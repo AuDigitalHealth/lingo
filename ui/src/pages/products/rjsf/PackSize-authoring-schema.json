@@ -59,7 +59,13 @@
     "PackDetails": {
       "type": "object",
       "properties": {
-        "packSize": { "type": "number" },
+        "packSize": {
+          "type": "integer",
+          "minimum": 1,
+          "errorMessage": {
+            "minimum": "Pack size must be at least 1."
+          }
+        },
         "externalIdentifiers": {
           "type": "array",
           "title": "External identifiers",
@@ -67,8 +73,8 @@
             "$ref": "#/$defs/ExternalIdentifier"
           }
         }
-
-      }
+      },
+      "required": ["packSize"]
     }
   },
   "properties": {
@@ -96,7 +102,13 @@
     "newPackSizeInput": {
       "type": "object",
       "properties": {
-        "packSize": { "type": "number" },
+        "packSize": {
+          "type": "integer",
+          "minimum": 1,
+          "errorMessage": {
+            "minimum": "Pack size must be at least 1."
+          }
+        },
         "externalIdentifiers": {
           "type": "array",
           "title": "External identifiers",

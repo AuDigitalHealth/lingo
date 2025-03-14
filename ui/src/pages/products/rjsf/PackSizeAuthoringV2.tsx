@@ -64,7 +64,7 @@ function PackSizeAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: P
     const [runningWarningsCheck, setRunningWarningsCheck] = useState(false);
     const [warnings, setWarnings] = useState<string[]>([]);
     const [formData, setFormData] = useState<FormData>({
-        packSizes: []
+
 
     });
     const { data, isFetching } = useFetchBulkAuthorPackSizes(selectedProduct, task.branchPath);
@@ -83,7 +83,6 @@ function PackSizeAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: P
     const handleClear = useCallback(() => {
         const newData: FormData = {
             ...formData,
-            packSizes: [],
             newPackSizeInput: { packSize: undefined, externalIdentifiers: [] },
         };
         setFormData(newData);
@@ -206,7 +205,6 @@ function PackSizeAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: P
                                 }}
                                 validator={validator}
                                 formContext={formContext}
-                                noHtml5Validate
                             >
                                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 1 }}>
                                     <Button
@@ -214,7 +212,7 @@ function PackSizeAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: P
                                         variant="contained"
                                         color="primary"
                                         size="small"
-                                        disabled={!formData.packSizes || (formData.packSizes && formData.packSizes.length === 0)}
+                                        disabled={!formContext.formData.packSizes || formContext.formData.packSizes.length ===0}
                                     >
                                         Preview
                                     </Button>
