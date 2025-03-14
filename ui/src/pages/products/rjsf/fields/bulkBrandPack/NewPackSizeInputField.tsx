@@ -13,7 +13,7 @@ const NewPackSizeInputField: React.FC<FieldProps> = (props) => {
     }, [formData]);
 
     const handleAdd = () => {
-        if (inputValue.packSize && !isNaN(inputValue.packSize)) {
+        if (inputValue.packSize !== undefined && !isNaN(inputValue.packSize)) {
             const currentFormData = { ...formContext.formData };
             const currentPackSizes = Array.isArray(currentFormData.packSizes) ? [...currentFormData.packSizes] : [];
             const newPackSize = { ...inputValue };
@@ -45,16 +45,39 @@ const NewPackSizeInputField: React.FC<FieldProps> = (props) => {
         return inputValue.packSize !== undefined && !hasErrors;
     };
 
-    const enforceMinimumValue = (newValue: any) => {
+    const enforceSchemaConstraints = (newValue: any) => {
         const packSize = newValue.packSize;
-        const minimum = schema.properties?.packSize?.minimum || 1; // Default to 1 if not specified
+        const packSizeSchema = schema.properties?.packSize || {};
 
-        if (packSize === undefined || (Number.isInteger(packSize) && packSize >= minimum)) {
+        // Allow undefined to clear the field
+        if (packSize === undefined) {
             return newValue;
         }
+
+        // Use the validator from registry.formContext to validate packSize against its schema
+        const validator = registry.formContext?.validator || registry.validator;
+        const rootSchema = registry.rootSchema;
+
+        // Wrap packSize in an object to match the schema structure
+        const tempData = { packSize };
+        const tempSchema = {
+            type: "object",
+            properties: {
+                packSize: packSizeSchema,
+            },
+        };
+
+        // Validate using AJV
+        const errors = validator.validateFormData(tempData, tempSchema, rootSchema).errors;
+
+        // If no errors, accept the new value
+        if (!errors || errors.length === 0) {
+            return newValue;
+        }
+
         return {
             ...newValue,
-            packSize: packSize < minimum || !Number.isInteger(packSize) ? inputValue.packSize : packSize,
+            packSize: inputValue.packSize, // Keep previous value if invalid
         };
     };
 
@@ -70,9 +93,9 @@ const NewPackSizeInputField: React.FC<FieldProps> = (props) => {
                     {...props}
                     formData={inputValue}
                     onChange={(newValue) => {
-                        const clampedValue = enforceMinimumValue(newValue);
-                        setInputValue(clampedValue);
-                        onChange(clampedValue);
+                        const validatedValue = enforceSchemaConstraints(newValue);
+                        setInputValue(validatedValue);
+                        onChange(validatedValue);
                     }}
                 />
             </Box>
