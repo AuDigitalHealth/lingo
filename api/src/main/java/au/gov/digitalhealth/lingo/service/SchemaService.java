@@ -78,6 +78,14 @@ public class SchemaService {
 
     return schemaNode.toString();
   }
+  public String getBulkBrandSchema(String branch) {
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+    JsonNode schemaNode = readFileContentAsJson(modelConfiguration.getBaseDeviceSchema());
+
+    schemaExtender.updateSchema(modelConfiguration, schemaNode);
+
+    return schemaNode.toString();
+  }
 
   public String getDeviceUiSchema(String branch) {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
