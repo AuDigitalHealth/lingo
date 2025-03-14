@@ -83,7 +83,10 @@ public class SecurityConfiguration {
             "/api/(.*)/product-model/.*",
             "/api/(.*)/product-model-graph/.*",
             "/config/medication/(.*)/.*",
-            "/config/device/(.*)/.*"));
+            "/config/device/(.*)/.*",
+                "/config/bulk-brand/(.*)/.*",
+                "/config/bulk-pack/(.*)/.*"
+                ));
   }
 
   @Bean
