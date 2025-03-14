@@ -80,7 +80,6 @@ function BrandAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: Bran
     const handleClear = useCallback(() => {
         const newData: FormData = {
             ...formData,
-            brands: [],
             newBrandInput: { brand: undefined, externalIdentifiers: [] },
         };
         setFormData(newData);
@@ -94,7 +93,6 @@ function BrandAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: Bran
             const newData: FormData = {
                 selectedProduct: selectedProduct.pt?.term || '',
                 existingBrands: data.brands || [],
-                brands: [],
                 newBrandInput: { brand: undefined, externalIdentifiers: [] },
             };
             console.log('Initial formData:', newData);
