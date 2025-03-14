@@ -1,4 +1,12 @@
 {
+  "ui:order": [
+    "selectedProduct",
+    "newPackSizeInput",
+    "existingPackSizes",
+    "packSizes",
+    "unitOfMeasure"
+
+  ],
   "ui:options": {
     "layout": {
       "grid": [

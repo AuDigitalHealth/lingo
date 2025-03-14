@@ -106,4 +106,40 @@ export const ConfigService = {
     }
     return await schemaResponse.json();
   },
+  async fetchBulkBrandSchemaData(branchPath: string) {
+    const schemaResponse = await fetch(
+        `/config/bulk-brand/${branchPath}/schema`,
+    );
+    if (!schemaResponse.ok) {
+      throw new Error(`HTTP error! status: ${schemaResponse.status}`);
+    }
+    return await schemaResponse.json();
+  },
+  async fetchBulkBrandUiSchemaData(branchPath: string) {
+    const schemaResponse = await fetch(
+        `/config/bulk-brand/${branchPath}/ui-schema`,
+    );
+    if (!schemaResponse.ok) {
+      throw new Error(`HTTP error! status: ${schemaResponse.status}`);
+    }
+    return await schemaResponse.json();
+  },
+  async fetchBulkPackSchemaData(branchPath: string) {
+    const schemaResponse = await fetch(
+        `/config/bulk-pack/${branchPath}/schema`,
+    );
+    if (!schemaResponse.ok) {
+      throw new Error(`HTTP error! status: ${schemaResponse.status}`);
+    }
+    return await schemaResponse.json();
+  },
+  async fetchBulkPackUiSchemaData(branchPath: string) {
+    const schemaResponse = await fetch(
+        `/config/bulk-pack/${branchPath}/ui-schema`,
+    );
+    if (!schemaResponse.ok) {
+      throw new Error(`HTTP error! status: ${schemaResponse.status}`);
+    }
+    return await schemaResponse.json();
+  },
 };
