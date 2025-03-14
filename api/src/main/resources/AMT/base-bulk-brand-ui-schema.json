@@ -1,4 +1,11 @@
 {
+  "ui:order": [
+    "selectedProduct",
+    "newBrandInput",
+    "existingBrands",
+    "brands"
+
+  ],
   "ui:options": {
     "layout": {
       "grid": [
