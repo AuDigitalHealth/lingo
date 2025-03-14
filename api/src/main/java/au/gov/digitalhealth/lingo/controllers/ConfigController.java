@@ -92,4 +92,26 @@ public class ConfigController {
   public ResponseEntity<String> getDeviceUiSchema(@PathVariable String branch) {
     return ResponseEntity.ok(schemaService.getDeviceUiSchema(branch));
   }
+
+
+//  @GetMapping(value = "/bulk-brand/{branch}/schema", produces = MediaType.APPLICATION_JSON_VALUE)
+//  public ResponseEntity<String> getBulkBrandSchema(@PathVariable String branch) {
+//    return ResponseEntity.ok(schemaService.getDeviceSchema(branch));
+//
+//  }
+//  @GetMapping(value = "/bulk-brand/{branch}/ui-schema", produces = MediaType.APPLICATION_JSON_VALUE)
+//  public ResponseEntity<String> getBulkBrandUiSchema(@PathVariable String branch) {
+//    return ResponseEntity.ok(schemaService.getDeviceUiSchema(branch));
+//  }
+//
+//  @GetMapping(value = "/bulk-pack/{branch}/schema", produces = MediaType.APPLICATION_JSON_VALUE)
+//  public ResponseEntity<String> getBulkPackSchema(@PathVariable String branch) {
+//    return ResponseEntity.ok(schemaService.getDeviceSchema(branch));
+//  }
+//
+//  @GetMapping(value = "/bulk-pack/{branch}/ui-schema", produces = MediaType.APPLICATION_JSON_VALUE)
+//  public ResponseEntity<String> getBulkPackUiSchema(@PathVariable String branch) {
+//    return ResponseEntity.ok(schemaService.getDeviceUiSchema(branch));
+//  }
+
 }
