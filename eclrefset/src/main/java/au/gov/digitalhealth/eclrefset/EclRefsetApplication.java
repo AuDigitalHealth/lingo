@@ -15,8 +15,6 @@
  */
 package au.gov.digitalhealth.eclrefset;
 
-import au.csiro.snowstorm_client.model.SnowstormItemsPageReferenceSetMember;
-import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.gov.digitalhealth.eclrefset.model.addorremovequeryresponse.AddOrRemoveQueryResponse;
 import au.gov.digitalhealth.eclrefset.model.addorremovequeryresponse.AddRemoveItem;
 import au.gov.digitalhealth.eclrefset.model.refsetqueryresponse.Data;
@@ -42,7 +40,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -75,12 +72,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -427,7 +422,7 @@ public class EclRefsetApplication {
 
           logAndAddRefsetMembersToBulk(allAddQueryResponse, item, restTemplate, bulkChangeList);
 
-          this.doBulkUpdate(restTemplate, bulkChangeList);
+          this.doBulkUpdate(restTemplate, bulkChangeList, resultDto, item);
           bulkChangeList.clear();
 
           // process remaining pages
@@ -454,7 +449,7 @@ public class EclRefsetApplication {
 
             addResult.getItems().addAll(addResultItems);
 
-            this.doBulkUpdate(restTemplate, bulkChangeList);
+            this.doBulkUpdate(restTemplate, bulkChangeList, resultDto, item);
             bulkChangeList.clear();
           }
         }
@@ -586,7 +581,7 @@ public class EclRefsetApplication {
     logAndRemoveRefsetMembersToBulk(
         queryResponse, item, restTemplate, bulkChangeList);
 
-    this.doBulkUpdate(restTemplate, bulkChangeList);
+    this.doBulkUpdate(restTemplate, bulkChangeList, removeResult, item);
     bulkChangeList.clear();
 
     // process remaining pages
@@ -615,7 +610,7 @@ public class EclRefsetApplication {
 
       removeResult.getItems().addAll(removeResultItems);
 
-      this.doBulkUpdate(restTemplate, bulkChangeList);
+      this.doBulkUpdate(restTemplate, bulkChangeList, removeResult, item);
       bulkChangeList.clear();
     }
   }
@@ -640,8 +635,9 @@ public class EclRefsetApplication {
     executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
   }
 
-  private void doBulkUpdate(RestTemplate restTemplate, List<JSONObject> bulkChangeList)
-      throws Exception {
+  private void doBulkUpdate(RestTemplate restTemplate, List<JSONObject> bulkChangeList,
+      ResultDto resultDto, Item item)
+      {
     if (!bulkChangeList.isEmpty()) {
       // bulk update
       HttpHeaders headers = new HttpHeaders();
@@ -650,51 +646,63 @@ public class EclRefsetApplication {
       String requestBody = bulkChangeList.toString();
       HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
       String bulkQuery = perfSnowstormUrl + BRANCH + "/members/bulk";
-      HttpEntity<String> bulkQueryResult =
-          restTemplate.exchange(bulkQuery, HttpMethod.POST, request, String.class);
-      String location =
-          Objects.requireNonNull(bulkQueryResult.getHeaders().getLocation()).getPath();
-      String bulkChangeId = location.substring(location.lastIndexOf('/') + 1);
+      try{
+        HttpEntity<String> bulkQueryResult =
+            restTemplate.exchange(bulkQuery, HttpMethod.POST, request, String.class);
+        String location =
+            Objects.requireNonNull(bulkQueryResult.getHeaders().getLocation()).getPath();
+        String bulkChangeId = location.substring(location.lastIndexOf('/') + 1);
 
-      boolean running = true;
-      while (running) {
-        try {
-          Thread.sleep(5000); // 5000 milliseconds = 5 seconds
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-        }
+        boolean running = true;
+        while (running) {
+          try {
+            Thread.sleep(5000); // 5000 milliseconds = 5 seconds
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+          }
 
-        String bulkStatusQuery = perfSnowstormUrl + BRANCH + "/members/bulk/" + bulkChangeId;
-        String bulkStatusResponse = restTemplate.getForObject(bulkStatusQuery, String.class);
+          String bulkStatusQuery = perfSnowstormUrl + BRANCH + "/members/bulk/" + bulkChangeId;
+          String bulkStatusResponse = restTemplate.getForObject(bulkStatusQuery, String.class);
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode jsonNode = objectMapper.readTree(bulkStatusResponse);
-        String status = jsonNode.get("status").asText();
+          ObjectMapper objectMapper = new ObjectMapper();
+          JsonNode jsonNode = objectMapper.readTree(bulkStatusResponse);
+          String status = jsonNode.get("status").asText();
 
-        if (!status.equals("RUNNING")) {
-          running = false;
+          if (!status.equals("RUNNING")) {
+            running = false;
 
-          if (status.equals("COMPLETED")) {
-            log.info(
-                "bulk update with id:"
-                    + bulkChangeId
-                    + " COMPLETED in "
-                    + jsonNode.get("secondsDuration").asText());
-          } else if (status.equals("FAILED")) {
-            log.info(
-                "bulk update with id:"
-                    + bulkChangeId
-                    + " FAILED in "
-                    + jsonNode.get("secondsDuration").asText());
-            log.info("error message:" + jsonNode.get("message"));
-            throw new EclRefsetProcessingException("Bulk Update Failed:" + jsonNode.get("message"));
-          } else {
-            // maybe an error status?
-            log.info("batch status is " + status);
-            throw new EclRefsetProcessingException("Unexpected Bulk status:" + status);
+            if (status.equals("COMPLETED")) {
+              log.info(
+                  "bulk update with id:"
+                      + bulkChangeId
+                      + " COMPLETED in "
+                      + jsonNode.get("secondsDuration").asText());
+            } else if (status.equals("FAILED")) {
+              log.info(
+                  "bulk update with id:"
+                      + bulkChangeId
+                      + " FAILED in "
+                      + jsonNode.get("secondsDuration").asText());
+              log.info("error message:" + jsonNode.get("message"));
+              throw new EclRefsetProcessingException("Bulk Update Failed:" + jsonNode.get("message"));
+            } else {
+              // maybe an error status?
+              log.info("batch status is " + status);
+              throw new EclRefsetProcessingException("Unexpected Bulk status:" + status);
+            }
           }
         }
+      } catch (Exception e){
+        ResultNotificationDto resultNotificationDto = ResultNotificationDto.builder()
+            .type(ResultNotificationType.ERROR)
+            .description(
+                "Error posting update to refset: "
+                    + item.getRefsetId()
+                    + LogThresholdInfo.ACTION_HAS_NOT_BEEN_CARRIED_OUT_MESSAGE)
+            .build();
+        resultDto.setNotification(resultNotificationDto);
       }
+
     }
   }
 
