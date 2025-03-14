@@ -148,7 +148,6 @@ function PackSizeAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: P
             onSubmit(formData);
         }
     };
-
     const formContext = {
         onChange: (newFormData: FormData) => {
             setFormData(newFormData);
@@ -156,7 +155,9 @@ function PackSizeAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: P
         formData,
         handleClear,
         onSubmit: (data: { formData: FormData }) => onSubmit(data.formData),
+        validator
     };
+
 
     if (isFetching) return <ProductLoader message={`Loading Product details for ${selectedProduct?.pt?.term}`} />;
     if (loadingPreview) return <ProductLoader message={`Loading Product Preview for ${selectedProduct?.pt?.term}`} />;
