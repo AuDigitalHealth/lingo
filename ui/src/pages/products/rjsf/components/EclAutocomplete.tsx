@@ -67,6 +67,7 @@ const EclAutocomplete: React.FC<EclAutocompleteProps> = ({
       const conceptMini: ConceptMini = {
         conceptId: selectedProduct.conceptId || '',
         pt: selectedProduct.pt,
+        fsn:selectedProduct.fsn
       };
       onChange(conceptMini);
       setInputValue(selectedProduct.pt?.term || '');
