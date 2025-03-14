@@ -26,8 +26,6 @@ const NewBrandInputField: React.FC<FieldProps> = (props) => {
             };
 
             formContext.onChange(updatedFormData);
-            setInputValue({ brand: undefined, externalIdentifiers: [] });
-            onChange({ brand: undefined, externalIdentifiers: [] });
         }
     };
 
