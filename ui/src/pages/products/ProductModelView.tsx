@@ -37,7 +37,7 @@ function ProductModelView({ branch }: ProductModelViewProps) {
     return (
       <ProductPreviewCreateOrViewMode
         branch={branchPath}
-        productModel={data}
+        productModelResponse={data}
         readOnlyMode={true}
       />
     );
