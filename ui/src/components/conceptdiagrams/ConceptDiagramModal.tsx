@@ -9,8 +9,8 @@ import ConceptDiagram from './ConceptDiagram';
 interface ConceptDiagramModalProps {
   open: boolean;
   handleClose: () => void;
-  newConcept?: NewConceptDetails;
-  concept: Concept | null;
+  newConcept?: NewConceptDetails | null;
+  concept: Concept | null | undefined;
   keepMounted: boolean;
 }
 

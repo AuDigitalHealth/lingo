@@ -255,6 +255,7 @@ export interface AxiomRelationshipNewConcept {
 
 export interface Term {
   term: string;
+  semanticTag?: string;
   lang?: string;
 }
 
@@ -286,6 +287,7 @@ export interface Product {
   conceptId: string;
   preferredTerm?: string;
   fullySpecifiedName?: string;
+  semanticTag?: string;
   generatedPreferredTerm?: string;
   generatedFullySpecifiedName?: string;
   newInTask: boolean;

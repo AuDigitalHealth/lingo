@@ -21,7 +21,7 @@ function ProductModelReadonly({ branch }: ProductModelReadonlyProps) {
     if (locationState.productModel !== null) {
       return (
         <ProductPreviewCreateOrViewMode
-          productModel={locationState.productModel}
+          productModelResponse={locationState.productModel}
           readOnlyMode={true}
           branch={locationState.branch}
         />

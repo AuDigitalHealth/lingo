@@ -37,6 +37,7 @@ import {
 } from '../../types/product.ts';
 import { createFilterOptions } from '@mui/material';
 import Verhoeff from './Verhoeff.ts';
+import { extractSemanticTag } from './ProductPreviewUtils.ts';
 
 function isNumeric(value: string) {
   return /^\d+$/.test(value);
@@ -345,6 +346,24 @@ export function cleanProductSummary(productSummary: ProductSummary) {
   productSummary.nodes.forEach(node => {
     if (node.concept !== null && node.newConceptDetails) {
       node.newConceptDetails = null;
+    }
+  });
+
+  // re-attach semantic tags if they have not been edited
+  productSummary.nodes.forEach(node => {
+    if (node.newConceptDetails) {
+      const newSemanticTag = extractSemanticTag(
+        node.newConceptDetails.fullySpecifiedName,
+      );
+      // there's a new semantic tag, so update the semanticTag
+      if (node.newConceptDetails.semanticTag && newSemanticTag) {
+        node.newConceptDetails.semanticTag = newSemanticTag;
+        return;
+      }
+      // re-add old one
+      if (node.newConceptDetails && node.newConceptDetails.semanticTag) {
+        node.newConceptDetails.fullySpecifiedName = `${node.newConceptDetails.fullySpecifiedName?.trim()} ${node.newConceptDetails.semanticTag}`;
+      }
     }
   });
 
