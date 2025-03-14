@@ -6,8 +6,7 @@ import WarningModal from '../../../themes/overrides/WarningModal';
 import useAuthoringStore from '../../../stores/AuthoringStore';
 import { useFetchBulkAuthorBrands } from '../../../hooks/api/tickets/useTicketProduct';
 import { findWarningsForBrandPackSizes } from '../../../types/productValidationUtils';
-import schemaTest from './Brand-authoring-schema.json';
-import uiSchemaTest from './Brand-authoring-uiSchema.json';
+
 import { Concept } from '../../../types/concept.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
 import { Task } from '../../../types/task.ts';
@@ -24,6 +23,9 @@ import NewBrandInputField from './fields/bulkBrandPack/NewBrandInputField.tsx';
 import ObjectFieldTemplate from './templates/ObjectFieldTemplate.tsx';
 import { BrandPackSizeCreationDetails } from '../../../types/product.ts';
 import TitleWidget from "./widgets/TitleWidget.tsx";
+import {useQuery} from "@tanstack/react-query";
+import {ConfigService} from "../../../api/ConfigService.ts";
+
 
 // Define FormData interface
 interface FormData {
@@ -60,6 +62,13 @@ function BrandAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: Bran
         handlePreviewToggleModal,
         setBrandPackSizePreviewDetails,
     } = useAuthoringStore();
+
+    const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
+        task.branchPath,
+    );
+    const { data: uiSchema, isLoading: isUiSchemaLoading } = useUiSchemaQuery(
+        task.branchPath,
+    );
 
     const [runningWarningsCheck, setRunningWarningsCheck] = useState(false);
     const [warnings, setWarnings] = useState<string[]>([]);
@@ -142,7 +151,9 @@ function BrandAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: Bran
         handleClear,
         onSubmit,
     };
-
+    if (isSchemaLoading || isUiSchemaLoading) {
+        return <ProductLoader message="Loading Schema" />;
+    }
     if (isFetching) return <ProductLoader message={`Loading Product details for ${selectedProduct?.pt?.term}`} />;
     if (loadingPreview) return <ProductLoader message={`Loading Product Preview for ${selectedProduct?.pt?.term}`} />;
     if (runningWarningsCheck) return <ProductLoader message={`Running validation before Preview`} />;
@@ -176,8 +187,8 @@ function BrandAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: Bran
                             </Alert>
                             <Form
                                 ref={formRef}
-                                schema={schemaTest as RJSFSchema}
-                                uiSchema={uiSchemaTest as UiSchema}
+                                schema={schema}
+                                uiSchema={uiSchema}
                                 formData={formData}
                                 onChange={({ formData: newFormData }) => setFormData(newFormData as FormData)}
                                 onSubmit={onSubmit}
@@ -204,5 +215,20 @@ function BrandAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: Bran
         </Box>
     );
 }
+export const useSchemaQuery = (branchPath: string) => {
+    return useQuery({
+        queryKey: ['bulk-brand-schema', branchPath],
+        queryFn: () => ConfigService.fetchBulkBrandSchemaData(branchPath),
+        enabled: !!branchPath,
+    });
+};
+
+export const useUiSchemaQuery = (branchPath: string) => {
+    return useQuery({
+        queryKey: ['bulk-brand-uiSchema', branchPath],
+        queryFn: () => ConfigService.fetchBulkBrandUiSchemaData(branchPath),
+        enabled: !!branchPath,
+    });
+};
 
 export default BrandAuthoringV2;

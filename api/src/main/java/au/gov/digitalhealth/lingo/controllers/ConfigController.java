@@ -94,24 +94,24 @@ public class ConfigController {
   }
 
 
-//  @GetMapping(value = "/bulk-brand/{branch}/schema", produces = MediaType.APPLICATION_JSON_VALUE)
-//  public ResponseEntity<String> getBulkBrandSchema(@PathVariable String branch) {
-//    return ResponseEntity.ok(schemaService.getDeviceSchema(branch));
-//
-//  }
-//  @GetMapping(value = "/bulk-brand/{branch}/ui-schema", produces = MediaType.APPLICATION_JSON_VALUE)
-//  public ResponseEntity<String> getBulkBrandUiSchema(@PathVariable String branch) {
-//    return ResponseEntity.ok(schemaService.getDeviceUiSchema(branch));
-//  }
-//
-//  @GetMapping(value = "/bulk-pack/{branch}/schema", produces = MediaType.APPLICATION_JSON_VALUE)
-//  public ResponseEntity<String> getBulkPackSchema(@PathVariable String branch) {
-//    return ResponseEntity.ok(schemaService.getDeviceSchema(branch));
-//  }
-//
-//  @GetMapping(value = "/bulk-pack/{branch}/ui-schema", produces = MediaType.APPLICATION_JSON_VALUE)
-//  public ResponseEntity<String> getBulkPackUiSchema(@PathVariable String branch) {
-//    return ResponseEntity.ok(schemaService.getDeviceUiSchema(branch));
-//  }
+  @GetMapping(value = "/bulk-brand/{branch}/schema", produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<String> getBulkBrandSchema(@PathVariable String branch) {
+    return ResponseEntity.ok(schemaService.getBulkBrandSchema(branch));
+
+  }
+  @GetMapping(value = "/bulk-brand/{branch}/ui-schema", produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<String> getBulkBrandUiSchema(@PathVariable String branch) {
+    return ResponseEntity.ok(schemaService.getBulkBrandUiSchema(branch));
+  }
+
+  @GetMapping(value = "/bulk-pack/{branch}/schema", produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<String> getBulkPackSchema(@PathVariable String branch) {
+    return ResponseEntity.ok(schemaService.getBulkPackSchema(branch));
+  }
+
+  @GetMapping(value = "/bulk-pack/{branch}/ui-schema", produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<String> getBulkPackUiSchema(@PathVariable String branch) {
+    return ResponseEntity.ok(schemaService.getBulkPackUiSchema(branch));
+  }
 
 }
