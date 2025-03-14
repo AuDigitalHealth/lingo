@@ -80,11 +80,36 @@ public class SchemaService {
   }
   public String getBulkBrandSchema(String branch) {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
-    JsonNode schemaNode = readFileContentAsJson(modelConfiguration.getBaseDeviceSchema());
+    JsonNode schemaNode = readFileContentAsJson(modelConfiguration.getBaseBulkBrandSchema());
 
     schemaExtender.updateSchema(modelConfiguration, schemaNode);
 
     return schemaNode.toString();
+  }
+  public String getBulkBrandUiSchema(String branch) {
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+    JsonNode uiSchemaNode = readFileContentAsJson(modelConfiguration.getBaseBulkBrandUiSchema());
+
+    uiSchemaExtender.updateUiSchema(modelConfiguration, uiSchemaNode);
+
+    return uiSchemaNode.toString();
+  }
+
+  public String getBulkPackSchema(String branch) {
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+    JsonNode schemaNode = readFileContentAsJson(modelConfiguration.getBaseBulkPackSchema());
+
+    schemaExtender.updateSchema(modelConfiguration, schemaNode);
+
+    return schemaNode.toString();
+  }
+  public String getBulkPackUiSchema(String branch) {
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+    JsonNode uiSchemaNode = readFileContentAsJson(modelConfiguration.getBaseBulkPackUiSchema());
+
+    uiSchemaExtender.updateUiSchema(modelConfiguration, uiSchemaNode);
+
+    return uiSchemaNode.toString();
   }
 
   public String getDeviceUiSchema(String branch) {

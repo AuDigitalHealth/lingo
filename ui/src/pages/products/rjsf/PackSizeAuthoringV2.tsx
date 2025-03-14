@@ -6,8 +6,6 @@ import WarningModal from '../../../themes/overrides/WarningModal';
 import useAuthoringStore from '../../../stores/AuthoringStore';
 import { useFetchBulkAuthorPackSizes } from '../../../hooks/api/tickets/useTicketProduct';
 import { findWarningsForBrandPackSizes } from '../../../types/productValidationUtils';
-import schemaTest from './PackSize-authoring-schema.json';
-import uiSchemaTest from './PackSize-authoring-uiSchema.json';
 import { Concept } from '../../../types/concept.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
 import { Task } from '../../../types/task.ts';
@@ -25,6 +23,8 @@ import { BrandPackSizeCreationDetails } from '../../../types/product.ts';
 import NewPackSizeInputField from "./fields/bulkBrandPack/NewPackSizeInputField.tsx";
 import TitleWidget from "./widgets/TitleWidget.tsx";
 import AutoCompleteField from "./fields/AutoCompleteField.tsx";
+import {useQuery} from "@tanstack/react-query";
+import {ConfigService} from "../../../api/ConfigService.ts";
 
 interface FormData {
     selectedProduct?: string;
@@ -60,6 +60,13 @@ function PackSizeAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: P
         handlePreviewToggleModal,
         setBrandPackSizePreviewDetails,
     } = useAuthoringStore();
+
+    const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
+        task.branchPath,
+    );
+    const { data: uiSchema, isLoading: isUiSchemaLoading } = useUiSchemaQuery(
+        task.branchPath,
+    );
 
     const [runningWarningsCheck, setRunningWarningsCheck] = useState(false);
     const [warnings, setWarnings] = useState<string[]>([]);
@@ -192,8 +199,8 @@ function PackSizeAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: P
                             </Alert>
                             <Form
                                 ref={formRef}
-                                schema={schemaTest as RJSFSchema}
-                                uiSchema={uiSchemaTest as UiSchema}
+                                schema={schema}
+                                uiSchema={uiSchema}
                                 formData={formData}
                                 onChange={({ formData: newFormData }) => setFormData(newFormData as FormData)}
                                 onSubmit={({ formData }) => onSubmit(formData)}
@@ -226,5 +233,19 @@ function PackSizeAuthoringV2({ selectedProduct, task, ticket, fieldBindings }: P
         </Box>
     );
 }
+export const useSchemaQuery = (branchPath: string) => {
+    return useQuery({
+        queryKey: ['bulk-pack-schema', branchPath],
+        queryFn: () => ConfigService.fetchBulkPackSchemaData(branchPath),
+        enabled: !!branchPath,
+    });
+};
 
+export const useUiSchemaQuery = (branchPath: string) => {
+    return useQuery({
+        queryKey: ['bulk-pack-uiSchema', branchPath],
+        queryFn: () => ConfigService.fetchBulkPackUiSchemaData(branchPath),
+        enabled: !!branchPath,
+    });
+};
 export default PackSizeAuthoringV2;
