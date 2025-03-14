@@ -9,6 +9,9 @@
         },
         "pt": {
           "$ref": "#/$defs/SnowstormTermLangPojo"
+        },
+        "fsn": {
+          "$ref": "#/$defs/SnowstormTermLangPojo"
         }
       },
       "minProperties": 1,
