@@ -370,6 +370,33 @@ export function cleanProductSummary(productSummary: ProductSummary) {
   return productSummary;
 }
 
+export function getSemanticTagChanges(
+  productSummary: ProductSummary | undefined,
+) {
+  if (!productSummary) return { hasChanged: false, changeMessages: [''] };
+  let hasChanged = false;
+  const changeMessages = [''];
+  productSummary.nodes.forEach(node => {
+    if (node.newConceptDetails) {
+      const newSemanticTag = extractSemanticTag(
+        node.newConceptDetails.fullySpecifiedName,
+      );
+      // there's a new semantic tag, so set hasChanged = true
+      if (
+        node.newConceptDetails.semanticTag &&
+        newSemanticTag &&
+        newSemanticTag !== node.newConceptDetails.semanticTag
+      ) {
+        hasChanged = true;
+        changeMessages.push(
+          `Semantic tag changed from: ${node.newConceptDetails.semanticTag} to: ${newSemanticTag}. \n\n`,
+        );
+      }
+    }
+  });
+  return { hasChanged: hasChanged, changeMessages: changeMessages };
+}
+
 export function cleanBrandPackSizeDetails(
   brandPackSizeDetails: BrandPackSizeCreationDetails,
 ) {

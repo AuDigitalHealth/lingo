@@ -8,6 +8,7 @@ import {
   cleanProductSummary,
   containsNewConcept,
   getProductDisplayName,
+  getSemanticTagChanges,
   isDeviceType,
 } from '../../utils/helpers/conceptUtils.ts';
 import Loading from '../../components/Loading.tsx';
@@ -52,6 +53,7 @@ import {
   removeSemanticTagFromTerm,
 } from '../../utils/helpers/ProductPreviewUtils.ts';
 import { ProductNameOverrideModal } from './components/ProductNameOverrideModal.tsx';
+import { SemanticTagOverrideModal } from './components/SemanticTagOverrideModal.tsx';
 
 interface ProductPreviewCreateOrViewModeProps {
   productCreationDetails?: ProductCreationDetails;
@@ -110,6 +112,12 @@ function ProductPreviewCreateOrViewMode({
   const [duplicateNameModalOpen, setDuplicateNameModalOpen] = useState(false);
   const [overrideDuplicateName, setOverrideDuplicateName] = useState(false);
 
+  const [semanticChangeWarning, setSemanticChangeWarning] = useState(false);
+  const [semanticChangeWarningMessages, setSemanticChangeWarningMessage] =
+    useState<string[] | undefined>(undefined);
+  const [overrideSemanticChangeWarning, setOverrideSemanticChangeWarning] =
+    useState(false);
+
   const productWithNameAlreadyExists = (
     ticket: Ticket | undefined,
     productSummary: ProductSummary,
@@ -151,6 +159,13 @@ function ProductPreviewCreateOrViewMode({
       setDuplicateNameModalOpen(true);
       return;
     }
+    // check if any of the concept semantic tags have been changed from the recieved semantic tag
+    const semanticTagChanges = getSemanticTagChanges(data);
+    if (semanticTagChanges.hasChanged && !overrideSemanticChangeWarning) {
+      setSemanticChangeWarning(true);
+      setSemanticChangeWarningMessage(semanticTagChanges.changeMessages);
+    }
+
     const errKey = await validateProductSummaryNodes(
       data.nodes,
       branch,
@@ -162,11 +177,18 @@ function ProductPreviewCreateOrViewMode({
     }
     const fsnWarnings = uniqueFsnValidator(data.nodes);
     const ptWarnings = uniquePtValidator(data.nodes);
+
+    let ignoreErrorsOpen = false;
     if (!ignoreErrors && (fsnWarnings || ptWarnings)) {
       setIgnoreErrorsModalOpen(true);
+      ignoreErrorsOpen = true;
+    }
+    if (
+      ignoreErrorsOpen ||
+      (semanticTagChanges.hasChanged && !overrideSemanticChangeWarning)
+    ) {
       return;
     }
-
     submitData(data);
   };
 
@@ -186,6 +208,9 @@ function ProductPreviewCreateOrViewMode({
       if (isDeviceType(selectedProductType)) {
         productCreationDetails.packageDetails = cleanDevicePackageDetails(
           productCreationDetails.packageDetails as DevicePackageDetails,
+        );
+        productCreationDetails.productSummary = cleanProductSummary(
+          productCreationDetails.productSummary,
         );
         productService
           .createDeviceProduct(productCreationDetails, branch)
@@ -341,6 +366,20 @@ function ProductPreviewCreateOrViewMode({
             setDuplicateNameModalOpen(false);
           }}
         />
+        <SemanticTagOverrideModal
+          messages={semanticChangeWarningMessages}
+          open={semanticChangeWarning}
+          ignore={() => {
+            setOverrideSemanticChangeWarning(true);
+            setSemanticChangeWarning(false);
+            if (!ignoreErrorsModalOpen) {
+              submitData();
+            }
+          }}
+          handleClose={() => {
+            setSemanticChangeWarning(false);
+          }}
+        />
         <WarningModal
           open={ignoreErrorsModalOpen}
           content={`At least one FSN or PT is the same as another FSN or PT. Is this correct?`}
@@ -352,7 +391,9 @@ function ProductPreviewCreateOrViewMode({
           handleAction={() => {
             setIgnoreErrors(true);
             setIgnoreErrorsModalOpen(false);
-            submitData();
+            if (!semanticChangeWarning) {
+              submitData();
+            }
           }}
         />
         <Box width={'100%'}>
