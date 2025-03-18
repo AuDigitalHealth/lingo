@@ -60,7 +60,9 @@
                   "minimum": 1
                 }
               },
-              "required": ["value"]
+              "required": [
+                "value"
+              ]
             },
             {
               "properties": {
@@ -98,7 +100,9 @@
           "$ref": "#/$defs/SnowstormConceptMini"
         }
       },
-      "required": ["activeIngredient"],
+      "required": [
+        "activeIngredient"
+      ],
       "errorMessage": {
         "required": "Active Ingredient must be populated."
       }
@@ -113,28 +117,32 @@
         "basisOfStrengthSubstance": {
           "$ref": "#/$defs/SnowstormConceptMini"
         },
-        "concentrationStrength": {
+        "concentrationStrengthNumerator": {
           "$ref": "#/$defs/Quantity",
-          "title": "Concentration Strength"
+          "title": "Concentration Strength Numerator"
         },
-        "totalQuantity": {
-          "$ref": "#/$defs/Quantity"
+        "concentrationStrengthDenominator": {
+          "$ref": "#/$defs/Quantity",
+          "title": "Concentration Strength Denominator"
+        },
+        "presentationStrengthNumerator": {
+          "$ref": "#/$defs/Quantity",
+          "title": "Presentation Strength Numerator"
+        },
+        "presentationStrengthDenominator": {
+          "$ref": "#/$defs/Quantity",
+          "title": "Presentation Strength Denominator"
         }
       },
-      "required": ["activeAndPreciseIngredients"]
+      "required": [
+        "activeAndPreciseIngredients"
+      ]
     },
     "GenericAndSpecificForms": {
       "type": "object",
       "properties": {
         "genericForm": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/SnowstormConceptMini"
-            },
-            {
-              "type": "null"
-            }
-          ],
+          "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Generic Dose Form"
         },
         "specificForm": {
@@ -150,34 +158,6 @@
         }
       },
       "title": "Generic and Specific Forms"
-    },
-    "ContainerOrDeviceType": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "containerType": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/SnowstormConceptMini"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "title": "Container Type"
-        },
-        "deviceType": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/SnowstormConceptMini"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "title": "Device Type"
-        }
-      }
     },
     "ProductDetails": {
       "type": "object",
@@ -207,81 +187,36 @@
         },
         "quantity": {
           "$ref": "#/$defs/Quantity",
-          "title": "Unit Size"
+          "title": "Unit of Presentation Size"
         },
-        "containerOrDeviceType": {
-          "$ref": "#/$defs/ContainerOrDeviceType"
+        "unitOfPresentation": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Unit of Presentation"
         },
         "packSize": {
           "$ref": "#/$defs/Quantity",
           "title": "Pack Size"
         },
-        "otherIdentifyingInformation": {
-          "type": "string",
-          "title": "Other Identifying Information"
-        },
-        "nonDefiningProperties": {
-          "title": "Non Defining Properties",
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/ProductProperty"
-          }
+        "supplier": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Supplier"
         }
       },
-      "required": ["productName", "activeIngredients", "packSize"],
+      "required": [
+        "productName",
+        "activeIngredients",
+        "genericAndSpecificForms",
+        "unitOfPresentation",
+        "packSize"
+      ],
       "errorMessage": {
         "required": "Product Details must be populated."
-      },
-      "allOf": [
-        {
-          "not": {
-            "properties": {
-              "genericAndSpecificForms": {
-                "properties": {
-                  "genericForm": {
-                    "type": "null"
-                  }
-                }
-              },
-              "containerOrDeviceType": {
-                "properties": {
-                  "containerType": {
-                    "type": "null"
-                  },
-                  "deviceType": {
-                    "type": "null"
-                  }
-                }
-              }
-            },
-            "required": ["genericAndSpecificForms", "containerOrDeviceType"]
-          },
-          "errorMessage": {
-            "not": "You must provide either a Generic Form or Container/Device Type. Both cannot be empty."
-          }
-        }
-      ]
+      }
     },
     "PackageDetails": {
       "type": "object",
       "title": "Package Details",
       "properties": {
-        "productName": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "Brand Name",
-          "minProperties": 1,
-          "errorMessage": {
-            "minProperties": "Brand Name must be populated."
-          }
-        },
-        "containerType": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "Container Type",
-          "minProperties": 1,
-          "errorMessage": {
-            "minProperties": "Container Type must be populated."
-          }
-        },
         "containedProducts": {
           "type": "array",
           "title": "Contained Products",
@@ -296,194 +231,27 @@
       },
       "required": [
         "productName",
-        "containerType",
         "containedProducts",
         "packSize"
       ],
       "errorMessage": {
         "required": "Fields must be populated."
       }
-    },
-    "PackageExternalIdentifier": {
-      "type": "object",
-      "oneOf": [
-        {
-          "title": "Associated procedure",
-          "type": "object",
-          "properties": {
-            "identifierScheme": {
-              "type": "string",
-              "const": "procedure"
-            },
-            "relationshipType": {
-              "title": "Relationship type",
-              "type": "string",
-              "const": "RELATED"
-            },
-            "identifierValue": {
-              "title": "Associated procedure",
-              "type": "object",
-              "errorMessage": {
-                "pattern": "Please enter a valid Associated procedure matching null"
-              }
-            }
-          }
-        },
-        {
-          "title": "ARTGID",
-          "type": "object",
-          "properties": {
-            "identifierScheme": {
-              "type": "string",
-              "const": "artgid"
-            },
-            "relationshipType": {
-              "title": "Relationship type",
-              "type": "string",
-              "const": "RELATED"
-            },
-            "identifierValue": {
-              "title": "ARTGID",
-              "type": "string",
-              "pattern": "\\d{1,8}",
-              "errorMessage": {
-                "pattern": "Please enter a valid ARTGID matching \\d{1,8}"
-              }
-            }
-          }
-        }
-      ]
-    },
-    "PackageReferenceSet": {
-      "type": "object",
-      "oneOf": [
-        {
-          "title": "Black Triangle",
-          "type": "object",
-          "properties": {
-            "identifierScheme": {
-              "type": "string",
-              "const": "blackTriangle"
-            }
-          }
-        }
-      ]
-    },
-    "PackageProperty": {
-      "type": "object",
-      "oneOf": [
-        {
-          "title": "Important Drug",
-          "type": "object",
-          "properties": {
-            "identifierScheme": {
-              "type": "string",
-              "const": "important"
-            },
-            "value": {
-              "title": "Important Drug",
-              "type": "string",
-              "enum": ["true", "false", "Maybe"]
-            }
-          }
-        },
-        {
-          "title": "Price",
-          "type": "object",
-          "properties": {
-            "identifierScheme": {
-              "type": "string",
-              "const": "price"
-            },
-            "value": {
-              "title": "Price",
-              "type": "string",
-              "pattern": "\\d{1,8}",
-              "errorMessage": {
-                "pattern": "Please enter a valid Price matching \\d{1,8}"
-              }
-            }
-          }
-        }
-      ]
-    },
-    "ProductProperty": {
-      "type": "object",
-      "oneOf": [
-        {
-          "title": "Licenced Route",
-          "type": "object",
-          "properties": {
-            "identifierScheme": {
-              "type": "string",
-              "const": "licencedRoute"
-            },
-            "value": {
-              "title": "Licenced Route",
-              "type": "object",
-              "errorMessage": {
-                "pattern": "Please enter a valid Licenced Route matching null"
-              }
-            }
-          }
-        }
-      ]
     }
   },
   "properties": {
-    "productName": {
-      "$ref": "#/$defs/SnowstormConceptMini",
-      "title": "Brand Name",
-      "minProperties": 1,
-      "errorMessage": {
-        "minProperties": "Brand Name must be populated."
-      }
-    },
-    "containerType": {
-      "$ref": "#/$defs/SnowstormConceptMini",
-      "title": "Container Type",
-      "minProperties": 1,
-      "errorMessage": {
-        "minProperties": "Container Type must be populated."
-      }
-    },
     "containedProducts": {
       "type": "array",
       "title": "Contained Products",
       "items": {
         "$ref": "#/$defs/ProductDetails"
       }
-    },
-    "containedPackages": {
-      "type": "array",
-      "title": "Contained Packages",
-      "items": {
-        "$ref": "#/$defs/PackageDetails"
-      }
-    },
-    "externalIdentifiers": {
-      "title": "External Identifiers",
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/PackageExternalIdentifier"
-      }
-    },
-    "referenceSets": {
-      "title": "Reference Sets",
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/PackageReferenceSet"
-      }
-    },
-    "nonDefiningProperties": {
-      "title": "Non Defining Properties",
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/PackageProperty"
-      }
     }
   },
-  "required": ["productName", "containerType"],
+  "required": [
+    "productName",
+    "containedProducts"
+  ],
   "errorMessage": {
     "required": "Fields must be populated."
   },
@@ -491,10 +259,6 @@
   "if": {
     "properties": {
       "containedProducts": {
-        "type": "array",
-        "maxItems": 0
-      },
-      "containedPackages": {
         "type": "array",
         "maxItems": 0
       }
@@ -505,7 +269,7 @@
       "type": "object"
     },
     "errorMessage": {
-      "not": "At least one of 'Contained Products' or 'Contained Packages' must be populated."
+      "not": "'Contained Products' must be populated."
     }
   }
 }
