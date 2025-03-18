@@ -14,3 +14,21 @@ export const getItemTitle = (
     ? _.get(formData[index], titleSource) || `${defaultTitle} ${index + 1}`
     : `${defaultTitle} ${index + 1}`;
 };
+export function getParentPath(fullPath) {
+  const match = fullPath.match(/^(.*)\.[^.]+$/);
+  return match ? match[1] : fullPath;
+}
+// Function to get uiSchema path
+export function getUiSchemaPath(fieldPath) {
+  const parts = fieldPath.split('.');
+  const uiSchemaParts = parts.map(part => {
+    // Check if the part ends with [index], e.g., "containedProducts[0]"
+    const match = part.match(/^(.*)\[\d+\]$/);
+    if (match) {
+      // Return the base name followed by "items"
+      return `${match[1]}.items`;
+    }
+    return part; // No array index, return unchanged
+  });
+  return uiSchemaParts.join('.');
+}
