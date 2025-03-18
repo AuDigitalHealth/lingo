@@ -18,6 +18,8 @@ import TextFieldWidget from './widgets/TextFieldWidget.tsx';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import ProductPreviewCreateModal from '../components/ProductPreviewCreateModal.tsx';
 import { Task } from '../../../types/task.ts';
+import schema from './MedicationProductDetails-schema.json';
+import uiSchema from './MedicationProductDetails-uiSchema.json';
 import {
   MedicationPackageDetails,
   ProductCreationDetails,
@@ -30,6 +32,9 @@ import { ConfigService } from '../../../api/ConfigService.ts';
 import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
 import ConditionalArrayField from './fields/ConditionalArrayField.tsx';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
+
+import CompactQuantityField from "./fields/CompactQuantityField.tsx";
+import CompactQuantityWidget from "./widgets/CompactQuantityWidget.tsx";
 
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -46,10 +51,10 @@ function MedicationAuthoringV2({
   const [formData, setFormData] = useState({});
   const formRef = useRef<any>(null); // Ref to access the RJSF Form instance
 
-  const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
+  const { data: schemaTest, isLoading: isSchemaLoading } = useSchemaQuery(
     task.branchPath,
   );
-  const { data: uiSchema, isLoading: isUiSchemaLoading } = useUiSchemaQuery(
+  const { data: uiSchemaTest, isLoading: isUiSchemaLoading } = useUiSchemaQuery(
     task.branchPath,
   );
   const mutation = useCalculateProduct();
@@ -100,6 +105,7 @@ function MedicationAuthoringV2({
       setFormData(newFormData);
     },
     formData, // Pass full form data
+    uiSchema
   };
 
   return (
@@ -127,13 +133,14 @@ function MedicationAuthoringV2({
                 ParentChildAutoCompleteField,
                 MutuallyExclusiveAutocompleteField,
                 ConditionalArrayField,
+                CompactQuantityField
               }}
               templates={{
                 FieldTemplate: CustomFieldTemplate,
                 ArrayFieldTemplate: CustomArrayFieldTemplate,
               }}
               validator={validator}
-              widgets={{ NumberWidget, TextFieldWidget, OneOfArrayWidget }}
+              widgets={{ NumberWidget, TextFieldWidget, OneOfArrayWidget, CompactQuantityWidget }}
               onError={errors => console.log('Validation Errors:', errors)}
               disabled={isPending}
             >
