@@ -2,15 +2,18 @@ import React from 'react';
 import { Grid, TextField } from '@mui/material';
 import { FieldProps } from '@rjsf/utils';
 import AutoCompleteField from './AutoCompleteField';
+import EclAutocomplete from "../components/EclAutocomplete.tsx";
+import useTaskById from "../../../../hooks/useTaskById.tsx";
 
 const UnitValueField = ({
   formData,
   onChange,
   schema,
   uiSchema,
+                          rawErrors = [],
 }: FieldProps) => {
   const { value, unit } = formData || { value: undefined, unit: undefined };
-
+  const task = useTaskById();
   const handleUnitChange = (selectedUnit: any | null) => {
     if (!selectedUnit) {
       // Remove the 'unit' property from formData if selectedUnit is null
@@ -53,22 +56,24 @@ const UnitValueField = ({
           type="number"
           fullWidth
           variant="outlined"
-          sx={{ mt: 0 }} // Remove top margin to align with AutoCompleteField
+          // error={rawErrors.length > 0}
+
+
         />
       </Grid>
 
-      {/* Unit field with AutoCompleteField */}
-      <Grid item xs={6}>
-        <AutoCompleteField
-          schema={schema}
-          formData={unit}
-          onChange={handleUnitChange}
-          uiSchema={{
-            'ui:options': {
-              ...unitOptions,
-            },
-          }}
-        />
+      <Grid item xs={6} sx={{ mt: 0 }}>
+        {task && (<EclAutocomplete
+            value={unit}
+            onChange={handleUnitChange}
+            ecl={unitOptions.ecl || ''}
+            branch={task.branchPath}
+            showDefaultOptions={unitOptions.showDefaultOptions || true}
+            isDisabled={false}
+            title="Unit"
+            errorMessage={rawErrors.length > 0 ? rawErrors.join(', ') : ''}
+        />)}
+
       </Grid>
     </Grid>
   );
