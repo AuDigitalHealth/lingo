@@ -2,70 +2,71 @@ import React from 'react';
 import { FieldProps } from '@rjsf/utils';
 import { Grid, TextField, Typography, Box } from '@mui/material';
 import _ from 'lodash';
-
 import { UnitEachId } from '../../../../utils/helpers/conceptUtils.ts';
-import AutoCompleteField from "./AutoCompleteField.tsx";
-import { getParentPath, getUiSchemaPath } from "../helpers/helpers.ts";
+import { getFieldName, getParentPath, getUiSchemaPath } from "../helpers/helpers.ts";
+import EclAutocomplete from "../components/EclAutocomplete.tsx";
+import useTaskById from "../../../../hooks/useTaskById.tsx";
+import { Task } from "../../../../types/task.ts";
 
 const CompactQuantityField = ({
                                   formData,
-                                  onChange,
                                   schema,
                                   uiSchema,
                                   idSchema,
                                   required,
                                   formContext,
                                   rawErrors = [],
-                                  name,
                                   registry,
                               }: FieldProps) => {
-    // Extract data for main (numerator) field
+    const task = useTaskById();
     const mainValue = _.get(formData, 'value', undefined);
     const mainUnit = _.get(formData, 'unit', undefined);
     const title = _.get(uiSchema, 'ui:title', 'Quantity');
     const unitOptions = _.get(uiSchema, 'unit.ui:options', {});
     const isNumerator = _.get(uiSchema, 'ui:options.isNumerator', false);
     const pairWith = _.get(uiSchema, 'ui:options.pairWith', null);
-
-    // Calculate field paths
     const rootFormData = _.get(registry, 'formContext.formData', {});
-    const fieldNameRaw = idSchema?.$id ? idSchema.$id.replace('root_', '') : undefined;
-    const fieldName = fieldNameRaw.replace(/_(\d+)_/g, '[$1].');
+    const fieldName = getFieldName(idSchema);
     const pairedField = pairWith ? `${getParentPath(fieldName)}.${pairWith}` : undefined;
-
-    // Extract data for paired (denominator) field
     const pairedFormData = pairedField && isNumerator ? _.get(rootFormData, pairedField, {}) : {};
     const pairedValue = _.get(pairedFormData, 'value', '');
     const pairedUnit = _.get(pairedFormData, 'unit', undefined);
-
-    // Get ui:options and schema for paired field's unit
     const pairedUiSchemaPath = `${getUiSchemaPath(getParentPath(fieldName))}.${pairWith}`;
     const pairedUnitUiOptions = _.get(formContext.uiSchema, `${pairedUiSchemaPath}.unit.ui:options`, {});
     const pairedSchemaPath = pairedField?.split('.').map(part => part.replace(/\[\d+\]/, '.items')).join('.');
     const pairedUnitSchema = _.get(registry.rootSchema, `${pairedSchemaPath}.properties.unit`, {});
 
-    // Utility function to adjust value based on unit
     const adjustValue = (value: number | undefined, unit: any): number => {
         const isEach = _.get(unit, 'conceptId') === UnitEachId;
-        return isEach ? Math.max(1, Math.round(value || 0)) : (value || 0);
+        return isEach ? Math.max(1, Math.round(value || 0)) : value;
     };
 
-    // Handler for value changes
     const handleValueChange = (event: React.ChangeEvent<HTMLInputElement>, isPair = false) => {
-        const numericValue = parseFloat(event.target.value);
-        if (isNaN(numericValue)) return;
-
+        const inputValue = event.target.value;
         const targetUnit = isPair ? pairedUnit : mainUnit;
-        const adjustedValue = adjustValue(numericValue, targetUnit);
         const targetField = isPair ? pairedField : fieldName;
         const targetData = isPair ? pairedFormData : formData;
-        const updatedFormData = { ...targetData, value: adjustedValue };
         const newFormData = _.cloneDeep(rootFormData);
+
+        if (inputValue === '') {
+            if (!targetUnit) {
+                const updatedFormData = { ...targetData };
+                delete updatedFormData.value;
+                _.set(newFormData, targetField, updatedFormData);
+                formContext.onChange(newFormData);
+            }
+            return;
+        }
+
+        const numericValue = parseFloat(inputValue);
+        if (isNaN(numericValue)) return;
+
+        const adjustedValue = adjustValue(numericValue, targetUnit);
+        const updatedFormData = { ...targetData, value: adjustedValue };
         _.set(newFormData, targetField, updatedFormData);
         formContext.onChange(newFormData);
     };
 
-    // Handler for unit changes
     const handleUnitChange = (selectedUnit: any | null, isPair = false) => {
         const targetField = isPair ? pairedField : fieldName;
         const targetData = isPair ? pairedFormData : formData;
@@ -74,7 +75,7 @@ const CompactQuantityField = ({
         if (!selectedUnit) {
             const updatedFormData = { ...targetData };
             delete updatedFormData.unit;
-            delete updatedFormData.value;
+            delete updatedFormData.value; // Clear value when unit is removed
             _.set(newFormData, targetField, updatedFormData);
         } else {
             const currentValue = isPair ? pairedValue : mainValue;
@@ -85,7 +86,6 @@ const CompactQuantityField = ({
         formContext.onChange(newFormData);
     };
 
-    // Render a single quantity field (value + unit)
     const renderQuantityField = ({
                                      label,
                                      value,
@@ -97,6 +97,7 @@ const CompactQuantityField = ({
                                      idPrefix,
                                      required,
                                      errors,
+                                     task
                                  }: {
         label: string;
         value: any;
@@ -108,8 +109,9 @@ const CompactQuantityField = ({
         idPrefix: string;
         required: boolean;
         errors: string[];
+        task: Task;
     }) => (
-        <Grid container spacing={0.5} alignItems="center">
+        <Grid container spacing={1} alignItems="center">
             <Grid item xs={2}>
                 <Typography variant="body2" sx={{ fontSize: '0.75rem' }}>
                     {label}
@@ -117,34 +119,30 @@ const CompactQuantityField = ({
             </Grid>
             <Grid item xs={5}>
                 <TextField
-                    id={`${idPrefix}-value`}
+                    label="Value"
                     value={value ?? ''}
                     onChange={onValueChange}
                     type="number"
                     fullWidth
                     variant="outlined"
-                    size="small"
-                    required={required}
-                    error={errors.length > 0}
-                    helperText={errors.length > 0 ? errors.join(', ') : ''}
-                    inputProps={{
-                        min: _.get(unit, 'conceptId') === UnitEachId ? 1 : 0,
-                        step: _.get(unit, 'conceptId') === UnitEachId ? 1 : 0.01,
-                        style: { padding: '4px 8px' },
-                    }}
-                    sx={{ '& .MuiOutlinedInput-root': { height: '32px' } }}
+
+
                 />
             </Grid>
-            <Grid item xs={5}>
-                <AutoCompleteField
-                    schema={unitSchema}
-                    formData={unit}
-                    onChange={onUnitChange}
-                    uiSchema={{ 'ui:options': uiOptions }}
-                    idSchema={{ $id: `${idPrefix}-unit` }}
-                    required={required}
-                    sx={{ '& .MuiAutocomplete-inputRoot': { height: '32px', padding: '0 4px' } }}
-                />
+            <Grid item xs={5} sx={{ mt: -0.5 }}>
+                {task && (
+                    <EclAutocomplete
+                        value={unit}
+                        onChange={onUnitChange}
+                        ecl={uiOptions.ecl || ''}
+                        branch={task.branchPath}
+                        showDefaultOptions={uiOptions.showDefaultOptions || true}
+                        isDisabled={false}
+                        title="Unit"
+                        errorMessage={errors.length > 0 ? errors.join(', ') : ''}
+                        sx={{ mb: 0, mt: 0.5 }}
+                    />
+                )}
             </Grid>
         </Grid>
     );
@@ -152,11 +150,9 @@ const CompactQuantityField = ({
     if (!isNumerator && pairWith) return null;
 
     return (
-        <Box sx={{ mb: 1 }}>
-            <Typography variant="subtitle1" sx={{ mb: 0.5 }}>
-                {title}
-            </Typography>
-            <Grid container spacing={0.5} alignItems="center">
+        <Box sx={{mb:"-35px" }}>
+            <Typography sx={{ mb: 0.5 }}>{title}</Typography>
+            <Grid container spacing={1} alignItems="center">
                 <Grid item xs={12}>
                     {renderQuantityField({
                         label: 'Numerator',
@@ -169,6 +165,7 @@ const CompactQuantityField = ({
                         idPrefix: idSchema.$id,
                         required,
                         errors: rawErrors,
+                        task
                     })}
                 </Grid>
                 {pairWith && (
@@ -184,6 +181,7 @@ const CompactQuantityField = ({
                             idPrefix: `${idSchema.$id}-${pairWith}`,
                             required,
                             errors: [],
+                            task
                         })}
                     </Grid>
                 )}

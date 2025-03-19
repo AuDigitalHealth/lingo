@@ -1,93 +1,218 @@
 import React from 'react';
-import { WidgetProps } from '@rjsf/core';
-import { Grid, TextField, Box } from '@mui/material';
-import AutoCompleteField from "../fields/AutoCompleteField.tsx";
-
+import { WidgetProps } from '@rjsf/utils';
+import { Grid, TextField, Typography, Box } from '@mui/material';
+import _ from 'lodash';
+import { UnitEachId } from '../../../../utils/helpers/conceptUtils.ts';
+import { getParentPath, getUiSchemaPath } from "../helpers/helpers.ts";
+import EclAutocomplete from "../components/EclAutocomplete.tsx";
+import useTaskById from "../../../../hooks/useTaskById.tsx";
+import { Task } from "../../../../types/task.ts";
 
 const CompactQuantityWidget = ({
-                                   id,
-                                   value,
-                                   required,
+                                   value: formData, // formData is the entire object { value, unit }
                                    onChange,
                                    schema,
                                    uiSchema,
+                                   idSchema,
+                                   required,
                                    formContext,
                                    rawErrors = [],
+                                   registry,
+                                   name,
+                                   disabled,
+                                   readonly,
                                }: WidgetProps) => {
-    // Extract value and unit from the form data
-    const currentValue = value?.value ?? '';
-    const currentUnit = value?.unit || undefined;
+    const task = useTaskById();
 
-    // Get title from uiSchema (with fallback)
-    const title = uiSchema?.['ui:title'] || 'Quantity';
+    // Extract data for main (numerator) field
+    const mainValue = _.get(formData, 'value', undefined);
+    const mainUnit = _.get(formData, 'unit', undefined);
+    const title = _.get(uiSchema, 'ui:title', 'Quantity');
+    const unitOptions = _.get(uiSchema, 'unit.ui:options', {});
+    const isNumerator = _.get(uiSchema, 'ui:options.isNumerator', false);
+    const pairWith = _.get(uiSchema, 'ui:options.pairWith', null);
 
-    // Get unit-specific options from uiSchema
-    const unitOptions = uiSchema?.unit?.['ui:options'] || {};
+    // Calculate field paths
+    const rootFormData = _.get(registry, 'formContext.formData', {});
+    const fieldNameRaw = idSchema?.$id ? idSchema.$id.replace('root_', '') : undefined;
+    const fieldName = fieldNameRaw?.replace(/_(\d+)_/g, '[$1].') || name;
+    const pairedField = pairWith ? `${getParentPath(fieldName)}.${pairWith}` : undefined;
 
-    // Handle value change
-    const handleValueChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    // Extract data for paired (denominator) field
+    const pairedFormData = pairedField && isNumerator ? _.get(rootFormData, pairedField, {}) : {};
+    const pairedValue = _.get(pairedFormData, 'value', '');
+    const pairedUnit = _.get(pairedFormData, 'unit', undefined);
+
+    // Get ui:options and schema for paired field's unit
+    const pairedUiSchemaPath = `${getUiSchemaPath(getParentPath(fieldName))}.${pairWith}`;
+    const pairedUnitUiOptions = _.get(formContext.uiSchema, `${pairedUiSchemaPath}.unit.ui:options`, {});
+    const pairedSchemaPath = pairedField?.split('.').map(part => part.replace(/\[\d+\]/, '.items')).join('.');
+    const pairedUnitSchema = _.get(registry.rootSchema, `${pairedSchemaPath}.properties.unit`, {});
+
+    // Utility function to adjust value based on unit
+    const adjustValue = (value: number | undefined, unit: any): number => {
+        const isEach = _.get(unit, 'conceptId') === UnitEachId;
+        return isEach ? Math.max(1, Math.round(value || 0)) : (value || 0);
+    };
+
+    // Handler for value changes
+    const handleValueChange = (event: React.ChangeEvent<HTMLInputElement>, isPair = false) => {
         const numericValue = parseFloat(event.target.value);
-        if (!isNaN(numericValue)) {
-            const isEach = currentUnit?.conceptId === '732935002';
-            const adjustedValue = isEach ? Math.max(1, Math.round(numericValue)) : numericValue;
-            onChange({ ...value, value: adjustedValue });
+        if (isNaN(numericValue)) return;
+
+        const targetUnit = isPair ? pairedUnit : mainUnit;
+        const adjustedValue = adjustValue(numericValue, targetUnit);
+        const targetField = isPair ? pairedField : fieldName;
+        const targetData = isPair ? pairedFormData : formData || {};
+        const updatedFormData = { ...targetData, value: adjustedValue };
+
+        if (isPair) {
+            const newFormData = _.cloneDeep(rootFormData);
+            _.set(newFormData, targetField, updatedFormData);
+            formContext.onChange(newFormData); // Update the entire form data for paired field
+        } else {
+            onChange(updatedFormData); // Update only this widget's value
         }
     };
 
-    // Handle unit change
-    const handleUnitChange = (selectedUnit: any | null) => {
+    // Handler for unit changes
+    const handleUnitChange = (selectedUnit: any | null, isPair = false) => {
+        const targetField = isPair ? pairedField : fieldName;
+        const targetData = isPair ? pairedFormData : formData || {};
+        const newFormData = _.cloneDeep(rootFormData);
+
         if (!selectedUnit) {
-            // Remove unit and value if unit is cleared
-            const updatedFormData = { ...value };
+            const updatedFormData = { ...targetData };
             delete updatedFormData.unit;
             delete updatedFormData.value;
-            onChange(updatedFormData);
+            if (isPair) {
+                _.set(newFormData, targetField, updatedFormData);
+                formContext.onChange(newFormData);
+            } else {
+                onChange(updatedFormData);
+            }
         } else {
-            // Update unit and ensure value is set (default to 0 if not present)
-            const isEach = selectedUnit.conceptId === '732935002';
-            const adjustedValue = isEach ? Math.max(1, Math.round(currentValue || 0)) : (currentValue || 0);
-            onChange({ ...value, unit: selectedUnit, value: adjustedValue });
+            const currentValue = isPair ? pairedValue : mainValue;
+            const adjustedValue = adjustValue(currentValue, selectedUnit);
+            const updatedFormData = { ...targetData, unit: selectedUnit, value: adjustedValue };
+            if (isPair) {
+                _.set(newFormData, targetField, updatedFormData);
+                formContext.onChange(newFormData);
+            } else {
+                onChange(updatedFormData);
+            }
         }
     };
 
-    return (
-        <Box width="100%">
-            <Grid container spacing={1} alignItems="center">
-                {/* Value field (number input) */}
-                <Grid item xs={6}>
-                    <TextField
-                        id={`${id}-value`}
-                        label="Value"
-                        value={currentValue}
-                        onChange={handleValueChange}
-                        type="number"
-                        fullWidth
-                        variant="outlined"
-                        required={required}
-                        error={rawErrors.length > 0}
-                        helperText={rawErrors.join(', ')}
-                        size="small"
-                        inputProps={{
-                            min: currentUnit?.conceptId === '732935002' ? 1 : 0,
-                            step: currentUnit?.conceptId === '732935002' ? 1 : 0.01,
-                        }}
-                        sx={{ mt: 0 }} // Align with AutoCompleteField
+    const renderQuantityField = ({
+                                     label,
+                                     value,
+                                     unit,
+                                     onValueChange,
+                                     onUnitChange,
+                                     unitSchema,
+                                     uiOptions,
+                                     idPrefix,
+                                     required,
+                                     errors,
+                                     task,
+                                 }: {
+        label: string;
+        value: any;
+        unit: any;
+        onValueChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+        onUnitChange: (val: any) => void;
+        unitSchema: any;
+        uiOptions: any;
+        idPrefix: string;
+        required: boolean;
+        errors: string[];
+        task: Task;
+    }) => (
+        <Grid container spacing={0.5} alignItems="center">
+            <Grid item xs={2}>
+                <Typography variant="body2" sx={{ fontSize: '0.75rem' }}>
+                    {label}
+                </Typography>
+            </Grid>
+            <Grid item xs={5}>
+                <TextField
+                    id={`${idPrefix}-value`}
+                    value={value ?? ''}
+                    onChange={onValueChange}
+                    type="number"
+                    fullWidth
+                    variant="outlined"
+                    size="small"
+                    required={required}
+                    error={errors.length > 0}
+                    helperText={errors.length > 0 ? errors.join(', ') : ''}
+                    disabled={disabled || readonly}
+                    inputProps={{
+                        min: _.get(unit, 'conceptId') === UnitEachId ? 1 : 0,
+                        step: _.get(unit, 'conceptId') === UnitEachId ? 1 : 0.01,
+                        style: { padding: '4px 8px' },
+                    }}
+                    sx={{ '& .MuiOutlinedInput-root': { height: '32px' } }}
+                />
+            </Grid>
+            <Grid item xs={5}>
+                {task && (
+                    <EclAutocomplete
+                        value={unit}
+                        onChange={onUnitChange}
+                        ecl={uiOptions.ecl || ''}
+                        branch={task.branchPath}
+                        showDefaultOptions={uiOptions.showDefaultOptions || true}
+                        isDisabled={disabled || readonly}
+                        title="Unit"
+                        errorMessage={errors.length > 0 ? errors.join(', ') : ''}
                     />
-                </Grid>
+                )}
+            </Grid>
+        </Grid>
+    );
 
-                {/* Unit field with AutoCompleteField */}
-                <Grid item xs={6}>
-                    <AutoCompleteField
-                        schema={schema?.properties?.unit || {}}
-                        formData={currentUnit}
-                        onChange={handleUnitChange}
-                        uiSchema={{
-                            'ui:options': {
-                                ...unitOptions,
-                            },
-                        }}
-                    />
+    if (!isNumerator && pairWith) return null;
+
+    return (
+        <Box sx={{ mb: 1 }}>
+            <Typography variant="subtitle1" sx={{ mb: 0.5 }}>
+                {title}
+            </Typography>
+            <Grid container spacing={0.5} alignItems="center">
+                <Grid item xs={12}>
+                    {renderQuantityField({
+                        label: 'Numerator',
+                        value: mainValue,
+                        unit: mainUnit,
+                        onValueChange: (e) => handleValueChange(e, false),
+                        onUnitChange: (val) => handleUnitChange(val, false),
+                        unitSchema: _.get(schema, 'properties.unit', {}),
+                        uiOptions: unitOptions,
+                        idPrefix: idSchema.$id,
+                        required,
+                        errors: rawErrors,
+                        task,
+                    })}
                 </Grid>
+                {pairWith && (
+                    <Grid item xs={12}>
+                        {renderQuantityField({
+                            label: 'Denominator',
+                            value: pairedValue,
+                            unit: pairedUnit,
+                            onValueChange: (e) => handleValueChange(e, true),
+                            onUnitChange: (val) => handleUnitChange(val, true),
+                            unitSchema: pairedUnitSchema,
+                            uiOptions: pairedUnitUiOptions,
+                            idPrefix: `${idSchema.$id}-${pairWith}`,
+                            required,
+                            errors: [],
+                            task,
+                        })}
+                    </Grid>
+                )}
             </Grid>
         </Box>
     );
