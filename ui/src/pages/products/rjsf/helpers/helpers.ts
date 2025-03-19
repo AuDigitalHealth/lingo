@@ -14,6 +14,10 @@ export const getItemTitle = (
     ? _.get(formData[index], titleSource) || `${defaultTitle} ${index + 1}`
     : `${defaultTitle} ${index + 1}`;
 };
+export function getFieldName(idSchema) {
+  const fieldNameRaw = idSchema?.$id ? idSchema.$id.replace('root_', '') : undefined;
+  return fieldNameRaw.replace(/_(\d+)_/g, '[$1].');
+}
 export function getParentPath(fullPath) {
   const match = fullPath.match(/^(.*)\.[^.]+$/);
   return match ? match[1] : fullPath;
