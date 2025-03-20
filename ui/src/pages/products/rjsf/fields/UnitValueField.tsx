@@ -2,15 +2,15 @@ import React from 'react';
 import { Grid, TextField } from '@mui/material';
 import { FieldProps } from '@rjsf/utils';
 import AutoCompleteField from './AutoCompleteField';
-import EclAutocomplete from "../components/EclAutocomplete.tsx";
-import useTaskById from "../../../../hooks/useTaskById.tsx";
+import EclAutocomplete from '../components/EclAutocomplete.tsx';
+import useTaskById from '../../../../hooks/useTaskById.tsx';
 
 const UnitValueField = ({
   formData,
   onChange,
   schema,
   uiSchema,
-                          rawErrors = [],
+  rawErrors = [],
 }: FieldProps) => {
   const { value, unit } = formData || { value: undefined, unit: undefined };
   const task = useTaskById();
@@ -57,13 +57,12 @@ const UnitValueField = ({
           fullWidth
           variant="outlined"
           // error={rawErrors.length > 0}
-
-
         />
       </Grid>
 
       <Grid item xs={6} sx={{ mt: 0 }}>
-        {task && (<EclAutocomplete
+        {task && (
+          <EclAutocomplete
             value={unit}
             onChange={handleUnitChange}
             ecl={unitOptions.ecl || ''}
@@ -72,8 +71,8 @@ const UnitValueField = ({
             isDisabled={false}
             title="Unit"
             errorMessage={rawErrors.length > 0 ? rawErrors.join(', ') : ''}
-        />)}
-
+          />
+        )}
       </Grid>
     </Grid>
   );
