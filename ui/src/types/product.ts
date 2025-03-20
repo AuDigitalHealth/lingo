@@ -145,9 +145,10 @@ export interface ProductUpdateRequest {
   externalRequesterUpdate: ProductExternalRequesterUpdateRequest;
 }
 export interface ProductDescriptionUpdateRequest {
-  descriptions: Description[] | undefined;
+  descriptions: Description[];
   ticketId: number;
 }
+
 export interface ProductExternalRequesterUpdateRequest {
   externalIdentifiers: ExternalIdentifier[];
   ticketId: number;
