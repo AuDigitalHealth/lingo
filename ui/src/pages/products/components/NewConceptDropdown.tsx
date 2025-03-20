@@ -125,9 +125,8 @@ function NewConceptDropdownField({
   semanticTag,
 }: NewConceptDropdownFieldProps) {
   const [fieldChanged, setFieldChange] = useState(false);
-
   const regExp = convertStringToRegex(
-    getValueFromFieldBindings(fieldBindings, 'description.validation'),
+    getValueFromFieldBindings(fieldBindings, 'description.validation.regex'),
   );
 
   const handleBlur = () => {
