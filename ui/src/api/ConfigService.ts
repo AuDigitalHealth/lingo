@@ -108,7 +108,7 @@ export const ConfigService = {
   },
   async fetchBulkBrandSchemaData(branchPath: string) {
     const schemaResponse = await fetch(
-        `/config/bulk-brand/${branchPath}/schema`,
+      `/config/bulk-brand/${branchPath}/schema`,
     );
     if (!schemaResponse.ok) {
       throw new Error(`HTTP error! status: ${schemaResponse.status}`);
@@ -117,7 +117,7 @@ export const ConfigService = {
   },
   async fetchBulkBrandUiSchemaData(branchPath: string) {
     const schemaResponse = await fetch(
-        `/config/bulk-brand/${branchPath}/ui-schema`,
+      `/config/bulk-brand/${branchPath}/ui-schema`,
     );
     if (!schemaResponse.ok) {
       throw new Error(`HTTP error! status: ${schemaResponse.status}`);
@@ -126,7 +126,7 @@ export const ConfigService = {
   },
   async fetchBulkPackSchemaData(branchPath: string) {
     const schemaResponse = await fetch(
-        `/config/bulk-pack/${branchPath}/schema`,
+      `/config/bulk-pack/${branchPath}/schema`,
     );
     if (!schemaResponse.ok) {
       throw new Error(`HTTP error! status: ${schemaResponse.status}`);
@@ -135,7 +135,7 @@ export const ConfigService = {
   },
   async fetchBulkPackUiSchemaData(branchPath: string) {
     const schemaResponse = await fetch(
-        `/config/bulk-pack/${branchPath}/ui-schema`,
+      `/config/bulk-pack/${branchPath}/ui-schema`,
     );
     if (!schemaResponse.ok) {
       throw new Error(`HTTP error! status: ${schemaResponse.status}`);
