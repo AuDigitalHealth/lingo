@@ -290,7 +290,7 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
   return (
     <Box>
       {!skipTitle && title && (
-        <Typography variant="h6" sx={{ fontWeight: 'bold'}}>
+        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
           {title}
         </Typography>
       )}

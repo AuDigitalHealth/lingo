@@ -33,8 +33,8 @@ import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
 import ConditionalArrayField from './fields/ConditionalArrayField.tsx';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 
-import CompactQuantityField from "./fields/CompactQuantityField.tsx";
-import CompactQuantityWidget from "./widgets/CompactQuantityWidget.tsx";
+import CompactQuantityField from './fields/CompactQuantityField.tsx';
+import CompactQuantityWidget from './widgets/CompactQuantityWidget.tsx';
 
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -51,10 +51,10 @@ function MedicationAuthoringV2({
   const [formData, setFormData] = useState({});
   const formRef = useRef<any>(null); // Ref to access the RJSF Form instance
 
-  const { data: schemaTest, isLoading: isSchemaLoading } = useSchemaQuery(
+  const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
     task.branchPath,
   );
-  const { data: uiSchemaTest, isLoading: isUiSchemaLoading } = useUiSchemaQuery(
+  const { data: uiSchema, isLoading: isUiSchemaLoading } = useUiSchemaQuery(
     task.branchPath,
   );
   const mutation = useCalculateProduct();
@@ -105,7 +105,7 @@ function MedicationAuthoringV2({
       setFormData(newFormData);
     },
     formData, // Pass full form data
-    uiSchema
+    uiSchema,
   };
 
   return (
@@ -133,14 +133,19 @@ function MedicationAuthoringV2({
                 ParentChildAutoCompleteField,
                 MutuallyExclusiveAutocompleteField,
                 ConditionalArrayField,
-                CompactQuantityField
+                CompactQuantityField,
               }}
               templates={{
                 FieldTemplate: CustomFieldTemplate,
                 ArrayFieldTemplate: CustomArrayFieldTemplate,
               }}
               validator={validator}
-              widgets={{ NumberWidget, TextFieldWidget, OneOfArrayWidget, CompactQuantityWidget }}
+              widgets={{
+                NumberWidget,
+                TextFieldWidget,
+                OneOfArrayWidget,
+                CompactQuantityWidget,
+              }}
               onError={errors => console.log('Validation Errors:', errors)}
               disabled={isPending}
             >
