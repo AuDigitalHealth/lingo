@@ -64,10 +64,15 @@ export type Description = {
   typeId: string;
   // where the string is the conceptId of the dialect
   acceptabilityMap?: Record<string, Acceptability>;
-  type: 'FSN' | 'SYNONYM' | 'TEXT_DEFINITION';
+  type: DefinitionType;
   lang: string;
   caseSignificance: CaseSignificance;
 };
+
+export enum DefinitionType {
+  FSN = 'FSN',
+  SYNONYM = 'SYNONYM',
+}
 
 export enum CaseSignificance {
   ENTIRE_TERM_CASE_SENSITIVE = 'ENTIRE_TERM_CASE_SENSITIVE',

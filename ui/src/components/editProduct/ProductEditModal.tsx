@@ -3,6 +3,7 @@ import {
   Divider,
   FormControl,
   FormControlLabel,
+  FormHelperText,
   Grid,
   IconButton,
   InputLabel,
@@ -19,6 +20,7 @@ import BaseModalHeader from '../modal/BaseModalHeader';
 import {
   Acceptability,
   CaseSignificance,
+  DefinitionType,
   Description,
   Product,
 } from '../../types/concept.ts';
@@ -77,12 +79,25 @@ import { LanguageRefset } from '../../types/Project.ts';
 import ConfirmationModal from '../../themes/overrides/ConfirmationModal.tsx';
 import Loading from '../Loading.tsx';
 import { enqueueSnackbar } from 'notistack';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { productUpdateValidationSchema } from '../../types/productValidations.ts';
 
 const USLangRefset: LanguageRefset = {
   default: 'false',
   en: '900000000000509007',
   dialectName: 'US',
   readOnly: 'false',
+};
+
+const typeMap: Record<DefinitionType, string> = {
+  [DefinitionType.FSN]: '900000000000003001',
+  [DefinitionType.SYNONYM]: '900000000000013009',
+};
+
+const caseSignificanceDisplay: Record<CaseSignificance, string> = {
+  [CaseSignificance.ENTIRE_TERM_CASE_SENSITIVE]: 'CS',
+  [CaseSignificance.CASE_INSENSITIVE]: 'ci',
+  [CaseSignificance.INITIAL_CHARACTER_CASE_INSENSITIVE]: 'cI',
 };
 
 interface ProductEditModalProps {
@@ -252,12 +267,25 @@ function EditConceptBody({
     formState: { errors },
     getValues,
     setValue,
+    watch,
+    trigger,
   } = useForm<ProductUpdateRequest>({
-    mode: 'onSubmit',
-    reValidateMode: 'onSubmit',
+    mode: 'all',
+    reValidateMode: 'onChange',
     criteriaMode: 'all',
     defaultValues,
+    resolver: yupResolver(productUpdateValidationSchema),
   });
+
+  useEffect(() => {
+    // eslint-disable-next-line
+    const subscription = watch((value, { name, type }) => {
+      if (name?.includes('term')) return;
+      void trigger();
+    });
+
+    return () => subscription.unsubscribe();
+  }, [watch, trigger]);
 
   const { fields, append } = useFieldArray({
     control,
@@ -383,21 +411,17 @@ function EditConceptBody({
     });
   };
 
-  console.log('unscoped sorted descriptions');
-  console.log(sortedDescriptions);
   /**
    * Handling sequential call. Snowstorm is throwing error simultaneously updating artg id and product descriptions
    * @param data
    */
   const updateProduct = async (data: ProductUpdateRequest) => {
-    console.log('sorted descriptions');
-    console.log(sortedDescriptions);
     const productId = product.conceptId;
     const newFsnIndex = data.descriptionUpdate?.descriptions?.findIndex(
       description => {
         return description.type === 'FSN' && description.active === true;
       },
-    ) as number;
+    );
 
     const readOnlyLangRefsetsIds = langRefsets
       .filter(langRefset => {
@@ -420,7 +444,6 @@ function EditConceptBody({
     });
 
     if (data.descriptionUpdate) {
-      console.log(sortedDescriptionsWithoutSemanticTags);
       data.descriptionUpdate.descriptions = processDescriptionsWithSemanticTags(
         data.descriptionUpdate?.descriptions,
         sortedDescriptions,
@@ -431,6 +454,11 @@ function EditConceptBody({
       data.descriptionUpdate.descriptions =
         data.descriptionUpdate.descriptions?.map(desc => {
           return removeNotAcceptable(desc);
+        });
+
+      data.descriptionUpdate.descriptions =
+        data.descriptionUpdate.descriptions?.map(desc => {
+          return adjustTypeIds(desc);
         });
     }
 
@@ -567,8 +595,6 @@ function EditConceptBody({
                   isCtpp={isCtpp}
                   dialects={langRefsets}
                 />
-
-                {/* Right Section */}
                 <Grid
                   item
                   xs={6}
@@ -606,44 +632,21 @@ function EditConceptBody({
                         action={'Confirm'}
                         handleAction={handleConfirmAction}
                       />
-                      <InnerBoxSmall component="fieldset">
-                        <FieldLabelRequired>FSN</FieldLabelRequired>
-                        {/* {!isLoading && */}
-                        {isFetching && <Loading />}
-                        {!isFetching &&
-                          fields.map((field, index) => {
-                            return (
-                              <FieldDescriptions
-                                key={index}
-                                displayRetiredDescriptions={
-                                  displayRetiredDescriptions
-                                }
-                                field={field}
-                                sortedDescriptionsWithSemanticTag={
-                                  sortedDescriptions
-                                }
-                                sortedDescriptionsWithoutSemanticTag={
-                                  sortedDescriptionsWithoutSemanticTags
-                                }
-                                index={index}
-                                handleDeleteDescription={
-                                  handleDeleteDescription
-                                }
-                                isPreferredTerm={isPreferredTerm}
-                                langRefsets={langRefsets}
-                                control={control}
-                                disabled={isUpdating}
-                              />
-                            );
-                          })}
-                      </InnerBoxSmall>
-                      <IconButton
-                        onClick={handleAddDescription}
-                        aria-label="add description"
-                        disabled={isUpdating}
-                      >
-                        <Add />
-                      </IconButton>
+                      <RightSection
+                        isFetching={isFetching}
+                        fields={fields}
+                        displayRetiredDescriptions={displayRetiredDescriptions}
+                        sortedDescriptions={sortedDescriptions}
+                        sortedDescriptionsWithoutSemanticTags={
+                          sortedDescriptionsWithoutSemanticTags
+                        }
+                        handleDeleteDescription={handleDeleteDescription}
+                        isUpdating={isUpdating}
+                        langRefsets={langRefsets}
+                        control={control}
+                        handleAddDescription={handleAddDescription}
+                        isPreferredTerm={isPreferredTerm}
+                      />
                       {isCtpp && (
                         <Grid>
                           <InnerBoxSmall component="fieldset">
@@ -774,10 +777,31 @@ function LeftSection({
                 return (
                   <Grid
                     container
-                    spacing={2}
+                    spacing={1}
                     key={`${description.descriptionId}-left`}
                     alignItems="center"
                   >
+                    <Grid item xs={12} md={2}>
+                      {/* <Typography variant="subtitle2">{label}</Typography> */}
+                      <FormControl fullWidth margin="dense" size="small">
+                        <InputLabel>Type</InputLabel>
+                        <Select
+                          // fullWidth
+                          // variant="standard"
+                          margin="dense"
+                          value={description.type}
+                          disabled
+                        >
+                          {Object.values(DefinitionType).map(
+                            (value: string) => (
+                              <MenuItem key={value} value={value}>
+                                {value}
+                              </MenuItem>
+                            ),
+                          )}
+                        </Select>
+                      </FormControl>
+                    </Grid>
                     <Grid item xs={12} md={5}>
                       <Typography variant="subtitle2">{label}</Typography>
                       <TextField
@@ -792,7 +816,7 @@ function LeftSection({
                       />
                     </Grid>
                     {/* Display Dialect Acceptability */}
-                    <Grid item xs={12} md={4}>
+                    <Grid item xs={12} md={3}>
                       <Grid container direction="column" spacing={1}>
                         {dialects.map(dialect => (
                           <Grid item xs={12} md={2.5} key={dialect.en}>
@@ -824,7 +848,7 @@ function LeftSection({
                         ))}
                       </Grid>
                     </Grid>
-                    <Grid item xs={12} md={3}>
+                    <Grid item xs={12} md={2}>
                       <FormControl fullWidth margin="dense" size="small">
                         <InputLabel>Case Sensitivity</InputLabel>
 
@@ -876,6 +900,75 @@ function LeftSection({
   );
 }
 
+interface RightSectionProps {
+  isFetching: boolean;
+  fields: FieldArrayWithId<
+    ProductUpdateRequest,
+    'descriptionUpdate.descriptions',
+    'id'
+  >[];
+  displayRetiredDescriptions: boolean;
+  sortedDescriptions: Description[];
+  sortedDescriptionsWithoutSemanticTags: Description[];
+  handleDeleteDescription: (index: number) => void;
+  isUpdating: boolean;
+  isPreferredTerm: (desc: Description) => boolean;
+  langRefsets: LanguageRefset[];
+  control: Control<ProductUpdateRequest>;
+  handleAddDescription: React.MouseEventHandler<HTMLButtonElement> | undefined;
+}
+
+function RightSection({
+  isFetching,
+  fields,
+  displayRetiredDescriptions,
+  sortedDescriptions,
+  sortedDescriptionsWithoutSemanticTags,
+  handleDeleteDescription,
+  isUpdating,
+  isPreferredTerm,
+  langRefsets,
+  control,
+  handleAddDescription,
+}: RightSectionProps) {
+  return (
+    <>
+      <InnerBoxSmall component="fieldset">
+        <FieldLabelRequired>FSN</FieldLabelRequired>
+        {/* {!isLoading && */}
+        {isFetching && <Loading />}
+        {!isFetching &&
+          fields.map((field, index) => {
+            return (
+              <FieldDescriptions
+                key={index}
+                displayRetiredDescriptions={displayRetiredDescriptions}
+                field={field}
+                sortedDescriptionsWithSemanticTag={sortedDescriptions}
+                sortedDescriptionsWithoutSemanticTag={
+                  sortedDescriptionsWithoutSemanticTags
+                }
+                index={index}
+                handleDeleteDescription={handleDeleteDescription}
+                isPreferredTerm={isPreferredTerm}
+                langRefsets={langRefsets}
+                control={control}
+                disabled={isUpdating}
+              />
+            );
+          })}
+      </InnerBoxSmall>
+      <IconButton
+        onClick={handleAddDescription}
+        aria-label="add description"
+        disabled={isUpdating}
+      >
+        <Add />
+      </IconButton>
+    </>
+  );
+}
+
 interface ActionButtonProps {
   control: Control<ProductUpdateRequest>;
   resetAndClose: () => void;
@@ -890,10 +983,11 @@ function ActionButton({
   toggleDisplayRetiredDescriptions,
   displayRetiredDescriptions,
 }: ActionButtonProps) {
-  const { dirtyFields } = useFormState({ control });
+  const { dirtyFields, errors } = useFormState({ control });
+  const hasErrors = Object.keys(errors).length > 0;
   const isDirty = Object.keys(dirtyFields).length > 0;
 
-  const isButtonDisabled = () => isSubmitting || !isDirty;
+  const isButtonDisabled = () => isSubmitting || !isDirty || hasErrors;
   return (
     <Grid
       item
@@ -975,7 +1069,7 @@ const createDefaultDescription = (
     conceptId: conceptId,
     typeId: typeId,
     acceptabilityMap: undefined,
-    type: 'SYNONYM',
+    type: DefinitionType.SYNONYM,
     lang: 'en',
     caseSignificance: CaseSignificance.ENTIRE_TERM_CASE_SENSITIVE,
   };
@@ -1037,8 +1131,36 @@ const FieldDescriptions = ({
     return <></>;
   }
   return (
-    <Grid container spacing={2} key={field.id} alignItems="center">
-      <Grid item xs={12} md={4}>
+    <Grid container spacing={1} key={field.id} alignItems="center">
+      <Grid item xs={12} md={2}>
+        <Controller
+          name={`descriptionUpdate.descriptions.${index}.type`}
+          control={control}
+          render={({ field: controllerField, fieldState }) => {
+            return (
+              <FormControl
+                fullWidth
+                margin="dense"
+                size="small"
+                error={!!fieldState.error}
+              >
+                <InputLabel>Type</InputLabel>
+                <Select {...controllerField} margin="dense" disabled={disabled}>
+                  {['FSN', 'SYNONYM'].map((value: string) => (
+                    <MenuItem key={value} value={value}>
+                      {value}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {fieldState.error && (
+                  <FormHelperText>{fieldState.error.message}</FormHelperText>
+                )}
+              </FormControl>
+            );
+          }}
+        />
+      </Grid>
+      <Grid item xs={12} md={4.5}>
         <Controller
           name={`descriptionUpdate.descriptions.${index}.active`}
           control={control}
@@ -1089,64 +1211,77 @@ const FieldDescriptions = ({
         )}
       </Grid>
 
-      <Grid item xs={12} md={4}>
+      <Grid item xs={12} md={3}>
         <Grid container direction="column" spacing={1}>
           {langRefsets.map(dialect => {
             return (
               <Grid item key={dialect.dialectName}>
-                <FormControl fullWidth margin="dense" size="small">
-                  <InputLabel>{dialect.dialectName}</InputLabel>
-                  <Controller
-                    name={`descriptionUpdate.descriptions.${index}.acceptabilityMap.${dialect.en}`}
-                    control={control}
-                    defaultValue={
-                      sortedDescriptionsWithoutSemanticTag[index]
-                        ?.acceptabilityMap?.[dialect.en] ||
-                      ('NOT ACCEPTABLE' as Acceptability)
-                    }
-                    render={({ field: controllerField }) => (
+                <Controller
+                  name={`descriptionUpdate.descriptions.${index}.acceptabilityMap.${dialect.en}`}
+                  control={control}
+                  defaultValue={
+                    sortedDescriptionsWithoutSemanticTag[index]
+                      ?.acceptabilityMap?.[dialect.en] ||
+                    ('NOT ACCEPTABLE' as Acceptability)
+                  }
+                  render={({ field: controllerField, fieldState }) => {
+                    return (
                       <>
-                        <Select
-                          {...controllerField}
-                          disabled={
-                            disabled ||
-                            dialect.dialectName.toLowerCase() === 'en-gb'
-                          }
+                        <FormControl
+                          fullWidth
+                          margin="dense"
+                          size="small"
+                          error={!!fieldState.error}
                         >
-                          {['PREFERRED', 'ACCEPTABLE'].map((value: string) => (
-                            <MenuItem key={value} value={value}>
-                              {value}
+                          <InputLabel>{dialect.dialectName}</InputLabel>
+                          <Select
+                            {...controllerField}
+                            disabled={
+                              disabled ||
+                              dialect.dialectName.toLowerCase() === 'en-gb'
+                            }
+                            error={!!fieldState.error}
+                          >
+                            {['PREFERRED', 'ACCEPTABLE'].map(
+                              (value: string) => (
+                                <MenuItem key={value} value={value}>
+                                  {value}
+                                </MenuItem>
+                              ),
+                            )}
+                            <MenuItem value={'NOT ACCEPTABLE'}>
+                              NOT ACCEPTABLE
                             </MenuItem>
-                          ))}
-                          <MenuItem value={'NOT ACCEPTABLE'}>
-                            NOT ACCEPTABLE
-                          </MenuItem>
-                        </Select>
+                          </Select>
+                          {fieldState.error && (
+                            <FormHelperText>
+                              {fieldState.error.message}
+                            </FormHelperText>
+                          )}
+                        </FormControl>
                       </>
-                    )}
-                  />
-                </FormControl>
+                    );
+                  }}
+                />
               </Grid>
             );
           })}
         </Grid>
       </Grid>
-      <Grid item xs={12} md={3}>
+      <Grid item xs={12} md={1.5}>
         <FormControl fullWidth margin="dense" size="small">
           <InputLabel>Case Sensitivity</InputLabel>
           <Controller
             name={`descriptionUpdate.descriptions.${index}.caseSignificance`}
             control={control}
             render={({ field: controllerField }) => (
-              <>
-                <Select {...controllerField} disabled={disabled}>
-                  {Object.values(CaseSignificance).map(value => (
-                    <MenuItem key={value} value={value}>
-                      {value}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </>
+              <Select {...controllerField} disabled={disabled}>
+                {Object.values(CaseSignificance).map(value => (
+                  <MenuItem key={value} value={value}>
+                    {caseSignificanceDisplay[value]}
+                  </MenuItem>
+                ))}
+              </Select>
             )}
           />
         </FormControl>
@@ -1224,4 +1359,11 @@ function removeNotAcceptable(desc: Description) {
   }
 
   return desc;
+}
+
+function adjustTypeIds(desc: Description): Description {
+  return {
+    ...desc,
+    typeId: typeMap[desc.type],
+  };
 }
