@@ -60,9 +60,7 @@
                   "minimum": 1
                 }
               },
-              "required": [
-                "value"
-              ]
+              "required": ["value"]
             },
             {
               "properties": {
@@ -100,9 +98,7 @@
           "$ref": "#/$defs/SnowstormConceptMini"
         }
       },
-      "required": [
-        "activeIngredient"
-      ],
+      "required": ["activeIngredient"],
       "errorMessage": {
         "required": "Active Ingredient must be populated."
       }
@@ -134,9 +130,7 @@
           "title": "Presentation Strength Denominator"
         }
       },
-      "required": [
-        "activeAndPreciseIngredients"
-      ]
+      "required": ["activeAndPreciseIngredients"]
     },
     "GenericAndSpecificForms": {
       "type": "object",
@@ -229,11 +223,7 @@
           "title": "Pack Size"
         }
       },
-      "required": [
-        "productName",
-        "containedProducts",
-        "packSize"
-      ],
+      "required": ["productName", "containedProducts", "packSize"],
       "errorMessage": {
         "required": "Fields must be populated."
       }
@@ -248,10 +238,7 @@
       }
     }
   },
-  "required": [
-    "productName",
-    "containedProducts"
-  ],
+  "required": ["productName", "containedProducts"],
   "errorMessage": {
     "required": "Fields must be populated."
   },

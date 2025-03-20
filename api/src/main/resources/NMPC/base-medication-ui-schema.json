@@ -18,7 +18,6 @@
     }
   },
   "containedProducts": {
-    "ui:field": "ConditionalArrayField",
     "ui:options": {
       "skipTitle": true,
       "conditions": [
@@ -115,10 +114,48 @@
               "showDefaultOptions": false
             }
           },
+          "concentrationStrengthNumerator": {
+            "ui:field": "CompactQuantityField",
+            "ui:title": "Concentration Strength",
+            "ui:options": {
+              "isNumerator": true,
+              "pairWith": "concentrationStrengthDenominator",
+              "skipTitle": true
+            },
+            "unit": {
+              "ui:options": {
+                "branch": "MAIN",
+                "ecl": "^929360031000036100.999000031000168102",
+                "extendedEcl": "<767524001:(700000091000036104=* AND 700000071000036103=*)",
+                "showDefaultOptions": true
+              }
+            }
+          },
+          "concentrationStrengthDenominator": {
+            "ui:field": "CompactQuantityField",
+            "ui:title": "Concentration Strength",
+            "ui:options": {
+              "isNumerator": false,
+              "pairWith": "concentrationStrengthNumerator",
+              "skipTitle": true
+            },
+            "unit": {
+              "ui:options": {
+                "branch": "MAIN",
+                "ecl": "^929360031000036100.999000031000168102",
+                "extendedEcl": "<767524001:(700000091000036104=* AND 700000071000036103=*)",
+                "showDefaultOptions": true
+              }
+            }
+          },
           "presentationStrengthNumerator": {
-            "ui:field": "UnitValueField",
-            "ui:title": "Presentation Strength Numerator",
-            "value": {},
+            "ui:field": "CompactQuantityField",
+            "ui:title": "Presentation Strength",
+            "ui:options": {
+              "isNumerator": true,
+              "pairWith": "presentationStrengthDenominator",
+              "skipTitle": true
+            },
             "unit": {
               "ui:options": {
                 "branch": "MAIN",
@@ -129,39 +166,17 @@
             }
           },
           "presentationStrengthDenominator": {
-            "ui:field": "UnitValueField",
-            "ui:title": "Presentation Strength Denominator",
-            "value": {},
+            "ui:field": "CompactQuantityField",
+            "ui:title": "Presentation Strength",
+            "ui:options": {
+              "isNumerator": false,
+              "pairWith": "presentationStrengthNumerator",
+              "skipTitle": true
+            },
             "unit": {
               "ui:options": {
                 "branch": "MAIN",
                 "ecl": "(>>(< 763158003 : (774158006 = < 774167006 , 774159003 = < 774164004 , 763032000 = < 732935002 )).732947008",
-                "extendedEcl": "<767524001",
-                "showDefaultOptions": true
-              }
-            }
-          },
-          "concentrationStrengthNumerator": {
-            "ui:field": "UnitValueField",
-            "ui:title": "Concentration Strength Numerator",
-            "value": {},
-            "unit": {
-              "ui:options": {
-                "branch": "MAIN",
-                "ecl": "(>>(< 763158003 : (774158006 = < 774167006 , 774159003 = < 774164004 , 763032000 = < 732935002 )).733725009",
-                "extendedEcl": "<767524001",
-                "showDefaultOptions": true
-              }
-            }
-          },
-          "concentrationStrengthDenominator": {
-            "ui:field": "UnitValueField",
-            "ui:title": "Concentration Strength Denominator",
-            "value": {},
-            "unit": {
-              "ui:options": {
-                "branch": "MAIN",
-                "ecl": "(>>(< 763158003 : (774158006 = < 774167006 , 774159003 = < 774164004 , 763032000 = < 732935002 )).733722007",
                 "extendedEcl": "<767524001",
                 "showDefaultOptions": true
               }
