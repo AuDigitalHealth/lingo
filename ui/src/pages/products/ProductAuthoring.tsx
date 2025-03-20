@@ -23,8 +23,8 @@ import BrandAuthoring from './components/BrandAuthoring.tsx';
 import EditProduct from './components/EditProduct.tsx';
 import MedicationAuthoringV2 from './rjsf/MedicationAuthoringV2.tsx';
 import DeviceAuthoringV2 from './rjsf/DeviceAuthoringV2.tsx';
-import BrandAuthoringV2 from "./rjsf/BrandAuthoringV2.tsx";
-import PackSizeAuthoringV2 from "./rjsf/PackSizeAuthoringV2.tsx";
+import BrandAuthoringV2 from './rjsf/BrandAuthoringV2.tsx';
+import PackSizeAuthoringV2 from './rjsf/PackSizeAuthoringV2.tsx';
 
 interface ProductAuthoringProps {
   ticket: Ticket;
@@ -164,17 +164,17 @@ function ProductAuthoring({
               task={task}
             />
           ) : selectedActionType === ActionType.newPackSize ? (
-              <PackSizeAuthoringV2
-                  selectedProduct={selectedProduct}
-                  ticket={ticket}
-                  task={task}
-              />
+            <PackSizeAuthoringV2
+              selectedProduct={selectedProduct}
+              ticket={ticket}
+              task={task}
+            />
           ) : selectedActionType === ActionType.newBrand ? (
-              <BrandAuthoringV2
-                  selectedProduct={selectedProduct}
-                  ticket={ticket}
-                  task={task}
-              />
+            <BrandAuthoringV2
+              selectedProduct={selectedProduct}
+              ticket={ticket}
+              task={task}
+            />
           ) : selectedActionType === ActionType.editProduct ? (
             <EditProduct
               selectedProduct={selectedProduct}

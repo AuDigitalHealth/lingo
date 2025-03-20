@@ -7,7 +7,7 @@ export const getItemTitle = (
   defaultTitle = 'Untitled',
 ) => {
   const titleSource = uiSchema.items?.['ui:options']?.titleSource;
-  if(uiSchema.items?.['ui:options']?.defaultTitle){
+  if (uiSchema.items?.['ui:options']?.defaultTitle) {
     defaultTitle = uiSchema.items?.['ui:options']?.defaultTitle;
   }
   return titleSource && formData && formData[index]
@@ -15,7 +15,9 @@ export const getItemTitle = (
     : `${defaultTitle} ${index + 1}`;
 };
 export function getFieldName(idSchema) {
-  const fieldNameRaw = idSchema?.$id ? idSchema.$id.replace('root_', '') : undefined;
+  const fieldNameRaw = idSchema?.$id
+    ? idSchema.$id.replace('root_', '')
+    : undefined;
   return fieldNameRaw.replace(/_(\d+)_/g, '[$1].');
 }
 export function getParentPath(fullPath) {
