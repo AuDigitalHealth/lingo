@@ -9,6 +9,7 @@ const ParentChildAutoCompleteField = ({
   uiSchema,
   onChange,
   rawErrors,
+  errorSchema = {},
 }: FieldProps) => {
   const {
     parentFieldName,
@@ -83,6 +84,7 @@ const ParentChildAutoCompleteField = ({
           uiSchema={{ 'ui:options': parentFieldOptions }}
           formData={parentValue}
           onChange={handleParentChange}
+          errorSchema={errorSchema}
         />
       </Box>
 

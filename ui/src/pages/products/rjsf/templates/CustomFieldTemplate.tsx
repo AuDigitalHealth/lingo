@@ -64,11 +64,11 @@ const CustomFieldTemplate = (props: FieldProps) => {
       {enhancedChildren}
 
       {/* Render validation error */}
-      {errorMessage && (
-        <FormHelperText sx={{ mt: 0, color: 'error' }} error>
-          {errorMessage}
-        </FormHelperText>
-      )}
+      {/*{errorMessage && (*/}
+      {/*  <FormHelperText sx={{ mt: 0, color: 'error' }} error>*/}
+      {/*    {errorMessage}*/}
+      {/*  </FormHelperText>*/}
+      {/*)}*/}
     </Box>
   );
 };

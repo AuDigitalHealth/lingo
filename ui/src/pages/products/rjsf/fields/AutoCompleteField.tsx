@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FieldProps } from '@rjsf/core';
-import { Box, FormHelperText, IconButton, Tooltip } from '@mui/material';
+import { Box, IconButton, Tooltip } from '@mui/material';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { Concept, ConceptMini } from '../../../../types/concept.ts';
 import { SetExtendedEclButton } from '../../components/SetExtendedEclButton.tsx';
@@ -11,14 +11,19 @@ import { useTicketByTicketNumber } from '../../../../hooks/api/tickets/useTicket
 import { useParams } from 'react-router-dom';
 import { Ticket } from '../../../../types/tickets/ticket.ts';
 
+import { ErrorDisplay } from '../components/ErrorDisplay.tsx';
+import { getUniqueErrors } from '../helpers/errorUtils.ts'; // Adjust path as needed
+
 const AutoCompleteField = ({
   schema,
   uiSchema,
   formData,
   onChange,
-  rawErrors,
+  rawErrors = [],
+  errorSchema = {},
 }: FieldProps) => {
-  const { ecl, showDefaultOptions, extendedEcl } = uiSchema['ui:options'] || {};
+  const { ecl, showDefaultOptions, extendedEcl, createBrand, disabled } =
+    uiSchema['ui:options'] || {};
   const [localExtendedEcl, setLocalExtendedEcl] = useState<boolean>(false);
   const [openCreateBrandModal, setOpenCreateBrandModal] = useState(false);
   const currentEcl = localExtendedEcl ? extendedEcl : ecl;
@@ -27,9 +32,7 @@ const AutoCompleteField = ({
   const useTicketQuery = useTicketByTicketNumber(ticketNumber, false);
 
   const title = schema.title || uiSchema['ui:title'];
-  const isDisabled = uiSchema['ui:options']?.disabled || false;
-  const errorMessage =
-    rawErrors && rawErrors[0] ? rawErrors[0].message || '' : '';
+  const isDisabled = disabled || false;
 
   const handleChange = (conceptMini: ConceptMini | null) => {
     onChange(conceptMini);
@@ -42,6 +45,9 @@ const AutoCompleteField = ({
     });
     setOpenCreateBrandModal(false);
   };
+
+  // Get unique errors using the common utility
+  const allErrors = getUniqueErrors(rawErrors, errorSchema);
 
   return (
     <Box>
@@ -56,18 +62,17 @@ const AutoCompleteField = ({
               showDefaultOptions={showDefaultOptions}
               isDisabled={isDisabled}
               title={title}
-              errorMessage={errorMessage}
+              errorMessage="" // Removed, as errors are handled by ErrorDisplay
             />
           )}
-
-          {uiSchema?.['ui:options']?.createBrand && (
+          {createBrand && (
             <Tooltip title="Create Brand">
               <IconButton
                 onClick={() => setOpenCreateBrandModal(true)}
                 sx={{
                   position: 'absolute',
-                  right: '-40px', // Adjust to move right of EclAutocomplete
-                  top: '0', // Adjust to position just above
+                  right: '-40px',
+                  top: '0',
                 }}
                 disabled={isDisabled}
               >
@@ -86,7 +91,7 @@ const AutoCompleteField = ({
           </Box>
         )}
       </Box>
-      {uiSchema?.['ui:options']?.createBrand && (
+      {createBrand && (
         <CreateBrand
           open={openCreateBrandModal}
           onClose={() => setOpenCreateBrandModal(false)}
@@ -96,7 +101,7 @@ const AutoCompleteField = ({
           ticket={useTicketQuery.data as Ticket}
         />
       )}
-      {errorMessage && <FormHelperText error>{errorMessage}</FormHelperText>}
+      <ErrorDisplay errors={allErrors} />
     </Box>
   );
 };
