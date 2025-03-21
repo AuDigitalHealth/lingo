@@ -35,6 +35,7 @@ import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 
 import CompactQuantityField from './fields/CompactQuantityField.tsx';
 import CompactQuantityWidget from './widgets/CompactQuantityWidget.tsx';
+import _ from 'lodash';
 
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -50,6 +51,7 @@ function MedicationAuthoringV2({
 }: MedicationAuthoringV2Props) {
   const [formData, setFormData] = useState({});
   const formRef = useRef<any>(null); // Ref to access the RJSF Form instance
+  const [errorSchema, setErrorSchema] = useState({});
 
   const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
     task.branchPath,
@@ -106,6 +108,15 @@ function MedicationAuthoringV2({
     },
     formData, // Pass full form data
     uiSchema,
+    errorSchema,
+  };
+  const onError = (errors: any) => {
+    console.log('Form errors:', errors);
+    const newErrorSchema = errors.reduce((acc: any, error: any) => {
+      _.set(acc, error.property.slice(1), { __errors: [error.message] });
+      return acc;
+    }, {});
+    setErrorSchema(newErrorSchema);
   };
 
   return (
@@ -146,7 +157,7 @@ function MedicationAuthoringV2({
                 OneOfArrayWidget,
                 CompactQuantityWidget,
               }}
-              onError={errors => console.log('Validation Errors:', errors)}
+              onError={onError}
               disabled={isPending}
             >
               <Box
