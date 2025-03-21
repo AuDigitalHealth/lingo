@@ -12,6 +12,12 @@ import EclAutocomplete from '../components/EclAutocomplete.tsx';
 import useTaskById from '../../../../hooks/useTaskById.tsx';
 import { Task } from '../../../../types/task.ts';
 
+import { ErrorDisplay } from '../components/ErrorDisplay.tsx';
+import {
+  extractAllErrorMessages,
+  getFieldErrors,
+} from '../helpers/errorUtils.ts'; // Adjust path
+
 const CompactQuantityField = ({
   formData,
   schema,
@@ -20,6 +26,7 @@ const CompactQuantityField = ({
   required,
   formContext,
   rawErrors = [],
+  errorSchema = {},
   registry,
 }: FieldProps) => {
   const task = useTaskById();
@@ -53,6 +60,23 @@ const CompactQuantityField = ({
     `${pairedSchemaPath}.properties.unit`,
     {},
   );
+
+  const numeratorErrors = extractAllErrorMessages(errorSchema);
+  const denominatorErrors = pairedField
+    ? getFieldErrors(formContext.errorSchema || {}, pairedField)
+    : [];
+
+  // Consolidate errors with prefixes
+  const allErrorsSet = new Set<string>(
+    rawErrors.map(error => `Numerator: ${error}`),
+  );
+  numeratorErrors
+    .map(error => `Numerator: ${error}`)
+    .forEach(error => allErrorsSet.add(error));
+  denominatorErrors
+    .map(error => `Denominator: ${error}`)
+    .forEach(error => allErrorsSet.add(error));
+  const allErrors = Array.from(allErrorsSet);
 
   const adjustValue = (value: number | undefined, unit: any): number => {
     const isEach = _.get(unit, 'conceptId') === UnitEachId;
@@ -96,7 +120,7 @@ const CompactQuantityField = ({
     if (!selectedUnit) {
       const updatedFormData = { ...targetData };
       delete updatedFormData.unit;
-      delete updatedFormData.value; // Clear value when unit is removed
+      delete updatedFormData.value;
       _.set(newFormData, targetField, updatedFormData);
     } else {
       const currentValue = isPair ? pairedValue : mainValue;
@@ -175,40 +199,50 @@ const CompactQuantityField = ({
   return (
     <Box sx={{ mb: '-35px' }}>
       <Typography sx={{ mb: 0.5 }}>{title}</Typography>
-      <Grid container spacing={1} alignItems="center">
-        <Grid item xs={12}>
-          {renderQuantityField({
-            label: 'Numerator',
-            value: mainValue,
-            unit: mainUnit,
-            onValueChange: e => handleValueChange(e, false),
-            onUnitChange: val => handleUnitChange(val, false),
-            unitSchema: _.get(schema, 'properties.unit', {}),
-            uiOptions: unitOptions,
-            idPrefix: idSchema.$id,
-            required,
-            errors: rawErrors,
-            task,
-          })}
-        </Grid>
-        {pairWith && (
+      <Box
+        sx={{
+          border: '1px solid',
+          borderColor: 'grey.400',
+          borderRadius: 1,
+          p: 2,
+        }}
+      >
+        <Grid container spacing={1} alignItems="center">
           <Grid item xs={12}>
             {renderQuantityField({
-              label: 'Denominator',
-              value: pairedValue,
-              unit: pairedUnit,
-              onValueChange: e => handleValueChange(e, true),
-              onUnitChange: val => handleUnitChange(val, true),
-              unitSchema: pairedUnitSchema,
-              uiOptions: pairedUnitUiOptions,
-              idPrefix: `${idSchema.$id}-${pairWith}`,
+              label: 'Numerator',
+              value: mainValue,
+              unit: mainUnit,
+              onValueChange: e => handleValueChange(e, false),
+              onUnitChange: val => handleUnitChange(val, false),
+              unitSchema: _.get(schema, 'properties.unit', {}),
+              uiOptions: unitOptions,
+              idPrefix: idSchema.$id,
               required,
-              errors: [],
+              errors: numeratorErrors,
               task,
             })}
           </Grid>
-        )}
-      </Grid>
+          {pairWith && (
+            <Grid item xs={12}>
+              {renderQuantityField({
+                label: 'Denominator',
+                value: pairedValue,
+                unit: pairedUnit,
+                onValueChange: e => handleValueChange(e, true),
+                onUnitChange: val => handleUnitChange(val, true),
+                unitSchema: pairedUnitSchema,
+                uiOptions: pairedUnitUiOptions,
+                idPrefix: `${idSchema.$id}-${pairWith}`,
+                required,
+                errors: denominatorErrors,
+                task,
+              })}
+            </Grid>
+          )}
+          <ErrorDisplay errors={allErrors} />
+        </Grid>
+      </Box>
     </Box>
   );
 };
