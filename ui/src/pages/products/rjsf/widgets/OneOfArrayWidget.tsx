@@ -27,8 +27,7 @@ const renderField = (
   valueSetAutocomplete: boolean = false,
   eclAutocomplete: boolean = false,
   scheme: string,
-  valueSetBinding: any,
-  eclBinding: any,
+  bindingConfig: any,
   isMandatoryUnfilled: boolean = false, // Indicates if this field is mandatory and unfilled
   submitAttempted: boolean = false, // Indicates submission attempt
   branch: string,
@@ -46,12 +45,12 @@ const renderField = (
         : '';
 
   if (valueSetAutocomplete) {
-    const binding = valueSetBinding[scheme] || {};
+    const binding = bindingConfig[scheme] || {};
     return (
       <Box paddingTop={1}>
         <ValueSetAutocomplete
           label={propSchema.title || 'Value'}
-          url={binding.url}
+          url={binding.valueSet}
           showDefaultOptions={false}
           value={value || null}
           onChange={onChange}
@@ -61,7 +60,7 @@ const renderField = (
       </Box>
     );
   } else if (eclAutocomplete && branch) {
-    const binding = eclBinding[scheme] || {};
+    const binding = bindingConfig[scheme] || {};
     return (
       <Box paddingTop={1}>
         <EclAutocomplete
@@ -140,8 +139,7 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
 
   const oneOfOptions = schema.items.oneOf as any[];
   const items = Array.isArray(value) ? value : [];
-  const valueSetBinding = uiSchema['ui:options']?.valueSetBinding || {};
-  const eclBinding = uiSchema['ui:options']?.binding || {};
+  const binding = uiSchema['ui:options']?.binding || {};
   const mandatorySchemes = uiSchema['ui:options']?.mandatorySchemes || [];
   const multiValuedSchemes = uiSchema['ui:options']?.multiValuedSchemes || [];
   const skipTitle = uiSchema['ui:options']?.skipTitle;
@@ -162,8 +160,18 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
 
   const title = uiSchema['ui:options']?.title || schema.title || 'Items';
 
-  const hasValueSetBinding = (scheme: string) => !!valueSetBinding[scheme];
-  const hasEclBinding = (scheme: string) => !!eclBinding[scheme];
+  const hasValueSetBinding = (scheme: string) => {
+    if (binding[scheme]) {
+      return !!binding[scheme].valueSet;
+    }
+    return false;
+  };
+  const hasEclBinding = (scheme: string) => {
+    if (binding[scheme]) {
+      return !!binding[scheme].ecl;
+    }
+    return false;
+  };
 
   // Detect submission attempt via rawErrors
   const submitAttempted = !!rawErrors?.length;
@@ -339,8 +347,7 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
                     useValueSetAutocomplete,
                     useEclAutocomplete,
                     scheme,
-                    valueSetBinding,
-                    eclBinding,
+                    binding,
                     isMandatoryUnfilled, // Pass validation state
                     submitAttempted, // Pass submission state
                     task?.branchPath,
