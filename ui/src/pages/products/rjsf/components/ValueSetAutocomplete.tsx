@@ -1,122 +1,112 @@
 import React, { useState, useEffect } from 'react';
-import { Autocomplete, CircularProgress, TextField, Box } from '@mui/material';
-import { Concept, ConceptMini } from '../../../../types/concept.ts';
+import { Autocomplete, CircularProgress, TextField } from '@mui/material';
+import { Concept } from '../../../../types/concept.ts';
 import { useSearchConceptOntoServerByUrl } from '../../../../hooks/api/products/useSearchConcept.tsx';
 import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../../utils/helpers/getValueSetExpansionContainsPt.ts';
 import useApplicationConfigStore from '../../../../stores/ApplicationConfigStore.ts';
 
 interface ValueSetAutocompleteProps {
-  label?: string;
-  url: string;
-  showDefaultOptions?: boolean;
-  value: ConceptMini | null;
-  onChange: (value: ConceptMini | null) => void;
-  disabled?: boolean;
-  error?: string;
+    label?: string;
+    url: string;
+    showDefaultOptions?: boolean;
+    value: string | null; // Concept ID only
+    onChange: (value: string | null) => void;
+    disabled?: boolean;
+    error?: string;
 }
 
 const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
-  label,
-  url,
-  showDefaultOptions = false,
-  value,
-  onChange,
-  disabled = false,
-  error,
-}) => {
-  const [inputValue, setInputValue] = useState('');
-  const [options, setOptions] = useState<Concept[]>([]);
-  const [useExtendedEcl, setUseExtendedEcl] = useState(false);
-  const { applicationConfig } = useApplicationConfigStore();
-  const { isLoading, data } = useSearchConceptOntoServerByUrl(
-    inputValue,
-    url && url.length > 0 ? url : undefined,
-    showDefaultOptions,
-  );
+                                                                       label,
+                                                                       url,
+                                                                       showDefaultOptions = false,
+                                                                       value, // Concept ID only
+                                                                       onChange,
+                                                                       disabled = false,
+                                                                       error,
+                                                                   }) => {
+    const [inputValue, setInputValue] = useState('');
+    const [options, setOptions] = useState<Concept[]>([]);
+    const [selectedConcept, setSelectedConcept] = useState<Concept | null>(null);
+    const { applicationConfig } = useApplicationConfigStore();
+    const { isLoading, data } = useSearchConceptOntoServerByUrl(
+        inputValue,
+        url && url.length > 0 ? url : undefined,
+        showDefaultOptions,
+    );
 
-  // Update options when search results change
-  useEffect(() => {
-    if (data && data.expansion?.contains !== undefined) {
-      const concepts =
-        convertFromValueSetExpansionContainsListToSnowstormConceptMiniList(
-          data.expansion?.contains,
-          applicationConfig.fhirPreferredForLanguage,
-        );
-      const uniqueOptions = Array.from(
-        new Map(concepts.map(item => [item.conceptId, item])).values(),
-      );
-      setOptions(uniqueOptions);
-    }
-  }, [data]);
+    // Update options when search data changes
+    useEffect(() => {
+        if (data?.expansion?.contains) {
+            const concepts = convertFromValueSetExpansionContainsListToSnowstormConceptMiniList(
+                data.expansion.contains,
+                applicationConfig.fhirPreferredForLanguage,
+            );
+            const uniqueOptions = Array.from(
+                new Map(concepts.map(item => [item.conceptId, item])).values(),
+            );
+            setOptions(uniqueOptions);
 
-  // Sync inputValue with value or options
-  useEffect(() => {
-    if (value && options.length > 0) {
-      const selectedOption = options.find(
-        option => option.conceptId === value.conceptId,
-      );
-      setInputValue(selectedOption?.pt.term || value?.pt?.term || '');
-    } else if (value) {
-      setInputValue(value?.pt?.term || '');
-    } else {
-      setInputValue('');
-    }
-  }, [value, options]);
+            // If value exists and matches a fetched option, set selectedConcept
+            if (value && !selectedConcept) {
+                const matchingConcept = uniqueOptions.find(option => option.conceptId === value);
+                if (matchingConcept) {
+                    setSelectedConcept(matchingConcept);
+                    setInputValue(matchingConcept.pt.term);
+                }
+            }
+        }
+    }, [data, applicationConfig.fhirPreferredForLanguage, value, selectedConcept]);
 
-  const handleChange = (selectedValue: Concept | null) => {
-    if (selectedValue) {
-      const conceptMini: ConceptMini = {
-        conceptId: selectedValue.conceptId || '',
-        pt: selectedValue.pt,
-      };
-      onChange(conceptMini);
-      setInputValue(selectedValue.pt.term);
-    } else {
-      onChange(null);
-      setInputValue('');
-    }
-  };
+    // Trigger API search with conceptId when value changes
+    useEffect(() => {
+        if (value && (!selectedConcept || selectedConcept.conceptId !== value)) {
+            setInputValue(value); // Use conceptId as initial search term
+        } else if (!value) {
+            setSelectedConcept(null);
+            setInputValue('');
+        }
+    }, [value, selectedConcept]);
 
-  return (
-    <Autocomplete
-      loading={isLoading}
-      options={disabled ? [] : options}
-      getOptionLabel={option => option?.pt?.term || ''}
-      value={
-        options.find(option => option.conceptId === value?.conceptId) ||
-        value ||
-        null
-      }
-      onInputChange={(_, newInputValue) => setInputValue(newInputValue)}
-      onChange={(_, selectedValue) => handleChange(selectedValue as Concept)}
-      isOptionEqualToValue={(option, val) =>
-        option?.conceptId === val?.conceptId
-      }
-      renderOption={(props, option) => (
-        <li {...props} key={option.conceptId}>
-          {option.pt.term}
-        </li>
-      )}
-      renderInput={params => (
-        <TextField
-          {...params}
-          label={label}
-          error={!!error}
-          helperText={error}
-          InputProps={{
-            ...params.InputProps,
-            endAdornment: (
-              <>
-                {isLoading ? <CircularProgress size={20} /> : null}
-                {params.InputProps.endAdornment}
-              </>
-            ),
-          }}
-          disabled={disabled}
+    // Handle selection change
+    const handleChange = (selectedValue: Concept | null) => {
+        setSelectedConcept(selectedValue);
+        onChange(selectedValue?.conceptId || null);
+    };
+
+    return (
+        <Autocomplete
+            loading={isLoading}
+            options={disabled ? [] : options}
+            getOptionLabel={(option) => option?.pt?.term || ''}
+            value={selectedConcept} // Controlled by selectedConcept
+            onInputChange={(_, newInputValue) => setInputValue(newInputValue)}
+            onChange={(_, selectedValue) => handleChange(selectedValue as Concept)}
+            isOptionEqualToValue={(option, val) => option?.conceptId === val?.conceptId}
+            renderOption={(props, option) => (
+                <li {...props} key={option.conceptId}>
+                    {option.pt.term}
+                </li>
+            )}
+            renderInput={(params) => (
+                <TextField
+                    {...params}
+                    label={label}
+                    error={!!error}
+                    helperText={error}
+                    InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                            <>
+                                {isLoading ? <CircularProgress size={20} /> : null}
+                                {params.InputProps.endAdornment}
+                            </>
+                        ),
+                    }}
+                    disabled={disabled}
+                />
+            )}
         />
-      )}
-    />
-  );
+    );
 };
 
 export default ValueSetAutocomplete;
