@@ -277,7 +277,7 @@ public class MedicationProductCalculationService {
               + " is not valid for scheme "
               + externalIdentifier.getIdentifierScheme());
     }
-    if (!externalIdentifier.getIdentifierValue().matches(mappingRefset.getValueRegexValidation())) {
+    if (mappingRefset.getValueRegexValidation() !=null && !externalIdentifier.getIdentifierValue().matches(mappingRefset.getValueRegexValidation())) {
       throw new ProductAtomicDataValidationProblem(
           "External identifier value "
               + externalIdentifier.getIdentifierValue()
