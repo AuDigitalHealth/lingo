@@ -40,7 +40,7 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
             const concepts = convertFromValueSetExpansionContainsListToSnowstormConceptMiniList(
                 data.expansion.contains,
                 applicationConfig.fhirPreferredForLanguage,
-            );
+            );//TODO we may not need this conversion as we only need the code and display
             const uniqueOptions = Array.from(
                 new Map(concepts.map(item => [item.conceptId, item])).values(),
             );
