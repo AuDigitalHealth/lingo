@@ -1,5 +1,5 @@
 import { FieldProps } from '@rjsf/core';
-import { Box, FormHelperText, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import React from 'react';
 
 const CustomFieldTemplate = (props: FieldProps) => {
