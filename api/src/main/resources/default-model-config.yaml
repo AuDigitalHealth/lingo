@@ -63,7 +63,8 @@ models:
         title: Associated procedure
         identifier: 71388002
         level: PACKAGE
-        dataType: STRING
+        dataType: STRING,
+        valueRegexValidation: ^.+$
         valueSetReference: http://snomed.info/sct?fhir_vs=ecl/%5E%2032570141000036105%20
         modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
         mandatory: false
