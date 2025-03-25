@@ -5,7 +5,7 @@ import EclAutocomplete from '../components/EclAutocomplete.tsx';
 import useTaskById from '../../../../hooks/useTaskById.tsx';
 
 import { ErrorDisplay } from '../components/ErrorDisplay.tsx';
-import { getUniqueErrors } from '../helpers/errorUtils.ts'; // Adjust path
+import { getUniqueErrors } from '../helpers/errorUtils.ts';
 
 const UnitValueField = ({
   formData,
