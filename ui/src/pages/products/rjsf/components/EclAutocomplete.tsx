@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Autocomplete, CircularProgress, TextField } from '@mui/material';
 import { Concept, ConceptMini } from '../../../../types/concept.ts';
-import { useSearchConceptOntoServerByUrl } from '../../../../hooks/api/products/useSearchConcept.tsx';
-import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../../utils/helpers/getValueSetExpansionContainsPt.ts';
-import useApplicationConfigStore from '../../../../stores/ApplicationConfigStore.ts';
 import { useSearchConceptsByEcl } from '../../../../hooks/api/useInitializeConcepts.tsx';
 
 interface EclAutocompleteProps {
