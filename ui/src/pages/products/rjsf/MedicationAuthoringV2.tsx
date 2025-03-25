@@ -18,8 +18,6 @@ import TextFieldWidget from './widgets/TextFieldWidget.tsx';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import ProductPreviewCreateModal from '../components/ProductPreviewCreateModal.tsx';
 import { Task } from '../../../types/task.ts';
-import schema from './MedicationProductDetails-schema.json';
-import uiSchema from './MedicationProductDetails-uiSchema.json';
 import {
   MedicationPackageDetails,
   ProductCreationDetails,
@@ -34,7 +32,6 @@ import ConditionalArrayField from './fields/ConditionalArrayField.tsx';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 
 import CompactQuantityField from './fields/CompactQuantityField.tsx';
-import CompactQuantityWidget from './widgets/CompactQuantityWidget.tsx';
 import _ from 'lodash';
 
 export interface MedicationAuthoringV2Props {
@@ -155,7 +152,6 @@ function MedicationAuthoringV2({
                 NumberWidget,
                 TextFieldWidget,
                 OneOfArrayWidget,
-                CompactQuantityWidget,
               }}
               onError={onError}
               disabled={isPending}

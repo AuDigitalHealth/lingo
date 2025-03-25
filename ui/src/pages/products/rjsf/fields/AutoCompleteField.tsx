@@ -12,7 +12,7 @@ import { useParams } from 'react-router-dom';
 import { Ticket } from '../../../../types/tickets/ticket.ts';
 
 import { ErrorDisplay } from '../components/ErrorDisplay.tsx';
-import { getUniqueErrors } from '../helpers/errorUtils.ts'; // Adjust path as needed
+import { getUniqueErrors } from '../helpers/errorUtils.ts';
 
 const AutoCompleteField = ({
   schema,
