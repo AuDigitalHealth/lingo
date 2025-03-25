@@ -16,7 +16,7 @@ import { ErrorDisplay } from '../components/ErrorDisplay.tsx';
 import {
   extractAllErrorMessages,
   getFieldErrors,
-} from '../helpers/errorUtils.ts'; // Adjust path
+} from '../helpers/errorUtils.ts';
 
 const CompactQuantityField = ({
   formData,

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { WidgetProps } from '@rjsf/utils';
 import {
   Box,
-  Button,
   FormControl,
   InputLabel,
   Select,
