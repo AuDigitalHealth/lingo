@@ -22,17 +22,30 @@ const UnitValueField = ({
     if (!selectedUnit) {
       const updatedFormData = { ...formData };
       delete updatedFormData.unit;
-      if (!updatedFormData.unit) delete updatedFormData.value;
+      if (!updatedFormData.value) {
+        onChange(undefined);
+      }
       onChange(updatedFormData);
     } else {
-      onChange({ ...formData, unit: selectedUnit, value: value || 0 });
+      onChange({ ...formData, unit: selectedUnit });
     }
   };
 
   const handleValueChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const numericValue = parseFloat(event.target.value);
-    if (!isNaN(numericValue)) {
-      onChange({ ...formData, value: numericValue });
+    const inputValue = event.target.value;
+    if (inputValue === '') {
+      let updatedFormData = { ...formData };
+      delete updatedFormData.value;
+      if (!updatedFormData.unit) {
+        onChange(undefined);
+      } else {
+        onChange(updatedFormData);
+      }
+    } else {
+      const numericValue = parseFloat(inputValue);
+      if (!isNaN(numericValue)) {
+        onChange({ ...formData, value: numericValue });
+      }
     }
   };
 
