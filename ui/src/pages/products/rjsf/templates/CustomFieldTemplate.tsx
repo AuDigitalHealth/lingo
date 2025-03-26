@@ -4,19 +4,16 @@ import React from 'react';
 
 const CustomFieldTemplate = (props: FieldProps) => {
   const {
-    id,
     classNames,
     label,
     required,
     rawErrors,
     description,
     children,
-    schema,
+
     uiSchema,
-    formContext,
   } = props;
 
-  const errorMessage = rawErrors && rawErrors[0] ? rawErrors[0] : '';
   const hasError = !!rawErrors && rawErrors.length > 0;
 
   // Check if this field is already processed by ArrayFieldTemplate

@@ -10,14 +10,12 @@ import { getUniqueErrors } from '../helpers/errorUtils.ts';
 const UnitValueField = ({
   formData,
   onChange,
-  schema,
   uiSchema,
   rawErrors = [],
   errorSchema = {},
 }: FieldProps) => {
   const { value, unit } = formData || { value: undefined, unit: undefined };
   const task = useTaskById();
-  const title = uiSchema?.['ui:title'] || 'Unit and Value';
   const unitOptions = uiSchema?.unit?.['ui:options'] || {};
 
   const handleUnitChange = (selectedUnit: any | null) => {
