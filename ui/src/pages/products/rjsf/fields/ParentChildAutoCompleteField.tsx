@@ -8,7 +8,6 @@ const ParentChildAutoCompleteField = ({
   formData,
   uiSchema,
   onChange,
-  rawErrors,
   errorSchema = {},
 }: FieldProps) => {
   const {

@@ -4,15 +4,8 @@ import { Box, IconButton, Tooltip } from '@mui/material';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 
 const NewPackSizeInputField: React.FC<FieldProps> = props => {
-  const {
-    formData,
-    onChange,
-    formContext,
-    schema,
-    uiSchema,
-    registry,
-    errorSchema,
-  } = props;
+  const { formData, onChange, formContext, schema, registry, errorSchema } =
+    props;
 
   const [inputValue, setInputValue] = useState(
     formData || { packSize: undefined, externalIdentifiers: [] },

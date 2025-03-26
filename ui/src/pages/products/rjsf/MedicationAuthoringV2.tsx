@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useRef } from 'react';
+import React, { useCallback, useState, useRef } from 'react';
 import { Form } from '@rjsf/mui';
 import { Container, Button, Box, Paper } from '@mui/material';
 import UnitValueField from './fields/UnitValueField.tsx';
@@ -211,7 +211,6 @@ export function useCalculateProduct() {
     mutationFn: async ({
       formData,
       ticket,
-      toggleModalOpen,
       task,
     }: UseCalculateProductArguments) => {
       const productSummary = await productService.previewNewMedicationProduct(
@@ -259,15 +258,12 @@ const fetchProductDataFn = async ({
   const productId = isValueSetExpansionContains(selectedProduct)
     ? selectedProduct.code
     : selectedProduct.conceptId;
-  try {
-    const mp = await productService.fetchMedication(
-      productId || '',
-      task.branchPath,
-    );
-    return mp.productName ? mp : null;
-  } catch (error) {
-    throw error;
-  }
+
+  const mp = await productService.fetchMedication(
+    productId || '',
+    task.branchPath,
+  );
+  return mp.productName ? mp : null;
 };
 
 interface ProductQueryProps {
