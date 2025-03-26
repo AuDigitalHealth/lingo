@@ -4,7 +4,7 @@ import { Box, IconButton, Tooltip } from '@mui/material';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 
 const NewBrandInputField: React.FC<FieldProps> = props => {
-  const { formData, onChange, formContext, schema, uiSchema, registry } = props;
+  const { formData, onChange, formContext, registry } = props;
 
   const [inputValue, setInputValue] = useState(
     formData || { brand: undefined, externalIdentifiers: [] },
