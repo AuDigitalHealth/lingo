@@ -33,8 +33,8 @@ import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 
 import CompactQuantityField from './fields/CompactQuantityField.tsx';
 import _ from 'lodash';
-// import schema from './base-medication-schema.json';
-// import uiSchema from './base-medication-ui-schema.json';
+import schema from './base-medication-schema.json';
+import uiSchema from './base-medication-ui-schema.json';
 
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -52,10 +52,10 @@ function MedicationAuthoringV2({
   const formRef = useRef<any>(null); // Ref to access the RJSF Form instance
   const [errorSchema, setErrorSchema] = useState({});
 
-  const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
+  const { data: schemaTest, isLoading: isSchemaLoading } = useSchemaQuery(
     task.branchPath,
   );
-  const { data: uiSchema, isLoading: isUiSchemaLoading } = useUiSchemaQuery(
+  const { data: uiSchemaTest, isLoading: isUiSchemaLoading } = useUiSchemaQuery(
     task.branchPath,
   );
   const mutation = useCalculateProduct();
