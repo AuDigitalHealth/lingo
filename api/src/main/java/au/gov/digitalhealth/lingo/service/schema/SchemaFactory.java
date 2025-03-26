@@ -5,10 +5,13 @@ import au.gov.digitalhealth.lingo.configuration.model.NonDefiningBase;
 import au.gov.digitalhealth.lingo.configuration.model.NonDefiningProperty;
 import au.gov.digitalhealth.lingo.configuration.model.ReferenceSet;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.NonDefiningPropertyDataType;
+import jakarta.validation.Valid;
 
 public class SchemaFactory {
 
   public static final String IDENTIFIER_SCHEME = "identifierScheme";
+  public static final String VALUE_OBJECT_FIELD = "valueObject";
+  public static final String VALUE_FIELD = "value";
 
   private SchemaFactory() {}
 
@@ -76,7 +79,7 @@ public class SchemaFactory {
     // identifiers
     propertySchema.addProperty(IDENTIFIER_SCHEME, ConstProperty.create(property.getName()));
 
-    propertySchema.addProperty("value", getProperty(property));
+    propertySchema.addProperty(getPropertyNameForType(property.getDataType().toString()), getProperty(property));
 
     return propertySchema;
   }
@@ -112,6 +115,14 @@ public class SchemaFactory {
 
     returnValue.setTitle(nonDefiningProperty.getTitle());
     return returnValue;
+  }
+  
+  private static String getPropertyNameForType(String dataType){
+    if(dataType.equals(NonDefiningPropertyDataType.CONCEPT.toString())){
+      return VALUE_OBJECT_FIELD;
+    }
+    return VALUE_FIELD;
+    
   }
 
   public static ObjectProperty create(ReferenceSet referenceSet) {
