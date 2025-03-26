@@ -28,10 +28,9 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
   canAdd,
   onAddClick,
   title,
-  description,
+
   uiSchema,
   formData,
-  DescriptionField,
   formContext,
   idSchema,
 }) => {
@@ -57,7 +56,6 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
           {title}
         </Typography>
       )}
-      {description && <DescriptionField description={description} />}
 
       {items.map(element => {
         const itemTitle = getItemTitle(uiSchema, formData, element.index);

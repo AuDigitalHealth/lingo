@@ -3,7 +3,6 @@ import {
   getTemplate,
   getUiOptions,
   RJSFSchema,
-  TemplatesType,
   WidgetProps,
 } from '@rjsf/utils';
 import { TextField } from '@mui/material';
