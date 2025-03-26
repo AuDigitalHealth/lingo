@@ -2,7 +2,6 @@ import React from 'react';
 import { FieldProps } from '@rjsf/utils';
 import { Grid, TextField, Typography, Box } from '@mui/material';
 import _ from 'lodash';
-import { UnitEachId } from '../../../../utils/helpers/conceptUtils.ts';
 import {
   getFieldName,
   getParentPath,
@@ -78,36 +77,30 @@ const CompactQuantityField = ({
     .forEach(error => allErrorsSet.add(error));
   const allErrors = Array.from(allErrorsSet);
 
-  const adjustValue = (value: number | undefined, unit: any): number => {
-    const isEach = _.get(unit, 'conceptId') === UnitEachId;
-    return isEach ? Math.max(1, Math.round(value || 0)) : value;
-  };
-
   const handleValueChange = (
     event: React.ChangeEvent<HTMLInputElement>,
     isPair = false,
   ) => {
     const inputValue = event.target.value;
-    const targetUnit = isPair ? pairedUnit : mainUnit;
     const targetField = isPair ? pairedField : fieldName;
     const targetData = isPair ? pairedFormData : formData;
     const newFormData = _.cloneDeep(rootFormData);
 
     if (inputValue === '') {
-      if (!targetUnit) {
-        const updatedFormData = { ...targetData };
-        delete updatedFormData.value;
-        _.set(newFormData, targetField, updatedFormData);
-        formContext.onChange(newFormData);
+      let updatedFormData = { ...targetData };
+      delete updatedFormData.value;
+      if (!updatedFormData.unit) {
+        updatedFormData = undefined;
       }
+      _.set(newFormData, targetField, updatedFormData);
+      formContext.onChange(newFormData);
+
       return;
     }
 
     const numericValue = parseFloat(inputValue);
     if (isNaN(numericValue)) return;
-
-    const adjustedValue = adjustValue(numericValue, targetUnit);
-    const updatedFormData = { ...targetData, value: adjustedValue };
+    const updatedFormData = { ...targetData, value: numericValue };
     _.set(newFormData, targetField, updatedFormData);
     formContext.onChange(newFormData);
   };
@@ -118,17 +111,16 @@ const CompactQuantityField = ({
     const newFormData = _.cloneDeep(rootFormData);
 
     if (!selectedUnit) {
-      const updatedFormData = { ...targetData };
+      let updatedFormData = { ...targetData };
       delete updatedFormData.unit;
-      delete updatedFormData.value;
+      if (!updatedFormData.value) {
+        updatedFormData = undefined;
+      }
       _.set(newFormData, targetField, updatedFormData);
     } else {
-      const currentValue = isPair ? pairedValue : mainValue;
-      const adjustedValue = adjustValue(currentValue, selectedUnit);
       const updatedFormData = {
         ...targetData,
         unit: selectedUnit,
-        value: adjustedValue,
       };
       _.set(newFormData, targetField, updatedFormData);
     }
@@ -141,10 +133,8 @@ const CompactQuantityField = ({
     unit,
     onValueChange,
     onUnitChange,
-    unitSchema,
+
     uiOptions,
-    idPrefix,
-    required,
     errors,
     task,
   }: {
