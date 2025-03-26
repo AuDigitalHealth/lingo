@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useRef } from 'react';
+import React, { useCallback, useState, useRef } from 'react';
 import { Form } from '@rjsf/mui';
 import { Container, Button, Box, Paper } from '@mui/material';
 import UnitValueField from './fields/UnitValueField.tsx';
@@ -56,8 +56,6 @@ function DeviceAuthoringV2({
   const mutation = useCalculateProduct();
   const { isPending, data } = mutation;
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const { ticketNumber } = useParams();
-  // const useTicketQuery = useTicketByTicketNumber(ticketNumber, true);
   const { isLoading, isFetching } = useProductQuery({
     selectedProduct,
     task,
@@ -189,7 +187,6 @@ export function useCalculateProduct() {
     mutationFn: async ({
       formData,
       ticket,
-      toggleModalOpen,
       task,
     }: UseCalculateProductArguments) => {
       const productSummary = await productService.previewNewDeviceProduct(
@@ -237,15 +234,9 @@ const fetchProductDataFn = async ({
   const productId = isValueSetExpansionContains(selectedProduct)
     ? selectedProduct.code
     : selectedProduct.conceptId;
-  try {
-    const mp = await productService.fetchDevice(
-      productId || '',
-      task.branchPath,
-    );
-    return mp.productName ? mp : null;
-  } catch (error) {
-    throw error;
-  }
+
+  const mp = await productService.fetchDevice(productId || '', task.branchPath);
+  return mp.productName ? mp : null;
 };
 
 interface ProductQueryProps {
