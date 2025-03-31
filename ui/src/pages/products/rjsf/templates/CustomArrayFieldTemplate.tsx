@@ -5,7 +5,6 @@ import AccordionArrayFieldTemplate from './AccordionArrayFieldTemplate';
 
 const CustomArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = props => {
   const templateType = props.uiSchema['ui:options']?.arrayTemplate;
-  console.log('CustomArrayFieldTemplate Props:', props);
   switch (templateType) {
     case 'accordion':
       return <AccordionArrayFieldTemplate {...props} />;
