@@ -218,6 +218,10 @@
         "containerOrDeviceType": {
           "$ref": "#/$defs/ContainerOrDeviceType"
         },
+        "packSize": {
+          "$ref": "#/$defs/Quantity",
+          "title": "Pack Size"
+        },
         "otherIdentifyingInformation": {
           "type": "string",
           "title": "Other Identifying Information"
@@ -225,7 +229,8 @@
       },
       "required": [
         "productName",
-        "activeIngredients"
+        "activeIngredients",
+        "packSize"
       ],
       "errorMessage": {
         "required": "Product Details must be populated."
@@ -263,170 +268,6 @@
         }
       ]
     },
-    "ContainedProduct": {
-      "type": "object",
-      "title": "Contained Product",
-      "properties": {
-        "unit": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "errorMessage": {
-            "type": "Invalid Pack Size Unit",
-            "minProperties": "Field must be populated."
-          }
-        },
-        "value": {
-          "type": "number",
-          "minimum": 0,
-          "errorMessage": {
-            "type": "Value must be a number",
-            "minimum": "Value must be at least 0"
-          }
-        },
-        "productDetails": {
-          "$ref": "#/$defs/ProductDetails"
-        }
-      },
-      "required": ["unit", "value", "productDetails"],
-      "errorMessage": {
-        "required": "Contained product must be populated."
-      },
-      "dependencies": {
-        "unit": {
-          "oneOf": [
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": {
-                      "const": "732935002",
-                      "errorMessage": {
-                        "const": "Invalid Unit and Value"
-                      }
-                    }
-                  },
-                  "required": ["conceptId"]
-                },
-                "value": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "errorMessage": {
-                    "type": "Value must be an integer when Unit is 'Each'",
-                    "const": "Unit must be 'Each' for this value constraint"
-                  }
-                }
-              },
-              "errorMessage": {
-                "oneOf": "Unit must be 'Each' with an integer value >= 1"
-              }
-            },
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": { "not": { "const": "732935002" } }
-                  }
-                },
-                "value": {
-                  "type": "number",
-                  "minimum": 0,
-                  "errorMessage": {
-                    "type": "Value must be a number ",
-                    "minimum": "Value must be at least 0"
-                  }
-                }
-              },
-              "errorMessage": {
-                "oneOf": "Unit must not be 'Each' and value must be a number >= 0"
-
-              }
-
-            }
-          ]
-        }
-      }
-    },
-    "ContainedPackage": {
-      "type": "object",
-      "title": "Contained Product",
-      "properties": {
-        "unit": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "errorMessage": {
-            "type": "Invalid Pack Size Unit",
-            "minProperties": "Field must be populated."
-          }
-        },
-        "value": {
-          "type": "number",
-          "minimum": 0,
-          "errorMessage": {
-            "type": "Value must be a number",
-            "minimum": "Value must be at least 0"
-          }
-        },
-        "packageDetails": {
-          "$ref": "#/$defs/PackageDetails"
-        }
-      },
-      "required": ["unit", "value", "packageDetails"],
-      "errorMessage": {
-        "required": "Contained Package must be populated."
-      },
-      "dependencies": {
-        "unit": {
-          "oneOf": [
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": {
-                      "const": "732935002",
-                      "errorMessage": {
-                        "const": "Invalid Unit and Value"
-                      }
-                    }
-                  },
-                  "required": ["conceptId"]
-                },
-                "value": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "errorMessage": {
-                    "type": "Value must be an integer when Unit is 'Each'",
-                    "const": "Unit must be 'Each' for this value constraint"
-                  }
-                }
-              },
-              "errorMessage": {
-                "oneOf": "Unit must be 'Each' with an integer value >= 1"
-              }
-            },
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": { "not": { "const": "732935002" } }
-                  }
-                },
-                "value": {
-                  "type": "number",
-                  "minimum": 0,
-                  "errorMessage": {
-                    "type": "Value must be a number ",
-                    "minimum": "Value must be at least 0"
-                  }
-                }
-              },
-              "errorMessage": {
-                "oneOf": "Unit must not be 'Each' and value must be a number >= 0"
-
-              }
-
-            }
-          ]
-        }
-      }
-    },
     "PackageDetails": {
       "type": "object",
       "title": "Package Details",
@@ -451,19 +292,15 @@
           "type": "array",
           "title": "Contained Products",
           "items": {
-            "$ref": "#/$defs/ContainedProduct"
-          },
-          "minItems": 1,
-          "errorMessage": {
-            "minItems": "At least one Contained Products."
+            "$ref": "#/$defs/ProductDetails"
           }
+        },
+        "packSize": {
+          "$ref": "#/$defs/Quantity",
+          "title": "Pack Size"
         }
       },
-      "required": [
-        "productName",
-        "containerType",
-        "containedProducts"
-      ],
+      "required": ["productName", "containerType","containedProducts","packSize"],
       "errorMessage": {
         "required": "Fields must be populated."
       }
@@ -491,14 +328,14 @@
       "type": "array",
       "title": "Contained Products",
       "items": {
-        "$ref": "#/$defs/ContainedProduct"
+        "$ref": "#/$defs/ProductDetails"
       }
     },
     "containedPackages": {
       "type": "array",
       "title": "Contained Packages",
       "items": {
-        "$ref": "#/$defs/ContainedPackage"
+        "$ref": "#/$defs/PackageDetails"
       }
     }
   },

@@ -17,7 +17,7 @@ const CustomFieldTemplate = (props: FieldProps) => {
   const hasError = !!rawErrors && rawErrors.length > 0;
 
   // Check if this field is already processed by ArrayFieldTemplate
-  const skipTitle = uiSchema['ui:options']?.skipTitle;
+  const skipTitle = uiSchema && uiSchema['ui:options']?.skipTitle || false;
 
   // Enhance children with error styling
   const enhancedChildren = React.cloneElement(children, {
