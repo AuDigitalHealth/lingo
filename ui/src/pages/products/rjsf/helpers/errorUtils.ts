@@ -34,9 +34,17 @@ export const extractAllErrorMessages = (
 
   // Add top-level errors if they exist, prefixed with the current path
   if (errorSchema.__errors && Array.isArray(errorSchema.__errors)) {
-    const currentPath = parentPath ? parentPath : '';
+    const currentPath = parentPath ? parentPath : undefined;
     errors = errors.concat(
-      errorSchema.__errors.map((error: string) => `${currentPath}: ${error}`),
+      errorSchema.__errors.map((error: string) => {
+        if(currentPath){
+          return `${currentPath}: ${error}`;
+        }
+        else{
+          return `${error}`;
+        }
+
+      }),
     );
   }
 
