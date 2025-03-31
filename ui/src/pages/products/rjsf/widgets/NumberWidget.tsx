@@ -1,7 +1,5 @@
 import * as React from 'react';
 import {
-  getTemplate,
-  getUiOptions,
   RJSFSchema,
   WidgetProps,
 } from '@rjsf/utils';
