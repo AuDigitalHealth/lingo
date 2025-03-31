@@ -23,7 +23,6 @@ import {
   ProductCreationDetails,
   ProductType,
 } from '../../../types/product.ts';
-import { useParams } from 'react-router-dom';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import { ConfigService } from '../../../api/ConfigService.ts';
 import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
