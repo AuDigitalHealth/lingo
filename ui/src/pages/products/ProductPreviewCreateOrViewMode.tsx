@@ -4,8 +4,6 @@ import { Concept, ProductSummary } from '../../types/concept.ts';
 import {
   cleanBrandPackSizeDetails,
   cleanDevicePackageDetails,
-  cleanPackageDetails,
-  cleanProductSummary,
   containsNewConcept,
   getProductDisplayName,
   isDeviceType,
@@ -21,7 +19,6 @@ import {
   BrandPackSizeCreationDetails,
   BulkProductCreationDetails,
   DevicePackageDetails,
-  MedicationPackageDetails,
   ProductCreationDetails,
 } from '../../types/product.ts';
 import { Ticket } from '../../types/tickets/ticket.ts';

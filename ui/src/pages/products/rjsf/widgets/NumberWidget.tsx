@@ -1,9 +1,6 @@
 import * as React from 'react';
 import {
-  getTemplate,
-  getUiOptions,
   RJSFSchema,
-  TemplatesType,
   WidgetProps,
 } from '@rjsf/utils';
 import { TextField } from '@mui/material';
@@ -22,19 +19,14 @@ function NumberWidget<T = any, F extends RJSFSchema = RJSFSchema>({
   onFocus,
   autofocus,
   options,
-  schema,
+
   uiSchema,
   rawErrors,
   registry,
   hideError,
 }: WidgetProps<T, F>) {
-  const { widgets, templates } = registry;
-  const { title = '' } = getUiOptions<T, F>(uiSchema);
-  const BaseInputTemplate = getTemplate<'BaseInputTemplate', T, F>(
-    'BaseInputTemplate',
-    registry,
-    templates,
-  );
+  const { templates } = registry;
+
   const handleChange = React.useCallback(
     (nextValue: string) => onChange(nextValue === '' ? '' : nextValue),
     [onChange],
