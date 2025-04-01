@@ -84,35 +84,27 @@
         }
       }
     },
-    "ActiveAndPreciseIngredients": {
+    "Ingredient": {
       "type": "object",
-      "title": "Active Ingredient",
       "additionalProperties": false,
       "properties": {
         "activeIngredient": {
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Has Active Ingredient",
           "errorMessage": {
-            "minProperties": "Active Ingredient must be populated."
+            "minProperties": "Active Ingredient must be populated.",
+            "type": "Active Ingredient must be populated."
           }
         },
         "preciseIngredient": {
-          "$ref": "#/$defs/SnowstormConceptMini"
-        }
-      },
-      "required": [
-        "activeIngredient"
-      ],
-      "errorMessage": {
-        "required": "Active Ingredient must be populated."
-      }
-    },
-    "Ingredient": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "activeAndPreciseIngredients": {
-          "$ref": "#/$defs/ActiveAndPreciseIngredients"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SnowstormConceptMini"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "basisOfStrengthSubstance": {
           "$ref": "#/$defs/SnowstormConceptMini"
@@ -125,65 +117,7 @@
           "$ref": "#/$defs/Quantity"
         }
       },
-      "required": [
-        "activeAndPreciseIngredients"
-      ]
-    },
-    "GenericAndSpecificForms": {
-      "type": "object",
-      "properties": {
-        "genericForm": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/SnowstormConceptMini"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "title": "Generic Dose Form"
-        },
-        "specificForm": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/SnowstormConceptMini"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "title": "Specific Dose Form"
-        }
-      },
-      "title": "Generic and Specific Forms"
-    },
-    "ContainerOrDeviceType": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "containerType": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/SnowstormConceptMini"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "title": "Container Type"
-        },
-        "deviceType": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/SnowstormConceptMini"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "title": "Device Type"
-        }
-      }
+      "required": ["activeIngredient"]
     },
     "ProductDetails": {
       "type": "object",
@@ -208,15 +142,39 @@
             "minItems": "At least one active ingredient must be present."
           }
         },
-        "genericAndSpecificForms": {
-          "$ref": "#/$defs/GenericAndSpecificForms"
+        "genericForm": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Generic Dose Form"
+        },
+        "specificForm": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SnowstormConceptMini"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Specific Dose Form"
         },
         "quantity": {
           "$ref": "#/$defs/Quantity",
           "title": "Unit Size"
         },
-        "containerOrDeviceType": {
-          "$ref": "#/$defs/ContainerOrDeviceType"
+        "containerType": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Container Type"
+        },
+        "deviceType": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SnowstormConceptMini"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Device Type"
         },
         "otherIdentifyingInformation": {
           "type": "string",
@@ -232,33 +190,27 @@
       },
       "allOf": [
         {
-          "not": {
+          "if": {
             "properties": {
-              "genericAndSpecificForms": {
-                "properties": {
-                  "genericForm": {
-                    "type": "null"
-                  }
-                }
+              "genericForm": {
+                "type": ["object", "null"],
+                "not": { "type": "object", "minProperties": 1 }
               },
-              "containerOrDeviceType": {
-                "properties": {
-                  "containerType": {
-                    "type": "null"
-                  },
-                  "deviceType": {
-                    "type": "null"
-                  }
-                }
+              "containerType": {
+                "type": ["object", "null"],
+                "not": { "type": "object", "minProperties": 1 }
+              },
+              "deviceType": {
+                "type": ["object", "null"],
+                "not": { "type": "object", "minProperties": 1 }
               }
-            },
-            "required": [
-              "genericAndSpecificForms",
-              "containerOrDeviceType"
-            ]
+            }
           },
-          "errorMessage": {
-            "not": "You must provide either a Generic Form or Container/Device Type. Both cannot be empty."
+          "then": {
+            "not": { "type": "object" },
+            "errorMessage": {
+              "not": "You must provide at least one of Generic Form, Container Type, or Device Type."
+            }
           }
         }
       ]
