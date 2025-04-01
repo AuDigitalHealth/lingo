@@ -43,11 +43,10 @@
       "conditionLogic": "and"
     },
     "items": {
-      "ui:order": ["productDetails","unit", "value"],
+      "ui:order": ["productDetails", "unit", "value"],
       "ui:options": {
         "titleSource": "productDetails.productName.pt.term",
         "defaultTitle": "Product",
-
         "style": {
           "border": "1px solid #ddd",
           "padding": "10px",
@@ -56,7 +55,6 @@
         },
         "skipTitle": true
       },
-
       "unit": {
         "ui:field": "UnitValueRowField",
         "ui:title": "Pack Size",
@@ -79,9 +77,11 @@
         "ui:order": [
           "productName",
           "activeIngredients",
-          "genericAndSpecificForms",
+          "genericForm",
+          "specificForm",
           "quantity",
-          "containerOrDeviceType",
+          "containerType",
+          "deviceType",
           "otherIdentifyingInformation"
         ],
         "productName": {
@@ -98,17 +98,18 @@
           },
           "items": {
             "ui:order": [
-              "activeAndPreciseIngredients",
+              "activeIngredient",
+              "preciseIngredient",
               "basisOfStrengthSubstance",
               "concentrationStrength",
               "totalQuantity"
             ],
             "ui:options": {
-              "titleSource": "activeAndPreciseIngredients.activeIngredient.pt.term",
+              "titleSource": "activeIngredient.pt.term",
               "defaultTitle": "Ingredient",
               "skipTitle": true
             },
-            "activeAndPreciseIngredients": {
+            "activeIngredient": {
               "ui:field": "ParentChildAutoCompleteField",
               "ui:options": {
                 "parentFieldName": "activeIngredient",
@@ -126,6 +127,12 @@
                   "title": "Precise Ingredient",
                   "getEcl": "<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent)) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))))"
                 }
+              }
+            },
+            "preciseIngredient": {
+              "ui:widget": "hidden",
+              "ui:options": {
+                "skipTitle": true
               }
             },
             "basisOfStrengthSubstance": {
@@ -163,12 +170,11 @@
             }
           }
         },
-        "genericAndSpecificForms": {
+        "genericForm": {
           "ui:field": "ParentChildAutoCompleteField",
           "ui:options": {
             "parentFieldName": "genericForm",
             "childFieldName": "specificForm",
-            "skipTitle": true,
             "parentFieldOptions": {
               "ecl": "^929360071000036103.411116001",
               "extendedEcl": "<736542009",
@@ -183,6 +189,12 @@
             }
           }
         },
+        "specificForm": {
+          "ui:widget": "hidden",
+          "ui:options": {
+            "skipTitle": true
+          }
+        },
         "quantity": {
           "ui:field": "UnitValueField",
           "ui:title": "Unit Size",
@@ -195,7 +207,7 @@
             }
           }
         },
-        "containerOrDeviceType": {
+        "containerType": {
           "ui:field": "MutuallyExclusiveAutocompleteField",
           "ui:options": {
             "fieldAName": "containerType",
@@ -213,6 +225,12 @@
               "extendedEcl": "<63653004",
               "showDefaultOptions": true
             }
+          }
+        },
+        "deviceType": {
+          "ui:widget": "hidden",
+          "ui:options": {
+            "skipTitle": true
           }
         },
         "otherIdentifyingInformation": {
@@ -348,9 +366,11 @@
               "ui:order": [
                 "productName",
                 "activeIngredients",
-                "genericAndSpecificForms",
+                "genericForm",
+                "specificForm",
                 "quantity",
-                "containerOrDeviceType",
+                "containerType",
+                "deviceType",
                 "otherIdentifyingInformation"
               ],
               "productName": {
@@ -367,17 +387,18 @@
                 },
                 "items": {
                   "ui:order": [
-                    "activeAndPreciseIngredients",
+                    "activeIngredient",
+                    "preciseIngredient",
                     "basisOfStrengthSubstance",
                     "concentrationStrength",
                     "totalQuantity"
                   ],
                   "ui:options": {
-                    "titleSource": "activeAndPreciseIngredients.activeIngredient.pt.term",
+                    "titleSource": "activeIngredient.pt.term",
                     "defaultTitle": "Ingredient",
                     "skipTitle": true
                   },
-                  "activeAndPreciseIngredients": {
+                  "activeIngredient": {
                     "ui:field": "ParentChildAutoCompleteField",
                     "ui:options": {
                       "parentFieldName": "activeIngredient",
@@ -395,6 +416,12 @@
                         "title": "Precise Ingredient",
                         "getEcl": "<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent)) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))))"
                       }
+                    }
+                  },
+                  "preciseIngredient": {
+                    "ui:widget": "hidden",
+                    "ui:options": {
+                      "skipTitle": true
                     }
                   },
                   "basisOfStrengthSubstance": {
@@ -432,12 +459,11 @@
                   }
                 }
               },
-              "genericAndSpecificForms": {
+              "genericForm": {
                 "ui:field": "ParentChildAutoCompleteField",
                 "ui:options": {
                   "parentFieldName": "genericForm",
                   "childFieldName": "specificForm",
-                  "skipTitle": true,
                   "parentFieldOptions": {
                     "ecl": "^929360071000036103.411116001",
                     "extendedEcl": "<736542009",
@@ -452,6 +478,12 @@
                   }
                 }
               },
+              "specificForm": {
+                "ui:widget": "hidden",
+                "ui:options": {
+                  "skipTitle": true
+                }
+              },
               "quantity": {
                 "ui:field": "UnitValueField",
                 "ui:title": "Unit Size",
@@ -464,7 +496,7 @@
                   }
                 }
               },
-              "containerOrDeviceType": {
+              "containerType": {
                 "ui:field": "MutuallyExclusiveAutocompleteField",
                 "ui:options": {
                   "fieldAName": "containerType",
@@ -484,6 +516,12 @@
                   }
                 }
               },
+              "deviceType": {
+                "ui:widget": "hidden",
+                "ui:options": {
+                  "skipTitle": true
+                }
+              },
               "otherIdentifyingInformation": {
                 "ui:widget": "TextFieldWidget",
                 "ui:options": {
@@ -491,7 +529,6 @@
                   "placeholder": "Enter any additional identifying information"
                 }
               }
-
             }
           }
         }
