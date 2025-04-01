@@ -1,50 +1,59 @@
 import React from 'react';
-import { Grid, TextField } from '@mui/material';
 import { FieldProps } from '@rjsf/utils';
-import AutoCompleteField from './AutoCompleteField';
+import { Grid, TextField } from '@mui/material';
+import EclAutocomplete from '../components/EclAutocomplete.tsx';
+import useTaskById from '../../../../hooks/useTaskById.tsx';
+
+import { ErrorDisplay } from '../components/ErrorDisplay.tsx';
+import { getUniqueErrors } from '../helpers/errorUtils.ts';
 
 const UnitValueField = ({
   formData,
   onChange,
-  schema,
   uiSchema,
+  rawErrors = [],
+  errorSchema = {},
 }: FieldProps) => {
   const { value, unit } = formData || { value: undefined, unit: undefined };
+  const task = useTaskById();
+  const unitOptions = uiSchema?.unit?.['ui:options'] || {};
 
   const handleUnitChange = (selectedUnit: any | null) => {
     if (!selectedUnit) {
-      // Remove the 'unit' property from formData if selectedUnit is null
       const updatedFormData = { ...formData };
       delete updatedFormData.unit;
-
-      // Remove the 'value' property if unit is not present
-      if (!updatedFormData.unit) {
-        delete updatedFormData.value;
+      if (!updatedFormData.value) {
+        onChange(undefined);
       }
-
       onChange(updatedFormData);
     } else {
-      // Update unit value using the AutoCompleteField's onChange handler
-      onChange({ ...formData, unit: selectedUnit, value: value || 0 });
+      onChange({ ...formData, unit: selectedUnit });
     }
   };
 
   const handleValueChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const numericValue = parseFloat(event.target.value);
-    if (!isNaN(numericValue)) {
-      onChange({ ...formData, value: numericValue });
+    const inputValue = event.target.value;
+    if (inputValue === '') {
+      let updatedFormData = { ...formData };
+      delete updatedFormData.value;
+      if (!updatedFormData.unit) {
+        onChange(undefined);
+      } else {
+        onChange(updatedFormData);
+      }
+    } else {
+      const numericValue = parseFloat(inputValue);
+      if (!isNaN(numericValue)) {
+        onChange({ ...formData, value: numericValue });
+      }
     }
   };
 
-  // Get title from uiSchema (with fallback if title is not provided)
-  const title = uiSchema?.['ui:title'] || 'Unit and Value';
-
-  // Get only the 'unit' specific options from the uiSchema
-  const unitOptions = uiSchema?.unit?.['ui:options'] || {};
+  // Get unique errors without prefix for rawErrors
+  const allErrors = getUniqueErrors(rawErrors, errorSchema);
 
   return (
     <Grid container spacing={1} alignItems="center">
-      {/* Value field (e.g., number input) */}
       <Grid item xs={6}>
         <TextField
           label="Value"
@@ -53,23 +62,23 @@ const UnitValueField = ({
           type="number"
           fullWidth
           variant="outlined"
-          sx={{ mt: 0 }} // Remove top margin to align with AutoCompleteField
         />
       </Grid>
-
-      {/* Unit field with AutoCompleteField */}
       <Grid item xs={6}>
-        <AutoCompleteField
-          schema={schema}
-          formData={unit}
-          onChange={handleUnitChange}
-          uiSchema={{
-            'ui:options': {
-              ...unitOptions,
-            },
-          }}
-        />
+        {task && (
+          <EclAutocomplete
+            value={unit}
+            onChange={handleUnitChange}
+            ecl={unitOptions.ecl || ''}
+            branch={task.branchPath}
+            showDefaultOptions={unitOptions.showDefaultOptions || true}
+            isDisabled={false}
+            title="Unit"
+            errorMessage={''}
+          />
+        )}
       </Grid>
+      <ErrorDisplay errors={allErrors} />
     </Grid>
   );
 };

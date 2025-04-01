@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Autocomplete, CircularProgress, TextField, Box } from '@mui/material';
+import { Autocomplete, CircularProgress, TextField } from '@mui/material';
 import { Concept, ConceptMini } from '../../../../types/concept.ts';
-import { useSearchConceptOntoServerByUrl } from '../../../../hooks/api/products/useSearchConcept.tsx';
-import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../../utils/helpers/getValueSetExpansionContainsPt.ts';
-import useApplicationConfigStore from '../../../../stores/ApplicationConfigStore.ts';
 import { useSearchConceptsByEcl } from '../../../../hooks/api/useInitializeConcepts.tsx';
 
 interface EclAutocompleteProps {
@@ -15,6 +12,7 @@ interface EclAutocompleteProps {
   isDisabled: boolean;
   title?: string;
   errorMessage: string;
+  sx?: any; // Added to allow external styling
 }
 
 const EclAutocomplete: React.FC<EclAutocompleteProps> = ({
@@ -26,18 +24,18 @@ const EclAutocomplete: React.FC<EclAutocompleteProps> = ({
   isDisabled,
   title,
   errorMessage,
+  sx,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [options, setOptions] = useState<Concept[]>([]);
 
   const { isLoading, allData } = useSearchConceptsByEcl(
     inputValue,
-    ecl && ecl.length > 0 ? ecl : undefined, // Use extended ECL if `localExtendedEcl` is true, otherwise fallback to ecl
+    ecl && ecl.length > 0 ? ecl : undefined,
     branch as string,
     showDefaultOptions,
   );
 
-  // Update options when search results change
   useEffect(() => {
     if (allData) {
       const uniqueOptions = Array.from(
@@ -49,7 +47,6 @@ const EclAutocomplete: React.FC<EclAutocompleteProps> = ({
     }
   }, [allData]);
 
-  // Sync inputValue based on value or options
   useEffect(() => {
     if (value && options.length > 0) {
       const selectedOption = options.find(
@@ -61,13 +58,12 @@ const EclAutocomplete: React.FC<EclAutocompleteProps> = ({
     }
   }, [value, options]);
 
-  // Handle option selection
   const handleProductChange = (selectedProduct: Concept | null) => {
     if (selectedProduct) {
       const conceptMini: ConceptMini = {
         conceptId: selectedProduct.conceptId || '',
         pt: selectedProduct.pt,
-        fsn:selectedProduct.fsn
+        fsn: selectedProduct.fsn,
       };
       onChange(conceptMini);
       setInputValue(selectedProduct.pt?.term || '');
@@ -102,8 +98,8 @@ const EclAutocomplete: React.FC<EclAutocompleteProps> = ({
       renderInput={params => (
         <TextField
           {...params}
-          error={!!errorMessage}
-          helperText={errorMessage}
+          // error={!!errorMessage}
+          // helperText={errorMessage || ' '} // Reserve space even when no error
           label={title}
           InputProps={{
             ...params.InputProps,
@@ -115,8 +111,16 @@ const EclAutocomplete: React.FC<EclAutocompleteProps> = ({
             ),
           }}
           disabled={isDisabled}
+          sx={{
+            '& .MuiFormHelperText-root': {
+              m: 0, // Remove margin to keep layout tight
+              minHeight: '1em', // Reserve consistent space
+              color: errorMessage ? 'error.main' : 'text.secondary', // Change color based on errorMessage
+            },
+          }}
         />
       )}
+      sx={sx} // Pass external styles
     />
   );
 };

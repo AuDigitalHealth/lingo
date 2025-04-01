@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { WidgetProps } from '@rjsf/utils';
 import {
   Box,
-  Button,
   FormControl,
   InputLabel,
   Select,
@@ -17,20 +16,45 @@ import ValueSetAutocomplete from '../components/ValueSetAutocomplete';
 import EclAutocomplete from '../components/EclAutocomplete';
 import useTaskById from '../../../../hooks/useTaskById.tsx';
 
+// Define interfaces for type safety
+interface SchemaProperty {
+  const?: string;
+  default?: string;
+  enum?: string[];
+  title?: string;
+  pattern?: string;
+  errorMessage?: { pattern?: string };
+}
+
+interface SchemaOption {
+  title: string;
+  properties: { [key: string]: SchemaProperty };
+}
+
+interface Item {
+  identifierScheme: string;
+  identifierValue: string | null;
+  [key: string]: string | null;
+}
+
+interface BindingConfig {
+  [key: string]: { valueSet?: string; ecl?: string };
+}
+
+// Define the renderField function with proper types
 const renderField = (
   propName: string,
-  propSchema: any,
-  value: any,
-  onChange: (newValue: any) => void,
+  propSchema: SchemaProperty,
+  value: string | null,
+  onChange: (newValue: string | null) => void,
   disabled: boolean,
   readonly: boolean,
-  valueSetAutocomplete: boolean = false,
-  eclAutocomplete: boolean = false,
+  valueSetAutocomplete = false,
+  eclAutocomplete = false,
   scheme: string,
-  valueSetBinding: any,
-  eclBinding: any,
-  isMandatoryUnfilled: boolean = false, // Indicates if this field is mandatory and unfilled
-  submitAttempted: boolean = false, // Indicates submission attempt
+  bindingConfig: BindingConfig,
+  isMandatoryUnfilled = false,
+  submitAttempted = false,
   branch: string,
 ) => {
   if (propSchema.const) {
@@ -46,32 +70,32 @@ const renderField = (
         : '';
 
   if (valueSetAutocomplete) {
-    const binding = valueSetBinding[scheme] || {};
+    const binding = bindingConfig[scheme] || {};
     return (
       <Box paddingTop={1}>
         <ValueSetAutocomplete
           label={propSchema.title || 'Value'}
-          url={binding.url}
+          url={binding.valueSet || ''}
           showDefaultOptions={false}
-          value={value || null}
+          value={value}
           onChange={onChange}
           disabled={disabled || readonly}
-          error={errorMessage} // Pass error message
+          error={!!errorMessage}
         />
       </Box>
     );
   } else if (eclAutocomplete && branch) {
-    const binding = eclBinding[scheme] || {};
+    const binding = bindingConfig[scheme] || {};
     return (
       <Box paddingTop={1}>
         <EclAutocomplete
-          value={value || null}
-          ecl={binding.ecl}
+          value={value}
+          ecl={binding.ecl || ''}
           branch={branch}
           onChange={onChange}
           showDefaultOptions={false}
           isDisabled={disabled || readonly}
-          errorMessage={errorMessage} // Pass error message
+          errorMessage={errorMessage}
           title={propSchema.title || 'Value'}
         />
       </Box>
@@ -84,10 +108,10 @@ const renderField = (
         <InputLabel>{propSchema.title || propName}</InputLabel>
         <Select
           value={value || propSchema.default || ''}
-          onChange={e => onChange(e.target.value)}
+          onChange={e => onChange(e.target.value as string)}
           disabled={disabled || readonly}
         >
-          {propSchema.enum.map((option: any) => (
+          {propSchema.enum.map(option => (
             <MenuItem key={option} value={option}>
               {option}
             </MenuItem>
@@ -122,29 +146,22 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
     id,
     value,
     onChange,
-    required,
     disabled,
     readonly,
     uiSchema,
-    rawErrors, // RJSF validation errors
+    rawErrors = [],
   } = props;
 
-  if (!schema.items || !('oneOf' in schema.items)) {
-    console.error(
-      'OneOfArrayWidget requires an array with oneOf schema:',
-      schema,
-    );
-    return <div>Error: Expected an array with oneOf schema</div>;
-  }
   const task = useTaskById();
-
-  const oneOfOptions = schema.items.oneOf as any[];
-  const items = Array.isArray(value) ? value : [];
-  const valueSetBinding = uiSchema['ui:options']?.valueSetBinding || {};
-  const eclBinding = uiSchema['ui:options']?.binding || {};
-  const mandatorySchemes = uiSchema['ui:options']?.mandatorySchemes || [];
-  const multiValuedSchemes = uiSchema['ui:options']?.multiValuedSchemes || [];
-  const skipTitle = uiSchema['ui:options']?.skipTitle;
+  const oneOfOptions =
+    (schema.items as { oneOf?: SchemaOption[] })?.oneOf || [];
+  const items: Item[] = Array.isArray(value) ? value : [];
+  const binding: BindingConfig = uiSchema['ui:options']?.binding || {};
+  const mandatorySchemes: string[] =
+    uiSchema['ui:options']?.mandatorySchemes || [];
+  const multiValuedSchemes: string[] =
+    uiSchema['ui:options']?.multiValuedSchemes || [];
+  const skipTitle: boolean = uiSchema['ui:options']?.skipTitle || false;
 
   const [selectedType] = useState<string>(() => {
     if (items.length > 0) {
@@ -160,50 +177,53 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
   });
   const [dropdownType, setDropdownType] = useState<string>(selectedType);
 
-  const title = uiSchema['ui:options']?.title || schema.title || 'Items';
+  const title: string =
+    uiSchema['ui:options']?.title || schema.title || 'Items';
+  const submitAttempted = rawErrors.length > 0;
 
-  const hasValueSetBinding = (scheme: string) => !!valueSetBinding[scheme];
-  const hasEclBinding = (scheme: string) => !!eclBinding[scheme];
-
-  // Detect submission attempt via rawErrors
-  const submitAttempted = !!rawErrors?.length;
+  const hasValueSetBinding = (scheme: string): boolean =>
+    !!binding[scheme]?.valueSet;
+  const hasEclBinding = (scheme: string): boolean => !!binding[scheme]?.ecl;
 
   useEffect(() => {
     enforceMandatoryConstraints(items);
-  }, []);
+  }, [items]);
 
   const addItem = () => {
     const selectedSchema = oneOfOptions.find(
       option => option.title === dropdownType,
     );
-    const scheme = selectedSchema?.properties.identifierScheme.const;
-    const isMultiValued = multiValuedSchemes.includes(scheme);
-
     if (!selectedSchema) return;
 
-    const newItem: any = {};
-    Object.entries(selectedSchema.properties).forEach(
-      ([key, prop]: [string, any]) => {
-        if (prop.const) {
-          newItem[key] = prop.const;
-        } else if (
-          (hasValueSetBinding(scheme) || hasEclBinding(scheme)) &&
-          key === 'identifierValue'
-        ) {
-          newItem[key] = null;
-        } else if (prop.default) {
-          newItem[key] = prop.default;
-        } else {
-          newItem[key] = '';
-        }
-      },
-    );
+    const scheme = selectedSchema.properties.identifierScheme.const;
+    if (
+      !scheme ||
+      (!multiValuedSchemes.includes(scheme) &&
+        items.some(item => item.identifierScheme === scheme))
+    ) {
+      return;
+    }
 
-    const newItems = [...items, newItem];
-    onChange(newItems);
+    const newItem: Item = {};
+    Object.entries(selectedSchema.properties).forEach(([key, prop]) => {
+      if (prop.const) {
+        newItem[key] = prop.const;
+      } else if (
+        (hasValueSetBinding(scheme) || hasEclBinding(scheme)) &&
+        key === 'identifierValue'
+      ) {
+        newItem[key] = null;
+      } else if (prop.default) {
+        newItem[key] = prop.default;
+      } else {
+        newItem[key] = '';
+      }
+    });
+
+    onChange([...items, newItem]);
   };
 
-  const updateItem = (index: number, updated: any) => {
+  const updateItem = (index: number, updated: Item) => {
     const newItems = [...items];
     newItems[index] = updated;
     onChange(newItems);
@@ -215,7 +235,7 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
     enforceMandatoryConstraints(newItems);
   };
 
-  const enforceMandatoryConstraints = (currentItems: any[]) => {
+  const enforceMandatoryConstraints = (currentItems: Item[]) => {
     const missingMandatory = mandatorySchemes.filter(
       scheme => !currentItems.some(item => item.identifierScheme === scheme),
     );
@@ -225,23 +245,21 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
         option => option.properties.identifierScheme.const === scheme,
       );
       if (mandatorySchema) {
-        const newItem: any = {};
-        Object.entries(mandatorySchema.properties).forEach(
-          ([key, prop]: [string, any]) => {
-            if (prop.const) {
-              newItem[key] = prop.const;
-            } else if (
-              (hasValueSetBinding(scheme) || hasEclBinding(scheme)) &&
-              key === 'identifierValue'
-            ) {
-              newItem[key] = null;
-            } else if (prop.default) {
-              newItem[key] = prop.default;
-            } else {
-              newItem[key] = '';
-            }
-          },
-        );
+        const newItem: Item = {};
+        Object.entries(mandatorySchema.properties).forEach(([key, prop]) => {
+          if (prop.const) {
+            newItem[key] = prop.const;
+          } else if (
+            (hasValueSetBinding(scheme) || hasEclBinding(scheme)) &&
+            key === 'identifierValue'
+          ) {
+            newItem[key] = null;
+          } else if (prop.default) {
+            newItem[key] = prop.default;
+          } else {
+            newItem[key] = '';
+          }
+        });
         currentItems.push(newItem);
       }
     });
@@ -251,7 +269,7 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
     }
   };
 
-  const isRemoveDisabled = (index: number) => {
+  const isRemoveDisabled = (index: number): boolean => {
     const item = items[index];
     const scheme = item.identifierScheme;
     const isMandatory = mandatorySchemes.includes(scheme);
@@ -261,19 +279,20 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
     return isMandatory && !isMultiValued && count === 1;
   };
 
-  const isAddDisabled = () => {
+  const isAddDisabled = (): boolean => {
     const selectedSchema = oneOfOptions.find(
       option => option.title === dropdownType,
     );
-    const scheme = selectedSchema?.properties.identifierScheme.const;
-    const isMultiValued = multiValuedSchemes.includes(scheme);
+    if (!selectedSchema) return true;
 
+    const scheme = selectedSchema.properties.identifierScheme.const;
     return (
-      !isMultiValued && items.some(item => item.identifierScheme === scheme)
+      !multiValuedSchemes.includes(scheme) &&
+      items.some(item => item.identifierScheme === scheme)
     );
   };
 
-  const getUnfilledMandatorySchemes = () => {
+  const getUnfilledMandatorySchemes = (): string[] => {
     return mandatorySchemes.filter(
       scheme =>
         !items.some(
@@ -287,15 +306,23 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
 
   const unfilledMandatorySchemes = getUnfilledMandatorySchemes();
 
+  if (!schema.items || !('oneOf' in schema.items)) {
+    console.error(
+      'OneOfArrayWidget requires an array with oneOf schema:',
+      schema,
+    );
+    return <div>Error: Expected an array with oneOf schema</div>;
+  }
+
   return (
     <Box>
       {!skipTitle && title && (
-        <Typography variant="h6" sx={{ fontWeight: 'bold'}}>
+        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
           {title}
         </Typography>
       )}
 
-      {items.map((item: any, index: number) => {
+      {items.map((item, index) => {
         const schemaOption = oneOfOptions.find(
           option =>
             option.properties.identifierScheme.const === item.identifierScheme,
@@ -319,14 +346,12 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
               borderRadius: '4px',
               position: 'relative',
               ...(submitAttempted &&
-                isMandatoryUnfilled && {
-                  borderColor: 'error.main',
-                }),
+                isMandatoryUnfilled && { borderColor: 'error.main' }),
             }}
           >
             <Typography variant="subtitle1">{schemaOption.title}</Typography>
             {Object.entries(schemaOption.properties).map(
-              ([propName, propSchema]: [string, any]) => (
+              ([propName, propSchema]) => (
                 <div key={propName}>
                   {renderField(
                     propName,
@@ -339,11 +364,10 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
                     useValueSetAutocomplete,
                     useEclAutocomplete,
                     scheme,
-                    valueSetBinding,
-                    eclBinding,
-                    isMandatoryUnfilled, // Pass validation state
-                    submitAttempted, // Pass submission state
-                    task?.branchPath,
+                    binding,
+                    isMandatoryUnfilled,
+                    submitAttempted,
+                    task?.branchPath || '',
                   )}
                 </div>
               ),
@@ -363,7 +387,6 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
         );
       })}
 
-      {/* Global validation warning */}
       {submitAttempted && unfilledMandatorySchemes.length > 0 && (
         <Typography color="error" variant="body2" sx={{ mb: 2 }}>
           Please fill in the required fields for:{' '}
@@ -377,7 +400,7 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
             <InputLabel>Type</InputLabel>
             <Select
               value={dropdownType}
-              onChange={e => setDropdownType(e.target.value)}
+              onChange={e => setDropdownType(e.target.value as string)}
             >
               {oneOfOptions.map(option => (
                 <MenuItem key={option.title} value={option.title}>

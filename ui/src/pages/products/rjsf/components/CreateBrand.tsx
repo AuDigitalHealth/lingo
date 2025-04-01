@@ -1,4 +1,3 @@
-// components/CreateBrand.tsx
 import React, { useState, useEffect } from 'react';
 
 import { Button, TextField, CircularProgress, Box } from '@mui/material';
@@ -40,7 +39,7 @@ const CreateBrand: React.FC<CreateBrandProps> = ({
   const debouncedSearch = useDebounce(inputValue, 700);
 
   const createBrandOptions = uiSchema?.['ui:options']?.createBrand || {};
-  const ecl = createBrandOptions.ecl || '<774167006';
+  const ecl = createBrandOptions.ecl;
   const semanticTag = createBrandOptions.semanticTags || '';
 
   const { allData, isLoading } = useSearchConceptsByEcl(

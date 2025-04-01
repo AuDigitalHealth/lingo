@@ -1,6 +1,5 @@
 import { get } from 'lodash';
 
-// Define a type for a single condition
 export interface Condition {
   field: string; // The field to check in formData
   operator:
@@ -9,7 +8,7 @@ export interface Condition {
     | 'notEquals'
     | 'exists'
     | 'notExists';
-  value?: any; // The value to compare against (optional for exists/notExists)
+  value?: any;
 }
 
 // Evaluate a single condition
