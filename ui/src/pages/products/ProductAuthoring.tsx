@@ -1,16 +1,12 @@
 import React, { useEffect } from 'react';
 import SearchProduct from './components/SearchProduct.tsx';
-import useConceptStore from '../../stores/ConceptStore.ts';
+
 import { Card, Grid } from '@mui/material';
-import MedicationAuthoring from './components/MedicationAuthoring.tsx';
+
 import { Box, Stack } from '@mui/system';
-import useInitializeConcepts, {
-  useDefaultUnit,
-  useUnitPack,
-} from '../../hooks/api/useInitializeConcepts.tsx';
+import useInitializeConcepts from '../../hooks/api/useInitializeConcepts.tsx';
 import Loading from '../../components/Loading.tsx';
-import { Concept } from '../../types/concept.ts';
-import DeviceAuthoring from './components/DeviceAuthoring.tsx';
+
 import { Ticket } from '../../types/tickets/ticket.ts';
 import { Task } from '../../types/task.ts';
 import { useFieldBindings } from '../../hooks/api/useInitializeConfig.tsx';
@@ -18,13 +14,12 @@ import { useNavigate } from 'react-router-dom';
 import useAuthoringStore from '../../stores/AuthoringStore.ts';
 import { ActionType, ProductType } from '../../types/product.ts';
 import { isValueSetExpansionContains } from '../../types/predicates/isValueSetExpansionContains.ts';
-import PackSizeAuthoring from './components/PackSizeAuthoring.tsx';
-import BrandAuthoring from './components/BrandAuthoring.tsx';
+
 import EditProduct from './components/EditProduct.tsx';
 import MedicationAuthoringV2 from './rjsf/MedicationAuthoringV2.tsx';
 import DeviceAuthoringV2 from './rjsf/DeviceAuthoringV2.tsx';
-import BrandAuthoringV2 from "./rjsf/BrandAuthoringV2.tsx";
-import PackSizeAuthoringV2 from "./rjsf/PackSizeAuthoringV2.tsx";
+import BrandAuthoringV2 from './rjsf/BrandAuthoringV2.tsx';
+import PackSizeAuthoringV2 from './rjsf/PackSizeAuthoringV2.tsx';
 
 interface ProductAuthoringProps {
   ticket: Ticket;
@@ -38,19 +33,12 @@ function ProductAuthoring({
   ticket,
   task,
   productName,
-  productId,
   productType,
   actionType,
 }: ProductAuthoringProps) {
-  const conceptStore = useConceptStore();
-  const { defaultProductPackSizes, defaultProductBrands } = conceptStore;
   const { fieldBindingIsLoading, fieldBindings } = useFieldBindings(
     task.branchPath,
   );
-
-  const { unitPack } = useUnitPack(task.branchPath);
-
-  const { defaultUnit } = useDefaultUnit(task.branchPath);
 
   useInitializeConcepts(task.branchPath);
 
@@ -164,17 +152,19 @@ function ProductAuthoring({
               task={task}
             />
           ) : selectedActionType === ActionType.newPackSize ? (
-              <PackSizeAuthoringV2
-                  selectedProduct={selectedProduct}
-                  ticket={ticket}
-                  task={task}
-              />
+            <PackSizeAuthoringV2
+              selectedProduct={selectedProduct}
+              ticket={ticket}
+              task={task}
+              fieldBindings={fieldBindings}
+            />
           ) : selectedActionType === ActionType.newBrand ? (
-              <BrandAuthoringV2
-                  selectedProduct={selectedProduct}
-                  ticket={ticket}
-                  task={task}
-              />
+            <BrandAuthoringV2
+              selectedProduct={selectedProduct}
+              ticket={ticket}
+              task={task}
+              fieldBindings={fieldBindings}
+            />
           ) : selectedActionType === ActionType.editProduct ? (
             <EditProduct
               selectedProduct={selectedProduct}
