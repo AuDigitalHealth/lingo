@@ -5,6 +5,10 @@ models:
     baseMedicationUiSchema: classpath:AMT/base-medication-ui-schema.json
     baseDeviceSchema: classpath:AMT/base-device-schema.json
     baseDeviceUiSchema: classpath:AMT/base-device-ui-schema.json
+    baseBulkBrandSchema: classpath:AMT/base-bulk-brand-schema.json
+    baseBulkBrandUiSchema: classpath:AMT/base-bulk-brand-ui-schema.json
+    baseBulkPackSchema: classpath:AMT/base-bulk-pack-schema.json
+    baseBulkPackUiSchema: classpath:AMT/base-bulk-pack-ui-schema.json
     levels:
       - name: Medicinal Product
         displayLabel: MP
@@ -59,7 +63,8 @@ models:
         title: Associated procedure
         identifier: 71388002
         level: PACKAGE
-        dataType: STRING
+        dataType: STRING,
+        valueRegexValidation: ^.+$
         valueSetReference: http://snomed.info/sct?fhir_vs=ecl/%5E%2032570141000036105%20
         modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
         mandatory: false
@@ -83,7 +88,7 @@ models:
         dataType: UNSIGNED_INTEGER
         valueRegexValidation: \d{1,8}
         modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
-        mandatory: true
+        mandatory: false
         multiValued: false
       - name: licencedRoute
         title: Licenced Route

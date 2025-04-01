@@ -113,12 +113,13 @@ public class SchemaExtender {
       levelMatchingProperties.forEach(
           refset -> referenceSetList.getOneOf().add(SchemaFactory.create(refset)));
 
+      String updatedJsonTypeName = productPackageType+"_"+jsonTypeName;
       schemaNode
           .withObjectProperty(DEFS)
-          .set(jsonTypeName, objectMapper.valueToTree(referenceSetList));
+          .set(updatedJsonTypeName, objectMapper.valueToTree(referenceSetList));
 
       resultingProperty = new ArrayProperty();
-      resultingProperty.setItems(new ReferenceProperty("#/$defs/" + jsonTypeName));
+      resultingProperty.setItems(new ReferenceProperty("#/$defs/" + updatedJsonTypeName));
       resultingProperty.setTitle(title);
     }
     return resultingProperty;

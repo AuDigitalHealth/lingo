@@ -11,7 +11,10 @@ const TextFieldWidget = ({
   label,
   options,
 }: WidgetProps) => {
-  const placeholder = options?.placeholder || 'Enter text';
+  const placeholder =
+    (options?.placeholder as string | undefined) || 'Enter text';
+
+  const errors = rawErrors as string[] | undefined;
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -20,10 +23,12 @@ const TextFieldWidget = ({
         fullWidth
         variant="outlined"
         placeholder={placeholder}
-        value={value || ''} // Controlled component
-        onChange={e => onChange(e.target.value)} // Pass the updated value
-        error={rawErrors.length > 0}
-        helperText={rawErrors.length > 0 ? rawErrors[0] : ''}
+        value={(value as string) || ''}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+          onChange(e.target.value)
+        }
+        error={errors?.length > 0}
+        helperText={errors && errors.length > 0 ? errors[0] : ''}
         label={label}
         required={required}
       />
