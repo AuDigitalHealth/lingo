@@ -21,6 +21,7 @@ export function getFieldName(idSchema) {
   return fieldNameRaw.replace(/_(\d+)_/g, '[$1].');
 }
 export function getParentPath(fullPath) {
+  fullPath = fullPath.replace(/_/g, '.');
   const match = fullPath.match(/^(.*)\.[^.]+$/);
   return match ? match[1] : fullPath;
 }
