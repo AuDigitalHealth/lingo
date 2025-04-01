@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useRef } from 'react';
+import React, { useCallback, useState, useRef } from 'react';
 import { Form } from '@rjsf/mui';
 import { Container, Button, Box, Paper } from '@mui/material';
 import UnitValueField from './fields/UnitValueField.tsx';
@@ -27,11 +27,16 @@ import { useParams } from 'react-router-dom';
 import { useTicketByTicketNumber } from '../../../hooks/api/tickets/useTicketById.tsx';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import { ConfigService } from '../../../api/ConfigService.ts';
-import schemaTest from './MedicationProductDetails-schema.json';
-import uiSchemaTest from './MedicationProductDetails-uiSchema.json';
 import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
 import ConditionalArrayField from './fields/ConditionalArrayField.tsx';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
+
+import CompactQuantityField from './fields/CompactQuantityField.tsx';
+import _ from 'lodash';
+import schema from './base-medication-schema.json';
+import uiSchema from './base-medication-ui-schema.json';
+import CustomObjectFieldTemplate from "./templates/CustomObjectFieldTemplate.tsx";
+import UnitValueRowField from "./fields/UnitValueRowField.tsx";
 
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -47,6 +52,7 @@ function MedicationAuthoringV2({
 }: MedicationAuthoringV2Props) {
   const [formData, setFormData] = useState({});
   const formRef = useRef<any>(null); // Ref to access the RJSF Form instance
+  const [errorSchema, setErrorSchema] = useState({});
 
   const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
     task.branchPath,
@@ -102,6 +108,16 @@ function MedicationAuthoringV2({
       setFormData(newFormData);
     },
     formData, // Pass full form data
+    uiSchema,
+    errorSchema,
+  };
+  const onError = (errors: any) => {
+    console.log('Form errors:', errors);
+    const newErrorSchema = errors.reduce((acc: any, error: any) => {
+      _.set(acc, error.property.slice(1), { __errors: [error.message] });
+      return acc;
+    }, {});
+    setErrorSchema(newErrorSchema);
   };
 
   return (
@@ -129,14 +145,21 @@ function MedicationAuthoringV2({
                 ParentChildAutoCompleteField,
                 MutuallyExclusiveAutocompleteField,
                 ConditionalArrayField,
+                CompactQuantityField,
+                UnitValueRowField
               }}
               templates={{
                 FieldTemplate: CustomFieldTemplate,
                 ArrayFieldTemplate: CustomArrayFieldTemplate,
+                ObjectFieldTemplate: CustomObjectFieldTemplate,
               }}
               validator={validator}
-              widgets={{ NumberWidget, TextFieldWidget, OneOfArrayWidget }}
-              onError={errors => console.log('Validation Errors:', errors)}
+              widgets={{
+                NumberWidget,
+                TextFieldWidget,
+                OneOfArrayWidget,
+              }}
+              onError={onError}
               disabled={isPending}
             >
               <Box
@@ -192,7 +215,6 @@ export function useCalculateProduct() {
     mutationFn: async ({
       formData,
       ticket,
-      toggleModalOpen,
       task,
     }: UseCalculateProductArguments) => {
       const productSummary = await productService.previewNewMedicationProduct(
@@ -240,15 +262,12 @@ const fetchProductDataFn = async ({
   const productId = isValueSetExpansionContains(selectedProduct)
     ? selectedProduct.code
     : selectedProduct.conceptId;
-  try {
-    const mp = await productService.fetchMedication(
-      productId || '',
-      task.branchPath,
-    );
-    return mp.productName ? mp : null;
-  } catch (error) {
-    throw error;
-  }
+
+  const mp = await productService.fetchMedication(
+    productId || '',
+    task.branchPath,
+  );
+  return mp.productName ? mp : null;
 };
 
 interface ProductQueryProps {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Autocomplete, CircularProgress, TextField, Box } from '@mui/material';
-import { Concept, ConceptMini } from '../../../../types/concept.ts';
+import { Autocomplete, CircularProgress, TextField } from '@mui/material';
+import { Concept } from '../../../../types/concept.ts';
 import { useSearchConceptOntoServerByUrl } from '../../../../hooks/api/products/useSearchConcept.tsx';
 import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../../utils/helpers/getValueSetExpansionContainsPt.ts';
 import useApplicationConfigStore from '../../../../stores/ApplicationConfigStore.ts';
@@ -9,8 +9,8 @@ interface ValueSetAutocompleteProps {
   label?: string;
   url: string;
   showDefaultOptions?: boolean;
-  value: ConceptMini | null;
-  onChange: (value: ConceptMini | null) => void;
+  value: string | null; // Concept ID only
+  onChange: (value: string | null) => void;
   disabled?: boolean;
   error?: string;
 }
@@ -19,14 +19,14 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
   label,
   url,
   showDefaultOptions = false,
-  value,
+  value, // Concept ID only
   onChange,
   disabled = false,
   error,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [options, setOptions] = useState<Concept[]>([]);
-  const [useExtendedEcl, setUseExtendedEcl] = useState(false);
+  const [selectedConcept, setSelectedConcept] = useState<Concept | null>(null);
   const { applicationConfig } = useApplicationConfigStore();
   const { isLoading, data } = useSearchConceptOntoServerByUrl(
     inputValue,
@@ -34,47 +34,51 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
     showDefaultOptions,
   );
 
-  // Update options when search results change
+  // Update options when search data changes
   useEffect(() => {
-    if (data && data.expansion?.contains !== undefined) {
+    if (data?.expansion?.contains) {
       const concepts =
         convertFromValueSetExpansionContainsListToSnowstormConceptMiniList(
-          data.expansion?.contains,
+          data.expansion.contains,
           applicationConfig.fhirPreferredForLanguage,
-        );
+        ); //TODO we may not need this conversion as we only need the code and display
       const uniqueOptions = Array.from(
         new Map(concepts.map(item => [item.conceptId, item])).values(),
       );
       setOptions(uniqueOptions);
-    }
-  }, [data]);
 
-  // Sync inputValue with value or options
+      // If value exists and matches a fetched option, set selectedConcept
+      if (value && !selectedConcept) {
+        const matchingConcept = uniqueOptions.find(
+          option => option.conceptId === value,
+        );
+        if (matchingConcept) {
+          setSelectedConcept(matchingConcept);
+          setInputValue(matchingConcept.pt.term);
+        }
+      }
+    }
+  }, [
+    data,
+    applicationConfig.fhirPreferredForLanguage,
+    value,
+    selectedConcept,
+  ]);
+
+  // Trigger API search with conceptId when value changes
   useEffect(() => {
-    if (value && options.length > 0) {
-      const selectedOption = options.find(
-        option => option.conceptId === value.conceptId,
-      );
-      setInputValue(selectedOption?.pt.term || value?.pt?.term || '');
-    } else if (value) {
-      setInputValue(value?.pt?.term || '');
-    } else {
+    if (value && (!selectedConcept || selectedConcept.conceptId !== value)) {
+      setInputValue(value); // Use conceptId as initial search term
+    } else if (!value) {
+      setSelectedConcept(null);
       setInputValue('');
     }
-  }, [value, options]);
+  }, [value, selectedConcept]);
 
+  // Handle selection change
   const handleChange = (selectedValue: Concept | null) => {
-    if (selectedValue) {
-      const conceptMini: ConceptMini = {
-        conceptId: selectedValue.conceptId || '',
-        pt: selectedValue.pt,
-      };
-      onChange(conceptMini);
-      setInputValue(selectedValue.pt.term);
-    } else {
-      onChange(null);
-      setInputValue('');
-    }
+    setSelectedConcept(selectedValue);
+    onChange(selectedValue?.conceptId || null);
   };
 
   return (
@@ -82,11 +86,7 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
       loading={isLoading}
       options={disabled ? [] : options}
       getOptionLabel={option => option?.pt?.term || ''}
-      value={
-        options.find(option => option.conceptId === value?.conceptId) ||
-        value ||
-        null
-      }
+      value={selectedConcept} // Controlled by selectedConcept
       onInputChange={(_, newInputValue) => setInputValue(newInputValue)}
       onChange={(_, selectedValue) => handleChange(selectedValue as Concept)}
       isOptionEqualToValue={(option, val) =>
