@@ -1,19 +1,3 @@
-///
-/// Copyright 2024 Australian Digital Health Agency ABN 84 425 496 912.
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///   http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
 import ApplicationConfig, {
   SecureAppConfig,
   ServiceStatus,
@@ -79,7 +63,7 @@ export const ConfigService = {
     if (!uiSchemaResponse.ok) {
       throw new Error(`HTTP error! status: ${uiSchemaResponse.status}`);
     }
-    return await uiSchemaResponse.json();
+    return (await uiSchemaResponse.json()) as string;
   },
   async fetchMeddicationSchemaData(branchPath: string) {
     const schemaResponse = await fetch(
@@ -88,7 +72,7 @@ export const ConfigService = {
     if (!schemaResponse.ok) {
       throw new Error(`HTTP error! status: ${schemaResponse.status}`);
     }
-    return await schemaResponse.json();
+    return (await schemaResponse.json()) as string;
   },
   async fetchDeviceUiSchemaData(branchPath: string) {
     const uiSchemaResponse = await fetch(
@@ -97,13 +81,49 @@ export const ConfigService = {
     if (!uiSchemaResponse.ok) {
       throw new Error(`HTTP error! status: ${uiSchemaResponse.status}`);
     }
-    return await uiSchemaResponse.json();
+    return (await uiSchemaResponse.json()) as string;
   },
   async fetchDeviceSchemaData(branchPath: string) {
     const schemaResponse = await fetch(`/config/device/${branchPath}/schema`);
     if (!schemaResponse.ok) {
       throw new Error(`HTTP error! status: ${schemaResponse.status}`);
     }
-    return await schemaResponse.json();
+    return (await schemaResponse.json()) as string;
+  },
+  async fetchBulkBrandSchemaData(branchPath: string) {
+    const schemaResponse = await fetch(
+      `/config/bulk-brand/${branchPath}/schema`,
+    );
+    if (!schemaResponse.ok) {
+      throw new Error(`HTTP error! status: ${schemaResponse.status}`);
+    }
+    return (await schemaResponse.json()) as string;
+  },
+  async fetchBulkBrandUiSchemaData(branchPath: string) {
+    const schemaResponse = await fetch(
+      `/config/bulk-brand/${branchPath}/ui-schema`,
+    );
+    if (!schemaResponse.ok) {
+      throw new Error(`HTTP error! status: ${schemaResponse.status}`);
+    }
+    return (await schemaResponse.json()) as string;
+  },
+  async fetchBulkPackSchemaData(branchPath: string) {
+    const schemaResponse = await fetch(
+      `/config/bulk-pack/${branchPath}/schema`,
+    );
+    if (!schemaResponse.ok) {
+      throw new Error(`HTTP error! status: ${schemaResponse.status}`);
+    }
+    return (await schemaResponse.json()) as string;
+  },
+  async fetchBulkPackUiSchemaData(branchPath: string) {
+    const schemaResponse = await fetch(
+      `/config/bulk-pack/${branchPath}/ui-schema`,
+    );
+    if (!schemaResponse.ok) {
+      throw new Error(`HTTP error! status: ${schemaResponse.status}`);
+    }
+    return (await schemaResponse.json()) as string;
   },
 };

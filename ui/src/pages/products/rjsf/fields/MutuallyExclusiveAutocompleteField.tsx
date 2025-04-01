@@ -1,112 +1,145 @@
 import React, { useState } from 'react';
 import { FieldProps } from '@rjsf/core';
-
 import { Grid, Box, Typography } from '@mui/material';
 import AutoCompleteField from './AutoCompleteField.tsx';
+import { ConceptMini } from "../../../../types/concept.ts";
+import _ from 'lodash';
+import { getFieldName, getParentPath } from "../helpers/helpers.ts";
+import { getFieldErrors, getUniqueErrors } from "../helpers/errorUtils.ts";
+import { ErrorDisplay } from "../components/ErrorDisplay.tsx";
 
 const MutuallyExclusiveAutocompleteField = ({
-  formData,
-  uiSchema,
-  onChange,
-}: FieldProps) => {
-  const { fieldAOptions, fieldBOptions, fieldAName, fieldBName } =
-    uiSchema['ui:options'] || {};
+                                              formData,
+                                              uiSchema,
+                                              errorSchema = {},
+                                              registry,
+                                              formContext,
+                                              idSchema,
+                                              rawErrors
+                                            }: FieldProps) => {
+  const {
+    fieldAName = '',
+    fieldBName = '',
+    fieldAOptions,
+    fieldBOptions,
+  } = uiSchema['ui:options'] || {};
 
-  // Track the values of Field A and Field B
-  const [fieldAValue, setFieldAValue] = useState(formData?.[fieldAName]);
-  const [fieldBValue, setFieldBValue] = useState(formData?.[fieldBName]);
+  const fieldName = getFieldName(idSchema);
+  const parentPath = getParentPath(fieldName);
+  const rootFormData = _.get(registry, 'rootSchema.formData', formContext?.formData || formData || {});
 
-  const [isFieldADisabled, setIsFieldADisabled] = useState(false);
-  const [isFieldBDisabled, setIsFieldBDisabled] = useState(false);
+  // Get the current data at parentPath to preserve other fields
+  const currentData = _.get(rootFormData, parentPath) || {};
 
-  // Handle Field A selection
-  const handleFieldAChange = (newValue: any) => {
+  const initialFieldAValue = _.get(currentData, fieldAName) || null;
+  const initialFieldBValue = _.get(currentData, fieldBName) || null;
+
+  const [fieldAValue, setFieldAValue] = useState<ConceptMini | null>(initialFieldAValue);
+  const [fieldBValue, setFieldBValue] = useState<ConceptMini | null>(initialFieldBValue);
+  const [isFieldADisabled, setIsFieldADisabled] = useState(!!initialFieldBValue);
+  const [isFieldBDisabled, setIsFieldBDisabled] = useState(!!initialFieldAValue);
+
+  const handleFieldAChange = (newValue: ConceptMini | null) => {
     setFieldAValue(newValue);
+
+    const newRootFormData = _.cloneDeep(rootFormData);
+    let updatedData = { ...currentData };
+
     if (newValue) {
-      setFieldBValue(null); // Clear Field B value
-      setIsFieldBDisabled(true); // Disable Field B
-      onChange({
-        ...formData,
-        [fieldAName]: newValue,
-        [fieldBName]: null,
-      });
+      // Set fieldA and remove fieldB
+      updatedData[fieldAName] = newValue;
+      updatedData = _.omit(updatedData, fieldBName);
+      setFieldBValue(null);
+      setIsFieldBDisabled(true);
     } else {
-      setIsFieldBDisabled(false); // Enable Field B
-      onChange({
-        ...formData,
-        [fieldAName]: null,
-      });
+      // Remove fieldA and enable fieldB
+      updatedData = _.omit(updatedData, fieldAName);
+      setIsFieldBDisabled(false);
     }
+
+    _.set(newRootFormData, parentPath, updatedData);
+
+    console.log('Field A change payload:', { path: parentPath, data: updatedData });
+    formContext?.onChange(newRootFormData);
   };
 
-  // Handle Field B selection
-  const handleFieldBChange = (newValue: any) => {
+  const handleFieldBChange = (newValue: ConceptMini | null) => {
     setFieldBValue(newValue);
+
+    const newRootFormData = _.cloneDeep(rootFormData);
+    let updatedData = { ...currentData };
+
     if (newValue) {
-      setFieldAValue(null); // Clear Field A value
-      setIsFieldADisabled(true); // Disable Field A
-      onChange({
-        ...formData,
-        [fieldBName]: newValue,
-        [fieldAName]: null,
-      });
+      // Set fieldB and remove fieldA
+      updatedData[fieldBName] = newValue;
+      updatedData = _.omit(updatedData, fieldAName);
+      setFieldAValue(null);
+      setIsFieldADisabled(true);
     } else {
-      setIsFieldADisabled(false); // Enable Field A
-      onChange({
-        ...formData,
-        [fieldBName]: null,
-      });
+      // Remove fieldB and enable fieldA
+      updatedData = _.omit(updatedData, fieldBName);
+      setIsFieldADisabled(false);
     }
+
+    _.set(newRootFormData, parentPath, updatedData);
+    formContext?.onChange(newRootFormData);
   };
+
+  const fieldAErrors = getUniqueErrors(rawErrors, errorSchema);
+  const fieldBErrors = getFieldErrors(formContext?.errorSchema || {}, `${parentPath}.${fieldBName}`);
 
   return (
-    <Grid container spacing={2} alignItems="center">
-      {/* Field A */}
-      <Grid item xs={5}>
-        <Box>
-          <AutoCompleteField
-            schema={{ title: fieldAOptions?.title }}
-            uiSchema={{
-              'ui:options': {
-                ...fieldAOptions,
-                disabled: isFieldADisabled, // Make Field A non-clickable
-              },
-            }}
-            formData={fieldAValue}
-            onChange={handleFieldAChange}
-          />
-        </Box>
-      </Grid>
+      <Grid container spacing={2} alignItems="center">
+        {/* Field A (e.g., containerType) */}
+        <Grid item xs={5}>
+          <Box>
+            <AutoCompleteField
+                schema={{ title: fieldAOptions?.title }}
+                uiSchema={{
+                  'ui:options': {
+                    ...fieldAOptions,
+                    disabled: isFieldADisabled,
+                  }
+                }}
+                formData={fieldAValue}
+                onChange={handleFieldAChange}
+                errorSchema={errorSchema}
+            />
+            <ErrorDisplay errors={fieldAErrors} />
+          </Box>
+        </Grid>
 
-      {/* OR Label */}
-      <Grid item xs={2}>
-        <Typography
-          variant="h6"
-          align="center"
-          color="textSecondary"
-          style={{ fontWeight: 'bold' }}
-        >
-          OR
-        </Typography>
-      </Grid>
+        {/* OR Label */}
+        <Grid item xs={2}>
+          <Typography
+              variant="h6"
+              align="center"
+              color="textSecondary"
+              style={{ fontWeight: 'bold' }}
+          >
+            OR
+          </Typography>
+        </Grid>
 
-      {/* Field B */}
-      <Grid item xs={5}>
-        <Box>
-          <AutoCompleteField
-            schema={{ title: fieldBOptions?.title }}
-            uiSchema={{
-              'ui:options': {
-                ...fieldBOptions,
-                disabled: isFieldBDisabled, // Make Field B non-clickable
-              },
-            }}
-            formData={fieldBValue}
-            onChange={handleFieldBChange}
-          />
-        </Box>
+        {/* Field B (e.g., deviceType) */}
+        <Grid item xs={5}>
+          <Box>
+            <AutoCompleteField
+                schema={{ title: fieldBOptions?.title }}
+                uiSchema={{
+                  'ui:widget': 'hidden',
+                  'ui:options': {
+                    ...fieldBOptions,
+                    disabled: isFieldBDisabled,
+                  }
+                }}
+                formData={fieldBValue}
+                onChange={handleFieldBChange}
+            />
+            <ErrorDisplay errors={fieldBErrors} />
+          </Box>
+        </Grid>
       </Grid>
-    </Grid>
   );
 };
 

@@ -46,7 +46,7 @@ export interface Concept {
 export interface ConceptMini {
   conceptId: string;
   pt?: Term;
-  fsn?:Term;
+  fsn?: Term;
 }
 
 export interface BrowserConcept extends Concept {
