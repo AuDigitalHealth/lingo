@@ -8,7 +8,7 @@ import { getFieldErrors, getUniqueErrors } from "../helpers/errorUtils.ts";
 import { ErrorDisplay } from "../components/ErrorDisplay.tsx";
 import { getFieldName, getParentPath } from "../helpers/helpers.ts";
 
-const UnitValueRowField = (props: FieldProps) => {
+const UnitValueUnWrappedField = (props: FieldProps) => {
     const {
         formData, // unit field data
         uiSchema,
@@ -84,4 +84,4 @@ const UnitValueRowField = (props: FieldProps) => {
     );
 };
 
-export default UnitValueRowField;
+export default UnitValueUnWrappedField;

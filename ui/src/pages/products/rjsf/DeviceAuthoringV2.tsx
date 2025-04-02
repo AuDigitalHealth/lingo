@@ -6,7 +6,7 @@ import _ from 'lodash';
 import ajvErrors from 'ajv-errors';
 import AutoCompleteField from './fields/AutoCompleteField.tsx';
 import ParentChildAutoCompleteField from './fields/ParentChildAutoCompleteField.tsx';
-import UnitValueRowField from './fields/UnitValueRowField.tsx';
+import UnitValueUnWrappedField from './fields/UnitValueUnWrappedField.tsx';
 import ProductLoader from '../components/ProductLoader.tsx';
 import ProductPreviewCreateModal from '../components/ProductPreviewCreateModal.tsx';
 import CustomFieldTemplate from './templates/CustomFieldTemplate.tsx';
@@ -121,7 +121,7 @@ function DeviceAuthoringV2({
                 onSubmit={handleFormSubmit}
                 onError={onError}
                 fields={{
-                  UnitValueRowField,
+                  UnitValueUnWrappedField: UnitValueUnWrappedField,
                   AutoCompleteField,
                   ParentChildAutoCompleteField,
                 }}
