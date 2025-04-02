@@ -35,8 +35,6 @@ import {
   ProductCreationDetails,
   ProductType,
 } from '../../../types/product.ts';
-import schema from './base-medication-schema.json';
-import uiSchema from './base-medication-ui-schema.json';
 
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -57,8 +55,8 @@ function MedicationAuthoringV2({
 
   const { ticketNumber } = useParams();
   const useTicketQuery = useTicketByTicketNumber(ticketNumber, true);
-  const { data: schemaTest, isLoading: isSchemaLoading } = useSchemaQuery(task.branchPath);
-  const { data: uiSchemaTest, isLoading: isUiSchemaLoading } = useUiSchemaQuery(task.branchPath);
+  const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(task.branchPath);
+  const { data: uiSchema, isLoading: isUiSchemaLoading } = useUiSchemaQuery(task.branchPath);
   const { isLoading, isFetching } = useProductQuery({
     selectedProduct,
     task,
