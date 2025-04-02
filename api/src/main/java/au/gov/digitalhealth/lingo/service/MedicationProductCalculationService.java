@@ -277,7 +277,10 @@ public class MedicationProductCalculationService {
               + " is not valid for scheme "
               + externalIdentifier.getIdentifierScheme());
     }
-    if (mappingRefset.getValueRegexValidation() !=null && !externalIdentifier.getIdentifierValue().matches(mappingRefset.getValueRegexValidation())) {
+    if (mappingRefset.getValueRegexValidation() != null
+        && !externalIdentifier
+            .getIdentifierValue()
+            .matches(mappingRefset.getValueRegexValidation())) {
       throw new ProductAtomicDataValidationProblem(
           "External identifier value "
               + externalIdentifier.getIdentifierValue()
@@ -515,7 +518,6 @@ public class MedicationProductCalculationService {
         label.equals(ProductSummaryService.MPP_LABEL),
         true);
   }
-
 
   private Set<SnowstormRelationship> createPackagedClinicalDrugRelationships(
       PackageDetails<MedicationProductDetails> packageDetails,
@@ -870,6 +872,7 @@ public class MedicationProductCalculationService {
           CONCENTRATION_STRENGTH_UNIT,
           DataTypeEnum.DECIMAL,
           group);
+
       group++;
     }
 
