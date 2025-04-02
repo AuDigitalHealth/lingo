@@ -82,34 +82,6 @@
         }
       }
     },
-    "DeviceAndSpecificDeviceType": {
-      "type": "object",
-      "properties": {
-        "deviceType": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/SnowstormConceptMini"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "title": "Device Type"
-        },
-        "specificDeviceType": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/SnowstormConceptMini"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "title": "Specific Device Type"
-        }
-      },
-      "title": "Device and Specific device type"
-    },
     "ProductDetails": {
       "type": "object",
       "title": "Product Details",
@@ -123,24 +95,113 @@
           }
         },
 
-        "deviceAndSpecificDeviceType": {
-          "$ref": "#/$defs/DeviceAndSpecificDeviceType"
+        "deviceType": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Device Type"
+        },
+        "specificDeviceType": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SnowstormConceptMini"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Specific Device Type"
         },
         "otherIdentifyingInformation": {
           "type": "string",
           "title": "Other Identifying Information"
-        },
-        "packSize": {
-          "$ref": "#/$defs/Quantity",
-          "title": "Pack Size"
         }
       },
-      "required": ["productName", "deviceAndSpecificDeviceType", "packSize"],
+      "required": ["productName", "deviceType"],
       "errorMessage": {
         "required": "Product Details must be populated."
       }
-    }
+    },
+    "ContainedProduct": {
+      "type": "object",
+      "title": "Contained Product",
+      "properties": {
+        "unit": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "errorMessage": {
+            "type": "Invalid Pack Size Unit",
+            "minProperties": "Field must be populated."
+          }
+        },
+        "value": {
+          "type": "number",
+          "minimum": 0,
+          "errorMessage": {
+            "type": "Value must be a number",
+            "minimum": "Value must be at least 0"
+          }
+        },
+        "productDetails": {
+          "$ref": "#/$defs/ProductDetails"
+        }
+      },
+      "required": ["unit", "value", "productDetails"],
+      "errorMessage": {
+        "required": "Contained product must be populated."
+      },
+      "dependencies": {
+        "unit": {
+          "oneOf": [
+            {
+              "properties": {
+                "unit": {
+                  "properties": {
+                    "conceptId": {
+                      "const": "732935002",
+                      "errorMessage": {
+                        "const": "Invalid Unit and Value"
+                      }
+                    }
+                  },
+                  "required": ["conceptId"]
+                },
+                "value": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "errorMessage": {
+                    "type": "Value must be an integer when Unit is 'Each'",
+                    "const": "Unit must be 'Each' for this value constraint"
+                  }
+                }
+              },
+              "errorMessage": {
+                "oneOf": "Unit must be 'Each' with an integer value >= 1"
+              }
+            },
+            {
+              "properties": {
+                "unit": {
+                  "properties": {
+                    "conceptId": { "not": { "const": "732935002" } }
+                  }
+                },
+                "value": {
+                  "type": "number",
+                  "minimum": 0,
+                  "errorMessage": {
+                    "type": "Value must be a number ",
+                    "minimum": "Value must be at least 0"
+                  }
+                }
+              },
+              "errorMessage": {
+                "oneOf": "Unit must not be 'Each' and value must be a number >= 0"
 
+              }
+
+            }
+          ]
+        }
+      }
+    }
   },
   "properties": {
     "productName": {
@@ -163,8 +224,9 @@
       "type": "array",
       "title": "Contained Products",
       "items": {
-        "$ref": "#/$defs/ProductDetails"
-      }
+        "$ref": "#/$defs/ContainedProduct"
+      },
+      "minItems": 1
     }
   },
   "required": ["productName", "containerType","containedProducts"],
