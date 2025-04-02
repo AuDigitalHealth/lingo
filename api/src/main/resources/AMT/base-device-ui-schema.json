@@ -53,7 +53,7 @@
         "skipTitle": true
       },
       "unit": {
-        "ui:field": "UnitValueRowField",
+        "ui:field": "UnitValueUnWrappedField",
         "ui:title": "Pack Size",
         "ui:options": {
           "pairWith": "value",
