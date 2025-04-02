@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FieldProps } from '@rjsf/core';
-import { Box } from '@mui/material';
+import {Box, Typography} from '@mui/material';
 import AutoCompleteField from './AutoCompleteField.tsx';
 import { ConceptMini } from "../../../../types/concept.ts";
 import _ from 'lodash';
@@ -112,6 +112,10 @@ const ParentChildAutoCompleteField = ({
             </Box>
 
             <Box>
+                {!childFieldOptions?.skipTitle && (<Typography variant="h6" gutterBottom>
+                    {childFieldOptions?.title}
+                </Typography>)}
+
                 <AutoCompleteField
                     schema={{ title: childFieldOptions?.title }}
                     uiSchema={{
