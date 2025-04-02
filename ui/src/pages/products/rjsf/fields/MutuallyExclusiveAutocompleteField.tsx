@@ -93,6 +93,10 @@ const MutuallyExclusiveAutocompleteField = ({
         {/* Field A (e.g., containerType) */}
         <Grid item xs={5}>
           <Box>
+              {!fieldAOptions?.skipTitle && (<Typography variant="h6" gutterBottom>
+                  {fieldAOptions?.title}
+                  {/*{required && <span style={{ color: 'red' }}>*</span>}*/}
+              </Typography>)}
             <AutoCompleteField
                 schema={{ title: fieldAOptions?.title }}
                 uiSchema={{
@@ -124,6 +128,9 @@ const MutuallyExclusiveAutocompleteField = ({
         {/* Field B (e.g., deviceType) */}
         <Grid item xs={5}>
           <Box>
+              {!fieldBOptions?.skipTitle && (<Typography variant="h6" gutterBottom>
+                  {fieldBOptions?.title}
+              </Typography>)}
             <AutoCompleteField
                 schema={{ title: fieldBOptions?.title }}
                 uiSchema={{
