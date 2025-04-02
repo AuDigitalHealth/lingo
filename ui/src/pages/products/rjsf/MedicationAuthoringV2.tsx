@@ -12,7 +12,7 @@ import ParentChildAutoCompleteField from './fields/ParentChildAutoCompleteField.
 import MutuallyExclusiveAutocompleteField from './fields/MutuallyExclusiveAutocompleteField.tsx';
 import ConditionalArrayField from './fields/ConditionalArrayField.tsx';
 import CompactQuantityField from './fields/CompactQuantityField.tsx';
-import UnitValueRowField from './fields/UnitValueRowField.tsx';
+import UnitValueUnWrappedField from './fields/UnitValueUnWrappedField.tsx';
 import ProductLoader from '../components/ProductLoader.tsx';
 import ProductPreviewCreateModal from '../components/ProductPreviewCreateModal.tsx';
 import CustomFieldTemplate from './templates/CustomFieldTemplate.tsx';
@@ -135,7 +135,7 @@ function MedicationAuthoringV2({
                   MutuallyExclusiveAutocompleteField,
                   ConditionalArrayField,
                   CompactQuantityField,
-                  UnitValueRowField,
+                  UnitValueUnWrappedField,
                 }}
                 templates={{
                   FieldTemplate: CustomFieldTemplate,
