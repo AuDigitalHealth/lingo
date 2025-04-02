@@ -1,37 +1,33 @@
 import React, { useCallback, useState, useRef } from 'react';
 import { Form } from '@rjsf/mui';
 import { Container, Button, Box, Paper } from '@mui/material';
-import UnitValueField from './fields/UnitValueField.tsx';
-import ProductLoader from '../components/ProductLoader.tsx';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import _ from 'lodash';
+import ajvErrors from 'ajv-errors';
+import AutoCompleteField from './fields/AutoCompleteField.tsx';
 import ParentChildAutoCompleteField from './fields/ParentChildAutoCompleteField.tsx';
+import UnitValueRowField from './fields/UnitValueRowField.tsx';
+import ProductLoader from '../components/ProductLoader.tsx';
+import ProductPreviewCreateModal from '../components/ProductPreviewCreateModal.tsx';
+import CustomFieldTemplate from './templates/CustomFieldTemplate.tsx';
+import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
+import CustomObjectFieldTemplate from './templates/CustomObjectFieldTemplate.tsx';
+import NumberWidget from './widgets/NumberWidget.tsx';
+import TextFieldWidget from './widgets/TextFieldWidget.tsx';
+import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 import productService from '../../../api/ProductService.ts';
+import { ConfigService } from '../../../api/ConfigService.ts';
 import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
+import { customizeValidator } from '@rjsf/validator-ajv8';
 import { Concept } from '../../../types/concept.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
-import { customizeValidator } from '@rjsf/validator-ajv8';
-import MutuallyExclusiveAutocompleteField from './fields/MutuallyExclusiveAutocompleteField.tsx';
-import AutoCompleteField from './fields/AutoCompleteField.tsx';
-import CustomFieldTemplate from './templates/CustomFieldTemplate.tsx';
-import NumberWidget from './widgets/NumberWidget.tsx';
-import ajvErrors from 'ajv-errors';
-import TextFieldWidget from './widgets/TextFieldWidget.tsx';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import ProductPreviewCreateModal from '../components/ProductPreviewCreateModal.tsx';
 import { Task } from '../../../types/task.ts';
+import { Ticket } from '../../../types/tickets/ticket.ts';
 import {
   DevicePackageDetails,
   ProductCreationDetails,
   ProductType,
 } from '../../../types/product.ts';
-import { Ticket } from '../../../types/tickets/ticket.ts';
-import { ConfigService } from '../../../api/ConfigService.ts';
-import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
-import ConditionalArrayField from './fields/ConditionalArrayField.tsx';
-import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
-import _ from "lodash";
-import UnitValueRowField from "./fields/UnitValueRowField.tsx";
-import CustomObjectFieldTemplate from "./templates/CustomObjectFieldTemplate.tsx";
-
 export interface DeviceAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
   task: Task;
@@ -42,31 +38,28 @@ const validator = customizeValidator();
 ajvErrors(validator.ajv);
 
 function DeviceAuthoringV2({
-  task,
-  selectedProduct,
-  ticket,
-}: DeviceAuthoringV2Props) {
+                             task,
+                             selectedProduct,
+                             ticket,
+                           }: DeviceAuthoringV2Props) {
   const [formData, setFormData] = useState({});
-  const formRef = useRef<any>(null); // Ref to access the RJSF Form instance
   const [errorSchema, setErrorSchema] = useState({});
-  const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
-    task.branchPath,
-  );
-  const { data: uiSchema, isLoading: isUiSchemaLoading } = useUiSchemaQuery(
-    task.branchPath,
-  );
-  const mutation = useCalculateProduct();
-  const { isPending, data } = mutation;
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const formRef = useRef<any>(null); // Ref to access the RJSF Form instance
+
+  const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(task.branchPath);
+  const { data: uiSchema, isLoading: isUiSchemaLoading } = useUiSchemaQuery(task.branchPath);
   const { isLoading, isFetching } = useProductQuery({
     selectedProduct,
     task,
     setFunction: setFormData,
   });
+  const mutation = useCalculateProduct();
+  const { isPending, data } = mutation;
 
   const handleToggleCreateModal = useCallback(() => {
     setCreateModalOpen(!createModalOpen);
-  }, [setCreateModalOpen, createModalOpen]);
+  }, [createModalOpen]);
 
   const handleChange = ({ formData }: any) => {
     setFormData(formData);
@@ -75,16 +68,16 @@ function DeviceAuthoringV2({
   const handleFormSubmit = ({ formData }: any) => {
     mutation.mutate({
       formData,
-      ticket: ticket,
+      ticket,
       toggleModalOpen: handleToggleCreateModal,
       task,
     });
   };
 
   const handleClear = useCallback(() => {
-    setFormData({}); // Reset form data to empty object
+    setFormData({});
     if (formRef.current) {
-      formRef.current.reset(); // Reset native form
+      formRef.current.reset();
     }
   }, []);
 
@@ -95,6 +88,7 @@ function DeviceAuthoringV2({
   if (isSchemaLoading || isUiSchemaLoading) {
     return <ProductLoader message="Loading Schema" />;
   }
+
   const formContext = {
     onChange: (newFormData: any) => {
       setFormData(newFormData);
@@ -103,6 +97,7 @@ function DeviceAuthoringV2({
     uiSchema,
     errorSchema,
   };
+
   const onError = (errors: any) => {
     console.log('Form errors:', errors);
     const newErrorSchema = errors.reduce((acc: any, error: any) => {
@@ -111,79 +106,75 @@ function DeviceAuthoringV2({
     }, {});
     setErrorSchema(newErrorSchema);
   };
+
   return (
-    <>
-      <Paper
-        sx={{
-          bgcolor: '#fff',
-          borderRadius: 2,
-          boxShadow: 1,
-        }}
-      >
+      <Paper sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1 }}>
         <Box m={2} p={2}>
           <Container>
             <Form
-              ref={formRef}
-              schema={schema}
-              uiSchema={uiSchema}
-              formData={formData}
-              onChange={handleChange}
-              onSubmit={handleFormSubmit}
-              fields={{
-                UnitValueRowField,
-                AutoCompleteField,
-                ParentChildAutoCompleteField,
-                ConditionalArrayField,
-              }}
-              templates={{
-                FieldTemplate: CustomFieldTemplate,
-                ArrayFieldTemplate: CustomArrayFieldTemplate,
-                ObjectFieldTemplate: CustomObjectFieldTemplate,
-              }}
-              validator={validator}
-              widgets={{ NumberWidget, TextFieldWidget, OneOfArrayWidget }}
-              onError={onError}
-              formContext={formContext}
-              disabled={isPending}
+                ref={formRef}
+                schema={schema}
+                uiSchema={uiSchema}
+                formData={formData}
+                formContext={formContext}
+                onChange={handleChange}
+                onSubmit={handleFormSubmit}
+                onError={onError}
+                fields={{
+                  UnitValueRowField,
+                  AutoCompleteField,
+                  ParentChildAutoCompleteField,
+                }}
+                templates={{
+                  FieldTemplate: CustomFieldTemplate,
+                  ArrayFieldTemplate: CustomArrayFieldTemplate,
+                  ObjectFieldTemplate: CustomObjectFieldTemplate,
+                }}
+                validator={validator}
+                widgets={{
+                  NumberWidget,
+                  TextFieldWidget,
+                  OneOfArrayWidget,
+                }}
+                disabled={isPending}
             >
               <Box
-                sx={{
-                  mt: 2,
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  gap: 2,
-                }}
+                  sx={{
+                    mt: 2,
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    gap: 2,
+                  }}
               >
                 <Button
-                  variant="outlined"
-                  color="secondary"
-                  onClick={handleClear}
-                  disabled={isPending}
+                    variant="outlined"
+                    color="secondary"
+                    onClick={handleClear}
+                    disabled={isPending}
                 >
                   Clear
                 </Button>
                 <Button
-                  type="submit"
-                  variant="contained"
-                  color="primary"
-                  disabled={isPending}
+                    type="submit"
+                    variant="contained"
+                    color="primary"
+                    disabled={isPending}
                 >
                   {isPending ? 'Submitting...' : 'Preview'}
                 </Button>
               </Box>
             </Form>
+            <ProductPreviewCreateModal
+                open={createModalOpen}
+                handleClose={handleToggleCreateModal}
+                productCreationDetails={data}
+                branch={task.branchPath}
+                ticket={ticket}
+                productType={ProductType.device}
+            />
           </Container>
-          <ProductPreviewCreateModal
-            open={createModalOpen}
-            handleClose={handleToggleCreateModal}
-            productCreationDetails={data}
-            branch={task.branchPath}
-            ticket={ticket}
-            productType={ProductType.device}
-          />
         </Box>
       </Paper>
-    </>
   );
 }
 
@@ -197,13 +188,13 @@ interface UseCalculateProductArguments {
 export function useCalculateProduct() {
   const mutation = useMutation({
     mutationFn: async ({
-      formData,
-      ticket,
-      task,
-    }: UseCalculateProductArguments) => {
+                         formData,
+                         ticket,
+                         task,
+                       }: UseCalculateProductArguments) => {
       const productSummary = await productService.previewNewDeviceProduct(
-        formData,
-        task.branchPath,
+          formData,
+          task.branchPath,
       );
       const productCreationObj: ProductCreationDetails = {
         productSummary,
@@ -238,33 +229,33 @@ export const useUiSchemaQuery = (branchPath: string) => {
   });
 };
 
-const fetchProductDataFn = async ({
-  selectedProduct,
-  task,
-}: ProductQueryProps) => {
-  if (!selectedProduct) return null;
-  const productId = isValueSetExpansionContains(selectedProduct)
-    ? selectedProduct.code
-    : selectedProduct.conceptId;
-
-  const mp = await productService.fetchDevice(productId || '', task.branchPath);
-  return mp.productName ? mp : null;
-};
-
 interface ProductQueryProps {
   selectedProduct: Concept | ValueSetExpansionContains | null;
   task: Task;
   setFunction?: ({}) => void;
 }
 
-export const useProductQuery = ({
-  selectedProduct,
-  task,
-  setFunction,
-}: ProductQueryProps) => {
+const fetchProductDataFn = async ({
+                                    selectedProduct,
+                                    task,
+                                  }: ProductQueryProps) => {
+  if (!selectedProduct) return null;
   const productId = isValueSetExpansionContains(selectedProduct)
-    ? selectedProduct.code
-    : selectedProduct?.conceptId;
+      ? selectedProduct.code
+      : selectedProduct.conceptId;
+
+  const mp = await productService.fetchDevice(productId || '', task.branchPath);
+  return mp.productName ? mp : null;
+};
+
+export const useProductQuery = ({
+                                  selectedProduct,
+                                  task,
+                                  setFunction,
+                                }: ProductQueryProps) => {
+  const productId = isValueSetExpansionContains(selectedProduct)
+      ? selectedProduct.code
+      : selectedProduct?.conceptId;
   const queryKey = ['product', productId, task?.branchPath];
   return useQuery({
     queryKey,
