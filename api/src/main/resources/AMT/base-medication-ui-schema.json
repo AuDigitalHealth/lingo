@@ -218,6 +218,7 @@
               "ecl": "^929360051000036108.30465011000036106",
               "extendedEcl": "<49062001",
               "showDefaultOptions": true
+
             },
             "fieldBOptions": {
               "title": "Device Type",
@@ -236,7 +237,6 @@
         "otherIdentifyingInformation": {
           "ui:widget": "TextFieldWidget",
           "ui:options": {
-            "skipTitle": true,
             "placeholder": "Enter any additional identifying information"
           }
         }
@@ -501,7 +501,6 @@
                 "ui:options": {
                   "fieldAName": "containerType",
                   "fieldBName": "deviceType",
-                  "skipTitle": true,
                   "fieldAOptions": {
                     "title": "Container Type",
                     "ecl": "^929360051000036108.30465011000036106",
@@ -525,7 +524,6 @@
               "otherIdentifyingInformation": {
                 "ui:widget": "TextFieldWidget",
                 "ui:options": {
-                  "skipTitle": true,
                   "placeholder": "Enter any additional identifying information"
                 }
               }
