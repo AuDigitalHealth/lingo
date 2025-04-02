@@ -225,7 +225,8 @@
       "title": "Contained Products",
       "items": {
         "$ref": "#/$defs/ContainedProduct"
-      }
+      },
+      "minItems": 1
     }
   },
   "required": ["productName", "containerType","containedProducts"],

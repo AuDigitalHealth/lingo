@@ -29,6 +29,7 @@
   "containedProducts": {
     "ui:options": {
       "skipTitle": true,
+      "arrayTemplate": "accordion",
       "searchAndAddProduct": {
         "ecl": "^929360031000036100 AND <63653004",
         "type": "device",
