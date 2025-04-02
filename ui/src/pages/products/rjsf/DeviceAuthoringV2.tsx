@@ -28,6 +28,9 @@ import { ConfigService } from '../../../api/ConfigService.ts';
 import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
 import ConditionalArrayField from './fields/ConditionalArrayField.tsx';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
+import _ from "lodash";
+import UnitValueRowField from "./fields/UnitValueRowField.tsx";
+import CustomObjectFieldTemplate from "./templates/CustomObjectFieldTemplate.tsx";
 
 export interface DeviceAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -45,7 +48,7 @@ function DeviceAuthoringV2({
 }: DeviceAuthoringV2Props) {
   const [formData, setFormData] = useState({});
   const formRef = useRef<any>(null); // Ref to access the RJSF Form instance
-
+  const [errorSchema, setErrorSchema] = useState({});
   const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
     task.branchPath,
   );
@@ -96,7 +99,17 @@ function DeviceAuthoringV2({
     onChange: (newFormData: any) => {
       setFormData(newFormData);
     },
-    formData, // Pass full form data
+    formData,
+    uiSchema,
+    errorSchema,
+  };
+  const onError = (errors: any) => {
+    console.log('Form errors:', errors);
+    const newErrorSchema = errors.reduce((acc: any, error: any) => {
+      _.set(acc, error.property.slice(1), { __errors: [error.message] });
+      return acc;
+    }, {});
+    setErrorSchema(newErrorSchema);
   };
   return (
     <>
@@ -117,19 +130,19 @@ function DeviceAuthoringV2({
               onChange={handleChange}
               onSubmit={handleFormSubmit}
               fields={{
-                UnitValueField,
+                UnitValueRowField,
                 AutoCompleteField,
                 ParentChildAutoCompleteField,
-                MutuallyExclusiveAutocompleteField,
                 ConditionalArrayField,
               }}
               templates={{
                 FieldTemplate: CustomFieldTemplate,
                 ArrayFieldTemplate: CustomArrayFieldTemplate,
+                ObjectFieldTemplate: CustomObjectFieldTemplate,
               }}
               validator={validator}
               widgets={{ NumberWidget, TextFieldWidget, OneOfArrayWidget }}
-              onError={errors => console.log('Validation Errors:', errors)}
+              onError={onError}
               formContext={formContext}
               disabled={isPending}
             >
