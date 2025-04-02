@@ -27,6 +27,7 @@
   "containedProducts": {
     "ui:field": "ConditionalArrayField",
     "ui:options": {
+      "arrayTemplate": "accordion",
       "skipTitle": true,
       "searchAndAddProduct": {
         "ecl": "^929360031000036100 AND <763158003",
@@ -499,6 +500,7 @@
               "containerType": {
                 "ui:field": "MutuallyExclusiveAutocompleteField",
                 "ui:options": {
+                  "skipTitle": true,
                   "fieldAName": "containerType",
                   "fieldBName": "deviceType",
                   "fieldAOptions": {
