@@ -36,22 +36,14 @@ public class Ingredient extends ProductBaseDto {
 
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
-    Map<String, String> idMap = new HashMap<>();
-    idMap.put(activeIngredient.getConceptId(), SnowstormDtoUtil.getFsnTerm(activeIngredient));
+    Map<String, String> idMap = addToIdFsnMap(null, totalQuantity, concentrationStrength);
+    addToIdFsnMap(idMap, activeIngredient);
     if (preciseIngredient != null) {
-      idMap.put(preciseIngredient.getConceptId(), SnowstormDtoUtil.getFsnTerm(preciseIngredient));
-  }
-    if (basisOfStrengthSubstance != null) {
-      idMap.put(
-          basisOfStrengthSubstance.getConceptId(),
-          SnowstormDtoUtil.getFsnTerm(basisOfStrengthSubstance));
+      addToIdFsnMap(idMap, preciseIngredient);
     }
-    if (totalQuantity != null) {
-      idMap.putAll(totalQuantity.getIdFsnMap());
-  }
-    if (concentrationStrength != null) {
-      idMap.putAll(concentrationStrength.getIdFsnMap());
-  }
+    if (basisOfStrengthSubstance != null) {
+      addToIdFsnMap(idMap, basisOfStrengthSubstance);
+    }
     return idMap;
   }
 }
