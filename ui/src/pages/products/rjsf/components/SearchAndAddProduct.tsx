@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button, Box, Typography, CircularProgress } from '@mui/material';
 import EclAutocomplete from './EclAutocomplete';
 import { ConceptMini } from '../../../../types/concept.ts';
-import { ProductAddDetails } from '../../../../types/product.ts';
+import {MedicationProductQuantity, ProductAddDetails} from '../../../../types/product.ts';
 import productService from '../../../../api/ProductService.ts';
 import useTaskById from '../../../../hooks/useTaskById.tsx';
 import ProductService from '../../../../api/ProductService.ts';
@@ -11,6 +11,7 @@ import BaseModalFooter from '../../../../components/modal/BaseModalFooter.tsx';
 import BaseModal from '../../../../components/modal/BaseModal.tsx';
 import BaseModalBody from '../../../../components/modal/BaseModalBody.tsx';
 import BaseModalHeader from '../../../../components/modal/BaseModalHeader.tsx';
+import {useDefaultUnit} from "../../../../hooks/api/useInitializeConcepts.tsx";
 
 interface SearchAndAddProductProps {
   open: boolean;
@@ -37,6 +38,7 @@ const SearchAndAddProduct: React.FC<SearchAndAddProductProps> = ({
   const isPackage = uiSchema?.['ui:options']?.searchAndAddProduct.package;
   const type = uiSchema?.['ui:options']?.searchAndAddProduct.type;
   const productTitle = isPackage ? 'Package' : 'Product';
+  const { defaultUnit } = useDefaultUnit(task?.branchPath as string);
 
   // Fetch product details when a product is selected
   useEffect(() => {
@@ -48,21 +50,37 @@ const SearchAndAddProduct: React.FC<SearchAndAddProductProps> = ({
           let productDetails;
 
           if (type === 'device') {
-            productDetails = await productService.fetchDeviceProduct(
+
+            const deviceDetails = await productService.fetchDeviceProduct(
               selectedProduct.conceptId as string,
               task?.branchPath as string,
             );
+            productDetails = {
+              productDetails: deviceDetails,
+              value: 1,
+              unit: defaultUnit,
+            };
           } else if (type === 'medication') {
             if (isPackage) {
-              productDetails = await ProductService.fetchMedication(
+              const medicationPackageDetails = await ProductService.fetchMedication(
                 selectedProduct.conceptId as string,
                 task?.branchPath as string,
               );
+              productDetails = {
+                packageDetails: medicationPackageDetails,
+                value: 1,
+                unit: defaultUnit,
+              };
             } else {
-              productDetails = await productService.fetchMedicationProduct(
+              const medicationProductDetails = await productService.fetchMedicationProduct(
                 selectedProduct.conceptId as string,
                 task?.branchPath as string,
               );
+              productDetails = {
+                productDetails: medicationProductDetails,
+                value: 1,
+                unit: defaultUnit,
+              };
             }
           }
 
