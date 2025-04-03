@@ -15,7 +15,6 @@
  */
 package au.gov.digitalhealth.lingo.product.details;
 
-import au.gov.digitalhealth.lingo.validation.OnlyOneNotEmpty;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -25,15 +24,14 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@OnlyOneNotEmpty(
-    fields = {"containedProducts", "containedPackages"},
-    message = "Either containedProducts or containedPackages must be populated, but not both")
-public class ContainedPackageDetails<T extends ProductDetails> extends PackageDetails<T> {
-  @NotNull @Valid Quantity packSize;
+public class ProductQuantity<T extends ProductDetails> extends Quantity {
+  @NotNull @Valid T productDetails;
 
   @Override
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
-    return addToIdFsnMap(super.getIdFsnMap(), packSize);
+    Map<String, String> idMap = productDetails.getIdFsnMap();
+    idMap.putAll(super.getIdFsnMap());
+    return idMap;
   }
 }

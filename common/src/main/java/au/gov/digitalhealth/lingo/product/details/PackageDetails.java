@@ -16,11 +16,13 @@
 package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import au.gov.digitalhealth.lingo.validation.OnlyOneNotEmpty;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.Data;
@@ -34,18 +36,20 @@ import lombok.EqualsAndHashCode;
 public class PackageDetails<T extends ProductDetails> extends PackageProductDetailsBase {
   @NotNull SnowstormConceptMini productName;
   @NotNull SnowstormConceptMini containerType;
-  List<@Valid T> containedProducts = new ArrayList<>();
-  List<@Valid ContainedPackageDetails<T>> containedPackages = new ArrayList<>();
+  List<@Valid ProductQuantity<T>> containedProducts = new ArrayList<>();
+  List<@Valid PackageQuantity<T>> containedPackages = new ArrayList<>();
   List<String> selectedConceptIdentifiers = new ArrayList<>();
 
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
-    Map<String, String> idMap = addToIdFsnMap(null, productName, containerType);
-    for (T productQuantity : containedProducts) {
-      addToIdFsnMap(idMap, productQuantity);
+    Map<String, String> idMap = new HashMap<>();
+    idMap.put(productName.getConceptId(), SnowstormDtoUtil.getFsnTerm(productName));
+    idMap.put(containerType.getConceptId(), SnowstormDtoUtil.getFsnTerm(containerType));
+    for (ProductQuantity<T> productQuantity : containedProducts) {
+      idMap.putAll(productQuantity.getIdFsnMap());
     }
-    for (ContainedPackageDetails<T> packageQuantity : containedPackages) {
-      addToIdFsnMap(idMap, packageQuantity);
+    for (PackageQuantity<T> packageQuantity : containedPackages) {
+      idMap.putAll(packageQuantity.getIdFsnMap());
     }
     return idMap;
   }
