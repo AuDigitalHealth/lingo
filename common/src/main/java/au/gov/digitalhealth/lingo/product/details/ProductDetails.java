@@ -34,7 +34,6 @@ import lombok.EqualsAndHashCode;
   @Type(value = DeviceProductDetails.class, name = "device")
 })
 public abstract class ProductDetails extends PackageProductDetailsBase {
-  @NotNull @Valid Quantity packSize;
   @NotNull SnowstormConceptMini productName;
   String otherIdentifyingInformation;
 
