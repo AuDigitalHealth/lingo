@@ -51,11 +51,47 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
 
   return (
     <div>
+      <Toolbar
+          variant="dense"
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          paddingLeft: '0px ! important',
+          paddingRight: '17px ! important',
+          gap: '0px',
+        }}>
       {title && (
-        <Typography variant="h6" sx={{ fontWeight: 'bold', mt: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: 'bold', mt: 2, flexGrow: 1 }}>
           {title}
         </Typography>
       )}
+        {canAdd && (
+            <div style={{ marginTop: '10px', display: 'flex', gap: '0px' }}>
+              <Tooltip title="Add Manually">
+                <IconButton onClick={onAddClick}>
+                  <AddCircleOutlineIcon color="primary" />
+                </IconButton>
+              </Tooltip>
+              {uiSchema?.['ui:options']?.searchAndAddProduct && (
+                  <Tooltip title="Search and Add">
+                    <IconButton onClick={handleOpenSearchModal}>
+                      <SearchAndAddIcon width="20px" />
+                    </IconButton>
+                  </Tooltip>
+              )}
+            </div>
+        )}
+
+        {uiSchema?.['ui:options']?.searchAndAddProduct && (
+            <SearchAndAddProduct
+                open={openSearchModal}
+                onClose={handleCloseSearchModal}
+                onAddProduct={handleAddProduct}
+                uiSchema={uiSchema}
+            />
+        )}
+      </Toolbar>
 
       {items.map(element => {
         const itemTitle = getItemTitle(uiSchema, formData, element.index);
@@ -82,32 +118,6 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
           </Box>
         );
       })}
-
-      {canAdd && (
-        <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
-          <Tooltip title="Add Manually">
-            <IconButton onClick={onAddClick}>
-              <AddCircleOutlineIcon color="primary" />
-            </IconButton>
-          </Tooltip>
-          {uiSchema?.['ui:options']?.searchAndAddProduct && (
-            <Tooltip title="Search and Add">
-              <IconButton onClick={handleOpenSearchModal}>
-                <SearchAndAddIcon width="20px" />
-              </IconButton>
-            </Tooltip>
-          )}
-        </div>
-      )}
-
-      {uiSchema?.['ui:options']?.searchAndAddProduct && (
-        <SearchAndAddProduct
-          open={openSearchModal}
-          onClose={handleCloseSearchModal}
-          onAddProduct={handleAddProduct}
-          uiSchema={uiSchema}
-        />
-      )}
     </div>
   );
 };
