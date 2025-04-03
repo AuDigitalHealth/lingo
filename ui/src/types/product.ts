@@ -14,7 +14,13 @@
 /// limitations under the License.
 ///
 
-import { Concept, Description, ProductSummary } from './concept.ts';
+import {
+  BrowserConcept,
+  Concept,
+  Description,
+  ProductSummary,
+} from './concept.ts';
+import { VersionedEntity } from './tickets/ticket.ts';
 
 export enum ProductType {
   medication = 'medication',
@@ -22,6 +28,7 @@ export enum ProductType {
   brandPackSize = 'brand-pack-size',
   bulkPackSize = 'bulk-pack-size',
   bulkBrand = 'bulk-brand',
+  productUpdate = 'product-update',
 }
 
 export enum ActionType {
@@ -122,10 +129,30 @@ export interface DevicePackageDetails {
 }
 
 export interface BrandPackSizeCreationDetails {
-  type?: string;
+  type?: ProductType.bulkBrand | ProductType.bulkPackSize;
   productId: string;
   brands?: ProductBrands;
   packSizes?: ProductPackSizes;
+}
+
+export const isProductUpdateDetails = (
+  details:
+    | BrandPackSizeCreationDetails
+    | ProductUpdateCreationDetails
+    | undefined,
+): details is ProductUpdateCreationDetails => {
+  return details?.type === ProductType.productUpdate;
+};
+export interface ProductUpdateCreationDetails {
+  type?: ProductType.productUpdate;
+  productId: string;
+  historicState: ProductUpdateState;
+  updatedState: ProductUpdateState;
+}
+
+export interface ProductUpdateState {
+  concept: BrowserConcept;
+  externalIdentifiers: ExternalIdentifier[];
 }
 
 export interface ProductCreationDetails {
@@ -140,19 +167,30 @@ export interface ProductCreationDetails {
   nameOverride: string | null;
 }
 
+export interface ProductUpdate extends VersionedEntity {
+  productId: string;
+  historicState: {
+    descriptions: Description[];
+    artgids: string[];
+  };
+  updatedState: {
+    descriptions: Description[];
+    artgids: string[];
+  };
+}
 export interface ProductUpdateRequest {
+  ticketId: number;
   descriptionUpdate: ProductDescriptionUpdateRequest;
   externalRequesterUpdate: ProductExternalRequesterUpdateRequest;
 }
 export interface ProductDescriptionUpdateRequest {
   descriptions: Description[];
-  ticketId: number;
 }
 
 export interface ProductExternalRequesterUpdateRequest {
   externalIdentifiers: ExternalIdentifier[];
-  ticketId: number;
 }
+
 export interface BulkProductCreationDetails {
   productSummary: ProductSummary;
   details: BrandPackSizeCreationDetails;

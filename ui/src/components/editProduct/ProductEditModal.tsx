@@ -29,7 +29,12 @@ import {
   FieldLabelRequired,
   InnerBoxSmall,
 } from '../../pages/products/components/style/ProductBoxes.tsx';
-import { filterKeypress } from '../../utils/helpers/conceptUtils.ts';
+import {
+  filterKeypress,
+  findDefaultLangRefset,
+  isPreferredTerm,
+  sortDescriptions,
+} from '../../utils/helpers/conceptUtils.ts';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -37,21 +42,21 @@ import {
   Controller,
   FieldArrayWithId,
   FieldError,
+  useController,
   useFieldArray,
   useForm,
   useFormState,
+  useWatch,
 } from 'react-hook-form';
 import {
   ExternalIdentifier,
-  ProductDescriptionUpdateRequest,
-  ProductExternalRequesterUpdateRequest,
   ProductUpdateRequest,
 } from '../../types/product.ts';
 import ArtgAutoComplete from '../../pages/products/components/ArtgAutoComplete.tsx';
 import {
-  useUpdateProductDescription,
+  useUpdateProduct,
   useUpdateProductExternalIdentifiers,
-} from '../../hooks/api/products/useUpdateProductDescription.tsx';
+} from '../../hooks/api/products/useUpdateProduct.tsx';
 import { Ticket } from '../../types/tickets/ticket.ts';
 import { useTheme } from '@mui/material/styles';
 import {
@@ -81,6 +86,7 @@ import Loading from '../Loading.tsx';
 import { enqueueSnackbar } from 'notistack';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { productUpdateValidationSchema } from '../../types/productValidations.ts';
+import { useNavigate } from 'react-router-dom';
 
 const USLangRefset: LanguageRefset = {
   default: 'false',
@@ -167,6 +173,7 @@ function EditConceptBody({
   isCtpp,
   sevenBoxConceptId,
 }: EditConceptBodyProps) {
+  const navigate = useNavigate();
   const { data, isFetching } = useSearchConceptByIdNoCache(
     product.conceptId,
     branch,
@@ -174,6 +181,13 @@ function EditConceptBody({
 
   const { data: projects } = useAvailableProjects();
   const { applicationConfig } = useApplicationConfigStore();
+
+  const defaultSemanticTag = extractSemanticTag(
+    data?.descriptions.find(desc => {
+      return desc.type === 'FSN' && desc.active === true;
+    })?.term,
+  );
+
   const project = getProjectFromKey(applicationConfig?.apProjectKey, projects);
 
   const [displayRetiredDescriptions, setDisplayRetiredDescriptions] =
@@ -199,39 +213,12 @@ function EditConceptBody({
     product.externalIdentifiers ? product.externalIdentifiers : [],
   );
 
-  const defaultLangRefset = langRefsets.find(langRefsets => {
-    return langRefsets.default === 'true';
-  });
-
-  const isPreferredTerm = (description: Description): boolean => {
-    if (!description) {
-      return false;
-    }
-    return (
-      description.type === 'SYNONYM' &&
-      defaultLangRefset !== undefined &&
-      description.acceptabilityMap?.[defaultLangRefset.en] === 'PREFERRED'
-    );
-  };
+  const defaultLangRefset = findDefaultLangRefset(langRefsets);
 
   const sortedDescriptions = useMemo(() => {
     if (!descriptions) return [];
 
-    const fsn = descriptions.find(d => {
-      return d.type === 'FSN' && d.active === true;
-    });
-    const preferredSynonym = descriptions.find(isPreferredTerm);
-    const otherSynonyms = descriptions.filter(
-      d => d.type === 'SYNONYM' && d !== preferredSynonym,
-    );
-
-    const tempDescriptions = [
-      ...(fsn ? [fsn] : []),
-      ...(preferredSynonym ? [preferredSynonym] : []),
-      ...otherSynonyms,
-    ];
-    return tempDescriptions;
-    // eslint-disable-next-line
+    return sortDescriptions(descriptions, defaultLangRefset);
   }, [descriptions, defaultLangRefset]);
 
   const sortedDescriptionsWithoutSemanticTags = useMemo(() => {
@@ -246,15 +233,14 @@ function EditConceptBody({
 
   const defaultValues = useMemo(() => {
     return {
+      ticketId: ticket.id,
       externalRequesterUpdate: {
         externalIdentifiers: product.externalIdentifiers
           ? sortExternalIdentifiers(product.externalIdentifiers)
           : [],
-        ticketId: ticket.id,
       },
       descriptionUpdate: {
         descriptions: descriptions,
-        ticketId: ticket.id,
       },
     } as ProductUpdateRequest;
   }, [product, ticket, descriptions]);
@@ -264,7 +250,6 @@ function EditConceptBody({
     control,
     setError,
     reset,
-    formState: { errors },
     getValues,
     setValue,
     watch,
@@ -278,8 +263,7 @@ function EditConceptBody({
   });
 
   useEffect(() => {
-    // eslint-disable-next-line
-    const subscription = watch((value, { name, type }) => {
+    const subscription = watch((value, { name }) => {
       if (name?.includes('term')) return;
       void trigger();
     });
@@ -316,12 +300,12 @@ function EditConceptBody({
   }, [sortedDescriptionsWithoutSemanticTags, reset, getValues]);
 
   const theme = useTheme();
-  const updateProductDescriptionMutation = useUpdateProductDescription();
+  const updateProductMutation = useUpdateProduct();
   const updateProductExternalIdentifierMutation =
     useUpdateProductExternalIdentifiers();
 
   const { isPending, data: updateProductDescriptionData } =
-    updateProductDescriptionMutation;
+    updateProductMutation;
   const {
     isPending: isExternalIdentifiersPending,
     data: updateExternalIdentifierData,
@@ -360,16 +344,17 @@ function EditConceptBody({
 
   const queryClient = useQueryClient();
 
-  const updateDescription = (request: ProductDescriptionUpdateRequest) => {
+  const sendUpdateProductRequest = (request: ProductUpdateRequest) => {
     const productId = product.conceptId;
-    updateProductDescriptionMutation.mutate(
+    updateProductMutation.mutate(
       {
-        productDescriptionUpdateRequest: cloneDeep(request),
+        productUpdateRequest: cloneDeep(request),
         productId: productId,
         branch: branch,
       },
       {
-        onSuccess: () => {
+        onSuccess: res => {
+          const bulkQueryKey = ['ticket-bulk-product-actions', `${ticket.id}`];
           const queryKey = getSearchConceptsByEclOptions(
             descriptions.find(d => d.type === 'FSN')?.term as string,
             ctppSearchEcl,
@@ -386,37 +371,24 @@ function EditConceptBody({
             variant: 'success',
           });
           formSubmissionData.current = null;
+          void queryClient
+            .invalidateQueries({ queryKey: bulkQueryKey })
+            .then(() => {
+              const productUpdateDetailsId = res.id;
+              if (productUpdateDetailsId) {
+                void navigate(`view/update/${productUpdateDetailsId}`);
+              }
+            });
         },
       },
     );
-  };
-
-  const updateArtgIds = (
-    externalRequesterUpdate: ProductExternalRequesterUpdateRequest,
-    productId: string,
-    ticketId: number,
-  ) => {
-    externalRequesterUpdate.ticketId = ticketId;
-    return new Promise<void>((resolve, reject) => {
-      updateProductExternalIdentifierMutation.mutate(
-        { externalRequesterUpdate, productId, branch },
-        {
-          onSuccess: result => {
-            product.externalIdentifiers = result;
-            resolve();
-          },
-          onError: reject,
-        },
-      );
-    });
   };
 
   /**
    * Handling sequential call. Snowstorm is throwing error simultaneously updating artg id and product descriptions
    * @param data
    */
-  const updateProduct = async (data: ProductUpdateRequest) => {
-    const productId = product.conceptId;
+  const updateProduct = (data: ProductUpdateRequest) => {
     const newFsnIndex = data.descriptionUpdate?.descriptions?.findIndex(
       description => {
         return description.type === 'FSN' && description.active === true;
@@ -435,7 +407,8 @@ function EditConceptBody({
         Object.keys(description.acceptabilityMap).forEach(key => {
           if (
             readOnlyLangRefsetsIds.includes(key) &&
-            description.acceptabilityMap
+            description.acceptabilityMap &&
+            description.acceptabilityMap[key] === 'NOT ACCEPTABLE'
           ) {
             delete description.acceptabilityMap[key];
           }
@@ -447,6 +420,7 @@ function EditConceptBody({
       data.descriptionUpdate.descriptions = processDescriptionsWithSemanticTags(
         data.descriptionUpdate?.descriptions,
         sortedDescriptions,
+        defaultSemanticTag,
       );
     }
 
@@ -473,21 +447,8 @@ function EditConceptBody({
     );
 
     try {
-      if (artgModified && anyDescriptionModified) {
-        void (await updateArtgIds(
-          data.externalRequesterUpdate,
-          productId,
-          ticket.id,
-        ));
-        updateDescription(data.descriptionUpdate);
-      } else if (artgModified) {
-        void (await updateArtgIds(
-          data.externalRequesterUpdate,
-          productId,
-          ticket.id,
-        ));
-      } else if (anyDescriptionModified) {
-        updateDescription(data.descriptionUpdate);
+      if (artgModified || anyDescriptionModified) {
+        sendUpdateProductRequest(data);
       }
     } catch (error) {
       const err = error as AxiosError<SnowstormError>;
@@ -586,15 +547,25 @@ function EditConceptBody({
                   alignItems: 'stretch', // Ensures both sections stretch equally
                 }}
               >
-                {/* Left Section */}
-                <LeftSection
-                  displayRetiredDescriptions={displayRetiredDescriptions}
-                  isFetching={isFetching}
-                  product={product}
-                  descriptions={sortedDescriptions}
-                  isCtpp={isCtpp}
-                  dialects={langRefsets}
-                />
+                <Grid
+                  item
+                  xs={6}
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                  }}
+                >
+                  {/* Left Section */}
+                  <ExistingDescriptionsSection
+                    displayRetiredDescriptions={displayRetiredDescriptions}
+                    isFetching={isFetching}
+                    externalIdentifiers={product.externalIdentifiers}
+                    descriptions={sortedDescriptions}
+                    isCtpp={isCtpp}
+                    dialects={langRefsets}
+                    title={'Existing'}
+                  />
+                </Grid>
                 <Grid
                   item
                   xs={6}
@@ -645,14 +616,18 @@ function EditConceptBody({
                         langRefsets={langRefsets}
                         control={control}
                         handleAddDescription={handleAddDescription}
-                        isPreferredTerm={isPreferredTerm}
                       />
                       {isCtpp && (
                         <Grid>
                           <InnerBoxSmall component="fieldset">
                             <legend>Artg Ids</legend>
                             <Grid paddingTop={1}></Grid>
-                            <ArtgAutoComplete
+                            <ArtgAutoCompleteWrapper
+                              isUpdating={isUpdating}
+                              control={control}
+                              setArtgOptVals={setArtgOptVals}
+                            />
+                            {/* <ArtgAutoComplete
                               disabled={isUpdating}
                               name="externalRequesterUpdate.externalIdentifiers"
                               control={control}
@@ -667,7 +642,7 @@ function EditConceptBody({
                               ) => {
                                 setArtgOptVals(artgs ? artgs : []);
                               }}
-                            />
+                            /> */}
                             {artgOptVals.length === 0 &&
                               product.externalIdentifiers &&
                               product.externalIdentifiers?.length > 0 && (
@@ -706,23 +681,25 @@ function EditConceptBody({
     </>
   );
 }
-interface LeftSectionProps {
+interface ExistingDescriptionsSectionProps {
   displayRetiredDescriptions: boolean;
   isFetching: boolean;
-  product: Product;
-  descriptions: Description[];
+  externalIdentifiers?: ExternalIdentifier[];
+  descriptions?: Description[];
   isCtpp: boolean;
   dialects: LanguageRefset[];
+  title: string;
 }
 
-function LeftSection({
+export function ExistingDescriptionsSection({
   displayRetiredDescriptions,
   isFetching,
-  product,
   descriptions,
   isCtpp,
   dialects,
-}: LeftSectionProps) {
+  title,
+  externalIdentifiers,
+}: ExistingDescriptionsSectionProps) {
   // Function to determine preferred term based on AU dialect
   const isPreferredTerm = (description: Description): boolean => {
     const defaultDialectKey = dialects.find(langRefsets => {
@@ -738,15 +715,14 @@ function LeftSection({
   return (
     <Grid
       item
-      xs={6}
+      xs={12}
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        paddingRight: 1, // Add padding to separate from right section
       }}
     >
       <Typography variant="h6" marginBottom={1}>
-        Existing
+        {title}
       </Typography>
       <Box
         border={0.1}
@@ -763,7 +739,7 @@ function LeftSection({
           {isFetching && <Loading />}
           {!isFetching && (
             <>
-              {descriptions.map((description, index) => {
+              {descriptions?.map((description, index) => {
                 const isPreferred = isPreferredTerm(description);
                 const label =
                   description.type === 'FSN'
@@ -803,6 +779,12 @@ function LeftSection({
                       </FormControl>
                     </Grid>
                     <Grid item xs={12} md={5}>
+                      <Switch
+                        disabled
+                        checked={description.active}
+                        color="primary"
+                        size="small"
+                      />
                       <Typography variant="subtitle2">{label}</Typography>
                       <TextField
                         fullWidth
@@ -884,8 +866,8 @@ function LeftSection({
                 InputLabelProps={{ shrink: true }}
                 onKeyDown={filterKeypress}
                 value={
-                  (product.externalIdentifiers
-                    ? sortExternalIdentifiers(product.externalIdentifiers)
+                  (externalIdentifiers
+                    ? sortExternalIdentifiers(externalIdentifiers)
                         .map(artg => artg.identifierValue)
                         .join(', ')
                     : '') || ''
@@ -912,7 +894,6 @@ interface RightSectionProps {
   sortedDescriptionsWithoutSemanticTags: Description[];
   handleDeleteDescription: (index: number) => void;
   isUpdating: boolean;
-  isPreferredTerm: (desc: Description) => boolean;
   langRefsets: LanguageRefset[];
   control: Control<ProductUpdateRequest>;
   handleAddDescription: React.MouseEventHandler<HTMLButtonElement> | undefined;
@@ -926,7 +907,6 @@ function RightSection({
   sortedDescriptionsWithoutSemanticTags,
   handleDeleteDescription,
   isUpdating,
-  isPreferredTerm,
   langRefsets,
   control,
   handleAddDescription,
@@ -950,7 +930,6 @@ function RightSection({
                 }
                 index={index}
                 handleDeleteDescription={handleDeleteDescription}
-                isPreferredTerm={isPreferredTerm}
                 langRefsets={langRefsets}
                 control={control}
                 disabled={isUpdating}
@@ -1080,7 +1059,6 @@ interface FieldDescriptionsProps {
   sortedDescriptionsWithoutSemanticTag: Description[];
   sortedDescriptionsWithSemanticTag: Description[];
   index: number;
-  isPreferredTerm: (desc: Description) => boolean;
   handleDeleteDescription: (index: number) => void;
   langRefsets: LanguageRefset[];
   field: FieldArrayWithId<
@@ -1096,7 +1074,6 @@ const FieldDescriptions = ({
   sortedDescriptionsWithoutSemanticTag,
   sortedDescriptionsWithSemanticTag,
   index,
-  isPreferredTerm,
   handleDeleteDescription,
   langRefsets,
   field,
@@ -1110,15 +1087,23 @@ const FieldDescriptions = ({
     index
   ] as Description | undefined;
 
+  const isActive = useWatch({
+    control,
+    name: `descriptionUpdate.descriptions.${index}.active`,
+    defaultValue: description?.active ?? true,
+  });
+
   const containsSemanticTag = extractSemanticTag(
     descriptionWithSemanticTag?.term,
   )
     ?.trim()
     .toLocaleLowerCase();
 
+  const defaultLangRefset = findDefaultLangRefset(langRefsets);
   const descriptionType = sortedDescriptionsWithoutSemanticTag[index]?.type;
   const isPreferred = isPreferredTerm(
     sortedDescriptionsWithoutSemanticTag[index],
+    defaultLangRefset,
   );
   const label =
     descriptionType === 'FSN'
@@ -1130,6 +1115,10 @@ const FieldDescriptions = ({
   if (!displayRetiredDescriptions && description && !description.active) {
     return <></>;
   }
+
+  const isDisabled = disabled || !isActive;
+
+  const isReleased = description?.released;
   return (
     <Grid container spacing={1} key={field.id} alignItems="center">
       <Grid item xs={12} md={2}>
@@ -1145,7 +1134,13 @@ const FieldDescriptions = ({
                 error={!!fieldState.error}
               >
                 <InputLabel>Type</InputLabel>
-                <Select {...controllerField} margin="dense" disabled={disabled}>
+                <Select
+                  {...controllerField}
+                  margin="dense"
+                  disabled={
+                    description?.descriptionId !== undefined || isDisabled
+                  }
+                >
                   {['FSN', 'SYNONYM'].map((value: string) => (
                     <MenuItem key={value} value={value}>
                       {value}
@@ -1179,25 +1174,12 @@ const FieldDescriptions = ({
             );
           }}
         />
-        <Controller
-          name={`descriptionUpdate.descriptions.${index}.term`}
+        <DescriptionTextInput
           control={control}
-          render={({ field: controllerField, fieldState }) => {
-            return (
-              <TextField
-                {...controllerField}
-                label={`${label}`}
-                fullWidth
-                margin="dense"
-                error={!!fieldState.error}
-                helperText={fieldState.error?.message}
-                multiline
-                minRows={1}
-                maxRows={4}
-                disabled={disabled}
-              />
-            );
-          }}
+          index={index}
+          label={label}
+          isDisabled={isDisabled}
+          isReleased={isReleased ? isReleased : false}
         />
         {/* Display Semantic Tag if available */}
         {containsSemanticTag && (
@@ -1237,7 +1219,7 @@ const FieldDescriptions = ({
                           <Select
                             {...controllerField}
                             disabled={
-                              disabled ||
+                              isDisabled ||
                               dialect.dialectName.toLowerCase() === 'en-gb'
                             }
                             error={!!fieldState.error}
@@ -1275,7 +1257,7 @@ const FieldDescriptions = ({
             name={`descriptionUpdate.descriptions.${index}.caseSignificance`}
             control={control}
             render={({ field: controllerField }) => (
-              <Select {...controllerField} disabled={disabled}>
+              <Select {...controllerField} disabled={isDisabled}>
                 {Object.values(CaseSignificance).map(value => (
                   <MenuItem key={value} value={value}>
                     {caseSignificanceDisplay[value]}
@@ -1306,6 +1288,7 @@ const FieldDescriptions = ({
 function processDescriptionsWithSemanticTags(
   updatedDescriptions: Description[] | undefined,
   existingDescriptions: Description[],
+  defaultSemanticTag: string | undefined,
 ): Description[] {
   if (!updatedDescriptions) return [];
   const existingDescriptionsMap = new Map(
@@ -1313,12 +1296,11 @@ function processDescriptionsWithSemanticTags(
   );
 
   const returnVal = updatedDescriptions.map(updatedDesc => {
+    updatedDesc.term = updatedDesc.term.trim();
     const existingDesc = existingDescriptionsMap.get(updatedDesc.descriptionId);
-    // No matching existing description, return the updated description as is
-    if (!existingDesc) return updatedDesc;
 
     const updatedTag = extractSemanticTag(updatedDesc.term);
-    const existingTag = extractSemanticTag(existingDesc.term);
+    const existingTag = extractSemanticTag(existingDesc?.term);
 
     let newTerm = updatedDesc.term;
 
@@ -1336,6 +1318,16 @@ function processDescriptionsWithSemanticTags(
         newTerm = updatedDesc.term.replace(/\s*\(.*?\)\s*$/, '').trim();
       } else {
         newTerm = updatedDesc.term;
+      }
+      // If this is the fsn, there is no existing description, this fsn has no descriptionId, and if there is a defaultSemanticTag, add it
+      if (
+        updatedDesc.type === 'FSN' &&
+        !updatedDesc.descriptionId &&
+        defaultSemanticTag
+      ) {
+        if (!updatedTag) {
+          newTerm = `${updatedDesc.term} ${defaultSemanticTag}`;
+        }
       }
     }
 
@@ -1366,4 +1358,67 @@ function adjustTypeIds(desc: Description): Description {
     ...desc,
     typeId: typeMap[desc.type],
   };
+}
+
+interface DescriptionTextInputProps {
+  control: Control<ProductUpdateRequest>;
+  index: number;
+  label: string;
+  isDisabled: boolean;
+  isReleased: boolean;
+}
+
+const DescriptionTextInput = ({
+  control,
+  index,
+  label,
+  isDisabled,
+  isReleased,
+}: DescriptionTextInputProps) => {
+  const { field, fieldState } = useController({
+    name: `descriptionUpdate.descriptions.${index}.term`,
+    control,
+  });
+
+  return (
+    <TextField
+      {...field}
+      label={`${label}`}
+      fullWidth
+      margin="dense"
+      error={!!fieldState.error}
+      helperText={fieldState.error?.message}
+      multiline
+      minRows={1}
+      maxRows={4}
+      disabled={isDisabled || isReleased}
+    />
+  );
+};
+
+interface ArtgAutoCompleteWrapperProps {
+  isUpdating: boolean;
+  control: Control<ProductUpdateRequest>;
+  setArtgOptVals: (externalIdentifiers: ExternalIdentifier[]) => void;
+}
+function ArtgAutoCompleteWrapper({
+  isUpdating,
+  control,
+  setArtgOptVals,
+}: ArtgAutoCompleteWrapperProps) {
+  const { errors } = useFormState({ control });
+
+  return (
+    <ArtgAutoComplete
+      disabled={isUpdating}
+      name="externalRequesterUpdate.externalIdentifiers"
+      control={control}
+      error={errors?.externalRequesterUpdate?.externalIdentifiers as FieldError}
+      dataTestId="package-brand"
+      optionValues={[]}
+      handleChange={(artgs: ExternalIdentifier[] | null) => {
+        setArtgOptVals(artgs ? artgs : []);
+      }}
+    />
+  );
 }

@@ -186,7 +186,7 @@ export function mapToProductDetailsArray(
       ticketId: item.ticketId,
       version: item.version as number,
       productType: findProductType(item.packageDetails),
-      created: item.created,
+      created: item.created as string,
     };
     return productDto;
   });
@@ -196,7 +196,9 @@ export function mapToProductDetailsArrayFromBulkActions(
   bulkProductActions: TicketBulkProductActionDto[],
   indexStarts: number,
 ): ProductTableRow[] {
-  const productDetailsArray = bulkProductActions.map(function (item) {
+  // this may also be a product update, so that must be considered
+  const productDetailsArray = bulkProductActions.map(item => {
+    item.details.type;
     const id = indexStarts++;
     const productDto: ProductTableRow = {
       id: id,
@@ -210,12 +212,7 @@ export function mapToProductDetailsArrayFromBulkActions(
 
       status: ProductStatus.Completed,
       ticketId: item.ticketId,
-      productType:
-        item.details &&
-        item.details.packSizes &&
-        item.details.packSizes.packSizes
-          ? ProductType.bulkPackSize
-          : ProductType.bulkBrand,
+      productType: item.details.type,
       created: item.created,
     };
     return productDto;

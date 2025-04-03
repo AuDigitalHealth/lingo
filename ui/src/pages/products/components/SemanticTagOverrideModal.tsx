@@ -25,7 +25,7 @@ export function SemanticTagOverrideModal({
       </div>
       <BaseModalBody data-testid={'override-modal'}>
         <>
-          'The follow changes were found from the generated semantic tags:'
+          The follow changes were found from the generated semantic tags:
           {messages?.map(message => {
             return <Typography variant="body1">{message}</Typography>;
           })}
@@ -36,22 +36,22 @@ export function SemanticTagOverrideModal({
         endChildren={
           <Stack direction="row" spacing={1}>
             <Button
-              color="primary"
-              size="small"
-              variant="contained"
-              onClick={() => handleClose()}
-              data-testid={'back-button'}
-            >
-              {'Go Back'}
-            </Button>
-            <Button
-              color="warning"
+              color="error"
               size="small"
               variant="contained"
               onClick={() => ignore()}
               data-testid={'warning-and-proceed-btn'}
             >
               {'Proceed'}
+            </Button>
+            <Button
+              color="primary"
+              size="small"
+              variant="contained"
+              onClick={() => handleClose()}
+              data-testid={'back-button'}
+            >
+              {'Return to Screen'}
             </Button>
           </Stack>
         }

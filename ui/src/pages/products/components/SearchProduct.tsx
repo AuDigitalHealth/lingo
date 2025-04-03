@@ -296,10 +296,9 @@ export default function SearchProduct({
   }, [ontoData]);
 
   useEffect(() => {
-    if (data !== undefined) {
+    if (data) {
       localStorage.setItem('fsn_toggle', fsnToggle.toString());
       setResults(data.items);
-      setOpen(true);
     }
   }, [data, fsnToggle]);
 
