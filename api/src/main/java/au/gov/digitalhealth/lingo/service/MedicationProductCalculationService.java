@@ -925,12 +925,11 @@ public class MedicationProductCalculationService {
     if ((productDetails.getContainerType() != null
             || productDetails.getDeviceType() != null
             || productDetailsQuantity != null)
-        && (!productDetails
-                .getPackSize()
+        && (!productQuantity
                 .getUnit()
                 .getConceptId()
                 .equals(UNIT_OF_PRESENTATION.getValue())
-            || !ValidationUtil.isIntegerValue(productDetails.getPackSize().getValue()))) {
+            || !ValidationUtil.isIntegerValue(productQuantity.getValue()))) {
       throw new ProductAtomicDataValidationProblem(
           "Product quantity must be a positive whole number and unit each if a container type or device type are specified");
     }
