@@ -161,12 +161,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
 
   public PackageDetails<T> getPackageAtomicData(String branch, String productId) {
     Maps maps = getMaps(branch, productId, getPackageAtomicDataEcl(), ProductPackageType.PACKAGE);
-
-    PackageDetails<T> packageDetails = new PackageDetails<>();
-
-    populatePackageDetails(packageDetails, productId, maps, getModelConfiguration(branch));
-
-    return packageDetails;
+    return populatePackageDetails( productId, maps, getModelConfiguration(branch));
   }
 
   public T getProductAtomicData(String branch, String productId) {
@@ -462,9 +457,9 @@ public abstract class AtomicDataService<T extends ProductDetails> {
   }
 
   @SuppressWarnings("null")
-  private <Y extends PackageDetails<T>> void populatePackageDetails(
-      Y details, String productId, Maps maps, ModelConfiguration modelConfiguration) {
-
+  private PackageDetails<T> populatePackageDetails(
+      String productId, Maps maps, ModelConfiguration modelConfiguration) {
+    PackageDetails<T> details = new PackageDetails<>();
     SnowstormConcept basePackage = maps.browserMap().get(productId);
     Set<SnowstormRelationship> basePackageRelationships = getRelationshipsFromAxioms(basePackage);
     // container type
@@ -498,11 +493,10 @@ public abstract class AtomicDataService<T extends ProductDetails> {
         details.getContainedPackages().add(packageQuantity);
         // sub pack product details
         assert subpacksRelationship.getTarget() != null;
-        populatePackageDetails(
-                packageQuantity.getPackageDetails(),
+        packageQuantity.setPackageDetails(populatePackageDetails(
             subpacksRelationship.getTarget().getConceptId(),
             maps,
-            modelConfiguration);
+            modelConfiguration));
       }
     } else {
       if (productRelationships.isEmpty()) {
@@ -538,6 +532,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
         details.getContainedProducts().add(productQuantity);
       }
     }
+    return details;
   }
 
   private T populateProductDetails(
