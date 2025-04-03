@@ -525,4 +525,21 @@ public class SnowstormDtoUtil {
         .findFirst()
         .orElse(null);
   }
+
+  public static SnowstormConceptView cloneConceptView(SnowstormConceptView existingConcept) {
+    Set<SnowstormDescription> desc = new HashSet<>(existingConcept.getDescriptions());
+    return new SnowstormConceptView()
+        .fsn(existingConcept.getFsn())
+        .pt(existingConcept.getPt())
+        .descriptions(desc)
+        .conceptId(existingConcept.getConceptId())
+        .active(existingConcept.getActive())
+        .definitionStatusId(existingConcept.getDefinitionStatusId())
+        .classAxioms(existingConcept.getClassAxioms())
+        .gciAxioms(existingConcept.getGciAxioms())
+        .relationships(existingConcept.getRelationships())
+        .effectiveTime(existingConcept.getEffectiveTime())
+        .moduleId(existingConcept.getModuleId());
+  }
+
 }

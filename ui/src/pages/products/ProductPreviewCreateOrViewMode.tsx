@@ -378,13 +378,17 @@ function ProductPreviewCreateOrViewMode({
           }}
           handleClose={() => {
             setSemanticChangeWarning(false);
+            setIgnoreErrors(false);
+            setIgnoreErrorsModalOpen(false);
           }}
         />
         <WarningModal
-          open={ignoreErrorsModalOpen}
+          open={ignoreErrorsModalOpen && !semanticChangeWarning}
           content={`At least one FSN or PT is the same as another FSN or PT. Is this correct?`}
           handleClose={() => {
             setIgnoreErrorsModalOpen(false);
+            setSemanticChangeWarning(false);
+            setOverrideSemanticChangeWarning(false);
           }}
           disabled={false}
           action={'Ignore Duplicates'}

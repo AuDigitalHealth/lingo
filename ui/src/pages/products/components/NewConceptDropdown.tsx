@@ -5,7 +5,13 @@ import {
   UseFormGetValues,
   UseFormRegister,
 } from 'react-hook-form';
-import { FormHelperText, Grid, Stack, TextField } from '@mui/material';
+import {
+  FormHelperText,
+  Grid,
+  IconButton,
+  Stack,
+  TextField,
+} from '@mui/material';
 import { InnerBoxSmall } from './style/ProductBoxes.tsx';
 import {
   filterKeypress,
@@ -16,7 +22,12 @@ import { replaceAllWithWhiteSpace } from '../../../types/productValidationUtils.
 import { convertStringToRegex } from '../../../utils/helpers/stringUtils.ts';
 import { getValueFromFieldBindings } from '../../../utils/helpers/FieldBindingUtils.ts';
 import React, { useState } from 'react';
-import { removeSemanticTagFromTerm } from '../../../utils/helpers/ProductPreviewUtils.ts';
+import {
+  extractSemanticTag,
+  removeSemanticTagFromTerm,
+} from '../../../utils/helpers/ProductPreviewUtils.ts';
+import { ContentCopy } from '@mui/icons-material';
+import { enqueueSnackbar } from 'notistack';
 
 interface NewConceptDropdownProps {
   product: Product;
@@ -118,6 +129,7 @@ interface NewConceptDropdownFieldProps {
 function NewConceptDropdownField({
   fieldName,
   legend,
+  originalValue,
   getValues,
   dataTestId,
   control,
@@ -128,16 +140,26 @@ function NewConceptDropdownField({
   const regExp = convertStringToRegex(
     getValueFromFieldBindings(fieldBindings, 'description.validation.regex'),
   );
-
+  const originalValWithSemanticTag = semanticTag
+    ? `${originalValue} ${semanticTag}`
+    : originalValue;
+  const [copyVal, setCopyVal] = useState(originalValWithSemanticTag);
+  const preferredFieldName = fieldName.replace(
+    /\.(\w+)$/,
+    (match, p1: string) =>
+      `.generated${p1.charAt(0).toUpperCase() + p1.slice(1)}`,
+  );
   const handleBlur = () => {
     const currentVal: string = getValues(
       fieldName as 'nodes.0.newConceptDetails.preferredTerm',
     );
-    const preferredFieldName = fieldName.replace(
-      /\.(\w+)$/,
-      (match, p1: string) =>
-        `.generated${p1.charAt(0).toUpperCase() + p1.slice(1)}`,
-    );
+
+    if (extractSemanticTag(currentVal)) {
+      setCopyVal(currentVal);
+    } else {
+      setCopyVal(`${currentVal} ${semanticTag}`);
+    }
+
     const generatedVal: string = getValues(
       preferredFieldName as 'nodes.0.newConceptDetails.preferredTerm',
     );
@@ -146,6 +168,16 @@ function NewConceptDropdownField({
     setFieldChange(!(currentVal === generatedValWithoutSemanticTag));
   };
 
+  const handleCopy = () => {
+    if (copyVal) {
+      void navigator.clipboard.writeText(copyVal).then(() => {
+        enqueueSnackbar(`Copied '${copyVal}' to Clipboard`, {
+          variant: 'info',
+          autoHideDuration: 3000,
+        });
+      });
+    }
+  };
   return (
     <InnerBoxSmall component="fieldset">
       <legend>{legend}</legend>
@@ -156,31 +188,37 @@ function NewConceptDropdownField({
         defaultValue=""
         render={({ field }) => (
           <Stack sx={{ flexDirection: 'column' }}>
-            <TextField
-              {...field}
-              InputLabelProps={{ shrink: true }}
-              variant="outlined"
-              margin="dense"
-              fullWidth
-              multiline
-              minRows={1}
-              maxRows={4}
-              data-testid={dataTestId}
-              onChange={e => {
-                const value =
-                  regExp !== null
-                    ? replaceAllWithWhiteSpace(
-                        regExp,
+            <Stack flexDirection={'row'} alignItems={'center'}>
+              <TextField
+                {...field}
+                InputLabelProps={{ shrink: true }}
+                variant="outlined"
+                margin="dense"
+                fullWidth
+                multiline
+                minRows={1}
+                maxRows={4}
+                data-testid={dataTestId}
+                onChange={e => {
+                  const value =
+                    regExp !== null
+                      ? replaceAllWithWhiteSpace(
+                          regExp,
 
-                        e.target.value,
-                      )
-                    : e.target.value;
+                          e.target.value,
+                        )
+                      : e.target.value;
 
-                field.onChange(value);
-              }}
-              color={fieldChanged ? 'error' : 'primary'}
-              onBlur={handleBlur}
-            />
+                  field.onChange(value);
+                }}
+                color={fieldChanged ? 'error' : 'primary'}
+                onBlur={handleBlur}
+              />
+              <IconButton onClick={handleCopy}>
+                <ContentCopy />
+              </IconButton>
+            </Stack>
+
             {semanticTag && (
               <FormHelperText>{`Semantic Tag: ${semanticTag}`}</FormHelperText>
             )}

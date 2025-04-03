@@ -1,6 +1,6 @@
 import {
-  ProductDescriptionUpdateRequest,
   ProductExternalRequesterUpdateRequest,
+  ProductUpdateRequest,
 } from '../../../types/product.ts';
 import { useMutation } from '@tanstack/react-query';
 import { enqueueSnackbar } from 'notistack';
@@ -8,20 +8,20 @@ import { AxiosError } from 'axios';
 import productService from '../../../api/ProductService.ts';
 
 interface useUpdateProductDescriptionArguments {
-  productDescriptionUpdateRequest: ProductDescriptionUpdateRequest;
+  productUpdateRequest: ProductUpdateRequest;
   productId: string;
   branch: string;
 }
 
-export function useUpdateProductDescription() {
+export function useUpdateProduct() {
   const mutation = useMutation({
     mutationFn: ({
-      productDescriptionUpdateRequest,
+      productUpdateRequest,
       productId,
       branch,
     }: useUpdateProductDescriptionArguments) => {
-      return productService.editProductDescriptions(
-        productDescriptionUpdateRequest,
+      return productService.editProduct(
+        productUpdateRequest,
         productId,
         branch,
       );

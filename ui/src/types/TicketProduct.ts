@@ -30,7 +30,7 @@ export interface ProductTableRow {
   productType: ProductType | undefined;
   bulkProductActionId?: number;
   conceptIds?: string[];
-  created?: Date;
+  created: string;
 }
 export enum ProductStatus {
   Completed = 'completed',

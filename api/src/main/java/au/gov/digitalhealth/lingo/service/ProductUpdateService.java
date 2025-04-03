@@ -22,12 +22,21 @@ import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.*;
 import au.csiro.snowstorm_client.model.*;
 import au.gov.digitalhealth.lingo.configuration.FieldBindingConfiguration;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
+import au.gov.digitalhealth.lingo.product.bulk.ProductUpdateCreationDetails;
 import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.update.ProductDescriptionUpdateRequest;
 import au.gov.digitalhealth.lingo.product.update.ProductExternalIdentifierUpdateRequest;
+import au.gov.digitalhealth.lingo.product.update.ProductUpdateRequest;
+import au.gov.digitalhealth.lingo.product.update.ProductUpdateState;
+import au.gov.digitalhealth.lingo.util.AmtConstants;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
+import au.gov.digitalhealth.tickets.models.BulkProductAction;
+import au.gov.digitalhealth.tickets.models.Ticket;
+import au.gov.digitalhealth.tickets.repository.BulkProductActionRepository;
+import au.gov.digitalhealth.tickets.repository.TicketRepository;
 import au.gov.digitalhealth.tickets.service.TicketServiceImpl;
 import jakarta.validation.Valid;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
@@ -41,34 +50,98 @@ public class ProductUpdateService {
   SnowstormClient snowstormClient;
 
   TicketServiceImpl ticketService;
+
+  TicketRepository ticketRepository;
   FieldBindingConfiguration fieldBindingConfiguration;
+
+  BulkProductActionRepository bulkProductActionRepository;
 
   public ProductUpdateService(
       SnowstormClient snowstormClient,
       TicketServiceImpl ticketService,
-      FieldBindingConfiguration fieldBindingConfiguration) {
+      FieldBindingConfiguration fieldBindingConfiguration,
+      TicketRepository ticketRepository,
+      BulkProductActionRepository bulkProductActionRepository) {
     this.snowstormClient = snowstormClient;
 
     this.ticketService = ticketService;
     this.fieldBindingConfiguration = fieldBindingConfiguration;
+    this.ticketRepository = ticketRepository;
+    this.bulkProductActionRepository = bulkProductActionRepository;
   }
 
-  public SnowstormConceptMini updateProductDescriptions(
+  public BulkProductAction updateProduct(
+      String branch, String productId, @Valid ProductUpdateRequest productUpdateRequest)
+      throws InterruptedException {
+
+    ProductDescriptionUpdateRequest productDescriptionUpdateRequest =
+        productUpdateRequest.getDescriptionUpdate();
+    ProductExternalIdentifierUpdateRequest productExternalIdentifierUpdateRequest =
+        productUpdateRequest.getExternalRequesterUpdate();
+    Ticket ticket = ticketRepository.findById(productUpdateRequest.getTicketId()).orElseThrow();
+    String fsn =
+        getFsnFromDescriptions(productDescriptionUpdateRequest.getDescriptions()).getTerm();
+    BulkProductAction productUpdate = BulkProductAction.builder().ticket(ticket).name(fsn).build();
+    ProductUpdateState historicState = ProductUpdateState.builder().build();
+    ProductUpdateState updateState = ProductUpdateState.builder().build();
+    ProductUpdateCreationDetails productUpdateCreationDetails =
+        ProductUpdateCreationDetails.builder()
+            .productId(productId)
+            .historicState(historicState)
+            .updatedState(updateState)
+            .build();
+
+    updateProductDescriptions(
+        branch, productId, productDescriptionUpdateRequest, productUpdateCreationDetails);
+
+    if (productExternalIdentifierUpdateRequest != null) {
+      updateProductExternalIdentifiers(
+          branch, productId, productExternalIdentifierUpdateRequest, productUpdateCreationDetails);
+    }
+
+    productUpdate.setDetails(productUpdateCreationDetails);
+
+    Optional<BulkProductAction> existingBulkProductAction =
+        bulkProductActionRepository.findByNameAndTicketId(
+            productUpdate.getName(), productUpdateRequest.getTicketId());
+    if (existingBulkProductAction.isPresent()) {
+      productUpdate.setName(productUpdate.getName() + Instant.now().toString());
+    }
+    return bulkProductActionRepository.save(productUpdate);
+  }
+
+  public ProductUpdateCreationDetails updateProductDescriptions(
       String branch,
       String productId,
-      @Valid ProductDescriptionUpdateRequest productDescriptionUpdateRequest) {
+      @Valid ProductDescriptionUpdateRequest productDescriptionUpdateRequest,
+      ProductUpdateCreationDetails productUpdateCreationDetails) {
 
-    // Retrieve and update concepts
     List<SnowstormConcept> existingConcepts = fetchBrowserConcepts(branch, Set.of(productId));
+
+    SnowstormConceptView existingConceptView =
+        SnowstormDtoUtil.toSnowstormConceptView(existingConcepts.get(0));
+
+    productUpdateCreationDetails.getHistoricState().setConcept(existingConceptView);
+
     SnowstormConceptView conceptsNeedUpdate =
-        prepareConceptUpdate(existingConcepts.get(0), productDescriptionUpdateRequest, branch);
+        prepareConceptUpdate(existingConceptView, productDescriptionUpdateRequest, branch);
+
+    productUpdateCreationDetails.getUpdatedState().setConcept(conceptsNeedUpdate);
+
+    boolean areDescriptionsModified =
+        productDescriptionUpdateRequest.areDescriptionsModified(
+            existingConceptView.getDescriptions());
+
+    if (!areDescriptionsModified) {
+      return productUpdateCreationDetails;
+    }
 
     if (conceptsNeedUpdate != null) {
       try {
-        SnowstormConceptView updatedConcept =
+        SnowstormConceptView response =
             snowstormClient.updateConcept(
                 branch, conceptsNeedUpdate.getConceptId(), conceptsNeedUpdate, false);
-        return SnowstormDtoUtil.toSnowstormConceptMini(updatedConcept);
+        productUpdateCreationDetails.getUpdatedState().setConcept(response);
       } catch (WebClientResponseException ex) {
 
         String errorBody = ex.getResponseBodyAsString();
@@ -76,28 +149,22 @@ public class ProductUpdateService {
         throw new ProductAtomicDataValidationProblem(String.format("%s", errorBody));
       }
     }
-    return SnowstormDtoUtil.toSnowstormConceptMini(existingConcepts.get(0));
+
+    return productUpdateCreationDetails;
   }
 
   private SnowstormConceptView prepareConceptUpdate(
-      SnowstormConcept existingConcept,
+      SnowstormConceptView existingConcept,
       ProductDescriptionUpdateRequest productDescriptionUpdateRequest,
       String branch) {
     if (productDescriptionUpdateRequest == null) return null;
 
-    boolean areDescriptionsModified =
-        productDescriptionUpdateRequest.areDescriptionsModified(existingConcept.getDescriptions());
-
-    if (!areDescriptionsModified) {
-      throw new ProductAtomicDataValidationProblem("No descriptions modified");
-    }
-    SnowstormConceptView conceptNeedToUpdate =
-        SnowstormDtoUtil.toSnowstormConceptView(existingConcept);
+    SnowstormConceptView conceptNeedToUpdate = SnowstormDtoUtil.cloneConceptView(existingConcept);
 
     String fsn =
         SnowstormDtoUtil.getFsnFromDescriptions(productDescriptionUpdateRequest.getDescriptions())
             .getTerm();
-    String existingFsn = existingConcept.getFsn().getTerm();
+    String existingFsn = conceptNeedToUpdate.getFsn().getTerm();
     if (fsn != null && existingFsn != null && !existingFsn.equals(fsn.trim())) {
       String newFsn = fsn.trim();
 
@@ -111,16 +178,6 @@ public class ProductUpdateService {
       snowstormClient.checkForDuplicateFsn(newFsn, branch);
     }
 
-    // if snowstorm does not recieve the retired descriptions... it is going to delete them
-    Set<SnowstormDescription> retiredDescriptions =
-        conceptNeedToUpdate.getDescriptions().stream()
-            .filter(
-                desc -> {
-                  return desc.getActive() == false;
-                })
-            .collect(Collectors.toSet());
-
-    productDescriptionUpdateRequest.getDescriptions().addAll(retiredDescriptions);
     conceptNeedToUpdate.setDescriptions(productDescriptionUpdateRequest.getDescriptions());
 
     return conceptNeedToUpdate;
@@ -136,7 +193,8 @@ public class ProductUpdateService {
   public Set<ExternalIdentifier> updateProductExternalIdentifiers(
       String branch,
       String productId,
-      @Valid ProductExternalIdentifierUpdateRequest productExternalIdentifierUpdateRequest)
+      @Valid ProductExternalIdentifierUpdateRequest productExternalIdentifierUpdateRequest,
+      ProductUpdateCreationDetails productUpdateCreationDetails)
       throws InterruptedException {
     Set<ExternalIdentifier> externalIdentifiers =
         productExternalIdentifierUpdateRequest.getExternalIdentifiers();
@@ -149,6 +207,9 @@ public class ProductUpdateService {
     List<SnowstormReferenceSetMember> existingMembers =
         snowstormClient.getArtgMembers(branch, Set.of(productId));
 
+    Set<ExternalIdentifier> existingIdentifiers = getExternalIdentifiers(branch, productId);
+
+    productUpdateCreationDetails.getHistoricState().setExternalIdentifiers(existingIdentifiers);
     if (existingMembers == null || existingMembers.isEmpty()) {
       // Add all externalIdentifiers as new members if no existing members
       externalIdentifiers.forEach(
@@ -175,8 +236,26 @@ public class ProductUpdateService {
               .collect(Collectors.toSet());
       snowstormClient.removeRefsetMembers(branch, artgToBeRemoved);
     }
-
+    productUpdateCreationDetails.getUpdatedState().setExternalIdentifiers(externalIdentifiers);
     return externalIdentifiers;
+  }
+
+  public Set<ExternalIdentifier> getExternalIdentifiers(String branch, String productId) {
+    List<SnowstormReferenceSetMember> existingMembers =
+        snowstormClient.getArtgMembers(branch, Set.of(productId));
+
+    Set<ExternalIdentifier> existingIdentifiers =
+        existingMembers.stream()
+            .map(
+                referenceSetMember -> {
+                  return ExternalIdentifier.builder()
+                      .identifierScheme(AmtConstants.ARTGID_SCHEME.toString())
+                      .identifierValue(referenceSetMember.getAdditionalFields().get("mapTarget"))
+                      .build();
+                })
+            .collect(Collectors.toSet());
+
+    return existingIdentifiers;
   }
 
   private void processExternalIdentifiers(

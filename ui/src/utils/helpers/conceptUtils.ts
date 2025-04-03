@@ -19,6 +19,7 @@ import {
   Concept,
   ConceptResponse,
   ConceptSearchItem,
+  Description,
   Edge,
   Product,
   ProductSummary,
@@ -38,6 +39,7 @@ import {
 import { createFilterOptions } from '@mui/material';
 import Verhoeff from './Verhoeff.ts';
 import { extractSemanticTag } from './ProductPreviewUtils.ts';
+import { LanguageRefset } from '../../types/Project.ts';
 
 function isNumeric(value: string) {
   return /^\d+$/.test(value);
@@ -484,4 +486,48 @@ export const generateArtgObj = (artgValue: string): ExternalIdentifier => {
     identifierScheme: 'https://www.tga.gov.au/artg',
     identifierValue: artgValue,
   };
+};
+
+export const isPreferredTerm = (
+  description: Description,
+  defaultLangRefset: LanguageRefset | undefined,
+) => {
+  if (!description) {
+    return false;
+  }
+  return (
+    description.type === 'SYNONYM' &&
+    defaultLangRefset !== undefined &&
+    description.acceptabilityMap?.[defaultLangRefset.en] === 'PREFERRED'
+  );
+};
+
+export const sortDescriptions = (
+  descs: Description[] | undefined,
+  defaultLangRefset: LanguageRefset | undefined,
+): Description[] => {
+  if (!descs) return [];
+  const fsn = descs.filter(d => {
+    return d.type === 'FSN';
+  });
+
+  const preferredSynonym = descs.find(desc => {
+    return isPreferredTerm(desc, defaultLangRefset);
+  });
+  const otherSynonyms = descs.filter(
+    d => d.type === 'SYNONYM' && d !== preferredSynonym,
+  );
+
+  const tempDescriptions = [
+    ...fsn,
+    ...(preferredSynonym ? [preferredSynonym] : []),
+    ...otherSynonyms,
+  ];
+  return tempDescriptions;
+};
+
+export const findDefaultLangRefset = (langRefsets: LanguageRefset[]) => {
+  return langRefsets.find(langRefsets => {
+    return langRefsets.default === 'true';
+  });
 };
