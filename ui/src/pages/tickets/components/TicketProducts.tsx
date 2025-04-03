@@ -64,7 +64,8 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
         productDetailsArray.length,
       )
     : [];
-  const data = productDetailsArray.concat(bulkProductActionDetailsArray);
+
+  const data = [...productDetailsArray, ...bulkProductActionDetailsArray];
   const navigate = useNavigate();
   const { canEdit, lockDescription } = useCanEditTask();
   const queryClient = useQueryClient();
@@ -312,6 +313,21 @@ const productNameTemplate = (
   rowData: ProductTableRow,
   activeConceptIds: string[],
 ) => {
+  if (isProductUpdate(rowData)) {
+    return (
+      <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
+        <Link
+          to={`product/view/update/${rowData.bulkProductActionId}`}
+          className={'product-view-update-link'}
+          key={`link-${rowData.id}`}
+          data-testid={`link-${rowData.id}`}
+          style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+        >
+          {trimName(rowData.name)}
+        </Link>
+      </Tooltip>
+    );
+  }
   if (isBulkPackProductAction(rowData)) {
     return (
       <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
@@ -387,12 +403,20 @@ const isBulkPackProductAction = (
   if (
     (product && product.productType === ProductType.brandPackSize) ||
     product?.productType === ProductType.bulkPackSize ||
-    product?.productType === ProductType.bulkBrand
+    product?.productType === ProductType.bulkBrand ||
+    product?.productType === ProductType.productUpdate
   ) {
     return true;
   }
   return false;
 };
+const isProductUpdate = (product: ProductTableRow | undefined): boolean => {
+  if (product && product.productType === ProductType.productUpdate) {
+    return true;
+  }
+  return false;
+};
+
 const showActionLoadInToAtomicForm = (product: ProductTableRow | undefined) => {
   if (!product) {
     return false;

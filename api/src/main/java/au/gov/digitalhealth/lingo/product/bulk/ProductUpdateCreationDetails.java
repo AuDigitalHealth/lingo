@@ -13,22 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package au.gov.digitalhealth.lingo.product.update;
+package au.gov.digitalhealth.lingo.product.bulk;
 
-import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
-import jakarta.validation.Valid;
+import au.gov.digitalhealth.lingo.product.update.ProductUpdateState;
+import au.gov.digitalhealth.lingo.util.PartionIdentifier;
+import au.gov.digitalhealth.lingo.validation.ValidSctId;
+import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.util.Set;
+import java.util.Date;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Valid
 @Builder
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProductExternalIdentifierUpdateRequest implements Serializable {
-  @Valid Set<@Valid ExternalIdentifier> externalIdentifiers;
+public class ProductUpdateCreationDetails implements BulkProductActionDetails, Serializable {
+  @NotNull
+  @ValidSctId(partitionIdentifier = PartionIdentifier.CONCEPT)
+  private String productId;
+
+  private ProductUpdateState historicState;
+
+  private ProductUpdateState updatedState;
+
+  @Override
+  public String calculateSaveName() {
+    return "Product Update " + new Date();
+  }
 }

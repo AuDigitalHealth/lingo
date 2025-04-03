@@ -24,10 +24,8 @@ function AvatarWithTooltip({ username, size, sx }: AvatarWithTooltipProps) {
         <Stack direction="row" spacing={1}>
           <Avatar
             color={stringToColor(getDisplayName(username, jiraUsers))}
-            rating="pg"
-            default="monsterid"
             style={{ borderRadius: '50px' }}
-            size={size ? size : 30}
+            size={size ? size : 'md'}
             className="CustomAvatar-image"
             key={username}
           >

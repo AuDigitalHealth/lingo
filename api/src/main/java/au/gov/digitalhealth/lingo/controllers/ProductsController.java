@@ -15,18 +15,17 @@
  */
 package au.gov.digitalhealth.lingo.controllers;
 
-import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
 import au.gov.digitalhealth.lingo.aspect.LogExecutionTime;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
-import au.gov.digitalhealth.lingo.product.update.ProductDescriptionUpdateRequest;
-import au.gov.digitalhealth.lingo.product.update.ProductExternalIdentifierUpdateRequest;
+import au.gov.digitalhealth.lingo.product.update.ProductUpdateRequest;
 import au.gov.digitalhealth.lingo.service.ProductSummaryService;
 import au.gov.digitalhealth.lingo.service.ProductUpdateService;
 import au.gov.digitalhealth.lingo.service.TaskManagerService;
+import au.gov.digitalhealth.tickets.models.BulkProductAction;
 import jakarta.validation.Valid;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -64,30 +63,25 @@ public class ProductsController {
   }
 
   @LogExecutionTime
-  @PutMapping("/{branch}/product-model/{productId}/descriptions")
-  public ResponseEntity<SnowstormConceptMini> updateProductDescriptions(
+  @PutMapping("/{branch}/product-model/{productId}/update")
+  public ResponseEntity<BulkProductAction> updateProductDescriptions(
       @PathVariable String branch,
       @PathVariable Long productId,
-      @RequestBody @Valid ProductDescriptionUpdateRequest productDescriptionUpdateRequest) {
+      @RequestBody @Valid ProductUpdateRequest productUpdateRequest)
+      throws InterruptedException {
     taskManagerService.validateTaskState(branch);
-    return new ResponseEntity<>(
-        productUpdateService.updateProductDescriptions(
-            branch, String.valueOf(productId), productDescriptionUpdateRequest),
-        HttpStatus.OK);
+    BulkProductAction response =
+        productUpdateService.updateProduct(branch, String.valueOf(productId), productUpdateRequest);
+    return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @LogExecutionTime
-  @PutMapping("/{branch}/product-model/{productId}/external-identifiers")
-  public ResponseEntity<Set<ExternalIdentifier>> updateProductExternalIdentifiers(
-      @PathVariable String branch,
-      @PathVariable Long productId,
-      @RequestBody @Valid
-          ProductExternalIdentifierUpdateRequest productExternalIdentifierUpdateRequest)
-      throws InterruptedException {
+  @GetMapping("/{branch}/product-model/{productId}/externalIdentifiers")
+  public ResponseEntity<Set<ExternalIdentifier>> getExternalIdentifiers(
+      @PathVariable String branch, @PathVariable Long productId) throws InterruptedException {
     taskManagerService.validateTaskState(branch);
     return new ResponseEntity<>(
-        productUpdateService.updateProductExternalIdentifiers(
-            branch, String.valueOf(productId), productExternalIdentifierUpdateRequest),
+        productUpdateService.getExternalIdentifiers(branch, String.valueOf(productId)),
         HttpStatus.OK);
   }
 

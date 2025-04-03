@@ -838,18 +838,6 @@ export const bulkAddExternalRequestorSchema: yup.ObjectSchema<BulkAddExternalReq
   });
 
 // Define the validation schema
-// export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateRequest> =
-// yup.object({
-//   externalRequesterUpdate: yup.object<ProductExternalRequesterUpdateRequest>({
-//     externalRequesterUpdate: yup.object().notRequired()
-//   }),
-//   descriptionUpdate: yup.object<ProductDescriptionUpdateRequest>({
-//     ticketId: yup.number().required('Ticket ID is required'),
-//     descriptions: yup.array().of(
-//       yup.object<Description>()
-//     ).nullable()
-//   })
-// });
 export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateRequest> =
   yup
     .object({
@@ -864,12 +852,10 @@ export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateReques
               }),
             )
             .required(),
-          ticketId: yup.number().required('Ticket ID is required'),
         })
         .defined(),
 
       descriptionUpdate: yup.object<ProductDescriptionUpdateRequest>({
-        ticketId: yup.number().required('Ticket ID is required'),
         descriptions: yup
           .array<Description>()
           .of(
@@ -878,7 +864,29 @@ export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateReques
               moduleId: yup.string().required(),
               released: yup.boolean().required(),
               descriptionId: yup.string().optional(),
-              term: yup.string().required('Term cannot be blank'),
+              term: yup
+                .string()
+                .required('Term cannot be blank')
+                .test(
+                  'Must not contain only a space character',
+                  (value, context) => {
+                    const isJustWhiteSpace = /^\s+$/.test(value);
+                    if (isJustWhiteSpace) {
+                      return context.createError({
+                        message: 'Must not contain only white space characters',
+                        path: context.path,
+                      });
+                    }
+                    const startsWithWhiteSpace = /^\s/.test(value);
+                    if (startsWithWhiteSpace) {
+                      return context.createError({
+                        message: 'Must not start with a whitespace character',
+                        path: context.path,
+                      });
+                    }
+                    return true;
+                  },
+                ),
               conceptId: yup.string().required(),
               typeId: yup.string().required(),
               acceptabilityMap: yup
@@ -886,7 +894,13 @@ export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateReques
                 .test(
                   'Only One Preferred Synonym Per Language',
                   (value, context) => {
-                    let fail = false;
+                    const thisDescription = context.from?.[1]
+                      .value as Description;
+
+                    if (!thisDescription.active) {
+                      return true;
+                    }
+
                     const thisAcceptability = value as Record<
                       string,
                       Acceptability
@@ -919,21 +933,73 @@ export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateReques
                       });
                     }
 
-                    const thisDescription = context.from?.[1]
-                      .value as Description;
-
-                    // Original validation logic
-                    if (
-                      !thisDescription.active ||
-                      thisDescription.type !== 'SYNONYM'
-                    ) {
-                      return true;
-                    }
-
                     const productDescriptionUpdateRequest = context.from?.[2]
                       .value as ProductDescriptionUpdateRequest;
 
-                    const counter: Record<string, number> = {};
+                    if (
+                      thisDescription.active &&
+                      thisDescription.type === 'FSN'
+                    ) {
+                      const preferredCounter: Record<string, number> = {};
+                      const descriptions =
+                        productDescriptionUpdateRequest.descriptions;
+
+                      descriptions.forEach(desc => {
+                        if (
+                          desc.type === 'FSN' &&
+                          desc.active === true &&
+                          desc.acceptabilityMap
+                        ) {
+                          Object.keys(desc.acceptabilityMap)
+                            .filter(key => key !== '900000000000508004')
+                            .forEach(key => {
+                              if (desc.acceptabilityMap) {
+                                if (!preferredCounter[key]) {
+                                  preferredCounter[key] = 0;
+                                }
+                                if (
+                                  desc.acceptabilityMap[key] === 'PREFERRED'
+                                ) {
+                                  preferredCounter[key] += 1;
+                                }
+                              }
+                            });
+                        }
+                      });
+
+                      let onlyOneFail = false;
+                      let exactlyOneFail = false;
+                      let errPath = '';
+
+                      Object.entries(preferredCounter).forEach(
+                        ([language, count]) => {
+                          if (count > 1) {
+                            onlyOneFail = true;
+                            errPath = `${context.path}.${language}`;
+                          }
+                          if (count === 0) {
+                            exactlyOneFail = true;
+                            errPath = `${context.path}.${language}`;
+                          }
+                        },
+                      );
+
+                      if (onlyOneFail) {
+                        return context.createError({
+                          message: `Only one FSN can be preferred per language.`,
+                          path: errPath,
+                        });
+                      }
+
+                      if (exactlyOneFail) {
+                        return context.createError({
+                          message: `One FSN must be preferred for each language.`,
+                          path: errPath,
+                        });
+                      }
+                    }
+
+                    const preferredCounter: Record<string, number> = {};
                     const descriptions =
                       productDescriptionUpdateRequest.descriptions;
 
@@ -946,30 +1012,45 @@ export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateReques
                         Object.keys(desc.acceptabilityMap)
                           .filter(key => key !== '900000000000508004') // Filter out the specific key
                           .forEach(key => {
-                            if (
-                              desc.acceptabilityMap &&
-                              desc.acceptabilityMap[key] === 'PREFERRED'
-                            ) {
-                              if (!counter[key]) {
-                                counter[key] = 0;
+                            if (desc.acceptabilityMap) {
+                              if (!preferredCounter[key]) {
+                                preferredCounter[key] = 0;
                               }
-                              counter[key] += 1;
+                              if (desc.acceptabilityMap[key] === 'PREFERRED') {
+                                preferredCounter[key] += 1;
+                              }
                             }
                           });
                       }
                     });
 
+                    let onlyOneFail = false;
+                    let exactlyOneFail = false;
                     let errPath = '';
-                    Object.entries(counter).forEach(([language, count]) => {
-                      if (count > 1) {
-                        fail = true;
-                        errPath = `${context.path}.${language}`;
-                      }
-                    });
 
-                    if (fail) {
+                    Object.entries(preferredCounter).forEach(
+                      ([language, count]) => {
+                        if (count > 1) {
+                          onlyOneFail = true;
+                          errPath = `${context.path}.${language}`;
+                        }
+                        if (count === 0) {
+                          exactlyOneFail = true;
+                          errPath = `${context.path}.${language}`;
+                        }
+                      },
+                    );
+
+                    if (onlyOneFail) {
                       return context.createError({
                         message: `Only one synonym can be preferred per language.`,
+                        path: errPath,
+                      });
+                    }
+
+                    if (exactlyOneFail) {
+                      return context.createError({
+                        message: `One synonym must be preferred for each language.`,
                         path: errPath,
                       });
                     }

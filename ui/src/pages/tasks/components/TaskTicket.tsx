@@ -33,6 +33,7 @@ import { Box } from '@mui/system';
 import TicketDrawer from '../../tickets/components/grid/TicketDrawer.tsx';
 import { queryClient } from '../../../hooks/api/config/useQueryConfig.ts';
 import { allTaskAssociationsOptions } from '../../../hooks/api/useInitializeTickets.tsx';
+import ProductEditView from '../../../components/editProduct/ProductEditView.tsx';
 
 interface TaskTicketProps {
   menuOpen: boolean;
@@ -104,7 +105,7 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
             >
               <AvatarWithTooltip
                 username={useTicketQuery.data?.assignee}
-                size={40}
+                size={'md'}
               />
               <Typography variant="caption" fontWeight="bold">
                 Assignee
@@ -154,6 +155,10 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
       )}
       <Stack sx={{ width: '100%' }}>
         <Routes>
+          <Route
+            path="product/view/update/:updateId"
+            element={<ProductEditView ticket={useTicketQuery.data} />}
+          />
           <Route
             path="product/view/:conceptId/*"
             element={<ProductModelReadonly branch={task?.branchPath} />}

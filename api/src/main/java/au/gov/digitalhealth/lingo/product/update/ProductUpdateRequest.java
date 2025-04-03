@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package au.gov.digitalhealth.lingo.product.bulk;
+package au.gov.digitalhealth.lingo.product.update;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import java.io.Serializable;
+import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
+import lombok.Data;
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-@JsonSubTypes({
-  @JsonSubTypes.Type(value = BrandPackSizeCreationDetails.class, name = "brand-pack-size"),
-  @JsonSubTypes.Type(value = ProductUpdateCreationDetails.class, name = "product-update")
-})
-public interface BulkProductActionDetails extends Serializable {
+@Data
+@Builder
+public class ProductUpdateRequest {
 
-  String calculateSaveName();
+  @NotNull Long ticketId;
+
+  private ProductDescriptionUpdateRequest descriptionUpdate;
+
+  private ProductExternalIdentifierUpdateRequest externalRequesterUpdate;
 }

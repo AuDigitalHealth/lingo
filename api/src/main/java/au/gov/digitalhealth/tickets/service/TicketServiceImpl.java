@@ -1188,6 +1188,7 @@ public class TicketServiceImpl implements TicketService {
   }
 
   public Set<BulkProductActionDto> getBulkProductActionForTicket(Long ticketId) {
+    List<BulkProductAction> bpa = bulkProductActionRepository.findByTicketId(ticketId);
     return bulkProductActionRepository.findByTicketId(ticketId).stream()
         .map(bulkProductActionMapper::toDto)
         .collect(Collectors.toSet());

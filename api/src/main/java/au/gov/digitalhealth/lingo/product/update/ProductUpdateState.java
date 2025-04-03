@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package au.gov.digitalhealth.lingo.product.bulk;
+package au.gov.digitalhealth.lingo.product.update;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import au.csiro.snowstorm_client.model.SnowstormConceptView;
+import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
 import java.io.Serializable;
+import java.util.Set;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-@JsonSubTypes({
-  @JsonSubTypes.Type(value = BrandPackSizeCreationDetails.class, name = "brand-pack-size"),
-  @JsonSubTypes.Type(value = ProductUpdateCreationDetails.class, name = "product-update")
-})
-public interface BulkProductActionDetails extends Serializable {
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class ProductUpdateState implements Serializable {
 
-  String calculateSaveName();
+  SnowstormConceptView concept;
+
+  Set<ExternalIdentifier> externalIdentifiers;
 }

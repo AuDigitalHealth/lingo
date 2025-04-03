@@ -19,6 +19,8 @@ import {
   BrandPackSizeCreationDetails,
   DevicePackageDetails,
   MedicationPackageDetails,
+  ProductUpdate,
+  ProductUpdateCreationDetails,
 } from '../product.ts';
 import { SearchConditionBody } from './search.ts';
 import { ColorCode } from '../ColorCode.ts';
@@ -65,6 +67,7 @@ export interface Ticket extends VersionedEntity {
   taskAssociation?: TaskAssocationDto | null;
   products?: TicketProductDto[];
   bulkProductActions?: TicketBulkProductActionDto[];
+  productUpdates?: ProductUpdate[];
 }
 
 export interface PagedTicket extends PagedItem {
@@ -81,7 +84,7 @@ export interface BaseEntity {
   created: string;
   createdBy: string;
 }
-interface VersionedEntity extends BaseEntity {
+export interface VersionedEntity extends BaseEntity {
   version?: number;
   modified?: string;
   modifiedBy?: string;
@@ -263,8 +266,8 @@ export interface TicketProductDto {
   id?: number;
   ticketId: number;
   version: number | null;
-  created?: Date;
-  modified?: Date;
+  created?: string;
+  modified?: string;
   createdBy?: string;
   modifiedBy?: string;
   name: string;
@@ -277,8 +280,8 @@ export interface TicketBulkProductActionDto {
   ticketId: number;
   name: string;
   conceptIds: string[];
-  details: BrandPackSizeCreationDetails;
-  created?: Date;
+  details: BrandPackSizeCreationDetails | ProductUpdateCreationDetails;
+  created: string;
 }
 
 export interface AutocompleteGroupOption {

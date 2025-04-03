@@ -24,16 +24,16 @@ import static au.gov.digitalhealth.lingo.service.ProductSummaryService.TPUU_LABE
 import static au.gov.digitalhealth.lingo.service.ProductSummaryService.TP_LABEL;
 
 import au.csiro.snowstorm_client.model.SnowstormConcept;
-import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormDescription;
 import au.gov.digitalhealth.lingo.AmtTestData;
 import au.gov.digitalhealth.lingo.LingoTestBase;
 import au.gov.digitalhealth.lingo.MedicationAssertions;
-import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
+import au.gov.digitalhealth.lingo.product.bulk.ProductUpdateCreationDetails;
 import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.update.ProductDescriptionUpdateRequest;
 import au.gov.digitalhealth.lingo.product.update.ProductExternalIdentifierUpdateRequest;
+import au.gov.digitalhealth.lingo.product.update.ProductUpdateRequest;
 import au.gov.digitalhealth.lingo.service.ProductUpdateService;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import au.gov.digitalhealth.tickets.helper.JsonReader;
@@ -127,15 +127,40 @@ class ProductControllerTest extends LingoTestBase {
     fsn.setTerm(newFsn);
     pt.setTerm(newPt);
 
-    ProductDescriptionUpdateRequest productDescriptionUpdateRequest =
-        new ProductDescriptionUpdateRequest(Set.of(fsn, pt), ticketResponse.getId());
-    SnowstormConceptMini updatedProduct =
-        getLingoTestClient()
-            .updateProductDescription(
-                productDescriptionUpdateRequest, existingConcept.getConceptId());
+    ProductUpdateRequest productUpdateRequest =
+        ProductUpdateRequest.builder()
+            .descriptionUpdate(
+                ProductDescriptionUpdateRequest.builder().descriptions(Set.of(fsn, pt)).build())
+            .ticketId(ticketResponse.getId())
+            .build();
 
-    Assertions.assertThat(updatedProduct.getPt().getTerm()).isEqualTo(newPt);
-    Assertions.assertThat(updatedProduct.getFsn().getTerm()).isEqualTo(newFsn);
+    au.gov.digitalhealth.tickets.models.BulkProductAction updatedProduct =
+        getLingoTestClient().updateProduct(productUpdateRequest, existingConcept.getConceptId());
+
+    ProductUpdateCreationDetails updatedProductDetails =
+        (ProductUpdateCreationDetails) updatedProduct.getDetails();
+
+    Assertions.assertThat(
+            updatedProductDetails.getUpdatedState().getConcept().getDescriptions().stream()
+                .filter(
+                    snowstormDescription -> {
+                      return snowstormDescription.getDescriptionId().equals(fsn.getDescriptionId());
+                    })
+                .findFirst()
+                .get()
+                .getTerm())
+        .isEqualTo(fsn.getTerm());
+
+    Assertions.assertThat(
+            updatedProductDetails.getUpdatedState().getConcept().getDescriptions().stream()
+                .filter(
+                    snowstormDescription -> {
+                      return snowstormDescription.getDescriptionId().equals(pt.getDescriptionId());
+                    })
+                .findFirst()
+                .get()
+                .getTerm())
+        .isEqualTo(pt.getTerm());
 
     // Testing semantic tag check
     fsn.setTerm(newPt);
@@ -145,8 +170,14 @@ class ProductControllerTest extends LingoTestBase {
             .putRequest(
                 "/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/"
                     + existingConcept.getConceptId()
-                    + "/descriptions",
-                new ProductDescriptionUpdateRequest(Set.of(fsn, pt), ticketResponse.getId()),
+                    + "/update",
+                ProductUpdateRequest.builder()
+                    .ticketId(ticketResponse.getId())
+                    .descriptionUpdate(
+                        ProductDescriptionUpdateRequest.builder()
+                            .descriptions(Set.of(fsn, pt))
+                            .build())
+                    .build(),
                 HttpStatus.BAD_REQUEST,
                 ProblemDetail.class);
 
@@ -156,40 +187,70 @@ class ProductControllerTest extends LingoTestBase {
             String.format(
                 "The required semantic tag \"(containerized branded product package)\" is missing from the FSN \"%s\".",
                 fsn.getTerm()));
-  }
 
-  @Test
-  void updateProductExternalIdentifiersTest() {
-    Ticket ticketResponse = getLingoTestClient().createTicket("Update Product Test");
-    ProductSummary productSummary =
-        getLingoTestClient().getProductModel(AmtTestData.EMLA_5_PERCENT_PATCH_20_CARTON);
-    Node existingCtpp = productSummary.getSubjects().iterator().next();
+    // fix so semantic tag error isnt thrown again
+
+    fsn.setTerm(newFsn);
 
     ProductExternalIdentifierUpdateRequest productExternalIdentifierUpdateRequest =
         new ProductExternalIdentifierUpdateRequest(
             Set.of(
                 new ExternalIdentifier("https://www.tga.gov.au/artg", "123"),
-                new ExternalIdentifier("https://www.tga.gov.au/artg", "345")),
-            ticketResponse.getId());
-    Set<ExternalIdentifier> updatedExternalIdentifiers =
+                new ExternalIdentifier("https://www.tga.gov.au/artg", "345")));
+
+    au.gov.digitalhealth.tickets.models.BulkProductAction externalIdentifiersUpdated =
         getLingoTestClient()
-            .updateProductExternalIdentifiers(
-                productExternalIdentifierUpdateRequest, existingCtpp.getConceptId());
-    Assertions.assertThat(updatedExternalIdentifiers.size()).isEqualTo(2);
+            .putRequest(
+                "/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/"
+                    + existingConcept.getConceptId()
+                    + "/update",
+                ProductUpdateRequest.builder()
+                    .ticketId(ticketResponse.getId())
+                    .descriptionUpdate(
+                        ProductDescriptionUpdateRequest.builder()
+                            .descriptions(Set.of(fsn, pt))
+                            .build())
+                    .externalRequesterUpdate(productExternalIdentifierUpdateRequest)
+                    .build(),
+                HttpStatus.OK,
+                au.gov.digitalhealth.tickets.models.BulkProductAction.class);
+
+    updatedProductDetails = (ProductUpdateCreationDetails) externalIdentifiersUpdated.getDetails();
+
+    Set<ExternalIdentifier> newExternalIdentifiers =
+        updatedProductDetails.getUpdatedState().getExternalIdentifiers();
+
+    Assertions.assertThat(newExternalIdentifiers.size()).isEqualTo(2);
     Assertions.assertThat(
-            updatedExternalIdentifiers.stream().anyMatch(e -> e.getIdentifierValue().equals("123")))
+            newExternalIdentifiers.stream().anyMatch(e -> e.getIdentifierValue().equals("123")))
         .isTrue();
     Assertions.assertThat(
-            updatedExternalIdentifiers.stream().anyMatch(e -> e.getIdentifierValue().equals("345")))
+            newExternalIdentifiers.stream().anyMatch(e -> e.getIdentifierValue().equals("345")))
         .isTrue();
 
-    // Test for removing artg id
     productExternalIdentifierUpdateRequest =
-        new ProductExternalIdentifierUpdateRequest(Collections.emptySet(), ticketResponse.getId());
-    updatedExternalIdentifiers =
+        new ProductExternalIdentifierUpdateRequest(Collections.emptySet());
+
+    externalIdentifiersUpdated =
         getLingoTestClient()
-            .updateProductExternalIdentifiers(
-                productExternalIdentifierUpdateRequest, existingCtpp.getConceptId());
-    Assertions.assertThat(updatedExternalIdentifiers.size()).isEqualTo(0);
+            .putRequest(
+                "/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/"
+                    + existingConcept.getConceptId()
+                    + "/update",
+                ProductUpdateRequest.builder()
+                    .ticketId(ticketResponse.getId())
+                    .descriptionUpdate(
+                        ProductDescriptionUpdateRequest.builder()
+                            .descriptions(Set.of(fsn, pt))
+                            .build())
+                    .externalRequesterUpdate(productExternalIdentifierUpdateRequest)
+                    .build(),
+                HttpStatus.OK,
+                au.gov.digitalhealth.tickets.models.BulkProductAction.class);
+
+    updatedProductDetails = (ProductUpdateCreationDetails) externalIdentifiersUpdated.getDetails();
+
+    newExternalIdentifiers = updatedProductDetails.getUpdatedState().getExternalIdentifiers();
+    Assertions.assertThat(newExternalIdentifiers.size()).isEqualTo(0);
   }
 }
