@@ -7,7 +7,7 @@ import {
   AccordionSummary,
   AccordionDetails,
   IconButton,
-  Tooltip,
+  Tooltip, Toolbar, Grid,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
@@ -68,18 +68,14 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
               sx={containerStyle}
             >
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography>{itemTitle}</Typography>
+                    <Typography sx={{flexGrow: 1, marginTop: '8px;'}}>{itemTitle}</Typography>
+                    {element.hasRemove && (
+                        <IconButton onClick={element.onDropIndexClick(element.index)}><RemoveCircleOutlineIcon color="error" /></IconButton>
+                    )}
               </AccordionSummary>
               <AccordionDetails>
                 <Box>
                   {React.cloneElement(element.children, { title: itemTitle })}
-                  {element.hasRemove && (
-                    <IconButton
-                      onClick={element.onDropIndexClick(element.index)}
-                    >
-                      <RemoveCircleOutlineIcon color="error" />
-                    </IconButton>
-                  )}
                 </Box>
               </AccordionDetails>
             </Accordion>
