@@ -83,12 +83,7 @@ import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
-import au.gov.digitalhealth.lingo.product.details.ContainedPackageDetails;
-import au.gov.digitalhealth.lingo.product.details.Ingredient;
-import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
-import au.gov.digitalhealth.lingo.product.details.PackageDetails;
-import au.gov.digitalhealth.lingo.product.details.PackageProductDetailsBase;
-import au.gov.digitalhealth.lingo.product.details.Quantity;
+import au.gov.digitalhealth.lingo.product.details.*;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet;
 import au.gov.digitalhealth.lingo.util.AmtConstants;
@@ -221,10 +216,11 @@ public class MedicationProductCalculationService {
         packageDetails.getContainedPackages().stream()
                 .anyMatch(
                     p ->
-                        p.getContainedProducts().stream()
-                            .anyMatch(MedicationProductDetails::hasDeviceType))
+                        p.getPackageDetails().getContainedProducts().stream()
+                            .anyMatch(
+                                product -> product.getProductDetails().getDeviceType() != null))
             || packageDetails.getContainedProducts().stream()
-                .anyMatch(MedicationProductDetails::hasDeviceType);
+                .anyMatch(product -> product.getProductDetails().getDeviceType() != null);
 
     if (branded && containerized && device) {
       return CONTAINERIZED_BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG.getValue();
@@ -322,23 +318,28 @@ public class MedicationProductCalculationService {
 
     validatePackageDetails(packageDetails, branch);
 
-    Map<ContainedPackageDetails<MedicationProductDetails>, ProductSummary> innerPackageSummaries =
+    Map<PackageQuantity<MedicationProductDetails>, ProductSummary> innerPackageSummaries =
         new HashMap<>();
-    for (ContainedPackageDetails<MedicationProductDetails> containedPackageDetails :
+    for (PackageQuantity<MedicationProductDetails> packageQuantity :
         packageDetails.getContainedPackages()) {
-      validatePackageQuantity(containedPackageDetails);
+      validatePackageQuantity(packageQuantity);
       ProductSummary innerPackageSummary =
-          calculateCreatePackage(branch, containedPackageDetails, atomicCache);
-      innerPackageSummaries.put(containedPackageDetails, innerPackageSummary);
+          calculateCreatePackage(branch, packageQuantity.getPackageDetails(), atomicCache);
+      innerPackageSummaries.put(packageQuantity, innerPackageSummary);
     }
 
-    Map<MedicationProductDetails, ProductSummary> innnerProductSummaries = new HashMap<>();
-    for (MedicationProductDetails productDetails : packageDetails.getContainedProducts()) {
-      validateProductQuantity(branch, productDetails);
+    Map<ProductQuantity<MedicationProductDetails>, ProductSummary> innnerProductSummaries =
+        new HashMap<>();
+    for (ProductQuantity<MedicationProductDetails> productQuantity :
+        packageDetails.getContainedProducts()) {
+      validateProductQuantity(branch, productQuantity);
       ProductSummary innerProductSummary =
           createProduct(
-              branch, productDetails, atomicCache, packageDetails.getSelectedConceptIdentifiers());
-      innnerProductSummaries.put(productDetails, innerProductSummary);
+              branch,
+              productQuantity.getProductDetails(),
+              atomicCache,
+              packageDetails.getSelectedConceptIdentifiers());
+      innnerProductSummaries.put(productQuantity, innerProductSummary);
     }
 
     CompletableFuture<Node> mpp =
@@ -469,8 +470,8 @@ public class MedicationProductCalculationService {
   private CompletableFuture<Node> getOrCreatePackagedClinicalDrug(
       String branch,
       PackageDetails<MedicationProductDetails> packageDetails,
-      Map<ContainedPackageDetails<MedicationProductDetails>, ProductSummary> innerPackageSummaries,
-      Map<MedicationProductDetails, ProductSummary> innnerProductSummaries,
+      Map<PackageQuantity<MedicationProductDetails>, ProductSummary> innerPackageSummaries,
+      Map<ProductQuantity<MedicationProductDetails>, ProductSummary> innnerProductSummaries,
       boolean branded,
       boolean container,
       AtomicCache atomicCache) {
@@ -521,8 +522,8 @@ public class MedicationProductCalculationService {
 
   private Set<SnowstormRelationship> createPackagedClinicalDrugRelationships(
       PackageDetails<MedicationProductDetails> packageDetails,
-      Map<ContainedPackageDetails<MedicationProductDetails>, ProductSummary> innerPackageSummaries,
-      Map<MedicationProductDetails, ProductSummary> innnerProductSummaries,
+      Map<PackageQuantity<MedicationProductDetails>, ProductSummary> innerPackageSummaries,
+      Map<ProductQuantity<MedicationProductDetails>, ProductSummary> innnerProductSummaries,
       boolean branded,
       boolean container) {
 
@@ -539,7 +540,7 @@ public class MedicationProductCalculationService {
     }
 
     int group = 1;
-    for (Entry<MedicationProductDetails, ProductSummary> entry :
+    for (Entry<ProductQuantity<MedicationProductDetails>, ProductSummary> entry :
         innnerProductSummaries.entrySet()) {
       Node contained;
       ProductSummary productSummary = entry.getValue();
@@ -550,18 +551,18 @@ public class MedicationProductCalculationService {
       }
       relationships.add(getSnowstormRelationship(CONTAINS_CD, contained, group));
 
-      MedicationProductDetails productDetails = entry.getKey();
+      ProductQuantity<MedicationProductDetails> quantity = entry.getKey();
       relationships.add(
           getSnowstormRelationship(
               HAS_PACK_SIZE_UNIT,
-              productDetails.getPackSize().getUnit(),
+                  quantity.getUnit(),
               group,
               STATED_RELATIONSHIP));
       relationships.add(
           getSnowstormDatatypeComponent(
               HAS_PACK_SIZE_VALUE,
               BigDecimalFormatter.formatBigDecimal(
-                  productDetails.getPackSize().getValue(), decimalScale),
+                      quantity.getValue(), decimalScale),
               DataTypeEnum.DECIMAL,
               group,
               STATED_RELATIONSHIP));
@@ -571,7 +572,7 @@ public class MedicationProductCalculationService {
               COUNT_OF_CONTAINED_COMPONENT_INGREDIENT,
               // get the unique set of active ingredients
               Integer.toString(
-                  productDetails.getActiveIngredients().stream()
+                      quantity.getProductDetails().getActiveIngredients().stream()
                       .map(i -> i.getActiveIngredient().getConceptId())
                       .collect(Collectors.toSet())
                       .size()),
@@ -582,7 +583,7 @@ public class MedicationProductCalculationService {
       group++;
     }
 
-    for (Entry<ContainedPackageDetails<MedicationProductDetails>, ProductSummary> entry :
+    for (Entry<PackageQuantity<MedicationProductDetails>, ProductSummary> entry :
         innerPackageSummaries.entrySet()) {
       Node contained;
       ProductSummary productSummary = entry.getValue();
@@ -595,18 +596,18 @@ public class MedicationProductCalculationService {
       }
       relationships.add(getSnowstormRelationship(CONTAINS_PACKAGED_CD, contained, group));
 
-      ContainedPackageDetails<MedicationProductDetails> containedPackageDetails = entry.getKey();
+      PackageQuantity<MedicationProductDetails> quantity = entry.getKey();
       relationships.add(
           getSnowstormRelationship(
               HAS_PACK_SIZE_UNIT,
-              containedPackageDetails.getPackSize().getUnit(),
+                  quantity.getUnit(),
               group,
               STATED_RELATIONSHIP));
       relationships.add(
           getSnowstormDatatypeComponent(
               HAS_PACK_SIZE_VALUE,
               BigDecimalFormatter.formatBigDecimal(
-                  containedPackageDetails.getPackSize().getValue(), decimalScale),
+                      quantity.getValue(), decimalScale),
               DataTypeEnum.DECIMAL,
               group,
               STATED_RELATIONSHIP));
@@ -911,13 +912,15 @@ public class MedicationProductCalculationService {
     return relationships;
   }
 
-  private void validateProductQuantity(String branch, MedicationProductDetails productDetails) {
+  private void validateProductQuantity(
+      String branch, ProductQuantity<MedicationProductDetails> productQuantity) {
     // Leave the MRCM validation to the MRCM - the UI should already enforce this and the validation
     // in the MS will catch it. Validating here will just slow things down.
-    ValidationUtil.validateQuantityValueIsOneIfUnitIsEach(productDetails.getPackSize());
+    ValidationUtil.validateQuantityValueIsOneIfUnitIsEach(productQuantity);
 
     // if the contained product has a container/device type or a quantity then the unit must be
     // each and the quantity must be an integer
+    MedicationProductDetails productDetails = productQuantity.getProductDetails();
     Quantity productDetailsQuantity = productDetails.getQuantity();
     if ((productDetails.getContainerType() != null
             || productDetails.getDeviceType() != null
@@ -1092,17 +1095,16 @@ public class MedicationProductCalculationService {
         .equals(numeratorAndDenominator.getSecond().getConceptId());
   }
 
-  private void validatePackageQuantity(
-      ContainedPackageDetails<MedicationProductDetails> packageDetails) {
+  private void validatePackageQuantity(PackageQuantity<MedicationProductDetails> packageQuantity) {
     // Leave the MRCM validation to the MRCM - the UI should already enforce this and the validation
     // in the MS will catch it. Validating here will just slow things down.
 
     // -- package quantity unit must be each and the quantitiy must be an integer
-    ValidationUtil.validateQuantityValueIsOneIfUnitIsEach(packageDetails.getPackSize());
+    ValidationUtil.validateQuantityValueIsOneIfUnitIsEach(packageQuantity);
 
     // validate that the package is only nested one deep
-    if (packageDetails.getContainedPackages() != null
-        && !packageDetails.getContainedPackages().isEmpty()) {
+    if (packageQuantity.getPackageDetails().getContainedPackages() != null
+        && !packageQuantity.getPackageDetails().getContainedPackages().isEmpty()) {
       throw new ProductAtomicDataValidationProblem(
           "A contained package must not contain further packages - nesting is only one level deep");
     }
@@ -1273,11 +1275,7 @@ public class MedicationProductCalculationService {
     if (packageDetails.getContainedPackages() != null
         && !packageDetails.getContainedPackages().isEmpty()
         && !packageDetails.getContainedPackages().stream()
-            .allMatch(
-                p ->
-                    Objects.equals(
-                        p.getPackSize().getUnit().getConceptId(),
-                        UNIT_OF_PRESENTATION.getValue()))) {
+            .allMatch(p -> p.getUnit().getConceptId().equals(UNIT_OF_PRESENTATION.getValue()))) {
       throw new ProductAtomicDataValidationProblem(
           "If the package contains other packages it must use a unit of 'each' for the contained packages");
     }
@@ -1285,8 +1283,10 @@ public class MedicationProductCalculationService {
     // if the package contains other packages it must have a container type of "Pack"
     if (packageDetails.getContainedPackages() != null
         && !packageDetails.getContainedPackages().isEmpty()
-        && !Objects.equals(
-            packageDetails.getContainerType().getConceptId(), SnomedConstants.PACK.getValue())) {
+        && !packageDetails
+            .getContainerType()
+            .getConceptId()
+            .equals(SnomedConstants.PACK.getValue())) {
       throw new ProductAtomicDataValidationProblem(
           "If the package contains other packages it must have a container type of 'Pack'");
     }
