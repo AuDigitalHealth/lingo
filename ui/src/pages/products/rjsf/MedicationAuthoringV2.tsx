@@ -186,11 +186,6 @@ function MedicationAuthoringV2({
             />
           </Container>
         </Box>
-        <style>{`
-        .MuiSelect-select {
-          min-width: 15vw;
-        }        
-        `}</style>
       </Paper>
   );
 }
