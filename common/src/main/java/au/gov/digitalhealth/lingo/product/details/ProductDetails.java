@@ -16,12 +16,15 @@
 package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+
+import java.util.HashMap;
 import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -35,15 +38,19 @@ import lombok.EqualsAndHashCode;
 })
 public abstract class ProductDetails extends PackageProductDetailsBase {
   @NotNull SnowstormConceptMini productName;
+  SnowstormConceptMini deviceType;
   String otherIdentifyingInformation;
 
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
-    Map<String, String> idMap = addToIdFsnMap(null, productName);
+    Map<String, String> idMap = new HashMap<>();
+    idMap.put(productName.getConceptId(), SnowstormDtoUtil.getFsnTerm(productName));
+    if (deviceType != null) {
+      idMap.put(deviceType.getConceptId(), SnowstormDtoUtil.getFsnTerm(deviceType));
+    }
     idMap.putAll(getSpecialisedIdFsnMap());
     return idMap;
   }
 
-  @JsonIgnore
   protected abstract Map<String, String> getSpecialisedIdFsnMap();
 }
