@@ -43,24 +43,24 @@ public class MedicationProductDetails extends ProductDetails {
 
   @Override
   protected Map<String, String> getSpecialisedIdFsnMap() {
-    Map<String, String> idMap = new HashMap<>();
+    Map<String, String> idMap = addToIdFsnMap(null, quantity);
     if (genericForm != null) {
-      idMap.put(genericForm.getConceptId(), genericForm.getFsn().getTerm());
+      addToIdFsnMap(idMap, genericForm);
     }
     if (specificForm != null) {
-      idMap.put(specificForm.getConceptId(), specificForm.getFsn().getTerm());
+      addToIdFsnMap(idMap, specificForm);
     }
     if (quantity != null) {
       idMap.putAll(quantity.getIdFsnMap());
     }
     if (containerType != null) {
-      idMap.put(containerType.getConceptId(), containerType.getFsn().getTerm());
+      addToIdFsnMap(idMap, containerType);
     }
     if (deviceType != null) {
-      idMap.put(deviceType.getConceptId(), deviceType.getFsn().getTerm());
+      addToIdFsnMap(idMap, deviceType);
     }
     for (Ingredient ingredient : activeIngredients) {
-      idMap.putAll(ingredient.getIdFsnMap());
+      addToIdFsnMap(idMap, ingredient);
     }
     return idMap;
   }
