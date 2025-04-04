@@ -31,10 +31,10 @@ export const getItemTitle = (
     : `${defaultTitle} ${index + 1}`;
 };
 export function getFieldName(idSchema) {
-  const fieldNameRaw = idSchema?.$id
+  const withoutRoot = idSchema.$id.startsWith('root_')
     ? idSchema.$id.replace('root_', '')
-    : undefined;
-  return fieldNameRaw.replace(/_(\d+)_/g, '[$1].');
+    : idSchema.$id;
+  return withoutRoot.replace(/_/g, '.');
 }
 export function getParentPath(fullPath) {
   fullPath = fullPath.replace(/_/g, '.');
