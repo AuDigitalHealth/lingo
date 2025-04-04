@@ -121,6 +121,10 @@ function MedicationAuthoring({
     return <ProductLoader message="Loading Product details" />;
   }
 
+  if (isPending) {
+    return <ProductLoader message="Previewing product" />;
+  }
+
   if (isSchemaLoading || isUiSchemaLoading) {
     return <ProductLoader message="Loading Schema" />;
   }
