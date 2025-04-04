@@ -30,6 +30,8 @@ import {
 } from '../../../types/product.ts';
 
 import { useTicketProductQuery } from './hooks/useTicketProductQuery.ts';
+import ProductPartialSaveModal from '../components/ProductPartialSaveModal.tsx';
+import { DraftSubmitPanel } from './components/DarftSubmitPanel.tsx';
 export interface DeviceAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
   task: Task;
@@ -47,6 +49,8 @@ function DeviceAuthoringV2({
   ticketProductId,
 }: DeviceAuthoringV2Props) {
   const [formData, setFormData] = useState({});
+  const [saveModalOpen, setSaveModalOpen] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
   const [errorSchema, setErrorSchema] = useState({});
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const formRef = useRef<any>(null); // Ref to access the RJSF Form instance
@@ -72,12 +76,18 @@ function DeviceAuthoringV2({
   const mutation = useCalculateProduct();
   const { isPending, data } = mutation;
 
+  const handleSaveToggleModal = () => {
+    setSaveModalOpen(!saveModalOpen);
+  };
   const handleToggleCreateModal = useCallback(() => {
     setCreateModalOpen(!createModalOpen);
   }, [createModalOpen]);
 
   const handleChange = ({ formData }: any) => {
     setFormData(formData);
+    if (!_.isEmpty(formData.productName)) {
+      setIsDirty(true); //TODO better way to handle check form is dirty
+    }
   };
 
   const handleFormSubmit = ({ formData }: any) => {
@@ -88,12 +98,16 @@ function DeviceAuthoringV2({
       task,
     });
   };
+  const saveDraft = () => {
+    setSaveModalOpen(true);
+  };
 
   const handleClear = useCallback(() => {
     setFormData({});
     if (formRef.current) {
       formRef.current.reset();
     }
+    setIsDirty(false);
   }, []);
 
   if (
@@ -174,6 +188,7 @@ function DeviceAuthoringV2({
               >
                 Clear
               </Button>
+              <DraftSubmitPanel isDirty={isDirty} saveDraft={saveDraft} />
               <Button
                 type="submit"
                 variant="contained"
@@ -184,6 +199,13 @@ function DeviceAuthoringV2({
               </Button>
             </Box>
           </Form>
+          <ProductPartialSaveModal
+            packageDetails={formData}
+            handleClose={handleSaveToggleModal}
+            open={saveModalOpen}
+            ticket={ticket}
+            existingProductId={ticketProductId}
+          />
           <ProductPreviewCreateModal
             open={createModalOpen}
             handleClose={handleToggleCreateModal}
