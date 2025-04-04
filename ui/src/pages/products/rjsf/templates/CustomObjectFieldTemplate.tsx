@@ -23,7 +23,7 @@ const CustomObjectFieldTemplate = (props: ObjectFieldTemplateProps) => {
     return (
       <div>
         {properties.map(element => (
-          <div key={element.name} style={{ marginBottom: '30px' }}>
+          <div key={element.name} style={{ marginBottom: '40px' }}>
             {element.content}
           </div>
         ))}
