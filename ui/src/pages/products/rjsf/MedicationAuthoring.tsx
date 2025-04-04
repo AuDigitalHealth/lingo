@@ -35,7 +35,7 @@ import {
 } from '../../../types/product.ts';
 import { useTicketProductQuery } from './hooks/useTicketProductQuery.ts';
 import { DraftSubmitPanel } from './components/DarftSubmitPanel.tsx';
-import ProductPartialSaveModal from '../components/ProductPartialSaveModal.tsx';
+import ProductPartialSaveModal from './components/ProductPartialSaveModal.tsx';
 
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -47,7 +47,7 @@ export interface MedicationAuthoringV2Props {
 const validator = customizeValidator();
 ajvErrors(validator.ajv);
 
-function MedicationAuthoringV2({
+function MedicationAuthoring({
   task,
   selectedProduct,
   ticketProductId,
@@ -323,4 +323,4 @@ const useProductQuery = ({
   });
 };
 
-export default MedicationAuthoringV2;
+export default MedicationAuthoring;
