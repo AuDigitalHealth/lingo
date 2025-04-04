@@ -53,13 +53,11 @@ export const extractAllErrorMessages = (
     const currentPath = parentPath ? parentPath : undefined;
     errors = errors.concat(
       errorSchema.__errors.map((error: string) => {
-        if(currentPath){
+        if (currentPath) {
           return `${currentPath}: ${error}`;
-        }
-        else{
+        } else {
           return `${error}`;
         }
-
       }),
     );
   }
