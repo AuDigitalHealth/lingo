@@ -2,7 +2,6 @@ import React, { useCallback, useState, useRef } from 'react';
 import { Form } from '@rjsf/mui';
 import { Container, Button, Box, Paper } from '@mui/material';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useParams } from 'react-router-dom';
 import _ from 'lodash';
 import ajvErrors from 'ajv-errors';
 
@@ -23,7 +22,6 @@ import TextFieldWidget from './widgets/TextFieldWidget.tsx';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 import productService from '../../../api/ProductService.ts';
 import { ConfigService } from '../../../api/ConfigService.ts';
-import { useTicketByTicketNumber } from '../../../hooks/api/tickets/useTicketById.tsx';
 import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
 import { customizeValidator } from '@rjsf/validator-ajv8';
 import { Concept } from '../../../types/concept.ts';
@@ -35,31 +33,44 @@ import {
   ProductCreationDetails,
   ProductType,
 } from '../../../types/product.ts';
-
+import { useTicketProductQuery } from './hooks/useTicketProductQuery.ts';
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
   task: Task;
+  ticket: Ticket;
+  ticketProductId?: string;
 }
 
 const validator = customizeValidator();
 ajvErrors(validator.ajv);
 
 function MedicationAuthoringV2({
-                                 task,
-                                 selectedProduct,
-                               }: MedicationAuthoringV2Props) {
+  task,
+  selectedProduct,
+  ticketProductId,
+  ticket,
+}: MedicationAuthoringV2Props) {
   const [formData, setFormData] = useState({});
   const [errorSchema, setErrorSchema] = useState({});
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const formRef = useRef<any>(null); // Ref to access the RJSF Form instance
-
-  const { ticketNumber } = useParams();
-  const useTicketQuery = useTicketByTicketNumber(ticketNumber, true);
-  const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(task.branchPath);
-  const { data: uiSchema, isLoading: isUiSchemaLoading } = useUiSchemaQuery(task.branchPath);
+  const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
+    task.branchPath,
+  );
+  const { data: uiSchema, isLoading: isUiSchemaLoading } = useUiSchemaQuery(
+    task.branchPath,
+  );
   const { isLoading, isFetching } = useProductQuery({
     selectedProduct,
     task,
+    setFunction: setFormData,
+  });
+  const {
+    isLoading: isTicketProductLoading,
+    isFetching: isTicketProductFetching,
+  } = useTicketProductQuery({
+    ticketProductId,
+    ticket,
     setFunction: setFormData,
   });
   const mutation = useCalculateProduct();
@@ -76,7 +87,7 @@ function MedicationAuthoringV2({
   const handleFormSubmit = ({ formData }: any) => {
     mutation.mutate({
       formData,
-      ticket: useTicketQuery.data as Ticket,
+      ticket: ticket,
       toggleModalOpen: handleToggleCreateModal,
       task,
     });
@@ -89,7 +100,12 @@ function MedicationAuthoringV2({
     }
   }, []);
 
-  if (isLoading || isFetching) {
+  if (
+    isLoading ||
+    isFetching ||
+    isTicketProductLoading ||
+    isTicketProductFetching
+  ) {
     return <ProductLoader message="Loading Product details" />;
   }
 
@@ -116,77 +132,77 @@ function MedicationAuthoringV2({
   };
 
   return (
-      <Paper sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1 }}>
-        <Box m={2} p={2}>
-          <Container>
-            <Form
-                ref={formRef}
-                schema={schema}
-                uiSchema={uiSchema}
-                formData={formData}
-                formContext={formContext}
-                onChange={handleChange}
-                onSubmit={handleFormSubmit}
-                onError={onError}
-                fields={{
-                  UnitValueField,
-                  AutoCompleteField,
-                  ParentChildAutoCompleteField,
-                  MutuallyExclusiveAutocompleteField,
-                  ConditionalArrayField,
-                  CompactQuantityField,
-                  UnitValueUnWrappedField,
-                }}
-                templates={{
-                  FieldTemplate: CustomFieldTemplate,
-                  ArrayFieldTemplate: CustomArrayFieldTemplate,
-                  ObjectFieldTemplate: CustomObjectFieldTemplate,
-                }}
-                validator={validator}
-                widgets={{
-                  NumberWidget,
-                  TextFieldWidget,
-                  OneOfArrayWidget,
-                }}
-                disabled={isPending}
+    <Paper sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1 }}>
+      <Box m={2} p={2}>
+        <Container>
+          <Form
+            ref={formRef}
+            schema={schema}
+            uiSchema={uiSchema}
+            formData={formData}
+            formContext={formContext}
+            onChange={handleChange}
+            onSubmit={handleFormSubmit}
+            onError={onError}
+            fields={{
+              UnitValueField,
+              AutoCompleteField,
+              ParentChildAutoCompleteField,
+              MutuallyExclusiveAutocompleteField,
+              ConditionalArrayField,
+              CompactQuantityField,
+              UnitValueUnWrappedField,
+            }}
+            templates={{
+              FieldTemplate: CustomFieldTemplate,
+              ArrayFieldTemplate: CustomArrayFieldTemplate,
+              ObjectFieldTemplate: CustomObjectFieldTemplate,
+            }}
+            validator={validator}
+            widgets={{
+              NumberWidget,
+              TextFieldWidget,
+              OneOfArrayWidget,
+            }}
+            disabled={isPending}
+          >
+            <Box
+              sx={{
+                mt: 2,
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 2,
+              }}
             >
-              <Box
-                  sx={{
-                    mt: 2,
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                    gap: 2,
-                  }}
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={handleClear}
+                disabled={isPending}
               >
-                <Button
-                    variant="outlined"
-                    color="secondary"
-                    onClick={handleClear}
-                    disabled={isPending}
-                >
-                  Clear
-                </Button>
-                <Button
-                    type="submit"
-                    variant="contained"
-                    color="primary"
-                    disabled={isPending}
-                >
-                  {isPending ? 'Submitting...' : 'Preview'}
-                </Button>
-              </Box>
-            </Form>
-            <ProductPreviewCreateModal
-                open={createModalOpen}
-                handleClose={handleToggleCreateModal}
-                productCreationDetails={data}
-                branch={task.branchPath}
-                ticket={useTicketQuery.data as Ticket}
-                productType={ProductType.medication}
-            />
-          </Container>
-        </Box>
-      </Paper>
+                Clear
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                disabled={isPending}
+              >
+                {isPending ? 'Submitting...' : 'Preview'}
+              </Button>
+            </Box>
+          </Form>
+          <ProductPreviewCreateModal
+            open={createModalOpen}
+            handleClose={handleToggleCreateModal}
+            productCreationDetails={data}
+            branch={task.branchPath}
+            ticket={ticket}
+            productType={ProductType.medication}
+          />
+        </Container>
+      </Box>
+    </Paper>
   );
 }
 
@@ -197,16 +213,16 @@ interface UseCalculateProductArguments {
   task: Task;
 }
 
- function useCalculateProduct() {
+function useCalculateProduct() {
   const mutation = useMutation({
     mutationFn: async ({
-                         formData,
-                         ticket,
-                         task,
-                       }: UseCalculateProductArguments) => {
+      formData,
+      ticket,
+      task,
+    }: UseCalculateProductArguments) => {
       const productSummary = await productService.previewNewMedicationProduct(
-          formData,
-          task.branchPath,
+        formData,
+        task.branchPath,
       );
       const productCreationObj: ProductCreationDetails = {
         productSummary,
@@ -225,7 +241,7 @@ interface UseCalculateProductArguments {
   return mutation;
 }
 
- const useSchemaQuery = (branchPath: string) => {
+const useSchemaQuery = (branchPath: string) => {
   return useQuery({
     queryKey: ['medication-schema', branchPath],
     queryFn: () => ConfigService.fetchMeddicationSchemaData(branchPath),
@@ -233,7 +249,7 @@ interface UseCalculateProductArguments {
   });
 };
 
- const useUiSchemaQuery = (branchPath: string) => {
+const useUiSchemaQuery = (branchPath: string) => {
   return useQuery({
     queryKey: ['medication-uiSchema', branchPath],
     queryFn: () => ConfigService.fetchMedicationUiSchemaData(branchPath),
@@ -248,26 +264,29 @@ interface ProductQueryProps {
 }
 
 const fetchProductDataFn = async ({
-                                    selectedProduct,
-                                    task,
-                                  }: ProductQueryProps) => {
+  selectedProduct,
+  task,
+}: ProductQueryProps) => {
   if (!selectedProduct) return null;
   const productId = isValueSetExpansionContains(selectedProduct)
-      ? selectedProduct.code
-      : selectedProduct.conceptId;
+    ? selectedProduct.code
+    : selectedProduct.conceptId;
 
-  const mp = await productService.fetchMedication(productId || '', task.branchPath);
+  const mp = await productService.fetchMedication(
+    productId || '',
+    task.branchPath,
+  );
   return mp.productName ? mp : null;
 };
 
- const useProductQuery = ({
-                                  selectedProduct,
-                                  task,
-                                  setFunction,
-                                }: ProductQueryProps) => {
+const useProductQuery = ({
+  selectedProduct,
+  task,
+  setFunction,
+}: ProductQueryProps) => {
   const productId = isValueSetExpansionContains(selectedProduct)
-      ? selectedProduct.code
-      : selectedProduct?.conceptId;
+    ? selectedProduct.code
+    : selectedProduct?.conceptId;
   const queryKey = ['product', productId, task?.branchPath];
   return useQuery({
     queryKey,
