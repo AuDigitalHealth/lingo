@@ -33,6 +33,7 @@ function ProductAuthoring({
   ticket,
   task,
   productName,
+  productId,
   productType,
   actionType,
 }: ProductAuthoringProps) {
@@ -114,7 +115,9 @@ function ProductAuthoring({
   } else {
     return (
       <Grid>
-        <h3>{getTitle(productName, selectedActionType)}</h3>
+        <h3>
+          {getTitle(productName, getActionType(actionType, selectedActionType))}
+        </h3>
         {!productName ? (
           <Stack direction="row" spacing={2} alignItems="center">
             <Card sx={{ marginY: '1em', padding: '1em', width: '100%' }}>
@@ -129,7 +132,7 @@ function ProductAuthoring({
                   branch={task.branchPath}
                   fieldBindings={fieldBindings}
                   hideAdvancedSearch={true}
-                  actionType={selectedActionType}
+                  actionType={getActionType(actionType, selectedActionType)}
                 />
                 {/*<Button color={"error"} variant={"contained"}>Clear</Button>*/}
               </Box>
@@ -140,32 +143,40 @@ function ProductAuthoring({
         )}
 
         <Grid>
-          {selectedActionType === ActionType.newMedication ? (
+          {getActionType(actionType, selectedActionType) ===
+          ActionType.newMedication ? (
             <MedicationAuthoringV2
               selectedProduct={selectedProduct}
               task={task}
+              ticketProductId={productId}
+              ticket={ticket}
             />
-          ) : selectedActionType === ActionType.newDevice ? (
+          ) : getActionType(actionType, selectedActionType) ===
+            ActionType.newDevice ? (
             <DeviceAuthoringV2
               selectedProduct={selectedProduct}
               ticket={ticket}
               task={task}
+              ticketProductId={productId}
             />
-          ) : selectedActionType === ActionType.newPackSize ? (
+          ) : getActionType(actionType, selectedActionType) ===
+            ActionType.newPackSize ? (
             <PackSizeAuthoringV2
               selectedProduct={selectedProduct}
               ticket={ticket}
               task={task}
               fieldBindings={fieldBindings}
             />
-          ) : selectedActionType === ActionType.newBrand ? (
+          ) : getActionType(actionType, selectedActionType) ===
+            ActionType.newBrand ? (
             <BrandAuthoringV2
               selectedProduct={selectedProduct}
               ticket={ticket}
               task={task}
               fieldBindings={fieldBindings}
             />
-          ) : selectedActionType === ActionType.editProduct ? (
+          ) : getActionType(actionType, selectedActionType) ===
+            ActionType.editProduct ? (
             <EditProduct
               selectedProduct={selectedProduct}
               handleClearForm={handleClearFormWrapper}
@@ -196,5 +207,14 @@ const getTitle = (
   return productName
     ? `Create New Product (Loaded from ${productName})`
     : 'Create New Product';
+};
+const getActionType = (
+  actionType: ActionType | undefined,
+  selectedActionType: ActionType,
+) => {
+  if (actionType) {
+    return actionType;
+  }
+  return selectedActionType;
 };
 export default ProductAuthoring;
