@@ -29,7 +29,7 @@
   "containedProducts": {
     "ui:options": {
       "skipTitle": true,
-
+      "arrayTemplate": "accordion",
       "searchAndAddProduct": {
         "ecl": "^929360031000036100 AND <63653004",
         "type": "device",
@@ -38,10 +38,6 @@
 
     },
     "items": {
-      "ui:options": {
-        "titleSource": "productDetails.productName.pt.term",
-        "defaultTitle": "Product"
-      },
       "ui:order": ["productDetails", "unit", "value"],
       "ui:options": {
         "style": {
@@ -50,6 +46,8 @@
           "marginBottom": "20px",
           "borderRadius": "8px"
         },
+        "titleSource": "productDetails.productName.pt.term",
+        "defaultTitle": "Product",
         "skipTitle": true
       },
       "unit": {
