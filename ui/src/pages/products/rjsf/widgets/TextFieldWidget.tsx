@@ -1,5 +1,5 @@
 import React from 'react';
-import { WidgetProps } from '@rjsf/core';
+import { WidgetProps } from '@rjsf/utils';
 import { TextField, Box } from '@mui/material';
 
 const TextFieldWidget = ({
@@ -12,7 +12,7 @@ const TextFieldWidget = ({
   options,
 }: WidgetProps) => {
   const placeholder =
-    (options?.placeholder as string | undefined) || 'Enter text';
+      (options && options?.placeholder ? options?.placeholder : 'Enter text');
 
   const errors = rawErrors as string[] | undefined;
 
@@ -27,7 +27,7 @@ const TextFieldWidget = ({
         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
           onChange(e.target.value)
         }
-        error={errors?.length > 0}
+        error={errors && errors.length > 0}
         helperText={errors && errors.length > 0 ? errors[0] : ''}
         label={label}
         required={required}
