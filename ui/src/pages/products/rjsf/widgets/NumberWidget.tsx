@@ -46,7 +46,7 @@ function NumberWidget<T = any, F extends RJSFSchema = RJSFSchema>({
       label={label}
       name={name}
       placeholder={placeholder}
-      value={value || value === 0 ? value : ''}
+      value={value || value === 0 ? value as unknown : ''}
       required={required}
       disabled={disabled}
       readOnly={readonly}
