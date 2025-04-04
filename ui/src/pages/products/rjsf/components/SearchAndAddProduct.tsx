@@ -3,7 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { Button, Box, Typography, CircularProgress } from '@mui/material';
 import EclAutocomplete from './EclAutocomplete';
 import { ConceptMini } from '../../../../types/concept.ts';
-import {MedicationProductQuantity, ProductAddDetails} from '../../../../types/product.ts';
+import {
+  MedicationProductQuantity,
+  ProductAddDetails,
+} from '../../../../types/product.ts';
 import productService from '../../../../api/ProductService.ts';
 import useTaskById from '../../../../hooks/useTaskById.tsx';
 import ProductService from '../../../../api/ProductService.ts';
@@ -11,7 +14,7 @@ import BaseModalFooter from '../../../../components/modal/BaseModalFooter.tsx';
 import BaseModal from '../../../../components/modal/BaseModal.tsx';
 import BaseModalBody from '../../../../components/modal/BaseModalBody.tsx';
 import BaseModalHeader from '../../../../components/modal/BaseModalHeader.tsx';
-import {useDefaultUnit} from "../../../../hooks/api/useInitializeConcepts.tsx";
+import { useDefaultUnit } from '../../../../hooks/api/useInitializeConcepts.tsx';
 
 interface SearchAndAddProductProps {
   open: boolean;
@@ -50,7 +53,6 @@ const SearchAndAddProduct: React.FC<SearchAndAddProductProps> = ({
           let productDetails;
 
           if (type === 'device') {
-
             const deviceDetails = await productService.fetchDeviceProduct(
               selectedProduct.conceptId as string,
               task?.branchPath as string,
@@ -62,20 +64,22 @@ const SearchAndAddProduct: React.FC<SearchAndAddProductProps> = ({
             };
           } else if (type === 'medication') {
             if (isPackage) {
-              const medicationPackageDetails = await ProductService.fetchMedication(
-                selectedProduct.conceptId as string,
-                task?.branchPath as string,
-              );
+              const medicationPackageDetails =
+                await ProductService.fetchMedication(
+                  selectedProduct.conceptId as string,
+                  task?.branchPath as string,
+                );
               productDetails = {
                 packageDetails: medicationPackageDetails,
                 value: 1,
                 unit: defaultUnit,
               };
             } else {
-              const medicationProductDetails = await productService.fetchMedicationProduct(
-                selectedProduct.conceptId as string,
-                task?.branchPath as string,
-              );
+              const medicationProductDetails =
+                await productService.fetchMedicationProduct(
+                  selectedProduct.conceptId as string,
+                  task?.branchPath as string,
+                );
               productDetails = {
                 productDetails: medicationProductDetails,
                 value: 1,
