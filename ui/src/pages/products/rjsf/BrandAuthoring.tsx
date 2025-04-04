@@ -4,8 +4,9 @@ import { Theme } from '@rjsf/mui';
 import { Box, Button, Grid, Paper, Alert } from '@mui/material';
 import WarningModal from '../../../themes/overrides/WarningModal';
 import useAuthoringStore from '../../../stores/AuthoringStore';
-import { useFetchBulkAuthorPackSizes } from '../../../hooks/api/tickets/useTicketProduct';
+import { useFetchBulkAuthorBrands } from '../../../hooks/api/tickets/useTicketProduct';
 import { findWarningsForBrandPackSizes } from '../../../types/productValidationUtils';
+
 import { Concept } from '../../../types/concept.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
 import { Task } from '../../../types/task.ts';
@@ -14,31 +15,31 @@ import ProductLoader from '../components/ProductLoader.tsx';
 import ProductPreviewCreateModal from '../components/ProductPreviewCreateModal.tsx';
 import { customizeValidator } from '@rjsf/validator-ajv8';
 import ajvErrors from 'ajv-errors';
-import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
-
-import CustomFieldTemplate from './templates/CustomFieldTemplate.tsx';
-import ObjectFieldTemplate from './templates/ObjectFieldTemplate.tsx';
-import PackSizeArrayTemplate from './templates/bulkBrandPack/PackSizeArrayTemplate.tsx'; // You'll need to create this if you want custom array rendering
-import { BrandPackSizeCreationDetails } from '../../../types/product.ts';
-import NewPackSizeInputField from './fields/bulkBrandPack/NewPackSizeInputField.tsx';
-import TitleWidget from './widgets/TitleWidget.tsx';
 import AutoCompleteField from './fields/AutoCompleteField.tsx';
+import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
+import BrandArrayTemplate from './templates/bulkBrandPack/BrandArrayTemplate.tsx';
+import CustomFieldTemplate from './templates/CustomFieldTemplate.tsx';
+import NewBrandInputField from './fields/bulkBrandPack/NewBrandInputField.tsx';
+import ObjectFieldTemplate from './templates/ObjectFieldTemplate.tsx';
+import { BrandPackSizeCreationDetails } from '../../../types/product.ts';
+import TitleWidget from './widgets/TitleWidget.tsx';
 import { useQuery } from '@tanstack/react-query';
 import { ConfigService } from '../../../api/ConfigService.ts';
 
+// Define FormData interface
 interface FormData {
   selectedProduct?: string;
-  existingPackSizes?: any[];
-  packSizes: any[];
-  newPackSizeInput: {
-    packSize?: number;
+  existingBrands?: any[];
+  brands: any[];
+  newBrandInput: {
+    brand?: string;
     externalIdentifiers: any[];
   };
 }
 
 const Form = withTheme(Theme);
 
-export interface PackSizeAuthoringV2Props {
+export interface BrandAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
   task: Task;
   ticket: Ticket;
@@ -48,12 +49,12 @@ export interface PackSizeAuthoringV2Props {
 const validator = customizeValidator();
 ajvErrors(validator.ajv);
 
-function PackSizeAuthoringV2({
+function BrandAuthoring({
   selectedProduct,
   task,
   ticket,
   fieldBindings,
-}: PackSizeAuthoringV2Props) {
+}: BrandAuthoringV2Props) {
   const {
     productCreationDetails,
     previewModalOpen,
@@ -75,8 +76,8 @@ function PackSizeAuthoringV2({
 
   const [runningWarningsCheck, setRunningWarningsCheck] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]);
-  const [formData, setFormData] = useState<FormData>({});
-  const { data, isFetching } = useFetchBulkAuthorPackSizes(
+  const [formData, setFormData] = useState<FormData>();
+  const { data, isFetching } = useFetchBulkAuthorBrands(
     selectedProduct,
     task.branchPath,
   );
@@ -88,14 +89,14 @@ function PackSizeAuthoringV2({
   };
 
   const fields = {
-    NewPackSizeInputField,
     AutoCompleteField,
+    NewBrandInputField,
   };
 
   const handleClear = useCallback(() => {
     const newData: FormData = {
       ...formData,
-      newPackSizeInput: { packSize: undefined, externalIdentifiers: [] },
+      newBrandInput: { brand: undefined, externalIdentifiers: [] },
     };
     setFormData(newData);
     if (formRef.current) {
@@ -107,34 +108,27 @@ function PackSizeAuthoringV2({
     if (selectedProduct && data) {
       const newData: FormData = {
         selectedProduct: selectedProduct.pt?.term || '',
-        existingPackSizes: data.packSizes || [],
-        unitOfMeasure: data.unitOfMeasure,
-        newPackSizeInput: { packSize: undefined, externalIdentifiers: [] },
+        existingBrands: data.brands || [],
+        newBrandInput: { brand: undefined, externalIdentifiers: [] },
       };
       console.log('Initial formData:', newData);
       setFormData(newData);
     }
   }, [selectedProduct, data]);
 
-  const onSubmit = async (submittedFormData: FormData) => {
-    setFormData(submittedFormData);
+  const onSubmit = async ({ formData }: { formData: FormData }) => {
     setBrandPackSizePreviewDetails(undefined);
-    const packSizeDetails: BrandPackSizeCreationDetails = {
+    const brandPackSizeDetails: BrandPackSizeCreationDetails = {
       type: 'brand-pack-size',
       productId: selectedProduct?.id,
-      packSizes: {
-        productId: selectedProduct?.id,
-        unitOfMeasure: data?.unitOfMeasure, // Assuming this comes from the fetched data
-        packSizes: submittedFormData.packSizes,
-      },
+      brands: { productId: selectedProduct?.id, brands: formData.brands },
       externalIdentifiers: [],
     };
-    setBrandPackSizePreviewDetails(packSizeDetails);
+    setBrandPackSizePreviewDetails(brandPackSizeDetails);
     setRunningWarningsCheck(true);
-
     try {
       const warnings = await findWarningsForBrandPackSizes(
-        packSizeDetails,
+        brandPackSizeDetails,
         task.branchPath,
         fieldBindings,
       );
@@ -144,7 +138,7 @@ function PackSizeAuthoringV2({
         setWarningModalOpen(true);
       } else {
         previewBrandPackSize(
-          packSizeDetails,
+          brandPackSizeDetails,
           ticket,
           task.branchPath,
           null,
@@ -161,21 +155,18 @@ function PackSizeAuthoringV2({
     }
   };
 
-  const handlePreviewClick = () => {
-    if (formRef.current && formData) {
-      onSubmit(formData);
-    }
-  };
   const formContext = {
     onChange: (newFormData: FormData) => {
+      console.log('Form context onChange:', newFormData);
       setFormData(newFormData);
     },
     formData,
     handleClear,
-    onSubmit: (data: { formData: FormData }) => onSubmit(data.formData),
-    validator,
+    onSubmit,
   };
-
+  if (isSchemaLoading || isUiSchemaLoading) {
+    return <ProductLoader message="Loading Schema" />;
+  }
   if (isFetching)
     return (
       <ProductLoader
@@ -193,7 +184,7 @@ function PackSizeAuthoringV2({
   if (!selectedProduct || !data) {
     return (
       <Alert severity="info">
-        Search and select a product to create new pack size(s).
+        Search and select a product to create new brand(s).
       </Alert>
     );
   }
@@ -228,7 +219,7 @@ function PackSizeAuthoringV2({
           <Paper>
             <Box m={1} p={1}>
               <Alert severity="info" sx={{ mb: 1 }}>
-                Enter one or more new pack sizes for the selected product.
+                Enter one or more new brands for the selected product.
               </Alert>
               <Form
                 ref={formRef}
@@ -238,12 +229,12 @@ function PackSizeAuthoringV2({
                 onChange={({ formData: newFormData }) =>
                   setFormData(newFormData as FormData)
                 }
-                onSubmit={({ formData }) => onSubmit(formData)}
+                onSubmit={onSubmit}
                 widgets={widgets}
                 fields={fields}
                 templates={{
                   FieldTemplate: CustomFieldTemplate,
-                  ArrayFieldTemplate: PackSizeArrayTemplate, // Create this if needed
+                  ArrayFieldTemplate: BrandArrayTemplate,
                   ObjectFieldTemplate,
                 }}
                 validator={validator}
@@ -258,14 +249,10 @@ function PackSizeAuthoringV2({
                   }}
                 >
                   <Button
-                    onClick={handlePreviewClick}
+                    type="submit"
                     variant="contained"
                     color="primary"
                     size="small"
-                    disabled={
-                      !formContext.formData.packSizes ||
-                      formContext.formData.packSizes.length === 0
-                    }
                   >
                     Preview
                   </Button>
@@ -280,17 +267,18 @@ function PackSizeAuthoringV2({
 }
 export const useSchemaQuery = (branchPath: string) => {
   return useQuery({
-    queryKey: ['bulk-pack-schema', branchPath],
-    queryFn: () => ConfigService.fetchBulkPackSchemaData(branchPath),
+    queryKey: ['bulk-brand-schema', branchPath],
+    queryFn: () => ConfigService.fetchBulkBrandSchemaData(branchPath),
     enabled: !!branchPath,
   });
 };
 
 export const useUiSchemaQuery = (branchPath: string) => {
   return useQuery({
-    queryKey: ['bulk-pack-uiSchema', branchPath],
-    queryFn: () => ConfigService.fetchBulkPackUiSchemaData(branchPath),
+    queryKey: ['bulk-brand-uiSchema', branchPath],
+    queryFn: () => ConfigService.fetchBulkBrandUiSchemaData(branchPath),
     enabled: !!branchPath,
   });
 };
-export default PackSizeAuthoringV2;
+
+export default BrandAuthoring;

@@ -30,7 +30,7 @@ import {
 } from '../../../types/product.ts';
 
 import { useTicketProductQuery } from './hooks/useTicketProductQuery.ts';
-import ProductPartialSaveModal from '../components/ProductPartialSaveModal.tsx';
+import ProductPartialSaveModal from './components/ProductPartialSaveModal.tsx';
 import { DraftSubmitPanel } from './components/DarftSubmitPanel.tsx';
 export interface DeviceAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -42,7 +42,7 @@ export interface DeviceAuthoringV2Props {
 const validator = customizeValidator();
 ajvErrors(validator.ajv);
 
-function DeviceAuthoringV2({
+function DeviceAuthoring({
   task,
   selectedProduct,
   ticket,
@@ -310,4 +310,4 @@ export const useProductQuery = ({
   });
 };
 
-export default DeviceAuthoringV2;
+export default DeviceAuthoring;
