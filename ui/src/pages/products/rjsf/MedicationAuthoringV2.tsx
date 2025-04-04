@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useRef } from 'react';
+import React, { useCallback, useState, useRef, useEffect } from 'react';
 import { Form } from '@rjsf/mui';
 import { Container, Button, Box, Paper } from '@mui/material';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -34,6 +34,9 @@ import {
   ProductType,
 } from '../../../types/product.ts';
 import { useTicketProductQuery } from './hooks/useTicketProductQuery.ts';
+import { DraftSubmitPanel } from './components/DarftSubmitPanel.tsx';
+import ProductPartialSaveModal from '../components/ProductPartialSaveModal.tsx';
+
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
   task: Task;
@@ -52,8 +55,10 @@ function MedicationAuthoringV2({
 }: MedicationAuthoringV2Props) {
   const [formData, setFormData] = useState({});
   const [errorSchema, setErrorSchema] = useState({});
+  const [saveModalOpen, setSaveModalOpen] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const formRef = useRef<any>(null); // Ref to access the RJSF Form instance
+  const formRef = useRef<any>(null);
   const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
     task.branchPath,
   );
@@ -82,6 +87,12 @@ function MedicationAuthoringV2({
 
   const handleChange = ({ formData }: any) => {
     setFormData(formData);
+    if (!_.isEmpty(formData.productName)) {
+      setIsDirty(true); //TODO better way to handle check form is dirty
+    }
+  };
+  const handleSaveToggleModal = () => {
+    setSaveModalOpen(!saveModalOpen);
   };
 
   const handleFormSubmit = ({ formData }: any) => {
@@ -98,6 +109,7 @@ function MedicationAuthoringV2({
     if (formRef.current) {
       formRef.current.reset();
     }
+    setIsDirty(false);
   }, []);
 
   if (
@@ -120,6 +132,10 @@ function MedicationAuthoringV2({
     formData,
     uiSchema,
     errorSchema,
+  };
+
+  const saveDraft = () => {
+    setSaveModalOpen(true);
   };
 
   const onError = (errors: any) => {
@@ -182,6 +198,7 @@ function MedicationAuthoringV2({
               >
                 Clear
               </Button>
+              <DraftSubmitPanel isDirty={isDirty} saveDraft={saveDraft} />
               <Button
                 type="submit"
                 variant="contained"
@@ -192,6 +209,13 @@ function MedicationAuthoringV2({
               </Button>
             </Box>
           </Form>
+          <ProductPartialSaveModal
+            packageDetails={formData}
+            handleClose={handleSaveToggleModal}
+            open={saveModalOpen}
+            ticket={ticket}
+            existingProductId={ticketProductId}
+          />
           <ProductPreviewCreateModal
             open={createModalOpen}
             handleClose={handleToggleCreateModal}
