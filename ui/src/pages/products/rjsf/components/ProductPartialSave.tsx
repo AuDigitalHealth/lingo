@@ -1,15 +1,15 @@
 import {
   DevicePackageDetails,
   MedicationPackageDetails,
-} from '../../../types/product.ts';
+} from '../../../../types/product.ts';
 import {
   Ticket,
   AutocompleteGroupOption,
   AutocompleteGroupOptionType,
-} from '../../../types/tickets/ticket.ts';
+} from '../../../../types/tickets/ticket.ts';
 import React, { useCallback, useState } from 'react';
-import useUserStore from '../../../stores/UserStore.ts';
-import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
+import useUserStore from '../../../../stores/UserStore.ts';
+import { useServiceStatus } from '../../../../hooks/api/useServiceStatus.tsx';
 import {
   filterAndMapToPartialProductNames,
   findProductNameById,
@@ -17,10 +17,10 @@ import {
   generateSuggestedProductNameForDevice,
   mapToProductOptions,
   mapToTicketProductDto,
-} from '../../../utils/helpers/ticketProductsUtils.ts';
-import TicketProductService from '../../../api/TicketProductService.ts';
-import { snowstormErrorHandler } from '../../../types/ErrorHandler.ts';
-import Loading from '../../../components/Loading.tsx';
+} from '../../../../utils/helpers/ticketProductsUtils.ts';
+import TicketProductService from '../../../../api/TicketProductService.ts';
+import { snowstormErrorHandler } from '../../../../types/ErrorHandler.ts';
+import Loading from '../../../../components/Loading.tsx';
 import {
   Autocomplete,
   Box,
@@ -31,10 +31,10 @@ import {
 import { Stack } from '@mui/system';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
-import useAuthoringStore from '../../../stores/AuthoringStore.ts';
-import { isDeviceType } from '../../../utils/helpers/conceptUtils.ts';
-import { ProductStatus } from '../../../types/TicketProduct.ts';
-import { getTicketProductsByTicketIdOptions } from '../../../hooks/api/tickets/useTicketById.tsx';
+import useAuthoringStore from '../../../../stores/AuthoringStore.ts';
+import { isDeviceType } from '../../../../utils/helpers/conceptUtils.ts';
+import { ProductStatus } from '../../../../types/TicketProduct.ts';
+import { getTicketProductsByTicketIdOptions } from '../../../../hooks/api/tickets/useTicketById.tsx';
 import { useQueryClient } from '@tanstack/react-query';
 
 interface ProductPartialSaveProps {
