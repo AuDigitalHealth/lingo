@@ -320,6 +320,7 @@
           }
         },
         "containedProducts": {
+          "ui:field": "BoxArrayFieldTemplate",
           "ui:options": {
             "skipTitle": true,
             "searchAndAddProduct": {
