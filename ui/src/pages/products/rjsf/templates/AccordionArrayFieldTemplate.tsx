@@ -7,7 +7,8 @@ import {
   AccordionSummary,
   AccordionDetails,
   IconButton,
-  Tooltip, Toolbar, Grid,
+  Tooltip,
+  Toolbar,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
@@ -52,7 +53,7 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
   return (
     <div>
       <Toolbar
-          variant="dense"
+        variant="dense"
         sx={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -60,36 +61,40 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
           paddingLeft: '0px ! important',
           paddingRight: '17px ! important',
           gap: '0px',
-        }}>
-      {title && (
-        <Typography variant="h6" sx={{ fontWeight: 'bold', mt: 2, flexGrow: 1 }}>
-          {title}
-        </Typography>
-      )}
+        }}
+      >
+        {title && (
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 'bold', mt: 2, flexGrow: 1 }}
+          >
+            {title}
+          </Typography>
+        )}
         {canAdd && (
-            <div style={{ marginTop: '10px', display: 'flex', gap: '0px' }}>
-              <Tooltip title="Add Manually">
-                <IconButton onClick={onAddClick}>
-                  <AddCircleOutlineIcon color="primary" />
+          <div style={{ marginTop: '10px', display: 'flex', gap: '0px' }}>
+            <Tooltip title="Add Manually">
+              <IconButton onClick={onAddClick}>
+                <AddCircleOutlineIcon color="primary" />
+              </IconButton>
+            </Tooltip>
+            {uiSchema?.['ui:options']?.searchAndAddProduct && (
+              <Tooltip title="Search and Add">
+                <IconButton onClick={handleOpenSearchModal}>
+                  <SearchAndAddIcon width="20px" />
                 </IconButton>
               </Tooltip>
-              {uiSchema?.['ui:options']?.searchAndAddProduct && (
-                  <Tooltip title="Search and Add">
-                    <IconButton onClick={handleOpenSearchModal}>
-                      <SearchAndAddIcon width="20px" />
-                    </IconButton>
-                  </Tooltip>
-              )}
-            </div>
+            )}
+          </div>
         )}
 
         {uiSchema?.['ui:options']?.searchAndAddProduct && (
-            <SearchAndAddProduct
-                open={openSearchModal}
-                onClose={handleCloseSearchModal}
-                onAddProduct={handleAddProduct}
-                uiSchema={uiSchema}
-            />
+          <SearchAndAddProduct
+            open={openSearchModal}
+            onClose={handleCloseSearchModal}
+            onAddProduct={handleAddProduct}
+            uiSchema={uiSchema}
+          />
         )}
       </Toolbar>
 
@@ -104,10 +109,14 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
               sx={containerStyle}
             >
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography sx={{flexGrow: 1, marginTop: '8px;'}}>{itemTitle}</Typography>
-                    {element.hasRemove && (
-                        <IconButton onClick={element.onDropIndexClick(element.index)}><RemoveCircleOutlineIcon color="error" /></IconButton>
-                    )}
+                <Typography sx={{ flexGrow: 1, marginTop: '8px;' }}>
+                  {itemTitle}
+                </Typography>
+                {element.hasRemove && (
+                  <IconButton onClick={element.onDropIndexClick(element.index)}>
+                    <RemoveCircleOutlineIcon color="error" />
+                  </IconButton>
+                )}
               </AccordionSummary>
               <AccordionDetails>
                 <Box>
