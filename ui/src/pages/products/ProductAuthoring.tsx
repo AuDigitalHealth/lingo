@@ -16,10 +16,10 @@ import { ActionType, ProductType } from '../../types/product.ts';
 import { isValueSetExpansionContains } from '../../types/predicates/isValueSetExpansionContains.ts';
 
 import EditProduct from './components/EditProduct.tsx';
-import MedicationAuthoringV2 from './rjsf/MedicationAuthoringV2.tsx';
-import DeviceAuthoringV2 from './rjsf/DeviceAuthoringV2.tsx';
-import BrandAuthoringV2 from './rjsf/BrandAuthoringV2.tsx';
-import PackSizeAuthoringV2 from './rjsf/PackSizeAuthoringV2.tsx';
+import MedicationAuthoring from './rjsf/MedicationAuthoring.tsx';
+import DeviceAuthoring from './rjsf/DeviceAuthoring.tsx';
+import BrandAuthoring from './rjsf/BrandAuthoring.tsx';
+import PackSizeAuthoring from './rjsf/PackSizeAuthoring.tsx';
 
 interface ProductAuthoringProps {
   ticket: Ticket;
@@ -145,7 +145,7 @@ function ProductAuthoring({
         <Grid>
           {getActionType(actionType, selectedActionType) ===
           ActionType.newMedication ? (
-            <MedicationAuthoringV2
+            <MedicationAuthoring
               selectedProduct={selectedProduct}
               task={task}
               ticketProductId={productId}
@@ -153,7 +153,7 @@ function ProductAuthoring({
             />
           ) : getActionType(actionType, selectedActionType) ===
             ActionType.newDevice ? (
-            <DeviceAuthoringV2
+            <DeviceAuthoring
               selectedProduct={selectedProduct}
               ticket={ticket}
               task={task}
@@ -161,7 +161,7 @@ function ProductAuthoring({
             />
           ) : getActionType(actionType, selectedActionType) ===
             ActionType.newPackSize ? (
-            <PackSizeAuthoringV2
+            <PackSizeAuthoring
               selectedProduct={selectedProduct}
               ticket={ticket}
               task={task}
@@ -169,7 +169,7 @@ function ProductAuthoring({
             />
           ) : getActionType(actionType, selectedActionType) ===
             ActionType.newBrand ? (
-            <BrandAuthoringV2
+            <BrandAuthoring
               selectedProduct={selectedProduct}
               ticket={ticket}
               task={task}
