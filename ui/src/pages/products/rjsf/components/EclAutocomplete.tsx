@@ -32,7 +32,7 @@ const EclAutocomplete: React.FC<EclAutocompleteProps> = ({
   const { isLoading, allData } = useSearchConceptsByEcl(
     inputValue,
     ecl && ecl.length > 0 ? ecl : undefined,
-    branch as string,
+    branch,
     showDefaultOptions,
   );
 
@@ -42,7 +42,7 @@ const EclAutocomplete: React.FC<EclAutocompleteProps> = ({
         new Map(
           allData.map((item: Concept) => [item.conceptId, item]),
         ).values(),
-      ) as Concept[];
+      );
       setOptions(uniqueOptions);
     }
   }, [allData]);

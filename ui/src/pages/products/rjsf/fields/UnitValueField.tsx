@@ -34,7 +34,7 @@ const UnitValueField = ({
   const handleValueChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = event.target.value;
     if (inputValue === '') {
-      let updatedFormData = { ...formData };
+      const updatedFormData = { ...formData };
       delete updatedFormData.value;
       if (!updatedFormData.unit) {
         onChange(undefined);
