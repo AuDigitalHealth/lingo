@@ -27,7 +27,6 @@ export default function ProductPreviewCreateModal({
   branch,
   ticket,
 }: ProductPreviewCreateModalProps) {
-  console.log('hey!!!');
   return (
     <BaseModal
       open={open}
