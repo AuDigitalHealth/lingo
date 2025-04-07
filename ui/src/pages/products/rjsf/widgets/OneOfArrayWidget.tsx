@@ -108,7 +108,7 @@ const renderField = (
         <InputLabel>{propSchema.title || propName}</InputLabel>
         <Select
           value={value || propSchema.default || ''}
-          onChange={e => onChange(e.target.value)}
+          onChange={e => onChange(e.target.value as string)}
           disabled={disabled || readonly}
         >
           {propSchema.enum.map(option => (
@@ -144,7 +144,7 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
   const {
     schema,
     id,
-    value: value,
+    value,
     onChange,
     disabled,
     readonly,
@@ -155,7 +155,7 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
   const task = useTaskById();
   const oneOfOptions =
     (schema.items as { oneOf?: SchemaOption[] })?.oneOf || [];
-  const items: Item[] = Array.isArray(value) ? value as Item[] : [];
+  const items: Item[] = Array.isArray(value) ? value : [];
   const binding: BindingConfig = uiSchema['ui:options']?.binding || {};
   const mandatorySchemes: string[] =
     uiSchema['ui:options']?.mandatorySchemes || [];
@@ -400,7 +400,7 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
             <InputLabel>Type</InputLabel>
             <Select
               value={dropdownType}
-              onChange={e => setDropdownType(e.target.value)}
+              onChange={e => setDropdownType(e.target.value as string)}
             >
               {oneOfOptions.map(option => (
                 <MenuItem key={option.title} value={option.title}>
