@@ -44,7 +44,7 @@ export const getUniqueErrors = (
 
 export const extractAllErrorMessages = (
   errorSchema: any,
-  parentPath: string = '',
+  parentPath: '',
 ): string[] => {
   let errors: string[] = [];
 
