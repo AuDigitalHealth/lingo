@@ -144,13 +144,13 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
   const {
     schema,
     id,
-    value,
+    value: value,
     onChange,
     disabled,
     readonly,
     uiSchema,
     rawErrors = [],
-  }: any = props;
+  } = props;
 
   const task = useTaskById();
   const oneOfOptions =
