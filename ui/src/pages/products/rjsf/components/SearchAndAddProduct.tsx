@@ -54,7 +54,7 @@ const SearchAndAddProduct: React.FC<SearchAndAddProductProps> = ({
 
           if (type === 'device') {
             const deviceDetails = await productService.fetchDeviceProduct(
-              selectedProduct.conceptId as string,
+              selectedProduct.conceptId,
               task?.branchPath as string,
             );
             productDetails = {
@@ -66,7 +66,7 @@ const SearchAndAddProduct: React.FC<SearchAndAddProductProps> = ({
             if (isPackage) {
               const medicationPackageDetails =
                 await ProductService.fetchMedication(
-                  selectedProduct.conceptId as string,
+                  selectedProduct.conceptId,
                   task?.branchPath as string,
                 );
               productDetails = {
@@ -77,7 +77,7 @@ const SearchAndAddProduct: React.FC<SearchAndAddProductProps> = ({
             } else {
               const medicationProductDetails =
                 await productService.fetchMedicationProduct(
-                  selectedProduct.conceptId as string,
+                  selectedProduct.conceptId,
                   task?.branchPath as string,
                 );
               productDetails = {
