@@ -184,6 +184,8 @@ public class EclRefsetApplication {
         return;
       }
 
+      log.severe("Corresponding process name found in lingo, and Snodine has been enabled.");
+
       restTemplate.setInterceptors(
           Collections.singletonList(new AuthInterceptor(cookie.getName(), cookie.getValue())));
 
