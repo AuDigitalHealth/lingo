@@ -15,8 +15,9 @@ import BaseModal from '../../../../components/modal/BaseModal.tsx';
 import BaseModalBody from '../../../../components/modal/BaseModalBody.tsx';
 import BaseModalHeader from '../../../../components/modal/BaseModalHeader.tsx';
 import { useDefaultUnit } from '../../../../hooks/api/useInitializeConcepts.tsx';
+import {FieldProps} from "@rjsf/utils";
 
-interface SearchAndAddProductProps {
+interface SearchAndAddProductProps extends FieldProps {
   open: boolean;
   onClose: () => void;
   onAddProduct: (product: ProductAddDetails) => void;
@@ -24,6 +25,8 @@ interface SearchAndAddProductProps {
 }
 
 const SearchAndAddProduct: React.FC<SearchAndAddProductProps> = ({
+  idSchema,
+  name,
   open,
   onClose,
   onAddProduct,
@@ -126,6 +129,8 @@ const SearchAndAddProduct: React.FC<SearchAndAddProductProps> = ({
         <Box width={500}>
           {task?.branchPath && (
             <EclAutocomplete
+              idSchema={idSchema}
+              name={name}
               value={selectedProduct}
               onChange={(conceptMini: ConceptMini | null) =>
                 setSelectedProduct(conceptMini)

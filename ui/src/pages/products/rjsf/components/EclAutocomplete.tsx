@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Autocomplete, CircularProgress, TextField } from '@mui/material';
 import { Concept, ConceptMini } from '../../../../types/concept.ts';
 import { useSearchConceptsByEcl } from '../../../../hooks/api/useInitializeConcepts.tsx';
+import {FieldProps} from "@rjsf/utils";
 
-interface EclAutocompleteProps {
+interface EclAutocompleteProps extends FieldProps {
   value: ConceptMini | null | undefined;
   onChange: (conceptMini: ConceptMini | null) => void;
   ecl: string;
@@ -16,6 +17,8 @@ interface EclAutocompleteProps {
 }
 
 const EclAutocomplete: React.FC<EclAutocompleteProps> = ({
+  idSchema,
+  name,
   value,
   onChange,
   ecl,
@@ -28,7 +31,6 @@ const EclAutocomplete: React.FC<EclAutocompleteProps> = ({
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [options, setOptions] = useState<Concept[]>([]);
-
   const { isLoading, allData } = useSearchConceptsByEcl(
     inputValue,
     ecl && ecl.length > 0 ? ecl : undefined,
@@ -75,6 +77,7 @@ const EclAutocomplete: React.FC<EclAutocompleteProps> = ({
 
   return (
     <Autocomplete
+      data-testid={idSchema?.$id || name}
       loading={isLoading}
       options={isDisabled ? [] : options}
       getOptionLabel={(option: Concept) => option?.pt?.term || ''}

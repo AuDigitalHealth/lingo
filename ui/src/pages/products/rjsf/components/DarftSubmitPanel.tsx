@@ -5,8 +5,9 @@ import { Button } from '@mui/material';
 
 import useAuthoringStore from '../../../../stores/AuthoringStore.ts';
 import ConfirmationModal from '../../../../themes/overrides/ConfirmationModal.tsx';
+import {FieldProps} from "@rjsf/utils";
 
-export interface DraftSubmitPanelProps {
+export interface DraftSubmitPanelProps extends FieldProps {
   isDirty: boolean;
   saveDraft: () => void;
 }

@@ -18,6 +18,7 @@ import {
 } from '../helpers/errorUtils.ts';
 
 const CompactQuantityField = ({
+  name,
   formData,
   schema,
   uiSchema,
@@ -167,6 +168,8 @@ const CompactQuantityField = ({
       <Grid item xs={5} sx={{ mt: -0.5 }}>
         {task && (
           <EclAutocomplete
+            idSchema={idSchema}
+            name={name}
             value={unit}
             onChange={onUnitChange}
             ecl={uiOptions.ecl || ''}

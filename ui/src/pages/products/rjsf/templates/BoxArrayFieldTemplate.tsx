@@ -35,7 +35,7 @@ const BoxArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
   } = useSearchAndAddProduct(formContext, idSchema);
 
   return (
-    <div>
+  <div data-testid={idSchema.$id + '_container'}>
       <Toolbar
           variant="dense"
           sx={{
@@ -85,7 +85,8 @@ const BoxArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
       {items.map(element => {
         const itemTitle = getItemTitle(uiSchema, formData, element.index);
         return (
-          <Box key={element.key || element.index} sx={containerStyle}>
+          <Box key={element.key || element.index} sx={containerStyle}
+               data-testid={`${idSchema.$id}_${element.index}_container`}>
             {element.hasRemove && (
                 <Toolbar
                     variant="dense"
