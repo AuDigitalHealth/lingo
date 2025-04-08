@@ -1,7 +1,8 @@
 import React from 'react';
 import { Typography, Grid } from '@mui/material';
+import {FieldProps} from "@rjsf/utils";
 
-interface ErrorDisplayProps {
+interface ErrorDisplayProps extends FieldProps {
   errors: string[];
   sx?: object; // Optional styling for the Grid container
 }
