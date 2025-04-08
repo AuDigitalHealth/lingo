@@ -15,6 +15,8 @@
  */
 package au.gov.digitalhealth.eclrefset;
 
+import au.csiro.snowstorm_client.model.SnowstormItemsPageReferenceSetMember;
+import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.gov.digitalhealth.eclrefset.model.addorremovequeryresponse.AddOrRemoveQueryResponse;
 import au.gov.digitalhealth.eclrefset.model.addorremovequeryresponse.AddRemoveItem;
 import au.gov.digitalhealth.eclrefset.model.refsetqueryresponse.Data;
@@ -40,6 +42,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -72,10 +75,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
