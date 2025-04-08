@@ -154,7 +154,7 @@ function MedicationAuthoring({
   return (
     <Paper sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1 }}>
       <Box m={2} p={2}>
-        <Container>
+        <Container data-testid="product-creation-grid">
           <Form
             ref={formRef}
             schema={schema}
@@ -195,6 +195,7 @@ function MedicationAuthoring({
               }}
             >
               <Button
+                data-testid={'product-clear-btn'}
                 variant="outlined"
                 color="secondary"
                 onClick={handleClear}
@@ -204,6 +205,7 @@ function MedicationAuthoring({
               </Button>
               <DraftSubmitPanel isDirty={isDirty} saveDraft={saveDraft} />
               <Button
+                data-testid={'preview-btn'}
                 type="submit"
                 variant="contained"
                 color="primary"
