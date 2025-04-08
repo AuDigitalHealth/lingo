@@ -10,6 +10,7 @@ import { getFieldName, getParentPath } from '../helpers/helpers.ts';
 
 const UnitValueUnWrappedField = (props: FieldProps) => {
   const {
+    name,
     formData, // unit field data
     uiSchema,
     onChange,
@@ -62,6 +63,7 @@ const UnitValueUnWrappedField = (props: FieldProps) => {
     <Grid container spacing={1} direction={'row'} alignItems="center">
       <Grid item xs={6}>
         <TextField
+          data-testid={idSchema ? idSchema.$id?.replace(/_[^_]+$/g, '_value') : valuePath}
           label="Value"
           value={valueData ?? ''}
           onChange={handleValueChange}
@@ -74,6 +76,8 @@ const UnitValueUnWrappedField = (props: FieldProps) => {
       <Grid item xs={6}>
         {task && (
           <EclAutocomplete
+            idSchema={idSchema}
+            name={name}
             value={formData}
             title="Unit"
             onChange={handleUnitChange}

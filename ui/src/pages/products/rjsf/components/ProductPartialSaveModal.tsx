@@ -11,8 +11,9 @@ import React, { useState } from 'react';
 import { Ticket } from '../../../../types/tickets/ticket.ts';
 
 import ProductPartialSave from './ProductPartialSave.tsx';
+import {FieldProps} from "@rjsf/utils";
 
-interface ProductPartialSaveModalProps {
+interface ProductPartialSaveModalProps extends FieldProps {
   open: boolean;
   handleClose: () => void;
   packageDetails: MedicationPackageDetails | DevicePackageDetails | undefined;
@@ -21,6 +22,8 @@ interface ProductPartialSaveModalProps {
   productStatus?: string | undefined;
 }
 export default function ProductPartialSaveModal({
+  idSchema,
+  name,
   open,
   handleClose,
   packageDetails,
@@ -42,6 +45,8 @@ export default function ProductPartialSaveModal({
           <Loading message={`Loading product save progress `} />
         ) : (
           <ProductPartialSave
+            idSchema={idSchema}
+            name={name}
             packageDetails={packageDetails}
             ticket={ticket}
             handleClose={handleClose}
