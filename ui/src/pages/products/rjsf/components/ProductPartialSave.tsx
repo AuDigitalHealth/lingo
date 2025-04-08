@@ -36,8 +36,9 @@ import { isDeviceType } from '../../../../utils/helpers/conceptUtils.ts';
 import { ProductStatus } from '../../../../types/TicketProduct.ts';
 import { getTicketProductsByTicketIdOptions } from '../../../../hooks/api/tickets/useTicketById.tsx';
 import { useQueryClient } from '@tanstack/react-query';
+import {FieldProps} from "@rjsf/utils";
 
-interface ProductPartialSaveProps {
+interface ProductPartialSaveProps extends FieldProps {
   packageDetails: MedicationPackageDetails | DevicePackageDetails;
   handleClose: () => void;
   ticket: Ticket;
@@ -47,6 +48,8 @@ interface ProductPartialSaveProps {
   productStatus?: string | undefined;
 }
 function ProductPartialSave({
+  idSchema,
+  name,
   packageDetails,
   handleClose,
   ticket,
@@ -162,6 +165,7 @@ function ProductPartialSave({
         }}
       >
         <Autocomplete
+          data-testid={idSchema?.$id || name}
           autoSelect={true}
           fullWidth
           freeSolo

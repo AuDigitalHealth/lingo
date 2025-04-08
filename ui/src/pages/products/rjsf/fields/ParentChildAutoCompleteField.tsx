@@ -9,6 +9,7 @@ import { getFieldErrors, getUniqueErrors } from '../helpers/errorUtils.ts';
 import { ErrorDisplay } from '../components/ErrorDisplay.tsx';
 
 const ParentChildAutoCompleteField = ({
+  name,
   formData,
   uiSchema,
   errorSchema = {},
@@ -113,6 +114,7 @@ const ParentChildAutoCompleteField = ({
     <Box>
       <Box mb={3}>
         <AutoCompleteField
+          name={idSchema.$id}
           schema={{ title: parentFieldOptions?.title }}
           uiSchema={{ 'ui:options': parentFieldOptions }}
           formData={parentValue}
@@ -130,6 +132,7 @@ const ParentChildAutoCompleteField = ({
         )}
 
         <AutoCompleteField
+          name={idSchema.$id.replaceAll(`_${parentFieldName}`, `_${childFieldName}`)}
           schema={{ title: childFieldOptions?.title }}
           uiSchema={{
             'ui:widget': 'hidden',
