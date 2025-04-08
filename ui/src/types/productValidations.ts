@@ -1180,7 +1180,7 @@ export function uniqueFsnValidator(products: Product[]): boolean {
     let fsn = '';
     if (product.concept) {
       fsn = product.concept.fsn ? product.concept.fsn.term : '';
-    } else {
+    } else if (product.newConceptDetails) {
       fsn = product.newConceptDetails['fullySpecifiedName'];
     }
 

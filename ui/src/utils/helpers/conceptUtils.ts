@@ -38,7 +38,10 @@ import {
 } from '../../types/product.ts';
 import { createFilterOptions } from '@mui/material';
 import Verhoeff from './Verhoeff.ts';
-import { extractSemanticTag } from './ProductPreviewUtils.ts';
+import {
+  extractSemanticTag,
+  removeSemanticTagFromTerm,
+} from './ProductPreviewUtils.ts';
 import { LanguageRefset } from '../../types/Project.ts';
 
 function isNumeric(value: string) {
@@ -352,6 +355,34 @@ export function cleanProductSummary(productSummary: ProductSummary) {
   });
 
   // re-attach semantic tags if they have not been edited
+  reattachSemanticTags(productSummary);
+
+  return productSummary;
+}
+
+export function removeSemanticTagsFromTerms(
+  productModelResponse: ProductSummary,
+) {
+  return productModelResponse.nodes.map(node => {
+    if (node.newConceptDetails?.fullySpecifiedName) {
+      const semanticTag = extractSemanticTag(
+        node.newConceptDetails?.fullySpecifiedName,
+      );
+      if (semanticTag) {
+        node.newConceptDetails.semanticTag = semanticTag;
+        const termWithoutTag = removeSemanticTagFromTerm(
+          node.newConceptDetails.fullySpecifiedName,
+        );
+        node.newConceptDetails.fullySpecifiedName = termWithoutTag
+          ? termWithoutTag
+          : '';
+      }
+    }
+    return node;
+  });
+}
+
+export function reattachSemanticTags(productSummary: ProductSummary) {
   productSummary.nodes.forEach(node => {
     if (node.newConceptDetails) {
       const newSemanticTag = extractSemanticTag(
@@ -368,8 +399,6 @@ export function cleanProductSummary(productSummary: ProductSummary) {
       }
     }
   });
-
-  return productSummary;
 }
 
 export function getSemanticTagChanges(

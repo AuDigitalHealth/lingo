@@ -9,7 +9,11 @@ import {
   useJobResults,
   useUpdateJobResult,
 } from '../../hooks/api/useJobResults';
-import { Column, ColumnFilterElementTemplateOptions } from 'primereact/column';
+import {
+  Column,
+  ColumnFilterElementTemplateOptions,
+  ColumnSortEvent,
+} from 'primereact/column';
 import React, { useMemo, useState } from 'react';
 import {
   JobResult,
@@ -25,6 +29,10 @@ import { Link } from 'react-router-dom';
 import { Dropdown } from 'primereact/dropdown';
 import { CheckCircle, Error, Warning } from '@mui/icons-material';
 
+interface ResultArrayColumnSortEvent extends Omit<ColumnSortEvent, 'data'> {
+  data: Result[]; // Override data to be Result[]
+}
+
 export default function Jobs() {
   const jobs = useJobResults();
 
@@ -33,8 +41,6 @@ export default function Jobs() {
       jobName: name,
     }));
   }, [jobs.data]);
-
-  console.log(jobNames.length);
 
   const [expandedRows, setExpandedRows] = useState<
     DataTableExpandedRows | DataTableValueArray | undefined
@@ -109,6 +115,24 @@ export default function Jobs() {
           <Column
             field="name"
             header="Name"
+            sortFunction={(event: ResultArrayColumnSortEvent) => {
+              const { data, order } = event;
+
+              return data.sort((a: Result, b: Result) => {
+                const getFirstLetter = (str: string) => {
+                  if (!str) return '';
+                  const match = str.match(/[A-Za-z]/);
+                  return match ? match[0].toLowerCase() : '';
+                };
+
+                const firstLetterA = getFirstLetter(a.name);
+                const firstLetterB = getFirstLetter(b.name);
+
+                return order === 1
+                  ? firstLetterA.localeCompare(firstLetterB)
+                  : firstLetterB.localeCompare(firstLetterA);
+              });
+            }}
             sortable
             body={(rowData: Result) => {
               return <Typography>{rowData.name}</Typography>;
