@@ -8,6 +8,8 @@ import { ErrorDisplay } from '../components/ErrorDisplay.tsx';
 import { getUniqueErrors } from '../helpers/errorUtils.ts';
 
 const UnitValueField = ({
+  idSchema,
+  name,
   formData,
   onChange,
   uiSchema,
@@ -56,6 +58,7 @@ const UnitValueField = ({
     <Grid container spacing={1} alignItems="center">
       <Grid item xs={6}>
         <TextField
+          data-testid={idSchema.$id}
           label="Value"
           value={value ?? ''}
           onChange={handleValueChange}
@@ -67,6 +70,7 @@ const UnitValueField = ({
       <Grid item xs={6}>
         {task && (
           <EclAutocomplete
+            name={idSchema.$id + '_unit'}
             value={unit}
             onChange={handleUnitChange}
             ecl={unitOptions.ecl || ''}

@@ -9,6 +9,7 @@ import { getFieldErrors, getUniqueErrors } from '../helpers/errorUtils.ts';
 import { ErrorDisplay } from '../components/ErrorDisplay.tsx';
 
 const MutuallyExclusiveAutocompleteField = ({
+  name,
   formData,
   uiSchema,
   errorSchema = {},
@@ -116,6 +117,8 @@ const MutuallyExclusiveAutocompleteField = ({
             </Typography>
           )}
           <AutoCompleteField
+            idSchema={idSchema}
+            name={name}
             schema={{ title: fieldAOptions?.title }}
             uiSchema={{
               'ui:options': {
@@ -152,6 +155,8 @@ const MutuallyExclusiveAutocompleteField = ({
             </Typography>
           )}
           <AutoCompleteField
+            idSchema={idSchema}
+            name={name}
             schema={{ title: fieldBOptions?.title }}
             uiSchema={{
               'ui:widget': 'hidden',
