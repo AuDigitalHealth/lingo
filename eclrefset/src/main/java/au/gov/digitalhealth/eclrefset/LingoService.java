@@ -28,6 +28,7 @@ import io.restassured.response.Response;
 import java.util.Comparator;
 import java.util.List;
 import org.apache.http.HttpStatus;
+import java.util.Comparator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
@@ -45,7 +46,29 @@ public class LingoService {
 
     RestAssured.defaultParser = Parser.JSON;
 
-    jobResultDto.getResults().sort(Comparator.comparing(ResultDto::getName));
+    jobResultDto.getResults().sort(Comparator.comparing(
+        ResultDto::getName,
+        Comparator.nullsLast((a, b) -> {
+
+          if (a == null || a.trim().isEmpty()) return 1;
+          if (b == null || b.trim().isEmpty()) return -1;
+
+
+          String aText = a.contains("|") ? a.split("\\|")[1].trim() : a;
+          String bText = b.contains("|") ? b.split("\\|")[1].trim() : b;
+
+
+          if (aText.isEmpty()) return 1;
+          if (bText.isEmpty()) return -1;
+
+
+          char aFirst = aText.toLowerCase().charAt(0);
+          char bFirst = bText.toLowerCase().charAt(0);
+
+          return Character.compare(aFirst, bFirst);
+        })
+    ));
+
 
     Response response =
         given()
