@@ -6,7 +6,7 @@ schedules:
   displayName: Daily ECL Refset Process Pipeline Run
   branches:
     include:
-      - main
+      - temporary-snodine-branch
   always: true
 
 pool:
