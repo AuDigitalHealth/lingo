@@ -1,4 +1,4 @@
-import { Box } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
 import { Concept, ProductSummary } from '../../types/concept.ts';
 import {
@@ -54,6 +54,11 @@ import {
 } from '../../utils/helpers/ProductPreviewUtils.ts';
 import { ProductNameOverrideModal } from './components/ProductNameOverrideModal.tsx';
 import { SemanticTagOverrideModal } from './components/SemanticTagOverrideModal.tsx';
+import { cloneDeep } from 'lodash';
+import { reattachSemanticTags } from '../../utils/helpers/conceptUtils.ts';
+import ConceptService from '../../api/ConceptService.ts';
+import ErrorModal from '../../themes/overrides/ErrorModal.tsx';
+import { deepClone } from '@mui/x-data-grid/utils/utils';
 
 interface ProductPreviewCreateOrViewModeProps {
   productCreationDetails?: ProductCreationDetails;
@@ -110,8 +115,15 @@ function ProductPreviewCreateOrViewMode({
   const [errorKey, setErrorKey] = useState<string | undefined>();
 
   const [duplicateNameModalOpen, setDuplicateNameModalOpen] = useState(false);
-  const [overrideDuplicateName, setOverrideDuplicateName] = useState(false);
+  const [overrideDuplicateProductName, setOverrideDuplicateProductName] =
+    useState(false);
 
+  const [duplicateConceptNameError, setDuplicateConceptNameError] =
+    useState(false);
+  const [
+    duplicateConceptNameErrorMessages,
+    setDuplicateConceptNameErrorMessages,
+  ] = useState<Concept[] | undefined>(undefined);
   const [semanticChangeWarning, setSemanticChangeWarning] = useState(false);
   const [semanticChangeWarningMessages, setSemanticChangeWarningMessage] =
     useState<string[] | undefined>(undefined);
@@ -123,14 +135,87 @@ function ProductPreviewCreateOrViewMode({
     productSummary: ProductSummary,
     productCreationDetails: ProductCreationDetails | undefined,
   ) => {
+    const clonedProductSummary = cloneDeep(productSummary);
+    reattachSemanticTags(clonedProductSummary);
+
     const duplicateName = ticket?.products?.find(product => {
-      return product.name === productSummary.subjects[0].fullySpecifiedName;
+      return (
+        product.name === clonedProductSummary.subjects[0].fullySpecifiedName
+      );
     });
     return (
       duplicateName !== undefined &&
       (!productCreationDetails?.nameOverride ||
         productCreationDetails?.nameOverride === duplicateName.name)
     );
+  };
+
+  const duplicateFsnCheck = async (
+    productSummary: ProductSummary | undefined,
+  ) => {
+    if (!productSummary) {
+      return {
+        hasDuplicates: false,
+        matchingConcepts: [],
+      };
+    }
+    const clonedProductSummary = cloneDeep(productSummary);
+    reattachSemanticTags(clonedProductSummary);
+    const newConcepts = clonedProductSummary?.nodes
+      ?.filter(node => {
+        return node.newConceptDetails !== null;
+      })
+      .map(node => {
+        return node.newConceptDetails;
+      });
+
+    // Array to store matches
+    const matchingConcepts: Array<Concept> = [];
+
+    if (newConcepts && newConcepts.length > 0) {
+      const conceptSearchPromises = newConcepts.map(async concept => {
+        if (concept && concept.fullySpecifiedName) {
+          return {
+            searchedName: concept.fullySpecifiedName,
+            response: await ConceptService.searchConceptNoEcl(
+              concept.fullySpecifiedName,
+              branch,
+              true,
+            ),
+          };
+        }
+        return null;
+      });
+
+      const conceptSearchResults = await Promise.all(conceptSearchPromises);
+
+      conceptSearchResults.forEach(result => {
+        if (!result) return;
+
+        const searchedName = result.searchedName;
+        const response = result.response;
+
+        const matches = response.items.filter(
+          item => item.fsn && item.fsn.term === searchedName,
+        );
+
+        // Add each matching concept to our result array
+        matches.forEach(match => {
+          matchingConcepts.push(match);
+        });
+      });
+    }
+
+    const uniqueMatchingConcepts = Array.from(
+      new Map(
+        matchingConcepts.map(concept => [concept.conceptId, concept]),
+      ).values(),
+    );
+
+    return {
+      hasDuplicates: uniqueMatchingConcepts.length > 0,
+      matchingConcepts: uniqueMatchingConcepts,
+    };
   };
 
   const { register, handleSubmit, reset, control, getValues, setValue, watch } =
@@ -152,9 +237,10 @@ function ProductPreviewCreateOrViewMode({
       setErrorKey(undefined);
     }
     setLastValidatedData(data);
+
     if (
       productWithNameAlreadyExists(ticket, data, productCreationDetails) &&
-      !overrideDuplicateName
+      !overrideDuplicateProductName
     ) {
       setDuplicateNameModalOpen(true);
       return;
@@ -175,8 +261,11 @@ function ProductPreviewCreateOrViewMode({
       setErrorKey(errKey as string);
       return;
     }
-    const fsnWarnings = uniqueFsnValidator(data.nodes);
-    const ptWarnings = uniquePtValidator(data.nodes);
+
+    const producSummaryClone = deepClone(data) as ProductSummary;
+    reattachSemanticTags(producSummaryClone);
+    const fsnWarnings = uniqueFsnValidator(producSummaryClone.nodes);
+    const ptWarnings = uniquePtValidator(producSummaryClone.nodes);
 
     let ignoreErrorsOpen = false;
     if (!ignoreErrors && (fsnWarnings || ptWarnings)) {
@@ -189,11 +278,23 @@ function ProductPreviewCreateOrViewMode({
     ) {
       return;
     }
-    submitData(data);
+
+    void submitData(data);
   };
 
-  const submitData = (data?: ProductSummary) => {
+  const submitData = async (data?: ProductSummary) => {
     const usedData = data ? data : lastValidatedData;
+    setLoading(true);
+    const duplicateFsn = await duplicateFsnCheck(usedData);
+
+    if (duplicateFsn.hasDuplicates) {
+      setLoading(false);
+      setDuplicateConceptNameError(true);
+      setDuplicateConceptNameErrorMessages(duplicateFsn.matchingConcepts);
+      setIgnoreErrors(false);
+      setOverrideSemanticChangeWarning(false);
+      return;
+    }
 
     if (
       !readOnlyMode &&
@@ -345,6 +446,24 @@ function ProductPreviewCreateOrViewMode({
   } else {
     return (
       <>
+        <ErrorModal
+          open={duplicateConceptNameError}
+          handleClose={() => setDuplicateConceptNameError(false)}
+          content={
+            <>
+              <Typography>
+                This would create concepts with FSN's that already exist
+              </Typography>
+              {duplicateConceptNameErrorMessages?.map(concept => {
+                return (
+                  <Typography>
+                    Existing Concept: {concept.idAndFsnTerm}
+                  </Typography>
+                );
+              })}
+            </>
+          }
+        />
         <ProductNameOverrideModal
           saveProduct={() => {
             setDuplicateNameModalOpen(false);
@@ -356,7 +475,7 @@ function ProductPreviewCreateOrViewMode({
           productCreationDetails={productCreationDetails}
           open={duplicateNameModalOpen}
           ignore={() => {
-            setOverrideDuplicateName(true);
+            setOverrideDuplicateProductName(true);
             setDuplicateNameModalOpen(false);
             if (lastValidatedData) {
               void onSubmit(lastValidatedData);
@@ -373,7 +492,7 @@ function ProductPreviewCreateOrViewMode({
             setOverrideSemanticChangeWarning(true);
             setSemanticChangeWarning(false);
             if (!ignoreErrorsModalOpen) {
-              submitData();
+              void submitData();
             }
           }}
           handleClose={() => {
@@ -396,7 +515,7 @@ function ProductPreviewCreateOrViewMode({
             setIgnoreErrors(true);
             setIgnoreErrorsModalOpen(false);
             if (!semanticChangeWarning) {
-              submitData();
+              void submitData();
             }
           }}
         />
