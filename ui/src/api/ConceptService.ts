@@ -66,6 +66,28 @@ const ConceptService = {
     conceptResponse.items = uniqueConcepts;
     return conceptResponse;
   },
+  async searchConceptNoEcl(
+    str: string,
+    branch: string,
+    useOldConcepts?: boolean,
+  ): Promise<ConceptResponse> {
+    let concepts: Concept[] = [];
+
+    const url = `/snowstorm/${branch}/concepts?term=${str}&termActive=true${useOldConcepts ? '' : '&isPublished=false'}`;
+    const response = await api.get(url, {
+      headers: {
+        'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
+      },
+    });
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const conceptResponse = response.data as ConceptResponse;
+    concepts = conceptResponse.items;
+    const uniqueConcepts = filterByActiveConcepts(concepts);
+    conceptResponse.items = uniqueConcepts;
+    return conceptResponse;
+  },
   async searchConceptByEcl(
     ecl: string,
     branch: string,
