@@ -92,7 +92,7 @@ const ProductService = {
   },
 
   async previewNewMedicationProduct(
-    medicationPackage: any,
+    medicationPackage: MedicationProductDetails,
     branch: string,
   ): Promise<ProductSummary> {
     const response = await api.post(
