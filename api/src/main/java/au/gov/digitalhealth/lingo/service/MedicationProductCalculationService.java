@@ -104,7 +104,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -554,15 +553,11 @@ public class MedicationProductCalculationService {
       ProductQuantity<MedicationProductDetails> quantity = entry.getKey();
       relationships.add(
           getSnowstormRelationship(
-              HAS_PACK_SIZE_UNIT,
-                  quantity.getUnit(),
-              group,
-              STATED_RELATIONSHIP));
+              HAS_PACK_SIZE_UNIT, quantity.getUnit(), group, STATED_RELATIONSHIP));
       relationships.add(
           getSnowstormDatatypeComponent(
               HAS_PACK_SIZE_VALUE,
-              BigDecimalFormatter.formatBigDecimal(
-                      quantity.getValue(), decimalScale),
+              BigDecimalFormatter.formatBigDecimal(quantity.getValue(), decimalScale),
               DataTypeEnum.DECIMAL,
               group,
               STATED_RELATIONSHIP));
@@ -572,7 +567,7 @@ public class MedicationProductCalculationService {
               COUNT_OF_CONTAINED_COMPONENT_INGREDIENT,
               // get the unique set of active ingredients
               Integer.toString(
-                      quantity.getProductDetails().getActiveIngredients().stream()
+                  quantity.getProductDetails().getActiveIngredients().stream()
                       .map(i -> i.getActiveIngredient().getConceptId())
                       .collect(Collectors.toSet())
                       .size()),
@@ -599,15 +594,11 @@ public class MedicationProductCalculationService {
       PackageQuantity<MedicationProductDetails> quantity = entry.getKey();
       relationships.add(
           getSnowstormRelationship(
-              HAS_PACK_SIZE_UNIT,
-                  quantity.getUnit(),
-              group,
-              STATED_RELATIONSHIP));
+              HAS_PACK_SIZE_UNIT, quantity.getUnit(), group, STATED_RELATIONSHIP));
       relationships.add(
           getSnowstormDatatypeComponent(
               HAS_PACK_SIZE_VALUE,
-              BigDecimalFormatter.formatBigDecimal(
-                      quantity.getValue(), decimalScale),
+              BigDecimalFormatter.formatBigDecimal(quantity.getValue(), decimalScale),
               DataTypeEnum.DECIMAL,
               group,
               STATED_RELATIONSHIP));
@@ -925,10 +916,7 @@ public class MedicationProductCalculationService {
     if ((productDetails.getContainerType() != null
             || productDetails.getDeviceType() != null
             || productDetailsQuantity != null)
-        && (!productQuantity
-                .getUnit()
-                .getConceptId()
-                .equals(UNIT_OF_PRESENTATION.getValue())
+        && (!productQuantity.getUnit().getConceptId().equals(UNIT_OF_PRESENTATION.getValue())
             || !ValidationUtil.isIntegerValue(productQuantity.getValue()))) {
       throw new ProductAtomicDataValidationProblem(
           "Product quantity must be a positive whole number and unit each if a container type or device type are specified");

@@ -93,7 +93,8 @@ public class SchemaFactory {
     // identifiers
     propertySchema.addProperty(IDENTIFIER_SCHEME, ConstProperty.create(property.getName()));
 
-    propertySchema.addProperty(getPropertyNameForType(property.getDataType().toString()), getProperty(property));
+    propertySchema.addProperty(
+        getPropertyNameForType(property.getDataType().toString()), getProperty(property));
 
     return propertySchema;
   }
