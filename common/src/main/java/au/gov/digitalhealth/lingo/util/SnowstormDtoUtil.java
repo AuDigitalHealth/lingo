@@ -512,7 +512,7 @@ public class SnowstormDtoUtil {
   public static SnowstormDescription getFsnFromDescriptions(Set<SnowstormDescription> descriptions) {
 
     return descriptions.stream()
-        .filter(description -> description.getType().equals("FSN"))
+        .filter(description ->  {return description.getType().equals("FSN") && description.getActive();})
         .findFirst()
         .orElse(null);
   }

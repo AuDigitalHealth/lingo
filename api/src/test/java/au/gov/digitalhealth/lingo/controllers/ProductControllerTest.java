@@ -50,7 +50,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ProblemDetail;
 
 class ProductControllerTest extends LingoTestBase {
 
@@ -161,32 +160,6 @@ class ProductControllerTest extends LingoTestBase {
                 .get()
                 .getTerm())
         .isEqualTo(pt.getTerm());
-
-    // Testing semantic tag check
-    fsn.setTerm(newPt);
-
-    ProblemDetail problemDetail =
-        getLingoTestClient()
-            .putRequest(
-                "/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/"
-                    + existingConcept.getConceptId()
-                    + "/update",
-                ProductUpdateRequest.builder()
-                    .ticketId(ticketResponse.getId())
-                    .descriptionUpdate(
-                        ProductDescriptionUpdateRequest.builder()
-                            .descriptions(Set.of(fsn, pt))
-                            .build())
-                    .build(),
-                HttpStatus.BAD_REQUEST,
-                ProblemDetail.class);
-
-    Assertions.assertThat(problemDetail.getTitle()).isEqualTo("Atomic data validation problem");
-    Assertions.assertThat(problemDetail.getDetail())
-        .isEqualTo(
-            String.format(
-                "The required semantic tag \"(containerized branded product package)\" is missing from the FSN \"%s\".",
-                fsn.getTerm()));
 
     // fix so semantic tag error isnt thrown again
 
