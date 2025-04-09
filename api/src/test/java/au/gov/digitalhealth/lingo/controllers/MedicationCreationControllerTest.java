@@ -33,12 +33,9 @@ import au.gov.digitalhealth.lingo.MedicationAssertions;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductCreationDetails;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
-import au.gov.digitalhealth.lingo.product.details.ContainedPackageDetails;
-import au.gov.digitalhealth.lingo.product.details.Ingredient;
-import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
-import au.gov.digitalhealth.lingo.product.details.PackageDetails;
-import au.gov.digitalhealth.lingo.product.details.Quantity;
+import au.gov.digitalhealth.lingo.product.details.*;
 import au.gov.digitalhealth.tickets.models.Ticket;
+import jakarta.validation.Valid;
 import java.math.BigDecimal;
 import java.util.List;
 import lombok.extern.java.Log;
@@ -92,9 +89,15 @@ class MedicationCreationControllerTest extends LingoTestBase {
     PackageDetails<MedicationProductDetails> packageDetails =
         getLingoTestClient()
             .getMedicationPackDetails(AmtTestData.OXALICCORD_50ML_PER_10ML_IN_10ML_VIAL_CTPP_ID);
-    Quantity productQty = packageDetails.getContainedProducts().get(0).getQuantity();
+    Quantity productQty =
+        packageDetails.getContainedProducts().get(0).getProductDetails().getQuantity();
     Ingredient ingredient =
-        packageDetails.getContainedProducts().get(0).getActiveIngredients().get(0);
+        packageDetails
+            .getContainedProducts()
+            .get(0)
+            .getProductDetails()
+            .getActiveIngredients()
+            .get(0);
     Quantity concentrationStrength = ingredient.getConcentrationStrength();
     Quantity totalQty = ingredient.getTotalQuantity();
 
@@ -143,9 +146,15 @@ class MedicationCreationControllerTest extends LingoTestBase {
     PackageDetails<MedicationProductDetails> packageDetails =
         getLingoTestClient()
             .getMedicationPackDetails(AmtTestData.OXALICCORD_50ML_PER_10ML_IN_10ML_VIAL_CTPP_ID);
-    Quantity productQty = packageDetails.getContainedProducts().get(0).getQuantity();
+    Quantity productQty =
+        packageDetails.getContainedProducts().get(0).getProductDetails().getQuantity();
     Ingredient ingredient =
-        packageDetails.getContainedProducts().get(0).getActiveIngredients().get(0);
+        packageDetails
+            .getContainedProducts()
+            .get(0)
+            .getProductDetails()
+            .getActiveIngredients()
+            .get(0);
     Quantity concentrationStrength = ingredient.getConcentrationStrength();
     Quantity totalQty = ingredient.getTotalQuantity();
 
@@ -206,8 +215,13 @@ class MedicationCreationControllerTest extends LingoTestBase {
         BigDecimal.valueOf(100),
         BigDecimal.valueOf(10),
         BigDecimal.valueOf(10),
-        packageDetails.getContainedProducts().get(0).getActiveIngredients().get(0),
-        packageDetails.getContainedProducts().get(0).getQuantity());
+        packageDetails
+            .getContainedProducts()
+            .get(0)
+            .getProductDetails()
+            .getActiveIngredients()
+            .get(0),
+        packageDetails.getContainedProducts().get(0).getProductDetails().getQuantity());
 
     ProductSummary productSummary =
         getLingoTestClient().calculateMedicationProductSummary(packageDetails);
@@ -221,8 +235,13 @@ class MedicationCreationControllerTest extends LingoTestBase {
         BigDecimal.valueOf(100),
         BigDecimal.valueOf(15),
         BigDecimal.valueOf(10),
-        packageDetails.getContainedProducts().get(0).getActiveIngredients().get(0),
-        packageDetails.getContainedProducts().get(0).getQuantity());
+        packageDetails
+            .getContainedProducts()
+            .get(0)
+            .getProductDetails()
+            .getActiveIngredients()
+            .get(0),
+        packageDetails.getContainedProducts().get(0).getProductDetails().getQuantity());
     Assertions.assertThat(
             getLingoTestClient().calculateMedicationProductSummaryWithBadRequest(packageDetails))
         .contains(
@@ -233,8 +252,13 @@ class MedicationCreationControllerTest extends LingoTestBase {
         BigDecimal.valueOf(34453.333333),
         BigDecimal.valueOf(84.444444),
         BigDecimal.valueOf(408),
-        packageDetails.getContainedProducts().get(0).getActiveIngredients().get(0),
-        packageDetails.getContainedProducts().get(0).getQuantity());
+        packageDetails
+            .getContainedProducts()
+            .get(0)
+            .getProductDetails()
+            .getActiveIngredients()
+            .get(0),
+        packageDetails.getContainedProducts().get(0).getProductDetails().getQuantity());
 
     productSummary = getLingoTestClient().calculateMedicationProductSummary(packageDetails);
 
@@ -247,8 +271,13 @@ class MedicationCreationControllerTest extends LingoTestBase {
         BigDecimal.valueOf(34453.333333),
         BigDecimal.valueOf(84.444445),
         BigDecimal.valueOf(408),
-        packageDetails.getContainedProducts().get(0).getActiveIngredients().get(0),
-        packageDetails.getContainedProducts().get(0).getQuantity());
+        packageDetails
+            .getContainedProducts()
+            .get(0)
+            .getProductDetails()
+            .getActiveIngredients()
+            .get(0),
+        packageDetails.getContainedProducts().get(0).getProductDetails().getQuantity());
     Assertions.assertThat(
             getLingoTestClient().calculateMedicationProductSummaryWithBadRequest(packageDetails))
         .contains(
@@ -277,12 +306,7 @@ class MedicationCreationControllerTest extends LingoTestBase {
     Assertions.assertThat(packageDetails.getContainedProducts()).size().isEqualTo(1);
 
     // change pack size to 2
-    packageDetails
-        .getContainedProducts()
-        .iterator()
-        .next()
-        .getPackSize()
-        .setValue(new BigDecimal("2.0"));
+    packageDetails.getContainedProducts().iterator().next().setValue(new BigDecimal("2.0"));
 
     // calculate
     ProductSummary productSummary =
@@ -370,6 +394,7 @@ class MedicationCreationControllerTest extends LingoTestBase {
         .getContainedProducts()
         .iterator()
         .next()
+        .getProductDetails()
         .setOtherIdentifyingInformation("test-oii");
 
     // calculate
@@ -398,21 +423,15 @@ class MedicationCreationControllerTest extends LingoTestBase {
     Assertions.assertThat(packageDetails.getContainedPackages()).size().isEqualTo(3);
     Assertions.assertThat(packageDetails.getContainedProducts()).isNullOrEmpty();
 
-    for (ContainedPackageDetails<MedicationProductDetails> innerPack :
-        packageDetails.getContainedPackages()) {
-      Assertions.assertThat(innerPack.getPackSize().getValue())
-          .isEqualTo(BigDecimal.ONE.setScale(1));
-      Assertions.assertThat(innerPack.getPackSize().getUnit().getConceptId())
+    for (@Valid
+    PackageQuantity<MedicationProductDetails> innerPack : packageDetails.getContainedPackages()) {
+      Assertions.assertThat(innerPack.getValue()).isEqualTo(BigDecimal.ONE.setScale(1));
+      Assertions.assertThat(innerPack.getUnit().getConceptId())
           .isEqualTo(UNIT_OF_PRESENTATION.getValue());
     }
 
     // change pack size to 2
-    packageDetails
-        .getContainedPackages()
-        .iterator()
-        .next()
-        .getPackSize()
-        .setValue(new BigDecimal("2.0"));
+    packageDetails.getContainedPackages().iterator().next().setValue(new BigDecimal("2.0"));
 
     // calculate
     ProductSummary productSummary =
@@ -474,11 +493,10 @@ class MedicationCreationControllerTest extends LingoTestBase {
     Assertions.assertThat(packageDetails.getContainedPackages()).size().isEqualTo(3);
     Assertions.assertThat(packageDetails.getContainedProducts()).isNullOrEmpty();
 
-    for (ContainedPackageDetails<MedicationProductDetails> innerPack :
-        packageDetails.getContainedPackages()) {
-      Assertions.assertThat(innerPack.getPackSize().getValue())
-          .isEqualTo(BigDecimal.ONE.setScale(1));
-      Assertions.assertThat(innerPack.getPackSize().getUnit().getConceptId())
+    for (@Valid
+    PackageQuantity<MedicationProductDetails> innerPack : packageDetails.getContainedPackages()) {
+      Assertions.assertThat(innerPack.getValue()).isEqualTo(BigDecimal.ONE.setScale(1));
+      Assertions.assertThat(innerPack.getUnit().getConceptId())
           .isEqualTo(UNIT_OF_PRESENTATION.getValue());
     }
 
@@ -487,10 +505,10 @@ class MedicationCreationControllerTest extends LingoTestBase {
         .getContainedPackages()
         .iterator()
         .next()
+        .getPackageDetails()
         .getContainedProducts()
         .iterator()
         .next()
-        .getPackSize()
         .setValue(BigDecimal.valueOf(29).setScale(1));
 
     // calculate
@@ -691,7 +709,12 @@ class MedicationCreationControllerTest extends LingoTestBase {
 
     // Step 2: Change the strength of the ingredient to a unique value
     Ingredient ingredient =
-        packageDetails.getContainedProducts().get(0).getActiveIngredients().get(0);
+        packageDetails
+            .getContainedProducts()
+            .get(0)
+            .getProductDetails()
+            .getActiveIngredients()
+            .get(0);
     ingredient.getTotalQuantity().setValue(BigDecimal.valueOf(99999)); // Unique strength
 
     // Step 3: Perform a calculate/preview operation
@@ -738,7 +761,6 @@ class MedicationCreationControllerTest extends LingoTestBase {
         .getContainedProducts()
         .iterator()
         .next()
-        .getPackSize()
         .setValue(BigDecimal.valueOf(999)); // Unique pack size
 
     // Step 8: Perform another calculate/preview operation
