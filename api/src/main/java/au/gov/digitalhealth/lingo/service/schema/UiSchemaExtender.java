@@ -77,9 +77,10 @@ public class UiSchemaExtender {
     addUiNodeForPropertySet(
         (ObjectNode) uiSchemaNode, properties, nodeName, ProductPackageType.PACKAGE);
     addUiNodeForPropertySet(
-        uiSchemaNode.withObjectProperty(CONTAINED_PRODUCTS)
-                .withObjectProperty(ITEMS)
-                .withObjectProperty(PRODUCT_DETAILS),
+        uiSchemaNode
+            .withObjectProperty(CONTAINED_PRODUCTS)
+            .withObjectProperty(ITEMS)
+            .withObjectProperty(PRODUCT_DETAILS),
         properties,
         nodeName,
         ProductPackageType.PRODUCT);
