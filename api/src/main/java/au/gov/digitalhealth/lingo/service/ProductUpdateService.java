@@ -16,7 +16,6 @@
 package au.gov.digitalhealth.lingo.service;
 
 import static au.gov.digitalhealth.lingo.service.AtomicDataService.MAP_TARGET;
-import static au.gov.digitalhealth.lingo.util.SemanticTagUtil.extractSemanticTag;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.*;
 
 import au.csiro.snowstorm_client.model.*;
@@ -38,8 +37,10 @@ import au.gov.digitalhealth.tickets.service.TicketServiceImpl;
 import jakarta.validation.Valid;
 import java.time.Instant;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
@@ -123,6 +124,62 @@ public class ProductUpdateService {
 
     productUpdateCreationDetails.getHistoricState().setConcept(existingConceptView);
 
+    Map<SnowstormDescription, SnowstormDescription> retireReplaceDescriptions =
+        getDescriptionsNeedingRetireReplace(existingConceptView, productDescriptionUpdateRequest);
+
+    if (!retireReplaceDescriptions.isEmpty()) {
+      // Create a map for quick lookup of keys by descriptionId
+      Map<String, SnowstormDescription> keyDescriptionsById =
+          retireReplaceDescriptions.keySet().stream()
+              .filter(desc -> desc.getDescriptionId() != null)
+              .collect(
+                  Collectors.toMap(SnowstormDescription::getDescriptionId, Function.identity()));
+
+      // Create a new set to hold the updated descriptions
+      Set<SnowstormDescription> updatedDescriptions = new HashSet<>();
+
+      // Process each description in the request
+      for (SnowstormDescription description : productDescriptionUpdateRequest.getDescriptions()) {
+        String descriptionId = description.getDescriptionId();
+
+        // If this matches a key in retireReplaceDescriptions, replace it
+        if (descriptionId != null && keyDescriptionsById.containsKey(descriptionId)) {
+          // Add the original description from the key set
+          updatedDescriptions.add(keyDescriptionsById.get(descriptionId));
+
+          // Find the corresponding value
+          SnowstormDescription valueDescription = null;
+          for (Map.Entry<SnowstormDescription, SnowstormDescription> entry :
+              retireReplaceDescriptions.entrySet()) {
+            if (descriptionId.equals(entry.getKey().getDescriptionId())) {
+              valueDescription = entry.getValue();
+              break;
+            }
+          }
+
+          // Create a new description based on the value with type SYNONYM
+          if (valueDescription != null) {
+            SnowstormDescription synonymDesc = new SnowstormDescription();
+            // Copy all properties from valueDescription
+            BeanUtils.copyProperties(valueDescription, synonymDesc);
+            // Set type to SYNONYM
+            synonymDesc.setType("SYNONYM");
+            synonymDesc.setDescriptionId(null);
+            synonymDesc.setReleased(false);
+            synonymDesc.setTypeId("900000000000013009");
+            // Add the new SYNONYM description
+            updatedDescriptions.add(synonymDesc);
+          }
+        } else {
+          // Keep descriptions that don't need replacement
+          updatedDescriptions.add(description);
+        }
+      }
+
+      // Update the request with the modified descriptions
+      productDescriptionUpdateRequest.setDescriptions(updatedDescriptions);
+    }
+
     SnowstormConceptView conceptsNeedUpdate =
         prepareConceptUpdate(existingConceptView, productDescriptionUpdateRequest, branch);
 
@@ -142,6 +199,86 @@ public class ProductUpdateService {
             snowstormClient.updateConcept(
                 branch, conceptsNeedUpdate.getConceptId(), conceptsNeedUpdate, false);
         productUpdateCreationDetails.getUpdatedState().setConcept(response);
+
+        if (!retireReplaceDescriptions.isEmpty()) {
+
+          Set<SnowstormDescription> descriptionsWithRetireReplaceCompleted = new HashSet<>();
+          response
+              .getDescriptions()
+              .forEach(
+                  desc -> {
+                    Optional<SnowstormDescription> descriptionForRetirement =
+                        retireReplaceDescriptions.keySet().stream()
+                            .filter(
+                                key ->
+                                    key.getDescriptionId() != null
+                                        && key.getDescriptionId().equals(desc.getDescriptionId()))
+                            .findFirst();
+
+                    Optional<SnowstormDescription> isAReplacementDescription =
+                        retireReplaceDescriptions.values().stream()
+                            .filter(
+                                key ->
+                                    key.getTerm() != null && key.getTerm().equals(desc.getTerm()))
+                            .findFirst();
+
+                    if (!descriptionForRetirement.isEmpty()) {
+                      // Get the matching key and its corresponding value from
+                      // retireReplaceDescriptions
+                      SnowstormDescription keyDescription = descriptionForRetirement.get();
+                      SnowstormDescription valueDescription =
+                          retireReplaceDescriptions.get(keyDescription);
+
+                      // Find the description in response that has the same term as valueDescription
+                      Optional<SnowstormDescription> matchingValueDesc =
+                          response.getDescriptions().stream()
+                              .filter(
+                                  responseDesc ->
+                                      valueDescription.getTerm() != null
+                                          && valueDescription
+                                              .getTerm()
+                                              .equals(responseDesc.getTerm()))
+                              .findFirst();
+
+                      if (matchingValueDesc.isPresent()) {
+                        // add the replaced by
+                        Map<String, Set<String>> replacedBy = new HashMap<>();
+                        Set<String> replacementIds = new HashSet<>();
+                        SnowstormDescription matchingDesc = matchingValueDesc.get();
+                        replacementIds.add(
+                            matchingDesc.getDescriptionId()); // Add the replacement ID
+                        replacedBy.put("REPLACED_BY", replacementIds);
+
+                        // Set the association targets on the description
+                        SnowstormDescription unwrappedDescriptionForRetirement =
+                            descriptionForRetirement.get();
+                        unwrappedDescriptionForRetirement.setAssociationTargets(replacedBy);
+                        unwrappedDescriptionForRetirement.setActive(false);
+                        unwrappedDescriptionForRetirement.setAcceptabilityMap(new HashMap<>());
+
+                        // Add to the completed set
+                        descriptionsWithRetireReplaceCompleted.add(
+                            unwrappedDescriptionForRetirement);
+                      } else {
+                        // If no matching term found, add the original description
+                        descriptionsWithRetireReplaceCompleted.add(desc);
+                      }
+                    } else if (isAReplacementDescription.isPresent()) {
+                      SnowstormDescription replacement = isAReplacementDescription.get();
+                      replacement.setDescriptionId(desc.getDescriptionId());
+                      replacement.setReleased(false);
+                      descriptionsWithRetireReplaceCompleted.add(replacement);
+                    } else {
+                      descriptionsWithRetireReplaceCompleted.add(desc);
+                    }
+                  });
+
+          conceptsNeedUpdate.setDescriptions(descriptionsWithRetireReplaceCompleted);
+          SnowstormConceptView response2 =
+              snowstormClient.updateConcept(
+                  branch, conceptsNeedUpdate.getConceptId(), conceptsNeedUpdate, false);
+          productUpdateCreationDetails.getUpdatedState().setConcept(response2);
+        }
       } catch (WebClientResponseException ex) {
 
         String errorBody = ex.getResponseBodyAsString();
@@ -168,19 +305,45 @@ public class ProductUpdateService {
     if (fsn != null && existingFsn != null && !existingFsn.equals(fsn.trim())) {
       String newFsn = fsn.trim();
 
-      String semanticTag = extractSemanticTag(existingFsn);
-      if (semanticTag != null && !newFsn.endsWith(semanticTag)) {
-        throw new ProductAtomicDataValidationProblem(
-            String.format(
-                "The required semantic tag \"%s\" is missing from the FSN \"%s\".",
-                semanticTag, newFsn));
-      }
       snowstormClient.checkForDuplicateFsn(newFsn, branch);
     }
 
     conceptNeedToUpdate.setDescriptions(productDescriptionUpdateRequest.getDescriptions());
 
     return conceptNeedToUpdate;
+  }
+
+  private Map<SnowstormDescription, SnowstormDescription> getDescriptionsNeedingRetireReplace(
+      SnowstormConceptView existingConcept,
+      ProductDescriptionUpdateRequest productDescriptionUpdateRequest) {
+    if (productDescriptionUpdateRequest == null || existingConcept == null) {
+      return Collections.emptyMap();
+    }
+
+    Map<String, SnowstormDescription> existingDescriptionsById =
+        existingConcept.getDescriptions().stream()
+            .collect(Collectors.toMap(SnowstormDescription::getDescriptionId, Function.identity()));
+
+    Map<SnowstormDescription, SnowstormDescription> descriptionsNeedingUpdate = new HashMap<>();
+
+    for (SnowstormDescription newDescription : productDescriptionUpdateRequest.getDescriptions()) {
+      String descriptionId = newDescription.getDescriptionId();
+      if (descriptionId != null && existingDescriptionsById.containsKey(descriptionId)) {
+        SnowstormDescription oldDescription = existingDescriptionsById.get(descriptionId);
+
+        // Check if both are released and term has changed
+        if (oldDescription != null
+            && newDescription != null
+            && Boolean.TRUE.equals(oldDescription.getReleased())
+            && Boolean.TRUE.equals(newDescription.getReleased())
+            && !Objects.equals(oldDescription.getTerm(), newDescription.getTerm())) {
+
+          descriptionsNeedingUpdate.put(oldDescription, newDescription);
+        }
+      }
+    }
+
+    return descriptionsNeedingUpdate;
   }
 
   public List<SnowstormConcept> fetchBrowserConcepts(String branch, Set<String> conceptIds) {

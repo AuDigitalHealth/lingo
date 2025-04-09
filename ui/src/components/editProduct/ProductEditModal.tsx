@@ -87,6 +87,8 @@ import { enqueueSnackbar } from 'notistack';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { productUpdateValidationSchema } from '../../types/productValidations.ts';
 import { useNavigate } from 'react-router-dom';
+import WarningModal from '../../themes/overrides/WarningModal.tsx';
+import { deepClone } from '@mui/x-data-grid/utils/utils';
 
 const USLangRefset: LanguageRefset = {
   default: 'false',
@@ -193,7 +195,9 @@ function EditConceptBody({
   const [displayRetiredDescriptions, setDisplayRetiredDescriptions] =
     useState(false);
 
-  const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
+  const [ctppModalOpen, setCtppModalOpen] = useState(false);
+  const [semanticTagWarningModalOpen, setSemanticTagWarningModalOpen] =
+    useState(false);
 
   const langRefsets = useMemo(() => {
     if (project === undefined || project.metadata === undefined) {
@@ -333,13 +337,40 @@ function EditConceptBody({
   const formSubmissionData = useRef<ProductUpdateRequest | null>(null);
 
   const onSubmit = (data: ProductUpdateRequest) => {
+    let shouldReturn = false;
     if (!isCtpp) {
-      setConfirmationModalOpen(true);
+      setCtppModalOpen(true);
       formSubmissionData.current = data;
-      return;
-    } else {
-      void updateProduct(data);
+      shouldReturn = true;
     }
+
+    if (defaultSemanticTag) {
+      const clonedDescriptions = deepClone(
+        data.descriptionUpdate?.descriptions,
+      ) as Description[];
+
+      const withReattached = processDescriptionsWithSemanticTags(
+        clonedDescriptions,
+        descriptions,
+        defaultSemanticTag,
+      );
+
+      const fsn = withReattached?.find(description => {
+        return description.type === 'FSN' && description.active === true;
+      });
+      if (fsn) {
+        const newSemanticTag = extractSemanticTag(fsn.term);
+        if (newSemanticTag && newSemanticTag !== defaultSemanticTag) {
+          setSemanticTagWarningModalOpen(true);
+          formSubmissionData.current = data;
+          shouldReturn = true;
+        }
+      }
+    }
+
+    if (shouldReturn) return;
+
+    void updateProduct(data);
   };
 
   const queryClient = useQueryClient();
@@ -505,13 +536,27 @@ function EditConceptBody({
   };
 
   const handleCloseModal = () => {
-    setConfirmationModalOpen(false);
+    setCtppModalOpen(false);
+    setSemanticTagWarningModalOpen(false);
   };
 
   const handleConfirmAction = () => {
-    setConfirmationModalOpen(false);
+    setCtppModalOpen(false);
     const dataToSubmit = formSubmissionData.current;
-    if (dataToSubmit) {
+    if (dataToSubmit && !semanticTagWarningModalOpen) {
+      void updateProduct(dataToSubmit);
+    }
+  };
+
+  const handleCloseSemanticTagWarningModal = () => {
+    setCtppModalOpen(false);
+    setSemanticTagWarningModalOpen(false);
+  };
+
+  const handleConfirmSemanticTagWarning = () => {
+    setSemanticTagWarningModalOpen(false);
+    const dataToSubmit = formSubmissionData.current;
+    if (dataToSubmit && !ctppModalOpen) {
       void updateProduct(dataToSubmit);
     }
   };
@@ -594,7 +639,7 @@ function EditConceptBody({
                     >
                       <ConfirmationModal
                         keepMounted={true}
-                        open={confirmationModalOpen}
+                        open={ctppModalOpen}
                         content={
                           'Any Changes to the FSN or PT will not cascade to any other products that use this concept. Is that okay?'
                         }
@@ -602,6 +647,15 @@ function EditConceptBody({
                         title={'Confirm Change'}
                         action={'Confirm'}
                         handleAction={handleConfirmAction}
+                      />
+                      <WarningModal
+                        open={semanticTagWarningModalOpen && !ctppModalOpen}
+                        handleClose={handleCloseSemanticTagWarningModal}
+                        handleAction={handleConfirmSemanticTagWarning}
+                        action={'Ignore Warning'}
+                        content={
+                          'The Semantic entered is not a valid semantic tag for this concept type. Is that correct?'
+                        }
                       />
                       <RightSection
                         isFetching={isFetching}
@@ -627,22 +681,6 @@ function EditConceptBody({
                               control={control}
                               setArtgOptVals={setArtgOptVals}
                             />
-                            {/* <ArtgAutoComplete
-                              disabled={isUpdating}
-                              name="externalRequesterUpdate.externalIdentifiers"
-                              control={control}
-                              error={
-                                errors?.externalRequesterUpdate
-                                  ?.externalIdentifiers as FieldError
-                              }
-                              dataTestId="package-brand"
-                              optionValues={[]}
-                              handleChange={(
-                                artgs: ExternalIdentifier[] | null,
-                              ) => {
-                                setArtgOptVals(artgs ? artgs : []);
-                              }}
-                            /> */}
                             {artgOptVals.length === 0 &&
                               product.externalIdentifiers &&
                               product.externalIdentifiers?.length > 0 && (
@@ -1179,7 +1217,7 @@ const FieldDescriptions = ({
           index={index}
           label={label}
           isDisabled={isDisabled}
-          isReleased={isReleased ? isReleased : false}
+          isReleased={isReleased || false}
         />
         {/* Display Semantic Tag if available */}
         {containsSemanticTag && (
@@ -1380,19 +1418,30 @@ const DescriptionTextInput = ({
     control,
   });
 
+  const initialValueRef = useRef(field.value);
+
+  const hasChanged = field.value !== initialValueRef.current;
+
   return (
-    <TextField
-      {...field}
-      label={`${label}`}
-      fullWidth
-      margin="dense"
-      error={!!fieldState.error}
-      helperText={fieldState.error?.message}
-      multiline
-      minRows={1}
-      maxRows={4}
-      disabled={isDisabled || isReleased}
-    />
+    <>
+      <TextField
+        {...field}
+        label={`${label}`}
+        fullWidth
+        margin="dense"
+        error={!!fieldState.error}
+        helperText={fieldState.error?.message}
+        multiline
+        minRows={1}
+        maxRows={4}
+        disabled={isDisabled}
+      />
+      {hasChanged && isReleased && (
+        <FormHelperText sx={{ color: t => `${t.palette.warning.main}` }}>
+          This change will retire this description and create a replacement.
+        </FormHelperText>
+      )}
+    </>
   );
 };
 
