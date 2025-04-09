@@ -232,7 +232,10 @@ describe('Product creation Spec', () => {
     addNewProduct();
 
     previewWithError('error', branch);
-    verifyErrorMsg('[data-testid="root_productName"] input', 'Brand name is mandatory');
+    verifyErrorMsg(
+      '[data-testid="root_productName"] input',
+      'Brand name is mandatory',
+    );
 
     cy.get(`[data-testid="root_containerType"] input`).click();
     cy.get(`[data-testid="root_containerType"] input`).clear();
@@ -244,11 +247,18 @@ describe('Product creation Spec', () => {
     cy.get("[data-testid='create-new-product']").click();
     const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
     handleBrandHack(branch, 'root_productName', 'Amox', timeOut);
-    searchAndSelectAutocomplete(branch, 'root_productName', testProduct2, timeOut);
+    searchAndSelectAutocomplete(
+      branch,
+      'root_productName',
+      testProduct2,
+      timeOut,
+    );
 
     addNewProduct();
     fillSuccessfulProductDetails(branch, 0, timeOut);
-    cy.get(`[data-testid="root_containedProducts_0_productDetails_genericForm"] input`).clear();
+    cy.get(
+      `[data-testid="root_containedProducts_0_productDetails_genericForm"] input`,
+    ).clear();
     expandOrHideProduct(0);
     cy.wait(3000);
     previewWithError(
@@ -261,15 +271,25 @@ describe('Product creation Spec', () => {
     cy.get("[data-testid='create-new-product']").click();
     const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
     handleBrandHack(branch, 'root_productName', 'Amox', timeOut);
-    searchAndSelectAutocomplete(branch, 'root_productName', testProduct2, timeOut);
+    searchAndSelectAutocomplete(
+      branch,
+      'root_productName',
+      testProduct2,
+      timeOut,
+    );
 
     addNewProduct();
     fillSuccessfulProductDetails(branch, 0, timeOut);
-    cy.get(`[data-testid="root_containedProducts_0_productDetails_productName"] input`).clear();
+    cy.get(
+      `[data-testid="root_containedProducts_0_productDetails_productName"] input`,
+    ).clear();
     expandOrHideProduct(0);
     cy.wait(3000);
     previewWithError('error:', branch);
-    verifyErrorMsg('root_containedProducts_0_productDetails_productName', 'Brand name is mandatory');
+    verifyErrorMsg(
+      'root_containedProducts_0_productDetails_productName',
+      'Brand name is mandatory',
+    );
   });
   it.skip('Medication: Validate product pack size', () => {
     loadTaskPage(taskKey, ticketNumber);
@@ -277,7 +297,12 @@ describe('Product creation Spec', () => {
     cy.get("[data-testid='create-new-product']").click();
     const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
     handleBrandHack(branch, 'root_productName', 'Amox', timeOut);
-    searchAndSelectAutocomplete(branch, 'root_productName', testProduct2, timeOut);
+    searchAndSelectAutocomplete(
+      branch,
+      'root_productName',
+      testProduct2,
+      timeOut,
+    );
 
     addNewProduct();
     fillSuccessfulProductDetails(branch, 0, timeOut);
@@ -286,14 +311,22 @@ describe('Product creation Spec', () => {
     expandOrHideProduct(0);
     cy.wait(3000);
     previewWithError('error:', branch);
-    verifyErrorMsg('root_containedProducts_0_value', 'Pack size is a required field');
+    verifyErrorMsg(
+      'root_containedProducts_0_value',
+      'Pack size is a required field',
+    );
   });
   it.skip('Medication: Validate product pack size unit', () => {
     loadTaskPage(taskKey, ticketNumber);
     cy.get("[data-testid='create-new-product']").click();
     const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
     handleBrandHack(branch, 'root_productName', 'Amox', timeOut);
-    searchAndSelectAutocomplete(branch, 'root_productName', testProduct2, timeOut);
+    searchAndSelectAutocomplete(
+      branch,
+      'root_productName',
+      testProduct2,
+      timeOut,
+    );
 
     addNewProduct();
     fillSuccessfulProductDetails(branch, 0, timeOut);
@@ -309,7 +342,12 @@ describe('Product creation Spec', () => {
     const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
 
     handleBrandHack(branch, 'root_productName', 'Amox', timeOut);
-    searchAndSelectAutocomplete(branch, 'root_productName', testProduct2, timeOut);
+    searchAndSelectAutocomplete(
+      branch,
+      'root_productName',
+      testProduct2,
+      timeOut,
+    );
 
     addNewProduct();
     fillSuccessfulProductDetails(branch, 0, timeOut);
@@ -328,7 +366,12 @@ describe('Product creation Spec', () => {
     cy.get("[data-testid='create-new-product']").click();
     const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
     handleBrandHack(branch, 'root_productName', 'Amox', timeOut);
-    searchAndSelectAutocomplete(branch, 'root_productName', testProduct2, timeOut);
+    searchAndSelectAutocomplete(
+      branch,
+      'root_productName',
+      testProduct2,
+      timeOut,
+    );
 
     addNewProduct();
     fillSuccessfulProductDetails(branch, 0, timeOut);
@@ -351,11 +394,18 @@ describe('Product creation Spec', () => {
     cy.get("[data-testid='create-new-product']").click();
     const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
     handleBrandHack(branch, 'root_productName', 'Amox', timeOut);
-    searchAndSelectAutocomplete(branch, 'root_productName', testProduct2, timeOut);
+    searchAndSelectAutocomplete(
+      branch,
+      'root_productName',
+      testProduct2,
+      timeOut,
+    );
 
     addNewProduct();
     fillSuccessfulProductDetails(branch, 0, timeOut);
-    cy.get(`[data-testid="root_containedProducts_0_productDetails_quantity"] input`).type('50');
+    cy.get(
+      `[data-testid="root_containedProducts_0_productDetails_quantity"] input`,
+    ).type('50');
     searchAndSelectAutocomplete(
       branch,
       'root_containedProducts_0_productDetails_quantity-unit',
@@ -363,7 +413,9 @@ describe('Product creation Spec', () => {
       timeOut,
     );
 
-    cy.get(`[data-testid="root_containedProducts_0_productDetails_activeIngredients_0_totalQuantity"] input`).type('500');
+    cy.get(
+      `[data-testid="root_containedProducts_0_productDetails_activeIngredients_0_totalQuantity"] input`,
+    ).type('500');
     searchAndSelectAutocomplete(
       branch,
       'root_containedProducts_0_productDetails_activeIngredients_0_totalQuantity_unit',
@@ -371,9 +423,9 @@ describe('Product creation Spec', () => {
       timeOut,
     );
 
-    cy.get(`[data-testid="root_containedProducts_0_productDetails_activeIngredients_0_concentrationStrength"] input`).type(
-      '500',
-    );
+    cy.get(
+      `[data-testid="root_containedProducts_0_productDetails_activeIngredients_0_concentrationStrength"] input`,
+    ).type('500');
     searchAndSelectAutocomplete(
       branch,
       'root_containedProducts_0_productDetails_activeIngredients_0_concentrationStrength_unit',
@@ -393,11 +445,18 @@ describe('Product creation Spec', () => {
     cy.get("[data-testid='create-new-product']").click();
     const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
     handleBrandHack(branch, 'root_productName', 'Amox', timeOut);
-    searchAndSelectAutocomplete(branch, 'root_productName', testProduct2, timeOut);
+    searchAndSelectAutocomplete(
+      branch,
+      'root_productName',
+      testProduct2,
+      timeOut,
+    );
 
     addNewProduct();
     fillSuccessfulProductDetails(branch, 0, timeOut);
-    cy.get(`[data-testid="root_containedProducts_0_productDetails_quantity"] input`).type('50');
+    cy.get(
+      `[data-testid="root_containedProducts_0_productDetails_quantity"] input`,
+    ).type('50');
     searchAndSelectAutocomplete(
       branch,
       'root_containedProducts_0_productDetails_quantity-unit',
@@ -405,7 +464,9 @@ describe('Product creation Spec', () => {
       timeOut,
     );
 
-    cy.get(`[data-testid="root_containedProducts_0_productDetails_activeIngredients_0_totalQuantity"] input`).type('500');
+    cy.get(
+      `[data-testid="root_containedProducts_0_productDetails_activeIngredients_0_totalQuantity"] input`,
+    ).type('500');
     searchAndSelectAutocomplete(
       branch,
       'root_containedProducts_0_productDetails_activeIngredients_0_totalQuantity-unit',
@@ -413,7 +474,9 @@ describe('Product creation Spec', () => {
       timeOut,
     );
 
-    cy.get(`[data-testid="root_containedProducts_0_productDetails_activeIngredients_0_concentrationStrength"] input`).type('10');
+    cy.get(
+      `[data-testid="root_containedProducts_0_productDetails_activeIngredients_0_concentrationStrength"] input`,
+    ).type('10');
     searchAndSelectAutocomplete(
       branch,
       'root_containedProducts_0_productDetails_activeIngredients_0_concentrationStrength_unit',
@@ -428,11 +491,18 @@ describe('Product creation Spec', () => {
     cy.get("[data-testid='create-new-product']").click();
     const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
     handleBrandHack(branch, 'root_productName', 'Amox', timeOut);
-    searchAndSelectAutocomplete(branch, 'root_productName', testProduct2, timeOut);
+    searchAndSelectAutocomplete(
+      branch,
+      'root_productName',
+      testProduct2,
+      timeOut,
+    );
 
     addNewProduct();
     fillSuccessfulProductDetails(branch, 0, timeOut);
-    cy.get(`[data-testid="root_containedProducts_0_productDetails_quantity"] input`).type('50');
+    cy.get(
+      `[data-testid="root_containedProducts_0_productDetails_quantity"] input`,
+    ).type('50');
     searchAndSelectAutocomplete(
       branch,
       'root_containedProducts_0_productDetails_quantity_unit',
@@ -440,7 +510,9 @@ describe('Product creation Spec', () => {
       timeOut,
     );
 
-    cy.get(`[data-testid="root_containedProducts_0_productDetails_activeIngredients_0_totalQuantity"] input`).type('500');
+    cy.get(
+      `[data-testid="root_containedProducts_0_productDetails_activeIngredients_0_totalQuantity"] input`,
+    ).type('500');
     searchAndSelectAutocomplete(
       branch,
       'root_containedProducts_0_productDetails_activeIngredients_0_totalQuantity_unit',
@@ -448,7 +520,9 @@ describe('Product creation Spec', () => {
       timeOut,
     );
 
-    cy.get(`[data-testid="root_containedProducts_0_productDetails_activeIngredients_0_concentrationStrength"] input`).type('10');
+    cy.get(
+      `[data-testid="root_containedProducts_0_productDetails_activeIngredients_0_concentrationStrength"] input`,
+    ).type('10');
     searchAndSelectAutocomplete(
       branch,
       'root_containedProducts_0_productDetails_activeIngredients_0_concentrationStrength_unit',
@@ -464,11 +538,18 @@ describe('Product creation Spec', () => {
     cy.get("[data-testid='create-new-product']").click();
     const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
     handleBrandHack(branch, 'root_productName', 'Amox', timeOut);
-    searchAndSelectAutocomplete(branch, 'root_productName', testProduct2, timeOut);
+    searchAndSelectAutocomplete(
+      branch,
+      'root_productName',
+      testProduct2,
+      timeOut,
+    );
 
     addNewProduct();
     fillSuccessfulProductDetails(branch, 0, timeOut);
-    cy.get(`[data-testid="root_containedProducts_0_productDetails_quantity"] input`).type('12');
+    cy.get(
+      `[data-testid="root_containedProducts_0_productDetails_quantity"] input`,
+    ).type('12');
     searchAndSelectAutocomplete(
       branch,
       'root_containedProducts_0_productDetails_quantity_unit',
@@ -476,7 +557,9 @@ describe('Product creation Spec', () => {
       timeOut,
     );
 
-    cy.get(`[data-testid="root_containedProducts_0_productDetails_activeIngredients_0_totalQuantity"] input`).type('250');
+    cy.get(
+      `[data-testid="root_containedProducts_0_productDetails_activeIngredients_0_totalQuantity"] input`,
+    ).type('250');
     searchAndSelectAutocomplete(
       branch,
       'root_containedProducts_0_productDetails_activeIngredients_0_totalQuantity_unit',
@@ -484,7 +567,9 @@ describe('Product creation Spec', () => {
       timeOut,
     );
 
-    cy.get(`[data-testid="root_containedProducts_0_productDetails_activeIngredients_0_concentrationStrength"] input`).type('15');
+    cy.get(
+      `[data-testid="root_containedProducts_0_productDetails_activeIngredients_0_concentrationStrength"] input`,
+    ).type('15');
     searchAndSelectAutocomplete(
       branch,
       'root_containedProducts_0_productDetails_activeIngredients_0_concentrationStrength_unit',
@@ -500,7 +585,12 @@ describe('Product creation Spec', () => {
     cy.get("[data-testid='create-new-product']").click();
     const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
     handleBrandHack(branch, 'root_productName', 'Amox', timeOut);
-    searchAndSelectAutocomplete(branch, 'root_productName', testProduct2, timeOut);
+    searchAndSelectAutocomplete(
+      branch,
+      'root_productName',
+      testProduct2,
+      timeOut,
+    );
     searchAndSelectAutocomplete(
       branch,
       'root_containerType',
