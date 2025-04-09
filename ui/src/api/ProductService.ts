@@ -264,7 +264,7 @@ const ProductService = {
     branch: string,
   ): Promise<ExternalIdentifier[]> {
     const response = await api.get(
-      `/api/${branch}/product-model/${productId}/externalIdentifiers`,
+      `/api${branch}/product-model/${productId}/externalIdentifiers`,
     );
     if (response.status != 200 && response.status != 422) {
       this.handleErrors();

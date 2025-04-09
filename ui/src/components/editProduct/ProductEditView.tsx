@@ -178,7 +178,7 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
             isCtpp={
               externalIdentifiers ? externalIdentifiers.length > 0 : false
             }
-            title={'Updated'}
+            title={'Current state'}
             externalIdentifiers={externalIdentifiers}
             dialects={langRefsets}
           />
