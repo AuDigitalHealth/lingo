@@ -137,15 +137,11 @@ public class DeviceProductCalculationService {
             .getPreferredTerm()
         + ", "
         + productQuantity.getValue()
-        + (productQuantity
-                .getUnit()
-                .getConceptId()
-                .equals(UNIT_OF_PRESENTATION.getValue())
+        + (productQuantity.getUnit().getConceptId().equals(UNIT_OF_PRESENTATION.getValue())
             ? ""
             : " "
                 + Objects.requireNonNull(
-                    productQuantity.getUnit().getPt(),
-                        "Unit must have a preferred term")
+                        productQuantity.getUnit().getPt(), "Unit must have a preferred term")
                     .getTerm());
   }
 
@@ -473,7 +469,10 @@ public class DeviceProductCalculationService {
           Node.builder()
               .newConceptDetails(
                   getNewMpuuDetails(
-                      models.getModelConfiguration(branch), productQuantity.getProductDetails(), cache.getNextId(), mp))
+                      models.getModelConfiguration(branch),
+                      productQuantity.getProductDetails(),
+                      cache.getNextId(),
+                      mp))
               .label(ProductSummaryService.MPUU_LABEL)
               .build();
     }
