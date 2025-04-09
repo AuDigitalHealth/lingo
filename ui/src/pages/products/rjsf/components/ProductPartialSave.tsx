@@ -36,7 +36,7 @@ import { isDeviceType } from '../../../../utils/helpers/conceptUtils.ts';
 import { ProductStatus } from '../../../../types/TicketProduct.ts';
 import { getTicketProductsByTicketIdOptions } from '../../../../hooks/api/tickets/useTicketById.tsx';
 import { useQueryClient } from '@tanstack/react-query';
-import {FieldProps} from "@rjsf/utils";
+import { FieldProps } from '@rjsf/utils';
 
 interface ProductPartialSaveProps extends FieldProps {
   packageDetails: MedicationPackageDetails | DevicePackageDetails;

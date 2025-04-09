@@ -11,7 +11,7 @@ import React, { useState } from 'react';
 import { Ticket } from '../../../../types/tickets/ticket.ts';
 
 import ProductPartialSave from './ProductPartialSave.tsx';
-import {FieldProps} from "@rjsf/utils";
+import { FieldProps } from '@rjsf/utils';
 
 interface ProductPartialSaveModalProps extends FieldProps {
   open: boolean;
