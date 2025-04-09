@@ -49,23 +49,17 @@ public class LingoService {
     jobResultDto.getResults().sort(Comparator.comparing(
         ResultDto::getName,
         Comparator.nullsLast((a, b) -> {
-
           if (a == null || a.trim().isEmpty()) return 1;
           if (b == null || b.trim().isEmpty()) return -1;
-
 
           String aText = a.contains("|") ? a.split("\\|")[1].trim() : a;
           String bText = b.contains("|") ? b.split("\\|")[1].trim() : b;
 
-
           if (aText.isEmpty()) return 1;
           if (bText.isEmpty()) return -1;
 
-
-          char aFirst = aText.toLowerCase().charAt(0);
-          char bFirst = bText.toLowerCase().charAt(0);
-
-          return Character.compare(aFirst, bFirst);
+          // Compare entire strings after pipe instead of just first char
+          return aText.toLowerCase().compareTo(bText.toLowerCase());
         })
     ));
 
