@@ -63,7 +63,9 @@ const UnitValueUnWrappedField = (props: FieldProps) => {
     <Grid container spacing={1} direction={'row'} alignItems="center">
       <Grid item xs={6}>
         <TextField
-          data-testid={idSchema ? idSchema.$id?.replace(/_[^_]+$/g, '_value') : valuePath}
+          data-testid={
+            idSchema ? idSchema.$id?.replace(/_[^_]+$/g, '_value') : valuePath
+          }
           label="Value"
           value={valueData ?? ''}
           onChange={handleValueChange}

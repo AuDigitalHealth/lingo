@@ -132,7 +132,10 @@ const ParentChildAutoCompleteField = ({
         )}
 
         <AutoCompleteField
-          name={idSchema.$id.replaceAll(`_${parentFieldName}`, `_${childFieldName}`)}
+          name={idSchema.$id.replaceAll(
+            `_${parentFieldName}`,
+            `_${childFieldName}`,
+          )}
           schema={{ title: childFieldOptions?.title }}
           uiSchema={{
             'ui:widget': 'hidden',
