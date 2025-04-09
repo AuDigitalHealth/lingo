@@ -119,18 +119,20 @@ export default function Jobs() {
               const { data, order } = event;
 
               return data.sort((a: Result, b: Result) => {
-                const getFirstLetter = (str: string) => {
+                const getTextAfterPipe = (str: string) => {
                   if (!str) return '';
-                  const match = str.match(/[A-Za-z]/);
-                  return match ? match[0].toLowerCase() : '';
+                  const parts = str.split('|');
+                  return parts.length > 1
+                    ? parts[1].trim().toLowerCase()
+                    : str.toLowerCase();
                 };
 
-                const firstLetterA = getFirstLetter(a.name);
-                const firstLetterB = getFirstLetter(b.name);
+                const textAfterPipeA = getTextAfterPipe(a.name);
+                const textAfterPipeB = getTextAfterPipe(b.name);
 
                 return order === 1
-                  ? firstLetterA.localeCompare(firstLetterB)
-                  : firstLetterB.localeCompare(firstLetterA);
+                  ? textAfterPipeA.localeCompare(textAfterPipeB)
+                  : textAfterPipeB.localeCompare(textAfterPipeA);
               });
             }}
             sortable
