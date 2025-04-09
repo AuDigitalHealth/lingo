@@ -102,8 +102,10 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
         const itemTitle = getItemTitle(uiSchema, formData, element.index);
 
         return (
-          <Box key={element.index}
-               data-testid={`${idSchema.$id}_${element.index}_container`}>
+          <Box
+            key={element.index}
+            data-testid={`${idSchema.$id}_${element.index}_container`}
+          >
             <Accordion
               expanded={expandedPanels.includes(`panel${element.index}`)}
               onChange={handleChange(`panel${element.index}`)}

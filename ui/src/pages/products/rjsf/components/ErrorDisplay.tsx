@@ -1,6 +1,6 @@
 import React from 'react';
 import { Typography, Grid } from '@mui/material';
-import {FieldProps} from "@rjsf/utils";
+import { FieldProps } from '@rjsf/utils';
 
 interface ErrorDisplayProps extends FieldProps {
   errors: string[];

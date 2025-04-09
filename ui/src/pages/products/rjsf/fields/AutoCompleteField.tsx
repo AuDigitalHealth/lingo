@@ -71,7 +71,8 @@ const AutoCompleteField = ({
           )}
           {createBrand && (
             <Tooltip title="Create Brand">
-              <IconButton data-testid="create-brand-btn"
+              <IconButton
+                data-testid="create-brand-btn"
                 onClick={() => setOpenCreateBrandModal(true)}
                 sx={{
                   position: 'absolute',
