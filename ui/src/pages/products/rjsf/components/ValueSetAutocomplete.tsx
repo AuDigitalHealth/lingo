@@ -4,7 +4,7 @@ import { Concept } from '../../../../types/concept.ts';
 import { useSearchConceptOntoServerByUrl } from '../../../../hooks/api/products/useSearchConcept.tsx';
 import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../../utils/helpers/getValueSetExpansionContainsPt.ts';
 import useApplicationConfigStore from '../../../../stores/ApplicationConfigStore.ts';
-import {FieldProps} from "@rjsf/utils";
+import { FieldProps } from '@rjsf/utils';
 
 interface ValueSetAutocompleteProps extends FieldProps {
   label?: string;
