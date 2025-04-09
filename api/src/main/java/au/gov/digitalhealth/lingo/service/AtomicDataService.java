@@ -161,7 +161,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
 
   public PackageDetails<T> getPackageAtomicData(String branch, String productId) {
     Maps maps = getMaps(branch, productId, getPackageAtomicDataEcl(), ProductPackageType.PACKAGE);
-    return populatePackageDetails( productId, maps, getModelConfiguration(branch));
+    return populatePackageDetails(productId, maps, getModelConfiguration(branch));
   }
 
   public T getProductAtomicData(String branch, String productId) {
@@ -488,15 +488,14 @@ public abstract class AtomicDataService<T extends ProductDetails> {
         packageQuantity.setUnit(getSingleActiveTarget(roleGroup, HAS_PACK_SIZE_UNIT.getValue()));
         // sub pack quantity value
         packageQuantity.setValue(
-                new BigDecimal(
-                        getSingleActiveConcreteValue(roleGroup, HAS_PACK_SIZE_VALUE.getValue())));
+            new BigDecimal(
+                getSingleActiveConcreteValue(roleGroup, HAS_PACK_SIZE_VALUE.getValue())));
         details.getContainedPackages().add(packageQuantity);
         // sub pack product details
         assert subpacksRelationship.getTarget() != null;
-        packageQuantity.setPackageDetails(populatePackageDetails(
-            subpacksRelationship.getTarget().getConceptId(),
-            maps,
-            modelConfiguration));
+        packageQuantity.setPackageDetails(
+            populatePackageDetails(
+                subpacksRelationship.getTarget().getConceptId(), maps, modelConfiguration));
       }
     } else {
       if (productRelationships.isEmpty()) {
@@ -514,7 +513,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
         ProductQuantity<T> productQuantity = new ProductQuantity<>();
         // contained product quantity value
         productQuantity.setValue(
-                getSingleActiveBigDecimal(subRoleGroup, HAS_PACK_SIZE_VALUE.getValue()));
+            getSingleActiveBigDecimal(subRoleGroup, HAS_PACK_SIZE_VALUE.getValue()));
         // contained product quantity unit
         productQuantity.setUnit(getSingleActiveTarget(subRoleGroup, HAS_PACK_SIZE_UNIT.getValue()));
 
