@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Autocomplete, CircularProgress, TextField } from '@mui/material';
 import { Concept, ConceptMini } from '../../../../types/concept.ts';
 import { useSearchConceptsByEcl } from '../../../../hooks/api/useInitializeConcepts.tsx';
-import {FieldProps} from "@rjsf/utils";
+import { FieldProps } from '@rjsf/utils';
 
 interface EclAutocompleteProps extends FieldProps {
   value: ConceptMini | null | undefined;

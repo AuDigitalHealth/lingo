@@ -15,7 +15,7 @@ import BaseModal from '../../../../components/modal/BaseModal.tsx';
 import BaseModalBody from '../../../../components/modal/BaseModalBody.tsx';
 import BaseModalHeader from '../../../../components/modal/BaseModalHeader.tsx';
 import { useDefaultUnit } from '../../../../hooks/api/useInitializeConcepts.tsx';
-import {FieldProps} from "@rjsf/utils";
+import { FieldProps } from '@rjsf/utils';
 
 interface SearchAndAddProductProps extends FieldProps {
   open: boolean;
