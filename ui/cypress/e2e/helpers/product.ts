@@ -434,7 +434,7 @@ export function addNewProduct() {
 }
 export function expandOrHideProduct(productIndex: number) {
   cy.get(
-    `[data-testid='root_containedProducts_${productIndex}_container'] div.MuiGrid-container`,
+    `[data-testid='root_containedProducts_${productIndex}_container'] .MuiAccordionSummary-root`,
     { timeout: 20000 },
   )
     .first()
@@ -442,7 +442,7 @@ export function expandOrHideProduct(productIndex: number) {
 }
 export function expandIngredient(productIndex: number, ingIndex: number) {
   cy.get(
-    `[data-testid='root_containedProducts_${productIndex}_productDetails_activeIngredients_${ingIndex}_container'] div.MuiGrid-container`,
+    `[data-testid='root_containedProducts_${productIndex}_productDetails_activeIngredients_${ingIndex}_container'] .MuiAccordionSummary-root`,
   ).click();
 }
 export function fillSuccessfulProductDetails(
