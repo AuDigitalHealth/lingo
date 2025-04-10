@@ -74,8 +74,15 @@
           "productName",
           "deviceType",
           "specificDeviceType",
-          "otherIdentifyingInformation"
+          "otherIdentifyingInformation",
+          "type"
         ],
+        "type": {
+          "ui:widget": "hidden",
+          "ui:options": {
+            "skipTitle": true
+          }
+        },
         "productName": {
           "ui:field": "AutoCompleteField",
           "ui:options": {

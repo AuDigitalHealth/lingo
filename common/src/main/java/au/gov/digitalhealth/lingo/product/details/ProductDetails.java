@@ -31,10 +31,10 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = false)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property="type")
 @JsonSubTypes({
-  @Type(value = MedicationProductDetails.class, name = "medication"),
-  @Type(value = DeviceProductDetails.class, name = "device")
+  @JsonSubTypes.Type(value = MedicationProductDetails.class, name = "medication"),
+  @JsonSubTypes.Type(value = DeviceProductDetails.class, name = "device")
 })
 public abstract class ProductDetails extends PackageProductDetailsBase {
   @NotNull SnowstormConceptMini productName;
