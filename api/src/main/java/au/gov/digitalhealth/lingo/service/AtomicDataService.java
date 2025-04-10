@@ -52,11 +52,7 @@ import au.gov.digitalhealth.lingo.product.BrandWithIdentifiers;
 import au.gov.digitalhealth.lingo.product.PackSizeWithIdentifiers;
 import au.gov.digitalhealth.lingo.product.ProductBrands;
 import au.gov.digitalhealth.lingo.product.ProductPackSizes;
-import au.gov.digitalhealth.lingo.product.details.ContainedPackageDetails;
-import au.gov.digitalhealth.lingo.product.details.PackageDetails;
-import au.gov.digitalhealth.lingo.product.details.PackageProductDetailsBase;
-import au.gov.digitalhealth.lingo.product.details.ProductDetails;
-import au.gov.digitalhealth.lingo.product.details.Quantity;
+import au.gov.digitalhealth.lingo.product.details.*;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
 import au.gov.digitalhealth.lingo.util.EclBuilder;
@@ -165,12 +161,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
 
   public PackageDetails<T> getPackageAtomicData(String branch, String productId) {
     Maps maps = getMaps(branch, productId, getPackageAtomicDataEcl(), ProductPackageType.PACKAGE);
-
-    PackageDetails<T> packageDetails = new PackageDetails<>();
-
-    populatePackageDetails(packageDetails, productId, maps, getModelConfiguration(branch));
-
-    return packageDetails;
+    return populatePackageDetails(productId, maps, getModelConfiguration(branch));
   }
 
   public T getProductAtomicData(String branch, String productId) {
@@ -466,9 +457,9 @@ public abstract class AtomicDataService<T extends ProductDetails> {
   }
 
   @SuppressWarnings("null")
-  private <Y extends PackageDetails<T>> void populatePackageDetails(
-      Y details, String productId, Maps maps, ModelConfiguration modelConfiguration) {
-
+  private PackageDetails<T> populatePackageDetails(
+      String productId, Maps maps, ModelConfiguration modelConfiguration) {
+    PackageDetails<T> details = new PackageDetails<>();
     SnowstormConcept basePackage = maps.browserMap().get(productId);
     Set<SnowstormRelationship> basePackageRelationships = getRelationshipsFromAxioms(basePackage);
     // container type
@@ -493,21 +484,18 @@ public abstract class AtomicDataService<T extends ProductDetails> {
       for (SnowstormRelationship subpacksRelationship : subpacksRelationships) {
         Set<SnowstormRelationship> roleGroup =
             getActiveRelationshipsInRoleGroup(subpacksRelationship, basePackageRelationships);
-
-        ContainedPackageDetails<T> containedPackageDetails = new ContainedPackageDetails<>();
-        details.getContainedPackages().add(containedPackageDetails);
-
-        containedPackageDetails.setPackSize(
-            new Quantity(
-                getSingleActiveBigDecimal(roleGroup, HAS_PACK_SIZE_VALUE.getValue()),
-                getSingleActiveTarget(roleGroup, HAS_PACK_SIZE_UNIT.getValue())));
+        PackageQuantity<T> packageQuantity = new PackageQuantity<>();
+        packageQuantity.setUnit(getSingleActiveTarget(roleGroup, HAS_PACK_SIZE_UNIT.getValue()));
+        // sub pack quantity value
+        packageQuantity.setValue(
+            new BigDecimal(
+                getSingleActiveConcreteValue(roleGroup, HAS_PACK_SIZE_VALUE.getValue())));
+        details.getContainedPackages().add(packageQuantity);
         // sub pack product details
         assert subpacksRelationship.getTarget() != null;
-        populatePackageDetails(
-            containedPackageDetails,
-            subpacksRelationship.getTarget().getConceptId(),
-            maps,
-            modelConfiguration);
+        packageQuantity.setPackageDetails(
+            populatePackageDetails(
+                subpacksRelationship.getTarget().getConceptId(), maps, modelConfiguration));
       }
     } else {
       if (productRelationships.isEmpty()) {
@@ -522,6 +510,13 @@ public abstract class AtomicDataService<T extends ProductDetails> {
         SnowstormConcept product =
             maps.browserMap().get(subProductRelationship.getTarget().getConceptId());
 
+        ProductQuantity<T> productQuantity = new ProductQuantity<>();
+        // contained product quantity value
+        productQuantity.setValue(
+            getSingleActiveBigDecimal(subRoleGroup, HAS_PACK_SIZE_VALUE.getValue()));
+        // contained product quantity unit
+        productQuantity.setUnit(getSingleActiveTarget(subRoleGroup, HAS_PACK_SIZE_UNIT.getValue()));
+
         if (product == null) {
           throw new AtomicDataExtractionProblem(
               "Expected concept to be in downloaded set for the product but was not found: "
@@ -531,15 +526,12 @@ public abstract class AtomicDataService<T extends ProductDetails> {
 
         // contained product details
         T productDetails = populateProductDetails(product, productId, maps, modelConfiguration);
+        productQuantity.setProductDetails(productDetails);
 
-        details.getContainedProducts().add(productDetails);
-        // contained product quantity value
-        productDetails.setPackSize(
-            new Quantity(
-                getSingleActiveBigDecimal(subRoleGroup, HAS_PACK_SIZE_VALUE.getValue()),
-                getSingleActiveTarget(subRoleGroup, HAS_PACK_SIZE_UNIT.getValue())));
+        details.getContainedProducts().add(productQuantity);
       }
     }
+    return details;
   }
 
   private T populateProductDetails(

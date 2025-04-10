@@ -60,9 +60,7 @@
                   "minimum": 1
                 }
               },
-              "required": [
-                "value"
-              ]
+              "required": ["value"]
             },
             {
               "properties": {
@@ -84,35 +82,27 @@
         }
       }
     },
-    "ActiveAndPreciseIngredients": {
+    "Ingredient": {
       "type": "object",
-      "title": "Active Ingredient",
       "additionalProperties": false,
       "properties": {
         "activeIngredient": {
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Has Active Ingredient",
           "errorMessage": {
-            "minProperties": "Active Ingredient must be populated."
+            "minProperties": "Active Ingredient must be populated.",
+            "type": "Active Ingredient must be populated."
           }
         },
         "preciseIngredient": {
-          "$ref": "#/$defs/SnowstormConceptMini"
-        }
-      },
-      "required": [
-        "activeIngredient"
-      ],
-      "errorMessage": {
-        "required": "Active Ingredient must be populated."
-      }
-    },
-    "Ingredient": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "activeAndPreciseIngredients": {
-          "$ref": "#/$defs/ActiveAndPreciseIngredients"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SnowstormConceptMini"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "basisOfStrengthSubstance": {
           "$ref": "#/$defs/SnowstormConceptMini"
@@ -134,9 +124,7 @@
           "title": "Presentation Strength Denominator"
         }
       },
-      "required": [
-        "activeAndPreciseIngredients"
-      ]
+      "required": ["activeIngredient"]
     },
     "GenericAndSpecificForms": {
       "type": "object",
@@ -158,6 +146,86 @@
         }
       },
       "title": "Generic and Specific Forms"
+    },
+    "ContainedProduct": {
+      "type": "object",
+      "title": "Contained Product",
+      "properties": {
+        "unit": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "errorMessage": {
+            "type": "Invalid Pack Size Unit",
+            "minProperties": "Field must be populated."
+          }
+        },
+        "value": {
+          "type": "number",
+          "minimum": 0,
+          "errorMessage": {
+            "type": "Value must be a number",
+            "minimum": "Value must be at least 0"
+          }
+        },
+        "productDetails": {
+          "$ref": "#/$defs/ProductDetails"
+        }
+      },
+      "required": ["unit", "value", "productDetails"],
+      "errorMessage": {
+        "required": "Contained product must be populated."
+      },
+      "dependencies": {
+        "unit": {
+          "oneOf": [
+            {
+              "properties": {
+                "unit": {
+                  "properties": {
+                    "conceptId": {
+                      "const": "732935002",
+                      "errorMessage": {
+                        "const": "Invalid Unit and Value"
+                      }
+                    }
+                  },
+                  "required": ["conceptId"]
+                },
+                "value": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "errorMessage": {
+                    "type": "Value must be an integer when Unit is 'Each'",
+                    "const": "Unit must be 'Each' for this value constraint"
+                  }
+                }
+              },
+              "errorMessage": {
+                "oneOf": "Unit must be 'Each' with an integer value >= 1"
+              }
+            },
+            {
+              "properties": {
+                "unit": {
+                  "properties": {
+                    "conceptId": { "not": { "const": "732935002" } }
+                  }
+                },
+                "value": {
+                  "type": "number",
+                  "minimum": 0,
+                  "errorMessage": {
+                    "type": "Value must be a number ",
+                    "minimum": "Value must be at least 0"
+                  }
+                }
+              },
+              "errorMessage": {
+                "oneOf": "Unit must not be 'Each' and value must be a number >= 0"
+              }
+            }
+          ]
+        }
+      }
     },
     "ProductDetails": {
       "type": "object",
@@ -182,8 +250,20 @@
             "minItems": "At least one active ingredient must be present."
           }
         },
-        "genericAndSpecificForms": {
-          "$ref": "#/$defs/GenericAndSpecificForms"
+        "genericForm": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Generic Dose Form"
+        },
+        "specificForm": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SnowstormConceptMini"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Specific Dose Form"
         },
         "quantity": {
           "$ref": "#/$defs/Quantity",
@@ -193,10 +273,6 @@
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Unit of Presentation"
         },
-        "packSize": {
-          "$ref": "#/$defs/Quantity",
-          "title": "Pack Size"
-        },
         "supplier": {
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Supplier"
@@ -205,7 +281,6 @@
       "required": [
         "productName",
         "activeIngredients",
-        "genericAndSpecificForms",
         "unitOfPresentation",
         "packSize"
       ],
@@ -229,11 +304,7 @@
           "title": "Pack Size"
         }
       },
-      "required": [
-        "productName",
-        "containedProducts",
-        "packSize"
-      ],
+      "required": ["productName", "containedProducts", "packSize"],
       "errorMessage": {
         "required": "Fields must be populated."
       }
@@ -244,14 +315,11 @@
       "type": "array",
       "title": "Contained Products",
       "items": {
-        "$ref": "#/$defs/ProductDetails"
+        "$ref": "#/$defs/ContainedProduct"
       }
     }
   },
-  "required": [
-    "productName",
-    "containedProducts"
-  ],
+  "required": ["productName", "containedProducts"],
   "errorMessage": {
     "required": "Fields must be populated."
   },

@@ -169,7 +169,8 @@ class ProductControllerTest extends LingoTestBase {
 
     ProductExternalIdentifierUpdateRequest productExternalIdentifierUpdateRequest =
         new ProductExternalIdentifierUpdateRequest(
-            Set.of(ExternalIdentifier.builder()
+            Set.of(
+                ExternalIdentifier.builder()
                     .identifierScheme(ARTG_SCHEME)
                     .identifierValue("123")
                     .relationshipType(MappingType.RELATED)
@@ -194,7 +195,8 @@ class ProductControllerTest extends LingoTestBase {
 
     productExternalIdentifierUpdateRequest =
         new ProductExternalIdentifierUpdateRequest(
-            Set.of(ExternalIdentifier.builder()
+            Set.of(
+                ExternalIdentifier.builder()
                     .identifierScheme(ARTG_SCHEME)
                     .identifierValue("123")
                     .relationshipType(MappingType.RELATED)

@@ -16,9 +16,11 @@
 package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import java.util.HashMap;
 import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -26,43 +28,22 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = false)
 public class Ingredient extends ProductBaseDto {
-  @NotNull ActiveAndPreciseIngredient activeAndPreciseIngredients;
+  @NotNull SnowstormConceptMini activeIngredient;
+  SnowstormConceptMini preciseIngredient;
   SnowstormConceptMini basisOfStrengthSubstance;
   @Valid Quantity totalQuantity;
   @Valid Quantity concentrationStrength;
 
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
-    Map<String, String> idMap =
-        addToIdFsnMap(null, activeAndPreciseIngredients, totalQuantity, concentrationStrength);
-    return addToIdFsnMap(idMap, basisOfStrengthSubstance);
-  }
-
-  @JsonIgnore
-  public SnowstormConceptMini getActiveIngredient() {
-    return activeAndPreciseIngredients == null
-        ? null
-        : activeAndPreciseIngredients.getActiveIngredient();
-  }
-
-  public void setActiveIngredient(SnowstormConceptMini target) {
-    if (activeAndPreciseIngredients == null) {
-      activeAndPreciseIngredients = new ActiveAndPreciseIngredient();
+    Map<String, String> idMap = addToIdFsnMap(null, totalQuantity, concentrationStrength);
+    addToIdFsnMap(idMap, activeIngredient);
+    if (preciseIngredient != null) {
+      addToIdFsnMap(idMap, preciseIngredient);
     }
-    activeAndPreciseIngredients.setActiveIngredient(target);
-  }
-
-  @JsonIgnore
-  public SnowstormConceptMini getPreciseIngredient() {
-    return activeAndPreciseIngredients == null
-        ? null
-        : activeAndPreciseIngredients.getPreciseIngredient();
-  }
-
-  public void setPreciseIngredient(SnowstormConceptMini singleOptionalActiveTarget) {
-    if (activeAndPreciseIngredients == null) {
-      activeAndPreciseIngredients = new ActiveAndPreciseIngredient();
+    if (basisOfStrengthSubstance != null) {
+      addToIdFsnMap(idMap, basisOfStrengthSubstance);
     }
-    activeAndPreciseIngredients.setPreciseIngredient(singleOptionalActiveTarget);
+    return idMap;
   }
 }

@@ -4,8 +4,9 @@ import { Concept } from '../../../../types/concept.ts';
 import { useSearchConceptOntoServerByUrl } from '../../../../hooks/api/products/useSearchConcept.tsx';
 import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../../utils/helpers/getValueSetExpansionContainsPt.ts';
 import useApplicationConfigStore from '../../../../stores/ApplicationConfigStore.ts';
+import { FieldProps } from '@rjsf/utils';
 
-interface ValueSetAutocompleteProps {
+interface ValueSetAutocompleteProps extends FieldProps {
   label?: string;
   url: string;
   showDefaultOptions?: boolean;
@@ -16,6 +17,8 @@ interface ValueSetAutocompleteProps {
 }
 
 const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
+  idSchema,
+  name,
   label,
   url,
   showDefaultOptions = false,
@@ -83,6 +86,7 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
 
   return (
     <Autocomplete
+      data-testid={idSchema?.$id || name}
       loading={isLoading}
       options={disabled ? [] : options}
       getOptionLabel={option => option?.pt?.term || ''}
