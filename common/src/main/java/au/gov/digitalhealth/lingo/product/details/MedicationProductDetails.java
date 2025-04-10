@@ -17,6 +17,7 @@ package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.gov.digitalhealth.lingo.validation.OnlyOnePopulated;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,6 +28,7 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
+@JsonTypeName("medication")
 @OnlyOnePopulated(
     fields = {"containerType", "deviceType"},
     message = "Only container type or device type can be populated, not both")
