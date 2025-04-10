@@ -20,52 +20,28 @@ import au.gov.digitalhealth.lingo.validation.OnlyOneNotEmpty;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.Map;
 import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
+@JsonTypeName("device")
 @OnlyOneNotEmpty(
     fields = {"newSpecificDeviceName", "specificDeviceType"},
     message = "Either newSpecificDeviceName or specificDeviceType must be populated, but not both")
 public class DeviceProductDetails extends ProductDetails {
   String newSpecificDeviceName;
 
-  DeviceAndSpecificDeviceType deviceAndSpecificDeviceType;
+  SnowstormConceptMini specificDeviceType;
 
   Set<SnowstormConceptMini> otherParentConcepts;
 
-  @JsonIgnore
   @Override
   protected Map<String, String> getSpecialisedIdFsnMap() {
-    Map<String, String> idMap = addToIdFsnMap(null, deviceAndSpecificDeviceType);
-    addToIdFsnMap(idMap, otherParentConcepts);
-    return idMap;
-  }
-
-  @JsonIgnore
-  public SnowstormConceptMini getSpecificDeviceType() {
-    return deviceAndSpecificDeviceType == null
-        ? null
-        : deviceAndSpecificDeviceType.getSpecificDeviceType();
-  }
-
-  public void setSpecificDeviceType(SnowstormConceptMini deviceType) {
-    if (deviceAndSpecificDeviceType == null) {
-      deviceAndSpecificDeviceType = new DeviceAndSpecificDeviceType();
-    }
-    deviceAndSpecificDeviceType.setSpecificDeviceType(deviceType);
-  }
-
-  @JsonIgnore
-  public SnowstormConceptMini getDeviceType() {
-    return deviceAndSpecificDeviceType == null ? null : deviceAndSpecificDeviceType.getDeviceType();
-  }
-
-  public void setDeviceType(SnowstormConceptMini deviceType) {
-    if (deviceAndSpecificDeviceType == null) {
-      deviceAndSpecificDeviceType = new DeviceAndSpecificDeviceType();
-    }
-    deviceAndSpecificDeviceType.setDeviceType(deviceType);
+    return specificDeviceType == null
+        ? Map.of()
+        : Map.of(specificDeviceType.getConceptId(), specificDeviceType.getFsn().getTerm());
   }
 }

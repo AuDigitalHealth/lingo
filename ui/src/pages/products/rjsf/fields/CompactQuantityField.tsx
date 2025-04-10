@@ -18,6 +18,7 @@ import {
 } from '../helpers/errorUtils.ts';
 
 const CompactQuantityField = ({
+  name,
   formData,
   schema,
   uiSchema,
@@ -66,14 +67,12 @@ const CompactQuantityField = ({
     : [];
 
   // Consolidate errors with prefixes
-  const allErrorsSet = new Set<string>(
-    rawErrors.map(error => `Numerator: ${error}`),
-  );
+  const allErrorsSet = new Set<string>(rawErrors.map(error => `${error}`));
   numeratorErrors
-    .map(error => `Numerator: ${error}`)
+    .map(error => `${error}`)
     .forEach(error => allErrorsSet.add(error));
   denominatorErrors
-    .map(error => `Denominator: ${error}`)
+    .map(error => `${error}`)
     .forEach(error => allErrorsSet.add(error));
   const allErrors = Array.from(allErrorsSet);
 
@@ -169,6 +168,8 @@ const CompactQuantityField = ({
       <Grid item xs={5} sx={{ mt: -0.5 }}>
         {task && (
           <EclAutocomplete
+            idSchema={idSchema}
+            name={name}
             value={unit}
             onChange={onUnitChange}
             ecl={uiOptions.ecl || ''}
@@ -184,7 +185,8 @@ const CompactQuantityField = ({
     </Grid>
   );
 
-  if (!isNumerator && pairWith) return null;
+  if (!isNumerator && pairWith)
+    return <>{allErrors && <ErrorDisplay errors={allErrors} />}</>;
 
   return (
     <Box sx={{ mb: '-35px' }}>
@@ -230,9 +232,9 @@ const CompactQuantityField = ({
               })}
             </Grid>
           )}
-          <ErrorDisplay errors={allErrors} />
         </Grid>
       </Box>
+      {allErrors && <ErrorDisplay errors={allErrors} />}
     </Box>
   );
 };

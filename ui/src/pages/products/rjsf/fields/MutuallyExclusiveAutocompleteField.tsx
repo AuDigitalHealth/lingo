@@ -2,21 +2,22 @@ import React, { useState } from 'react';
 import { FieldProps } from '@rjsf/core';
 import { Grid, Box, Typography } from '@mui/material';
 import AutoCompleteField from './AutoCompleteField.tsx';
-import { ConceptMini } from "../../../../types/concept.ts";
+import { ConceptMini } from '../../../../types/concept.ts';
 import _ from 'lodash';
-import { getFieldName, getParentPath } from "../helpers/helpers.ts";
-import { getFieldErrors, getUniqueErrors } from "../helpers/errorUtils.ts";
-import { ErrorDisplay } from "../components/ErrorDisplay.tsx";
+import { getFieldName, getParentPath } from '../helpers/helpers.ts';
+import { getFieldErrors, getUniqueErrors } from '../helpers/errorUtils.ts';
+import { ErrorDisplay } from '../components/ErrorDisplay.tsx';
 
 const MutuallyExclusiveAutocompleteField = ({
-                                              formData,
-                                              uiSchema,
-                                              errorSchema = {},
-                                              registry,
-                                              formContext,
-                                              idSchema,
-                                              rawErrors
-                                            }: FieldProps) => {
+  name,
+  formData,
+  uiSchema,
+  errorSchema = {},
+  registry,
+  formContext,
+  idSchema,
+  rawErrors,
+}: FieldProps) => {
   const {
     fieldAName = '',
     fieldBName = '',
@@ -26,7 +27,11 @@ const MutuallyExclusiveAutocompleteField = ({
 
   const fieldName = getFieldName(idSchema);
   const parentPath = getParentPath(fieldName);
-  const rootFormData = _.get(registry, 'rootSchema.formData', formContext?.formData || formData || {});
+  const rootFormData = _.get(
+    registry,
+    'rootSchema.formData',
+    formContext?.formData || formData || {},
+  );
 
   // Get the current data at parentPath to preserve other fields
   const currentData = _.get(rootFormData, parentPath) || {};
@@ -34,10 +39,16 @@ const MutuallyExclusiveAutocompleteField = ({
   const initialFieldAValue = _.get(currentData, fieldAName) || null;
   const initialFieldBValue = _.get(currentData, fieldBName) || null;
 
-  const [fieldAValue, setFieldAValue] = useState<ConceptMini | null>(initialFieldAValue);
-  const [fieldBValue, setFieldBValue] = useState<ConceptMini | null>(initialFieldBValue);
-  const [isFieldADisabled, setIsFieldADisabled] = useState(!!initialFieldBValue);
-  const [isFieldBDisabled, setIsFieldBDisabled] = useState(!!initialFieldAValue);
+  const [fieldAValue, setFieldAValue] = useState<ConceptMini | null>(
+    initialFieldAValue,
+  );
+  const [fieldBValue, setFieldBValue] = useState<ConceptMini | null>(
+    initialFieldBValue,
+  );
+  const [isFieldADisabled, setIsFieldADisabled] =
+    useState(!!initialFieldBValue);
+  const [isFieldBDisabled, setIsFieldBDisabled] =
+    useState(!!initialFieldAValue);
 
   const handleFieldAChange = (newValue: ConceptMini | null) => {
     setFieldAValue(newValue);
@@ -59,7 +70,10 @@ const MutuallyExclusiveAutocompleteField = ({
 
     _.set(newRootFormData, parentPath, updatedData);
 
-    console.log('Field A change payload:', { path: parentPath, data: updatedData });
+    console.log('Field A change payload:', {
+      path: parentPath,
+      data: updatedData,
+    });
     formContext?.onChange(newRootFormData);
   };
 
@@ -86,60 +100,78 @@ const MutuallyExclusiveAutocompleteField = ({
   };
 
   const fieldAErrors = getUniqueErrors(rawErrors, errorSchema);
-  const fieldBErrors = getFieldErrors(formContext?.errorSchema || {}, `${parentPath}.${fieldBName}`);
+  const fieldBErrors = getFieldErrors(
+    formContext?.errorSchema || {},
+    `${parentPath}.${fieldBName}`,
+  );
 
   return (
-      <Grid container spacing={2} alignItems="center">
-        {/* Field A (e.g., containerType) */}
-        <Grid item xs={5}>
-          <Box>
-            <AutoCompleteField
-                schema={{ title: fieldAOptions?.title }}
-                uiSchema={{
-                  'ui:options': {
-                    ...fieldAOptions,
-                    disabled: isFieldADisabled,
-                  }
-                }}
-                formData={fieldAValue}
-                onChange={handleFieldAChange}
-                errorSchema={errorSchema}
-            />
-            <ErrorDisplay errors={fieldAErrors} />
-          </Box>
-        </Grid>
-
-        {/* OR Label */}
-        <Grid item xs={2}>
-          <Typography
-              variant="h6"
-              align="center"
-              color="textSecondary"
-              style={{ fontWeight: 'bold' }}
-          >
-            OR
-          </Typography>
-        </Grid>
-
-        {/* Field B (e.g., deviceType) */}
-        <Grid item xs={5}>
-          <Box>
-            <AutoCompleteField
-                schema={{ title: fieldBOptions?.title }}
-                uiSchema={{
-                  'ui:widget': 'hidden',
-                  'ui:options': {
-                    ...fieldBOptions,
-                    disabled: isFieldBDisabled,
-                  }
-                }}
-                formData={fieldBValue}
-                onChange={handleFieldBChange}
-            />
-            <ErrorDisplay errors={fieldBErrors} />
-          </Box>
-        </Grid>
+    <Grid container spacing={2} alignItems="center">
+      {/* Field A (e.g., containerType) */}
+      <Grid item xs={5}>
+        <Box>
+          {!fieldAOptions?.skipTitle && (
+            <Typography variant="h6" gutterBottom>
+              {fieldAOptions?.title}
+              {/*{required && <span style={{ color: 'red' }}>*</span>}*/}
+            </Typography>
+          )}
+          <AutoCompleteField
+            idSchema={idSchema}
+            name={name}
+            schema={{ title: fieldAOptions?.title }}
+            uiSchema={{
+              'ui:options': {
+                ...fieldAOptions,
+                disabled: isFieldADisabled,
+              },
+            }}
+            formData={fieldAValue}
+            onChange={handleFieldAChange}
+            errorSchema={errorSchema}
+          />
+          <ErrorDisplay errors={fieldAErrors} />
+        </Box>
       </Grid>
+
+      {/* OR Label */}
+      <Grid item xs={2}>
+        <Typography
+          variant="h6"
+          align="center"
+          color="textSecondary"
+          style={{ fontWeight: 'bold' }}
+        >
+          OR
+        </Typography>
+      </Grid>
+
+      {/* Field B (e.g., deviceType) */}
+      <Grid item xs={5}>
+        <Box>
+          {!fieldBOptions?.skipTitle && (
+            <Typography variant="h6" gutterBottom>
+              {fieldBOptions?.title}
+            </Typography>
+          )}
+          <AutoCompleteField
+            idSchema={idSchema}
+            name={name}
+            schema={{ title: fieldBOptions?.title }}
+            uiSchema={{
+              'ui:widget': 'hidden',
+              'ui:options': {
+                ...fieldBOptions,
+                disabled: isFieldBDisabled,
+              },
+            }}
+            formData={fieldBValue}
+            onChange={handleFieldBChange}
+          />
+          <ErrorDisplay errors={fieldBErrors} />
+        </Box>
+      </Grid>
+    </Grid>
   );
 };
 
