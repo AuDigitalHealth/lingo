@@ -20,11 +20,14 @@ import au.gov.digitalhealth.lingo.validation.OnlyOneNotEmpty;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.Map;
 import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
+@JsonTypeName("device")
 @OnlyOneNotEmpty(
     fields = {"newSpecificDeviceName", "specificDeviceType"},
     message = "Either newSpecificDeviceName or specificDeviceType must be populated, but not both")
