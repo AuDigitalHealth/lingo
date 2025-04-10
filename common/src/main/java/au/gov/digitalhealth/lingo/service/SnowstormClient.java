@@ -15,6 +15,8 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
+import static au.gov.digitalhealth.lingo.util.AmtConstants.ARTGID_REFSET;
+
 import au.csiro.snowstorm_client.api.ConceptsApi;
 import au.csiro.snowstorm_client.api.RefsetMembersApi;
 import au.csiro.snowstorm_client.api.RelationshipsApi;
@@ -22,9 +24,9 @@ import au.csiro.snowstorm_client.invoker.ApiClient;
 import au.csiro.snowstorm_client.model.*;
 import au.csiro.snowstorm_client.model.SnowstormAsyncConceptChangeBatch.StatusEnum;
 import au.gov.digitalhealth.lingo.exception.BatchSnowstormRequestFailedProblem;
+import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.exception.SingleConceptExpectedProblem;
-import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.log.SnowstormLogger;
 import au.gov.digitalhealth.lingo.service.ServiceStatus.SnowstormStatus;
 import au.gov.digitalhealth.lingo.service.ServiceStatus.Status;
@@ -47,7 +49,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.annotation.PreDestroy;
@@ -65,8 +66,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import static au.gov.digitalhealth.lingo.util.AmtConstants.ARTGID_REFSET;
 
 /** Client for Snowstorm's REST API */
 @Getter
@@ -686,7 +685,7 @@ public class SnowstormClient {
                 })
             .collect(Collectors.toSet());
 
-    if (memberToDeactivate.size() > 0) {
+    if (!memberToDeactivate.isEmpty()) {
       log.fine(
           "Bulk deactivating refset members: "
               + memberToDeactivate.size()
@@ -703,13 +702,13 @@ public class SnowstormClient {
             .map(SnowstormReferenceSetMember::getMemberId)
             .collect(Collectors.toSet());
 
-    if (memberIdsToDelete.size() > 0) {
+    if (!memberIdsToDelete.isEmpty()) {
       log.fine(
           "Bulk deleting refset members: " + memberIdsToDelete.size() + " on branch: " + branch);
     }
 
     // Force must always be false, this is snowstorm api protection.
-    if(memberIdsToDelete.size() > 0){
+    if (!memberIdsToDelete.isEmpty()) {
       Mono<Void> deleteMono =
           getRefsetMembersApi()
               .deleteMembers(
@@ -727,7 +726,7 @@ public class SnowstormClient {
     }
 
 
-    if (memberToDeactivate.size() > 0) {
+    if (!memberToDeactivate.isEmpty()) {
       List<SnowstormReferenceSetMemberViewComponent> deactivatedMembersWithActiveFalse =
           memberToDeactivate.stream()
               .map(
@@ -737,7 +736,8 @@ public class SnowstormClient {
                         .refsetId(member.getRefsetId())
                         .moduleId(member.getModuleId())
                         .referencedComponentId(member.getReferencedComponentId())
-                        .memberId(member.getMemberId());
+                        .memberId(member.getMemberId())
+                        .additionalFields(member.getAdditionalFields());
                   })
               .toList();
       createRefsetMemberships(branch, deactivatedMembersWithActiveFalse);
