@@ -5,6 +5,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import _ from 'lodash';
 import ajvErrors from 'ajv-errors';
 
+import { enqueueSnackbar } from 'notistack';
 import UnitValueField from './fields/UnitValueField.tsx';
 import AutoCompleteField from './fields/AutoCompleteField.tsx';
 import ParentChildAutoCompleteField from './fields/ParentChildAutoCompleteField.tsx';
@@ -149,7 +150,24 @@ function MedicationAuthoring({
       return acc;
     }, {});
     setErrorSchema(newErrorSchema);
+    enqueueSnackbar(
+      'Error Validating Product Definition' +
+        (newErrorSchema ? `: ${formatErrors(newErrorSchema)}` : ``),
+      {
+        variant: 'error',
+      },
+    );
   };
+
+  function formatErrors(errorsObj: object): string {
+    const result = [];
+    for (const [key, value] of Object.entries(errorsObj)) {
+      const label = key ? key.charAt(0).toUpperCase() + key.slice(1) : 'Other';
+      const messages = value['__errors'].join(', ');
+      result.push(`${label} [ ${messages} ]`);
+    }
+    return result.join(', ');
+  }
 
   return (
     <Paper sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1 }}>
