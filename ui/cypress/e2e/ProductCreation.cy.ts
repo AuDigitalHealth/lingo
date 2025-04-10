@@ -81,6 +81,7 @@ describe('Product creation Spec', () => {
       cy.wait('@postBranchCreation', { timeout: timeOut });
     });
   });
+
   it('Set up Ticket', async () => {
     const ticket = await promisify(createTicket('Test Product creation'));
     if (ticket.ticketNumber === undefined) {
@@ -242,6 +243,7 @@ describe('Product creation Spec', () => {
     previewWithError('error', branch);
     verifyErrorMsg('root_containerType', 'Container type is mandatory');
   });
+
   it('Medication: Validate Rule 1 One of Form, Container, or Device must be populated', () => {
     loadTaskPage(taskKey, ticketNumber);
     cy.get("[data-testid='create-new-product']").click();
@@ -804,6 +806,7 @@ describe('Product creation Spec', () => {
     );
     verifyErrorMsg('package-new-brand', 'Brand name already exists');
   });
+
   it('delete task', () => {
     if (taskKey) {
       deleteTask(taskKey);
