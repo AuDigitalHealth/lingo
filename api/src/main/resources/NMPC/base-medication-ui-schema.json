@@ -20,14 +20,6 @@
   "containedProducts": {
     "ui:options": {
       "skipTitle": true,
-      "conditions": [
-        {
-          "field": "containedPackages",
-          "operator": "lengthGreaterThan",
-          "value": 0
-        }
-      ],
-      "conditionLogic": "and",
       "searchAndAddProduct": {
         "ecl": "< 763158003 : (774158006 = < 774167006 , 774159003 = < 774164004 , 763032000 = < 732935002 )",
         "type": "medication",
@@ -35,15 +27,7 @@
       }
     },
     "items": {
-      "ui:order": [
-        "productName",
-        "activeIngredients",
-        "genericAndSpecificForms",
-        "quantity",
-        "unitOfPresentation",
-        "packSize",
-        "supplier"
-      ],
+      "ui:order": ["productDetails", "unit", "value"],
       "ui:options": {
         "titleSource": "productDetails.productName.pt.term",
         "defaultTitle": "Product",
@@ -55,201 +39,240 @@
         },
         "skipTitle": true
       },
-      "productName": {
-        "ui:field": "AutoCompleteField",
+      "unit": {
+        "ui:field": "UnitValueUnWrappedField",
+        "ui:title": "Pack Size",
         "ui:options": {
-          "branch": "MAIN",
-          "ecl": "<774167006",
-          "showDefaultOptions": false
+          "pairWith": "value",
+          "ecl": "(^929360051000036108 : (774160008 OR 999000081000168101) = *).774163005",
+          "showDefaultOptions": true
         }
       },
-      "activeIngredients": {
+      "value": {
+        "ui:widget": "hidden",
         "ui:options": {
-          "skipTitle": true,
-          "arrayTemplate": "accordion"
+          "skipTitle": true
+        }
+      },
+      "productDetails": {
+        "ui:options": {
+          "skipTitle": true
         },
-        "items": {
-          "ui:order": [
-            "activeAndPreciseIngredients",
-            "basisOfStrengthSubstance",
-            "concentrationStrengthNumerator",
-            "concentrationStrengthDenominator",
-            "presentationStrengthNumerator",
-            "presentationStrengthDenominator"
-          ],
+        "ui:order": [
+          "productName",
+          "activeIngredients",
+          "genericForm",
+          "specificForm",
+          "quantity",
+          "unitOfPresentation",
+          "supplier"
+        ],
+        "productName": {
+          "ui:field": "AutoCompleteField",
           "ui:options": {
-            "titleSource": "activeAndPreciseIngredients.activeIngredient.pt.term",
-            "defaultTitle": "Ingredient",
-            "skipTitle": true
+            "branch": "MAIN",
+            "ecl": "<774167006",
+            "showDefaultOptions": false
+          }
+        },
+        "activeIngredients": {
+          "ui:options": {
+            "skipTitle": true,
+            "arrayTemplate": "accordion"
           },
-          "activeAndPreciseIngredients": {
-            "ui:field": "ParentChildAutoCompleteField",
+          "items": {
+            "ui:order": [
+              "activeIngredient",
+              "preciseIngredient",
+              "basisOfStrengthSubstance",
+              "concentrationStrengthNumerator",
+              "concentrationStrengthDenominator",
+              "presentationStrengthNumerator",
+              "presentationStrengthDenominator"
+            ],
             "ui:options": {
-              "parentFieldName": "activeIngredient",
-              "childFieldName": "preciseIngredient",
-              "parentFieldOptions": {
+              "titleSource": "activeIngredient.pt.term",
+              "defaultTitle": "Ingredient",
+              "skipTitle": true
+            },
+            "activeIngredient": {
+              "ui:field": "ParentChildAutoCompleteField",
+              "ui:options": {
+                "parentFieldName": "activeIngredient",
+                "childFieldName": "preciseIngredient",
+                "parentFieldOptions": {
+                  "ecl": ">>(< 763158003 : (774158006 = < 774167006 , 774159003 = < 774164004 , 763032000 = < 732935002 )).127489000",
+                  "extendedEcl": "<105590001",
+                  "showDefaultOptions": false,
+                  "title": "Has Active Ingredient",
+                  "skipTitle": true
+                },
+                "childFieldOptions": {
+                  "ecl": "",
+                  "showDefaultOptions": true,
+                  "title": "Precise Ingredient",
+                  "getEcl": "<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent)) OR (< 410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))))"
+                }
+              }
+            },
+            "preciseIngredient": {
+              "ui:widget": "hidden",
+              "ui:options": {
+                "skipTitle": true
+              }
+            },
+            "basisOfStrengthSubstance": {
+              "ui:field": "AutoCompleteField",
+              "ui:title": "BoSS",
+              "ui:options": {
                 "branch": "MAIN",
-                "ecl": ">>(< 763158003 : (774158006 = < 774167006 , 774159003 = < 774164004 , 763032000 = < 732935002 )).127489000",
+                "ecl": "(>>(< 763158003 : (774158006 = < 774167006 , 774159003 = < 774164004 , 763032000 = < 732935002 )).732943007) OR (>>>>(< 763158003 : (774158006 = < 774167006 , 774159003 = < 774164004 , 763032000 = < 732935002 )).127489000)",
                 "extendedEcl": "<105590001",
-                "showDefaultOptions": false,
-                "title": "Has Active Ingredient",
+                "showDefaultOptions": false
+              }
+            },
+            "concentrationStrengthNumerator": {
+              "ui:field": "CompactQuantityField",
+              "ui:title": "Concentration Strength",
+              "ui:options": {
+                "isNumerator": true,
+                "pairWith": "concentrationStrengthDenominator",
                 "skipTitle": true
               },
-              "childFieldOptions": {
-                "branch": "MAIN",
-                "ecl": "",
-                "showDefaultOptions": true,
-                "title": "Precise Ingredient",
-                "getEcl": "<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent)) OR (< 410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))))"
+              "unit": {
+                "ui:options": {
+                  "ecl": "^929360031000036100.999000031000168102",
+                  "extendedEcl": "<767524001:(700000091000036104=* AND 700000071000036103=*)",
+                  "showDefaultOptions": true
+                }
+              }
+            },
+            "concentrationStrengthDenominator": {
+              "ui:field": "CompactQuantityField",
+              "ui:title": "Concentration Strength",
+              "ui:options": {
+                "isNumerator": false,
+                "pairWith": "concentrationStrengthNumerator",
+                "skipTitle": true
+              },
+              "unit": {
+                "ui:options": {
+                  "branch": "MAIN",
+                  "ecl": "^929360031000036100.999000031000168102",
+                  "extendedEcl": "<767524001:(700000091000036104=* AND 700000071000036103=*)",
+                  "showDefaultOptions": true
+                }
+              }
+            },
+            "presentationStrengthNumerator": {
+              "ui:field": "CompactQuantityField",
+              "ui:title": "Presentation Strength",
+              "ui:options": {
+                "isNumerator": true,
+                "pairWith": "presentationStrengthDenominator",
+                "skipTitle": true
+              },
+              "unit": {
+                "ui:options": {
+                  "branch": "MAIN",
+                "ecl": "(>>(< 763158003 : (774158006 = < 774167006 , 774159003 = < 774164004 , 763032000 = < 732935002 ))).732945000",
+                  "extendedEcl": "<767524001",
+                  "showDefaultOptions": true
+                }
+              }
+            },
+            "presentationStrengthDenominator": {
+              "ui:field": "CompactQuantityField",
+              "ui:title": "Presentation Strength",
+              "ui:options": {
+                "isNumerator": false,
+                "pairWith": "presentationStrengthNumerator",
+                "skipTitle": true
+              },
+              "unit": {
+                "ui:options": {
+                  "branch": "MAIN",
+                "ecl": "(>>(< 763158003 : (774158006 = < 774167006 , 774159003 = < 774164004 , 763032000 = < 732935002 )))  .732947008",
+                  "extendedEcl": "<767524001",
+                  "showDefaultOptions": true
+                }
               }
             }
-          },
-          "basisOfStrengthSubstance": {
-            "ui:field": "AutoCompleteField",
-            "ui:title": "BoSS",
+          }
+        },
+        "genericForm": {
+          "ui:field": "ParentChildAutoCompleteField",
+          "ui:options": {
+            "parentFieldName": "genericForm",
+            "childFieldName": "specificForm",
+            "skipTitle": true,
+            "parentFieldOptions": {
+              "branch": "MAIN",
+              "ecl": "(< 763158003 : 763032000 = < 732935002).411116001",
+              "extendedEcl": "<736542009",
+              "showDefaultOptions": false,
+              "title": "Generic Dose Form"
+            },
+            "childFieldOptions": {
+              "branch": "MAIN",
+              "ecl": "",
+              "showDefaultOptions": true,
+              "title": "Specific Dose Form",
+              "getEcl": "<@parent"
+            }
+          }
+        },
+        "specificForm": {
+          "ui:widget": "hidden",
+          "ui:options": {
+            "skipTitle": true
+          }
+        },
+        "quantity": {
+          "ui:field": "UnitValueField",
+          "ui:title": "Unit Size",
+          "value": {},
+          "unit": {
             "ui:options": {
               "branch": "MAIN",
-              "ecl": "(>>(< 763158003 : (774158006 = < 774167006 , 774159003 = < 774164004 , 763032000 = < 732935002 )).732943007) OR (>>>>(< 763158003 : (774158006 = < 774167006 , 774159003 = < 774164004 , 763032000 = < 732935002 )).127489000)",
-              "extendedEcl": "<105590001",
-              "showDefaultOptions": false
-            }
-          },
-          "concentrationStrengthNumerator": {
-            "ui:field": "CompactQuantityField",
-            "ui:title": "Concentration Strength",
-            "ui:options": {
-              "isNumerator": true,
-              "pairWith": "concentrationStrengthDenominator",
-              "skipTitle": true
-            },
-            "unit": {
-              "ui:options": {
-                "branch": "MAIN",
-                "ecl": "^929360031000036100.999000031000168102",
-                "extendedEcl": "<767524001:(700000091000036104=* AND 700000071000036103=*)",
-                "showDefaultOptions": true
-              }
-            }
-          },
-          "concentrationStrengthDenominator": {
-            "ui:field": "CompactQuantityField",
-            "ui:title": "Concentration Strength",
-            "ui:options": {
-              "isNumerator": false,
-              "pairWith": "concentrationStrengthNumerator",
-              "skipTitle": true
-            },
-            "unit": {
-              "ui:options": {
-                "branch": "MAIN",
-                "ecl": "^929360031000036100.999000031000168102",
-                "extendedEcl": "<767524001:(700000091000036104=* AND 700000071000036103=*)",
-                "showDefaultOptions": true
-              }
-            }
-          },
-          "presentationStrengthNumerator": {
-            "ui:field": "CompactQuantityField",
-            "ui:title": "Presentation Strength",
-            "ui:options": {
-              "isNumerator": true,
-              "pairWith": "presentationStrengthDenominator",
-              "skipTitle": true
-            },
-            "unit": {
-              "ui:options": {
-                "branch": "MAIN",
-                "ecl": "(>>(< 763158003 : (774158006 = < 774167006 , 774159003 = < 774164004 , 763032000 = < 732935002 ))).732945000",
-                "extendedEcl": "<767524001",
-                "showDefaultOptions": true
-              }
-            }
-          },
-          "presentationStrengthDenominator": {
-            "ui:field": "CompactQuantityField",
-            "ui:title": "Presentation Strength",
-            "ui:options": {
-              "isNumerator": false,
-              "pairWith": "presentationStrengthNumerator",
-              "skipTitle": true
-            },
-            "unit": {
-              "ui:options": {
-                "branch": "MAIN",
-                "ecl": "(>>(< 763158003 : (774158006 = < 774167006 , 774159003 = < 774164004 , 763032000 = < 732935002 )))  .732947008",
-                "extendedEcl": "<767524001",
-                "showDefaultOptions": true
-              }
-            }
-          }
-        }
-      },
-      "genericAndSpecificForms": {
-        "ui:field": "ParentChildAutoCompleteField",
-        "ui:options": {
-          "parentFieldName": "genericForm",
-          "childFieldName": "specificForm",
-          "skipTitle": true,
-          "parentFieldOptions": {
-            "branch": "MAIN",
-            "ecl": "(< 763158003 : 763032000 = < 732935002).411116001",
-            "extendedEcl": "<736542009",
-            "showDefaultOptions": false,
-            "title": "Generic Dose Form"
-          },
-          "childFieldOptions": {
-            "branch": "MAIN",
-            "ecl": "",
-            "showDefaultOptions": true,
-            "title": "Specific Dose Form",
-            "getEcl": "<@parent"
-          }
-        }
-      },
-      "quantity": {
-        "ui:field": "UnitValueField",
-        "ui:title": "Unit Size",
-        "value": {},
-        "unit": {
-          "ui:options": {
-            "branch": "MAIN",
             "ecl": "(>>(< 763158003 : (774158006 = < 774167006 , 774159003 = < 774164004 , 763032000 = < 732935002 ))).320091000221107",
-            "extendedEcl": "<767524001",
-            "showDefaultOptions": true
+              "extendedEcl": "<767524001",
+              "showDefaultOptions": true
+            }
           }
-        }
-      },
-      "unitOfPresentation": {
-        "ui:field": "AutoCompleteField",
-        "ui:title": "Unit of Presentation",
-        "ui:options": {
-          "branch": "MAIN",
-          "ecl": ">>(< 763158003 : (774158006 = < 774167006 , 774159003 = < 774164004 , 763032000 = < 732935002 ))).763032000",
-          "extendedEcl": "<105590001",
-          "showDefaultOptions": false
-        }
-      },
-      "packSize": {
-        "ui:field": "UnitValueField",
-        "ui:title": "Pack Size",
-        "value": {
-          "ui:widget": "text"
         },
-        "unit": {
+        "unitOfPresentation": {
+          "ui:field": "AutoCompleteField",
+          "ui:title": "Unit of Presentation",
           "ui:options": {
             "branch": "MAIN",
-            "ecl": "<781405001.774163005",
-            "showDefaultOptions": true
+          "ecl": ">>(< 763158003 : (774158006 = < 774167006 , 774159003 = < 774164004 , 763032000 = < 732935002 ))).763032000",
+            "extendedEcl": "<105590001",
+            "showDefaultOptions": false
           }
-        }
-      },
-      "supplier": {
-        "ui:field": "AutoCompleteField",
-        "ui:title": "Supplier",
-        "ui:options": {
-          "branch": "MAIN",
-          "ecl": "<774164004",
-          "showDefaultOptions": false
+        },
+        "packSize": {
+          "ui:field": "UnitValueField",
+          "ui:title": "Pack Size",
+          "value": {
+            "ui:widget": "text"
+          },
+          "unit": {
+            "ui:options": {
+              "branch": "MAIN",
+              "ecl": "<781405001.774163005",
+              "showDefaultOptions": true
+            }
+          }
+        },
+        "supplier": {
+          "ui:field": "AutoCompleteField",
+          "ui:title": "Supplier",
+          "ui:options": {
+            "branch": "MAIN",
+            "ecl": "<774164004",
+            "showDefaultOptions": false
+          }
         }
       }
     }

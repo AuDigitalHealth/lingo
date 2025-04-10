@@ -78,6 +78,7 @@ public class SchemaService {
 
     return schemaNode.toString();
   }
+
   public String getBulkBrandSchema(String branch) {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     JsonNode schemaNode = readFileContentAsJson(modelConfiguration.getBaseBulkBrandSchema());
@@ -86,6 +87,7 @@ public class SchemaService {
 
     return schemaNode.toString();
   }
+
   public String getBulkBrandUiSchema(String branch) {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     JsonNode uiSchemaNode = readFileContentAsJson(modelConfiguration.getBaseBulkBrandUiSchema());
@@ -103,6 +105,7 @@ public class SchemaService {
 
     return schemaNode.toString();
   }
+
   public String getBulkPackUiSchema(String branch) {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     JsonNode uiSchemaNode = readFileContentAsJson(modelConfiguration.getBaseBulkPackUiSchema());

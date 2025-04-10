@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FieldProps } from '@rjsf/core';
+import { FieldProps } from '@rjsf/utils';
 import { Box, IconButton, Tooltip } from '@mui/material';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { Concept, ConceptMini } from '../../../../types/concept.ts';
@@ -15,6 +15,8 @@ import { ErrorDisplay } from '../components/ErrorDisplay.tsx';
 import { getUniqueErrors } from '../helpers/errorUtils.ts';
 
 const AutoCompleteField = ({
+  idSchema,
+  name,
   schema,
   uiSchema,
   formData,
@@ -55,6 +57,8 @@ const AutoCompleteField = ({
         <Box flex={50} sx={{ position: 'relative' }}>
           {task?.branchPath && (
             <EclAutocomplete
+              idSchema={idSchema}
+              name={name}
               value={formData}
               onChange={handleChange}
               ecl={currentEcl}
@@ -68,6 +72,7 @@ const AutoCompleteField = ({
           {createBrand && (
             <Tooltip title="Create Brand">
               <IconButton
+                data-testid="create-brand-btn"
                 onClick={() => setOpenCreateBrandModal(true)}
                 sx={{
                   position: 'absolute',
