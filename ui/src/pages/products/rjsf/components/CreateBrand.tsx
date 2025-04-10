@@ -14,8 +14,9 @@ import BaseModal from '../../../../components/modal/BaseModal.tsx';
 import BaseModalBody from '../../../../components/modal/BaseModalBody.tsx';
 import BaseModalFooter from '../../../../components/modal/BaseModalFooter.tsx';
 import BaseModalHeader from '../../../../components/modal/BaseModalHeader.tsx';
+import { FieldProps } from '@rjsf/utils';
 
-interface CreateBrandProps {
+interface CreateBrandProps extends FieldProps {
   open: boolean;
   onClose: () => void;
   onAddBrand: (brand: Concept) => void;

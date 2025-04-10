@@ -27,6 +27,7 @@
   "containedProducts": {
     "ui:field": "ConditionalArrayField",
     "ui:options": {
+      "arrayTemplate": "accordion",
       "skipTitle": true,
       "searchAndAddProduct": {
         "ecl": "^929360031000036100 AND <763158003",
@@ -56,7 +57,7 @@
         "skipTitle": true
       },
       "unit": {
-        "ui:field": "UnitValueRowField",
+        "ui:field": "UnitValueUnWrappedField",
         "ui:title": "Pack Size",
         "ui:options": {
           "pairWith": "value",
@@ -82,8 +83,15 @@
           "quantity",
           "containerType",
           "deviceType",
-          "otherIdentifyingInformation"
+          "otherIdentifyingInformation",
+          "type"
         ],
+        "type": {
+          "ui:widget": "hidden",
+          "ui:options": {
+            "skipTitle": true
+          }
+        },
         "productName": {
           "ui:field": "AutoCompleteField",
           "ui:options": {
@@ -218,6 +226,7 @@
               "ecl": "^929360051000036108.30465011000036106",
               "extendedEcl": "<49062001",
               "showDefaultOptions": true
+
             },
             "fieldBOptions": {
               "title": "Device Type",
@@ -236,7 +245,6 @@
         "otherIdentifyingInformation": {
           "ui:widget": "TextFieldWidget",
           "ui:options": {
-            "skipTitle": true,
             "placeholder": "Enter any additional identifying information"
           }
         }
@@ -280,7 +288,7 @@
         "skipTitle": true
       },
       "unit": {
-        "ui:field": "UnitValueRowField",
+        "ui:field": "UnitValueUnWrappedField",
         "ui:title": "Pack Size",
         "ui:options": {
           "pairWith": "value",
@@ -319,6 +327,7 @@
           }
         },
         "containedProducts": {
+          "ui:field": "BoxArrayFieldTemplate",
           "ui:options": {
             "skipTitle": true,
             "searchAndAddProduct": {
@@ -345,7 +354,7 @@
               "skipTitle": true
             },
             "unit": {
-              "ui:field": "UnitValueRowField",
+              "ui:field": "UnitValueUnWrappedField",
               "ui:title": "Pack Size",
               "ui:options": {
                 "pairWith": "value",
@@ -371,8 +380,15 @@
                 "quantity",
                 "containerType",
                 "deviceType",
-                "otherIdentifyingInformation"
+                "otherIdentifyingInformation",
+                "type"
               ],
+              "type": {
+                "ui:widget": "hidden",
+                "ui:options": {
+                  "skipTitle": true
+                }
+              },
               "productName": {
                 "ui:field": "AutoCompleteField",
                 "ui:options": {
@@ -499,9 +515,9 @@
               "containerType": {
                 "ui:field": "MutuallyExclusiveAutocompleteField",
                 "ui:options": {
+                  "skipTitle": true,
                   "fieldAName": "containerType",
                   "fieldBName": "deviceType",
-                  "skipTitle": true,
                   "fieldAOptions": {
                     "title": "Container Type",
                     "ecl": "^929360051000036108.30465011000036106",
@@ -525,7 +541,6 @@
               "otherIdentifyingInformation": {
                 "ui:widget": "TextFieldWidget",
                 "ui:options": {
-                  "skipTitle": true,
                   "placeholder": "Enter any additional identifying information"
                 }
               }

@@ -25,12 +25,12 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = false)
 public class DeviceAndSpecificDeviceType extends ProductBaseDto {
 
-  @NotNull SnowstormConceptMini deviceType;
+    @NotNull SnowstormConceptMini deviceType;
 
-  SnowstormConceptMini specificDeviceType;
+    SnowstormConceptMini specificDeviceType;
 
-  @Override
-  public Map<String, String> getIdFsnMap() {
-    return addToIdFsnMap(null, deviceType, specificDeviceType);
-  }
+    @Override
+    public Map<String, String> getIdFsnMap() {
+        return addToIdFsnMap(null, deviceType, specificDeviceType);
+    }
 }
