@@ -83,8 +83,15 @@
           "quantity",
           "containerType",
           "deviceType",
-          "otherIdentifyingInformation"
+          "otherIdentifyingInformation",
+          "type"
         ],
+        "type": {
+          "ui:widget": "hidden",
+          "ui:options": {
+            "skipTitle": true
+          }
+        },
         "productName": {
           "ui:field": "AutoCompleteField",
           "ui:options": {
@@ -373,8 +380,15 @@
                 "quantity",
                 "containerType",
                 "deviceType",
-                "otherIdentifyingInformation"
+                "otherIdentifyingInformation",
+                "type"
               ],
+              "type": {
+                "ui:widget": "hidden",
+                "ui:options": {
+                  "skipTitle": true
+                }
+              },
               "productName": {
                 "ui:field": "AutoCompleteField",
                 "ui:options": {
