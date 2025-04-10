@@ -453,13 +453,13 @@ export function fillSuccessfulProductDetails(
   expandOrHideProduct(productIndex);
   searchAndSelectAutocomplete(
     branch,
-    `product-${productIndex}-generic-dose-form`,
+    `root_containedProducts_${productIndex}_productDetails_genericForm`,
     'injection',
     timeOut,
   );
   searchAndSelectAutocomplete(
     branch,
-    `product-${productIndex}-specific-dose-form`,
+    `root_containedProducts_${productIndex}_productDetails_specificForm`,
     'powder',
     timeOut,
   );
@@ -476,13 +476,13 @@ export function fillSuccessfulIngredientIndex(
 ) {
   searchAndSelectAutocomplete(
     branch,
-    `product-${productIndex}-ing-${ingIndex}-active-ing`,
+    `root_containedProducts_${productIndex}_productDetails_activeIngredients_${ingIndex}_activeIngredient`,
     'codeine',
     timeOut,
   );
   searchAndSelectAutocomplete(
     branch,
-    `product-${productIndex}-ing-${ingIndex}-precise-ing`,
+    `root_containedProducts_${productIndex}_productDetails_preciseIngredients_${ingIndex}_preciseIngredient`,
     'codeine',
     timeOut,
   );
