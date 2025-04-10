@@ -200,7 +200,7 @@ describe('Product creation Spec', () => {
   //
   //   verifyLoadedProduct(1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0);
   // });
-  it.skip('Medication: Preview new product from scratch', () => {
+  it('Medication: Preview new product from scratch', () => {
     loadTaskPage(taskKey, ticketNumber);
     cy.get("[data-testid='create-new-product']").click();
     const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
@@ -224,7 +224,7 @@ describe('Product creation Spec', () => {
     previewProduct(branch, timeOut);
   });
 
-  it.skip('Medication: Verify Fields on package level', () => {
+  it('Medication: Verify Fields on package level', () => {
     loadTaskPage(taskKey, ticketNumber);
     cy.get("[data-testid='create-new-product']").click();
     const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
@@ -242,7 +242,7 @@ describe('Product creation Spec', () => {
     previewWithError('error', branch);
     verifyErrorMsg('root_containerType', 'Container type is mandatory');
   });
-  it.skip('Medication: Validate Rule 1 One of Form, Container, or Device must be populated', () => {
+  it('Medication: Validate Rule 1 One of Form, Container, or Device must be populated', () => {
     loadTaskPage(taskKey, ticketNumber);
     cy.get("[data-testid='create-new-product']").click();
     const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
@@ -266,7 +266,7 @@ describe('Product creation Spec', () => {
       branch,
     );
   });
-  it.skip('Medication: Validate product brand name is required', () => {
+  it('Medication: Validate product brand name is required', () => {
     loadTaskPage(taskKey, ticketNumber);
     cy.get("[data-testid='create-new-product']").click();
     const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
@@ -291,7 +291,7 @@ describe('Product creation Spec', () => {
       'Brand name is mandatory',
     );
   });
-  it.skip('Medication: Validate product pack size', () => {
+  it('Medication: Validate product pack size', () => {
     loadTaskPage(taskKey, ticketNumber);
 
     cy.get("[data-testid='create-new-product']").click();
@@ -316,7 +316,7 @@ describe('Product creation Spec', () => {
       'Pack size is a required field',
     );
   });
-  it.skip('Medication: Validate product pack size unit', () => {
+  it('Medication: Validate product pack size unit', () => {
     loadTaskPage(taskKey, ticketNumber);
     cy.get("[data-testid='create-new-product']").click();
     const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
@@ -336,7 +336,7 @@ describe('Product creation Spec', () => {
     previewWithError('error:', branch);
     verifyErrorMsg('root_containedProducts_0_unit', 'Unit is required');
   });
-  it.skip('Medication: Validate product pack size when unit is each', () => {
+  it('Medication: Validate product pack size when unit is each', () => {
     loadTaskPage(taskKey, ticketNumber);
     cy.get("[data-testid='create-new-product']").click();
     const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
@@ -361,7 +361,7 @@ describe('Product creation Spec', () => {
       'Value must be a positive whole number.',
     );
   });
-  it.skip('Medication: Verify if form is populated device type must not be populated', () => {
+  it('Medication: Verify if form is populated device type must not be populated', () => {
     loadTaskPage(taskKey, ticketNumber);
     cy.get("[data-testid='create-new-product']").click();
     const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
@@ -389,7 +389,7 @@ describe('Product creation Spec', () => {
       'If Form is populated, Device must not be populated',
     );
   });
-  it.skip('Medication: Fail if  The Unit Strength, Concentration Strength, and Unit Size values are not aligned', () => {
+  it('Medication: Fail if  The Unit Strength, Concentration Strength, and Unit Size values are not aligned', () => {
     loadTaskPage(taskKey, ticketNumber);
     cy.get("[data-testid='create-new-product']").click();
     const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
@@ -440,7 +440,7 @@ describe('Product creation Spec', () => {
       branch,
     );
   });
-  it.skip('Medication: Success if  The Unit Strength, Concentration Strength, and Unit Size values are  aligned', () => {
+  it('Medication: Success if  The Unit Strength, Concentration Strength, and Unit Size values are  aligned', () => {
     loadTaskPage(taskKey, ticketNumber);
     cy.get("[data-testid='create-new-product']").click();
     const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
@@ -486,7 +486,7 @@ describe('Product creation Spec', () => {
 
     previewProduct(branch, timeOut);
   });
-  it.skip('Medication: Success if the Unit Size Unit should match the Concentration Strength Unit denominator unit show warning', () => {
+  it('Medication: Success if the Unit Size Unit should match the Concentration Strength Unit denominator unit show warning', () => {
     loadTaskPage(taskKey, ticketNumber);
     cy.get("[data-testid='create-new-product']").click();
     const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
@@ -533,7 +533,7 @@ describe('Product creation Spec', () => {
     previewProduct(branch, timeOut, true);
   });
 
-  it.skip('Medication: Fail if the Unit Size, concentration, strength values are not aligned', () => {
+  it('Medication: Fail if the Unit Size, concentration, strength values are not aligned', () => {
     loadTaskPage(taskKey, ticketNumber);
     cy.get("[data-testid='create-new-product']").click();
     const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
@@ -580,7 +580,7 @@ describe('Product creation Spec', () => {
     previewWithError('expected Concentration Strength is: 20.833333', branch);
   });
 
-  it.skip('Medication: validate a simple product from scratch', () => {
+  it('Medication: validate a simple product from scratch', () => {
     loadTaskPage(taskKey, ticketNumber);
     cy.get("[data-testid='create-new-product']").click();
     const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
@@ -631,7 +631,7 @@ describe('Product creation Spec', () => {
     );
   });
 
-  it.skip('Medication: create a simple product by changing pack size', () => {
+  it('Medication: create a simple product by changing pack size', () => {
     loadTaskPage(taskKey, ticketNumber);
     cy.get("[data-testid='create-new-product']").click();
     const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
@@ -645,7 +645,7 @@ describe('Product creation Spec', () => {
     verifyLoadedProduct(1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0);
   });
 
-  it.skip('Medication: create a multiPack product by changing pack size', () => {
+  it('Medication: create a multiPack product by changing pack size', () => {
     loadTaskPage(taskKey, ticketNumber);
     cy.get("[data-testid='create-new-product']").click();
     const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
@@ -664,7 +664,7 @@ describe('Product creation Spec', () => {
     );
     verifyLoadedProduct(3, 3, 4, 4, 3, 4, 4, 0, 0, 0, 0, 0, 0, 0);
   });
-  it.skip('Device: Create a device by changing pack size', () => {
+  it('Device: Create a device by changing pack size', () => {
     loadTaskPage(taskKey, ticketNumber);
     cy.get("[data-testid='create-new-product']").click();
     selectDeviceType();
@@ -685,7 +685,7 @@ describe('Product creation Spec', () => {
     );
     verifyLoadedProduct(1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0);
   });
-  it.skip('Bulk pack: Create a bulk pack', () => {
+  it('Bulk pack: Create a bulk pack', () => {
     loadTaskPage(taskKey, ticketNumber);
     cy.get("[data-testid='create-new-product']").click();
     selectBulkPack();
@@ -718,7 +718,7 @@ describe('Product creation Spec', () => {
     verifyLoadedProduct(1, 1, 2, 1, 1, 2, 2, 0, 0, 0, 0, 0, 0, 0);
   });
 
-  it.skip('Bulk pack: Invalid pack size(characters)', () => {
+  it('Bulk pack: Invalid pack size(characters)', () => {
     loadTaskPage(taskKey, ticketNumber);
     cy.get("[data-testid='create-new-product']").click();
     selectBulkPack();
@@ -737,7 +737,7 @@ describe('Product creation Spec', () => {
     cy.get("[data-testid='create-pack-btn']").should('be.disabled');
   });
 
-  it.skip('Bulk pack: Duplicate pack size', () => {
+  it('Bulk pack: Duplicate pack size', () => {
     loadTaskPage(taskKey, ticketNumber);
     cy.get("[data-testid='create-new-product']").click();
     selectBulkPack();
@@ -759,7 +759,7 @@ describe('Product creation Spec', () => {
     setBulkPackSize(packSize.toString());
     verifyErrorMsg('pack-size-input', 'Not a valid pack size');
   });
-  it.skip('Bulk brand: create new Brand', () => {
+  it('Bulk brand: create new Brand', () => {
     loadTaskPage(taskKey, ticketNumber);
     cy.get("[data-testid='create-new-product']").click();
     selectBulkBrand();
@@ -788,7 +788,7 @@ describe('Product creation Spec', () => {
     );
     verifyLoadedProduct(1, 1, 1, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0);
   });
-  it.skip('Bulk brand: Duplicate brand', () => {
+  it('Bulk brand: Duplicate brand', () => {
     loadTaskPage(taskKey, ticketNumber);
     cy.get("[data-testid='create-new-product']").click();
     selectBulkBrand();
