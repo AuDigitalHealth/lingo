@@ -123,6 +123,10 @@
       "type": "object",
       "title": "Product Details",
       "properties": {
+        "type": {
+          "type": "string",
+          "default": "medication"
+        },
         "productName": {
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Product Name",

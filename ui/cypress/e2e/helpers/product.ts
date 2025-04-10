@@ -237,21 +237,38 @@ export function previewProduct(
 
 export function changePackSize(packSize: number) {
   cy.wait(2000);
-  cy.get('#panel1a-header div.MuiGrid-container').click();
+  cy.get(
+    '[data-testid="root_containedProducts_0_container"] .MuiButtonBase-root',
+  )
+    .first()
+    .click();
   cy.wait(1000);
-  cy.get('#pack-size-input').clear();
-  cy.get('#pack-size-input').type(packSize.toString(), { delay: 5 });
+  cy.get('[data-testid="root_containedProducts_0_value"] input').clear();
+  cy.get('[data-testid="root_containedProducts_0_value"] input').type(
+    packSize.toString(),
+    { delay: 5 },
+  );
   cy.wait(2000);
 }
 export function setBulkPackSize(packSize: string) {
-  cy.get("[data-testid='pack-size-input']").click();
-  cy.get("[data-testid='pack-size-input']").type(packSize, { delay: 5 });
+  cy.get('[data-testid="root_containedProducts_0_value"] input').click();
+  cy.get('[data-testid="root_containedProducts_0_value"] input').type(
+    packSize,
+    { delay: 5 },
+  );
 }
 export function verifyPackSizeChange(packSize: number) {
   cy.wait(2000);
-  cy.get('#panel1a-header div.MuiGrid-container').click();
+  cy.get(
+    '[data-testid="root_containedProducts_0_container"] .MuiButtonBase-root',
+  )
+    .first()
+    .click();
   cy.wait(1000);
-  cy.get('#pack-size-input').should('have.value', packSize.toString());
+  cy.get('[data-testid="root_containedProducts_0_value"] input').should(
+    'have.value',
+    packSize.toString(),
+  );
 }
 
 export function createProduct(
@@ -348,11 +365,27 @@ export function searchAndSelectAutocomplete(
   cy.get(`[data-testid="${dataTestId}"]`).click();
 
   if (clearCurrentValue) {
-    cy.get(`[data-testid="${dataTestId}-input"]`).clear();
+    cy.get(`[data-testid="${dataTestId}-input"]`)
+      .should(() => {})
+      .then($el => {
+        if ($el.length) {
+          cy.get(`[data-testid="${dataTestId}-input"]`).clear();
+        } else {
+          cy.get(`[data-testid="${dataTestId}"] input`).clear();
+        }
+      });
   }
 
   // cy.waitForOntoSearch(branch);
-  cy.get(`[data-testid="${dataTestId}-input"]`).type(value);
+  cy.get(`[data-testid="${dataTestId}-input"]`)
+    .should(() => {})
+    .then($el => {
+      if ($el.length) {
+        cy.get(`[data-testid="${dataTestId}-input"]`).type(value);
+      } else {
+        cy.get(`[data-testid="${dataTestId}"] input`).type(value);
+      }
+    });
   cy.wait('@getConceptSearch', { responseTimeout: timeOut });
   // cy.wait(1000); // Adjust the wait time as needed
 
@@ -393,16 +426,23 @@ export function previewWithError(error: string, branch: string) {
   verifyGenericError(error);
 }
 export function addNewProduct() {
-  cy.get("[data-testid='add-new-product']").click();
+  cy.get(
+    "[data-testid='root_containedProducts_container'] button[aria-label='Add Manually']",
+  )
+    .first()
+    .click();
 }
 export function expandOrHideProduct(productIndex: number) {
   cy.get(
-    `[data-testid='product-${productIndex}-detailed-product-panel'] div.MuiGrid-container`,
-  ).click();
+    `[data-testid='root_containedProducts_${productIndex}_container'] .MuiAccordionSummary-root`,
+    { timeout: 20000 },
+  )
+    .first()
+    .click();
 }
 export function expandIngredient(productIndex: number, ingIndex: number) {
   cy.get(
-    `[data-testid='product-${productIndex}-ing-${ingIndex}-detailed-ingredient-panel'] div.MuiGrid-container`,
+    `[data-testid='root_containedProducts_${productIndex}_productDetails_activeIngredients_${ingIndex}_container'] .MuiAccordionSummary-root`,
   ).click();
 }
 export function fillSuccessfulProductDetails(

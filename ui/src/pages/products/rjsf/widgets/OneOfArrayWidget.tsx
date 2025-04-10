@@ -108,7 +108,7 @@ const renderField = (
         <InputLabel>{propSchema.title || propName}</InputLabel>
         <Select
           value={value || propSchema.default || ''}
-          onChange={e => onChange(e.target.value as string)}
+          onChange={e => onChange(e.target.value)}
           disabled={disabled || readonly}
         >
           {propSchema.enum.map(option => (
@@ -400,7 +400,7 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
             <InputLabel>Type</InputLabel>
             <Select
               value={dropdownType}
-              onChange={e => setDropdownType(e.target.value as string)}
+              onChange={e => setDropdownType(e.target.value)}
             >
               {oneOfOptions.map(option => (
                 <MenuItem key={option.title} value={option.title}>
