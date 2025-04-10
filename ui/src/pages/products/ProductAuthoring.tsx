@@ -16,10 +16,10 @@ import { ActionType, ProductType } from '../../types/product.ts';
 import { isValueSetExpansionContains } from '../../types/predicates/isValueSetExpansionContains.ts';
 
 import EditProduct from './components/EditProduct.tsx';
-import MedicationAuthoringV2 from './rjsf/MedicationAuthoringV2.tsx';
-import DeviceAuthoringV2 from './rjsf/DeviceAuthoringV2.tsx';
-import BrandAuthoringV2 from './rjsf/BrandAuthoringV2.tsx';
-import PackSizeAuthoringV2 from './rjsf/PackSizeAuthoringV2.tsx';
+import MedicationAuthoring from './rjsf/MedicationAuthoring.tsx';
+import DeviceAuthoring from './rjsf/DeviceAuthoring.tsx';
+import BrandAuthoring from './rjsf/BrandAuthoring.tsx';
+import PackSizeAuthoring from './rjsf/PackSizeAuthoring.tsx';
 
 interface ProductAuthoringProps {
   ticket: Ticket;
@@ -33,6 +33,7 @@ function ProductAuthoring({
   ticket,
   task,
   productName,
+  productId,
   productType,
   actionType,
 }: ProductAuthoringProps) {
@@ -114,7 +115,9 @@ function ProductAuthoring({
   } else {
     return (
       <Grid>
-        <h3>{getTitle(productName, selectedActionType)}</h3>
+        <h3>
+          {getTitle(productName, getActionType(actionType, selectedActionType))}
+        </h3>
         {!productName ? (
           <Stack direction="row" spacing={2} alignItems="center">
             <Card sx={{ marginY: '1em', padding: '1em', width: '100%' }}>
@@ -129,7 +132,7 @@ function ProductAuthoring({
                   branch={task.branchPath}
                   fieldBindings={fieldBindings}
                   hideAdvancedSearch={true}
-                  actionType={selectedActionType}
+                  actionType={getActionType(actionType, selectedActionType)}
                 />
                 {/*<Button color={"error"} variant={"contained"}>Clear</Button>*/}
               </Box>
@@ -140,32 +143,40 @@ function ProductAuthoring({
         )}
 
         <Grid>
-          {selectedActionType === ActionType.newMedication ? (
-            <MedicationAuthoringV2
+          {getActionType(actionType, selectedActionType) ===
+          ActionType.newMedication ? (
+            <MedicationAuthoring
               selectedProduct={selectedProduct}
               task={task}
+              ticketProductId={productId}
+              ticket={ticket}
             />
-          ) : selectedActionType === ActionType.newDevice ? (
-            <DeviceAuthoringV2
+          ) : getActionType(actionType, selectedActionType) ===
+            ActionType.newDevice ? (
+            <DeviceAuthoring
               selectedProduct={selectedProduct}
               ticket={ticket}
               task={task}
+              ticketProductId={productId}
             />
-          ) : selectedActionType === ActionType.newPackSize ? (
-            <PackSizeAuthoringV2
+          ) : getActionType(actionType, selectedActionType) ===
+            ActionType.newPackSize ? (
+            <PackSizeAuthoring
               selectedProduct={selectedProduct}
               ticket={ticket}
               task={task}
               fieldBindings={fieldBindings}
             />
-          ) : selectedActionType === ActionType.newBrand ? (
-            <BrandAuthoringV2
+          ) : getActionType(actionType, selectedActionType) ===
+            ActionType.newBrand ? (
+            <BrandAuthoring
               selectedProduct={selectedProduct}
               ticket={ticket}
               task={task}
               fieldBindings={fieldBindings}
             />
-          ) : selectedActionType === ActionType.editProduct ? (
+          ) : getActionType(actionType, selectedActionType) ===
+            ActionType.editProduct ? (
             <EditProduct
               selectedProduct={selectedProduct}
               handleClearForm={handleClearFormWrapper}
@@ -196,5 +207,14 @@ const getTitle = (
   return productName
     ? `Create New Product (Loaded from ${productName})`
     : 'Create New Product';
+};
+const getActionType = (
+  actionType: ActionType | undefined,
+  selectedActionType: ActionType,
+) => {
+  if (actionType) {
+    return actionType;
+  }
+  return selectedActionType;
 };
 export default ProductAuthoring;

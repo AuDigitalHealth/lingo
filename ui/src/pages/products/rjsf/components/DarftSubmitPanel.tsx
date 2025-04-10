@@ -1,25 +1,22 @@
-import { Control, useFormState } from 'react-hook-form';
 import { useEffect, useState } from 'react';
-import useAuthoringStore from '../../../stores/AuthoringStore.ts';
+
 import { useBlocker } from 'react-router-dom';
 import { Button } from '@mui/material';
-import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
-import {
-  DevicePackageDetails,
-  MedicationPackageDetails,
-} from '../../../types/product.ts';
 
-export interface DraftSubmitPanelProps {
-  control: Control<MedicationPackageDetails | DevicePackageDetails>;
+import useAuthoringStore from '../../../../stores/AuthoringStore.ts';
+import ConfirmationModal from '../../../../themes/overrides/ConfirmationModal.tsx';
+import { FieldProps } from '@rjsf/utils';
+
+export interface DraftSubmitPanelProps extends FieldProps {
+  isDirty: boolean;
   saveDraft: () => void;
 }
 export function DraftSubmitPanel({
-  control,
+  isDirty,
   saveDraft,
 }: DraftSubmitPanelProps) {
-  const { dirtyFields } = useFormState({ control });
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
-  const isDirty = Object.keys(dirtyFields).length > 0;
+
   const { forceNavigation } = useAuthoringStore();
 
   const blocker = useBlocker(

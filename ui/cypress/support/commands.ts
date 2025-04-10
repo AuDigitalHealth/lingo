@@ -89,7 +89,15 @@ Cypress.Commands.add('login', (email: string, password: string) => {
 
     cy.intercept('/api/authenticate').as('authenticate');
 
-    cy.contains('button[type="submit"]', /log in/i).click();
+    cy.contains('button[type="submit"]', /log in/i)
+      .should(() => {})
+      .then($el => {
+        if ($el.length) {
+          cy.contains('button[type="submit"]', /log in/i).click();
+        } else {
+          cy.contains('button', /sign me in/i).click();
+        }
+      });
 
     cy.wait('@authenticate');
 

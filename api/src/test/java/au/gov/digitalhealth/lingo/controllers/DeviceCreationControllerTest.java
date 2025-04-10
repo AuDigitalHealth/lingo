@@ -32,7 +32,9 @@ import au.gov.digitalhealth.lingo.product.ProductCreationDetails;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.details.DeviceProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
+import au.gov.digitalhealth.lingo.product.details.ProductQuantity;
 import au.gov.digitalhealth.tickets.models.Ticket;
+import jakarta.validation.Valid;
 import java.math.BigDecimal;
 import lombok.extern.java.Log;
 import org.assertj.core.api.Assertions;
@@ -85,12 +87,7 @@ class DeviceCreationControllerTest extends LingoTestBase {
     Assertions.assertThat(packageDetails.getContainedProducts()).size().isEqualTo(1);
 
     // change pack size to 2
-    packageDetails
-        .getContainedProducts()
-        .iterator()
-        .next()
-        .getPackSize()
-        .setValue(new BigDecimal("2.0"));
+    packageDetails.getContainedProducts().iterator().next().setValue(new BigDecimal("2.0"));
 
     // calculate
     ProductSummary productSummary =
@@ -156,9 +153,11 @@ class DeviceCreationControllerTest extends LingoTestBase {
     Assertions.assertThat(packageDetails.getContainedPackages()).isNullOrEmpty();
     Assertions.assertThat(packageDetails.getContainedProducts()).size().isEqualTo(1);
 
-    DeviceProductDetails productDetails = packageDetails.getContainedProducts().iterator().next();
-    productDetails.setSpecificDeviceType(null);
-    productDetails.setNewSpecificDeviceName("New specific device name");
+    @Valid
+    ProductQuantity<DeviceProductDetails> productDetails =
+        packageDetails.getContainedProducts().iterator().next();
+    productDetails.getProductDetails().setSpecificDeviceType(null);
+    productDetails.getProductDetails().setNewSpecificDeviceName("New specific device name");
 
     // calculate
     ProductSummary productSummary =
@@ -212,11 +211,22 @@ class DeviceCreationControllerTest extends LingoTestBase {
             .getDevicePackDetails(Long.parseLong(createdProduct.getSingleSubject().getConceptId()));
 
     Assertions.assertThat(packageDetailsPostCreation.getContainedProducts()).size().isEqualTo(1);
-    DeviceProductDetails productDetailsPostCreation =
+    @Valid
+    ProductQuantity<DeviceProductDetails> productDetailsPostCreation =
         packageDetailsPostCreation.getContainedProducts().iterator().next();
-    Assertions.assertThat(productDetailsPostCreation.getSpecificDeviceType().getPt().getTerm())
+    Assertions.assertThat(
+            productDetailsPostCreation
+                .getProductDetails()
+                .getSpecificDeviceType()
+                .getPt()
+                .getTerm())
         .isEqualTo("New specific device name");
-    Assertions.assertThat(productDetailsPostCreation.getSpecificDeviceType().getFsn().getTerm())
+    Assertions.assertThat(
+            productDetailsPostCreation
+                .getProductDetails()
+                .getSpecificDeviceType()
+                .getFsn()
+                .getTerm())
         .isEqualTo("New specific device name (physical object)");
   }
 }

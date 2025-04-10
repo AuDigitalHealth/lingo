@@ -8,3 +8,6 @@ body {
 #sentry-feedback {
   --inset: auto auto 0px -10px;
 }
+.MuiSelect-select {
+  min-width: 15vw;
+}

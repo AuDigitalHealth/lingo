@@ -1,8 +1,5 @@
 import * as React from 'react';
-import {
-  RJSFSchema,
-  WidgetProps,
-} from '@rjsf/utils';
+import { RJSFSchema, WidgetProps } from '@rjsf/utils';
 import { TextField } from '@mui/material';
 
 function NumberWidget<T = any, F extends RJSFSchema = RJSFSchema>({
