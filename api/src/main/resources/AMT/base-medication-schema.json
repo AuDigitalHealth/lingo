@@ -129,10 +129,10 @@
         },
         "productName": {
           "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "Product Name",
+          "title": "Brand Name",
           "minProperties": 1,
           "errorMessage": {
-            "minProperties": "Product Name must be populated."
+            "minProperties": "Brand Name must be populated."
           }
         },
         "activeIngredients": {

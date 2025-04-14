@@ -91,7 +91,12 @@ const UnitValueUnWrappedField = (props: FieldProps) => {
           />
         )}
       </Grid>
-      <ErrorDisplay errors={allErrors} />
+      <Grid item xs={6}>
+        <ErrorDisplay errors={valueErrors} />
+      </Grid>
+      <Grid item xs={6}>
+        <ErrorDisplay errors={unitErrors} />
+      </Grid>
     </Grid>
   );
 };
