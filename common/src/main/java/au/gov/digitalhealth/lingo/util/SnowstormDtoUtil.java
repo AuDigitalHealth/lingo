@@ -542,4 +542,45 @@ public class SnowstormDtoUtil {
         .moduleId(existingConcept.getModuleId());
   }
 
+  public static SnowstormDescription cloneSnowstormDescription(SnowstormDescription description) {
+    return new SnowstormDescription()
+        // Required fields (marked with @Nonnull)
+        .term(description.getTerm())
+        .languageCode(description.getLanguageCode())
+        .typeId(description.getTypeId())
+        .caseSignificanceId(description.getCaseSignificanceId())
+
+        // Optional fields (marked with @Nullable)
+        .internalId(description.getInternalId())
+        .path(description.getPath())
+        .start(description.getStart())
+        .end(description.getEnd())
+        .deleted(description.getDeleted())
+        .changed(description.getChanged())
+        .active(description.getActive())
+        .moduleId(description.getModuleId())
+        .effectiveTimeI(description.getEffectiveTimeI())
+        .released(description.getReleased())
+        .releaseHash(description.getReleaseHash())
+        .releasedEffectiveTime(description.getReleasedEffectiveTime())
+        .descriptionId(description.getDescriptionId())
+        .termFolded(description.getTermFolded())
+        .termLen(description.getTermLen())
+        .tag(description.getTag())
+        .conceptId(description.getConceptId())
+        .lang(description.getLang())
+        .caseSignificance(description.getCaseSignificance())
+        .type(description.getType())
+        .effectiveTime(description.getEffectiveTime())
+        .inactivationIndicator(description.getInactivationIndicator())
+
+        // Collection fields - creating new instances to avoid sharing references
+        .acceptabilityMap(description.getAcceptabilityMap() != null ?
+            new HashMap<>(description.getAcceptabilityMap()) : new HashMap<>())
+        .acceptabilityMapFromLangRefsetMembers(description.getAcceptabilityMapFromLangRefsetMembers() != null ?
+            new HashMap<>(description.getAcceptabilityMapFromLangRefsetMembers()) : new HashMap<>())
+        .associationTargets(description.getAssociationTargets() != null ?
+            new HashMap<>(description.getAssociationTargets()) : new HashMap<>());
+  }
+
 }

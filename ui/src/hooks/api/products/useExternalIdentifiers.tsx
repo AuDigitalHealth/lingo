@@ -13,6 +13,7 @@ export function useExternalIdentifiers(
         branch as string,
       ),
     enabled: productId !== undefined && branch !== undefined,
+    staleTime: 0,
   });
 
   return query;

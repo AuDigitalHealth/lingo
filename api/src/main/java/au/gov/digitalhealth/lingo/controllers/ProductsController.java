@@ -80,9 +80,9 @@ public class ProductsController {
   public ResponseEntity<Set<ExternalIdentifier>> getExternalIdentifiers(
       @PathVariable String branch, @PathVariable Long productId) throws InterruptedException {
     taskManagerService.validateTaskState(branch);
-    return new ResponseEntity<>(
-        productUpdateService.getExternalIdentifiers(branch, String.valueOf(productId)),
-        HttpStatus.OK);
+    Set<ExternalIdentifier> externalIdentifiers =
+        productUpdateService.getExternalIdentifiers(branch, String.valueOf(productId));
+    return new ResponseEntity<>(externalIdentifiers, HttpStatus.OK);
   }
 
   @LogExecutionTime
