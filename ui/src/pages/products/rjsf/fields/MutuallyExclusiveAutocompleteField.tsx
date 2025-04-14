@@ -117,8 +117,7 @@ const MutuallyExclusiveAutocompleteField = ({
             </Typography>
           )}
           <AutoCompleteField
-            idSchema={idSchema}
-            name={name}
+            name={idSchema.$id}
             schema={{ title: fieldAOptions?.title }}
             uiSchema={{
               'ui:options': {
@@ -155,8 +154,7 @@ const MutuallyExclusiveAutocompleteField = ({
             </Typography>
           )}
           <AutoCompleteField
-            idSchema={idSchema}
-            name={name}
+            name={idSchema.$id.replaceAll(`_${fieldAName}`, `_${fieldBName}`)}
             schema={{ title: fieldBOptions?.title }}
             uiSchema={{
               'ui:widget': 'hidden',

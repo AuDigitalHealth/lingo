@@ -144,30 +144,26 @@ function MedicationAuthoring({
   };
 
   const onError = (errors: any) => {
-    console.log('Form errors:', errors);
     const newErrorSchema = errors.reduce((acc: any, error: any) => {
       _.set(acc, error.property.slice(1), { __errors: [error.message] });
       return acc;
     }, {});
     setErrorSchema(newErrorSchema);
-    enqueueSnackbar(
-      'Error Validating Product Definition' +
-        (newErrorSchema ? `: ${formatErrors(newErrorSchema)}` : ``),
-      {
-        variant: 'error',
-      },
-    );
+    // enqueueSnackbar(
+    //   'Error Validating Product Definition.',
+    //   {
+    //     variant: 'error',
+    //     autoHideDuration: 2000,
+    //   },
+    // );
+    // enqueueSnackbar(
+    //   'Error Validating Product Definition' +
+    //     (newErrorSchema ? `: ${formatErrors(newErrorSchema)}` : ``),
+    //   {
+    //     variant: 'error',
+    //   },
+    // );
   };
-
-  function formatErrors(errorsObj: object): string {
-    const result = [];
-    for (const [key, value] of Object.entries(errorsObj)) {
-      const label = key ? key.charAt(0).toUpperCase() + key.slice(1) : 'Other';
-      const messages = value['__errors'].join(', ');
-      result.push(`${label} [ ${messages} ]`);
-    }
-    return result.join(', ');
-  }
 
   return (
     <Paper sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1 }}>
