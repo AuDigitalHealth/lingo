@@ -42,6 +42,7 @@ import {
   Controller,
   FieldArrayWithId,
   FieldError,
+  UseFormSetValue,
   useController,
   useFieldArray,
   useForm,
@@ -495,6 +496,7 @@ function EditConceptBody({
       }
     }
   };
+
   const resetAndClose = () => {
     setArtgOptVals(
       product.externalIdentifiers ? product.externalIdentifiers : [],
@@ -670,6 +672,7 @@ function EditConceptBody({
                         langRefsets={langRefsets}
                         control={control}
                         handleAddDescription={handleAddDescription}
+                        setValue={setValue}
                       />
                       {isCtpp && (
                         <Grid>
@@ -935,6 +938,7 @@ interface RightSectionProps {
   langRefsets: LanguageRefset[];
   control: Control<ProductUpdateRequest>;
   handleAddDescription: React.MouseEventHandler<HTMLButtonElement> | undefined;
+  setValue: UseFormSetValue<ProductUpdateRequest>;
 }
 
 function RightSection({
@@ -948,6 +952,7 @@ function RightSection({
   langRefsets,
   control,
   handleAddDescription,
+  setValue,
 }: RightSectionProps) {
   return (
     <>
@@ -971,6 +976,7 @@ function RightSection({
                 langRefsets={langRefsets}
                 control={control}
                 disabled={isUpdating}
+                setValue={setValue}
               />
             );
           })}
@@ -1106,6 +1112,7 @@ interface FieldDescriptionsProps {
   >;
   control: Control<ProductUpdateRequest>;
   disabled: boolean;
+  setValue: UseFormSetValue<ProductUpdateRequest>;
 }
 const FieldDescriptions = ({
   displayRetiredDescriptions,
@@ -1117,6 +1124,7 @@ const FieldDescriptions = ({
   field,
   control,
   disabled,
+  setValue,
 }: FieldDescriptionsProps) => {
   const description = sortedDescriptionsWithoutSemanticTag[index] as
     | Description
@@ -1149,6 +1157,8 @@ const FieldDescriptions = ({
       : isPreferred
         ? 'Preferred Term'
         : 'Synonym';
+
+  const isFsnOrPreferred = descriptionType === 'FSN' || isPreferred;
 
   if (!displayRetiredDescriptions && description && !description.active) {
     return <></>;
@@ -1204,7 +1214,20 @@ const FieldDescriptions = ({
                 disabled={disabled}
                 checked={controllerField.value}
                 onChange={e => {
-                  controllerField.onChange(e.target.checked);
+                  const newActiveState = e.target.checked;
+                  controllerField.onChange(newActiveState);
+
+                  // If switched to inactive, update all acceptability values to NOT ACCEPTABLE
+                  if (!newActiveState) {
+                    // Get all dialect entries from langRefsets
+                    langRefsets.forEach(dialect => {
+                      // Update each acceptability value to NOT ACCEPTABLE
+                      const fieldName =
+                        `descriptionUpdate.descriptions.${index}.acceptabilityMap.${dialect.en}` as 'descriptionUpdate.descriptions.${index}.acceptabilityMap.${dialect.en}';
+
+                      setValue(fieldName, 'NOT ACCEPTABLE');
+                    });
+                  }
                 }}
                 color="primary"
                 size="small"
@@ -1218,6 +1241,7 @@ const FieldDescriptions = ({
           label={label}
           isDisabled={isDisabled}
           isReleased={isReleased || false}
+          isFsnOrPreferred={isFsnOrPreferred}
         />
         {/* Display Semantic Tag if available */}
         {containsSemanticTag && (
@@ -1404,6 +1428,7 @@ interface DescriptionTextInputProps {
   label: string;
   isDisabled: boolean;
   isReleased: boolean;
+  isFsnOrPreferred: boolean;
 }
 
 const DescriptionTextInput = ({
@@ -1412,6 +1437,7 @@ const DescriptionTextInput = ({
   label,
   isDisabled,
   isReleased,
+  isFsnOrPreferred,
 }: DescriptionTextInputProps) => {
   const { field, fieldState } = useController({
     name: `descriptionUpdate.descriptions.${index}.term`,
@@ -1434,9 +1460,9 @@ const DescriptionTextInput = ({
         multiline
         minRows={1}
         maxRows={4}
-        disabled={isDisabled}
+        disabled={isDisabled || (isReleased && !isFsnOrPreferred)}
       />
-      {hasChanged && isReleased && (
+      {hasChanged && isReleased && isFsnOrPreferred && (
         <FormHelperText sx={{ color: t => `${t.palette.warning.main}` }}>
           This change will retire this description and create a replacement.
         </FormHelperText>
