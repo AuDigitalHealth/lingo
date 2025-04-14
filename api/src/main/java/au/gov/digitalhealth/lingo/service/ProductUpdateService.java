@@ -251,7 +251,8 @@ public class ProductUpdateService {
 
                         // Set the association targets on the description
                         SnowstormDescription unwrappedDescriptionForRetirement =
-                            descriptionForRetirement.get();
+                            SnowstormDtoUtil.cloneSnowstormDescription(
+                                descriptionForRetirement.get());
                         unwrappedDescriptionForRetirement.setAssociationTargets(replacedBy);
                         unwrappedDescriptionForRetirement.setActive(false);
                         unwrappedDescriptionForRetirement.setAcceptabilityMap(new HashMap<>());

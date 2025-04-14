@@ -675,7 +675,8 @@ public class SnowstormClient {
     return refsetIds;
   }
 
-  public void removeRefsetMembers(String branch, Set<SnowstormReferenceSetMember> members) {
+  public void removeRefsetMembers(String branch, Set<SnowstormReferenceSetMember> members)
+      throws InterruptedException {
 
     Set<SnowstormReferenceSetMember> memberToDeactivate =
         members.stream()
@@ -736,11 +737,14 @@ public class SnowstormClient {
                         .refsetId(member.getRefsetId())
                         .moduleId(member.getModuleId())
                         .referencedComponentId(member.getReferencedComponentId())
-                        .memberId(member.getMemberId())
-                        .additionalFields(member.getAdditionalFields());
+                        .additionalFields(member.getAdditionalFields())
+                        .memberId(member.getMemberId());
                   })
               .toList();
-      createRefsetMemberships(branch, deactivatedMembersWithActiveFalse);
+
+        createRefsetMembers(branch, deactivatedMembersWithActiveFalse);
+
+
       log.fine(
           "Deleted refset members: "
               + deactivatedMembersWithActiveFalse.size()

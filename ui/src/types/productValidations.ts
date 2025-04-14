@@ -897,9 +897,8 @@ export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateReques
                     const thisDescription = context.from?.[1]
                       .value as Description;
 
-                    if (!thisDescription.active) {
-                      return true;
-                    }
+                    const productDescriptionUpdateRequest = context.from?.[2]
+                      .value as ProductDescriptionUpdateRequest;
 
                     const thisAcceptability = value as Record<
                       string,
@@ -912,6 +911,28 @@ export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateReques
                         ([key]) => key !== '900000000000508004',
                       ),
                     );
+
+                    if (!thisDescription.active) {
+                      const activeSynonyms =
+                        productDescriptionUpdateRequest.descriptions.filter(
+                          desc => {
+                            return (
+                              desc.type === 'SYNONYM' && desc.active === true
+                            );
+                          },
+                        );
+                      if (activeSynonyms.length === 0) {
+                        const firstLanguage = Object.keys(
+                          filteredAcceptability,
+                        )[Object.keys(filteredAcceptability).length - 1];
+                        const errPath = `${context.path}.${firstLanguage}`;
+                        return context.createError({
+                          message: 'There must be at least one active synonym',
+                          path: errPath,
+                        });
+                      }
+                      return true;
+                    }
 
                     // Check if all remaining values are "NOT ACCEPTABLE"
                     const allNotAcceptable =
@@ -932,9 +953,6 @@ export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateReques
                         path: errPath,
                       });
                     }
-
-                    const productDescriptionUpdateRequest = context.from?.[2]
-                      .value as ProductDescriptionUpdateRequest;
 
                     if (
                       thisDescription.active &&
