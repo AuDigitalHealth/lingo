@@ -79,7 +79,6 @@ public class ProductsController {
   @GetMapping("/{branch}/product-model/{productId}/externalIdentifiers")
   public ResponseEntity<Set<ExternalIdentifier>> getExternalIdentifiers(
       @PathVariable String branch, @PathVariable Long productId) throws InterruptedException {
-    taskManagerService.validateTaskState(branch);
     Set<ExternalIdentifier> externalIdentifiers =
         productUpdateService.getExternalIdentifiers(branch, String.valueOf(productId));
     return new ResponseEntity<>(externalIdentifiers, HttpStatus.OK);

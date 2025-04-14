@@ -122,6 +122,8 @@ public class ProductUpdateService {
     SnowstormConceptView existingConceptView =
         SnowstormDtoUtil.toSnowstormConceptView(existingConcepts.get(0));
 
+    existingConceptView.setRelationships(new HashSet<>());
+
     productUpdateCreationDetails.getHistoricState().setConcept(existingConceptView);
 
     Map<SnowstormDescription, SnowstormDescription> retireReplaceDescriptions =
@@ -247,12 +249,14 @@ public class ProductUpdateService {
                         SnowstormDescription matchingDesc = matchingValueDesc.get();
                         replacementIds.add(
                             matchingDesc.getDescriptionId()); // Add the replacement ID
+
                         replacedBy.put("REPLACED_BY", replacementIds);
 
                         // Set the association targets on the description
                         SnowstormDescription unwrappedDescriptionForRetirement =
                             SnowstormDtoUtil.cloneSnowstormDescription(
                                 descriptionForRetirement.get());
+                        unwrappedDescriptionForRetirement.setInactivationIndicator("OUTDATED");
                         unwrappedDescriptionForRetirement.setAssociationTargets(replacedBy);
                         unwrappedDescriptionForRetirement.setActive(false);
                         unwrappedDescriptionForRetirement.setAcceptabilityMap(new HashMap<>());
