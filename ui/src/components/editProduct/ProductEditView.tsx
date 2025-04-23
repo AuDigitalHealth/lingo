@@ -1,4 +1,4 @@
-import { Box, FormControlLabel, Grid, Switch } from '@mui/material';
+import { Box, FormControlLabel, Grid, Switch, Typography } from '@mui/material';
 import { Ticket } from '../../types/tickets/ticket';
 import { useParams } from 'react-router-dom';
 import { ExistingDescriptionsSection } from './ProductEditModal';
@@ -32,11 +32,6 @@ interface ProductEditViewProps {
 }
 function ProductEditView({ ticket }: ProductEditViewProps) {
   const { updateId, branchKey } = useParams();
-
-  const params = useParams();
-  console.log('params');
-  console.log(params);
-  //
   const [displayRetiredDescriptions, setDisplayRetiredDescriptions] =
     useState(false);
   const { applicationConfig } = useApplicationConfig();
@@ -57,12 +52,14 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
     return productAction.id === parseInt(updateId ? updateId : '');
   });
 
-  const productId = isProductUpdateDetails(productUpdate?.details)
-    ? productUpdate?.details.productId
+  const updatedConcept = isProductUpdateDetails(productUpdate?.details)
+    ? productUpdate?.details.updatedState.concept
     : undefined;
+
   const branch = `/${applicationConfig?.apDefaultBranch}${branchKey ? `/${branchKey}` : ''}`;
+
   const { data: currentConcept, isFetching } = useSearchConceptByIdNoCache(
-    productId,
+    updatedConcept?.conceptId,
     branch,
   );
 
@@ -71,7 +68,7 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
     defaultLangrefset,
   );
   const { data: externalIdentifiers } = useExternalIdentifiers(
-    productId,
+    updatedConcept?.conceptId,
     branch,
   );
 
@@ -88,9 +85,6 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
     ? productUpdate?.details.historicState.externalIdentifiers
     : undefined;
 
-  const updatedConcept = isProductUpdateDetails(productUpdate?.details)
-    ? productUpdate?.details.updatedState.concept
-    : undefined;
   const updatedDescriptions = sortDescriptions(
     updatedConcept?.descriptions,
     defaultLangrefset,
@@ -121,6 +115,13 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
         flexDirection: 'column', // Changed to row for horizontal columns
       }}
     >
+      <Typography variant="h4">
+        {formatConceptUpdate(
+          updatedConcept?.conceptId,
+          productUpdate?.details.productId,
+          productUpdate?.created,
+        )}
+      </Typography>
       <Grid container direction="row" spacing={1} sx={{ width: '100%' }}>
         {/* First Column */}
         <Grid item xs={6}>
@@ -347,5 +348,33 @@ function hasConceptBeenChanged(
 
   // If no changes were found, return false
   return false;
+}
+
+function formatConceptUpdate(
+  conceptId: string | undefined,
+  productId: string | undefined,
+  utcDateTime: string | undefined,
+) {
+  if (!utcDateTime) {
+    return (
+      <>
+        Updates made to concept: {conceptId} on product: {productId}
+      </>
+    );
+  }
+  const date = new Date(utcDateTime);
+
+  const localDate = date.toLocaleDateString('en-CA', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+
+  return (
+    <>
+      Updates made to concept: {conceptId} on {localDate} on product:{' '}
+      {productId}
+    </>
+  );
 }
 export default ProductEditView;

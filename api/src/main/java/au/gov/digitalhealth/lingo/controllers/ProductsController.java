@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import lombok.extern.java.Log;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -41,6 +42,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping(
     value = "/api",
     produces = {MediaType.APPLICATION_JSON_VALUE})
+@Log
 public class ProductsController {
 
   final ProductSummaryService productService;

@@ -542,6 +542,24 @@ public class SnowstormDtoUtil {
         .moduleId(existingConcept.getModuleId());
   }
 
+  public static SnowstormConcept cloneConcept(SnowstormConcept existingConcept) {
+    Set<SnowstormDescription> desc = new HashSet<>(existingConcept.getDescriptions());
+    return new SnowstormConcept()
+        .definitionStatus(existingConcept.getDefinitionStatus())
+        .definitionStatusId(existingConcept.getDefinitionStatusId())
+        .fsn(existingConcept.getFsn())
+        .pt(existingConcept.getPt())
+        .descriptions(desc)
+        .conceptId(existingConcept.getConceptId())
+        .active(existingConcept.getActive())
+        .definitionStatusId(existingConcept.getDefinitionStatusId())
+        .classAxioms(existingConcept.getClassAxioms())
+        .gciAxioms(existingConcept.getGciAxioms())
+        .relationships(existingConcept.getRelationships())
+        .effectiveTime(existingConcept.getEffectiveTime())
+        .moduleId(existingConcept.getModuleId());
+  }
+
   public static SnowstormDescription cloneSnowstormDescription(SnowstormDescription description) {
     return new SnowstormDescription()
         // Required fields (marked with @Nonnull)
