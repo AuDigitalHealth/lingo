@@ -35,6 +35,7 @@ import au.gov.digitalhealth.lingo.util.BranchPatternMatcher;
 import au.gov.digitalhealth.lingo.util.CacheConstants;
 import au.gov.digitalhealth.lingo.util.ClientHelper;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import java.time.Duration;
@@ -61,6 +62,8 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
+import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -499,6 +502,14 @@ public class SnowstormClient {
     return api.getBrowserConcepts(branch, request, languageHeader);
   }
 
+  public Mono<SnowstormConcept> getBrowserConcept(String branch, String conceptId) {
+    return snowStormApiClient.get()
+        .uri(uriBuilder -> uriBuilder
+            .path("/browser/{branch}/concepts/{conceptId}")
+            .build(branch, conceptId))
+        .retrieve()
+        .bodyToMono(SnowstormConcept.class);
+  }
   public Mono<SnowstormItemsPageRelationship> getRelationships(String branch, String conceptId) {
     RelationshipsApi api = new RelationshipsApi(getApiClient());
 
@@ -511,10 +522,42 @@ public class SnowstormClient {
     return getConceptsApi().createConcept(branch, concept, validate, languageHeader).block();
   }
 
-  public SnowstormConceptView updateConcept(
+  public SnowstormConceptView updateConceptView(
       String branch, String conceptId, SnowstormConceptView concept, boolean validate) {
+    try {
+      // Serialize the concept to JSON string to see what's being sent
+      objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+      String conceptJson = objectMapper.writeValueAsString(concept);
+      log.info(String.format("Sending concept update request: %s", conceptJson));
+    } catch (Exception e) {
+      log.severe("Error serializing concept object");
+    }
     return getConceptsApi()
         .updateConcept(branch, conceptId, concept, validate, languageHeader)
+        .block();
+  }
+
+  public SnowstormConcept updateConcept(String branch, String conceptId, SnowstormConcept concept, boolean validate) {
+    ObjectMapper customMapper = new ObjectMapper()
+        .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
+    // Create a custom encoder with this mapper
+    Jackson2JsonEncoder encoder = new Jackson2JsonEncoder(customMapper, MediaType.APPLICATION_JSON);
+
+    return snowStormApiClient
+        .mutate()
+        .codecs(configurer ->
+            configurer.defaultCodecs().jackson2JsonEncoder(encoder)
+        )
+        .build()
+        .put()
+        .uri(uriBuilder -> uriBuilder
+            .path("/browser/{branch}/concepts/{conceptId}")
+            .queryParam("validate", validate)
+            .build(branch, conceptId))
+        .bodyValue(concept)
+        .retrieve()
+        .bodyToMono(SnowstormConcept.class)
         .block();
   }
 

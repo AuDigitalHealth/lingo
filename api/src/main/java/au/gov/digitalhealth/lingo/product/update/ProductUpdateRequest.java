@@ -25,6 +25,8 @@ public class ProductUpdateRequest {
 
   @NotNull Long ticketId;
 
+  private String conceptId;
+
   private ProductDescriptionUpdateRequest descriptionUpdate;
 
   private ProductExternalIdentifierUpdateRequest externalRequesterUpdate;

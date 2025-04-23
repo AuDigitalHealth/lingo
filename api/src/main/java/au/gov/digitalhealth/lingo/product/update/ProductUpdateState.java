@@ -15,7 +15,7 @@
  */
 package au.gov.digitalhealth.lingo.product.update;
 
-import au.csiro.snowstorm_client.model.SnowstormConceptView;
+import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
 import java.io.Serializable;
 import java.util.Set;
@@ -30,7 +30,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ProductUpdateState implements Serializable {
 
-  SnowstormConceptView concept;
+  SnowstormConcept concept;
 
   Set<ExternalIdentifier> externalIdentifiers;
 }

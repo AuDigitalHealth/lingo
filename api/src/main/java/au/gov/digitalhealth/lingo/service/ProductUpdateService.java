@@ -75,6 +75,8 @@ public class ProductUpdateService {
       String branch, String productId, @Valid ProductUpdateRequest productUpdateRequest)
       throws InterruptedException {
 
+    String conceptId = productUpdateRequest.getConceptId();
+    log.info(String.format("Product update for %s commencing", conceptId));
     ProductDescriptionUpdateRequest productDescriptionUpdateRequest =
         productUpdateRequest.getDescriptionUpdate();
     ProductExternalIdentifierUpdateRequest productExternalIdentifierUpdateRequest =
@@ -93,11 +95,12 @@ public class ProductUpdateService {
             .build();
 
     updateProductDescriptions(
-        branch, productId, productDescriptionUpdateRequest, productUpdateCreationDetails);
+        branch, conceptId, productDescriptionUpdateRequest, productUpdateCreationDetails);
 
     if (productExternalIdentifierUpdateRequest != null) {
+      log.info(String.format("Product update for %s contains ARTGIDS.", conceptId));
       updateProductExternalIdentifiers(
-          branch, productId, productExternalIdentifierUpdateRequest, productUpdateCreationDetails);
+          branch, conceptId, productExternalIdentifierUpdateRequest, productUpdateCreationDetails);
     }
 
     productUpdate.setDetails(productUpdateCreationDetails);
@@ -108,21 +111,22 @@ public class ProductUpdateService {
     if (existingBulkProductAction.isPresent()) {
       productUpdate.setName(productUpdate.getName() + Instant.now().toString());
     }
+    log.info(
+        String.format(
+            "Product description update for %s saving on ticket %s", conceptId, ticket.getId()));
     return bulkProductActionRepository.save(productUpdate);
   }
 
   public ProductUpdateCreationDetails updateProductDescriptions(
       String branch,
-      String productId,
+      String conceptId,
       @Valid ProductDescriptionUpdateRequest productDescriptionUpdateRequest,
       ProductUpdateCreationDetails productUpdateCreationDetails) {
 
-    List<SnowstormConcept> existingConcepts = fetchBrowserConcepts(branch, Set.of(productId));
-
-    SnowstormConceptView existingConceptView =
-        SnowstormDtoUtil.toSnowstormConceptView(existingConcepts.get(0));
-
-    existingConceptView.setRelationships(new HashSet<>());
+    SnowstormConcept existingConceptView = fetchBrowserConcept(branch, conceptId);
+    existingConceptView.definitionStatusId(
+        mapFromDefinitionStatusToId(
+            Objects.requireNonNull(existingConceptView.getDefinitionStatus())));
 
     productUpdateCreationDetails.getHistoricState().setConcept(existingConceptView);
 
@@ -130,6 +134,8 @@ public class ProductUpdateService {
         getDescriptionsNeedingRetireReplace(existingConceptView, productDescriptionUpdateRequest);
 
     if (!retireReplaceDescriptions.isEmpty()) {
+      log.info(
+          String.format("Product description update for %s requires retire/replace", conceptId));
       // Create a map for quick lookup of keys by descriptionId
       Map<String, SnowstormDescription> keyDescriptionsById =
           retireReplaceDescriptions.keySet().stream()
@@ -182,7 +188,7 @@ public class ProductUpdateService {
       productDescriptionUpdateRequest.setDescriptions(updatedDescriptions);
     }
 
-    SnowstormConceptView conceptsNeedUpdate =
+    SnowstormConcept conceptsNeedUpdate =
         prepareConceptUpdate(existingConceptView, productDescriptionUpdateRequest, branch);
 
     productUpdateCreationDetails.getUpdatedState().setConcept(conceptsNeedUpdate);
@@ -197,9 +203,17 @@ public class ProductUpdateService {
 
     if (conceptsNeedUpdate != null) {
       try {
-        SnowstormConceptView response =
+        log.info(
+            String.format(
+                "Product description update for %s initial description update commencing",
+                conceptId));
+        SnowstormConcept response =
             snowstormClient.updateConcept(
                 branch, conceptsNeedUpdate.getConceptId(), conceptsNeedUpdate, false);
+        log.info(
+            String.format(
+                "Product description update for %s initial description update completed",
+                conceptId));
         productUpdateCreationDetails.getUpdatedState().setConcept(response);
 
         if (!retireReplaceDescriptions.isEmpty()) {
@@ -278,10 +292,20 @@ public class ProductUpdateService {
                     }
                   });
 
-          conceptsNeedUpdate.setDescriptions(descriptionsWithRetireReplaceCompleted);
-          SnowstormConceptView response2 =
+          response.setDescriptions(descriptionsWithRetireReplaceCompleted);
+          response.setDefinitionStatusId(
+              mapFromDefinitionStatusToId(Objects.requireNonNull(response.getDefinitionStatus())));
+          log.info(
+              String.format(
+                  "Product description update for %s retire/replace description update commencing",
+                  conceptId));
+          SnowstormConcept response2 =
               snowstormClient.updateConcept(
-                  branch, conceptsNeedUpdate.getConceptId(), conceptsNeedUpdate, false);
+                  branch, conceptsNeedUpdate.getConceptId(), response, false);
+          log.info(
+              String.format(
+                  "Product description update for %s retire/replace description update completed",
+                  conceptId));
           productUpdateCreationDetails.getUpdatedState().setConcept(response2);
         }
       } catch (WebClientResponseException ex) {
@@ -295,13 +319,13 @@ public class ProductUpdateService {
     return productUpdateCreationDetails;
   }
 
-  private SnowstormConceptView prepareConceptUpdate(
-      SnowstormConceptView existingConcept,
+  private SnowstormConcept prepareConceptUpdate(
+      SnowstormConcept existingConcept,
       ProductDescriptionUpdateRequest productDescriptionUpdateRequest,
       String branch) {
     if (productDescriptionUpdateRequest == null) return null;
 
-    SnowstormConceptView conceptNeedToUpdate = SnowstormDtoUtil.cloneConceptView(existingConcept);
+    SnowstormConcept conceptNeedToUpdate = SnowstormDtoUtil.cloneConcept(existingConcept);
 
     String fsn =
         SnowstormDtoUtil.getFsnFromDescriptions(productDescriptionUpdateRequest.getDescriptions())
@@ -319,7 +343,7 @@ public class ProductUpdateService {
   }
 
   private Map<SnowstormDescription, SnowstormDescription> getDescriptionsNeedingRetireReplace(
-      SnowstormConceptView existingConcept,
+      SnowstormConcept existingConcept,
       ProductDescriptionUpdateRequest productDescriptionUpdateRequest) {
     if (productDescriptionUpdateRequest == null || existingConcept == null) {
       return Collections.emptyMap();
@@ -351,16 +375,13 @@ public class ProductUpdateService {
     return descriptionsNeedingUpdate;
   }
 
-  public List<SnowstormConcept> fetchBrowserConcepts(String branch, Set<String> conceptIds) {
-    return snowstormClient
-        .getBrowserConcepts(branch, conceptIds)
-        .collect(Collectors.toList())
-        .block();
+  public SnowstormConcept fetchBrowserConcept(String branch, String conceptId) {
+    return snowstormClient.getBrowserConcept(branch, conceptId).block();
   }
 
   public Set<ExternalIdentifier> updateProductExternalIdentifiers(
       String branch,
-      String productId,
+      String conceptId,
       @Valid ProductExternalIdentifierUpdateRequest productExternalIdentifierUpdateRequest,
       ProductUpdateCreationDetails productUpdateCreationDetails)
       throws InterruptedException {
@@ -373,9 +394,9 @@ public class ProductUpdateService {
 
     // Fetch existing ARTG reference set members
     List<SnowstormReferenceSetMember> existingMembers =
-        snowstormClient.getArtgMembers(branch, Set.of(productId));
+        snowstormClient.getArtgMembers(branch, Set.of(conceptId));
 
-    Set<ExternalIdentifier> existingIdentifiers = getExternalIdentifiers(branch, productId);
+    Set<ExternalIdentifier> existingIdentifiers = getExternalIdentifiers(branch, conceptId);
 
     productUpdateCreationDetails.getHistoricState().setExternalIdentifiers(existingIdentifiers);
     if (existingMembers == null || existingMembers.isEmpty()) {
@@ -383,16 +404,20 @@ public class ProductUpdateService {
       externalIdentifiers.forEach(
           identifier ->
               artgToBeAdded.add(
-                  createSnowstormReferenceSetMemberViewComponent(identifier, productId)));
+                  createSnowstormReferenceSetMemberViewComponent(identifier, conceptId)));
     } else {
       // Process external identifiers
       processExternalIdentifiers(
-          existingMembers, externalIdentifiers, productId, artgToBeAdded, artgToBeRemoved);
+          existingMembers, externalIdentifiers, conceptId, artgToBeAdded, artgToBeRemoved);
     }
 
     // Apply changes
 
     if (!artgToBeAdded.isEmpty()) {
+      log.info(
+          String.format(
+              "Product update for %s needs adding of %s ARTGIDS.",
+              conceptId, List.copyOf(artgToBeAdded)));
       snowstormClient.createRefsetMembers(branch, List.copyOf(artgToBeAdded));
     }
 
@@ -402,6 +427,10 @@ public class ProductUpdateService {
           artgToBeRemoved.stream()
               .map(SnowstormReferenceSetMember::getMemberId)
               .collect(Collectors.toSet());
+      log.info(
+          String.format(
+              "Product update for %s needs removing of %s ARTGIDS.",
+              conceptId, List.copyOf(artgToBeRemoved)));
       snowstormClient.removeRefsetMembers(branch, artgToBeRemoved);
     }
     productUpdateCreationDetails.getUpdatedState().setExternalIdentifiers(externalIdentifiers);
@@ -461,5 +490,15 @@ public class ProductUpdateService {
     String existingTarget = existingMember.getAdditionalFields().get(MAP_TARGET);
     return externalIdentifiers.stream()
         .noneMatch(identifier -> identifier.getIdentifierValue().equals(existingTarget));
+  }
+
+  private String mapFromDefinitionStatusToId(String definitionStatus) {
+    if (definitionStatus.equals("PRIMITIVE")) {
+      return "900000000000074008";
+    }
+    if (definitionStatus.equals("FULLY_DEFINED")) {
+      return "900000000000073002";
+    }
+    return null;
   }
 }
