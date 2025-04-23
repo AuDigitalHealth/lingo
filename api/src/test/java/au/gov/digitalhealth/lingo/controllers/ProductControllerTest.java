@@ -130,6 +130,7 @@ class ProductControllerTest extends LingoTestBase {
         ProductUpdateRequest.builder()
             .descriptionUpdate(
                 ProductDescriptionUpdateRequest.builder().descriptions(Set.of(fsn, pt)).build())
+            .conceptId(existingConcept.getConceptId())
             .ticketId(ticketResponse.getId())
             .build();
 
@@ -179,6 +180,7 @@ class ProductControllerTest extends LingoTestBase {
                     + "/update",
                 ProductUpdateRequest.builder()
                     .ticketId(ticketResponse.getId())
+                    .conceptId(existingConcept.getConceptId())
                     .descriptionUpdate(
                         ProductDescriptionUpdateRequest.builder()
                             .descriptions(Set.of(fsn, pt))
@@ -212,6 +214,7 @@ class ProductControllerTest extends LingoTestBase {
                     + "/update",
                 ProductUpdateRequest.builder()
                     .ticketId(ticketResponse.getId())
+                    .conceptId(existingConcept.getConceptId())
                     .descriptionUpdate(
                         ProductDescriptionUpdateRequest.builder()
                             .descriptions(Set.of(fsn, pt))

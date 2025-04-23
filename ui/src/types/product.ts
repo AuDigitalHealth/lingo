@@ -180,6 +180,8 @@ export interface ProductUpdate extends VersionedEntity {
 }
 export interface ProductUpdateRequest {
   ticketId: number;
+  // the concept that is actually being edited
+  conceptId: string;
   descriptionUpdate: ProductDescriptionUpdateRequest;
   externalRequesterUpdate: ProductExternalRequesterUpdateRequest;
 }

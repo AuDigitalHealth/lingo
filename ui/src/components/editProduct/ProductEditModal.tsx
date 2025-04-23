@@ -87,7 +87,6 @@ import Loading from '../Loading.tsx';
 import { enqueueSnackbar } from 'notistack';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { productUpdateValidationSchema } from '../../types/productValidations.ts';
-import { useNavigate } from 'react-router-dom';
 import WarningModal from '../../themes/overrides/WarningModal.tsx';
 import { deepClone } from '@mui/x-data-grid/utils/utils';
 
@@ -176,7 +175,6 @@ function EditConceptBody({
   isCtpp,
   sevenBoxConceptId,
 }: EditConceptBodyProps) {
-  const navigate = useNavigate();
   const { data, isFetching } = useSearchConceptByIdNoCache(
     product.conceptId,
     branch,
@@ -378,14 +376,15 @@ function EditConceptBody({
 
   const sendUpdateProductRequest = (request: ProductUpdateRequest) => {
     const productId = product.conceptId;
+    request.conceptId = productId;
     updateProductMutation.mutate(
       {
         productUpdateRequest: cloneDeep(request),
-        productId: productId,
+        productId: sevenBoxConceptId as string,
         branch: branch,
       },
       {
-        onSuccess: res => {
+        onSuccess: () => {
           const bulkQueryKey = ['ticket-bulk-product-actions', `${ticket.id}`];
           const queryKey = getSearchConceptsByEclOptions(
             descriptions.find(d => d.type === 'FSN')?.term as string,
@@ -398,19 +397,16 @@ function EditConceptBody({
           void queryClient.invalidateQueries({ queryKey: queryKey });
 
           const queryKeyConceptModel = `concept-model-${branch}-${sevenBoxConceptId}`;
-          void queryClient.refetchQueries({ queryKey: [queryKeyConceptModel] });
+
+          void queryClient.refetchQueries({
+            queryKey: [queryKeyConceptModel],
+            exact: true,
+          });
           enqueueSnackbar('Product edited successfully.', {
             variant: 'success',
           });
           formSubmissionData.current = null;
-          void queryClient
-            .invalidateQueries({ queryKey: bulkQueryKey })
-            .then(() => {
-              const productUpdateDetailsId = res.id;
-              if (productUpdateDetailsId) {
-                void navigate(`view/update/${productUpdateDetailsId}`);
-              }
-            });
+          void queryClient.invalidateQueries({ queryKey: bulkQueryKey });
         },
       },
     );
