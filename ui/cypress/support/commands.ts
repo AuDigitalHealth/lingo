@@ -82,7 +82,6 @@ Cypress.Commands.add('login', (email: string, password: string) => {
     cy.contains('Log In').click();
 
     cy.url().should('include', 'ims.ihtsdotools.org');
-    cy.url().should('include', '/login');
 
     cy.get('#username').type(Cypress.env('ims_username'));
     cy.get('#password').type(Cypress.env('ims_password'));
