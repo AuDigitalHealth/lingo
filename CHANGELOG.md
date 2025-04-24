@@ -10,6 +10,30 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 ## [Unreleased]
 - No updates yet.
 
+### Added
+
+- Ability to manually lock Snomio processes during a release week (#1350)
+- Display a concept model diagram for a concept using the inferred view (#870)
+- Create additional synonyms for new product concepts within the 7-box Preview screen (#159)
+- Ticket management: Attach multiple files to a ticket in a single manual operation (#1263)
+- Separation of semantic tags from concept descriptions in the 7-box Preview screen (#1354)
+- Validation of concept semantic tags within the Preview screen (#1353)
+- Sergio: Add/update additional URLs targeting product information (#1262)
+
+### Changed
+
+- In the dashboard screen, add the saved filter's name as a title for each cell (#867)
+- 7-box Preview screen does not remove newline characters from manually-edited descriptions (#1328)
+- Task Management: Sort tasks by reviewers (#1303)
+- Sergio: Remove BlackTriangle label from ticket when the product is no longer BTS (#1370)
+- Sergio: Additional stabilisation improvements (#1300)
+- Snodine: Overnight processing should skip broken reference sets without aborting the entire run (#1398)
+
+### Fixed
+
+- Unable to edit the description of a multi-component product (#1323)
+- Sergio: Tickets are being updated with incomplete comments (#1277)
+- Sergio: Incorrect title for product URL in tickets (#1409)
 
 ## [1.2.10.2] - 2025-02-27
 
