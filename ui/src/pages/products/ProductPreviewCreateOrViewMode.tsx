@@ -279,7 +279,7 @@ function ProductPreviewCreateOrViewMode({
       return;
     }
 
-    void submitData(data);
+    void submitData(producSummaryClone);
   };
 
   const submitData = async (data?: ProductSummary) => {
