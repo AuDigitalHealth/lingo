@@ -5,6 +5,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import _ from 'lodash';
 import ajvErrors from 'ajv-errors';
 
+import { enqueueSnackbar } from 'notistack';
 import UnitValueField from './fields/UnitValueField.tsx';
 import AutoCompleteField from './fields/AutoCompleteField.tsx';
 import ParentChildAutoCompleteField from './fields/ParentChildAutoCompleteField.tsx';
@@ -143,12 +144,25 @@ function MedicationAuthoring({
   };
 
   const onError = (errors: any) => {
-    console.log('Form errors:', errors);
     const newErrorSchema = errors.reduce((acc: any, error: any) => {
       _.set(acc, error.property.slice(1), { __errors: [error.message] });
       return acc;
     }, {});
     setErrorSchema(newErrorSchema);
+    // enqueueSnackbar(
+    //   'Error Validating Product Definition.',
+    //   {
+    //     variant: 'error',
+    //     autoHideDuration: 2000,
+    //   },
+    // );
+    // enqueueSnackbar(
+    //   'Error Validating Product Definition' +
+    //     (newErrorSchema ? `: ${formatErrors(newErrorSchema)}` : ``),
+    //   {
+    //     variant: 'error',
+    //   },
+    // );
   };
 
   return (
