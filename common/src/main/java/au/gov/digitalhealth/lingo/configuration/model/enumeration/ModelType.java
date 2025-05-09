@@ -17,5 +17,5 @@ package au.gov.digitalhealth.lingo.configuration.model.enumeration;
 
 public enum ModelType {
   AMT,
-  SNOMED_INTERNATIONAL
+  NMPC
 }
