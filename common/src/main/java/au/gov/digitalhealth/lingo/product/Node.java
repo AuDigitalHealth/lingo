@@ -20,6 +20,7 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.PRIMITIVE;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.util.AmtConstants;
 import au.gov.digitalhealth.lingo.validation.OnlyOnePopulated;
@@ -62,6 +63,8 @@ public class Node {
   /** Label for this node indicating its place in the model. */
   @NotNull @NotEmpty String label;
 
+  @JsonProperty @NotNull @NotEmpty String displayName;
+
   /**
    * Details of a new concept that has not yet been created in the terminology. Either this element
    * or concept is populated, not both.
@@ -75,6 +78,8 @@ public class Node {
   boolean newInProject;
 
   @Builder.Default Set<ExternalIdentifier> externalIdentifiers = new HashSet<>();
+
+  ModelLevelType modelLevel;
 
   public Node(SnowstormConceptMini concept, String label) {
     this.concept = concept;

@@ -18,8 +18,11 @@ package au.gov.digitalhealth.lingo.configuration.model;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.util.PartionIdentifier;
 import au.gov.digitalhealth.lingo.validation.ValidSctId;
+import jakarta.validation.ValidationException;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.Data;
 
 /**
@@ -37,4 +40,33 @@ public class ModelLevel {
   @ValidSctId(partitionIdentifier = PartionIdentifier.CONCEPT)
   @NotNull
   private String referenceSetIdentifier;
+
+  private String productModelEcl;
+
+  public static ModelLevel getLeafLevel(Set<ModelLevel> levels) {
+    Set<ModelLevelType> levelTypes =
+        levels.stream().map(ModelLevel::getModelLevelType).collect(Collectors.toSet());
+
+    Set<ModelLevel> leafLevel =
+        levels.stream()
+            .filter(
+                level ->
+                    level.getModelLevelType().getDescendants().isEmpty()
+                        || level.getModelLevelType().getDescendants().stream()
+                            .noneMatch(levelTypes::contains))
+            .collect(Collectors.toSet());
+
+    if (leafLevel.size() > 1) {
+      throw new ValidationException(
+          "More than one leaf level found for the given levels: " + leafLevel);
+    } else if (leafLevel.isEmpty()) {
+      throw new ValidationException("No leaf level found for the given levels: " + levels);
+    } else {
+      return leafLevel.iterator().next();
+    }
+  }
+
+  public boolean isLeafLevel(Set<ModelLevel> levels) {
+    return getLeafLevel(levels).equals(this);
+  }
 }
