@@ -4,39 +4,28 @@ import { Concept, ConceptMini } from '../../../../types/concept.ts';
 import { useSearchConceptsByEcl } from '../../../../hooks/api/useInitializeConcepts.tsx';
 import { FieldProps } from '@rjsf/utils';
 
-interface EclAutocompleteProps extends FieldProps {
-  value: ConceptMini | null | undefined;
-  onChange: (conceptMini: ConceptMini | null) => void;
-  ecl: string;
-  branch: string;
-  showDefaultOptions: boolean;
-  isDisabled: boolean;
-  title?: string;
-  errorMessage: string;
-  sx?: any; // Added to allow external styling
-}
+const EclAutocomplete: React.FC<FieldProps<any, any>> = (props) => {
 
-const EclAutocomplete: React.FC<EclAutocompleteProps> = ({
-  idSchema,
-  name,
-  value,
-  onChange,
-  ecl,
-  branch,
-  showDefaultOptions,
-  isDisabled,
-  title,
-  errorMessage,
-  sx,
-}) => {
-  const [inputValue, setInputValue] = useState('');
-  const [options, setOptions] = useState<Concept[]>([]);
+  if (!props) {
+    return;
+  }
+
+  const { id, ecl, branch, value, isDisabled, formData, errorMessage, sx, onChange, schema, uiSchema } = props;
+  const { showDefaultOptions } = uiSchema && uiSchema['ui:options'] || {};
+
+  // const [suggestions, setSuggestions] = useState<any[]>([]);
+  // const [input, setInput] = useState<string>(formData?.pt?.term || '');
+
+  const [inputValue, setInputValue] = useState<string>(formData?.pt?.term || '');
+  const [concepts, setConcepts] = useState<Concept[]>([]);
   const { isLoading, allData } = useSearchConceptsByEcl(
     inputValue,
     ecl && ecl.length > 0 ? ecl : undefined,
     branch,
-    showDefaultOptions,
+    showDefaultOptions as boolean,
   );
+
+  const title = (schema && schema.title) || (uiSchema && uiSchema['ui:title']) || '';
 
   useEffect(() => {
     if (allData) {
@@ -45,20 +34,20 @@ const EclAutocomplete: React.FC<EclAutocompleteProps> = ({
           allData.map((item: Concept) => [item.conceptId, item]),
         ).values(),
       );
-      setOptions(uniqueOptions);
+      setConcepts(uniqueOptions);
     }
   }, [allData]);
 
   useEffect(() => {
-    if (value && options.length > 0) {
-      const selectedOption = options.find(
-        option => option.conceptId === value.conceptId,
+    if (value && concepts.length > 0) {
+      const selectedOption = concepts.find(
+          concept => concept.conceptId === value.conceptId,
       );
       setInputValue(selectedOption?.pt?.term || value?.pt?.term || '');
     } else if (value) {
       setInputValue(value?.pt?.term || '');
     }
-  }, [value, options]);
+  }, [value, concepts]);
 
   const handleProductChange = (selectedProduct: Concept | null) => {
     if (selectedProduct) {
@@ -67,22 +56,22 @@ const EclAutocomplete: React.FC<EclAutocompleteProps> = ({
         pt: selectedProduct.pt,
         fsn: selectedProduct.fsn,
       };
-      onChange(conceptMini);
       setInputValue(selectedProduct.pt?.term || '');
+      onChange(conceptMini);
     } else {
-      onChange(null);
       setInputValue('');
+      onChange(null);
     }
   };
 
   return (
+      <span data-component-name="EclAutocomplete">
     <Autocomplete
-      data-testid={idSchema?.$id || name}
       loading={isLoading}
-      options={isDisabled ? [] : options}
-      getOptionLabel={(option: Concept) => option?.pt?.term || ''}
+      options={isDisabled ? [] : concepts}
+      getOptionLabel={(concept: Concept) => concept?.pt?.term || ''}
       value={
-        options.find(option => option.conceptId === value?.conceptId) ||
+        concepts.find(concept => concept.conceptId === value?.conceptId) ||
         value ||
         null
       }
@@ -90,12 +79,12 @@ const EclAutocomplete: React.FC<EclAutocompleteProps> = ({
       onChange={(event, selectedValue) =>
         handleProductChange(selectedValue as Concept)
       }
-      isOptionEqualToValue={(option: Concept, selectedValue: Concept) =>
-        option?.conceptId === selectedValue?.conceptId
+      isOptionEqualToValue={(concept: Concept, selectedValue: Concept) =>
+          concept?.conceptId === selectedValue?.conceptId
       }
-      renderOption={(props, option: Concept) => (
-        <li {...props} key={option.conceptId}>
-          {option.pt.term}
+      renderOption={(props, concept: Concept) => (
+        <li {...props} key={concept.conceptId}>
+          {concept.pt?.term}
         </li>
       )}
       renderInput={params => (
@@ -103,6 +92,7 @@ const EclAutocomplete: React.FC<EclAutocompleteProps> = ({
           {...params}
           // error={!!errorMessage}
           // helperText={errorMessage || ' '} // Reserve space even when no error
+          data-test-id={id}
           label={title}
           InputProps={{
             ...params.InputProps,
@@ -125,6 +115,7 @@ const EclAutocomplete: React.FC<EclAutocompleteProps> = ({
       )}
       sx={sx} // Pass external styles
     />
+      </span>
   );
 };
 

@@ -1,157 +1,120 @@
 import React, { useState, useEffect } from 'react';
-import { FieldProps } from '@rjsf/core';
-import { Box, Typography } from '@mui/material';
-import AutoCompleteField from './AutoCompleteField.tsx';
-import { ConceptMini } from '../../../../types/concept.ts';
+import { FieldProps } from '@rjsf/utils';
+import AutoCompleteField from './AutoCompleteField';
 import _ from 'lodash';
-import { getFieldName, getParentPath } from '../helpers/helpers.ts';
-import { getFieldErrors, getUniqueErrors } from '../helpers/errorUtils.ts';
-import { ErrorDisplay } from '../components/ErrorDisplay.tsx';
+import { ConceptMini } from "../../../../types/concept.ts";
+import { getParentPath,
+getUiSchemaPath,
+getFormDataById,
+    getUiSchemaById,
+    setFormDataById,
+    setUiSchemaById,
+    getItemTitle,
+    getFieldName,
 
-const ParentChildAutoCompleteField = ({
-  name,
-  formData,
-  uiSchema,
-  errorSchema = {},
-  registry,
-  formContext,
-  idSchema,
-  rawErrors,
-}: FieldProps) => {
-  const {
-    parentFieldName = '',
-    childFieldName = '',
-    parentFieldOptions,
-    childFieldOptions,
-  } = uiSchema['ui:options'] || {};
+} from "../helpers/helpers.ts";
+import {RjsfUtils} from "../helpers/rjsfUtils.ts";
 
-  const fieldName = getFieldName(idSchema);
-  const parentPath = getParentPath(fieldName);
-  const rootFormData = _.get(
-    registry,
-    'rootSchema.formData',
-    formContext?.formData || formData || {},
-  );
+const ParentChildAutoCompleteField: React.FC<FieldProps<any, any>> = (props) => {
+    const { formData, formContext, registry, onChange, uiSchema, idSchema, schema } = props;
+    const opts = uiSchema && uiSchema['ui:options'] || {};
+    const { childFieldName, childFieldOptions } = opts;
+    // const commonParentPath = getParentPath(idSchema.$id).replaceAll("root.", "");
 
-  // Get the current data at parentPath to preserve other fields
-  const currentData = _.get(rootFormData, parentPath) || {};
+    const stringify = (obj: any) => {
+        let cache: any[] = [];
+        let str = JSON.stringify(obj, function(key, value) {
+            if (typeof value === "object" && value !== null) {
+                if (cache.indexOf(value) !== -1) {
+                    // Circular reference found, discard key
+                    return;
+                }
+                // Store value in our collection
+                cache.push(value);
+            }
+            return value;
+        });
+        // cache = null; // reset the cache
+        return str;
+    };
 
-  const initialParentValue = _.get(currentData, parentFieldName) || null;
-  const initialChildValue = _.get(currentData, childFieldName) || null;
+    // @ts-ignore
+    console.log(RjsfUtils.getFormDataById(formContext.formData, idSchema.$id));
 
-  const [parentValue, setParentValue] = useState<ConceptMini | null>(
-    initialParentValue,
-  );
-  const [childValue, setChildValue] = useState<ConceptMini | null>(
-    initialChildValue,
-  );
-  const [childEcl, setChildEcl] = useState(childFieldOptions?.ecl || '');
-  const [isChildDisabled, setIsChildDisabled] = useState(!initialParentValue);
+    const rootFormData = _.get(
+        registry,
+        'rootSchema.formData',
+        formContext?.formData || formData || {},
+    );
 
-  useEffect(() => {
-    if (parentValue?.conceptId && childFieldOptions?.getEcl) {
-      const updatedEcl = childFieldOptions.getEcl.replace(
-        /@parent/gi,
-        parentValue.conceptId,
-      );
-      setChildEcl(updatedEcl);
-      setIsChildDisabled(false);
-    } else {
-      setChildEcl('');
-      setChildValue(null);
-      setIsChildDisabled(true);
-    }
-  }, [parentValue, childFieldOptions]);
+    const commonParentFormData = _.get(rootFormData, commonParentPath) || {};
+    const initialChildFormData = _.get(commonParentFormData, childFieldName) || {};
 
-  const handleParentChange = (newValue: ConceptMini | null) => {
-    setParentValue(newValue);
+    const [parentFormData, setParentFormData] = useState(formData);
+    const [childFormData, setChildFormData] = useState(initialChildFormData);
 
-    const newRootFormData = _.cloneDeep(rootFormData);
-    let updatedData = { ...currentData };
+    // Update parent formData and trigger the onChange event for the parent component
+    const handleSelect = (conceptMini: ConceptMini | null) => {
+        const newFormData = conceptMini || {
+            conceptId: '',
+            pt: undefined,
+            fsn: undefined,
+        } as ConceptMini;
 
-    if (newValue) {
-      // Set parent field, keep child if it exists
-      updatedData[parentFieldName] = newValue;
-      setIsChildDisabled(false);
-    } else {
-      // Remove parent and child fields when parent is cleared
-      updatedData = _.omit(updatedData, [parentFieldName, childFieldName]);
-      setChildValue(null);
-      setChildEcl('');
-      setIsChildDisabled(true);
-    }
 
-    _.set(newRootFormData, parentPath, updatedData);
-    formContext?.onChange(newRootFormData);
-  };
 
-  const handleChildChange = (newValue: ConceptMini | null) => {
-    setChildValue(newValue);
+        // Update the parent form data
+        setParentFormData(newFormData);
 
-    const newRootFormData = _.cloneDeep(rootFormData);
-    let updatedData = { ...currentData };
+        // Dynamically update child field options based on parent selection
+        let childEcl = '';
+        if (newFormData?.conceptId) {
+            // Replace @parent in the ECL expression
+            childEcl = childFieldOptions?.getEcl
+                ? childFieldOptions?.getEcl.replace(/@parent/g, newFormData?.conceptId)
+                : '';
+        }
 
-    if (newValue) {
-      // Set child field, ensure parent is included
-      updatedData[childFieldName] = newValue;
-      updatedData[parentFieldName] = parentValue; // Parent must exist if child is set
-    } else {
-      // Remove child field, keep parent
-      updatedData = _.omit(updatedData, childFieldName);
-    }
+        // Update the child form data (optional depending on your logic)
+        setChildFormData({
+            conceptId: '',
+            pt: undefined,
+            fsn: undefined,
+        } as ConceptMini);
 
-    _.set(newRootFormData, parentPath, updatedData);
-    formContext?.onChange(newRootFormData);
-  };
+        // Dynamically modify the UI schema for the child field
+        // You should update formContext or pass new uiSchema to the parent component
+        const updatedUiSchema = {
+            ...uiSchema,
+            [childFieldName]: {
+                ...uiSchema[childFieldName],
+                'ui:options': {
+                    ...childFieldOptions,
+                    ecl: childEcl,
+                    disabled: !newFormData?.conceptId,  // Disable the child field if no conceptId in parent
+                }
+            }
+        };
 
-  const parentErrors = getUniqueErrors(rawErrors, errorSchema);
-  const childErrors = getFieldErrors(
-    formContext?.errorSchema || {},
-    `${parentPath}.${childFieldName}`,
-  );
+        // This will inform the parent component that the UI schema has been updated
+        // If you need to use the updated UI schema in parent, pass `updatedUiSchema` via context or directly
+        console.log('Updated UI Schema:', updatedUiSchema);
 
-  return (
-    <Box>
-      <Box mb={3}>
-        <AutoCompleteField
-          name={idSchema.$id}
-          schema={{ title: parentFieldOptions?.title }}
-          uiSchema={{ 'ui:options': parentFieldOptions }}
-          formData={parentValue}
-          onChange={handleParentChange}
-          errorSchema={errorSchema}
-        />
-        <ErrorDisplay errors={parentErrors} />
-      </Box>
+        // Call onChange to update parent component formData
+        onChange(newFormData);
+    };
 
-      <Box>
-        {!childFieldOptions?.skipTitle && (
-          <Typography variant="h6" gutterBottom>
-            {childFieldOptions?.title}
-          </Typography>
-        )}
-
-        <AutoCompleteField
-          name={idSchema.$id.replaceAll(
-            `_${parentFieldName}`,
-            `_${childFieldName}`,
-          )}
-          schema={{ title: childFieldOptions?.title }}
-          uiSchema={{
-            'ui:widget': 'hidden',
-            'ui:options': {
-              ...childFieldOptions,
-              ecl: childEcl,
-              disabled: isChildDisabled,
-            },
-          }}
-          formData={childValue}
-          onChange={handleChildChange}
-        />
-        <ErrorDisplay errors={childErrors} />
-      </Box>
-    </Box>
-  );
+    return (
+        <span data-component-name="ParentChildAutoCompleteField">
+            <div>
+                <AutoCompleteField
+                    {...props}
+                    onChange={handleSelect}
+                    value={parentFormData} // Ensure that the AutoCompleteField uses the latest formData
+                />
+            </div>
+        </span>
+    );
 };
 
 export default ParentChildAutoCompleteField;
