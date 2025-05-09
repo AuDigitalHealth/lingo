@@ -15,29 +15,32 @@
  */
 package au.gov.digitalhealth.lingo.configuration.model.enumeration;
 
-import java.util.Objects;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.Getter;
 
 public enum ModelLevelType {
-  MEDICINAL_PRODUCT(null),
-  MEDICINAL_PRODUCT_ONLY(MEDICINAL_PRODUCT),
-  MEDICINAL_PRODUCT_PRECISELY(MEDICINAL_PRODUCT_ONLY),
-  MEDICINAL_PRODUCT_FORM(MEDICINAL_PRODUCT),
-  MEDICINAL_PRODUCT_ONLY_FORM(MEDICINAL_PRODUCT_FORM),
-  PRODUCT_NAME(null),
-  REAL_MEDICINAL_PRODUCT(MEDICINAL_PRODUCT),
-  CLINICAL_DRUG(MEDICINAL_PRODUCT_ONLY_FORM),
-  REAL_CLINICAL_DRUG(CLINICAL_DRUG),
-  PACKAGED_CLINICAL_DRUG(null),
-  REAL_PACKAGED_CLINICAL_DRUG(PACKAGED_CLINICAL_DRUG),
-  REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG(REAL_PACKAGED_CLINICAL_DRUG);
+  MEDICINAL_PRODUCT(null, false),
+  MEDICINAL_PRODUCT_ONLY(Set.of(MEDICINAL_PRODUCT), false),
+  MEDICINAL_PRODUCT_PRECISELY(Set.of(MEDICINAL_PRODUCT_ONLY), false),
+  MEDICINAL_PRODUCT_FORM(Set.of(MEDICINAL_PRODUCT), false),
+  MEDICINAL_PRODUCT_ONLY_FORM(Set.of(MEDICINAL_PRODUCT_FORM), false),
+  PRODUCT_NAME(null, true),
+  REAL_MEDICINAL_PRODUCT(Set.of(MEDICINAL_PRODUCT), true),
+  CLINICAL_DRUG(Set.of(MEDICINAL_PRODUCT_ONLY_FORM), false),
+  REAL_CLINICAL_DRUG(Set.of(CLINICAL_DRUG, REAL_MEDICINAL_PRODUCT), true),
+  PACKAGED_CLINICAL_DRUG(null, false),
+  REAL_PACKAGED_CLINICAL_DRUG(Set.of(PACKAGED_CLINICAL_DRUG), true),
+  REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG(Set.of(REAL_PACKAGED_CLINICAL_DRUG), true);
 
-  private final ModelLevelType parent;
+  @Getter private final Set<ModelLevelType> parents;
+  @Getter private final boolean branded;
 
-  ModelLevelType(ModelLevelType parent) {
-    this.parent = parent;
+  ModelLevelType(Set<ModelLevelType> parent, boolean branded) {
+    this.parents = parent;
+    this.branded = branded;
   }
 
   public boolean isPackageLevel() {
@@ -46,8 +49,24 @@ public enum ModelLevelType {
         || this == REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG;
   }
 
+  public boolean isProductLevel() {
+    return !isPackageLevel() && this != PRODUCT_NAME;
+  }
+
   public Set<ModelLevelType> getAncestors() {
-    return Stream.iterate(this.parent, Objects::nonNull, model -> model.parent)
+    Set<ModelLevelType> ancestors = new HashSet<>();
+    if (parents != null) {
+      for (ModelLevelType parent : parents) {
+        ancestors.add(parent);
+        ancestors.addAll(parent.getAncestors());
+      }
+    }
+    return ancestors;
+  }
+
+  public Set<ModelLevelType> getDescendants() {
+    return Stream.of(ModelLevelType.values())
+        .filter(modelType -> modelType.getAncestors().contains(this))
         .collect(Collectors.toSet());
   }
 }
