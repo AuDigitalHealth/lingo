@@ -15,17 +15,39 @@
  */
 package au.gov.digitalhealth.lingo.configuration.model.enumeration;
 
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 public enum ModelLevelType {
-  MEDICINAL_PRODUCT,
-  MEDICINAL_PRODUCT_ONLY,
-  MEDICINAL_PRODUCT_PRECISELY,
-  MEDICINAL_PRODUCT_FORM,
-  MEDICINAL_PRODUCT_ONLY_FORM,
-  PRODUCT_NAME,
-  REAL_MEDICINAL_PRODUCT,
-  CLINICAL_DRUG,
-  REAL_CLINICAL_DRUG,
-  PACKAGED_CLINICAL_DRUG,
-  REAL_PACKAGED_CLINICAL_DRUG,
-  REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+  MEDICINAL_PRODUCT(null),
+  MEDICINAL_PRODUCT_ONLY(MEDICINAL_PRODUCT),
+  MEDICINAL_PRODUCT_PRECISELY(MEDICINAL_PRODUCT_ONLY),
+  MEDICINAL_PRODUCT_FORM(MEDICINAL_PRODUCT),
+  MEDICINAL_PRODUCT_ONLY_FORM(MEDICINAL_PRODUCT_FORM),
+  PRODUCT_NAME(null),
+  REAL_MEDICINAL_PRODUCT(MEDICINAL_PRODUCT),
+  CLINICAL_DRUG(MEDICINAL_PRODUCT_ONLY_FORM),
+  REAL_CLINICAL_DRUG(CLINICAL_DRUG),
+  PACKAGED_CLINICAL_DRUG(null),
+  REAL_PACKAGED_CLINICAL_DRUG(PACKAGED_CLINICAL_DRUG),
+  REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG(REAL_PACKAGED_CLINICAL_DRUG);
+
+  private final ModelLevelType parent;
+
+  ModelLevelType(ModelLevelType parent) {
+    this.parent = parent;
+  }
+
+  public boolean isPackageLevel() {
+    return this == PACKAGED_CLINICAL_DRUG
+        || this == REAL_PACKAGED_CLINICAL_DRUG
+        || this == REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG;
+  }
+
+  public Set<ModelLevelType> getAncestors() {
+    return Stream.iterate(this.parent, Objects::nonNull, model -> model.parent)
+        .collect(Collectors.toSet());
+  }
 }
