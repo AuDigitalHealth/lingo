@@ -55,6 +55,7 @@ const UnitValueField = ({
   const allErrors = getUniqueErrors(rawErrors, errorSchema);
 
   return (
+      <span data-component-name="UnitValueField">
     <Grid container spacing={1} alignItems="center">
       <Grid item xs={6}>
         <TextField
@@ -84,7 +85,26 @@ const UnitValueField = ({
       </Grid>
       <ErrorDisplay errors={allErrors} />
     </Grid>
+      </span>
   );
 };
 
 export default UnitValueField;
+
+// import React from 'react';
+// import { FieldProps } from '@rjsf/utils';
+// import UnitInput from "./UnitInput.tsx";
+//
+// const UnitValueField: React.FC<FieldProps<any, any>> = (props) => {
+//   const { formData, onChange, uiSchema } = props;
+//   return (
+//       <UnitInput
+//           value={formData}
+//           onChange={onChange}
+//           options={uiSchema && uiSchema['ui:options']}
+//           showValue
+//       />
+//   );
+// };
+//
+// export default UnitValueField;
