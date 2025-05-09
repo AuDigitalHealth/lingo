@@ -563,5 +563,15 @@
         }
       }
     }
+  },
+  "externalIdentifiers": {
+    "ui:widget": "OneOfArrayWidget",
+    "ui:options": {
+      "label": false,
+      "skipTitle": true,
+      "multiValuedSchemes": [
+        "artgid"
+      ]
+    }
   }
 }
