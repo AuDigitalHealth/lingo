@@ -5,7 +5,6 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import _ from 'lodash';
 import ajvErrors from 'ajv-errors';
 import AutoCompleteField from './fields/AutoCompleteField.tsx';
-import ParentChildAutoCompleteField from './fields/ParentChildAutoCompleteField.tsx';
 import UnitValueUnWrappedField from './fields/UnitValueUnWrappedField.tsx';
 import ProductLoader from '../components/ProductLoader.tsx';
 import ProductPreviewCreateModal from '../components/ProductPreviewCreateModal.tsx';
@@ -161,7 +160,6 @@ function DeviceAuthoring({
             fields={{
               UnitValueUnWrappedField: UnitValueUnWrappedField,
               AutoCompleteField,
-              ParentChildAutoCompleteField,
             }}
             templates={{
               FieldTemplate: CustomFieldTemplate,
