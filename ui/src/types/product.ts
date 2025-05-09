@@ -33,15 +33,6 @@ export enum ActionType {
   editProduct = 'editProduct',
 }
 
-export enum ProductGroupType {
-  MP = 'Product',
-  MPUU = 'Generic Product',
-  MPP = 'Generic Pack',
-  CTPP = 'Branded Container',
-  TP = 'Brand Name',
-  TPUU = 'Branded Product',
-  TPP = 'Branded Pack',
-}
 export interface ExternalIdentifier {
   identifierScheme: string;
   identifierValue: string;

@@ -276,6 +276,7 @@ export interface Edge {
 }
 
 export interface Product {
+  displayName: string;
   concept: Concept | null;
   label: string;
   newConceptDetails: NewConceptDetails | null;

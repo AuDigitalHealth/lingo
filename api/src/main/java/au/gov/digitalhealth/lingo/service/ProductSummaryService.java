@@ -19,14 +19,19 @@ import static au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils.getExterna
 
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
+import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
+import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -40,18 +45,6 @@ import reactor.core.publisher.Mono;
 @Log
 public class ProductSummaryService {
 
-  public static final String TPP_FOR_CTPP_ECL = "(> <id>) and ^ 929360041000036105";
-  public static final String MPP_FOR_CTPP_ECL =
-      "((> <id>) and ^ 929360081000036101) minus >((> <id>) and ^ 929360081000036101)";
-  public static final String TP_FOR_PRODUCT_ECL = ">> <id>.774158006";
-  public static final String TPUU_FOR_CTPP_ECL =
-      "(>> ((<id>.774160008) or (<id>.999000081000168101))) and (^ 929360031000036100)";
-  public static final String MPUU_FOR_MPP_ECL =
-      "(>> ((<id>.774160008) or (<id>.999000081000168101)) and ^ 929360071000036103) minus >(>> ((<id>.774160008) or (<id>.999000081000168101)) and ^ 929360071000036103)";
-  public static final String MPUU_FOR_TPUU_ECL =
-      "((> <id>) and ^ 929360071000036103) minus >((> <id>) and ^ 929360071000036103)";
-  public static final String MP_FOR_TPUU_ECL =
-      "((> <id>) and ^ 929360061000036106) minus >((> <id>) and ^ 929360061000036106)";
   public static final String CONTAINS_LABEL = "contains";
   public static final String HAS_PRODUCT_NAME_LABEL = "has product name";
   public static final String CTPP_LABEL = "CTPP";
@@ -62,8 +55,6 @@ public class ProductSummaryService {
   public static final String TPUU_LABEL = "TPUU";
   public static final String MPUU_LABEL = "MPUU";
   public static final String MP_LABEL = "MP";
-  private static final String SUBPACK_FROM_PARENT_PACK_ECL =
-      "((<id>.999000011000168107) or (<id>.999000111000168106))";
   private final SnowstormClient snowStormApiClient;
   private final NodeGeneratorService nodeGeneratorService;
   private final Models models;
@@ -123,8 +114,9 @@ public class ProductSummaryService {
     Mono<List<String>> projectChangedConceptIds =
         snowStormApiClient.getConceptIdsChangedOnProject(branch);
 
-    addConceptsAndRelationshipsForProduct(branch, productId, null, null, null, productSummary)
-        .join();
+    ModelConfiguration model = models.getModelConfiguration(branch);
+
+    addConceptsAndRelationshipsForProduct(branch, productId, null, productSummary, model).join();
 
     log.fine("Calculating transitive relationships for product model for " + productId);
 
@@ -194,204 +186,267 @@ public class ProductSummaryService {
   CompletableFuture<ProductSummary> addConceptsAndRelationshipsForProduct(
       String branch,
       String productId,
-      String outerCtppId,
-      String outerTppId,
-      String outerMppId,
-      ProductSummary productSummary) {
+      Map<ModelLevel, CompletableFuture<Node>> outerPackageNodes,
+      ProductSummary productSummary,
+      ModelConfiguration model) {
+
+    Set<ModelLevel> packagModelLevels = model.getPackageLevels();
+    long productIdLong = Long.parseLong(productId);
 
     Set<CompletableFuture<?>> futures = Collections.synchronizedSet(new HashSet<>());
 
-    CompletableFuture<Node> ctppNode =
-        nodeGeneratorService
-            .lookUpNode(branch, productId, CTPP_LABEL)
-            .thenApply(
-                c -> {
-                  productSummary.addNode(c);
-                  if (productSummary.getSubjects() == null
-                      || productSummary.getSubjects().isEmpty()) {
-                    // set this for the first, outermost CTPP
-                    productSummary.setSingleSubject(c);
-                  }
-                  return c;
-                });
-    futures.add(ctppNode);
-
-    CompletableFuture<Node> tppNode =
-        nodeGeneratorService
-            .lookUpNode(branch, Long.valueOf(productId), TPP_FOR_CTPP_ECL, TPP_LABEL)
-            .thenApply(
-                c -> {
-                  productSummary.addNode(c);
-                  return c;
-                });
-    futures.add(tppNode);
-
-    CompletableFuture<Node> mppNode =
-        nodeGeneratorService
-            .lookUpNode(branch, Long.valueOf(productId), MPP_FOR_CTPP_ECL, MPP_LABEL)
-            .thenApply(
-                c -> {
-                  productSummary.addNode(c);
-                  return c;
-                });
-    futures.add(mppNode);
-
-    futures.add(
-        CompletableFuture.allOf(mppNode, tppNode, ctppNode)
-            .thenApply(
-                v -> {
-                  productSummary.addEdge(
-                      ctppNode.join().getConcept().getConceptId(),
-                      tppNode.join().getConcept().getConceptId(),
-                      IS_A_LABEL);
-                  productSummary.addEdge(
-                      tppNode.join().getConcept().getConceptId(),
-                      mppNode.join().getConcept().getConceptId(),
-                      IS_A_LABEL);
-                  return null;
-                }));
-
-    if (outerCtppId != null) {
-      // no subpacks of subpacks
-      productSummary.addEdge(outerCtppId, productId, CONTAINS_LABEL);
-
-      futures.add(
-          CompletableFuture.allOf(mppNode, tppNode)
+    Map<ModelLevel, CompletableFuture<Node>> packageLevelNodeMap = new HashMap<>();
+    for (ModelLevel modelLevel : packagModelLevels) {
+      CompletableFuture<Node> node =
+          nodeGeneratorService
+              .lookUpNode(branch, productIdLong, modelLevel)
               .thenApply(
-                  v -> {
-                    productSummary.addEdge(
-                        outerTppId, tppNode.join().getConcept().getConceptId(), CONTAINS_LABEL);
-                    productSummary.addEdge(
-                        outerMppId, mppNode.join().getConcept().getConceptId(), CONTAINS_LABEL);
-                    return null;
-                  }));
-    } else {
+                  c -> {
+                    productSummary.addNode(c);
+                    if (modelLevel.isLeafLevel(packagModelLevels)
+                        && (productSummary.getSubjects() == null
+                            || productSummary.getSubjects().isEmpty())) {
+                      // set this for the first, outermost package node
+                      productSummary.setSingleSubject(c);
+                    }
+                    return c;
+                  });
+      futures.add(node);
+      packageLevelNodeMap.put(modelLevel, node);
+    }
+
+    CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+        .thenCompose(
+            v -> {
+              // Create a list to hold all the edge-creation futures
+              Set<CompletableFuture<Void>> edgeFutures = new HashSet<>();
+
+              // Process each model level asynchronously
+              for (ModelLevel modelLevel : packagModelLevels) {
+                // Get the child node future
+                CompletableFuture<Node> childNodeFuture = packageLevelNodeMap.get(modelLevel);
+
+                // Create parent-child relationship if needed
+                if (!model.getParentModelLevels(modelLevel.getModelLevelType()).isEmpty()) {
+
+                  for (ModelLevel parentLevel :
+                      model.getParentModelLevels(modelLevel.getModelLevelType())) {
+                    // Get the parent node future
+                    CompletableFuture<Node> parentNodeFuture = packageLevelNodeMap.get(parentLevel);
+
+                    // Create a future for adding the parent-child edge
+                    CompletableFuture<Void> parentEdgeFuture =
+                        childNodeFuture.thenCombine(
+                            parentNodeFuture,
+                            (childNode, parentNode) -> {
+                              productSummary.addEdge(
+                                  childNode.getConcept().getConceptId(),
+                                  parentNode.getConcept().getConceptId(),
+                                  IS_A_LABEL);
+                              return null;
+                            });
+
+                    edgeFutures.add(parentEdgeFuture);
+                  }
+                }
+
+                // Create outer-inner package relationship if needed
+                if (outerPackageNodes != null && !outerPackageNodes.isEmpty()) {
+                  CompletableFuture<Node> outerNodeFuture = outerPackageNodes.get(modelLevel);
+
+                  // Create a future for adding the outer-inner edge
+                  CompletableFuture<Void> outerEdgeFuture =
+                      childNodeFuture.thenCombine(
+                          outerNodeFuture,
+                          (childNode, outerNode) -> {
+                            if (outerNode != null) {
+                              productSummary.addEdge(
+                                  outerNode.getConcept().getConceptId(),
+                                  childNode.getConcept().getConceptId(),
+                                  CONTAINS_LABEL);
+                            }
+                            return null;
+                          });
+
+                  edgeFutures.add(outerEdgeFuture);
+                }
+              }
+
+              // Wait for all edge creations to complete
+              return CompletableFuture.allOf(edgeFutures.toArray(new CompletableFuture[0]));
+            })
+        .join();
+
+    if ((outerPackageNodes == null || outerPackageNodes.isEmpty())
+        && (model.getSubpackFromPackageEcl() != null
+            && !model.getSubpackFromPackageEcl().isBlank())) {
       Collection<String> subpackCtppIds =
           snowStormApiClient.getConceptsIdsFromEcl(
-              branch, SUBPACK_FROM_PARENT_PACK_ECL, Long.parseLong(productId), 0, 100);
+              branch, model.getSubpackFromPackageEcl(), Long.parseLong(productId), 0, 100);
 
       futures.addAll(
           subpackCtppIds.stream()
               .map(
                   subpackCtppId ->
                       addConceptsAndRelationshipsForProduct(
-                          branch,
-                          subpackCtppId,
-                          productId,
-                          tppNode.join().getConcept().getConceptId(),
-                          mppNode.join().getConcept().getConceptId(),
-                          productSummary))
+                          branch, subpackCtppId, packageLevelNodeMap, productSummary, model))
               .toList());
     }
 
-    futures.add(
-        nodeGeneratorService
-            .lookUpNode(branch, Long.valueOf(productId), TP_FOR_PRODUCT_ECL, TP_LABEL)
-            .thenApply(
-                c -> {
-                  productSummary.addNode(c);
-                  productSummary.addEdge(
-                      tppNode.join().getConcept().getConceptId(),
-                      c.getConcept().getConceptId(),
-                      HAS_PRODUCT_NAME_LABEL);
-                  productSummary.addEdge(
-                      ctppNode.join().getConcept().getConceptId(),
-                      c.getConcept().getConceptId(),
-                      HAS_PRODUCT_NAME_LABEL);
-                  return c;
-                }));
+    if (model.containsModelLevel(ModelLevelType.PRODUCT_NAME)) {
+      ModelLevel productNameLevel = model.getLevelOfType(ModelLevelType.PRODUCT_NAME);
+      futures.add(
+          nodeGeneratorService
+              .lookUpNode(branch, productIdLong, productNameLevel)
+              .thenApply(
+                  c -> {
+                    productSummary.addNode(c);
+                    for (ModelLevel modelLevel : packagModelLevels) {
+                      if (modelLevel.getModelLevelType().isBranded()) {
+                        Node packageNode =
+                            packageLevelNodeMap
+                                .get(model.getLevelOfType(modelLevel.getModelLevelType()))
+                                .join();
 
-    CompletableFuture<List<Node>> tpuusForCtpp =
+                        productSummary.addEdge(
+                            packageNode.getConcept().getConceptId(),
+                            c.getConcept().getConceptId(),
+                            HAS_PRODUCT_NAME_LABEL);
+                      }
+                    }
+                    return c;
+                  }));
+    }
+
+    Set<ModelLevel> productModelLevels = model.getProductLevels();
+
+    ModelLevel leafProductLevel = ModelLevel.getLeafLevel(productModelLevels);
+    CompletableFuture<Void> productNodesFuture =
         nodeGeneratorService
-            .lookUpNodes(branch, productId, TPUU_FOR_CTPP_ECL, TPUU_LABEL)
-            .thenApply(
-                c -> {
-                  c.forEach(
-                      concept -> {
-                        productSummary.addNode(concept);
-                        productSummary.addEdge(
-                            ctppNode.join().getConceptId(), concept.getConceptId(), CONTAINS_LABEL);
-                        productSummary.addEdge(
-                            tppNode.join().getConceptId(), concept.getConceptId(), CONTAINS_LABEL);
-                        CompletableFuture<Node> tpuuTp =
-                            nodeGeneratorService
-                                .lookUpNode(
-                                    branch,
-                                    Long.valueOf(concept.getConceptId()),
-                                    TP_FOR_PRODUCT_ECL,
-                                    TP_LABEL)
-                                .thenApply(
-                                    tp -> {
-                                      productSummary.addEdge(
-                                          concept.getConceptId(),
-                                          tp.getConcept().getConceptId(),
-                                          HAS_PRODUCT_NAME_LABEL);
-                                      return tp;
-                                    });
-                        futures.add(tpuuTp);
-                        CompletableFuture<List<Node>> mpuusForTpuu =
-                            nodeGeneratorService
-                                .lookUpNodes(
-                                    branch, concept.getConceptId(), MPUU_FOR_TPUU_ECL, MPUU_LABEL)
-                                .thenApply(
-                                    mpuus -> {
-                                      mpuus.forEach(
-                                          mpuu -> {
-                                            productSummary.addNode(mpuu);
-                                            productSummary.addEdge(
-                                                concept.getConceptId(),
-                                                mpuu.getConcept().getConceptId(),
-                                                IS_A_LABEL);
-                                            productSummary.addEdge(
-                                                mppNode.join().getConceptId(),
-                                                mpuu.getConcept().getConceptId(),
-                                                CONTAINS_LABEL);
-                                            productSummary.addEdge(
-                                                tppNode.join().getConceptId(),
-                                                mpuu.getConcept().getConceptId(),
-                                                CONTAINS_LABEL);
-                                            productSummary.addEdge(
-                                                ctppNode.join().getConceptId(),
-                                                mpuu.getConcept().getConceptId(),
-                                                CONTAINS_LABEL);
-                                          });
-                                      return mpuus;
-                                    });
-                        futures.add(mpuusForTpuu);
-                        CompletableFuture<List<Node>> mpsForTpuu =
-                            nodeGeneratorService
-                                .lookUpNodes(
-                                    branch, concept.getConceptId(), MP_FOR_TPUU_ECL, MP_LABEL)
-                                .thenApply(
-                                    mps -> {
-                                      mps.forEach(
-                                          mp -> {
-                                            productSummary.addNode(mp);
-                                            productSummary.addEdge(
-                                                concept.getConceptId(),
-                                                mp.getConcept().getConceptId(),
-                                                IS_A_LABEL);
-                                            productSummary.addEdge(
-                                                mppNode.join().getConceptId(),
-                                                mp.getConcept().getConceptId(),
-                                                CONTAINS_LABEL);
-                                            productSummary.addEdge(
-                                                tppNode.join().getConceptId(),
-                                                mp.getConcept().getConceptId(),
-                                                CONTAINS_LABEL);
-                                            productSummary.addEdge(
-                                                ctppNode.join().getConceptId(),
-                                                mp.getConcept().getConceptId(),
-                                                CONTAINS_LABEL);
-                                          });
-                                      return mps;
-                                    });
-                        futures.add(mpsForTpuu);
-                      });
-                  return c;
+            .lookUpNodes(branch, productIdLong, leafProductLevel)
+            .thenCompose(
+                productNodes -> {
+                  Set<CompletableFuture<Void>> productFutures =
+                      Collections.synchronizedSet(new HashSet<>());
+                  for (Node node : productNodes) {
+                    productFutures.add(
+                        processProductNode(
+                            branch,
+                            productSummary,
+                            model,
+                            node,
+                            packagModelLevels,
+                            packageLevelNodeMap));
+                  }
+                  return CompletableFuture.allOf(productFutures.toArray(new CompletableFuture[0]));
                 });
-    tpuusForCtpp.join();
+
+    futures.add(productNodesFuture);
     CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
     return CompletableFuture.completedFuture(productSummary);
+  }
+
+  private CompletableFuture<Void> processProductNode(
+      String branch,
+      ProductSummary productSummary,
+      ModelConfiguration model,
+      Node productNode,
+      Set<ModelLevel> packagModelLevels,
+      Map<ModelLevel, CompletableFuture<Node>> packageLevelNodeMap) {
+
+    Set<CompletableFuture<?>> futures = Collections.synchronizedSet(new HashSet<>());
+
+    productSummary.addNode(productNode);
+    // attach to the package nodes
+    for (ModelLevel modelLevel :
+        packagModelLevels.stream()
+            .filter(
+                l -> l.getModelLevelType().isBranded() == productNode.getModelLevel().isBranded())
+            .toList()) {
+
+      CompletableFuture<Node> packageNodeFuture =
+          packageLevelNodeMap.get(model.getLevelOfType(modelLevel.getModelLevelType()));
+
+      // Create a future for adding the edge (don't block!)
+      CompletableFuture<Void> edgeFuture =
+          packageNodeFuture.thenAccept(
+              packageNode -> {
+                productSummary.addEdge(
+                    packageNode.getConcept().getConceptId(),
+                    productNode.getConcept().getConceptId(),
+                    CONTAINS_LABEL);
+              });
+      futures.add(edgeFuture);
+    }
+
+    if (model.containsModelLevel(ModelLevelType.PRODUCT_NAME)
+        && productNode.getModelLevel().isBranded()) {
+      ModelLevel productNameLevel = model.getLevelOfType(ModelLevelType.PRODUCT_NAME);
+      futures.add(
+          nodeGeneratorService
+              .lookUpNode(
+                  branch, Long.parseLong(productNode.getConcept().getConceptId()), productNameLevel)
+              .thenCompose(
+                  productName -> {
+                    productSummary.addNode(productName);
+
+                    // Gather all the futures for creating edges
+                    Set<CompletableFuture<Void>> edgeFutures = new HashSet<>();
+
+                    for (ModelLevel modelLevel : packagModelLevels) {
+                      if (modelLevel.getModelLevelType().isBranded()) {
+                        // Get the future for the package node
+                        CompletableFuture<Node> packageNodeFuture =
+                            packageLevelNodeMap.get(
+                                model.getLevelOfType(modelLevel.getModelLevelType()));
+
+                        // Create a future for adding the edge (don't block!)
+                        CompletableFuture<Void> edgeFuture =
+                            packageNodeFuture.thenAccept(
+                                packageNode -> {
+                                  productSummary.addEdge(
+                                      productNode.getConcept().getConceptId(),
+                                      productName.getConcept().getConceptId(),
+                                      HAS_PRODUCT_NAME_LABEL);
+                                });
+
+                        edgeFutures.add(edgeFuture);
+                      }
+                    }
+
+                    // Wait for all edge creations to complete, then return the productName
+                    return CompletableFuture.allOf(edgeFutures.toArray(new CompletableFuture[0]));
+                  }));
+    }
+
+    // find and attach to the parent nodes
+    final Set<ModelLevel> parentModelLevels =
+        model.getParentModelLevels(productNode.getModelLevel());
+    if (parentModelLevels != null) {
+      for (ModelLevel parentModelLevel : parentModelLevels) {
+        futures.add(
+            nodeGeneratorService
+                .lookUpNode(
+                    branch,
+                    Long.parseLong(productNode.getConcept().getConceptId()),
+                    parentModelLevel)
+                .thenCompose(
+                    parent -> {
+                      productSummary.addEdge(
+                          productNode.getConcept().getConceptId(),
+                          parent.getConcept().getConceptId(),
+                          IS_A_LABEL);
+                      return processProductNode(
+                          branch,
+                          productSummary,
+                          model,
+                          parent,
+                          packagModelLevels,
+                          packageLevelNodeMap);
+                    }));
+      }
+    }
+
+    return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
   }
 }

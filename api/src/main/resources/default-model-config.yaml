@@ -9,42 +9,50 @@ models:
     baseBulkBrandUiSchema: classpath:AMT/base-bulk-brand-ui-schema.json
     baseBulkPackSchema: classpath:AMT/base-bulk-pack-schema.json
     baseBulkPackUiSchema: classpath:AMT/base-bulk-pack-ui-schema.json
+    subpackFromPackageEcl: "((<id>.999000011000168107) or (<id>.999000111000168106))"
     levels:
-      - name: Medicinal Product
+      - name: Product
         displayLabel: MP
+        displayName: Product
         modelLevelType: MEDICINAL_PRODUCT
         semanticTag: medicinal product
         referenceSetIdentifier: 929360061000036106
-      - name: Clinical Drug
-        displayLabel: CD
+        productModelEcl: "((> <id>) and ^ 929360061000036106) minus >((> <id>) and ^ 929360061000036106)"
+      - name: Generic Product
+        displayLabel: MPUU
         modelLevelType: CLINICAL_DRUG
         semanticTag: clinical drug
         referenceSetIdentifier: 929360071000036103
-      - name: Real Clinical Drug
-        displayLabel: RCD
+        productModelEcl: "((> <id>) and ^ 929360071000036103) minus >((> <id>) and ^ 929360071000036103)"
+      - name: Branded Product
+        displayLabel: TPUU
         modelLevelType: REAL_CLINICAL_DRUG
         semanticTag: branded clinical drug
         referenceSetIdentifier: 929360031000036100
-      - name: Packaged Clinical Drug
-        displayLabel: PCD
+        productModelEcl: "(>> ((<id>.774160008) or (<id>.999000081000168101))) and (^ 929360031000036100)"
+      - name: Generic Pack
+        displayLabel: MPP
         modelLevelType: PACKAGED_CLINICAL_DRUG
         semanticTag: clinical drug package
         referenceSetIdentifier: 929360081000036101
-      - name: Real Packaged Clinical Drug
-        displayLabel: RPCD
+        productModelEcl: "((> <id>) and ^ 929360081000036101) minus >((> <id>) and ^ 929360081000036101)"
+      - name: Branded Pack
+        displayLabel: TPP
         modelLevelType: REAL_PACKAGED_CLINICAL_DRUG
         semanticTag: branded clinical drug package
         referenceSetIdentifier: 929360041000036105
-      - name: Real Containerized Packaged Clinical Drug
-        displayLabel: RCPCD
+        productModelEcl: "(> <id>) and ^ 929360041000036105"
+      - name: Branded Container
+        displayLabel: CTPP
         modelLevelType: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
         semanticTag: containerized branded clinical drug package
         referenceSetIdentifier: 929360051000036108
-      - name: Product Name
-        displayLabel: PN
+      - name: Brand Name
+        displayLabel: TP
         modelLevelType: PRODUCT_NAME
         semanticTag: product name
         referenceSetIdentifier: 929360021000036102
+        productModelEcl: ">> <id>.774158006"
     mappings:
       - name: artgid
         title: ARTGID
@@ -72,41 +80,41 @@ models:
     baseBulkPackSchema: classpath:NMPC/base-bulk-pack-schema.json
     baseBulkPackUiSchema: classpath:NMPC/base-bulk-pack-ui-schema.json
     levels:
-      - name: Medicinal Product
+      - name: Virtual Therapeutic Moiety
         displayLabel: MP
         modelLevelType: MEDICINAL_PRODUCT
         semanticTag: medicinal product
         referenceSetIdentifier: 929360061000036106
-      - name: Clinical Drug
-        displayLabel: CD
+        productModelEcl: "(> <id> :[0..0]774159003=*,[0..0]411116001=*) MINUS (>(> <id> :[0..0]774159003=*,[0..0]411116001=*) OR 763158003)"
+      - name: Virtual Medicinal Product
+        displayLabel: MPUU
         modelLevelType: CLINICAL_DRUG
         semanticTag: clinical drug
         referenceSetIdentifier: 929360071000036103
-      - name: Real Clinical Drug
-        displayLabel: RCD
+        productModelEcl: "(> <id> :[0..0]774159003=*) {{ C moduleId=1601000220105 }} MINUS (>((> <id> :[0..0]774159003=*) {{ C moduleId=1601000220105 }}))"
+      - name: Actual Medicinal Product
+        displayLabel: TPUU
         modelLevelType: REAL_CLINICAL_DRUG
-        semanticTag: branded clinical drug
+        semanticTag: real clinical drug
         referenceSetIdentifier: 929360031000036100
-      - name: Packaged Clinical Drug
-        displayLabel: PCD
+        productModelEcl: "(<id>.774160008) {{ D term=\"real clinical drug\" }}"
+      - name: Virtual Medicinal Product Pack
+        displayLabel: MPP
         modelLevelType: PACKAGED_CLINICAL_DRUG
         semanticTag: clinical drug package
         referenceSetIdentifier: 929360081000036101
-      - name: Real Packaged Clinical Drug
-        displayLabel: RPCD
+        productModelEcl: "> <id> {{D term=\"packaged clinical drug\"}}"
+      - name: Actual Medicinal Product Pack
+        displayLabel: TPP
         modelLevelType: REAL_PACKAGED_CLINICAL_DRUG
-        semanticTag: branded clinical drug package
+        semanticTag: real clinical drug package
         referenceSetIdentifier: 929360041000036105
-      - name: Real Containerized Packaged Clinical Drug
-        displayLabel: RCPCD
-        modelLevelType: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
-        semanticTag: containerized branded clinical drug package
-        referenceSetIdentifier: 929360051000036108
-      - name: Product Name
-        displayLabel: PN
-        modelLevelType: PRODUCT_NAME
-        semanticTag: product name
+      - name: Actual Therapeutic Moiety
+        displayLabel: TP
+        modelLevelType: REAL_MEDICINAL_PRODUCT
+        semanticTag: real medicinal product
         referenceSetIdentifier: 929360021000036102
+        productModelEcl: "> <id> :774159003=*"
     mappings:
       - name: pan
         title: Product authorisation number
