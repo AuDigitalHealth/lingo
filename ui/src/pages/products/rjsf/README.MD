@@ -76,39 +76,6 @@ A conditional array renderer — only renders if certain conditions are true.
 
 ---
 
-## 3. `ParentChildAutoCompleteField`
-
-### a. Purpose / Overview
-Links two `AutoCompleteField`s: selecting a parent updates the child ECL.
-
-### b. Rendered Fields / Attributes
-- Parent autocomplete input.
-- Child autocomplete input (filtered based on parent).
-
-### c. Layout and Styling
-- Vertical stacking.
-- Error/validation styling per field.
-
-### d. Event Handlers
-- `onChange` in parent triggers child option update.
-- `onChange` in child stores selected concept.
-
-### e. Validation
-- Ensures parent is selected before showing child.
-
-### f. Options (`ui:options`)
-- `parentFieldName`, `childFieldName`
-- `parentFieldOptions`, `childFieldOptions`
-- `getEcl`: string formula for dynamic child filtering
-
-### g. Dependencies
-- `AutoCompleteField`
-
-### h. Potential Improvements
-- Make `getEcl` callable instead of string templated.
-
----
-
 ## 4. `UnitValueUnWrappedField`
 
 ### a. Purpose / Overview
