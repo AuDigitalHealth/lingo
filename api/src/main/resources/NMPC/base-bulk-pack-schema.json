@@ -1,0 +1,122 @@
+{
+  "type": "object",
+  "$defs": {
+    "SnowstormConceptMini": {
+      "type": "object",
+      "properties": {
+        "conceptId": {
+          "type": "string"
+        },
+        "pt": {
+          "$ref": "#/$defs/SnowstormTermLangPojo"
+        }
+      },
+      "minProperties": 1,
+      "errorMessage": {
+        "minProperties": "Field must be populated."
+      }
+    },
+    "SnowstormTermLangPojo": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "lang": {
+          "type": "string"
+        },
+        "term": {
+          "type": "string"
+        }
+      }
+    },
+    "ExternalIdentifier": {
+      "type": "object",
+      "oneOf": [
+        {
+          "title": "ARTGID",
+          "type": "object",
+          "properties": {
+            "identifierScheme": {
+              "type": "string",
+              "const": "artgid"
+            },
+            "relationshipType": {
+              "title": "Relationship type",
+              "type": "string",
+              "const": "RELATED"
+            },
+            "identifierValue": {
+              "title": "ARTGID",
+              "type": "string",
+              "pattern": "\\d{1,8}",
+              "errorMessage": {
+                "pattern": "Please enter a valid ARTGID matching \\d{1,8}"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "PackDetails": {
+      "type": "object",
+      "properties": {
+        "packSize": {
+          "type": "integer",
+          "minimum": 1,
+          "errorMessage": {
+            "minimum": "Pack size must be at least 1."
+          }
+        },
+        "externalIdentifiers": {
+          "type": "array",
+          "title": "External identifiers",
+          "items": {
+            "$ref": "#/$defs/ExternalIdentifier"
+          }
+        }
+      },
+      "required": ["packSize"]
+    }
+  },
+  "properties": {
+    "selectedProduct": {
+      "type": "string",
+      "title": "Selected Product"
+    },
+    "existingPackSizes": {
+      "type": "array",
+      "title": "Existing Pack Sizes",
+      "items": {
+        "$ref": "#/$defs/PackDetails"
+      }
+    },
+    "packSizes": {
+      "type": "array",
+      "title": "New Pack Sizes",
+      "items": {
+        "$ref": "#/$defs/PackDetails"
+      }
+    },
+    "unitOfMeasure": {
+      "$ref": "#/$defs/SnowstormConceptMini"
+    },
+    "newPackSizeInput": {
+      "type": "object",
+      "properties": {
+        "packSize": {
+          "type": "integer",
+          "minimum": 1,
+          "errorMessage": {
+            "minimum": "Pack size must be at least 1."
+          }
+        },
+        "externalIdentifiers": {
+          "type": "array",
+          "title": "External identifiers",
+          "items": {
+            "$ref": "#/$defs/ExternalIdentifier"
+          }
+        }
+      }
+    }
+  }
+}
