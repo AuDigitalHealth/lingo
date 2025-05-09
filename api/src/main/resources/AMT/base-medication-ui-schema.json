@@ -135,6 +135,7 @@
                   }
                 ],
                 "ecl": ">>^929360031000036100.127489000",
+                "extendedEcl": "<105590001",
                 "showDefaultOptions": false
               }
             },
@@ -189,29 +190,36 @@
           }
         },
         "genericForm": {
-          "ui:field": "ParentChildAutoCompleteField",
+          "ui:field": "AutoCompleteField",
           "ui:options": {
-            "parentFieldName": "genericForm",
-            "childFieldName": "specificForm",
-            "parentFieldOptions": {
-              "ecl": "^929360071000036103.411116001",
-              "extendedEcl": "<736542009",
-              "showDefaultOptions": false,
-              "title": "Generic Dose Form"
-            },
-            "childFieldOptions": {
-              "ecl": "",
-              "showDefaultOptions": true,
-              "title": "Specific Dose Form",
-              "getEcl": "<@parent"
-            }
+            "dependants": [
+              {
+                "path": "../specificForm",
+                "ui:options": {
+                  "getEcl": "<@parent",
+                  "showDefaultOptions": true
+                }
+              }
+            ],
+            "ecl": "^929360071000036103.411116001",
+            "extendedEcl": "<736542009",
+            "showDefaultOptions": false,
           }
         },
         "specificForm": {
-          "ui:widget": "hidden",
-          "ui:options": {
-            "skipTitle": true
-          }
+          "anyOf": [
+            {
+              "ui:title": "Specific Dose Form",
+              "ui:field": "AutoCompleteField",
+              "ui:options": {
+                "showDefaultOptions": true
+              }
+            },
+            {
+              "ui:title": "No Specific Dose Form",
+              "value": null
+            }
+          ]
         },
         "quantity": {
           "ui:field": "UnitValueField",
@@ -436,6 +444,7 @@
                         }
                       ],
                       "ecl": ">>^929360031000036100.127489000",
+                      "extendedEcl": "<105590001",
                       "showDefaultOptions": false
                     }
                   },
@@ -490,29 +499,36 @@
                 }
               },
               "genericForm": {
-                "ui:field": "ParentChildAutoCompleteField",
+                "ui:field": "AutoCompleteField",
                 "ui:options": {
-                  "parentFieldName": "genericForm",
-                  "childFieldName": "specificForm",
-                  "parentFieldOptions": {
-                    "ecl": "^929360071000036103.411116001",
-                    "extendedEcl": "<736542009",
-                    "showDefaultOptions": false,
-                    "title": "Generic Dose Form"
-                  },
-                  "childFieldOptions": {
-                    "ecl": "",
-                    "showDefaultOptions": true,
-                    "title": "Specific Dose Form",
-                    "getEcl": "<@parent"
-                  }
+                  "dependants": [
+                    {
+                      "path": "../specificForm",
+                      "ui:options": {
+                        "getEcl": "<@parent",
+                        "showDefaultOptions": true
+                      }
+                    }
+                  ],
+                  "ecl": "^929360071000036103.411116001",
+                  "extendedEcl": "<736542009",
+                  "showDefaultOptions": false,
                 }
               },
               "specificForm": {
-                "ui:widget": "hidden",
-                "ui:options": {
-                  "skipTitle": true
-                }
+                "anyOf": [
+                  {
+                    "ui:title": "Specific Dose Form",
+                    "ui:field": "AutoCompleteField",
+                    "ui:options": {
+                      "showDefaultOptions": true
+                    }
+                  },
+                  {
+                    "ui:title": "No Specific Dose Form",
+                    "value": null
+                  }
+                ]
               },
               "quantity": {
                 "ui:field": "UnitValueField",
