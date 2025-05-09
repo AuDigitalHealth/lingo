@@ -2,6 +2,7 @@
   "ui:order": [
     "productName",
     "containerType",
+    "externalIdentifiers",
     "containedProducts",
     "containedPackages"
   ],
@@ -44,7 +45,11 @@
       "conditionLogic": "and"
     },
     "items": {
-      "ui:order": ["productDetails", "unit", "value"],
+      "ui:order": [
+        "productDetails",
+        "unit",
+        "value"
+      ],
       "ui:options": {
         "titleSource": "productDetails.productName.pt.term",
         "defaultTitle": "Product",
@@ -118,30 +123,35 @@
               "skipTitle": true
             },
             "activeIngredient": {
-              "ui:field": "ParentChildAutoCompleteField",
+              "ui:field": "AutoCompleteField",
               "ui:options": {
-                "parentFieldName": "activeIngredient",
-                "childFieldName": "preciseIngredient",
-                "parentFieldOptions": {
-                  "ecl": ">>^929360031000036100.127489000",
-                  "extendedEcl": "<105590001",
-                  "showDefaultOptions": false,
-                  "title": "Has Active Ingredient",
-                  "skipTitle": true
-                },
-                "childFieldOptions": {
-                  "ecl": "",
-                  "showDefaultOptions": true,
-                  "title": "Precise Ingredient",
-                  "getEcl": "<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent)) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))))"
-                }
+                "dependants": [
+                  {
+                    "path": "../preciseIngredient",
+                    "ui:options": {
+                      "getEcl": "<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent)) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))))",
+                      "showDefaultOptions": true
+                    }
+                  }
+                ],
+                "ecl": ">>^929360031000036100.127489000",
+                "showDefaultOptions": false
               }
             },
             "preciseIngredient": {
-              "ui:widget": "hidden",
-              "ui:options": {
-                "skipTitle": true
-              }
+              "anyOf": [
+                {
+                  "ui:title": "Precise Ingredient",
+                  "ui:field": "AutoCompleteField",
+                  "ui:options": {
+                    "showDefaultOptions": true
+                  }
+                },
+                {
+                  "ui:title": "No Precise Ingredient",
+                  "value": null
+                }
+              ]
             },
             "basisOfStrengthSubstance": {
               "ui:field": "AutoCompleteField",
@@ -226,7 +236,6 @@
               "ecl": "^929360051000036108.30465011000036106",
               "extendedEcl": "<49062001",
               "showDefaultOptions": true
-
             },
             "fieldBOptions": {
               "title": "Device Type",
@@ -415,30 +424,35 @@
                     "skipTitle": true
                   },
                   "activeIngredient": {
-                    "ui:field": "ParentChildAutoCompleteField",
+                    "ui:field": "AutoCompleteField",
                     "ui:options": {
-                      "parentFieldName": "activeIngredient",
-                      "childFieldName": "preciseIngredient",
-                      "parentFieldOptions": {
-                        "ecl": ">>^929360031000036100.127489000",
-                        "extendedEcl": "<105590001",
-                        "showDefaultOptions": false,
-                        "title": "Has Active Ingredient",
-                        "skipTitle": true
-                      },
-                      "childFieldOptions": {
-                        "ecl": "",
-                        "showDefaultOptions": true,
-                        "title": "Precise Ingredient",
-                        "getEcl": "<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent)) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))))"
-                      }
+                      "dependants": [
+                        {
+                          "path": "../preciseIngredient",
+                          "ui:options": {
+                            "getEcl": "<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent)) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))))",
+                            "showDefaultOptions": true
+                          }
+                        }
+                      ],
+                      "ecl": ">>^929360031000036100.127489000",
+                      "showDefaultOptions": false
                     }
                   },
                   "preciseIngredient": {
-                    "ui:widget": "hidden",
-                    "ui:options": {
-                      "skipTitle": true
-                    }
+                    "anyOf": [
+                      {
+                        "ui:title": "Precise Ingredient",
+                        "ui:field": "AutoCompleteField",
+                        "ui:options": {
+                          "showDefaultOptions": true
+                        }
+                      },
+                      {
+                        "ui:title": "No Precise Ingredient",
+                        "value": null
+                      }
+                    ]
                   },
                   "basisOfStrengthSubstance": {
                     "ui:field": "AutoCompleteField",
