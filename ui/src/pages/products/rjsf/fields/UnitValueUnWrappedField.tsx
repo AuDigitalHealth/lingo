@@ -60,6 +60,7 @@ const UnitValueUnWrappedField = (props: FieldProps) => {
     (v, i, a) => a.indexOf(v) === i,
   );
   return (
+      <span data-component-name="UnitValueUnWrappedField">
     <Grid container spacing={1} direction={'row'} alignItems="center">
       <Grid item xs={6}>
         <TextField
@@ -98,6 +99,7 @@ const UnitValueUnWrappedField = (props: FieldProps) => {
         <ErrorDisplay errors={unitErrors} />
       </Grid>
     </Grid>
+      </span>
   );
 };
 
