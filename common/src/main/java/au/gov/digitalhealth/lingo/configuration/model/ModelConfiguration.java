@@ -75,6 +75,8 @@ public class ModelConfiguration implements InitializingBean {
 
   @NotEmpty private String baseBulkPackUiSchema;
 
+  private String subpackFromPackageEcl;
+
   @Override
   public void afterPropertiesSet() throws ValidationException {
     validateModelLevels();
@@ -158,5 +160,73 @@ public class ModelConfiguration implements InitializingBean {
   public Map<String, NonDefiningProperty> getNonDefiningPropertiesByName() {
     return nonDefiningProperties.stream()
         .collect(Collectors.toMap(NonDefiningProperty::getName, Function.identity(), (a, b) -> a));
+  }
+
+  public Set<ModelLevel> getProductLevels() {
+    return levels.stream()
+        .filter(level -> level.getModelLevelType().isProductLevel())
+        .collect(Collectors.toSet());
+  }
+
+  public Set<ModelLevel> getPackageLevels() {
+    return levels.stream()
+        .filter(level -> level.getModelLevelType().isPackageLevel())
+        .collect(Collectors.toSet());
+  }
+
+  public ModelLevel getLevelOfType(ModelLevelType type) {
+    List<ModelLevel> matchingLevels =
+        levels.stream().filter(level -> level.getModelLevelType().equals(type)).toList();
+
+    if (matchingLevels.isEmpty()) {
+      throw new ValidationException(
+          "No model level found for type: " + type + " in model: " + this.modelType);
+    }
+
+    if (matchingLevels.size() > 1) {
+      throw new ValidationException(
+          "Multiple model levels found for type: " + type + " in model: " + this.modelType);
+    }
+
+    return matchingLevels.get(0);
+  }
+
+  /**
+   * Gets the most immediate parent model level for the given model level type.
+   *
+   * @param modelLevel The model level type to find the parent for
+   * @return The parent model level, or null if there is no parent
+   * @throws ValidationException if multiple parents are found, or the type exists but there is no
+   *     matching level
+   */
+  public Set<ModelLevel> getParentModelLevels(ModelLevelType modelLevel) {
+    // Get ancestors of the requested model level
+    Set<ModelLevelType> ancestorTypes = modelLevel.getAncestors();
+
+    // Get all model level types available in this model
+    Set<ModelLevelType> availableTypes =
+        getLevels().stream().map(ModelLevel::getModelLevelType).collect(Collectors.toSet());
+
+    // Find ancestors that exist in our model
+    Set<ModelLevelType> existingAncestors =
+        ancestorTypes.stream().filter(availableTypes::contains).collect(Collectors.toSet());
+
+    // Find the most immediate ancestors (ones that don't have their own ancestors in the set)
+    Set<ModelLevelType> immediateAncestors = new HashSet<>(existingAncestors);
+    existingAncestors.forEach(ancestor -> immediateAncestors.removeAll(ancestor.getAncestors()));
+
+    // Validate the result
+    if (immediateAncestors.isEmpty()) {
+      return Set.of();
+    }
+
+    // Get the actual ModelLevel instance for the found type
+    return getLevels().stream()
+        .filter(level -> immediateAncestors.contains(level.getModelLevelType()))
+        .collect(Collectors.toSet());
+  }
+
+  public boolean containsModelLevel(ModelLevelType modelLevelType) {
+    return levels.stream().anyMatch(level -> level.getModelLevelType().equals(modelLevelType));
   }
 }

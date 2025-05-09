@@ -1,4 +1,4 @@
-import { ProductSummary } from '../../../types/concept.ts';
+import {ProductSummary} from '../../../types/concept.ts';
 import {
   Control,
   UseFormGetValues,
@@ -8,19 +8,18 @@ import {
 } from 'react-hook-form';
 
 import useCanEditTask from '../../../hooks/useCanEditTask.tsx';
-import React, { useState } from 'react';
-import { useFieldBindings } from '../../../hooks/api/useInitializeConfig.tsx';
-import { useRefsetMembersByComponentIds } from '../../../hooks/api/refset/useRefsetMembersByComponentIds.tsx';
-import { Box, Button, Grid } from '@mui/material';
-import ProductTypeGroupPreview from './ProductTypeGroupPreview.tsx';
+import React, {useState} from 'react';
+import {useFieldBindings} from '../../../hooks/api/useInitializeConfig.tsx';
 import {
-  filterByLabel,
-  getProductDisplayName,
-} from '../../../utils/helpers/conceptUtils.ts';
-import { Stack } from '@mui/system';
+  useRefsetMembersByComponentIds
+} from '../../../hooks/api/refset/useRefsetMembersByComponentIds.tsx';
+import {Box, Button, Grid} from '@mui/material';
+import ProductTypeGroupPreview from './ProductTypeGroupPreview.tsx';
+import {filterByLabel, getProductDisplayName,} from '../../../utils/helpers/conceptUtils.ts';
+import {Stack} from '@mui/system';
 import UnableToEditTooltip from '../../tasks/components/UnableToEditTooltip.tsx';
 
-import { Ticket } from '../../../types/tickets/ticket.ts';
+import {Ticket} from '../../../types/tickets/ticket.ts';
 import ProductLoader from './ProductLoader.tsx';
 
 interface ProductPreviewBodyProps {
@@ -82,7 +81,7 @@ function ProductPreviewBody({
         {isRefsetLoading ||
           (fieldBindingIsLoading && (
             <ProductLoader
-              message={`Loading 7 Box model for [${getProductDisplayName(productModel)}]`}
+              message={`Loading box model for [${getProductDisplayName(productModel)}]`}
             />
           ))}
         <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 3 }}>

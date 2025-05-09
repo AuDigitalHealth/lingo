@@ -26,6 +26,7 @@ import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.exception.SingleConceptExpectedProblem;
 import au.gov.digitalhealth.lingo.product.NewConceptDetails;
@@ -62,33 +63,37 @@ public class NodeGeneratorService {
   }
 
   @Async
-  public CompletableFuture<Node> lookUpNode(String branch, String productId, String label) {
+  public CompletableFuture<Node> lookUpNode(String branch, Long productId, ModelLevel modelLevel) {
     Node node = new Node();
-    node.setLabel(label);
-    SnowstormConceptMini concept = snowstormClient.getConcept(branch, productId);
-    node.setConcept(concept);
-    return CompletableFuture.completedFuture(node);
-  }
-
-  @Async
-  public CompletableFuture<Node> lookUpNode(
-      String branch, Long productId, String ecl, String label) {
-    Node node = new Node();
-    node.setLabel(label);
-    SnowstormConceptMini concept = snowstormClient.getConceptFromEcl(branch, ecl, productId);
+    node.setLabel(modelLevel.getDisplayLabel());
+    node.setModelLevel(modelLevel.getModelLevelType());
+    node.setDisplayName(modelLevel.getName());
+    SnowstormConceptMini concept;
+    if (modelLevel.getProductModelEcl() != null && !modelLevel.getProductModelEcl().isBlank()) {
+      concept =
+          snowstormClient.getConceptFromEcl(branch, modelLevel.getProductModelEcl(), productId);
+    } else {
+      concept = snowstormClient.getConcept(branch, productId.toString());
+    }
     node.setConcept(concept);
     return CompletableFuture.completedFuture(node);
   }
 
   @Async
   public CompletableFuture<List<Node>> lookUpNodes(
-      String branch, String productId, String ecl, String label) {
+      String branch, Long productId, ModelLevel modelLevel) {
+
     return CompletableFuture.completedFuture(
-        snowstormClient.getConceptsFromEcl(branch, ecl, Long.parseLong(productId), 0, 100).stream()
+        snowstormClient
+            // TODO need to change this back from inferred when using the transformed data
+            .getConceptsFromInferredEcl(branch, modelLevel.getProductModelEcl(), productId, 0, 100)
+            .stream()
             .map(
                 concept -> {
                   Node node = new Node();
-                  node.setLabel(label);
+                  node.setLabel(modelLevel.getDisplayLabel());
+                  node.setModelLevel(modelLevel.getModelLevelType());
+                  node.setDisplayName(modelLevel.getName());
                   node.setConcept(concept);
                   return node;
                 })
