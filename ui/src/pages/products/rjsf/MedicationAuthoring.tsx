@@ -143,63 +143,66 @@ function MedicationAuthoring({
     setSaveModalOpen(true);
   };
 
-  const onError = (errors: any) => {
-    const newErrorSchema = errors.reduce((acc: any, error: any) => {
-      _.set(acc, error.property.slice(1), { __errors: [error.message] });
-      return acc;
-    }, {});
-    setErrorSchema(newErrorSchema);
-    // enqueueSnackbar(
-    //   'Error Validating Product Definition.',
-    //   {
-    //     variant: 'error',
-    //     autoHideDuration: 2000,
-    //   },
-    // );
-    // enqueueSnackbar(
-    //   'Error Validating Product Definition' +
-    //     (newErrorSchema ? `: ${formatErrors(newErrorSchema)}` : ``),
-    //   {
-    //     variant: 'error',
-    //   },
-    // );
-  };
+  // const onError = (errors: any) => {
+  //   const newErrorSchema = errors.reduce((acc: any, error: any) => {
+  //     _.set(acc, error.property.slice(1), { __errors: [error.message] });
+  //     return acc;
+  //   }, {});
+  //   setErrorSchema(newErrorSchema);
+  //   // enqueueSnackbar(
+  //   //   'Error Validating Product Definition.',
+  //   //   {
+  //   //     variant: 'error',
+  //   //     autoHideDuration: 2000,
+  //   //   },
+  //   // );
+  //   // enqueueSnackbar(
+  //   //   'Error Validating Product Definition' +
+  //   //     (newErrorSchema ? `: ${formatErrors(newErrorSchema)}` : ``),
+  //   //   {
+  //   //     variant: 'error',
+  //   //   },
+  //   // );
+  // };
 
   return (
     <Paper sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1 }}>
       <Box m={2} p={2}>
         <Container data-testid="product-creation-grid">
+              {/*// ParentChildAutoCompleteField,*/}
           <Form
             ref={formRef}
-            schema={schema}
-            uiSchema={uiSchema}
+            schema={schema as any}
+            uiSchema={uiSchema as any}
             formData={formData}
             formContext={formContext}
-            onChange={handleChange}
-            onSubmit={handleFormSubmit}
-            onError={onError}
             fields={{
-              UnitValueField,
               AutoCompleteField,
-              ParentChildAutoCompleteField,
-              MutuallyExclusiveAutocompleteField,
               ConditionalArrayField,
-              CompactQuantityField,
               UnitValueUnWrappedField,
+              UnitValueField,
+              MutuallyExclusiveAutocompleteField,
+              CompactQuantityField,
+            }}
+            widgets={{
+              TextFieldWidget,
+              OneOfArrayWidget,
+              NumberWidget,
             }}
             templates={{
-              FieldTemplate: CustomFieldTemplate,
               ArrayFieldTemplate: CustomArrayFieldTemplate,
               ObjectFieldTemplate: CustomObjectFieldTemplate,
             }}
+            onChange={handleChange}
+            onSubmit={handleFormSubmit}
             validator={validator}
-            widgets={{
-              NumberWidget,
-              TextFieldWidget,
-              OneOfArrayWidget,
-            }}
             disabled={isPending}
           >
+            {/*// onChange={({ formData }) => console.log(formData)}*/}
+          {/*  onError={(errs) => {*/}
+          {/*  // @ts-ignore*/}
+          {/*  setErrors(errs);*/}
+          {/*}}*/}
             <Box
               sx={{
                 mt: 2,
