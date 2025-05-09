@@ -51,64 +51,249 @@ models:
         description: Australian Register of Therapeutic Goods Identifier
         identifier: 11000168105
         level: PACKAGE
-        dataType: UNSIGNED_INTEGER
-        valueRegexValidation: \d{1,8}
+        dataType: STRING
+        valueRegexValidation: (PA\d{4,8}(\/\d{1,2})?(\/\d{1,2})?)|(EU\/\d{1,5}\/\d{1,5}\/\d{1,5})
         modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
         defaultMappingType: RELATED
         mappingTypes:
           - RELATED
-#      - name: procedure
-#        title: Associated procedure
-#        identifier: 71388002
-#        level: PACKAGE
-#        dataType: STRING,
-#        valueRegexValidation: ^.+$
-#        valueSetReference: http://snomed.info/sct?fhir_vs=ecl/%5E%2032570141000036105%20
-#        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
-#        mandatory: false
-#        multiValued: true
-#        defaultMappingType: RELATED
-#        mappingTypes:
-#          - RELATED
     referenceSets:
-#      - name: blackTriangle
-#        title: Black Triangle
-#        description: Medicines on the Black Triangle Scheme
-#        identifier: 1514151000168100
-#        level: PACKAGE
-#        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
     nonDefiningProperties:
-#      - name: price
-#        title: Price
-#        description: Indicative price
-#        identifier: 34851004
-#        level: PACKAGE
-#        dataType: UNSIGNED_INTEGER
-#        valueRegexValidation: \d{1,8}
-#        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
-#        mandatory: false
-#        multiValued: false
-#      - name: licencedRoute
-#        title: Licenced Route
-#        description: Licenced Route of Administration
-#        identifier: 1445111000168100
-#        level: PRODUCT
-#        dataType: CONCEPT
-#        eclBinding: ^810671000168107
-#        modelLevels: REAL_CLINICAL_DRUG
-#        mandatory: false
-#        multiValued: true
-#      - name: important
-#        title: Important Drug
-#        identifier: 365913004
-#        level: PACKAGE
-#        dataType: STRING
-#        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
-#        mandatory: false
-#        multiValued: false
-#        allowedValues:
-#          - "Yes"
-#          - "No"
-#          - "Maybe"
+  MAIN_SNOMEDCT-IE_IE:
+    modelType: NMPC
+    baseMedicationSchema: classpath:NMPC/base-medication-schema.json
+    baseMedicationUiSchema: classpath:NMPC/base-medication-ui-schema.json
+    baseDeviceSchema: classpath:NMPC/base-device-schema.json
+    baseDeviceUiSchema: classpath:NMPC/base-device-ui-schema.json
+    baseBulkBrandSchema: classpath:NMPC/base-bulk-brand-schema.json
+    baseBulkBrandUiSchema: classpath:NMPC/base-bulk-brand-ui-schema.json
+    baseBulkPackSchema: classpath:NMPC/base-bulk-pack-schema.json
+    baseBulkPackUiSchema: classpath:NMPC/base-bulk-pack-ui-schema.json
+    levels:
+      - name: Medicinal Product
+        displayLabel: MP
+        modelLevelType: MEDICINAL_PRODUCT
+        semanticTag: medicinal product
+        referenceSetIdentifier: 929360061000036106
+      - name: Clinical Drug
+        displayLabel: CD
+        modelLevelType: CLINICAL_DRUG
+        semanticTag: clinical drug
+        referenceSetIdentifier: 929360071000036103
+      - name: Real Clinical Drug
+        displayLabel: RCD
+        modelLevelType: REAL_CLINICAL_DRUG
+        semanticTag: branded clinical drug
+        referenceSetIdentifier: 929360031000036100
+      - name: Packaged Clinical Drug
+        displayLabel: PCD
+        modelLevelType: PACKAGED_CLINICAL_DRUG
+        semanticTag: clinical drug package
+        referenceSetIdentifier: 929360081000036101
+      - name: Real Packaged Clinical Drug
+        displayLabel: RPCD
+        modelLevelType: REAL_PACKAGED_CLINICAL_DRUG
+        semanticTag: branded clinical drug package
+        referenceSetIdentifier: 929360041000036105
+      - name: Real Containerized Packaged Clinical Drug
+        displayLabel: RCPCD
+        modelLevelType: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+        semanticTag: containerized branded clinical drug package
+        referenceSetIdentifier: 929360051000036108
+      - name: Product Name
+        displayLabel: PN
+        modelLevelType: PRODUCT_NAME
+        semanticTag: product name
+        referenceSetIdentifier: 929360021000036102
+    mappings:
+      - name: pan
+        title: Product authorisation number
+        description: HPRA or EMA product authorisation number
+        identifier: 11000168105
+        level: PRODUCT
+        dataType: STRING
+        valueRegexValidation: (PA\d{4,8}(\/\d{1,2})?(\/\d{1,2})?)|(EU\/\d{1,5}\/\d{1,5}\/\d{1,5})
+        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+        defaultMappingType: RELATED
+        mappingTypes:
+          - RELATED
+      - name: pan
+        title: Product authorisation number
+        description: HPRA or EMA product authorisation number
+        identifier: 11000168105
+        level: PACKAGE
+        dataType: STRING
+        valueRegexValidation: (PA\d{4,8}(\/\d{1,2})?(\/\d{1,2})?)|(EU\/\d{1,5}\/\d{1,5}\/\d{1,5})
+        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+        defaultMappingType: RELATED
+        mappingTypes:
+          - RELATED
+      - name: ean
+        title: EAN
+        identifier: 71388002
+        level: PACKAGE
+        dataType: UNSIGNED_INTEGER
+        valueRegexValidation: \d{13}
+        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+        defaultMappingType: RELATED
+        mappingTypes:
+          - RELATED
+      - name: gtin
+        title: GTIN
+        identifier: 71388002
+        level: PACKAGE
+        dataType: UNSIGNED_INTEGER
+        valueRegexValidation: \d{8,14}
+        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+        defaultMappingType: RELATED
+        mappingTypes:
+          - RELATED
+      - name: atc
+        title: ATC level 5 code
+        identifier: 71388002
+        level: PACKAGE
+        dataType: STRING,
+        valueRegexValidation: ^.+$
+        valueSetReference: http://snomed.info/sct?fhir_vs=ecl/%5E%2032570141000036105%20
+        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+        defaultMappingType: RELATED
+        mappingTypes:
+          - RELATED
+    referenceSets:
+      - name: blackTriangle
+        title: Black Triangle
+        description: Medicines on the Black Triangle Scheme
+        identifier: 1514151000168100
+        level: PRODUCT
+        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+      - name: combinationOnly
+        title: Combination pack only
+        description: Combination pack only
+        identifier: 1514151000168100
+        level: PACKAGE
+        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+      - name: parallelImport
+        title: Parallel import
+        description: Parallel import
+        identifier: 1514151000168100
+        level: PRODUCT
+        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+      - name: vmpNonPrescribable
+        title: Non-prescribable VMP
+        description: Non-prescribable VMP
+        identifier: 1514151000168100
+        level: PRODUCT
+        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+    nonDefiningProperties:
+      - name: price
+        title: Reimbursement price
+        description: Reimbursement price
+        identifier: 34851004
+        level: PACKAGE
+        dataType: UNSIGNED_INTEGER
+        valueRegexValidation: \d{1,8}
+        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+      - name: refPrice
+        title: Reference price
+        description: Reference price
+        identifier: 34851004
+        level: PACKAGE
+        dataType: UNSIGNED_INTEGER
+        valueRegexValidation: \d{1,8}
+        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+      - name: licencedRoute
+        title: Licenced Route
+        description: Licenced Route of Administration
+        identifier: 1445111000168100
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: ^32570601000036100
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+      - name: supplier
+        title: Supplier
+        description: Supplier
+        identifier: 1445111000168100
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: <11900001
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+      - name: controlledDrug
+        title: Controlled drug status
+        description: Controlled drug status
+        identifier: 1445111000168100
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: <263490005
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+      - name: legalStatus
+        title: Legal status
+        description: Legal status
+        identifier: 1445111000168100
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: <263490005
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+      - name: pil
+        title: Prduct information leaflet
+        description: Prduct information leaflet
+        identifier: 1445111000168100
+        level: PRODUCT
+        dataType: URI
+        valueRegexValidation: http(s)?://.+\.(pdf|html)
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+      - name: smpc
+        title: SmPC
+        description: SmPC
+        identifier: 1445111000168100
+        level: PRODUCT
+        dataType: URI
+        valueRegexValidation: http(s)?://.+\.(pdf|html)
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+      - name: pil
+        title: Prduct information leaflet
+        description: Prduct information leaflet
+        identifier: 1445111000168100
+        level: PACKAGE
+        dataType: URI
+        valueRegexValidation: http(s)?://.+\.(pdf|html)
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+      - name: smpc
+        title: SmPC
+        description: SmPC
+        identifier: 1445111000168100
+        level: PACKAGE
+        dataType: URI
+        valueRegexValidation: http(s)?://.+\.(pdf|html)
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
