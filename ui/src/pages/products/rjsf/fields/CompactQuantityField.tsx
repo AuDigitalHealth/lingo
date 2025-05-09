@@ -189,6 +189,7 @@ const CompactQuantityField = ({
     return <>{allErrors && <ErrorDisplay errors={allErrors} />}</>;
 
   return (
+      <span data-component-name="CompactQuantityField">
     <Box sx={{ mb: '-35px' }}>
       <Typography sx={{ mb: 0.5 }}>{title}</Typography>
       <Box
@@ -236,6 +237,7 @@ const CompactQuantityField = ({
       </Box>
       {allErrors && <ErrorDisplay errors={allErrors} />}
     </Box>
+      </span>
   );
 };
 
