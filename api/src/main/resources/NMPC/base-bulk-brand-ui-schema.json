@@ -1,0 +1,114 @@
+{
+  "ui:order": [
+    "selectedProduct",
+    "newBrandInput",
+    "existingBrands",
+    "brands"
+
+  ],
+  "ui:options": {
+    "layout": {
+      "grid": [
+        { "name": "selectedProduct", "xs": 12 },
+        { "name": "newBrandInput", "xs": 8 },
+        { "name": "existingBrands", "xs": 6 },
+        { "name": "brands", "xs": 6 }
+      ]
+    }
+  },
+  "selectedProduct": {
+    "ui:readonly": true,
+    "ui:widget": "TitleWidget",
+    "ui:options": {
+      "skipTitle": true
+    }
+  },
+  "existingBrands": {
+    "ui:options": {
+      "orderable": false,
+      "skipTitle": true,
+      "listTitle": "Existing Brands",
+      "readOnly": true
+    },
+    "items": {
+      "ui:readonly": true,
+      "ui:options": {
+        "skipTitle": true
+      },
+      "brand": {
+        "ui:field": "AutoCompleteField",
+        "ui:readonly": true,
+        "ui:options": {
+          "label": "",
+          "skipTitle": true
+        }
+      },
+      "externalIdentifiers": {
+        "ui:widget": "OneOfArrayWidget",
+        "ui:readonly": true,
+        "ui:options": {
+          "label": false,
+          "skipTitle": true,
+          "mandatorySchemes": [],
+          "multiValuedSchemes": ["artgid"]
+        }
+      }
+    }
+  },
+  "brands": {
+    "ui:options": {
+      "orderable": false,
+      "skipTitle": true,
+      "listTitle": "Newly Added Brands",
+      "readOnly": false
+    },
+    "items": {
+      "ui:readonly": false,
+      "ui:options": {
+        "skipTitle": true
+      },
+      "brand": {
+        "ui:field": "AutoCompleteField",
+        "ui:readonly": true,
+        "ui:options": {
+          "label": "",
+          "skipTitle": true
+        }
+      },
+      "externalIdentifiers": {
+        "ui:widget": "OneOfArrayWidget",
+        "ui:readonly": true,
+        "ui:options": {
+          "label": false,
+          "skipTitle": true,
+          "mandatorySchemes": [],
+          "multiValuedSchemes": ["artgid"]
+        }
+      }
+    }
+  },
+  "newBrandInput": {
+    "ui:field": "NewBrandInputField",
+    "ui:options": {
+      "skipTitle": true
+    },
+    "brand": {
+      "ui:field": "AutoCompleteField",
+      "ui:options": {
+        "ecl": "<774167006",
+        "showDefaultOptions": false,
+        "label": "",
+        "skipTitle": true
+      }
+    },
+    "externalIdentifiers": {
+      "ui:widget": "OneOfArrayWidget",
+      "ui:options": {
+        "label": false,
+        "skipTitle": true,
+        "mandatorySchemes": [],
+        "multiValuedSchemes": ["artgid"]
+      }
+    }
+  }
+}

@@ -1,0 +1,113 @@
+{
+  "type": "object",
+  "$defs": {
+    "SnowstormConceptMini": {
+      "type": "object",
+      "properties": {
+        "conceptId": {
+          "type": "string"
+        },
+        "pt": {
+          "$ref": "#/$defs/SnowstormTermLangPojo"
+        },
+        "fsn": {
+          "$ref": "#/$defs/SnowstormTermLangPojo"
+        }
+      },
+      "minProperties": 1,
+      "errorMessage": {
+        "minProperties": "Field must be populated."
+      }
+    },
+    "SnowstormTermLangPojo": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "lang": {
+          "type": "string"
+        },
+        "term": {
+          "type": "string"
+        }
+      }
+    },
+    "ExternalIdentifier": {
+      "type": "object",
+      "oneOf": [
+        {
+          "title": "ARTGID",
+          "type": "object",
+          "properties": {
+            "identifierScheme": {
+              "type": "string",
+              "const": "artgid"
+            },
+            "relationshipType": {
+              "title": "Relationship type",
+              "type": "string",
+              "const": "RELATED"
+            },
+            "identifierValue": {
+              "title": "ARTGID",
+              "type": "string",
+              "pattern": "\\d{1,8}",
+              "errorMessage": {
+                "pattern": "Please enter a valid ARTGID matching \\d{1,8}"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "BrandDetails": {
+      "type": "object",
+      "properties": {
+        "brand": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Brand",
+          "minProperties": 1,
+          "errorMessage": {
+            "minProperties": "Brand Name must be populated."
+          }
+        },
+        "externalIdentifiers": {
+          "type": "array",
+          "title": "External identifiers",
+          "items": {
+            "$ref": "#/$defs/ExternalIdentifier"
+          }
+        }
+
+      }
+    }
+  },
+  "properties": {
+    "selectedProduct": {
+      "type": "string",
+      "title": "Selected Product"
+    },
+    "existingBrands": {
+      "type": "array",
+      "title": "Existing Brands",
+      "items": {
+        "$ref": "#/$defs/BrandDetails"
+      }
+    },
+    "brands": {
+      "type": "array",
+      "title": "Newly Added Brands",
+      "items": {
+        "$ref": "#/$defs/BrandDetails"
+      }
+    },
+    "newBrandInput": {
+      "$ref": "#/$defs/BrandDetails",
+      "title": "Add New Brand"
+    }
+  },
+  "required": ["brands"],
+  "errorMessage": {
+    "required": "Fields must be populated."
+  },
+  "additionalProperties": false
+}

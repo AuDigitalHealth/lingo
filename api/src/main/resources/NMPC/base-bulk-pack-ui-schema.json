@@ -1,0 +1,111 @@
+{
+  "ui:order": [
+    "selectedProduct",
+    "newPackSizeInput",
+    "existingPackSizes",
+    "packSizes",
+    "unitOfMeasure"
+
+  ],
+  "ui:options": {
+    "layout": {
+      "grid": [
+        { "name": "selectedProduct", "xs": 12 },
+        { "name": "newPackSizeInput", "xs": 8 },
+        { "name": "existingPackSizes", "xs": 6 },
+        { "name": "packSizes", "xs": 6 }
+      ]
+    }
+  },
+  "selectedProduct": {
+    "ui:readonly": true,
+    "ui:widget": "TitleWidget",
+    "ui:options": {
+      "skipTitle": true
+    }
+  },
+  "existingPackSizes": {
+    "ui:options": {
+      "orderable": false,
+      "skipTitle": true,
+      "listTitle": "Existing Pack Sizes",
+      "readOnly": true
+    },
+    "items": {
+      "ui:readonly": true,
+      "ui:options": {
+        "skipTitle": true
+      },
+      "packSize": {
+        "ui:readonly": true,
+        "ui:options": {
+          "label": ""
+        }
+      },
+      "externalIdentifiers": {
+        "ui:widget": "OneOfArrayWidget",
+        "ui:readonly": true,
+        "ui:options": {
+          "label": false,
+          "skipTitle": true,
+          "mandatorySchemes": [],
+          "multiValuedSchemes": ["artgid"]
+        }
+      }
+    }
+  },
+  "packSizes": {
+    "ui:options": {
+      "orderable": false,
+      "skipTitle": true,
+      "listTitle": "Newly Added Pack Sizes",
+      "readOnly": false
+    },
+    "items": {
+      "ui:readonly": false,
+      "ui:options": {
+        "skipTitle": true
+      },
+      "packSize": {
+        "ui:readonly": true,
+        "ui:options": {
+          "label": ""
+        }
+      },
+      "externalIdentifiers": {
+        "ui:widget": "OneOfArrayWidget",
+        "ui:readonly": true,
+        "ui:options": {
+          "label": false,
+          "skipTitle": true,
+          "mandatorySchemes": [],
+          "multiValuedSchemes": ["artgid"]
+        }
+      }
+    }
+  },
+  "unitOfMeasure": {
+    "ui:widget": "hidden"
+  },
+  "newPackSizeInput": {
+    "ui:field": "NewPackSizeInputField",
+    "ui:options": {
+      "skipTitle": true
+    },
+    "packSize": {
+      "ui:options": {
+        "label": "Pack Size",
+        "skipTitle": true
+      }
+    },
+    "externalIdentifiers": {
+      "ui:widget": "OneOfArrayWidget",
+      "ui:options": {
+        "label": false,
+        "skipTitle": true,
+        "mandatorySchemes": [],
+        "multiValuedSchemes": ["artgid"]
+      }
+    }
+  }
+}
