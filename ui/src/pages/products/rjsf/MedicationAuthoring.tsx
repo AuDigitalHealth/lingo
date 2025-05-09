@@ -8,7 +8,6 @@ import ajvErrors from 'ajv-errors';
 import { enqueueSnackbar } from 'notistack';
 import UnitValueField from './fields/UnitValueField.tsx';
 import AutoCompleteField from './fields/AutoCompleteField.tsx';
-import ParentChildAutoCompleteField from './fields/ParentChildAutoCompleteField.tsx';
 import MutuallyExclusiveAutocompleteField from './fields/MutuallyExclusiveAutocompleteField.tsx';
 import ConditionalArrayField from './fields/ConditionalArrayField.tsx';
 import CompactQuantityField from './fields/CompactQuantityField.tsx';
@@ -169,7 +168,6 @@ function MedicationAuthoring({
     <Paper sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1 }}>
       <Box m={2} p={2}>
         <Container data-testid="product-creation-grid">
-              {/*// ParentChildAutoCompleteField,*/}
           <Form
             ref={formRef}
             schema={schema as any}
