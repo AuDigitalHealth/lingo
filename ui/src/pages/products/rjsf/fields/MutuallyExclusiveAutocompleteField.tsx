@@ -106,6 +106,7 @@ const MutuallyExclusiveAutocompleteField = ({
   );
 
   return (
+      <span data-component-name="MutuallyExclusiveAutocompleteField">
     <Grid container spacing={2} alignItems="center">
       {/* Field A (e.g., containerType) */}
       <Grid item xs={5}>
@@ -170,6 +171,7 @@ const MutuallyExclusiveAutocompleteField = ({
         </Box>
       </Grid>
     </Grid>
+      </span>
   );
 };
 
