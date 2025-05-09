@@ -21,13 +21,17 @@
     "ui:options": {
       "skipTitle": true,
       "searchAndAddProduct": {
-        "ecl": "< 763158003 : (774158006 = < 774167006 , 774159003 = < 774164004 , 763032000 = < 732935002 )",
+        "ecl": "<763158003 {{ D term=\"real clinical drug\" }}",
         "type": "medication",
         "package": false
       }
     },
     "items": {
-      "ui:order": ["productDetails", "unit", "value"],
+      "ui:order": [
+        "productDetails",
+        "unit",
+        "value"
+      ],
       "ui:options": {
         "titleSource": "productDetails.productName.pt.term",
         "defaultTitle": "Product",
@@ -44,7 +48,7 @@
         "ui:title": "Pack Size",
         "ui:options": {
           "pairWith": "value",
-          "ecl": "(^929360051000036108 : (774160008 OR 999000081000168101) = *).774163005",
+          "ecl": "(<781405001 {{ D term=\"*.real packaged clinical drug.*\" }}) : (774160008 /* OR 999000081000168101 */) = *).774163005",
           "showDefaultOptions": true
         }
       },
@@ -101,7 +105,7 @@
                 "parentFieldName": "activeIngredient",
                 "childFieldName": "preciseIngredient",
                 "parentFieldOptions": {
-                  "ecl": ">>(< 763158003 : (774158006 = < 774167006 , 774159003 = < 774164004 , 763032000 = < 732935002 )).127489000",
+                  "ecl": ">>(<763158003 {{ D term=\"real clinical drug\" }}).127489000",
                   "extendedEcl": "<105590001",
                   "showDefaultOptions": false,
                   "title": "Has Active Ingredient",
@@ -126,7 +130,7 @@
               "ui:title": "BoSS",
               "ui:options": {
                 "branch": "MAIN",
-                "ecl": "(>>(< 763158003 : (774158006 = < 774167006 , 774159003 = < 774164004 , 763032000 = < 732935002 )).732943007) OR (>>>>(< 763158003 : (774158006 = < 774167006 , 774159003 = < 774164004 , 763032000 = < 732935002 )).127489000)",
+                "ecl": "(<763158003 {{ D term=\"real clinical drug\" }}).732943007",
                 "extendedEcl": "<105590001",
                 "showDefaultOptions": false
               }
@@ -141,8 +145,8 @@
               },
               "unit": {
                 "ui:options": {
-                  "ecl": "^929360031000036100.999000031000168102",
-                  "extendedEcl": "<767524001:(700000091000036104=* AND 700000071000036103=*)",
+                  "ecl": "<763158003 {{ D term=\"real clinical drug\" }}.733725009",
+                  "extendedEcl": "<767524001",
                   "showDefaultOptions": true
                 }
               }
@@ -158,8 +162,8 @@
               "unit": {
                 "ui:options": {
                   "branch": "MAIN",
-                  "ecl": "^929360031000036100.999000031000168102",
-                  "extendedEcl": "<767524001:(700000091000036104=* AND 700000071000036103=*)",
+                  "ecl": "<763158003 {{ D term=\"real clinical drug\" }}.733722007",
+                  "extendedEcl": "<767524001",
                   "showDefaultOptions": true
                 }
               }
@@ -175,7 +179,7 @@
               "unit": {
                 "ui:options": {
                   "branch": "MAIN",
-                "ecl": "(>>(< 763158003 : (774158006 = < 774167006 , 774159003 = < 774164004 , 763032000 = < 732935002 ))).732945000",
+                  "ecl": "(<763158003 {{ D term=\"real clinical drug\" }}).732945000",
                   "extendedEcl": "<767524001",
                   "showDefaultOptions": true
                 }
@@ -192,7 +196,7 @@
               "unit": {
                 "ui:options": {
                   "branch": "MAIN",
-                "ecl": "(>>(< 763158003 : (774158006 = < 774167006 , 774159003 = < 774164004 , 763032000 = < 732935002 )))  .732947008",
+                  "ecl": "(<763158003 {{ D term=\"real clinical drug\" }}).732947008",
                   "extendedEcl": "<767524001",
                   "showDefaultOptions": true
                 }
@@ -208,7 +212,7 @@
             "skipTitle": true,
             "parentFieldOptions": {
               "branch": "MAIN",
-              "ecl": "(< 763158003 : 763032000 = < 732935002).411116001",
+              "ecl": "(>>(<763158003 {{ D term=\"real clinical drug\" }})).411116001",
               "extendedEcl": "<736542009",
               "showDefaultOptions": false,
               "title": "Generic Dose Form"
@@ -235,7 +239,7 @@
           "unit": {
             "ui:options": {
               "branch": "MAIN",
-            "ecl": "(>>(< 763158003 : (774158006 = < 774167006 , 774159003 = < 774164004 , 763032000 = < 732935002 ))).320091000221107",
+              "ecl": "(<763158003 {{ D term=\"real clinical drug\" }}).320091000221107",
               "extendedEcl": "<767524001",
               "showDefaultOptions": true
             }
@@ -246,7 +250,7 @@
           "ui:title": "Unit of Presentation",
           "ui:options": {
             "branch": "MAIN",
-          "ecl": ">>(< 763158003 : (774158006 = < 774167006 , 774159003 = < 774164004 , 763032000 = < 732935002 ))).763032000",
+            "ecl": "(<763158003 {{ D term=\"real clinical drug\" }}).763032000",
             "extendedEcl": "<105590001",
             "showDefaultOptions": false
           }
