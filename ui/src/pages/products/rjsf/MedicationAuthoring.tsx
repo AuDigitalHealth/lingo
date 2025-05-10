@@ -5,16 +5,13 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import _ from 'lodash';
 import ajvErrors from 'ajv-errors';
 
-import { enqueueSnackbar } from 'notistack';
 import UnitValueField from './fields/UnitValueField.tsx';
 import AutoCompleteField from './fields/AutoCompleteField.tsx';
-import MutuallyExclusiveAutocompleteField from './fields/MutuallyExclusiveAutocompleteField.tsx';
 import ConditionalArrayField from './fields/ConditionalArrayField.tsx';
 import CompactQuantityField from './fields/CompactQuantityField.tsx';
 import UnitValueUnWrappedField from './fields/UnitValueUnWrappedField.tsx';
 import ProductLoader from '../components/ProductLoader.tsx';
 import ProductPreviewCreateModal from '../components/ProductPreviewCreateModal.tsx';
-import CustomFieldTemplate from './templates/CustomFieldTemplate.tsx';
 import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
 import CustomObjectFieldTemplate from './templates/CustomObjectFieldTemplate.tsx';
 import NumberWidget from './widgets/NumberWidget.tsx';
@@ -142,28 +139,6 @@ function MedicationAuthoring({
     setSaveModalOpen(true);
   };
 
-  // const onError = (errors: any) => {
-  //   const newErrorSchema = errors.reduce((acc: any, error: any) => {
-  //     _.set(acc, error.property.slice(1), { __errors: [error.message] });
-  //     return acc;
-  //   }, {});
-  //   setErrorSchema(newErrorSchema);
-  //   // enqueueSnackbar(
-  //   //   'Error Validating Product Definition.',
-  //   //   {
-  //   //     variant: 'error',
-  //   //     autoHideDuration: 2000,
-  //   //   },
-  //   // );
-  //   // enqueueSnackbar(
-  //   //   'Error Validating Product Definition' +
-  //   //     (newErrorSchema ? `: ${formatErrors(newErrorSchema)}` : ``),
-  //   //   {
-  //   //     variant: 'error',
-  //   //   },
-  //   // );
-  // };
-
   return (
     <Paper sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1 }}>
       <Box m={2} p={2}>
@@ -179,7 +154,6 @@ function MedicationAuthoring({
               ConditionalArrayField,
               UnitValueUnWrappedField,
               UnitValueField,
-              MutuallyExclusiveAutocompleteField,
               CompactQuantityField,
             }}
             widgets={{
@@ -196,11 +170,6 @@ function MedicationAuthoring({
             validator={validator}
             disabled={isPending}
           >
-            {/*// onChange={({ formData }) => console.log(formData)}*/}
-          {/*  onError={(errs) => {*/}
-          {/*  // @ts-ignore*/}
-          {/*  setErrors(errs);*/}
-          {/*}}*/}
             <Box
               sx={{
                 mt: 2,
