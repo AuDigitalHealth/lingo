@@ -10,7 +10,7 @@ import useTaskById from '../../../../hooks/useTaskById.tsx';
 import {useTicketByTicketNumber} from '../../../../hooks/api/tickets/useTicketById.tsx';
 import {useParams} from 'react-router-dom';
 import {Ticket} from '../../../../types/tickets/ticket.ts';
-import {behaveDependants} from './behaviour/autoCompleteDependantsBehaviour.ts';
+import {updateDependants, updateExclusions} from './behaviour/dependants.ts';
 
 const AutoCompleteField: React.FC<FieldProps<any, any>> = (props) => {
   const { onChange, idSchema } = props;
@@ -31,10 +31,8 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = (props) => {
   const { ticketNumber } = useParams();
   const useTicketQuery = useTicketByTicketNumber(ticketNumber, false);
 
-
-  // Handle Dependants: START
-  behaveDependants(uiSchema, idSchema, formContext, rootFormData, rootUiSchema, formData);
-  // Handle Dependants: END
+  updateDependants(uiSchema, idSchema, formContext, rootFormData, rootUiSchema, formData);
+  updateExclusions(uiSchema, idSchema, formContext, rootFormData, rootUiSchema, formData);
 
   const handleSelect = (conceptMini: ConceptMini | null) => {
     setFormData(conceptMini);

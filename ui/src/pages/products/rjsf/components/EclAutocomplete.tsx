@@ -25,7 +25,7 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = (props) => {
     showDefaultOptions as boolean,
   );
 
-  const title = (schema && schema.title) || (uiSchema && uiSchema['ui:title']) || '';
+  const title = (props && props.title) || (schema && schema.title) || (uiSchema && uiSchema['ui:title']) || '';
 
   useEffect(() => {
     if (allData) {
