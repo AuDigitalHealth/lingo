@@ -2,7 +2,6 @@
   "ui:order": [
     "productName",
     "containerType",
-    "externalIdentifiers",
     "containedProducts",
     "containedPackages"
   ],
@@ -191,6 +190,7 @@
         },
         "genericForm": {
           "ui:field": "AutoCompleteField",
+          "title": "Generic Dose Form",
           "ui:options": {
             "dependants": [
               {
@@ -203,7 +203,7 @@
             ],
             "ecl": "^929360071000036103.411116001",
             "extendedEcl": "<736542009",
-            "showDefaultOptions": false,
+            "showDefaultOptions": false
           }
         },
         "specificForm": {
@@ -234,30 +234,40 @@
           }
         },
         "containerType": {
-          "ui:field": "MutuallyExclusiveAutocompleteField",
+          "ui:field": "AutoCompleteField",
+          "ui:title": "Container Type",
           "ui:options": {
-            "fieldAName": "containerType",
-            "fieldBName": "deviceType",
-            "skipTitle": true,
-            "fieldAOptions": {
-              "title": "Container Type",
-              "ecl": "^929360051000036108.30465011000036106",
-              "extendedEcl": "<49062001",
-              "showDefaultOptions": true
-            },
-            "fieldBOptions": {
-              "title": "Device Type",
-              "ecl": "^929360031000036100.999000061000168105",
-              "extendedEcl": "<63653004",
-              "showDefaultOptions": true
-            }
+            "ecl": "^929360051000036108.30465011000036106",
+            "extendedEcl": "<49062001",
+            "showDefaultOptions": true,
+            "exclusions": [
+              {
+                "path": "../deviceType"
+              }
+            ]
           }
         },
         "deviceType": {
-          "ui:widget": "hidden",
-          "ui:options": {
-            "skipTitle": true
-          }
+          "anyOf": [
+            {
+              "ui:title": "Device Type",
+              "ui:field": "AutoCompleteField",
+              "ui:options": {
+                "ecl": "^929360031000036100.999000061000168105",
+                "extendedEcl": "<63653004",
+                "showDefaultOptions": true,
+                "exclusions": [
+                  {
+                    "path": "../containerType"
+                  }
+                ]
+              }
+            },
+            {
+              "ui:title": "No Device Type",
+              "value": null
+            }
+          ]
         },
         "otherIdentifyingInformation": {
           "ui:widget": "TextFieldWidget",
@@ -344,7 +354,6 @@
           }
         },
         "containedProducts": {
-          "ui:field": "BoxArrayFieldTemplate",
           "ui:options": {
             "skipTitle": true,
             "searchAndAddProduct": {
@@ -500,6 +509,7 @@
               },
               "genericForm": {
                 "ui:field": "AutoCompleteField",
+                "title": "Generic Dose Form",
                 "ui:options": {
                   "dependants": [
                     {
@@ -512,7 +522,7 @@
                   ],
                   "ecl": "^929360071000036103.411116001",
                   "extendedEcl": "<736542009",
-                  "showDefaultOptions": false,
+                  "showDefaultOptions": false
                 }
               },
               "specificForm": {
@@ -543,30 +553,40 @@
                 }
               },
               "containerType": {
-                "ui:field": "MutuallyExclusiveAutocompleteField",
+                "ui:field": "AutoCompleteField",
+                "ui:title": "Container Type",
                 "ui:options": {
-                  "skipTitle": true,
-                  "fieldAName": "containerType",
-                  "fieldBName": "deviceType",
-                  "fieldAOptions": {
-                    "title": "Container Type",
-                    "ecl": "^929360051000036108.30465011000036106",
-                    "extendedEcl": "<49062001",
-                    "showDefaultOptions": true
-                  },
-                  "fieldBOptions": {
-                    "title": "Device Type",
-                    "ecl": "^929360031000036100.999000061000168105",
-                    "extendedEcl": "<63653004",
-                    "showDefaultOptions": true
-                  }
+                  "ecl": "^929360051000036108.30465011000036106",
+                  "extendedEcl": "<49062001",
+                  "showDefaultOptions": true,
+                  "exclusions": [
+                    {
+                      "path": "../deviceType"
+                    }
+                  ]
                 }
               },
               "deviceType": {
-                "ui:widget": "hidden",
-                "ui:options": {
-                  "skipTitle": true
-                }
+                "anyOf": [
+                  {
+                    "ui:title": "Device Type",
+                    "ui:field": "AutoCompleteField",
+                    "ui:options": {
+                      "ecl": "^929360031000036100.999000061000168105",
+                      "extendedEcl": "<63653004",
+                      "showDefaultOptions": true,
+                      "exclusions": [
+                        {
+                          "path": "../containerType"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "ui:title": "No Device Type",
+                    "value": null
+                  }
+                ]
               },
               "otherIdentifyingInformation": {
                 "ui:widget": "TextFieldWidget",
