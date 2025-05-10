@@ -4,21 +4,13 @@ import { Grid, TextField } from '@mui/material';
 import EclAutocomplete from '../components/EclAutocomplete.tsx';
 import useTaskById from '../../../../hooks/useTaskById.tsx';
 
-import { ErrorDisplay } from '../components/ErrorDisplay.tsx';
-import { getUniqueErrors } from '../helpers/errorUtils.ts';
-
-const UnitValueField = ({
-  idSchema,
-  name,
-  formData,
-  onChange,
-  uiSchema,
-  rawErrors = [],
-  errorSchema = {},
-}: FieldProps) => {
+const UnitValueField: React.FC<FieldProps<any, any>> = (props) => {
+  const { formData, uiSchema, rawErrors = [], errorSchema = {}, onChange, idSchema } = props;
   const { value, unit } = formData || { value: undefined, unit: undefined };
   const task = useTaskById();
   const unitOptions = uiSchema?.unit?.['ui:options'] || {};
+
+  const title = (props.schema && props.schema.title) || (uiSchema && uiSchema['ui:title']) || '';
 
   const handleUnitChange = (selectedUnit: any | null) => {
     if (!selectedUnit) {
@@ -51,14 +43,12 @@ const UnitValueField = ({
     }
   };
 
-  // Get unique errors without prefix for rawErrors
-  const allErrors = getUniqueErrors(rawErrors, errorSchema);
-
   return (
-      <span data-component-name="UnitValueField">
+    <span data-component-name="UnitValueField">
     <Grid container spacing={1} alignItems="center">
       <Grid item xs={6}>
         <TextField
+          {...props}
           data-testid={idSchema.$id}
           label="Value"
           value={value ?? ''}
@@ -78,33 +68,14 @@ const UnitValueField = ({
             branch={task.branchPath}
             showDefaultOptions={unitOptions.showDefaultOptions || true}
             isDisabled={false}
-            title="Unit"
+            title={title}
             errorMessage={''}
           />
         )}
       </Grid>
-      <ErrorDisplay errors={allErrors} />
     </Grid>
       </span>
   );
 };
 
 export default UnitValueField;
-
-// import React from 'react';
-// import { FieldProps } from '@rjsf/utils';
-// import UnitInput from "./UnitInput.tsx";
-//
-// const UnitValueField: React.FC<FieldProps<any, any>> = (props) => {
-//   const { formData, onChange, uiSchema } = props;
-//   return (
-//       <UnitInput
-//           value={formData}
-//           onChange={onChange}
-//           options={uiSchema && uiSchema['ui:options']}
-//           showValue
-//       />
-//   );
-// };
-//
-// export default UnitValueField;

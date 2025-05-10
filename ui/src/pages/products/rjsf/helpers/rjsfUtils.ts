@@ -148,61 +148,6 @@ export class RjsfUtils {
         _.set(rootUiSchema, lodashPath, value);
     };
 
-
-    // /**
-    //  * Updates the object at the given ID by replacing all its keys
-    //  * with those from the provided value object.
-    //  * Returns a new formData object to maintain immutability.
-    //  */
-    // public static updateFormDataById(formContext: any, rjsfId: string, value: any): any {
-    //     const path = this.rjsfIdToFormDataPath(rjsfId);
-    //     const newFormData = _.cloneDeep(formContext.formData);
-    //
-    //     const existing = _.get(newFormData, path);
-    //
-    //     if (_.isObject(existing) && !Array.isArray(existing) && _.isObject(value)) {
-    //         // Clear existing object
-    //         Object.keys(existing).forEach(key => {
-    //             // @ts-ignore
-    //             delete existing[key];
-    //         });
-    //         // Assign new keys
-    //         Object.assign(existing, value);
-    //     } else {
-    //         // Fallback to simple set if not an object
-    //         _.set(newFormData, path, value);
-    //     }
-    //
-    //     return newFormData;
-    // };
-    //
-    // /**
-    //  * Updates the object at the given ID in the uiSchema by replacing all its keys
-    //  * with those from the provided value object.
-    //  * Returns a new uiSchema object to maintain immutability.
-    //  */
-    // public static updateUiSchemaById(formContext: any, rjsfId: string, value: any): any {
-    //     const path = this.rjsfIdToUiSchemaPath(rjsfId);
-    //     const newUiSchema = _.cloneDeep(formContext.uiSchema);
-    //
-    //     const existing = _.get(newUiSchema, path);
-    //
-    //     if (_.isObject(existing) && !Array.isArray(existing) && _.isObject(value)) {
-    //         // Clear existing object
-    //         Object.keys(existing).forEach(key => {
-    //             // @ts-ignore
-    //             delete existing[key];
-    //         });
-    //         // Assign new keys
-    //         Object.assign(existing, value);
-    //     } else {
-    //         // Fallback to simple set if not an object
-    //         _.set(newUiSchema, path, value);
-    //     }
-    //
-    //     return newUiSchema;
-    // };
-
     /**
      * Retrieves a value from the uiSchema object using an RJSF ID.
      * Note: uiSchema paths directly mirror the schema structure, typically without
@@ -242,10 +187,6 @@ export class RjsfUtils {
      */
     public static setUiSchemaById(rootUiSchema: any, rjsfId: string, value: any): any {
         const lodashPath = RjsfUtils.rjsfIdToUiSchemaPath(rjsfId);
-        // Use _.set with a clone to avoid mutating the original uiSchema
-        // const newUiSchema = _.cloneDeep(formContext.uiSchema);
         _.set(rootUiSchema, lodashPath, value);
-        // debugger;
-        // return formContext.uiSchema;
     }
 }
