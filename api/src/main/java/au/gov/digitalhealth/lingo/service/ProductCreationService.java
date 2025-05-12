@@ -33,6 +33,7 @@ import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.exception.EmptyProductCreationProblem;
 import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.exception.NamespaceNotConfiguredProblem;
@@ -195,7 +196,7 @@ public class ProductCreationService {
     }
 
     Set<Node> newSubjects =
-        productSummary.calculateSubject(false).stream()
+        productSummary.calculateSubject(false, models.getModelConfiguration(branch)).stream()
             .filter(Node::isNewConcept)
             .collect(Collectors.toSet());
 
@@ -395,7 +396,19 @@ public class ProductCreationService {
               }
             });
 
-    Set<Node> subjects = productSummary.calculateSubject(singleSubject);
+    final ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+    Set<Node> subjects = productSummary.calculateSubject(singleSubject, modelConfiguration);
+
+    // todo this is a hack and should be addressed properly
+    String mpRefset;
+
+    if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
+      mpRefset = MP_REFSET_ID.getValue();
+    } else {
+      mpRefset =
+          modelConfiguration.getReferenceSetForModelLevelType(
+              ModelLevelType.MEDICINAL_PRODUCT_ONLY);
+    }
 
     // This is really for the device scenario, where the user has selected an existing concept as
     // the device type that isn't already an MP.
@@ -406,16 +419,12 @@ public class ProductCreationService {
                     && n.getLabel().equals(ProductSummaryService.MP_LABEL)
                     && snowstormClient
                         .getConceptIdsFromEcl(
-                            branch, "^" + MP_REFSET_ID + " AND " + n.getConceptId(), 0, 1)
+                            branch, "^" + mpRefset + " AND " + n.getConceptId(), 0, 1)
                         .isEmpty())
         .forEach(
             n ->
                 snowstormClient.createRefsetMembership(
-                    branch,
-                    MP_REFSET_ID.getValue(),
-                    n.getConceptId(),
-                    true,
-                    models.getModelConfiguration(branch).getModuleId()));
+                    branch, mpRefset, n.getConceptId(), true, modelConfiguration.getModuleId()));
 
     List<Node> nodeCreateOrder =
         productSummary.getNodes().stream()

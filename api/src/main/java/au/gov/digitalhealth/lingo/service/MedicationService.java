@@ -62,6 +62,7 @@ import au.gov.digitalhealth.lingo.exception.AtomicDataExtractionProblem;
 import au.gov.digitalhealth.lingo.product.details.Ingredient;
 import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
 import au.gov.digitalhealth.lingo.product.details.Quantity;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -319,8 +320,16 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
 
       // TODO after migration change to additional relationship
       if (inferredRelationshipOfTypeExists(productRelationships, HAS_SUPPLIER.getValue())) {
-        productDetails.setSupplier(
-            getSingleActiveTarget(productRelationships, HAS_SUPPLIER.getValue()));
+        productDetails
+            .getNonDefiningProperties()
+            .add(
+                new NonDefiningProperty(
+                    product.getRelationships().stream()
+                        .filter(r -> r.getActive())
+                        .filter(r -> r.getTypeId().equals(HAS_SUPPLIER))
+                        .findFirst()
+                        .orElseThrow(),
+                    modelConfiguration.getNonDefiningPropertiesByName().get("supplier")));
       }
     }
 

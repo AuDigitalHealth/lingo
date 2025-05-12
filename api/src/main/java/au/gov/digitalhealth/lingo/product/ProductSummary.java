@@ -16,10 +16,10 @@
 package au.gov.digitalhealth.lingo.product;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.exception.MoreThanOneSubjectProblem;
 import au.gov.digitalhealth.lingo.exception.SingleConceptExpectedProblem;
-import au.gov.digitalhealth.lingo.service.ProductSummaryService;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
@@ -148,13 +148,13 @@ public class ProductSummary implements Serializable {
     }
   }
 
-  public Set<Node> calculateSubject(boolean singleSubject) {
+  public Set<Node> calculateSubject(boolean singleSubject, ModelConfiguration modelConfiguration) {
     synchronized (nodes) {
       Set<Node> subjectNodes =
           getNodes().stream()
               .filter(
                   n ->
-                      n.getLabel().equals(ProductSummaryService.CTPP_LABEL)
+                      modelConfiguration.getLeafPackageModelLevel().getDisplayLabel().equals(n.getLabel())
                           && getEdges().stream()
                               .noneMatch(e -> e.getTarget().equals(n.getConceptId())))
               .collect(Collectors.toSet());

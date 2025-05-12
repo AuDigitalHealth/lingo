@@ -82,7 +82,8 @@ public abstract class AtomicDataService<T extends ProductDetails> {
       SnowstormClient snowStormApiClient,
       String branch,
       Map<String, String> substitutionMap,
-      Integer limit) {
+      Integer limit,
+      ModelConfiguration modelConfiguration) {
     Set<SnowstormRelationship> eclRels =
         axiom.getRelationships().stream()
             .filter(r -> !r.getTypeId().equals(typeToSuppress.getValue()))
@@ -96,7 +97,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
             .active(true)
             .destinationId(MEDICINAL_PRODUCT_PACKAGE.getValue()));
 
-    String ecl = EclBuilder.build(eclRels, Set.of(), false, true);
+    String ecl = EclBuilder.build(eclRels, Set.of(), false, true, modelConfiguration);
 
     for (Map.Entry<String, String> entry : substitutionMap.entrySet()) {
       ecl = ecl.replace(entry.getKey(), "(" + entry.getValue() + ")");
@@ -271,7 +272,13 @@ public abstract class AtomicDataService<T extends ProductDetails> {
 
     Collection<String> packVariantIds =
         getSimilarPackageConcepts(
-            axiom, HAS_PACK_SIZE_VALUE, snowStormApiClient, branch, Map.of(), 100);
+            axiom,
+            HAS_PACK_SIZE_VALUE,
+            snowStormApiClient,
+            branch,
+            Map.of(),
+            100,
+            getModelConfiguration(branch));
 
     Mono<List<SnowstormConcept>> packVariants =
         snowStormApiClient.getBrowserConcepts(branch, packVariantIds).collectList();
@@ -378,7 +385,8 @@ public abstract class AtomicDataService<T extends ProductDetails> {
                 .collect(Collectors.toSet()),
             Set.of(),
             false,
-            true);
+            true,
+            getModelConfiguration(branch));
 
     SnowstormAxiom axiom = getSingleAxiom(concept);
 
@@ -389,7 +397,8 @@ public abstract class AtomicDataService<T extends ProductDetails> {
             snowStormApiClient,
             branch,
             Map.of(Objects.requireNonNull(containedConcept.getConceptId()), containedProductEcl),
-            1000);
+            1000,
+            getModelConfiguration(branch));
 
     Mono<List<SnowstormConcept>> packVariants =
         snowStormApiClient.getBrowserConcepts(branch, packVariantIds).collectList();
