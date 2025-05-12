@@ -20,7 +20,6 @@ import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import au.gov.digitalhealth.lingo.validation.OnlyOneNotEmpty;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,8 +33,8 @@ import lombok.EqualsAndHashCode;
     fields = {"containedProducts", "containedPackages"},
     message = "Either containedProducts or containedPackages must be populated, but not both")
 public class PackageDetails<T extends ProductDetails> extends PackageProductDetailsBase {
-  @NotNull SnowstormConceptMini productName;
-  @NotNull SnowstormConceptMini containerType;
+  SnowstormConceptMini productName;
+  SnowstormConceptMini containerType;
   List<@Valid ProductQuantity<T>> containedProducts = new ArrayList<>();
   List<@Valid PackageQuantity<T>> containedPackages = new ArrayList<>();
   List<String> selectedConceptIdentifiers = new ArrayList<>();
@@ -43,8 +42,12 @@ public class PackageDetails<T extends ProductDetails> extends PackageProductDeta
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
     Map<String, String> idMap = new HashMap<>();
-    idMap.put(productName.getConceptId(), SnowstormDtoUtil.getFsnTerm(productName));
-    idMap.put(containerType.getConceptId(), SnowstormDtoUtil.getFsnTerm(containerType));
+    if (productName != null) {
+      idMap.put(productName.getConceptId(), SnowstormDtoUtil.getFsnTerm(productName));
+    }
+    if (containerType != null) {
+      idMap.put(containerType.getConceptId(), SnowstormDtoUtil.getFsnTerm(containerType));
+    }
     for (ProductQuantity<T> productQuantity : containedProducts) {
       idMap.putAll(productQuantity.getIdFsnMap());
     }
