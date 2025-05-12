@@ -56,6 +56,7 @@ import static au.gov.digitalhealth.lingo.util.ValidationUtil.assertSingleCompone
 import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
@@ -158,7 +159,8 @@ public class BrandPackSizeService {
       SnowstormConcept tppConcept,
       SnowstormConceptMini brand,
       Node newTpuuNode,
-      AtomicCache atomicCache) {
+      AtomicCache atomicCache,
+      ModelConfiguration modelConfiguration) {
     Set<SnowstormRelationship> newRelationships =
         cloneNewRelationships(tppConcept.getClassAxioms().iterator().next().getRelationships());
 
@@ -188,7 +190,8 @@ public class BrandPackSizeService {
             .collect(Collectors.toSet());
 
     newRelationships.add(
-        SnowstormDtoUtil.getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT_PACKAGE, 0));
+        SnowstormDtoUtil.getSnowstormRelationship(
+            IS_A, MEDICINAL_PRODUCT_PACKAGE, 0, modelConfiguration.getModuleId()));
 
     newRelationships.forEach(
         r -> {
@@ -200,12 +203,13 @@ public class BrandPackSizeService {
     return newRelationships;
   }
 
-  private static void addParent(Node child, Node parent) {
+  private static void addParent(Node child, Node parent, String moduleId) {
     if (child.isNewConcept()) {
       child
           .getNewConceptDetails()
           .getAxioms()
-          .forEach(a -> a.getRelationships().add(getSnowstormRelationship(IS_A, parent, 0)));
+          .forEach(
+              a -> a.getRelationships().add(getSnowstormRelationship(IS_A, parent, 0, moduleId)));
     }
   }
 
@@ -218,7 +222,8 @@ public class BrandPackSizeService {
       CompletableFuture<Node> newTppNode,
       Node tpuu,
       Node mpp,
-      CompletableFuture<Node> newCtppNode) {
+      CompletableFuture<Node> newCtppNode,
+      String moduleId) {
 
     Node tp = productSummary.getNode(brand.getConceptId());
     if (tp == null) {
@@ -230,7 +235,7 @@ public class BrandPackSizeService {
       productSummary.addNode(newTpuuNode);
       productSummary.addEdge(newTpuuNode.getConceptId(), tp.getConceptId(), HAS_PRODUCT_NAME_LABEL);
       productSummary.addEdge(newTpuuNode.getConceptId(), mpuu.getConceptId(), IS_A_LABEL);
-      addParent(newTpuuNode, mpuu);
+      addParent(newTpuuNode, mpuu, moduleId);
     }
 
     if (newMppNode != null) {
@@ -247,7 +252,7 @@ public class BrandPackSizeService {
         newTppNode.join().getConceptId(),
         newMppNode == null ? mpp.getConceptId() : newMppNode.getConceptId(),
         IS_A_LABEL);
-    addParent(newTppNode.join(), newMppNode == null ? mpp : newMppNode);
+    addParent(newTppNode.join(), newMppNode == null ? mpp : newMppNode, moduleId);
     productSummary.addEdge(
         newTppNode.join().getConceptId(), tp.getConceptId(), HAS_PRODUCT_NAME_LABEL);
 
@@ -258,7 +263,7 @@ public class BrandPackSizeService {
         CONTAINS_LABEL);
     productSummary.addEdge(
         newCtppNode.join().getConceptId(), newTppNode.join().getConceptId(), IS_A_LABEL);
-    addParent(newCtppNode.join(), newTppNode.join());
+    addParent(newCtppNode.join(), newTppNode.join(), moduleId);
     productSummary.addEdge(
         newCtppNode.join().getConceptId(), tp.getConceptId(), HAS_PRODUCT_NAME_LABEL);
   }
@@ -274,6 +279,8 @@ public class BrandPackSizeService {
    */
   public ProductSummary calculateNewBrandPackSizes(
       String branch, BrandPackSizeCreationDetails brandPackSizeCreationDetails) {
+
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
     ProductBrands brands = brandPackSizeCreationDetails.getBrands();
     ProductPackSizes packSizes = brandPackSizeCreationDetails.getPackSizes();
@@ -550,7 +557,8 @@ public class BrandPackSizeService {
                             newTppNode,
                             tpuu,
                             mpp,
-                            newCtppNode);
+                            newCtppNode,
+                            modelConfiguration.getModuleId());
 
                         log.fine(
                             "adding subject "
@@ -594,9 +602,16 @@ public class BrandPackSizeService {
       AtomicCache atomicCache,
       Set<ExternalIdentifier> externalIdentifiers,
       boolean isDevice) {
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     Set<SnowstormRelationship> newCtppRelationships =
         calculateNewBrandedPackRelationships(
-            packSize, decimalScale, ctppConcept, brand, newTpuuNode, atomicCache);
+            packSize,
+            decimalScale,
+            ctppConcept,
+            brand,
+            newTpuuNode,
+            atomicCache,
+            modelConfiguration);
 
     String semanticTag =
         isDevice
@@ -624,7 +639,8 @@ public class BrandPackSizeService {
             true)
         .thenApply(
             n -> {
-              nameGenerationService.addGeneratedFsnAndPt(atomicCache, semanticTag, n);
+              nameGenerationService.addGeneratedFsnAndPt(
+                  atomicCache, semanticTag, n, modelConfiguration.getModuleId());
               return n;
             });
   }
@@ -637,9 +653,17 @@ public class BrandPackSizeService {
       Node newTpuuNode,
       AtomicCache atomicCache,
       boolean isDevice) {
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+
     Set<SnowstormRelationship> newTppRelationships =
         calculateNewBrandedPackRelationships(
-            packSize, decimalScale, tppConcept, brand, newTpuuNode, atomicCache);
+            packSize,
+            decimalScale,
+            tppConcept,
+            brand,
+            newTpuuNode,
+            atomicCache,
+            modelConfiguration);
 
     String semanticTag =
         isDevice
@@ -662,7 +686,8 @@ public class BrandPackSizeService {
             true)
         .thenApply(
             n -> {
-              nameGenerationService.addGeneratedFsnAndPt(atomicCache, semanticTag, n);
+              nameGenerationService.addGeneratedFsnAndPt(
+                  atomicCache, semanticTag, n, modelConfiguration.getModuleId());
               return n;
             });
   }
@@ -673,6 +698,8 @@ public class BrandPackSizeService {
       SnowstormConcept mppConcept,
       AtomicCache atomicCache,
       boolean isDevice) {
+
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
     Set<SnowstormRelationship> relationships =
         cloneNewRelationships(mppConcept.getClassAxioms().iterator().next().getRelationships());
@@ -720,7 +747,8 @@ public class BrandPackSizeService {
             true)
         .thenApply(
             n -> {
-              nameGenerationService.addGeneratedFsnAndPt(atomicCache, semanticTag, n);
+              nameGenerationService.addGeneratedFsnAndPt(
+                  atomicCache, semanticTag, n, modelConfiguration.getModuleId());
               return n;
             });
   }
@@ -731,6 +759,9 @@ public class BrandPackSizeService {
       SnowstormConceptMini brand,
       AtomicCache atomicCache,
       boolean isDevice) {
+
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+
     Set<SnowstormRelationship> relationships =
         cloneNewRelationships(tpuuConcept.getClassAxioms().iterator().next().getRelationships());
 
@@ -772,7 +803,8 @@ public class BrandPackSizeService {
             true)
         .thenApply(
             n -> {
-              nameGenerationService.addGeneratedFsnAndPt(atomicCache, semanticTag, n);
+              nameGenerationService.addGeneratedFsnAndPt(
+                  atomicCache, semanticTag, n, modelConfiguration.getModuleId());
               return n;
             });
   }
