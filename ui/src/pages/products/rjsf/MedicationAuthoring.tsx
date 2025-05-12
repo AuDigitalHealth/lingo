@@ -1,11 +1,9 @@
-import React, { useCallback, useState, useRef, useEffect } from 'react';
-import { Form } from '@rjsf/mui';
-import { Container, Button, Box, Paper } from '@mui/material';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import React, {useCallback, useRef, useState} from 'react';
+import {Form} from '@rjsf/mui';
+import {Box, Button, Container, Paper} from '@mui/material';
+import {useMutation, useQuery} from '@tanstack/react-query';
 import _ from 'lodash';
 import ajvErrors from 'ajv-errors';
-
-import { enqueueSnackbar } from 'notistack';
 import UnitValueField from './fields/UnitValueField.tsx';
 import AutoCompleteField from './fields/AutoCompleteField.tsx';
 import ParentChildAutoCompleteField from './fields/ParentChildAutoCompleteField.tsx';
@@ -22,20 +20,22 @@ import NumberWidget from './widgets/NumberWidget.tsx';
 import TextFieldWidget from './widgets/TextFieldWidget.tsx';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 import productService from '../../../api/ProductService.ts';
-import { ConfigService } from '../../../api/ConfigService.ts';
-import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
-import { customizeValidator } from '@rjsf/validator-ajv8';
-import { Concept } from '../../../types/concept.ts';
-import type { ValueSetExpansionContains } from 'fhir/r4';
-import { Task } from '../../../types/task.ts';
-import { Ticket } from '../../../types/tickets/ticket.ts';
+import {ConfigService} from '../../../api/ConfigService.ts';
+import {
+  isValueSetExpansionContains
+} from '../../../types/predicates/isValueSetExpansionContains.ts';
+import {customizeValidator} from '@rjsf/validator-ajv8';
+import {Concept} from '../../../types/concept.ts';
+import type {ValueSetExpansionContains} from 'fhir/r4';
+import {Task} from '../../../types/task.ts';
+import {Ticket} from '../../../types/tickets/ticket.ts';
 import {
   MedicationPackageDetails,
   ProductCreationDetails,
   ProductType,
 } from '../../../types/product.ts';
-import { useTicketProductQuery } from './hooks/useTicketProductQuery.ts';
-import { DraftSubmitPanel } from './components/DarftSubmitPanel.tsx';
+import {useTicketProductQuery} from './hooks/useTicketProductQuery.ts';
+import {DraftSubmitPanel} from './components/DarftSubmitPanel.tsx';
 import ProductPartialSaveModal from './components/ProductPartialSaveModal.tsx';
 
 export interface MedicationAuthoringV2Props {
@@ -193,6 +193,9 @@ function MedicationAuthoring({
               ObjectFieldTemplate: CustomObjectFieldTemplate,
             }}
             validator={validator}
+            noValidate={true}
+            noHtml5Validate={true}
+
             widgets={{
               NumberWidget,
               TextFieldWidget,
@@ -316,11 +319,10 @@ const fetchProductDataFn = async ({
     ? selectedProduct.code
     : selectedProduct.conceptId;
 
-  const mp = await productService.fetchMedication(
+  return await productService.fetchMedication(
     productId || '',
     task.branchPath,
   );
-  return mp.productName ? mp : null;
 };
 
 const useProductQuery = ({
