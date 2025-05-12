@@ -117,7 +117,9 @@
           "$ref": "#/$defs/Quantity"
         }
       },
-      "required": ["activeIngredient"]
+      "required": [
+        "activeIngredient"
+      ]
     },
     "ProductDetails": {
       "type": "object",
@@ -165,6 +167,10 @@
           "$ref": "#/$defs/Quantity",
           "title": "Unit Size"
         },
+        "otherIdentifyingInformation": {
+          "type": "string",
+          "title": "Other Identifying Information"
+        },
         "containerType": {
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Container Type"
@@ -179,10 +185,6 @@
             }
           ],
           "title": "Device Type"
-        },
-        "otherIdentifyingInformation": {
-          "type": "string",
-          "title": "Other Identifying Information"
         }
       },
       "required": [
@@ -197,25 +199,57 @@
           "if": {
             "properties": {
               "genericForm": {
-                "type": ["object", "null"],
-                "not": { "type": "object", "minProperties": 1 }
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "not": {
+                  "type": "object",
+                  "minProperties": 1
+                }
               },
               "containerType": {
-                "type": ["object", "null"],
-                "not": { "type": "object", "minProperties": 1 }
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "not": {
+                  "type": "object",
+                  "minProperties": 1
+                }
               },
               "deviceType": {
-                "type": ["object", "null"],
-                "not": { "type": "object", "minProperties": 1 }
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "not": {
+                  "type": "object",
+                  "minProperties": 1
+                }
               }
             }
           },
           "then": {
-            "not": { "type": "object" },
+            "not": {
+              "type": "object"
+            },
             "errorMessage": {
               "not": "You must provide at least one of Generic Form, Container Type, or Device Type."
             }
           }
+        }
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "containerType"
+          ]
+        },
+        {
+          "required": [
+            "deviceType"
+          ]
         }
       ]
     },
@@ -242,7 +276,11 @@
           "$ref": "#/$defs/ProductDetails"
         }
       },
-      "required": ["unit", "value", "productDetails"],
+      "required": [
+        "unit",
+        "value",
+        "productDetails"
+      ],
       "errorMessage": {
         "required": "Contained product must be populated."
       },
@@ -260,7 +298,9 @@
                       }
                     }
                   },
-                  "required": ["conceptId"]
+                  "required": [
+                    "conceptId"
+                  ]
                 },
                 "value": {
                   "type": "integer",
@@ -279,7 +319,11 @@
               "properties": {
                 "unit": {
                   "properties": {
-                    "conceptId": { "not": { "const": "732935002" } }
+                    "conceptId": {
+                      "not": {
+                        "const": "732935002"
+                      }
+                    }
                   }
                 },
                 "value": {
@@ -293,9 +337,7 @@
               },
               "errorMessage": {
                 "oneOf": "Unit must not be 'Each' and value must be a number >= 0"
-
               }
-
             }
           ]
         }
@@ -324,7 +366,11 @@
           "$ref": "#/$defs/PackageDetails"
         }
       },
-      "required": ["unit", "value", "packageDetails"],
+      "required": [
+        "unit",
+        "value",
+        "packageDetails"
+      ],
       "errorMessage": {
         "required": "Contained Package must be populated."
       },
@@ -342,7 +388,9 @@
                       }
                     }
                   },
-                  "required": ["conceptId"]
+                  "required": [
+                    "conceptId"
+                  ]
                 },
                 "value": {
                   "type": "integer",
@@ -361,7 +409,11 @@
               "properties": {
                 "unit": {
                   "properties": {
-                    "conceptId": { "not": { "const": "732935002" } }
+                    "conceptId": {
+                      "not": {
+                        "const": "732935002"
+                      }
+                    }
                   }
                 },
                 "value": {
@@ -375,9 +427,7 @@
               },
               "errorMessage": {
                 "oneOf": "Unit must not be 'Each' and value must be a number >= 0"
-
               }
-
             }
           ]
         }
@@ -424,7 +474,6 @@
         "required": "Fields must be populated."
       }
     }
-
   },
   "properties": {
     "productName": {
@@ -486,5 +535,4 @@
       "not": "At least one of 'Contained Products' or 'Contained Packages' must be populated."
     }
   }
-
 }
