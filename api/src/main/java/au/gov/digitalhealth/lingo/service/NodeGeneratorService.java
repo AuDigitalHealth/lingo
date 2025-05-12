@@ -107,10 +107,9 @@ public class NodeGeneratorService {
       AtomicCache atomicCache,
       Set<SnowstormRelationship> relationships,
       Set<String> refsets,
-      String label,
+      ModelLevel modelLevel,
       Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
       Set<SnowstormRelationship> nonDefiningProperties,
-      String semanticTag,
       List<String> selectedConceptIdentifiers,
       boolean suppressIsa,
       boolean suppressNegativeStatements,
@@ -121,10 +120,9 @@ public class NodeGeneratorService {
             atomicCache,
             relationships,
             refsets,
-            label,
+            modelLevel,
             referenceSetMembers,
             nonDefiningProperties,
-            semanticTag,
             selectedConceptIdentifiers,
             suppressIsa,
             suppressNegativeStatements,
@@ -136,10 +134,9 @@ public class NodeGeneratorService {
       AtomicCache atomicCache,
       Set<SnowstormRelationship> relationships,
       Set<String> refsets,
-      String label,
+      ModelLevel modelLevel,
       Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
       Set<SnowstormRelationship> nonDefiningProperties,
-      String semanticTag,
       List<String> selectedConceptIdentifiers,
       boolean suppressIsa,
       boolean suppressNegativeStatements,
@@ -149,7 +146,11 @@ public class NodeGeneratorService {
 
     boolean selectedConcept = false; // indicates if a selected concept has been detected
     Node node = new Node();
-    node.setLabel(label);
+    node.setLabel(modelLevel.getDisplayLabel());
+    node.setDisplayName(modelLevel.getName());
+    node.setModelLevel(modelLevel.getModelLevelType());
+
+    String label = modelLevel.getDisplayLabel();
 
     // if the relationships are empty or a relationship to a new concept (-ve id)
     // then don't bother looking
@@ -161,7 +162,7 @@ public class NodeGeneratorService {
                         && r.getDestinationId() != null
                         && Long.parseLong(r.getDestinationId()) < 0)) {
       String ecl =
-          EclBuilder.build(relationships, refsets, suppressIsa, suppressNegativeStatements);
+          EclBuilder.build(relationships, refsets, suppressIsa, suppressNegativeStatements, modelConfiguration);
 
       if (log.isLoggable(Level.FINE)) {
         log.fine("ECL for " + label + " " + ecl);
@@ -179,7 +180,8 @@ public class NodeGeneratorService {
                 + " ECL "
                 + ecl
                 + " trying again without refset constraint");
-        ecl = EclBuilder.build(relationships, Set.of(), suppressIsa, suppressNegativeStatements);
+        ecl = EclBuilder.build(relationships, Set.of(), suppressIsa, suppressNegativeStatements,
+            modelConfiguration);
       }
 
       if (log.isLoggable(Level.FINE)) {
@@ -239,7 +241,7 @@ public class NodeGeneratorService {
       axiom.setRelationships(relationships);
       axiom.setModuleId(modelConfiguration.getModuleId());
       axiom.setReleased(false);
-      newConceptDetails.setSemanticTag(semanticTag);
+      newConceptDetails.setSemanticTag(modelLevel.getSemanticTag());
       newConceptDetails.getAxioms().add(axiom);
       newConceptDetails.setReferenceSetMembers(referenceSetMembers);
       newConceptDetails.setNonDefiningProperties(nonDefiningProperties);

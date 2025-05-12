@@ -17,13 +17,9 @@ package au.gov.digitalhealth.lingo.service;
 
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONTAINS_DEVICE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.COUNT_OF_DEVICE_TYPE;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.CTPP_REFSET_ID;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_CONTAINER_TYPE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.MPP_REFSET_ID;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.NO_OII_VALUE;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.TPP_REFSET_ID;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.TPUU_REFSET_ID;
 import static au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter.calculateNonDefiningRelationships;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.BRANDED_PHYSICAL_OBJECT_SEMANTIC_TAG;
@@ -47,6 +43,7 @@ import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
+import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
@@ -322,19 +319,16 @@ public class DeviceProductCalculationService {
       ProductSummary productSummary,
       String label) {
     String containedLabel;
-    AmtConstants refset;
-    SnomedConstants semanticTag;
     Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers;
-    ModelLevelType modelLevelType;
 
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+
+    ModelLevel modelLevel;
 
     switch (label) {
       case ProductSummaryService.MPP_LABEL -> {
         containedLabel = ProductSummaryService.MPUU_LABEL;
-        refset = MPP_REFSET_ID;
-        semanticTag = PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG;
-        modelLevelType = ModelLevelType.PACKAGED_CLINICAL_DRUG;
+        modelLevel = modelConfiguration.getLevelOfType(ModelLevelType.PACKAGED_CLINICAL_DRUG);
         referenceSetMembers =
             SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(
                 packageDetails.getExternalIdentifiers(),
@@ -346,9 +340,7 @@ public class DeviceProductCalculationService {
       }
       case ProductSummaryService.TPP_LABEL -> {
         containedLabel = ProductSummaryService.TPUU_LABEL;
-        refset = TPP_REFSET_ID;
-        semanticTag = BRANDED_PHYSICAL_OBJECT_SEMANTIC_TAG;
-        modelLevelType = ModelLevelType.REAL_PACKAGED_CLINICAL_DRUG;
+        modelLevel = modelConfiguration.getLevelOfType(ModelLevelType.REAL_PACKAGED_CLINICAL_DRUG);
         referenceSetMembers =
             SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(
                 packageDetails.getExternalIdentifiers(),
@@ -360,9 +352,9 @@ public class DeviceProductCalculationService {
       }
       case ProductSummaryService.CTPP_LABEL -> {
         containedLabel = ProductSummaryService.TPUU_LABEL;
-        refset = CTPP_REFSET_ID;
-        semanticTag = CONTAINERIZED_BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG;
-        modelLevelType = ModelLevelType.REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG;
+        modelLevel =
+            modelConfiguration.getLevelOfType(
+                ModelLevelType.REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG);
         referenceSetMembers =
             SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(
                 packageDetails.getExternalIdentifiers(),
@@ -383,14 +375,15 @@ public class DeviceProductCalculationService {
                 packageDetails,
                 innerProductSummaries,
                 containedLabel,
-                semanticTag,
+                modelLevel.getSemanticTag(),
                 modelConfiguration),
-            Set.of(refset.getValue()),
-            label,
+            Set.of(modelLevel.getReferenceSetIdentifier()),
+            modelLevel,
             referenceSetMembers,
             calculateNonDefiningRelationships(
-                models.getModelConfiguration(branch), packageDetails, modelLevelType),
-            semanticTag.getValue(),
+                models.getModelConfiguration(branch),
+                packageDetails,
+                modelLevel.getModelLevelType()),
             packageDetails.getSelectedConceptIdentifiers(),
             true,
             label.equals(ProductSummaryService.MPP_LABEL),
@@ -414,7 +407,7 @@ public class DeviceProductCalculationService {
       PackageDetails<DeviceProductDetails> packageDetails,
       Map<ProductQuantity<DeviceProductDetails>, ProductSummary> innerProductSummaries,
       String containedTypeLabel,
-      SnomedConstants semanticTag,
+      String semanticTag,
       ModelConfiguration modelConfiguration) {
     Set<SnowstormRelationship> relationships = new HashSet<>();
     relationships.add(getSnowstormRelationship(IS_A, PACKAGE, 0, modelConfiguration.getModuleId()));
@@ -464,7 +457,7 @@ public class DeviceProductCalculationService {
               modelConfiguration.getModuleId()));
     }
 
-    if (semanticTag.equals(CONTAINERIZED_BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG)) {
+    if (semanticTag.equals(CONTAINERIZED_BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG.getValue())) {
       relationships.add(
           getSnowstormRelationship(
               HAS_CONTAINER_TYPE,
@@ -515,20 +508,22 @@ public class DeviceProductCalculationService {
     innerProductSummary.addEdge(
         mpuu.getConceptId(), mp.getConceptId(), ProductSummaryService.IS_A_LABEL);
 
+    ModelLevel tpuuLevel =
+        modelConfiguration.getLevelOfType(ModelLevelType.REAL_CLINICAL_DRUG);
+
     Node tpuu =
         nodeGeneratorService.generateNode(
             branch,
             cache,
             getTpuuRelationships(
                 mpuu, productQuantity.getProductDetails(), modelConfiguration.getModuleId()),
-            Set.of(TPUU_REFSET_ID.getValue()),
-            ProductSummaryService.TPUU_LABEL,
+            Set.of(tpuuLevel.getReferenceSetIdentifier()),
+            tpuuLevel,
             Set.of(),
             calculateNonDefiningRelationships(
                 models.getModelConfiguration(branch),
                 packageDetails,
                 ModelLevelType.REAL_CLINICAL_DRUG),
-            BRANDED_PHYSICAL_OBJECT_SEMANTIC_TAG.getValue(),
             packageDetails.getSelectedConceptIdentifiers(),
             false,
             false,
