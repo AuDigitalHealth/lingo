@@ -65,7 +65,7 @@ models:
         identifier: 11000168105
         level: PACKAGE
         dataType: STRING
-        valueRegexValidation: (PA\d{4,8}(\/\d{1,2})?(\/\d{1,2})?)|(EU\/\d{1,5}\/\d{1,5}\/\d{1,5})
+        valueRegexValidation: \d{3,8}
         modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
@@ -92,38 +92,38 @@ models:
     levels:
       - name: Virtual Therapeutic Moiety
         displayLabel: MP
-        modelLevelType: MEDICINAL_PRODUCT
+        modelLevelType: MEDICINAL_PRODUCT_ONLY
         semanticTag: medicinal product
-        referenceSetIdentifier: 929360061000036106
+        referenceSetIdentifier: 660351000220100
         productModelEcl: "(> <id> :[0..0]774159003=*,[0..0]411116001=*) MINUS (>(> <id> :[0..0]774159003=*,[0..0]411116001=*) OR 763158003)"
       - name: Virtual Medicinal Product
         displayLabel: MPUU
         modelLevelType: CLINICAL_DRUG
         semanticTag: clinical drug
-        referenceSetIdentifier: 929360071000036103
+        referenceSetIdentifier: 660371000220109
         productModelEcl: "(> <id> :[0..0]774159003=*) {{ C moduleId=1601000220105 }} MINUS (>((> <id> :[0..0]774159003=*) {{ C moduleId=1601000220105 }}))"
       - name: Actual Medicinal Product
         displayLabel: TPUU
         modelLevelType: REAL_CLINICAL_DRUG
         semanticTag: real clinical drug
-        referenceSetIdentifier: 929360031000036100
+        referenceSetIdentifier: 660381000220107
         productModelEcl: "(<id>.774160008) {{ D term=\"real clinical drug\" }}"
       - name: Virtual Medicinal Product Pack
         displayLabel: MPP
         modelLevelType: PACKAGED_CLINICAL_DRUG
         semanticTag: clinical drug package
-        referenceSetIdentifier: 929360081000036101
-        productModelEcl: "> <id> {{D term=\"packaged clinical drug\"}}"
+        referenceSetIdentifier: 660391000220105
+        productModelEcl: "> <id> {{D term=\"clinical drug package\"}}"
       - name: Actual Medicinal Product Pack
         displayLabel: TPP
         modelLevelType: REAL_PACKAGED_CLINICAL_DRUG
         semanticTag: real clinical drug package
-        referenceSetIdentifier: 929360041000036105
+        referenceSetIdentifier: 660401000220107
       - name: Actual Therapeutic Moiety
         displayLabel: TP
         modelLevelType: REAL_MEDICINAL_PRODUCT
         semanticTag: real medicinal product
-        referenceSetIdentifier: 929360021000036102
+        referenceSetIdentifier: 660361000220103
         productModelEcl: "> <id> :774159003=*"
     mappings:
       - name: pan
@@ -215,63 +215,23 @@ models:
         level: PRODUCT
         modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
     nonDefiningProperties:
-      - name: price
-        title: Reimbursement price
-        description: Reimbursement price
-        identifier: 115214000
-        level: PACKAGE
-        dataType: UNSIGNED_INTEGER
-        valueRegexValidation: \d{1,8}
-        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+      - name: supplier
+        title: Supplier
+        description: Supplier
+        identifier: 774159003
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: <774164004
+        modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
-        multiValued: false
-      - name: refPrice
-        title: Reference price
-        description: Reference price
-        identifier: 34851004
-        level: PACKAGE
-        dataType: UNSIGNED_INTEGER
-        valueRegexValidation: \d{1,8}
-        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
-        mandatory: false
-        multiValued: false
+        multiValued: true
       - name: licencedRoute
         title: Licenced Route
         description: Licenced Route of Administration
         identifier: 243637007
         level: PRODUCT
         dataType: CONCEPT
-        eclBinding: ^32570601000036100
-        modelLevels: REAL_CLINICAL_DRUG
-        mandatory: false
-        multiValued: true
-      - name: supplier
-        title: Supplier
-        description: Supplier
-        identifier: 243640007
-        level: PRODUCT
-        dataType: CONCEPT
-        eclBinding: <11900001
-        modelLevels: REAL_CLINICAL_DRUG
-        mandatory: false
-        multiValued: true
-      - name: controlledDrug
-        title: Controlled drug status
-        description: Controlled drug status
-        identifier: 68638009
-        level: PRODUCT
-        dataType: CONCEPT
-        eclBinding: <263490005
-        modelLevels: REAL_CLINICAL_DRUG
-        mandatory: false
-        multiValued: true
-      - name: legalStatus
-        title: Legal status
-        description: Legal status
-        identifier: 243641006
-        level: PRODUCT
-        dataType: CONCEPT
-        eclBinding: <263490005
+        eclBinding: <284009009
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: true

@@ -57,6 +57,7 @@ import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
+import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
@@ -618,13 +619,16 @@ public class BrandPackSizeService {
             ? CONTAINERIZED_BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG.getValue()
             : CONTAINERIZED_BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue();
 
+    ModelLevel modelLevel =
+        modelConfiguration.getLevelOfType(ModelLevelType.REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG);
+
     return nodeGeneratorService
         .generateNodeAsync(
             branch,
             atomicCache,
             newCtppRelationships,
             Set.of(CTPP_REFSET_ID.getValue()),
-            CTPP_LABEL,
+            modelLevel,
             SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(
                 externalIdentifiers,
                 ModelLevelType.REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG,
@@ -632,7 +636,6 @@ public class BrandPackSizeService {
                     .getModelConfiguration(branch)
                     .getMappingRefsetMapForType(ProductPackageType.PACKAGE)),
             Set.of(), // may need to reconsider if users specify the properties to copy over
-            semanticTag,
             List.of(),
             false,
             false,
@@ -670,16 +673,18 @@ public class BrandPackSizeService {
             ? BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG.getValue()
             : BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue();
 
+    ModelLevel modelLevel =
+        modelConfiguration.getLevelOfType(ModelLevelType.REAL_PACKAGED_CLINICAL_DRUG);
+
     return nodeGeneratorService
         .generateNodeAsync(
             branch,
             atomicCache,
             newTppRelationships,
             Set.of(TPP_REFSET_ID.getValue()),
-            TPP_LABEL,
+            modelLevel,
             Set.of(),
             Set.of(), // may need to reconsider if users specify the properties to copy over
-            semanticTag,
             List.of(),
             false,
             false,
@@ -731,16 +736,18 @@ public class BrandPackSizeService {
             ? PRODUCT_PACKAGE_SEMANTIC_TAG.getValue()
             : CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue();
 
+    ModelLevel modelLevel =
+        modelConfiguration.getLevelOfType(ModelLevelType.PACKAGED_CLINICAL_DRUG);
+
     return nodeGeneratorService
         .generateNodeAsync(
             branch,
             atomicCache,
             relationships,
             Set.of(MPP_REFSET_ID.getValue()),
-            MPP_LABEL,
+            modelLevel,
             Set.of(),
             Set.of(), // may need to reconsider if users specify the properties to copy over
-            semanticTag,
             List.of(),
             false,
             false,
@@ -787,16 +794,17 @@ public class BrandPackSizeService {
             ? BRANDED_PRODUCT_SEMANTIC_TAG.getValue()
             : BRANDED_CLINICAL_DRUG_SEMANTIC_TAG.getValue();
 
+    ModelLevel modelLevel = modelConfiguration.getLevelOfType(ModelLevelType.REAL_CLINICAL_DRUG);
+
     return nodeGeneratorService
         .generateNodeAsync(
             branch,
             atomicCache,
             relationships,
             Set.of(TPUU_REFSET_ID.getValue()),
-            TPUU_LABEL,
+            modelLevel,
             Set.of(),
             Set.of(), // may need to reconsider if users specify the properties to copy over
-            semanticTag,
             List.of(),
             false,
             false,
