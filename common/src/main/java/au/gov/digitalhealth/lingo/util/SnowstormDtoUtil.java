@@ -20,6 +20,7 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.ADDITIONAL_RELATIO
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.ADDITIONAL_RELATIONSHIP_CHARACTERISTIC_TYPE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.DEFINED;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.ENTIRE_TERM_CASE_SENSITIVE;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.INFERRED_RELATIONSHIP;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.PRIMITIVE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.SOME_MODIFIER;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.STATED_RELATIONSHIP;
@@ -79,6 +80,20 @@ public class SnowstormDtoUtil {
   }
 
   public static Set<SnowstormRelationship> filterActiveStatedRelationshipByType(
+      Set<SnowstormRelationship> relationships, String... type) {
+    return relationships.stream()
+        .filter(
+            r ->
+                Set.of(type)
+                    .contains(
+                        Objects.requireNonNull(r.getType(), "relationship must have a type")
+                            .getConceptId()))
+        .filter(r -> r.getActive() != null && r.getActive())
+        .filter(r -> STATED_RELATIONSHIP.getValue().equals(r.getCharacteristicType()))
+        .collect(Collectors.toSet());
+  }
+
+  public static Set<SnowstormRelationship> filterActiveInferredRelationshipByType(
       Set<SnowstormRelationship> relationships, String type) {
     return relationships.stream()
         .filter(
@@ -87,7 +102,7 @@ public class SnowstormDtoUtil {
                     Objects.requireNonNull(r.getType(), "relationship must have a type")
                         .getConceptId()))
         .filter(r -> r.getActive() != null && r.getActive())
-        .filter(r -> STATED_RELATIONSHIP.getValue().equals(r.getCharacteristicType()))
+        .filter(r -> INFERRED_RELATIONSHIP.getValue().equals(r.getCharacteristicType()))
         .collect(Collectors.toSet());
   }
 
@@ -98,6 +113,11 @@ public class SnowstormDtoUtil {
           concept.getConceptId());
     }
     return concept.getClassAxioms().iterator().next().getRelationships();
+  }
+
+  public static boolean inferredRelationshipOfTypeExists(
+      Set<SnowstormRelationship> subRoleGroup, String type) {
+    return !filterActiveInferredRelationshipByType(subRoleGroup, type).isEmpty();
   }
 
   public static boolean relationshipOfTypeExists(
@@ -138,6 +158,15 @@ public class SnowstormDtoUtil {
     }
 
     return filteredRelationships.iterator().next();
+  }
+
+  public static Set<SnowstormRelationship> getActiveRelationshipsInRoleGroup(
+      Integer group, Set<SnowstormRelationship> relationships) {
+    return relationships.stream()
+        .filter(r -> Objects.equals(r.getGroupId(), group))
+        .filter(r -> r.getActive() != null && r.getActive())
+        .filter(r -> "STATED_RELATIONSHIP".equals(r.getCharacteristicType()))
+        .collect(Collectors.toSet());
   }
 
   public static Set<SnowstormRelationship> getActiveRelationshipsInRoleGroup(
@@ -186,9 +215,9 @@ public class SnowstormDtoUtil {
   }
 
   public static SnowstormRelationship getSnowstormRelationship(
-      LingoConstants type, LingoConstants destination, int group) {
+      LingoConstants type, LingoConstants destination, int group, String moduleId) {
     SnowstormRelationship relationship =
-        createBaseSnowstormRelationship(type, group, STATED_RELATIONSHIP);
+        createBaseSnowstormRelationship(type, group, STATED_RELATIONSHIP, moduleId);
     relationship.setConcrete(false);
     relationship.setDestinationId(destination.getValue());
     relationship.setTarget(toSnowstormConceptMini(destination));
@@ -196,9 +225,9 @@ public class SnowstormDtoUtil {
   }
 
   public static SnowstormRelationship getSnowstormRelationship(
-      LingoConstants type, Node destination, int group) {
+      LingoConstants type, Node destination, int group, String moduleId) {
     SnowstormRelationship relationship =
-        createBaseSnowstormRelationship(type, group, STATED_RELATIONSHIP);
+        createBaseSnowstormRelationship(type, group, STATED_RELATIONSHIP, moduleId);
     relationship.setConcrete(false);
     relationship.setDestinationId(destination.getConceptId());
     relationship.setTarget(toSnowstormConceptMini(destination));
@@ -209,9 +238,10 @@ public class SnowstormDtoUtil {
       LingoConstants type,
       SnowstormConceptMini destination,
       int group,
-      SnomedConstants characteristicType) {
+      SnomedConstants characteristicType,
+      String moduleId) {
     SnowstormRelationship relationship =
-        createBaseSnowstormRelationship(type, group, characteristicType);
+        createBaseSnowstormRelationship(type, group, characteristicType, moduleId);
     relationship.setConcrete(false);
     relationship.setDestinationId(destination.getConceptId());
     relationship.setTarget(destination);
@@ -223,7 +253,8 @@ public class SnowstormDtoUtil {
       String value,
       DataTypeEnum type,
       int group,
-      SnomedConstants characteristicType) {
+      SnomedConstants characteristicType,
+      String moduleId) {
     String prefixedValue = null;
     if (Objects.requireNonNull(type) == DataTypeEnum.DECIMAL || type == DataTypeEnum.INTEGER) {
       prefixedValue = "#" + value;
@@ -231,7 +262,7 @@ public class SnowstormDtoUtil {
       prefixedValue = "\"" + value + "\"";
     }
     SnowstormRelationship relationship =
-        createBaseSnowstormRelationship(propertyType, group, characteristicType);
+        createBaseSnowstormRelationship(propertyType, group, characteristicType, moduleId);
     relationship.setConcrete(true);
     relationship.setConcreteValue(
         new SnowstormConcreteValue().value(value).dataType(type).valueWithPrefix(prefixedValue));
@@ -239,10 +270,10 @@ public class SnowstormDtoUtil {
   }
 
   private static SnowstormRelationship createBaseSnowstormRelationship(
-      LingoConstants type, int group, SnomedConstants characteristicType) {
+      LingoConstants type, int group, SnomedConstants characteristicType, String moduleId) {
     SnowstormRelationship relationship = new SnowstormRelationship();
     relationship.setActive(true);
-    relationship.setModuleId(SCT_AU_MODULE.getValue());
+    relationship.setModuleId(moduleId);
     relationship.setReleased(false);
     relationship.setGrouped(group > 0);
     relationship.setGroupId(group);
@@ -342,7 +373,8 @@ public class SnowstormDtoUtil {
       LingoConstants valueType,
       LingoConstants unitType,
       DataTypeEnum datatype,
-      int group) {
+      int group,
+      String moduleId) {
     if (quantity != null) {
       relationships.add(
           getSnowstormDatatypeComponent(
@@ -350,9 +382,11 @@ public class SnowstormDtoUtil {
               BigDecimalFormatter.formatBigDecimal(quantity.getValue(), decimalScale),
               datatype,
               group,
-              STATED_RELATIONSHIP));
+              STATED_RELATIONSHIP,
+              moduleId));
       relationships.add(
-          getSnowstormRelationship(unitType, quantity.getUnit(), group, STATED_RELATIONSHIP));
+          getSnowstormRelationship(
+              unitType, quantity.getUnit(), group, STATED_RELATIONSHIP, moduleId));
     }
   }
 
@@ -360,9 +394,11 @@ public class SnowstormDtoUtil {
       Set<SnowstormRelationship> relationships,
       SnowstormConceptMini property,
       LingoConstants type,
-      int group) {
+      int group,
+      String moduleId) {
     if (property != null) {
-      relationships.add(getSnowstormRelationship(type, property, group, STATED_RELATIONSHIP));
+      relationships.add(
+          getSnowstormRelationship(type, property, group, STATED_RELATIONSHIP, moduleId));
     }
   }
 
@@ -402,13 +438,13 @@ public class SnowstormDtoUtil {
     return snowstormConceptMini.getFsn().getTerm();
   }
 
-  public static SnowstormConceptView toSnowstormConceptView(Node node) {
+  public static SnowstormConceptView toSnowstormConceptView(Node node, String moduleId) {
     SnowstormConceptView concept = new SnowstormConceptView();
 
     if (node.getNewConceptDetails().getConceptId() != null) {
       concept.setConceptId(node.getNewConceptDetails().getConceptId().toString());
     }
-    concept.setModuleId(SCT_AU_MODULE.getValue());
+    concept.setModuleId(moduleId);
 
     NewConceptDetails newConceptDetails = node.getNewConceptDetails();
 

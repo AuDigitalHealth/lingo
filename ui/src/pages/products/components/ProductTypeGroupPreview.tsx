@@ -71,7 +71,7 @@ function ProductTypeGroupPreview({
           id="panel1a-header"
         >
           <Typography data-testid={`product-group-title-${label}`}>
-            {productLabelItems[0].displayName}
+            {productLabelItems[0]?.displayName}
           </Typography>
         </AccordionSummary>
         <AccordionDetails key={label + '-accordion'}>

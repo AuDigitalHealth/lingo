@@ -16,11 +16,9 @@
 package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import java.util.HashMap;
 import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -33,6 +31,10 @@ public class Ingredient extends ProductBaseDto {
   SnowstormConceptMini basisOfStrengthSubstance;
   @Valid Quantity totalQuantity;
   @Valid Quantity concentrationStrength;
+  @Valid Quantity presentationStrengthNumerator;
+  @Valid Quantity presentationStrengthDenominator;
+  @Valid Quantity concentrationStrengthNumerator;
+  @Valid Quantity concentrationStrengthDenominator;
 
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
