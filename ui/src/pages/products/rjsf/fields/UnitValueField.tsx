@@ -5,7 +5,7 @@ import EclAutocomplete from '../components/EclAutocomplete.tsx';
 import useTaskById from '../../../../hooks/useTaskById.tsx';
 
 const UnitValueField: React.FC<FieldProps<any, any>> = (props) => {
-  const { formData, uiSchema, rawErrors = [], errorSchema = {}, onChange, idSchema } = props;
+  const { formData, uiSchema, onChange, idSchema } = props;
   const { value, unit } = formData || { value: undefined, unit: undefined };
   const task = useTaskById();
   const unitOptions = uiSchema?.unit?.['ui:options'] || {};
