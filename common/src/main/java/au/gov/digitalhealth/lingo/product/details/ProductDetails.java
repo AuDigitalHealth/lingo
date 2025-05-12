@@ -28,7 +28,7 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = false)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property="type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
   @JsonSubTypes.Type(value = MedicationProductDetails.class, name = "medication"),
   @JsonSubTypes.Type(value = DeviceProductDetails.class, name = "device")
@@ -37,7 +37,6 @@ public abstract class ProductDetails extends PackageProductDetailsBase {
   @NotNull SnowstormConceptMini productName;
   SnowstormConceptMini deviceType;
   String otherIdentifyingInformation;
-  SnowstormConceptMini supplier;
 
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
