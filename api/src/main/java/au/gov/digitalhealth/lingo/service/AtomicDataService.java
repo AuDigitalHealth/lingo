@@ -15,13 +15,12 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
+import static au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType.CLINICAL_DRUG;
+import static au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType.MEDICINAL_PRODUCT;
+import static au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType.REAL_CLINICAL_DRUG;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONTAINS_DEVICE;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.CTPP_REFSET_ID;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_CONTAINER_TYPE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.MPUU_REFSET_ID;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.MP_REFSET_ID;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.TPUU_REFSET_ID;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONTAINS_CD;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_UNIT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_VALUE;
@@ -45,6 +44,7 @@ import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.aspect.LogExecutionTime;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ReferenceSet;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
 import au.gov.digitalhealth.lingo.exception.AtomicDataExtractionProblem;
 import au.gov.digitalhealth.lingo.exception.ResourceNotFoundProblem;
@@ -76,7 +76,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
 
   public static final String MAP_TARGET = "mapTarget";
 
-  private static Collection<String> getSimilarConcepts(
+  private static Collection<String> getSimilarPackageConcepts(
       SnowstormAxiom axiom,
       SnomedConstants typeToSuppress,
       SnowstormClient snowStormApiClient,
@@ -141,15 +141,16 @@ public abstract class AtomicDataService<T extends ProductDetails> {
 
   protected abstract SnowstormClient getSnowStormApiClient();
 
-  protected abstract String getPackageAtomicDataEcl();
+  protected abstract String getPackageAtomicDataEcl(ModelConfiguration modelConfiguration);
 
-  protected abstract String getProductAtomicDataEcl();
+  protected abstract String getProductAtomicDataEcl(ModelConfiguration modelConfiguration);
 
   protected abstract T populateSpecificProductDetails(
       SnowstormConcept product,
       String productId,
       Map<String, SnowstormConcept> browserMap,
-      Map<String, String> typeMap);
+      Map<String, String> typeMap,
+      ModelConfiguration modelConfiguration);
 
   protected abstract String getType();
 
@@ -160,12 +161,22 @@ public abstract class AtomicDataService<T extends ProductDetails> {
   protected abstract ModelConfiguration getModelConfiguration(String branch);
 
   public PackageDetails<T> getPackageAtomicData(String branch, String productId) {
-    Maps maps = getMaps(branch, productId, getPackageAtomicDataEcl(), ProductPackageType.PACKAGE);
+    Maps maps =
+        getMaps(
+            branch,
+            productId,
+            getPackageAtomicDataEcl(getModelConfiguration(branch)),
+            ProductPackageType.PACKAGE);
     return populatePackageDetails(productId, maps, getModelConfiguration(branch));
   }
 
   public T getProductAtomicData(String branch, String productId) {
-    Maps maps = getMaps(branch, productId, getProductAtomicDataEcl(), ProductPackageType.PRODUCT);
+    Maps maps =
+        getMaps(
+            branch,
+            productId,
+            getProductAtomicDataEcl(getModelConfiguration(branch)),
+            ProductPackageType.PRODUCT);
 
     return populateProductDetails(
         maps.browserMap.get(productId), productId, maps, getModelConfiguration(branch));
@@ -191,10 +202,10 @@ public abstract class AtomicDataService<T extends ProductDetails> {
         refsetMembers
             .filter(
                 m ->
-                    m.getRefsetId().equals(CTPP_REFSET_ID.getValue())
-                        || m.getRefsetId().equals(TPUU_REFSET_ID.getValue())
-                        || m.getRefsetId().equals(MPUU_REFSET_ID.getValue())
-                        || m.getRefsetId().equals(MP_REFSET_ID.getValue()))
+                    getModelConfiguration(branch)
+                        .getReferenceSetsForModelLevelTypes(
+                            CLINICAL_DRUG, REAL_CLINICAL_DRUG, MEDICINAL_PRODUCT)
+                        .contains(m.getRefsetId()))
             .collect(
                 Collectors.toMap(
                     SnowstormReferenceSetMember::getReferencedComponentId,
@@ -232,10 +243,10 @@ public abstract class AtomicDataService<T extends ProductDetails> {
             .map(t -> new Maps(t.getT1(), t.getT2(), t.getT3(), t.getT4()))
             .block();
 
-    if (maps == null || !maps.typeMap.keySet().equals(maps.browserMap.keySet())) {
-      throw new AtomicDataExtractionProblem(
-          "Mismatch between browser and refset members", productId);
-    }
+    //    if (maps == null || !maps.typeMap.keySet().equals(maps.browserMap.keySet())) {
+    //      throw new AtomicDataExtractionProblem(
+    //          "Mismatch between browser and refset members", productId);
+    //    }
     return maps;
   }
 
@@ -259,7 +270,8 @@ public abstract class AtomicDataService<T extends ProductDetails> {
     SnowstormAxiom axiom = getSingleAxiom(concept);
 
     Collection<String> packVariantIds =
-        getSimilarConcepts(axiom, HAS_PACK_SIZE_VALUE, snowStormApiClient, branch, Map.of(), 100);
+        getSimilarPackageConcepts(
+            axiom, HAS_PACK_SIZE_VALUE, snowStormApiClient, branch, Map.of(), 100);
 
     Mono<List<SnowstormConcept>> packVariants =
         snowStormApiClient.getBrowserConcepts(branch, packVariantIds).collectList();
@@ -371,7 +383,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
     SnowstormAxiom axiom = getSingleAxiom(concept);
 
     Collection<String> packVariantIds =
-        getSimilarConcepts(
+        getSimilarPackageConcepts(
             axiom,
             HAS_PRODUCT_NAME,
             snowStormApiClient,
@@ -462,12 +474,19 @@ public abstract class AtomicDataService<T extends ProductDetails> {
     PackageDetails<T> details = new PackageDetails<>();
     SnowstormConcept basePackage = maps.browserMap().get(productId);
     Set<SnowstormRelationship> basePackageRelationships = getRelationshipsFromAxioms(basePackage);
-    // container type
-    details.setContainerType(
-        getSingleActiveTarget(basePackageRelationships, HAS_CONTAINER_TYPE.getValue()));
-    // product name
-    details.setProductName(
-        getSingleActiveTarget(basePackageRelationships, HAS_PRODUCT_NAME.getValue()));
+
+    if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
+      // container type
+      details.setContainerType(
+          getSingleActiveTarget(basePackageRelationships, HAS_CONTAINER_TYPE.getValue()));
+    }
+
+    // TODO should exist for Ireland post migration?
+    if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
+      // product name
+      details.setProductName(
+          getSingleActiveTarget(basePackageRelationships, HAS_PRODUCT_NAME.getValue()));
+    }
 
     addNonDefiningData(details, productId, maps, modelConfiguration, basePackageRelationships);
 
@@ -511,6 +530,8 @@ public abstract class AtomicDataService<T extends ProductDetails> {
             maps.browserMap().get(subProductRelationship.getTarget().getConceptId());
 
         ProductQuantity<T> productQuantity = new ProductQuantity<>();
+        // TODO are there NMPC products with no pack size?
+
         // contained product quantity value
         productQuantity.setValue(
             getSingleActiveBigDecimal(subRoleGroup, HAS_PACK_SIZE_VALUE.getValue()));
@@ -541,7 +562,8 @@ public abstract class AtomicDataService<T extends ProductDetails> {
       ModelConfiguration modelConfiguration) {
 
     T productDetails =
-        populateSpecificProductDetails(product, productId, maps.browserMap(), maps.typeMap());
+        populateSpecificProductDetails(
+            product, productId, maps.browserMap(), maps.typeMap(), modelConfiguration);
 
     if (maps.mappingMap().containsKey(product.getConceptId())) {
       productDetails.setExternalIdentifiers(maps.mappingMap().get(product.getConceptId()));
@@ -556,9 +578,11 @@ public abstract class AtomicDataService<T extends ProductDetails> {
     productDetails.setProductName(
         getSingleActiveTarget(productRelationships, HAS_PRODUCT_NAME.getValue()));
 
-    productDetails.setOtherIdentifyingInformation(
-        getSingleActiveConcreteValue(
-            productRelationships, HAS_OTHER_IDENTIFYING_INFORMATION.getValue()));
+    if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
+      productDetails.setOtherIdentifyingInformation(
+          getSingleActiveConcreteValue(
+              productRelationships, HAS_OTHER_IDENTIFYING_INFORMATION.getValue()));
+    }
 
     addNonDefiningData(
         productDetails, product.getConceptId(), maps, modelConfiguration, productRelationships);

@@ -1,6 +1,7 @@
 models:
   MAIN_SNOMEDCT-AU_AUAMT:
     modelType: AMT
+    moduleId: 32506021000036107
     baseMedicationSchema: classpath:AMT/base-medication-schema.json
     baseMedicationUiSchema: classpath:AMT/base-medication-ui-schema.json
     baseDeviceSchema: classpath:AMT/base-device-schema.json
@@ -10,6 +11,10 @@ models:
     baseBulkPackSchema: classpath:AMT/base-bulk-pack-schema.json
     baseBulkPackUiSchema: classpath:AMT/base-bulk-pack-ui-schema.json
     subpackFromPackageEcl: "((<id>.999000011000168107) or (<id>.999000111000168106))"
+    medicationPackageDataExtractionEcl: "(<id> or (<id>.999000011000168107) or (<id>.774160008) or (<id>.999000011000168107.774160008) or ((>>((<id>.774160008) or (<id>.999000011000168107.774160008))) and (^929360071000036103))) and <373873005"
+    medicationProductDataExtractionEcl: "(<id> or (>> <id> and ^929360071000036103)) and <373873005"
+    devicePackageDataExtractionEcl: "(<id> or (<id>.999000111000168106) or (<id>.999000081000168101) or (<id>.999000111000168106.999000081000168101) or ((>>((<id>.999000081000168101) or (<id>.999000111000168106.999000081000168101))) and (^929360071000036103 or ^929360061000036106))) and < 260787004"
+    deviceProductDataExtractionEcl: "(<id> or (>> <id> and (^929360071000036103 or ^929360061000036106))) and < 260787004"
     levels:
       - name: Product
         displayLabel: MP
@@ -71,6 +76,7 @@ models:
     nonDefiningProperties:
   MAIN_SNOMEDCT-IE_IE:
     modelType: NMPC
+    moduleId: 1601000220105
     baseMedicationSchema: classpath:NMPC/base-medication-schema.json
     baseMedicationUiSchema: classpath:NMPC/base-medication-ui-schema.json
     baseDeviceSchema: classpath:NMPC/base-device-schema.json
@@ -79,6 +85,10 @@ models:
     baseBulkBrandUiSchema: classpath:NMPC/base-bulk-brand-ui-schema.json
     baseBulkPackSchema: classpath:NMPC/base-bulk-pack-schema.json
     baseBulkPackUiSchema: classpath:NMPC/base-bulk-pack-ui-schema.json
+    medicationPackageDataExtractionEcl: "(<id> or (>><id>.774160008)) and <373873005"
+    medicationProductDataExtractionEcl: "(<id> or (>!<id>:411116001=*)) and <373873005"
+    devicePackageDataExtractionEcl: "(<id> or (<id>.999000111000168106) or (<id>.999000081000168101) or (<id>.999000111000168106.999000081000168101) or ((>>((<id>.999000081000168101) or (<id>.999000111000168106.999000081000168101))) and (^929360071000036103 or ^929360061000036106))) and < 260787004"
+    deviceProductDataExtractionEcl: "(<id> or (>> <id> and (^929360071000036103 or ^929360061000036106))) and < 260787004"
     levels:
       - name: Virtual Therapeutic Moiety
         displayLabel: MP
@@ -144,7 +154,7 @@ models:
           - RELATED
       - name: ean
         title: EAN
-        identifier: 71388002
+        identifier: 410607006
         level: PACKAGE
         dataType: UNSIGNED_INTEGER
         valueRegexValidation: \d{13}
@@ -168,7 +178,7 @@ models:
           - RELATED
       - name: atc
         title: ATC level 5 code
-        identifier: 71388002
+        identifier: 84676004
         level: PACKAGE
         dataType: STRING,
         valueRegexValidation: ^.+$
@@ -183,19 +193,19 @@ models:
       - name: blackTriangle
         title: Black Triangle
         description: Medicines on the Black Triangle Scheme
-        identifier: 1514151000168100
+        identifier: 419036000
         level: PRODUCT
         modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
       - name: combinationOnly
         title: Combination pack only
         description: Combination pack only
-        identifier: 1514151000168100
+        identifier: 431134006
         level: PACKAGE
         modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
       - name: parallelImport
         title: Parallel import
         description: Parallel import
-        identifier: 1514151000168100
+        identifier: 433741003
         level: PRODUCT
         modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
       - name: vmpNonPrescribable
@@ -208,7 +218,7 @@ models:
       - name: price
         title: Reimbursement price
         description: Reimbursement price
-        identifier: 34851004
+        identifier: 115214000
         level: PACKAGE
         dataType: UNSIGNED_INTEGER
         valueRegexValidation: \d{1,8}
@@ -228,7 +238,7 @@ models:
       - name: licencedRoute
         title: Licenced Route
         description: Licenced Route of Administration
-        identifier: 1445111000168100
+        identifier: 243637007
         level: PRODUCT
         dataType: CONCEPT
         eclBinding: ^32570601000036100
@@ -238,7 +248,7 @@ models:
       - name: supplier
         title: Supplier
         description: Supplier
-        identifier: 1445111000168100
+        identifier: 243640007
         level: PRODUCT
         dataType: CONCEPT
         eclBinding: <11900001
@@ -248,7 +258,7 @@ models:
       - name: controlledDrug
         title: Controlled drug status
         description: Controlled drug status
-        identifier: 1445111000168100
+        identifier: 68638009
         level: PRODUCT
         dataType: CONCEPT
         eclBinding: <263490005
@@ -258,7 +268,7 @@ models:
       - name: legalStatus
         title: Legal status
         description: Legal status
-        identifier: 1445111000168100
+        identifier: 243641006
         level: PRODUCT
         dataType: CONCEPT
         eclBinding: <263490005
@@ -268,7 +278,7 @@ models:
       - name: pil
         title: Prduct information leaflet
         description: Prduct information leaflet
-        identifier: 1445111000168100
+        identifier: 26366004
         level: PRODUCT
         dataType: URI
         valueRegexValidation: http(s)?://.+\.(pdf|html)
@@ -278,7 +288,7 @@ models:
       - name: smpc
         title: SmPC
         description: SmPC
-        identifier: 1445111000168100
+        identifier: 243642004
         level: PRODUCT
         dataType: URI
         valueRegexValidation: http(s)?://.+\.(pdf|html)
@@ -288,7 +298,7 @@ models:
       - name: pil
         title: Prduct information leaflet
         description: Prduct information leaflet
-        identifier: 1445111000168100
+        identifier: 243638002
         level: PACKAGE
         dataType: URI
         valueRegexValidation: http(s)?://.+\.(pdf|html)

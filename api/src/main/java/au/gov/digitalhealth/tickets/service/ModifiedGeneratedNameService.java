@@ -15,6 +15,8 @@
  */
 package au.gov.digitalhealth.tickets.service;
 
+import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
+import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.product.NameGeneratorSpec;
 import au.gov.digitalhealth.lingo.product.NewConceptDetails;
 import au.gov.digitalhealth.lingo.product.Node;
@@ -40,12 +42,16 @@ public class ModifiedGeneratedNameService {
 
   ModifiedGeneratedNameRepository modifiedGeneratedNameRepository;
 
+  Models models;
+
   @Autowired
   public ModifiedGeneratedNameService(
       NameGenerationService nameGenerationService,
-      ModifiedGeneratedNameRepository modifiedGeneratedNameRepository) {
+      ModifiedGeneratedNameRepository modifiedGeneratedNameRepository,
+      Models models) {
     this.nameGenerationService = nameGenerationService;
     this.modifiedGeneratedNameRepository = modifiedGeneratedNameRepository;
+    this.models = models;
   }
 
   public void createAndSaveModifiedGeneratedNames(
@@ -53,6 +59,8 @@ public class ModifiedGeneratedNameService {
       ProductSummary productSummaryClone,
       String branch,
       BidiMap<String, String> idMap) {
+
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
     List<ModifiedGeneratedName> modifiedGeneratedNames =
         productSummaryClone.getNodes().stream()
@@ -67,7 +75,8 @@ public class ModifiedGeneratedNameService {
                             new AtomicCache(
                                 idFsnMap, AmtConstants.values(), SnomedConstants.values()),
                             newConceptDetails.getSemanticTag(),
-                            node);
+                            node,
+                            modelConfiguration.getModuleId());
                     if (nameGeneratorSpec.isEmpty()) return Stream.empty();
                     ModifiedGeneratedName.ModifiedGeneratedNameBuilder mgnb =
                         ModifiedGeneratedName.builder()

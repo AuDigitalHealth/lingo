@@ -52,10 +52,11 @@ public class NameGenerationService {
     this.failOnBadInput = failOnBadInput;
   }
 
-  public void addGeneratedFsnAndPt(AtomicCache atomicCache, String semanticTag, Node node) {
+  public void addGeneratedFsnAndPt(
+      AtomicCache atomicCache, String semanticTag, Node node, String moduleId) {
     Instant start = Instant.now();
     Optional<NameGeneratorSpec> nameGeneratorSpec =
-        generateNameGeneratorSpec(atomicCache, semanticTag, node);
+        generateNameGeneratorSpec(atomicCache, semanticTag, node, moduleId);
     if (nameGeneratorSpec.isEmpty()) return;
     FsnAndPt fsnAndPt = createFsnAndPreferredTerm(nameGeneratorSpec.get());
     node.getNewConceptDetails().setFullySpecifiedName(fsnAndPt.getFSN());
@@ -76,9 +77,9 @@ public class NameGenerationService {
   }
 
   public Optional<NameGeneratorSpec> generateNameGeneratorSpec(
-      AtomicCache atomicCache, String semanticTag, Node node) {
+      AtomicCache atomicCache, String semanticTag, Node node, String moduleId) {
     if (node.isNewConcept()) {
-      SnowstormConceptView scon = SnowstormDtoUtil.toSnowstormConceptView(node);
+      SnowstormConceptView scon = SnowstormDtoUtil.toSnowstormConceptView(node, moduleId);
       Set<String> axioms = owlAxiomService.translate(scon);
       String axiomN;
       try {

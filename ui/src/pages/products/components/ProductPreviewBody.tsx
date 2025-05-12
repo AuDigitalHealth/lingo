@@ -138,30 +138,35 @@ function ProductPreviewBody({
             ))}
           </Grid>
           <Grid xs={12} key={'bottom'} item={true}>
-            {lableTypesCentre.map((label, index) => (
-              <ProductTypeGroupPreview
-                key={`left-${label}-${index}`}
-                productLabelItems={filterByLabel(productModel?.nodes, label)}
-                label={label}
-                control={control}
-                productModel={productModel}
-                activeConcept={activeConcept}
-                setActiveConcept={setActiveConcept}
-                expandedConcepts={expandedConcepts}
-                setExpandedConcepts={setExpandedConcepts}
-                register={register}
-                watch={watch}
-                getValues={getValues}
-                idsWithInvalidName={idsWithInvalidName}
-                setIdsWithInvalidName={setIdsWithInvalidName}
-                fieldBindings={fieldBindings}
-                branch={branch}
-                refsetData={refsetData}
-                editProduct={editProduct}
-                setValue={setValue}
-                ticket={ticket}
-              />
-            ))}
+            {lableTypesCentre.map((label, index) => {
+              const filteredItems = filterByLabel(productModel?.nodes, label);
+
+              // Only render the component if there are items to display
+              return filteredItems && filteredItems.length > 0 ? (
+                  <ProductTypeGroupPreview
+                      key={`left-${label}-${index}`}
+                      productLabelItems={filteredItems}
+                      label={label}
+                      control={control}
+                      productModel={productModel}
+                      activeConcept={activeConcept}
+                      setActiveConcept={setActiveConcept}
+                      expandedConcepts={expandedConcepts}
+                      setExpandedConcepts={setExpandedConcepts}
+                      register={register}
+                      watch={watch}
+                      getValues={getValues}
+                      idsWithInvalidName={idsWithInvalidName}
+                      setIdsWithInvalidName={setIdsWithInvalidName}
+                      fieldBindings={fieldBindings}
+                      branch={branch}
+                      refsetData={refsetData}
+                      editProduct={editProduct}
+                      setValue={setValue}
+                      ticket={ticket}
+                  />
+              ) : null;
+            })}
           </Grid>
         </Grid>
       </Box>
