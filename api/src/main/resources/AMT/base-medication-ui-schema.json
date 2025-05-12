@@ -1,10 +1,69 @@
 {
-  "ui:order": [
-    "productName",
-    "containerType",
-    "containedProducts",
-    "containedPackages"
-  ],
+  "ui:field": "LayoutGridField",
+  "ui:layoutGrid": {
+    "ui:row": [
+      {
+        "ui:row": {
+          "className": "grid grid-cols-12 gap-4 col-span-12 grid-rows-4",
+          "children": [
+            {
+              "ui:col": {
+                "className": "col-span-6 row-span-4",
+                "children": [
+                  "productName"
+                ]
+              }
+            },
+            {
+              "ui:col": {
+                "className": "col-span-6 row-span-1 flex items-center",
+                "children": [
+                  "containerType"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "ui:row": {
+          "className": "grid grid-cols-12 gap-4 col-span-12 grid-rows-4",
+          "children": [
+            {
+              "ui:col": {
+                "className": "col-span-6 row-span-4",
+                "children": [
+                  "containedProducts"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "ui:row": {
+          "className": "grid grid-cols-12 gap-4 col-span-12 grid-rows-4",
+          "children": [
+            {
+              "ui:col": {
+                "className": "col-span-6 row-span-4",
+                "children": [
+                  "containedPackages"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+    "ui:order": [
+        "productName",
+        "containerType",
+        "containedProducts",
+        "containedPackages",
+        "externalIdentifiers"
+    ],
   "productName": {
     "ui:field": "AutoCompleteField",
     "ui:options": {
@@ -25,7 +84,6 @@
     }
   },
   "containedProducts": {
-    "ui:field": "ConditionalArrayField",
     "ui:options": {
       "arrayTemplate": "accordion",
       "skipTitle": true,
@@ -61,7 +119,6 @@
         "skipTitle": true
       },
       "unit": {
-        "ui:field": "UnitValueUnWrappedField",
         "ui:title": "Pack Size",
         "ui:options": {
           "pairWith": "value",
@@ -70,7 +127,6 @@
         }
       },
       "value": {
-        "ui:widget": "hidden",
         "ui:options": {
           "skipTitle": true
         }
@@ -91,7 +147,6 @@
           "type"
         ],
         "type": {
-          "ui:widget": "hidden",
           "ui:options": {
             "skipTitle": true
           }
@@ -163,7 +218,6 @@
               }
             },
             "totalQuantity": {
-              "ui:field": "UnitValueField",
               "ui:title": "Unit Strength",
               "value": {},
               "unit": {
@@ -175,7 +229,6 @@
               }
             },
             "concentrationStrength": {
-              "ui:field": "UnitValueField",
               "ui:title": "Concentration Strength",
               "value": {},
               "unit": {
@@ -222,7 +275,6 @@
           ]
         },
         "quantity": {
-          "ui:field": "UnitValueField",
           "ui:title": "Unit Size",
           "value": {},
           "unit": {
@@ -270,7 +322,6 @@
           ]
         },
         "otherIdentifyingInformation": {
-          "ui:widget": "TextFieldWidget",
           "ui:options": {
             "placeholder": "Enter any additional identifying information"
           }
@@ -279,7 +330,6 @@
     }
   },
   "containedPackages": {
-    "ui:field": "ConditionalArrayField",
     "ui:options": {
       "skipTitle": true,
       "searchAndAddProduct": {
@@ -315,7 +365,6 @@
         "skipTitle": true
       },
       "unit": {
-        "ui:field": "UnitValueUnWrappedField",
         "ui:title": "Pack Size",
         "ui:options": {
           "pairWith": "value",
@@ -324,7 +373,6 @@
         }
       },
       "value": {
-        "ui:widget": "hidden",
         "ui:options": {
           "skipTitle": true
         }
@@ -380,7 +428,6 @@
               "skipTitle": true
             },
             "unit": {
-              "ui:field": "UnitValueUnWrappedField",
               "ui:title": "Pack Size",
               "ui:options": {
                 "pairWith": "value",
@@ -389,7 +436,6 @@
               }
             },
             "value": {
-              "ui:widget": "hidden",
               "ui:options": {
                 "skipTitle": true
               }
@@ -410,7 +456,6 @@
                 "type"
               ],
               "type": {
-                "ui:widget": "hidden",
                 "ui:options": {
                   "skipTitle": true
                 }
@@ -482,7 +527,6 @@
                     }
                   },
                   "totalQuantity": {
-                    "ui:field": "UnitValueField",
                     "ui:title": "Unit Strength",
                     "value": {},
                     "unit": {
@@ -494,7 +538,6 @@
                     }
                   },
                   "concentrationStrength": {
-                    "ui:field": "UnitValueField",
                     "ui:title": "Concentration Strength",
                     "value": {},
                     "unit": {
@@ -541,7 +584,6 @@
                 ]
               },
               "quantity": {
-                "ui:field": "UnitValueField",
                 "ui:title": "Unit Size",
                 "value": {},
                 "unit": {
@@ -589,7 +631,6 @@
                 ]
               },
               "otherIdentifyingInformation": {
-                "ui:widget": "TextFieldWidget",
                 "ui:options": {
                   "placeholder": "Enter any additional identifying information"
                 }
@@ -601,7 +642,6 @@
     }
   },
   "externalIdentifiers": {
-    "ui:widget": "OneOfArrayWidget",
     "ui:options": {
       "label": false,
       "skipTitle": true,

@@ -34,6 +34,10 @@ import { useTicketProductQuery } from './hooks/useTicketProductQuery.ts';
 import { DraftSubmitPanel } from './components/DarftSubmitPanel.tsx';
 import ProductPartialSaveModal from './components/ProductPartialSaveModal.tsx';
 
+import { uiSchema } from './ire-template-medication-ui-schema.ts';
+import { schema } from './ire-template-medication-schema.ts';
+import { formData as tmpFormData } from './ire-template-medication-formData.ts';
+
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
   task: Task;
@@ -50,18 +54,22 @@ function MedicationAuthoring({
   ticketProductId,
   ticket,
 }: MedicationAuthoringV2Props) {
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState(tmpFormData);
   const [errorSchema, setErrorSchema] = useState({});
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const formRef = useRef<any>(null);
-  const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
-    task.branchPath,
-  );
-  const { data: uiSchema, isLoading: isUiSchemaLoading } = useUiSchemaQuery(
-    task.branchPath,
-  );
+  const isSchemaLoading = false;
+  // const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
+  //   task.branchPath,
+  // );
+
+  const isUiSchemaLoading = false;
+  // const { data: uiSchema, isLoading: isUiSchemaLoading }
+  //     useUiSchemaQuery(
+  //   task.branchPath,
+  // );
   const { isLoading, isFetching } = useProductQuery({
     selectedProduct,
     task,
