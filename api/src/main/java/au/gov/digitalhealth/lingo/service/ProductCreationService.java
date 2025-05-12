@@ -30,7 +30,9 @@ import au.csiro.snowstorm_client.model.*;
 import au.gov.digitalhealth.lingo.configuration.FieldBindingConfiguration;
 import au.gov.digitalhealth.lingo.configuration.NamespaceConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
+import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.exception.EmptyProductCreationProblem;
 import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.exception.NamespaceNotConfiguredProblem;
@@ -57,6 +59,7 @@ import au.gov.digitalhealth.tickets.service.TicketServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -271,6 +274,8 @@ public class ProductCreationService {
   public SnowstormConceptMini createBrand(
       String branch, @Valid BrandCreationRequest brandCreationRequest) throws InterruptedException {
 
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+
     // Validate that the ticket exists
     ticketService.findTicket(brandCreationRequest.getTicketId());
 
@@ -285,10 +290,16 @@ public class ProductCreationService {
             branch,
             generatedFsn,
             generatePT,
-            Set.of(getSnowstormRelationship(IS_A, PRODUCT_NAME, 0)));
+            Set.of(
+                getSnowstormRelationship(IS_A, PRODUCT_NAME, 0, modelConfiguration.getModuleId())));
 
-    // put in the 929360021000036102 reference set
-    addToRefset(branch, createdConcept.getConceptId(), TP_REFSET_ID.getValue());
+    if (modelConfiguration.getReferenceSetForModelLevelType(ModelLevelType.PRODUCT_NAME) != null) {
+      // Add the brand to the reference set
+      addToRefset(
+          branch,
+          createdConcept.getConceptId(),
+          modelConfiguration.getReferenceSetForModelLevelType(ModelLevelType.PRODUCT_NAME));
+    }
     return toSnowstormConceptMini(createdConcept);
   }
 
@@ -315,6 +326,8 @@ public class ProductCreationService {
 
   private SnowstormConceptView createPrimitiveConcept(
       String branch, String fsn, String pt, Set<SnowstormRelationship> relationships) {
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+
     snowstormClient.checkForDuplicateFsn(fsn, branch);
     // Create and configure the new Snowstorm concept
     SnowstormConceptView newConcept = new SnowstormConceptView();
@@ -326,17 +339,18 @@ public class ProductCreationService {
     SnowstormDtoUtil.addDescription(newConcept, fsn, SnomedConstants.FSN.getValue());
 
     // Add the axiom to the concept
-    SnowstormAxiom axiom = createPrimitiveAxiom(relationships);
+    SnowstormAxiom axiom = createPrimitiveAxiom(relationships, modelConfiguration.getModuleId());
     newConcept.setClassAxioms(Set.of(axiom));
 
     // Create the concept in Snowstorm and return the result
     return snowstormClient.createConcept(branch, newConcept, false);
   }
 
-  private SnowstormAxiom createPrimitiveAxiom(Set<SnowstormRelationship> relationships) {
+  private SnowstormAxiom createPrimitiveAxiom(
+      Set<SnowstormRelationship> relationships, @NotEmpty String moduleId) {
     SnowstormAxiom axiom = new SnowstormAxiom();
     axiom.active(true);
-    axiom.setModuleId(SCT_AU_MODULE.getValue()); // Noticed coming as null
+    axiom.setModuleId(moduleId);
     axiom.setDefinitionStatusId(PRIMITIVE.getValue());
     axiom.setDefinitionStatus("PRIMITIVE");
     axiom.setRelationships(relationships);
@@ -352,7 +366,7 @@ public class ProductCreationService {
             .active(true)
             .refsetId(refsetId)
             .referencedComponentId(conceptId)
-            .moduleId(SCT_AU_MODULE.getValue()));
+            .moduleId(models.getModelConfiguration(branch).getModuleId()));
 
     snowstormClient.createRefsetMembers(branch, refsetMembers);
   }
@@ -397,7 +411,11 @@ public class ProductCreationService {
         .forEach(
             n ->
                 snowstormClient.createRefsetMembership(
-                    branch, MP_REFSET_ID.getValue(), n.getConceptId(), true));
+                    branch,
+                    MP_REFSET_ID.getValue(),
+                    n.getConceptId(),
+                    true,
+                    models.getModelConfiguration(branch).getModuleId()));
 
     List<Node> nodeCreateOrder =
         productSummary.getNodes().stream()
@@ -465,6 +483,8 @@ public class ProductCreationService {
 
   private void createConcepts(String branch, List<Node> nodeCreateOrder, Map<String, String> idMap)
       throws InterruptedException {
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+
     Deque<String> preallocatedIdentifiers = new ArrayDeque<>();
 
     if (identifierSource.isReservationAvailable()) {
@@ -506,7 +526,8 @@ public class ProductCreationService {
     // set up the concepts to create
     List<SnowstormConceptView> concepts = new ArrayList<>();
     for (Node node : nodeCreateOrder) {
-      SnowstormConceptView concept = SnowstormDtoUtil.toSnowstormConceptView(node);
+      SnowstormConceptView concept =
+          SnowstormDtoUtil.toSnowstormConceptView(node, modelConfiguration.getModuleId());
 
       updateAxiomIdentifierReferences(idMap, concept);
 
@@ -581,6 +602,7 @@ public class ProductCreationService {
   public List<String> createRefsetMemberships(String branch, List<Node> nodeCreateOrder)
       throws InterruptedException {
     log.fine("Creating refset members");
+    final String moduleId = models.getModelConfiguration(branch).getModuleId();
     List<SnowstormReferenceSetMemberViewComponent> referenceSetMemberViewComponents =
         nodeCreateOrder.stream()
             .map(
@@ -591,7 +613,7 @@ public class ProductCreationService {
                           .active(true)
                           .refsetId(getRefsetId(n.getLabel()))
                           .referencedComponentId(n.getConcept().getConceptId())
-                          .moduleId(SCT_AU_MODULE.getValue()));
+                          .moduleId(moduleId));
 
                   if (n.getNewConceptDetails().getReferenceSetMembers() != null) {
                     for (SnowstormReferenceSetMemberViewComponent member :

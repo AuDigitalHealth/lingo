@@ -1033,14 +1033,14 @@ public class SnowstormClient {
   }
 
   public SnowstormReferenceSetMemberViewComponent createRefsetMembership(
-      String branch, String refsetId, String memberId, boolean active) {
+      String branch, String refsetId, String memberId, boolean active, String moduleId) {
     SnowstormReferenceSetMemberViewComponent refsetMember =
         new SnowstormReferenceSetMemberViewComponent();
     refsetMember
         .active(active)
         .refsetId(refsetId)
         .referencedComponentId(memberId)
-        .moduleId(AmtConstants.SCT_AU_MODULE.getValue());
+        .moduleId(moduleId);
     return createRefsetMembership(branch, refsetMember);
   }
 

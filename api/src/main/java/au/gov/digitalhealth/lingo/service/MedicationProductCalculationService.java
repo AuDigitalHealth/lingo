@@ -198,12 +198,13 @@ public class MedicationProductCalculationService {
     return changePercentage.compareTo(new BigDecimal(percentage)) <= 0;
   }
 
-  private static void addParent(Node mpuuNode, Node mpNode) {
+  private static void addParent(Node mpuuNode, Node mpNode, String moduleId) {
     if (mpuuNode.isNewConcept()) {
       mpuuNode
           .getNewConceptDetails()
           .getAxioms()
-          .forEach(a -> a.getRelationships().add(getSnowstormRelationship(IS_A, mpNode, 0)));
+          .forEach(
+              a -> a.getRelationships().add(getSnowstormRelationship(IS_A, mpNode, 0, moduleId)));
     }
   }
 
@@ -308,6 +309,9 @@ public class MedicationProductCalculationService {
       PackageDetails<MedicationProductDetails> packageDetails,
       AtomicCache atomicCache)
       throws ExecutionException, InterruptedException {
+
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+
     ProductSummary productSummary = new ProductSummary();
 
     Mono<List<String>> taskChangedConceptIds = snowstormClient.getConceptIdsChangedOnTask(branch);
@@ -353,7 +357,10 @@ public class MedicationProductCalculationService {
             .thenApply(
                 n -> {
                   nameGenerationService.addGeneratedFsnAndPt(
-                      atomicCache, getSemanticTag(false, false, packageDetails), n);
+                      atomicCache,
+                      getSemanticTag(false, false, packageDetails),
+                      n,
+                      modelConfiguration.getModuleId());
                   productSummary.addNode(n);
                   return n;
                 });
@@ -370,7 +377,10 @@ public class MedicationProductCalculationService {
             .thenApply(
                 n -> {
                   nameGenerationService.addGeneratedFsnAndPt(
-                      atomicCache, getSemanticTag(true, false, packageDetails), n);
+                      atomicCache,
+                      getSemanticTag(true, false, packageDetails),
+                      n,
+                      modelConfiguration.getModuleId());
                   productSummary.addNode(n);
                   return n;
                 });
@@ -387,7 +397,10 @@ public class MedicationProductCalculationService {
             .thenApply(
                 n -> {
                   nameGenerationService.addGeneratedFsnAndPt(
-                      atomicCache, getSemanticTag(true, true, packageDetails), n);
+                      atomicCache,
+                      getSemanticTag(true, true, packageDetails),
+                      n,
+                      modelConfiguration.getModuleId());
                   productSummary.addNode(n);
                   return n;
                 });
@@ -398,8 +411,8 @@ public class MedicationProductCalculationService {
     Node tppNode = tpp.get();
     Node ctppNode = ctpp.get();
 
-    addParent(tppNode, mppNode);
-    addParent(ctppNode, tppNode);
+    addParent(tppNode, mppNode, modelConfiguration.getModuleId());
+    addParent(ctppNode, tppNode, modelConfiguration.getModuleId());
     productSummary.addEdge(
         tppNode.getConceptId(), mppNode.getConceptId(), ProductSummaryService.IS_A_LABEL);
     productSummary.addEdge(
@@ -475,6 +488,8 @@ public class MedicationProductCalculationService {
       boolean container,
       AtomicCache atomicCache) {
 
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+
     String semanticTag;
     String label;
     Set<String> refsets;
@@ -500,7 +515,12 @@ public class MedicationProductCalculationService {
 
     Set<SnowstormRelationship> relationships =
         createPackagedClinicalDrugRelationships(
-            packageDetails, innerPackageSummaries, innnerProductSummaries, branded, container);
+            packageDetails,
+            innerPackageSummaries,
+            innnerProductSummaries,
+            branded,
+            container,
+            modelConfiguration);
 
     return nodeGeneratorService.generateNodeAsync(
         branch,
@@ -524,18 +544,30 @@ public class MedicationProductCalculationService {
       Map<PackageQuantity<MedicationProductDetails>, ProductSummary> innerPackageSummaries,
       Map<ProductQuantity<MedicationProductDetails>, ProductSummary> innnerProductSummaries,
       boolean branded,
-      boolean container) {
+      boolean container,
+      ModelConfiguration modelConfiguration) {
 
     Set<SnowstormRelationship> relationships = new HashSet<>();
-    relationships.add(getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT_PACKAGE, 0));
+    relationships.add(
+        getSnowstormRelationship(
+            IS_A, MEDICINAL_PRODUCT_PACKAGE, 0, modelConfiguration.getModuleId()));
 
     if (branded && container) {
       addRelationshipIfNotNull(
-          relationships, packageDetails.getContainerType(), HAS_CONTAINER_TYPE, 0);
+          relationships,
+          packageDetails.getContainerType(),
+          HAS_CONTAINER_TYPE,
+          0,
+          modelConfiguration.getModuleId());
     }
 
     if (branded) {
-      addRelationshipIfNotNull(relationships, packageDetails.getProductName(), HAS_PRODUCT_NAME, 0);
+      addRelationshipIfNotNull(
+          relationships,
+          packageDetails.getProductName(),
+          HAS_PRODUCT_NAME,
+          0,
+          modelConfiguration.getModuleId());
     }
 
     int group = 1;
@@ -548,19 +580,26 @@ public class MedicationProductCalculationService {
       } else {
         contained = productSummary.getSingleConceptWithLabel(ProductSummaryService.MPUU_LABEL);
       }
-      relationships.add(getSnowstormRelationship(CONTAINS_CD, contained, group));
+      relationships.add(
+          getSnowstormRelationship(
+              CONTAINS_CD, contained, group, modelConfiguration.getModuleId()));
 
       ProductQuantity<MedicationProductDetails> quantity = entry.getKey();
       relationships.add(
           getSnowstormRelationship(
-              HAS_PACK_SIZE_UNIT, quantity.getUnit(), group, STATED_RELATIONSHIP));
+              HAS_PACK_SIZE_UNIT,
+              quantity.getUnit(),
+              group,
+              STATED_RELATIONSHIP,
+              modelConfiguration.getModuleId()));
       relationships.add(
           getSnowstormDatatypeComponent(
               HAS_PACK_SIZE_VALUE,
               BigDecimalFormatter.formatBigDecimal(quantity.getValue(), decimalScale),
               DataTypeEnum.DECIMAL,
               group,
-              STATED_RELATIONSHIP));
+              STATED_RELATIONSHIP,
+              modelConfiguration.getModuleId()));
 
       relationships.add(
           getSnowstormDatatypeComponent(
@@ -573,7 +612,8 @@ public class MedicationProductCalculationService {
                       .size()),
               DataTypeEnum.INTEGER,
               group,
-              STATED_RELATIONSHIP));
+              STATED_RELATIONSHIP,
+              modelConfiguration.getModuleId()));
 
       group++;
     }
@@ -589,19 +629,26 @@ public class MedicationProductCalculationService {
       } else {
         contained = productSummary.getSingleConceptWithLabel(ProductSummaryService.MPP_LABEL);
       }
-      relationships.add(getSnowstormRelationship(CONTAINS_PACKAGED_CD, contained, group));
+      relationships.add(
+          getSnowstormRelationship(
+              CONTAINS_PACKAGED_CD, contained, group, modelConfiguration.getModuleId()));
 
       PackageQuantity<MedicationProductDetails> quantity = entry.getKey();
       relationships.add(
           getSnowstormRelationship(
-              HAS_PACK_SIZE_UNIT, quantity.getUnit(), group, STATED_RELATIONSHIP));
+              HAS_PACK_SIZE_UNIT,
+              quantity.getUnit(),
+              group,
+              STATED_RELATIONSHIP,
+              modelConfiguration.getModuleId()));
       relationships.add(
           getSnowstormDatatypeComponent(
               HAS_PACK_SIZE_VALUE,
               BigDecimalFormatter.formatBigDecimal(quantity.getValue(), decimalScale),
               DataTypeEnum.DECIMAL,
               group,
-              STATED_RELATIONSHIP));
+              STATED_RELATIONSHIP,
+              modelConfiguration.getModuleId()));
       group++;
     }
 
@@ -617,7 +664,8 @@ public class MedicationProductCalculationService {
                       .size()),
               DataTypeEnum.INTEGER,
               0,
-              STATED_RELATIONSHIP));
+              STATED_RELATIONSHIP,
+              modelConfiguration.getModuleId()));
     }
 
     return relationships;
@@ -630,6 +678,8 @@ public class MedicationProductCalculationService {
       List<String> selectedConceptIdentifiers)
       throws ExecutionException, InterruptedException {
 
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+
     validateProductDetails(productDetails, branch);
 
     ProductSummary productSummary = new ProductSummary();
@@ -639,7 +689,10 @@ public class MedicationProductCalculationService {
             .thenApply(
                 n -> {
                   nameGenerationService.addGeneratedFsnAndPt(
-                      atomicCache, MEDICINAL_PRODUCT_SEMANTIC_TAG.getValue(), n);
+                      atomicCache,
+                      MEDICINAL_PRODUCT_SEMANTIC_TAG.getValue(),
+                      n,
+                      modelConfiguration.getModuleId());
                   productSummary.addNode(n);
                   return n;
                 });
@@ -649,7 +702,10 @@ public class MedicationProductCalculationService {
             .thenApply(
                 n -> {
                   nameGenerationService.addGeneratedFsnAndPt(
-                      atomicCache, getSemanticTag(false, productDetails), n);
+                      atomicCache,
+                      getSemanticTag(false, productDetails),
+                      n,
+                      modelConfiguration.getModuleId());
                   productSummary.addNode(n);
                   return n;
                 });
@@ -665,13 +721,16 @@ public class MedicationProductCalculationService {
             .thenApply(
                 n -> {
                   nameGenerationService.addGeneratedFsnAndPt(
-                      atomicCache, getSemanticTag(true, productDetails), n);
+                      atomicCache,
+                      getSemanticTag(true, productDetails),
+                      n,
+                      modelConfiguration.getModuleId());
                   productSummary.addNode(n);
                   return n;
                 });
     Node tpuuNode = tpuu.get();
 
-    addParent(mpuuNode, mpNode);
+    addParent(mpuuNode, mpNode, modelConfiguration.getModuleId());
 
     productSummary.addEdge(
         mpuuNode.getConceptId(), mpNode.getConceptId(), ProductSummaryService.IS_A_LABEL);
@@ -696,6 +755,9 @@ public class MedicationProductCalculationService {
       boolean branded,
       AtomicCache atomicCache,
       List<String> selectedConceptIdentifiers) {
+
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+
     String label = branded ? ProductSummaryService.TPUU_LABEL : ProductSummaryService.MPUU_LABEL;
     ModelLevelType modelLevelType =
         branded ? ModelLevelType.CLINICAL_DRUG : ModelLevelType.REAL_CLINICAL_DRUG;
@@ -704,7 +766,7 @@ public class MedicationProductCalculationService {
     String semanticTag = getSemanticTag(branded, productDetails);
 
     Set<SnowstormRelationship> relationships =
-        createClinicalDrugRelationships(productDetails, parent, branded);
+        createClinicalDrugRelationships(productDetails, parent, branded, modelConfiguration);
 
     return nodeGeneratorService.generateNodeAsync(
         branch,
@@ -728,7 +790,10 @@ public class MedicationProductCalculationService {
       MedicationProductDetails details,
       AtomicCache atomicCache,
       List<String> selectedConceptIdentifiers) {
-    Set<SnowstormRelationship> relationships = createMpRelationships(details);
+
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+
+    Set<SnowstormRelationship> relationships = createMpRelationships(details, modelConfiguration);
     String semanticTag = MEDICINAL_PRODUCT_SEMANTIC_TAG.getValue();
 
     return nodeGeneratorService.generateNodeAsync(
@@ -791,17 +856,26 @@ public class MedicationProductCalculationService {
   }
 
   private Set<SnowstormRelationship> createClinicalDrugRelationships(
-      MedicationProductDetails productDetails, Node parent, boolean branded) {
+      MedicationProductDetails productDetails,
+      Node parent,
+      boolean branded,
+      ModelConfiguration modelConfiguration) {
     Set<SnowstormRelationship> relationships = new HashSet<>();
-    relationships.add(getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT, 0));
+    relationships.add(
+        getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT, 0, modelConfiguration.getModuleId()));
     if (parent != null) {
-      relationships.add(getSnowstormRelationship(IS_A, parent, 0));
+      relationships.add(
+          getSnowstormRelationship(IS_A, parent, 0, modelConfiguration.getModuleId()));
     }
 
     if (branded) {
       relationships.add(
           getSnowstormRelationship(
-              HAS_PRODUCT_NAME, productDetails.getProductName(), 0, STATED_RELATIONSHIP));
+              HAS_PRODUCT_NAME,
+              productDetails.getProductName(),
+              0,
+              STATED_RELATIONSHIP,
+              modelConfiguration.getModuleId()));
 
       relationships.add(
           getSnowstormDatatypeComponent(
@@ -811,12 +885,22 @@ public class MedicationProductCalculationService {
                   : productDetails.getOtherIdentifyingInformation(),
               DataTypeEnum.STRING,
               0,
-              STATED_RELATIONSHIP));
+              STATED_RELATIONSHIP,
+              modelConfiguration.getModuleId()));
     }
 
     addRelationshipIfNotNull(
-        relationships, productDetails.getContainerType(), HAS_CONTAINER_TYPE, 0);
-    addRelationshipIfNotNull(relationships, productDetails.getDeviceType(), HAS_DEVICE_TYPE, 0);
+        relationships,
+        productDetails.getContainerType(),
+        HAS_CONTAINER_TYPE,
+        0,
+        modelConfiguration.getModuleId());
+    addRelationshipIfNotNull(
+        relationships,
+        productDetails.getDeviceType(),
+        HAS_DEVICE_TYPE,
+        0,
+        modelConfiguration.getModuleId());
 
     SnowstormConceptMini doseForm =
         productDetails.getGenericForm() == null ? null : productDetails.getGenericForm();
@@ -828,7 +912,12 @@ public class MedicationProductCalculationService {
 
     if (doseForm != null) {
       relationships.add(
-          getSnowstormRelationship(HAS_MANUFACTURED_DOSE_FORM, doseForm, 0, STATED_RELATIONSHIP));
+          getSnowstormRelationship(
+              HAS_MANUFACTURED_DOSE_FORM,
+              doseForm,
+              0,
+              STATED_RELATIONSHIP,
+              modelConfiguration.getModuleId()));
     }
 
     addQuantityIfNotNull(
@@ -838,16 +927,29 @@ public class MedicationProductCalculationService {
         HAS_PACK_SIZE_VALUE,
         HAS_PACK_SIZE_UNIT,
         DataTypeEnum.DECIMAL,
-        0);
+        0,
+        modelConfiguration.getModuleId());
 
     int group = 1;
     for (Ingredient ingredient : productDetails.getActiveIngredients()) {
       addRelationshipIfNotNull(
-          relationships, ingredient.getActiveIngredient(), HAS_ACTIVE_INGREDIENT, group);
+          relationships,
+          ingredient.getActiveIngredient(),
+          HAS_ACTIVE_INGREDIENT,
+          group,
+          modelConfiguration.getModuleId());
       addRelationshipIfNotNull(
-          relationships, ingredient.getPreciseIngredient(), HAS_PRECISE_ACTIVE_INGREDIENT, group);
+          relationships,
+          ingredient.getPreciseIngredient(),
+          HAS_PRECISE_ACTIVE_INGREDIENT,
+          group,
+          modelConfiguration.getModuleId());
       addRelationshipIfNotNull(
-          relationships, ingredient.getBasisOfStrengthSubstance(), HAS_BOSS, group);
+          relationships,
+          ingredient.getBasisOfStrengthSubstance(),
+          HAS_BOSS,
+          group,
+          modelConfiguration.getModuleId());
       addQuantityIfNotNull(
           ingredient.getTotalQuantity(),
           decimalScale,
@@ -855,7 +957,8 @@ public class MedicationProductCalculationService {
           HAS_TOTAL_QUANTITY_VALUE,
           HAS_TOTAL_QUANTITY_UNIT,
           DataTypeEnum.DECIMAL,
-          group);
+          group,
+          modelConfiguration.getModuleId());
       addQuantityIfNotNull(
           ingredient.getConcentrationStrength(),
           decimalScale,
@@ -863,7 +966,8 @@ public class MedicationProductCalculationService {
           CONCENTRATION_STRENGTH_VALUE,
           CONCENTRATION_STRENGTH_UNIT,
           DataTypeEnum.DECIMAL,
-          group);
+          group,
+          modelConfiguration.getModuleId());
 
       group++;
     }
@@ -883,21 +987,27 @@ public class MedicationProductCalculationService {
                       .size()),
               DataTypeEnum.INTEGER,
               0,
-              STATED_RELATIONSHIP));
+              STATED_RELATIONSHIP,
+              modelConfiguration.getModuleId()));
     }
 
     return relationships;
   }
 
   private Set<SnowstormRelationship> createMpRelationships(
-      MedicationProductDetails productDetails) {
+      MedicationProductDetails productDetails, ModelConfiguration modelConfiguration) {
     Set<SnowstormRelationship> relationships = new HashSet<>();
-    relationships.add(getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT, 0));
+    relationships.add(
+        getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT, 0, modelConfiguration.getModuleId()));
     int group = 1;
     for (Ingredient ingredient : productDetails.getActiveIngredients()) {
       relationships.add(
           getSnowstormRelationship(
-              HAS_ACTIVE_INGREDIENT, ingredient.getActiveIngredient(), group, STATED_RELATIONSHIP));
+              HAS_ACTIVE_INGREDIENT,
+              ingredient.getActiveIngredient(),
+              group,
+              STATED_RELATIONSHIP,
+              modelConfiguration.getModuleId()));
       group++;
     }
     return relationships;
