@@ -22,22 +22,33 @@ import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_CONTAINER_TYPE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_DEVICE_TYPE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_TOTAL_QUANTITY_UNIT;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_TOTAL_QUANTITY_VALUE;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.MPUU_REFSET_ID;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONTAINS_CD;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_ACTIVE_INGREDIENT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_BOSS;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_CONCENTRATION_STRENGTH_DENOMINATOR_UNIT;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_CONCENTRATION_STRENGTH_DENOMINATOR_VALUE;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_CONCENTRATION_STRENGTH_NUMERATOR_UNIT;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_CONCENTRATION_STRENGTH_NUMERATOR_VALUE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_MANUFACTURED_DOSE_FORM;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_UNIT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_VALUE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRECISE_ACTIVE_INGREDIENT;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRESENTATION_STRENGTH_DENOMINATOR_UNIT;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRESENTATION_STRENGTH_DENOMINATOR_VALUE;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRESENTATION_STRENGTH_NUMERATOR_UNIT;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRESENTATION_STRENGTH_NUMERATOR_VALUE;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_SUPPLIER;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_UNIT_OF_PRESENTATION;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.IS_A;
+import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.filterActiveInferredRelationshipByType;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.filterActiveStatedRelationshipByType;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getActiveRelationshipsInRoleGroup;
-import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getActiveRelationshipsOfType;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getRelationshipsFromAxioms;
+import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getSingleActiveBigDecimal;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getSingleActiveTarget;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getSingleOptionalActiveBigDecimal;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getSingleOptionalActiveTarget;
+import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.inferredRelationshipOfTypeExists;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.relationshipOfTypeExists;
 
 import au.csiro.snowstorm_client.model.SnowstormConcept;
@@ -45,6 +56,8 @@ import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.exception.AtomicDataExtractionProblem;
 import au.gov.digitalhealth.lingo.product.details.Ingredient;
 import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
@@ -60,14 +73,6 @@ import org.springframework.stereotype.Service;
 @Service
 @Log
 public class MedicationService extends AtomicDataService<MedicationProductDetails> {
-  private static final String PACKAGE_CONCEPTS_FOR_ATOMIC_EXTRACTION_ECL =
-      "(<id> or (<id>.999000011000168107) "
-          + "or (<id>.774160008) "
-          + "or (<id>.999000011000168107.774160008) "
-          + "or ((>>((<id>.774160008) or (<id>.999000011000168107.774160008))) and (^929360071000036103))) "
-          + "and <373873005";
-  private static final String PRODUCT_CONCEPTS_FOR_ATOMIC_EXTRACTION_ECL =
-      "(<id> or (>> <id> and ^929360071000036103)) and <373873005";
   private final SnowstormClient snowStormApiClient;
   private final Models models;
 
@@ -78,30 +83,66 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
   }
 
   private static Ingredient getIngredient(
-      SnowstormRelationship ingredientRelationship,
-      Set<SnowstormRelationship> productRelationships) {
+      Integer groupId,
+      Set<SnowstormRelationship> productRelationships,
+      ModelConfiguration modelConfiguration) {
     Set<SnowstormRelationship> ingredientRoleGroup =
-        getActiveRelationshipsInRoleGroup(ingredientRelationship, productRelationships);
+        getActiveRelationshipsInRoleGroup(groupId, productRelationships);
     Ingredient ingredient = new Ingredient();
-    ingredient.setActiveIngredient(ingredientRelationship.getTarget());
+    ingredient.setActiveIngredient(
+        getSingleOptionalActiveTarget(ingredientRoleGroup, HAS_ACTIVE_INGREDIENT.getValue()));
     ingredient.setPreciseIngredient(
         getSingleOptionalActiveTarget(
             ingredientRoleGroup, HAS_PRECISE_ACTIVE_INGREDIENT.getValue()));
     ingredient.setBasisOfStrengthSubstance(
         getSingleOptionalActiveTarget(ingredientRoleGroup, HAS_BOSS.getValue()));
-    if (relationshipOfTypeExists(ingredientRoleGroup, HAS_TOTAL_QUANTITY_VALUE.getValue())) {
-      ingredient.setTotalQuantity(
-          new Quantity(
-              getSingleOptionalActiveBigDecimal(
-                  ingredientRoleGroup, HAS_TOTAL_QUANTITY_VALUE.getValue()),
-              getSingleActiveTarget(ingredientRoleGroup, HAS_TOTAL_QUANTITY_UNIT.getValue())));
-    }
-    if (relationshipOfTypeExists(ingredientRoleGroup, CONCENTRATION_STRENGTH_VALUE.getValue())) {
-      ingredient.setConcentrationStrength(
-          new Quantity(
-              getSingleOptionalActiveBigDecimal(
-                  ingredientRoleGroup, CONCENTRATION_STRENGTH_VALUE.getValue()),
-              getSingleActiveTarget(ingredientRoleGroup, CONCENTRATION_STRENGTH_UNIT.getValue())));
+    if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
+      if (relationshipOfTypeExists(ingredientRoleGroup, HAS_TOTAL_QUANTITY_VALUE.getValue())) {
+        ingredient.setTotalQuantity(
+            new Quantity(
+                getSingleOptionalActiveBigDecimal(
+                    ingredientRoleGroup, HAS_TOTAL_QUANTITY_VALUE.getValue()),
+                getSingleActiveTarget(ingredientRoleGroup, HAS_TOTAL_QUANTITY_UNIT.getValue())));
+      }
+      if (relationshipOfTypeExists(ingredientRoleGroup, CONCENTRATION_STRENGTH_VALUE.getValue())) {
+        ingredient.setConcentrationStrength(
+            new Quantity(
+                getSingleOptionalActiveBigDecimal(
+                    ingredientRoleGroup, CONCENTRATION_STRENGTH_VALUE.getValue()),
+                getSingleActiveTarget(
+                    ingredientRoleGroup, CONCENTRATION_STRENGTH_UNIT.getValue())));
+      }
+    } else {
+      if (relationshipOfTypeExists(
+          ingredientRoleGroup, HAS_PRESENTATION_STRENGTH_NUMERATOR_VALUE.getValue())) {
+        ingredient.setPresentationStrengthNumerator(
+            new Quantity(
+                getSingleActiveBigDecimal(
+                    ingredientRoleGroup, HAS_PRESENTATION_STRENGTH_NUMERATOR_VALUE.getValue()),
+                getSingleActiveTarget(
+                    ingredientRoleGroup, HAS_PRESENTATION_STRENGTH_NUMERATOR_UNIT.getValue())));
+        ingredient.setPresentationStrengthDenominator(
+            new Quantity(
+                getSingleActiveBigDecimal(
+                    ingredientRoleGroup, HAS_PRESENTATION_STRENGTH_DENOMINATOR_VALUE.getValue()),
+                getSingleActiveTarget(
+                    ingredientRoleGroup, HAS_PRESENTATION_STRENGTH_DENOMINATOR_UNIT.getValue())));
+      }
+      if (relationshipOfTypeExists(
+          ingredientRoleGroup, HAS_CONCENTRATION_STRENGTH_NUMERATOR_VALUE.getValue())) {
+        ingredient.setConcentrationStrengthNumerator(
+            new Quantity(
+                getSingleActiveBigDecimal(
+                    ingredientRoleGroup, HAS_CONCENTRATION_STRENGTH_NUMERATOR_VALUE.getValue()),
+                getSingleActiveTarget(
+                    ingredientRoleGroup, HAS_CONCENTRATION_STRENGTH_NUMERATOR_UNIT.getValue())));
+        ingredient.setConcentrationStrengthDenominator(
+            new Quantity(
+                getSingleActiveBigDecimal(
+                    ingredientRoleGroup, HAS_CONCENTRATION_STRENGTH_DENOMINATOR_VALUE.getValue()),
+                getSingleActiveTarget(
+                    ingredientRoleGroup, HAS_CONCENTRATION_STRENGTH_DENOMINATOR_UNIT.getValue())));
+      }
     }
     return ingredient;
   }
@@ -110,22 +151,54 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
       String productId,
       Map<String, SnowstormConcept> browserMap,
       Map<String, String> typeMap,
-      Set<SnowstormRelationship> productRelationships,
+      ModelConfiguration modelConfiguration,
+      SnowstormConcept product,
       MedicationProductDetails productDetails) {
-    Set<SnowstormConcept> mpuu =
-        filterActiveStatedRelationshipByType(productRelationships, IS_A.getValue()).stream()
-            .filter(
-                r ->
-                    r.getTarget() != null
-                        && typeMap.get(r.getTarget().getConceptId()) != null
-                        && typeMap
-                            .get(r.getTarget().getConceptId())
-                            .equals(MPUU_REFSET_ID.getValue()))
-            .map(r -> browserMap.get(r.getTarget().getConceptId()))
-            .collect(Collectors.toSet());
+
+    Set<SnowstormConcept> mpuu;
+
+    Set<SnowstormRelationship> productRelationships = getRelationshipsFromAxioms(product);
+
+    if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
+      mpuu =
+          filterActiveStatedRelationshipByType(productRelationships, IS_A.getValue()).stream()
+              .filter(
+                  r ->
+                      r.getTarget() != null
+                          && typeMap.get(r.getTarget().getConceptId()) != null
+                          && typeMap
+                              .get(r.getTarget().getConceptId())
+                              .equals(
+                                  modelConfiguration.getReferenceSetForModelLevelType(
+                                      ModelLevelType.CLINICAL_DRUG)))
+              .map(r -> browserMap.get(r.getTarget().getConceptId()))
+              .collect(Collectors.toSet());
+    } else {
+      // TODO working around reference set absence
+      mpuu =
+          filterActiveInferredRelationshipByType(product.getRelationships(), IS_A.getValue())
+              .stream()
+              .filter(
+                  r ->
+                      r.getTarget() != null
+                          && browserMap.containsKey(r.getTarget().getConceptId())
+                          && browserMap
+                              .get(r.getTarget().getConceptId())
+                              .getRelationships()
+                              .stream()
+                              .anyMatch(
+                                  rel ->
+                                      Boolean.TRUE.equals(rel.getActive())
+                                          && rel.getType()
+                                              .getConceptId()
+                                              .equals(HAS_MANUFACTURED_DOSE_FORM.getValue())))
+              .map(r -> browserMap.get(r.getTarget().getConceptId()))
+              .collect(Collectors.toSet());
+    }
 
     if (mpuu.size() != 1) {
-      throw new AtomicDataExtractionProblem("Expected 1 MPUU but found " + mpuu.size(), productId);
+      throw new AtomicDataExtractionProblem(
+          "Expected 1 Clinical Drug level concept but found " + mpuu.size(), productId);
     }
 
     SnowstormConceptMini genericDoseForm =
@@ -163,13 +236,13 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
   }
 
   @Override
-  protected String getPackageAtomicDataEcl() {
-    return PACKAGE_CONCEPTS_FOR_ATOMIC_EXTRACTION_ECL;
+  protected String getPackageAtomicDataEcl(ModelConfiguration modelConfiguration) {
+    return modelConfiguration.getMedicationPackageDataExtractionEcl();
   }
 
   @Override
-  protected String getProductAtomicDataEcl() {
-    return PRODUCT_CONCEPTS_FOR_ATOMIC_EXTRACTION_ECL;
+  protected String getProductAtomicDataEcl(ModelConfiguration modelConfiguration) {
+    return modelConfiguration.getMedicationProductDataExtractionEcl();
   }
 
   @Override
@@ -192,7 +265,8 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
       SnowstormConcept product,
       String productId,
       Map<String, SnowstormConcept> browserMap,
-      Map<String, String> typeMap) {
+      Map<String, String> typeMap,
+      ModelConfiguration modelConfiguration) {
 
     MedicationProductDetails productDetails = new MedicationProductDetails();
 
@@ -203,41 +277,62 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
     boolean hasDoseForm =
         relationshipOfTypeExists(productRelationships, HAS_MANUFACTURED_DOSE_FORM.getValue());
     if (hasDoseForm) {
-      populateDoseForm(productId, browserMap, typeMap, productRelationships, productDetails);
+      populateDoseForm(productId, browserMap, typeMap, modelConfiguration, product, productDetails);
     }
 
-    boolean hasContainerType =
-        relationshipOfTypeExists(productRelationships, HAS_CONTAINER_TYPE.getValue());
-    if (hasContainerType) {
-      productDetails.setContainerType(
-          getSingleActiveTarget(productRelationships, HAS_CONTAINER_TYPE.getValue()));
-    }
+    if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
+      boolean hasContainerType =
+          relationshipOfTypeExists(productRelationships, HAS_CONTAINER_TYPE.getValue());
+      if (hasContainerType) {
+        productDetails.setContainerType(
+            getSingleActiveTarget(productRelationships, HAS_CONTAINER_TYPE.getValue()));
+      }
 
-    boolean hasDevice = relationshipOfTypeExists(productRelationships, HAS_DEVICE_TYPE.getValue());
-    if (hasDevice) {
-      productDetails.setDeviceType(
-          getSingleActiveTarget(productRelationships, HAS_DEVICE_TYPE.getValue()));
-    }
+      boolean hasDevice =
+          relationshipOfTypeExists(productRelationships, HAS_DEVICE_TYPE.getValue());
+      if (hasDevice) {
+        productDetails.setDeviceType(
+            getSingleActiveTarget(productRelationships, HAS_DEVICE_TYPE.getValue()));
+      }
 
-    if (!hasDoseForm && !hasDevice) {
-      throw new AtomicDataExtractionProblem(
-          "Expected manufactured dose form or device type, product has neither", productId);
-    } else if (hasDoseForm && hasDevice) {
-      throw new AtomicDataExtractionProblem(
-          "Expected manufactured dose form or device type, product has both", productId);
-    } else if (hasDevice && hasContainerType) {
-      throw new AtomicDataExtractionProblem(
-          "Expected container type or device type, product has both", productId);
+      if (!hasDoseForm && !hasDevice) {
+        throw new AtomicDataExtractionProblem(
+            "Expected manufactured dose form or device type, product has neither", productId);
+      } else if (hasDoseForm && hasDevice) {
+        throw new AtomicDataExtractionProblem(
+            "Expected manufactured dose form or device type, product has both", productId);
+      } else if (hasDevice && hasContainerType) {
+        throw new AtomicDataExtractionProblem(
+            "Expected container type or device type, product has both", productId);
+      }
+    } else {
+      if (relationshipOfTypeExists(productRelationships, HAS_UNIT_OF_PRESENTATION.getValue())) {
+        productDetails.setUnitOfPresentation(
+            getSingleActiveTarget(productRelationships, HAS_UNIT_OF_PRESENTATION.getValue()));
+      }
+
+      // TODO after migration change to additional relationship
+      if (inferredRelationshipOfTypeExists(productRelationships, HAS_SUPPLIER.getValue())) {
+        productDetails.setSupplier(
+            getSingleActiveTarget(productRelationships, HAS_SUPPLIER.getValue()));
+      }
     }
 
     populatePackSize(productRelationships, productDetails);
 
-    Set<SnowstormRelationship> ingredientRelationships =
-        getActiveRelationshipsOfType(productRelationships, HAS_ACTIVE_INGREDIENT.getValue());
-    for (SnowstormRelationship ingredientRelationship : ingredientRelationships) {
+    Set<Integer> ingredientGroups =
+        filterActiveStatedRelationshipByType(
+                productRelationships,
+                HAS_ACTIVE_INGREDIENT.getValue(),
+                HAS_PRECISE_ACTIVE_INGREDIENT.getValue())
+            .stream()
+            .map(SnowstormRelationship::getGroupId)
+            .collect(Collectors.toSet());
+
+    for (Integer group : ingredientGroups) {
       productDetails
           .getActiveIngredients()
-          .add(getIngredient(ingredientRelationship, productRelationships));
+          .add(getIngredient(group, productRelationships, modelConfiguration));
     }
     return productDetails;
   }

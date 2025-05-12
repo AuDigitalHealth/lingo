@@ -22,7 +22,6 @@ import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_CONTAINER_TYPE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.MPP_REFSET_ID;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.NO_OII_VALUE;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.SCT_AU_MODULE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.TPP_REFSET_ID;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.TPUU_REFSET_ID;
 import static au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter.calculateNonDefiningRelationships;
@@ -97,12 +96,12 @@ public class DeviceProductCalculationService {
   }
 
   private static Set<SnowstormRelationship> getTpuuRelationships(
-      Node mpuu, DeviceProductDetails productDetails) {
+      Node mpuu, DeviceProductDetails productDetails, String moduleId) {
     Set<SnowstormRelationship> relationships = new HashSet<>();
-    relationships.add(getSnowstormRelationship(IS_A, mpuu, 0));
+    relationships.add(getSnowstormRelationship(IS_A, mpuu, 0, moduleId));
     relationships.add(
         getSnowstormRelationship(
-            HAS_PRODUCT_NAME, productDetails.getProductName(), 0, STATED_RELATIONSHIP));
+            HAS_PRODUCT_NAME, productDetails.getProductName(), 0, STATED_RELATIONSHIP, moduleId));
     relationships.add(
         getSnowstormDatatypeComponent(
             HAS_OTHER_IDENTIFYING_INFORMATION,
@@ -111,19 +110,21 @@ public class DeviceProductCalculationService {
                 : productDetails.getOtherIdentifyingInformation(),
             DataTypeEnum.STRING,
             0,
-            STATED_RELATIONSHIP));
+            STATED_RELATIONSHIP,
+            moduleId));
     return relationships;
   }
 
   private static Set<SnowstormRelationship> getMpuuRelationships(
-      Node mp, Set<SnowstormConceptMini> otherParentConcepts) {
+      Node mp, Set<SnowstormConceptMini> otherParentConcepts, String moduleId) {
     Set<SnowstormRelationship> relationships = new HashSet<>();
-    relationships.add(getSnowstormRelationship(IS_A, mp, 0));
+    relationships.add(getSnowstormRelationship(IS_A, mp, 0, moduleId));
     if (otherParentConcepts != null) {
       otherParentConcepts.forEach(
           otherParentConcept ->
               relationships.add(
-                  getSnowstormRelationship(IS_A, otherParentConcept, 0, STATED_RELATIONSHIP)));
+                  getSnowstormRelationship(
+                      IS_A, otherParentConcept, 0, STATED_RELATIONSHIP, moduleId)));
     }
     return relationships;
   }
@@ -147,6 +148,8 @@ public class DeviceProductCalculationService {
 
   public ProductSummary calculateProductFromAtomicData(
       String branch, @Valid PackageDetails<@Valid DeviceProductDetails> packageDetails) {
+
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
     Mono<List<String>> taskChangedConceptIds = snowstormClient.getConceptIdsChangedOnTask(branch);
 
@@ -229,7 +232,12 @@ public class DeviceProductCalculationService {
           .getNewConceptDetails()
           .getAxioms()
           .forEach(
-              axiom -> axiom.getRelationships().add(getSnowstormRelationship(IS_A, mppNode, 0)));
+              axiom ->
+                  axiom
+                      .getRelationships()
+                      .add(
+                          getSnowstormRelationship(
+                              IS_A, mppNode, 0, modelConfiguration.getModuleId())));
     }
 
     productSummary.addEdge(
@@ -256,7 +264,12 @@ public class DeviceProductCalculationService {
           .getNewConceptDetails()
           .getAxioms()
           .forEach(
-              axiom -> axiom.getRelationships().add(getSnowstormRelationship(IS_A, tppNode, 0)));
+              axiom ->
+                  axiom
+                      .getRelationships()
+                      .add(
+                          getSnowstormRelationship(
+                              IS_A, tppNode, 0, modelConfiguration.getModuleId())));
     }
 
     productSummary.addEdge(
@@ -314,6 +327,8 @@ public class DeviceProductCalculationService {
     Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers;
     ModelLevelType modelLevelType;
 
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+
     switch (label) {
       case ProductSummaryService.MPP_LABEL -> {
         containedLabel = ProductSummaryService.MPUU_LABEL;
@@ -365,7 +380,11 @@ public class DeviceProductCalculationService {
             branch,
             cache,
             getPackageRelationships(
-                packageDetails, innerProductSummaries, containedLabel, semanticTag),
+                packageDetails,
+                innerProductSummaries,
+                containedLabel,
+                semanticTag,
+                modelConfiguration),
             Set.of(refset.getValue()),
             label,
             referenceSetMembers,
@@ -395,9 +414,10 @@ public class DeviceProductCalculationService {
       PackageDetails<DeviceProductDetails> packageDetails,
       Map<ProductQuantity<DeviceProductDetails>, ProductSummary> innerProductSummaries,
       String containedTypeLabel,
-      SnomedConstants semanticTag) {
+      SnomedConstants semanticTag,
+      ModelConfiguration modelConfiguration) {
     Set<SnowstormRelationship> relationships = new HashSet<>();
-    relationships.add(getSnowstormRelationship(IS_A, PACKAGE, 0));
+    relationships.add(getSnowstormRelationship(IS_A, PACKAGE, 0, modelConfiguration.getModuleId()));
     int group = 1;
     for (Entry<ProductQuantity<DeviceProductDetails>, ProductSummary> innerProductSummaryEntry :
         innerProductSummaries.entrySet()) {
@@ -405,13 +425,15 @@ public class DeviceProductCalculationService {
           getSnowstormRelationship(
               CONTAINS_DEVICE,
               innerProductSummaryEntry.getValue().getSingleConceptWithLabel(containedTypeLabel),
-              group));
+              group,
+              modelConfiguration.getModuleId()));
       relationships.add(
           getSnowstormRelationship(
               HAS_PACK_SIZE_UNIT,
               innerProductSummaryEntry.getKey().getUnit(),
               group,
-              STATED_RELATIONSHIP));
+              STATED_RELATIONSHIP,
+              modelConfiguration.getModuleId()));
       relationships.add(
           getSnowstormDatatypeComponent(
               HAS_PACK_SIZE_VALUE,
@@ -419,7 +441,8 @@ public class DeviceProductCalculationService {
                   innerProductSummaryEntry.getKey().getValue(), decimalScale),
               DataTypeEnum.DECIMAL,
               group,
-              STATED_RELATIONSHIP));
+              STATED_RELATIONSHIP,
+              modelConfiguration.getModuleId()));
       group++;
     }
     relationships.add(
@@ -428,18 +451,27 @@ public class DeviceProductCalculationService {
             Integer.toString(innerProductSummaries.size()),
             DataTypeEnum.INTEGER,
             0,
-            STATED_RELATIONSHIP));
+            STATED_RELATIONSHIP,
+            modelConfiguration.getModuleId()));
 
     if (!containedTypeLabel.equals(ProductSummaryService.MPUU_LABEL)) {
       relationships.add(
           getSnowstormRelationship(
-              HAS_PRODUCT_NAME, packageDetails.getProductName(), group++, STATED_RELATIONSHIP));
+              HAS_PRODUCT_NAME,
+              packageDetails.getProductName(),
+              group++,
+              STATED_RELATIONSHIP,
+              modelConfiguration.getModuleId()));
     }
 
     if (semanticTag.equals(CONTAINERIZED_BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG)) {
       relationships.add(
           getSnowstormRelationship(
-              HAS_CONTAINER_TYPE, packageDetails.getContainerType(), group, STATED_RELATIONSHIP));
+              HAS_CONTAINER_TYPE,
+              packageDetails.getContainerType(),
+              group,
+              STATED_RELATIONSHIP,
+              modelConfiguration.getModuleId()));
     }
     return relationships;
   }
@@ -449,6 +481,9 @@ public class DeviceProductCalculationService {
       PackageDetails<DeviceProductDetails> packageDetails,
       ProductQuantity<DeviceProductDetails> productQuantity,
       AtomicCache cache) {
+
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+
     ProductSummary innerProductSummary = new ProductSummary();
     Node mp =
         Node.builder()
@@ -484,7 +519,8 @@ public class DeviceProductCalculationService {
         nodeGeneratorService.generateNode(
             branch,
             cache,
-            getTpuuRelationships(mpuu, productQuantity.getProductDetails()),
+            getTpuuRelationships(
+                mpuu, productQuantity.getProductDetails(), modelConfiguration.getModuleId()),
             Set.of(TPUU_REFSET_ID.getValue()),
             ProductSummaryService.TPUU_LABEL,
             Set.of(),
@@ -546,9 +582,10 @@ public class DeviceProductCalculationService {
     axiom.setDefinitionStatusId(PRIMITIVE.getValue());
     axiom.setDefinitionStatus("PRIMITIVE");
     Set<SnowstormRelationship> relationships =
-        getMpuuRelationships(mp, productDetails.getOtherParentConcepts());
+        getMpuuRelationships(
+            mp, productDetails.getOtherParentConcepts(), modelConfiguration.getModuleId());
     axiom.setRelationships(relationships);
-    axiom.setModuleId(SCT_AU_MODULE.getValue());
+    axiom.setModuleId(modelConfiguration.getModuleId());
     axiom.setReleased(false);
     mpuuDetails.getAxioms().add(axiom);
     mpuuDetails.setNonDefiningProperties(

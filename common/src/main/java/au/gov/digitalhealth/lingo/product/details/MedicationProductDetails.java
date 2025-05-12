@@ -20,7 +20,6 @@ import au.gov.digitalhealth.lingo.validation.OnlyOnePopulated;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import jakarta.validation.Valid;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.Data;
@@ -40,6 +39,7 @@ public class MedicationProductDetails extends ProductDetails {
   @Valid Quantity quantity;
   SnowstormConceptMini containerType;
   SnowstormConceptMini deviceType;
+  SnowstormConceptMini unitOfPresentation;
 
   List<@Valid Ingredient> activeIngredients = new ArrayList<>();
 

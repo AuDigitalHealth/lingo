@@ -18,6 +18,7 @@ package au.gov.digitalhealth.lingo.configuration.model;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
+import au.gov.digitalhealth.lingo.exception.ConfigurationProblem;
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
 import jakarta.validation.constraints.NotEmpty;
@@ -75,7 +76,14 @@ public class ModelConfiguration implements InitializingBean {
 
   @NotEmpty private String baseBulkPackUiSchema;
 
+  @NotEmpty private String moduleId;
+
   private String subpackFromPackageEcl;
+
+  @NotEmpty private String medicationPackageDataExtractionEcl;
+  @NotEmpty private String medicationProductDataExtractionEcl;
+  @NotEmpty private String devicePackageDataExtractionEcl;
+  @NotEmpty private String deviceProductDataExtractionEcl;
 
   @Override
   public void afterPropertiesSet() throws ValidationException {
@@ -228,5 +236,24 @@ public class ModelConfiguration implements InitializingBean {
 
   public boolean containsModelLevel(ModelLevelType modelLevelType) {
     return levels.stream().anyMatch(level -> level.getModelLevelType().equals(modelLevelType));
+  }
+
+  public String getReferenceSetForModelLevelType(ModelLevelType modelLevelType) {
+    return levels.stream()
+        .filter(level -> level.getModelLevelType().equals(modelLevelType))
+        .map(ModelLevel::getReferenceSetIdentifier)
+        .findFirst()
+        .orElseThrow(
+            () ->
+                new ConfigurationProblem(
+                    "No reference set found for model level type: " + modelLevelType));
+  }
+
+  public Set<String> getReferenceSetsForModelLevelTypes(ModelLevelType... modelLevelType) {
+    Set<ModelLevelType> modelLevelTypes = new HashSet<>(Arrays.asList(modelLevelType));
+    return levels.stream()
+        .filter(level -> modelLevelTypes.contains(level.getModelLevelType()))
+        .map(ModelLevel::getReferenceSetIdentifier)
+        .collect(Collectors.toSet());
   }
 }

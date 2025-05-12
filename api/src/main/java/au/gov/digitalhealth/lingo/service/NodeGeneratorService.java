@@ -26,6 +26,7 @@ import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.exception.SingleConceptExpectedProblem;
@@ -144,6 +145,8 @@ public class NodeGeneratorService {
       boolean suppressNegativeStatements,
       boolean enforceRefsets) {
 
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+
     boolean selectedConcept = false; // indicates if a selected concept has been detected
     Node node = new Node();
     node.setLabel(label);
@@ -234,7 +237,7 @@ public class NodeGeneratorService {
           node.getConceptOptions().isEmpty() ? DEFINED.getValue() : PRIMITIVE.getValue());
       axiom.setDefinitionStatus(node.getConceptOptions().isEmpty() ? "FULLY_DEFINED" : "PRIMITIVE");
       axiom.setRelationships(relationships);
-      axiom.setModuleId(SCT_AU_MODULE.getValue());
+      axiom.setModuleId(modelConfiguration.getModuleId());
       axiom.setReleased(false);
       newConceptDetails.setSemanticTag(semanticTag);
       newConceptDetails.getAxioms().add(axiom);

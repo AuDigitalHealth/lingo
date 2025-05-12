@@ -70,7 +70,8 @@ public class NonDefiningPropertiesConverter {
               modelNonDefiningProperty.asLingoConstant(),
               nonDefiningProperty.getValueObject(),
               0,
-              ADDITIONAL_RELATIONSHIP);
+              ADDITIONAL_RELATIONSHIP,
+              modelConfiguration.getModuleId());
         } else {
           if (nonDefiningProperty.getValue() == null) {
             throw new ProductAtomicDataValidationProblem(
@@ -83,7 +84,8 @@ public class NonDefiningPropertiesConverter {
               nonDefiningProperty.getValue(),
               modelNonDefiningProperty.getDataType().getSnowstormDatatype(),
               0,
-              ADDITIONAL_RELATIONSHIP);
+              ADDITIONAL_RELATIONSHIP,
+              modelConfiguration.getModuleId());
         }
       }
     }

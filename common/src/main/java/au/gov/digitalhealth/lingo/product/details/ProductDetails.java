@@ -19,11 +19,8 @@ import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-
 import java.util.HashMap;
 import java.util.Map;
 import lombok.Data;
@@ -40,6 +37,7 @@ public abstract class ProductDetails extends PackageProductDetailsBase {
   @NotNull SnowstormConceptMini productName;
   SnowstormConceptMini deviceType;
   String otherIdentifyingInformation;
+  SnowstormConceptMini supplier;
 
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
