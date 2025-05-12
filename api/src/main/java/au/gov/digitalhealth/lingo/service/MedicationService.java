@@ -94,6 +94,12 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
     ingredient.setPreciseIngredient(
         getSingleOptionalActiveTarget(
             ingredientRoleGroup, HAS_PRECISE_ACTIVE_INGREDIENT.getValue()));
+
+    // TODO get active ingredient properly
+    if (ingredient.getActiveIngredient() == null && ingredient.getPreciseIngredient() != null) {
+      ingredient.setActiveIngredient(ingredient.getPreciseIngredient());
+    }
+
     ingredient.setBasisOfStrengthSubstance(
         getSingleOptionalActiveTarget(ingredientRoleGroup, HAS_BOSS.getValue()));
     if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
