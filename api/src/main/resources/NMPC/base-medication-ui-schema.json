@@ -48,7 +48,7 @@
         "ui:title": "Pack Size",
         "ui:options": {
           "pairWith": "value",
-          "ecl": "(<781405001 {{ D term=\"*.real packaged clinical drug.*\" }}) : (774160008 /* OR 999000081000168101 */) = *).774163005",
+          "ecl": "((<781405001 {{ D term=\"*.real packaged clinical drug.*\" }}) : (774160008 /* OR 999000081000168101 */) = *).774163005",
           "showDefaultOptions": true
         }
       },

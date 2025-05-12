@@ -276,8 +276,8 @@ models:
         mandatory: false
         multiValued: true
       - name: pil
-        title: Prduct information leaflet
-        description: Prduct information leaflet
+        title: Product information leaflet
+        description: Product information leaflet
         identifier: 26366004
         level: PRODUCT
         dataType: URI
@@ -296,8 +296,8 @@ models:
         mandatory: false
         multiValued: true
       - name: pil
-        title: Prduct information leaflet
-        description: Prduct information leaflet
+        title: Product information leaflet
+        description: Product information leaflet
         identifier: 243638002
         level: PACKAGE
         dataType: URI
