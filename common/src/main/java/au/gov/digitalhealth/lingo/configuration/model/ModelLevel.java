@@ -69,4 +69,12 @@ public class ModelLevel {
   public boolean isLeafLevel(Set<ModelLevel> levels) {
     return getLeafLevel(levels).equals(this);
   }
+
+  public boolean isBranded() {
+    return modelLevelType.isBranded();
+  }
+
+  public boolean isContainerized() {
+    return modelLevelType.isContainerized();
+  }
 }

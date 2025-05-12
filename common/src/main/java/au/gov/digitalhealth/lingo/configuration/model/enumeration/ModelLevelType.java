@@ -21,26 +21,27 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.Getter;
 
+@Getter
 public enum ModelLevelType {
-  MEDICINAL_PRODUCT(null, false),
-  MEDICINAL_PRODUCT_ONLY(Set.of(MEDICINAL_PRODUCT), false),
-  MEDICINAL_PRODUCT_PRECISELY(Set.of(MEDICINAL_PRODUCT_ONLY), false),
-  MEDICINAL_PRODUCT_FORM(Set.of(MEDICINAL_PRODUCT), false),
-  MEDICINAL_PRODUCT_ONLY_FORM(Set.of(MEDICINAL_PRODUCT_FORM), false),
-  PRODUCT_NAME(null, true),
-  REAL_MEDICINAL_PRODUCT(Set.of(MEDICINAL_PRODUCT), true),
-  CLINICAL_DRUG(Set.of(MEDICINAL_PRODUCT_ONLY_FORM), false),
-  REAL_CLINICAL_DRUG(Set.of(CLINICAL_DRUG, REAL_MEDICINAL_PRODUCT), true),
-  PACKAGED_CLINICAL_DRUG(null, false),
-  REAL_PACKAGED_CLINICAL_DRUG(Set.of(PACKAGED_CLINICAL_DRUG), true),
-  REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG(Set.of(REAL_PACKAGED_CLINICAL_DRUG), true);
+  MEDICINAL_PRODUCT(null, false, null),
+  MEDICINAL_PRODUCT_ONLY(Set.of(MEDICINAL_PRODUCT), false, null),
+  PRODUCT_NAME(null, true, null),
+  REAL_MEDICINAL_PRODUCT(Set.of(MEDICINAL_PRODUCT), true, null),
+  CLINICAL_DRUG(Set.of(MEDICINAL_PRODUCT_ONLY), false, null),
+  REAL_CLINICAL_DRUG(Set.of(CLINICAL_DRUG, REAL_MEDICINAL_PRODUCT), true, null),
+  PACKAGED_CLINICAL_DRUG(null, false, CLINICAL_DRUG),
+  REAL_PACKAGED_CLINICAL_DRUG(Set.of(PACKAGED_CLINICAL_DRUG), true, REAL_CLINICAL_DRUG),
+  REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG(
+      Set.of(REAL_PACKAGED_CLINICAL_DRUG), true, REAL_CLINICAL_DRUG);
 
-  @Getter private final Set<ModelLevelType> parents;
-  @Getter private final boolean branded;
+  private final Set<ModelLevelType> parents;
+  private final boolean branded;
+  private final ModelLevelType containedLevel;
 
-  ModelLevelType(Set<ModelLevelType> parent, boolean branded) {
+  ModelLevelType(Set<ModelLevelType> parent, boolean branded, ModelLevelType containedLevel) {
     this.parents = parent;
     this.branded = branded;
+    this.containedLevel = containedLevel;
   }
 
   public boolean isPackageLevel() {
@@ -68,5 +69,9 @@ public enum ModelLevelType {
     return Stream.of(ModelLevelType.values())
         .filter(modelType -> modelType.getAncestors().contains(this))
         .collect(Collectors.toSet());
+  }
+
+  public boolean isContainerized() {
+    return this == REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG;
   }
 }

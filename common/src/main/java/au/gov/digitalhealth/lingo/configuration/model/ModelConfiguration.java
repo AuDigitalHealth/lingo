@@ -256,4 +256,19 @@ public class ModelConfiguration implements InitializingBean {
         .map(ModelLevel::getReferenceSetIdentifier)
         .collect(Collectors.toSet());
   }
+
+  public ModelLevel getLeafPackageModelLevel() {
+    return ModelLevel.getLeafLevel(getPackageLevels());
+  }
+
+  public ModelLevel getContainedLevelForType(ModelLevelType modelLevel) {
+    if (!modelLevel.isPackageLevel()) {
+      throw new ConfigurationProblem(
+          "Model level type "
+              + modelLevel
+              + " is not a package level type, cannot get contained level");
+    }
+
+    return getLevelOfType(modelLevel.getContainedLevel());
+  }
 }
