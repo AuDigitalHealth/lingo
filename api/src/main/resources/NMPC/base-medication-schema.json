@@ -60,7 +60,9 @@
                   "minimum": 1
                 }
               },
-              "required": ["value"]
+              "required": [
+                "value"
+              ]
             },
             {
               "properties": {
@@ -124,7 +126,9 @@
           "title": "Presentation Strength Denominator"
         }
       },
-      "required": ["activeIngredient"]
+      "required": [
+        "activeIngredient"
+      ]
     },
     "GenericAndSpecificForms": {
       "type": "object",
@@ -170,7 +174,11 @@
           "$ref": "#/$defs/ProductDetails"
         }
       },
-      "required": ["unit", "value", "productDetails"],
+      "required": [
+        "unit",
+        "value",
+        "productDetails"
+      ],
       "errorMessage": {
         "required": "Contained product must be populated."
       },
@@ -188,7 +196,9 @@
                       }
                     }
                   },
-                  "required": ["conceptId"]
+                  "required": [
+                    "conceptId"
+                  ]
                 },
                 "value": {
                   "type": "integer",
@@ -207,7 +217,11 @@
               "properties": {
                 "unit": {
                   "properties": {
-                    "conceptId": { "not": { "const": "732935002" } }
+                    "conceptId": {
+                      "not": {
+                        "const": "732935002"
+                      }
+                    }
                   }
                 },
                 "value": {
@@ -265,10 +279,6 @@
           ],
           "title": "Specific Dose Form"
         },
-        "quantity": {
-          "$ref": "#/$defs/Quantity",
-          "title": "Unit of Presentation Size"
-        },
         "unitOfPresentation": {
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Unit of Presentation"
@@ -304,7 +314,11 @@
           "title": "Pack Size"
         }
       },
-      "required": ["productName", "containedProducts", "packSize"],
+      "required": [
+        "productName",
+        "containedProducts",
+        "packSize"
+      ],
       "errorMessage": {
         "required": "Fields must be populated."
       }
@@ -319,7 +333,10 @@
       }
     }
   },
-  "required": ["productName", "containedProducts"],
+  "required": [
+    "productName",
+    "containedProducts"
+  ],
   "errorMessage": {
     "required": "Fields must be populated."
   },
