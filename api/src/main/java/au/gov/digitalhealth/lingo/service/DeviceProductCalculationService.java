@@ -46,8 +46,8 @@ import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
-import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.NewConceptDetails;
 import au.gov.digitalhealth.lingo.product.Node;
@@ -55,11 +55,11 @@ import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.details.DeviceProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.ProductQuantity;
+import au.gov.digitalhealth.lingo.service.validators.DeviceDetailsValidator;
 import au.gov.digitalhealth.lingo.util.AmtConstants;
 import au.gov.digitalhealth.lingo.util.BigDecimalFormatter;
 import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
-import au.gov.digitalhealth.lingo.util.ValidationUtil;
 import jakarta.validation.Valid;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -79,6 +79,7 @@ import reactor.core.publisher.Mono;
 public class DeviceProductCalculationService {
 
   private final Models models;
+  private final Map<String, DeviceDetailsValidator> deviceDetailsValidatorByQualifier;
   SnowstormClient snowstormClient;
   NodeGeneratorService nodeGeneratorService;
 
@@ -86,10 +87,14 @@ public class DeviceProductCalculationService {
   int decimalScale;
 
   public DeviceProductCalculationService(
-      SnowstormClient snowstormClient, NodeGeneratorService nodeGeneratorService, Models models) {
+      SnowstormClient snowstormClient,
+      NodeGeneratorService nodeGeneratorService,
+      Models models,
+      Map<String, DeviceDetailsValidator> deviceDetailsValidatorByQualifier) {
     this.snowstormClient = snowstormClient;
     this.nodeGeneratorService = nodeGeneratorService;
     this.models = models;
+    this.deviceDetailsValidatorByQualifier = deviceDetailsValidatorByQualifier;
   }
 
   private static Set<SnowstormRelationship> getTpuuRelationships(
@@ -157,7 +162,17 @@ public class DeviceProductCalculationService {
         new AtomicCache(
             packageDetails.getIdFsnMap(), AmtConstants.values(), SnomedConstants.values());
 
-    validateProductDetails(packageDetails);
+    final DeviceDetailsValidator deviceDetailsValidator =
+        deviceDetailsValidatorByQualifier.get(
+            modelConfiguration.getModelType().name()
+                + "-"
+                + DeviceDetailsValidator.class.getSimpleName());
+
+    if (deviceDetailsValidator == null) {
+      throw new IllegalStateException(
+          "No device details validator found for model type: " + modelConfiguration.getModelType());
+    }
+    deviceDetailsValidator.validatePackageDetails(packageDetails, branch);
 
     ProductSummary productSummary = new ProductSummary();
 
@@ -239,11 +254,15 @@ public class DeviceProductCalculationService {
 
     productSummary.addEdge(
         tppNode.getConceptId(), mppNode.getConceptId(), ProductSummaryService.IS_A_LABEL);
-    productSummary.addNode(packageDetails.getProductName(), ProductSummaryService.TP_LABEL);
-    productSummary.addEdge(
-        tppNode.getConceptId(),
-        packageDetails.getProductName().getConceptId(),
-        ProductSummaryService.HAS_PRODUCT_NAME_LABEL);
+
+    if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
+      ModelLevel tpLevel = modelConfiguration.getLevelOfType(ModelLevelType.PRODUCT_NAME);
+      productSummary.addNode(packageDetails.getProductName(), tpLevel);
+      productSummary.addEdge(
+          tppNode.getConceptId(),
+          packageDetails.getProductName().getConceptId(),
+          ProductSummaryService.HAS_PRODUCT_NAME_LABEL);
+    }
 
     if (ctppNode.isNewConcept()) {
       String ctppPreferredTerm =
@@ -375,10 +394,11 @@ public class DeviceProductCalculationService {
                 packageDetails,
                 innerProductSummaries,
                 containedLabel,
-                modelLevel.getSemanticTag(),
+                modelLevel.getDeviceSemanticTag(),
                 modelConfiguration),
             Set.of(modelLevel.getReferenceSetIdentifier()),
             modelLevel,
+            modelLevel.getDeviceSemanticTag(),
             referenceSetMembers,
             calculateNonDefiningRelationships(
                 models.getModelConfiguration(branch),
@@ -478,19 +498,32 @@ public class DeviceProductCalculationService {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
     ProductSummary innerProductSummary = new ProductSummary();
+    ModelLevelType mpType;
+    if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
+      mpType = ModelLevelType.MEDICINAL_PRODUCT;
+    } else {
+      mpType = ModelLevelType.MEDICINAL_PRODUCT_ONLY;
+    }
+
+    ModelLevel mpLevel = modelConfiguration.getLevelOfType(mpType);
     Node mp =
         Node.builder()
             .concept(productQuantity.getProductDetails().getDeviceType())
-            .label(ProductSummaryService.MP_LABEL)
+            .displayName(mpLevel.getName())
+            .modelLevel(mpLevel.getModelLevelType())
+            .label(mpLevel.getDisplayLabel())
             .build();
     innerProductSummary.addNode(mp);
 
+    ModelLevel mpuuLevel = modelConfiguration.getLevelOfType(ModelLevelType.CLINICAL_DRUG);
     Node mpuu;
     if (productQuantity.getProductDetails().getSpecificDeviceType() != null) {
       mpuu =
           Node.builder()
               .concept(productQuantity.getProductDetails().getSpecificDeviceType())
-              .label(ProductSummaryService.MPUU_LABEL)
+              .displayName(mpuuLevel.getName())
+              .modelLevel(mpuuLevel.getModelLevelType())
+              .label(mpuuLevel.getDisplayLabel())
               .build();
     } else {
       mpuu =
@@ -501,15 +534,16 @@ public class DeviceProductCalculationService {
                       productQuantity.getProductDetails(),
                       cache.getNextId(),
                       mp))
-              .label(ProductSummaryService.MPUU_LABEL)
+              .displayName(mpuuLevel.getName())
+              .modelLevel(mpuuLevel.getModelLevelType())
+              .label(mpuuLevel.getDisplayLabel())
               .build();
     }
     innerProductSummary.addNode(mpuu);
     innerProductSummary.addEdge(
         mpuu.getConceptId(), mp.getConceptId(), ProductSummaryService.IS_A_LABEL);
 
-    ModelLevel tpuuLevel =
-        modelConfiguration.getLevelOfType(ModelLevelType.REAL_CLINICAL_DRUG);
+    ModelLevel tpuuLevel = modelConfiguration.getLevelOfType(ModelLevelType.REAL_CLINICAL_DRUG);
 
     Node tpuu =
         nodeGeneratorService.generateNode(
@@ -519,6 +553,7 @@ public class DeviceProductCalculationService {
                 mpuu, productQuantity.getProductDetails(), modelConfiguration.getModuleId()),
             Set.of(tpuuLevel.getReferenceSetIdentifier()),
             tpuuLevel,
+            tpuuLevel.getDeviceSemanticTag(),
             Set.of(),
             calculateNonDefiningRelationships(
                 models.getModelConfiguration(branch),
@@ -543,11 +578,15 @@ public class DeviceProductCalculationService {
     innerProductSummary.addEdge(
         tpuu.getConceptId(), mpuu.getConceptId(), ProductSummaryService.IS_A_LABEL);
 
-    innerProductSummary.addNode(packageDetails.getProductName(), ProductSummaryService.TP_LABEL);
-    innerProductSummary.addEdge(
-        tpuu.getConceptId(),
-        packageDetails.getProductName().getConceptId(),
-        ProductSummaryService.HAS_PRODUCT_NAME_LABEL);
+    if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
+      ModelLevel tpLevel = modelConfiguration.getLevelOfType(ModelLevelType.PRODUCT_NAME);
+
+      innerProductSummary.addNode(packageDetails.getProductName(), tpLevel);
+      innerProductSummary.addEdge(
+          tpuu.getConceptId(),
+          packageDetails.getProductName().getConceptId(),
+          ProductSummaryService.HAS_PRODUCT_NAME_LABEL);
+    }
 
     innerProductSummary.setSingleSubject(tpuu);
     return innerProductSummary;
@@ -587,46 +626,5 @@ public class DeviceProductCalculationService {
         calculateNonDefiningRelationships(
             modelConfiguration, productDetails, ModelLevelType.CLINICAL_DRUG));
     return mpuuDetails;
-  }
-
-  private void validateProductDetails(PackageDetails<DeviceProductDetails> productDetails) {
-    // device packages should not contain other packages
-    if (!productDetails.getContainedPackages().isEmpty()) {
-      throw new ProductAtomicDataValidationProblem("Device packages cannot contain other packages");
-    }
-
-    // if specific device type is not null, other parent concepts must be null or empty
-    if (productDetails.getContainedProducts().stream()
-        .anyMatch(
-            productQuantity ->
-                productQuantity.getProductDetails().getSpecificDeviceType() != null
-                    && !(productQuantity.getProductDetails().getOtherParentConcepts() == null
-                        || productQuantity
-                            .getProductDetails()
-                            .getOtherParentConcepts()
-                            .isEmpty()))) {
-      throw new ProductAtomicDataValidationProblem(
-          "Specific device type and other parent concepts cannot both be populated");
-    }
-
-    // device packages must contain at least one device
-    if (productDetails.getContainedProducts().isEmpty()) {
-      throw new ProductAtomicDataValidationProblem(
-          "Device packages must contain at least one device");
-    }
-
-    for (ProductQuantity<DeviceProductDetails> productQuantity :
-        productDetails.getContainedProducts()) {
-      // validate quantity is one if unit is each
-      ValidationUtil.validateQuantityValueIsOneIfUnitIsEach(productQuantity);
-      validateDeviceType(productQuantity.getProductDetails());
-    }
-  }
-
-  private void validateDeviceType(DeviceProductDetails deviceProductDetails) {
-    // validate device type is not null
-    if (deviceProductDetails.getDeviceType() == null) {
-      throw new ProductAtomicDataValidationProblem("Device type is required");
-    }
   }
 }

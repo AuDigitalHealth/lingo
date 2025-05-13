@@ -28,6 +28,7 @@ import static au.gov.digitalhealth.lingo.service.ProductSummaryService.TP_LABEL;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.ARTGID_REFSET;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.BRANDED_CLINICAL_DRUG_SEMANTIC_TAG;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.BRANDED_PHYSICAL_OBJECT_SEMANTIC_TAG;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.BRANDED_PRODUCT_SEMANTIC_TAG;
@@ -234,7 +235,7 @@ public class MedicationAssertions {
                     device
                         ? (medicated
                             ? BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG.getValue()
-                            : BRANDED_PHYSICAL_OBJECT_SEMANTIC_TAG.getValue())
+                            : BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG.getValue())
                         : BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue());
         case MPP_LABEL ->
             Assertions.assertThat(node.getNewConceptDetails().getSemanticTag())

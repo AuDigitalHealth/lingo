@@ -108,6 +108,7 @@ public class NodeGeneratorService {
       Set<SnowstormRelationship> relationships,
       Set<String> refsets,
       ModelLevel modelLevel,
+      String semanticTag,
       Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
       Set<SnowstormRelationship> nonDefiningProperties,
       List<String> selectedConceptIdentifiers,
@@ -121,6 +122,7 @@ public class NodeGeneratorService {
             relationships,
             refsets,
             modelLevel,
+            semanticTag,
             referenceSetMembers,
             nonDefiningProperties,
             selectedConceptIdentifiers,
@@ -135,6 +137,7 @@ public class NodeGeneratorService {
       Set<SnowstormRelationship> relationships,
       Set<String> refsets,
       ModelLevel modelLevel,
+      String semanticTag,
       Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
       Set<SnowstormRelationship> nonDefiningProperties,
       List<String> selectedConceptIdentifiers,
@@ -162,7 +165,8 @@ public class NodeGeneratorService {
                         && r.getDestinationId() != null
                         && Long.parseLong(r.getDestinationId()) < 0)) {
       String ecl =
-          EclBuilder.build(relationships, refsets, suppressIsa, suppressNegativeStatements, modelConfiguration);
+          EclBuilder.build(
+              relationships, refsets, suppressIsa, suppressNegativeStatements, modelConfiguration);
 
       if (log.isLoggable(Level.FINE)) {
         log.fine("ECL for " + label + " " + ecl);
@@ -180,8 +184,13 @@ public class NodeGeneratorService {
                 + " ECL "
                 + ecl
                 + " trying again without refset constraint");
-        ecl = EclBuilder.build(relationships, Set.of(), suppressIsa, suppressNegativeStatements,
-            modelConfiguration);
+        ecl =
+            EclBuilder.build(
+                relationships,
+                Set.of(),
+                suppressIsa,
+                suppressNegativeStatements,
+                modelConfiguration);
       }
 
       if (log.isLoggable(Level.FINE)) {
@@ -241,7 +250,7 @@ public class NodeGeneratorService {
       axiom.setRelationships(relationships);
       axiom.setModuleId(modelConfiguration.getModuleId());
       axiom.setReleased(false);
-      newConceptDetails.setSemanticTag(modelLevel.getSemanticTag());
+      newConceptDetails.setSemanticTag(semanticTag);
       newConceptDetails.getAxioms().add(axiom);
       newConceptDetails.setReferenceSetMembers(referenceSetMembers);
       newConceptDetails.setNonDefiningProperties(nonDefiningProperties);
