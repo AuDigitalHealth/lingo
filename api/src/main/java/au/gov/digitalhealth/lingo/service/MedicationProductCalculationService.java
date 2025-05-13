@@ -179,7 +179,10 @@ public class MedicationProductCalculationService {
         snowstormClient.getConceptIdsChangedOnProject(branch);
 
     final MedicationDetailsValidator medicationDetailsValidator =
-        medicationDetailsValidatorByQualifier.get(modelConfiguration.getModelType().name());
+        medicationDetailsValidatorByQualifier.get(
+            modelConfiguration.getModelType().name()
+                + "-"
+                + MedicationDetailsValidator.class.getSimpleName());
 
     if (medicationDetailsValidator == null) {
       throw new IllegalStateException(
@@ -226,7 +229,9 @@ public class MedicationProductCalculationService {
                   n -> {
                     nameGenerationService.addGeneratedFsnAndPt(
                         atomicCache,
-                        packageLevel.getSemanticTag(),
+                        packageDetails.hasDeviceType()
+                            ? packageLevel.getDrugDeviceSemanticTag()
+                            : packageLevel.getMedicineSemanticTag(),
                         n,
                         modelConfiguration.getModuleId());
                     productSummary.addNode(n);
@@ -256,7 +261,9 @@ public class MedicationProductCalculationService {
 
     if (modelConfiguration.getModelType().equals(ModelType.AMT)
         || packageDetails.getProductName() != null) {
-      productSummary.addNode(packageDetails.getProductName(), ProductSummaryService.TP_LABEL);
+      productSummary.addNode(
+          packageDetails.getProductName(),
+          modelConfiguration.getLevelOfType(ModelLevelType.PRODUCT_NAME));
       for (Node node : packageNodeMap.values()) {
         if (node.getModelLevel().isBranded()) {
           productSummary.addEdge(
@@ -325,7 +332,10 @@ public class MedicationProductCalculationService {
 
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
-    String label = packageLevel.getSemanticTag();
+    String label =
+        packageDetails.hasDeviceType()
+            ? packageLevel.getDrugDeviceSemanticTag()
+            : packageLevel.getMedicineSemanticTag();
     Set<String> refsets = Set.of(packageLevel.getReferenceSetIdentifier());
     ModelLevelType modelLevelType = packageLevel.getModelLevelType();
 
@@ -347,6 +357,7 @@ public class MedicationProductCalculationService {
         relationships,
         refsets,
         packageLevel,
+        label,
         getReferenceSetMembers(
             packageDetails, models.getModelConfiguration(branch), PACKAGE, modelLevelType),
         calculateNonDefiningRelationships(
@@ -515,7 +526,12 @@ public class MedicationProductCalculationService {
             .thenApply(
                 n -> {
                   nameGenerationService.addGeneratedFsnAndPt(
-                      atomicCache, mpLevel.getSemanticTag(), n, modelConfiguration.getModuleId());
+                      atomicCache,
+                      productDetails.hasDeviceType()
+                          ? mpLevel.getDrugDeviceSemanticTag()
+                          : mpLevel.getMedicineSemanticTag(),
+                      n,
+                      modelConfiguration.getModuleId());
                   productSummary.addNode(n);
                   return n;
                 });
@@ -528,7 +544,12 @@ public class MedicationProductCalculationService {
             .thenApply(
                 n -> {
                   nameGenerationService.addGeneratedFsnAndPt(
-                      atomicCache, mpuuLevel.getSemanticTag(), n, modelConfiguration.getModuleId());
+                      atomicCache,
+                      productDetails.hasDeviceType()
+                          ? mpuuLevel.getDrugDeviceSemanticTag()
+                          : mpuuLevel.getMedicineSemanticTag(),
+                      n,
+                      modelConfiguration.getModuleId());
                   productSummary.addNode(n);
                   return n;
                 });
@@ -546,7 +567,12 @@ public class MedicationProductCalculationService {
             .thenApply(
                 n -> {
                   nameGenerationService.addGeneratedFsnAndPt(
-                      atomicCache, tpuuLevel.getSemanticTag(), n, modelConfiguration.getModuleId());
+                      atomicCache,
+                      productDetails.hasDeviceType()
+                          ? tpuuLevel.getDrugDeviceSemanticTag()
+                          : tpuuLevel.getMedicineSemanticTag(),
+                      n,
+                      modelConfiguration.getModuleId());
                   productSummary.addNode(n);
                   return n;
                 });
@@ -561,7 +587,9 @@ public class MedicationProductCalculationService {
                   n -> {
                     nameGenerationService.addGeneratedFsnAndPt(
                         atomicCache,
-                        atmLevel.getSemanticTag(),
+                        productDetails.hasDeviceType()
+                            ? atmLevel.getDrugDeviceSemanticTag()
+                            : atmLevel.getMedicineSemanticTag(),
                         n,
                         modelConfiguration.getModuleId());
                     productSummary.addNode(n);
@@ -581,7 +609,9 @@ public class MedicationProductCalculationService {
         tpuuNode.getConceptId(), mpuuNode.getConceptId(), ProductSummaryService.IS_A_LABEL);
 
     if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
-      productSummary.addNode(productDetails.getProductName(), ProductSummaryService.TP_LABEL);
+      productSummary.addNode(
+          productDetails.getProductName(),
+          modelConfiguration.getLevelOfType(ModelLevelType.PRODUCT_NAME));
       productSummary.addEdge(
           tpuuNode.getConceptId(),
           productDetails.getProductName().getConceptId(),
@@ -610,6 +640,9 @@ public class MedicationProductCalculationService {
         relationships,
         Set.of(atmLevel.getReferenceSetIdentifier()),
         atmLevel,
+        productDetails.hasDeviceType()
+            ? atmLevel.getDrugDeviceSemanticTag()
+            : atmLevel.getMedicineSemanticTag(),
         getReferenceSetMembers(
             productDetails,
             models.getModelConfiguration(branch),
@@ -675,6 +708,9 @@ public class MedicationProductCalculationService {
         relationships,
         referencedIds,
         level,
+        productDetails.hasDeviceType()
+            ? level.getDrugDeviceSemanticTag()
+            : level.getMedicineSemanticTag(),
         getReferenceSetMembers(
             productDetails, models.getModelConfiguration(branch), PRODUCT, modelLevelType),
         calculateNonDefiningRelationships(
@@ -717,6 +753,9 @@ public class MedicationProductCalculationService {
         relationships,
         Set.of(mpLevel.getReferenceSetIdentifier()),
         mpLevel,
+        details.hasDeviceType()
+            ? mpLevel.getDrugDeviceSemanticTag()
+            : mpLevel.getMedicineSemanticTag(),
         getReferenceSetMembers(
             details,
             models.getModelConfiguration(branch),

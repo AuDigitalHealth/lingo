@@ -35,7 +35,9 @@ public class ModelLevel {
   @NotNull private ModelLevelType modelLevelType;
   @NotBlank private String name;
   @NotBlank private String displayLabel;
-  @NotBlank private String semanticTag;
+  @NotBlank private String medicineSemanticTag;
+  @NotBlank private String deviceSemanticTag;
+  @NotBlank private String drugDeviceSemanticTag;
 
   @ValidSctId(partitionIdentifier = PartionIdentifier.CONCEPT)
   @NotNull

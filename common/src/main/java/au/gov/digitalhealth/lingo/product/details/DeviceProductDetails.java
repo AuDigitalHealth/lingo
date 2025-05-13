@@ -17,11 +17,9 @@ package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.gov.digitalhealth.lingo.validation.OnlyOneNotEmpty;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.util.Map;
 import java.util.Set;
-
-import com.fasterxml.jackson.annotation.JsonTypeName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -43,5 +41,10 @@ public class DeviceProductDetails extends ProductDetails {
     return specificDeviceType == null
         ? Map.of()
         : Map.of(specificDeviceType.getConceptId(), specificDeviceType.getFsn().getTerm());
+  }
+
+  @Override
+  public boolean hasDeviceType() {
+    return true;
   }
 }
