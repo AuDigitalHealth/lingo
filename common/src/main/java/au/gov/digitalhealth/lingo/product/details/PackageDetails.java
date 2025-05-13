@@ -56,4 +56,11 @@ public class PackageDetails<T extends ProductDetails> extends PackageProductDeta
     }
     return idMap;
   }
+
+  public boolean hasDeviceType() {
+    return containedProducts.stream()
+            .anyMatch(productQuantity -> productQuantity.getProductDetails().hasDeviceType())
+        || containedPackages.stream()
+            .anyMatch(packageQuantity -> packageQuantity.getPackageDetails().hasDeviceType());
+  }
 }
