@@ -629,6 +629,7 @@ public class BrandPackSizeService {
             newCtppRelationships,
             Set.of(CTPP_REFSET_ID.getValue()),
             modelLevel,
+            isDevice ? modelLevel.getDrugDeviceSemanticTag() : modelLevel.getMedicineSemanticTag(),
             SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(
                 externalIdentifiers,
                 ModelLevelType.REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG,
@@ -683,6 +684,7 @@ public class BrandPackSizeService {
             newTppRelationships,
             Set.of(TPP_REFSET_ID.getValue()),
             modelLevel,
+            isDevice ? modelLevel.getDrugDeviceSemanticTag() : modelLevel.getMedicineSemanticTag(),
             Set.of(),
             Set.of(), // may need to reconsider if users specify the properties to copy over
             List.of(),
@@ -746,6 +748,7 @@ public class BrandPackSizeService {
             relationships,
             Set.of(MPP_REFSET_ID.getValue()),
             modelLevel,
+            isDevice ? modelLevel.getDrugDeviceSemanticTag() : modelLevel.getMedicineSemanticTag(),
             Set.of(),
             Set.of(), // may need to reconsider if users specify the properties to copy over
             List.of(),
@@ -803,6 +806,7 @@ public class BrandPackSizeService {
             relationships,
             Set.of(TPUU_REFSET_ID.getValue()),
             modelLevel,
+            isDevice ? modelLevel.getDrugDeviceSemanticTag() : modelLevel.getMedicineSemanticTag(),
             Set.of(),
             Set.of(), // may need to reconsider if users specify the properties to copy over
             List.of(),
