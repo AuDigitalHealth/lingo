@@ -20,42 +20,56 @@ models:
         displayLabel: MP
         displayName: Product
         modelLevelType: MEDICINAL_PRODUCT
-        semanticTag: medicinal product
+        medicineSemanticTag: medicinal product
+        drugDeviceSemanticTag: medicinal product
+        deviceSemanticTag: physical object
         referenceSetIdentifier: 929360061000036106
         productModelEcl: "((> <id>) and ^ 929360061000036106) minus >((> <id>) and ^ 929360061000036106)"
       - name: Generic Product
         displayLabel: MPUU
         modelLevelType: CLINICAL_DRUG
-        semanticTag: clinical drug
+        medicineSemanticTag: clinical drug
+        drugDeviceSemanticTag: product
+        deviceSemanticTag: physical object
         referenceSetIdentifier: 929360071000036103
         productModelEcl: "((> <id>) and ^ 929360071000036103) minus >((> <id>) and ^ 929360071000036103)"
       - name: Branded Product
         displayLabel: TPUU
         modelLevelType: REAL_CLINICAL_DRUG
-        semanticTag: branded clinical drug
+        medicineSemanticTag: branded clinical drug
+        deviceSemanticTag: branded physical object
+        drugDeviceSemanticTag: branded product
         referenceSetIdentifier: 929360031000036100
         productModelEcl: "(>> ((<id>.774160008) or (<id>.999000081000168101))) and (^ 929360031000036100)"
       - name: Generic Pack
         displayLabel: MPP
         modelLevelType: PACKAGED_CLINICAL_DRUG
-        semanticTag: clinical drug package
+        medicineSemanticTag: clinical drug package
+        deviceSemanticTag: physical object package
+        drugDeviceSemanticTag: product package
         referenceSetIdentifier: 929360081000036101
         productModelEcl: "((> <id>) and ^ 929360081000036101) minus >((> <id>) and ^ 929360081000036101)"
       - name: Branded Pack
         displayLabel: TPP
         modelLevelType: REAL_PACKAGED_CLINICAL_DRUG
-        semanticTag: branded clinical drug package
+        medicineSemanticTag: branded clinical drug package
+        deviceSemanticTag: branded physical object package
+        drugDeviceSemanticTag: branded product package
         referenceSetIdentifier: 929360041000036105
         productModelEcl: "(> <id>) and ^ 929360041000036105"
       - name: Branded Container
         displayLabel: CTPP
         modelLevelType: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
-        semanticTag: containerized branded clinical drug package
+        medicineSemanticTag: containerized branded clinical drug package
+        deviceSemanticTag: containerized branded physical object package
+        drugDeviceSemanticTag: containerized branded product package
         referenceSetIdentifier: 929360051000036108
       - name: Brand Name
         displayLabel: TP
         modelLevelType: PRODUCT_NAME
-        semanticTag: product name
+        medicineSemanticTag: product name
+        deviceSemanticTag: product name
+        drugDeviceSemanticTag: product name
         referenceSetIdentifier: 929360021000036102
         productModelEcl: ">> <id>.774158006"
     mappings:
@@ -93,36 +107,48 @@ models:
       - name: Virtual Therapeutic Moiety
         displayLabel: MP
         modelLevelType: MEDICINAL_PRODUCT_ONLY
-        semanticTag: medicinal product
+        medicineSemanticTag: medicinal product
+        deviceSemanticTag: physical object
+        drugDeviceSemanticTag: medicinal product
         referenceSetIdentifier: 660351000220100
         productModelEcl: "(> <id> :[0..0]774159003=*,[0..0]411116001=*) MINUS (>(> <id> :[0..0]774159003=*,[0..0]411116001=*) OR 763158003)"
       - name: Virtual Medicinal Product
         displayLabel: MPUU
         modelLevelType: CLINICAL_DRUG
-        semanticTag: clinical drug
+        medicineSemanticTag: clinical drug
+        deviceSemanticTag: physical object
+        drugDeviceSemanticTag: clinical drug
         referenceSetIdentifier: 660371000220109
         productModelEcl: "(> <id> :[0..0]774159003=*) {{ C moduleId=1601000220105 }} MINUS (>((> <id> :[0..0]774159003=*) {{ C moduleId=1601000220105 }}))"
       - name: Actual Medicinal Product
         displayLabel: TPUU
         modelLevelType: REAL_CLINICAL_DRUG
-        semanticTag: real clinical drug
+        medicineSemanticTag: real clinical drug
+        deviceSemanticTag: branded physical object
+        drugDeviceSemanticTag: real clinical drug
         referenceSetIdentifier: 660381000220107
         productModelEcl: "(<id>.774160008) {{ D term=\"real clinical drug\" }}"
       - name: Virtual Medicinal Product Pack
         displayLabel: MPP
         modelLevelType: PACKAGED_CLINICAL_DRUG
-        semanticTag: clinical drug package
+        medicineSemanticTag: clinical drug package
+        deviceSemanticTag: physical object package
+        drugDeviceSemanticTag: clinical drug package
         referenceSetIdentifier: 660391000220105
         productModelEcl: "> <id> {{D term=\"clinical drug package\"}}"
       - name: Actual Medicinal Product Pack
         displayLabel: TPP
         modelLevelType: REAL_PACKAGED_CLINICAL_DRUG
-        semanticTag: real clinical drug package
+        medicineSemanticTag: real clinical drug package
+        deviceSemanticTag: branded physical object package
+        drugDeviceSemanticTag: real clinical drug package
         referenceSetIdentifier: 660401000220107
       - name: Actual Therapeutic Moiety
         displayLabel: TP
         modelLevelType: REAL_MEDICINAL_PRODUCT
-        semanticTag: real medicinal product
+        medicineSemanticTag: real medicinal product
+        deviceSemanticTag: branded physical object
+        drugDeviceSemanticTag: real medicinal product
         referenceSetIdentifier: 660361000220103
         productModelEcl: "> <id> :774159003=*"
     mappings:

@@ -30,7 +30,7 @@ function ProductModelView({ branch }: ProductModelViewProps) {
   );
 
   if (isLoading) {
-    return <Loading message={`Loading 7 Box model for ${conceptId}`} />;
+    return <Loading message={`Loading box model for ${conceptId}`} />;
   }
 
   if (data) {

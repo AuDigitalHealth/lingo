@@ -36,7 +36,7 @@ import lombok.extern.java.Log;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
-@Service("AMT")
+@Service("AMT-MedicationDetailsValidator")
 @Log
 public class AmtMedicationDetailsValidator implements MedicationDetailsValidator {
   Models models;
