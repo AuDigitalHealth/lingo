@@ -67,7 +67,6 @@
           "activeIngredients",
           "genericForm",
           "specificForm",
-          "quantity",
           "unitOfPresentation",
           "supplier"
         ],
@@ -230,19 +229,6 @@
           "ui:widget": "hidden",
           "ui:options": {
             "skipTitle": true
-          }
-        },
-        "quantity": {
-          "ui:field": "UnitValueField",
-          "ui:title": "Unit Size",
-          "value": {},
-          "unit": {
-            "ui:options": {
-              "branch": "MAIN",
-              "ecl": "(<763158003 {{ D term=\"real clinical drug\" }}).320091000221107",
-              "extendedEcl": "<767524001",
-              "showDefaultOptions": true
-            }
           }
         },
         "unitOfPresentation": {
