@@ -50,4 +50,6 @@ public abstract class ProductDetails extends PackageProductDetailsBase {
   }
 
   protected abstract Map<String, String> getSpecialisedIdFsnMap();
+
+  public abstract boolean hasDeviceType();
 }

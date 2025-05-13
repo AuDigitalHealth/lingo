@@ -17,6 +17,7 @@ package au.gov.digitalhealth.lingo.product;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
+import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.exception.MoreThanOneSubjectProblem;
 import au.gov.digitalhealth.lingo.exception.SingleConceptExpectedProblem;
@@ -70,9 +71,11 @@ public class ProductSummary implements Serializable {
     }
   }
 
-  public void addNode(SnowstormConceptMini conceptSummary, String label) {
+  public void addNode(SnowstormConceptMini conceptSummary, ModelLevel modelLevel) {
     synchronized (nodes) {
-      Node node = new Node(conceptSummary, label);
+      Node node = new Node(conceptSummary, modelLevel.getDisplayLabel());
+      node.setModelLevel(modelLevel.getModelLevelType());
+      node.setDisplayName(modelLevel.getName());
       addNode(node);
     }
   }
@@ -154,7 +157,10 @@ public class ProductSummary implements Serializable {
           getNodes().stream()
               .filter(
                   n ->
-                      modelConfiguration.getLeafPackageModelLevel().getDisplayLabel().equals(n.getLabel())
+                      modelConfiguration
+                              .getLeafPackageModelLevel()
+                              .getDisplayLabel()
+                              .equals(n.getLabel())
                           && getEdges().stream()
                               .noneMatch(e -> e.getTarget().equals(n.getConceptId())))
               .collect(Collectors.toSet());

@@ -166,6 +166,7 @@ public class ProductSummaryService {
             .flatMapIterable(c -> c);
 
     // Iterate over the product summary nodes and update reference set members for CTPP nodes
+    //todo broaden this for other identifiers at other levels
     productSummary
         .getNodes()
         .forEach(
