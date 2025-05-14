@@ -15,6 +15,8 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
+import static au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType.MEDICINAL_PRODUCT_ONLY;
+import static au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType.REAL_MEDICINAL_PRODUCT;
 import static au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType.CONTAINED_PACKAGE;
 import static au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType.PACKAGE;
 import static au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType.PRODUCT;
@@ -83,6 +85,7 @@ import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import au.gov.digitalhealth.tickets.service.TicketServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -91,6 +94,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -653,155 +657,145 @@ public class MedicationProductCalculationService {
 
     ProductSummary productSummary = new ProductSummary();
 
-    // todo refactoring still required here - remove work arounds
-    ModelLevel mpLevel =
-        modelConfiguration.getLevelOfType(
-            modelConfiguration.getModelType().equals(ModelType.AMT)
-                ? ModelLevelType.MEDICINAL_PRODUCT
-                : ModelLevelType.MEDICINAL_PRODUCT_ONLY);
+    // sor the levels by their dependencies
+    List<ModelLevel> productLevels =
+        modelConfiguration.getProductLevels().stream()
+            .sorted(
+                (ModelLevel a, ModelLevel b) -> {
+                  Set<ModelLevel> ancestorsOfA =
+                      modelConfiguration.getAncestorModelLevels(a.getModelLevelType());
+                  Set<ModelLevel> ancestorsOfB =
+                      modelConfiguration.getAncestorModelLevels(b.getModelLevelType());
 
-    CompletableFuture<Node> mp =
-        findOrCreateMp(branch, productDetails, atomicCache, selectedConceptIdentifiers, mpLevel)
-            .thenApply(
-                n -> {
-                  nameGenerationService.addGeneratedFsnAndPt(
-                      atomicCache,
-                      productDetails.hasDeviceType()
-                          ? mpLevel.getDrugDeviceSemanticTag()
-                          : mpLevel.getMedicineSemanticTag(),
-                      n,
-                      modelConfiguration);
-                  productSummary.addNode(n);
-                  return n;
-                });
+                  // Compare by number of ancestors first
+                  int comparison = Integer.compare(ancestorsOfA.size(), ancestorsOfB.size());
+                  if (comparison != 0) {
+                    return comparison;
+                  }
 
-    ModelLevel mpuuLevel = modelConfiguration.getLevelOfType(ModelLevelType.CLINICAL_DRUG);
+                  // If same number of ancestors, check if one is ancestor of the other
+                  if (ancestorsOfA.contains(b)) {
+                    return 1; // B is an ancestor of A, so A is more dependent
+                  } else if (ancestorsOfB.contains(a)) {
+                    return -1; // A is an ancestor of B, so B is more dependent
+                  }
 
-    CompletableFuture<Node> mpuu =
-        findOrCreateUnit(
-                branch, productDetails, null, atomicCache, selectedConceptIdentifiers, mpuuLevel)
-            .thenApply(
-                n -> {
-                  nameGenerationService.addGeneratedFsnAndPt(
-                      atomicCache,
-                      productDetails.hasDeviceType()
-                          ? mpuuLevel.getDrugDeviceSemanticTag()
-                          : mpuuLevel.getMedicineSemanticTag(),
-                      n,
-                      modelConfiguration);
-                  productSummary.addNode(n);
-                  return n;
-                });
+                  // Arbitrary ordering
+                  return a.getModelLevelType().compareTo(b.getModelLevelType());
+                })
+            .toList();
 
-    CompletableFuture.allOf(mp, mpuu).get();
+    Map<ModelLevel, CompletableFuture<Node>> levelFutureMap = new HashMap<>();
+    for (ModelLevel level : productLevels) {
+      Set<CompletableFuture<Node>> parents = new HashSet<>();
 
-    Node mpNode = mp.get();
-    Node mpuuNode = mpuu.get();
+      for (ModelLevel parent : modelConfiguration.getParentModelLevels(level.getModelLevelType())) {
+        CompletableFuture<Node> parentFuture = levelFutureMap.get(parent);
+        if (parentFuture != null) {
+          parents.add(parentFuture);
+        }
+      }
 
-    ModelLevel tpuuLevel = modelConfiguration.getLevelOfType(ModelLevelType.REAL_CLINICAL_DRUG);
+      levelFutureMap.put(
+          level,
+          CompletableFuture.allOf(parents.toArray(new CompletableFuture[parents.size()]))
+              .thenCompose(
+                  p -> {
+                    Set<Node> parentNodes =
+                        parents.stream().map(CompletableFuture::join).collect(Collectors.toSet());
 
-    CompletableFuture<Node> tpuu =
-        findOrCreateUnit(
-                branch,
-                productDetails,
-                mpuuNode,
-                atomicCache,
-                selectedConceptIdentifiers,
-                tpuuLevel)
-            .thenApply(
-                n -> {
-                  nameGenerationService.addGeneratedFsnAndPt(
-                      atomicCache,
-                      productDetails.hasDeviceType()
-                          ? tpuuLevel.getDrugDeviceSemanticTag()
-                          : tpuuLevel.getMedicineSemanticTag(),
-                      n,
-                      modelConfiguration);
-                  productSummary.addNode(n);
-                  return n;
-                });
-    Node tpuuNode = tpuu.get();
-
-    if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
-      ModelLevel atmLevel =
-          modelConfiguration.getLevelOfType(ModelLevelType.REAL_MEDICINAL_PRODUCT);
-      CompletableFuture<Node> atm =
-          findOrCreateAtm(branch, productDetails, atomicCache, selectedConceptIdentifiers, atmLevel)
-              .thenApply(
-                  n -> {
-                    nameGenerationService.addGeneratedFsnAndPt(
-                        atomicCache,
-                        productDetails.hasDeviceType()
-                            ? atmLevel.getDrugDeviceSemanticTag()
-                            : atmLevel.getMedicineSemanticTag(),
-                        n,
-                        modelConfiguration);
-                    productSummary.addNode(n);
-                    return n;
-                  });
-      Node atmNode = atm.get();
-      addParent(tpuuNode, atmNode, modelConfiguration.getModuleId());
-      productSummary.addEdge(
-          tpuuNode.getConceptId(), atmNode.getConceptId(), ProductSummaryService.IS_A_LABEL);
+                    return switch (level.getModelLevelType()) {
+                      case MEDICINAL_PRODUCT, MEDICINAL_PRODUCT_ONLY, REAL_MEDICINAL_PRODUCT ->
+                          findOrCreateMp(
+                                  branch,
+                                  productDetails,
+                                  atomicCache,
+                                  selectedConceptIdentifiers,
+                                  level)
+                              .thenApply(
+                                  postProductNodeCreationFunction(
+                                      productDetails,
+                                      atomicCache,
+                                      level,
+                                      modelConfiguration,
+                                      productSummary,
+                                      parentNodes));
+                      case CLINICAL_DRUG, REAL_CLINICAL_DRUG ->
+                          findOrCreateUnit(
+                                  branch,
+                                  productDetails,
+                                  parentNodes,
+                                  atomicCache,
+                                  selectedConceptIdentifiers,
+                                  level)
+                              .thenApply(
+                                  postProductNodeCreationFunction(
+                                      productDetails,
+                                      atomicCache,
+                                      level,
+                                      modelConfiguration,
+                                      productSummary,
+                                      parentNodes));
+                      default ->
+                          throw new IllegalArgumentException(
+                              "Unsupported model level type: " + level.getModelLevelType());
+                    };
+                  }));
     }
 
-    addParent(mpuuNode, mpNode, modelConfiguration.getModuleId());
+    CompletableFuture.allOf(
+            levelFutureMap.values().toArray(new CompletableFuture[levelFutureMap.size()]))
+        .join();
 
-    productSummary.addEdge(
-        mpuuNode.getConceptId(), mpNode.getConceptId(), ProductSummaryService.IS_A_LABEL);
-    productSummary.addEdge(
-        tpuuNode.getConceptId(), mpuuNode.getConceptId(), ProductSummaryService.IS_A_LABEL);
-
-    if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
+    if (modelConfiguration.containsModelLevel(ModelLevelType.PRODUCT_NAME)) {
       productSummary.addNode(
           productDetails.getProductName(),
           modelConfiguration.getLevelOfType(ModelLevelType.PRODUCT_NAME));
-      productSummary.addEdge(
-          tpuuNode.getConceptId(),
-          productDetails.getProductName().getConceptId(),
-          ProductSummaryService.HAS_PRODUCT_NAME_LABEL);
+      levelFutureMap.forEach(
+          (key, value) -> {
+            if (key.isBranded()) {
+              productSummary.addEdge(
+                  value.join().getConceptId(),
+                  productDetails.getProductName().getConceptId(),
+                  ProductSummaryService.HAS_PRODUCT_NAME_LABEL);
+            }
+          });
     }
 
-    productSummary.setSingleSubject(tpuuNode);
+    productSummary.setSingleSubject(
+        levelFutureMap.get(modelConfiguration.getLeafProductModelLevel()).get());
 
     return productSummary;
   }
 
-  private CompletableFuture<Node> findOrCreateAtm(
-      String branch,
+  private Function<Node, Node> postProductNodeCreationFunction(
       MedicationProductDetails productDetails,
       AtomicCache atomicCache,
-      List<String> selectedConceptIdentifiers,
-      ModelLevel atmLevel) {
-    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
-
-    Set<SnowstormRelationship> relationships =
-        createAtmRelationships(productDetails, modelConfiguration);
-
-    return nodeGeneratorService.generateNodeAsync(
-        branch,
-        atomicCache,
-        relationships,
-        Set.of(atmLevel.getReferenceSetIdentifier()),
-        atmLevel,
-        productDetails.hasDeviceType()
-            ? atmLevel.getDrugDeviceSemanticTag()
-            : atmLevel.getMedicineSemanticTag(),
-        getReferenceSetMembers(
-            productDetails,
-            models.getModelConfiguration(branch),
-            PRODUCT,
-            atmLevel.getModelLevelType()),
-        calculateNonDefiningRelationships(
-            models.getModelConfiguration(branch), productDetails, atmLevel.getModelLevelType()),
-        selectedConceptIdentifiers,
-        false,
-        true,
-        false);
+      ModelLevel level,
+      ModelConfiguration modelConfiguration,
+      ProductSummary productSummary,
+      Set<Node> parentNodes) {
+    return n -> {
+      nameGenerationService.addGeneratedFsnAndPt(
+          atomicCache,
+          productDetails.hasDeviceType()
+              ? level.getDrugDeviceSemanticTag()
+              : level.getMedicineSemanticTag(),
+          n,
+          modelConfiguration);
+      productSummary.addNode(n);
+      for (Node parent : parentNodes) {
+        productSummary.addEdge(
+            n.getConceptId(), parent.getConceptId(), ProductSummaryService.IS_A_LABEL);
+      }
+      return n;
+    };
   }
 
-  private Set<SnowstormRelationship> createAtmRelationships(
-      MedicationProductDetails productDetails, ModelConfiguration modelConfiguration) {
+  private Set<SnowstormRelationship> createMpRelationships(
+      MedicationProductDetails productDetails,
+      ModelLevel level,
+      ModelConfiguration modelConfiguration) {
     Set<SnowstormRelationship> relationships = new HashSet<>();
     relationships.add(
         getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT, 0, modelConfiguration.getModuleId()));
@@ -816,20 +810,40 @@ public class MedicationProductCalculationService {
               modelConfiguration.getModuleId()));
       group++;
     }
-    relationships.add(
-        getSnowstormRelationship(
-            HAS_PRODUCT_NAME,
-            productDetails.getProductName(),
-            0,
-            STATED_RELATIONSHIP,
-            modelConfiguration.getModuleId()));
+
+    if (level.isBranded()) {
+      relationships.add(
+          getSnowstormRelationship(
+              HAS_PRODUCT_NAME,
+              productDetails.getProductName(),
+              0,
+              STATED_RELATIONSHIP,
+              modelConfiguration.getModuleId()));
+    }
+
+    if (EnumSet.of(MEDICINAL_PRODUCT_ONLY, REAL_MEDICINAL_PRODUCT)
+        .contains(level.getModelLevelType())) {
+      relationships.add(
+          getSnowstormDatatypeComponent(
+              SnomedConstants.COUNT_OF_BASE_ACTIVE_INGREDIENT,
+              Integer.toString(
+                  productDetails.getActiveIngredients().stream()
+                      .map(i -> i.getBasisOfStrengthSubstance().getConceptId())
+                      .collect(Collectors.toSet())
+                      .size()),
+              DataTypeEnum.INTEGER,
+              0,
+              SnomedConstants.STATED_RELATIONSHIP,
+              modelConfiguration.getModuleId()));
+    }
+
     return relationships;
   }
 
   private CompletableFuture<Node> findOrCreateUnit(
       String branch,
       MedicationProductDetails productDetails,
-      Node parent,
+      Set<Node> parents,
       AtomicCache atomicCache,
       List<String> selectedConceptIdentifiers,
       ModelLevel level) {
@@ -842,7 +856,7 @@ public class MedicationProductCalculationService {
     Set<String> referencedIds = Set.of(level.getReferenceSetIdentifier());
 
     Set<SnowstormRelationship> relationships =
-        createClinicalDrugRelationships(productDetails, parent, branded, modelConfiguration);
+        createClinicalDrugRelationships(productDetails, parents, branded, modelConfiguration);
 
     boolean enforceRefsets = modelConfiguration.getModelType().equals(ModelType.AMT);
 
@@ -874,22 +888,8 @@ public class MedicationProductCalculationService {
 
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
-    Set<SnowstormRelationship> relationships = createMpRelationships(details, modelConfiguration);
-
-    if (mpLevel.getModelLevelType().equals(ModelLevelType.MEDICINAL_PRODUCT_ONLY)) {
-      relationships.add(
-          getSnowstormDatatypeComponent(
-              SnomedConstants.COUNT_OF_BASE_ACTIVE_INGREDIENT,
-              Integer.toString(
-                  details.getActiveIngredients().stream()
-                      .map(i -> i.getBasisOfStrengthSubstance().getConceptId())
-                      .collect(Collectors.toSet())
-                      .size()),
-              DataTypeEnum.INTEGER,
-              0,
-              SnomedConstants.STATED_RELATIONSHIP,
-              modelConfiguration.getModuleId()));
-    }
+    Set<SnowstormRelationship> relationships =
+        createMpRelationships(details, mpLevel, modelConfiguration);
 
     return nodeGeneratorService.generateNodeAsync(
         branch,
@@ -954,14 +954,16 @@ public class MedicationProductCalculationService {
 
   private Set<SnowstormRelationship> createClinicalDrugRelationships(
       MedicationProductDetails productDetails,
-      Node parent,
+      Set<Node> parents,
       boolean branded,
       ModelConfiguration modelConfiguration) {
     Set<SnowstormRelationship> relationships = new HashSet<>();
 
-    if (parent != null) {
-      relationships.add(
-          getSnowstormRelationship(IS_A, parent, 0, modelConfiguration.getModuleId()));
+    if (parents != null && !parents.isEmpty()) {
+      for (Node parent : parents) {
+        relationships.add(
+            getSnowstormRelationship(IS_A, parent, 0, modelConfiguration.getModuleId()));
+      }
     } else {
       relationships.add(
           getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT, 0, modelConfiguration.getModuleId()));
@@ -1162,25 +1164,6 @@ public class MedicationProductCalculationService {
               modelConfiguration.getModuleId()));
     }
 
-    return relationships;
-  }
-
-  private Set<SnowstormRelationship> createMpRelationships(
-      MedicationProductDetails productDetails, ModelConfiguration modelConfiguration) {
-    Set<SnowstormRelationship> relationships = new HashSet<>();
-    relationships.add(
-        getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT, 0, modelConfiguration.getModuleId()));
-    int group = 1;
-    for (Ingredient ingredient : productDetails.getActiveIngredients()) {
-      relationships.add(
-          getSnowstormRelationship(
-              HAS_ACTIVE_INGREDIENT,
-              ingredient.getActiveIngredient(),
-              group,
-              STATED_RELATIONSHIP,
-              modelConfiguration.getModuleId()));
-      group++;
-    }
     return relationships;
   }
 }

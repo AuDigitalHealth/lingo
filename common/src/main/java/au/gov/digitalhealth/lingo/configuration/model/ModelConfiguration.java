@@ -240,6 +240,18 @@ public class ModelConfiguration implements InitializingBean {
         .collect(Collectors.toSet());
   }
 
+  /**
+   * Gets the ancestor model levels for the specified model level.
+   *
+   * @param modelLevel The model level type to find the ancestors for
+   * @return The ancestor model levels, or an empty set if there are no ancestors
+   */
+  public Set<ModelLevel> getAncestorModelLevels(ModelLevelType modelLevel) {
+    return getLevels().stream()
+        .filter(level -> modelLevel.getAncestors().contains(level.getModelLevelType()))
+        .collect(Collectors.toSet());
+  }
+
   public boolean containsModelLevel(ModelLevelType modelLevelType) {
     return levels.stream().anyMatch(level -> level.getModelLevelType().equals(modelLevelType));
   }
@@ -265,6 +277,10 @@ public class ModelConfiguration implements InitializingBean {
 
   public ModelLevel getLeafPackageModelLevel() {
     return ModelLevel.getLeafLevel(getPackageLevels());
+  }
+
+  public ModelLevel getLeafProductModelLevel() {
+    return ModelLevel.getLeafLevel(getProductLevels());
   }
 
   public ModelLevel getContainedLevelForType(ModelLevelType modelLevel) {
