@@ -53,7 +53,8 @@ public enum AmtConstants implements LingoConstants {
   // todo - why no useages?
   COUNT_OF_CD_TYPE("1142143009", "Count of clinical drug type (attribute)"),
   // default value for OII if there isn't one
-  NO_OII_VALUE("None");
+  NO_OII_VALUE("None"),
+  INERT_SUBSTANCE("920012011000036105", "Inert substance (substance)");
 
   private final String value;
   private final String label;
