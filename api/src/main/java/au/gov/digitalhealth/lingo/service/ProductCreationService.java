@@ -16,12 +16,6 @@
 package au.gov.digitalhealth.lingo.service;
 
 import static au.gov.digitalhealth.lingo.service.ProductSummaryService.CTPP_LABEL;
-import static au.gov.digitalhealth.lingo.service.ProductSummaryService.MPP_LABEL;
-import static au.gov.digitalhealth.lingo.service.ProductSummaryService.MPUU_LABEL;
-import static au.gov.digitalhealth.lingo.service.ProductSummaryService.MP_LABEL;
-import static au.gov.digitalhealth.lingo.service.ProductSummaryService.TPP_LABEL;
-import static au.gov.digitalhealth.lingo.service.ProductSummaryService.TPUU_LABEL;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.*;
 import static au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMemberViewComponents;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.*;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.*;
@@ -336,8 +330,19 @@ public class ProductCreationService {
     newConcept.setDefinitionStatusId(PRIMITIVE.getValue());
 
     // Add descriptions to the concept (synonym and fully specified name)
-    SnowstormDtoUtil.addDescription(newConcept, pt, SnomedConstants.SYNONYM.getValue());
-    SnowstormDtoUtil.addDescription(newConcept, fsn, SnomedConstants.FSN.getValue());
+    SnowstormDtoUtil.addDescription(
+        newConcept,
+        pt,
+        SnomedConstants.SYNONYM.getValue(),
+        modelConfiguration,
+        // todo need to revise hard coding case sensitivity
+        ENTIRE_TERM_CASE_SENSITIVE.getValue());
+    SnowstormDtoUtil.addDescription(
+        newConcept,
+        fsn,
+        SnomedConstants.FSN.getValue(),
+        modelConfiguration,
+        ENTIRE_TERM_CASE_SENSITIVE.getValue());
 
     // Add the axiom to the concept
     SnowstormAxiom axiom = createPrimitiveAxiom(relationships, modelConfiguration.getModuleId());
@@ -403,7 +408,8 @@ public class ProductCreationService {
     String mpRefset;
 
     if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
-      mpRefset = MP_REFSET_ID.getValue();
+      mpRefset =
+          modelConfiguration.getReferenceSetForModelLevelType(ModelLevelType.MEDICINAL_PRODUCT);
     } else {
       mpRefset =
           modelConfiguration.getReferenceSetForModelLevelType(
@@ -419,7 +425,11 @@ public class ProductCreationService {
                     && n.getLabel().equals(ProductSummaryService.MP_LABEL)
                     && snowstormClient
                         .getConceptIdsFromEcl(
-                            branch, "^" + mpRefset + " AND " + n.getConceptId(), 0, 1)
+                            branch,
+                            "^" + mpRefset + " AND " + n.getConceptId(),
+                            0,
+                            1,
+                            modelConfiguration.isExecuteEclAsStated())
                         .isEmpty())
         .forEach(
             n ->
@@ -536,7 +546,7 @@ public class ProductCreationService {
     List<SnowstormConceptView> concepts = new ArrayList<>();
     for (Node node : nodeCreateOrder) {
       SnowstormConceptView concept =
-          SnowstormDtoUtil.toSnowstormConceptView(node, modelConfiguration.getModuleId());
+          SnowstormDtoUtil.toSnowstormConceptView(node, modelConfiguration);
 
       updateAxiomIdentifierReferences(idMap, concept);
 
@@ -620,7 +630,11 @@ public class ProductCreationService {
                   refsetMembers.add(
                       new SnowstormReferenceSetMemberViewComponent()
                           .active(true)
-                          .refsetId(getRefsetId(n.getLabel()))
+                          .refsetId(
+                              models
+                                  .getModelConfiguration(branch)
+                                  .getLevelOfType(n.getModelLevel())
+                                  .getReferenceSetIdentifier())
                           .referencedComponentId(n.getConcept().getConceptId())
                           .moduleId(moduleId));
 
@@ -772,17 +786,5 @@ public class ProductCreationService {
             e);
       }
     }
-  }
-
-  private String getRefsetId(String label) {
-    return switch (label) {
-      case MPP_LABEL -> MPP_REFSET_ID.getValue();
-      case TPP_LABEL -> TPP_REFSET_ID.getValue();
-      case CTPP_LABEL -> CTPP_REFSET_ID.getValue();
-      case MP_LABEL -> MP_REFSET_ID.getValue();
-      case MPUU_LABEL -> MPUU_REFSET_ID.getValue();
-      case TPUU_LABEL -> TPUU_REFSET_ID.getValue();
-      default -> throw new IllegalArgumentException("Unknown refset for label " + label);
-    };
   }
 }

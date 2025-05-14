@@ -144,6 +144,66 @@ public class MedicationProductCalculationService {
     }
   }
 
+  private static void connectOuterAndInnerProductSummaries(
+      ModelConfiguration modelConfiguration,
+      Map<PackageQuantity<MedicationProductDetails>, ProductSummary> innerPackageSummaries,
+      Map<ProductQuantity<MedicationProductDetails>, ProductSummary> innnerProductSummaries,
+      ProductSummary productSummary,
+      Map<ModelLevelType, Node> packageNodeMap) {
+    for (ProductSummary summary : innerPackageSummaries.values()) {
+      productSummary.addSummary(summary);
+
+      for (Node packageNode : packageNodeMap.values()) {
+        productSummary.addEdge(
+            packageNode.getConceptId(),
+            summary
+                .getSingleConceptWithLabel(
+                    modelConfiguration
+                        .getLevelOfType(packageNode.getModelLevel())
+                        .getDisplayLabel())
+                .getConceptId(),
+            ProductSummaryService.CONTAINS_LABEL);
+      }
+    }
+
+    for (ProductSummary summary : innnerProductSummaries.values()) {
+      productSummary.addSummary(summary);
+
+      for (Node packageNode : packageNodeMap.values()) {
+        productSummary.addEdge(
+            packageNode.getConceptId(),
+            summary
+                .getSingleConceptWithLabel(
+                    modelConfiguration
+                        .getContainedLevelForType(packageNode.getModelLevel())
+                        .getDisplayLabel())
+                .getConceptId(),
+            ProductSummaryService.CONTAINS_LABEL);
+      }
+    }
+  }
+
+  private static void addProductNameNode(
+      PackageDetails<MedicationProductDetails> packageDetails,
+      ModelConfiguration modelConfiguration,
+      ProductSummary productSummary,
+      Map<ModelLevelType, Node> packageNodeMap) {
+    if (modelConfiguration.containsModelLevel(ModelLevelType.PRODUCT_NAME)
+        || packageDetails.getProductName() != null) {
+      productSummary.addNode(
+          packageDetails.getProductName(),
+          modelConfiguration.getLevelOfType(ModelLevelType.PRODUCT_NAME));
+      for (Node node : packageNodeMap.values()) {
+        if (node.getModelLevel().isBranded()) {
+          productSummary.addEdge(
+              node.getConceptId(),
+              packageDetails.getProductName().getConceptId(),
+              ProductSummaryService.HAS_PRODUCT_NAME_LABEL);
+        }
+      }
+    }
+  }
+
   /**
    * Calculates the existing and new products required to create a product based on the product
    * details.
@@ -163,6 +223,18 @@ public class MedicationProductCalculationService {
             packageDetails.getIdFsnMap(), AmtConstants.values(), SnomedConstants.values()));
   }
 
+  /**
+   * Calculates the existing and new concepts required to create a product based on the data
+   * supplied
+   *
+   * @param branch branch to lookup concepts in
+   * @param packageDetails details of the product to create
+   * @param atomicCache cache of existing concepts and their details to build for name generation
+   * @return ProductSummary representing the existing and new concepts required to create this
+   *     product
+   * @throws ExecutionException
+   * @throws InterruptedException
+   */
   private ProductSummary calculateCreatePackage(
       String branch,
       PackageDetails<MedicationProductDetails> packageDetails,
@@ -178,41 +250,94 @@ public class MedicationProductCalculationService {
     Mono<List<String>> projectChangedConceptIds =
         snowstormClient.getConceptIdsChangedOnProject(branch);
 
-    final MedicationDetailsValidator medicationDetailsValidator =
-        medicationDetailsValidatorByQualifier.get(
-            modelConfiguration.getModelType().name()
-                + "-"
-                + MedicationDetailsValidator.class.getSimpleName());
+    validateInputData(branch, packageDetails, modelConfiguration);
 
-    if (medicationDetailsValidator == null) {
-      throw new IllegalStateException(
-          "No medication details validator found for model type: "
-              + modelConfiguration.getModelType());
-    }
-    medicationDetailsValidator.validatePackageDetails(packageDetails, branch);
+    final Map<PackageQuantity<MedicationProductDetails>, ProductSummary> innerPackageSummaries =
+        calculateContainedPackages(branch, packageDetails, atomicCache);
 
-    Map<PackageQuantity<MedicationProductDetails>, ProductSummary> innerPackageSummaries =
-        new HashMap<>();
-    for (PackageQuantity<MedicationProductDetails> packageQuantity :
-        packageDetails.getContainedPackages()) {
-      ProductSummary innerPackageSummary =
-          calculateCreatePackage(branch, packageQuantity.getPackageDetails(), atomicCache);
-      innerPackageSummaries.put(packageQuantity, innerPackageSummary);
-    }
+    final Map<ProductQuantity<MedicationProductDetails>, ProductSummary> innnerProductSummaries =
+        calculateContainedProducts(branch, packageDetails, atomicCache);
 
-    Map<ProductQuantity<MedicationProductDetails>, ProductSummary> innnerProductSummaries =
-        new HashMap<>();
-    for (ProductQuantity<MedicationProductDetails> productQuantity :
-        packageDetails.getContainedProducts()) {
-      ProductSummary innerProductSummary =
-          createProduct(
-              branch,
-              productQuantity.getProductDetails(),
-              atomicCache,
-              packageDetails.getSelectedConceptIdentifiers());
-      innnerProductSummaries.put(productQuantity, innerProductSummary);
-    }
+    calculateOuterPackageNodes(
+        branch,
+        packageDetails,
+        atomicCache,
+        modelConfiguration,
+        innerPackageSummaries,
+        innnerProductSummaries,
+        productSummary);
 
+    Set<Edge> transitiveContainsEdges =
+        ProductSummaryService.getTransitiveEdges(productSummary, new HashSet<>());
+    productSummary.getEdges().addAll(transitiveContainsEdges);
+
+    productSummary.getNodes().stream()
+        .filter(Node::isNewConcept)
+        .forEach(
+            n ->
+                n.getNewConceptDetails()
+                    .getAxioms()
+                    .forEach(RelationshipSorter::sortRelationships));
+
+    productSummary.updateNodeChangeStatus(
+        taskChangedConceptIds.block(), projectChangedConceptIds.block());
+
+    return productSummary;
+  }
+
+  private void calculateOuterPackageNodes(
+      String branch,
+      PackageDetails<MedicationProductDetails> packageDetails,
+      AtomicCache atomicCache,
+      ModelConfiguration modelConfiguration,
+      Map<PackageQuantity<MedicationProductDetails>, ProductSummary> innerPackageSummaries,
+      Map<ProductQuantity<MedicationProductDetails>, ProductSummary> innnerProductSummaries,
+      ProductSummary productSummary) {
+
+    final Map<ModelLevelType, Node> packageNodeMap =
+        createPackageLevelNodes(
+            branch,
+            packageDetails,
+            atomicCache,
+            modelConfiguration,
+            innerPackageSummaries,
+            innnerProductSummaries,
+            productSummary);
+
+    productSummary.setSingleSubject(
+        packageNodeMap.get(modelConfiguration.getLeafPackageModelLevel().getModelLevelType()));
+
+    addProductNameNode(packageDetails, modelConfiguration, productSummary, packageNodeMap);
+
+    connectOuterAndInnerProductSummaries(
+        modelConfiguration,
+        innerPackageSummaries,
+        innnerProductSummaries,
+        productSummary,
+        packageNodeMap);
+  }
+
+  /**
+   * Creates the nodes for the package levels configured for the branch's model
+   *
+   * @param branch
+   * @param packageDetails
+   * @param atomicCache
+   * @param modelConfiguration
+   * @param innerPackageSummaries
+   * @param innnerProductSummaries
+   * @param productSummary
+   * @return A map of the package level type to the node created for that level - used to connect
+   *     these nodes to other ProductSummary objects for nested products/packages
+   */
+  private Map<ModelLevelType, Node> createPackageLevelNodes(
+      String branch,
+      PackageDetails<MedicationProductDetails> packageDetails,
+      AtomicCache atomicCache,
+      ModelConfiguration modelConfiguration,
+      Map<PackageQuantity<MedicationProductDetails>, ProductSummary> innerPackageSummaries,
+      Map<ProductQuantity<MedicationProductDetails>, ProductSummary> innnerProductSummaries,
+      ProductSummary productSummary) {
     Set<ModelLevel> packageLevels = modelConfiguration.getPackageLevels();
 
     Set<CompletableFuture<Node>> packageLevelFutures = new HashSet<>();
@@ -233,7 +358,7 @@ public class MedicationProductCalculationService {
                             ? packageLevel.getDrugDeviceSemanticTag()
                             : packageLevel.getMedicineSemanticTag(),
                         n,
-                        modelConfiguration.getModuleId());
+                        modelConfiguration);
                     productSummary.addNode(n);
                     return n;
                   }));
@@ -255,71 +380,83 @@ public class MedicationProductCalculationService {
         }
       }
     }
+    return packageNodeMap;
+  }
 
-    productSummary.setSingleSubject(
-        packageNodeMap.get(modelConfiguration.getLeafPackageModelLevel().getModelLevelType()));
-
-    if (modelConfiguration.getModelType().equals(ModelType.AMT)
-        || packageDetails.getProductName() != null) {
-      productSummary.addNode(
-          packageDetails.getProductName(),
-          modelConfiguration.getLevelOfType(ModelLevelType.PRODUCT_NAME));
-      for (Node node : packageNodeMap.values()) {
-        if (node.getModelLevel().isBranded()) {
-          productSummary.addEdge(
-              node.getConceptId(),
-              packageDetails.getProductName().getConceptId(),
-              ProductSummaryService.HAS_PRODUCT_NAME_LABEL);
-        }
-      }
+  /**
+   * Calculates the contained products for a package - i.e. the tablets in the outer pack
+   *
+   * @param branch
+   * @param packageDetails
+   * @param atomicCache
+   * @return A map of the contained products and their resultant ProductSummary to add to the
+   *     overall ProductSummary
+   * @throws ExecutionException
+   * @throws InterruptedException
+   */
+  private Map<ProductQuantity<MedicationProductDetails>, ProductSummary> calculateContainedProducts(
+      String branch,
+      PackageDetails<MedicationProductDetails> packageDetails,
+      AtomicCache atomicCache)
+      throws ExecutionException, InterruptedException {
+    Map<ProductQuantity<MedicationProductDetails>, ProductSummary> innnerProductSummaries =
+        new HashMap<>();
+    for (ProductQuantity<MedicationProductDetails> productQuantity :
+        packageDetails.getContainedProducts()) {
+      ProductSummary innerProductSummary =
+          createProduct(
+              branch,
+              productQuantity.getProductDetails(),
+              atomicCache,
+              packageDetails.getSelectedConceptIdentifiers());
+      innnerProductSummaries.put(productQuantity, innerProductSummary);
     }
+    return innnerProductSummaries;
+  }
 
-    for (ProductSummary summary : innerPackageSummaries.values()) {
-      productSummary.addSummary(summary);
-
-      for (Node packageNode : packageNodeMap.values()) {
-        productSummary.addEdge(
-            packageNode.getConceptId(),
-            summary
-                .getSingleConceptWithLabel(
-                    modelConfiguration.getLevelOfType(packageNode.getModelLevel()).getName())
-                .getConceptId(),
-            ProductSummaryService.CONTAINS_LABEL);
-      }
+  /**
+   * Calculates the contained subpackages for a package
+   *
+   * @param branch
+   * @param packageDetails
+   * @param atomicCache
+   * @return A map of the contained packages and their resultant ProductSummary to add to the outer
+   *     ProductSummary
+   * @throws ExecutionException
+   * @throws InterruptedException
+   */
+  private Map<PackageQuantity<MedicationProductDetails>, ProductSummary> calculateContainedPackages(
+      String branch,
+      PackageDetails<MedicationProductDetails> packageDetails,
+      AtomicCache atomicCache)
+      throws ExecutionException, InterruptedException {
+    Map<PackageQuantity<MedicationProductDetails>, ProductSummary> innerPackageSummaries =
+        new HashMap<>();
+    for (PackageQuantity<MedicationProductDetails> packageQuantity :
+        packageDetails.getContainedPackages()) {
+      ProductSummary innerPackageSummary =
+          calculateCreatePackage(branch, packageQuantity.getPackageDetails(), atomicCache);
+      innerPackageSummaries.put(packageQuantity, innerPackageSummary);
     }
+    return innerPackageSummaries;
+  }
 
-    for (ProductSummary summary : innnerProductSummaries.values()) {
-      productSummary.addSummary(summary);
+  private void validateInputData(
+      String branch,
+      PackageDetails<MedicationProductDetails> packageDetails,
+      ModelConfiguration modelConfiguration) {
+    final MedicationDetailsValidator medicationDetailsValidator =
+        medicationDetailsValidatorByQualifier.get(
+            modelConfiguration.getModelType().name()
+                + "-"
+                + MedicationDetailsValidator.class.getSimpleName());
 
-      for (Node packageNode : packageNodeMap.values()) {
-        productSummary.addEdge(
-            packageNode.getConceptId(),
-            summary
-                .getSingleConceptWithLabel(
-                    modelConfiguration
-                        .getContainedLevelForType(packageNode.getModelLevel())
-                        .getDisplayLabel())
-                .getConceptId(),
-            ProductSummaryService.CONTAINS_LABEL);
-      }
+    if (medicationDetailsValidator == null) {
+      throw new IllegalStateException(
+          "No medication details validator found for model type: "
+              + modelConfiguration.getModelType());
     }
-
-    Set<Edge> transitiveContainsEdges =
-        ProductSummaryService.getTransitiveEdges(productSummary, new HashSet<>());
-    productSummary.getEdges().addAll(transitiveContainsEdges);
-
-    productSummary.getNodes().stream()
-        .filter(Node::isNewConcept)
-        .forEach(
-            n ->
-                n.getNewConceptDetails()
-                    .getAxioms()
-                    .forEach(RelationshipSorter::sortRelationships));
-
-    productSummary.updateNodeChangeStatus(
-        taskChangedConceptIds.block(), projectChangedConceptIds.block());
-
-    return productSummary;
+    medicationDetailsValidator.validatePackageDetails(packageDetails, branch);
   }
 
   private CompletableFuture<Node> getOrCreatePackagedClinicalDrug(
@@ -348,7 +485,8 @@ public class MedicationProductCalculationService {
             packageLevel.isContainerized(),
             modelConfiguration);
 
-    // todo remove this once using transformed nmpc data
+    // todo remove this once using transformed nmpc data - should be enforced but can't be for NMPC
+    // at the moment
     boolean enforceRefsets = modelConfiguration.getModelType().equals(ModelType.AMT);
 
     return nodeGeneratorService.generateNodeAsync(
@@ -531,7 +669,7 @@ public class MedicationProductCalculationService {
                           ? mpLevel.getDrugDeviceSemanticTag()
                           : mpLevel.getMedicineSemanticTag(),
                       n,
-                      modelConfiguration.getModuleId());
+                      modelConfiguration);
                   productSummary.addNode(n);
                   return n;
                 });
@@ -549,7 +687,7 @@ public class MedicationProductCalculationService {
                           ? mpuuLevel.getDrugDeviceSemanticTag()
                           : mpuuLevel.getMedicineSemanticTag(),
                       n,
-                      modelConfiguration.getModuleId());
+                      modelConfiguration);
                   productSummary.addNode(n);
                   return n;
                 });
@@ -572,7 +710,7 @@ public class MedicationProductCalculationService {
                           ? tpuuLevel.getDrugDeviceSemanticTag()
                           : tpuuLevel.getMedicineSemanticTag(),
                       n,
-                      modelConfiguration.getModuleId());
+                      modelConfiguration);
                   productSummary.addNode(n);
                   return n;
                 });
@@ -591,7 +729,7 @@ public class MedicationProductCalculationService {
                             ? atmLevel.getDrugDeviceSemanticTag()
                             : atmLevel.getMedicineSemanticTag(),
                         n,
-                        modelConfiguration.getModuleId());
+                        modelConfiguration);
                     productSummary.addNode(n);
                     return n;
                   });
