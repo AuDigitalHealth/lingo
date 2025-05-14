@@ -130,7 +130,7 @@ class MedicationCreationControllerTest extends LingoTestBase {
     Assertions.assertThat(
             getLingoTestClient().calculateMedicationProductSummaryWithBadRequest(packageDetails))
         .contains(
-            "Total quantity and concentration strength must be present if the product quantity exists for ingredient 395814003|Oxaliplatin (substance)| but total quantity and concentration strength are not specified");
+            "Basis of strength substance is populated but neither total quantity or concentration strength are populated");
 
     // should be passing for the excluded list
     ingredient.getActiveIngredient().conceptId(INERT_SUBSTANCE.getValue());
