@@ -45,6 +45,12 @@ public class ModelLevel {
 
   private String productModelEcl;
 
+  /**
+   * Get the leaf level from a set of levels. A leaf level is a level that has no descendants in the
+   * model level hierarchy.
+   * @param levels
+   * @return
+   */
   public static ModelLevel getLeafLevel(Set<ModelLevel> levels) {
     Set<ModelLevelType> levelTypes =
         levels.stream().map(ModelLevel::getModelLevelType).collect(Collectors.toSet());
