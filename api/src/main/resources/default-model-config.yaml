@@ -2,6 +2,9 @@ models:
   MAIN_SNOMEDCT-AU_AUAMT:
     modelType: AMT
     moduleId: 32506021000036107
+    preferredLanguageRefsets:
+      - 32570271000036106
+      - 900000000000509007
     baseMedicationSchema: classpath:AMT/base-medication-schema.json
     baseMedicationUiSchema: classpath:AMT/base-medication-ui-schema.json
     baseDeviceSchema: classpath:AMT/base-device-schema.json
@@ -88,9 +91,12 @@ models:
           - RELATED
     referenceSets:
     nonDefiningProperties:
-  MAIN_SNOMEDCT-IE_IE:
+  MAIN_SNOMEDCT-IE:
     modelType: NMPC
     moduleId: 1601000220105
+    preferredLanguageRefsets:
+      - 21000220103
+      - 900000000000509007
     baseMedicationSchema: classpath:NMPC/base-medication-schema.json
     baseMedicationUiSchema: classpath:NMPC/base-medication-ui-schema.json
     baseDeviceSchema: classpath:NMPC/base-device-schema.json
@@ -103,6 +109,7 @@ models:
     medicationProductDataExtractionEcl: "(<id> or (>!<id>:411116001=*)) and <373873005"
     devicePackageDataExtractionEcl: "(<id> or (<id>.999000111000168106) or (<id>.999000081000168101) or (<id>.999000111000168106.999000081000168101) or ((>>((<id>.999000081000168101) or (<id>.999000111000168106.999000081000168101))) and (^929360071000036103 or ^929360061000036106))) and < 260787004"
     deviceProductDataExtractionEcl: "(<id> or (>> <id> and (^929360071000036103 or ^929360061000036106))) and < 260787004"
+    executeEclAsStated: false
     levels:
       - name: Virtual Therapeutic Moiety
         displayLabel: MP
@@ -208,10 +215,23 @@ models:
         level: PACKAGE
         dataType: STRING,
         valueRegexValidation: ^.+$
-        valueSetReference: http://snomed.info/sct?fhir_vs=ecl/%5E%2032570141000036105%20
+        valueSetReference: http://www.whocc.no/atc/vs
         modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
+        defaultMappingType: RELATED
+        mappingTypes:
+          - RELATED
+      - name: pcrs
+        title: GMS Reimbursable Number
+        identifier: 105590001
+        level: PACKAGE
+        dataType: STRING,
+        valueRegexValidation: ^.+$
+        valueSetReference: https://nmpc.hse.ie/PCRS/vs
+        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
         defaultMappingType: RELATED
         mappingTypes:
           - RELATED
