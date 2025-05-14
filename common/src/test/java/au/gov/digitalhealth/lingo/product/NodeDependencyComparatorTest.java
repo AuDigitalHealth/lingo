@@ -17,6 +17,8 @@ package au.gov.digitalhealth.lingo.product;
 
 import au.csiro.snowstorm_client.model.SnowstormAxiom;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -28,7 +30,12 @@ import org.junit.jupiter.api.Assertions;
 public class NodeDependencyComparatorTest extends TestCase {
 
   private static Node getNode(int x) {
-    Node node1 = new Node(null, "label");
+    ModelLevel modelLevel = new ModelLevel();
+    modelLevel.setName("ModelLevel" + x);
+    modelLevel.setDisplayLabel("Label" + x);
+    modelLevel.setModelLevelType(ModelLevelType.PRODUCT_NAME);
+
+    Node node1 = new Node(null, modelLevel);
     node1.setNewConceptDetails(new NewConceptDetails());
     node1.getNewConceptDetails().setConceptId(x);
     return node1;
