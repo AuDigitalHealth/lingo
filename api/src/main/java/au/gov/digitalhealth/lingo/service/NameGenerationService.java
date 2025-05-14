@@ -16,6 +16,7 @@
 package au.gov.digitalhealth.lingo.service;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptView;
+import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.FsnAndPt;
 import au.gov.digitalhealth.lingo.product.NameGeneratorSpec;
@@ -53,10 +54,13 @@ public class NameGenerationService {
   }
 
   public void addGeneratedFsnAndPt(
-      AtomicCache atomicCache, String semanticTag, Node node, String moduleId) {
+      AtomicCache atomicCache,
+      String semanticTag,
+      Node node,
+      ModelConfiguration modelConfiguration) {
     Instant start = Instant.now();
     Optional<NameGeneratorSpec> nameGeneratorSpec =
-        generateNameGeneratorSpec(atomicCache, semanticTag, node, moduleId);
+        generateNameGeneratorSpec(atomicCache, semanticTag, node, modelConfiguration);
     if (nameGeneratorSpec.isEmpty()) return;
     FsnAndPt fsnAndPt = createFsnAndPreferredTerm(nameGeneratorSpec.get());
     node.getNewConceptDetails().setFullySpecifiedName(fsnAndPt.getFSN());
@@ -77,9 +81,12 @@ public class NameGenerationService {
   }
 
   public Optional<NameGeneratorSpec> generateNameGeneratorSpec(
-      AtomicCache atomicCache, String semanticTag, Node node, String moduleId) {
+      AtomicCache atomicCache,
+      String semanticTag,
+      Node node,
+      ModelConfiguration modelConfiguration) {
     if (node.isNewConcept()) {
-      SnowstormConceptView scon = SnowstormDtoUtil.toSnowstormConceptView(node, moduleId);
+      SnowstormConceptView scon = SnowstormDtoUtil.toSnowstormConceptView(node, modelConfiguration);
       Set<String> axioms = owlAxiomService.translate(scon);
       String axiomN;
       try {

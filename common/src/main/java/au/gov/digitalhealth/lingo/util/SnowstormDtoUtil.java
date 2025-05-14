@@ -29,6 +29,7 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.STATED_RELATIONSHU
 import au.csiro.snowstorm_client.model.*;
 import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
 import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
+import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.MappingType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.exception.AtomicDataExtractionProblem;
@@ -402,7 +403,12 @@ public class SnowstormDtoUtil {
     }
   }
 
-  public static void addDescription(SnowstormConceptView concept, String term, String type) {
+  public static void addDescription(
+      SnowstormConceptView concept,
+      String term,
+      String type,
+      ModelConfiguration modelConfiguration,
+      String caseSignificance) {
     Set<SnowstormDescription> descriptions = concept.getDescriptions();
 
     descriptions.add(
@@ -411,16 +417,9 @@ public class SnowstormDtoUtil {
             .lang("en")
             .term(term)
             .type(type)
-            .caseSignificance(ENTIRE_TERM_CASE_SENSITIVE.getValue())
-            .moduleId(SCT_AU_MODULE.getValue())
-            .acceptabilityMap(
-                Map.of(
-                    AmtConstants.ADRS.getValue(),
-                    SnomedConstants.PREFERRED.getValue(),
-                    AmtConstants.GB_LANG_REFSET_ID.getValue(),
-                    SnomedConstants.PREFERRED.getValue(),
-                    AmtConstants.US_LANG_REFSET_ID.getValue(),
-                    SnomedConstants.PREFERRED.getValue())));
+            .caseSignificance(caseSignificance)
+            .moduleId(modelConfiguration.getModuleId())
+            .acceptabilityMap(modelConfiguration.getAcceptabilityMap()));
 
     concept.setDescriptions(descriptions);
   }
@@ -438,20 +437,30 @@ public class SnowstormDtoUtil {
     return snowstormConceptMini.getFsn().getTerm();
   }
 
-  public static SnowstormConceptView toSnowstormConceptView(Node node, String moduleId) {
+  public static SnowstormConceptView toSnowstormConceptView(
+      Node node, ModelConfiguration modelConfiguration) {
     SnowstormConceptView concept = new SnowstormConceptView();
 
     if (node.getNewConceptDetails().getConceptId() != null) {
       concept.setConceptId(node.getNewConceptDetails().getConceptId().toString());
     }
-    concept.setModuleId(moduleId);
+    concept.setModuleId(modelConfiguration.getModuleId());
 
     NewConceptDetails newConceptDetails = node.getNewConceptDetails();
 
     SnowstormDtoUtil.addDescription(
-        concept, newConceptDetails.getPreferredTerm(), SnomedConstants.SYNONYM.getValue());
+        concept,
+        newConceptDetails.getPreferredTerm(),
+        SnomedConstants.SYNONYM.getValue(),
+        modelConfiguration,
+        // todo need to revise hard coding of ENTIRE_TERM_CASE_SENSITIVE
+        ENTIRE_TERM_CASE_SENSITIVE.getValue());
     SnowstormDtoUtil.addDescription(
-        concept, newConceptDetails.getFullySpecifiedName(), SnomedConstants.FSN.getValue());
+        concept,
+        newConceptDetails.getFullySpecifiedName(),
+        SnomedConstants.FSN.getValue(),
+        modelConfiguration,
+        ENTIRE_TERM_CASE_SENSITIVE.getValue());
 
     concept.setActive(true);
     concept.setDefinitionStatusId(

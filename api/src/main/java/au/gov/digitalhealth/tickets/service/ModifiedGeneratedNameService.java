@@ -76,7 +76,7 @@ public class ModifiedGeneratedNameService {
                                 idFsnMap, AmtConstants.values(), SnomedConstants.values()),
                             newConceptDetails.getSemanticTag(),
                             node,
-                            modelConfiguration.getModuleId());
+                            modelConfiguration);
                     if (nameGeneratorSpec.isEmpty()) return Stream.empty();
                     ModifiedGeneratedName.ModifiedGeneratedNameBuilder mgnb =
                         ModifiedGeneratedName.builder()
