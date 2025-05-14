@@ -211,7 +211,15 @@ public abstract class AtomicDataService<T extends ProductDetails> {
             .collect(
                 Collectors.toMap(
                     SnowstormReferenceSetMember::getReferencedComponentId,
-                    SnowstormReferenceSetMember::getRefsetId));
+                    SnowstormReferenceSetMember::getRefsetId,
+                    // todo work around NMPC having duplicate refset entries
+                    (existing, replacement) -> {
+                      if (!existing.equals(replacement)) {
+                        throw new IllegalStateException(
+                            "Duplicate key " + existing + " and " + replacement);
+                      }
+                      return existing;
+                    }));
 
     Mono<Map<String, List<ExternalIdentifier>>> mappingsMap =
         ExternalIdentifierUtils.getExternalIdentifiersMapFromRefsetMembers(
