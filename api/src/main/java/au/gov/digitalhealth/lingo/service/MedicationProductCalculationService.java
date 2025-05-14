@@ -52,6 +52,7 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.IS_A;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.MEDICINAL_PRODUCT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.MEDICINAL_PRODUCT_PACKAGE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.STATED_RELATIONSHIP;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.UNIT_OF_PRESENTATION;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.addQuantityIfNotNull;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.addRelationshipIfNotNull;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getSnowstormDatatypeComponent;
@@ -995,6 +996,15 @@ public class MedicationProductCalculationService {
           relationships,
           productDetails.getDeviceType(),
           HAS_DEVICE_TYPE,
+          0,
+          modelConfiguration.getModuleId());
+    }
+
+    if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
+      addRelationshipIfNotNull(
+          relationships,
+          productDetails.getUnitOfPresentation(),
+          UNIT_OF_PRESENTATION,
           0,
           modelConfiguration.getModuleId());
     }
