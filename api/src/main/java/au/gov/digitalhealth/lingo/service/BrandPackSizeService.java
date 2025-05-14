@@ -25,11 +25,7 @@ import static au.gov.digitalhealth.lingo.service.ProductSummaryService.TPP_LABEL
 import static au.gov.digitalhealth.lingo.service.ProductSummaryService.TPUU_LABEL;
 import static au.gov.digitalhealth.lingo.service.ProductSummaryService.TP_LABEL;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONTAINS_DEVICE;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.CTPP_REFSET_ID;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_DEVICE_TYPE;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.MPP_REFSET_ID;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.TPP_REFSET_ID;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.TPUU_REFSET_ID;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.BRANDED_CLINICAL_DRUG_SEMANTIC_TAG;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG;
@@ -627,7 +623,7 @@ public class BrandPackSizeService {
             branch,
             atomicCache,
             newCtppRelationships,
-            Set.of(CTPP_REFSET_ID.getValue()),
+            Set.of(modelLevel.getReferenceSetIdentifier()),
             modelLevel,
             isDevice ? modelLevel.getDrugDeviceSemanticTag() : modelLevel.getMedicineSemanticTag(),
             SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(
@@ -644,7 +640,7 @@ public class BrandPackSizeService {
         .thenApply(
             n -> {
               nameGenerationService.addGeneratedFsnAndPt(
-                  atomicCache, semanticTag, n, modelConfiguration.getModuleId());
+                  atomicCache, semanticTag, n, modelConfiguration);
               return n;
             });
   }
@@ -682,7 +678,7 @@ public class BrandPackSizeService {
             branch,
             atomicCache,
             newTppRelationships,
-            Set.of(TPP_REFSET_ID.getValue()),
+            Set.of(modelLevel.getReferenceSetIdentifier()),
             modelLevel,
             isDevice ? modelLevel.getDrugDeviceSemanticTag() : modelLevel.getMedicineSemanticTag(),
             Set.of(),
@@ -694,7 +690,7 @@ public class BrandPackSizeService {
         .thenApply(
             n -> {
               nameGenerationService.addGeneratedFsnAndPt(
-                  atomicCache, semanticTag, n, modelConfiguration.getModuleId());
+                  atomicCache, semanticTag, n, modelConfiguration);
               return n;
             });
   }
@@ -746,7 +742,7 @@ public class BrandPackSizeService {
             branch,
             atomicCache,
             relationships,
-            Set.of(MPP_REFSET_ID.getValue()),
+            Set.of(modelLevel.getReferenceSetIdentifier()),
             modelLevel,
             isDevice ? modelLevel.getDrugDeviceSemanticTag() : modelLevel.getMedicineSemanticTag(),
             Set.of(),
@@ -758,7 +754,7 @@ public class BrandPackSizeService {
         .thenApply(
             n -> {
               nameGenerationService.addGeneratedFsnAndPt(
-                  atomicCache, semanticTag, n, modelConfiguration.getModuleId());
+                  atomicCache, semanticTag, n, modelConfiguration);
               return n;
             });
   }
@@ -804,7 +800,7 @@ public class BrandPackSizeService {
             branch,
             atomicCache,
             relationships,
-            Set.of(TPUU_REFSET_ID.getValue()),
+            Set.of(modelLevel.getReferenceSetIdentifier()),
             modelLevel,
             isDevice ? modelLevel.getDrugDeviceSemanticTag() : modelLevel.getMedicineSemanticTag(),
             Set.of(),
@@ -816,7 +812,7 @@ public class BrandPackSizeService {
         .thenApply(
             n -> {
               nameGenerationService.addGeneratedFsnAndPt(
-                  atomicCache, semanticTag, n, modelConfiguration.getModuleId());
+                  atomicCache, semanticTag, n, modelConfiguration);
               return n;
             });
   }
