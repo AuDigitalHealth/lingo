@@ -89,7 +89,7 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
       data-testid={idSchema?.$id || name}
       loading={isLoading}
       options={disabled ? [] : options}
-      getOptionLabel={option => option?.pt?.term || ''}
+      getOptionLabel={option => (option?.conceptId ? option.conceptId + " - " + option?.pt?.term : '')}
       value={selectedConcept} // Controlled by selectedConcept
       onInputChange={(_, newInputValue) => setInputValue(newInputValue)}
       onChange={(_, selectedValue) => handleChange(selectedValue as Concept)}
@@ -98,7 +98,7 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
       }
       renderOption={(props, option) => (
         <li {...props} key={option.conceptId}>
-          {option.pt.term}
+          {option.conceptId + " - " + option?.pt?.term}
         </li>
       )}
       renderInput={params => (
