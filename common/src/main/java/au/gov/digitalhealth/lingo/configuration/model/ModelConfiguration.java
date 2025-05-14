@@ -15,6 +15,8 @@
  */
 package au.gov.digitalhealth.lingo.configuration.model;
 
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.PREFERRED;
+
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
@@ -80,10 +82,14 @@ public class ModelConfiguration implements InitializingBean {
 
   private String subpackFromPackageEcl;
 
+  private boolean executeEclAsStated = true;
+
   @NotEmpty private String medicationPackageDataExtractionEcl;
   @NotEmpty private String medicationProductDataExtractionEcl;
   @NotEmpty private String devicePackageDataExtractionEcl;
   @NotEmpty private String deviceProductDataExtractionEcl;
+
+  @NotNull @NotEmpty private Set<String> preferredLanguageRefsets;
 
   @Override
   public void afterPropertiesSet() throws ValidationException {
@@ -270,5 +276,10 @@ public class ModelConfiguration implements InitializingBean {
     }
 
     return getLevelOfType(modelLevel.getContainedLevel());
+  }
+
+  public Map<@NotNull String, @NotNull String> getAcceptabilityMap() {
+    return getPreferredLanguageRefsets().stream()
+        .collect(Collectors.toMap(s -> s, s -> PREFERRED.getValue()));
   }
 }

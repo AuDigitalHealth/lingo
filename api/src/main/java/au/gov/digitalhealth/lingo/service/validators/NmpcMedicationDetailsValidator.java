@@ -8,7 +8,7 @@ import au.gov.digitalhealth.lingo.service.SnowstormClient;
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Service;
 
-@Service("NMPC")
+@Service("NMPC-MedicationDetailsValidator")
 @Log
 public class NmpcMedicationDetailsValidator implements MedicationDetailsValidator {
   Models models;
