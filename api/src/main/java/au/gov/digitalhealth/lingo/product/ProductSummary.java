@@ -73,7 +73,7 @@ public class ProductSummary implements Serializable {
 
   public void addNode(SnowstormConceptMini conceptSummary, ModelLevel modelLevel) {
     synchronized (nodes) {
-      Node node = new Node(conceptSummary, modelLevel.getDisplayLabel());
+      Node node = new Node(conceptSummary, modelLevel);
       node.setModelLevel(modelLevel.getModelLevelType());
       node.setDisplayName(modelLevel.getName());
       addNode(node);

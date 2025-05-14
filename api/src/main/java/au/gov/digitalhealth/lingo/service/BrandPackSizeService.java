@@ -23,7 +23,6 @@ import static au.gov.digitalhealth.lingo.service.ProductSummaryService.MPP_LABEL
 import static au.gov.digitalhealth.lingo.service.ProductSummaryService.MPUU_LABEL;
 import static au.gov.digitalhealth.lingo.service.ProductSummaryService.TPP_LABEL;
 import static au.gov.digitalhealth.lingo.service.ProductSummaryService.TPUU_LABEL;
-import static au.gov.digitalhealth.lingo.service.ProductSummaryService.TP_LABEL;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONTAINS_DEVICE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_DEVICE_TYPE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
@@ -220,11 +219,13 @@ public class BrandPackSizeService {
       Node tpuu,
       Node mpp,
       CompletableFuture<Node> newCtppNode,
-      String moduleId) {
+      ModelConfiguration modelConfiguration) {
+
+    ModelLevel tpLevel = modelConfiguration.getLevelOfType(ModelLevelType.PRODUCT_NAME);
 
     Node tp = productSummary.getNode(brand.getConceptId());
     if (tp == null) {
-      tp = new Node(brand, TP_LABEL);
+      tp = new Node(brand, tpLevel);
       productSummary.addNode(tp);
     }
 
@@ -232,7 +233,7 @@ public class BrandPackSizeService {
       productSummary.addNode(newTpuuNode);
       productSummary.addEdge(newTpuuNode.getConceptId(), tp.getConceptId(), HAS_PRODUCT_NAME_LABEL);
       productSummary.addEdge(newTpuuNode.getConceptId(), mpuu.getConceptId(), IS_A_LABEL);
-      addParent(newTpuuNode, mpuu, moduleId);
+      addParent(newTpuuNode, mpuu, modelConfiguration.getModuleId());
     }
 
     if (newMppNode != null) {
@@ -249,7 +250,7 @@ public class BrandPackSizeService {
         newTppNode.join().getConceptId(),
         newMppNode == null ? mpp.getConceptId() : newMppNode.getConceptId(),
         IS_A_LABEL);
-    addParent(newTppNode.join(), newMppNode == null ? mpp : newMppNode, moduleId);
+    addParent(newTppNode.join(), newMppNode == null ? mpp : newMppNode, modelConfiguration.getModuleId());
     productSummary.addEdge(
         newTppNode.join().getConceptId(), tp.getConceptId(), HAS_PRODUCT_NAME_LABEL);
 
@@ -260,7 +261,7 @@ public class BrandPackSizeService {
         CONTAINS_LABEL);
     productSummary.addEdge(
         newCtppNode.join().getConceptId(), newTppNode.join().getConceptId(), IS_A_LABEL);
-    addParent(newCtppNode.join(), newTppNode.join(), moduleId);
+    addParent(newCtppNode.join(), newTppNode.join(), modelConfiguration.getModuleId());
     productSummary.addEdge(
         newCtppNode.join().getConceptId(), tp.getConceptId(), HAS_PRODUCT_NAME_LABEL);
   }
@@ -555,7 +556,7 @@ public class BrandPackSizeService {
                             tpuu,
                             mpp,
                             newCtppNode,
-                            modelConfiguration.getModuleId());
+                            modelConfiguration);
 
                         log.fine(
                             "adding subject "

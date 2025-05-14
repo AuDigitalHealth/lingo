@@ -15,8 +15,8 @@
  */
 package au.gov.digitalhealth.lingo.product;
 
-
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.validation.OnlyOnePopulated;
@@ -77,9 +77,11 @@ public class Node {
 
   ModelLevelType modelLevel;
 
-  public Node(SnowstormConceptMini concept, String label) {
+  public Node(SnowstormConceptMini concept, ModelLevel level) {
     this.concept = concept;
-    this.label = label;
+    this.label = level.getDisplayLabel();
+    this.displayName = level.getName();
+    this.modelLevel = level.getModelLevelType();
   }
 
   public static Comparator<@Valid Node> getNodeComparator(Set<Node> nodeSet) {
@@ -135,26 +137,28 @@ public class Node {
     return concept == null && newConceptDetails != null;
   }
 
-//  public SnowstormConceptMini toConceptMini() {
-//    if (concept != null) {
-//      return getConcept();
-//    } else if (newConceptDetails != null) {
-//      SnowstormConceptMini cm = new SnowstormConceptMini();
-//      return cm.conceptId(newConceptDetails.getConceptId().toString())
-//          .fsn(
-//              new SnowstormTermLangPojo()
-//                  .lang("en")
-//                  .term(newConceptDetails.getFullySpecifiedName()))
-//          .pt(new SnowstormTermLangPojo().lang("en").term(newConceptDetails.getPreferredTerm()))
-//          .idAndFsnTerm(getIdAndFsnTerm())
-//          .definitionStatus(
-//              newConceptDetails.getAxioms().stream()
-//                      .anyMatch(a -> Objects.equals(a.getDefinitionStatus(), DEFINED.getValue()))
-//                  ? DEFINED.getValue()
-//                  : PRIMITIVE.getValue())
-//          .moduleId(AmtConstants.SCT_AU_MODULE.getValue());
-//    } else {
-//      throw new IllegalStateException("Node must represent a concept or a new concept, not both");
-//    }
-//  }
+  //  public SnowstormConceptMini toConceptMini() {
+  //    if (concept != null) {
+  //      return getConcept();
+  //    } else if (newConceptDetails != null) {
+  //      SnowstormConceptMini cm = new SnowstormConceptMini();
+  //      return cm.conceptId(newConceptDetails.getConceptId().toString())
+  //          .fsn(
+  //              new SnowstormTermLangPojo()
+  //                  .lang("en")
+  //                  .term(newConceptDetails.getFullySpecifiedName()))
+  //          .pt(new SnowstormTermLangPojo().lang("en").term(newConceptDetails.getPreferredTerm()))
+  //          .idAndFsnTerm(getIdAndFsnTerm())
+  //          .definitionStatus(
+  //              newConceptDetails.getAxioms().stream()
+  //                      .anyMatch(a -> Objects.equals(a.getDefinitionStatus(),
+  // DEFINED.getValue()))
+  //                  ? DEFINED.getValue()
+  //                  : PRIMITIVE.getValue())
+  //          .moduleId(AmtConstants.SCT_AU_MODULE.getValue());
+  //    } else {
+  //      throw new IllegalStateException("Node must represent a concept or a new concept, not
+  // both");
+  //    }
+  //  }
 }
