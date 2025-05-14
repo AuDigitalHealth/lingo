@@ -86,8 +86,13 @@ public class NodeGeneratorService {
 
     return CompletableFuture.completedFuture(
         snowstormClient
-            // TODO need to change this back from inferred when using the transformed data
-            .getConceptsFromInferredEcl(branch, modelLevel.getProductModelEcl(), productId, 0, 100)
+            .getConceptsFromEcl(
+                branch,
+                modelLevel.getProductModelEcl(),
+                productId,
+                0,
+                100,
+                models.getModelConfiguration(branch).isExecuteEclAsStated())
             .stream()
             .map(
                 concept -> {
@@ -173,7 +178,8 @@ public class NodeGeneratorService {
       }
 
       Collection<SnowstormConceptMini> matchingConcepts =
-          snowstormClient.getConceptsFromEcl(branch, ecl, limit);
+          snowstormClient.getConceptsFromEcl(
+              branch, ecl, limit, modelConfiguration.isExecuteEclAsStated());
 
       matchingConcepts = filterByOii(branch, relationships, matchingConcepts);
 
@@ -197,7 +203,9 @@ public class NodeGeneratorService {
         log.fine("ECL for " + label + " " + ecl);
       }
 
-      matchingConcepts = snowstormClient.getConceptsFromEcl(branch, ecl, limit);
+      matchingConcepts =
+          snowstormClient.getConceptsFromEcl(
+              branch, ecl, limit, modelConfiguration.isExecuteEclAsStated());
 
       matchingConcepts = filterByOii(branch, relationships, matchingConcepts);
 
@@ -329,7 +337,8 @@ public class NodeGeneratorService {
             branch,
             "(<" + node.getConceptId() + ") AND (" + nodeIdOrClause + ")",
             0,
-            productSummary.getNodes().size())
+            productSummary.getNodes().size(),
+            models.getModelConfiguration(branch).isExecuteEclAsStated())
         .stream()
         .map(SnowstormConceptMini::getConceptId)
         .forEach(

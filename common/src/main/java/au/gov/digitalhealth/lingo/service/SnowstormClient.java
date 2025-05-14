@@ -35,6 +35,7 @@ import au.gov.digitalhealth.lingo.util.CacheConstants;
 import au.gov.digitalhealth.lingo.util.ClientHelper;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PreDestroy;
 import jakarta.validation.constraints.NotNull;
 import java.net.URI;
 import java.time.Duration;
@@ -51,7 +52,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import javax.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -142,9 +142,9 @@ public class SnowstormClient {
       String branch, String ecl, Pair<String, Object>... params)
       throws SingleConceptExpectedProblem {
     ecl = populateParameters(ecl, params);
-    Collection<SnowstormConceptMini> concepts = getConceptsFromEcl(branch, ecl, 0, 2);
+    Collection<SnowstormConceptMini> concepts = getConceptsFromEcl(branch, ecl, 0, 2, true);
     if (concepts.size() != 1) {
-      concepts = getConceptsFromInferredEcl(branch, ecl, 0, 2);
+      concepts = getConceptsFromEcl(branch, ecl, 0, 2, false);
       if (concepts.size() != 1) {
         throw new SingleConceptExpectedProblem(branch, ecl, concepts);
       }
@@ -152,50 +152,61 @@ public class SnowstormClient {
     return concepts.iterator().next();
   }
 
-  public Collection<SnowstormConceptMini> getConceptsFromEcl(String branch, String ecl, int limit) {
-    return getConceptsFromEcl(branch, ecl, 0, limit);
+  public Collection<SnowstormConceptMini> getConceptsFromEcl(
+      String branch, String ecl, int limit, boolean executeAsStated) {
+    return getConceptsFromEcl(branch, ecl, 0, limit, executeAsStated);
   }
 
   public Collection<SnowstormConceptMini> getConceptsFromEcl(
-      String branch, String ecl, Long id, int offset, int limit) {
-    return getConceptsFromEcl(branch, ecl, offset, limit, Pair.of("<id>", id));
-  }
-
-  public Collection<SnowstormConceptMini> getConceptsFromInferredEcl(
-      String branch, String ecl, Long id, int offset, int limit) {
-    return getConceptsFromInferredEcl(branch, ecl, offset, limit, Pair.of("<id>", id));
+      String branch, String ecl, Long id, int offset, int limit, boolean executeAsStated) {
+    return getConceptsFromEcl(branch, ecl, offset, limit, executeAsStated, Pair.of("<id>", id));
   }
 
   public Collection<String> getConceptsIdsFromEcl(
-      String branch, String ecl, long id, int offset, int limit) {
-    return getConceptIdsFromEcl(branch, ecl, offset, limit, Pair.of("<id>", id));
+      String branch, String ecl, long id, int offset, int limit, boolean executeAsStated) {
+    return getConceptIdsFromEcl(branch, ecl, offset, limit, executeAsStated, Pair.of("<id>", id));
   }
 
   @SafeVarargs
   @SuppressWarnings("java:S1192")
   public final Collection<String> getConceptIdsFromEcl(
-      String branch, String ecl, int offset, int limit, Pair<String, Object>... params) {
+      String branch,
+      String ecl,
+      int offset,
+      int limit,
+      boolean executeEclAsStated,
+      Pair<String, Object>... params) {
     ecl = populateParameters(ecl, params);
 
     ConceptsApi api = getConceptsApi();
 
     Instant start = Instant.now();
 
+    SnowstormConceptSearchRequest snowstormConceptSearchRequest =
+        new SnowstormConceptSearchRequest()
+            .returnIdOnly(true)
+            .offset(offset)
+            .limit(limit)
+            .conceptIds(null)
+            .module(null)
+            .preferredOrAcceptableIn(null)
+            .acceptableIn(null)
+            .preferredIn(null)
+            .language(null)
+            .descriptionType(null);
+
+    //    final boolean executeEclAsStated = true;
+    //        models == null || models.getModelConfiguration(branch).isExecuteEclAsStated();
+    if (executeEclAsStated) {
+      snowstormConceptSearchRequest = snowstormConceptSearchRequest.statedEclFilter(ecl);
+    } else {
+      snowstormConceptSearchRequest = snowstormConceptSearchRequest.eclFilter(ecl);
+    }
+
     SnowstormItemsPageObject page =
         api.search(
                 branch,
-                new SnowstormConceptSearchRequest()
-                    .statedEclFilter(ecl)
-                    .returnIdOnly(true)
-                    .offset(offset)
-                    .limit(limit)
-                    .conceptIds(null)
-                    .module(null)
-                    .preferredOrAcceptableIn(null)
-                    .acceptableIn(null)
-                    .preferredIn(null)
-                    .language(null)
-                    .descriptionType(null),
+                snowstormConceptSearchRequest,
                 "en") // acceptability doesn't matter since this just returns ids
             .block();
 
@@ -211,7 +222,8 @@ public class SnowstormClient {
               + limit
               + " in "
               + Duration.between(start, end).toMillis()
-              + " ms");
+              + " ms on "
+              + (executeEclAsStated ? "stated form" : "inferred form"));
     }
 
     validatePage(branch, ecl, page);
@@ -249,80 +261,41 @@ public class SnowstormClient {
   }
 
   public Collection<SnowstormConceptMini> getConceptsFromEcl(
-      String branch, String ecl, int offset, int limit, Pair<String, Object>... params) {
+      String branch,
+      String ecl,
+      int offset,
+      int limit,
+      boolean executeEclAsStated,
+      Pair<String, Object>... params) {
     ecl = populateParameters(ecl, params);
 
     ConceptsApi api = getConceptsApi();
 
     Instant start = Instant.now();
 
-    SnowstormItemsPageObject page =
-        api.search(
-                branch,
-                new SnowstormConceptSearchRequest()
-                    .statedEclFilter(ecl)
-                    .returnIdOnly(false)
-                    .offset(offset)
-                    .limit(limit)
-                    .conceptIds(null)
-                    .module(null)
-                    .preferredOrAcceptableIn(null)
-                    .acceptableIn(null)
-                    .preferredIn(null)
-                    .language(null)
-                    .descriptionType(null),
-                languageHeader)
-            .block();
+    SnowstormConceptSearchRequest snowstormConceptSearchRequest =
+        new SnowstormConceptSearchRequest()
+            .returnIdOnly(false)
+            .offset(offset)
+            .limit(limit)
+            .conceptIds(null)
+            .module(null)
+            .preferredOrAcceptableIn(null)
+            .acceptableIn(null)
+            .preferredIn(null)
+            .language(null)
+            .descriptionType(null);
 
-    Instant end = Instant.now();
-
-    if (log.isLoggable(Level.FINE)) {
-      logger.logFine(
-          " executed ECL: "
-              + ecl
-              + ", offset: "
-              + offset
-              + ", limit: "
-              + limit
-              + " in "
-              + Duration.between(start, end).toMillis()
-              + " ms");
+    //    final boolean executeEclAsStated = true;
+    //        models == null || models.getModelConfiguration(branch).isExecuteEclAsStated();
+    if (executeEclAsStated) {
+      snowstormConceptSearchRequest = snowstormConceptSearchRequest.statedEclFilter(ecl);
+    } else {
+      snowstormConceptSearchRequest = snowstormConceptSearchRequest.eclFilter(ecl);
     }
 
-    validatePage(branch, ecl, page);
-    return Objects.requireNonNull(
-            page.getItems(), "response page unexpectedly empty for ECL " + ecl)
-        .stream()
-        .map(SnowstormDtoUtil::fromLinkedHashMap)
-        .filter(c -> c.getActive() != null && c.getActive())
-        .toList();
-  }
-
-  public Collection<SnowstormConceptMini> getConceptsFromInferredEcl(
-      String branch, String ecl, int offset, int limit, Pair<String, Object>... params) {
-    ecl = populateParameters(ecl, params);
-
-    ConceptsApi api = getConceptsApi();
-
-    Instant start = Instant.now();
-
     SnowstormItemsPageObject page =
-        api.search(
-                branch,
-                new SnowstormConceptSearchRequest()
-                    .eclFilter(ecl)
-                    .returnIdOnly(false)
-                    .offset(offset)
-                    .limit(limit)
-                    .conceptIds(null)
-                    .module(null)
-                    .preferredOrAcceptableIn(null)
-                    .acceptableIn(null)
-                    .preferredIn(null)
-                    .language(null)
-                    .descriptionType(null),
-                languageHeader)
-            .block();
+        api.search(branch, snowstormConceptSearchRequest, languageHeader).block();
 
     Instant end = Instant.now();
 
@@ -336,7 +309,8 @@ public class SnowstormClient {
               + limit
               + " in "
               + Duration.between(start, end).toMillis()
-              + " ms");
+              + " ms on "
+              + (executeEclAsStated ? "stated form" : "inferred form"));
     }
 
     validatePage(branch, ecl, page);
@@ -349,14 +323,19 @@ public class SnowstormClient {
   }
 
   public Collection<SnowstormConceptMini> getConceptsFromEclAllPages(
-      String branch, String ecl, int pageSize, Pair<String, Object>... params) {
+      String branch,
+      String ecl,
+      int pageSize,
+      boolean executeAsStated,
+      Pair<String, Object>... params) {
     final String populatedEcl = populateParameters(ecl, params);
     ConceptsApi api = getConceptsApi();
     ExecutorService executor = Executors.newFixedThreadPool(10);
 
     try {
       // First, get the total count
-      SnowstormItemsPageObject firstPage = fetchPage(api, branch, populatedEcl, 0, 1);
+      SnowstormItemsPageObject firstPage =
+          fetchPage(api, branch, populatedEcl, 0, 1, executeAsStated);
       Long totalItems = firstPage.getTotal();
 
       if (totalItems == null || totalItems == 0) {
@@ -376,7 +355,7 @@ public class SnowstormClient {
             CompletableFuture.supplyAsync(
                 () -> {
                   SnowstormItemsPageObject page =
-                      fetchPage(api, branch, populatedEcl, offset, pageSize);
+                      fetchPage(api, branch, populatedEcl, offset, pageSize, executeAsStated);
                   return Objects.requireNonNull(page.getItems()).stream()
                       .map(SnowstormDtoUtil::fromLinkedHashMap)
                       .filter(c -> c.getActive() != null && c.getActive())
@@ -398,25 +377,37 @@ public class SnowstormClient {
   }
 
   private SnowstormItemsPageObject fetchPage(
-      ConceptsApi api, String branch, String ecl, int offset, int limit) {
+      ConceptsApi api,
+      String branch,
+      String ecl,
+      int offset,
+      int limit,
+      boolean executeEclAsStated) {
     Instant start = Instant.now();
+
+    SnowstormConceptSearchRequest snowstormConceptSearchRequest =
+        new SnowstormConceptSearchRequest()
+            .returnIdOnly(false)
+            .offset(offset)
+            .limit(limit)
+            .conceptIds(null)
+            .module(null)
+            .preferredOrAcceptableIn(null)
+            .acceptableIn(null)
+            .preferredIn(null)
+            .language(null)
+            .descriptionType(null);
+
+    //    final boolean executeEclAsStated = true;
+    //        models == null || models.getModelConfiguration(branch).isExecuteEclAsStated();
+    if (executeEclAsStated) {
+      snowstormConceptSearchRequest = snowstormConceptSearchRequest.statedEclFilter(ecl);
+    } else {
+      snowstormConceptSearchRequest = snowstormConceptSearchRequest.eclFilter(ecl);
+    }
+
     SnowstormItemsPageObject page =
-        api.search(
-                branch,
-                new SnowstormConceptSearchRequest()
-                    .statedEclFilter(ecl)
-                    .returnIdOnly(false)
-                    .offset(offset)
-                    .limit(limit)
-                    .conceptIds(null)
-                    .module(null)
-                    .preferredOrAcceptableIn(null)
-                    .acceptableIn(null)
-                    .preferredIn(null)
-                    .language(null)
-                    .descriptionType(null),
-                languageHeader)
-            .block();
+        api.search(branch, snowstormConceptSearchRequest, languageHeader).block();
     Instant end = Instant.now();
 
     if (log.isLoggable(Level.FINE)) {
@@ -429,7 +420,8 @@ public class SnowstormClient {
               + limit
               + " in "
               + Duration.between(start, end).toMillis()
-              + " ms");
+              + " ms on "
+              + (executeEclAsStated ? "stated form" : "inferred form"));
     }
     return page;
   }

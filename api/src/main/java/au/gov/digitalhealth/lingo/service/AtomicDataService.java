@@ -103,7 +103,8 @@ public abstract class AtomicDataService<T extends ProductDetails> {
       ecl = ecl.replace(entry.getKey(), "(" + entry.getValue() + ")");
     }
 
-    return snowStormApiClient.getConceptIdsFromEcl(branch, ecl, 0, limit != null ? limit : 100);
+    return snowStormApiClient.getConceptIdsFromEcl(
+        branch, ecl, 0, limit != null ? limit : 100, modelConfiguration.isExecuteEclAsStated());
   }
 
   private static void addNonDefiningData(
@@ -468,7 +469,13 @@ public abstract class AtomicDataService<T extends ProductDetails> {
   private Collection<String> getConceptsToMap(
       String branch, String productId, String ecl, SnowstormClient snowStormApiClient) {
     Collection<String> concepts =
-        snowStormApiClient.getConceptsIdsFromEcl(branch, ecl, Long.parseLong(productId), 0, 100);
+        snowStormApiClient.getConceptsIdsFromEcl(
+            branch,
+            ecl,
+            Long.parseLong(productId),
+            0,
+            100,
+            getModelConfiguration(branch).isExecuteEclAsStated());
 
     if (concepts.isEmpty()) {
       throw new ResourceNotFoundProblem(
