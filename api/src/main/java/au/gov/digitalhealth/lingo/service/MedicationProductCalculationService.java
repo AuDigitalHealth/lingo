@@ -702,7 +702,12 @@ public class MedicationProductCalculationService {
 
     CompletableFuture<Node> tpuu =
         findOrCreateUnit(
-                branch, productDetails, null, atomicCache, selectedConceptIdentifiers, tpuuLevel)
+                branch,
+                productDetails,
+                mpuuNode,
+                atomicCache,
+                selectedConceptIdentifiers,
+                tpuuLevel)
             .thenApply(
                 n -> {
                   nameGenerationService.addGeneratedFsnAndPt(
