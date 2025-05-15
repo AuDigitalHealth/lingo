@@ -53,5 +53,5 @@ export function getUiSchemaPath(fieldPath) {
     }
     return part; // No array index, return unchanged
   });
-  return uiSchemaParts.join('.');
+  return uiSchemaParts.join('.').replaceAll('0', 'items');
 }
