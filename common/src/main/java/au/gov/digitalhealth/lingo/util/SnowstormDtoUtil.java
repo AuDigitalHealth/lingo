@@ -375,19 +375,24 @@ public class SnowstormDtoUtil {
       LingoConstants unitType,
       DataTypeEnum datatype,
       int group,
-      String moduleId) {
+      ModelConfiguration modelConfiguration) {
     if (quantity != null) {
       relationships.add(
           getSnowstormDatatypeComponent(
               valueType,
-              BigDecimalFormatter.formatBigDecimal(quantity.getValue(), decimalScale),
+              BigDecimalFormatter.formatBigDecimal(
+                  quantity.getValue(), decimalScale, modelConfiguration.isTrimWholeNumbers()),
               datatype,
               group,
               STATED_RELATIONSHIP,
-              moduleId));
+              modelConfiguration.getModuleId()));
       relationships.add(
           getSnowstormRelationship(
-              unitType, quantity.getUnit(), group, STATED_RELATIONSHIP, moduleId));
+              unitType,
+              quantity.getUnit(),
+              group,
+              STATED_RELATIONSHIP,
+              modelConfiguration.getModuleId()));
     }
   }
 

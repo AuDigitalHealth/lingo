@@ -110,6 +110,7 @@ models:
     devicePackageDataExtractionEcl: "(<id> or (<id>.999000111000168106) or (<id>.999000081000168101) or (<id>.999000111000168106.999000081000168101) or ((>>((<id>.999000081000168101) or (<id>.999000111000168106.999000081000168101))) and (^929360071000036103 or ^929360061000036106))) and < 260787004"
     deviceProductDataExtractionEcl: "(<id> or (>> <id> and (^929360071000036103 or ^929360061000036106))) and < 260787004"
     executeEclAsStated: false
+    trimWholeNumbers: true
     levels:
       - name: Virtual Therapeutic Moiety
         displayLabel: MP

@@ -451,7 +451,9 @@ public class DeviceProductCalculationService {
           getSnowstormDatatypeComponent(
               HAS_PACK_SIZE_VALUE,
               BigDecimalFormatter.formatBigDecimal(
-                  innerProductSummaryEntry.getKey().getValue(), decimalScale),
+                  innerProductSummaryEntry.getKey().getValue(),
+                  decimalScale,
+                  modelConfiguration.isTrimWholeNumbers()),
               DataTypeEnum.DECIMAL,
               group,
               STATED_RELATIONSHIP,

@@ -164,7 +164,9 @@ public class BrandPackSizeService {
       relationship.setConcrete(relationship.getConcreteValue() != null);
       relationship.setCharacteristicTypeId(STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE.getValue());
       if (relationship.getTypeId().equals(HAS_PACK_SIZE_VALUE.getValue())) {
-        String packSizeString = BigDecimalFormatter.formatBigDecimal(packSize, decimalScale);
+        String packSizeString =
+            BigDecimalFormatter.formatBigDecimal(
+                packSize, decimalScale, modelConfiguration.isTrimWholeNumbers());
         Objects.requireNonNull(relationship.getConcreteValue()).setValue(packSizeString);
         Objects.requireNonNull(relationship.getConcreteValue())
             .setValueWithPrefix("#" + packSizeString);
@@ -250,7 +252,8 @@ public class BrandPackSizeService {
         newTppNode.join().getConceptId(),
         newMppNode == null ? mpp.getConceptId() : newMppNode.getConceptId(),
         IS_A_LABEL);
-    addParent(newTppNode.join(), newMppNode == null ? mpp : newMppNode, modelConfiguration.getModuleId());
+    addParent(
+        newTppNode.join(), newMppNode == null ? mpp : newMppNode, modelConfiguration.getModuleId());
     productSummary.addEdge(
         newTppNode.join().getConceptId(), tp.getConceptId(), HAS_PRODUCT_NAME_LABEL);
 
@@ -713,7 +716,9 @@ public class BrandPackSizeService {
           r.setCharacteristicTypeId(STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE.getValue());
           r.setConcrete(r.getConcreteValue() != null);
           if (r.getTypeId().equals(HAS_PACK_SIZE_VALUE.getValue())) {
-            String packSizeString = BigDecimalFormatter.formatBigDecimal(packSize, decimalScale);
+            String packSizeString =
+                BigDecimalFormatter.formatBigDecimal(
+                    packSize, decimalScale, modelConfiguration.isTrimWholeNumbers());
             r.getConcreteValue().setValue(packSizeString);
             r.getConcreteValue().setValueWithPrefix("#" + packSizeString);
           }
