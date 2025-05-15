@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Autocomplete, CircularProgress, TextField } from '@mui/material';
-import { Concept } from '../../../../types/concept.ts';
-import { useSearchConceptOntoServerByUrl } from '../../../../hooks/api/products/useSearchConcept.tsx';
-import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../../utils/helpers/getValueSetExpansionContainsPt.ts';
+import React, {useEffect, useState} from 'react';
+import {Autocomplete, CircularProgress, TextField} from '@mui/material';
+import {Concept} from '../../../../types/concept.ts';
+import {useSearchConceptOntoServerByUrl} from '../../../../hooks/api/products/useSearchConcept.tsx';
+import {
+  convertFromValueSetExpansionContainsListToSnowstormConceptMiniList
+} from '../../../../utils/helpers/getValueSetExpansionContainsPt.ts';
 import useApplicationConfigStore from '../../../../stores/ApplicationConfigStore.ts';
-import { FieldProps } from '@rjsf/utils';
+import {FieldProps} from '@rjsf/utils';
 
 interface ValueSetAutocompleteProps extends FieldProps {
   label?: string;
@@ -96,11 +98,13 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
       isOptionEqualToValue={(option, val) =>
         option?.conceptId === val?.conceptId
       }
-      renderOption={(props, option) => (
-        <li {...props} key={option.conceptId}>
+      renderOption={(props, option) => {
+        const { key, ...otherProps } = props;
+        return (
+        <li {...otherProps} key={option.conceptId}>
           {option.conceptId + " - " + option?.pt?.term}
         </li>
-      )}
+      )}}
       renderInput={params => (
         <TextField
           {...params}

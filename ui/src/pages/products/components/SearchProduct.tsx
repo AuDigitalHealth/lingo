@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   Autocomplete,
   Button,
@@ -12,34 +12,35 @@ import {
   ToggleButtonGroup,
 } from '@mui/material';
 import TuneIcon from '@mui/icons-material/Tune';
-import { Concept } from '../../../types/concept.ts';
+import {Concept} from '../../../types/concept.ts';
 import useDebounce from '../../../hooks/useDebounce.tsx';
 import Box from '@mui/material/Box';
 import CloseIcon from '@mui/icons-material/Close';
 import MedicationIcon from '@mui/icons-material/Medication';
-import { Stack } from '@mui/system';
-import { Link } from 'react-router-dom';
-import { isFsnToggleOn } from '../../../utils/helpers/conceptUtils.ts';
-import Select, { SelectChangeEvent } from '@mui/material/Select';
+import {Stack} from '@mui/system';
+import {Link} from 'react-router-dom';
+import {isFsnToggleOn} from '../../../utils/helpers/conceptUtils.ts';
+import Select, {SelectChangeEvent} from '@mui/material/Select';
 import {
   useSearchConcept,
   useSearchConceptOntoserver,
 } from '../../../hooks/api/products/useSearchConcept.tsx';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 
-import { ActionType, ProductType } from '../../../types/product.ts';
-import { FieldBindings } from '../../../types/FieldBindings.ts';
-import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
-import { ConceptSearchSidebar } from '../../../components/ConceptSearchSidebar.tsx';
+import {ActionType, ProductType} from '../../../types/product.ts';
+import {FieldBindings} from '../../../types/FieldBindings.ts';
+import {generateEclFromBinding} from '../../../utils/helpers/EclUtils.ts';
+import {ConceptSearchSidebar} from '../../../components/ConceptSearchSidebar.tsx';
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 
-import type { ValueSetExpansionContains } from 'fhir/r4';
-import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
-import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../utils/helpers/getValueSetExpansionContainsPt.ts';
+import type {ValueSetExpansionContains} from 'fhir/r4';
 import {
-  PUBLISHED_CONCEPTS,
-  UNPUBLISHED_CONCEPTS,
-} from '../../../utils/statics/responses.ts';
+  isValueSetExpansionContains
+} from '../../../types/predicates/isValueSetExpansionContains.ts';
+import {
+  convertFromValueSetExpansionContainsListToSnowstormConceptMiniList
+} from '../../../utils/helpers/getValueSetExpansionContainsPt.ts';
+import {PUBLISHED_CONCEPTS, UNPUBLISHED_CONCEPTS,} from '../../../utils/statics/responses.ts';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 
 export interface ConceptSearchResult extends Concept {
@@ -470,8 +471,9 @@ export default function SearchProduct({
               />
             )}
             renderOption={(props, option, { selected }) => {
+              const { key, ...otherProps } = props;
               return (
-                <li {...props}>
+                  <li key={key} {...otherProps}>
                   {!disableLinkOpen ? (
                     <Link
                       to={linkPath(
