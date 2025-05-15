@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Autocomplete, CircularProgress, TextField } from '@mui/material';
-import { Concept, ConceptMini } from '../../../../types/concept.ts';
-import { useSearchConceptsByEcl } from '../../../../hooks/api/useInitializeConcepts.tsx';
-import { FieldProps } from '@rjsf/utils';
+import React, {useEffect, useState} from 'react';
+import {Autocomplete, CircularProgress, TextField} from '@mui/material';
+import {Concept, ConceptMini} from '../../../../types/concept.ts';
+import {useSearchConceptsByEcl} from '../../../../hooks/api/useInitializeConcepts.tsx';
+import {FieldProps} from '@rjsf/utils';
 
 interface EclAutocompleteProps extends FieldProps {
   value: ConceptMini | null | undefined;
@@ -93,11 +93,13 @@ const EclAutocomplete: React.FC<EclAutocompleteProps> = ({
       isOptionEqualToValue={(option: Concept, selectedValue: Concept) =>
         option?.conceptId === selectedValue?.conceptId
       }
-      renderOption={(props, option: Concept) => (
-        <li {...props} key={option.conceptId}>
+      renderOption={(props, option: Concept) => {
+        const { key, ...otherProps } = props;
+        return(
+        <li {...otherProps} key={option.conceptId}>
           {option.pt.term}
         </li>
-      )}
+      )}}
       renderInput={params => (
         <TextField
           {...params}
