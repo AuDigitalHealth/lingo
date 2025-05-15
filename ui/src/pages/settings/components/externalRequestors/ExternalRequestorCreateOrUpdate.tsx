@@ -1,23 +1,20 @@
-import {
-  ExternalRequestor,
-  ExternalRequestorDto,
-} from '../../../../types/tickets/ticket.ts';
-import React, { useEffect } from 'react';
+import {ExternalRequestor, ExternalRequestorDto,} from '../../../../types/tickets/ticket.ts';
+import React, {useEffect} from 'react';
 
-import { Autocomplete, Box, Button, Grid, TextField } from '@mui/material';
-import { Stack } from '@mui/system';
+import {Autocomplete, Box, Button, Grid, TextField} from '@mui/material';
+import {Stack} from '@mui/system';
 
-import { Controller, useForm, useFormState } from 'react-hook-form';
+import {Controller, useForm, useFormState} from 'react-hook-form';
 import TicketsService from '../../../../api/TicketsService.ts';
-import { useServiceStatus } from '../../../../hooks/api/useServiceStatus.tsx';
-import { snowstormErrorHandler } from '../../../../types/ErrorHandler.ts';
-import { useQueryClient } from '@tanstack/react-query';
-import { ticketExternalRequestors } from '../../../../types/queryKeys.ts';
-import { yupResolver } from '@hookform/resolvers/yup';
+import {useServiceStatus} from '../../../../hooks/api/useServiceStatus.tsx';
+import {snowstormErrorHandler} from '../../../../types/ErrorHandler.ts';
+import {useQueryClient} from '@tanstack/react-query';
+import {ticketExternalRequestors} from '../../../../types/queryKeys.ts';
+import {yupResolver} from '@hookform/resolvers/yup';
 
 import * as yup from 'yup';
-import { isDoubleByte } from '../../../../utils/helpers/validationUtils.ts';
-import { ColorCode, getColorCodeKey } from '../../../../types/ColorCode.ts';
+import {isDoubleByte} from '../../../../utils/helpers/validationUtils.ts';
+import {ColorCode, getColorCodeKey} from '../../../../types/ColorCode.ts';
 import CloseIcon from '@mui/icons-material/Close';
 
 interface ExternalRequestorCreateOrUpdateProps {
@@ -138,9 +135,11 @@ function ExternalRequestorCreateOrUpdate({
                   options={colorOptions}
                   fullWidth
                   getOptionLabel={option => getColorCodeKey(option)}
-                  renderOption={(props, option, { selected }) => (
-                    <li
-                      {...props}
+                  renderOption={(props, option, { selected }) => {
+                    const { key, ...otherProps } = props;
+                    return (
+                    <li key={key}
+                      {...otherProps}
                       data-testid={'li-color-option-' + getColorCodeKey(option)}
                     >
                       <Box
@@ -174,7 +173,7 @@ function ExternalRequestorCreateOrUpdate({
                         }}
                       />
                     </li>
-                  )}
+                  )}}
                   renderInput={params => (
                     <TextField
                       {...params}

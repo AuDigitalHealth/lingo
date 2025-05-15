@@ -117,13 +117,14 @@ export default function TicketAutocomplete({
       filterOptions={filterOptions}
       renderOption={(props, option) => {
         const isDisabled = isOptionDisabled ? isOptionDisabled(option) : false;
+        const { key, ...otherProps } = props;
         return (
           <Tooltip
             title={isDisabled ? disabledTooltipTitle : ''}
             key={option.id}
           >
             <span>
-              <li {...props}>
+              <li key={key} {...otherProps}>
                 <Stack direction="column">
                   <Typography sx={{ color: 'gray' }}>
                     {option.ticketNumber}
