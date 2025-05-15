@@ -52,11 +52,11 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRESENTATION_S
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRESENTATION_STRENGTH_NUMERATOR_UNIT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRESENTATION_STRENGTH_NUMERATOR_VALUE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRODUCT_NAME;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_UNIT_OF_PRESENTATION;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.IS_A;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.MEDICINAL_PRODUCT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.MEDICINAL_PRODUCT_PACKAGE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.STATED_RELATIONSHIP;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.UNIT_OF_PRESENTATION;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.VIRTUAL_MEDICINAL_PRODUCT;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.addQuantityIfNotNull;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.addRelationshipIfNotNull;
@@ -1041,7 +1041,7 @@ public class MedicationProductCalculationService {
       addRelationshipIfNotNull(
           relationships,
           productDetails.getUnitOfPresentation(),
-          UNIT_OF_PRESENTATION,
+          HAS_UNIT_OF_PRESENTATION,
           0,
           modelConfiguration.getModuleId());
     }
