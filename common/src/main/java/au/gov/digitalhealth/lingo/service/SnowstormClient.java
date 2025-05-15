@@ -213,17 +213,21 @@ public class SnowstormClient {
     Instant end = Instant.now();
 
     if (log.isLoggable(Level.FINE)) {
-      logger.logFine(
-          " executed id only ECL: "
-              + ecl
-              + ", offset: "
-              + offset
-              + ", limit: "
-              + limit
-              + " in "
-              + Duration.between(start, end).toMillis()
-              + " ms on "
-              + (executeEclAsStated ? "stated form" : "inferred form"));
+      // todo this was null, not sure why - need to check it out some sort of dependency injection
+      // issue
+      if (logger != null) {
+        logger.logFine(
+            " executed id only ECL: "
+                + ecl
+                + ", offset: "
+                + offset
+                + ", limit: "
+                + limit
+                + " in "
+                + Duration.between(start, end).toMillis()
+                + " ms on "
+                + (executeEclAsStated ? "stated form" : "inferred form"));
+      }
     }
 
     validatePage(branch, ecl, page);
@@ -300,17 +304,19 @@ public class SnowstormClient {
     Instant end = Instant.now();
 
     if (log.isLoggable(Level.FINE)) {
-      logger.logFine(
-          " executed ECL: "
-              + ecl
-              + ", offset: "
-              + offset
-              + ", limit: "
-              + limit
-              + " in "
-              + Duration.between(start, end).toMillis()
-              + " ms on "
-              + (executeEclAsStated ? "stated form" : "inferred form"));
+      if (logger != null) {
+        logger.logFine(
+            " executed ECL: "
+                + ecl
+                + ", offset: "
+                + offset
+                + ", limit: "
+                + limit
+                + " in "
+                + Duration.between(start, end).toMillis()
+                + " ms on "
+                + (executeEclAsStated ? "stated form" : "inferred form"));
+      }
     }
 
     validatePage(branch, ecl, page);
@@ -411,17 +417,19 @@ public class SnowstormClient {
     Instant end = Instant.now();
 
     if (log.isLoggable(Level.FINE)) {
-      logger.logFine(
-          " executed ECL: "
-              + ecl
-              + ", offset: "
-              + offset
-              + ", limit: "
-              + limit
-              + " in "
-              + Duration.between(start, end).toMillis()
-              + " ms on "
-              + (executeEclAsStated ? "stated form" : "inferred form"));
+      if (logger != null) {
+        logger.logFine(
+            " executed ECL: "
+                + ecl
+                + ", offset: "
+                + offset
+                + ", limit: "
+                + limit
+                + " in "
+                + Duration.between(start, end).toMillis()
+                + " ms on "
+                + (executeEclAsStated ? "stated form" : "inferred form"));
+      }
     }
     return page;
   }
