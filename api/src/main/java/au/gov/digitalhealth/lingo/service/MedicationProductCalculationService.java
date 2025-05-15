@@ -15,6 +15,7 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
+import static au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType.CLINICAL_DRUG;
 import static au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType.MEDICINAL_PRODUCT_ONLY;
 import static au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType.REAL_MEDICINAL_PRODUCT;
 import static au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType.CONTAINED_PACKAGE;
@@ -56,6 +57,7 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.MEDICINAL_PRODUCT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.MEDICINAL_PRODUCT_PACKAGE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.STATED_RELATIONSHIP;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.UNIT_OF_PRESENTATION;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.VIRTUAL_MEDICINAL_PRODUCT;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.addQuantityIfNotNull;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.addRelationshipIfNotNull;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getSnowstormDatatypeComponent;
@@ -988,6 +990,13 @@ public class MedicationProductCalculationService {
     } else {
       relationships.add(
           getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT, 0, modelConfiguration.getModuleId()));
+    }
+
+    if (modelConfiguration.getModelType().equals(ModelType.NMPC)
+        && level.getModelLevelType().equals(CLINICAL_DRUG)) {
+      relationships.add(
+          getSnowstormRelationship(
+              IS_A, VIRTUAL_MEDICINAL_PRODUCT, 0, modelConfiguration.getModuleId()));
     }
 
     if (branded) {
