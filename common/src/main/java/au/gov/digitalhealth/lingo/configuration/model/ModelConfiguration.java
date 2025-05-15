@@ -41,54 +41,38 @@ import org.springframework.beans.factory.InitializingBean;
 /** Configuration of a specific model for a given project. */
 @Data
 public class ModelConfiguration implements InitializingBean {
+  boolean trimWholeNumbers = false;
   /** The type of model. */
   @NotNull private ModelType modelType;
-
   /**
    * The concept levels enabled in the model and their details. This will affect the levels expected
    * in existing content and generated in new content.
    */
   @NotEmpty private List<@Valid ModelLevel> levels;
-
   /** The mappings that can be used in the model for map type refsets. */
   private Set<@Valid MappingRefset> mappings = new HashSet<>();
-
   /**
    * The non-defining properties that can be used in the model. This encompasses relationships, and
    * concrete domains.
    */
   private Set<@Valid NonDefiningProperty> nonDefiningProperties = new HashSet<>();
-
   /** The additional simple reference sets that products/packages can be added into. */
   private Set<@Valid ReferenceSet> referenceSets = new HashSet<>();
-
   @NotEmpty private String baseMedicationSchema;
-
   @NotEmpty private String baseMedicationUiSchema;
-
   @NotEmpty private String baseDeviceSchema;
-
   @NotEmpty private String baseDeviceUiSchema;
-
   @NotEmpty private String baseBulkBrandSchema;
-
   @NotEmpty private String baseBulkBrandUiSchema;
-
   @NotEmpty private String baseBulkPackSchema;
-
   @NotEmpty private String baseBulkPackUiSchema;
-
   @NotEmpty private String moduleId;
-
   private String subpackFromPackageEcl;
-
   private boolean executeEclAsStated = true;
-
   @NotEmpty private String medicationPackageDataExtractionEcl;
   @NotEmpty private String medicationProductDataExtractionEcl;
   @NotEmpty private String devicePackageDataExtractionEcl;
   @NotEmpty private String deviceProductDataExtractionEcl;
-
   @NotNull @NotEmpty private Set<String> preferredLanguageRefsets;
 
   @Override
