@@ -46,8 +46,36 @@ class BigDecimalFormatterTest {
     "123.456789123, 0, 123",
     "123.456789123, -1, 120"
   })
-  void testFormatBigDecimal(String input, int scale, String expected) {
+  void testFormatBigDecimalNoTrim(String input, int scale, String expected) {
     BigDecimal number = new BigDecimal(input);
-    assertEquals(expected, BigDecimalFormatter.formatBigDecimal(number, scale));
+    assertEquals(expected, BigDecimalFormatter.formatBigDecimal(number, scale, false));
+  }
+
+  @ParameterizedTest
+  @CsvSource({
+    "123.456789123, 6, 123.456789",
+    "123.456789, 6, 123.456789",
+    "123.45, 6, 123.45",
+    "123, 6, 123",
+    "123.450000, 6, 123.45",
+    "123.4, 6, 123.4",
+    "0, 6, 0",
+    "123.456789123, 3, 123.457",
+    "123.456, 3, 123.456",
+    "123.45, 3, 123.45",
+    "123, 3, 123",
+    "123.000, 3, 123",
+    "123.00000, 3, 123",
+    "123.00001, 3, 123",
+    "123.0000100, 3, 123",
+    "123.00100, 3, 123.001",
+    "123.0100, 3, 123.01",
+    "123.450000, 3, 123.45",
+    "123.456789123, 0, 123",
+    "123.456789123, -1, 120"
+  })
+  void testFormatBigDecimalTrim(String input, int scale, String expected) {
+    BigDecimal number = new BigDecimal(input);
+    assertEquals(expected, BigDecimalFormatter.formatBigDecimal(number, scale, true));
   }
 }
