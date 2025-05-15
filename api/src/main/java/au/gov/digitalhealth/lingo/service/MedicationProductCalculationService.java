@@ -23,6 +23,7 @@ import static au.gov.digitalhealth.lingo.configuration.model.enumeration.Product
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONCENTRATION_STRENGTH_UNIT;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONCENTRATION_STRENGTH_VALUE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONTAINS_PACKAGED_CD;
+import static au.gov.digitalhealth.lingo.util.AmtConstants.COUNT_OF_CD_TYPE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.COUNT_OF_CONTAINED_COMPONENT_INGREDIENT;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.COUNT_OF_CONTAINED_PACKAGE_TYPE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_CONTAINER_TYPE;
@@ -591,6 +592,22 @@ public class MedicationProductCalculationService {
       }
 
       group++;
+    }
+
+    if (!innnerProductSummaries.isEmpty()) {
+      relationships.add(
+          getSnowstormDatatypeComponent(
+              COUNT_OF_CD_TYPE,
+              // get the unique set of CD types
+              Integer.toString(
+                  innnerProductSummaries.values().stream()
+                      .map(v -> v.getSingleSubject().getConceptId())
+                      .collect(Collectors.toSet())
+                      .size()),
+              DataTypeEnum.INTEGER,
+              0,
+              STATED_RELATIONSHIP,
+              modelConfiguration.getModuleId()));
     }
 
     for (Entry<PackageQuantity<MedicationProductDetails>, ProductSummary> entry :
