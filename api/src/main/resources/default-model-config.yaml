@@ -119,7 +119,7 @@ models:
         deviceSemanticTag: physical object
         drugDeviceSemanticTag: medicinal product
         referenceSetIdentifier: 660351000220100
-        productModelEcl: "(> <id> :[0..0]774159003=*,[0..0]411116001=*) MINUS (>(> <id> :[0..0]774159003=*,[0..0]411116001=*) OR 763158003)"
+        productModelEcl: "(> <id> :[0..0]774159003=*,[0..0]411116001=*) MINUS (>(> <id> :[0..0]774159003=*,[0..0]411116001=*) OR 660341000220102)"
       - name: Virtual Medicinal Product
         displayLabel: MPUU
         modelLevelType: CLINICAL_DRUG
