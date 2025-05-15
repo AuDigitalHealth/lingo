@@ -569,7 +569,8 @@ public class MedicationProductCalculationService {
       relationships.add(
           getSnowstormDatatypeComponent(
               HAS_PACK_SIZE_VALUE,
-              BigDecimalFormatter.formatBigDecimal(quantity.getValue(), decimalScale),
+              BigDecimalFormatter.formatBigDecimal(
+                  quantity.getValue(), decimalScale, modelConfiguration.isTrimWholeNumbers()),
               DataTypeEnum.DECIMAL,
               group,
               STATED_RELATIONSHIP,
@@ -636,7 +637,8 @@ public class MedicationProductCalculationService {
       relationships.add(
           getSnowstormDatatypeComponent(
               HAS_PACK_SIZE_VALUE,
-              BigDecimalFormatter.formatBigDecimal(quantity.getValue(), decimalScale),
+              BigDecimalFormatter.formatBigDecimal(
+                  quantity.getValue(), decimalScale, modelConfiguration.isTrimWholeNumbers()),
               DataTypeEnum.DECIMAL,
               group,
               STATED_RELATIONSHIP,
@@ -1060,7 +1062,7 @@ public class MedicationProductCalculationService {
           HAS_PACK_SIZE_UNIT,
           DataTypeEnum.DECIMAL,
           0,
-          modelConfiguration.getModuleId());
+          modelConfiguration);
     }
 
     int group = 1;
@@ -1092,7 +1094,7 @@ public class MedicationProductCalculationService {
             HAS_TOTAL_QUANTITY_UNIT,
             DataTypeEnum.DECIMAL,
             group,
-            modelConfiguration.getModuleId());
+            modelConfiguration);
         addQuantityIfNotNull(
             ingredient.getConcentrationStrength(),
             decimalScale,
@@ -1101,7 +1103,7 @@ public class MedicationProductCalculationService {
             CONCENTRATION_STRENGTH_UNIT,
             DataTypeEnum.DECIMAL,
             group,
-            modelConfiguration.getModuleId());
+            modelConfiguration);
       } else {
         addQuantityIfNotNull(
             ingredient.getPresentationStrengthNumerator(),
@@ -1111,7 +1113,7 @@ public class MedicationProductCalculationService {
             HAS_PRESENTATION_STRENGTH_NUMERATOR_UNIT,
             DataTypeEnum.DECIMAL,
             group,
-            modelConfiguration.getModuleId());
+            modelConfiguration);
         addQuantityIfNotNull(
             ingredient.getPresentationStrengthDenominator(),
             decimalScale,
@@ -1120,7 +1122,7 @@ public class MedicationProductCalculationService {
             HAS_PRESENTATION_STRENGTH_DENOMINATOR_UNIT,
             DataTypeEnum.DECIMAL,
             group,
-            modelConfiguration.getModuleId());
+            modelConfiguration);
         addQuantityIfNotNull(
             ingredient.getConcentrationStrengthNumerator(),
             decimalScale,
@@ -1129,7 +1131,7 @@ public class MedicationProductCalculationService {
             HAS_CONCENTRATION_STRENGTH_NUMERATOR_UNIT,
             DataTypeEnum.DECIMAL,
             group,
-            modelConfiguration.getModuleId());
+            modelConfiguration);
         addQuantityIfNotNull(
             ingredient.getConcentrationStrengthDenominator(),
             decimalScale,
@@ -1138,7 +1140,7 @@ public class MedicationProductCalculationService {
             HAS_CONCENTRATION_STRENGTH_DENOMINATOR_UNIT,
             DataTypeEnum.DECIMAL,
             group,
-            modelConfiguration.getModuleId());
+            modelConfiguration);
       }
 
       group++;
