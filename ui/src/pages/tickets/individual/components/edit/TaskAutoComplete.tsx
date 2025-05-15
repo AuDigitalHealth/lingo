@@ -1,10 +1,10 @@
-import { Autocomplete, TextField } from '@mui/material';
-import { useState } from 'react';
+import {Autocomplete, TextField} from '@mui/material';
+import {useState} from 'react';
 
-import { Stack } from '@mui/system';
+import {Stack} from '@mui/system';
 
-import { Task } from '../../../../../types/task';
-import { useAllTasks } from '../../../../../hooks/api/useAllTasks';
+import {Task} from '../../../../../types/task';
+import {useAllTasks} from '../../../../../hooks/api/useAllTasks';
 
 interface TaskAutoCompleteProps {
   handleChange: (task: Task | null) => void;
@@ -59,8 +59,9 @@ export default function TaskAutoComplete({
         return option.key + ' ' + option.summary;
       }}
       renderOption={(props, option) => {
+        const { key, ...otherProps } = props;
         return (
-          <li {...props}>
+          <li key={key} {...otherProps}>
             <Stack direction="row">{option.key + ' ' + option.summary}</Stack>
           </li>
         );
