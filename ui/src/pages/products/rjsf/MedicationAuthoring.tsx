@@ -88,7 +88,7 @@ function MedicationAuthoring({
 
   const handleChange = ({ formData }: any) => {
     setFormData(formData);
-    if (!_.isEmpty(formData.productName)) {
+    if (!_.isEmpty(formData.productName || formData.containedProducts)) {
       setIsDirty(true); //TODO better way to handle check form is dirty
     }
   };
