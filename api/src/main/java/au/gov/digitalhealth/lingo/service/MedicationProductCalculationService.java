@@ -875,7 +875,8 @@ public class MedicationProductCalculationService {
     Set<String> referencedIds = Set.of(level.getReferenceSetIdentifier());
 
     Set<SnowstormRelationship> relationships =
-        createClinicalDrugRelationships(productDetails, parents, branded, modelConfiguration);
+        createClinicalDrugRelationships(
+            productDetails, parents, branded, modelConfiguration, level);
 
     boolean enforceRefsets = modelConfiguration.getModelType().equals(ModelType.AMT);
 
@@ -975,7 +976,8 @@ public class MedicationProductCalculationService {
       MedicationProductDetails productDetails,
       Set<Node> parents,
       boolean branded,
-      ModelConfiguration modelConfiguration) {
+      ModelConfiguration modelConfiguration,
+      ModelLevel level) {
     Set<SnowstormRelationship> relationships = new HashSet<>();
 
     if (parents != null && !parents.isEmpty()) {
@@ -1073,12 +1075,17 @@ public class MedicationProductCalculationService {
           HAS_ACTIVE_INGREDIENT,
           group,
           modelConfiguration.getModuleId());
-      addRelationshipIfNotNull(
-          relationships,
-          ingredient.getPreciseIngredient(),
-          HAS_PRECISE_ACTIVE_INGREDIENT,
-          group,
-          modelConfiguration.getModuleId());
+
+      // todo check this later
+      if (level.isBranded() || modelConfiguration.getModelType().equals(ModelType.AMT)) {
+        addRelationshipIfNotNull(
+            relationships,
+            ingredient.getPreciseIngredient(),
+            HAS_PRECISE_ACTIVE_INGREDIENT,
+            group,
+            modelConfiguration.getModuleId());
+      }
+
       addRelationshipIfNotNull(
           relationships,
           ingredient.getBasisOfStrengthSubstance(),
