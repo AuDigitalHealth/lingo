@@ -16,11 +16,10 @@
 
 import axios from 'axios';
 
-import type { ValueSet, Parameters, CapabilityStatement } from 'fhir/r4';
-import { appendIdsToEcl } from '../utils/helpers/EclUtils';
-import { StatusWithEffectiveDate } from '../types/applicationConfig';
-import { Bundle } from 'fhir/r4';
-import { CodeSystem } from 'fhir/r4';
+import type {CapabilityStatement, Parameters, ValueSet} from 'fhir/r4';
+import {Bundle, CodeSystem} from 'fhir/r4';
+import {appendIdsToEcl} from '../utils/helpers/EclUtils';
+import {StatusWithEffectiveDate} from '../types/applicationConfig';
 
 const OntoserverService = {
   handleErrors: () => {
@@ -34,15 +33,11 @@ const OntoserverService = {
     count: string,
     filter?: string,
   ): Promise<ValueSet> {
-    let encodedFilter = '';
-    if (filter) {
-      encodedFilter = encodeURIComponent(filter);
-    }
     return this.searchConceptByUrl(
       baseUrl,
       `http://snomed.info/${extension}?fhir_vs=ecl/${providedEcl}`,
       count,
-      encodedFilter,
+      filter,
     );
   },
   async searchConceptByUrl(
