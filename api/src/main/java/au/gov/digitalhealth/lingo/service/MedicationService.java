@@ -63,9 +63,13 @@ import au.gov.digitalhealth.lingo.product.details.Ingredient;
 import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
 import au.gov.digitalhealth.lingo.product.details.Quantity;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
+import au.gov.digitalhealth.lingo.util.SnomedConstants;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -86,20 +90,14 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
   private static Ingredient getIngredient(
       Integer groupId,
       Set<SnowstormRelationship> productRelationships,
+      Map<Integer, ActivePreciseIngredient> preciseActiveInredientMap,
       ModelConfiguration modelConfiguration) {
     Set<SnowstormRelationship> ingredientRoleGroup =
         getActiveRelationshipsInRoleGroup(groupId, productRelationships);
-    Ingredient ingredient = new Ingredient();
-    ingredient.setActiveIngredient(
-        getSingleOptionalActiveTarget(ingredientRoleGroup, HAS_ACTIVE_INGREDIENT.getValue()));
-    ingredient.setPreciseIngredient(
-        getSingleOptionalActiveTarget(
-            ingredientRoleGroup, HAS_PRECISE_ACTIVE_INGREDIENT.getValue()));
 
-    // TODO get active ingredient properly
-    if (ingredient.getActiveIngredient() == null && ingredient.getPreciseIngredient() != null) {
-      ingredient.setActiveIngredient(ingredient.getPreciseIngredient());
-    }
+    Ingredient ingredient = new Ingredient();
+    ingredient.setActiveIngredient(preciseActiveInredientMap.get(groupId).getActiveIngredient());
+    ingredient.setPreciseIngredient(preciseActiveInredientMap.get(groupId).getPreciseIngredient());
 
     ingredient.setBasisOfStrengthSubstance(
         getSingleOptionalActiveTarget(ingredientRoleGroup, HAS_BOSS.getValue()));
@@ -237,6 +235,29 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
     }
   }
 
+  private void addToMap(
+      SnowstormRelationship r, Map<Integer, ActivePreciseIngredient> preciseActiveInredientMap) {
+    ActivePreciseIngredient activePreciseIngredient = preciseActiveInredientMap.get(r.getGroupId());
+    if (activePreciseIngredient == null) {
+      if (r.getTypeId().equals(HAS_ACTIVE_INGREDIENT.getValue())) {
+        activePreciseIngredient = new ActivePreciseIngredient(r.getTarget(), null);
+      } else if (r.getTypeId().equals(HAS_PRECISE_ACTIVE_INGREDIENT.getValue())) {
+        activePreciseIngredient = new ActivePreciseIngredient(null, r.getTarget());
+      } else {
+        throw new AtomicDataExtractionProblem(
+            "Unexpected relationship type " + r.getTypeId() + " in group " + r.getGroupId(),
+            r.getGroupId().toString());
+      }
+    } else {
+      if (SnomedConstants.valueOf(r.getTypeId()) == HAS_ACTIVE_INGREDIENT) {
+        activePreciseIngredient.setActiveIngredient(r.getTarget());
+      } else if (SnomedConstants.valueOf(r.getTypeId()) == HAS_PRECISE_ACTIVE_INGREDIENT) {
+        activePreciseIngredient.setPreciseIngredient(r.getTarget());
+      }
+    }
+    preciseActiveInredientMap.put(r.getGroupId(), activePreciseIngredient);
+  }
+
   @Override
   protected SnowstormClient getSnowStormApiClient() {
     return snowStormApiClient;
@@ -269,6 +290,7 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
 
   @Override
   protected MedicationProductDetails populateSpecificProductDetails(
+      String branch,
       SnowstormConcept product,
       String productId,
       Map<String, SnowstormConcept> browserMap,
@@ -344,16 +366,167 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
             .map(SnowstormRelationship::getGroupId)
             .collect(Collectors.toSet());
 
+    final Map<Integer, ActivePreciseIngredient> preciseActiveInredientMap =
+        getActivePreciseIngredientMap(
+            branch, productId, browserMap, typeMap, modelConfiguration, productRelationships);
+
     for (Integer group : ingredientGroups) {
       productDetails
           .getActiveIngredients()
-          .add(getIngredient(group, productRelationships, modelConfiguration));
+          .add(
+              getIngredient(
+                  group, productRelationships, preciseActiveInredientMap, modelConfiguration));
     }
     return productDetails;
+  }
+
+  private Map<Integer, ActivePreciseIngredient> getActivePreciseIngredientMap(
+      String branch,
+      String productId,
+      Map<String, SnowstormConcept> browserMap,
+      Map<String, String> typeMap,
+      ModelConfiguration modelConfiguration,
+      Set<SnowstormRelationship> productRelationships) {
+    Map<Integer, ActivePreciseIngredient> preciseActiveInredientMap = new HashMap<>();
+
+    filterActiveStatedRelationshipByType(
+            productRelationships,
+            HAS_ACTIVE_INGREDIENT.getValue(),
+            HAS_PRECISE_ACTIVE_INGREDIENT.getValue())
+        .forEach(r -> addToMap(r, preciseActiveInredientMap));
+
+    // find all the entries where active ingredients that are missing
+    Map<Integer, ActivePreciseIngredient> missingActiveIngreidents =
+        preciseActiveInredientMap.entrySet().stream()
+            .filter(entry -> entry.getValue().getActiveIngredient() == null)
+            .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
+
+    if (!missingActiveIngreidents.isEmpty()) {
+      // active ingredients aren't on the branded product, need to look at the clinical drug
+      SnowstormConcept clinicalDrug =
+          browserMap.get(
+              typeMap.get(
+                  modelConfiguration
+                      .getLevelOfType(ModelLevelType.CLINICAL_DRUG)
+                      .getReferenceSetIdentifier()));
+
+      // todo this is working around that some of these VMPs still don't have their reference set
+      // added
+      if (clinicalDrug == null) {
+        Set<SnowstormConcept> clinicalDrugs =
+            browserMap.values().stream()
+                .filter(c -> c.getFsn().getTerm().endsWith("(clinical drug)"))
+                .collect(Collectors.toSet());
+
+        if (clinicalDrugs.size() == 1) {
+          clinicalDrug = clinicalDrugs.iterator().next();
+        } else {
+          Set<String> productParents =
+              browserMap
+                  .get(productRelationships.iterator().next().getSourceId())
+                  .getRelationships()
+                  .stream()
+                  .filter(r -> r.getActive() && r.getTypeId().equals(IS_A.getValue()))
+                  .map(r -> r.getTarget().getConceptId())
+                  .collect(Collectors.toSet());
+          Set<SnowstormConcept> candidtateClinicalDrugs =
+              clinicalDrugs.stream()
+                  .filter(cd -> productParents.contains(cd.getConceptId()))
+                  .collect(Collectors.toSet());
+          if (candidtateClinicalDrugs.size() == 1) {
+            clinicalDrug = candidtateClinicalDrugs.iterator().next();
+          } else {
+            throw new AtomicDataExtractionProblem(
+                "Expected 1 Clinical Drug but found "
+                    + candidtateClinicalDrugs.size()
+                    + " canidates were "
+                    + candidtateClinicalDrugs.stream()
+                        .map(c -> c.getConceptId())
+                        .collect(Collectors.joining()),
+                productId);
+          }
+        }
+
+        log.warning(
+            "Clinical drug not in reference set, using "
+                + clinicalDrug.getConceptId()
+                + "|"
+                + clinicalDrug.getFsn().getTerm()
+                + "|");
+      }
+
+      // get the set of target active ingredients
+      // todo shouldn't need to get PRECISE_ACTIVE_INGREDIENT here if NMPC content is migrated
+      // properly
+      Map<String, SnowstormConceptMini> activeIngredients =
+          filterActiveStatedRelationshipByType(
+                  getRelationshipsFromAxioms(clinicalDrug),
+                  HAS_ACTIVE_INGREDIENT.getValue(),
+                  HAS_PRECISE_ACTIVE_INGREDIENT.getValue())
+              .stream()
+              .collect(Collectors.toMap(r -> r.getTarget().getConceptId(), r -> r.getTarget()));
+
+      Set<SnowstormRelationship> clinicalDrugPreciseIngredients =
+          filterActiveStatedRelationshipByType(
+              getRelationshipsFromAxioms(clinicalDrug), HAS_PRECISE_ACTIVE_INGREDIENT.getValue());
+
+      if (!clinicalDrugPreciseIngredients.isEmpty()) {
+        log.warning(
+            "Clinical drug "
+                + clinicalDrug.getConceptId()
+                + "|"
+                + clinicalDrug.getFsn().getTerm()
+                + "| has "
+                + clinicalDrugPreciseIngredients.size()
+                + " precise ingredients, expected 0");
+      }
+
+      missingActiveIngreidents.forEach(
+          (key, value) -> {
+            SnowstormConceptMini activeIngredient;
+            if (activeIngredients.containsKey(value.getPreciseIngredient().getConceptId())) {
+              activeIngredient = activeIngredients.get(value.getPreciseIngredient().getConceptId());
+            } else {
+              Set<SnowstormConceptMini> candidateIngredients =
+                  snowStormApiClient
+                      .getConceptsIdsFromEcl(
+                          branch,
+                          ">><id> OR (>><id>.738774007) OR (>><id>.738774007.738774007) OR (>><id>.738774007.738774007.738774007)",
+                          Long.parseLong(value.getPreciseIngredient().getConceptId()),
+                          0,
+                          1000,
+                          modelConfiguration.isExecuteEclAsStated())
+                      .stream()
+                      .filter(activeIngredients::containsKey)
+                      .map(activeIngredients::get)
+                      .collect(Collectors.toSet());
+              if (candidateIngredients.size() != 1) {
+                throw new AtomicDataExtractionProblem(
+                    "Expected 1 active ingredient for precise ingredient "
+                        + value.getPreciseIngredient().getConceptId()
+                        + " but found "
+                        + candidateIngredients.stream()
+                            .map(SnowstormConceptMini::getConceptId)
+                            .collect(Collectors.joining(",")),
+                    productId);
+              }
+              activeIngredient = candidateIngredients.iterator().next();
+            }
+            preciseActiveInredientMap.get(key).setActiveIngredient(activeIngredient);
+          });
+    }
+    return preciseActiveInredientMap;
   }
 
   @Override
   protected String getType() {
     return "medication";
+  }
+
+  @Data
+  @AllArgsConstructor
+  class ActivePreciseIngredient {
+    SnowstormConceptMini activeIngredient;
+    SnowstormConceptMini preciseIngredient;
   }
 }
