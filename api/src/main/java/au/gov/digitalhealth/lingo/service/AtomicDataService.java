@@ -148,6 +148,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
   protected abstract String getProductAtomicDataEcl(ModelConfiguration modelConfiguration);
 
   protected abstract T populateSpecificProductDetails(
+      String branch,
       SnowstormConcept product,
       String productId,
       Map<String, SnowstormConcept> browserMap,
@@ -169,7 +170,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
             productId,
             getPackageAtomicDataEcl(getModelConfiguration(branch)),
             ProductPackageType.PACKAGE);
-    return populatePackageDetails(productId, maps, getModelConfiguration(branch));
+    return populatePackageDetails(branch, productId, maps, getModelConfiguration(branch));
   }
 
   public T getProductAtomicData(String branch, String productId) {
@@ -181,7 +182,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
             ProductPackageType.PRODUCT);
 
     return populateProductDetails(
-        maps.browserMap.get(productId), productId, maps, getModelConfiguration(branch));
+        branch, maps.browserMap.get(productId), productId, maps, getModelConfiguration(branch));
   }
 
   @LogExecutionTime
@@ -494,7 +495,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
 
   @SuppressWarnings("null")
   private PackageDetails<T> populatePackageDetails(
-      String productId, Maps maps, ModelConfiguration modelConfiguration) {
+      String branch, String productId, Maps maps, ModelConfiguration modelConfiguration) {
     PackageDetails<T> details = new PackageDetails<>();
     SnowstormConcept basePackage = maps.browserMap().get(productId);
     Set<SnowstormRelationship> basePackageRelationships = getRelationshipsFromAxioms(basePackage);
@@ -538,7 +539,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
         assert subpacksRelationship.getTarget() != null;
         packageQuantity.setPackageDetails(
             populatePackageDetails(
-                subpacksRelationship.getTarget().getConceptId(), maps, modelConfiguration));
+                branch, subpacksRelationship.getTarget().getConceptId(), maps, modelConfiguration));
       }
     } else {
       if (productRelationships.isEmpty()) {
@@ -570,7 +571,8 @@ public abstract class AtomicDataService<T extends ProductDetails> {
         }
 
         // contained product details
-        T productDetails = populateProductDetails(product, productId, maps, modelConfiguration);
+        T productDetails =
+            populateProductDetails(branch, product, productId, maps, modelConfiguration);
         productQuantity.setProductDetails(productDetails);
 
         details.getContainedProducts().add(productQuantity);
@@ -580,6 +582,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
   }
 
   private T populateProductDetails(
+      String branch,
       SnowstormConcept product,
       String productId,
       Maps maps,
@@ -587,7 +590,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
 
     T productDetails =
         populateSpecificProductDetails(
-            product, productId, maps.browserMap(), maps.typeMap(), modelConfiguration);
+            branch, product, productId, maps.browserMap(), maps.typeMap(), modelConfiguration);
 
     if (maps.mappingMap().containsKey(product.getConceptId())) {
       productDetails.setExternalIdentifiers(maps.mappingMap().get(product.getConceptId()));

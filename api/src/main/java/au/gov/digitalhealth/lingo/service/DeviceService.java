@@ -116,6 +116,7 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
 
   @Override
   protected DeviceProductDetails populateSpecificProductDetails(
+      String branch,
       SnowstormConcept product,
       String productId,
       Map<String, SnowstormConcept> browserMap,
