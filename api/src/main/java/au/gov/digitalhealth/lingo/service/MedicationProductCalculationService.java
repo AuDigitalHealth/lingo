@@ -1078,14 +1078,16 @@ public class MedicationProductCalculationService {
 
     int group = 1;
     for (Ingredient ingredient : productDetails.getActiveIngredients()) {
-      addRelationshipIfNotNull(
-          relationships,
-          ingredient.getActiveIngredient(),
-          HAS_ACTIVE_INGREDIENT,
-          group,
-          modelConfiguration.getModuleId());
 
-      // todo check this later
+      if (!level.isBranded() || modelConfiguration.getModelType().equals(ModelType.AMT)) {
+        addRelationshipIfNotNull(
+            relationships,
+            ingredient.getActiveIngredient(),
+            HAS_ACTIVE_INGREDIENT,
+            group,
+            modelConfiguration.getModuleId());
+      }
+
       if (level.isBranded() || modelConfiguration.getModelType().equals(ModelType.AMT)) {
         addRelationshipIfNotNull(
             relationships,

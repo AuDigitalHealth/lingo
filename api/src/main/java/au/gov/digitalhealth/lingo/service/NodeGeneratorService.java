@@ -197,20 +197,26 @@ public class NodeGeneratorService {
                 suppressIsa,
                 suppressNegativeStatements,
                 modelConfiguration);
+
+        if (log.isLoggable(Level.FINE)) {
+          log.fine("ECL for " + label + " " + ecl);
+        }
+
+        matchingConcepts =
+            snowstormClient.getConceptsFromEcl(
+                branch, ecl, limit, modelConfiguration.isExecuteEclAsStated());
+
+        matchingConcepts = filterByOii(branch, relationships, matchingConcepts);
       }
-
-      if (log.isLoggable(Level.FINE)) {
-        log.fine("ECL for " + label + " " + ecl);
-      }
-
-      matchingConcepts =
-          snowstormClient.getConceptsFromEcl(
-              branch, ecl, limit, modelConfiguration.isExecuteEclAsStated());
-
-      matchingConcepts = filterByOii(branch, relationships, matchingConcepts);
 
       if (matchingConcepts.isEmpty()) {
-        log.warning("No concept found for " + label + " ECL " + ecl);
+        log.info(
+            "No concept found suggesting new concept for "
+                + label
+                + " ECL was "
+                + ecl
+                + " branch "
+                + branch);
       } else if (matchingConcepts.size() == 1
           && matchingConcepts.iterator().next().getDefinitionStatus().equals("FULLY_DEFINED")) {
         node.setConcept(matchingConcepts.iterator().next());
