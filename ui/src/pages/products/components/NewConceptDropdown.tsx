@@ -4,8 +4,10 @@ import {
   Controller,
   UseFormGetValues,
   UseFormRegister,
+  useFieldArray,
 } from 'react-hook-form';
 import {
+  Button,
   FormHelperText,
   Grid,
   IconButton,
@@ -14,20 +16,27 @@ import {
 } from '@mui/material';
 import { InnerBoxSmall } from './style/ProductBoxes.tsx';
 import {
+  createDefaultDescription,
   filterKeypress,
+  findDefaultLangRefset,
   setEmptyToNull,
 } from '../../../utils/helpers/conceptUtils.ts';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import { replaceAllWithWhiteSpace } from '../../../types/productValidationUtils.ts';
 import { convertStringToRegex } from '../../../utils/helpers/stringUtils.ts';
 import { getValueFromFieldBindings } from '../../../utils/helpers/FieldBindingUtils.ts';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   extractSemanticTag,
   removeSemanticTagFromTerm,
 } from '../../../utils/helpers/ProductPreviewUtils.ts';
-import { ContentCopy } from '@mui/icons-material';
+import { ContentCopy, DeleteOutlined } from '@mui/icons-material';
 import { enqueueSnackbar } from 'notistack';
+import useAvailableProjects, {
+  getProjectFromKey,
+} from '../../../hooks/api/useInitializeProjects.tsx';
+import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
+import { PlusCircleOutlined } from '@ant-design/icons';
 
 interface NewConceptDropdownProps {
   product: Product;
@@ -76,6 +85,12 @@ function NewConceptDropdown({
           control={control}
           fieldBindings={fieldBindings}
         />
+        <AdditionalSynonymField
+          fieldName={`nodes[${index}].newConceptDetails.descriptions`}
+          register={register}
+          dataTestId={`pt-input`}
+          control={control}
+        />
         <InnerBoxSmall component="fieldset">
           <legend>Specified Concept Id</legend>
           <TextField
@@ -111,6 +126,98 @@ function NewConceptDropdown({
         )}
       </Grid>
     </div>
+  );
+}
+
+interface AdditionalSynonymFieldProps {
+  register: UseFormRegister<ProductSummary>;
+  fieldName: string;
+  dataTestId: string;
+  control: Control<ProductSummary>;
+}
+
+function AdditionalSynonymField({
+  register,
+  fieldName,
+  dataTestId,
+  control,
+}: AdditionalSynonymFieldProps) {
+  // Use useFieldArray to manage the array of descriptions
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: fieldName as 'nodes.0.newConceptDetails.descriptions',
+  });
+
+  const { data: projects } = useAvailableProjects();
+  const { applicationConfig } = useApplicationConfigStore();
+
+  const project = getProjectFromKey(applicationConfig?.apProjectKey, projects);
+
+  const langRefsets = useMemo(() => {
+    if (project === undefined || project.metadata === undefined) {
+      return [];
+    }
+    const fromApi = [...project.metadata.requiredLanguageRefsets];
+    return fromApi;
+  }, [project]);
+
+  const defaultLangRefset = findDefaultLangRefset(langRefsets);
+
+  // Handle adding a new synonym
+  const handleAddSynonym = () => {
+    const defaultDescription = createDefaultDescription(
+      '1',
+      '900000000000013009',
+      defaultLangRefset?.en,
+    );
+    append(defaultDescription);
+  };
+
+  return (
+    <Stack>
+      {/* <fieldset>
+        <legend>{legend}</legend> */}
+
+      {/* Display existing synonyms with ability to edit */}
+      {fields.map((field, index) => {
+        // For each description in the array, create an input field
+        const descriptionFieldName = `${fieldName}.${index}.term`;
+
+        return (
+          <InnerBoxSmall component="fieldset">
+            <legend>Synonym</legend>
+            <Stack flexDirection={'row'} alignItems={'center'}>
+              <TextField
+                type="text"
+                {...register(
+                  descriptionFieldName as `nodes.0.newConceptDetails.descriptions`,
+                )}
+                data-testid={`${dataTestId}-${index}`}
+                placeholder="Enter synonym term"
+                fullWidth
+              />
+              <IconButton color="error" onClick={() => remove(index)}>
+                <DeleteOutlined />
+              </IconButton>
+            </Stack>
+          </InnerBoxSmall>
+        );
+      })}
+
+      {/* Button to add a new synonym */}
+      <Stack flexDirection={'row'} justifyContent={'flex-end'}>
+        <Button
+          size="medium"
+          type="button"
+          onClick={handleAddSynonym}
+          data-testid={`${dataTestId}-add-button`}
+          startIcon={<PlusCircleOutlined />}
+        >
+          Add Synonym
+        </Button>
+      </Stack>
+      {/* </fieldset> */}
+    </Stack>
   );
 }
 

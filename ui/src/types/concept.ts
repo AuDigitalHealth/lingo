@@ -304,6 +304,7 @@ export interface Product {
 export interface NewConceptDetails {
   conceptId: number;
   specifiedConceptId: string | null;
+
   fullySpecifiedName: string;
   preferredTerm: string;
   semanticTag: string;
@@ -311,6 +312,7 @@ export interface NewConceptDetails {
   referenceSetMembers: RefsetMember[];
   fsn?: Term;
   pt?: Term;
+  descriptions?: Description[];
 }
 
 export enum Product7BoxBGColour {
