@@ -334,6 +334,26 @@ public class SnowstormDtoUtil {
     }
   }
 
+  public static void addSynoynms(SnowstormConceptView concept, Set<SnowstormDescription> descriptions){
+    if(descriptions == null){
+      return;
+    }
+
+    descriptions.forEach(snowstormDescription -> {
+      SnowstormDescription desc = new SnowstormDescription()
+          .active(true)
+          .lang("en")
+          .term(snowstormDescription.getTerm())
+          .type(SnomedConstants.SYNONYM.toString())
+          .caseSignificance(ENTIRE_TERM_CASE_SENSITIVE.getValue())
+          .moduleId(SCT_AU_MODULE.getValue())
+          .acceptabilityMap(
+              Map.of(
+                  AmtConstants.ADRS.getValue(),
+                  SnomedConstants.ACCEPTABLE.getValue()));
+      concept.getDescriptions().add(desc);
+    });
+  }
   public static void addDescription(SnowstormConceptView concept, String term, String type) {
     Set<SnowstormDescription> descriptions = concept.getDescriptions();
 
@@ -386,6 +406,7 @@ public class SnowstormDtoUtil {
         concept, newConceptDetails.getPreferredTerm(), SnomedConstants.SYNONYM.getValue());
     SnowstormDtoUtil.addDescription(
         concept, newConceptDetails.getFullySpecifiedName(), SnomedConstants.FSN.getValue());
+    SnowstormDtoUtil.addSynoynms(concept, node.getNewConceptDetails().getDescriptions());
 
     concept.setActive(true);
     concept.setDefinitionStatusId(

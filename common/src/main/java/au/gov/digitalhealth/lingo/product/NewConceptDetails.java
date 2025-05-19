@@ -16,6 +16,7 @@
 package au.gov.digitalhealth.lingo.product;
 
 import au.csiro.snowstorm_client.model.SnowstormAxiom;
+import au.csiro.snowstorm_client.model.SnowstormDescription;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
 import au.gov.digitalhealth.lingo.util.PartionIdentifier;
@@ -74,6 +75,8 @@ public class NewConceptDetails {
 
   /** Axioms of the concept to be created, usually only one. */
   @NotNull @NotEmpty Set<SnowstormAxiom> axioms = new HashSet<>();
+
+  Set<SnowstormDescription> descriptions;
 
   Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers = new HashSet<>();
 
