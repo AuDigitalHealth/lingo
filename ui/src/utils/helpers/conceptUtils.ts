@@ -16,9 +16,11 @@
 
 import { ConceptSearchResult } from '../../pages/products/components/SearchProduct.tsx';
 import {
+  CaseSignificance,
   Concept,
   ConceptResponse,
   ConceptSearchItem,
+  DefinitionType,
   Description,
   Edge,
   Product,
@@ -400,6 +402,26 @@ export function reattachSemanticTags(productSummary: ProductSummary) {
     }
   });
 }
+
+export const createDefaultDescription = (
+  conceptId: string,
+  typeId: string,
+  moduleId: string | undefined,
+): Description => {
+  return {
+    active: true,
+    moduleId: moduleId ? moduleId : '',
+    released: false,
+    descriptionId: undefined,
+    term: '',
+    conceptId: conceptId,
+    typeId: typeId,
+    acceptabilityMap: undefined,
+    type: DefinitionType.SYNONYM,
+    lang: 'en',
+    caseSignificance: CaseSignificance.ENTIRE_TERM_CASE_SENSITIVE,
+  };
+};
 
 export function getSemanticTagChanges(
   productSummary: ProductSummary | undefined,

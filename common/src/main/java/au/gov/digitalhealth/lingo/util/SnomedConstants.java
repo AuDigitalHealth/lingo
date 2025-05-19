@@ -59,6 +59,7 @@ public enum SnomedConstants implements LingoConstants {
   PRODUCT_PACKAGE_SEMANTIC_TAG("product package"),
   UNIT_OF_PRESENTATION("732935002", "Unit of presentation (unit of presentation)"),
   PREFERRED("PREFERRED"),
+  ACCEPTABLE("ACCEPTABLE"),
   ENTIRE_TERM_CASE_SENSITIVE("ENTIRE_TERM_CASE_SENSITIVE"),
   SYNONYM("SYNONYM"),
   FSN("FSN"),
