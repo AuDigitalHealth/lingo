@@ -395,13 +395,16 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
       )}
 
       {!readonly && !disabled && (
-          <Box
-              sx={{
-                mb: 2,
-                position: 'relative',
-              }}
+        <Box
+          sx={{
+            mb: 2,
+            position: 'relative',
+          }}
+        >
+          <FormControl
+            fullWidth={true}
+            sx={{ minWidth: 120, mr: 1, paddingRight: 5 }}
           >
-          <FormControl fullWidth={true} sx={{ minWidth: 120, mr: 1, paddingRight: 5 }}>
             <InputLabel>Type</InputLabel>
             <Select
               value={dropdownType}
@@ -414,13 +417,15 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
               ))}
             </Select>
           </FormControl>
-          <IconButton onClick={addItem}
-                      sx={{
-                        position: 'absolute',
-                        right: '0px',
-                        top: '0',
-                      }}
-                      disabled={isAddDisabled()}>
+          <IconButton
+            onClick={addItem}
+            sx={{
+              position: 'absolute',
+              right: '0px',
+              top: '0',
+            }}
+            disabled={isAddDisabled()}
+          >
             <AddCircleOutlineIcon
               color={isAddDisabled() ? 'disabled' : 'primary'}
             />
