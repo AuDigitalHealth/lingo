@@ -7,17 +7,20 @@ import { useServiceStatus } from '../api/useServiceStatus.tsx';
 export function useRefsetMemberById(
   branch: string,
   memberId: string | undefined,
+  enabled: boolean,
 ) {
   const { serviceStatus } = useServiceStatus();
 
   const { data, error, refetch, isFetching } = useQuery({
     queryKey: [`refsetMembers-${branch}-${memberId}`],
     queryFn: () => {
-      if (memberId !== undefined)
+      if (memberId !== undefined) {
         return RefsetMembersService.getRefsetMemberById(branch, memberId);
+      }
       return null;
     },
     staleTime: 20 * (60 * 1000),
+    enabled: enabled,
   });
 
   useEffect(() => {

@@ -28,7 +28,7 @@ function RefsetMemberDetails() {
     refsetMemberData: refsetMember,
     refetchRefsetMember,
     isRefsetMemberFetching,
-  } = useRefsetMemberById(branch, memberId);
+  } = useRefsetMemberById(branch, memberId, true);
 
   const [editMode, setEditMode] = useState(false);
   const [newEcl, setNewEcl] = useState('');

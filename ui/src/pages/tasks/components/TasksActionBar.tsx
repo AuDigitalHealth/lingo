@@ -3,7 +3,10 @@ import { Button, Stack } from '@mui/material';
 import { useState } from 'react';
 import TasksCreateModal from './TasksCreateModal';
 
-export default function TasksActionBar() {
+interface TasksActionBarProps {
+  redirectUrl: string;
+}
+export default function TasksActionBar({ redirectUrl }: TasksActionBarProps) {
   const [modalOpen, setModalOpen] = useState(false);
   return (
     <>
@@ -11,6 +14,7 @@ export default function TasksActionBar() {
         open={modalOpen}
         handleClose={() => setModalOpen(false)}
         title={'Create Task'}
+        redirectUrl={redirectUrl}
       />
       <Stack sx={{ width: '100%', padding: '0em 0em 1em 1em' }}>
         <Button

@@ -1,23 +1,30 @@
-import useUserTaskByIds from '../../hooks/eclRefset/useUserTaskByIds.tsx';
 import { Stack } from '@mui/system';
-import UserTasksList from './components/UserTasksList.tsx';
 import PageBreadcrumbs from './components/PageBreadcrumbs.tsx';
 import { Outlet, useMatch, useParams } from 'react-router-dom';
 import { useRefsetMemberById } from '../../hooks/eclRefset/useRefsetMemberById.tsx';
 import { useConceptById } from '../../hooks/eclRefset/useConceptsById.tsx';
 import { Concept } from '../../types/concept.ts';
 import useBranch from '../../hooks/eclRefset/useBranch.tsx';
+import { useFetchAndCreateBranch } from '../../hooks/api/task/useInitializeBranch.tsx';
+import { Task } from '../../types/task.ts';
+import useTaskByKey from '../../hooks/useTaskById.tsx';
+import Loading from '../../components/Loading.tsx';
+import TasksList from '../tasks/components/TasksList.tsx';
 
 const SNODINE_BASE = '/dashboard/snodine';
 
 function RefsetsLayout() {
   const { taskKey, projectKey, memberId, conceptId } = useParams();
-  const task = useUserTaskByIds();
-
+  const task = useTaskByKey(taskKey);
+  const { data } = useFetchAndCreateBranch(task as Task);
   const branch = useBranch();
 
-  const { refsetMemberData } = useRefsetMemberById(branch, memberId);
-  const { conceptData } = useConceptById(branch, conceptId);
+  const { refsetMemberData } = useRefsetMemberById(
+    branch,
+    memberId,
+    data !== undefined,
+  );
+  const { conceptData } = useConceptById(branch, conceptId, data !== undefined);
 
   const breadcrumbs = [
     {
@@ -62,14 +69,21 @@ function RefsetsLayout() {
       }}
     >
       <PageBreadcrumbs breadcrumbs={breadcrumbs} />
-      <UserTasksList
+      <TasksList
         propTasks={task ? [task] : []}
         heading=""
         dense={true}
         naked={true}
+        taskCreateRedirectUrl=""
+        showActionBar={false}
       />
-
-      <Outlet />
+      {data !== undefined ? (
+        <Outlet />
+      ) : (
+        <Stack sx={{ width: '100%' }}>
+          <Loading />
+        </Stack>
+      )}
     </Stack>
   );
 }

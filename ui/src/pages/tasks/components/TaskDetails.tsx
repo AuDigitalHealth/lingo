@@ -8,12 +8,12 @@ import {
 import BadgeIcon from '@mui/icons-material/Badge';
 import TitleIcon from '@mui/icons-material/Title';
 import DescriptionIcon from '@mui/icons-material/Description';
-import useTaskById from '../../../hooks/useTaskById';
+import useTaskByKey from '../../../hooks/useTaskById';
 import TaskDetailsActions from './TaskDetailsActions';
 import { useTheme } from '@mui/material/styles';
 
 function TaskDetails() {
-  const task = useTaskById();
+  const task = useTaskByKey();
   const theme = useTheme();
   const description = `${task?.description?.replace(/<[^>]*>?/gm, ' ')}`;
 

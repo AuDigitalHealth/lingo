@@ -34,7 +34,7 @@ export function useFetchAndCreateBranch(task: Task | undefined | null) {
     return call;
   };
 
-  const { isLoading, error } = useQuery({
+  const { isLoading, error, data } = useQuery({
     queryKey: [`fetch-branch-${task ? task.branchPath : undefined}`],
     queryFn: () => {
       if (task && task.branchPath) {
@@ -53,11 +53,10 @@ export function useFetchAndCreateBranch(task: Task | undefined | null) {
     // if there is an error, it means the branch wasn't found and therefore it needs to be created.
     // this should only be done if the task.branchState is null (non existant) and the mutation isn't currently being called
     // AND the mutationData is undefined, i.e hasn't been been called before
-
     if (
       error &&
       task &&
-      task.branchState === null &&
+      !task.branchState &&
       !branchMutationLoading &&
       !branchData
     ) {
@@ -84,6 +83,7 @@ export function useFetchAndCreateBranch(task: Task | undefined | null) {
   ]);
   return {
     isLoading: isLoading || branchMutationLoading || taskMutationLoading,
+    data: data,
   };
 }
 

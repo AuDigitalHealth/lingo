@@ -44,6 +44,26 @@ export interface Concept {
   idAndFsnTerm?: string | null;
 }
 
+export interface RefsetConceptCreate {
+  active?: boolean;
+  definitionStatus?: DefinitionStatus | null;
+  moduleId?: string;
+  fsn?: Term;
+  pt?: Term;
+  refsetDescriptor: string;
+  type: RefsetConceptCreateType;
+}
+
+export enum RefsetConceptCreateType {
+  QueryBased = 'Query-Based',
+  TickFlick = 'Tick-Flick',
+}
+
+export interface TickFlickRefsetConcept extends Concept {
+  isQuerySpec?: boolean;
+  hasInactives?: boolean | 'loading';
+}
+
 export interface BrowserConcept extends Concept {
   descriptions: Description[];
 }
@@ -60,7 +80,7 @@ export type Description = {
   released: boolean;
   descriptionId?: string;
   term: string;
-  conceptId: string;
+  conceptId?: string;
   typeId: string;
   // where the string is the conceptId of the dialect
   acceptabilityMap?: Record<string, Acceptability>;

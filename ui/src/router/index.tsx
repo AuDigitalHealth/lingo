@@ -106,16 +106,35 @@ export const browserRouter = createBrowserRouter(
         <Route path="/dashboard/tasks" element={<TasksRoutes />}>
           <Route
             path="/dashboard/tasks"
-            element={<TasksList path="" heading="My Tasks" />}
+            element={
+              <TasksList
+                path=""
+                heading="My Tasks"
+                displayProject={false}
+                taskCreateRedirectUrl="/dashboard/tasks/edit"
+              />
+            }
           />
           <Route
             path="/dashboard/tasks/all"
-            element={<TasksList path="/all" heading="Tasks" />}
+            element={
+              <TasksList
+                path="/all"
+                heading="Tasks"
+                displayProject={false}
+                taskCreateRedirectUrl="/dashboard/tasks/edit"
+              />
+            }
           />
           <Route
             path="/dashboard/tasks/needReview"
             element={
-              <TasksList path="/needReview" heading="Tasks Requiring Review" />
+              <TasksList
+                path="/needReview"
+                heading="Tasks Requiring Review"
+                displayProject={false}
+                taskCreateRedirectUrl="/dashboard/tasks/edit"
+              />
             }
           />
 

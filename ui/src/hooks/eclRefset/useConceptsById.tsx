@@ -4,7 +4,11 @@ import { snowstormErrorHandler } from '../../types/ErrorHandler.ts';
 import { useServiceStatus } from '../api/useServiceStatus.tsx';
 import ConceptService from '../../api/ConceptService.ts';
 
-export function useConceptById(branch: string, conceptId: string | undefined) {
+export function useConceptById(
+  branch: string,
+  conceptId: string | undefined,
+  enabled: boolean,
+) {
   const { serviceStatus } = useServiceStatus();
 
   const { data, error, refetch, isFetching } = useQuery({
@@ -15,6 +19,7 @@ export function useConceptById(branch: string, conceptId: string | undefined) {
       return null;
     },
     staleTime: 20 * (60 * 1000),
+    enabled: enabled,
   });
 
   useEffect(() => {
