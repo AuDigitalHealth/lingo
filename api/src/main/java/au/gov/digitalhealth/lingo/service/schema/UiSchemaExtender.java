@@ -47,23 +47,6 @@ public class UiSchemaExtender {
     this.objectMapper = objectMapper;
   }
 
-  private static void insertNodeInUiOrder(ObjectNode uiSchemaNode, String propertyName) {
-    ArrayNode uiOrderArray = uiSchemaNode.withArray("ui:order");
-    int index = -1;
-    for (int i = 0; i < uiOrderArray.size(); i++) {
-      if (CONTAINED_PRODUCTS.equals(uiOrderArray.get(i).asText())
-          || "activeIngredients".equals(uiOrderArray.get(i).asText())) {
-        index = i;
-        break;
-      }
-    }
-    if (index != -1) {
-      uiOrderArray.insert(index, propertyName);
-    } else {
-      uiOrderArray.add(propertyName);
-    }
-  }
-
   public void updateUiSchema(ModelConfiguration modelConfiguration, JsonNode uiSchemaNode) {
 
     updateUiSchemaForType(uiSchemaNode, EXTERNAL_IDENTIFIERS, modelConfiguration.getMappings());
@@ -125,7 +108,6 @@ public class UiSchemaExtender {
 
       uiSchemaNode.set(nodeName, uiNode);
 
-      insertNodeInUiOrder(uiSchemaNode, nodeName);
       uiSchemaNode.set(nodeName, uiNode);
     }
   }

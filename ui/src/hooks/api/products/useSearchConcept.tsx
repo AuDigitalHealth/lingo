@@ -46,7 +46,7 @@ export function useSearchConceptOntoserver(
       searchTerm !== undefined &&
       providedEcl !== undefined &&
       providedEcl !== 'undefined' &&
-      searchTerm.length > 2 &&
+      searchTerm?.length > 2 &&
       !(allData && checkConceptSearchResultAlreadyExists(allData, searchTerm));
 
     return validConfig && (showDefaultOptions || validSearch);

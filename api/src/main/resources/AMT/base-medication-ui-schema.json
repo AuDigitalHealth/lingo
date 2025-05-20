@@ -1,69 +1,25 @@
 {
-  "ui:field": "LayoutGridField",
-  "ui:layoutGrid": {
-    "ui:row": [
-      {
-        "ui:row": {
-          "className": "grid grid-cols-12 gap-4 col-span-12 grid-rows-4",
-          "children": [
-            {
-              "ui:col": {
-                "className": "col-span-6 row-span-4",
-                "children": [
-                  "productName"
-                ]
-              }
-            },
-            {
-              "ui:col": {
-                "className": "col-span-6 row-span-1 flex items-center",
-                "children": [
-                  "containerType"
-                ]
-              }
-            }
-          ]
-        }
-      },
-      {
-        "ui:row": {
-          "className": "grid grid-cols-12 gap-4 col-span-12 grid-rows-4",
-          "children": [
-            {
-              "ui:col": {
-                "className": "col-span-6 row-span-4",
-                "children": [
-                  "containedProducts"
-                ]
-              }
-            }
-          ]
-        }
-      },
-      {
-        "ui:row": {
-          "className": "grid grid-cols-12 gap-4 col-span-12 grid-rows-4",
-          "children": [
-            {
-              "ui:col": {
-                "className": "col-span-6 row-span-4",
-                "children": [
-                  "containedPackages"
-                ]
-              }
-            }
-          ]
-        }
-      }
-    ]
-  },
-    "ui:order": [
-        "productName",
-        "containerType",
-        "containedProducts",
-        "containedPackages",
-        "externalIdentifiers"
-    ],
+  "ui:grid": [
+    {
+      "productName": 11
+    },
+    {
+      "_empty": 2
+    },
+    {
+      "containerType": 11
+    },
+    {
+      "externalIdentifiers": 12,
+      "_empty": 12
+    },
+    {
+      "containedProducts": 24
+    },
+    {
+      "containedPackages": 24
+    }
+  ],
   "productName": {
     "ui:field": "AutoCompleteField",
     "ui:options": {
@@ -84,6 +40,7 @@
     }
   },
   "containedProducts": {
+    "ui:field": "ConditionalArrayField",
     "ui:options": {
       "arrayTemplate": "accordion",
       "skipTitle": true,
@@ -102,51 +59,69 @@
       "conditionLogic": "and"
     },
     "items": {
-      "ui:order": [
-        "productDetails",
-        "unit",
-        "value"
+      "ui:grid": [
+        {
+          "productDetails": 24
+        },
+        {
+          "value": 6,
+          "unit": 6,
+          "_empty": 12
+        }
       ],
       "ui:options": {
         "titleSource": "productDetails.productName.pt.term",
         "defaultTitle": "Product",
-        "style": {
-          "border": "1px solid #ddd",
-          "padding": "10px",
-          "marginBottom": "20px",
-          "borderRadius": "8px"
-        },
         "skipTitle": true
       },
-      "unit": {
-        "ui:title": "Pack Size",
+      "value": {
+        "ui:widget": "text",
         "ui:options": {
-          "pairWith": "value",
-          "ecl": "(^929360051000036108 : (774160008 OR 999000081000168101) = *).774163005",
-          "showDefaultOptions": true
+          "inputType": "number",
+          "title": "Pack Size"
         }
       },
-      "value": {
+      "unit": {
+        "ui:field": "AutoCompleteField",
+        "ui:title": "Unit",
         "ui:options": {
-          "skipTitle": true
+          "ecl": "(^929360051000036108 : (774160008 OR 999000081000168101) = *).774163005",
+          "showDefaultOptions": true
         }
       },
       "productDetails": {
         "ui:options": {
           "skipTitle": true
         },
-        "ui:order": [
-          "productName",
-          "activeIngredients",
-          "genericForm",
-          "specificForm",
-          "quantity",
-          "containerType",
-          "deviceType",
-          "otherIdentifyingInformation",
-          "type"
+        "ui:grid": [
+          {
+            "productName": 12,
+            "genericForm": 12
+          },
+          {
+            "activeIngredients": 12,
+            "_columnB": 12
+          }
         ],
+        "_columnB": {
+          "ui:grid": [
+            {
+              "specificForm": 24
+            },
+            {
+              "quantity": 24
+            },
+            {
+              "containerType": 12,
+              "deviceType": 12
+            },
+            {
+              "otherIdentifyingInformation": 24
+            }
+          ]
+        },
         "type": {
+          "ui:widget": "hidden",
           "ui:options": {
             "skipTitle": true
           }
@@ -164,12 +139,22 @@
             "arrayTemplate": "accordion"
           },
           "items": {
-            "ui:order": [
-              "activeIngredient",
-              "preciseIngredient",
-              "basisOfStrengthSubstance",
-              "concentrationStrength",
-              "totalQuantity"
+            "ui:grid": [
+              {
+                "activeIngredient": 24
+              },
+              {
+                "preciseIngredient": 24
+              },
+              {
+                "basisOfStrengthSubstance": 24
+              },
+              {
+                "concentrationStrength": 24
+              },
+              {
+                "totalQuantity": 24
+              }
             ],
             "ui:options": {
               "titleSource": "activeIngredient.pt.term",
@@ -179,11 +164,18 @@
             "activeIngredient": {
               "ui:field": "AutoCompleteField",
               "ui:options": {
+                "skipTitle": true,
                 "dependants": [
                   {
                     "path": "../preciseIngredient",
                     "ui:options": {
                       "getEcl": "<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent)) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))))",
+                      "showDefaultOptions": true
+                    }
+                  },
+                  {
+                    "path": "../basisOfStrengthSubstance",
+                    "ui:options": {
                       "showDefaultOptions": true
                     }
                   }
@@ -194,33 +186,45 @@
               }
             },
             "preciseIngredient": {
-              "anyOf": [
-                {
-                  "ui:title": "Precise Ingredient",
-                  "ui:field": "AutoCompleteField",
-                  "ui:options": {
-                    "showDefaultOptions": true
-                  }
-                },
-                {
-                  "ui:title": "No Precise Ingredient",
-                  "value": null
-                }
-              ]
+              "ui:title": "Precise Ingredient",
+              "ui:field": "AutoCompleteField",
+              "ui:options": {
+                "skipTitle": true,
+                "showDefaultOptions": true
+              }
             },
             "basisOfStrengthSubstance": {
               "ui:field": "AutoCompleteField",
               "ui:title": "BoSS",
               "ui:options": {
+                "skipTitle": true,
                 "ecl": "(^929360031000036100.732943007) OR (>>^929360031000036100.127489000)",
                 "extendedEcl": "<105590001",
-                "showDefaultOptions": false
+                "showDefaultOptions": false,
+                "placeholder": "Basis of Strength Substance (Optional)",
+                "description": "Only enabled if Active Ingredient is set."
               }
             },
             "totalQuantity": {
-              "ui:title": "Unit Strength",
-              "value": {},
+              "ui:options": {
+                "skipTitle": true
+              },
+              "ui:grid": [
+                {
+                  "value": 12,
+                  "unit": 12
+                }
+              ],
+              "value": {
+                "ui:widget": "text",
+                "ui:title": "Unit Strength",
+                "ui:options": {
+                  "inputType": "number"
+                }
+              },
               "unit": {
+                "ui:field": "AutoCompleteField",
+                "ui:title": "Unit",
                 "ui:options": {
                   "ecl": "^929360031000036100.999000051000168108",
                   "extendedEcl": "(<767524001) MINUS (*:(700000091000036104=* OR 700000071000036103=*))",
@@ -229,9 +233,25 @@
               }
             },
             "concentrationStrength": {
-              "ui:title": "Concentration Strength",
-              "value": {},
+              "ui:options": {
+                "skipTitle": true
+              },
+              "ui:grid": [
+                {
+                  "value": 12,
+                  "unit": 12
+                }
+              ],
+              "value": {
+                "ui:widget": "text",
+                "ui:title": "Concentration Strength",
+                "ui:options": {
+                  "inputType": "number"
+                }
+              },
               "unit": {
+                "ui:field": "AutoCompleteField",
+                "ui:title": "Unit",
                 "ui:options": {
                   "ecl": "^929360031000036100.999000031000168102",
                   "extendedEcl": "<767524001:(700000091000036104=* AND 700000071000036103=*)",
@@ -243,7 +263,7 @@
         },
         "genericForm": {
           "ui:field": "AutoCompleteField",
-          "title": "Generic Dose Form",
+          "ui:title": "Generic Dose Form",
           "ui:options": {
             "dependants": [
               {
@@ -260,24 +280,32 @@
           }
         },
         "specificForm": {
-          "anyOf": [
-            {
-              "ui:title": "Specific Dose Form",
-              "ui:field": "AutoCompleteField",
-              "ui:options": {
-                "showDefaultOptions": true
-              }
-            },
-            {
-              "ui:title": "No Specific Dose Form",
-              "value": null
-            }
-          ]
+          "ui:title": "Specific Dose Form",
+          "ui:field": "AutoCompleteField",
+          "ui:options": {
+            "showDefaultOptions": true
+          }
         },
         "quantity": {
-          "ui:title": "Unit Size",
-          "value": {},
+          "ui:options": {
+            "skipTitle": true
+          },
+          "ui:grid": [
+            {
+              "value": 12,
+              "unit": 12
+            }
+          ],
+          "value": {
+            "ui:widget": "text",
+            "ui:title": "Unit Size",
+            "ui:options": {
+              "inputType": "number"
+            }
+          },
           "unit": {
+            "ui:field": "AutoCompleteField",
+            "ui:title": "Unit",
             "ui:options": {
               "ecl": "^929360031000036100.774163005",
               "extendedEcl": "(<767524001) MINUS (*:(700000091000036104=* OR 700000071000036103=*))",
@@ -300,28 +328,22 @@
           }
         },
         "deviceType": {
-          "anyOf": [
-            {
-              "ui:title": "Device Type",
-              "ui:field": "AutoCompleteField",
-              "ui:options": {
-                "ecl": "^929360031000036100.999000061000168105",
-                "extendedEcl": "<63653004",
-                "showDefaultOptions": true,
-                "exclusions": [
-                  {
-                    "path": "../containerType"
-                  }
-                ]
+          "ui:title": "Device Type",
+          "ui:field": "AutoCompleteField",
+          "ui:options": {
+            "ecl": "^929360031000036100.999000061000168105",
+            "extendedEcl": "<63653004",
+            "showDefaultOptions": true,
+            "exclusions": [
+              {
+                "path": "../containerType"
               }
-            },
-            {
-              "ui:title": "No Device Type",
-              "value": null
-            }
-          ]
+            ]
+          }
         },
         "otherIdentifyingInformation": {
+          "ui:widget": "text",
+          "ui:title": "Other Identifying Information",
           "ui:options": {
             "placeholder": "Enter any additional identifying information"
           }
@@ -330,6 +352,7 @@
     }
   },
   "containedPackages": {
+    "ui:field": "ConditionalArrayField",
     "ui:options": {
       "skipTitle": true,
       "searchAndAddProduct": {
@@ -337,7 +360,6 @@
         "type": "medication",
         "package": true
       },
-      "arrayTemplate": "accordion",
       "conditions": [
         {
           "field": "containedProducts",
@@ -348,43 +370,47 @@
       "conditionLogic": "and"
     },
     "items": {
-      "ui:order": [
-        "packageDetails",
-        "unit",
-        "value"
+      "ui:grid": [
+        {
+          "value": 6,
+          "unit": 6,
+          "_empty": 12
+        },
+        {
+          "packageDetails": 24
+        }
       ],
       "ui:options": {
         "titleSource": "packageDetails.productName.pt.term",
         "defaultTitle": "Package",
-        "style": {
-          "border": "1px solid #ddd",
-          "padding": "10px",
-          "marginBottom": "20px",
-          "borderRadius": "8px"
-        },
         "skipTitle": true
       },
-      "unit": {
-        "ui:title": "Pack Size",
+      "value": {
+        "ui:widget": "text",
         "ui:options": {
-          "pairWith": "value",
-          "ecl": "(^929360051000036108 : (774160008 OR 999000081000168101) = *).774163005",
-          "showDefaultOptions": true
+          "inputType": "number",
+          "title": "Quantity"
         }
       },
-      "value": {
+      "unit": {
+        "ui:field": "AutoCompleteField",
+        "ui:title": "Unit",
         "ui:options": {
-          "skipTitle": true
+          "ecl": "(^929360051000036108 : (774160008 OR 999000081000168101) = *).774163005"
         }
       },
       "packageDetails": {
         "ui:options": {
           "skipTitle": true
         },
-        "ui:order": [
-          "productName",
-          "containerType",
-          "containedProducts"
+        "ui:grid": [
+          {
+            "productName": 12,
+            "containerType": 12
+          },
+          {
+            "containedProducts": 24
+          }
         ],
         "productName": {
           "ui:field": "AutoCompleteField",
@@ -411,51 +437,69 @@
             }
           },
           "items": {
-            "ui:order": [
-              "productDetails",
-              "unit",
-              "value"
+            "ui:grid": [
+              {
+                "productDetails": 24
+              },
+              {
+                "value": 6,
+                "unit": 6,
+                "_empty": 12
+              }
             ],
             "ui:options": {
               "titleSource": "productDetails.productName.pt.term",
               "defaultTitle": "Product",
-              "style": {
-                "border": "1px solid #ddd",
-                "padding": "10px",
-                "marginBottom": "20px",
-                "borderRadius": "8px"
-              },
               "skipTitle": true
             },
-            "unit": {
-              "ui:title": "Pack Size",
+            "value": {
+              "ui:widget": "text",
               "ui:options": {
-                "pairWith": "value",
-                "ecl": "(^929360051000036108 : (774160008 OR 999000081000168101) = *).774163005",
-                "showDefaultOptions": true
+                "inputType": "number",
+                "title": "Pack Size"
               }
             },
-            "value": {
+            "unit": {
+              "ui:field": "AutoCompleteField",
+              "ui:title": "Unit",
               "ui:options": {
-                "skipTitle": true
+                "ecl": "(^929360051000036108 : (774160008 OR 999000081000168101) = *).774163005",
+                "showDefaultOptions": true
               }
             },
             "productDetails": {
               "ui:options": {
                 "skipTitle": true
               },
-              "ui:order": [
-                "productName",
-                "activeIngredients",
-                "genericForm",
-                "specificForm",
-                "quantity",
-                "containerType",
-                "deviceType",
-                "otherIdentifyingInformation",
-                "type"
+              "ui:grid": [
+                {
+                  "productName": 12,
+                  "genericForm": 12
+                },
+                {
+                  "activeIngredients": 12,
+                  "_columnB": 12
+                }
               ],
+              "_columnB": {
+                "ui:grid": [
+                  {
+                    "specificForm": 24
+                  },
+                  {
+                    "quantity": 24
+                  },
+                  {
+                    "containerType": 12,
+                    "deviceType": 12
+                  },
+                  {
+                    "otherIdentifyingInformation": 24
+                  }
+                ]
+              },
               "type": {
+                "ui:widget": "hidden",
                 "ui:options": {
                   "skipTitle": true
                 }
@@ -473,12 +517,22 @@
                   "arrayTemplate": "accordion"
                 },
                 "items": {
-                  "ui:order": [
-                    "activeIngredient",
-                    "preciseIngredient",
-                    "basisOfStrengthSubstance",
-                    "concentrationStrength",
-                    "totalQuantity"
+                  "ui:grid": [
+                    {
+                      "activeIngredient": 24
+                    },
+                    {
+                      "preciseIngredient": 24
+                    },
+                    {
+                      "basisOfStrengthSubstance": 24
+                    },
+                    {
+                      "concentrationStrength": 24
+                    },
+                    {
+                      "totalQuantity": 24
+                    }
                   ],
                   "ui:options": {
                     "titleSource": "activeIngredient.pt.term",
@@ -488,11 +542,18 @@
                   "activeIngredient": {
                     "ui:field": "AutoCompleteField",
                     "ui:options": {
+                      "skipTitle": true,
                       "dependants": [
                         {
                           "path": "../preciseIngredient",
                           "ui:options": {
                             "getEcl": "<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent)) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))))",
+                            "showDefaultOptions": true
+                          }
+                        },
+                        {
+                          "path": "../basisOfStrengthSubstance",
+                          "ui:options": {
                             "showDefaultOptions": true
                           }
                         }
@@ -503,33 +564,45 @@
                     }
                   },
                   "preciseIngredient": {
-                    "anyOf": [
-                      {
-                        "ui:title": "Precise Ingredient",
-                        "ui:field": "AutoCompleteField",
-                        "ui:options": {
-                          "showDefaultOptions": true
-                        }
-                      },
-                      {
-                        "ui:title": "No Precise Ingredient",
-                        "value": null
-                      }
-                    ]
+                    "ui:title": "Precise Ingredient",
+                    "ui:field": "AutoCompleteField",
+                    "ui:options": {
+                      "skipTitle": true,
+                      "showDefaultOptions": true
+                    }
                   },
                   "basisOfStrengthSubstance": {
                     "ui:field": "AutoCompleteField",
                     "ui:title": "BoSS",
                     "ui:options": {
+                      "skipTitle": true,
                       "ecl": "(^929360031000036100.732943007) OR (>>^929360031000036100.127489000)",
                       "extendedEcl": "<105590001",
-                      "showDefaultOptions": false
+                      "showDefaultOptions": false,
+                      "placeholder": "Basis of Strength Substance (Optional)",
+                      "description": "Only enabled if Active Ingredient is set."
                     }
                   },
                   "totalQuantity": {
-                    "ui:title": "Unit Strength",
-                    "value": {},
+                    "ui:options": {
+                      "skipTitle": true
+                    },
+                    "ui:grid": [
+                      {
+                        "value": 12,
+                        "unit": 12
+                      }
+                    ],
+                    "value": {
+                      "ui:widget": "text",
+                      "ui:title": "Unit Strength",
+                      "ui:options": {
+                        "inputType": "number"
+                      }
+                    },
                     "unit": {
+                      "ui:field": "AutoCompleteField",
+                      "ui:title": "Unit",
                       "ui:options": {
                         "ecl": "^929360031000036100.999000051000168108",
                         "extendedEcl": "(<767524001) MINUS (*:(700000091000036104=* OR 700000071000036103=*))",
@@ -538,9 +611,25 @@
                     }
                   },
                   "concentrationStrength": {
-                    "ui:title": "Concentration Strength",
-                    "value": {},
+                    "ui:options": {
+                      "skipTitle": true
+                    },
+                    "ui:grid": [
+                      {
+                        "value": 12,
+                        "unit": 12
+                      }
+                    ],
+                    "value": {
+                      "ui:widget": "text",
+                      "ui:title": "Concentration Strength",
+                      "ui:options": {
+                        "inputType": "number"
+                      }
+                    },
                     "unit": {
+                      "ui:field": "AutoCompleteField",
+                      "ui:title": "Unit",
                       "ui:options": {
                         "ecl": "^929360031000036100.999000031000168102",
                         "extendedEcl": "<767524001:(700000091000036104=* AND 700000071000036103=*)",
@@ -552,7 +641,7 @@
               },
               "genericForm": {
                 "ui:field": "AutoCompleteField",
-                "title": "Generic Dose Form",
+                "ui:title": "Generic Dose Form",
                 "ui:options": {
                   "dependants": [
                     {
@@ -569,24 +658,32 @@
                 }
               },
               "specificForm": {
-                "anyOf": [
-                  {
-                    "ui:title": "Specific Dose Form",
-                    "ui:field": "AutoCompleteField",
-                    "ui:options": {
-                      "showDefaultOptions": true
-                    }
-                  },
-                  {
-                    "ui:title": "No Specific Dose Form",
-                    "value": null
-                  }
-                ]
+                "ui:title": "Specific Dose Form",
+                "ui:field": "AutoCompleteField",
+                "ui:options": {
+                  "showDefaultOptions": true
+                }
               },
               "quantity": {
-                "ui:title": "Unit Size",
-                "value": {},
+                "ui:options": {
+                  "skipTitle": true
+                },
+                "ui:grid": [
+                  {
+                    "value": 12,
+                    "unit": 12
+                  }
+                ],
+                "value": {
+                  "ui:widget": "text",
+                  "ui:title": "Unit Size",
+                  "ui:options": {
+                    "inputType": "number"
+                  }
+                },
                 "unit": {
+                  "ui:field": "AutoCompleteField",
+                  "ui:title": "Unit",
                   "ui:options": {
                     "ecl": "^929360031000036100.774163005",
                     "extendedEcl": "(<767524001) MINUS (*:(700000091000036104=* OR 700000071000036103=*))",
@@ -609,28 +706,22 @@
                 }
               },
               "deviceType": {
-                "anyOf": [
-                  {
-                    "ui:title": "Device Type",
-                    "ui:field": "AutoCompleteField",
-                    "ui:options": {
-                      "ecl": "^929360031000036100.999000061000168105",
-                      "extendedEcl": "<63653004",
-                      "showDefaultOptions": true,
-                      "exclusions": [
-                        {
-                          "path": "../containerType"
-                        }
-                      ]
+                "ui:title": "Device Type",
+                "ui:field": "AutoCompleteField",
+                "ui:options": {
+                  "ecl": "^929360031000036100.999000061000168105",
+                  "extendedEcl": "<63653004",
+                  "showDefaultOptions": true,
+                  "exclusions": [
+                    {
+                      "path": "../containerType"
                     }
-                  },
-                  {
-                    "ui:title": "No Device Type",
-                    "value": null
-                  }
-                ]
+                  ]
+                }
               },
               "otherIdentifyingInformation": {
+                "ui:widget": "text",
+                "ui:title": "Other Identifying Information",
                 "ui:options": {
                   "placeholder": "Enter any additional identifying information"
                 }
@@ -639,15 +730,6 @@
           }
         }
       }
-    }
-  },
-  "externalIdentifiers": {
-    "ui:options": {
-      "label": false,
-      "skipTitle": true,
-      "multiValuedSchemes": [
-        "artgid"
-      ]
     }
   }
 }
