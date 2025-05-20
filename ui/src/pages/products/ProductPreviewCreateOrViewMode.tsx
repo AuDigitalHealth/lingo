@@ -278,7 +278,7 @@ function ProductPreviewCreateOrViewMode({
       return;
     }
 
-    void submitData(producSummaryClone);
+    void submitData(data);
   };
 
   const submitData = async (data?: ProductSummary) => {
@@ -294,7 +294,7 @@ function ProductPreviewCreateOrViewMode({
       setOverrideSemanticChangeWarning(false);
       return;
     }
-
+    reattachSemanticTags(usedData as ProductSummary);
     if (
       !readOnlyMode &&
       newConceptFound &&
