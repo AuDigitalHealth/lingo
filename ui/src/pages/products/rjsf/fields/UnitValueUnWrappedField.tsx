@@ -60,46 +60,46 @@ const UnitValueUnWrappedField = (props: FieldProps) => {
     (v, i, a) => a.indexOf(v) === i,
   );
   return (
-      <span data-component-name="UnitValueUnWrappedField">
-    <Grid container spacing={1} direction={'row'} alignItems="center">
-      <Grid item xs={6}>
-        <TextField
-          data-testid={
-            idSchema ? idSchema.$id?.replace(/_[^_]+$/g, '_value') : valuePath
-          }
-          label="Value"
-          value={valueData ?? ''}
-          onChange={handleValueChange}
-          type="number"
-          fullWidth
-          variant="outlined"
-          // error={valueErrors.length > 0}
-        />
-      </Grid>
-      <Grid item xs={6}>
-        {task && (
-          <EclAutocomplete
-            idSchema={idSchema}
-            name={name}
-            value={formData}
-            title="Unit"
-            onChange={handleUnitChange}
-            ecl={ecl}
-            branch={task.branchPath}
-            showDefaultOptions={showDefaultOptions}
-            isDisabled={false}
-            errorMessage={unitErrors.length > 0 ? unitErrors.join(', ') : ''}
+    <span data-component-name="UnitValueUnWrappedField">
+      <Grid container spacing={1} direction={'row'} alignItems="center">
+        <Grid item xs={6}>
+          <TextField
+            data-testid={
+              idSchema ? idSchema.$id?.replace(/_[^_]+$/g, '_value') : valuePath
+            }
+            label="Value"
+            value={valueData ?? ''}
+            onChange={handleValueChange}
+            type="number"
+            fullWidth
+            variant="outlined"
+            // error={valueErrors.length > 0}
           />
-        )}
+        </Grid>
+        <Grid item xs={6}>
+          {task && (
+            <EclAutocomplete
+              idSchema={idSchema}
+              name={name}
+              value={formData}
+              title="Unit"
+              onChange={handleUnitChange}
+              ecl={ecl}
+              branch={task.branchPath}
+              showDefaultOptions={showDefaultOptions}
+              isDisabled={false}
+              errorMessage={unitErrors.length > 0 ? unitErrors.join(', ') : ''}
+            />
+          )}
+        </Grid>
+        <Grid item xs={6}>
+          <ErrorDisplay errors={valueErrors} />
+        </Grid>
+        <Grid item xs={6}>
+          <ErrorDisplay errors={unitErrors} />
+        </Grid>
       </Grid>
-      <Grid item xs={6}>
-        <ErrorDisplay errors={valueErrors} />
-      </Grid>
-      <Grid item xs={6}>
-        <ErrorDisplay errors={unitErrors} />
-      </Grid>
-    </Grid>
-      </span>
+    </span>
   );
 };
 

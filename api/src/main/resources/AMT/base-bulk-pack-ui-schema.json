@@ -4,7 +4,8 @@
     "newPackSizeInput",
     "existingPackSizes",
     "packSizes",
-    "unitOfMeasure"
+    "unitOfMeasure",
+    "externalIdentifiers"
 
   ],
   "ui:options": {

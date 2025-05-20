@@ -1,18 +1,19 @@
-import React, {useState} from 'react';
-import {FieldProps} from '@rjsf/utils';
-import {Box, IconButton, Tooltip} from '@mui/material';
+import React, { useState } from 'react';
+import { FieldProps } from '@rjsf/utils';
+import { Box, IconButton, Tooltip } from '@mui/material';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import {Concept, ConceptMini} from '../../../../types/concept.ts';
-import {SetExtendedEclButton} from '../../components/SetExtendedEclButton.tsx';
+import { Concept, ConceptMini } from '../../../../types/concept.ts';
+import { SetExtendedEclButton } from '../../components/SetExtendedEclButton.tsx';
 import EclAutocomplete from '../components/EclAutocomplete.tsx';
 import CreateBrand from '../components/CreateBrand.tsx';
 import useTaskById from '../../../../hooks/useTaskById.tsx';
-import {useTicketByTicketNumber} from '../../../../hooks/api/tickets/useTicketById.tsx';
-import {useParams} from 'react-router-dom';
-import {Ticket} from '../../../../types/tickets/ticket.ts';
-import {updateDependants, updateExclusions} from './behaviour/dependants.ts';
+import { useTicketByTicketNumber } from '../../../../hooks/api/tickets/useTicketById.tsx';
+import { useParams } from 'react-router-dom';
+import { Ticket } from '../../../../types/tickets/ticket.ts';
+import { useDependantUpdates } from './../hooks/useDependantUpdates.ts';
+import { useExclusionUpdates } from './../hooks/useExclusionUpdates.ts';
 
-const AutoCompleteField: React.FC<FieldProps<any, any>> = (props) => {
+const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
   const { onChange, idSchema } = props;
 
   const [formContext, setFormContext] = useState(props.formContext || {});
@@ -22,7 +23,7 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = (props) => {
   const [rootUiSchema, setRootUiSchema] = useState(formContext?.uiSchema || {});
 
   const { ecl, extendedEcl, createBrand, disabled } =
-  uiSchema && uiSchema['ui:options'] || {};
+    (uiSchema && uiSchema['ui:options']) || {};
   const [openCreateBrandModal, setOpenCreateBrandModal] = useState(false);
   const [localExtendedEcl, setLocalExtendedEcl] = useState<boolean>(false);
   const currentEcl = localExtendedEcl ? extendedEcl : ecl;
@@ -31,16 +32,29 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = (props) => {
   const { ticketNumber } = useParams();
   const useTicketQuery = useTicketByTicketNumber(ticketNumber, false);
 
-  updateDependants(uiSchema, idSchema, formContext, rootFormData, rootUiSchema, formData);
-  updateExclusions(uiSchema, idSchema, formContext, rootFormData, rootUiSchema, formData);
+  useDependantUpdates(
+    uiSchema,
+    idSchema,
+    formContext,
+    rootFormData,
+    rootUiSchema,
+    formData,
+  );
+  useExclusionUpdates(
+    uiSchema,
+    idSchema,
+    formContext,
+    rootFormData,
+    rootUiSchema,
+    formData,
+  );
 
   const handleSelect = (conceptMini: ConceptMini | null) => {
-    setFormData(conceptMini);
-    if (conceptMini) {
-      onChange(conceptMini);
-    } else {
-      onChange(null);
+    if (!conceptMini && uiSchema.defaultValue) {
+      conceptMini = uiSchema.defaultValue;
     }
+    setFormData(conceptMini);
+    onChange(conceptMini);
   };
 
   const handleAddBrand = (brand: Concept) => {
@@ -52,62 +66,61 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = (props) => {
   };
 
   return (
-      <span data-component-name="AutoCompleteField">
+    <span data-component-name="AutoCompleteField">
       <Box>
         <Box display="flex" alignItems="center" gap={1}>
           <Box flex={50} sx={{ position: 'relative' }}>
             {task?.branchPath && (
-                <EclAutocomplete
-                    {...props}
-                    ecl={currentEcl}
-                    value={formData}
-                    disabled={disabled || false}
-                    branch={task?.branchPath as string}
-                    onChange={handleSelect}
-                    errorMessage=""
-                />
+              <EclAutocomplete
+                {...props}
+                ecl={currentEcl}
+                value={formData}
+                isDisabled={disabled || props.disabled || false}
+                branch={task?.branchPath}
+                onChange={handleSelect}
+                errorMessage=""
+              />
             )}
             {createBrand && (
-                <Tooltip title="Create Brand">
-                  <IconButton
-                      data-testid="create-brand-btn"
-                      onClick={() => setOpenCreateBrandModal(true)}
-                      sx={{
-                        position: 'absolute',
-                        right: '-40px',
-                        top: '0',
-                      }}
-                      disabled={disabled || false}
-                  >
-                    <AddCircleOutlineIcon color="primary" />
-                  </IconButton>
-                </Tooltip>
+              <Tooltip title="Create Brand">
+                <IconButton
+                  data-testid="create-brand-btn"
+                  onClick={() => setOpenCreateBrandModal(true)}
+                  sx={{
+                    position: 'absolute',
+                    right: '-40px',
+                    top: '0',
+                  }}
+                  disabled={disabled || false}
+                >
+                  <AddCircleOutlineIcon color="primary" />
+                </IconButton>
+              </Tooltip>
             )}
           </Box>
           {extendedEcl && (
-              <Box flex={1}>
-                <SetExtendedEclButton
-                    setExtendedEcl={setLocalExtendedEcl}
-                    extendedEcl={localExtendedEcl}
-                    disabled={disabled || false}
-                />
-              </Box>
+            <Box flex={1}>
+              <SetExtendedEclButton
+                setExtendedEcl={setLocalExtendedEcl}
+                extendedEcl={localExtendedEcl}
+                disabled={disabled || false}
+              />
+            </Box>
           )}
         </Box>
         {createBrand && (
-            <CreateBrand
-                open={openCreateBrandModal}
-                onClose={() => setOpenCreateBrandModal(false)}
-                onAddBrand={handleAddBrand}
-                uiSchema={uiSchema}
-                branch={task?.branchPath as string}
-                ticket={useTicketQuery.data as Ticket}
-            />
+          <CreateBrand
+            open={openCreateBrandModal}
+            onClose={() => setOpenCreateBrandModal(false)}
+            onAddBrand={handleAddBrand}
+            uiSchema={uiSchema}
+            branch={task?.branchPath as string}
+            ticket={useTicketQuery.data as Ticket}
+          />
         )}
       </Box>
-      </span>
+    </span>
   );
 };
-
 
 export default AutoCompleteField;

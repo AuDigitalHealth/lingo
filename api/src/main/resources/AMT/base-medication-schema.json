@@ -5,10 +5,12 @@
       "type": "object",
       "properties": {
         "conceptId": {
-          "type": "string"
+          "type": "string",
+          "default": ""
         },
         "pt": {
-          "$ref": "#/$defs/SnowstormTermLangPojo"
+          "$ref": "#/$defs/SnowstormTermLangPojo",
+          "default": {}
         }
       },
       "minProperties": 1,
@@ -97,14 +99,7 @@
           }
         },
         "preciseIngredient": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/SnowstormConceptMini"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "$ref": "#/$defs/SnowstormConceptMini"
         },
         "basisOfStrengthSubstance": {
           "$ref": "#/$defs/SnowstormConceptMini"
@@ -153,38 +148,24 @@
           "title": "Generic Dose Form"
         },
         "specificForm": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/SnowstormConceptMini"
-            },
-            {
-              "type": "null"
-            }
-          ],
+          "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Specific Dose Form"
         },
         "quantity": {
           "$ref": "#/$defs/Quantity",
           "title": "Unit Size"
         },
-        "otherIdentifyingInformation": {
-          "type": "string",
-          "title": "Other Identifying Information"
-        },
         "containerType": {
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Container Type"
         },
         "deviceType": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/SnowstormConceptMini"
-            },
-            {
-              "type": "null"
-            }
-          ],
+          "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Device Type"
+        },
+        "otherIdentifyingInformation": {
+          "type": "string",
+          "title": "Other Identifying Information"
         }
       },
       "required": [
@@ -238,18 +219,6 @@
               "not": "You must provide at least one of Generic Form, Container Type, or Device Type."
             }
           }
-        }
-      ],
-      "anyOf": [
-        {
-          "required": [
-            "containerType"
-          ]
-        },
-        {
-          "required": [
-            "deviceType"
-          ]
         }
       ]
     },

@@ -189,55 +189,55 @@ const CompactQuantityField = ({
     return <>{allErrors && <ErrorDisplay errors={allErrors} />}</>;
 
   return (
-      <span data-component-name="CompactQuantityField">
-    <Box sx={{ mb: '-35px' }}>
-      <Typography sx={{ mb: 0.5 }}>{title}</Typography>
-      <Box
-        sx={{
-          border: '1px solid',
-          borderColor: 'grey.400',
-          borderRadius: 1,
-          p: 2,
-        }}
-      >
-        <Grid container spacing={1} alignItems="center">
-          <Grid item xs={12}>
-            {renderQuantityField({
-              label: 'Numerator',
-              value: mainValue,
-              unit: mainUnit,
-              onValueChange: e => handleValueChange(e, false),
-              onUnitChange: val => handleUnitChange(val, false),
-              unitSchema: _.get(schema, 'properties.unit', {}),
-              uiOptions: unitOptions,
-              idPrefix: idSchema.$id,
-              required,
-              errors: numeratorErrors,
-              task,
-            })}
-          </Grid>
-          {pairWith && (
+    <span data-component-name="CompactQuantityField">
+      <Box sx={{ mb: '-35px' }}>
+        <Typography sx={{ mb: 0.5 }}>{title}</Typography>
+        <Box
+          sx={{
+            border: '1px solid',
+            borderColor: 'grey.400',
+            borderRadius: 1,
+            p: 2,
+          }}
+        >
+          <Grid container spacing={1} alignItems="center">
             <Grid item xs={12}>
               {renderQuantityField({
-                label: 'Denominator',
-                value: pairedValue,
-                unit: pairedUnit,
-                onValueChange: e => handleValueChange(e, true),
-                onUnitChange: val => handleUnitChange(val, true),
-                unitSchema: pairedUnitSchema,
-                uiOptions: pairedUnitUiOptions,
-                idPrefix: `${idSchema.$id}-${pairWith}`,
+                label: 'Numerator',
+                value: mainValue,
+                unit: mainUnit,
+                onValueChange: e => handleValueChange(e, false),
+                onUnitChange: val => handleUnitChange(val, false),
+                unitSchema: _.get(schema, 'properties.unit', {}),
+                uiOptions: unitOptions,
+                idPrefix: idSchema.$id,
                 required,
-                errors: denominatorErrors,
+                errors: numeratorErrors,
                 task,
               })}
             </Grid>
-          )}
-        </Grid>
+            {pairWith && (
+              <Grid item xs={12}>
+                {renderQuantityField({
+                  label: 'Denominator',
+                  value: pairedValue,
+                  unit: pairedUnit,
+                  onValueChange: e => handleValueChange(e, true),
+                  onUnitChange: val => handleUnitChange(val, true),
+                  unitSchema: pairedUnitSchema,
+                  uiOptions: pairedUnitUiOptions,
+                  idPrefix: `${idSchema.$id}-${pairWith}`,
+                  required,
+                  errors: denominatorErrors,
+                  task,
+                })}
+              </Grid>
+            )}
+          </Grid>
+        </Box>
+        {allErrors && <ErrorDisplay errors={allErrors} />}
       </Box>
-      {allErrors && <ErrorDisplay errors={allErrors} />}
-    </Box>
-      </span>
+    </span>
   );
 };
 

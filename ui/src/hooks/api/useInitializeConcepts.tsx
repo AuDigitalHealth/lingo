@@ -197,6 +197,6 @@ function isValidEclSearch(
   }
   return (
     showDefaultOptions ||
-    (searchString !== undefined && searchString.length > 2)
+    (searchString !== undefined && searchString?.length > 2)
   );
 }
