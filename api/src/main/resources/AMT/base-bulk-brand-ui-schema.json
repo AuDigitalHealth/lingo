@@ -3,7 +3,8 @@
     "selectedProduct",
     "newBrandInput",
     "existingBrands",
-    "brands"
+    "brands",
+    "externalIdentifiers"
 
   ],
   "ui:options": {

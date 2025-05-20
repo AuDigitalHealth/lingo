@@ -31,6 +31,7 @@ import {
 import { useTicketProductQuery } from './hooks/useTicketProductQuery.ts';
 import ProductPartialSaveModal from './components/ProductPartialSaveModal.tsx';
 import { DraftSubmitPanel } from './components/DarftSubmitPanel.tsx';
+import MuiGridTemplate from './templates/MuiGridTemplate.tsx';
 export interface DeviceAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
   task: Task;
@@ -164,7 +165,7 @@ function DeviceAuthoring({
             templates={{
               FieldTemplate: CustomFieldTemplate,
               ArrayFieldTemplate: CustomArrayFieldTemplate,
-              ObjectFieldTemplate: CustomObjectFieldTemplate,
+              ObjectFieldTemplate: MuiGridTemplate,
             }}
             validator={validator}
             widgets={{

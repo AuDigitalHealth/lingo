@@ -71,6 +71,7 @@
     "@types/lodash": "^4.17.14",
     "@types/sockjs-client": "^1.5.1",
     "ajv-errors": "^3.0.0",
+    "antd": "^5.25.1",
     "axios": "^1.4.0",
     "big.js": "^6.2.1",
     "cypress-promise": "1.1.0",
