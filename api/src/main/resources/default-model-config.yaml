@@ -106,9 +106,10 @@ models:
     baseBulkPackSchema: classpath:NMPC/base-bulk-pack-schema.json
     baseBulkPackUiSchema: classpath:NMPC/base-bulk-pack-ui-schema.json
     medicationPackageDataExtractionEcl: "(<id> or (>><id>.774160008)) and <373873005"
-    medicationProductDataExtractionEcl: "(<id> or (>> <id> and ^660371000220109)) and <373873005"
+    medicationProductDataExtractionEcl: "(<id> or (>!<id>:411116001=*)) and <373873005"
     devicePackageDataExtractionEcl: "(<id> or (<id>.999000111000168106) or (<id>.999000081000168101) or (<id>.999000111000168106.999000081000168101) or ((>>((<id>.999000081000168101) or (<id>.999000111000168106.999000081000168101))) and (^929360071000036103 or ^929360061000036106))) and < 260787004"
     deviceProductDataExtractionEcl: "(<id> or (>> <id> and (^929360071000036103 or ^929360061000036106))) and < 260787004"
+    executeEclAsStated: false
     trimWholeNumbers: true
     levels:
       - name: Virtual Therapeutic Moiety
@@ -118,7 +119,7 @@ models:
         deviceSemanticTag: physical object
         drugDeviceSemanticTag: medicinal product
         referenceSetIdentifier: 660351000220100
-        productModelEcl: "((> <id>) and ^ 660351000220100) minus >((> <id>) and ^ 660351000220100)"
+        productModelEcl: "(> <id> :[0..0]774159003=*,[0..0]411116001=*) MINUS (>(> <id> :[0..0]774159003=*,[0..0]411116001=*) OR 660341000220102)"
       - name: Virtual Medicinal Product
         displayLabel: MPUU
         modelLevelType: CLINICAL_DRUG
@@ -126,7 +127,7 @@ models:
         deviceSemanticTag: physical object
         drugDeviceSemanticTag: clinical drug
         referenceSetIdentifier: 660371000220109
-        productModelEcl: "((> <id>) and ^ 660371000220109) minus >((> <id>) and ^ 660371000220109)"
+        productModelEcl: "(> <id> :[0..0]774159003=*) {{ C moduleId=1601000220105 }} MINUS (>((> <id> :[0..0]774159003=*) {{ C moduleId=1601000220105 }}))"
       - name: Actual Medicinal Product
         displayLabel: TPUU
         modelLevelType: REAL_CLINICAL_DRUG
@@ -134,7 +135,7 @@ models:
         deviceSemanticTag: branded physical object
         drugDeviceSemanticTag: real clinical drug
         referenceSetIdentifier: 660381000220107
-        productModelEcl: "(>> (<id>.774160008)) and (^ 660381000220107)"
+        productModelEcl: "(<id>.774160008) {{ D term=\"real clinical drug\" }}"
       - name: Virtual Medicinal Product Pack
         displayLabel: MPP
         modelLevelType: PACKAGED_CLINICAL_DRUG
@@ -142,7 +143,7 @@ models:
         deviceSemanticTag: physical object package
         drugDeviceSemanticTag: clinical drug package
         referenceSetIdentifier: 660391000220105
-        productModelEcl: "((> <id>) and ^ 660391000220105) minus >((> <id>) and ^ 660391000220105)"
+        productModelEcl: "> <id> {{D term=\"clinical drug package\"}}"
       - name: Actual Medicinal Product Pack
         displayLabel: TPP
         modelLevelType: REAL_PACKAGED_CLINICAL_DRUG
