@@ -53,7 +53,7 @@ import NewConceptDropdown from './NewConceptDropdown.tsx';
 
 import { useParams } from 'react-router-dom';
 import { useTicketByTicketNumber } from '../../../hooks/api/tickets/useTicketById.tsx';
-import useTaskById from '../../../hooks/useTaskById.tsx';
+import useTaskByKey from '../../../hooks/useTaskById.tsx';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 import { ProductType } from '../../../types/product.ts';
@@ -499,7 +499,7 @@ function ConceptOptionsDropdown({
   const { ticketNumber } = useParams();
   const { data: ticket } = useTicketByTicketNumber(ticketNumber, true);
 
-  const task = useTaskById();
+  const task = useTaskByKey();
   const { serviceStatus } = useServiceStatus();
 
   const {

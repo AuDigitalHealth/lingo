@@ -261,7 +261,6 @@ function ProductPreviewCreateOrViewMode({
       setErrorKey(errKey as string);
       return;
     }
-
     const producSummaryClone = deepClone(data) as ProductSummary;
     reattachSemanticTags(producSummaryClone);
     const fsnWarnings = uniqueFsnValidator(producSummaryClone.nodes);

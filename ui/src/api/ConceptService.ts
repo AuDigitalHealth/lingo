@@ -287,9 +287,10 @@ const ConceptService = {
       term?: string;
       activeFilter?: boolean;
       termActive?: boolean;
+      searchAfter?: string;
     },
   ): Promise<ConceptResponse> {
-    const { term, termActive, activeFilter } = options ?? {};
+    const { term, termActive, activeFilter, searchAfter } = options ?? {};
     let { limit, offset } = options ?? {};
     limit = limit || 50;
     offset = offset || 0;
@@ -303,6 +304,7 @@ const ConceptService = {
       limit,
       activeFilter,
       termActive,
+      searchAfter,
     };
     if (term && term.length > 2) {
       params.term = term;

@@ -8,11 +8,13 @@ import { Concept } from '../../types/concept';
 export function useRefsetHasInactives(
   branch: string,
   refsetConcepts: Concept[],
+  showInactives: boolean,
 ) {
   const { serviceStatus } = useServiceStatus();
 
-  const { data, error } = useQueries({
+  const { data, error, isLoading } = useQueries({
     queries: refsetConcepts.map(refset => ({
+      enabled: showInactives,
       queryKey: [`concept-${branch}-^ ${refset.conceptId}-inactives`],
       queryFn: async () => {
         if (!refset.conceptId) return false;
@@ -32,6 +34,7 @@ export function useRefsetHasInactives(
           result.isLoading ? 'loading' : result.data,
         ),
         error: results.find(result => result.error)?.error,
+        isLoading: results.some(result => result.isLoading),
       };
     },
   });
@@ -41,5 +44,5 @@ export function useRefsetHasInactives(
       snowstormErrorHandler(error, 'Search Failed', serviceStatus);
     }
   }, [error, serviceStatus]);
-  return { data, error };
+  return { data, error, isLoading };
 }

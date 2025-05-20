@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import useUserStore from '../stores/UserStore';
-import useTaskById from './useTaskById';
+import useTaskByKey from './useTaskById';
 import { ClassificationStatus, Task, TaskStatus } from '../types/task.ts';
 import { useQuery } from '@tanstack/react-query';
 import TasksServices from '../api/TasksService.ts';
 
 export default function useCanEditTask() {
   const user = useUserStore();
-  const task = useTaskById();
+  const task = useTaskByKey();
   const [canEdit, setCanEdit] = useState(false);
   const { isLocked, lockDescription } = useIsTaskLocked(task, user.login);
   useEffect(() => {

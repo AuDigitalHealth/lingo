@@ -29,6 +29,7 @@ interface TasksCreateModalProps {
   handleClose: () => void;
   title: string;
   redirectEnabled?: boolean;
+  redirectUrl: string;
 }
 
 type TaskFormValues = {
@@ -42,6 +43,7 @@ export default function TasksCreateModal({
   handleClose,
   title,
   redirectEnabled = true,
+  redirectUrl,
 }: TasksCreateModalProps) {
   const [loading, setLoading] = useState(false);
   const { applicationConfig } = useApplicationConfigStore();
@@ -128,7 +130,10 @@ export default function TasksCreateModal({
             queryKey: queryKey,
           });
           if (redirectEnabled) {
-            navigate(`/dashboard/tasks/edit/${res.key}`);
+            if (redirectUrl.includes(':projectKey')) {
+              redirectUrl = redirectUrl.replace(':projectKey', res.projectKey);
+            }
+            navigate(`${redirectUrl}/${res.key}`);
           }
         }
       })
