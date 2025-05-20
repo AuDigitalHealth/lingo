@@ -65,11 +65,16 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
     setOpenCreateBrandModal(false);
   };
 
+  let paddingRight = 0;
+  if (createBrand) {
+    paddingRight = 5;
+  }
+
   return (
     <span data-component-name="AutoCompleteField">
       <Box>
         <Box display="flex" alignItems="center" gap={1}>
-          <Box flex={50} sx={{ position: 'relative' }}>
+          <Box flex={50} sx={{ position: 'relative', paddingRight: paddingRight }}>
             {task?.branchPath && (
               <EclAutocomplete
                 {...props}
@@ -88,7 +93,7 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
                   onClick={() => setOpenCreateBrandModal(true)}
                   sx={{
                     position: 'absolute',
-                    right: '-40px',
+                    right: '0px',
                     top: '0',
                   }}
                   disabled={disabled || false}

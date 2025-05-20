@@ -8,18 +8,8 @@ body {
 #sentry-feedback {
   --inset: auto auto 0px -10px;
 }
-.MuiSelect-select {
-  min-width: 15vw;
-}
-.form-group.field.field-undefined .MuiSelect-select {
-  min-width: unset !important;
-  width: unset !important;
-}
-.form-group.field.field-undefined .panel > .form-group {
-  display: inline-block;
-  padding-right: 8px;
-}
-.form-group.field.field-undefined .panel-body > .form-group {
-  padding-right: unset;
-  width: 50% !important;
+
+.field-string>.MuiTextField-root,
+.field-number>.MuiTextField-root {
+  width: inherit;
 }
