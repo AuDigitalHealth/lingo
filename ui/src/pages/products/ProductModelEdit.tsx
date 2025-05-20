@@ -85,7 +85,7 @@ import {
 } from '../../hooks/api/tickets/useTicketById.tsx';
 
 import { useLocation, useParams } from 'react-router-dom';
-import useTaskById from '../../hooks/useTaskById.tsx';
+import useTaskByKey from '../../hooks/useTaskById.tsx';
 import useAuthoringStore from '../../stores/AuthoringStore.ts';
 import {
   uniqueFsnValidator,
@@ -716,7 +716,7 @@ function ConceptOptionsDropdown({
   const { ticketNumber } = useParams();
   const { data: ticket } = useTicketByTicketNumber(ticketNumber, true);
 
-  const task = useTaskById();
+  const task = useTaskByKey();
   const { serviceStatus } = useServiceStatus();
 
   const {

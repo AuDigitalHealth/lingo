@@ -1,4 +1,4 @@
-import useTaskById from '../../hooks/useTaskById.tsx';
+import useTaskByKey from '../../hooks/useTaskById.tsx';
 import TaskEditCard from './components/TaskEditCard.tsx';
 import TasksList from './components/TasksList.tsx';
 import TaskTicket from './components/TaskTicket.tsx';
@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { Route, Routes } from 'react-router-dom';
 
 function TaskEditLayout() {
-  const task = useTaskById();
+  const task = useTaskByKey();
   const [menuOpen, setMenuOpen] = useState(true);
 
   const handleMenuToggle = () => {
@@ -36,6 +36,7 @@ function TaskEditLayout() {
           dense={true}
           naked={true}
           showActionBar={false}
+          taskCreateRedirectUrl="/dashboard/tasks/edit"
         />
         <Stack
           sx={{

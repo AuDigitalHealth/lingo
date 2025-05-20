@@ -27,11 +27,13 @@ function TickFlickRefset() {
   const { conceptData: concept, isConceptFetching } = useConceptById(
     branch,
     conceptId,
+    true,
   );
 
   const { data: inactiveData } = useRefsetHasInactives(
     branch,
     concept ? [concept] : [],
+    true,
   );
   const { data: queryRefsetData } = useConceptsByEcl(
     branch,

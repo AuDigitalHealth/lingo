@@ -1,6 +1,6 @@
 import { Stack } from '@mui/system';
-import UserTasksList from './components/UserTasksList.tsx';
 import { Typography } from '@mui/material';
+import TasksList from '../tasks/components/TasksList.tsx';
 
 function TaskEditLayout() {
   return (
@@ -8,7 +8,13 @@ function TaskEditLayout() {
       <Typography variant="h1" sx={{ fontSize: '1.5rem', color: '#003665' }}>
         Snodine
       </Typography>
-      <UserTasksList heading="My Tasks" />
+      <TasksList
+        heading="My Tasks"
+        isSnodineList={true}
+        displayProject={true}
+        path="/snodine"
+        taskCreateRedirectUrl="/dashboard/snodine/task/:projectKey"
+      />
     </Stack>
   );
 }

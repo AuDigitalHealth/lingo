@@ -46,14 +46,17 @@ import { getAllKeyValueMapForTheKey } from '../../../utils/helpers/FieldBindingU
 import message from '../../../layouts/MainLayout/Header/HeaderContent/Message.tsx';
 
 interface TaskListProps {
-  path?: '' | '/all' | '/needReview';
+  path?: '' | '/all' | '/needReview' | '/snodine';
   propTasks?: Task[];
   heading: string;
   dense?: boolean;
   // disable search, filter's etc
   naked?: boolean;
   showActionBar?: boolean;
-  // jiraUsers: JiraUser[];
+  displayProject?: boolean;
+  displayTickets?: boolean;
+  isSnodineList?: boolean;
+  taskCreateRedirectUrl: string;
 }
 
 function ValidationBadge(formattedValue: {
@@ -83,6 +86,10 @@ function TasksList({
   dense = false,
   naked = false,
   showActionBar = true,
+  displayTickets = true,
+  isSnodineList = false,
+  displayProject,
+  taskCreateRedirectUrl,
 }: TaskListProps) {
   const { jiraUsers } = useJiraUsers();
   const { taskAssociationsData } = useAllTaskAssociations();
@@ -156,27 +163,101 @@ function TasksList({
       unavailableTasksErrorHandler();
     }
   }, []);
+
+  const projectColumn = {
+    field: 'projectKey',
+    headerName: 'Project',
+    width: 100,
+  };
+
+  const ticketsColumn = {
+    field: 'labels',
+    headerName: 'Tickets',
+    width: 150,
+    renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
+      const associatedTickets = getTaskAssociationsByTaskId(
+        params.row.key,
+        taskAssociationsData,
+      );
+      return (
+        <>
+          {associatedTickets.map((associatedTicket, index) => (
+            <Link
+              to={`/dashboard/tickets/backlog/individual/${associatedTicket.ticketNumber}`}
+              className={'task-details-link'}
+              key={associatedTicket.ticketNumber}
+            >
+              {associatedTicket.ticketNumber}
+              {index !== associatedTickets.length - 1 ? ', ' : ''}
+            </Link>
+          ))}
+        </>
+      );
+    },
+    valueGetter: (params: GridRenderCellParams<any, any>): string => {
+      const associatedTickets = getTaskAssociationsByTaskId(
+        params.row.key,
+        taskAssociationsData,
+      );
+      let allTickets = '';
+      associatedTickets.forEach((associatedTicket, index) => {
+        allTickets += associatedTicket.ticketId;
+        if (index !== associatedTickets.length - 1) allTickets += ',';
+      });
+      return allTickets;
+    },
+  };
+
+  const taskIdColumn = {
+    field: 'key',
+    headerName: 'Task ID',
+    minWidth: 90,
+    flex: 1,
+    maxWidth: 90,
+    valueGetter: (params: GridRenderCellParams<any, string>): Task => {
+      return params.row;
+    },
+    type: 'string',
+    sortComparator: (v1: any, v2: any, param1: any, param2: any) => {
+      // Sort by the task's key property
+      const key1 = param1.value?.key || '';
+      const key2 = param2.value?.key || '';
+
+      // Fallback to string comparison
+      return key1.localeCompare(key2);
+    },
+    renderCell: (params: GridRenderCellParams<any, Task>): ReactNode => {
+      if (isSnodineList) {
+        return naked ? (
+          <>{params.value?.key.toString()}</>
+        ) : (
+          <Link
+            to={`task/${params.value?.projectKey}/${params.value?.key}`}
+            className={'task-details-link'}
+          >
+            {params.value?.key.toString()}
+          </Link>
+        );
+      }
+      return (
+        <AuthoringPlatformLink
+          to={`/dashboard/tasks/edit/${params.value?.key}`}
+          className={'task-details-link'}
+        >
+          {params.value!.key?.toString()}
+        </AuthoringPlatformLink>
+      );
+    },
+  };
+
   const columns: GridColDef[] = [
+    ...(displayProject ? [projectColumn] : []),
     {
       field: 'summary',
       headerName: 'Name',
       width: 150,
     },
-    {
-      field: 'key',
-      headerName: 'Task ID',
-      minWidth: 90,
-      flex: 1,
-      maxWidth: 90,
-      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <AuthoringPlatformLink
-          to={`/dashboard/tasks/edit/${params.value}`}
-          className={'task-details-link'}
-        >
-          {params.value!.toString()}
-        </AuthoringPlatformLink>
-      ),
-    },
+    taskIdColumn,
     {
       field: 'updated',
       headerName: 'Modified',
@@ -188,43 +269,7 @@ function TasksList({
         return date.toLocaleDateString('en-AU');
       },
     },
-    {
-      field: 'labels',
-      headerName: 'Tickets',
-      width: 150,
-      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
-        const associatedTickets = getTaskAssociationsByTaskId(
-          params.row.key,
-          taskAssociationsData,
-        );
-        return (
-          <>
-            {associatedTickets.map((associatedTicket, index) => (
-              <Link
-                to={`/dashboard/tickets/backlog/individual/${associatedTicket.ticketNumber}`}
-                className={'task-details-link'}
-                key={associatedTicket.ticketNumber}
-              >
-                {associatedTicket.ticketNumber}
-                {index !== associatedTickets.length - 1 ? ', ' : ''}
-              </Link>
-            ))}
-          </>
-        );
-      },
-      valueGetter: (params: GridRenderCellParams<any, any>): string => {
-        const associatedTickets = getTaskAssociationsByTaskId(
-          params.row.key,
-          taskAssociationsData,
-        );
-        let allTickets = '';
-        associatedTickets.forEach((associatedTicket, index) => {
-          allTickets += associatedTicket.ticketId;
-          if (index !== associatedTickets.length - 1) allTickets += ',';
-        });
-        return allTickets;
-      },
-    },
+    ...(displayTickets ? [ticketsColumn] : []),
     {
       field: 'branchState',
       headerName: 'Rebase',
@@ -426,7 +471,7 @@ function TasksList({
   ];
   return (
     <>
-      {showActionBar && <TasksActionBar />}
+      {showActionBar && <TasksActionBar redirectUrl={taskCreateRedirectUrl} />}
 
       <Grid container>
         <Grid item xs={12} lg={12}>
@@ -510,8 +555,15 @@ function TasksList({
                       pagination: {
                         paginationModel: { page: 0, pageSize: 10 },
                       },
+                      sorting: {
+                        sortModel: [{ field: 'key', sort: 'desc' }],
+                      },
                     }
-                  : {}
+                  : {
+                      sorting: {
+                        sortModel: [{ field: 'key', sort: 'desc' }],
+                      },
+                    }
               }
               pageSizeOptions={!naked ? [10, 15, 20, 25] : []}
               disableColumnFilter={naked}

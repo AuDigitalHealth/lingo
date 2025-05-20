@@ -20,7 +20,7 @@ import { ArrowBack } from '@mui/icons-material';
 import { useTicketByTicketNumber } from '../../../hooks/api/tickets/useTicketById.tsx';
 import Loading from '../../../components/Loading';
 import ProductAuthoring from '../../products/ProductAuthoring';
-import useTaskById from '../../../hooks/useTaskById';
+import useTaskByKey from '../../../hooks/useTaskById';
 import ProductModelReadonly from '../../products/ProductModelReadonly.tsx';
 
 import { useEffect, useState } from 'react';
@@ -42,7 +42,7 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
   // These all need to be tied to actions - ? Whatever these actions look like, I really have no idea at the moment.
   // For now, we just have buttons
   const { branchKey, ticketNumber } = useParams();
-  const task = useTaskById();
+  const task = useTaskByKey();
   const [refreshKey, setRefreshKey] = useState(0);
   const useTicketQuery = useTicketByTicketNumber(ticketNumber, true);
   const { setSelectedActionType } = useAuthoringStore();

@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import useUserTaskByIds from '../../hooks/eclRefset/useUserTaskByIds.tsx';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import QueryRefsetList from './components/QueryRefsetList.tsx';
 import { Box, Button, Stack, Tab } from '@mui/material';
 import { TabContext, TabList, TabPanel } from '@mui/lab';
@@ -8,12 +7,14 @@ import { PlusCircleOutlined } from '@ant-design/icons';
 import useUserStore from '../../stores/UserStore.ts';
 import TickFlickRefsetList from './components/TickFlickRefsetList.tsx';
 import useBranch from '../../hooks/eclRefset/useBranch.tsx';
+import useTaskByKey from '../../hooks/useTaskById.tsx';
 
 type RefsetType = 'query' | 'tickflick';
 
 function Refsets() {
   const navigate = useNavigate();
-  const task = useUserTaskByIds();
+  const { taskKey } = useParams();
+  const task = useTaskByKey(taskKey);
   const { login } = useUserStore();
 
   const branch = useBranch();

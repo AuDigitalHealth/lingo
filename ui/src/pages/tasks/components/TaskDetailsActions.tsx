@@ -1,6 +1,6 @@
 /* eslint-disable */
 import { Button, ButtonGroup, Grid, SxProps } from '@mui/material';
-import useTaskById from '../../../hooks/useTaskById';
+import useTaskByKey from '../../../hooks/useTaskById';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -32,7 +32,7 @@ const customSx: SxProps = {
 };
 
 function TaskDetailsActions() {
-  const task = useTaskById();
+  const task = useTaskByKey();
   const taskStore = useTaskStore();
 
   const [classifying, setClassifying] = useState(false);

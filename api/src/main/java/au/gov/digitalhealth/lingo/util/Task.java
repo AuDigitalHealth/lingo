@@ -87,6 +87,9 @@ public class Task {
     COMPLETED("Completed"),
     @JsonProperty("Deleted")
     DELETED("Deleted"),
+
+    @JsonProperty("Auto Classifying")
+    AUTO_CLASSIFYING("Auto Classifying"),
     @JsonProperty("Unknown")
     UNKNOWN("Unknown");
 
