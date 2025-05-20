@@ -98,8 +98,8 @@ const lodashPathToRjsfId = (lodashPath: string) => {
   // Handle cases where bracket is at the start of a segment (e.g., array[0].field)
   // and cases where it follows a segment (e.g., object.array[0].field)
   const rjsfPath = pathStr
-      .replace(/\[(\d+)\]/g, '_$1') // Replace [index] with _index globally
-      .replace(/\._/g, '_'); // Clean up any stray dots that might appear before the underscore
+    .replace(/\[(\d+)\]/g, '_$1') // Replace [index] with _index globally
+    .replace(/\._/g, '_'); // Clean up any stray dots that might appear before the underscore
 
   // Add the 'root_' prefix
   return `root_${rjsfPath}`;
@@ -126,7 +126,11 @@ export const getFormDataById = (rootFormData: any, rjsfId: string) => {
  * @param {*} value The value to set.
  * @returns {object} A new formData object with the value set.
  */
-export const setFormDataById = (rootFormData: any, rjsfId: string, value: any) => {
+export const setFormDataById = (
+  rootFormData: any,
+  rjsfId: string,
+  value: any,
+) => {
   const lodashPath = rjsfIdToLodashPath(rjsfId);
   // Use _.set with a clone to avoid mutating the original formData
   const newFormData = _.cloneDeep(rootFormData);
@@ -171,7 +175,11 @@ export const getUiSchemaById = (rootUiSchema: any, rjsfId: string) => {
  * @param {*} value The uiSchema configuration object or value to set.
  * @returns {object} A new uiSchema object with the configuration set.
  */
-export const setUiSchemaById = (rootUiSchema: any, rjsfId: string, value: any) => {
+export const setUiSchemaById = (
+  rootUiSchema: any,
+  rjsfId: string,
+  value: any,
+) => {
   const lodashPath = rjsfIdToLodashPath(rjsfId);
   // Use _.set with a clone to avoid mutating the original uiSchema
   const newUiSchema = _.cloneDeep(rootUiSchema);

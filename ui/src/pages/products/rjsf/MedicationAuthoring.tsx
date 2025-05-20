@@ -33,10 +33,7 @@ import {
 import { useTicketProductQuery } from './hooks/useTicketProductQuery.ts';
 import { DraftSubmitPanel } from './components/DarftSubmitPanel.tsx';
 import ProductPartialSaveModal from './components/ProductPartialSaveModal.tsx';
-
-import { uiSchema } from './ire-template-medication-ui-schema.ts';
-import { schema } from './ire-template-medication-schema.ts';
-import { formData as tmpFormData } from './ire-template-medication-formData.ts';
+import MuiGridTemplate from './templates/MuiGridTemplate.tsx';
 
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -54,22 +51,20 @@ function MedicationAuthoring({
   ticketProductId,
   ticket,
 }: MedicationAuthoringV2Props) {
-  const [formData, setFormData] = useState(tmpFormData);
+  const [formData, setFormData] = useState({});
   const [errorSchema, setErrorSchema] = useState({});
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const formRef = useRef<any>(null);
-  const isSchemaLoading = false;
-  // const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
-  //   task.branchPath,
-  // );
 
-  const isUiSchemaLoading = false;
-  // const { data: uiSchema, isLoading: isUiSchemaLoading }
-  //     useUiSchemaQuery(
-  //   task.branchPath,
-  // );
+  const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
+    task.branchPath,
+  );
+  const { data: uiSchema, isLoading: isUiSchemaLoading } = useUiSchemaQuery(
+    task.branchPath,
+  );
+
   const { isLoading, isFetching } = useProductQuery({
     selectedProduct,
     task,
@@ -147,6 +142,14 @@ function MedicationAuthoring({
     setSaveModalOpen(true);
   };
 
+  const onError = (errors: any) => {
+    const newErrorSchema = errors.reduce((acc: any, error: any) => {
+      _.set(acc, error.property.slice(1), { __errors: [error.message] });
+      return acc;
+    }, {});
+    setErrorSchema(newErrorSchema);
+  };
+
   return (
     <Paper sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1 }}>
       <Box m={2} p={2}>
@@ -160,6 +163,7 @@ function MedicationAuthoring({
             fields={{
               AutoCompleteField,
               ConditionalArrayField,
+
               UnitValueUnWrappedField,
               UnitValueField,
               CompactQuantityField,
@@ -171,12 +175,15 @@ function MedicationAuthoring({
             }}
             templates={{
               ArrayFieldTemplate: CustomArrayFieldTemplate,
-              ObjectFieldTemplate: CustomObjectFieldTemplate,
+              ObjectFieldTemplate: MuiGridTemplate,
             }}
             onChange={handleChange}
             onSubmit={handleFormSubmit}
+            onError={onError}
             validator={validator}
             disabled={isPending}
+            noHtml5Validate={true}
+            noValidate={true}
           >
             <Box
               sx={{

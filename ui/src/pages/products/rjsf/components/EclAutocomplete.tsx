@@ -4,28 +4,42 @@ import { Concept, ConceptMini } from '../../../../types/concept.ts';
 import { useSearchConceptsByEcl } from '../../../../hooks/api/useInitializeConcepts.tsx';
 import { FieldProps } from '@rjsf/utils';
 
-const EclAutocomplete: React.FC<FieldProps<any, any>> = (props) => {
+const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
+  const {
+    id,
+    ecl,
+    branch,
+    value,
+    isDisabled,
+    errorMessage,
+    sx,
+    onChange,
+    schema,
+    uiSchema,
+  } = props;
+  const { showDefaultOptions } = (uiSchema && uiSchema['ui:options']) || {};
 
-  if (!props) {
-    return;
-  }
+  let isThisDisabled = isDisabled || props.disabled || false;
+  useEffect(() => {
+    isThisDisabled = isDisabled || props.disabled || false;
+    // @ts-ignore
+    setInputValue(null);
+  }, [isDisabled]);
 
-  const { id, ecl, branch, value, isDisabled, formData, errorMessage, sx, onChange, schema, uiSchema } = props;
-  const { showDefaultOptions } = uiSchema && uiSchema['ui:options'] || {};
-
-  // const [suggestions, setSuggestions] = useState<any[]>([]);
-  // const [input, setInput] = useState<string>(formData?.pt?.term || '');
-
-  const [inputValue, setInputValue] = useState<string>(formData?.pt?.term || '');
-  const [concepts, setConcepts] = useState<Concept[]>([]);
+  const [inputValue, setInputValue] = useState('');
+  const [options, setOptions] = useState<Concept[]>([]);
   const { isLoading, allData } = useSearchConceptsByEcl(
     inputValue,
-    ecl && ecl.length > 0 ? ecl : undefined,
+    ecl && ecl?.length > 0 ? ecl : undefined,
     branch,
     showDefaultOptions as boolean,
   );
 
-  const title = (props && props.title) || (schema && schema.title) || (uiSchema && uiSchema['ui:title']) || '';
+  const title =
+    (props && props.title) ||
+    (schema && schema.title) ||
+    (uiSchema && uiSchema['ui:title']) ||
+    '';
 
   useEffect(() => {
     if (allData) {
@@ -34,20 +48,20 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = (props) => {
           allData.map((item: Concept) => [item.conceptId, item]),
         ).values(),
       );
-      setConcepts(uniqueOptions);
+      setOptions(uniqueOptions);
     }
   }, [allData]);
 
   useEffect(() => {
-    if (value && concepts.length > 0) {
-      const selectedOption = concepts.find(
-          concept => concept.conceptId === value.conceptId,
+    if (value && options?.length > 0) {
+      const selectedOption = options.find(
+        option => option.conceptId === value.conceptId,
       );
       setInputValue(selectedOption?.pt?.term || value?.pt?.term || '');
     } else if (value) {
       setInputValue(value?.pt?.term || '');
     }
-  }, [value, concepts]);
+  }, [value, options]);
 
   const handleProductChange = (selectedProduct: Concept | null) => {
     if (selectedProduct) {
@@ -56,66 +70,65 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = (props) => {
         pt: selectedProduct.pt,
         fsn: selectedProduct.fsn,
       };
-      setInputValue(selectedProduct.pt?.term || '');
       onChange(conceptMini);
+      setInputValue(selectedProduct.pt?.term || '');
     } else {
-      setInputValue('');
       onChange(null);
+      setInputValue('');
     }
   };
 
   return (
-      <span data-component-name="EclAutocomplete">
-    <Autocomplete
-      loading={isLoading}
-      options={isDisabled ? [] : concepts}
-      getOptionLabel={(concept: Concept) => concept?.pt?.term || ''}
-      value={
-        concepts.find(concept => concept.conceptId === value?.conceptId) ||
-        value ||
-        null
-      }
-      onInputChange={(event, newInputValue) => setInputValue(newInputValue)}
-      onChange={(event, selectedValue) =>
-        handleProductChange(selectedValue as Concept)
-      }
-      isOptionEqualToValue={(concept: Concept, selectedValue: Concept) =>
-          concept?.conceptId === selectedValue?.conceptId
-      }
-      renderOption={(props, concept: Concept) => (
-        <li {...props} key={concept.conceptId}>
-          {concept.pt?.term}
-        </li>
-      )}
-      renderInput={params => (
-        <TextField
-          {...params}
-          // error={!!errorMessage}
-          // helperText={errorMessage || ' '} // Reserve space even when no error
-          data-test-id={id}
-          label={title}
-          InputProps={{
-            ...params.InputProps,
-            endAdornment: (
-              <>
-                {isLoading ? <CircularProgress size={20} /> : null}
-                {params.InputProps.endAdornment}
-              </>
-            ),
-          }}
-          disabled={isDisabled}
-          sx={{
-            '& .MuiFormHelperText-root': {
-              m: 0, // Remove margin to keep layout tight
-              minHeight: '1em', // Reserve consistent space
-              color: errorMessage ? 'error.main' : 'text.secondary', // Change color based on errorMessage
-            },
-          }}
-        />
-      )}
-      sx={sx} // Pass external styles
-    />
-      </span>
+    <span data-component-name="EclAutocomplete">
+      <Autocomplete
+        loading={isLoading}
+        disabled={isThisDisabled}
+        options={isDisabled ? [] : options}
+        getOptionLabel={(option: Concept) => option?.pt?.term || ''}
+        value={
+          options.find(option => option.conceptId === value?.conceptId) ||
+          value ||
+          null
+        }
+        onInputChange={(event, newInputValue) => setInputValue(newInputValue)}
+        onChange={(event, selectedValue) =>
+          handleProductChange(selectedValue as Concept)
+        }
+        isOptionEqualToValue={(option: Concept, selectedValue: Concept) =>
+          option?.conceptId === selectedValue?.conceptId
+        }
+        renderOption={(props, option: Concept) => (
+          <li {...props} key={option.conceptId}>
+            {option.pt.term}
+          </li>
+        )}
+        renderInput={params => (
+          <TextField
+            {...params}
+            data-test-id={id}
+            label={title}
+            InputProps={{
+              ...params.InputProps,
+              endAdornment: (
+                <>
+                  {isLoading ? <CircularProgress size={20} /> : null}
+                  {params.InputProps.endAdornment}
+                </>
+              ),
+            }}
+            disabled={isThisDisabled}
+            sx={{
+              '& .MuiFormHelperText-root': {
+                m: 0, // Remove margin to keep layout tight
+                minHeight: '1em', // Reserve consistent space
+                color: errorMessage ? 'error.main' : 'text.secondary', // Change color based on errorMessage
+              },
+            }}
+          />
+        )}
+        sx={sx} // Pass external styles
+      />
+    </span>
   );
 };
 

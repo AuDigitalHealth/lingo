@@ -13,19 +13,27 @@ const TextFieldWidget = ({
   label,
   options,
 }: WidgetProps) => {
-  const placeholder =
-    (options?.placeholder as string | undefined) || 'Enter text';
+  const placeholder = options?.placeholder || 'Enter text';
 
-  const _onChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => {
+  const _onChange = ({
+    target: { value },
+  }: React.ChangeEvent<HTMLInputElement>) => {
     onChange(value === '' ? options.emptyValue : value);
   };
-  const _onBlur = ({ target: { value } }: React.FocusEvent<HTMLInputElement>) => onBlur(id, value);
-  const _onFocus = ({ target: { value } }: React.FocusEvent<HTMLInputElement>) => onFocus(id, value);
+  const _onBlur = ({ target: { value } }: React.FocusEvent<HTMLInputElement>) =>
+    onBlur(id, value);
+  const _onFocus = ({
+    target: { value },
+  }: React.FocusEvent<HTMLInputElement>) => onFocus(id, value);
 
   const hasError = rawErrors && rawErrors.length > 0;
-  const errorMessages = hasError ? rawErrors.map((err: any) => {
-    return err?.message;
-  }).join(', ') : '';
+  const errorMessages = hasError
+    ? rawErrors
+        .map((err: any) => {
+          return err?.message;
+        })
+        .join(', ')
+    : '';
 
   return (
     <Box sx={{ width: '100%' }}>
