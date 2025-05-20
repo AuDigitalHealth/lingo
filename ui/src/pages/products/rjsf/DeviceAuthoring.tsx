@@ -1,6 +1,6 @@
 import React, { useCallback, useState, useRef } from 'react';
 import { Form } from '@rjsf/mui';
-import { Container, Button, Box, Paper } from '@mui/material';
+import {Container, Button, Box, Paper, Autocomplete} from '@mui/material';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import _ from 'lodash';
 import ajvErrors from 'ajv-errors';
@@ -160,7 +160,7 @@ function DeviceAuthoring({
             onError={onError}
             fields={{
               UnitValueUnWrappedField: UnitValueUnWrappedField,
-              AutoCompleteField,
+              AutoCompleteField
             }}
             templates={{
               FieldTemplate: CustomFieldTemplate,
@@ -171,7 +171,7 @@ function DeviceAuthoring({
             widgets={{
               NumberWidget,
               TextFieldWidget,
-              OneOfArrayWidget,
+              OneOfArrayWidget
             }}
             disabled={isPending}
           >

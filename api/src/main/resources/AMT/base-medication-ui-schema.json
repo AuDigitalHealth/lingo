@@ -1,13 +1,10 @@
 {
   "ui:grid": [
     {
-      "productName": 11
+      "productName": 12
     },
     {
-      "_empty": 2
-    },
-    {
-      "containerType": 11
+      "containerType": 12
     },
     {
       "externalIdentifiers": 12,
