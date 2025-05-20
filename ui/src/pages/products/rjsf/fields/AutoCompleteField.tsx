@@ -74,7 +74,10 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
     <span data-component-name="AutoCompleteField">
       <Box>
         <Box display="flex" alignItems="center" gap={1}>
-          <Box flex={50} sx={{ position: 'relative', paddingRight: paddingRight }}>
+          <Box
+            flex={50}
+            sx={{ position: 'relative', paddingRight: paddingRight }}
+          >
             {task?.branchPath && (
               <EclAutocomplete
                 {...props}
