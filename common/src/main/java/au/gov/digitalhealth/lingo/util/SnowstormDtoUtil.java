@@ -499,10 +499,6 @@ public class SnowstormDtoUtil {
       }
 
       if (mappingRefset.getModelLevels().contains(modelLevelType)) {
-        if (mappingRefset == null) {
-          throw new ProductAtomicDataValidationProblem(
-              "Unknown identifier scheme " + identifier.getIdentifierScheme());
-        }
 
         Map<String, String> additionalFields = new HashMap<>();
 
@@ -584,6 +580,16 @@ public class SnowstormDtoUtil {
     if (concept.getClassAxioms().size() > 1) {
       throw new AtomicDataExtractionProblem(
           "Cannot handle more than one axiom determining brands", concept.getConceptId());
+    }
+    return axiom;
+  }
+
+  public static SnowstormAxiom getSingleAxiom(NewConceptDetails concept) {
+    SnowstormAxiom axiom = concept.getAxioms().iterator().next();
+    if (concept.getAxioms().size() > 1) {
+      throw new AtomicDataExtractionProblem(
+          "Cannot handle more than one axiom determining brands",
+          concept.getConceptId().toString());
     }
     return axiom;
   }
