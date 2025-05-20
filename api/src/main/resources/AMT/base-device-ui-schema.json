@@ -1,6 +1,10 @@
 {
   "ui:grid": [
-    { "productName": 11, "_empty": 2, "containerType": 11 },
+    { "productName": 12, "containerType": 12 },
+    {
+      "externalIdentifiers": 12,
+      "_empty": 12
+    },
     { "containedProducts": 24 }
   ],
   "productName": {
@@ -38,6 +42,9 @@
       }
     },
     "items": {
+      "ui:options": {
+        "skipTitle": true
+      },
       "ui:grid": [
         { "productDetails": 24 },
         { "value": 6, "unit": 6, "_empty": 12 }
