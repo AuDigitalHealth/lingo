@@ -61,6 +61,7 @@ import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import au.gov.digitalhealth.lingo.util.ValidationUtil;
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -254,6 +255,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
             .map(t -> new Maps(t.getT1(), t.getT2(), t.getT3(), t.getT4()))
             .block();
 
+    // todo revisit this after NMPC migration
     //    if (maps == null || !maps.typeMap.keySet().equals(maps.browserMap.keySet())) {
     //      throw new AtomicDataExtractionProblem(
     //          "Mismatch between browser and refset members", productId);
@@ -292,9 +294,6 @@ public abstract class AtomicDataService<T extends ProductDetails> {
 
     Mono<List<SnowstormConcept>> packVariants =
         snowStormApiClient.getBrowserConcepts(branch, packVariantIds).collectList();
-
-    List<SnowstormConcept> block = packVariants.block();
-    assert block != null;
 
     Mono<List<SnowstormReferenceSetMember>> packVariantRefsetMembers =
         snowStormApiClient
@@ -362,15 +361,15 @@ public abstract class AtomicDataService<T extends ProductDetails> {
    */
   public ProductBrands getProductBrands(String branch, Long productId) {
     SnowstormClient snowStormApiClient = getSnowStormApiClient();
-    SnowstormConcept concept =
+    SnowstormConcept productConcept =
         Mono.from(snowStormApiClient.getBrowserConcepts(branch, Set.of(productId.toString())))
             .block();
 
-    assert concept != null;
-    ValidationUtil.assertSingleComponentSinglePackProduct(concept);
+    assert productConcept != null;
+    ValidationUtil.assertSingleComponentSinglePackProduct(productConcept);
 
     boolean medication =
-        getRelationshipsFromAxioms(concept).stream()
+        getRelationshipsFromAxioms(productConcept).stream()
             .anyMatch(r -> r.getTypeId().equals(CONTAINS_CD.getValue()));
 
     SnowstormConcept containedConcept =
@@ -380,7 +379,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
                     Set.of(
                         Objects.requireNonNull(
                             getSingleActiveTarget(
-                                    getSingleAxiom(concept).getRelationships(),
+                                    getSingleAxiom(productConcept).getRelationships(),
                                     medication
                                         ? CONTAINS_CD.getValue()
                                         : CONTAINS_DEVICE.getValue())
@@ -398,7 +397,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
             true,
             getModelConfiguration(branch));
 
-    SnowstormAxiom axiom = getSingleAxiom(concept);
+    SnowstormAxiom axiom = getSingleAxiom(productConcept);
 
     Collection<String> packVariantIds =
         getSimilarPackageConcepts(
@@ -431,11 +430,12 @@ public abstract class AtomicDataService<T extends ProductDetails> {
       packVariantRefsetMemebersResult = List.of();
     }
 
-    for (SnowstormConcept packVariant : packVariantResult) {
+    Map<String, SnowstormConceptMini> packVariantBrandMap =
+        getPackVariantBrandMap(branch, packVariantResult, productId);
 
-      SnowstormConceptMini brand =
-          getSingleActiveTarget(
-              getSingleAxiom(packVariant).getRelationships(), HAS_PRODUCT_NAME.getValue());
+    for (String packVariantId : packVariantBrandMap.keySet()) {
+
+      SnowstormConceptMini brand = packVariantBrandMap.get(packVariantId);
 
       // Find the BrandWithIdentifiers if present, or create a new one
       BrandWithIdentifiers brandWithIdentifiers =
@@ -456,7 +456,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
       externalIdentifiers.addAll(
           ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMembers(
               packVariantRefsetMemebersResult,
-              packVariant.getConceptId(),
+              packVariantId,
               getModelConfiguration(branch).getMappings().stream()
                   .filter(m -> m.getLevel().equals(ProductPackageType.PACKAGE))
                   .collect(Collectors.toSet())));
@@ -472,6 +472,63 @@ public abstract class AtomicDataService<T extends ProductDetails> {
     productBrands.setBrands(brandsWithIdentifiers);
 
     return productBrands;
+  }
+
+  private Map<String, SnowstormConceptMini> getPackVariantBrandMap(
+      String branch, List<SnowstormConcept> packVariantResult, Long productId) {
+    if (getModelConfiguration(branch).getModelType().equals(ModelType.AMT)) {
+      return packVariantResult.stream()
+          .collect(
+              Collectors.toMap(
+                  pv -> pv.getConceptId(),
+                  pv ->
+                      getSingleActiveTarget(
+                          getSingleAxiom(pv).getRelationships(), HAS_PRODUCT_NAME.getValue())));
+    } else if (getModelConfiguration(branch).getModelType().equals(ModelType.NMPC)) {
+      // NMPC doesn't have the product name on the pack concept, only the product concepts
+      // so we have to go and find them all
+      Map<String, SnowstormConceptMini> map = new HashMap<>();
+
+      for (SnowstormConcept packVariant : packVariantResult) {
+        Collection<SnowstormConceptMini> brands =
+            getSnowStormApiClient()
+                .getConceptsFromEcl(
+                    branch,
+                    "<id>.774160008.774158006",
+                    Long.parseLong(packVariant.getConceptId()),
+                    0,
+                    100,
+                    getModelConfiguration(branch).isExecuteEclAsStated());
+
+        if (brands.isEmpty()) {
+          throw new AtomicDataExtractionProblem(
+              "No matching brands for contained products of pack "
+                  + packVariant.getConceptId()
+                  + "|"
+                  + packVariant.getFsn()
+                  + "|",
+              productId.toString());
+        } else if (brands.size() > 1) {
+          throw new AtomicDataExtractionProblem(
+              "Multiple matching brands for contained products of pack "
+                  + packVariant.getConceptId()
+                  + "|"
+                  + packVariant.getFsn()
+                  + "|, only products with one brand are supported",
+              productId.toString());
+        } else {
+          map.put(packVariant.getConceptId(), brands.iterator().next());
+        }
+      }
+
+      return map;
+    } else {
+      throw new AtomicDataExtractionProblem(
+          "Unsupported model type "
+              + getModelConfiguration(branch).getModelType().name()
+              + " for pack variant brand mapping",
+          branch);
+    }
   }
 
   @LogExecutionTime
