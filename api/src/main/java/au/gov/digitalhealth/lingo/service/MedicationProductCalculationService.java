@@ -60,9 +60,12 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.STATED_RELATIONSHI
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.VIRTUAL_MEDICINAL_PRODUCT;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.addQuantityIfNotNull;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.addRelationshipIfNotNull;
+import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getSingleAxiom;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getSnowstormDatatypeComponent;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getSnowstormRelationship;
+import static java.lang.Boolean.TRUE;
 
+import au.csiro.snowstorm_client.model.SnowstormAxiom;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
@@ -678,7 +681,7 @@ public class MedicationProductCalculationService {
 
     ProductSummary productSummary = new ProductSummary();
 
-    // sor the levels by their dependencies
+    // sort the levels by their dependencies
     List<ModelLevel> productLevels =
         modelConfiguration.getProductLevels().stream()
             .sorted(
@@ -740,12 +743,15 @@ public class MedicationProductCalculationService {
                                       level,
                                       modelConfiguration,
                                       productSummary,
-                                      parentNodes));
+                                      parentNodes,
+                                      modelConfiguration));
                       case CLINICAL_DRUG, REAL_CLINICAL_DRUG ->
                           findOrCreateUnit(
                                   branch,
                                   productDetails,
-                                  parentNodes,
+                                  level.getModelLevelType().equals(CLINICAL_DRUG)
+                                      ? Set.of()
+                                      : parentNodes,
                                   atomicCache,
                                   selectedConceptIdentifiers,
                                   level)
@@ -756,7 +762,8 @@ public class MedicationProductCalculationService {
                                       level,
                                       modelConfiguration,
                                       productSummary,
-                                      parentNodes));
+                                      parentNodes,
+                                      modelConfiguration));
                       default ->
                           throw new IllegalArgumentException(
                               "Unsupported model level type: " + level.getModelLevelType());
@@ -795,7 +802,8 @@ public class MedicationProductCalculationService {
       ModelLevel level,
       ModelConfiguration modelConfiguration,
       ProductSummary productSummary,
-      Set<Node> parentNodes) {
+      Set<Node> parentNodes,
+      ModelConfiguration branchModelConfiguration) {
     return n -> {
       nameGenerationService.addGeneratedFsnAndPt(
           atomicCache,
@@ -808,6 +816,19 @@ public class MedicationProductCalculationService {
       for (Node parent : parentNodes) {
         productSummary.addEdge(
             n.getConceptId(), parent.getConceptId(), ProductSummaryService.IS_A_LABEL);
+        if (n.isNewConcept()) {
+          SnowstormAxiom axoim = getSingleAxiom(n.getNewConceptDetails());
+
+          if (axoim.getRelationships().stream()
+              .noneMatch(
+                  relationship ->
+                      TRUE.equals(relationship.getActive())
+                          && relationship.getTypeId().equals(IS_A.getValue())
+                          && relationship.getDestinationId().equals(parent.getConceptId()))) {
+            axoim.addRelationshipsItem(
+                getSnowstormRelationship(IS_A, parent, 0, branchModelConfiguration.getModuleId()));
+          }
+        }
       }
       return n;
     };
