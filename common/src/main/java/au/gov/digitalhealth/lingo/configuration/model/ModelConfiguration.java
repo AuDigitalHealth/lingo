@@ -42,22 +42,28 @@ import org.springframework.beans.factory.InitializingBean;
 @Data
 public class ModelConfiguration implements InitializingBean {
   boolean trimWholeNumbers = false;
+
   /** The type of model. */
   @NotNull private ModelType modelType;
+
   /**
    * The concept levels enabled in the model and their details. This will affect the levels expected
    * in existing content and generated in new content.
    */
   @NotEmpty private List<@Valid ModelLevel> levels;
+
   /** The mappings that can be used in the model for map type refsets. */
   private Set<@Valid MappingRefset> mappings = new HashSet<>();
+
   /**
    * The non-defining properties that can be used in the model. This encompasses relationships, and
    * concrete domains.
    */
   private Set<@Valid NonDefiningProperty> nonDefiningProperties = new HashSet<>();
+
   /** The additional simple reference sets that products/packages can be added into. */
   private Set<@Valid ReferenceSet> referenceSets = new HashSet<>();
+
   @NotEmpty private String baseMedicationSchema;
   @NotEmpty private String baseMedicationUiSchema;
   @NotEmpty private String baseDeviceSchema;
@@ -265,6 +271,16 @@ public class ModelConfiguration implements InitializingBean {
 
   public ModelLevel getLeafProductModelLevel() {
     return ModelLevel.getLeafLevel(getProductLevels());
+  }
+
+  public ModelLevel getLeafUnbrandedPackageModelLevel() {
+    return ModelLevel.getLeafLevel(
+        getPackageLevels().stream().filter(l -> !l.isBranded()).collect(Collectors.toSet()));
+  }
+
+  public ModelLevel getLeafUnbrandedProductModelLevel() {
+    return ModelLevel.getLeafLevel(
+        getProductLevels().stream().filter(l -> !l.isBranded()).collect(Collectors.toSet()));
   }
 
   public ModelLevel getContainedLevelForType(ModelLevelType modelLevel) {

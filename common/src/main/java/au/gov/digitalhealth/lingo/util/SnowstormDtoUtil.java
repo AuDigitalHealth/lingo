@@ -39,6 +39,7 @@ import au.gov.digitalhealth.lingo.product.NewConceptDetails;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.details.Quantity;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.*;
@@ -592,10 +593,11 @@ public class SnowstormDtoUtil {
    * ids
    *
    * @param existingRelationships the relationships to clone
+   * @param moduleId
    * @return a new set of relationships with blank ids
    */
   public static Set<SnowstormRelationship> cloneNewRelationships(
-      Set<SnowstormRelationship> existingRelationships) {
+      Set<SnowstormRelationship> existingRelationships, @NotEmpty String moduleId) {
 
     return existingRelationships.stream()
         .map(
@@ -615,7 +617,7 @@ public class SnowstormDtoUtil {
                     .effectiveTime(r.getEffectiveTime())
                     .groupId(r.getGroupId())
                     .grouped(r.getGrouped())
-                    .moduleId(r.getModuleId())
+                    .moduleId(moduleId)
                     .modifier(r.getModifier())
                     .sourceId(r.getSourceId())
                     .target(r.getTarget())
