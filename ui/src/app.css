@@ -9,7 +9,7 @@ body {
   --inset: auto auto 0px -10px;
 }
 
-.field-string>.MuiTextField-root,
-.field-number>.MuiTextField-root {
+.field-string > .MuiTextField-root,
+.field-number > .MuiTextField-root {
   width: inherit;
 }
