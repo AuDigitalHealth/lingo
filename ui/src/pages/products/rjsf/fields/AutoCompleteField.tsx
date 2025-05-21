@@ -18,9 +18,9 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
 
   const [formContext, setFormContext] = useState(props.formContext || {});
   const [formData, setFormData] = useState(props.formData || {});
-  const [uiSchema, setUiSchema] = useState(props.uiSchema || {});
-  const [rootFormData, setRootFormData] = useState(formContext?.formData || {});
-  const [rootUiSchema, setRootUiSchema] = useState(formContext?.uiSchema || {});
+  const uiSchema = props.uiSchema;
+  const [rootFormData, setRootFormData] = useState(props?.formData || {});
+  const [rootUiSchema, setRootUiSchema] = useState(props?.formContext?.uiSchema || {});
 
   const { ecl, extendedEcl, createBrand, disabled } =
     (uiSchema && uiSchema['ui:options']) || {};
