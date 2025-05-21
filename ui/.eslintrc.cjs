@@ -43,7 +43,7 @@ module.exports = {
   },
   overrides: [
     {
-      files: ['src/pages/products/rjsf/**/*.{ts,tsx}'],
+      files: ['src/pages/products/rjsf/**/*.{ts,tsx}', 'src/components/third-party/*.{ts,tsx}'],
       rules: {
         '@typescript-eslint/no-unsafe-assignment': 'off',
         '@typescript-eslint/no-unsafe-member-access': 'off',
