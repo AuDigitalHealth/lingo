@@ -98,7 +98,13 @@ public abstract class AtomicDataService<T extends ProductDetails> {
             .active(true)
             .destinationId(MEDICINAL_PRODUCT_PACKAGE.getValue()));
 
-    String ecl = EclBuilder.build(eclRels, Set.of(), false, true, modelConfiguration);
+    String ecl =
+        EclBuilder.build(
+            eclRels,
+            Set.of(modelConfiguration.getLeafPackageModelLevel().getReferenceSetIdentifier()),
+            false,
+            true,
+            modelConfiguration);
 
     for (Map.Entry<String, String> entry : substitutionMap.entrySet()) {
       ecl = ecl.replace(entry.getKey(), "(" + entry.getValue() + ")");
