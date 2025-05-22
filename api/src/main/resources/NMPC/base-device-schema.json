@@ -9,6 +9,9 @@
         },
         "pt": {
           "$ref": "#/$defs/SnowstormTermLangPojo"
+        },
+        "fsn": {
+          "$ref": "#/$defs/SnowstormTermLangPojo"
         }
       },
       "minProperties": 1,
@@ -60,7 +63,9 @@
                   "minimum": 1
                 }
               },
-              "required": ["value"]
+              "required": [
+                "value"
+              ]
             },
             {
               "properties": {
@@ -82,38 +87,14 @@
         }
       }
     },
-    "DeviceAndSpecificDeviceType": {
-      "type": "object",
-      "properties": {
-        "deviceType": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/SnowstormConceptMini"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "title": "Device Type"
-        },
-        "specificDeviceType": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/SnowstormConceptMini"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "title": "Specific Device Type"
-        }
-      },
-      "title": "Device and Specific device type"
-    },
     "ProductDetails": {
       "type": "object",
       "title": "Product Details",
       "properties": {
+        "type": {
+          "type": "string",
+          "default": "device"
+        },
         "productName": {
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Product Name",
@@ -122,52 +103,134 @@
             "minProperties": "Product Name must be populated."
           }
         },
-
-        "deviceAndSpecificDeviceType": {
-          "$ref": "#/$defs/DeviceAndSpecificDeviceType"
-        },
-        "otherIdentifyingInformation": {
-          "type": "string",
-          "title": "Other Identifying Information"
-        },
-        "packSize": {
-          "$ref": "#/$defs/Quantity",
-          "title": "Pack Size"
+        "deviceType": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Device Type"
         }
       },
-      "required": ["productName", "deviceAndSpecificDeviceType", "packSize"],
+      "required": [
+        "productName",
+        "deviceType"
+      ],
       "errorMessage": {
         "required": "Product Details must be populated."
       }
+    },
+    "ContainedProduct": {
+      "type": "object",
+      "title": "Contained Product",
+      "properties": {
+        "unit": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "default": {
+            "conceptId": "732935002",
+            "pt": {
+              "lang": "en",
+              "term": "Unit of presentation"
+            },
+            "fsn": {
+              "lang": "en",
+              "term": "Unit of presentation (unit of presentation)"
+            }
+          },
+          "errorMessage": {
+            "type": "Invalid Pack Size Unit",
+            "minProperties": "Field must be populated."
+          }
+        },
+        "value": {
+          "type": "number",
+          "minimum": 0,
+          "errorMessage": {
+            "type": "Value must be a number",
+            "minimum": "Value must be at least 0"
+          }
+        },
+        "productDetails": {
+          "$ref": "#/$defs/ProductDetails"
+        }
+      },
+      "required": [
+        "unit",
+        "value",
+        "productDetails"
+      ],
+      "errorMessage": {
+        "required": "Contained product must be populated."
+      },
+      "dependencies": {
+        "unit": {
+          "oneOf": [
+            {
+              "properties": {
+                "unit": {
+                  "properties": {
+                    "conceptId": {
+                      "const": "732935002",
+                      "errorMessage": {
+                        "const": "Invalid Unit and Value"
+                      }
+                    }
+                  },
+                  "required": [
+                    "conceptId"
+                  ]
+                },
+                "value": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "errorMessage": {
+                    "type": "Value must be an integer when Unit is 'Each'",
+                    "const": "Unit must be 'Each' for this value constraint"
+                  }
+                }
+              },
+              "errorMessage": {
+                "oneOf": "Unit must be 'Each' with an integer value >= 1"
+              }
+            },
+            {
+              "properties": {
+                "unit": {
+                  "properties": {
+                    "conceptId": {
+                      "not": {
+                        "const": "732935002"
+                      }
+                    }
+                  }
+                },
+                "value": {
+                  "type": "number",
+                  "minimum": 0,
+                  "errorMessage": {
+                    "type": "Value must be a number ",
+                    "minimum": "Value must be at least 0"
+                  }
+                }
+              },
+              "errorMessage": {
+                "oneOf": "Unit must not be 'Each' and value must be a number >= 0"
+              }
+            }
+          ]
+        }
+      }
     }
-
   },
   "properties": {
-    "productName": {
-      "$ref": "#/$defs/SnowstormConceptMini",
-      "title": "Brand Name",
-      "minProperties": 1,
-      "errorMessage": {
-        "minProperties": "Brand Name must be populated."
-      }
-    },
-    "containerType": {
-      "$ref": "#/$defs/SnowstormConceptMini",
-      "title": "Container Type",
-      "minProperties": 1,
-      "errorMessage": {
-        "minProperties": "Container Type must be populated."
-      }
-    },
     "containedProducts": {
       "type": "array",
       "title": "Contained Products",
       "items": {
-        "$ref": "#/$defs/ProductDetails"
-      }
+        "$ref": "#/$defs/ContainedProduct"
+      },
+      "minItems": 1
     }
   },
-  "required": ["productName", "containerType","containedProducts"],
+  "required": [
+    "containedProducts"
+  ],
   "errorMessage": {
     "required": "Fields must be populated."
   },

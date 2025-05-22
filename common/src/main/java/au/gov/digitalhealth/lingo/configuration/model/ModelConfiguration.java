@@ -283,6 +283,16 @@ public class ModelConfiguration implements InitializingBean {
         getProductLevels().stream().filter(l -> !l.isBranded()).collect(Collectors.toSet()));
   }
 
+  public ModelLevel getRootUnbrandedProductModelLevel() {
+    return ModelLevel.getRootLevel(
+        getProductLevels().stream().filter(l -> !l.isBranded()).collect(Collectors.toSet()));
+  }
+
+  public ModelLevel getRootBrandedProductModelLevel() {
+    return ModelLevel.getRootLevel(
+        getProductLevels().stream().filter(ModelLevel::isBranded).collect(Collectors.toSet()));
+  }
+
   public ModelLevel getContainedLevelForType(ModelLevelType modelLevel) {
     if (!modelLevel.isPackageLevel()) {
       throw new ConfigurationProblem(
