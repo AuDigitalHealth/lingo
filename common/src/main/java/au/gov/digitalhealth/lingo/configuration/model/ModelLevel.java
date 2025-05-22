@@ -48,21 +48,13 @@ public class ModelLevel {
   /**
    * Get the leaf level from a set of levels. A leaf level is a level that has no descendants in the
    * model level hierarchy.
-   * @param levels
-   * @return
+   *
+   * @param levels set of levels
+   * @return single leaf level
+   * @throws ValidationException if more than one leaf level is found or no leaf level is found
    */
   public static ModelLevel getLeafLevel(Set<ModelLevel> levels) {
-    Set<ModelLevelType> levelTypes =
-        levels.stream().map(ModelLevel::getModelLevelType).collect(Collectors.toSet());
-
-    Set<ModelLevel> leafLevel =
-        levels.stream()
-            .filter(
-                level ->
-                    level.getModelLevelType().getDescendants().isEmpty()
-                        || level.getModelLevelType().getDescendants().stream()
-                            .noneMatch(levelTypes::contains))
-            .collect(Collectors.toSet());
+    Set<ModelLevel> leafLevel = getLeafLevels(levels);
 
     if (leafLevel.size() > 1) {
       throw new ValidationException(
@@ -71,6 +63,57 @@ public class ModelLevel {
       throw new ValidationException("No leaf level found for the given levels: " + levels);
     } else {
       return leafLevel.iterator().next();
+    }
+  }
+
+  /**
+   * Get the leaf levels from a set of levels. A leaf level is a level that has no descendants in
+   * the model level hierarchy.
+   *
+   * @param levels set of levels
+   * @return set of leaf levels
+   */
+  public static Set<ModelLevel> getLeafLevels(Set<ModelLevel> levels) {
+    Set<ModelLevelType> levelTypes =
+        levels.stream().map(ModelLevel::getModelLevelType).collect(Collectors.toSet());
+
+    return levels.stream()
+        .filter(
+            level ->
+                level.getModelLevelType().getDescendants().isEmpty()
+                    || level.getModelLevelType().getDescendants().stream()
+                        .noneMatch(levelTypes::contains))
+        .collect(Collectors.toSet());
+  }
+
+  /**
+   * Get the root level from a set of levels. A root level is a level that has no ancestors in the
+   * model level hierarchy.
+   *
+   * @param levels set of levels
+   * @return single root level
+   * @throws ValidationException if more than one root level is found or no root level is found
+   */
+  public static ModelLevel getRootLevel(Set<ModelLevel> levels) {
+    Set<ModelLevelType> levelTypes =
+        levels.stream().map(ModelLevel::getModelLevelType).collect(Collectors.toSet());
+
+    Set<ModelLevel> rootLevel =
+        levels.stream()
+            .filter(
+                level ->
+                    level.getModelLevelType().getAncestors().isEmpty()
+                        || level.getModelLevelType().getAncestors().stream()
+                            .noneMatch(levelTypes::contains))
+            .collect(Collectors.toSet());
+
+    if (rootLevel.size() > 1) {
+      throw new ValidationException(
+          "More than one root level found for the given levels: " + rootLevel);
+    } else if (rootLevel.isEmpty()) {
+      throw new ValidationException("No root level found for the given levels: " + levels);
+    } else {
+      return rootLevel.iterator().next();
     }
   }
 
