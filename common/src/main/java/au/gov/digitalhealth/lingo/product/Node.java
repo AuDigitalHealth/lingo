@@ -136,29 +136,4 @@ public class Node {
   public boolean isNewConcept() {
     return concept == null && newConceptDetails != null;
   }
-
-  //  public SnowstormConceptMini toConceptMini() {
-  //    if (concept != null) {
-  //      return getConcept();
-  //    } else if (newConceptDetails != null) {
-  //      SnowstormConceptMini cm = new SnowstormConceptMini();
-  //      return cm.conceptId(newConceptDetails.getConceptId().toString())
-  //          .fsn(
-  //              new SnowstormTermLangPojo()
-  //                  .lang("en")
-  //                  .term(newConceptDetails.getFullySpecifiedName()))
-  //          .pt(new SnowstormTermLangPojo().lang("en").term(newConceptDetails.getPreferredTerm()))
-  //          .idAndFsnTerm(getIdAndFsnTerm())
-  //          .definitionStatus(
-  //              newConceptDetails.getAxioms().stream()
-  //                      .anyMatch(a -> Objects.equals(a.getDefinitionStatus(),
-  // DEFINED.getValue()))
-  //                  ? DEFINED.getValue()
-  //                  : PRIMITIVE.getValue())
-  //          .moduleId(AmtConstants.SCT_AU_MODULE.getValue());
-  //    } else {
-  //      throw new IllegalStateException("Node must represent a concept or a new concept, not
-  // both");
-  //    }
-  //  }
 }

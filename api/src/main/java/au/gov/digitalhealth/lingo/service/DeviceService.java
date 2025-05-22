@@ -26,7 +26,6 @@ import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
-import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.exception.AtomicDataExtractionProblem;
 import au.gov.digitalhealth.lingo.product.details.DeviceProductDetails;
 import java.util.Map;
@@ -45,7 +44,7 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
     this.models = models;
   }
 
-  private static SnowstormConceptMini getMpuu(
+  private static SnowstormConceptMini getLeafUnbrandedProduct(
       SnowstormConcept product,
       String productId,
       Map<String, String> typeMap,
@@ -60,8 +59,9 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
                         && typeMap
                             .get(r.getTarget().getConceptId())
                             .equals(
-                                modelConfiguration.getReferenceSetForModelLevelType(
-                                    ModelLevelType.CLINICAL_DRUG)))
+                                modelConfiguration
+                                    .getLeafUnbrandedProductModelLevel()
+                                    .getReferenceSetIdentifier()))
             .map(SnowstormRelationship::getTarget)
             .collect(Collectors.toSet());
 
@@ -71,7 +71,7 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
     return mpuu.iterator().next();
   }
 
-  private static SnowstormConceptMini getMp(
+  private static SnowstormConceptMini getRootUnbrandedProduct(
       String productId,
       Map<String, SnowstormConcept> browserMap,
       Map<String, String> typeMap,
@@ -88,8 +88,9 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
                         && typeMap
                             .get(r.getTarget().getConceptId())
                             .equals(
-                                modelConfiguration.getReferenceSetForModelLevelType(
-                                    ModelLevelType.MEDICINAL_PRODUCT)))
+                                modelConfiguration
+                                    .getRootUnbrandedProductModelLevel()
+                                    .getReferenceSetIdentifier()))
             .map(SnowstormRelationship::getTarget)
             .collect(Collectors.toSet());
 
@@ -125,17 +126,16 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
 
     DeviceProductDetails productDetails = new DeviceProductDetails();
 
-    productDetails.setSpecificDeviceType(getMpuu(product, productId, typeMap, modelConfiguration));
+    productDetails.setSpecificDeviceType(
+        getLeafUnbrandedProduct(product, productId, typeMap, modelConfiguration));
 
-    SnowstormConceptMini deviceType =
-        getMp(
+    productDetails.setDeviceType(
+        getRootUnbrandedProduct(
             productId,
             browserMap,
             typeMap,
             productDetails.getSpecificDeviceType(),
-            modelConfiguration);
-
-    productDetails.setDeviceType(deviceType);
+            modelConfiguration));
 
     return productDetails;
   }
