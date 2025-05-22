@@ -158,7 +158,7 @@ public class DeviceProductCalculationService {
             .getPreferredTerm()
         + ", "
         + productQuantity.getValue()
-        + (UNIT_OF_PRESENTATION.getValue().equals(productQuantity.getUnit().getConceptId()))
+        + (UNIT_OF_PRESENTATION.getValue().equals(productQuantity.getUnit().getConceptId())
             ? ""
             : " "
                 + Objects.requireNonNull(
