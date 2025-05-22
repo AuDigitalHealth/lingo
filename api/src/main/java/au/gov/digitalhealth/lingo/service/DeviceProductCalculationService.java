@@ -15,22 +15,19 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
+import static au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType.CLINICAL_DRUG;
+import static au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType.REAL_CLINICAL_DRUG;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONTAINS_DEVICE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.COUNT_OF_DEVICE_TYPE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_CONTAINER_TYPE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.NO_OII_VALUE;
 import static au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter.calculateNonDefiningRelationships;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.BRANDED_PHYSICAL_OBJECT_SEMANTIC_TAG;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONTAINERIZED_BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_UNIT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_VALUE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRODUCT_NAME;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.IS_A;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.PACKAGE;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.PHYSICAL_OBJECT_SEMANTIC_TAG;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.PRIMITIVE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.STATED_RELATIONSHIP;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.UNIT_OF_PRESENTATION;
@@ -61,6 +58,9 @@ import au.gov.digitalhealth.lingo.util.BigDecimalFormatter;
 import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -97,30 +97,48 @@ public class DeviceProductCalculationService {
     this.deviceDetailsValidatorByQualifier = deviceDetailsValidatorByQualifier;
   }
 
-  private static Set<SnowstormRelationship> getTpuuRelationships(
-      Node mpuu, DeviceProductDetails productDetails, String moduleId) {
+  private static Set<SnowstormRelationship> getLeafBrandedProductRelationships(
+      Node mpuu, DeviceProductDetails productDetails, ModelConfiguration modelConfiguration) {
     Set<SnowstormRelationship> relationships = new HashSet<>();
-    relationships.add(getSnowstormRelationship(IS_A, mpuu, 0, moduleId));
+    relationships.add(getSnowstormRelationship(IS_A, mpuu, 0, modelConfiguration.getModuleId()));
     relationships.add(
         getSnowstormRelationship(
-            HAS_PRODUCT_NAME, productDetails.getProductName(), 0, STATED_RELATIONSHIP, moduleId));
-    relationships.add(
-        getSnowstormDatatypeComponent(
-            HAS_OTHER_IDENTIFYING_INFORMATION,
-            !StringUtils.hasLength(productDetails.getOtherIdentifyingInformation())
-                ? NO_OII_VALUE.getValue()
-                : productDetails.getOtherIdentifyingInformation(),
-            DataTypeEnum.STRING,
+            HAS_PRODUCT_NAME,
+            productDetails.getProductName(),
             0,
             STATED_RELATIONSHIP,
-            moduleId));
+            modelConfiguration.getModuleId()));
+
+    if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
+      relationships.add(
+          getSnowstormDatatypeComponent(
+              HAS_OTHER_IDENTIFYING_INFORMATION,
+              !StringUtils.hasLength(productDetails.getOtherIdentifyingInformation())
+                  ? NO_OII_VALUE.getValue()
+                  : productDetails.getOtherIdentifyingInformation(),
+              DataTypeEnum.STRING,
+              0,
+              STATED_RELATIONSHIP,
+              modelConfiguration.getModuleId()));
+    }
     return relationships;
   }
 
-  private static Set<SnowstormRelationship> getMpuuRelationships(
-      Node mp, Set<SnowstormConceptMini> otherParentConcepts, String moduleId) {
+  private static Set<SnowstormRelationship> getAtmRelationships(
+      Node rootUnbrandedProductNode,
+      @NotNull SnowstormConceptMini productName,
+      @NotEmpty String moduleId) {
     Set<SnowstormRelationship> relationships = new HashSet<>();
-    relationships.add(getSnowstormRelationship(IS_A, mp, 0, moduleId));
+    relationships.add(getSnowstormRelationship(IS_A, rootUnbrandedProductNode, 0, moduleId));
+    relationships.add(
+        getSnowstormRelationship(HAS_PRODUCT_NAME, productName, 0, STATED_RELATIONSHIP, moduleId));
+    return relationships;
+  }
+
+  private static Set<SnowstormRelationship> getLeafUnbrandedRelationships(
+      Node rootUnbrandedNode, Set<SnowstormConceptMini> otherParentConcepts, String moduleId) {
+    Set<SnowstormRelationship> relationships = new HashSet<>();
+    relationships.add(getSnowstormRelationship(IS_A, rootUnbrandedNode, 0, moduleId));
     if (otherParentConcepts != null) {
       otherParentConcepts.forEach(
           otherParentConcept ->
@@ -132,15 +150,15 @@ public class DeviceProductCalculationService {
   }
 
   private static String generatePackTerm(
-      Entry<ProductQuantity<DeviceProductDetails>, ProductSummary> entry, String label) {
+      Entry<ProductQuantity<DeviceProductDetails>, ProductSummary> entry, ModelLevelType type) {
     ProductSummary productSummary = entry.getValue();
     ProductQuantity<DeviceProductDetails> productQuantity = entry.getKey();
     return productSummary
-            .getNode(productSummary.getSingleConceptWithLabel(label).getConceptId())
+            .getNode(productSummary.getSingleConceptOfType(type).getConceptId())
             .getPreferredTerm()
         + ", "
         + productQuantity.getValue()
-        + (productQuantity.getUnit().getConceptId().equals(UNIT_OF_PRESENTATION.getValue())
+        + (UNIT_OF_PRESENTATION.getValue().equals(productQuantity.getUnit().getConceptId()))
             ? ""
             : " "
                 + Objects.requireNonNull(
@@ -179,6 +197,8 @@ public class DeviceProductCalculationService {
     Map<ProductQuantity<DeviceProductDetails>, ProductSummary> innerProductSummaries =
         new HashMap<>();
 
+    updateConceptReferences(branch, packageDetails);
+
     for (ProductQuantity<DeviceProductDetails> productQuantity :
         packageDetails.getContainedProducts()) {
       ProductSummary innerProductSummary =
@@ -188,114 +208,81 @@ public class DeviceProductCalculationService {
       productSummary.addSummary(innerProductSummary);
     }
 
-    CompletableFuture<Node> mpp =
-        getPackageNode(
-            branch,
-            packageDetails,
-            cache,
-            innerProductSummaries,
-            productSummary,
-            ProductSummaryService.MPP_LABEL);
+    Map<ModelLevelType, CompletableFuture<Node>> packageLevelNodes = new EnumMap<>(ModelLevelType.class);
+    modelConfiguration
+        .getPackageLevels()
+        .forEach(
+            level -> packageLevelNodes.put(
+                level.getModelLevelType(),
+                getPackageNode(
+                    branch, packageDetails, cache, innerProductSummaries, productSummary, level)));
 
-    CompletableFuture<Node> tpp =
-        getPackageNode(
-            branch,
-            packageDetails,
-            cache,
-            innerProductSummaries,
-            productSummary,
-            ProductSummaryService.TPP_LABEL);
+    CompletableFuture.allOf(packageLevelNodes.values().toArray(CompletableFuture[]::new)).join();
 
-    CompletableFuture<Node> ctpp =
-        getPackageNode(
-            branch,
-            packageDetails,
-            cache,
-            innerProductSummaries,
-            productSummary,
-            ProductSummaryService.CTPP_LABEL);
+    packageLevelNodes.forEach(
+        (type, nodeFuture) -> {
+          Node node = nodeFuture.join();
+          if (node.isNewConcept()) {
+            String mppPreferredTerm =
+                calculatePreferredTerm(
+                    innerProductSummaries, type, packageDetails.getContainerType());
+            node.getNewConceptDetails().setPreferredTerm(mppPreferredTerm);
+            node.getNewConceptDetails()
+                .setFullySpecifiedName(
+                    mppPreferredTerm
+                        + " ("
+                        + modelConfiguration.getLevelOfType(type).getDeviceSemanticTag()
+                        + ")");
+          }
 
-    CompletableFuture.allOf(mpp, tpp, ctpp).join();
+          if (modelConfiguration.getModelType().equals(ModelType.AMT) && type.isBranded()) {
+            ModelLevel tpLevel = modelConfiguration.getLevelOfType(ModelLevelType.PRODUCT_NAME);
+            productSummary.addNode(packageDetails.getProductName(), tpLevel);
+            productSummary.addEdge(
+                node.getConceptId(),
+                packageDetails.getProductName().getConceptId(),
+                ProductSummaryService.HAS_PRODUCT_NAME_LABEL);
+          }
+        });
 
-    Node mppNode = mpp.join();
-    Node tppNode = tpp.join();
-    Node ctppNode = ctpp.join();
+    // once the names are set, we can add the isa relationships - names for new concepts are set
+    // in these isa relationships and used in the diagram display
+    packageLevelNodes.forEach(
+        (type, nodeFuture) -> {
+          Node node = nodeFuture.join();
+          Set<ModelLevel> ancestorLevels = modelConfiguration.getAncestorModelLevels(type);
+          if (!ancestorLevels.isEmpty()) {
+            Set<ModelLevel> parentLevels = ModelLevel.getLeafLevels(ancestorLevels);
+            ancestorLevels.forEach(
+                ancestorLevel -> {
+                  Node ancestorNode =
+                      packageLevelNodes.get(ancestorLevel.getModelLevelType()).join();
+                  productSummary.addEdge(
+                      node.getConceptId(),
+                      ancestorNode.getConceptId(),
+                      ProductSummaryService.IS_A_LABEL);
+                  if (node.isNewConcept() && parentLevels.contains(ancestorLevel)) {
+                    node.getNewConceptDetails()
+                        .getAxioms()
+                        .forEach(
+                            axiom ->
+                                axiom
+                                    .getRelationships()
+                                    .add(
+                                        getSnowstormRelationship(
+                                            IS_A,
+                                            ancestorNode,
+                                            0,
+                                            modelConfiguration.getModuleId())));
+                  }
+                });
+          }
+        });
 
-    if (mppNode.isNewConcept()) {
-      String mppPreferredTerm = calculateMppPreferredTerm(innerProductSummaries);
-      mppNode.getNewConceptDetails().setPreferredTerm(mppPreferredTerm);
-      mppNode
-          .getNewConceptDetails()
-          .setFullySpecifiedName(
-              mppPreferredTerm + " (" + PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG.getValue() + ")");
-    }
-
-    if (tppNode.isNewConcept()) {
-      String tppPreferredTerm = calculateTppPreferredTerm(innerProductSummaries);
-      tppNode.getNewConceptDetails().setPreferredTerm(tppPreferredTerm);
-      tppNode
-          .getNewConceptDetails()
-          .setFullySpecifiedName(
-              tppPreferredTerm
-                  + " ("
-                  + BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG.getValue()
-                  + ")");
-      tppNode
-          .getNewConceptDetails()
-          .getAxioms()
-          .forEach(
-              axiom ->
-                  axiom
-                      .getRelationships()
-                      .add(
-                          getSnowstormRelationship(
-                              IS_A, mppNode, 0, modelConfiguration.getModuleId())));
-    }
-
-    productSummary.addEdge(
-        tppNode.getConceptId(), mppNode.getConceptId(), ProductSummaryService.IS_A_LABEL);
-
-    if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
-      ModelLevel tpLevel = modelConfiguration.getLevelOfType(ModelLevelType.PRODUCT_NAME);
-      productSummary.addNode(packageDetails.getProductName(), tpLevel);
-      productSummary.addEdge(
-          tppNode.getConceptId(),
-          packageDetails.getProductName().getConceptId(),
-          ProductSummaryService.HAS_PRODUCT_NAME_LABEL);
-    }
-
-    if (ctppNode.isNewConcept()) {
-      String ctppPreferredTerm =
-          calculateCtppPreferredTerm(innerProductSummaries, packageDetails.getContainerType());
-      ctppNode.getNewConceptDetails().setPreferredTerm(ctppPreferredTerm);
-      ctppNode
-          .getNewConceptDetails()
-          .setFullySpecifiedName(
-              ctppPreferredTerm
-                  + " ("
-                  + CONTAINERIZED_BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG.getValue()
-                  + ")");
-
-      ctppNode
-          .getNewConceptDetails()
-          .getAxioms()
-          .forEach(
-              axiom ->
-                  axiom
-                      .getRelationships()
-                      .add(
-                          getSnowstormRelationship(
-                              IS_A, tppNode, 0, modelConfiguration.getModuleId())));
-    }
-
-    productSummary.addEdge(
-        ctppNode.getConceptId(), tppNode.getConceptId(), ProductSummaryService.IS_A_LABEL);
-    productSummary.addEdge(
-        ctppNode.getConceptId(),
-        packageDetails.getProductName().getConceptId(),
-        ProductSummaryService.HAS_PRODUCT_NAME_LABEL);
-
-    productSummary.setSingleSubject(ctppNode);
+    productSummary.setSingleSubject(
+        packageLevelNodes
+            .get(modelConfiguration.getLeafPackageModelLevel().getModelLevelType())
+            .join());
 
     Set<Edge> transitiveContainsEdges =
         ProductSummaryService.getTransitiveEdges(productSummary, new HashSet<>());
@@ -307,27 +294,110 @@ public class DeviceProductCalculationService {
     return productSummary;
   }
 
-  private String calculateMppPreferredTerm(
-      Map<ProductQuantity<DeviceProductDetails>, ProductSummary> innerProductSummaries) {
-    return innerProductSummaries.entrySet().stream()
-        .map(entry -> generatePackTerm(entry, ProductSummaryService.MPUU_LABEL))
-        .collect(Collectors.joining(", "));
+  private void updateConceptReferences(
+      String branch, @Valid PackageDetails<@Valid DeviceProductDetails> packageDetails) {
+    Set<String> conceptIds = new HashSet<>();
+
+    // Collect concept IDs from packageDetails
+    addConceptIdIfNotNull(conceptIds, packageDetails.getProductName());
+    addConceptIdIfNotNull(conceptIds, packageDetails.getContainerType());
+
+    for (ProductQuantity<DeviceProductDetails> productQuantity :
+        packageDetails.getContainedProducts()) {
+      addConceptIdIfNotNull(conceptIds, productQuantity.getUnit());
+
+      DeviceProductDetails details = productQuantity.getProductDetails();
+      addConceptIdIfNotNull(conceptIds, details.getDeviceType());
+      addConceptIdIfNotNull(conceptIds, details.getSpecificDeviceType());
+      addConceptIdIfNotNull(conceptIds, details.getProductName());
+      if (details.getOtherParentConcepts() != null) {
+        details
+            .getOtherParentConcepts()
+            .forEach(concept -> addConceptIdIfNotNull(conceptIds, concept));
+      }
+    }
+
+    Map<String, SnowstormConceptMini> conceptMiniMap =
+        snowstormClient.getConceptsById(branch, conceptIds).stream()
+            .collect(Collectors.toMap(SnowstormConceptMini::getConceptId, c -> c));
+
+    // Assign looked-up concepts back to packageDetails
+    packageDetails.setProductName(
+        getConceptOrThrow(
+            conceptMiniMap, packageDetails.getProductName(), "Product name concept not found: "));
+    packageDetails.setContainerType(
+        getConceptOrThrow(
+            conceptMiniMap,
+            packageDetails.getContainerType(),
+            "Container type concept not found: "));
+
+    for (ProductQuantity<DeviceProductDetails> productQuantity :
+        packageDetails.getContainedProducts()) {
+      productQuantity.setUnit(
+          getConceptOrThrow(conceptMiniMap, productQuantity.getUnit(), "Unit concept not found: "));
+      DeviceProductDetails details = productQuantity.getProductDetails();
+      details.setDeviceType(
+          getConceptOrThrow(
+              conceptMiniMap, details.getDeviceType(), "Device type concept not found: "));
+      details.setSpecificDeviceType(
+          getConceptOrNull(conceptMiniMap, details.getSpecificDeviceType()));
+      details.setProductName(getConceptOrNull(conceptMiniMap, details.getProductName()));
+      if (details.getOtherParentConcepts() != null) {
+        Set<SnowstormConceptMini> updatedParents =
+            details.getOtherParentConcepts().stream()
+                .map(concept -> getConceptOrNull(conceptMiniMap, concept))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        details.setOtherParentConcepts(updatedParents);
+      }
+    }
   }
 
-  private String calculateTppPreferredTerm(
-      Map<ProductQuantity<DeviceProductDetails>, ProductSummary> innerProductSummaries) {
-    return innerProductSummaries.entrySet().stream()
-        .map(entry -> generatePackTerm(entry, ProductSummaryService.TPUU_LABEL))
-        .collect(Collectors.joining(", "));
+  private void addConceptIdIfNotNull(Set<String> conceptIds, SnowstormConceptMini concept) {
+    if (concept != null) {
+      conceptIds.add(concept.getConceptId());
+    }
   }
 
-  private String calculateCtppPreferredTerm(
+  private SnowstormConceptMini getConceptOrThrow(
+      Map<String, SnowstormConceptMini> map, SnowstormConceptMini original, String errorMsg) {
+    if (original == null) return null;
+    SnowstormConceptMini lookedUp = map.get(original.getConceptId());
+    if (lookedUp == null) {
+      throw new IllegalArgumentException(errorMsg + original.getConceptId());
+    }
+    return lookedUp;
+  }
+
+  private SnowstormConceptMini getConceptOrNull(
+      Map<String, SnowstormConceptMini> map, SnowstormConceptMini original) {
+    if (original == null) return null;
+    return getConceptOrThrow(map, original, "Concept not found: ");
+  }
+
+  private String calculatePreferredTerm(
       Map<ProductQuantity<DeviceProductDetails>, ProductSummary> innerProductSummaries,
+      ModelLevelType type,
       SnowstormConceptMini containerType) {
-    return innerProductSummaries.entrySet().stream()
-        .map(entry -> generatePackTerm(entry, ProductSummaryService.TPUU_LABEL))
-        .collect(Collectors.joining(", "))
-        .concat(", " + containerType.getPt().getTerm());
+    switch (type) {
+      case PACKAGED_CLINICAL_DRUG -> {
+        return innerProductSummaries.entrySet().stream()
+            .map(entry -> generatePackTerm(entry, CLINICAL_DRUG))
+            .collect(Collectors.joining(", "));
+      }
+      case REAL_PACKAGED_CLINICAL_DRUG -> {
+        return innerProductSummaries.entrySet().stream()
+            .map(entry -> generatePackTerm(entry, REAL_CLINICAL_DRUG))
+            .collect(Collectors.joining(", "));
+      }
+      case REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG -> {
+        return innerProductSummaries.entrySet().stream()
+            .map(entry -> generatePackTerm(entry, REAL_CLINICAL_DRUG))
+            .collect(Collectors.joining(", "))
+            .concat(", " + Objects.requireNonNull(containerType.getPt(), "Container type concept must have a preferred term").getTerm());
+      }
+      default -> throw new IllegalArgumentException("Invalid type: " + type);
+    }
   }
 
   private CompletableFuture<Node> getPackageNode(
@@ -336,54 +406,24 @@ public class DeviceProductCalculationService {
       AtomicCache cache,
       Map<ProductQuantity<DeviceProductDetails>, ProductSummary> innerProductSummaries,
       ProductSummary productSummary,
-      String label) {
-    String containedLabel;
-    Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers;
+      ModelLevel modelLevel) {
 
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
-    ModelLevel modelLevel;
+    Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers =
+        SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(
+            packageDetails.getExternalIdentifiers(),
+            modelLevel.getModelLevelType(),
+            models
+                .getModelConfiguration(branch)
+                .getMappingRefsetMapForType(
+                    ProductPackageType.PACKAGE, ProductPackageType.CONTAINED_PACKAGE));
 
-    switch (label) {
-      case ProductSummaryService.MPP_LABEL -> {
-        containedLabel = ProductSummaryService.MPUU_LABEL;
-        modelLevel = modelConfiguration.getLevelOfType(ModelLevelType.PACKAGED_CLINICAL_DRUG);
-        referenceSetMembers =
-            SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(
-                packageDetails.getExternalIdentifiers(),
-                ModelLevelType.PACKAGED_CLINICAL_DRUG,
-                models
-                    .getModelConfiguration(branch)
-                    .getMappingRefsetMapForType(
-                        ProductPackageType.PACKAGE, ProductPackageType.CONTAINED_PACKAGE));
-      }
-      case ProductSummaryService.TPP_LABEL -> {
-        containedLabel = ProductSummaryService.TPUU_LABEL;
-        modelLevel = modelConfiguration.getLevelOfType(ModelLevelType.REAL_PACKAGED_CLINICAL_DRUG);
-        referenceSetMembers =
-            SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(
-                packageDetails.getExternalIdentifiers(),
-                ModelLevelType.REAL_PACKAGED_CLINICAL_DRUG,
-                models
-                    .getModelConfiguration(branch)
-                    .getMappingRefsetMapForType(
-                        ProductPackageType.PACKAGE, ProductPackageType.CONTAINED_PACKAGE));
-      }
-      case ProductSummaryService.CTPP_LABEL -> {
-        containedLabel = ProductSummaryService.TPUU_LABEL;
-        modelLevel =
-            modelConfiguration.getLevelOfType(
-                ModelLevelType.REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG);
-        referenceSetMembers =
-            SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(
-                packageDetails.getExternalIdentifiers(),
-                ModelLevelType.REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG,
-                models
-                    .getModelConfiguration(branch)
-                    .getMappingRefsetMapForType(
-                        ProductPackageType.PACKAGE, ProductPackageType.CONTAINED_PACKAGE));
-      }
-      default -> throw new IllegalArgumentException("Invalid label: " + label);
+    ModelLevel containedLevel;
+    if (modelLevel.getModelLevelType().isBranded()) {
+      containedLevel = modelConfiguration.getLeafProductModelLevel();
+    } else {
+      containedLevel = modelConfiguration.getLeafUnbrandedProductModelLevel();
     }
 
     return nodeGeneratorService
@@ -391,10 +431,10 @@ public class DeviceProductCalculationService {
             branch,
             cache,
             getPackageRelationships(
+                modelLevel,
                 packageDetails,
                 innerProductSummaries,
-                containedLabel,
-                modelLevel.getDeviceSemanticTag(),
+                containedLevel,
                 modelConfiguration),
             Set.of(modelLevel.getReferenceSetIdentifier()),
             modelLevel,
@@ -406,7 +446,7 @@ public class DeviceProductCalculationService {
                 modelLevel.getModelLevelType()),
             packageDetails.getSelectedConceptIdentifiers(),
             true,
-            label.equals(ProductSummaryService.MPP_LABEL),
+            ModelLevelType.PACKAGED_CLINICAL_DRUG.equals(modelLevel.getModelLevelType()),
             true)
         .thenApply(
             n -> {
@@ -416,7 +456,7 @@ public class DeviceProductCalculationService {
                       productSummary.addEdge(
                           n.getConceptId(),
                           innerProductSummary
-                              .getSingleConceptWithLabel(containedLabel)
+                              .getSingleConceptOfType(containedLevel.getModelLevelType())
                               .getConceptId(),
                           ProductSummaryService.CONTAINS_LABEL));
               return n;
@@ -424,10 +464,10 @@ public class DeviceProductCalculationService {
   }
 
   private Set<SnowstormRelationship> getPackageRelationships(
+      ModelLevel modelLevel,
       PackageDetails<DeviceProductDetails> packageDetails,
       Map<ProductQuantity<DeviceProductDetails>, ProductSummary> innerProductSummaries,
-      String containedTypeLabel,
-      String semanticTag,
+      ModelLevel containedType,
       ModelConfiguration modelConfiguration) {
     Set<SnowstormRelationship> relationships = new HashSet<>();
     relationships.add(getSnowstormRelationship(IS_A, PACKAGE, 0, modelConfiguration.getModuleId()));
@@ -437,7 +477,9 @@ public class DeviceProductCalculationService {
       relationships.add(
           getSnowstormRelationship(
               CONTAINS_DEVICE,
-              innerProductSummaryEntry.getValue().getSingleConceptWithLabel(containedTypeLabel),
+              innerProductSummaryEntry
+                  .getValue()
+                  .getSingleConceptOfType(containedType.getModelLevelType()),
               group,
               modelConfiguration.getModuleId()));
       relationships.add(
@@ -460,16 +502,19 @@ public class DeviceProductCalculationService {
               modelConfiguration.getModuleId()));
       group++;
     }
-    relationships.add(
-        getSnowstormDatatypeComponent(
-            COUNT_OF_DEVICE_TYPE,
-            Integer.toString(innerProductSummaries.size()),
-            DataTypeEnum.INTEGER,
-            0,
-            STATED_RELATIONSHIP,
-            modelConfiguration.getModuleId()));
 
-    if (!containedTypeLabel.equals(ProductSummaryService.MPUU_LABEL)) {
+    if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
+      relationships.add(
+          getSnowstormDatatypeComponent(
+              COUNT_OF_DEVICE_TYPE,
+              Integer.toString(innerProductSummaries.size()),
+              DataTypeEnum.INTEGER,
+              0,
+              STATED_RELATIONSHIP,
+              modelConfiguration.getModuleId()));
+    }
+
+    if (modelLevel.isBranded() && packageDetails.getProductName() != null) {
       relationships.add(
           getSnowstormRelationship(
               HAS_PRODUCT_NAME,
@@ -479,7 +524,7 @@ public class DeviceProductCalculationService {
               modelConfiguration.getModuleId()));
     }
 
-    if (semanticTag.equals(CONTAINERIZED_BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG.getValue())) {
+    if (modelLevel.isContainerized()) {
       relationships.add(
           getSnowstormRelationship(
               HAS_CONTAINER_TYPE,
@@ -500,133 +545,203 @@ public class DeviceProductCalculationService {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
     ProductSummary innerProductSummary = new ProductSummary();
-    ModelLevelType mpType;
-    if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
-      mpType = ModelLevelType.MEDICINAL_PRODUCT;
-    } else {
-      mpType = ModelLevelType.MEDICINAL_PRODUCT_ONLY;
-    }
 
-    ModelLevel mpLevel = modelConfiguration.getLevelOfType(mpType);
-    Node mp =
+    ModelLevel rootUnbrandedProductLevel = modelConfiguration.getRootUnbrandedProductModelLevel();
+    Node rootUnbrandedProductNode =
         Node.builder()
             .concept(productQuantity.getProductDetails().getDeviceType())
-            .displayName(mpLevel.getName())
-            .modelLevel(mpLevel.getModelLevelType())
-            .label(mpLevel.getDisplayLabel())
+            .displayName(rootUnbrandedProductLevel.getName())
+            .modelLevel(rootUnbrandedProductLevel.getModelLevelType())
+            .label(rootUnbrandedProductLevel.getDisplayLabel())
             .build();
-    innerProductSummary.addNode(mp);
+    innerProductSummary.addNode(rootUnbrandedProductNode);
 
-    ModelLevel mpuuLevel = modelConfiguration.getLevelOfType(ModelLevelType.CLINICAL_DRUG);
-    Node mpuu;
+    ModelLevel leafUnbrandedProductModelLevel =
+        modelConfiguration.getLeafUnbrandedProductModelLevel();
+    Node leafUnbrandedProductNode;
     if (productQuantity.getProductDetails().getSpecificDeviceType() != null) {
-      mpuu =
+      leafUnbrandedProductNode =
           Node.builder()
               .concept(productQuantity.getProductDetails().getSpecificDeviceType())
-              .displayName(mpuuLevel.getName())
-              .modelLevel(mpuuLevel.getModelLevelType())
-              .label(mpuuLevel.getDisplayLabel())
+              .displayName(leafUnbrandedProductModelLevel.getName())
+              .modelLevel(leafUnbrandedProductModelLevel.getModelLevelType())
+              .label(leafUnbrandedProductModelLevel.getDisplayLabel())
               .build();
     } else {
-      mpuu =
+      leafUnbrandedProductNode =
           Node.builder()
               .newConceptDetails(
-                  getNewMpuuDetails(
+                  getNewLeafUnbrandedDetails(
                       models.getModelConfiguration(branch),
+                      leafUnbrandedProductModelLevel,
                       productQuantity.getProductDetails(),
                       cache.getNextId(),
-                      mp))
-              .displayName(mpuuLevel.getName())
-              .modelLevel(mpuuLevel.getModelLevelType())
-              .label(mpuuLevel.getDisplayLabel())
+                      rootUnbrandedProductNode))
+              .displayName(leafUnbrandedProductModelLevel.getName())
+              .modelLevel(leafUnbrandedProductModelLevel.getModelLevelType())
+              .label(leafUnbrandedProductModelLevel.getDisplayLabel())
               .build();
     }
-    innerProductSummary.addNode(mpuu);
+    innerProductSummary.addNode(leafUnbrandedProductNode);
     innerProductSummary.addEdge(
-        mpuu.getConceptId(), mp.getConceptId(), ProductSummaryService.IS_A_LABEL);
+        leafUnbrandedProductNode.getConceptId(),
+        rootUnbrandedProductNode.getConceptId(),
+        ProductSummaryService.IS_A_LABEL);
 
-    ModelLevel tpuuLevel = modelConfiguration.getLevelOfType(ModelLevelType.REAL_CLINICAL_DRUG);
+    ModelLevel leafBrandedProductModelLevel = modelConfiguration.getLeafProductModelLevel();
 
-    Node tpuu =
+    Node leafBrandedProductNode =
         nodeGeneratorService.generateNode(
             branch,
             cache,
-            getTpuuRelationships(
-                mpuu, productQuantity.getProductDetails(), modelConfiguration.getModuleId()),
-            Set.of(tpuuLevel.getReferenceSetIdentifier()),
-            tpuuLevel,
-            tpuuLevel.getDeviceSemanticTag(),
+            getLeafBrandedProductRelationships(
+                leafUnbrandedProductNode, productQuantity.getProductDetails(), modelConfiguration),
+            Set.of(leafBrandedProductModelLevel.getReferenceSetIdentifier()),
+            leafBrandedProductModelLevel,
+            leafBrandedProductModelLevel.getDeviceSemanticTag(),
             Set.of(),
             calculateNonDefiningRelationships(
                 models.getModelConfiguration(branch),
                 packageDetails,
-                ModelLevelType.REAL_CLINICAL_DRUG),
+                leafBrandedProductModelLevel.getModelLevelType()),
             packageDetails.getSelectedConceptIdentifiers(),
             false,
             false,
             true);
-    if (tpuu.isNewConcept()) {
-      tpuu.getNewConceptDetails()
-          .setPreferredTerm(calculateTpuuName(productQuantity.getProductDetails()));
-      tpuu.getNewConceptDetails()
+    if (leafBrandedProductNode.isNewConcept()) {
+      leafBrandedProductNode
+          .getNewConceptDetails()
+          .setPreferredTerm(calculateBrandedProductName(productQuantity.getProductDetails()));
+      leafBrandedProductNode
+          .getNewConceptDetails()
           .setFullySpecifiedName(
-              tpuu.getNewConceptDetails().getPreferredTerm()
+              leafBrandedProductNode.getNewConceptDetails().getPreferredTerm()
                   + " ("
-                  + BRANDED_PHYSICAL_OBJECT_SEMANTIC_TAG.getValue()
+                  + leafBrandedProductModelLevel.getDeviceSemanticTag()
                   + ")");
     }
 
-    innerProductSummary.addNode(tpuu);
+    innerProductSummary.addNode(leafBrandedProductNode);
     innerProductSummary.addEdge(
-        tpuu.getConceptId(), mpuu.getConceptId(), ProductSummaryService.IS_A_LABEL);
+        leafBrandedProductNode.getConceptId(),
+        leafUnbrandedProductNode.getConceptId(),
+        ProductSummaryService.IS_A_LABEL);
 
     if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
-      ModelLevel tpLevel = modelConfiguration.getLevelOfType(ModelLevelType.PRODUCT_NAME);
+      ModelLevel productNameLevel = modelConfiguration.getLevelOfType(ModelLevelType.PRODUCT_NAME);
 
-      innerProductSummary.addNode(packageDetails.getProductName(), tpLevel);
+      innerProductSummary.addNode(packageDetails.getProductName(), productNameLevel);
       innerProductSummary.addEdge(
-          tpuu.getConceptId(),
+          leafBrandedProductNode.getConceptId(),
           packageDetails.getProductName().getConceptId(),
           ProductSummaryService.HAS_PRODUCT_NAME_LABEL);
+    } else if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
+      ModelLevel rootBrandedProductLevel = modelConfiguration.getRootBrandedProductModelLevel();
+      Node rootBrandedProductNode =
+          nodeGeneratorService.generateNode(
+              branch,
+              cache,
+              getAtmRelationships(
+                  rootUnbrandedProductNode,
+                  productQuantity.getProductDetails().getProductName(),
+                  modelConfiguration.getModuleId()),
+              Set.of(rootBrandedProductLevel.getReferenceSetIdentifier()),
+              rootBrandedProductLevel,
+              rootBrandedProductLevel.getDeviceSemanticTag(),
+              Set.of(),
+              calculateNonDefiningRelationships(
+                  models.getModelConfiguration(branch),
+                  packageDetails,
+                  rootBrandedProductLevel.getModelLevelType()),
+              packageDetails.getSelectedConceptIdentifiers(),
+              false,
+              false,
+              true);
+      if (rootBrandedProductNode.isNewConcept()) {
+        rootBrandedProductNode
+            .getNewConceptDetails()
+            .setPreferredTerm(calculateAtmName(productQuantity.getProductDetails()));
+        rootBrandedProductNode
+            .getNewConceptDetails()
+            .setFullySpecifiedName(
+                rootBrandedProductNode.getNewConceptDetails().getPreferredTerm()
+                    + " ("
+                    + rootBrandedProductLevel.getDeviceSemanticTag()
+                    + ")");
+      }
+
+      if (leafBrandedProductNode.isNewConcept()) {
+        leafBrandedProductNode
+            .getNewConceptDetails()
+            .getAxioms()
+            .iterator()
+            .next()
+            .addRelationshipsItem(
+                getSnowstormRelationship(
+                    IS_A, rootBrandedProductNode, 0, modelConfiguration.getModuleId()));
+      }
+
+      innerProductSummary.addNode(rootBrandedProductNode);
+      innerProductSummary.addEdge(
+          leafBrandedProductNode.getConceptId(),
+          rootBrandedProductNode.getConceptId(),
+          ProductSummaryService.IS_A_LABEL);
     }
 
-    innerProductSummary.setSingleSubject(tpuu);
+    innerProductSummary.setSingleSubject(leafBrandedProductNode);
     return innerProductSummary;
   }
 
-  private String calculateTpuuName(DeviceProductDetails productDetails) {
+  private String calculateAtmName(DeviceProductDetails productDetails) {
+    String deviceType = Objects.requireNonNull(productDetails.getDeviceType().getPt(), "Device type must have a preferred term").getTerm();
+    String productName = Objects.requireNonNull(productDetails.getProductName().getPt(), "Product name must have a preferred term").getTerm();
+
+    return productName + " " + deviceType;
+  }
+
+  private String calculateBrandedProductName(DeviceProductDetails productDetails) {
     String genericDeviceName =
         productDetails.getNewSpecificDeviceName() == null
-            ? productDetails.getSpecificDeviceType().getPt().getTerm()
+            ? Objects.requireNonNull(productDetails.getSpecificDeviceType().getPt(), "Specific device type must have a preferred term").getTerm()
             : productDetails.getNewSpecificDeviceName();
-    String deviceType = productDetails.getDeviceType().getPt().getTerm();
-    String productName = productDetails.getProductName().getPt().getTerm();
+    String deviceType = Objects.requireNonNull(productDetails.getDeviceType().getPt(), "Device type must have a preferred term").getTerm();
+    String productName = Objects.requireNonNull(productDetails.getProductName().getPt(), "Product name must have a preferred term").getTerm();
 
+    assert deviceType != null;
+    assert genericDeviceName != null;
     return productName + " " + genericDeviceName.replace(deviceType, "");
   }
 
-  private NewConceptDetails getNewMpuuDetails(
-      ModelConfiguration modelConfiguration, DeviceProductDetails productDetails, int id, Node mp) {
-    NewConceptDetails mpuuDetails = new NewConceptDetails(id);
-    mpuuDetails.setSemanticTag(PHYSICAL_OBJECT_SEMANTIC_TAG.getValue());
+  private NewConceptDetails getNewLeafUnbrandedDetails(
+      ModelConfiguration modelConfiguration,
+      ModelLevel leafUnbrandedProductModelLevel,
+      DeviceProductDetails productDetails,
+      int id,
+      Node rootUnbrandedNode) {
+    NewConceptDetails leafUnbrandedDetails = new NewConceptDetails(id);
+    leafUnbrandedDetails.setSemanticTag(leafUnbrandedProductModelLevel.getDeviceSemanticTag());
     String newSpecificDeviceName = productDetails.getNewSpecificDeviceName();
-    mpuuDetails.setPreferredTerm(newSpecificDeviceName);
-    mpuuDetails.setFullySpecifiedName(
-        newSpecificDeviceName + " (" + PHYSICAL_OBJECT_SEMANTIC_TAG.getValue() + ")");
+    leafUnbrandedDetails.setPreferredTerm(newSpecificDeviceName);
+    leafUnbrandedDetails.setFullySpecifiedName(
+        newSpecificDeviceName + " (" + leafUnbrandedProductModelLevel.getDeviceSemanticTag() + ")");
     SnowstormAxiom axiom = new SnowstormAxiom();
     axiom.active(true);
     axiom.setDefinitionStatusId(PRIMITIVE.getValue());
     axiom.setDefinitionStatus("PRIMITIVE");
     Set<SnowstormRelationship> relationships =
-        getMpuuRelationships(
-            mp, productDetails.getOtherParentConcepts(), modelConfiguration.getModuleId());
+        getLeafUnbrandedRelationships(
+            rootUnbrandedNode,
+            productDetails.getOtherParentConcepts(),
+            modelConfiguration.getModuleId());
     axiom.setRelationships(relationships);
     axiom.setModuleId(modelConfiguration.getModuleId());
     axiom.setReleased(false);
-    mpuuDetails.getAxioms().add(axiom);
-    mpuuDetails.setNonDefiningProperties(
+    leafUnbrandedDetails.getAxioms().add(axiom);
+    leafUnbrandedDetails.setNonDefiningProperties(
         calculateNonDefiningRelationships(
-            modelConfiguration, productDetails, ModelLevelType.CLINICAL_DRUG));
-    return mpuuDetails;
+            modelConfiguration,
+            productDetails,
+            leafUnbrandedProductModelLevel.getModelLevelType()));
+    return leafUnbrandedDetails;
   }
 }
