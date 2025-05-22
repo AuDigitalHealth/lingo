@@ -9,6 +9,9 @@
         },
         "pt": {
           "$ref": "#/$defs/SnowstormTermLangPojo"
+        },
+        "fsn": {
+          "$ref": "#/$defs/SnowstormTermLangPojo"
         }
       },
       "minProperties": 1,
@@ -60,7 +63,9 @@
                   "minimum": 1
                 }
               },
-              "required": ["value"]
+              "required": [
+                "value"
+              ]
             },
             {
               "properties": {
@@ -98,7 +103,6 @@
             "minProperties": "Product Name must be populated."
           }
         },
-
         "deviceType": {
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Device Type"
@@ -114,12 +118,26 @@
           ],
           "title": "Specific Device Type"
         },
+        "newSpecificDeviceName": {
+          "type": "string",
+          "title": "New Specific Device Name"
+        },
+        "otherParentConcepts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SnowstormConceptMini"
+          },
+          "title": "Other Parent Concepts"
+        },
         "otherIdentifyingInformation": {
           "type": "string",
           "title": "Other Identifying Information"
         }
       },
-      "required": ["productName", "deviceType"],
+      "required": [
+        "productName",
+        "deviceType"
+      ],
       "errorMessage": {
         "required": "Product Details must be populated."
       }
@@ -130,6 +148,17 @@
       "properties": {
         "unit": {
           "$ref": "#/$defs/SnowstormConceptMini",
+          "default": {
+            "conceptId": "732935002",
+            "pt": {
+              "lang": "en",
+              "term": "Each"
+            },
+            "fsn": {
+              "lang": "en",
+              "term": "Unit of presentation (unit of presentation)"
+            }
+          },
           "errorMessage": {
             "type": "Invalid Pack Size Unit",
             "minProperties": "Field must be populated."
@@ -147,7 +176,11 @@
           "$ref": "#/$defs/ProductDetails"
         }
       },
-      "required": ["unit", "value", "productDetails"],
+      "required": [
+        "unit",
+        "value",
+        "productDetails"
+      ],
       "errorMessage": {
         "required": "Contained product must be populated."
       },
@@ -165,7 +198,9 @@
                       }
                     }
                   },
-                  "required": ["conceptId"]
+                  "required": [
+                    "conceptId"
+                  ]
                 },
                 "value": {
                   "type": "integer",
@@ -184,7 +219,11 @@
               "properties": {
                 "unit": {
                   "properties": {
-                    "conceptId": { "not": { "const": "732935002" } }
+                    "conceptId": {
+                      "not": {
+                        "const": "732935002"
+                      }
+                    }
                   }
                 },
                 "value": {
@@ -198,9 +237,7 @@
               },
               "errorMessage": {
                 "oneOf": "Unit must not be 'Each' and value must be a number >= 0"
-
               }
-
             }
           ]
         }
@@ -233,7 +270,11 @@
       "minItems": 1
     }
   },
-  "required": ["productName", "containerType","containedProducts"],
+  "required": [
+    "productName",
+    "containerType",
+    "containedProducts"
+  ],
   "errorMessage": {
     "required": "Fields must be populated."
   },

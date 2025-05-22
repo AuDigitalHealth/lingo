@@ -18,6 +18,7 @@ package au.gov.digitalhealth.lingo.product;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.exception.MoreThanOneSubjectProblem;
 import au.gov.digitalhealth.lingo.exception.SingleConceptExpectedProblem;
@@ -232,6 +233,25 @@ public class ProductSummary implements Serializable {
                 + ctppNode.getConceptId());
       }
       subjects.add(ctppNode);
+    }
+  }
+
+  public Node getSingleConceptOfType(ModelLevelType type) {
+    synchronized (nodes) {
+      Set<Node> filteredNodes =
+          getNodes().stream()
+              .filter(n -> n.getModelLevel().equals(type))
+              .collect(Collectors.toSet());
+      if (filteredNodes.size() != 1) {
+        throw new SingleConceptExpectedProblem(
+            "Expected 1 "
+                + type
+                + " but found "
+                + filteredNodes.stream().map(Node::getIdAndFsnTerm).collect(Collectors.joining()),
+            filteredNodes.size());
+      } else {
+        return filteredNodes.iterator().next();
+      }
     }
   }
 }
