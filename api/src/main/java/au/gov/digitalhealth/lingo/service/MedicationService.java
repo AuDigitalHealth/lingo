@@ -40,7 +40,6 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRESENTATION_S
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_SUPPLIER;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_UNIT_OF_PRESENTATION;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.IS_A;
-import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.filterActiveInferredRelationshipByType;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.filterActiveStatedRelationshipByType;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getActiveRelationshipsInRoleGroup;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getRelationshipsFromAxioms;
@@ -164,42 +163,19 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
 
     Set<SnowstormRelationship> productRelationships = getRelationshipsFromAxioms(product);
 
-    if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
-      mpuu =
-          filterActiveStatedRelationshipByType(productRelationships, IS_A.getValue()).stream()
-              .filter(
-                  r ->
-                      r.getTarget() != null
-                          && typeMap.get(r.getTarget().getConceptId()) != null
-                          && typeMap
-                              .get(r.getTarget().getConceptId())
-                              .equals(
-                                  modelConfiguration.getReferenceSetForModelLevelType(
-                                      ModelLevelType.CLINICAL_DRUG)))
-              .map(r -> browserMap.get(r.getTarget().getConceptId()))
-              .collect(Collectors.toSet());
-    } else {
-      // TODO working around reference set absence
-      mpuu =
-          filterActiveInferredRelationshipByType(product.getRelationships(), IS_A.getValue())
-              .stream()
-              .filter(
-                  r ->
-                      r.getTarget() != null
-                          && browserMap.containsKey(r.getTarget().getConceptId())
-                          && browserMap
-                              .get(r.getTarget().getConceptId())
-                              .getRelationships()
-                              .stream()
-                              .anyMatch(
-                                  rel ->
-                                      Boolean.TRUE.equals(rel.getActive())
-                                          && rel.getType()
-                                              .getConceptId()
-                                              .equals(HAS_MANUFACTURED_DOSE_FORM.getValue())))
-              .map(r -> browserMap.get(r.getTarget().getConceptId()))
-              .collect(Collectors.toSet());
-    }
+    mpuu =
+        filterActiveStatedRelationshipByType(productRelationships, IS_A.getValue()).stream()
+            .filter(
+                r ->
+                    r.getTarget() != null
+                        && typeMap.get(r.getTarget().getConceptId()) != null
+                        && typeMap
+                            .get(r.getTarget().getConceptId())
+                            .equals(
+                                modelConfiguration.getReferenceSetForModelLevelType(
+                                    ModelLevelType.CLINICAL_DRUG)))
+            .map(r -> browserMap.get(r.getTarget().getConceptId()))
+            .collect(Collectors.toSet());
 
     if (mpuu.size() != 1) {
       throw new AtomicDataExtractionProblem(
