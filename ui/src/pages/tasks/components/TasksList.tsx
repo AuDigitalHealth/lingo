@@ -44,19 +44,20 @@ import { useJiraUsers } from '../../../hooks/api/useInitializeJiraUsers.tsx';
 import { useFieldBindings } from '../../../hooks/api/useInitializeConfig.tsx';
 import { getAllKeyValueMapForTheKey } from '../../../utils/helpers/FieldBindingUtils.ts';
 import message from '../../../layouts/MainLayout/Header/HeaderContent/Message.tsx';
+import { Project } from '../../../types/Project.ts';
 
 interface TaskListProps {
-  path?: '' | '/all' | '/needReview' | '/snodine';
-  propTasks?: Task[];
+  propTasks: Task[];
   heading: string;
   dense?: boolean;
-  // disable search, filter's etc
+  loading: boolean;
   naked?: boolean;
   showActionBar?: boolean;
   displayProject?: boolean;
   displayTickets?: boolean;
   isSnodineList?: boolean;
   taskCreateRedirectUrl: string;
+  projectOptions?: Project[];
 }
 
 function ValidationBadge(formattedValue: {
@@ -80,7 +81,7 @@ function ValidationBadge(formattedValue: {
 }
 
 function TasksList({
-  path,
+  loading,
   propTasks,
   heading,
   dense = false,
@@ -90,18 +91,14 @@ function TasksList({
   isSnodineList = false,
   displayProject,
   taskCreateRedirectUrl,
+  projectOptions,
 }: TaskListProps) {
   const { jiraUsers } = useJiraUsers();
   const { taskAssociationsData } = useAllTaskAssociations();
   const { applicationConfig } = useApplicationConfigStore();
   const { fieldBindings } = useFieldBindings(applicationConfig.apDefaultBranch);
-  const { allTasksIsLoading } = useAllTasks();
   const { serviceStatus } = useServiceStatus();
-  const { email, login } = useUserStore();
 
-  const { allTasks } = useAllTasks();
-
-  const [localTasks, setLocalTasks] = useState(propTasks ? propTasks : []);
   const validationStatusMap = getAllKeyValueMapForTheKey(
     fieldBindings,
     'task.validation.status',
@@ -118,45 +115,6 @@ function TasksList({
     fieldBindings,
     'task.feedback.status',
   );
-
-  useEffect(() => {
-    if (path === undefined || path === null) return;
-    if (path === '/all') {
-      setLocalTasks(allTasks ? allTasks : []);
-    } else if (path === '/needReview') {
-      setLocalTasks(
-        (() => {
-          const tasksNeedReview = allTasks?.filter(function (task) {
-            return task.status === TaskStatus.InReview;
-          });
-          return tasksNeedReview;
-        })() || [],
-      );
-    } else {
-      setLocalTasks(getFilteredMyTasks());
-    }
-  }, [path, allTasks]);
-
-  useEffect(() => {
-    if (propTasks !== undefined) {
-      setLocalTasks(propTasks);
-    }
-  }, [propTasks]);
-
-  const getFilteredMyTasks = useCallback(() => {
-    if (!allTasks) return [];
-    return allTasks?.filter(task => {
-      if (
-        task.assignee.email === email &&
-        task.projectKey === applicationConfig?.apProjectKey
-      ) {
-        return true;
-      }
-      if (userExistsInList(task.reviewers, login)) {
-        return true;
-      }
-    });
-  }, [allTasks, userExistsInList]);
 
   useEffect(() => {
     if (!serviceStatus?.authoringPlatform.running) {
@@ -471,17 +429,18 @@ function TasksList({
   ];
   return (
     <>
-      {showActionBar && <TasksActionBar redirectUrl={taskCreateRedirectUrl} />}
+      {showActionBar && projectOptions && (
+        <TasksActionBar
+          redirectUrl={taskCreateRedirectUrl}
+          projectsOptions={projectOptions}
+        />
+      )}
 
       <Grid container>
         <Grid item xs={12} lg={12}>
           <Card sx={{ width: '100%', border: '2px solid rgb(240, 240, 240)' }}>
             <DataGrid
-              loading={
-                allTasksIsLoading &&
-                allTasks === undefined &&
-                serviceStatus?.authoringPlatform.running
-              }
+              loading={loading}
               sx={{
                 fontWeight: 400,
                 fontSize: 14,
@@ -532,7 +491,7 @@ function TasksList({
               className={'task-list'}
               density={dense ? 'compact' : 'standard'}
               getRowId={(row: Task) => row.key}
-              rows={localTasks}
+              rows={propTasks}
               columns={columns}
               disableColumnSelector
               hideFooterSelectedRowCount
