@@ -22,7 +22,7 @@ export default function useInitializeTasks() {
 }
 
 export const useAllTasksOptions = (
-  applicationConfig: ApplicationConfig | null,
+  applicationConfig: ApplicationConfig | null | undefined,
 ) => {
   const queryKey = [`all-tasks-${applicationConfig?.apProjectKey}`];
   return queryOptions({
@@ -44,7 +44,6 @@ export function getTaskById(
   tasks = tasks?.filter(task => {
     return task.key === taskId;
   });
-
   return tasks.length === 1 ? tasks[0] : null;
 }
 
@@ -121,7 +120,7 @@ export function useAllTasks() {
 export function useInitializeUserTasks() {
   const { setUserTasks } = useTaskStore();
   const { isLoading, data, isError } = useQuery({
-    queryKey: [`user-tasks`],
+    queryKey: ['user-tasks'],
     queryFn: () => {
       return TasksServices.getUserTasks(true);
     },
@@ -144,7 +143,7 @@ export function useInitializeUserTasks() {
 export function useInitializeUserReviewTasks() {
   const { setUserReviewTasks } = useTaskStore();
   const { isLoading, data, isError } = useQuery({
-    queryKey: [`user-review-tasks`],
+    queryKey: ['user-review-tasks'],
     queryFn: () => {
       return TasksServices.getUserReviewTasks(true);
     },
