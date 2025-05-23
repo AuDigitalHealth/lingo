@@ -31,6 +31,7 @@ function TaskEditLayout() {
         maxHeight={'calc(100vh - 110px)'}
       >
         <TasksList
+          loading={false}
           propTasks={task ? [task] : []}
           heading="Task Details"
           dense={true}

@@ -7,14 +7,14 @@ import { PlusCircleOutlined } from '@ant-design/icons';
 import useUserStore from '../../stores/UserStore.ts';
 import TickFlickRefsetList from './components/TickFlickRefsetList.tsx';
 import useBranch from '../../hooks/eclRefset/useBranch.tsx';
-import useTaskByKey from '../../hooks/useTaskById.tsx';
+import useSnodineTaskByKey from '../../hooks/eclRefset/useSnodineTaskByKey.tsx';
 
 type RefsetType = 'query' | 'tickflick';
 
 function Refsets() {
   const navigate = useNavigate();
   const { taskKey } = useParams();
-  const task = useTaskByKey(taskKey);
+  const task = useSnodineTaskByKey(taskKey);
   const { login } = useUserStore();
 
   const branch = useBranch();

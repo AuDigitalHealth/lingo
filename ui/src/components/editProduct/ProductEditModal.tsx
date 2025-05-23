@@ -90,7 +90,6 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { productUpdateValidationSchema } from '../../types/productValidations.ts';
 import WarningModal from '../../themes/overrides/WarningModal.tsx';
 import { deepClone } from '@mui/x-data-grid/utils/utils';
-import { createDefaultDescription } from '../../utils/helpers/description.ts';
 
 const USLangRefset: LanguageRefset = {
   default: 'false',

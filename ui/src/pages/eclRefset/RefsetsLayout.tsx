@@ -7,15 +7,15 @@ import { Concept } from '../../types/concept.ts';
 import useBranch from '../../hooks/eclRefset/useBranch.tsx';
 import { useFetchAndCreateBranch } from '../../hooks/api/task/useInitializeBranch.tsx';
 import { Task } from '../../types/task.ts';
-import useTaskByKey from '../../hooks/useTaskById.tsx';
 import Loading from '../../components/Loading.tsx';
 import TasksList from '../tasks/components/TasksList.tsx';
+import useSnodineTaskByKey from '../../hooks/eclRefset/useSnodineTaskByKey.tsx';
 
 const SNODINE_BASE = '/dashboard/snodine';
 
 function RefsetsLayout() {
   const { taskKey, projectKey, memberId, conceptId } = useParams();
-  const task = useTaskByKey(taskKey);
+  const task = useSnodineTaskByKey(taskKey);
   const { data } = useFetchAndCreateBranch(task as Task);
   const branch = useBranch();
 
@@ -70,6 +70,8 @@ function RefsetsLayout() {
     >
       <PageBreadcrumbs breadcrumbs={breadcrumbs} />
       <TasksList
+        loading={false}
+        isSnodineList={true}
         propTasks={task ? [task] : []}
         heading=""
         dense={true}

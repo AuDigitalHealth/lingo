@@ -115,7 +115,7 @@ public class TaskManagerClient {
     Task createdTask =
         authoringPlatformApiClient
             .post()
-            .uri("/projects/" + apProject + "/tasks")
+            .uri("/projects/" + task.getProjectKey() + "/tasks")
             .contentType(MediaType.APPLICATION_JSON)
             .bodyValue(task)
             .retrieve()
