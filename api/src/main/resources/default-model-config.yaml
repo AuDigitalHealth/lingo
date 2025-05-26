@@ -105,7 +105,7 @@ models:
     baseBulkBrandUiSchema: classpath:NMPC/base-bulk-brand-ui-schema.json
     baseBulkPackSchema: classpath:NMPC/base-bulk-pack-schema.json
     baseBulkPackUiSchema: classpath:NMPC/base-bulk-pack-ui-schema.json
-    medicationPackageDataExtractionEcl: "(<id> or (>><id>.774160008)) and <373873005"
+    medicationPackageDataExtractionEcl: "(<id> or >>(>><id>.774160008)) and <373873005"
     medicationProductDataExtractionEcl: "(<id> or (>> <id> and ^660371000220109)) and <373873005"
     devicePackageDataExtractionEcl: "(<id> or (<id>.999000111000168106) or (<id>.999000081000168101) or (<id>.999000111000168106.999000081000168101) or ((>>((<id>.999000081000168101) or (<id>.999000111000168106.999000081000168101))) and (^929360071000036103 or ^929360061000036106))) and < 260787004"
     deviceProductDataExtractionEcl: "(<id> or (>> <id> and (^929360071000036103 or ^929360061000036106))) and < 260787004"
