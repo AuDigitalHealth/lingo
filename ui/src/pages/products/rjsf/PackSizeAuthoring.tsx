@@ -16,15 +16,15 @@ import { customizeValidator } from '@rjsf/validator-ajv8';
 import ajvErrors from 'ajv-errors';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 
-import CustomFieldTemplate from './templates/CustomFieldTemplate.tsx';
-import ObjectFieldTemplate from './templates/ObjectFieldTemplate.tsx';
 import PackSizeArrayTemplate from './templates/bulkBrandPack/PackSizeArrayTemplate.tsx'; // You'll need to create this if you want custom array rendering
 import { BrandPackSizeCreationDetails } from '../../../types/product.ts';
-import NewPackSizeInputField from './fields/bulkBrandPack/NewPackSizeInputField.tsx';
 import TitleWidget from './widgets/TitleWidget.tsx';
 import AutoCompleteField from './fields/AutoCompleteField.tsx';
 import { useQuery } from '@tanstack/react-query';
-import { ConfigService } from '../../../api/ConfigService.ts';
+import MuiGridTemplate from "./templates/MuiGridTemplate.tsx";
+import AddButtonField from "./fields/AddButtonField.tsx";
+import ExternalIdentifiers from "./fields/bulkBrandPack/ExternalIdentifiers.tsx";
+import PackDetails from "./fields/bulkBrandPack/PackDetails.tsx";
 
 interface FormData {
   selectedProduct?: string;
@@ -88,8 +88,10 @@ function PackSizeAuthoring({
   };
 
   const fields = {
-    NewPackSizeInputField,
+    AddButtonField,
     AutoCompleteField,
+    PackDetails,
+    ExternalIdentifiers
   };
 
   const handleClear = useCallback(() => {
@@ -190,6 +192,8 @@ function PackSizeAuthoring({
     );
   if (runningWarningsCheck)
     return <ProductLoader message={`Running validation before Preview`} />;
+
+  // TODO: Re-enable
   if (!selectedProduct || !data) {
     return (
       <Alert severity="info">
@@ -242,12 +246,14 @@ function PackSizeAuthoring({
                 widgets={widgets}
                 fields={fields}
                 templates={{
-                  FieldTemplate: CustomFieldTemplate,
                   ArrayFieldTemplate: PackSizeArrayTemplate, // Create this if needed
-                  ObjectFieldTemplate,
+                  ObjectFieldTemplate: MuiGridTemplate
                 }}
                 validator={validator}
-                formContext={formContext}
+                formContext={{
+                  formData,
+                  onFormDataChange: setFormData
+                }}
               >
                 <Box
                   sx={{
@@ -278,10 +284,119 @@ function PackSizeAuthoring({
     </Box>
   );
 }
+
 export const useSchemaQuery = (branchPath: string) => {
   return useQuery({
     queryKey: ['bulk-pack-schema', branchPath],
-    queryFn: () => ConfigService.fetchBulkPackSchemaData(branchPath),
+    // queryFn: () => ConfigService.fetchBulkPackSchemaData(branchPath),
+    queryFn: () => function () {
+      return {
+        "type": "object",
+        "$defs": {
+          "SnowstormConceptMini": {
+            "type": "object",
+            "properties": {
+              "conceptId": {
+                "type": "string"
+              },
+              "pt": {
+                "$ref": "#/$defs/SnowstormTermLangPojo"
+              }
+            },
+            "minProperties": 1,
+            "errorMessage": {
+              "minProperties": "Field must be populated."
+            }
+          },
+          "SnowstormTermLangPojo": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "lang": {
+                "type": "string"
+              },
+              "term": {
+                "type": "string"
+              }
+            }
+          },
+          "ExternalIdentifier": {
+            "type": "object",
+            "oneOf": [
+              {
+                "title": "ARTGID",
+                "type": "object",
+                "properties": {
+                  "identifierScheme": {
+                    "type": "string",
+                    "const": "artgid"
+                  },
+                  "relationshipType": {
+                    "title": "Relationship type",
+                    "type": "string",
+                    "const": "RELATED"
+                  },
+                  "identifierValue": {
+                    "title": "ARTGID",
+                    "type": "string",
+                    "pattern": "\\d{1,8}",
+                    "errorMessage": {
+                      "pattern": "Please enter a valid ARTGID matching \\d{1,8}"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "PackDetails": {
+            "type": "object",
+            "properties": {
+              "packSize": {
+                "type": "integer",
+                "minimum": 1,
+                "errorMessage": {
+                  "minimum": "Pack size must be at least 1."
+                }
+              },
+              "externalIdentifiers": {
+                "type": "array",
+                "title": "External identifiers",
+                "items": {
+                  "$ref": "#/$defs/ExternalIdentifier"
+                }
+              }
+            },
+            "required": ["packSize"]
+          }
+        },
+        "properties": {
+          "selectedProduct": {
+            "type": "string",
+            "title": "Selected Product"
+          },
+          "existingPackSizes": {
+            "type": "array",
+            "title": "Existing Pack Sizes",
+            "items": {
+              "$ref": "#/$defs/PackDetails"
+            }
+          },
+          "packSizes": {
+            "type": "array",
+            "title": "New Pack Sizes",
+            "items": {
+              "$ref": "#/$defs/PackDetails"
+            }
+          },
+          "newPackSizeInput": {
+            "$ref": "#/$defs/PackDetails"
+          },
+          "addButton": {
+            type: "null"
+          }
+        }
+      };
+    },
     enabled: !!branchPath,
   });
 };
@@ -289,7 +404,104 @@ export const useSchemaQuery = (branchPath: string) => {
 export const useUiSchemaQuery = (branchPath: string) => {
   return useQuery({
     queryKey: ['bulk-pack-uiSchema', branchPath],
-    queryFn: () => ConfigService.fetchBulkPackUiSchemaData(branchPath),
+    // queryFn: () => ConfigService.fetchBulkPackUiSchemaData(branchPath),
+    queryFn: () => function () {
+      return {
+        "ui:options": {
+          "skipTitle": true
+        },
+        "ui:grid": [
+          {
+            "_columnA": 12,
+            "_columnB": 12
+          }
+        ],
+        "_columnA": {
+          "ui:grid": [
+            {
+              "selectedProduct": 24
+            },
+            {
+              "existingPackSizes": 24
+            }
+          ]
+        },
+        "_columnB": {
+          "ui:title": null,
+          "ui:options": {
+            "label": false
+          },
+          "ui:grid": [
+            {
+              "newPackSizeInput": 23,
+              "addButton": 1
+            },
+            {
+              "packSizes": 24
+            }
+          ]
+        },
+        "selectedProduct": {
+          "ui:readonly": true,
+          "ui:widget": "TitleWidget",
+          "ui:options": {
+            "inputType": "text",
+            "ui:disabled": true,
+            "skipTitle": true
+          }
+        },
+        "newPackSizeInput": {
+          "ui:field": PackDetails,
+          "ui:options": {
+            "readOnly": false,
+            "allowDelete": false,
+            "requireEditButton": false
+          },
+        },
+
+        "addButton": {
+          "ui:field": "AddButtonField",
+          "ui:options": {
+            "skipTitle": true,
+            "tooltipTitle": "Add Pack Size",
+            "sourcePath": "newPackSizeInput",
+            "targetPath": "packSizes",
+            "isEnabled": (source: any, target: any) => {
+              console.log('SOURCE: ' + JSON.stringify(source, null, 2));
+              const packSize = source && typeof source === "object" && source.packSize;
+              return !isNaN(packSize) && target.filter((item: any) => item.packSize === packSize).length === 0;
+            },
+            "onAddClick": (source: any, target: any, clear: Function) => {
+              target.push(source);
+              clear();
+            }
+          }
+        },
+        "existingPackSizes": {
+          "ui:template": PackSizeArrayTemplate,
+          "ui:options": {
+            "orderable": false,
+            "skipTitle": true,
+            "listTitle": "Existing Pack Sizes",
+            "readOnly": true,
+            "allowDelete": false,
+            "requireEditButton": true
+          },
+        }
+        ,
+        "packSizes": {
+          "ui:template": PackSizeArrayTemplate,
+          "ui:options": {
+            "orderable": false,
+            "skipTitle": true,
+            "listTitle": "Newly Added Pack Sizes",
+            "readOnly": false,
+            "allowDelete": true,
+            "requireEditButton": true
+          }
+        }
+      };
+    },
     enabled: !!branchPath,
   });
 };
