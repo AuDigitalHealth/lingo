@@ -26,8 +26,10 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Data
+@EqualsAndHashCode(of = "name")
 public abstract class NonDefiningBase {
 
   /** The name of the property, used in generated JSON Schema. */
