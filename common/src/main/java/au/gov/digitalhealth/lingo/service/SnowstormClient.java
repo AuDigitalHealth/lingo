@@ -460,7 +460,7 @@ public class SnowstormClient {
     if (concepts != null) {
       searchRequestComponent.referencedComponentIds(List.copyOf(concepts));
     }
-    if (referenceSetId != null) {
+    if (referenceSetId != null && !referenceSetId.isEmpty()) {
       searchRequestComponent.referenceSet(
           referenceSetId.stream().collect(Collectors.joining(" OR ")));
     }

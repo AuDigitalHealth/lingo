@@ -43,7 +43,7 @@ public class ExternalIdentifierUtils {
 
     Set<ExternalIdentifier> externalIdentifiers = new HashSet<>();
 
-    Map<String, MappingRefset> mappingRefsetMap = getStringMappingRefsetMap(mappingRefsets);
+    Map<String, MappingRefset> mappingRefsetMap = createMappingToIdentifierMap(mappingRefsets);
 
     referenceSetMembers.forEach(
         r -> {
@@ -69,7 +69,7 @@ public class ExternalIdentifierUtils {
 
     Set<ExternalIdentifier> externalIdentifiers = new HashSet<>();
 
-    Map<String, MappingRefset> mappingRefsetMap = getStringMappingRefsetMap(mappingRefsets);
+    Map<String, MappingRefset> mappingRefsetMap = createMappingToIdentifierMap(mappingRefsets);
 
     referenceSetMembers.forEach(
         r -> {
@@ -97,7 +97,7 @@ public class ExternalIdentifierUtils {
 
     Set<ExternalIdentifier> externalIdentifiers = new HashSet<>();
 
-    Map<String, MappingRefset> mappingRefsetMap = getStringMappingRefsetMap(mappingRefsets);
+    Map<String, MappingRefset> mappingRefsetMap = createMappingToIdentifierMap(mappingRefsets);
 
     referenceSetMembers
         .toStream()
@@ -119,22 +119,24 @@ public class ExternalIdentifierUtils {
     return externalIdentifiers;
   }
 
-  private static Map<String, MappingRefset> getStringMappingRefsetMap(
+  private static Map<String, MappingRefset> createMappingToIdentifierMap(
       Set<MappingRefset> mappingRefsets) {
     return mappingRefsets.stream()
         .collect(Collectors.toMap(MappingRefset::getIdentifier, Function.identity()));
   }
 
-  public static Mono<Map<String, List<ExternalIdentifier>>> getExternalIdentifiersMapFromRefsetMembers(
-      Flux<SnowstormReferenceSetMember> refsetMembers,
-      String productId,
-      Set<MappingRefset> mappingRefsets) {
+  public static Mono<Map<String, List<ExternalIdentifier>>>
+      getExternalIdentifiersMapFromRefsetMembers(
+          Flux<SnowstormReferenceSetMember> refsetMembers, Set<MappingRefset> mappingRefsets) {
 
-    Map<String, MappingRefset> mappingRefsetMap = getStringMappingRefsetMap(mappingRefsets);
+    if (mappingRefsets.isEmpty()) {
+      return Mono.just(Map.of());
+    }
+
+    Map<String, MappingRefset> mappingRefsetMap = createMappingToIdentifierMap(mappingRefsets);
 
     return refsetMembers
         .filter(r -> r.getActive() != null && r.getActive())
-        .filter(r -> r.getReferencedComponentId().equals(productId))
         .filter(
             r ->
                 mappingRefsets.stream()

@@ -22,6 +22,7 @@ import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_CONTAINER_TYPE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_DEVICE_TYPE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_TOTAL_QUANTITY_UNIT;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_TOTAL_QUANTITY_VALUE;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.ADDITIONAL_RELATIONSHIP;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONTAINS_CD;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_ACTIVE_INGREDIENT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_BOSS;
@@ -40,6 +41,7 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRESENTATION_S
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_SUPPLIER;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_UNIT_OF_PRESENTATION;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.IS_A;
+import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.filterActiveInferredRelationshipByType;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.filterActiveStatedRelationshipByType;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getActiveRelationshipsInRoleGroup;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getRelationshipsFromAxioms;
@@ -65,6 +67,7 @@ import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty
 import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
@@ -172,7 +175,7 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
                         && typeMap
                             .get(r.getTarget().getConceptId())
                             .equals(
-                                modelConfiguration.getReferenceSetForModelLevelType(
+                                modelConfiguration.getReferenceSetIdsForModelLevelType(
                                     ModelLevelType.CLINICAL_DRUG)))
             .map(r -> browserMap.get(r.getTarget().getConceptId()))
             .collect(Collectors.toSet());
@@ -318,13 +321,19 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
 
       // TODO after migration change to additional relationship
       if (inferredRelationshipOfTypeExists(productRelationships, HAS_SUPPLIER.getValue())) {
+        if (filterActiveInferredRelationshipByType(productRelationships, HAS_SUPPLIER.getValue())
+            .stream()
+            .filter(SnowstormRelationship::getActive)
+            .anyMatch(r -> !r.getModifier().equals(ADDITIONAL_RELATIONSHIP.getValue()))) {
+          log.warning("Found active non additional relationship for HAS_SUPPLIER, " + productId);
+        }
         productDetails
             .getNonDefiningProperties()
             .add(
                 new NonDefiningProperty(
                     product.getRelationships().stream()
                         .filter(r -> r.getActive())
-                        .filter(r -> r.getTypeId().equals(HAS_SUPPLIER))
+                        .filter(r -> r.getTypeId().equals(HAS_SUPPLIER.getValue()))
                         .findFirst()
                         .orElseThrow(),
                     modelConfiguration.getNonDefiningPropertiesByName().get("supplier")));
@@ -375,7 +384,7 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
     Map<Integer, ActivePreciseIngredient> missingActiveIngreidents =
         preciseActiveInredientMap.entrySet().stream()
             .filter(entry -> entry.getValue().getActiveIngredient() == null)
-            .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
+            .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
     if (!missingActiveIngreidents.isEmpty()) {
       // active ingredients aren't on the branded product, need to look at the clinical drug
