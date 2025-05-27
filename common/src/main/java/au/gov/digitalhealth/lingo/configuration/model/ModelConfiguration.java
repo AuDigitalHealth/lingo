@@ -246,7 +246,26 @@ public class ModelConfiguration implements InitializingBean {
     return levels.stream().anyMatch(level -> level.getModelLevelType().equals(modelLevelType));
   }
 
-  public String getReferenceSetForModelLevelType(ModelLevelType modelLevelType) {
+  public Map<String, ReferenceSet> getReferenceSetsForModelLevel(ModelLevel modelLevel) {
+    return getReferenceSets().stream()
+        .filter(r -> r.getModelLevels().contains(modelLevel.getModelLevelType()))
+        .collect(Collectors.toMap(ReferenceSet::getIdentifier, Function.identity()));
+  }
+
+  public Map<String, MappingRefset> getMappingsForModelLevel(ModelLevel modelLevel) {
+    return getMappings().stream()
+        .filter(r -> r.getModelLevels().contains(modelLevel.getModelLevelType()))
+        .collect(Collectors.toMap(MappingRefset::getIdentifier, Function.identity()));
+  }
+
+  public Map<String, NonDefiningProperty> getNonDefiningPropertiesForModelLevel(
+      ModelLevel modelLevel) {
+    return getNonDefiningProperties().stream()
+        .filter(r -> r.getModelLevels().contains(modelLevel.getModelLevelType()))
+        .collect(Collectors.toMap(NonDefiningProperty::getIdentifier, Function.identity()));
+  }
+
+  public String getReferenceSetIdsForModelLevelType(ModelLevelType modelLevelType) {
     return levels.stream()
         .filter(level -> level.getModelLevelType().equals(modelLevelType))
         .map(ModelLevel::getReferenceSetIdentifier)
@@ -257,7 +276,7 @@ public class ModelConfiguration implements InitializingBean {
                     "No reference set found for model level type: " + modelLevelType));
   }
 
-  public Set<String> getReferenceSetsForModelLevelTypes(ModelLevelType... modelLevelType) {
+  public Set<String> getReferenceSetIdsForModelLevelTypes(ModelLevelType... modelLevelType) {
     Set<ModelLevelType> modelLevelTypes = new HashSet<>(Arrays.asList(modelLevelType));
     return levels.stream()
         .filter(level -> modelLevelTypes.contains(level.getModelLevelType()))

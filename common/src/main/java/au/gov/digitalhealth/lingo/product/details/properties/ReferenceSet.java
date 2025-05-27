@@ -15,6 +15,8 @@
  */
 package au.gov.digitalhealth.lingo.product.details.properties;
 
+import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
+import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -22,7 +24,21 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class ReferenceSet extends NonDefiningBase implements Serializable {
-  public ReferenceSet(String identifierScheme) {
-    super(identifierScheme);
+  public ReferenceSet(
+      SnowstormReferenceSetMember r,
+      au.gov.digitalhealth.lingo.configuration.model.ReferenceSet referenceSet) {
+    this.setIdentifierScheme(referenceSet.getName());
+    this.setIdentifier(r.getRefsetId());
+    this.setTitle(referenceSet.getTitle());
+    this.setDescription(referenceSet.getDescription());
+  }
+
+  public ReferenceSet(
+      SnowstormReferenceSetMemberViewComponent r,
+      au.gov.digitalhealth.lingo.configuration.model.ReferenceSet referenceSet) {
+    this.setIdentifierScheme(referenceSet.getName());
+    this.setIdentifier(r.getRefsetId());
+    this.setTitle(referenceSet.getTitle());
+    this.setDescription(referenceSet.getDescription());
   }
 }

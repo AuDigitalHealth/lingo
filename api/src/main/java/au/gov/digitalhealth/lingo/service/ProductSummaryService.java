@@ -129,9 +129,10 @@ public class ProductSummaryService {
     productSummary.getNodes().stream()
         .filter(
             n ->
-                !n.getLabel().equals(CTPP_LABEL)
-                    && !n.getLabel().equals(TPUU_LABEL)
-                    && !n.getLabel().equals(TP_LABEL))
+                model.getLevels().stream()
+                    .filter(ModelLevel::isBranded)
+                    .map(ModelLevel::getModelLevelType)
+                    .noneMatch(n.getModelLevel()::equals))
         .forEach(
             n ->
                 futures.add(
@@ -148,7 +149,12 @@ public class ProductSummaryService {
     // Extract CTPP concept IDs from product summary nodes and store them in a Set
     Set<String> ctppIds =
         productSummary.getNodes().stream()
-            .filter(n -> n.getLabel().equals(CTPP_LABEL)) // Filter nodes by CTPP label
+            .filter(
+                n ->
+                    model
+                        .getLeafPackageModelLevel()
+                        .getModelLevelType()
+                        .equals(n.getModelLevel())) // Filter nodes by leaf package model level
             .map(Node::getConceptId) // Get concept ID from each node
             .collect(Collectors.toSet()); // Collect concept IDs into a Set
 
@@ -376,12 +382,11 @@ public class ProductSummaryService {
       // Create a future for adding the edge (don't block!)
       CompletableFuture<Void> edgeFuture =
           packageNodeFuture.thenAccept(
-              packageNode -> {
-                productSummary.addEdge(
-                    packageNode.getConcept().getConceptId(),
-                    productNode.getConcept().getConceptId(),
-                    CONTAINS_LABEL);
-              });
+              packageNode ->
+                  productSummary.addEdge(
+                      packageNode.getConcept().getConceptId(),
+                      productNode.getConcept().getConceptId(),
+                      CONTAINS_LABEL));
       futures.add(edgeFuture);
     }
 
@@ -409,12 +414,11 @@ public class ProductSummaryService {
                         // Create a future for adding the edge (don't block!)
                         CompletableFuture<Void> edgeFuture =
                             packageNodeFuture.thenAccept(
-                                packageNode -> {
-                                  productSummary.addEdge(
-                                      productNode.getConcept().getConceptId(),
-                                      productName.getConcept().getConceptId(),
-                                      HAS_PRODUCT_NAME_LABEL);
-                                });
+                                packageNode ->
+                                    productSummary.addEdge(
+                                        productNode.getConcept().getConceptId(),
+                                        productName.getConcept().getConceptId(),
+                                        HAS_PRODUCT_NAME_LABEL));
 
                         edgeFutures.add(edgeFuture);
                       }

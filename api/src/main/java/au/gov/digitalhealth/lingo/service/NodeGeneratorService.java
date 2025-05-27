@@ -24,18 +24,24 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.PRIMITIVE;
 import au.csiro.snowstorm_client.model.SnowstormAxiom;
 import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.csiro.snowstorm_client.model.SnowstormItemsPageRelationship;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
+import au.gov.digitalhealth.lingo.configuration.model.NonDefiningProperty;
+import au.gov.digitalhealth.lingo.configuration.model.ReferenceSet;
 import au.gov.digitalhealth.lingo.exception.SingleConceptExpectedProblem;
 import au.gov.digitalhealth.lingo.product.NewConceptDetails;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.util.EclBuilder;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
@@ -46,6 +52,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Service
 @Log
@@ -77,7 +85,108 @@ public class NodeGeneratorService {
       concept = snowstormClient.getConcept(branch, productId.toString());
     }
     node.setConcept(concept);
+
+    populateNodeProperties(branch, modelLevel, node)
+        .doOnError(
+            e ->
+                log.log(
+                    Level.WARNING,
+                    "Error populating node properties for concept "
+                        + node.getConceptId()
+                        + ": "
+                        + e.getMessage(),
+                    e))
+        .block();
+
     return CompletableFuture.completedFuture(node);
+  }
+
+  private Mono<Void> populateNodeProperties(String branch, ModelLevel modelLevel, Node node) {
+    ModelConfiguration configuration = models.getModelConfiguration(branch);
+
+    Flux<Void> refsetMembersFlux = addRefsetAndMapping(branch, modelLevel, configuration, node);
+
+    Flux<Void> nonDefiningPropertiesFlux =
+        addNonDefiningProperties(branch, modelLevel, configuration, node);
+
+    // Create a Mono that completes when both Flux operations complete
+    return Mono.when(refsetMembersFlux, nonDefiningPropertiesFlux);
+  }
+
+  private Flux<Void> addNonDefiningProperties(
+      String branch, ModelLevel modelLevel, ModelConfiguration modelConfiguration, Node node) {
+
+    Map<String, NonDefiningProperty> nonDefiningPropertiesMap =
+        modelConfiguration.getNonDefiningPropertiesForModelLevel(modelLevel);
+
+    if (!nonDefiningPropertiesMap.isEmpty()) {
+      return snowstormClient
+          .getRelationships(branch, node.getConceptId())
+          .map(SnowstormItemsPageRelationship::getItems)
+          .flatMapMany(Flux::fromIterable)
+          .filter(SnowstormRelationship::getActive)
+          .flatMap(
+              relationship -> {
+                if (nonDefiningPropertiesMap.containsKey(relationship.getTypeId())) {
+                  node.getNonDefiningProperties()
+                      .add(
+                          new au.gov.digitalhealth.lingo.product.details.properties
+                              .NonDefiningProperty(
+                              relationship,
+                              nonDefiningPropertiesMap.get(relationship.getTypeId())));
+                }
+                return Mono.empty();
+              })
+          .then()
+          .flux();
+    } else {
+      return Flux.empty();
+    }
+  }
+
+  private Flux<Void> addRefsetAndMapping(
+      String branch, ModelLevel modelLevel, ModelConfiguration modelConfiguration, Node node) {
+    final Map<String, ReferenceSet> refsetMap =
+        modelConfiguration.getReferenceSetsForModelLevel(modelLevel);
+    final Map<String, MappingRefset> mappingMap =
+        modelConfiguration.getMappingsForModelLevel(modelLevel);
+
+    if (!refsetMap.isEmpty() || !mappingMap.isEmpty()) {
+
+      final Set<String> allRefsetIds = new HashSet<>(refsetMap.keySet());
+      allRefsetIds.addAll(mappingMap.keySet());
+
+      // get reference set members for the concept
+
+      return snowstormClient
+          .getRefsetMembers(branch, Set.of(node.getConceptId()), allRefsetIds, 0, 1000)
+          .map(s -> s.getItems())
+          .flatMapMany(Flux::fromIterable)
+          .filter(member -> member.getActive())
+          .flatMap(
+              member -> {
+                if (refsetMap.containsKey(member.getRefsetId())) {
+                  return Mono.just(
+                      node.getReferenceSets()
+                          .add(
+                              new au.gov.digitalhealth.lingo.product.details.properties
+                                  .ReferenceSet(member, refsetMap.get(member.getRefsetId()))));
+                } else if (mappingMap.containsKey(member.getRefsetId())) {
+                  return Mono.just(
+                      node.getExternalIdentifiers()
+                          .add(
+                              au.gov.digitalhealth.lingo.product.details.properties
+                                  .ExternalIdentifier.create(
+                                  member, mappingMap.get(member.getRefsetId()))));
+                } else {
+                  return Mono.empty();
+                }
+              })
+          .then()
+          .flux();
+    } else {
+      return Flux.empty();
+    }
   }
 
   @Async
@@ -101,6 +210,8 @@ public class NodeGeneratorService {
                   node.setModelLevel(modelLevel.getModelLevelType());
                   node.setDisplayName(modelLevel.getName());
                   node.setConcept(concept);
+                  final Mono<Void> combinedMono = populateNodeProperties(branch, modelLevel, node);
+                  combinedMono.block();
                   return node;
                 })
             .toList());
@@ -269,9 +380,38 @@ public class NodeGeneratorService {
       newConceptDetails.setReferenceSetMembers(referenceSetMembers);
       newConceptDetails.setNonDefiningProperties(nonDefiningProperties);
       node.setNewConceptDetails(newConceptDetails);
+//      node.setNonDefiningProperties(
+//          NonDefiningPropertyUtils.getNonDefiningProperties(
+//              nonDefiningProperties,
+//              modelConfiguration.getNonDefiningPropertiesForModelLevel(modelLevel)));
+//      node.setReferenceSets(
+//          ReferenceSetUtils.getReferenceSetsFromRefsetComponentViewMembers(
+//                  referenceSetMembers,
+//                  modelConfiguration.getReferenceSetsForModelLevel(modelLevel).values())
+//              .values()
+//              .stream()
+//              .flatMap(Collection::stream)
+//              .collect(Collectors.toSet()));
+//      node.setExternalIdentifiers(
+//          ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMemberViewComponents(
+//              referenceSetMembers,
+//              null,
+//              modelConfiguration.getMappingsForModelLevel(modelLevel).values().stream()
+//                  .collect(Collectors.toSet())));
       log.fine("New concept for " + label + " " + newConceptDetails.getConceptId());
     } else {
       log.fine("Concept found for " + label + " " + node.getConceptId());
+
+      Flux<Void> refsetMembersFlux =
+          addRefsetAndMapping(branch, modelLevel, modelConfiguration, node);
+
+      Flux<Void> nonDefiningPropertiesFlux =
+          addNonDefiningProperties(branch, modelLevel, modelConfiguration, node);
+
+      // Create a Mono that completes when both Flux operations complete
+      Mono<Void> combinedMono = Mono.when(refsetMembersFlux, nonDefiningPropertiesFlux);
+
+      combinedMono.block();
     }
 
     return node;
