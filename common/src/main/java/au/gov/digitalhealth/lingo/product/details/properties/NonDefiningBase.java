@@ -28,4 +28,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 public abstract class NonDefiningBase {
   @NotNull @NotEmpty String identifierScheme;
+  String identifier;
+  String title;
+  String description;
 }

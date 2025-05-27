@@ -208,14 +208,21 @@ public class DeviceProductCalculationService {
       productSummary.addSummary(innerProductSummary);
     }
 
-    Map<ModelLevelType, CompletableFuture<Node>> packageLevelNodes = new EnumMap<>(ModelLevelType.class);
+    Map<ModelLevelType, CompletableFuture<Node>> packageLevelNodes =
+        new EnumMap<>(ModelLevelType.class);
     modelConfiguration
         .getPackageLevels()
         .forEach(
-            level -> packageLevelNodes.put(
-                level.getModelLevelType(),
-                getPackageNode(
-                    branch, packageDetails, cache, innerProductSummaries, productSummary, level)));
+            level ->
+                packageLevelNodes.put(
+                    level.getModelLevelType(),
+                    getPackageNode(
+                        branch,
+                        packageDetails,
+                        cache,
+                        innerProductSummaries,
+                        productSummary,
+                        level)));
 
     CompletableFuture.allOf(packageLevelNodes.values().toArray(CompletableFuture[]::new)).join();
 
@@ -394,7 +401,12 @@ public class DeviceProductCalculationService {
         return innerProductSummaries.entrySet().stream()
             .map(entry -> generatePackTerm(entry, REAL_CLINICAL_DRUG))
             .collect(Collectors.joining(", "))
-            .concat(", " + Objects.requireNonNull(containerType.getPt(), "Container type concept must have a preferred term").getTerm());
+            .concat(
+                ", "
+                    + Objects.requireNonNull(
+                            containerType.getPt(),
+                            "Container type concept must have a preferred term")
+                        .getTerm());
       }
       default -> throw new IllegalArgumentException("Invalid type: " + type);
     }
@@ -693,8 +705,14 @@ public class DeviceProductCalculationService {
   }
 
   private String calculateAtmName(DeviceProductDetails productDetails) {
-    String deviceType = Objects.requireNonNull(productDetails.getDeviceType().getPt(), "Device type must have a preferred term").getTerm();
-    String productName = Objects.requireNonNull(productDetails.getProductName().getPt(), "Product name must have a preferred term").getTerm();
+    String deviceType =
+        Objects.requireNonNull(
+                productDetails.getDeviceType().getPt(), "Device type must have a preferred term")
+            .getTerm();
+    String productName =
+        Objects.requireNonNull(
+                productDetails.getProductName().getPt(), "Product name must have a preferred term")
+            .getTerm();
 
     return productName + " " + deviceType;
   }
@@ -702,10 +720,19 @@ public class DeviceProductCalculationService {
   private String calculateBrandedProductName(DeviceProductDetails productDetails) {
     String genericDeviceName =
         productDetails.getNewSpecificDeviceName() == null
-            ? Objects.requireNonNull(productDetails.getSpecificDeviceType().getPt(), "Specific device type must have a preferred term").getTerm()
+            ? Objects.requireNonNull(
+                    productDetails.getSpecificDeviceType().getPt(),
+                    "Specific device type must have a preferred term")
+                .getTerm()
             : productDetails.getNewSpecificDeviceName();
-    String deviceType = Objects.requireNonNull(productDetails.getDeviceType().getPt(), "Device type must have a preferred term").getTerm();
-    String productName = Objects.requireNonNull(productDetails.getProductName().getPt(), "Product name must have a preferred term").getTerm();
+    String deviceType =
+        Objects.requireNonNull(
+                productDetails.getDeviceType().getPt(), "Device type must have a preferred term")
+            .getTerm();
+    String productName =
+        Objects.requireNonNull(
+                productDetails.getProductName().getPt(), "Product name must have a preferred term")
+            .getTerm();
 
     assert deviceType != null;
     assert genericDeviceName != null;
