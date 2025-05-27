@@ -288,12 +288,13 @@ public class ProductCreationService {
             Set.of(
                 getSnowstormRelationship(IS_A, PRODUCT_NAME, 0, modelConfiguration.getModuleId())));
 
-    if (modelConfiguration.getReferenceSetForModelLevelType(ModelLevelType.PRODUCT_NAME) != null) {
+    if (modelConfiguration.getReferenceSetIdsForModelLevelType(ModelLevelType.PRODUCT_NAME)
+        != null) {
       // Add the brand to the reference set
       addToRefset(
           branch,
           createdConcept.getConceptId(),
-          modelConfiguration.getReferenceSetForModelLevelType(ModelLevelType.PRODUCT_NAME));
+          modelConfiguration.getReferenceSetIdsForModelLevelType(ModelLevelType.PRODUCT_NAME));
     }
     return toSnowstormConceptMini(createdConcept);
   }
@@ -409,10 +410,10 @@ public class ProductCreationService {
 
     if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
       mpRefset =
-          modelConfiguration.getReferenceSetForModelLevelType(ModelLevelType.MEDICINAL_PRODUCT);
+          modelConfiguration.getReferenceSetIdsForModelLevelType(ModelLevelType.MEDICINAL_PRODUCT);
     } else {
       mpRefset =
-          modelConfiguration.getReferenceSetForModelLevelType(
+          modelConfiguration.getReferenceSetIdsForModelLevelType(
               ModelLevelType.MEDICINAL_PRODUCT_ONLY);
     }
 
@@ -601,6 +602,7 @@ public class ProductCreationService {
 
     Set<MappingRefset> mappingRefsets = models.getModelConfiguration(branch).getMappings();
 
+    // todo handle non-defining properties properly
     nodeCreateOrder.forEach(
         n -> {
           if (n.getLabel().equals(CTPP_LABEL)

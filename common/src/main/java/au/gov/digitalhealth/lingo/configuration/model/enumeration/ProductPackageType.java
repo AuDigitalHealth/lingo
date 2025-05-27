@@ -18,5 +18,13 @@ package au.gov.digitalhealth.lingo.configuration.model.enumeration;
 public enum ProductPackageType {
   PRODUCT,
   PACKAGE,
-  CONTAINED_PACKAGE
+  CONTAINED_PACKAGE;
+
+  public boolean isProduct() {
+    return this == PRODUCT;
+  }
+
+  public boolean isPackage() {
+    return this == PACKAGE || this == CONTAINED_PACKAGE;
+  }
 }

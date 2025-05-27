@@ -15,9 +15,6 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
-import static au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType.CLINICAL_DRUG;
-import static au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType.MEDICINAL_PRODUCT;
-import static au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType.REAL_CLINICAL_DRUG;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONTAINS_DEVICE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_CONTAINER_TYPE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
@@ -43,7 +40,6 @@ import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.aspect.LogExecutionTime;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
-import au.gov.digitalhealth.lingo.configuration.model.ReferenceSet;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
 import au.gov.digitalhealth.lingo.exception.AtomicDataExtractionProblem;
@@ -57,6 +53,8 @@ import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
 import au.gov.digitalhealth.lingo.util.EclBuilder;
 import au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils;
+import au.gov.digitalhealth.lingo.util.NonDefiningPropertyUtils;
+import au.gov.digitalhealth.lingo.util.ReferenceSetUtils;
 import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import au.gov.digitalhealth.lingo.util.ValidationUtil;
 import java.math.BigDecimal;
@@ -69,10 +67,11 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.springframework.data.util.Pair;
+import lombok.extern.java.Log;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+@Log
 public abstract class AtomicDataService<T extends ProductDetails> {
 
   public static final String MAP_TARGET = "mapTarget";
@@ -116,36 +115,118 @@ public abstract class AtomicDataService<T extends ProductDetails> {
 
   private static void addNonDefiningData(
       PackageProductDetailsBase details,
-      String productId,
       Maps maps,
       ModelConfiguration modelConfiguration,
-      Set<SnowstormRelationship> relationships) {
-    // maps
-    if (maps.mappingMap().containsKey(productId)) {
-      details.setExternalIdentifiers(maps.mappingMap().get(productId));
-    }
-    // reference sets
-    if (maps.referenceSets().containsKey(productId)) {
-      details.getReferenceSets().addAll(maps.referenceSets().get(productId));
-    }
+      Set<ProductPackageType> productPackageTypes,
+      SnowstormConcept product) {
 
-    Map<String, au.gov.digitalhealth.lingo.configuration.model.NonDefiningProperty>
-        nonDefiningProperties =
-            modelConfiguration.getNonDefiningProperties().stream()
-                .filter(m -> m.getLevel().equals(ProductPackageType.PACKAGE))
-                .collect(
-                    Collectors.toMap(
-                        au.gov.digitalhealth.lingo.configuration.model.NonDefiningProperty
-                            ::getIdentifier,
-                        Function.identity()));
+    Set<String> idsInScope = getAncestors(product, maps);
+    idsInScope.add(product.getConceptId());
 
-    relationships.stream()
-        .filter(r -> nonDefiningProperties.containsKey(r.getTypeId()))
+    modelConfiguration.getNonDefiningProperties().stream()
+        .filter(
+            nonDefiningPropertyDefinition ->
+                productPackageTypes.contains(nonDefiningPropertyDefinition.getLevel()))
         .forEach(
-            r ->
-                details
-                    .getNonDefiningProperties()
-                    .add(new NonDefiningProperty(r, nonDefiningProperties.get(r.getTypeId()))));
+            nonDefiningPropertyDefinition ->
+                maps.nonDefiningPropertiesMap()
+                    .forEach(
+                        (key, nonDefiningProperties) -> {
+                          if (idsInScope.contains(key)) {
+                            nonDefiningProperties.stream()
+                                .filter(
+                                    nonDefiningProperty ->
+                                        nonDefiningProperty
+                                            .getIdentifierScheme()
+                                            .equals(nonDefiningPropertyDefinition.getName()))
+                                .forEach(
+                                    nonDefiningProperty -> {
+                                      if (!details
+                                          .getNonDefiningProperties()
+                                          .contains(nonDefiningProperty)) {
+                                        details.getNonDefiningProperties().add(nonDefiningProperty);
+                                      }
+                                    });
+                          }
+                        }));
+
+    modelConfiguration.getReferenceSets().stream()
+        .filter(
+            referenceSetDefinition ->
+                productPackageTypes.contains(referenceSetDefinition.getLevel()))
+        .forEach(
+            referenceSetDefinition ->
+                maps.referenceSets()
+                    .forEach(
+                        (key, referenceSets) -> {
+                          if (idsInScope.contains(key)) {
+                            referenceSets.stream()
+                                .filter(
+                                    referenceSet ->
+                                        referenceSet
+                                            .getIdentifierScheme()
+                                            .equals(referenceSetDefinition.getName()))
+                                .forEach(
+                                    referenceSet -> {
+                                      if (!details.getReferenceSets().contains(referenceSet)) {
+                                        details.getReferenceSets().add(referenceSet);
+                                      }
+                                    });
+                          }
+                        }));
+
+    modelConfiguration.getMappings().stream()
+        .filter(mappingDefinition -> productPackageTypes.contains(mappingDefinition.getLevel()))
+        .forEach(
+            mappingDefinition ->
+                maps.mappingMap()
+                    .forEach(
+                        (key, externalIdentifiers) -> {
+                          if (idsInScope.contains(key)) {
+                            externalIdentifiers.stream()
+                                .filter(
+                                    externalIdentifier ->
+                                        externalIdentifier
+                                            .getIdentifierScheme()
+                                            .equals(mappingDefinition.getName()))
+                                .forEach(
+                                    externalIdentifier -> {
+                                      if (!details
+                                          .getExternalIdentifiers()
+                                          .contains(externalIdentifier)) {
+                                        details.getExternalIdentifiers().add(externalIdentifier);
+                                      }
+                                    });
+                          }
+                        }));
+  }
+
+  /**
+   * Gets the ancestors of a product concept. Trying to avoid calling the API for speed, but missing
+   * ISAs might break this
+   *
+   * @param product The product concept.
+   * @param maps The maps containing the browser map.
+   * @return A set of ancestor concept IDs.
+   */
+  private static Set<String> getAncestors(SnowstormConcept product, Maps maps) {
+    log.fine("getAncestors " + product.getConceptId());
+    Set<String> ancestors = new HashSet<>();
+
+    product.getClassAxioms().stream()
+        .flatMap(a -> a.getRelationships().stream())
+        .filter(r -> r.getTypeId().equals(IS_A.getValue()))
+        .map(r -> r.getDestinationId())
+        .distinct()
+        .forEach(
+            a -> {
+              if (!ancestors.contains(a) && maps.browserMap().containsKey(a)) {
+                ancestors.add(a);
+                ancestors.addAll(getAncestors(maps.browserMap().get(a), maps));
+              }
+            });
+
+    return ancestors;
   }
 
   protected abstract SnowstormClient getSnowStormApiClient();
@@ -171,29 +252,19 @@ public abstract class AtomicDataService<T extends ProductDetails> {
   protected abstract ModelConfiguration getModelConfiguration(String branch);
 
   public PackageDetails<T> getPackageAtomicData(String branch, String productId) {
-    Maps maps =
-        getMaps(
-            branch,
-            productId,
-            getPackageAtomicDataEcl(getModelConfiguration(branch)),
-            ProductPackageType.PACKAGE);
+    Maps maps = getMaps(branch, productId, getPackageAtomicDataEcl(getModelConfiguration(branch)));
     return populatePackageDetails(branch, productId, maps, getModelConfiguration(branch));
   }
 
   public T getProductAtomicData(String branch, String productId) {
-    Maps maps =
-        getMaps(
-            branch,
-            productId,
-            getProductAtomicDataEcl(getModelConfiguration(branch)),
-            ProductPackageType.PRODUCT);
+    Maps maps = getMaps(branch, productId, getProductAtomicDataEcl(getModelConfiguration(branch)));
 
     return populateProductDetails(
         branch, maps.browserMap.get(productId), productId, maps, getModelConfiguration(branch));
   }
 
   @LogExecutionTime
-  private Maps getMaps(String branch, String productId, String ecl, ProductPackageType type) {
+  private Maps getMaps(String branch, String productId, String ecl) {
     SnowstormClient snowStormApiClient = getSnowStormApiClient();
     Collection<String> concepts = getConceptsToMap(branch, productId, ecl, snowStormApiClient);
 
@@ -212,16 +283,15 @@ public abstract class AtomicDataService<T extends ProductDetails> {
         refsetMembers
             .filter(
                 m ->
-                    getModelConfiguration(branch)
-                        .getReferenceSetsForModelLevelTypes(
-                            CLINICAL_DRUG, REAL_CLINICAL_DRUG, MEDICINAL_PRODUCT)
-                        .contains(m.getRefsetId()))
+                    getModelConfiguration(branch).getLevels().stream()
+                        .anyMatch(l -> l.getReferenceSetIdentifier().equals(m.getRefsetId())))
             .collect(
                 Collectors.toMap(
                     SnowstormReferenceSetMember::getReferencedComponentId,
                     SnowstormReferenceSetMember::getRefsetId,
                     // todo work around NMPC having duplicate refset entries
                     (existing, replacement) -> {
+                      log.warning(() -> "Duplicate refset member for " + existing);
                       if (!existing.equals(replacement)) {
                         throw new IllegalStateException(
                             "Duplicate key " + existing + " and " + replacement);
@@ -231,34 +301,24 @@ public abstract class AtomicDataService<T extends ProductDetails> {
 
     Mono<Map<String, List<ExternalIdentifier>>> mappingsMap =
         ExternalIdentifierUtils.getExternalIdentifiersMapFromRefsetMembers(
-            refsetMembers,
-            productId,
-            getModelConfiguration(branch).getMappings().stream()
-                .filter(m -> m.getLevel().equals(type))
-                .collect(Collectors.toSet()));
-
-    Map<String, ReferenceSet> referenceSetsConfigured =
-        getModelConfiguration(branch).getReferenceSets().stream()
-            .filter(r -> r.getLevel().equals(type))
-            .collect(Collectors.toMap(ReferenceSet::getIdentifier, Function.identity()));
+            refsetMembers, getModelConfiguration(branch).getMappings());
 
     Mono<Map<String, List<au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet>>>
         referenceSets =
-            refsetMembers
-                .filter(r -> referenceSetsConfigured.containsKey(r.getRefsetId()))
-                .map(
-                    s ->
-                        Pair.of(
-                            s.getReferencedComponentId(),
-                            new au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet(
-                                referenceSetsConfigured.get(s.getRefsetId()).getName())))
-                .collect(
-                    Collectors.groupingBy(
-                        Pair::getFirst, Collectors.mapping(Pair::getSecond, Collectors.toList())));
+            ReferenceSetUtils.getReferenceSetsFromRefsetMembers(
+                refsetMembers, getModelConfiguration(branch).getReferenceSets());
+
+    Mono<
+            Map<
+                String,
+                List<au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty>>>
+        nonDefiningProperties =
+            NonDefiningPropertyUtils.getNonDefiningPropertyFromConcepts(
+                browserMap, getModelConfiguration(branch).getNonDefiningProperties());
 
     Maps maps =
-        Mono.zip(browserMap, typeMap, mappingsMap, referenceSets)
-            .map(t -> new Maps(t.getT1(), t.getT2(), t.getT3(), t.getT4()))
+        Mono.zip(browserMap, typeMap, mappingsMap, referenceSets, nonDefiningProperties)
+            .map(t -> new Maps(t.getT1(), t.getT2(), t.getT3(), t.getT4(), t.getT5()))
             .block();
 
     // todo revisit this after NMPC migration
@@ -345,6 +405,15 @@ public abstract class AtomicDataService<T extends ProductDetails> {
               getModelConfiguration(branch).getMappings().stream()
                   .filter(m -> m.getLevel().equals(ProductPackageType.PACKAGE))
                   .collect(Collectors.toSet())));
+      packSizeWithIdentifier.setReferenceSets(
+          ReferenceSetUtils.getReferenceSetsFromRefsetMembers(
+                  packVariantRefsetMemebersResult, getModelConfiguration(branch).getReferenceSets())
+              .get(packVariant.getConceptId()));
+      packSizeWithIdentifier.setNonDefiningProperties(
+          NonDefiningPropertyUtils.getNonDefiningPropertyFromConcepts(
+                  Set.of(packVariant), getModelConfiguration(branch).getNonDefiningProperties())
+              .get(packVariant.getConceptId()));
+
       packSizeWithIdentifiers.add(packSizeWithIdentifier);
     }
 
@@ -439,6 +508,14 @@ public abstract class AtomicDataService<T extends ProductDetails> {
     Map<String, SnowstormConceptMini> packVariantBrandMap =
         getPackVariantBrandMap(branch, packVariantResult, productId);
 
+    Map<String, SnowstormConcept> packVariantMap =
+        packVariantResult.stream()
+            .collect(
+                Collectors.toMap(
+                    SnowstormConcept::getConceptId,
+                    Function.identity(),
+                    (existing, replacement) -> existing));
+
     for (String packVariantId : packVariantBrandMap.keySet()) {
 
       SnowstormConceptMini brand = packVariantBrandMap.get(packVariantId);
@@ -454,20 +531,30 @@ public abstract class AtomicDataService<T extends ProductDetails> {
         brandWithIdentifiers.setBrand(brand);
       }
 
-      Set<ExternalIdentifier> externalIdentifiers =
-          brandWithIdentifiers.getExternalIdentifiers() != null
-              ? brandWithIdentifiers.getExternalIdentifiers()
-              : new HashSet<>();
+      brandWithIdentifiers
+          .getExternalIdentifiers()
+          .addAll(
+              ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMembers(
+                  packVariantRefsetMemebersResult,
+                  packVariantId,
+                  getModelConfiguration(branch).getMappings().stream()
+                      .filter(m -> m.getLevel().equals(ProductPackageType.PACKAGE))
+                      .collect(Collectors.toSet())));
+      brandWithIdentifiers
+          .getReferenceSets()
+          .addAll(
+              ReferenceSetUtils.getReferenceSetsFromRefsetMembers(
+                      packVariantRefsetMemebersResult,
+                      getModelConfiguration(branch).getReferenceSets())
+                  .getOrDefault(packVariantId, new HashSet<>()));
+      brandWithIdentifiers
+          .getNonDefiningProperties()
+          .addAll(
+              NonDefiningPropertyUtils.getNonDefiningPropertyFromConcepts(
+                      Set.of(packVariantMap.get(packVariantId)),
+                      getModelConfiguration(branch).getNonDefiningProperties())
+                  .getOrDefault(packVariantId, new HashSet<>()));
 
-      externalIdentifiers.addAll(
-          ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMembers(
-              packVariantRefsetMemebersResult,
-              packVariantId,
-              getModelConfiguration(branch).getMappings().stream()
-                  .filter(m -> m.getLevel().equals(ProductPackageType.PACKAGE))
-                  .collect(Collectors.toSet())));
-
-      brandWithIdentifiers.setExternalIdentifiers(externalIdentifiers);
       if (newBrand) { // add only for not existing
         brandsWithIdentifiers.add(brandWithIdentifiers);
       }
@@ -569,14 +656,14 @@ public abstract class AtomicDataService<T extends ProductDetails> {
           getSingleActiveTarget(basePackageRelationships, HAS_CONTAINER_TYPE.getValue()));
     }
 
-    // TODO should exist for Ireland post migration?
     if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
       // product name
       details.setProductName(
           getSingleActiveTarget(basePackageRelationships, HAS_PRODUCT_NAME.getValue()));
     }
 
-    addNonDefiningData(details, productId, maps, modelConfiguration, basePackageRelationships);
+    addNonDefiningData(
+        details, maps, modelConfiguration, Set.of(ProductPackageType.PACKAGE), basePackage);
 
     Set<SnowstormRelationship> subpacksRelationships =
         getActiveRelationshipsOfType(basePackageRelationships, getSubpackRelationshipType());
@@ -603,6 +690,13 @@ public abstract class AtomicDataService<T extends ProductDetails> {
         packageQuantity.setPackageDetails(
             populatePackageDetails(
                 branch, subpacksRelationship.getTarget().getConceptId(), maps, modelConfiguration));
+
+        addNonDefiningData(
+            packageQuantity.getPackageDetails(),
+            maps,
+            modelConfiguration,
+            Set.of(ProductPackageType.CONTAINED_PACKAGE),
+            maps.browserMap().get(subpacksRelationship.getTarget().getConceptId()));
       }
     } else {
       if (productRelationships.isEmpty()) {
@@ -618,7 +712,6 @@ public abstract class AtomicDataService<T extends ProductDetails> {
             maps.browserMap().get(subProductRelationship.getTarget().getConceptId());
 
         ProductQuantity<T> productQuantity = new ProductQuantity<>();
-        // TODO are there NMPC products with no pack size?
 
         // contained product quantity value
         productQuantity.setValue(
@@ -675,7 +768,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
     }
 
     addNonDefiningData(
-        productDetails, product.getConceptId(), maps, modelConfiguration, productRelationships);
+        productDetails, maps, modelConfiguration, Set.of(ProductPackageType.PRODUCT), product);
 
     return productDetails;
   }
@@ -685,5 +778,6 @@ public abstract class AtomicDataService<T extends ProductDetails> {
       Map<String, String> typeMap,
       Map<String, List<ExternalIdentifier>> mappingMap,
       Map<String, List<au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet>>
-          referenceSets) {}
+          referenceSets,
+      Map<String, List<NonDefiningProperty>> nonDefiningPropertiesMap) {}
 }

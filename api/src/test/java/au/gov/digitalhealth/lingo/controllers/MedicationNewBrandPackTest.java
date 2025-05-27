@@ -29,6 +29,7 @@ import au.gov.digitalhealth.lingo.MedicationAssertions;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.MappingType;
 import au.gov.digitalhealth.lingo.exception.SingleConceptExpectedProblem;
 import au.gov.digitalhealth.lingo.product.BrandWithIdentifiers;
+import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.PackSizeWithIdentifiers;
 import au.gov.digitalhealth.lingo.product.ProductBrands;
 import au.gov.digitalhealth.lingo.product.ProductPackSizes;
@@ -454,6 +455,9 @@ class MedicationNewBrandPackTest extends LingoTestBase {
     MedicationAssertions.checkNoExternalIdentifiersOnTpp(productSummary);
     // Assert that new concepts are included in the calculation
     Assertions.assertThat(productSummary.isContainsNewConcepts()).isTrue();
+    // Two existing brands and two new brands should be created
+    Assertions.assertThat(productSummary.getSubjects().stream().filter(Node::isNewConcept).count())
+        .isEqualTo(2);
     MedicationAssertions.confirmAmtModelLinks(productSummary, true, false, false);
 
     // Create a ticket for the new brand creation
