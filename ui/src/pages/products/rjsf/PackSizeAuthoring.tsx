@@ -286,223 +286,250 @@ function PackSizeAuthoring({
 }
 
 export const useSchemaQuery = (branchPath: string) => {
-  return useQuery({
-    queryKey: ['bulk-pack-schema', branchPath],
-    // queryFn: () => ConfigService.fetchBulkPackSchemaData(branchPath),
-    queryFn: () => function () {
-      return {
-        "type": "object",
-        "$defs": {
-          "SnowstormConceptMini": {
-            "type": "object",
-            "properties": {
-              "conceptId": {
-                "type": "string"
+  // return useQuery({
+  //   queryKey: ['bulk-pack-schema', branchPath],
+  //   // queryFn: () => ConfigService.fetchBulkPackSchemaData(branchPath),
+  //   queryFn: () => async () => {
+      return { isLoading: false, data:
+        {
+          "type": "object",
+          "$defs": {
+            "SnowstormConceptMini": {
+              "type": "object",
+              "properties": {
+                "conceptId": {
+                  "type": "string"
+                },
+                "pt": {
+                  "$ref": "#/$defs/SnowstormTermLangPojo"
+                }
               },
-              "pt": {
-                "$ref": "#/$defs/SnowstormTermLangPojo"
+              "minProperties": 1,
+              "errorMessage": {
+                "minProperties": "Field must be populated."
               }
             },
-            "minProperties": 1,
-            "errorMessage": {
-              "minProperties": "Field must be populated."
-            }
-          },
-          "SnowstormTermLangPojo": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "lang": {
-                "type": "string"
-              },
-              "term": {
-                "type": "string"
+            "SnowstormTermLangPojo": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "lang": {
+                  "type": "string"
+                },
+                "term": {
+                  "type": "string"
+                }
               }
-            }
-          },
-          "ExternalIdentifier": {
-            "type": "object",
-            "oneOf": [
-              {
-                "title": "ARTGID",
-                "type": "object",
-                "properties": {
-                  "identifierScheme": {
-                    "type": "string",
-                    "const": "artgid"
-                  },
-                  "relationshipType": {
-                    "title": "Relationship type",
-                    "type": "string",
-                    "const": "RELATED"
-                  },
-                  "identifierValue": {
-                    "title": "ARTGID",
-                    "type": "string",
-                    "pattern": "\\d{1,8}",
-                    "errorMessage": {
-                      "pattern": "Please enter a valid ARTGID matching \\d{1,8}"
+            },
+            "ExternalIdentifier": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "title": "ARTGID",
+                  "type": "object",
+                  "properties": {
+                    "identifierScheme": {
+                      "type": "string",
+                      "const": "artgid"
+                    },
+                    "relationshipType": {
+                      "title": "Relationship type",
+                      "type": "string",
+                      "const": "RELATED"
+                    },
+                    "identifierValue": {
+                      "title": "ARTGID",
+                      "type": "string",
+                      "pattern": "\\d{1,8}",
+                      "errorMessage": {
+                        "pattern": "Please enter a valid ARTGID matching \\d{1,8}"
+                      }
+                    }
+                  }
+                },
+                {
+                  "title": "GTIN",
+                  "type": "object",
+                  "properties": {
+                    "identifierScheme": {
+                      "type": "string",
+                      "const": "gtin"
+                    },
+                    "relationshipType": {
+                      "title": "Relationship type",
+                      "type": "string",
+                      "const": "RELATED"
+                    },
+                    "identifierValue": {
+                      "title": "GTIN",
+                      "type": "string",
+                      "pattern": "\\d{1,8}",
+                      "errorMessage": {
+                        "pattern": "Please enter a valid GTIN matching \\d{1,8}"
+                      }
                     }
                   }
                 }
-              }
-            ]
-          },
-          "PackDetails": {
-            "type": "object",
-            "properties": {
-              "packSize": {
-                "type": "integer",
-                "minimum": 1,
-                "errorMessage": {
-                  "minimum": "Pack size must be at least 1."
+              ]
+            },
+            "PackDetails": {
+              "type": "object",
+              "properties": {
+                "packSize": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "errorMessage": {
+                    "minimum": "Pack size must be at least 1."
+                  }
+                },
+                "externalIdentifiers": {
+                  "type": "array",
+                  "title": "External identifiers",
+                  "items": {
+                    "$ref": "#/$defs/ExternalIdentifier"
+                  }
                 }
               },
-              "externalIdentifiers": {
-                "type": "array",
-                "title": "External identifiers",
-                "items": {
-                  "$ref": "#/$defs/ExternalIdentifier"
-                }
+              "required": ["packSize"]
+            }
+          },
+          "properties": {
+            "selectedProduct": {
+              "type": "string",
+              "title": "Selected Product"
+            },
+            "existingPackSizes": {
+              "type": "array",
+              "title": "Existing Pack Sizes",
+              "items": {
+                "$ref": "#/$defs/PackDetails"
               }
             },
-            "required": ["packSize"]
-          }
-        },
-        "properties": {
-          "selectedProduct": {
-            "type": "string",
-            "title": "Selected Product"
-          },
-          "existingPackSizes": {
-            "type": "array",
-            "title": "Existing Pack Sizes",
-            "items": {
+            "packSizes": {
+              "type": "array",
+              "title": "New Pack Sizes",
+              "items": {
+                "$ref": "#/$defs/PackDetails"
+              }
+            },
+            "newPackSizeInput": {
               "$ref": "#/$defs/PackDetails"
+            },
+            "addButton": {
+              type: "null"
             }
-          },
-          "packSizes": {
-            "type": "array",
-            "title": "New Pack Sizes",
-            "items": {
-              "$ref": "#/$defs/PackDetails"
-            }
-          },
-          "newPackSizeInput": {
-            "$ref": "#/$defs/PackDetails"
-          },
-          "addButton": {
-            type: "null"
           }
         }
       };
-    },
-    enabled: !!branchPath,
-  });
+  //   },
+  //   enabled: !!branchPath,
+  // });
 };
 
 export const useUiSchemaQuery = (branchPath: string) => {
-  return useQuery({
-    queryKey: ['bulk-pack-uiSchema', branchPath],
-    // queryFn: () => ConfigService.fetchBulkPackUiSchemaData(branchPath),
-    queryFn: () => function () {
-      return {
-        "ui:options": {
-          "skipTitle": true
-        },
-        "ui:grid": [
-          {
-            "_columnA": 12,
-            "_columnB": 12
-          }
-        ],
-        "_columnA": {
-          "ui:grid": [
-            {
-              "selectedProduct": 24
-            },
-            {
-              "existingPackSizes": 24
-            }
-          ]
-        },
-        "_columnB": {
-          "ui:title": null,
+  // return useQuery({
+  //   queryKey: ['bulk-pack-uiSchema', branchPath],
+  //   // queryFn: () => ConfigService.fetchBulkPackUiSchemaData(branchPath),
+  //   queryFn: () => async () => {
+      return { isLoading: false, data:
+        {
           "ui:options": {
-            "label": false
-          },
-          "ui:grid": [
-            {
-              "newPackSizeInput": 23,
-              "addButton": 1
-            },
-            {
-              "packSizes": 24
-            }
-          ]
-        },
-        "selectedProduct": {
-          "ui:readonly": true,
-          "ui:widget": "TitleWidget",
-          "ui:options": {
-            "inputType": "text",
-            "ui:disabled": true,
             "skipTitle": true
-          }
-        },
-        "newPackSizeInput": {
-          "ui:field": PackDetails,
-          "ui:options": {
-            "readOnly": false,
-            "allowDelete": false,
-            "requireEditButton": false
           },
-        },
-
-        "addButton": {
-          "ui:field": "AddButtonField",
-          "ui:options": {
-            "skipTitle": true,
-            "tooltipTitle": "Add Pack Size",
-            "sourcePath": "newPackSizeInput",
-            "targetPath": "packSizes",
-            "isEnabled": (source: any, target: any) => {
-              console.log('SOURCE: ' + JSON.stringify(source, null, 2));
-              const packSize = source && typeof source === "object" && source.packSize;
-              return !isNaN(packSize) && target.filter((item: any) => item.packSize === packSize).length === 0;
-            },
-            "onAddClick": (source: any, target: any, clear: Function) => {
-              target.push(source);
-              clear();
+          "ui:grid": [
+            {
+              "_columnA": 12,
+              "_columnB": 12
             }
-          }
-        },
-        "existingPackSizes": {
-          "ui:template": PackSizeArrayTemplate,
-          "ui:options": {
-            "orderable": false,
-            "skipTitle": true,
-            "listTitle": "Existing Pack Sizes",
-            "readOnly": true,
-            "allowDelete": false,
-            "requireEditButton": true
+          ],
+          "_columnA": {
+            "ui:grid": [
+              {
+                "selectedProduct": 24
+              },
+              {
+                "existingPackSizes": 24
+              }
+            ]
           },
-        }
-        ,
-        "packSizes": {
-          "ui:template": PackSizeArrayTemplate,
-          "ui:options": {
-            "orderable": false,
-            "skipTitle": true,
-            "listTitle": "Newly Added Pack Sizes",
-            "readOnly": false,
-            "allowDelete": true,
-            "requireEditButton": true
+          "_columnB": {
+            "ui:title": null,
+            "ui:options": {
+              "label": false
+            },
+            "ui:grid": [
+              {
+                "newPackSizeInput": 23,
+                "addButton": 1
+              },
+              {
+                "packSizes": 24
+              }
+            ]
+          },
+          "selectedProduct": {
+            "ui:readonly": true,
+            "ui:widget": "TitleWidget",
+            "ui:options": {
+              "inputType": "text",
+              "ui:disabled": true,
+              "skipTitle": true
+            }
+          },
+          "newPackSizeInput": {
+            "ui:field": PackDetails,
+            "ui:options": {
+              "readOnly": false,
+              "allowDelete": false,
+              "requireEditButton": false
+            },
+          },
+
+          "addButton": {
+            "ui:field": "AddButtonField",
+            "ui:options": {
+              "skipTitle": true,
+              "tooltipTitle": "Add Pack Size",
+              "sourcePath": "newPackSizeInput",
+              "targetPath": "packSizes",
+              "isEnabled": (source: any, target: any) => {
+                console.log('SOURCE: ' + JSON.stringify(source, null, 2));
+                const packSize = source && typeof source === "object" && source.packSize;
+                return !isNaN(packSize) && target.filter((item: any) => item.packSize === packSize).length === 0;
+              },
+              "onAddClick": (source: any, target: any, clear: Function) => {
+                target.push(source);
+                clear();
+              }
+            }
+          },
+          "existingPackSizes": {
+            "ui:template": PackSizeArrayTemplate,
+            "ui:options": {
+              "orderable": false,
+              "skipTitle": true,
+              "listTitle": "Existing Pack Sizes",
+              "readOnly": true,
+              "allowDelete": false,
+              "requireEditButton": true
+            },
+          }
+          ,
+          "packSizes": {
+            "ui:template": PackSizeArrayTemplate,
+            "ui:options": {
+              "orderable": false,
+              "skipTitle": true,
+              "listTitle": "Newly Added Pack Sizes",
+              "readOnly": false,
+              "allowDelete": true,
+              "requireEditButton": true
+            }
           }
         }
       };
-    },
-    enabled: !!branchPath,
-  });
+  //   },
+  //   enabled: !!branchPath,
+  // }});
 };
 export default PackSizeAuthoring;
