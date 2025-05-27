@@ -270,7 +270,7 @@ models:
         eclBinding: <774164004
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
-        multiValued: true
+        multiValued: false
       - name: licencedRoute
         title: Licenced Route
         description: Licenced Route of Administration
