@@ -475,28 +475,32 @@ class MedicationNewBrandPackTest extends LingoTestBase {
         .getSubjects()
         .forEach(subject -> Assertions.assertThat(subject.getConceptId()).matches("\\d{7,18}"));
 
-    // Verify one of the newly created brands by loading the conceptId
-    Long conceptToLoad =
-        Long.parseLong(createdProduct.getSubjects().iterator().next().getConceptId());
-    ProductBrands newProductBrands = getLingoTestClient().getMedicationProductBrands(conceptToLoad);
-
-    // Assert that the new brands are not empty and there are exactly four brands
-    Assertions.assertThat(newProductBrands.getBrands()).isNotEmpty();
-    Assertions.assertThat(newProductBrands.getBrands()).hasSize(4);
-
-    // Check for duplicate conceptIds in the new brands
-    Set<String> conceptIds = new HashSet<>();
-    boolean hasDuplicates =
-        newProductBrands.getBrands().stream()
-            .map(b -> b.getBrand().getConceptId())
-            .anyMatch(conceptId -> !conceptIds.add(conceptId));
-    Assertions.assertThat(hasDuplicates).isFalse(); // Ensure no duplicates exist
-
-    // Assert that each brand has exactly 2 external identifiers
-    newProductBrands
-        .getBrands()
+    createdProduct.getSubjects().stream()
+        .map(n -> Long.parseLong(n.getConceptId()))
         .forEach(
-            brandWithIdentifiers ->
-                Assertions.assertThat(brandWithIdentifiers.getExternalIdentifiers()).hasSize(2));
+            conceptToLoad -> {
+              ProductBrands newProductBrands =
+                  getLingoTestClient().getMedicationProductBrands(conceptToLoad);
+
+              // Assert that the new brands are not empty and there are exactly four brands
+              Assertions.assertThat(newProductBrands.getBrands()).isNotEmpty();
+              Assertions.assertThat(newProductBrands.getBrands()).hasSize(4);
+
+              // Check for duplicate conceptIds in the new brands
+              Set<String> conceptIds = new HashSet<>();
+              boolean hasDuplicates =
+                  newProductBrands.getBrands().stream()
+                      .map(b -> b.getBrand().getConceptId())
+                      .anyMatch(conceptId -> !conceptIds.add(conceptId));
+              Assertions.assertThat(hasDuplicates).isFalse(); // Ensure no duplicates exist
+
+              // Assert that each brand has exactly 2 external identifiers
+              newProductBrands
+                  .getBrands()
+                  .forEach(
+                      brandWithIdentifiers ->
+                          Assertions.assertThat(brandWithIdentifiers.getExternalIdentifiers())
+                              .hasSize(2));
+            });
   }
 }
