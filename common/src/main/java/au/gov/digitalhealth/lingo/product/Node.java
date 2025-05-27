@@ -19,6 +19,8 @@ import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
+import au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet;
 import au.gov.digitalhealth.lingo.validation.OnlyOnePopulated;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
@@ -74,6 +76,8 @@ public class Node {
   boolean newInProject;
 
   @Builder.Default Set<ExternalIdentifier> externalIdentifiers = new HashSet<>();
+  @Builder.Default Set<NonDefiningProperty> nonDefiningProperties = new HashSet<>();
+  @Builder.Default Set<ReferenceSet> referenceSets = new HashSet<>();
 
   ModelLevelType modelLevel;
 

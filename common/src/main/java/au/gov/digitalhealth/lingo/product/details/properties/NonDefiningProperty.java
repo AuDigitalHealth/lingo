@@ -19,6 +19,7 @@ import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.NonDefiningPropertyDataType;
 import au.gov.digitalhealth.lingo.validation.OnlyOneNotEmpty;
+import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -34,8 +35,12 @@ public class NonDefiningProperty extends NonDefiningBase implements Serializable
 
   public NonDefiningProperty(
       SnowstormRelationship r,
-      au.gov.digitalhealth.lingo.configuration.model.NonDefiningProperty nonDefiningProperty) {
-    super(nonDefiningProperty.getIdentifier());
+      @NotNull
+          au.gov.digitalhealth.lingo.configuration.model.NonDefiningProperty nonDefiningProperty) {
+    this.setIdentifierScheme(nonDefiningProperty.getName());
+    this.setIdentifier(nonDefiningProperty.getIdentifier());
+    this.setTitle(nonDefiningProperty.getTitle());
+    this.setDescription(nonDefiningProperty.getDescription());
     if (!r.getTypeId().equals(nonDefiningProperty.getIdentifier())) {
       throw new IllegalArgumentException(
           "The relationship type "
