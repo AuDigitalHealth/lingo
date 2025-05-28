@@ -123,33 +123,51 @@ public abstract class AtomicDataService<T extends ProductDetails> {
     Set<String> idsInScope = getAncestors(product, maps);
     idsInScope.add(product.getConceptId());
 
-    modelConfiguration.getNonDefiningProperties().stream()
-        .filter(
-            nonDefiningPropertyDefinition ->
-                productPackageTypes.contains(nonDefiningPropertyDefinition.getLevel()))
+    addNonDefiningProperties(details, maps, modelConfiguration, productPackageTypes, idsInScope);
+
+    addReferenceSets(details, maps, modelConfiguration, productPackageTypes, idsInScope);
+
+    addExternalIdentifiers(details, maps, modelConfiguration, productPackageTypes, idsInScope);
+  }
+
+  private static void addExternalIdentifiers(
+      PackageProductDetailsBase details,
+      Maps maps,
+      ModelConfiguration modelConfiguration,
+      Set<ProductPackageType> productPackageTypes,
+      Set<String> idsInScope) {
+    modelConfiguration.getMappings().stream()
+        .filter(mappingDefinition -> productPackageTypes.contains(mappingDefinition.getLevel()))
         .forEach(
-            nonDefiningPropertyDefinition ->
-                maps.nonDefiningPropertiesMap()
+            mappingDefinition ->
+                maps.mappingMap()
                     .forEach(
-                        (key, nonDefiningProperties) -> {
+                        (key, externalIdentifiers) -> {
                           if (idsInScope.contains(key)) {
-                            nonDefiningProperties.stream()
+                            externalIdentifiers.stream()
                                 .filter(
-                                    nonDefiningProperty ->
-                                        nonDefiningProperty
+                                    externalIdentifier ->
+                                        externalIdentifier
                                             .getIdentifierScheme()
-                                            .equals(nonDefiningPropertyDefinition.getName()))
+                                            .equals(mappingDefinition.getName()))
                                 .forEach(
-                                    nonDefiningProperty -> {
+                                    externalIdentifier -> {
                                       if (!details
-                                          .getNonDefiningProperties()
-                                          .contains(nonDefiningProperty)) {
-                                        details.getNonDefiningProperties().add(nonDefiningProperty);
+                                          .getExternalIdentifiers()
+                                          .contains(externalIdentifier)) {
+                                        details.getExternalIdentifiers().add(externalIdentifier);
                                       }
                                     });
                           }
                         }));
+  }
 
+  private static void addReferenceSets(
+      PackageProductDetailsBase details,
+      Maps maps,
+      ModelConfiguration modelConfiguration,
+      Set<ProductPackageType> productPackageTypes,
+      Set<String> idsInScope) {
     modelConfiguration.getReferenceSets().stream()
         .filter(
             referenceSetDefinition ->
@@ -174,27 +192,36 @@ public abstract class AtomicDataService<T extends ProductDetails> {
                                     });
                           }
                         }));
+  }
 
-    modelConfiguration.getMappings().stream()
-        .filter(mappingDefinition -> productPackageTypes.contains(mappingDefinition.getLevel()))
+  private static void addNonDefiningProperties(
+      PackageProductDetailsBase details,
+      Maps maps,
+      ModelConfiguration modelConfiguration,
+      Set<ProductPackageType> productPackageTypes,
+      Set<String> idsInScope) {
+    modelConfiguration.getNonDefiningProperties().stream()
+        .filter(
+            nonDefiningPropertyDefinition ->
+                productPackageTypes.contains(nonDefiningPropertyDefinition.getLevel()))
         .forEach(
-            mappingDefinition ->
-                maps.mappingMap()
+            nonDefiningPropertyDefinition ->
+                maps.nonDefiningPropertiesMap()
                     .forEach(
-                        (key, externalIdentifiers) -> {
+                        (key, nonDefiningProperties) -> {
                           if (idsInScope.contains(key)) {
-                            externalIdentifiers.stream()
+                            nonDefiningProperties.stream()
                                 .filter(
-                                    externalIdentifier ->
-                                        externalIdentifier
+                                    nonDefiningProperty ->
+                                        nonDefiningProperty
                                             .getIdentifierScheme()
-                                            .equals(mappingDefinition.getName()))
+                                            .equals(nonDefiningPropertyDefinition.getName()))
                                 .forEach(
-                                    externalIdentifier -> {
+                                    nonDefiningProperty -> {
                                       if (!details
-                                          .getExternalIdentifiers()
-                                          .contains(externalIdentifier)) {
-                                        details.getExternalIdentifiers().add(externalIdentifier);
+                                          .getNonDefiningProperties()
+                                          .contains(nonDefiningProperty)) {
+                                        details.getNonDefiningProperties().add(nonDefiningProperty);
                                       }
                                     });
                           }
@@ -321,11 +348,12 @@ public abstract class AtomicDataService<T extends ProductDetails> {
             .map(t -> new Maps(t.getT1(), t.getT2(), t.getT3(), t.getT4(), t.getT5()))
             .block();
 
-    // todo revisit this after NMPC migration
-    //    if (maps == null || !maps.typeMap.keySet().equals(maps.browserMap.keySet())) {
-    //      throw new AtomicDataExtractionProblem(
-    //          "Mismatch between browser and refset members", productId);
-    //    }
+    //     todo revisit this after NMPC migration
+    if (maps == null) {
+      // || !maps.typeMap.keySet().equals(maps.browserMap.keySet())) {
+      throw new AtomicDataExtractionProblem(
+          "Mismatch between browser and refset members", productId);
+    }
     return maps;
   }
 
@@ -516,14 +544,17 @@ public abstract class AtomicDataService<T extends ProductDetails> {
                     Function.identity(),
                     (existing, replacement) -> existing));
 
-    for (String packVariantId : packVariantBrandMap.keySet()) {
-
-      SnowstormConceptMini brand = packVariantBrandMap.get(packVariantId);
+    for (Map.Entry<String, SnowstormConceptMini> entry : packVariantBrandMap.entrySet()) {
+      String packVariantId = entry.getKey();
+      SnowstormConceptMini brand = entry.getValue();
 
       // Find the BrandWithIdentifiers if present, or create a new one
       BrandWithIdentifiers brandWithIdentifiers =
           brandsWithIdentifiers.stream()
-              .filter(bi -> bi.getBrand().getConceptId().equals(brand.getConceptId()))
+              .filter(
+                  bi ->
+                      bi.getBrand().getConceptId() != null
+                          && bi.getBrand().getConceptId().equals(brand.getConceptId()))
               .findAny()
               .orElseGet(BrandWithIdentifiers::new);
       boolean newBrand = brandWithIdentifiers.getBrand() == null;
@@ -747,14 +778,6 @@ public abstract class AtomicDataService<T extends ProductDetails> {
     T productDetails =
         populateSpecificProductDetails(
             branch, product, productId, maps.browserMap(), maps.typeMap(), modelConfiguration);
-
-    if (maps.mappingMap().containsKey(product.getConceptId())) {
-      productDetails.setExternalIdentifiers(maps.mappingMap().get(product.getConceptId()));
-    }
-
-    if (maps.referenceSets().containsKey(product.getConceptId())) {
-      productDetails.getReferenceSets().addAll(maps.referenceSets().get(product.getConceptId()));
-    }
 
     // product name
     Set<SnowstormRelationship> productRelationships = getRelationshipsFromAxioms(product);
