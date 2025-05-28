@@ -77,12 +77,13 @@ public class NonDefiningPropertiesConverter {
                     + modelNonDefiningProperty.getIdentifier()
                     + " is missing");
           }
-          SnowstormDtoUtil.getSnowstormRelationship(
-              modelNonDefiningProperty.asLingoConstant(),
-              nonDefiningProperty.getValueObject(),
-              0,
-              ADDITIONAL_RELATIONSHIP,
-              modelConfiguration.getModuleId());
+          snowstormRelationships.add(
+              SnowstormDtoUtil.getSnowstormRelationship(
+                  modelNonDefiningProperty.asLingoConstant(),
+                  nonDefiningProperty.getValueObject(),
+                  0,
+                  ADDITIONAL_RELATIONSHIP,
+                  modelConfiguration.getModuleId()));
         } else {
           if (nonDefiningProperty.getValue() == null) {
             throw new ProductAtomicDataValidationProblem(
@@ -90,13 +91,14 @@ public class NonDefiningPropertiesConverter {
                     + modelNonDefiningProperty.getIdentifier()
                     + " is missing");
           }
-          SnowstormDtoUtil.getSnowstormDatatypeComponent(
-              modelNonDefiningProperty.asLingoConstant(),
-              nonDefiningProperty.getValue(),
-              modelNonDefiningProperty.getDataType().getSnowstormDatatype(),
-              0,
-              ADDITIONAL_RELATIONSHIP,
-              modelConfiguration.getModuleId());
+          snowstormRelationships.add(
+              SnowstormDtoUtil.getSnowstormDatatypeComponent(
+                  modelNonDefiningProperty.asLingoConstant(),
+                  nonDefiningProperty.getValue(),
+                  modelNonDefiningProperty.getDataType().getSnowstormDatatype(),
+                  0,
+                  ADDITIONAL_RELATIONSHIP,
+                  modelConfiguration.getModuleId()));
         }
       }
     }

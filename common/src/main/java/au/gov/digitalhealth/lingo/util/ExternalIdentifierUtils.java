@@ -24,8 +24,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -43,7 +43,7 @@ public class ExternalIdentifierUtils {
 
     Set<ExternalIdentifier> externalIdentifiers = new HashSet<>();
 
-    Map<String, MappingRefset> mappingRefsetMap = createMappingToIdentifierMap(mappingRefsets);
+    Map<String, Set<MappingRefset>> mappingRefsetMap = createMappingToIdentifierMap(mappingRefsets);
 
     referenceSetMembers.forEach(
         r -> {
@@ -54,8 +54,10 @@ public class ExternalIdentifierUtils {
                       .collect(Collectors.toSet())
                       .contains(r.getRefsetId())) {
 
-            externalIdentifiers.add(
-                ExternalIdentifier.create(r, mappingRefsetMap.get(r.getRefsetId())));
+            externalIdentifiers.addAll(
+                mappingRefsetMap.getOrDefault(r.getRefsetId(), new HashSet<>()).stream()
+                    .map(m -> ExternalIdentifier.create(r, m))
+                    .collect(Collectors.toSet()));
           }
         });
 
@@ -69,7 +71,7 @@ public class ExternalIdentifierUtils {
 
     Set<ExternalIdentifier> externalIdentifiers = new HashSet<>();
 
-    Map<String, MappingRefset> mappingRefsetMap = createMappingToIdentifierMap(mappingRefsets);
+    Map<String, Set<MappingRefset>> mappingRefsetMap = createMappingToIdentifierMap(mappingRefsets);
 
     referenceSetMembers.forEach(
         r -> {
@@ -81,8 +83,10 @@ public class ExternalIdentifierUtils {
                   .collect(Collectors.toSet())
                   .contains(r.getRefsetId())) {
 
-            externalIdentifiers.add(
-                ExternalIdentifier.create(r, mappingRefsetMap.get(r.getRefsetId())));
+            externalIdentifiers.addAll(
+                mappingRefsetMap.getOrDefault(r.getRefsetId(), new HashSet<>()).stream()
+                    .map(m -> ExternalIdentifier.create(r, m))
+                    .collect(Collectors.toSet()));
           }
         });
 
@@ -97,7 +101,7 @@ public class ExternalIdentifierUtils {
 
     Set<ExternalIdentifier> externalIdentifiers = new HashSet<>();
 
-    Map<String, MappingRefset> mappingRefsetMap = createMappingToIdentifierMap(mappingRefsets);
+    Map<String, Set<MappingRefset>> mappingRefsetMap = createMappingToIdentifierMap(mappingRefsets);
 
     referenceSetMembers
         .toStream()
@@ -111,18 +115,20 @@ public class ExternalIdentifierUtils {
                       .collect(Collectors.toSet())
                       .contains(r.getRefsetId())) {
 
-                externalIdentifiers.add(
-                    ExternalIdentifier.create(r, mappingRefsetMap.get(r.getRefsetId())));
+                externalIdentifiers.addAll(
+                    mappingRefsetMap.getOrDefault(r.getRefsetId(), new HashSet<>()).stream()
+                        .map(m -> ExternalIdentifier.create(r, m))
+                        .collect(Collectors.toSet()));
               }
             });
 
     return externalIdentifiers;
   }
 
-  private static Map<String, MappingRefset> createMappingToIdentifierMap(
+  private static Map<String, Set<MappingRefset>> createMappingToIdentifierMap(
       Set<MappingRefset> mappingRefsets) {
     return mappingRefsets.stream()
-        .collect(Collectors.toMap(MappingRefset::getIdentifier, Function.identity()));
+        .collect(Collectors.groupingBy(MappingRefset::getIdentifier, Collectors.toSet()));
   }
 
   public static Mono<Map<String, List<ExternalIdentifier>>>
@@ -133,21 +139,25 @@ public class ExternalIdentifierUtils {
       return Mono.just(Map.of());
     }
 
-    Map<String, MappingRefset> mappingRefsetMap = createMappingToIdentifierMap(mappingRefsets);
+    Map<String, Set<MappingRefset>> mappingRefsetMap = createMappingToIdentifierMap(mappingRefsets);
+
+    Set<String> refsetIdentifiers =
+        mappingRefsets.stream().map(MappingRefset::getIdentifier).collect(Collectors.toSet());
 
     return refsetMembers
         .filter(r -> r.getActive() != null && r.getActive())
-        .filter(
-            r ->
-                mappingRefsets.stream()
-                    .map(MappingRefset::getIdentifier)
-                    .collect(Collectors.toSet())
-                    .contains(r.getRefsetId()))
+        .filter(r -> refsetIdentifiers.contains(r.getRefsetId()))
         .collect(
             Collectors.groupingBy(
                 SnowstormReferenceSetMember::getReferencedComponentId,
-                Collectors.mapping(
-                    r -> ExternalIdentifier.create(r, mappingRefsetMap.get(r.getRefsetId())),
+                Collectors.flatMapping(
+                    r -> {
+                      Set<MappingRefset> mappingRefsetsList = mappingRefsetMap.get(r.getRefsetId());
+                      if (mappingRefsetsList == null) {
+                        return Stream.empty();
+                      }
+                      return mappingRefsetsList.stream().map(m -> ExternalIdentifier.create(r, m));
+                    },
                     Collectors.toList())));
   }
 }
