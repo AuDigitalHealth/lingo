@@ -24,12 +24,23 @@ import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class BrandWithIdentifiers implements Serializable {
   @NotNull private SnowstormConceptMini brand;
-  @NotNull @Valid private Set<@Valid ExternalIdentifier> externalIdentifiers = new HashSet<>();
-  @NotNull @Valid private Set<@Valid NonDefiningProperty> nonDefiningProperties = new HashSet<>();
-  @NotNull @Valid private Set<@Valid ReferenceSet> referenceSets = new HashSet<>();
+
+  @Builder.Default @NotNull @Valid
+  private Set<@Valid ExternalIdentifier> externalIdentifiers = new HashSet<>();
+
+  @Builder.Default @NotNull @Valid
+  private Set<@Valid NonDefiningProperty> nonDefiningProperties = new HashSet<>();
+
+  @Builder.Default @NotNull @Valid private Set<@Valid ReferenceSet> referenceSets = new HashSet<>();
 }

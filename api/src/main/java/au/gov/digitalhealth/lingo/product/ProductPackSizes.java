@@ -33,7 +33,7 @@ public class ProductPackSizes implements Serializable {
 
   @NotNull private SnowstormConceptMini unitOfMeasure;
 
-  @NotEmpty @NotNull private Set<PackSizeWithIdentifiers> packSizes;
+  @NotEmpty @NotNull private Set<@Valid PackSizeWithIdentifiers> packSizes;
 
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
