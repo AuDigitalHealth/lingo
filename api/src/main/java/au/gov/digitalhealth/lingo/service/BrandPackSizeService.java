@@ -20,6 +20,8 @@ import static au.gov.digitalhealth.lingo.service.ProductSummaryService.HAS_PRODU
 import static au.gov.digitalhealth.lingo.service.ProductSummaryService.IS_A_LABEL;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONTAINS_DEVICE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_DEVICE_TYPE;
+import static au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter.calculateNonDefiningRelationships;
+import static au.gov.digitalhealth.lingo.util.ReferenceSetUtils.getReferenceSetMembers;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONTAINS_CD;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_UNIT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_VALUE;
@@ -43,7 +45,6 @@ import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
-import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.BrandWithIdentifiers;
 import au.gov.digitalhealth.lingo.product.Edge;
@@ -54,6 +55,8 @@ import au.gov.digitalhealth.lingo.product.ProductPackSizes;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.bulk.BrandPackSizeCreationDetails;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
+import au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet;
 import au.gov.digitalhealth.lingo.util.AmtConstants;
 import au.gov.digitalhealth.lingo.util.BigDecimalFormatter;
 import au.gov.digitalhealth.lingo.util.RelationshipSorter;
@@ -512,6 +515,9 @@ public class BrandPackSizeService {
                                 concepts.get(node.getConceptId()),
                                 brand,
                                 atomicCache,
+                                brandPackSizeEntry.getExternalIdentifiers(),
+                                brandPackSizeEntry.getReferenceSets(),
+                                brandPackSizeEntry.getNonDefiningProperties(),
                                 isDevice,
                                 node.getModelLevel())
                             .thenApply(
@@ -545,6 +551,9 @@ public class BrandPackSizeService {
                                 packSize.getPackSize(),
                                 concepts.get(node.getConceptId()),
                                 atomicCache,
+                                packSize.getExternalIdentifiers(),
+                                packSize.getReferenceSets(),
+                                packSize.getNonDefiningProperties(),
                                 isDevice,
                                 node.getModelLevel())
                             .thenApply(
@@ -560,28 +569,28 @@ public class BrandPackSizeService {
       }
     }
 
-    Map<SnowstormConceptMini, Set<ExternalIdentifier>> consolidatedBrands =
+    if (brands != null
+        && brands.getBrands().stream()
+            .collect(Collectors.groupingBy(BrandWithIdentifiers::getBrand))
+            .values()
+            .stream()
+            .anyMatch(l -> l.size() > 1)) {
+      throw new ProductAtomicDataValidationProblem(
+          "Duplicate brands found in the provided brand list. Please ensure each brand is unique.");
+    }
+
+    Set<BrandWithIdentifiers> brandSet =
         brands == null
-            ? Map.of(selectedProductBrand, new HashSet<>())
-            : brands.getBrands().stream()
-                .collect(
-                    Collectors.toMap(
-                        BrandWithIdentifiers::getBrand,
-                        BrandWithIdentifiers::getExternalIdentifiers,
-                        (existing, replacement) -> {
-                          existing.addAll(replacement);
-                          return existing;
-                        }));
+            ? Set.of(BrandWithIdentifiers.builder().brand(selectedProductBrand).build())
+            : brands.getBrands();
 
     List<CompletableFuture<ProductSummary>> productSummaryFutures = new ArrayList<>();
 
     Set<PackSizeWithIdentifiers> packSizesToProcess =
         packSizes == null ? Set.of(leafPackSize) : packSizes.getPackSizes();
 
-    for (Entry<SnowstormConceptMini, Set<ExternalIdentifier>> brandPackSizeEntry :
-        consolidatedBrands.entrySet()) {
-      SnowstormConceptMini brand = brandPackSizeEntry.getKey();
-      Set<ExternalIdentifier> brandExternalIdentifiers = brandPackSizeEntry.getValue();
+    for (BrandWithIdentifiers brandPackSize : brandSet) {
+      SnowstormConceptMini brand = brandPackSize.getBrand();
       for (PackSizeWithIdentifiers packSize : packSizesToProcess) {
         final boolean newBrand = !brand.getConceptId().equals(selectedProductBrand.getConceptId());
         final boolean newPackSize = !packSize.getPackSize().equals(leafPackSize.getPackSize());
@@ -606,10 +615,18 @@ public class BrandPackSizeService {
 
           Set<ExternalIdentifier> unionOfBrandAndPackExternalIdentifiers =
               new HashSet<>(packSize.getExternalIdentifiers());
-          unionOfBrandAndPackExternalIdentifiers.addAll(brandExternalIdentifiers);
+          unionOfBrandAndPackExternalIdentifiers.addAll(brandPackSize.getExternalIdentifiers());
+
+          Set<ReferenceSet> unionOfBrandAndPackReferenceSets =
+              new HashSet<>(packSize.getReferenceSets());
+          unionOfBrandAndPackReferenceSets.addAll(brandPackSize.getReferenceSets());
+
+          Set<NonDefiningProperty> unionOfBrandAndPackNonDefiningProperties =
+              new HashSet<>(packSize.getNonDefiningProperties());
+          unionOfBrandAndPackNonDefiningProperties.addAll(brandPackSize.getNonDefiningProperties());
 
           Map<ModelLevelType, CompletableFuture<Node>> newBrandedPackageNodeFutures =
-              new HashMap<>();
+              new EnumMap<>(ModelLevelType.class);
           brandedPackageNodeMap.forEach(
               (type, node) -> {
                 if (log.isLoggable(Level.FINE)) {
@@ -625,6 +642,8 @@ public class BrandPackSizeService {
                         newBrandedProductLeafNode,
                         atomicCache,
                         unionOfBrandAndPackExternalIdentifiers,
+                        unionOfBrandAndPackReferenceSets,
+                        unionOfBrandAndPackNonDefiningProperties,
                         isDevice,
                         modelConfiguration.getLevelOfType(type)));
               });
@@ -718,6 +737,8 @@ public class BrandPackSizeService {
       Node newLeafBrandedProductNode,
       AtomicCache atomicCache,
       Set<ExternalIdentifier> externalIdentifiers,
+      Set<ReferenceSet> referenceSets,
+      Set<NonDefiningProperty> nonDefiningProperties,
       boolean isDevice,
       ModelLevel modelLevel) {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
@@ -742,13 +763,15 @@ public class BrandPackSizeService {
             Set.of(modelLevel.getReferenceSetIdentifier()),
             modelLevel,
             isDevice ? modelLevel.getDrugDeviceSemanticTag() : modelLevel.getMedicineSemanticTag(),
-            SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(
+            getReferenceSetMembers(
                 externalIdentifiers,
-                modelLevel.getModelLevelType(),
-                models
-                    .getModelConfiguration(branch)
-                    .getMappingRefsetMapForType(ProductPackageType.PACKAGE)),
-            Set.of(), // may need to reconsider if users specify the properties to copy over
+                referenceSets,
+                models.getModelConfiguration(branch),
+                modelLevel.getModelLevelType()),
+            calculateNonDefiningRelationships(
+                models.getModelConfiguration(branch),
+                nonDefiningProperties,
+                modelLevel.getModelLevelType()),
             List.of(),
             false,
             false,
@@ -766,6 +789,9 @@ public class BrandPackSizeService {
       BigDecimal packSize,
       SnowstormConcept mppConcept,
       AtomicCache atomicCache,
+      Set<ExternalIdentifier> externalIdentifiers,
+      Set<ReferenceSet> referenceSets,
+      Set<NonDefiningProperty> nonDefiningProperties,
       boolean isDevice,
       ModelLevelType modelLevelType) {
 
@@ -813,8 +839,15 @@ public class BrandPackSizeService {
             Set.of(modelLevel.getReferenceSetIdentifier()),
             modelLevel,
             isDevice ? modelLevel.getDrugDeviceSemanticTag() : modelLevel.getMedicineSemanticTag(),
-            Set.of(),
-            Set.of(), // may need to reconsider if users specify the properties to copy over
+            getReferenceSetMembers(
+                externalIdentifiers,
+                referenceSets,
+                models.getModelConfiguration(branch),
+                modelLevel.getModelLevelType()),
+            calculateNonDefiningRelationships(
+                models.getModelConfiguration(branch),
+                nonDefiningProperties,
+                modelLevel.getModelLevelType()),
             List.of(),
             false,
             false,
@@ -832,6 +865,9 @@ public class BrandPackSizeService {
       SnowstormConcept leafProductConcept,
       SnowstormConceptMini brand,
       AtomicCache atomicCache,
+      Set<ExternalIdentifier> externalIdentifiers,
+      Set<ReferenceSet> referenceSets,
+      Set<NonDefiningProperty> nonDefiningProperties,
       boolean isDevice,
       ModelLevelType modelLevelType) {
 
@@ -880,8 +916,15 @@ public class BrandPackSizeService {
             Set.of(modelLevel.getReferenceSetIdentifier()),
             modelLevel,
             isDevice ? modelLevel.getDrugDeviceSemanticTag() : modelLevel.getMedicineSemanticTag(),
-            Set.of(),
-            Set.of(), // may need to reconsider if users specify the properties to copy over
+            getReferenceSetMembers(
+                externalIdentifiers,
+                referenceSets,
+                models.getModelConfiguration(branch),
+                modelLevel.getModelLevelType()),
+            calculateNonDefiningRelationships(
+                models.getModelConfiguration(branch),
+                nonDefiningProperties,
+                modelLevel.getModelLevelType()),
             List.of(),
             false,
             false,

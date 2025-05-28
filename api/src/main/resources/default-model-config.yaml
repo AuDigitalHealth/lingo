@@ -166,20 +166,20 @@ models:
         level: PRODUCT
         dataType: STRING
         valueRegexValidation: (PA\d{4,8}(\/\d{1,2})?(\/\d{1,2})?)|(EU\/\d{1,5}\/\d{1,5}\/\d{1,5})
-        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+        modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: true
         defaultMappingType: RELATED
         mappingTypes:
           - RELATED
-      - name: pan
+      - name: packagePan
         title: Product authorisation number
         description: HPRA or EMA product authorisation number
         identifier: 11000168105
         level: PACKAGE
         dataType: STRING
         valueRegexValidation: (PA\d{4,8}(\/\d{1,2})?(\/\d{1,2})?)|(EU\/\d{1,5}\/\d{1,5}\/\d{1,5})
-        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
         defaultMappingType: RELATED
@@ -191,7 +191,7 @@ models:
         level: PACKAGE
         dataType: UNSIGNED_INTEGER
         valueRegexValidation: \d{13}
-        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
         defaultMappingType: RELATED
@@ -203,7 +203,7 @@ models:
         level: PACKAGE
         dataType: UNSIGNED_INTEGER
         valueRegexValidation: \d{8,14}
-        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
         defaultMappingType: RELATED
@@ -216,7 +216,7 @@ models:
         dataType: STRING,
         valueRegexValidation: ^.+$
         valueSetReference: http://www.whocc.no/atc/vs
-        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
         defaultMappingType: RELATED
@@ -229,7 +229,7 @@ models:
         dataType: STRING,
         valueRegexValidation: ^.+$
         valueSetReference: https://nmpc.hse.ie/PCRS/vs
-        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: false
         defaultMappingType: RELATED
@@ -241,25 +241,25 @@ models:
         description: Medicines on the Black Triangle Scheme
         identifier: 419036000
         level: PRODUCT
-        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+        modelLevels: REAL_CLINICAL_DRUG
       - name: combinationOnly
         title: Combination pack only
         description: Combination pack only
         identifier: 431134006
         level: PACKAGE
-        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
       - name: parallelImport
         title: Parallel import
         description: Parallel import
         identifier: 433741003
         level: PRODUCT
-        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+        modelLevels: REAL_CLINICAL_DRUG
       - name: vmpNonPrescribable
         title: Non-prescribable VMP
         description: Non-prescribable VMP
         identifier: 1514151000168100
         level: PRODUCT
-        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+        modelLevels: REAL_CLINICAL_DRUG
     nonDefiningProperties:
       - name: supplier
         title: Supplier
@@ -301,23 +301,23 @@ models:
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: true
-      - name: pil
+      - name: packagePil
         title: Product information leaflet
         description: Product information leaflet
         identifier: 243638002
         level: PACKAGE
         dataType: URI
         valueRegexValidation: http(s)?://.+\.(pdf|html)
-        modelLevels: REAL_CLINICAL_DRUG
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
-      - name: smpc
+      - name: packageSmpc
         title: SmPC
         description: SmPC
         identifier: 1445111000168100
         level: PACKAGE
         dataType: URI
         valueRegexValidation: http(s)?://.+\.(pdf|html)
-        modelLevels: REAL_CLINICAL_DRUG
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true

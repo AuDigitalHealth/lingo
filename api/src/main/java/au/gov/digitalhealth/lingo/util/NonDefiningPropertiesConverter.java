@@ -24,6 +24,7 @@ import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.NonDefiningPropertyDataType;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.details.PackageProductDetailsBase;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -37,7 +38,17 @@ public class NonDefiningPropertiesConverter {
       ModelConfiguration modelConfiguration,
       PackageProductDetailsBase packageDetails,
       ModelLevelType modelLevelType) {
-    if (packageDetails.getNonDefiningProperties().isEmpty()) {
+    return calculateNonDefiningRelationships(
+        modelConfiguration, packageDetails.getNonDefiningProperties(), modelLevelType);
+  }
+
+  public static Set<SnowstormRelationship> calculateNonDefiningRelationships(
+      ModelConfiguration modelConfiguration,
+      Collection<au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty>
+          nonDefiningProperties,
+      ModelLevelType modelLevelType) {
+
+    if (nonDefiningProperties.isEmpty()) {
       return Set.of();
     }
 
@@ -47,7 +58,7 @@ public class NonDefiningPropertiesConverter {
     Set<SnowstormRelationship> snowstormRelationships = new HashSet<>();
 
     for (au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty
-        nonDefiningProperty : packageDetails.getNonDefiningProperties()) {
+        nonDefiningProperty : nonDefiningProperties) {
       NonDefiningProperty modelNonDefiningProperty =
           nonDefiningPropertiesByName.get(nonDefiningProperty.getIdentifierScheme());
 
