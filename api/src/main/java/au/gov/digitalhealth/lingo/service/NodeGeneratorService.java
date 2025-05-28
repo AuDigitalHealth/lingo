@@ -24,7 +24,9 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.PRIMITIVE;
 import au.csiro.snowstorm_client.model.SnowstormAxiom;
 import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.csiro.snowstorm_client.model.SnowstormItemsPageReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormItemsPageRelationship;
+import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
@@ -38,6 +40,9 @@ import au.gov.digitalhealth.lingo.product.NewConceptDetails;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.util.EclBuilder;
+import au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils;
+import au.gov.digitalhealth.lingo.util.NonDefiningPropertyUtils;
+import au.gov.digitalhealth.lingo.util.ReferenceSetUtils;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -117,7 +122,7 @@ public class NodeGeneratorService {
       String branch, ModelLevel modelLevel, ModelConfiguration modelConfiguration, Node node) {
 
     Map<String, NonDefiningProperty> nonDefiningPropertiesMap =
-        modelConfiguration.getNonDefiningPropertiesForModelLevel(modelLevel);
+        modelConfiguration.getNonDefiningPropertiesByIdentifierForModelLevel(modelLevel);
 
     if (!nonDefiningPropertiesMap.isEmpty()) {
       return snowstormClient
@@ -147,9 +152,9 @@ public class NodeGeneratorService {
   private Flux<Void> addRefsetAndMapping(
       String branch, ModelLevel modelLevel, ModelConfiguration modelConfiguration, Node node) {
     final Map<String, ReferenceSet> refsetMap =
-        modelConfiguration.getReferenceSetsForModelLevel(modelLevel);
+        modelConfiguration.getReferenceSetsByIdentifierForModelLevel(modelLevel);
     final Map<String, MappingRefset> mappingMap =
-        modelConfiguration.getMappingsForModelLevel(modelLevel);
+        modelConfiguration.getMappingsByIdentifierForModelLevel(modelLevel);
 
     if (!refsetMap.isEmpty() || !mappingMap.isEmpty()) {
 
@@ -160,9 +165,9 @@ public class NodeGeneratorService {
 
       return snowstormClient
           .getRefsetMembers(branch, Set.of(node.getConceptId()), allRefsetIds, 0, 1000)
-          .map(s -> s.getItems())
+          .map(SnowstormItemsPageReferenceSetMember::getItems)
           .flatMapMany(Flux::fromIterable)
-          .filter(member -> member.getActive())
+          .filter(SnowstormReferenceSetMember::getActive)
           .flatMap(
               member -> {
                 if (refsetMap.containsKey(member.getRefsetId())) {
@@ -380,24 +385,24 @@ public class NodeGeneratorService {
       newConceptDetails.setReferenceSetMembers(referenceSetMembers);
       newConceptDetails.setNonDefiningProperties(nonDefiningProperties);
       node.setNewConceptDetails(newConceptDetails);
-//      node.setNonDefiningProperties(
-//          NonDefiningPropertyUtils.getNonDefiningProperties(
-//              nonDefiningProperties,
-//              modelConfiguration.getNonDefiningPropertiesForModelLevel(modelLevel)));
-//      node.setReferenceSets(
-//          ReferenceSetUtils.getReferenceSetsFromRefsetComponentViewMembers(
-//                  referenceSetMembers,
-//                  modelConfiguration.getReferenceSetsForModelLevel(modelLevel).values())
-//              .values()
-//              .stream()
-//              .flatMap(Collection::stream)
-//              .collect(Collectors.toSet()));
-//      node.setExternalIdentifiers(
-//          ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMemberViewComponents(
-//              referenceSetMembers,
-//              null,
-//              modelConfiguration.getMappingsForModelLevel(modelLevel).values().stream()
-//                  .collect(Collectors.toSet())));
+      node.setNonDefiningProperties(
+          NonDefiningPropertyUtils.getNonDefiningProperties(
+              nonDefiningProperties,
+              modelConfiguration.getNonDefiningPropertiesByIdentifierForModelLevel(modelLevel)));
+      node.setReferenceSets(
+          ReferenceSetUtils.getReferenceSetsFromRefsetComponentViewMembers(
+                  referenceSetMembers,
+                  modelConfiguration.getReferenceSetsByIdentifierForModelLevel(modelLevel).values())
+              .values()
+              .stream()
+              .flatMap(Collection::stream)
+              .collect(Collectors.toSet()));
+      node.setExternalIdentifiers(
+          ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMemberViewComponents(
+              referenceSetMembers,
+              null,
+              new HashSet<>(
+                  modelConfiguration.getMappingsByIdentifierForModelLevel(modelLevel).values())));
       log.fine("New concept for " + label + " " + newConceptDetails.getConceptId());
     } else {
       log.fine("Concept found for " + label + " " + node.getConceptId());

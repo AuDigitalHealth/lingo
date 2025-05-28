@@ -195,8 +195,6 @@ public class SnowstormClient {
             .language(null)
             .descriptionType(null);
 
-    //    final boolean executeEclAsStated = true;
-    //        models == null || models.getModelConfiguration(branch).isExecuteEclAsStated();
     if (executeEclAsStated) {
       snowstormConceptSearchRequest = snowstormConceptSearchRequest.statedEclFilter(ecl);
     } else {
@@ -290,8 +288,6 @@ public class SnowstormClient {
             .language(null)
             .descriptionType(null);
 
-    //    final boolean executeEclAsStated = true;
-    //        models == null || models.getModelConfiguration(branch).isExecuteEclAsStated();
     if (executeEclAsStated) {
       snowstormConceptSearchRequest = snowstormConceptSearchRequest.statedEclFilter(ecl);
     } else {
@@ -404,8 +400,6 @@ public class SnowstormClient {
             .language(null)
             .descriptionType(null);
 
-    //    final boolean executeEclAsStated = true;
-    //        models == null || models.getModelConfiguration(branch).isExecuteEclAsStated();
     if (executeEclAsStated) {
       snowstormConceptSearchRequest = snowstormConceptSearchRequest.statedEclFilter(ecl);
     } else {
@@ -461,8 +455,7 @@ public class SnowstormClient {
       searchRequestComponent.referencedComponentIds(List.copyOf(concepts));
     }
     if (referenceSetId != null && !referenceSetId.isEmpty()) {
-      searchRequestComponent.referenceSet(
-          referenceSetId.stream().collect(Collectors.joining(" OR ")));
+      searchRequestComponent.referenceSet(String.join(" OR ", referenceSetId));
     }
     return getRefsetMembersApi()
         .findRefsetMembers(

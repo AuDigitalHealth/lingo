@@ -487,8 +487,10 @@ public class SnowstormDtoUtil {
   public static Set<SnowstormReferenceSetMemberViewComponent>
       getExternalIdentifierReferenceSetEntries(
           Collection<ExternalIdentifier> externalIdentifiers,
-          ModelLevelType modelLevelType,
-          Map<String, MappingRefset> mappingRefsetMap) {
+          ModelConfiguration modelConfiguration,
+          ModelLevelType modelLevelType) {
+
+    Map<String, MappingRefset> mappingRefsetMap = modelConfiguration.getMappingsByName();
     Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers = new HashSet<>();
     for (ExternalIdentifier identifier : externalIdentifiers) {
       MappingRefset mappingRefset = mappingRefsetMap.get(identifier.getIdentifierScheme());
