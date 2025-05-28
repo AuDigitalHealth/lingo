@@ -20,9 +20,11 @@ import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
+@NoArgsConstructor
 public class ReferenceSet extends NonDefiningBase implements Serializable {
   public ReferenceSet(
       SnowstormReferenceSetMember r,

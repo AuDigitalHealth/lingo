@@ -15,9 +15,7 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
-import static au.gov.digitalhealth.lingo.service.ProductSummaryService.CTPP_LABEL;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.*;
-import static au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMemberViewComponents;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.DEFINED;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.PRIMITIVE;
 
@@ -336,16 +334,6 @@ public class NodeGeneratorService {
       } else if (matchingConcepts.size() == 1
           && matchingConcepts.iterator().next().getDefinitionStatus().equals("FULLY_DEFINED")) {
         node.setConcept(matchingConcepts.iterator().next());
-        if (node.getLabel().equals(CTPP_LABEL)
-            && referenceSetMembers != null) { // populate external identifiers in response
-
-          node.getExternalIdentifiers()
-              .addAll(
-                  getExternalIdentifiersFromRefsetMemberViewComponents(
-                      referenceSetMembers,
-                      node.getConceptId(),
-                      models.getModelConfiguration(branch).getMappings()));
-        }
         atomicCache.addFsn(node.getConceptId(), node.getFullySpecifiedName());
       } else {
         node.setConceptOptions(matchingConcepts);
@@ -390,13 +378,9 @@ public class NodeGeneratorService {
               nonDefiningProperties,
               modelConfiguration.getNonDefiningPropertiesByIdentifierForModelLevel(modelLevel)));
       node.setReferenceSets(
-          ReferenceSetUtils.getReferenceSetsFromRefsetComponentViewMembers(
-                  referenceSetMembers,
-                  modelConfiguration.getReferenceSetsByIdentifierForModelLevel(modelLevel).values())
-              .values()
-              .stream()
-              .flatMap(Collection::stream)
-              .collect(Collectors.toSet()));
+          ReferenceSetUtils.getReferenceSetsFromNewRefsetComponentViewMembers(
+              referenceSetMembers,
+              modelConfiguration.getReferenceSetsByIdentifierForModelLevel(modelLevel).values()));
       node.setExternalIdentifiers(
           ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMemberViewComponents(
               referenceSetMembers,
@@ -407,6 +391,7 @@ public class NodeGeneratorService {
     } else {
       log.fine("Concept found for " + label + " " + node.getConceptId());
 
+      // look up the non defining properties for the concept
       Flux<Void> refsetMembersFlux =
           addRefsetAndMapping(branch, modelLevel, modelConfiguration, node);
 
