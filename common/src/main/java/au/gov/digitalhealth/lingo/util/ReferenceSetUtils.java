@@ -41,12 +41,12 @@ public class ReferenceSetUtils {
     // Utility class
   }
 
-  public static Map<String, Set<ReferenceSet>> getReferenceSetsFromRefsetComponentViewMembers(
+  public static Set<ReferenceSet> getReferenceSetsFromNewRefsetComponentViewMembers(
       Collection<SnowstormReferenceSetMemberViewComponent> refsetMembers,
       Collection<au.gov.digitalhealth.lingo.configuration.model.ReferenceSet> mappingRefsets) {
 
     if (mappingRefsets.isEmpty()) {
-      return Map.of();
+      return Set.of();
     }
 
     Map<String, au.gov.digitalhealth.lingo.configuration.model.ReferenceSet>
@@ -59,14 +59,8 @@ public class ReferenceSetUtils {
 
     return refsetMembers.stream()
         .filter(r -> referenceSetsConfigured.containsKey(r.getRefsetId()))
-        .map(
-            s ->
-                Pair.of(
-                    s.getReferencedComponentId(),
-                    new ReferenceSet(s, referenceSetsConfigured.get(s.getRefsetId()))))
-        .collect(
-            Collectors.groupingBy(
-                Pair::getFirst, Collectors.mapping(Pair::getSecond, Collectors.toSet())));
+        .map(s -> new ReferenceSet(s, referenceSetsConfigured.get(s.getRefsetId())))
+        .collect(Collectors.toSet());
   }
 
   public static Map<String, Set<ReferenceSet>> getReferenceSetsFromRefsetMembers(
