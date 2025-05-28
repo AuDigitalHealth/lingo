@@ -19,13 +19,14 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.PREFERRED;
 
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
-import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
 import au.gov.digitalhealth.lingo.exception.ConfigurationProblem;
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,11 +37,10 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.Data;
-import org.springframework.beans.factory.InitializingBean;
 
 /** Configuration of a specific model for a given project. */
 @Data
-public class ModelConfiguration implements InitializingBean {
+public class ModelConfiguration {
   boolean trimWholeNumbers = false;
 
   /** The type of model. */
@@ -81,8 +81,7 @@ public class ModelConfiguration implements InitializingBean {
   @NotEmpty private String deviceProductDataExtractionEcl;
   @NotNull @NotEmpty private Set<String> preferredLanguageRefsets;
 
-  @Override
-  public void afterPropertiesSet() throws ValidationException {
+  public void validate() throws ValidationException {
     validateModelLevels();
     validateProperties(nonDefiningProperties);
     validateProperties(mappings);
@@ -92,8 +91,24 @@ public class ModelConfiguration implements InitializingBean {
 
   private void validateSchemas(String... schemas) throws ValidationException {
     for (String schema : schemas) {
-      if (!Files.exists(new File(schema).toPath())) {
-        throw new ValidationException("Schema file for model does not exist: " + schema);
+      if (schema.startsWith("classpath:")) {
+        String resourcePath = schema.substring("classpath:".length());
+        // Use ClassLoader to check if the resource exists
+        try (InputStream resourceStream =
+            getClass().getClassLoader().getResourceAsStream(resourcePath)) {
+          if (resourceStream == null) {
+            throw new ValidationException("Schema file for model does not exist: " + schema);
+          }
+          // Resource exists and stream will be automatically closed
+        } catch (IOException e) {
+          // Handle any IO exceptions that might occur when closing the stream
+          throw new ValidationException("Error checking schema file: " + e.getMessage(), e);
+        }
+      } else {
+        // For regular file paths
+        if (!Files.exists(new File(schema).toPath())) {
+          throw new ValidationException("Schema file for model does not exist: " + schema);
+        }
       }
     }
   }
@@ -126,18 +141,11 @@ public class ModelConfiguration implements InitializingBean {
   private void validateProperties(Set<? extends NonDefiningBase> properties)
       throws ValidationException {
     List<String> propertyNames = new ArrayList<>();
-    List<String> propertyRefsetIds = new ArrayList<>();
     for (NonDefiningBase property : properties) {
       validateUnique(
           property.getName(),
           propertyNames,
           "Property names must be unique within a model duplicate name: ");
-      if (property.getIdentifier() != null) {
-        validateUnique(
-            property.getIdentifier(),
-            propertyRefsetIds,
-            "Property ids must be unique within a model duplicate id: ");
-      }
     }
   }
 
@@ -149,15 +157,13 @@ public class ModelConfiguration implements InitializingBean {
     list.add(value);
   }
 
-  public Map<String, ReferenceSet> getReferenceSetForType(ProductPackageType... types) {
+  public Map<String, ReferenceSet> getReferenceSetsByName() {
     return referenceSets.stream()
-        .filter(mapping -> Arrays.stream(types).toList().contains(mapping.getLevel()))
-        .collect(Collectors.toMap(ReferenceSet::getIdentifier, Function.identity(), (a, b) -> a));
+        .collect(Collectors.toMap(ReferenceSet::getName, Function.identity(), (a, b) -> a));
   }
 
-  public Map<String, MappingRefset> getMappingRefsetMapForType(ProductPackageType... types) {
+  public Map<String, MappingRefset> getMappingsByName() {
     return mappings.stream()
-        .filter(mapping -> Arrays.stream(types).toList().contains(mapping.getLevel()))
         .collect(Collectors.toMap(MappingRefset::getName, Function.identity(), (a, b) -> a));
   }
 
@@ -246,19 +252,20 @@ public class ModelConfiguration implements InitializingBean {
     return levels.stream().anyMatch(level -> level.getModelLevelType().equals(modelLevelType));
   }
 
-  public Map<String, ReferenceSet> getReferenceSetsForModelLevel(ModelLevel modelLevel) {
+  public Map<String, ReferenceSet> getReferenceSetsByIdentifierForModelLevel(
+      ModelLevel modelLevel) {
     return getReferenceSets().stream()
         .filter(r -> r.getModelLevels().contains(modelLevel.getModelLevelType()))
         .collect(Collectors.toMap(ReferenceSet::getIdentifier, Function.identity()));
   }
 
-  public Map<String, MappingRefset> getMappingsForModelLevel(ModelLevel modelLevel) {
+  public Map<String, MappingRefset> getMappingsByIdentifierForModelLevel(ModelLevel modelLevel) {
     return getMappings().stream()
         .filter(r -> r.getModelLevels().contains(modelLevel.getModelLevelType()))
         .collect(Collectors.toMap(MappingRefset::getIdentifier, Function.identity()));
   }
 
-  public Map<String, NonDefiningProperty> getNonDefiningPropertiesForModelLevel(
+  public Map<String, NonDefiningProperty> getNonDefiningPropertiesByIdentifierForModelLevel(
       ModelLevel modelLevel) {
     return getNonDefiningProperties().stream()
         .filter(r -> r.getModelLevels().contains(modelLevel.getModelLevelType()))

@@ -20,7 +20,6 @@ import au.gov.digitalhealth.lingo.exception.ResourceNotFoundProblem;
 import au.gov.digitalhealth.lingo.util.YamlPropertySourceFactory;
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -43,13 +42,20 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 public class Models extends HashMap<String, @Valid ModelConfiguration> implements InitializingBean {
   @Override
-  public void afterPropertiesSet() throws ValidationException, IOException {
+  public void afterPropertiesSet() throws ValidationException {
     if (this.isEmpty()) {
       throw new ValidationException("The models map must not be empty");
     }
     if (this.containsKey("MAIN")) {
       throw new ValidationException(
           "The MAIN project is reserved and cannot be used as a model configuration key");
+    }
+    for (Entry<String, @Valid ModelConfiguration> entry : entrySet()) {
+      ModelConfiguration modelConfiguration = entry.getValue();
+      if (modelConfiguration == null) {
+        throw new ValidationException("Model configuration for key " + entry.getKey() + " is null");
+      }
+      modelConfiguration.validate();
     }
   }
 

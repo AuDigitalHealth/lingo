@@ -243,7 +243,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
     product.getClassAxioms().stream()
         .flatMap(a -> a.getRelationships().stream())
         .filter(r -> r.getTypeId().equals(IS_A.getValue()))
-        .map(r -> r.getDestinationId())
+        .map(SnowstormRelationship::getDestinationId)
         .distinct()
         .forEach(
             a -> {
@@ -303,7 +303,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
     Flux<SnowstormReferenceSetMember> refsetMembers =
         snowStormApiClient
             .getRefsetMembers(branch, concepts, null, 0, 100)
-            .map(r -> r.getItems())
+            .map(SnowstormItemsPageReferenceSetMember::getItems)
             .flatMapIterable(c -> c);
 
     Mono<Map<String, String>> typeMap =
@@ -397,7 +397,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
                 null,
                 0,
                 packVariantIds.size() * 100) // TODO Need to comeback
-            .map(r -> r.getItems());
+            .map(SnowstormItemsPageReferenceSetMember::getItems);
 
     List<SnowstormConcept> packVariantResult = packVariants.block();
 
@@ -436,11 +436,11 @@ public abstract class AtomicDataService<T extends ProductDetails> {
       packSizeWithIdentifier.setReferenceSets(
           ReferenceSetUtils.getReferenceSetsFromRefsetMembers(
                   packVariantRefsetMemebersResult, getModelConfiguration(branch).getReferenceSets())
-              .get(packVariant.getConceptId()));
+              .getOrDefault(packVariant.getConceptId(), new HashSet<>()));
       packSizeWithIdentifier.setNonDefiningProperties(
           NonDefiningPropertyUtils.getNonDefiningPropertyFromConcepts(
                   Set.of(packVariant), getModelConfiguration(branch).getNonDefiningProperties())
-              .get(packVariant.getConceptId()));
+              .getOrDefault(packVariant.getConceptId(), new HashSet<>()));
 
       packSizeWithIdentifiers.add(packSizeWithIdentifier);
     }
@@ -604,7 +604,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
       return packVariantResult.stream()
           .collect(
               Collectors.toMap(
-                  pv -> pv.getConceptId(),
+                  SnowstormConcept::getConceptId,
                   pv ->
                       getSingleActiveTarget(
                           getSingleAxiom(pv).getRelationships(), HAS_PRODUCT_NAME.getValue())));
