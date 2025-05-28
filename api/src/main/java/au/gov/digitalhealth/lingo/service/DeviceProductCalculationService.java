@@ -44,7 +44,6 @@ import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
-import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.NewConceptDetails;
 import au.gov.digitalhealth.lingo.product.Node;
@@ -55,8 +54,8 @@ import au.gov.digitalhealth.lingo.product.details.ProductQuantity;
 import au.gov.digitalhealth.lingo.service.validators.DeviceDetailsValidator;
 import au.gov.digitalhealth.lingo.util.AmtConstants;
 import au.gov.digitalhealth.lingo.util.BigDecimalFormatter;
+import au.gov.digitalhealth.lingo.util.ReferenceSetUtils;
 import au.gov.digitalhealth.lingo.util.SnomedConstants;
-import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -423,13 +422,8 @@ public class DeviceProductCalculationService {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
     Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers =
-        SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(
-            packageDetails.getExternalIdentifiers(),
-            modelLevel.getModelLevelType(),
-            models
-                .getModelConfiguration(branch)
-                .getMappingRefsetMapForType(
-                    ProductPackageType.PACKAGE, ProductPackageType.CONTAINED_PACKAGE));
+        ReferenceSetUtils.getReferenceSetMembers(
+            packageDetails, modelConfiguration, modelLevel.getModelLevelType());
 
     ModelLevel containedLevel;
     if (modelLevel.getModelLevelType().isBranded()) {
@@ -611,7 +605,10 @@ public class DeviceProductCalculationService {
             Set.of(leafBrandedProductModelLevel.getReferenceSetIdentifier()),
             leafBrandedProductModelLevel,
             leafBrandedProductModelLevel.getDeviceSemanticTag(),
-            Set.of(),
+            ReferenceSetUtils.getReferenceSetMembers(
+                packageDetails,
+                modelConfiguration,
+                leafBrandedProductModelLevel.getModelLevelType()),
             calculateNonDefiningRelationships(
                 models.getModelConfiguration(branch),
                 packageDetails,
@@ -660,7 +657,8 @@ public class DeviceProductCalculationService {
               Set.of(rootBrandedProductLevel.getReferenceSetIdentifier()),
               rootBrandedProductLevel,
               rootBrandedProductLevel.getDeviceSemanticTag(),
-              Set.of(),
+              ReferenceSetUtils.getReferenceSetMembers(
+                  packageDetails, modelConfiguration, rootBrandedProductLevel.getModelLevelType()),
               calculateNonDefiningRelationships(
                   models.getModelConfiguration(branch),
                   packageDetails,

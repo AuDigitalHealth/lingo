@@ -17,8 +17,15 @@ package au.gov.digitalhealth.lingo.util;
 
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
+import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
+import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
+import au.gov.digitalhealth.lingo.product.details.PackageProductDetailsBase;
+import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet;
+import jakarta.validation.constraints.NotNull;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -117,5 +124,54 @@ public class ReferenceSetUtils {
         .collect(
             Collectors.groupingBy(
                 Pair::getFirst, Collectors.mapping(Pair::getSecond, Collectors.toList())));
+  }
+
+  public static Set<SnowstormReferenceSetMemberViewComponent> getReferenceSetMembers(
+      PackageProductDetailsBase details,
+      ModelConfiguration modelConfiguration,
+      ModelLevelType modelLevelType) {
+
+    return getReferenceSetMembers(
+        details.getExternalIdentifiers(),
+        details.getReferenceSets(),
+        modelConfiguration,
+        modelLevelType);
+  }
+
+  public static Set<SnowstormReferenceSetMemberViewComponent> getReferenceSetMembers(
+      Collection<ExternalIdentifier> externalIdentifiers,
+      Collection<ReferenceSet> referenceSets,
+      ModelConfiguration modelConfiguration,
+      @NotNull ModelLevelType modelLevelType) {
+
+    Map<String, au.gov.digitalhealth.lingo.configuration.model.ReferenceSet> referenceSetMap =
+        modelConfiguration.getReferenceSetsByName();
+
+    Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers = new HashSet<>();
+
+    for (ReferenceSet referenceSet : referenceSets) {
+      au.gov.digitalhealth.lingo.configuration.model.ReferenceSet configReferenceSet =
+          referenceSetMap.get(referenceSet.getIdentifierScheme());
+      if (configReferenceSet == null) {
+        throw new ProductAtomicDataValidationProblem(
+            "Reference set "
+                + referenceSet.getIdentifierScheme()
+                + " is not valid for this product");
+      }
+      if (configReferenceSet.getModelLevels().contains(modelLevelType)) {
+        referenceSetMembers.add(
+            new SnowstormReferenceSetMemberViewComponent()
+                .refsetId(configReferenceSet.getIdentifier())
+                .active(true));
+      }
+    }
+
+    final Set<SnowstormReferenceSetMemberViewComponent> externalIdentifierReferenceSetEntries =
+        SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(
+            externalIdentifiers, modelConfiguration, modelLevelType);
+
+    referenceSetMembers.addAll(externalIdentifierReferenceSetEntries);
+
+    return referenceSetMembers;
   }
 }
