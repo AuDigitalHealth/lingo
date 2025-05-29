@@ -272,10 +272,8 @@ public class ModelConfiguration {
         .collect(Collectors.toMap(NonDefiningProperty::getIdentifier, Function.identity()));
   }
 
-  public String getReferenceSetIdsForModelLevelType(ModelLevelType modelLevelType) {
-    return levels.stream()
-        .filter(level -> level.getModelLevelType().equals(modelLevelType))
-        .map(ModelLevel::getReferenceSetIdentifier)
+  public String getReferenceSetIdForModelLevelType(ModelLevelType modelLevelType) {
+    return getReferenceSetIdsForModelLevelTypes(modelLevelType).stream()
         .findFirst()
         .orElseThrow(
             () ->

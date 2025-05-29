@@ -175,7 +175,7 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
                         && typeMap
                             .get(r.getTarget().getConceptId())
                             .equals(
-                                modelConfiguration.getReferenceSetIdsForModelLevelType(
+                                modelConfiguration.getReferenceSetIdForModelLevelType(
                                     ModelLevelType.CLINICAL_DRUG)))
             .map(r -> browserMap.get(r.getTarget().getConceptId()))
             .collect(Collectors.toSet());
