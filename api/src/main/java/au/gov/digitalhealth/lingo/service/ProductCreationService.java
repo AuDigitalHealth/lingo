@@ -15,15 +15,12 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
-import static au.gov.digitalhealth.lingo.service.ProductSummaryService.CTPP_LABEL;
-import static au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMemberViewComponents;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.*;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.*;
 
 import au.csiro.snowstorm_client.model.*;
 import au.gov.digitalhealth.lingo.configuration.FieldBindingConfiguration;
 import au.gov.digitalhealth.lingo.configuration.NamespaceConfiguration;
-import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
@@ -551,6 +548,8 @@ public class ProductCreationService {
 
       updateAxiomIdentifierReferences(idMap, concept);
 
+      concept.getRelationships().addAll(node.getNewConceptDetails().getNonDefiningProperties());
+
       String conceptId = node.getNewConceptDetails().getConceptId().toString();
       if (Long.parseLong(conceptId) < 0) {
         if (!bulkCreate) {
@@ -599,23 +598,6 @@ public class ProductCreationService {
         });
 
     createRefsetMemberships(branch, nodeCreateOrder);
-
-    Set<MappingRefset> mappingRefsets = models.getModelConfiguration(branch).getMappings();
-
-    // todo handle non-defining properties properly
-    nodeCreateOrder.forEach(
-        n -> {
-          if (n.getLabel().equals(CTPP_LABEL)
-              && n.getNewConceptDetails() != null) { // populate external identifiers in response
-            n.getExternalIdentifiers()
-                .addAll(
-                    getExternalIdentifiersFromRefsetMemberViewComponents(
-                        n.getNewConceptDetails().getReferenceSetMembers(),
-                        n.getConceptId(),
-                        mappingRefsets));
-          }
-          n.setNewConceptDetails(null);
-        });
 
     log.fine("Concepts created and refset members created");
   }
