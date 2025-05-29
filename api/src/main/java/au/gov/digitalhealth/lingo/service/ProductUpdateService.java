@@ -15,9 +15,10 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
-import static au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMembers;
 import static au.gov.digitalhealth.lingo.util.SemanticTagUtil.extractSemanticTag;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.MAP_TARGET;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.*;
+import static java.lang.Boolean.TRUE;
 
 import au.csiro.snowstorm_client.model.*;
 import au.gov.digitalhealth.lingo.configuration.FieldBindingConfiguration;
@@ -25,12 +26,18 @@ import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
+import au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet;
 import au.gov.digitalhealth.lingo.product.update.ProductDescriptionUpdateRequest;
 import au.gov.digitalhealth.lingo.product.update.ProductExternalIdentifierUpdateRequest;
+import au.gov.digitalhealth.lingo.product.update.ProductNonDefiningPropertyUpdateRequest;
+import au.gov.digitalhealth.lingo.product.update.ProductReferenceSetUpdateRequest;
+import au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import au.gov.digitalhealth.tickets.service.TicketServiceImpl;
 import jakarta.validation.Valid;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Service;
@@ -56,6 +63,53 @@ public class ProductUpdateService {
     this.ticketService = ticketService;
     this.fieldBindingConfiguration = fieldBindingConfiguration;
     this.models = models;
+  }
+
+  private static String getIdentifierKey(MappingRefset m, ExternalIdentifier id) {
+    return m.getIdentifier()
+        + " "
+        + (id.getIdentifierValue() == null
+            ? id.getIdentifierValueObject().getConceptId()
+            : id.getIdentifierValue());
+  }
+
+  private static String getIdentifierKey(SnowstormReferenceSetMember id) {
+    if (id.getAdditionalFields() == null
+        || !id.getAdditionalFields().containsKey(MAP_TARGET.getValue())) {
+      throw new ProductAtomicDataValidationProblem(
+          "Mapping refset member does not contain a map target: " + id);
+    }
+    return id.getRefsetId() + " " + id.getAdditionalFields().get(MAP_TARGET.getValue());
+  }
+
+  private static String getNonDefiningPropertyKeyForRelationship(
+      SnowstormRelationship relationship) {
+    String value;
+    if (TRUE.equals(relationship.getConcrete())) {
+      if (relationship.getConcreteValue() == null) {
+        throw new ProductAtomicDataValidationProblem(
+            "Concrete value is null for relationship: " + relationship);
+      }
+      value = relationship.getConcreteValue().getValue();
+    } else {
+      if (relationship.getDestinationId() == null) {
+        throw new ProductAtomicDataValidationProblem(
+            "Destination ID is null for relationship: " + relationship);
+      }
+      value = relationship.getDestinationId();
+    }
+
+    return relationship.getTypeId() + " " + value;
+  }
+
+  private static String getNonDefiningPropertyKey(
+      au.gov.digitalhealth.lingo.configuration.model.NonDefiningProperty nonDefiningProperty,
+      NonDefiningProperty prop) {
+
+    final String value =
+        prop.getValue() == null ? prop.getValueObject().getConceptId() : prop.getValue();
+
+    return nonDefiningProperty.getIdentifier() + " " + value;
   }
 
   public SnowstormConceptMini updateProductDescriptions(
@@ -139,85 +193,190 @@ public class ProductUpdateService {
         .block();
   }
 
-  public Set<ExternalIdentifier> updateProductExternalIdentifiers(
+  public Collection<ExternalIdentifier> updateProductExternalIdentifiers(
       String branch,
-      String productId,
+      String conceptId,
       @Valid ProductExternalIdentifierUpdateRequest productExternalIdentifierUpdateRequest)
       throws InterruptedException {
-    Set<ExternalIdentifier> externalIdentifiers =
-        productExternalIdentifierUpdateRequest.getExternalIdentifiers();
 
-    // Prepare collections for changes
-    Set<SnowstormReferenceSetMember> idsToBeRemoved = new HashSet<>();
-    Set<SnowstormReferenceSetMemberViewComponent> idsToBeAdded = new HashSet<>();
+    Map<String, MappingRefset> mappingRefsets =
+        models.getModelConfiguration(branch).getMappingsByName();
 
-    Set<MappingRefset> mappingRefsets = models.getModelConfiguration(branch).getMappings();
+    Map<String, ExternalIdentifier> requestedExternalIdentifiers =
+        productExternalIdentifierUpdateRequest.getExternalIdentifiers().stream()
+            .filter(id -> mappingRefsets.containsKey(id.getIdentifierScheme()))
+            .collect(
+                Collectors.toMap(
+                    id -> getIdentifierKey(mappingRefsets.get(id.getIdentifierScheme()), id),
+                    id -> id));
 
-    // Fetch existing ARTG reference set members
-    List<SnowstormReferenceSetMember> existingMembers =
-        snowstormClient.getMappingRefsetMembers(branch, Set.of(productId), mappingRefsets);
+    Map<String, SnowstormReferenceSetMember> existingMembers =
+        snowstormClient
+            .getRefsetMembers(
+                branch,
+                Set.of(conceptId),
+                mappingRefsets.values().stream()
+                    .map(MappingRefset::getIdentifier)
+                    .collect(Collectors.toSet()))
+            .stream()
+            .filter(r -> r.getActive() != null && r.getActive())
+            .collect(Collectors.toMap(ProductUpdateService::getIdentifierKey, r -> r));
 
-    if (existingMembers == null || existingMembers.isEmpty()) {
-      // Add all externalIdentifiers as new members if no existing members
-      externalIdentifiers.forEach(
-          identifier ->
-              idsToBeAdded.add(
-                  createSnowstormReferenceSetMemberViewComponent(
-                      identifier, productId, mappingRefsets)));
-    } else {
-      // Process external identifiers
-      processExternalIdentifiers(
-          existingMembers,
-          externalIdentifiers,
-          productId,
-          idsToBeAdded,
-          idsToBeRemoved,
-          mappingRefsets);
-    }
+    Set<SnowstormReferenceSetMember> idsToBeRemoved =
+        existingMembers.entrySet().stream()
+            .filter(entry -> !requestedExternalIdentifiers.containsKey(entry.getKey()))
+            .map(Map.Entry::getValue)
+            .collect(Collectors.toSet());
 
-    // Apply changes
+    Set<SnowstormReferenceSetMemberViewComponent> idsToBeAdded =
+        requestedExternalIdentifiers.entrySet().stream()
+            .filter(entry -> !existingMembers.containsKey(entry.getKey()))
+            .map(
+                entry ->
+                    createSnowstormReferenceSetMemberViewComponent(
+                        entry.getValue(), conceptId, mappingRefsets.values()))
+            .collect(Collectors.toSet());
 
     if (!idsToBeAdded.isEmpty()) {
+      // Create new members in Snowstorm
       snowstormClient.createRefsetMembers(branch, List.copyOf(idsToBeAdded));
     }
 
-    // Remove outdated ARTG members
     if (!idsToBeRemoved.isEmpty()) {
+      // Remove outdated members from Snowstorm
       snowstormClient.removeRefsetMembers(branch, idsToBeRemoved);
     }
 
-    return externalIdentifiers;
+    return requestedExternalIdentifiers.values();
   }
 
-  private void processExternalIdentifiers(
-      List<SnowstormReferenceSetMember> existingMembers,
-      Set<ExternalIdentifier> externalIdentifiers,
-      String productId,
-      Set<SnowstormReferenceSetMemberViewComponent> idsToBeAdded,
-      Set<SnowstormReferenceSetMember> idsToBeRemoved,
-      Set<MappingRefset> mappingRefsets) {
+  public Collection<ReferenceSet> updateProductReferenceSets(
+      String branch,
+      String conceptId,
+      @Valid ProductReferenceSetUpdateRequest productReferenceSetUpdateRequest)
+      throws InterruptedException {
 
-    Map<ExternalIdentifier, SnowstormReferenceSetMember> existingIdentifiersMap = new HashMap<>();
-    existingMembers.forEach(
-        member ->
-            existingIdentifiersMap.put(
-                getExternalIdentifiersFromRefsetMembers(Set.of(member), productId, mappingRefsets)
-                    .iterator()
-                    .next(),
-                member));
+    Map<String, au.gov.digitalhealth.lingo.configuration.model.ReferenceSet> referenceSetMap =
+        models.getModelConfiguration(branch).getReferenceSetsByName();
 
-    // Identify ARTG to be added
-    externalIdentifiers.stream()
-        .filter(identifier -> !existingIdentifiersMap.containsKey(identifier))
-        .forEach(
-            identifier ->
-                idsToBeAdded.add(
+    Map<String, ReferenceSet> requestedRefsets =
+        productReferenceSetUpdateRequest.getReferenceSets().stream()
+            .filter(refset -> referenceSetMap.containsKey(refset.getIdentifierScheme()))
+            .collect(
+                Collectors.toMap(
+                    id -> referenceSetMap.get(id.getIdentifierScheme()).getIdentifier(), id -> id));
+
+    Map<String, SnowstormReferenceSetMember> existingMembers =
+        snowstormClient
+            .getRefsetMembers(
+                branch,
+                Set.of(conceptId),
+                referenceSetMap.values().stream()
+                    .map(au.gov.digitalhealth.lingo.configuration.model.ReferenceSet::getIdentifier)
+                    .collect(Collectors.toSet()))
+            .stream()
+            .filter(r -> r.getActive() != null && r.getActive())
+            .collect(Collectors.toMap(SnowstormReferenceSetMember::getRefsetId, r -> r));
+
+    Set<SnowstormReferenceSetMember> idsToBeRemoved =
+        existingMembers.entrySet().stream()
+            .filter(entry -> !requestedRefsets.containsKey(entry.getKey()))
+            .map(Map.Entry::getValue)
+            .collect(Collectors.toSet());
+
+    // create a list of SnowstormReferenceSetMember in requestedExternalIdentifiers where the
+    // requestedExternalIdentifiers key is not present in existingMembers keyset
+    Set<SnowstormReferenceSetMemberViewComponent> idsToBeAdded =
+        requestedRefsets.entrySet().stream()
+            .filter(entry -> !existingMembers.containsKey(entry.getKey()))
+            .map(
+                entry ->
                     createSnowstormReferenceSetMemberViewComponent(
-                        identifier, productId, mappingRefsets)));
+                        entry.getValue(), conceptId, referenceSetMap.values()))
+            .collect(Collectors.toSet());
 
-    // Identify ARTG to be removed
-    existingIdentifiersMap.entrySet().stream()
-        .filter(entry -> !externalIdentifiers.contains(entry.getKey()))
-        .forEach(entry -> idsToBeRemoved.add(entry.getValue()));
+    if (!idsToBeAdded.isEmpty()) {
+      // Create new members in Snowstorm
+      snowstormClient.createRefsetMembers(branch, List.copyOf(idsToBeAdded));
+    }
+
+    if (!idsToBeRemoved.isEmpty()) {
+      // Remove outdated members from Snowstorm
+      snowstormClient.removeRefsetMembers(branch, idsToBeRemoved);
+    }
+
+    return requestedRefsets.values();
+  }
+
+  public Collection<NonDefiningProperty> updateProductNonDefiningProperties(
+      String branch,
+      String conceptId,
+      @Valid ProductNonDefiningPropertyUpdateRequest productNonDefiningPropertyUpdateRequest) {
+
+    Map<String, au.gov.digitalhealth.lingo.configuration.model.NonDefiningProperty>
+        nonDefiningPropertiesByName =
+            models.getModelConfiguration(branch).getNonDefiningPropertiesByName();
+
+    Map<String, NonDefiningProperty> requestedProperties =
+        productNonDefiningPropertyUpdateRequest.getNonDefiningProperties().stream()
+            .filter(prop -> nonDefiningPropertiesByName.containsKey(prop.getIdentifierScheme()))
+            .collect(
+                Collectors.toMap(
+                    prop ->
+                        getNonDefiningPropertyKey(
+                            nonDefiningPropertiesByName.get(prop.getIdentifierScheme()), prop),
+                    prop -> prop));
+
+    Set<String> definedTypeIds =
+        nonDefiningPropertiesByName.values().stream()
+            .map(au.gov.digitalhealth.lingo.configuration.model.NonDefiningProperty::getIdentifier)
+            .collect(Collectors.toSet());
+
+    final SnowstormConcept browserConcept =
+        snowstormClient.getBrowserConcepts(branch, Set.of(conceptId)).blockFirst();
+
+    if (browserConcept == null) {
+      throw new ProductAtomicDataValidationProblem(
+          "Concept with ID " + conceptId + " does not exist in branch " + branch);
+    }
+
+    Map<String, SnowstormRelationship> existingProperties =
+        browserConcept.getRelationships().stream()
+            .filter(
+                r ->
+                    r.getActive() != null
+                        && r.getActive()
+                        && definedTypeIds.contains(r.getTypeId()))
+            .collect(
+                Collectors.toMap(
+                    ProductUpdateService::getNonDefiningPropertyKeyForRelationship, r -> r));
+
+    Set<SnowstormRelationship> idsToBeRemoved =
+        existingProperties.entrySet().stream()
+            .filter(entry -> !requestedProperties.containsKey(entry.getKey()))
+            .map(Entry::getValue)
+            .collect(Collectors.toSet());
+
+    Set<SnowstormRelationship> idsToBeAdded =
+        requestedProperties.entrySet().stream()
+            .filter(entry -> !existingProperties.containsKey(entry.getKey()))
+            .map(
+                entry ->
+                    NonDefiningPropertiesConverter.calculateNonDefiningRelationships(
+                        entry.getValue(),
+                        conceptId,
+                        nonDefiningPropertiesByName.values(),
+                        models.getModelConfiguration(branch).getModuleId()))
+            .collect(Collectors.toSet());
+
+    if (!idsToBeAdded.isEmpty() || !idsToBeRemoved.isEmpty()) {
+
+      browserConcept.getRelationships().removeAll(idsToBeRemoved);
+      browserConcept.getRelationships().addAll(idsToBeAdded);
+      snowstormClient.updateConcept(
+          branch, conceptId, SnowstormDtoUtil.toSnowstormConceptView(browserConcept), false);
+    }
+
+    return requestedProperties.values();
   }
 }

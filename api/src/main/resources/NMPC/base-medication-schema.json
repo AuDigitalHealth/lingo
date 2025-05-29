@@ -282,10 +282,6 @@
         "unitOfPresentation": {
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Unit of Presentation"
-        },
-        "supplier": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "Supplier"
         }
       },
       "required": [

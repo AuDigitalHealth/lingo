@@ -20,7 +20,10 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.ADDITIONAL_RELATIO
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.ADDITIONAL_RELATIONSHIP_CHARACTERISTIC_TYPE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.DEFINED;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.ENTIRE_TERM_CASE_SENSITIVE;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.FSN;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.INFERRED_RELATIONSHIP;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.MAP_TARGET;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.MAP_TYPE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.PRIMITIVE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.SOME_MODIFIER;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.STATED_RELATIONSHIP;
@@ -39,6 +42,7 @@ import au.gov.digitalhealth.lingo.product.NewConceptDetails;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.details.Quantity;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
+import au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
@@ -250,6 +254,21 @@ public class SnowstormDtoUtil {
     return relationship;
   }
 
+  public static SnowstormRelationship getSnowstormRelationship(
+      String typeId,
+      String typeTerm,
+      SnowstormConceptMini destination,
+      int group,
+      SnomedConstants characteristicType,
+      @NotEmpty String moduleId) {
+    SnowstormRelationship relationship =
+        createBaseSnowstormRelationship(typeId, typeTerm, group, characteristicType, moduleId);
+    relationship.setConcrete(false);
+    relationship.setDestinationId(destination.getConceptId());
+    relationship.setTarget(destination);
+    return relationship;
+  }
+
   public static SnowstormRelationship getSnowstormDatatypeComponent(
       LingoConstants propertyType,
       String value,
@@ -273,6 +292,16 @@ public class SnowstormDtoUtil {
 
   private static SnowstormRelationship createBaseSnowstormRelationship(
       LingoConstants type, int group, SnomedConstants characteristicType, String moduleId) {
+    return createBaseSnowstormRelationship(
+        type.getValue(), type.getLabel(), group, characteristicType, moduleId);
+  }
+
+  private static SnowstormRelationship createBaseSnowstormRelationship(
+      String type,
+      String typeTerm,
+      int group,
+      SnomedConstants characteristicType,
+      String moduleId) {
     SnowstormRelationship relationship = new SnowstormRelationship();
     relationship.setActive(true);
     relationship.setModuleId(moduleId);
@@ -280,8 +309,8 @@ public class SnowstormDtoUtil {
     relationship.setGrouped(group > 0);
     relationship.setGroupId(group);
     relationship.setRelationshipGroup(group);
-    relationship.setType(toSnowstormConceptMini(type));
-    relationship.setTypeId(type.getValue());
+    relationship.setType(toSnowstormConceptMini(type, typeTerm));
+    relationship.setTypeId(type);
     relationship.setModifier("EXISTENTIAL");
     relationship.setModifierId(SOME_MODIFIER.getValue());
     relationship.setCharacteristicType(characteristicType.getValue());
@@ -527,7 +556,7 @@ public class SnowstormDtoUtil {
       createSnowstormReferenceSetMemberViewComponent(
           ExternalIdentifier externalIdentifier,
           String referencedComponentId,
-          Set<MappingRefset> mappingRefsets) {
+          Collection<MappingRefset> mappingRefsets) {
 
     MappingRefset mappingRefset =
         mappingRefsets.stream()
@@ -540,10 +569,11 @@ public class SnowstormDtoUtil {
 
     Map<String, String> additionalFields = new HashMap<>();
 
-    additionalFields.put("mapTarget", externalIdentifier.getIdentifierValue());
+    additionalFields.put(MAP_TARGET.getValue(), externalIdentifier.getIdentifierValue());
 
     if (!MappingType.RELATED.equals(externalIdentifier.getRelationshipType())) {
-      additionalFields.put("mapType", externalIdentifier.getRelationshipType().getSctid());
+      additionalFields.put(
+          MAP_TYPE.getValue(), externalIdentifier.getRelationshipType().getSctid());
     }
 
     return new SnowstormReferenceSetMemberViewComponent()
@@ -551,6 +581,28 @@ public class SnowstormDtoUtil {
         .referencedComponentId(referencedComponentId)
         .refsetId(mappingRefset.getIdentifier())
         .additionalFields(additionalFields);
+  }
+
+  public static SnowstormReferenceSetMemberViewComponent
+      createSnowstormReferenceSetMemberViewComponent(
+          ReferenceSet referenceSet,
+          String referencedComponentId,
+          Collection<au.gov.digitalhealth.lingo.configuration.model.ReferenceSet>
+              referenceSetDefinitions) {
+
+    au.gov.digitalhealth.lingo.configuration.model.ReferenceSet referenceSetDefinition =
+        referenceSetDefinitions.stream()
+            .filter(m -> m.getName().equals(referenceSet.getIdentifierScheme()))
+            .findFirst()
+            .orElseThrow(
+                () ->
+                    new ProductAtomicDataValidationProblem(
+                        "Unknown identifier scheme " + referenceSet.getIdentifierScheme()));
+
+    return new SnowstormReferenceSetMemberViewComponent()
+        .active(true)
+        .referencedComponentId(referencedComponentId)
+        .refsetId(referenceSetDefinition.getIdentifier());
   }
 
   public static String getIdAndFsnTerm(SnowstormConceptMini component) {
@@ -564,7 +616,7 @@ public class SnowstormDtoUtil {
     return new SnowstormConceptMini()
         .conceptId(lingoConstants.getValue())
         .id(lingoConstants.getValue())
-        .definitionStatus("PRIMITIVE")
+        .definitionStatus(PRIMITIVE.name())
         .definitionStatusId(PRIMITIVE.getValue())
         .active(true)
         .fsn(new SnowstormTermLangPojo().lang("en").term(lingoConstants.getLabel()))
@@ -575,6 +627,17 @@ public class SnowstormDtoUtil {
                     lingoConstants
                         .getLabel()
                         .substring(0, lingoConstants.getLabel().indexOf("(") - 1)));
+  }
+
+  public static SnowstormConceptMini toSnowstormConceptMini(String id, String term) {
+    return new SnowstormConceptMini()
+        .conceptId(id)
+        .id(id)
+        .definitionStatus(PRIMITIVE.name())
+        .definitionStatusId(PRIMITIVE.getValue())
+        .active(true)
+        .fsn(new SnowstormTermLangPojo().lang("en").term(term))
+        .pt(new SnowstormTermLangPojo().lang("en").term(term.substring(0, term.indexOf("(") - 1)));
   }
 
   public static SnowstormAxiom getSingleAxiom(SnowstormConcept concept) {
@@ -601,7 +664,7 @@ public class SnowstormDtoUtil {
    * ids
    *
    * @param existingRelationships the relationships to clone
-   * @param moduleId
+   * @param moduleId the module id to set on the cloned relationships
    * @return a new set of relationships with blank ids
    */
   public static Set<SnowstormRelationship> cloneNewRelationships(
@@ -638,7 +701,7 @@ public class SnowstormDtoUtil {
       Set<SnowstormDescription> descriptions) {
 
     return descriptions.stream()
-        .filter(description -> description.getType().equals("FSN"))
+        .filter(description -> FSN.getValue().equals(description.getType()))
         .findFirst()
         .orElse(null);
   }

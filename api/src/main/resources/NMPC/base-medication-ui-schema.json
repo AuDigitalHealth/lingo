@@ -5,18 +5,6 @@
     "containedProducts",
     "containedPackages"
   ],
-  "productName": {
-    "ui:field": "AutoCompleteField",
-    "ui:options": {
-      "ecl": "<774167006",
-      "branch": "MAIN",
-      "showDefaultOptions": false,
-      "createBrand": {
-        "ecl": "<774167006",
-        "semanticTags": "(product name)"
-      }
-    }
-  },
   "containedProducts": {
     "ui:options": {
       "skipTitle": true,
@@ -75,7 +63,11 @@
           "ui:options": {
             "branch": "MAIN",
             "ecl": "<774167006",
-            "showDefaultOptions": false
+            "showDefaultOptions": false,
+            "createBrand": {
+              "ecl": "<774167006",
+              "semanticTags": "(product name)"
+            }
           }
         },
         "activeIngredients": {
@@ -253,15 +245,6 @@
               "ecl": "<781405001.774163005",
               "showDefaultOptions": true
             }
-          }
-        },
-        "supplier": {
-          "ui:field": "AutoCompleteField",
-          "ui:title": "Supplier",
-          "ui:options": {
-            "branch": "MAIN",
-            "ecl": "<774164004",
-            "showDefaultOptions": false
           }
         }
       }
