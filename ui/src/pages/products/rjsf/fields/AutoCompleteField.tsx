@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { FieldProps } from '@rjsf/utils';
 import { Box, IconButton, Tooltip } from '@mui/material';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { Concept, ConceptMini } from '../../../../types/concept.ts';
 import { SetExtendedEclButton } from '../../components/SetExtendedEclButton.tsx';
 import EclAutocomplete from '../components/EclAutocomplete.tsx';
@@ -13,6 +12,7 @@ import { Ticket } from '../../../../types/tickets/ticket.ts';
 
 import { ErrorDisplay } from '../components/ErrorDisplay.tsx';
 import { getUniqueErrors } from '../helpers/errorUtils.ts';
+import { PlaylistAdd } from '@mui/icons-material';
 
 const AutoCompleteField = ({
   idSchema,
@@ -81,7 +81,7 @@ const AutoCompleteField = ({
                 }}
                 disabled={isDisabled}
               >
-                <AddCircleOutlineIcon color="primary" />
+                <PlaylistAdd color="primary" />
               </IconButton>
             </Tooltip>
           )}
