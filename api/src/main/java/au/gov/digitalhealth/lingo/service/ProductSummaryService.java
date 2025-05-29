@@ -15,10 +15,7 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
-import static au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMembers;
 
-import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
-import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
@@ -37,7 +34,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /** Service for product-centric operations */
@@ -145,46 +141,6 @@ public class ProductSummaryService {
 
     productSummary.updateNodeChangeStatus(
         taskChangedConceptIds.block(), projectChangedConceptIds.block());
-
-    // Extract CTPP concept IDs from product summary nodes and store them in a Set
-    Set<String> ctppIds =
-        productSummary.getNodes().stream()
-            .filter(
-                n ->
-                    model
-                        .getLeafPackageModelLevel()
-                        .getModelLevelType()
-                        .equals(n.getModelLevel())) // Filter nodes by leaf package model level
-            .map(Node::getConceptId) // Get concept ID from each node
-            .collect(Collectors.toSet()); // Collect concept IDs into a Set
-
-    // Fetch ARTG reference set members based on the extracted CTPP concept IDs
-    Set<MappingRefset> mappings = models.getModelConfiguration(branch).getMappings();
-    Flux<SnowstormReferenceSetMember> artgRefsetMembers =
-        snowStormApiClient
-            .getRefsetMembers(
-                branch,
-                ctppIds,
-                mappings.stream().map(MappingRefset::getIdentifier).collect(Collectors.toSet()),
-                0,
-                100)
-            .map(r -> r.getItems())
-            .flatMapIterable(c -> c);
-
-    // Iterate over the product summary nodes and update reference set members for CTPP nodes
-    // todo broaden this for other identifiers at other levels
-    productSummary
-        .getNodes()
-        .forEach(
-            node -> {
-              if (node.getLabel().equals(CTPP_LABEL)) { // Check if the node has the CTPP label
-                // Filter ARTG refset members for the current node and collect into a Set
-                node.getExternalIdentifiers()
-                    .addAll(
-                        getExternalIdentifiersFromRefsetMembers(
-                            artgRefsetMembers, node.getConceptId(), mappings));
-              }
-            });
 
     log.info("Done product model for " + productId + " on branch " + branch);
     return productSummary;
