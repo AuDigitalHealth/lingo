@@ -4,15 +4,26 @@
     "newBrandInput",
     "existingBrands",
     "brands"
-
   ],
   "ui:options": {
     "layout": {
       "grid": [
-        { "name": "selectedProduct", "xs": 12 },
-        { "name": "newBrandInput", "xs": 8 },
-        { "name": "existingBrands", "xs": 6 },
-        { "name": "brands", "xs": 6 }
+        {
+          "name": "selectedProduct",
+          "xs": 12
+        },
+        {
+          "name": "newBrandInput",
+          "xs": 8
+        },
+        {
+          "name": "existingBrands",
+          "xs": 6
+        },
+        {
+          "name": "brands",
+          "xs": 6
+        }
       ]
     }
   },
@@ -50,7 +61,9 @@
           "label": false,
           "skipTitle": true,
           "mandatorySchemes": [],
-          "multiValuedSchemes": ["artgid"]
+          "multiValuedSchemes": [
+            "artgid"
+          ]
         }
       }
     }
@@ -72,7 +85,11 @@
         "ui:readonly": true,
         "ui:options": {
           "label": "",
-          "skipTitle": true
+          "skipTitle": true,
+          "createBrand": {
+            "ecl": "<774167006",
+            "semanticTags": "(product name)"
+          }
         }
       },
       "externalIdentifiers": {
@@ -82,7 +99,9 @@
           "label": false,
           "skipTitle": true,
           "mandatorySchemes": [],
-          "multiValuedSchemes": ["artgid"]
+          "multiValuedSchemes": [
+            "artgid"
+          ]
         }
       }
     }
@@ -107,7 +126,9 @@
         "label": false,
         "skipTitle": true,
         "mandatorySchemes": [],
-        "multiValuedSchemes": ["artgid"]
+        "multiValuedSchemes": [
+          "artgid"
+        ]
       }
     }
   }
