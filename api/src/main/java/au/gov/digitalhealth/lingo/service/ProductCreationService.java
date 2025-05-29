@@ -285,13 +285,14 @@ public class ProductCreationService {
             Set.of(
                 getSnowstormRelationship(IS_A, PRODUCT_NAME, 0, modelConfiguration.getModuleId())));
 
-    if (modelConfiguration.getReferenceSetIdsForModelLevelType(ModelLevelType.PRODUCT_NAME)
-        != null) {
+    if (!modelConfiguration
+        .getReferenceSetIdsForModelLevelTypes(ModelLevelType.PRODUCT_NAME)
+        .isEmpty()) {
       // Add the brand to the reference set
       addToRefset(
           branch,
           createdConcept.getConceptId(),
-          modelConfiguration.getReferenceSetIdsForModelLevelType(ModelLevelType.PRODUCT_NAME));
+          modelConfiguration.getReferenceSetIdForModelLevelType(ModelLevelType.PRODUCT_NAME));
     }
     return toSnowstormConceptMini(createdConcept);
   }
@@ -407,10 +408,10 @@ public class ProductCreationService {
 
     if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
       mpRefset =
-          modelConfiguration.getReferenceSetIdsForModelLevelType(ModelLevelType.MEDICINAL_PRODUCT);
+          modelConfiguration.getReferenceSetIdForModelLevelType(ModelLevelType.MEDICINAL_PRODUCT);
     } else {
       mpRefset =
-          modelConfiguration.getReferenceSetIdsForModelLevelType(
+          modelConfiguration.getReferenceSetIdForModelLevelType(
               ModelLevelType.MEDICINAL_PRODUCT_ONLY);
     }
 
