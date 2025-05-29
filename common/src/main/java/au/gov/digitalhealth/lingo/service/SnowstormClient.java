@@ -21,7 +21,6 @@ import au.csiro.snowstorm_client.api.RelationshipsApi;
 import au.csiro.snowstorm_client.invoker.ApiClient;
 import au.csiro.snowstorm_client.model.*;
 import au.csiro.snowstorm_client.model.SnowstormAsyncConceptChangeBatch.StatusEnum;
-import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
 import au.gov.digitalhealth.lingo.exception.BatchSnowstormRequestFailedProblem;
 import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
@@ -428,14 +427,9 @@ public class SnowstormClient {
     return page;
   }
 
-  public List<SnowstormReferenceSetMember> getMappingRefsetMembers(
-      String branch, Collection<String> concepts, Set<MappingRefset> mappingRefsets) {
-    return getRefsetMembers(
-            branch,
-            concepts,
-            mappingRefsets.stream().map(MappingRefset::getIdentifier).collect(Collectors.toSet()),
-            0,
-            100)
+  public List<SnowstormReferenceSetMember> getRefsetMembers(
+      String branch, Collection<String> concepts, Set<String> referenceSetIds) {
+    return getRefsetMembers(branch, concepts, referenceSetIds, 0, 100)
         .mapNotNull(SnowstormItemsPageReferenceSetMember::getItems)
         .flatMapIterable(items -> items)
         .collectList()
@@ -797,7 +791,7 @@ public class SnowstormClient {
             .filter(member -> Objects.requireNonNull(member.getReleased()).equals(true))
             .collect(Collectors.toSet());
 
-    if (memberToDeactivate.isEmpty()) {
+    if (!memberToDeactivate.isEmpty()) {
       log.fine(
           "Bulk deactivating refset members: "
               + memberToDeactivate.size()
@@ -811,13 +805,13 @@ public class SnowstormClient {
             .map(SnowstormReferenceSetMember::getMemberId)
             .collect(Collectors.toSet());
 
-    if (memberIdsToDelete.isEmpty()) {
+    if (!memberIdsToDelete.isEmpty()) {
       log.fine(
           "Bulk deleting refset members: " + memberIdsToDelete.size() + " on branch: " + branch);
     }
 
     // Force must always be false, this is snowstorm api protection.
-    if (memberIdsToDelete.isEmpty()) {
+    if (!memberIdsToDelete.isEmpty()) {
       Mono<Void> deleteMono =
           getRefsetMembersApi()
               .deleteMembers(

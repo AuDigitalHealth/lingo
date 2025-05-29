@@ -22,12 +22,17 @@ import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
+import au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet;
 import au.gov.digitalhealth.lingo.product.update.ProductDescriptionUpdateRequest;
 import au.gov.digitalhealth.lingo.product.update.ProductExternalIdentifierUpdateRequest;
+import au.gov.digitalhealth.lingo.product.update.ProductNonDefiningPropertyUpdateRequest;
+import au.gov.digitalhealth.lingo.product.update.ProductReferenceSetUpdateRequest;
 import au.gov.digitalhealth.lingo.service.ProductSummaryService;
 import au.gov.digitalhealth.lingo.service.ProductUpdateService;
 import au.gov.digitalhealth.lingo.service.TaskManagerService;
 import jakarta.validation.Valid;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -64,30 +69,58 @@ public class ProductsController {
   }
 
   @LogExecutionTime
-  @PutMapping("/{branch}/product-model/{productId}/descriptions")
+  @PutMapping("/{branch}/product-model/{conceptId}/descriptions")
   public ResponseEntity<SnowstormConceptMini> updateProductDescriptions(
       @PathVariable String branch,
-      @PathVariable Long productId,
+      @PathVariable Long conceptId,
       @RequestBody @Valid ProductDescriptionUpdateRequest productDescriptionUpdateRequest) {
     taskManagerService.validateTaskState(branch);
     return new ResponseEntity<>(
         productUpdateService.updateProductDescriptions(
-            branch, String.valueOf(productId), productDescriptionUpdateRequest),
+            branch, String.valueOf(conceptId), productDescriptionUpdateRequest),
         HttpStatus.OK);
   }
 
   @LogExecutionTime
-  @PutMapping("/{branch}/product-model/{productId}/external-identifiers")
-  public ResponseEntity<Set<ExternalIdentifier>> updateProductExternalIdentifiers(
+  @PutMapping("/{branch}/product-model/{conceptId}/external-identifiers")
+  public ResponseEntity<Collection<ExternalIdentifier>> updateProductExternalIdentifiers(
       @PathVariable String branch,
-      @PathVariable Long productId,
+      @PathVariable Long conceptId,
       @RequestBody @Valid
           ProductExternalIdentifierUpdateRequest productExternalIdentifierUpdateRequest)
       throws InterruptedException {
     taskManagerService.validateTaskState(branch);
     return new ResponseEntity<>(
         productUpdateService.updateProductExternalIdentifiers(
-            branch, String.valueOf(productId), productExternalIdentifierUpdateRequest),
+            branch, String.valueOf(conceptId), productExternalIdentifierUpdateRequest),
+        HttpStatus.OK);
+  }
+
+  @LogExecutionTime
+  @PutMapping("/{branch}/product-model/{conceptId}/reference-sets")
+  public ResponseEntity<Collection<ReferenceSet>> updateProductReferenceSets(
+      @PathVariable String branch,
+      @PathVariable Long conceptId,
+      @RequestBody @Valid ProductReferenceSetUpdateRequest productReferenceSetUpdateRequest)
+      throws InterruptedException {
+    taskManagerService.validateTaskState(branch);
+    return new ResponseEntity<>(
+        productUpdateService.updateProductReferenceSets(
+            branch, String.valueOf(conceptId), productReferenceSetUpdateRequest),
+        HttpStatus.OK);
+  }
+
+  @LogExecutionTime
+  @PutMapping("/{branch}/product-model/{conceptId}/non-defining-properties")
+  public ResponseEntity<Collection<NonDefiningProperty>> updateProductNonDefiningProperties(
+      @PathVariable String branch,
+      @PathVariable Long conceptId,
+      @RequestBody @Valid
+          ProductNonDefiningPropertyUpdateRequest productNonDefiningPropertyUpdateRequest) {
+    taskManagerService.validateTaskState(branch);
+    return new ResponseEntity<>(
+        productUpdateService.updateProductNonDefiningProperties(
+            branch, String.valueOf(conceptId), productNonDefiningPropertyUpdateRequest),
         HttpStatus.OK);
   }
 
