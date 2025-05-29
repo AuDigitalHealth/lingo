@@ -85,11 +85,7 @@
         "ui:readonly": true,
         "ui:options": {
           "label": "",
-          "skipTitle": true,
-          "createBrand": {
-            "ecl": "<774167006",
-            "semanticTags": "(product name)"
-          }
+          "skipTitle": true
         }
       },
       "externalIdentifiers": {
@@ -117,7 +113,11 @@
         "ecl": "<774167006",
         "showDefaultOptions": false,
         "label": "",
-        "skipTitle": true
+        "skipTitle": true,
+        "createBrand": {
+          "ecl": "<774167006",
+          "semanticTags": "(product name)"
+        }
       }
     },
     "externalIdentifiers": {
