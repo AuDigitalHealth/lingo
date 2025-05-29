@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
-import { Button, TextField, CircularProgress, Box } from '@mui/material';
+import { Box, Button, CircularProgress, TextField } from '@mui/material';
 import { Concept } from '../../../../types/concept.ts';
 import { BrandCreationDetails } from '../../../../types/product.ts';
 import { Ticket } from '../../../../types/tickets/ticket.ts';
 import useDebounce from '../../../../hooks/useDebounce.tsx';
-import { useSearchConceptsByEcl } from '../../../../hooks/api/useInitializeConcepts.tsx';
+import {
+  getSearchConceptsByEclOptions,
+  useSearchConceptsByEcl
+} from '../../../../hooks/api/useInitializeConcepts.tsx';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCreateBrand } from '../../../../hooks/api/products/useCreateBrand.tsx';
 import ConceptService from '../../../../api/ConceptService.ts';
-import { getSearchConceptsByEclOptions } from '../../../../hooks/api/useInitializeConcepts.tsx';
 import BaseModal from '../../../../components/modal/BaseModal.tsx';
 import BaseModalBody from '../../../../components/modal/BaseModalBody.tsx';
 import BaseModalFooter from '../../../../components/modal/BaseModalFooter.tsx';
@@ -56,7 +58,7 @@ const CreateBrand: React.FC<CreateBrandProps> = ({
     if (!nameExists && ticket && inputValue) {
       setError('');
       const brandCreationDetails: BrandCreationDetails = {
-        brandName: inputValue,
+        brandName: inputValue.trim(),
         ticketId: ticket.id,
       };
       createBrandMutation.mutate(
@@ -106,8 +108,8 @@ const CreateBrand: React.FC<CreateBrandProps> = ({
     if (
       allData?.some(
         c =>
-          c.pt?.term.toLowerCase() === inputValue.toLowerCase() ||
-          c.fsn?.term.toLowerCase() === inputValue.toLowerCase(),
+          c.pt?.term.toLowerCase() === inputValue.toLowerCase().trim() ||
+          c.fsn?.term.toLowerCase() === inputValue.toLowerCase().trim(),
       )
     ) {
       setNameExists(true);
@@ -143,7 +145,7 @@ const CreateBrand: React.FC<CreateBrandProps> = ({
           fullWidth
           margin="normal"
           value={inputValue}
-          onChange={e => setInputValue(e.target.value.trim())}
+          onChange={e => setInputValue(e.target.value)}
           error={!!error}
           helperText={error}
           sx={{ minWidth: '300px' }}
