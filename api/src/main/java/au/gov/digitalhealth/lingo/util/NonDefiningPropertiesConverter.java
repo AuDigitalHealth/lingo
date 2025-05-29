@@ -26,6 +26,7 @@ import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.details.PackageProductDetailsBase;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -70,39 +71,78 @@ public class NonDefiningPropertiesConverter {
       }
 
       if (modelNonDefiningProperty.getModelLevels().contains(modelLevelType)) {
-        if (modelNonDefiningProperty.getDataType().equals(NonDefiningPropertyDataType.CONCEPT)) {
-          if (nonDefiningProperty.getValueObject() == null) {
-            throw new ProductAtomicDataValidationProblem(
-                "Non-defining property "
-                    + modelNonDefiningProperty.getIdentifier()
-                    + " is missing");
-          }
-          snowstormRelationships.add(
-              SnowstormDtoUtil.getSnowstormRelationship(
-                  modelNonDefiningProperty.asLingoConstant(),
-                  nonDefiningProperty.getValueObject(),
-                  0,
-                  ADDITIONAL_RELATIONSHIP,
-                  modelConfiguration.getModuleId()));
-        } else {
-          if (nonDefiningProperty.getValue() == null) {
-            throw new ProductAtomicDataValidationProblem(
-                "Non-defining property "
-                    + modelNonDefiningProperty.getIdentifier()
-                    + " is missing");
-          }
-          snowstormRelationships.add(
-              SnowstormDtoUtil.getSnowstormDatatypeComponent(
-                  modelNonDefiningProperty.asLingoConstant(),
-                  nonDefiningProperty.getValue(),
-                  modelNonDefiningProperty.getDataType().getSnowstormDatatype(),
-                  0,
-                  ADDITIONAL_RELATIONSHIP,
-                  modelConfiguration.getModuleId()));
-        }
+        snowstormRelationships.add(
+            convertToRelationship(
+                nonDefiningProperty, modelConfiguration.getModuleId(), modelNonDefiningProperty));
       }
     }
 
     return snowstormRelationships;
+  }
+
+  public static SnowstormRelationship calculateNonDefiningRelationships(
+      au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty value,
+      String conceptId,
+      Collection<NonDefiningProperty> propertyDefinitions,
+      String moduleId) {
+
+    List<NonDefiningProperty> filteredPropertyDefinition =
+        propertyDefinitions.stream()
+            .filter(
+                propertyDefinition ->
+                    propertyDefinition.getName().equals(value.getIdentifierScheme()))
+            .toList();
+
+    if (filteredPropertyDefinition.isEmpty()) {
+      throw new ProductAtomicDataValidationProblem(
+          "Non-defining property "
+              + value.getIdentifierScheme()
+              + " is not valid for this product");
+    } else if (filteredPropertyDefinition.size() > 1) {
+      throw new ProductAtomicDataValidationProblem(
+          "Non-defining property "
+              + value.getIdentifierScheme()
+              + " is defined multiple times in the model");
+    }
+    NonDefiningProperty propertyDefinition = filteredPropertyDefinition.get(0);
+
+    SnowstormRelationship snowstormRelationship =
+        convertToRelationship(value, moduleId, propertyDefinition);
+    snowstormRelationship.setSourceId(conceptId);
+    return snowstormRelationship;
+  }
+
+  private static SnowstormRelationship convertToRelationship(
+      au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty value,
+      String moduleId,
+      NonDefiningProperty propertyDefinition) {
+    SnowstormRelationship snowstormRelationship;
+    if (propertyDefinition.getDataType().equals(NonDefiningPropertyDataType.CONCEPT)) {
+      if (value.getValueObject() == null) {
+        throw new ProductAtomicDataValidationProblem(
+            "Non-defining property " + propertyDefinition.getIdentifier() + " is missing");
+      }
+      snowstormRelationship =
+          SnowstormDtoUtil.getSnowstormRelationship(
+              propertyDefinition.asLingoConstant(),
+              value.getValueObject(),
+              0,
+              ADDITIONAL_RELATIONSHIP,
+              moduleId);
+    } else {
+      if (value.getValue() == null) {
+        throw new ProductAtomicDataValidationProblem(
+            "Non-defining property " + propertyDefinition.getIdentifier() + " is missing");
+      }
+      snowstormRelationship =
+          SnowstormDtoUtil.getSnowstormDatatypeComponent(
+              propertyDefinition.asLingoConstant(),
+              value.getValue(),
+              propertyDefinition.getDataType().getSnowstormDatatype(),
+              0,
+              ADDITIONAL_RELATIONSHIP,
+              moduleId);
+    }
+    return snowstormRelationship;
   }
 }
