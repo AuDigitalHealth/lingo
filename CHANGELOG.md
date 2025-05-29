@@ -11,6 +11,26 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 - No updates yet.
 
 
+## [1.2.10.4] - 2025-05-29
+
+### Added 
+
+- Ability to drag/drop attachments onto tickets
+- Can now filter for refsets with inactive concepts
+- Can now create tasks on the snodine page, on any project
+- Create additional synonyms in the 7 box create screen
+
+### Changed
+
+- Sort refset members by title
+- Reference sets are now handled on the front end, all data is queried when a reference set is loaded
+
+### Fixed
+
+- Pagination of reference set members now extends beyond 10,000
+- Issues with the artgid reference set
+- Issues with the semantic tags when the duplicate fsn/pt warning would appear on the 7 box create screen
+
 ## [1.2.10.3] - 2025-04-24
 
 ### Added
