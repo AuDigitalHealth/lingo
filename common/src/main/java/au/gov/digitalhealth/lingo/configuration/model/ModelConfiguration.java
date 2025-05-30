@@ -19,6 +19,7 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.PREFERRED;
 
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.NonDefiningPropertyDataType;
 import au.gov.digitalhealth.lingo.exception.ConfigurationProblem;
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
@@ -146,6 +147,42 @@ public class ModelConfiguration {
           property.getName(),
           propertyNames,
           "Property names must be unique within a model duplicate name: ");
+      if (property instanceof NonDefiningProperty p) {
+        if (p.getDataType().equals(NonDefiningPropertyDataType.CODED)) {
+          throw new ValidationException(
+              "Non-defining property "
+                  + p.getName()
+                  + " cannot be of type CODED, it must be CONCEPT or a regular datatype. Please update the model configuration.");
+        }
+        if (p.getDataType().equals(NonDefiningPropertyDataType.CONCEPT)
+            && (p.getEclBinding() == null || p.getEclBinding().isEmpty())) {
+          throw new ValidationException(
+              "Non-defining property "
+                  + p.getName()
+                  + " of type CONCEPT must have an ECL binding defined. Please update the model configuration.");
+        }
+      } else if (property instanceof MappingRefset p) {
+        if (p.getDataType().equals(NonDefiningPropertyDataType.CONCEPT)) {
+          throw new ValidationException(
+              "Mapping refset "
+                  + p.getName()
+                  + " cannot be of type CONCEPT, it must be CODED or a regular datatype. Please update the model configuration.");
+        }
+        if (p.getDataType().equals(NonDefiningPropertyDataType.CODED)) {
+          if (p.getValueSetReference() == null || p.getValueSetReference().isEmpty()) {
+            throw new ValidationException(
+                "Mapping refset "
+                    + p.getName()
+                    + " of type CODED must have a value set reference defined. Please update the model configuration.");
+          }
+          if (p.getCodeSystem() == null || p.getCodeSystem().isEmpty()) {
+            throw new ValidationException(
+                "Mapping refset "
+                    + p.getName()
+                    + " of type CODED must have a code system defined. Please update the model configuration.");
+          }
+        }
+      }
     }
   }
 

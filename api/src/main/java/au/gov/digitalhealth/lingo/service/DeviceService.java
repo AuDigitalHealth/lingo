@@ -28,6 +28,7 @@ import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.exception.AtomicDataExtractionProblem;
 import au.gov.digitalhealth.lingo.product.details.DeviceProductDetails;
+import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -38,10 +39,12 @@ import org.springframework.stereotype.Service;
 public class DeviceService extends AtomicDataService<DeviceProductDetails> {
   private final SnowstormClient snowStormApiClient;
   private final Models models;
+  private final FhirClient fhirClient;
 
-  DeviceService(SnowstormClient snowStormApiClient, Models models) {
+  DeviceService(SnowstormClient snowStormApiClient, Models models, FhirClient fhirClient) {
     this.snowStormApiClient = snowStormApiClient;
     this.models = models;
+    this.fhirClient = fhirClient;
   }
 
   private static SnowstormConceptMini getLeafUnbrandedProduct(
@@ -98,6 +101,11 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
       throw new AtomicDataExtractionProblem("Expected 1 MP but found " + mp.size(), productId);
     }
     return mp.iterator().next();
+  }
+
+  @Override
+  protected FhirClient getFhirClient() {
+    return fhirClient;
   }
 
   @Override
