@@ -37,6 +37,8 @@ public class UiSchemaExtender {
   public static final String ITEMS = "items";
   public static final String UI_OPTIONS = "ui:options";
   public static final String UI_WIDGET = "ui:widget";
+
+  public static final String UI_FIELD = "ui:field";
   public static final String CONTAINED_PRODUCTS = "containedProducts";
   public static final String PRODUCT_DETAILS = "productDetails";
   private static final String PACKAGE_DETAILS = "packageDetails";
@@ -99,7 +101,7 @@ public class UiSchemaExtender {
     if (!filteredPropertySet.isEmpty()) {
 
       ObjectNode uiNode = objectMapper.createObjectNode();
-      uiNode.put(UI_WIDGET, "OneOfArrayWidget");
+      uiNode.put(UI_FIELD, "ExternalIdentifiers");
       ObjectNode uiOptions = getUiOptions(false);
 
       processNonDefiningPropertyBaseMembers(filteredPropertySet, uiOptions);

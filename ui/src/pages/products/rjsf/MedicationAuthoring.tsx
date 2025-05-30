@@ -15,6 +15,7 @@ import ProductPreviewCreateModal from '../components/ProductPreviewCreateModal.t
 import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
 import CustomObjectFieldTemplate from './templates/CustomObjectFieldTemplate.tsx';
 import NumberWidget from './widgets/NumberWidget.tsx';
+import ExternalIdentifiers from './fields/bulkBrandPack/ExternalIdentifiers.tsx';
 import TextFieldWidget from './widgets/TextFieldWidget.tsx';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 import productService from '../../../api/ProductService.ts';
@@ -163,7 +164,7 @@ function MedicationAuthoring({
             fields={{
               AutoCompleteField,
               ConditionalArrayField,
-
+              ExternalIdentifiers,
               UnitValueUnWrappedField,
               UnitValueField,
               CompactQuantityField,

@@ -105,7 +105,15 @@
         "label": false,
         "skipTitle": true,
         "mandatorySchemes": [],
-        "multiValuedSchemes": ["artgid"]
+        "multiValuedSchemes": ["artgid", "atc"],
+        "binding": {
+          "atc": {
+            "valueSet": "http://www.whocc.no/atc/vs"
+          },
+          "pcrs": {
+            "valueSet": "https://nmpc.hse.ie/PCRS/vs"
+          }
+        }
       }
     }
   }

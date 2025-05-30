@@ -210,7 +210,9 @@ export function useSearchConceptOntoServerByUrl(
       queryKey: [`onto-concept-url-${searchTerm}`],
       queryFn: () => {
         return OntoserverService.searchConceptByUrl(
-          applicationConfig.fhirServerBaseUrl,
+          searchTerm === 'cod'
+            ? 'https://ontology.snowstorm.dc4h.link/staging-auth-proxy/fhir'
+            : applicationConfig.fhirServerBaseUrl,
           url,
           applicationConfig.fhirRequestCount,
           searchTerm,
