@@ -81,6 +81,7 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
   return (
     <span data-component-name="EclAutocomplete">
       <Autocomplete
+        sx={{ width: '100%' }}
         loading={isLoading}
         disabled={isThisDisabled}
         options={isDisabled ? [] : options}
