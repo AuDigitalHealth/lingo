@@ -107,6 +107,16 @@ public class ApiWebConfiguration {
         .build();
   }
 
+  @Bean
+  public WebClient fhirApiClient(
+      @Value("${fhir.server.url}") String fhirServerUrl, WebClient.Builder webClientBuilder) {
+    return webClientBuilder
+        .baseUrl(fhirServerUrl)
+        .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+        .filter(logRequest())
+        .build();
+  }
+
   private ExchangeFilterFunction logRequest() {
     return ExchangeFilterFunction.ofRequestProcessor(
         clientRequest -> {

@@ -24,6 +24,7 @@ import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.MappingType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.NonDefiningPropertyDataType;
+import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import au.gov.digitalhealth.lingo.validation.OnlyOneNotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -31,6 +32,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import reactor.core.publisher.Mono;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -42,23 +44,16 @@ public class ExternalIdentifier extends NonDefiningBase implements Serializable 
   SnowstormConceptMini identifierValueObject;
   @NotNull MappingType relationshipType;
 
-  public static ExternalIdentifier create(
-      SnowstormReferenceSetMember referenceSetMember, MappingRefset mappingRefset) {
+  public static Mono<ExternalIdentifier> create(
+      SnowstormReferenceSetMember referenceSetMember,
+      MappingRefset mappingRefset,
+      FhirClient fhirClient) {
 
     ExternalIdentifier identifier = new ExternalIdentifier();
 
     identifier.setIdentifierScheme(mappingRefset.getName());
 
     final String mapTargetId = referenceSetMember.getAdditionalFields().get(MAP_TARGET.getValue());
-    if (mappingRefset.getDataType().equals(NonDefiningPropertyDataType.CONCEPT)) {
-      // TODO - get concept from snowstorm
-      SnowstormConceptMini concept = new SnowstormConceptMini();
-      concept.setConceptId(mapTargetId);
-      identifier.setIdentifierValueObject(concept);
-    } else {
-      identifier.setIdentifierValue(mapTargetId);
-    }
-
     if (mappingRefset.getMappingTypes().size() == 1) {
       identifier.setRelationshipType(mappingRefset.getMappingTypes().iterator().next());
     } else {
@@ -66,25 +61,29 @@ public class ExternalIdentifier extends NonDefiningBase implements Serializable 
           MappingType.fromSctid(referenceSetMember.getAdditionalFields().get(MAP_TYPE.getValue())));
     }
 
-    return identifier;
+    if (mappingRefset.getDataType().equals(NonDefiningPropertyDataType.CODED)) {
+      return fhirClient
+          .getConcept(mapTargetId, mappingRefset.getCodeSystem())
+          .map(
+              c -> {
+                identifier.setIdentifierValueObject(c);
+                return identifier;
+              });
+    } else {
+      identifier.setIdentifierValue(mapTargetId);
+      return Mono.just(identifier);
+    }
   }
 
-  public static ExternalIdentifier create(
-      SnowstormReferenceSetMemberViewComponent referenceSetMember, MappingRefset mappingRefset) {
+  public static Mono<ExternalIdentifier> create(
+      SnowstormReferenceSetMemberViewComponent referenceSetMember,
+      MappingRefset mappingRefset,
+      FhirClient fhirClient) {
     ExternalIdentifier identifier = new ExternalIdentifier();
 
     identifier.setIdentifierScheme(mappingRefset.getName());
 
     final String mapTargetId = referenceSetMember.getAdditionalFields().get(MAP_TARGET.getValue());
-    if (mappingRefset.getDataType().equals(NonDefiningPropertyDataType.CONCEPT)) {
-      // TODO - get concept from snowstorm
-      SnowstormConceptMini concept = new SnowstormConceptMini();
-      concept.setConceptId(mapTargetId);
-      identifier.setIdentifierValueObject(concept);
-    } else {
-      identifier.setIdentifierValue(mapTargetId);
-    }
-
     if (mappingRefset.getMappingTypes().size() == 1) {
       identifier.setRelationshipType(mappingRefset.getMappingTypes().iterator().next());
     } else {
@@ -92,6 +91,17 @@ public class ExternalIdentifier extends NonDefiningBase implements Serializable 
           MappingType.fromSctid(referenceSetMember.getAdditionalFields().get(MAP_TYPE.getValue())));
     }
 
-    return identifier;
+    if (mappingRefset.getDataType().equals(NonDefiningPropertyDataType.CODED)) {
+      return fhirClient
+          .getConcept(mapTargetId, mappingRefset.getCodeSystem())
+          .map(
+              c -> {
+                identifier.setIdentifierValueObject(c);
+                return identifier;
+              });
+    } else {
+      identifier.setIdentifierValue(mapTargetId);
+      return Mono.just(identifier);
+    }
   }
 }

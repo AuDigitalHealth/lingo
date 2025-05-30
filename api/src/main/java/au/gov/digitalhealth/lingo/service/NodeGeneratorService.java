@@ -37,6 +37,7 @@ import au.gov.digitalhealth.lingo.exception.SingleConceptExpectedProblem;
 import au.gov.digitalhealth.lingo.product.NewConceptDetails;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
+import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import au.gov.digitalhealth.lingo.util.EclBuilder;
 import au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils;
 import au.gov.digitalhealth.lingo.util.NonDefiningPropertyUtils;
@@ -64,14 +65,17 @@ import reactor.core.publisher.Mono;
 public class NodeGeneratorService {
   SnowstormClient snowstormClient;
   Models models;
+  FhirClient fhirClient;
 
   @Value("${snomio.node.concept.search.limit:50}")
   private int limit;
 
   @Autowired
-  public NodeGeneratorService(SnowstormClient snowstormClient, Models models) {
+  public NodeGeneratorService(
+      SnowstormClient snowstormClient, Models models, FhirClient fhirClient) {
     this.snowstormClient = snowstormClient;
     this.models = models;
+    this.fhirClient = fhirClient;
   }
 
   @Async
@@ -175,12 +179,10 @@ public class NodeGeneratorService {
                               new au.gov.digitalhealth.lingo.product.details.properties
                                   .ReferenceSet(member, refsetMap.get(member.getRefsetId()))));
                 } else if (mappingMap.containsKey(member.getRefsetId())) {
-                  return Mono.just(
-                      node.getExternalIdentifiers()
-                          .add(
-                              au.gov.digitalhealth.lingo.product.details.properties
-                                  .ExternalIdentifier.create(
-                                  member, mappingMap.get(member.getRefsetId()))));
+                  return au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier
+                      .create(member, mappingMap.get(member.getRefsetId()), fhirClient)
+                      .doOnNext(p -> node.getExternalIdentifiers().add(p))
+                      .then(Mono.empty());
                 } else {
                   return Mono.empty();
                 }
@@ -386,7 +388,8 @@ public class NodeGeneratorService {
               referenceSetMembers,
               null,
               new HashSet<>(
-                  modelConfiguration.getMappingsByIdentifierForModelLevel(modelLevel).values())));
+                  modelConfiguration.getMappingsByIdentifierForModelLevel(modelLevel).values()),
+              fhirClient));
       log.fine("New concept for " + label + " " + newConceptDetails.getConceptId());
     } else {
       log.fine("Concept found for " + label + " " + node.getConceptId());
