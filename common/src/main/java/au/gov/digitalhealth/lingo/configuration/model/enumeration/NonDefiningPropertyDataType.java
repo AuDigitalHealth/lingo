@@ -160,6 +160,17 @@ public enum NonDefiningPropertyDataType {
     public DataTypeEnum getSnowstormDatatype() {
       throw new UnsupportedOperationException("CONCEPT is not a valid datatype for Snowstorm");
     }
+  },
+  CODED {
+    @Override
+    public boolean isValidValue(String value) {
+      return value != null && !value.isEmpty();
+    }
+
+    @Override
+    public DataTypeEnum getSnowstormDatatype() {
+      throw new UnsupportedOperationException("CONCEPT is not a valid datatype for Snowstorm");
+    }
   };
 
   public abstract boolean isValidValue(String value);

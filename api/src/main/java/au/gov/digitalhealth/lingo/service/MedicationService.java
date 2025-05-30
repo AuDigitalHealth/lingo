@@ -64,6 +64,7 @@ import au.gov.digitalhealth.lingo.product.details.Ingredient;
 import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
 import au.gov.digitalhealth.lingo.product.details.Quantity;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
+import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import java.util.HashMap;
 import java.util.Map;
@@ -82,11 +83,13 @@ import org.springframework.stereotype.Service;
 public class MedicationService extends AtomicDataService<MedicationProductDetails> {
   private final SnowstormClient snowStormApiClient;
   private final Models models;
+  private final FhirClient fhirClient;
 
   @Autowired
-  MedicationService(SnowstormClient snowStormApiClient, Models models) {
+  MedicationService(SnowstormClient snowStormApiClient, Models models, FhirClient fhirClient) {
     this.snowStormApiClient = snowStormApiClient;
     this.models = models;
+    this.fhirClient = fhirClient;
   }
 
   private static Ingredient getIngredient(
@@ -214,6 +217,11 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
     }
   }
 
+  @Override
+  protected FhirClient getFhirClient() {
+    return fhirClient;
+  }
+
   private void addToMap(
       SnowstormRelationship r, Map<Integer, ActivePreciseIngredient> preciseActiveInredientMap) {
     ActivePreciseIngredient activePreciseIngredient = preciseActiveInredientMap.get(r.getGroupId());
@@ -319,7 +327,6 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
             getSingleActiveTarget(productRelationships, HAS_UNIT_OF_PRESENTATION.getValue()));
       }
 
-      // TODO after migration change to additional relationship
       if (inferredRelationshipOfTypeExists(productRelationships, HAS_SUPPLIER.getValue())) {
         if (filterActiveInferredRelationshipByType(productRelationships, HAS_SUPPLIER.getValue())
             .stream()

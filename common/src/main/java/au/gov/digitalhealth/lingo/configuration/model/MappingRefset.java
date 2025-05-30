@@ -32,4 +32,7 @@ public class MappingRefset extends NonDefiningPropertyBase {
 
   /** Allowed mapping types. */
   private Set<MappingType> mappingTypes;
+
+  /** CodeSystem URI for the value */
+  private String codeSystem;
 }

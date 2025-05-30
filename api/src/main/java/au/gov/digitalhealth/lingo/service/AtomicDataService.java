@@ -51,6 +51,7 @@ import au.gov.digitalhealth.lingo.product.ProductPackSizes;
 import au.gov.digitalhealth.lingo.product.details.*;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
+import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import au.gov.digitalhealth.lingo.util.EclBuilder;
 import au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils;
 import au.gov.digitalhealth.lingo.util.NonDefiningPropertyUtils;
@@ -278,6 +279,8 @@ public abstract class AtomicDataService<T extends ProductDetails> {
 
   protected abstract ModelConfiguration getModelConfiguration(String branch);
 
+  protected abstract FhirClient getFhirClient();
+
   public PackageDetails<T> getPackageAtomicData(String branch, String productId) {
     Maps maps = getMaps(branch, productId, getPackageAtomicDataEcl(getModelConfiguration(branch)));
     return populatePackageDetails(branch, productId, maps, getModelConfiguration(branch));
@@ -328,7 +331,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
 
     Mono<Map<String, List<ExternalIdentifier>>> mappingsMap =
         ExternalIdentifierUtils.getExternalIdentifiersMapFromRefsetMembers(
-            refsetMembers, getModelConfiguration(branch).getMappings());
+            refsetMembers, getModelConfiguration(branch).getMappings(), getFhirClient());
 
     Mono<Map<String, List<au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet>>>
         referenceSets =
@@ -432,7 +435,8 @@ public abstract class AtomicDataService<T extends ProductDetails> {
               packVariant.getConceptId(),
               getModelConfiguration(branch).getMappings().stream()
                   .filter(m -> m.getLevel().equals(ProductPackageType.PACKAGE))
-                  .collect(Collectors.toSet())));
+                  .collect(Collectors.toSet()),
+              getFhirClient()));
       packSizeWithIdentifier.setReferenceSets(
           ReferenceSetUtils.getReferenceSetsFromRefsetMembers(
                   packVariantRefsetMemebersResult, getModelConfiguration(branch).getReferenceSets())
@@ -570,7 +574,8 @@ public abstract class AtomicDataService<T extends ProductDetails> {
                   packVariantId,
                   getModelConfiguration(branch).getMappings().stream()
                       .filter(m -> m.getLevel().equals(ProductPackageType.PACKAGE))
-                      .collect(Collectors.toSet())));
+                      .collect(Collectors.toSet()),
+                  getFhirClient()));
       brandWithIdentifiers
           .getReferenceSets()
           .addAll(
