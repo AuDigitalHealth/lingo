@@ -213,9 +213,10 @@ models:
         title: ATC level 5 code
         identifier: 84676004
         level: PACKAGE
-        dataType: STRING,
+        dataType: CODED,
         valueRegexValidation: ^.+$
         valueSetReference: http://www.whocc.no/atc/vs
+        codeSystem: http://www.whocc.no/atc
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
@@ -226,9 +227,10 @@ models:
         title: GMS Reimbursable Number
         identifier: 105590001
         level: PACKAGE
-        dataType: STRING,
+        dataType: CODED,
         valueRegexValidation: ^.+$
         valueSetReference: https://nmpc.hse.ie/PCRS/vs
+        codeSystem: https://nmpc.hse.ie/PCRS
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: false
