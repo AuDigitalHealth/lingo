@@ -1,267 +1,317 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 import {
-    Autocomplete,
-    TextField,
-    Chip,
-    Box,
-    Typography,
-    Tooltip,
-    Select,
-    MenuItem,
-    FormControl,
-    InputLabel,
-    Button,
-    Stack, Avatar, IconButton
-} from "@mui/material";
-import { FieldProps, RJSFSchema } from "@rjsf/utils";
-import _ from "lodash";
-import {Label} from "@mui/icons-material";
-import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
+  Autocomplete,
+  TextField,
+  Chip,
+  Box,
+  Typography,
+  Tooltip,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Button,
+  Stack,
+  Avatar,
+  IconButton,
+  Grid,
+} from '@mui/material';
+import { FieldProps, RJSFSchema } from '@rjsf/utils';
+import _ from 'lodash';
+import { Label } from '@mui/icons-material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import ValueSetAutocomplete, {
+  MultiValueValueSetAutocomplete,
+} from '../../components/ValueSetAutocomplete';
+import EclAutocomplete from '../../components/EclAutocomplete';
 
-const SCHEME_COLORS = ["primary", "secondary", "success", "error", "warning"];
+const SCHEME_COLORS = ['primary', 'secondary', 'success', 'error', 'warning'];
 
 const getColorByScheme = (scheme: string) => {
-    const index = scheme?.split("").reduce((a, b) => a + b.charCodeAt(0), 0) % SCHEME_COLORS.length;
-    return SCHEME_COLORS[index];
+  const index =
+    scheme?.split('').reduce((a, b) => a + b.charCodeAt(0), 0) %
+    SCHEME_COLORS.length;
+  return SCHEME_COLORS[index];
 };
 
 interface ExternalIdentifier {
-    identifierScheme: string;
-    relationshipType: string;
-    identifierValue: string;
+  identifierScheme: string;
+  relationshipType: string;
+  identifierValue: string;
 }
 
-const ExternalIdentifiers: React.FC<FieldProps<ExternalIdentifier[]>> = (props) => {
-    const {
-        onChange,
-        schema,
-        uiSchema,
-        registry,
-    } = props;
+interface BindingConfig {
+  [key: string]: { valueSet?: string; ecl?: string };
+}
 
-    const {
-        optionsByScheme = {},
-        schemeLimits = {},
-        freeSoloByScheme = {},
-        onChipClick,
-        readOnly = true
-    } = uiSchema && uiSchema["ui:options"] || {};
+const ExternalIdentifiers: React.FC<
+  FieldProps<ExternalIdentifier[]>
+> = props => {
+  const { onChange, schema, uiSchema, registry } = props;
+  const {
+    optionsByScheme = {},
+    schemeLimits = {},
+    freeSoloByScheme = {},
+    onChipClick,
+    readOnly,
+  } = (uiSchema && uiSchema['ui:options']) || {};
 
-    const [ formData, setFormData ] = useState<ExternalIdentifier[]>(props.formData || []);
+  const formData = props.formData;
 
-    const validator = registry.formContext?.validator || registry?.validator;
-    const rootSchema: RJSFSchema = registry.rootSchema;
+  const schemas = schema?.items?.anyOf as ExternalIdentifier[];
 
-    const schemesInUse: string[] =
-        schema?.items?.oneOf?.map((s) => s?.properties?.identifierScheme?.const) || [];
+  debugger;
+  return (
+    <>
+      <Grid container spacing={2}>
+        {schemas.map((schema, index) => {
+          return (
+            <Grid item xs={12} md={6} key={index}>
+              <ExternalIdentifierRender
+                sx={{ margin: 1 }}
+                formData={formData}
+                onChange={updated => {
+                  onChange(updated);
+                }}
+                schema={schema}
+                uiSchema={uiSchema}
+                registry={registry}
+              />
+            </Grid>
+          );
+        })}
+      </Grid>
+    </>
+  );
+};
 
-    const [selectedScheme, setSelectedScheme] = useState(schemesInUse[0]);
-    const [availableOptions, setAvailableOptions] = useState<string[]>([]);
-    const [inputValue, setInputValue] = useState("");
-    const [tooltip, setTooltip] = useState<string>("");
+const ExternalIdentifierRender: React.FC<
+  FieldProps<ExternalIdentifier[]>
+> = props => {
+  const { onChange, schema, uiSchema, registry } = props;
+  const {
+    optionsByScheme = {},
+    schemeLimits = {},
+    freeSoloByScheme = {},
+    onChipClick,
+    readOnly,
+  } = (uiSchema && uiSchema['ui:options']) || {};
 
-    const schemeColor = getColorByScheme(selectedScheme);
-    const relationshipType =
-        schema?.items?.oneOf?.find(
-            (s) => s.properties?.identifierScheme?.const === selectedScheme
-        )?.properties?.relationshipType?.const || "RELATED";
+  const schemeName = schema?.properties?.identifierScheme?.const;
 
-    const [ maxItems, setMaxItems ] = useState<number>(9999);
-    const [freeSolo, setFreeSolo] = useState<boolean>(true);
+  const [availableOptions, setAvailableOptions] = useState<string[]>([]);
+  const [inputValue, setInputValue] = useState('');
+  const [tooltip, setTooltip] = useState<string>('');
 
-    useEffect(() => {
-        // @ts-ignore
-        if (selectedScheme && schemeLimits && schemeLimits[selectedScheme]) {
-            // @ts-ignore
-            setMaxItems(schemeLimits[selectedScheme]);
-        }
-        // @ts-ignore
-        if (selectedScheme && freeSoloByScheme && freeSoloByScheme[selectedScheme]) {
-            // @ts-ignore
-            setFreeSolo(freeSoloByScheme[selectedScheme]);
-        }
-    }, [selectedScheme, schemeLimits, freeSoloByScheme]);
+  const [maxItems, setMaxItems] = useState<number>(9999);
+  const [freeSolo, setFreeSolo] = useState<boolean>(true);
 
-    const schemeEntries = formData.filter(
-        (f) => f.identifierScheme === selectedScheme
-    );
+  const formData = props.formData;
+  const multiValuedSchemes: string[] =
+    uiSchema['ui:options']?.multiValuedSchemes || [];
 
-    const otherEntries = formData.filter(
-        (f) => f.identifierScheme !== selectedScheme
-    );
+  const isMultiValued = multiValuedSchemes.includes(schemeName);
 
-    useEffect(() => {
-        // @ts-ignore
-        const opts = optionsByScheme[selectedScheme];
-        if (typeof opts === "function") {
-            opts().then(setAvailableOptions);
-        } else if (Array.isArray(opts)) {
-            setAvailableOptions(opts);
-        } else {
-            setAvailableOptions([]);
-        }
-    }, [selectedScheme, optionsByScheme]);
+  const bindingConfig: BindingConfig = uiSchema['ui:options']?.binding || {};
 
-    const handleAdd = (value: string) => {
+  const hasValueSetBinding = (scheme: string): boolean =>
+    !!bindingConfig[scheme]?.valueSet;
 
-        const trimmed = value.trim();
-        if (!trimmed) return;
+  const hasEclBinding = (scheme: string): boolean =>
+    !!bindingConfig[scheme]?.ecl;
 
-        if (formData.some((item) => item.identifierValue === trimmed && item.identifierScheme === selectedScheme)) {
-            setTooltip("This identifier is already added.");
-            return;
-        }
+  const useValueSetAutocomplete = hasValueSetBinding(schemeName);
+  const useEclAutocomplete = hasEclBinding(schemeName);
 
-        if (maxItems && schemeEntries.length >= maxItems) {
-            setTooltip(`Only ${maxItems} items allowed for ${selectedScheme}`);
-            return;
-        }
+  const binding = bindingConfig[schemeName] || {};
 
-        const testObj: ExternalIdentifier = {
-            identifierScheme: selectedScheme,
-            relationshipType,
-            identifierValue: trimmed,
-        };
+  const schemeEntries =
+    formData?.filter(
+      f => f.identifierScheme === schema.properties.identifierScheme.const,
+    ) || [];
 
-        const schemaDef = schema?.items?.oneOf?.find(
-            (s) => s.properties?.identifierScheme?.const === selectedScheme
+  const handleAdd = (value: string | string[]) => {
+    // Convert single string to array for uniform processing
+    const values = Array.isArray(value) ? value : [value];
+
+    const newItems: ExternalIdentifier[] = [];
+
+    for (const val of values) {
+      const trimmed = val.trim();
+      if (!trimmed) continue; // Skip empty strings
+
+      // Check if this identifier already exists
+      if (
+        formData?.some(
+          item =>
+            item.identifierValue === trimmed &&
+            item.identifierScheme === schema.properties.identifierScheme.const,
+        )
+      ) {
+        setTooltip(`Identifier "${trimmed}" is already added.`);
+        continue; // Skip this one but continue with others
+      }
+
+      // Check if adding this item would exceed maxItems
+      const currentCount = (formData?.length ?? 0) + newItems.length;
+      if (maxItems && schemeEntries && currentCount >= maxItems) {
+        setTooltip(
+          `Only ${maxItems} items allowed for ${schema.properties.identifierScheme.const}`,
         );
+        break; // Stop processing further items
+      }
 
-        const tempSchema = {
-            type: "object",
-            properties: schemaDef?.properties || {},
-            required: schemaDef?.required || []
-        };
+      const testObj: ExternalIdentifier = {
+        identifierScheme: schema.properties.identifierScheme.const,
+        relationshipType: schema.properties.relationshipType.const,
+        identifierValue: trimmed,
+      };
 
-        // const result = validator.validateFormData(testObj, tempSchema, rootSchema);
-        //
-        // if (result.errors?.length > 0) {
-        //     const idErr = result.errors.find((e) => e.property === ".identifierValue");
-        //     setTooltip(idErr?.message || "Invalid value");
-        //     return;
-        // }
+      newItems.push(testObj);
+    }
 
-        setFormData([...formData, testObj]);
-        onChange(formData);
-    };
+    // Only update if we have new items to add
+    if (newItems.length > 0) {
+      const newFormData = [...(formData ?? []), ...newItems];
+      onChange(newFormData);
+    }
+  };
 
-    const handleDelete = (value: string, scheme: string) => {
-        onChange(formData.filter((item) =>
-            !(item.identifierValue === value && item.identifierScheme === scheme)
-        ));
-    };
+  const handleDelete = (value: string, scheme: string) => {
+    const returnFormData = formData?.filter(item => {
+      const returnVal = !(
+        item.identifierValue === value && item.identifierScheme === scheme
+      );
+      return returnVal;
+    });
+    onChange(returnFormData);
+  };
 
-    const renderChip = (item: ExternalIdentifier, index: number) => (
-        <Box display="flex" alignItems="center" gap={1}>
-        {index === 0 && (
-            <Typography variant="body2" color={getColorByScheme(item.identifierScheme)}>{item.identifierScheme}</Typography>
-        )}
-        <Chip
-            variant="outlined"
-            sx={{
-                margin: 1,
-                padding: 0.5
-            }}
-            key={`${item.identifierScheme}-${item.identifierValue}-${index}`}
-            label={`${item.identifierValue}`}
-            color={getColorByScheme(item.identifierScheme)}
-            onClick={onChipClick ? () => onChipClick(item) : undefined}
-            onDelete={!readOnly
-                ? () => handleDelete(item.identifierValue, item.identifierScheme)
-                : undefined
-            }
-        />
-        </Box>
-    );
-
+  const renderChip = (item: ExternalIdentifier) => {
     return (
-        <Box>
-            <Stack
-                direction="row"
-                spacing={2}
-                alignItems="center"
-            >
-            {!readOnly && (
-                <FormControl>
-                    <InputLabel>Scheme</InputLabel>
-                    <Select
-                        sx={{
-                            height: '36px',
-                            width: 'max-content',
-                            display: 'inline-table'
-                        }}
-                        value={selectedScheme}
-                        label="Scheme"
-                        onChange={(e) => {
-                            setTooltip("");
-                            setSelectedScheme(e.target.value);
-                        }}
-                    >
-                    {schemesInUse.map((s) => (
-                        <MenuItem key={s} value={s}>
-                            {s?.toUpperCase()}
-                        </MenuItem>
-                    ))}
-                </Select>
-                </FormControl>
-            )}
-            <Autocomplete
-                multiple
-                sx={{
-                    width: '100%',
-                    padding: 0.5,
-                    marginLeft: '10px !important',
-                    marginRight: '10px !important',
-                    '& fieldset': {
-                    paddingTop: '0px !important',
-                        borderTop: '0px !important',
-                        borderLeft: '0px !important',
-                        borderRight: '0px !important',
-                    },
-                }}
-                disableClearable={true}
-                disabled={readOnly}
-                freeSolo={freeSolo}
-                filterSelectedOptions
-                options={availableOptions}
-                getOptionLabel={(option) => option}
-                value={schemeEntries.map((e) => e.identifierValue)}
-                inputValue={inputValue}
-                onInputChange={(_, newVal) => {
-                    setInputValue(newVal);
-                    setTooltip("");
-                }}
-                onChange={(_, values, reason, details) => {
-                    if (reason === "selectOption" && details?.option) {
-                        handleAdd(details.option);
-                    } else if (reason === "createOption") {
-                        handleAdd(values[values.length - 1]);
-                    }
-                }}
-                renderTags={(values, getTagProps) =>
-                    values.map((val, i) =>
-                        renderChip({ identifierValue: val, identifierScheme: selectedScheme, relationshipType }, i)
-                    )
-                }
-                renderInput={(params) =>
-                    <TextField {...params} label="External Identifiers"
-                               InputProps={{
-                                   ...params.InputProps,
-                                   endAdornment: readOnly ? null : params.InputProps.endAdornment,
-                               }}
-                    sx={{
-                        margin: 1,
-                        '& .MuiOutlinedInput-root': {
-                            borderRadius: '0px 0px 0px 0px',
-                            height: '36px',
-                        }
-                    }}/>
-            }
-            />
-            </Stack>
-        </Box>
+      <>
+        <Chip
+          variant="filled"
+          key={`${item.identifierScheme}-${item.identifierValue}`}
+          label={`${item.identifierValue}`}
+          onDelete={
+            !readOnly
+              ? () => handleDelete(item.identifierValue, item.identifierScheme)
+              : undefined
+          }
+        />
+      </>
     );
+  };
+
+  if (readOnly && (!schemeEntries || schemeEntries.length === 0)) {
+    return <></>;
+  }
+  return (
+    <Box>
+      <Stack
+        direction="row"
+        spacing={2}
+        alignItems="center"
+        sx={{ width: '100%' }}
+      >
+        {useValueSetAutocomplete && isMultiValued && (
+          <MultiValueValueSetAutocomplete
+            label={schema.properties.identifierScheme.const}
+            url={binding.valueSet || ''}
+            showDefaultOptions={false}
+            value={schemeEntries}
+            onChange={handleAdd}
+            disabled={readOnly ? true : false}
+            //   error={!!errorMessage}
+          />
+        )}
+        {useValueSetAutocomplete && !isMultiValued && (
+          <ValueSetAutocomplete
+            label={schema.properties.identifierScheme.const}
+            url={binding.valueSet || ''}
+            showDefaultOptions={false}
+            value={schemeEntries}
+            onChange={handleAdd}
+            disabled={readOnly ? true : false}
+            //   error={!!errorMessage}
+          />
+        )}
+        {useEclAutocomplete && (
+          <EclAutocomplete
+            value={schemeEntries}
+            ecl={binding.ecl || ''}
+            branch={branch}
+            onChange={handleAdd}
+            showDefaultOptions={false}
+            isDisabled={readOnly ? true : false}
+            // errorMessage={errorMessage}
+            title={schema.properties.identifierScheme.const}
+          />
+        )}
+        {!useEclAutocomplete && !useValueSetAutocomplete && (
+          <Autocomplete
+            multiple={true}
+            sx={{
+              width: '100%',
+            }}
+            disableClearable={true}
+            disabled={readOnly ? true : false}
+            freeSolo={freeSolo}
+            filterSelectedOptions
+            options={availableOptions}
+            getOptionLabel={option => option}
+            value={schemeEntries?.map(e => e.identifierValue)}
+            inputValue={inputValue}
+            onInputChange={(_, newVal) => {
+              setInputValue(newVal);
+              setTooltip('');
+            }}
+            onChange={(_, values, reason, details) => {
+              if (reason === 'selectOption' && details?.option) {
+                handleAdd(details.option);
+              } else if (reason === 'createOption') {
+                handleAdd(values[values.length - 1]);
+              }
+            }}
+            renderTags={(values, getTagProps) => {
+              return (
+                <>
+                  <Stack flexDirection={'row'} gap={1} flexWrap={'wrap'}>
+                    {values.map((val, i) => {
+                      return renderChip(
+                        {
+                          identifierValue: val,
+                          identifierScheme:
+                            schema.properties.identifierScheme.const,
+                          relationshipType:
+                            schema.properties.relationshipType.const,
+                        },
+                        // i,
+                      );
+                    })}
+                  </Stack>
+                </>
+              );
+            }}
+            renderInput={params => (
+              <TextField
+                {...params}
+                label={schema.properties.identifierScheme.const}
+                InputProps={{
+                  ...params.InputProps,
+                  endAdornment: readOnly
+                    ? null
+                    : params.InputProps.endAdornment,
+                }}
+              />
+            )}
+          />
+        )}
+      </Stack>
+    </Box>
+  );
 };
 
 export default ExternalIdentifiers;
