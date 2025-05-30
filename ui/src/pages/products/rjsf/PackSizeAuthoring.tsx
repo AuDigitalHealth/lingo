@@ -21,10 +21,10 @@ import { BrandPackSizeCreationDetails } from '../../../types/product.ts';
 import TitleWidget from './widgets/TitleWidget.tsx';
 import AutoCompleteField from './fields/AutoCompleteField.tsx';
 import { useQuery } from '@tanstack/react-query';
-import MuiGridTemplate from "./templates/MuiGridTemplate.tsx";
-import AddButtonField from "./fields/AddButtonField.tsx";
-import ExternalIdentifiers from "./fields/bulkBrandPack/ExternalIdentifiers.tsx";
-import PackDetails from "./fields/bulkBrandPack/PackDetails.tsx";
+import MuiGridTemplate from './templates/MuiGridTemplate.tsx';
+import AddButtonField from './fields/AddButtonField.tsx';
+import ExternalIdentifiers from './fields/bulkBrandPack/ExternalIdentifiers.tsx';
+import PackDetails from './fields/bulkBrandPack/PackDetails.tsx';
 
 interface FormData {
   selectedProduct?: string;
@@ -91,7 +91,7 @@ function PackSizeAuthoring({
     AddButtonField,
     AutoCompleteField,
     PackDetails,
-    ExternalIdentifiers
+    ExternalIdentifiers,
   };
 
   const handleClear = useCallback(() => {
@@ -247,12 +247,12 @@ function PackSizeAuthoring({
                 fields={fields}
                 templates={{
                   ArrayFieldTemplate: PackSizeArrayTemplate, // Create this if needed
-                  ObjectFieldTemplate: MuiGridTemplate
+                  ObjectFieldTemplate: MuiGridTemplate,
                 }}
                 validator={validator}
                 formContext={{
                   formData,
-                  onFormDataChange: setFormData
+                  onFormDataChange: setFormData,
                 }}
               >
                 <Box
@@ -290,137 +290,186 @@ export const useSchemaQuery = (branchPath: string) => {
   //   queryKey: ['bulk-pack-schema', branchPath],
   //   // queryFn: () => ConfigService.fetchBulkPackSchemaData(branchPath),
   //   queryFn: () => async () => {
-      return { isLoading: false, data:
-        {
-          "type": "object",
-          "$defs": {
-            "SnowstormConceptMini": {
-              "type": "object",
-              "properties": {
-                "conceptId": {
-                  "type": "string"
-                },
-                "pt": {
-                  "$ref": "#/$defs/SnowstormTermLangPojo"
-                }
-              },
-              "minProperties": 1,
-              "errorMessage": {
-                "minProperties": "Field must be populated."
-              }
+  return {
+    isLoading: false,
+    data: {
+      type: 'object',
+      $defs: {
+        SnowstormConceptMini: {
+          type: 'object',
+          properties: {
+            conceptId: {
+              type: 'string',
             },
-            "SnowstormTermLangPojo": {
-              "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "lang": {
-                  "type": "string"
-                },
-                "term": {
-                  "type": "string"
-                }
-              }
+            pt: {
+              $ref: '#/$defs/SnowstormTermLangPojo',
             },
-            "ExternalIdentifier": {
-              "type": "object",
-              "oneOf": [
-                {
-                  "title": "ARTGID",
-                  "type": "object",
-                  "properties": {
-                    "identifierScheme": {
-                      "type": "string",
-                      "const": "artgid"
-                    },
-                    "relationshipType": {
-                      "title": "Relationship type",
-                      "type": "string",
-                      "const": "RELATED"
-                    },
-                    "identifierValue": {
-                      "title": "ARTGID",
-                      "type": "string",
-                      "pattern": "\\d{1,8}",
-                      "errorMessage": {
-                        "pattern": "Please enter a valid ARTGID matching \\d{1,8}"
-                      }
-                    }
-                  }
-                },
-                {
-                  "title": "GTIN",
-                  "type": "object",
-                  "properties": {
-                    "identifierScheme": {
-                      "type": "string",
-                      "const": "gtin"
-                    },
-                    "relationshipType": {
-                      "title": "Relationship type",
-                      "type": "string",
-                      "const": "RELATED"
-                    },
-                    "identifierValue": {
-                      "title": "GTIN",
-                      "type": "string",
-                      "pattern": "\\d{1,8}",
-                      "errorMessage": {
-                        "pattern": "Please enter a valid GTIN matching \\d{1,8}"
-                      }
-                    }
-                  }
-                }
-              ]
-            },
-            "PackDetails": {
-              "type": "object",
-              "properties": {
-                "packSize": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "errorMessage": {
-                    "minimum": "Pack size must be at least 1."
-                  }
-                },
-                "externalIdentifiers": {
-                  "type": "array",
-                  "title": "External identifiers",
-                  "items": {
-                    "$ref": "#/$defs/ExternalIdentifier"
-                  }
-                }
-              },
-              "required": ["packSize"]
-            }
           },
-          "properties": {
-            "selectedProduct": {
-              "type": "string",
-              "title": "Selected Product"
+          minProperties: 1,
+          errorMessage: {
+            minProperties: 'Field must be populated.',
+          },
+        },
+        SnowstormTermLangPojo: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            lang: {
+              type: 'string',
             },
-            "existingPackSizes": {
-              "type": "array",
-              "title": "Existing Pack Sizes",
-              "items": {
-                "$ref": "#/$defs/PackDetails"
-              }
+            term: {
+              type: 'string',
             },
-            "packSizes": {
-              "type": "array",
-              "title": "New Pack Sizes",
-              "items": {
-                "$ref": "#/$defs/PackDetails"
-              }
+          },
+        },
+        ExternalIdentifier: {
+          type: 'object',
+          anyOf: [
+            {
+              title: 'ARTGID',
+              type: 'object',
+              properties: {
+                identifierScheme: {
+                  type: 'string',
+                  const: 'artgid',
+                },
+                relationshipType: {
+                  title: 'Relationship type',
+                  type: 'string',
+                  const: 'RELATED',
+                },
+                identifierValue: {
+                  title: 'ARTGID',
+                  type: 'string',
+                  pattern: '\\d{1,8}',
+                  errorMessage: {
+                    pattern: 'Please enter a valid ARTGID matching \\d{1,8}',
+                  },
+                },
+              },
             },
-            "newPackSizeInput": {
-              "$ref": "#/$defs/PackDetails"
+            {
+              title: 'GTIN',
+              type: 'object',
+              properties: {
+                identifierScheme: {
+                  type: 'string',
+                  const: 'gtin',
+                },
+                relationshipType: {
+                  title: 'Relationship type',
+                  type: 'string',
+                  const: 'RELATED',
+                },
+                identifierValue: {
+                  title: 'GTIN',
+                  type: 'string',
+                  pattern: '\\d{1,8}',
+                  errorMessage: {
+                    pattern: 'Please enter a valid GTIN matching \\d{1,8}',
+                  },
+                },
+              },
             },
-            "addButton": {
-              type: "null"
-            }
-          }
-        }
-      };
+            {
+              title: 'ATC level 5 code',
+              type: 'object',
+              properties: {
+                identifierScheme: {
+                  type: 'string',
+                  const: 'atc',
+                },
+                relationshipType: {
+                  title: 'Relationship type',
+                  type: 'string',
+                  const: 'RELATED',
+                },
+                identifierValue: {
+                  title: 'ATC level 5 code',
+                  type: 'string',
+                  pattern: '^.+$',
+                  errorMessage: {
+                    pattern:
+                      'Please enter a valid ATC level 5 code matching ^.+$',
+                  },
+                },
+              },
+            },
+            {
+              title: 'GMS Reimbursable Number',
+              type: 'object',
+              properties: {
+                identifierScheme: {
+                  type: 'string',
+                  const: 'pcrs',
+                },
+                relationshipType: {
+                  title: 'Relationship type',
+                  type: 'string',
+                  const: 'RELATED',
+                },
+                identifierValue: {
+                  title: 'GMS Reimbursable Number',
+                  type: 'string',
+                  pattern: '^.+$',
+                  errorMessage: {
+                    pattern:
+                      'Please enter a valid GMS Reimbursable Number matching ^.+$',
+                  },
+                },
+              },
+            },
+          ],
+        },
+        PackDetails: {
+          type: 'object',
+          properties: {
+            packSize: {
+              type: 'integer',
+              minimum: 1,
+              errorMessage: {
+                minimum: 'Pack size must be at least 1.',
+              },
+            },
+            externalIdentifiers: {
+              type: 'array',
+              title: 'External identifiers',
+              items: {
+                $ref: '#/$defs/ExternalIdentifier',
+              },
+            },
+          },
+          required: ['packSize'],
+        },
+      },
+      properties: {
+        selectedProduct: {
+          type: 'string',
+          title: 'Selected Product',
+        },
+        existingPackSizes: {
+          type: 'array',
+          title: 'Existing Pack Sizes',
+          items: {
+            $ref: '#/$defs/PackDetails',
+          },
+        },
+        packSizes: {
+          type: 'array',
+          title: 'New Pack Sizes',
+          items: {
+            $ref: '#/$defs/PackDetails',
+          },
+        },
+        newPackSizeInput: {
+          $ref: '#/$defs/PackDetails',
+        },
+        addButton: {
+          type: 'null',
+        },
+      },
+    },
+  };
   //   },
   //   enabled: !!branchPath,
   // });
@@ -431,103 +480,126 @@ export const useUiSchemaQuery = (branchPath: string) => {
   //   queryKey: ['bulk-pack-uiSchema', branchPath],
   //   // queryFn: () => ConfigService.fetchBulkPackUiSchemaData(branchPath),
   //   queryFn: () => async () => {
-      return { isLoading: false, data:
+  return {
+    isLoading: false,
+    data: {
+      'ui:options': {
+        skipTitle: true,
+      },
+      'ui:grid': [
         {
-          "ui:options": {
-            "skipTitle": true
+          _columnA: 12,
+          _columnB: 12,
+        },
+      ],
+      _columnA: {
+        'ui:grid': [
+          {
+            selectedProduct: 24,
           },
-          "ui:grid": [
-            {
-              "_columnA": 12,
-              "_columnB": 12
-            }
-          ],
-          "_columnA": {
-            "ui:grid": [
-              {
-                "selectedProduct": 24
-              },
-              {
-                "existingPackSizes": 24
-              }
-            ]
+          {
+            existingPackSizes: 24,
           },
-          "_columnB": {
-            "ui:title": null,
-            "ui:options": {
-              "label": false
+        ],
+      },
+      _columnB: {
+        'ui:title': null,
+        'ui:options': {
+          label: false,
+        },
+        'ui:grid': [
+          {
+            newPackSizeInput: 23,
+            addButton: 1,
+          },
+          {
+            packSizes: 24,
+          },
+        ],
+      },
+      selectedProduct: {
+        'ui:readonly': true,
+        'ui:widget': 'TitleWidget',
+        'ui:options': {
+          inputType: 'text',
+          'ui:disabled': true,
+          skipTitle: true,
+        },
+      },
+      newPackSizeInput: {
+        'ui:field': PackDetails,
+        'ui:options': {
+          readOnly: false,
+          allowDelete: false,
+          requireEditButton: false,
+          binding: {
+            atc: {
+              valueSet: 'http://www.whocc.no/atc/vs',
             },
-            "ui:grid": [
-              {
-                "newPackSizeInput": 23,
-                "addButton": 1
-              },
-              {
-                "packSizes": 24
-              }
-            ]
-          },
-          "selectedProduct": {
-            "ui:readonly": true,
-            "ui:widget": "TitleWidget",
-            "ui:options": {
-              "inputType": "text",
-              "ui:disabled": true,
-              "skipTitle": true
-            }
-          },
-          "newPackSizeInput": {
-            "ui:field": PackDetails,
-            "ui:options": {
-              "readOnly": false,
-              "allowDelete": false,
-              "requireEditButton": false
+            pcrs: {
+              valueSet: 'https://nmpc.hse.ie/PCRS/vs',
             },
           },
+          multiValuedSchemes: ['atc', 'ean', 'pan', 'gtin'],
+        },
+      },
 
-          "addButton": {
-            "ui:field": "AddButtonField",
-            "ui:options": {
-              "skipTitle": true,
-              "tooltipTitle": "Add Pack Size",
-              "sourcePath": "newPackSizeInput",
-              "targetPath": "packSizes",
-              "isEnabled": (source: any, target: any) => {
-                console.log('SOURCE: ' + JSON.stringify(source, null, 2));
-                const packSize = source && typeof source === "object" && source.packSize;
-                return !isNaN(packSize) && target.filter((item: any) => item.packSize === packSize).length === 0;
-              },
-              "onAddClick": (source: any, target: any, clear: Function) => {
-                target.push(source);
-                clear();
-              }
-            }
+      addButton: {
+        'ui:field': 'AddButtonField',
+        'ui:options': {
+          skipTitle: true,
+          tooltipTitle: 'Add Pack Size',
+          sourcePath: 'newPackSizeInput',
+          targetPath: 'packSizes',
+          isEnabled: (source: any, target: any) => {
+            console.log('SOURCE: ' + JSON.stringify(source, null, 2));
+            const packSize =
+              source && typeof source === 'object' && source.packSize;
+            return (
+              !isNaN(packSize) &&
+              target.filter((item: any) => item.packSize === packSize)
+                .length === 0
+            );
           },
-          "existingPackSizes": {
-            "ui:template": PackSizeArrayTemplate,
-            "ui:options": {
-              "orderable": false,
-              "skipTitle": true,
-              "listTitle": "Existing Pack Sizes",
-              "readOnly": true,
-              "allowDelete": false,
-              "requireEditButton": true
+          onAddClick: (source: any, target: any, clear: Function) => {
+            target.push(source);
+            clear();
+          },
+        },
+      },
+      existingPackSizes: {
+        'ui:template': PackSizeArrayTemplate,
+        'ui:options': {
+          orderable: false,
+          skipTitle: true,
+          listTitle: 'Existing Pack Sizes',
+          readOnly: true,
+          allowDelete: false,
+          requireEditButton: true,
+          multiValuedSchemes: ['atc', 'ean', 'pan', 'gtin'],
+          binding: {
+            atc: {
+              valueSet: 'http://www.whocc.no/atc/vs',
             },
-          }
-          ,
-          "packSizes": {
-            "ui:template": PackSizeArrayTemplate,
-            "ui:options": {
-              "orderable": false,
-              "skipTitle": true,
-              "listTitle": "Newly Added Pack Sizes",
-              "readOnly": false,
-              "allowDelete": true,
-              "requireEditButton": true
-            }
-          }
-        }
-      };
+            pcrs: {
+              valueSet: 'https://nmpc.hse.ie/PCRS/vs',
+            },
+          },
+        },
+      },
+      packSizes: {
+        'ui:template': PackSizeArrayTemplate,
+        'ui:options': {
+          orderable: false,
+          skipTitle: true,
+          listTitle: 'Newly Added Pack Sizes',
+          readOnly: false,
+          allowDelete: true,
+          requireEditButton: true,
+        },
+      },
+    },
+  };
   //   },
   //   enabled: !!branchPath,
   // }});
