@@ -34,9 +34,25 @@ export enum ActionType {
 }
 
 export interface ExternalIdentifier {
+  title: string;
   identifierScheme: string;
   identifierValue: string;
+  identifierValueObject: SnowstormConceptMini;
 }
+
+export interface NonDefiningProperty {
+  title: string;
+  identifierScheme: string;
+  value: string;
+  valueObject: SnowstormConceptMini;
+}
+
+export interface ReferenceSet {
+  title: string;
+  identifierScheme: string;
+  identifier: string;
+}
+
 export interface Quantity {
   value: number;
   unit?: Concept;

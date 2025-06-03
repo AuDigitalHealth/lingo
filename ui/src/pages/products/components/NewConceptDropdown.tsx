@@ -1,21 +1,14 @@
 import { Product, ProductSummary } from '../../../types/concept.ts';
-import {
-  Control,
-  Controller,
-  UseFormGetValues,
-  UseFormRegister,
-} from 'react-hook-form';
-import { FormHelperText, Grid, Stack, TextField } from '@mui/material';
+import { Control, Controller, UseFormGetValues, UseFormRegister } from 'react-hook-form';
+import { FormHelperText, Grid, Paper, Stack, TextField } from '@mui/material';
 import { InnerBoxSmall } from './style/ProductBoxes.tsx';
-import {
-  filterKeypress,
-  setEmptyToNull,
-} from '../../../utils/helpers/conceptUtils.ts';
+import { filterKeypress, setEmptyToNull } from '../../../utils/helpers/conceptUtils.ts';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import { replaceAllWithWhiteSpace } from '../../../types/productValidationUtils.ts';
 import { convertStringToRegex } from '../../../utils/helpers/stringUtils.ts';
 import { getValueFromFieldBindings } from '../../../utils/helpers/FieldBindingUtils.ts';
 import React, { useState } from 'react';
+import AdditionalPropertiesDisplay from './AdditionalPropertiesDisplay.tsx';
 
 interface NewConceptDropdownProps {
   product: Product;
@@ -75,25 +68,12 @@ function NewConceptDropdown({
             onKeyDown={filterKeypress}
           />
         </InnerBoxSmall>
-        {product.label === 'CTPP' && (
-          <InnerBoxSmall component="fieldset">
-            <legend>Artg Ids</legend>
-            <TextField
-              fullWidth
-              value={product.newConceptDetails?.referenceSetMembers
-                .flatMap(r => r.additionalFields?.mapTarget)
-                .sort((a, b) => {
-                  if (a !== undefined && b !== undefined) {
-                    return +a - +b;
-                  }
-                  return 0;
-                })}
-              InputProps={{
-                readOnly: true,
-              }}
-            />
-          </InnerBoxSmall>
-        )}
+
+        <AdditionalPropertiesDisplay
+          externalIdentifiers={product.externalIdentifiers}
+          nonDefiningProperties={product.nonDefiningProperties}
+          referenceSets={product.referenceSets}
+        />
       </Grid>
     </div>
   );
