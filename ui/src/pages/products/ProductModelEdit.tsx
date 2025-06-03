@@ -6,7 +6,6 @@ import {
   FormHelperText,
   Grid,
   IconButton,
-  Link,
   MenuItem,
   Select,
   SelectChangeEvent,
@@ -14,7 +13,7 @@ import {
   Tabs,
   TextField,
   Tooltip,
-  Typography,
+  Typography
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import {
@@ -23,23 +22,20 @@ import {
   Edge,
   Product,
   Product7BoxBGColour,
-  ProductSummary,
+  ProductSummary
 } from '../../types/concept.ts';
 import {
-  ARTG_ID,
   cleanBrandPackSizeDetails,
   cleanDevicePackageDetails,
   cleanPackageDetails,
   containsNewConcept,
   filterByLabel,
-  filterKeypress,
   findProductUsingId,
   findRelations,
   getProductDisplayName,
   isDeviceType,
   isFsnToggleOn,
-  OWL_EXPRESSION_ID,
-  setEmptyToNull,
+  OWL_EXPRESSION_ID
 } from '../../utils/helpers/conceptUtils.ts';
 import { styled, useTheme } from '@mui/material/styles';
 import MuiAccordion, { AccordionProps } from '@mui/material/Accordion';
@@ -57,10 +53,10 @@ import {
   UseFormGetValues,
   UseFormRegister,
   UseFormWatch,
-  useWatch,
+  useWatch
 } from 'react-hook-form';
 
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import CircleIcon from '@mui/icons-material/Circle';
 import {
   ActionType,
@@ -70,7 +66,7 @@ import {
   MedicationPackageDetails,
   ProductCreationDetails,
   ProductGroupType,
-  ProductType,
+  ProductType
 } from '../../types/product.ts';
 import { Ticket } from '../../types/tickets/ticket.ts';
 import { snowstormErrorHandler } from '../../types/ErrorHandler.ts';
@@ -81,43 +77,39 @@ import CustomTabPanel from './components/CustomTabPanel.tsx';
 import {
   getTicketBulkProductActionsByTicketIdOptions,
   getTicketProductsByTicketIdOptions,
-  useTicketByTicketNumber,
+  useTicketByTicketNumber
 } from '../../hooks/api/tickets/useTicketById.tsx';
-
-import { useLocation, useParams } from 'react-router-dom';
 import useTaskById from '../../hooks/useTaskById.tsx';
 import useAuthoringStore from '../../stores/AuthoringStore.ts';
-import {
-  uniqueFsnValidator,
-  uniquePtValidator,
-} from '../../types/productValidations.ts';
+import { uniqueFsnValidator, uniquePtValidator } from '../../types/productValidations.ts';
 import WarningModal from '../../themes/overrides/WarningModal.tsx';
 import { closeSnackbar } from 'notistack';
 import ConceptDiagramModal from '../../components/conceptdiagrams/ConceptDiagramModal.tsx';
 import {
   AccountTreeOutlined,
-  NewReleases,
-  NewReleasesOutlined,
   LibraryBooks,
+  NewReleases,
+  NewReleasesOutlined
 } from '@mui/icons-material';
 import { FormattedMessage } from 'react-intl';
 import { validateProductSummaryNodes } from '../../types/productValidationUtils.ts';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   getBulkAuthorBrandOptions,
-  getBulkAuthorPackSizeOptions,
+  getBulkAuthorPackSizeOptions
 } from '../../hooks/api/tickets/useTicketProduct.tsx';
-import {
-  bulkAuthorBrands,
-  bulkAuthorPackSizes,
-} from '../../types/queryKeys.ts';
+import { bulkAuthorBrands, bulkAuthorPackSizes } from '../../types/queryKeys.ts';
 import { isNameContainsKeywords } from '../../../cypress/e2e/helpers/product.ts';
 import { useFieldBindings } from '../../hooks/api/useInitializeConfig.tsx';
 import { FieldBindings } from '../../types/FieldBindings.ts';
 import ProductRefsetModal from '../../components/refset/ProductRefsetModal.tsx';
-import { useRefsetMembersByComponentIds } from '../../hooks/api/refset/useRefsetMembersByComponentIds.tsx';
+import {
+  useRefsetMembersByComponentIds
+} from '../../hooks/api/refset/useRefsetMembersByComponentIds.tsx';
 import { RefsetMember } from '../../types/RefsetMember.ts';
 import productService from '../../api/ProductService.ts';
+import ExistingConceptDropdown from './components/ExistingConceptDropdown.tsx';
+import NewConceptDropdown from './components/NewConceptDropdown.tsx';
 
 interface ProductModelEditProps {
   productCreationDetails?: ProductCreationDetails;
@@ -548,82 +540,6 @@ function ProductModelEdit({
   }
 }
 
-interface NewConceptDropdownProps {
-  product: Product;
-  index: number;
-  register: UseFormRegister<ProductSummary>;
-  getValues: UseFormGetValues<ProductSummary>;
-  control: Control<ProductSummary>;
-}
-
-function NewConceptDropdown({
-  product,
-  index,
-  register,
-  getValues,
-  control,
-}: NewConceptDropdownProps) {
-  return (
-    <div key={'div-' + product.conceptId}>
-      <Grid item xs={12}>
-        <Grid item xs={12}>
-          <NewConceptDropdownField
-            fieldName={`nodes[${index}].newConceptDetails.fullySpecifiedName`}
-            originalValue={product.newConceptDetails.fullySpecifiedName}
-            register={register}
-            legend={'FSN'}
-            getValues={getValues}
-            dataTestId={`fsn-input`}
-            control={control}
-          />
-        </Grid>
-        <NewConceptDropdownField
-          fieldName={`nodes[${index}].newConceptDetails.preferredTerm`}
-          originalValue={product.newConceptDetails.preferredTerm}
-          register={register}
-          legend={'Preferred Term'}
-          getValues={getValues}
-          dataTestId={`pt-input`}
-          control={control}
-        />
-        <InnerBoxSmall component="fieldset">
-          <legend>Specified Concept Id</legend>
-          <TextField
-            {...register(
-              `nodes[${index}].newConceptDetails.specifiedConceptId` as 'nodes.0.newConceptDetails.specifiedConceptId',
-              { required: false, setValueAs: setEmptyToNull },
-            )}
-            fullWidth
-            variant="outlined"
-            margin="dense"
-            InputLabelProps={{ shrink: true }}
-            onKeyDown={filterKeypress}
-          />
-        </InnerBoxSmall>
-        {product.label === 'CTPP' && (
-          <InnerBoxSmall component="fieldset">
-            <legend>Artg Ids</legend>
-            <TextField
-              fullWidth
-              value={product.newConceptDetails.referenceSetMembers
-                .flatMap(r => r.additionalFields?.mapTarget)
-                .sort((a, b) => {
-                  if (a !== undefined && b !== undefined) {
-                    return +a - +b;
-                  }
-                  return 0;
-                })}
-              InputProps={{
-                readOnly: true,
-              }}
-            />
-          </InnerBoxSmall>
-        )}
-      </Grid>
-    </div>
-  );
-}
-
 interface NewConceptDropdownFieldProps {
   register: UseFormRegister<ProductSummary>;
   originalValue: string;
@@ -862,41 +778,6 @@ function ConceptOptionsDropdown({
   );
 }
 
-interface ExistingConceptDropdownProps {
-  product: Product;
-  artgIds: string[];
-}
-
-// TODO: FIX ME! Why is there another one of these in ExistingConceptDropdown.tsx
-function ExistingConceptDropdown({
-  product,
-  artgIds,
-}: ExistingConceptDropdownProps) {
-  return (
-    <div key={`${product.conceptId}-div`}>
-      <Stack direction="row" spacing={2}>
-        <span style={{ color: '#184E6B' }}>Concept Id:</span>
-        <Link>{product.conceptId}</Link>
-      </Stack>
-      <Stack direction="row" spacing={2}>
-        <Typography style={{ color: '#184E6B' }}>FSN:</Typography>
-        <Typography>{product.concept?.fsn?.term}</Typography>
-      </Stack>
-      <Stack direction="row" spacing={2}>
-        <Typography style={{ color: '#184E6B' }}>Preferred Term:</Typography>
-        <Typography>{product.concept?.pt?.term}</Typography>
-      </Stack>
-      {((artgIds && artgIds.length > 0) || product.label === 'CTPP') && (
-        <Stack direction="row" spacing={2}>
-          <Typography style={{ color: '#184E6B' }}>Artg Ids:</Typography>
-
-          <Typography>{artgIds.join(',')}</Typography>
-        </Stack>
-      )}
-    </div>
-  );
-}
-
 function ProductHeaderWatch({
   control,
   index,
@@ -1118,7 +999,7 @@ function ProductPanel({
         open={conceptDiagramModalOpen}
         handleClose={() => setConceptDiagramModalOpen(false)}
         newConcept={product.newConcept ? product.newConceptDetails : undefined}
-        concept={product.concept}
+        product={product}
         keepMounted={true}
       />
       {refsetMembers.length > 0 && (
@@ -1336,22 +1217,6 @@ function ProductPanel({
             {product.concept && (
               <ExistingConceptDropdown
                 product={product}
-                artgIds={
-                  refsetMembers
-                    ?.filter(
-                      r =>
-                        r.referencedComponentId === product.conceptId &&
-                        r.refsetId === ARTG_ID,
-                    )
-                    .flatMap(r => r.additionalFields?.mapTarget)
-                    .filter((id): id is string => id !== undefined)
-                    .sort((a, b) => {
-                      if (a !== undefined && b !== undefined) {
-                        return +a - +b;
-                      }
-                      return 0;
-                    }) ?? []
-                }
               />
             )}
             {/* a new concept has to be made, as one does not exist */}
@@ -1365,6 +1230,7 @@ function ProductPanel({
                   register={register}
                   getValues={getValues}
                   control={control}
+                  fieldBindings={fieldBindings}
                 />
               )}
             {/* there is an option to pick a concept, but you could also create a new concept if you so desire. */}

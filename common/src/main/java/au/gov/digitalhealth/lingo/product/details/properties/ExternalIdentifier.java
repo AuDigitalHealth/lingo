@@ -52,6 +52,9 @@ public class ExternalIdentifier extends NonDefiningBase implements Serializable 
     ExternalIdentifier identifier = new ExternalIdentifier();
 
     identifier.setIdentifierScheme(mappingRefset.getName());
+    identifier.setTitle(mappingRefset.getTitle());
+    identifier.setDescription(mappingRefset.getDescription());
+    identifier.setIdentifier(referenceSetMember.getRefsetId());
 
     final String mapTargetId = referenceSetMember.getAdditionalFields().get(MAP_TARGET.getValue());
     if (mappingRefset.getMappingTypes().size() == 1) {
@@ -82,6 +85,9 @@ public class ExternalIdentifier extends NonDefiningBase implements Serializable 
     ExternalIdentifier identifier = new ExternalIdentifier();
 
     identifier.setIdentifierScheme(mappingRefset.getName());
+    identifier.setTitle(mappingRefset.getTitle());
+    identifier.setDescription(mappingRefset.getDescription());
+    identifier.setIdentifier(referenceSetMember.getRefsetId());
 
     final String mapTargetId = referenceSetMember.getAdditionalFields().get(MAP_TARGET.getValue());
     if (mappingRefset.getMappingTypes().size() == 1) {
