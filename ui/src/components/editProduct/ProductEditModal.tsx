@@ -9,7 +9,7 @@ import {
   Select,
   Switch,
   TextField,
-  Typography,
+  Typography
 } from '@mui/material';
 import BaseModal from '../modal/BaseModal';
 import BaseModalBody from '../modal/BaseModalBody';
@@ -19,9 +19,8 @@ import { Acceptability, Description, Product } from '../../types/concept.ts';
 import { Box, Stack } from '@mui/system';
 import {
   FieldLabelRequired,
-  InnerBoxSmall,
+  InnerBoxSmall
 } from '../../pages/products/components/style/ProductBoxes.tsx';
-import { filterKeypress } from '../../utils/helpers/conceptUtils.ts';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -32,25 +31,25 @@ import {
   useFieldArray,
   useForm,
   UseFormHandleSubmit,
-  useFormState,
+  useFormState
 } from 'react-hook-form';
 import {
   ExternalIdentifier,
   ProductDescriptionUpdateRequest,
   ProductExternalRequesterUpdateRequest,
-  ProductUpdateRequest,
+  ProductUpdateRequest
 } from '../../types/product.ts';
 import ArtgAutoComplete from '../../pages/products/components/ArtgAutoComplete.tsx';
 import {
   useUpdateProductDescription,
-  useUpdateProductExternalIdentifiers,
+  useUpdateProductExternalIdentifiers
 } from '../../hooks/api/products/useUpdateProductDescription.tsx';
 import { Ticket } from '../../types/tickets/ticket.ts';
 import ConceptService from '../../api/ConceptService.ts';
 import { useTheme } from '@mui/material/styles';
 import {
   areTwoExternalIdentifierArraysEqual,
-  sortExternalIdentifiers,
+  sortExternalIdentifiers
 } from '../../utils/helpers/tickets/additionalFieldsUtils.ts';
 import { getSearchConceptsByEclOptions } from '../../hooks/api/useInitializeConcepts.tsx';
 import { generateEclFromBinding } from '../../utils/helpers/EclUtils.ts';
@@ -62,14 +61,14 @@ import { extractSemanticTag } from '../../utils/helpers/ProductPreviewUtils.ts';
 import { AxiosError } from 'axios';
 import { SnowstormError } from '../../types/ErrorHandler.ts';
 import { useSearchConceptById } from '../../hooks/api/products/useSearchConcept.tsx';
-import { isEqual, cloneDeep } from 'lodash';
+import { cloneDeep, isEqual } from 'lodash';
 import { Add, Delete } from '@mui/icons-material';
-import useAvailableProjects, {
-  getProjectFromKey,
-} from '../../hooks/api/useInitializeProjects.tsx';
+import useAvailableProjects, { getProjectFromKey } from '../../hooks/api/useInitializeProjects.tsx';
 import useApplicationConfigStore from '../../stores/ApplicationConfigStore.ts';
 import { LanguageRefset, Project } from '../../types/Project.ts';
 import ConfirmationModal from '../../themes/overrides/ConfirmationModal.tsx';
+import AdditionalPropertiesDisplay
+  from '../../pages/products/components/AdditionalPropertiesDisplay.tsx';
 
 const USLangRefset: LanguageRefset = {
   default: 'false',
@@ -637,7 +636,7 @@ function EditConceptBody({
                       {isCtpp && (
                         <Grid>
                           <InnerBoxSmall component="fieldset">
-                            <legend>Artg Ids</legend>
+                            <legend>bar Ids</legend>
                             <Grid paddingTop={1}></Grid>
                             <ArtgAutoComplete
                               name="externalRequesterUpdate.externalIdentifiers"
@@ -803,29 +802,11 @@ function LeftSection({
           })}
         </InnerBoxSmall>
 
-        {/* Artg Ids Section */}
-        {isCtpp && (
-          <Grid>
-            <InnerBoxSmall component="fieldset">
-              <legend>Artg Ids</legend>
-              <TextField
-                fullWidth
-                variant="outlined"
-                margin="dense"
-                InputLabelProps={{ shrink: true }}
-                onKeyDown={filterKeypress}
-                value={
-                  (product.externalIdentifiers
-                    ? sortExternalIdentifiers(product.externalIdentifiers)
-                        .map(artg => artg.identifierValue)
-                        .join(', ')
-                    : '') || ''
-                }
-                disabled
-              />
-            </InnerBoxSmall>
-          </Grid>
-        )}
+        <AdditionalPropertiesDisplay
+          externalIdentifiers={product.externalIdentifiers}
+          nonDefiningProperties={product.nonDefiningProperties}
+          referenceSets={product.referenceSets}
+        />
       </Box>
     </Grid>
   );
