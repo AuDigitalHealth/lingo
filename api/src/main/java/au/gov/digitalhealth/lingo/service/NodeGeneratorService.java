@@ -157,41 +157,32 @@ public class NodeGeneratorService {
         modelConfiguration.getReferenceSetsByIdentifierForModelLevel(modelLevel);
     final Map<String, MappingRefset> mappingMap =
         modelConfiguration.getMappingsByIdentifierForModelLevel(modelLevel);
+    // get reference set members for the concept
 
-    if (!refsetMap.isEmpty() || !mappingMap.isEmpty()) {
-
-      final Set<String> allRefsetIds = new HashSet<>(refsetMap.keySet());
-      allRefsetIds.addAll(mappingMap.keySet());
-
-      // get reference set members for the concept
-
-      return snowstormClient
-          .getRefsetMembers(branch, Set.of(node.getConceptId()), allRefsetIds, 0, 1000)
-          .map(SnowstormItemsPageReferenceSetMember::getItems)
-          .flatMapMany(Flux::fromIterable)
-          .filter(SnowstormReferenceSetMember::getActive)
-          .flatMap(
-              member -> {
-                if (refsetMap.containsKey(member.getRefsetId())) {
-                  return Mono.just(
-                      node.getReferenceSets()
-                          .add(
-                              new au.gov.digitalhealth.lingo.product.details.properties
-                                  .ReferenceSet(member, refsetMap.get(member.getRefsetId()))));
-                } else if (mappingMap.containsKey(member.getRefsetId())) {
-                  return au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier
-                      .create(member, mappingMap.get(member.getRefsetId()), fhirClient)
-                      .doOnNext(p -> node.getExternalIdentifiers().add(p))
-                      .then(Mono.empty());
-                } else {
-                  return Mono.empty();
-                }
-              })
-          .then()
-          .flux();
-    } else {
-      return Flux.empty();
-    }
+    return snowstormClient
+        .getRefsetMembers(branch, Set.of(node.getConceptId()), Set.of(), 0, 1000)
+        .map(SnowstormItemsPageReferenceSetMember::getItems)
+        .flatMapMany(Flux::fromIterable)
+        .filter(SnowstormReferenceSetMember::getActive)
+        .flatMap(
+            member -> {
+              if (refsetMap.containsKey(member.getRefsetId())) {
+                return Mono.just(
+                    node.getReferenceSets()
+                        .add(
+                            new au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet(
+                                member, refsetMap.get(member.getRefsetId()))));
+              } else if (mappingMap.containsKey(member.getRefsetId())) {
+                return au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier
+                    .create(member, mappingMap.get(member.getRefsetId()), fhirClient)
+                    .doOnNext(p -> node.getExternalIdentifiers().add(p))
+                    .then(Mono.empty());
+              } else {
+                return Mono.empty();
+              }
+            })
+        .then()
+        .flux();
   }
 
   @Async
