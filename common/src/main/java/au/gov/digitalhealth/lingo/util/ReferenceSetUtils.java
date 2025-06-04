@@ -143,6 +143,12 @@ public class ReferenceSetUtils {
 
     Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers = new HashSet<>();
 
+    referenceSetMembers.add(
+        new SnowstormReferenceSetMemberViewComponent()
+            .refsetId(modelConfiguration.getReferenceSetIdForModelLevelType(modelLevelType))
+            .active(true)
+            .moduleId(modelConfiguration.getModuleId()));
+
     for (ReferenceSet referenceSet : referenceSets) {
       au.gov.digitalhealth.lingo.configuration.model.ReferenceSet configReferenceSet =
           referenceSetMap.get(referenceSet.getIdentifierScheme());

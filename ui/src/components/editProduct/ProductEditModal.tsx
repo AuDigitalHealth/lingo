@@ -536,7 +536,6 @@ function EditConceptBody({
   };
 
   return (
-    <>
       <Box sx={{ width: '100%' }}>
         <Grid
           container
@@ -563,8 +562,8 @@ function EditConceptBody({
                 <LeftSection
                   product={product}
                   descriptions={sortedDescriptions}
-                  isCtpp={isCtpp}
                   dialects={langRefsets}
+                  branch={branch}
                 />
 
                 {/* Right Section */}
@@ -688,7 +687,6 @@ function EditConceptBody({
           />
         </Grid>
       </Box>
-    </>
   );
 }
 interface LeftSectionProps {
@@ -696,13 +694,14 @@ interface LeftSectionProps {
   descriptions: Description[];
   isCtpp: boolean;
   dialects: LanguageRefset[];
+  branch: string;
 }
 
 function LeftSection({
   product,
   descriptions,
-  isCtpp,
   dialects,
+  branch
 }: LeftSectionProps) {
   // Function to determine preferred term based on AU dialect
   const isPreferredTerm = (description: Description): boolean => {
@@ -802,11 +801,7 @@ function LeftSection({
           })}
         </InnerBoxSmall>
 
-        <AdditionalPropertiesDisplay
-          externalIdentifiers={product.externalIdentifiers}
-          nonDefiningProperties={product.nonDefiningProperties}
-          referenceSets={product.referenceSets}
-        />
+        <AdditionalPropertiesDisplay product={product} branch={branch} showWrapper={false} />
       </Box>
     </Grid>
   );

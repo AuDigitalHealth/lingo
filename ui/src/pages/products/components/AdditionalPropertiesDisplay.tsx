@@ -1,32 +1,48 @@
 // ItemDetailsDisplay.tsx
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Box, Chip, Paper, Stack, Tooltip, Typography } from '@mui/material';
 import { ExternalIdentifier, NonDefiningProperty, ReferenceSet } from '../../../types/product.ts';
+import { Product } from '../../../types/concept.ts';
+import { AdditionalReferenceSetDisplay } from './AdditionalReferenceSetDisplay.tsx';
 
 interface ItemDetailsDisplayProps {
-  externalIdentifiers?: ExternalIdentifier[];
-  nonDefiningProperties?: NonDefiningProperty[];
-  referenceSets?: ReferenceSet[];
-  labelWidth?: number | string;
-  labelColor?: string;
-  showWrapper?: boolean;
+  product: Product,
+  branch: string,
+  labelWidth?: number | string,
+  labelColor?: string,
+  showWrapper?: boolean
 }
 
 export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
-                                                                        externalIdentifiers = [],
-                                                                        nonDefiningProperties = [],
-                                                                        referenceSets = [],
-                                                                        labelWidth = '100px',
-                                                                        labelColor = '#184E6B',
-                                                                        showWrapper = true
-                                                                      }) => {
+                                                                                 product,
+                                                                                 branch,
+                                                                                 labelWidth = '100px',
+                                                                                 labelColor = '#184E6B',
+                                                                                 showWrapper = true
+                                                                               }) => {
+
+  const {
+    externalIdentifiers,
+    nonDefiningProperties,
+    referenceSets
+  } = useMemo(() => {
+    const externalIds = product?.externalIdentifiers || [];
+    const nonDefProps = product?.nonDefiningProperties || [];
+    const refSets = product?.referenceSets || [];
+
+    return {
+      externalIdentifiers: externalIds,
+      nonDefiningProperties: nonDefProps,
+      referenceSets: refSets,
+    };
+  }, [product]);
 
   // Function to get display value for properties and identifiers
   const getItemValue = React.useCallback((item: ExternalIdentifier | NonDefiningProperty): string => {
     // Handle external identifier type items
     if ('identifierValueObject' in item && item.identifierValueObject) {
       return (item.identifierValueObject.conceptId || '') +
-        (item.identifierValueObject.conceptId && item.identifierValueObject.pt?.term ? " - " : "") +
+        (item.identifierValueObject.conceptId && item.identifierValueObject.pt?.term ? ' - ' : '') +
         (item.identifierValueObject.pt?.term || '');
     } else if ('identifierValue' in item && item.identifierValue !== undefined) {
       return String(item.identifierValue);
@@ -35,7 +51,7 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
     // Handle non-defining property type items
     if ('valueObject' in item && item.valueObject) {
       return (item.valueObject.conceptId || '') +
-        (item.valueObject.conceptId && item.valueObject.pt?.term ? " - " : "") +
+        (item.valueObject.conceptId && item.valueObject.pt?.term ? ' - ' : '') +
         (item.valueObject.pt?.term || '');
     } else if ('value' in item && item.value !== undefined) {
       return String(item.value);
@@ -45,7 +61,11 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
   }, []);
 
   // Define a generic grouping function for items
-  const groupItemsByTitle = React.useCallback(<T extends { title?: string, identifierScheme?: string, name?: string }>(
+  const groupItemsByTitle = React.useCallback(<T extends {
+    title?: string,
+    identifierScheme?: string,
+    name?: string
+  }>(
     items: T[]
   ): Record<string, T[]> => {
     if (!items || items.length === 0) return {};
@@ -120,10 +140,12 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
             label={item.valueObject.pt.term}
             size="small"
             variant="outlined"
-            sx={{ borderRadius: 1, backgroundColor: '#f0f7ff', borderColor: '#e0e0e0',
+            sx={{
+              borderRadius: 1, backgroundColor: '#f0f7ff', borderColor: '#e0e0e0',
               '&:hover': {
                 backgroundColor: '#e1f0ff'
-              } }}
+              }
+            }}
           />
         </Tooltip>
       );
@@ -142,32 +164,32 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
             }
           }}
         >
-            <Box
-              sx={{
-                backgroundColor: '#f0f7ff',
-                padding: '4px 8px',
-                fontWeight: 'medium',
-                fontSize: '0.8125rem',
-                borderRight: '1px solid #e0e0e0',
-                '&:hover': {
-                  backgroundColor: '#e1f0ff'
-                }
-              }}
-            >
-              {item.identifierValueObject.conceptId}
-            </Box>
-            <Box
-              sx={{
-                backgroundColor: '#f0f7ff',
-                padding: '4px 8px',
-                fontSize: '0.8125rem',
-                '&:hover': {
-                  backgroundColor: '#e1f0ff'
-                }
-              }}
-            >
-              {item.identifierValueObject?.pt?.term}
-            </Box>
+          <Box
+            sx={{
+              backgroundColor: '#f0f7ff',
+              padding: '4px 8px',
+              fontWeight: 'medium',
+              fontSize: '0.8125rem',
+              borderRight: '1px solid #e0e0e0',
+              '&:hover': {
+                backgroundColor: '#e1f0ff'
+              }
+            }}
+          >
+            {item.identifierValueObject.conceptId}
+          </Box>
+          <Box
+            sx={{
+              backgroundColor: '#f0f7ff',
+              padding: '4px 8px',
+              fontSize: '0.8125rem',
+              '&:hover': {
+                backgroundColor: '#e1f0ff'
+              }
+            }}
+          >
+            {item.identifierValueObject?.pt?.term}
+          </Box>
         </Box>
       );
     }
@@ -185,42 +207,34 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
     ) : null;
   };
 
-
-  // Check if there's any content to display
-  const hasContent = Object.keys(combinedItems).length > 0 || sortedReferenceSets.length > 0;
-
-  // If there's no content, return null or an empty fragment
-  if (!hasContent) {
-    return null; // or return <></>;
-  }
-
   function getPropertyContent() {
     return <Box>
-      {sortedReferenceSets.length > 0 && (
         <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-          <Typography style={{ color: labelColor, minWidth: labelWidth, fontWeight: 500 }}>
-            Refsets:
-          </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-            {sortedReferenceSets.map((refSet, index) => (
-              <Chip
-                key={getRefSetKey(refSet, index)}
-                label={getRefSetDisplayName(refSet)}
-                size="small"
-                variant="outlined"
-                sx={{
-                  borderRadius: 1,
-                  color: '#1976d2',
-                  backgroundColor: 'white',
-                  borderColor: '#1976d2',
-                  fontWeight: 500,
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-                }}
+              <AdditionalReferenceSetDisplay
+                product={product}
+                branch={branch}
               />
+            {sortedReferenceSets.map((refSet, index) => (
+              <Tooltip key={getRefSetKey(refSet, index)}
+                       title={`${refSet.identifier || ''}`} arrow>
+                <Chip
+                  label={getRefSetDisplayName(refSet)}
+                  size="small"
+                  variant="outlined"
+                  sx={{
+                    borderRadius: 1,
+                    color: '#1976d2',
+                    backgroundColor: 'white',
+                    borderColor: '#1976d2',
+                    fontWeight: 500,
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                  }}
+                />
+              </Tooltip>
             ))}
           </Box>
         </Stack>
-      )}
 
       {Object.entries(combinedItems).map(([itemTitle, items]) => (
         <Stack key={`${itemTitle}-items`} direction="row" spacing={2} alignItems="center"
@@ -246,13 +260,15 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
         backgroundColor: '#ffffff',
         border: '2px solid #e0e0e0',
         borderRadius: 3,
-        position: 'relative',
+        position: 'relative'
       }}
     >
       {getPropertyContent()}
     </Paper>
   ) : (
-    getPropertyContent()
+    <Box sx={{ mt: 2 }}>
+      {getPropertyContent()}
+    </Box>
   );
 
 };

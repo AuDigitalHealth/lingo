@@ -85,12 +85,7 @@ import { uniqueFsnValidator, uniquePtValidator } from '../../types/productValida
 import WarningModal from '../../themes/overrides/WarningModal.tsx';
 import { closeSnackbar } from 'notistack';
 import ConceptDiagramModal from '../../components/conceptdiagrams/ConceptDiagramModal.tsx';
-import {
-  AccountTreeOutlined,
-  LibraryBooks,
-  NewReleases,
-  NewReleasesOutlined
-} from '@mui/icons-material';
+import { AccountTreeOutlined, NewReleases, NewReleasesOutlined } from '@mui/icons-material';
 import { FormattedMessage } from 'react-intl';
 import { validateProductSummaryNodes } from '../../types/productValidationUtils.ts';
 import { useQueryClient } from '@tanstack/react-query';
@@ -102,7 +97,6 @@ import { bulkAuthorBrands, bulkAuthorPackSizes } from '../../types/queryKeys.ts'
 import { isNameContainsKeywords } from '../../../cypress/e2e/helpers/product.ts';
 import { useFieldBindings } from '../../hooks/api/useInitializeConfig.tsx';
 import { FieldBindings } from '../../types/FieldBindings.ts';
-import ProductRefsetModal from '../../components/refset/ProductRefsetModal.tsx';
 import {
   useRefsetMembersByComponentIds
 } from '../../hooks/api/refset/useRefsetMembersByComponentIds.tsx';
@@ -615,6 +609,7 @@ interface ConceptOptionsDropdownProps {
   handleConceptOptionsSubmit?: (concept: Concept) => void;
   setOptionsIgnored: (bool: boolean) => void;
   getValues: UseFormGetValues<ProductSummary>;
+  branch: string;
 }
 
 function ConceptOptionsDropdown({
@@ -624,6 +619,7 @@ function ConceptOptionsDropdown({
   setOptionsIgnored,
   getValues,
   control,
+  branch,
 }: ConceptOptionsDropdownProps) {
   const { ticketNumber } = useParams();
   const { data: ticket } = useTicketByTicketNumber(ticketNumber, true);
@@ -771,6 +767,7 @@ function ConceptOptionsDropdown({
             register={register}
             getValues={getValues}
             control={control}
+            branch={branch}
           />
         )}
       </CustomTabPanel>
@@ -917,11 +914,11 @@ function ProductPanel({
   idsWithInvalidName,
   setIdsWithInvalidName,
   fieldBindings,
+  branch,
   refsetMembers,
 }: ProductPanelProps) {
   const theme = useTheme();
   const [conceptDiagramModalOpen, setConceptDiagramModalOpen] = useState(false);
-  const [conceptRefsetModalOpen, setConceptRefsetModalOpen] = useState(false);
 
   const links = activeConcept
     ? findRelations(productModel?.edges, activeConcept, product.conceptId)
@@ -1001,15 +998,8 @@ function ProductPanel({
         newConcept={product.newConcept ? product.newConceptDetails : undefined}
         product={product}
         keepMounted={true}
+        branch={branch}
       />
-      {refsetMembers.length > 0 && (
-        <ProductRefsetModal
-          open={conceptRefsetModalOpen}
-          handleClose={() => setConceptRefsetModalOpen(false)}
-          refsetMembers={refsetMembers}
-          keepMounted={true}
-        />
-      )}
 
       <Grid>
         <Accordion
@@ -1123,14 +1113,6 @@ function ProductPanel({
                     >
                       <AccountTreeOutlined />
                     </IconButton>
-                    {refsetMembers.length > 0 && (
-                      <IconButton
-                        size="small"
-                        onClick={() => setConceptRefsetModalOpen(true)}
-                      >
-                        <LibraryBooks />
-                      </IconButton>
-                    )}
                   </Grid>
                 </Stack>
               </Grid>
@@ -1199,14 +1181,6 @@ function ProductPanel({
                     >
                       <AccountTreeOutlined />
                     </IconButton>
-                    {refsetMembers.length > 0 && (
-                      <IconButton
-                        size="small"
-                        onClick={() => setConceptRefsetModalOpen(true)}
-                      >
-                        <LibraryBooks />
-                      </IconButton>
-                    )}
                   </Grid>
                 </Stack>
               </Grid>
@@ -1217,6 +1191,7 @@ function ProductPanel({
             {product.concept && (
               <ExistingConceptDropdown
                 product={product}
+                branch={branch}
               />
             )}
             {/* a new concept has to be made, as one does not exist */}
@@ -1231,6 +1206,7 @@ function ProductPanel({
                   getValues={getValues}
                   control={control}
                   fieldBindings={fieldBindings}
+                  branch={branch}
                 />
               )}
             {/* there is an option to pick a concept, but you could also create a new concept if you so desire. */}
@@ -1245,6 +1221,7 @@ function ProductPanel({
                   setOptionsIgnored={setOptionsIgnored}
                   control={control}
                   getValues={getValues}
+                  branch={branch}
                 />
               )}
           </AccordionDetails>
