@@ -767,6 +767,13 @@ public class DeviceProductCalculationService {
             modelConfiguration,
             productDetails,
             leafUnbrandedProductModelLevel.getModelLevelType()));
+    leafUnbrandedDetails
+        .getReferenceSetMembers()
+        .addAll(
+            ReferenceSetUtils.getReferenceSetMembers(
+                productDetails,
+                modelConfiguration,
+                leafUnbrandedProductModelLevel.getModelLevelType()));
     return leafUnbrandedDetails;
   }
 }
