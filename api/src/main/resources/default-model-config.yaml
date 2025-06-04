@@ -215,7 +215,7 @@ models:
         level: PACKAGE
         dataType: CODED,
         valueRegexValidation: ^.+$
-        valueSetReference: http://www.whocc.no/atc/vs
+        valueSetReference: http://nmpc.hse.ie/ValueSet/atcselectable
         codeSystem: http://www.whocc.no/atc
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
