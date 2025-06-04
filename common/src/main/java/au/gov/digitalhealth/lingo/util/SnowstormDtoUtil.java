@@ -472,6 +472,20 @@ public class SnowstormDtoUtil {
     return snowstormConceptMini.getFsn().getTerm();
   }
 
+  public static SnowstormReferenceSetMemberViewComponent toSnowstormReferenceSetMember(
+      SnowstormReferenceSetMember referenceSetMember) {
+    return new SnowstormReferenceSetMemberViewComponent()
+        .active(referenceSetMember.getActive())
+        .moduleId(referenceSetMember.getModuleId())
+        .memberId(referenceSetMember.getMemberId())
+        .effectiveTime(referenceSetMember.getEffectiveTime())
+        .released(referenceSetMember.getReleased())
+        .releasedEffectiveTime(referenceSetMember.getReleasedEffectiveTime())
+        .refsetId(referenceSetMember.getRefsetId())
+        .referencedComponentId(referenceSetMember.getReferencedComponentId())
+        .additionalFields(referenceSetMember.getAdditionalFields());
+  }
+
   public static SnowstormConceptView toSnowstormConceptView(
       Node node, ModelConfiguration modelConfiguration) {
     SnowstormConceptView concept = new SnowstormConceptView();

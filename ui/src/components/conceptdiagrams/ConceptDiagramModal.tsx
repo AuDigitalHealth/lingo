@@ -14,8 +14,9 @@ interface ConceptDiagramModalProps {
   open: boolean;
   handleClose: () => void;
   newConcept?: NewConceptDetails;
-  product: Product | null;
+  product: Product;
   keepMounted: boolean;
+  branch: string;
 }
 
 export default function ConceptDiagramModal({
@@ -24,13 +25,13 @@ export default function ConceptDiagramModal({
   newConcept,
   product,
   keepMounted,
+  branch
 }: ConceptDiagramModalProps) {
   return (
     <BaseModal open={open} handleClose={handleClose} keepMounted={keepMounted}>
       <BaseModalHeader title={'Concept Diagram Preview'} />
       <BaseModalBody sx={{ overflow: 'auto' }}>
         <ConceptDiagram concept={product.concept} newConcept={newConcept} />
-
         <Accordion
           sx={{
             maxHeight: '25%', // Maximum height when expanded
@@ -61,9 +62,8 @@ export default function ConceptDiagramModal({
             maxHeight: 'calc(25vh - 48px)' // Maximum height minus header
           }}>
             <AdditionalPropertiesDisplay
-              externalIdentifiers={product.externalIdentifiers}
-              nonDefiningProperties={product.nonDefiningProperties}
-              referenceSets={product.referenceSets}
+              product={product}
+              branch={branch}
               showWrapper={false}
             />
           </AccordionDetails>

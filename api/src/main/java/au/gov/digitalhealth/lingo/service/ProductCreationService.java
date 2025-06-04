@@ -612,17 +612,6 @@ public class ProductCreationService {
             .map(
                 n -> {
                   List<SnowstormReferenceSetMemberViewComponent> refsetMembers = new ArrayList<>();
-                  refsetMembers.add(
-                      new SnowstormReferenceSetMemberViewComponent()
-                          .active(true)
-                          .refsetId(
-                              models
-                                  .getModelConfiguration(branch)
-                                  .getLevelOfType(n.getModelLevel())
-                                  .getReferenceSetIdentifier())
-                          .referencedComponentId(n.getConcept().getConceptId())
-                          .moduleId(moduleId));
-
                   if (n.getNewConceptDetails().getReferenceSetMembers() != null) {
                     for (SnowstormReferenceSetMemberViewComponent member :
                         n.getNewConceptDetails().getReferenceSetMembers()) {
