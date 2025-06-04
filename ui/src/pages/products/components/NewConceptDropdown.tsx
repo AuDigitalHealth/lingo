@@ -1,6 +1,6 @@
 import { Product, ProductSummary } from '../../../types/concept.ts';
 import { Control, Controller, UseFormGetValues, UseFormRegister } from 'react-hook-form';
-import { FormHelperText, Grid, Paper, Stack, TextField } from '@mui/material';
+import { FormHelperText, Grid, Stack, TextField } from '@mui/material';
 import { InnerBoxSmall } from './style/ProductBoxes.tsx';
 import { filterKeypress, setEmptyToNull } from '../../../utils/helpers/conceptUtils.ts';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
@@ -17,6 +17,7 @@ interface NewConceptDropdownProps {
   getValues: UseFormGetValues<ProductSummary>;
   control: Control<ProductSummary>;
   fieldBindings: FieldBindings;
+  branch: string;
 }
 
 function NewConceptDropdown({
@@ -26,6 +27,7 @@ function NewConceptDropdown({
   getValues,
   control,
   fieldBindings,
+  branch,
 }: NewConceptDropdownProps) {
   return (
     <div key={'div-' + product.conceptId}>
@@ -69,11 +71,7 @@ function NewConceptDropdown({
           />
         </InnerBoxSmall>
 
-        <AdditionalPropertiesDisplay
-          externalIdentifiers={product.externalIdentifiers}
-          nonDefiningProperties={product.nonDefiningProperties}
-          referenceSets={product.referenceSets}
-        />
+        <AdditionalPropertiesDisplay product={product} branch={branch} />
       </Grid>
     </div>
   );

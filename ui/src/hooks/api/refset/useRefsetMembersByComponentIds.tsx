@@ -6,6 +6,7 @@ import RefsetMembersService from '../../../api/RefsetMembersService.ts';
 export function useRefsetMembersByComponentIds(
   branch: string,
   referencedComponentIds: string[] | undefined,
+  options?: { enabled?: boolean }
 ) {
   const { serviceStatus } = useServiceStatus();
   const distinctIds = [...new Set(referencedComponentIds)];
@@ -24,10 +25,12 @@ export function useRefsetMembersByComponentIds(
     },
     staleTime: 20 * (60 * 1000),
     enabled:
-      distinctIds !== undefined &&
-      distinctIds.length > 0 &&
-      branch !== undefined &&
-      serviceStatus?.snowstorm.running,
+      options?.enabled !== undefined
+        ? options.enabled
+        : (distinctIds !== undefined &&
+          distinctIds.length > 0 &&
+          branch !== undefined &&
+          serviceStatus?.snowstorm.running),
   });
 
   return {

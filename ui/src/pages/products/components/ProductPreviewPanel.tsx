@@ -18,7 +18,6 @@ import { RefsetMember } from '../../../types/RefsetMember.ts';
 import { useTheme } from '@mui/material/styles';
 import { findProductUsingId, findRelations } from '../../../utils/helpers/conceptUtils.ts';
 import ConceptDiagramModal from '../../../components/conceptdiagrams/ConceptDiagramModal.tsx';
-import ProductRefsetModal from '../../../components/refset/ProductRefsetModal.tsx';
 import {
   AccordionDetails,
   AccordionSummary,
@@ -37,13 +36,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Stack } from '@mui/system';
 import LinkViews from './LinkViews.tsx';
 import { FormattedMessage } from 'react-intl';
-import {
-  AccountTreeOutlined,
-  Edit,
-  LibraryBooks,
-  NewReleases,
-  NewReleasesOutlined
-} from '@mui/icons-material';
+import { AccountTreeOutlined, Edit, NewReleases, NewReleasesOutlined } from '@mui/icons-material';
 import CircleIcon from '@mui/icons-material/Circle';
 import ExistingConceptDropdown from './ExistingConceptDropdown.tsx';
 import NewConceptDropdown from './NewConceptDropdown.tsx';
@@ -108,7 +101,6 @@ function ProductPreviewPanel({
 }: ProductPreviewPanelProps) {
   const theme = useTheme();
   const [conceptDiagramModalOpen, setConceptDiagramModalOpen] = useState(false);
-  const [conceptRefsetModalOpen, setConceptRefsetModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
 
   const links = activeConcept
@@ -201,15 +193,8 @@ function ProductPreviewPanel({
         }
         product={product}
         keepMounted={true}
+        branch={branch}
       />
-      {refsetMembers.length > 0 && (
-        <ProductRefsetModal
-          open={conceptRefsetModalOpen}
-          handleClose={() => setConceptRefsetModalOpen(false)}
-          refsetMembers={refsetMembers}
-          keepMounted={true}
-        />
-      )}
       {editProduct && ticket && (
         <ProductEditModal
           isCtpp={isEditingCTPP}
@@ -335,14 +320,6 @@ function ProductPreviewPanel({
                     >
                       <AccountTreeOutlined />
                     </IconButton>
-                    {refsetMembers.length > 0 && (
-                      <IconButton
-                        size="small"
-                        onClick={() => setConceptRefsetModalOpen(true)}
-                      >
-                        <LibraryBooks />
-                      </IconButton>
-                    )}
                     {editProduct && (
                       <IconButton
                         size="small"
@@ -416,14 +393,6 @@ function ProductPreviewPanel({
                     >
                       <AccountTreeOutlined />
                     </IconButton>
-                    {refsetMembers.length > 0 && (
-                      <IconButton
-                        size="small"
-                        onClick={() => setConceptRefsetModalOpen(true)}
-                      >
-                        <LibraryBooks />
-                      </IconButton>
-                    )}
                     {editProduct && (
                       <IconButton
                         size="small"
@@ -440,7 +409,7 @@ function ProductPreviewPanel({
           <AccordionDetails key={'accordion-details-' + product.conceptId}>
             {/* A single concept exists, you do not have an option to make a new concept */}
             {shouldRenderDropdownAsReadonly && (
-              <ExistingConceptDropdown product={product} />
+              <ExistingConceptDropdown product={product} branch={branch} />
             )}
             {/* a new concept has to be made, as one does not exist */}
             {product.concept === null &&
@@ -454,6 +423,7 @@ function ProductPreviewPanel({
                   getValues={getValues}
                   control={control}
                   fieldBindings={fieldBindings}
+                  branch={branch}
                 />
               )}
             {/*there is an option to pick a concept, but you could also create a new concept if you so desire.*/}
@@ -469,6 +439,7 @@ function ProductPreviewPanel({
                   control={control}
                   getValues={getValues}
                   fieldBindings={fieldBindings}
+                  branch={branch}
                 />
               )}
           </AccordionDetails>
@@ -486,6 +457,7 @@ interface ConceptOptionsDropdownProps {
   setOptionsIgnored: (bool: boolean) => void;
   getValues: UseFormGetValues<ProductSummary>;
   fieldBindings: FieldBindings;
+  branch: string;
 }
 function ConceptOptionsDropdown({
   product,
@@ -495,6 +467,7 @@ function ConceptOptionsDropdown({
   getValues,
   control,
   fieldBindings,
+  branch,
 }: ConceptOptionsDropdownProps) {
   const { ticketNumber } = useParams();
   const { data: ticket } = useTicketByTicketNumber(ticketNumber, true);
@@ -643,6 +616,7 @@ function ConceptOptionsDropdown({
             getValues={getValues}
             control={control}
             fieldBindings={fieldBindings}
+            branch={branch}
           />
         )}
       </CustomTabPanel>

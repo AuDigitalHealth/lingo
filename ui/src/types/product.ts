@@ -36,6 +36,7 @@ export enum ActionType {
 export interface ExternalIdentifier {
   title: string;
   identifierScheme: string;
+  identifier: string;
   identifierValue: string;
   identifierValueObject: SnowstormConceptMini;
 }
@@ -43,6 +44,7 @@ export interface ExternalIdentifier {
 export interface NonDefiningProperty {
   title: string;
   identifierScheme: string;
+  identifier: string;
   value: string;
   valueObject: SnowstormConceptMini;
 }
