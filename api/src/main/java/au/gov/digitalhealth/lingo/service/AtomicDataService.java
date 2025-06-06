@@ -661,7 +661,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
   }
 
   @LogExecutionTime
-  private Collection<String> getConceptsToMap(
+  protected Collection<String> getConceptsToMap(
       String branch, String productId, String ecl, SnowstormClient snowStormApiClient) {
     Collection<String> concepts =
         snowStormApiClient.getConceptsIdsFromEcl(

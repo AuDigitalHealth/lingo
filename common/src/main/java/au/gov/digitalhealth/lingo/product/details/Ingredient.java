@@ -27,6 +27,7 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = false)
 public class Ingredient extends ProductBaseDto {
   @NotNull SnowstormConceptMini activeIngredient;
+  SnowstormConceptMini refinedActiveIngredient;
   SnowstormConceptMini preciseIngredient;
   SnowstormConceptMini basisOfStrengthSubstance;
   @Valid Quantity totalQuantity;
