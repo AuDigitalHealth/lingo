@@ -20,6 +20,7 @@ import au.gov.digitalhealth.lingo.product.NameGeneratorSpec;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -36,6 +37,7 @@ public class NameGenerationClient {
     this.client = namegenApiClient;
   }
 
+  @Cacheable(value = "nameGenerator", key = "#spec.toString()")
   public FsnAndPt generateNames(NameGeneratorSpec spec) {
     return this.client
         .post()

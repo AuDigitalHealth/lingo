@@ -15,6 +15,7 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
+import au.csiro.snowstorm_client.api.BranchingApi;
 import au.csiro.snowstorm_client.api.ConceptsApi;
 import au.csiro.snowstorm_client.api.RefsetMembersApi;
 import au.csiro.snowstorm_client.api.RelationshipsApi;
@@ -39,16 +40,11 @@ import jakarta.validation.constraints.NotNull;
 import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -57,6 +53,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -79,6 +76,7 @@ public class SnowstormClient {
   private final WebClient snowStormApiClient;
   private final ObjectMapper objectMapper;
   private final SnowstormLogger logger;
+  private final SnowstormClient self;
 
   @Value("${snomio.snowstorm.batch.checks.delay:500}")
   private int delayBetweenBatchChecks;
@@ -94,14 +92,16 @@ public class SnowstormClient {
       @Qualifier("snowStormApiClient") WebClient snowStormApiClient,
       @Value("${ihtsdo.snowstorm.api.url}") String snowstormUrl,
       ObjectMapper objectMapper,
-      SnowstormLogger snowstormLogger) {
+      SnowstormLogger snowstormLogger,
+      @Lazy SnowstormClient self) {
     this.snowStormApiClient = snowStormApiClient;
     this.snowstormUrl = snowstormUrl;
     this.objectMapper = objectMapper;
     this.logger = snowstormLogger;
+    this.self = self;
   }
 
-  private static String populateParameters(String ecl, Pair<String, Object>[] params) {
+  private static String populateParameters(String ecl, Set<Pair<String, Object>> params) {
     if (params != null) {
       for (Pair<String, Object> param : params) {
         ecl = ecl.replaceAll(param.getFirst(), param.getSecond().toString());
@@ -125,6 +125,7 @@ public class SnowstormClient {
     }
   }
 
+  @Cacheable(value = CacheConstants.SNOWSTORM_CONCEPT, keyGenerator = "branchAwareKeyGenerator")
   public SnowstormConceptMini getConcept(String branch, String id) {
     ConceptsApi api = getConceptsApi();
 
@@ -133,17 +134,16 @@ public class SnowstormClient {
 
   public final SnowstormConceptMini getConceptFromEcl(String branch, String ecl, Long id)
       throws SingleConceptExpectedProblem {
-    return getConceptFromEcl(branch, ecl, Pair.of("<id>", id));
+    return getConceptFromEcl(branch, ecl, Set.of(Pair.of("<id>", id)));
   }
 
-  @SafeVarargs
-  public final SnowstormConceptMini getConceptFromEcl(
-      String branch, String ecl, Pair<String, Object>... params)
+  public SnowstormConceptMini getConceptFromEcl(
+      String branch, String ecl, Set<Pair<String, Object>> params)
       throws SingleConceptExpectedProblem {
     ecl = populateParameters(ecl, params);
-    Collection<SnowstormConceptMini> concepts = getConceptsFromEcl(branch, ecl, 0, 2, true);
+    Collection<SnowstormConceptMini> concepts = self.getConceptsFromEcl(branch, ecl, 0, 2, true);
     if (concepts.size() != 1) {
-      concepts = getConceptsFromEcl(branch, ecl, 0, 2, false);
+      concepts = self.getConceptsFromEcl(branch, ecl, 0, 2, false);
       if (concepts.size() != 1) {
         throw new SingleConceptExpectedProblem(branch, ecl, concepts);
       }
@@ -153,28 +153,36 @@ public class SnowstormClient {
 
   public Collection<SnowstormConceptMini> getConceptsFromEcl(
       String branch, String ecl, int limit, boolean executeAsStated) {
-    return getConceptsFromEcl(branch, ecl, 0, limit, executeAsStated);
+    return self.getConceptsFromEcl(branch, ecl, 0, limit, executeAsStated);
   }
 
   public Collection<SnowstormConceptMini> getConceptsFromEcl(
       String branch, String ecl, Long id, int offset, int limit, boolean executeAsStated) {
-    return getConceptsFromEcl(branch, ecl, offset, limit, executeAsStated, Pair.of("<id>", id));
+    return self.getConceptsFromEcl(
+        branch, ecl, offset, limit, executeAsStated, Set.of(Pair.of("<id>", id)));
   }
 
   public Collection<String> getConceptsIdsFromEcl(
       String branch, String ecl, long id, int offset, int limit, boolean executeAsStated) {
-    return getConceptIdsFromEcl(branch, ecl, offset, limit, executeAsStated, Pair.of("<id>", id));
+    return self.getConceptIdsFromEcl(
+        branch, ecl, offset, limit, executeAsStated, Set.of(Pair.of("<id>", id)));
   }
 
-  @SafeVarargs
-  @SuppressWarnings("java:S1192")
-  public final Collection<String> getConceptIdsFromEcl(
+  public Collection<String> getConceptIdsFromEcl(
+      String branch, String ecl, int offset, int limit, boolean executeEclAsStated) {
+    return self.getConceptIdsFromEcl(branch, ecl, offset, limit, executeEclAsStated, Set.of());
+  }
+
+  @Cacheable(
+      value = CacheConstants.SNOWSTORM_CONCEPTS_IDS_FROM_ECL,
+      keyGenerator = "branchAwareKeyGenerator")
+  public Collection<String> getConceptIdsFromEcl(
       String branch,
       String ecl,
       int offset,
       int limit,
       boolean executeEclAsStated,
-      Pair<String, Object>... params) {
+      Set<Pair<String, Object>> params) {
     ecl = populateParameters(ecl, params);
 
     ConceptsApi api = getConceptsApi();
@@ -262,12 +270,20 @@ public class SnowstormClient {
   }
 
   public Collection<SnowstormConceptMini> getConceptsFromEcl(
+      String branch, String ecl, int offset, int limit, boolean executeEclAsStated) {
+    return self.getConceptsFromEcl(branch, ecl, offset, limit, executeEclAsStated, Set.of());
+  }
+
+  @Cacheable(
+      value = CacheConstants.SNOWSTORM_CONCEPTS_FROM_ECL,
+      keyGenerator = "branchAwareKeyGenerator")
+  public Collection<SnowstormConceptMini> getConceptsFromEcl(
       String branch,
       String ecl,
       int offset,
       int limit,
       boolean executeEclAsStated,
-      Pair<String, Object>... params) {
+      Set<Pair<String, Object>> params) {
     ecl = populateParameters(ecl, params);
 
     ConceptsApi api = getConceptsApi();
@@ -298,20 +314,18 @@ public class SnowstormClient {
 
     Instant end = Instant.now();
 
-    if (log.isLoggable(Level.FINE)) {
-      if (logger != null) {
-        logger.logFine(
-            " executed ECL: "
-                + ecl
-                + ", offset: "
-                + offset
-                + ", limit: "
-                + limit
-                + " in "
-                + Duration.between(start, end).toMillis()
-                + " ms on "
-                + (executeEclAsStated ? "stated form" : "inferred form"));
-      }
+    if (log.isLoggable(Level.FINE) && logger != null) {
+      logger.logFine(
+          " executed ECL: "
+              + ecl
+              + ", offset: "
+              + offset
+              + ", limit: "
+              + limit
+              + " in "
+              + Duration.between(start, end).toMillis()
+              + " ms on "
+              + (executeEclAsStated ? "stated form" : "inferred form"));
     }
 
     validatePage(branch, ecl, page);
@@ -323,119 +337,18 @@ public class SnowstormClient {
         .toList();
   }
 
-  public Collection<SnowstormConceptMini> getConceptsFromEclAllPages(
-      String branch,
-      String ecl,
-      int pageSize,
-      boolean executeAsStated,
-      Pair<String, Object>... params) {
-    final String populatedEcl = populateParameters(ecl, params);
-    ConceptsApi api = getConceptsApi();
-    ExecutorService executor = Executors.newFixedThreadPool(10);
-
-    try {
-      // First, get the total count
-      SnowstormItemsPageObject firstPage =
-          fetchPage(api, branch, populatedEcl, 0, 1, executeAsStated);
-      Long totalItems = firstPage.getTotal();
-
-      if (totalItems == null || totalItems == 0) {
-        return Collections.emptyList();
-      }
-
-      // Calculate the number of pages
-      int totalPages = (int) Math.ceil((double) totalItems / pageSize);
-
-      // Create a list to hold all the futures
-      List<CompletableFuture<List<SnowstormConceptMini>>> futures = new ArrayList<>();
-
-      // Submit a task for each page
-      for (int i = 0; i < totalPages; i++) {
-        int offset = i * pageSize;
-        CompletableFuture<List<SnowstormConceptMini>> future =
-            CompletableFuture.supplyAsync(
-                () -> {
-                  SnowstormItemsPageObject page =
-                      fetchPage(api, branch, populatedEcl, offset, pageSize, executeAsStated);
-                  return Objects.requireNonNull(page.getItems()).stream()
-                      .map(SnowstormDtoUtil::fromLinkedHashMap)
-                      .filter(c -> c.getActive() != null && c.getActive())
-                      .toList();
-                },
-                executor);
-        futures.add(future);
-      }
-
-      // Wait for all futures to complete and collect results
-      CompletableFuture<Void> allOf =
-          CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
-      return allOf
-          .thenApply(v -> futures.stream().flatMap(future -> future.join().stream()).toList())
-          .join();
-    } finally {
-      executor.shutdown();
-    }
-  }
-
-  private SnowstormItemsPageObject fetchPage(
-      ConceptsApi api,
-      String branch,
-      String ecl,
-      int offset,
-      int limit,
-      boolean executeEclAsStated) {
-    Instant start = Instant.now();
-
-    SnowstormConceptSearchRequest snowstormConceptSearchRequest =
-        new SnowstormConceptSearchRequest()
-            .returnIdOnly(false)
-            .offset(offset)
-            .limit(limit)
-            .conceptIds(null)
-            .module(null)
-            .preferredOrAcceptableIn(null)
-            .acceptableIn(null)
-            .preferredIn(null)
-            .language(null)
-            .descriptionType(null);
-
-    if (executeEclAsStated) {
-      snowstormConceptSearchRequest = snowstormConceptSearchRequest.statedEclFilter(ecl);
-    } else {
-      snowstormConceptSearchRequest = snowstormConceptSearchRequest.eclFilter(ecl);
-    }
-
-    SnowstormItemsPageObject page =
-        api.search(branch, snowstormConceptSearchRequest, languageHeader).block();
-    Instant end = Instant.now();
-
-    if (log.isLoggable(Level.FINE)) {
-      if (logger != null) {
-        logger.logFine(
-            " executed ECL: "
-                + ecl
-                + ", offset: "
-                + offset
-                + ", limit: "
-                + limit
-                + " in "
-                + Duration.between(start, end).toMillis()
-                + " ms on "
-                + (executeEclAsStated ? "stated form" : "inferred form"));
-      }
-    }
-    return page;
-  }
-
   public List<SnowstormReferenceSetMember> getRefsetMembers(
       String branch, Collection<String> concepts, Set<String> referenceSetIds) {
-    return getRefsetMembers(branch, concepts, referenceSetIds, 0, 100)
+    return self.getRefsetMembers(branch, concepts, referenceSetIds, 0, 100)
         .mapNotNull(SnowstormItemsPageReferenceSetMember::getItems)
         .flatMapIterable(items -> items)
         .collectList()
         .block();
   }
 
+  @Cacheable(
+      value = CacheConstants.SNOWSTORM_REFSET_MEMBERS,
+      keyGenerator = "branchAwareKeyGenerator")
   public Mono<SnowstormItemsPageReferenceSetMember> getRefsetMembers(
       String branch,
       Collection<String> concepts,
@@ -451,86 +364,6 @@ public class SnowstormClient {
     if (referenceSetId != null && !referenceSetId.isEmpty()) {
       searchRequestComponent.referenceSet(String.join(" OR ", referenceSetId));
     }
-    return getRefsetMembersApi()
-        .findRefsetMembers(
-            branch, searchRequestComponent, offset, Math.min(limit, 10000), languageHeader);
-  }
-
-  public Collection<SnowstormReferenceSetMember> getAllRefsetMembers(
-      String branch, Collection<String> concepts, String referenceSetId, String module, int limit) {
-    SnowstormMemberSearchRequestComponent searchRequestComponent =
-        new SnowstormMemberSearchRequestComponent();
-    searchRequestComponent.active(true);
-    if (concepts != null) {
-      searchRequestComponent.referencedComponentIds(List.copyOf(concepts));
-    }
-    if (referenceSetId != null) {
-      searchRequestComponent.referenceSet(referenceSetId);
-    }
-
-    List<SnowstormReferenceSetMember> allMembers = new ArrayList<>();
-    String searchAfter = ""; // Start with empty search after
-
-    do {
-      // Fetch the current page of refset members
-      SnowstormItemsPageReferenceSetMember page =
-          getRefsetMembersApi()
-              .findRefsetMembers1(
-                  branch,
-                  referenceSetId,
-                  module,
-                  null,
-                  null,
-                  null,
-                  null,
-                  null,
-                  null,
-                  null, // Use searchAfter here
-                  0,
-                  limit,
-                  searchAfter,
-                  languageHeader)
-              .block();
-
-      if (page == null) {
-        throw new LingoProblem(
-            "no-page",
-            "No page from Snowstorm for refset members",
-            HttpStatus.BAD_GATEWAY,
-            "No page from Snowstorm for refset members on branch '" + branch + "'");
-      }
-
-      // Add current page items to the complete list
-      List<SnowstormReferenceSetMember> currentItems = page.getItems();
-      if (currentItems == null || currentItems.isEmpty()) {
-        // No more items to retrieve
-        break;
-      }
-
-      allMembers.addAll(currentItems);
-
-      // Update searchAfter for the next iteration
-      searchAfter = page.getSearchAfter();
-
-      // Optional: Break if no more search after value (depending on API behavior)
-    } while (searchAfter != null && !searchAfter.isEmpty());
-
-    return allMembers;
-  }
-
-  public Mono<SnowstormItemsPageReferenceSetMember> getRefsetMembersByAdditionalFieldSets(
-      String branch,
-      Map<String, Set<String>> additionalFieldSets,
-      String referenceSetId,
-      int offset,
-      int limit) {
-
-    SnowstormMemberSearchRequestComponent searchRequestComponent =
-        new SnowstormMemberSearchRequestComponent();
-    searchRequestComponent
-        .active(true)
-        .referenceSet(referenceSetId)
-        .additionalFieldSets(additionalFieldSets);
     return getRefsetMembersApi()
         .findRefsetMembers(
             branch, searchRequestComponent, offset, Math.min(limit, 10000), languageHeader);
@@ -566,14 +399,25 @@ public class SnowstormClient {
     return api;
   }
 
-  public Flux<SnowstormConcept> getBrowserConcepts(String branch, Collection<String> concepts) {
+  @Cacheable(
+      value = CacheConstants.SNOWSTORM_BROWSER_CONCEPTS,
+      keyGenerator = "branchAwareKeyGenerator")
+  public Mono<List<SnowstormConcept>> getBrowserConceptsAsList(
+      String branch, Collection<String> concepts) {
     ConceptsApi api = getConceptsApi();
     SnowstormConceptBulkLoadRequestComponent request =
         new SnowstormConceptBulkLoadRequestComponent();
     request.conceptIds(List.copyOf(concepts));
-    return api.getBrowserConcepts(branch, request, languageHeader);
+    return api.getBrowserConcepts(branch, request, languageHeader).collectList();
   }
 
+  public Flux<SnowstormConcept> getBrowserConcepts(String branch, Collection<String> concepts) {
+    return self.getBrowserConceptsAsList(branch, concepts).flatMapMany(Flux::fromIterable);
+  }
+
+  @Cacheable(
+      value = CacheConstants.SNOWSTORM_RELATIONSHIPS,
+      keyGenerator = "branchAwareKeyGenerator")
   public Mono<SnowstormItemsPageRelationship> getRelationships(String branch, String conceptId) {
     RelationshipsApi api = new RelationshipsApi(getApiClient());
 
@@ -676,7 +520,7 @@ public class SnowstormClient {
             "The batch "
                 + batch.getId()
                 + " to create concepts "
-                + batch.getConceptIds().stream()
+                + Objects.requireNonNull(batch.getConceptIds()).stream()
                     .map(Object::toString)
                     .collect(Collectors.joining(","))
                 + " failed on '"
@@ -694,7 +538,7 @@ public class SnowstormClient {
           "Batch failed creating concepts on branch '" + branch + "' message was " + lastMessage);
     }
 
-    return getConceptsById(branch, ids);
+    return self.getConceptsById(branch, ids);
   }
 
   public List<String> createRefsetMembers(
@@ -857,6 +701,9 @@ public class SnowstormClient {
     }
   }
 
+  @Cacheable(
+      value = CacheConstants.SNOWSTORM_CONCEPTS_BY_TERM,
+      keyGenerator = "branchAwareKeyGenerator")
   public List<SnowstormConceptMini> getConceptsByTerm(String branch, String term) {
     if (term.length() > 250) {
       throw new LingoProblem(
@@ -886,6 +733,9 @@ public class SnowstormClient {
         .toList();
   }
 
+  @Cacheable(
+      value = CacheConstants.SNOWSTORM_CONCEPTS_BY_IDS,
+      keyGenerator = "branchAwareKeyGenerator")
   public List<SnowstormConceptMini> getConceptsById(String branch, Set<String> ids) {
     SnowstormItemsPageObject page =
         getConceptsApi()
@@ -931,7 +781,7 @@ public class SnowstormClient {
   public void checkForDuplicateFsn(String fsn, String branch) {
     String searchTerm = (fsn.length() > 250) ? fsn.substring(0, 250) : fsn;
 
-    List<SnowstormConceptMini> existingConcepts = getConceptsByTerm(branch, searchTerm);
+    List<SnowstormConceptMini> existingConcepts = self.getConceptsByTerm(branch, searchTerm);
 
     boolean isDuplicate =
         existingConcepts.stream()
@@ -955,7 +805,8 @@ public class SnowstormClient {
 
   @Cacheable(cacheNames = CacheConstants.COMPOSITE_UNIT_CACHE)
   public boolean isCompositeUnit(String branch, SnowstormConceptMini unit) {
-    SnowstormItemsPageRelationship page = getRelationships(branch, unit.getConceptId()).block();
+    SnowstormItemsPageRelationship page =
+        self.getRelationships(branch, unit.getConceptId()).block();
     if (page == null) {
       throw new LingoProblem(
           "no-page",
@@ -980,7 +831,8 @@ public class SnowstormClient {
       String branch, String unit) {
     List<SnowstormRelationship> relationships =
         Objects.requireNonNull(
-                getRelationships(branch, unit).block(), "unit should have relationships: " + unit)
+                self.getRelationships(branch, unit).block(),
+                "unit should have relationships: " + unit)
             .getItems();
 
     if (relationships == null) {
@@ -1067,6 +919,9 @@ public class SnowstormClient {
         .build();
   }
 
+  @Cacheable(
+      value = CacheConstants.SNOWSTORM_CONCEPT_IDS_EXIST,
+      keyGenerator = "branchAwareKeyGenerator")
   public Collection<String> conceptIdsThatExist(String branch, Set<String> specifiedConceptIds) {
     Mono<SnowstormItemsPageObject> concepts =
         getConceptsApi()
@@ -1106,7 +961,7 @@ public class SnowstormClient {
     if (!BranchPatternMatcher.isTaskPattern(branch)) {
       return Mono.fromSupplier(List::of);
     }
-    return getConceptsForBranch(branch);
+    return self.getConceptsForBranch(branch);
   }
 
   public Mono<List<String>> getConceptIdsChangedOnProject(String branch) {
@@ -1114,11 +969,14 @@ public class SnowstormClient {
     if (BranchPatternMatcher.isTaskPattern(branch)) {
       project = BranchPatternMatcher.getProjectFromTask(branch);
     }
-    return getConceptsForBranch(project);
+    return self.getConceptsForBranch(project);
   }
 
+  @Cacheable(
+      value = CacheConstants.SNOWSTORM_CONCEPTS_FOR_BRANCH,
+      keyGenerator = "branchAwareKeyGenerator")
   @NotNull
-  private Mono<List<String>> getConceptsForBranch(String branch) {
+  public Mono<List<String>> getConceptsForBranch(String branch) {
     Mono<SnowstormItemsPageObject> concepts =
         getConceptsApi()
             .findConcepts(
@@ -1128,5 +986,17 @@ public class SnowstormClient {
     return concepts.map(
         p ->
             p.getItems() == null ? List.of() : p.getItems().stream().map(o -> (String) o).toList());
+  }
+
+  public Mono<SnowstormBranchPojo> getBranchMetadata(String branch) {
+    return new BranchingApi(getApiClient()).retrieveBranch(branch, false);
+  }
+
+  public Long getBranchHeadTimestamp(String branch) {
+    log.fine("Retrieving branch head timestamp for branch " + branch);
+    return getBranchMetadata(branch)
+        .map(SnowstormBranchPojo::getHeadTimestamp)
+        .blockOptional()
+        .orElse(null);
   }
 }

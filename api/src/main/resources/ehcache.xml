@@ -6,14 +6,37 @@
     </expiry>
     <heap unit="entries">10000</heap>
   </cache>
+
   <cache alias="org.hibernate.cache.internal.StandardQueryCache">
     <expiry>
       <ttl unit="seconds">120</ttl>
     </expiry>
     <heap unit="entries">10000</heap>
   </cache>
+  <cache alias="snowstorm-concepts-ids-from-ecl" uses-template="lru-20min-template"/>
+
+  <cache alias="snowstorm-concepts-from-ecl" uses-template="lru-20min-template"/>
+
+  <!-- Snowstorm cache definitions using the template -->
+  <cache alias="snowstorm-concept" uses-template="lru-20min-template"/>
+  <cache alias="snowstorm-refset-members" uses-template="lru-20min-template"/>
+  <cache alias="snowstorm-browser-concepts" uses-template="lru-20min-template"/>
+  <cache alias="snowstorm-relationships" uses-template="lru-20min-template"/>
+  <cache alias="snowstorm-concepts-by-term" uses-template="lru-20min-template"/>
+  <cache alias="snowstorm-concepts-by-ids" uses-template="lru-20min-template"/>
+  <cache alias="snowstorm-concept-ids-exist" uses-template="lru-20min-template"/>
+  <cache alias="snowstorm-concepts-for-branch" uses-template="lru-20min-template"/>
+  <cache alias="fhir-concepts" uses-template="lru-20min-template"/>
+  <cache-template name="lru-20min-template">
+    <expiry>
+      <ttl unit="minutes">20</ttl>
+    </expiry>
+    <resources>
+      <heap unit="entries">10000</heap>
+    </resources>
+  </cache-template>
   <service>
     <jsr107:defaults enable-management="true" enable-statistics="true"/>
   </service>
-  <!-- Define other caches for your entities here -->
+
 </config>
