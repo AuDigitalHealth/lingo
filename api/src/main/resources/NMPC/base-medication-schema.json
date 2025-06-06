@@ -90,11 +90,15 @@
       "properties": {
         "activeIngredient": {
           "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "Has Active Ingredient",
+          "title": "VTM Active Ingredient",
           "errorMessage": {
             "minProperties": "Active Ingredient must be populated.",
             "type": "Active Ingredient must be populated."
           }
+        },
+        "refinedActiveIngredient": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "VMP Active Ingredient"
         },
         "preciseIngredient": {
           "anyOf": [
@@ -127,7 +131,9 @@
         }
       },
       "required": [
-        "activeIngredient"
+        "activeIngredient",
+        "refinedActiveIngredient",
+        "preciseIngredient"
       ]
     },
     "GenericAndSpecificForms": {

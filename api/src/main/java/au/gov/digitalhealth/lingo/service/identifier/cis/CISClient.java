@@ -179,7 +179,7 @@ public class CISClient implements IdentifierSource {
             .contentType(MediaType.APPLICATION_JSON)
             .bodyValue(request)
             .retrieve()
-            .bodyToMono(Map.class)
+            .bodyToMono(new ParameterizedTypeReference<Map<String, String>>() {})
             .doOnError(
                 e -> {
                   throw new CISClientProblem("Failed to login to CIS", e);

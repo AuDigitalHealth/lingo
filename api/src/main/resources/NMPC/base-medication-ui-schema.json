@@ -78,6 +78,7 @@
           "items": {
             "ui:order": [
               "activeIngredient",
+              "refinedActiveIngredient",
               "preciseIngredient",
               "basisOfStrengthSubstance",
               "concentrationStrengthNumerator",
@@ -91,9 +92,18 @@
               "skipTitle": true
             },
             "activeIngredient": {
+              "ui:field": "AutoCompleteField",
+              "ui:title": "VTM Active Ingredient",
+              "ui:options": {
+                "ecl": "(<763158003 {{ D term=\"medicinal product\" }}).732943007",
+                "extendedEcl": "<105590001",
+                "showDefaultOptions": false
+              }
+            },
+            "refinedActiveIngredient": {
               "ui:field": "ParentChildAutoCompleteField",
               "ui:options": {
-                "parentFieldName": "activeIngredient",
+                "parentFieldName": "refinedActiveIngredient",
                 "childFieldName": "preciseIngredient",
                 "parentFieldOptions": {
                   "ecl": ">>(<763158003 {{ D term=\"real clinical drug\" }}).127489000",

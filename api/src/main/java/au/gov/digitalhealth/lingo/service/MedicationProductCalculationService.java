@@ -499,7 +499,8 @@ public class MedicationProductCalculationService {
         refsets,
         packageLevel,
         label,
-        getReferenceSetMembers(packageDetails, models.getModelConfiguration(branch), packageLevel.getModelLevelType()),
+        getReferenceSetMembers(
+            packageDetails, models.getModelConfiguration(branch), packageLevel.getModelLevelType()),
         calculateNonDefiningRelationships(
             models.getModelConfiguration(branch), packageDetails, packageLevel.getModelLevelType()),
         packageDetails.getSelectedConceptIdentifiers(),
@@ -837,7 +838,9 @@ public class MedicationProductCalculationService {
       relationships.add(
           getSnowstormRelationship(
               HAS_ACTIVE_INGREDIENT,
-              ingredient.getActiveIngredient(),
+              modelConfiguration.getModelType().equals(ModelType.NMPC) && level.isBranded()
+                  ? ingredient.getRefinedActiveIngredient()
+                  : ingredient.getActiveIngredient(),
               group,
               STATED_RELATIONSHIP,
               modelConfiguration.getModuleId()));
@@ -1052,7 +1055,9 @@ public class MedicationProductCalculationService {
       if (!level.isBranded() || modelConfiguration.getModelType().equals(ModelType.AMT)) {
         addRelationshipIfNotNull(
             relationships,
-            ingredient.getActiveIngredient(),
+            modelConfiguration.getModelType().equals(ModelType.AMT)
+                ? ingredient.getActiveIngredient()
+                : ingredient.getRefinedActiveIngredient(),
             HAS_ACTIVE_INGREDIENT,
             group,
             modelConfiguration.getModuleId());
