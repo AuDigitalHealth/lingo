@@ -26,6 +26,17 @@ public class CacheConstants {
   public static final String UNIT_NUMERATOR_DENOMINATOR_CACHE = "unit-numerator-denominator";
   public static final String VALIDATION_EXCLUDED_SUBSTANCES = "validation-excluded-substances";
   public static final String BRAND_SEMANTIC_TAG = "brand-semantic-tag";
+  public static final String SNOWSTORM_CONCEPTS_IDS_FROM_ECL = "snowstorm-concepts-ids-from-ecl";
+  public static final String SNOWSTORM_CONCEPTS_FROM_ECL = "snowstorm-concepts-from-ecl";
+  public static final String SNOWSTORM_CONCEPT = "snowstorm-concept";
+  public static final String SNOWSTORM_REFSET_MEMBERS = "snowstorm-refset-members";
+  public static final String SNOWSTORM_BROWSER_CONCEPTS = "snowstorm-browser-concepts";
+  public static final String SNOWSTORM_RELATIONSHIPS = "snowstorm-relationships";
+  public static final String SNOWSTORM_CONCEPTS_BY_TERM = "snowstorm-concepts-by-term";
+  public static final String SNOWSTORM_CONCEPTS_BY_IDS = "snowstorm-concepts-by-ids";
+  public static final String SNOWSTORM_CONCEPT_IDS_EXIST = "snowstorm-concept-ids-exist";
+  public static final String SNOWSTORM_CONCEPTS_FOR_BRANCH = "snowstorm-concepts-for-branch";
+  public static final String FHIR_CONCEPTS = "fhir-concepts";
 
   private CacheConstants() {
     throw new IllegalStateException("Utility class");

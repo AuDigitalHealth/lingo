@@ -47,13 +47,13 @@ public class IdentifierCache {
   }
 
   public void topUp() throws InterruptedException {
-    log.fine("Top up identifiers in cache " + namespaceId + " " + partitionId);
-    if (identifiers.size() < (maxCapacity / refilThreshold)) {
+    log.finest("Top up check for identifiers in cache " + namespaceId + " " + partitionId);
+    if (identifiers.size() < (maxCapacity * refilThreshold)) {
       int quantity = maxCapacity - identifiers.size();
       log.fine(
           "Reserving "
               + quantity
-              + "more identifiers for cache "
+              + " more identifiers for cache "
               + namespaceId
               + " "
               + partitionId);

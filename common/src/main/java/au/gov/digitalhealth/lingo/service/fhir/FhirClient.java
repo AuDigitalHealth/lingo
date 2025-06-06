@@ -4,7 +4,9 @@ import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
 import au.gov.digitalhealth.lingo.service.fhir.FhirParameters.Parameter;
 import au.gov.digitalhealth.lingo.service.fhir.FhirParameters.Parameter.Part;
+import au.gov.digitalhealth.lingo.util.CacheConstants;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -42,6 +44,10 @@ public class FhirClient {
         .orElseThrow(() -> new IllegalStateException("No display name found in FHIR parameters"));
   }
 
+  @Cacheable(
+      value = CacheConstants.FHIR_CONCEPTS,
+      key = "#code + '_' + #system",
+      unless = "#result == null || #result.pt == null || #result.pt.term == null")
   public Mono<SnowstormConceptMini> getConcept(String code, String system) {
     if (code == null || code.isEmpty()) {
       return Mono.error(new IllegalArgumentException("Code must not be null or empty"));
