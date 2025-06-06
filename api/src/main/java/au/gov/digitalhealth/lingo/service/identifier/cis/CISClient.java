@@ -20,9 +20,6 @@ import au.gov.digitalhealth.lingo.exception.CISClientProblem;
 import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.service.ServiceStatus.Status;
 import au.gov.digitalhealth.lingo.service.identifier.IdentifierSource;
-import io.netty.channel.ChannelOption;
-import io.netty.handler.logging.LogLevel;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -39,12 +36,9 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import reactor.netty.http.client.HttpClient;
-import reactor.netty.transport.logging.AdvancedByteBufFormat;
 
 /**
  * Client for the CIS API. Based on
@@ -104,17 +98,7 @@ public class CISClient implements IdentifierSource {
     this.timeoutSeconds = timeoutSeconds;
     this.backOffLevels = backOffLevels;
 
-    HttpClient httpClient =
-        HttpClient.create()
-            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, timeoutSeconds * 1000) // Connect timeout
-            .responseTimeout(Duration.ofSeconds(timeoutSeconds))
-            .wiretap(log.getName(), LogLevel.DEBUG, AdvancedByteBufFormat.TEXTUAL);
-
-    client =
-        WebClient.builder()
-            .clientConnector(new ReactorClientHttpConnector(httpClient))
-            .baseUrl(cisApiUrl)
-            .build();
+    client = WebClient.builder().baseUrl(cisApiUrl).build();
 
     try {
       login();

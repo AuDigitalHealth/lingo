@@ -15,13 +15,21 @@
  */
 package au.gov.digitalhealth.lingo.configuration;
 
+import static au.gov.digitalhealth.lingo.util.CacheConstants.ALL_TASKS_CACHE;
+import static au.gov.digitalhealth.lingo.util.CacheConstants.AP_STATUS_CACHE;
+import static au.gov.digitalhealth.lingo.util.CacheConstants.COMPOSITE_UNIT_CACHE;
+import static au.gov.digitalhealth.lingo.util.CacheConstants.JIRA_USERS_CACHE;
+import static au.gov.digitalhealth.lingo.util.CacheConstants.SNOWSTORM_STATUS_CACHE;
+import static au.gov.digitalhealth.lingo.util.CacheConstants.UNIT_NUMERATOR_DENOMINATOR_CACHE;
+import static au.gov.digitalhealth.lingo.util.CacheConstants.USERS_CACHE;
+
 import au.gov.digitalhealth.lingo.service.JiraUserManagerService;
 import au.gov.digitalhealth.lingo.service.SnowstormClient;
-import au.gov.digitalhealth.lingo.util.CacheConstants;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachingConfigurer;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -31,30 +39,30 @@ import org.springframework.scheduling.annotation.Scheduled;
 @EnableCaching
 @EnableScheduling
 @Log
-public class CachingConfig {
+public class CachingConfig implements CachingConfigurer {
 
   SnowstormClient snowstormClient;
 
   JiraUserManagerService jiraUserManagerService;
 
-  @Value("${caching.spring.jiraUser.enabled}")
-  private boolean jiraUserCacheEnabled;
-
   @Value("${ihtsdo.ap.codeSystem}")
   String codeSystem;
+
+  @Value("${caching.spring.jiraUser.enabled}")
+  private boolean jiraUserCacheEnabled;
 
   CachingConfig(SnowstormClient snowstormClient, JiraUserManagerService jiraUserManagerService) {
     this.snowstormClient = snowstormClient;
     this.jiraUserManagerService = jiraUserManagerService;
   }
 
-  @CacheEvict(value = CacheConstants.USERS_CACHE, allEntries = true)
+  @CacheEvict(value = USERS_CACHE, allEntries = true)
   @Scheduled(fixedRateString = "${caching.spring.usersTTL}")
   public void emptyUsersCache() {
     log.finer("emptying user cache");
   }
 
-  @CacheEvict(value = CacheConstants.JIRA_USERS_CACHE, allEntries = true)
+  @CacheEvict(value = JIRA_USERS_CACHE, allEntries = true)
   @Scheduled(fixedRateString = "${caching.spring.usersTTL}")
   public void emptyJiraUsersCache() {
     if (jiraUserCacheEnabled) {
@@ -67,7 +75,7 @@ public class CachingConfig {
     }
   }
 
-  @CacheEvict(value = CacheConstants.SNOWSTORM_STATUS_CACHE, allEntries = true)
+  @CacheEvict(value = SNOWSTORM_STATUS_CACHE, allEntries = true)
   @Scheduled(fixedRateString = "60000")
   public void refreshSnowstormStatusCache() {
     log.finer("Refresh snowstorm status cache");
@@ -78,25 +86,25 @@ public class CachingConfig {
     }
   }
 
-  @CacheEvict(value = CacheConstants.AP_STATUS_CACHE, allEntries = true)
+  @CacheEvict(value = AP_STATUS_CACHE, allEntries = true)
   @Scheduled(fixedRateString = "60000")
   public void refreshApStatusCache() {
     log.finer("Refreshing ap status cache");
   }
 
-  @CacheEvict(value = CacheConstants.ALL_TASKS_CACHE, allEntries = true)
+  @CacheEvict(value = ALL_TASKS_CACHE, allEntries = true)
   @Scheduled(fixedRateString = "60000")
   public void refreshAllTasksCache() {
     log.finer("Refresh all Tasks cache");
   }
 
-  @CacheEvict(value = CacheConstants.COMPOSITE_UNIT_CACHE)
+  @CacheEvict(value = COMPOSITE_UNIT_CACHE)
   @Scheduled(fixedRateString = "60", timeUnit = TimeUnit.MINUTES)
   public void refreshCompositeUnitCache() {
     log.finer("Refresh composite unit cache");
   }
 
-  @CacheEvict(value = CacheConstants.UNIT_NUMERATOR_DENOMINATOR_CACHE)
+  @CacheEvict(value = UNIT_NUMERATOR_DENOMINATOR_CACHE)
   @Scheduled(fixedRateString = "60", timeUnit = TimeUnit.MINUTES)
   public void refreshUniNumeratorDenominatorCache() {
     log.finer("Refresh unit numerator denominator cache");
