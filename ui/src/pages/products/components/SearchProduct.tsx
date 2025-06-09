@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Autocomplete,
   Button,
@@ -12,35 +12,34 @@ import {
   ToggleButtonGroup,
 } from '@mui/material';
 import TuneIcon from '@mui/icons-material/Tune';
-import {Concept} from '../../../types/concept.ts';
+import { Concept } from '../../../types/concept.ts';
 import useDebounce from '../../../hooks/useDebounce.tsx';
 import Box from '@mui/material/Box';
 import CloseIcon from '@mui/icons-material/Close';
 import MedicationIcon from '@mui/icons-material/Medication';
-import {Stack} from '@mui/system';
-import {Link} from 'react-router-dom';
-import {isFsnToggleOn} from '../../../utils/helpers/conceptUtils.ts';
-import Select, {SelectChangeEvent} from '@mui/material/Select';
+import { Stack } from '@mui/system';
+import { Link } from 'react-router-dom';
+import { isFsnToggleOn } from '../../../utils/helpers/conceptUtils.ts';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
 import {
   useSearchConcept,
   useSearchConceptOntoserver,
 } from '../../../hooks/api/products/useSearchConcept.tsx';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 
-import {ActionType, ProductType} from '../../../types/product.ts';
-import {FieldBindings} from '../../../types/FieldBindings.ts';
-import {generateEclFromBinding} from '../../../utils/helpers/EclUtils.ts';
-import {ConceptSearchSidebar} from '../../../components/ConceptSearchSidebar.tsx';
+import { ActionType, ProductType } from '../../../types/product.ts';
+import { FieldBindings } from '../../../types/FieldBindings.ts';
+import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
+import { ConceptSearchSidebar } from '../../../components/ConceptSearchSidebar.tsx';
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 
-import type {ValueSetExpansionContains} from 'fhir/r4';
+import type { ValueSetExpansionContains } from 'fhir/r4';
+import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
+import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../utils/helpers/getValueSetExpansionContainsPt.ts';
 import {
-  isValueSetExpansionContains
-} from '../../../types/predicates/isValueSetExpansionContains.ts';
-import {
-  convertFromValueSetExpansionContainsListToSnowstormConceptMiniList
-} from '../../../utils/helpers/getValueSetExpansionContainsPt.ts';
-import {PUBLISHED_CONCEPTS, UNPUBLISHED_CONCEPTS,} from '../../../utils/statics/responses.ts';
+  PUBLISHED_CONCEPTS,
+  UNPUBLISHED_CONCEPTS,
+} from '../../../utils/statics/responses.ts';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 
 export interface ConceptSearchResult extends Concept {
@@ -471,24 +470,22 @@ export default function SearchProduct({
               />
             )}
             renderOption={(props, option, { selected }) => {
-              const { key, ...otherProps } = props;
+              const key = isValueSetExpansionContains(option)
+                ? option.code
+                : option.conceptId;
+
               return (
-                  <li key={key} {...otherProps}>
+                <li {...props} key={key}>
                   {!disableLinkOpen ? (
                     <Link
-                      to={linkPath(
-                        isValueSetExpansionContains(option)
-                          ? (option.code as string)
-                          : (option.conceptId as string),
-                      )}
+                      to={linkPath(key)}
                       style={{ textDecoration: 'none', color: '#003665' }}
                     >
                       {optionComponent(option, selected, fsnToggle)}
                     </Link>
                   ) : (
                     <div style={{ textDecoration: 'none', color: '#003665' }}>
-                      {' '}
-                      {optionComponent(option, selected, fsnToggle)}{' '}
+                      {optionComponent(option, selected, fsnToggle)}
                     </div>
                   )}
                 </li>

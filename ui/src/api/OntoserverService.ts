@@ -16,10 +16,10 @@
 
 import axios from 'axios';
 
-import type {CapabilityStatement, Parameters, ValueSet} from 'fhir/r4';
-import {Bundle, CodeSystem} from 'fhir/r4';
-import {appendIdsToEcl} from '../utils/helpers/EclUtils';
-import {StatusWithEffectiveDate} from '../types/applicationConfig';
+import type { CapabilityStatement, Parameters, ValueSet } from 'fhir/r4';
+import { Bundle, CodeSystem } from 'fhir/r4';
+import { appendIdsToEcl } from '../utils/helpers/EclUtils';
+import { StatusWithEffectiveDate } from '../types/applicationConfig';
 
 const OntoserverService = {
   handleErrors: () => {
