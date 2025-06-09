@@ -35,7 +35,6 @@ const Transitions = forwardRef(
     {
       children,
       position = 'top-left',
-      // eslint-disable-next-line
       sx,
       type = 'grow',
       direction = 'up',

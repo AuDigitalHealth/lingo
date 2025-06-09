@@ -10,7 +10,10 @@ export function useReferenceSetConcepts(refsetIds: string[], branch: string) {
 
     // Fetch the concepts if not in cache
     queryFn: async () => {
-      const concepts = await ConceptService.searchConceptsByIds(refsetIds, branch);
+      const concepts = await ConceptService.searchConceptsByIds(
+        refsetIds,
+        branch,
+      );
 
       // Create a map of refsetId -> concept for easy lookup
       const conceptMap: Record<string, Concept> = {};

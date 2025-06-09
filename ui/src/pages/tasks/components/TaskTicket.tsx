@@ -56,7 +56,6 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
     }
   }, [useTicketQuery.data, setSelectedActionType]);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const refresh = () => {
     setRefreshKey(oldKey => oldKey + 1);
   };

@@ -11,8 +11,10 @@ interface ExistingConceptDropdownProps {
   branch: string;
 }
 
-function ExistingConceptDropdown({ product, branch }: ExistingConceptDropdownProps) {
-
+function ExistingConceptDropdown({
+  product,
+  branch,
+}: ExistingConceptDropdownProps) {
   const { applicationConfig } = useApplicationConfigStore();
   const snowstormBaseUrl = applicationConfig.apApiBaseUrl;
 
@@ -39,8 +41,8 @@ function ExistingConceptDropdown({ product, branch }: ExistingConceptDropdownPro
                 ml: 1,
                 color: '#1976d2',
                 '&:hover': {
-                  color: '#0f5baa'
-                }
+                  color: '#0f5baa',
+                },
               }}
             >
               <OpenInNew fontSize="small" />
@@ -56,7 +58,11 @@ function ExistingConceptDropdown({ product, branch }: ExistingConceptDropdownPro
         <Typography style={{ color: '#184E6B' }}>Preferred Term:</Typography>
         <Typography>{product.concept?.pt?.term}</Typography>
       </Stack>
-      <AdditionalPropertiesDisplay product={product} branch={branch} showWrapper={false} />
+      <AdditionalPropertiesDisplay
+        product={product}
+        branch={branch}
+        showWrapper={false}
+      />
     </div>
   );
 }
