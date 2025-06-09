@@ -661,7 +661,8 @@ function EditConceptBody({
                                       color: `${theme.palette.warning.darker}`,
                                     }}
                                   >
-                                    Warning!: This will remove all the artg ids{' '}
+                                    Warning!: This will remove all the artg
+                                    ids{' '}
                                   </span>
                                 </Box>
                               )}
