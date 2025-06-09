@@ -67,11 +67,6 @@ export const useExclusionUpdates = (
         }
         RjsfUtils.setFormDataById(rootFormData, dependantId, defaultValue);
         RjsfUtils.setUiSchemaById(rootUiSchema, dependantId, newUiSchema);
-        // @ts-ignore
-        if (formContext?.onChange) {
-          // @ts-ignore
-          formContext.onChange({ ...rootFormData });
-        }
       }
     }
   };

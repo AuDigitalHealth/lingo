@@ -1,26 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import {
-  Autocomplete,
-  TextField,
-  Chip,
-  Box,
-  Typography,
-  Tooltip,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Button,
-  Stack,
-  Avatar,
-  IconButton,
-  Grid,
-} from '@mui/material';
-import { FieldProps, RJSFSchema } from '@rjsf/utils';
-import _ from 'lodash';
-import { Label } from '@mui/icons-material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
+import React, { useState } from 'react';
+import { Autocomplete, TextField, Chip, Box, Stack, Grid } from '@mui/material';
+import { FieldProps } from '@rjsf/utils';
 import ValueSetAutocomplete, {
   MultiValueValueSetAutocomplete,
 } from '../../components/ValueSetAutocomplete';
@@ -61,7 +41,6 @@ const ExternalIdentifiers: React.FC<
 
   const schemas = schema?.items?.anyOf as ExternalIdentifier[];
 
-  debugger;
   return (
     <>
       <Grid container spacing={2}>
@@ -188,22 +167,18 @@ const ExternalIdentifierRender: React.FC<
     onChange(returnFormData);
   };
 
-  const renderChip = (item: ExternalIdentifier) => {
-    return (
-      <>
-        <Chip
-          variant="filled"
-          key={`${item.identifierScheme}-${item.identifierValue}`}
-          label={`${item.identifierValue}`}
-          onDelete={
-            !readOnly
-              ? () => handleDelete(item.identifierValue, item.identifierScheme)
-              : undefined
-          }
-        />
-      </>
-    );
-  };
+  const renderChip = (item: ExternalIdentifier) => (
+    <Chip
+      variant="filled"
+      key={`${item.identifierScheme}-${item.identifierValue}`}
+      label={`${item.identifierValue}`}
+      onDelete={
+        !readOnly
+          ? () => handleDelete(item.identifierValue, item.identifierScheme)
+          : undefined
+      }
+    />
+  );
 
   if (readOnly && (!schemeEntries || schemeEntries.length === 0)) {
     return <></>;
@@ -275,26 +250,23 @@ const ExternalIdentifierRender: React.FC<
                 handleAdd(values[values.length - 1]);
               }
             }}
-            renderTags={(values, getTagProps) => {
-              return (
-                <>
-                  <Stack flexDirection={'row'} gap={1} flexWrap={'wrap'}>
-                    {values.map((val, i) => {
-                      return renderChip(
-                        {
-                          identifierValue: val,
-                          identifierScheme:
-                            schema.properties.identifierScheme.const,
-                          relationshipType:
-                            schema.properties.relationshipType.const,
-                        },
-                        // i,
-                      );
+            renderTags={(values, getTagProps) => (
+              <Stack flexDirection={'row'} gap={1} flexWrap={'wrap'}>
+                {values.map((val, index) => (
+                  <React.Fragment
+                    key={`${schema.properties.identifierScheme.const}-${val}-${index}`}
+                  >
+                    {renderChip({
+                      identifierValue: val,
+                      identifierScheme:
+                        schema.properties.identifierScheme.const,
+                      relationshipType:
+                        schema.properties.relationshipType.const,
                     })}
-                  </Stack>
-                </>
-              );
-            }}
+                  </React.Fragment>
+                ))}
+              </Stack>
+            )}
             renderInput={params => (
               <TextField
                 {...params}

@@ -470,23 +470,22 @@ export default function SearchProduct({
               />
             )}
             renderOption={(props, option, { selected }) => {
+              const key = isValueSetExpansionContains(option)
+                ? option.code
+                : option.conceptId;
+
               return (
-                <li {...props}>
+                <li {...props} key={key}>
                   {!disableLinkOpen ? (
                     <Link
-                      to={linkPath(
-                        isValueSetExpansionContains(option)
-                          ? (option.code as string)
-                          : (option.conceptId as string),
-                      )}
+                      to={linkPath(key)}
                       style={{ textDecoration: 'none', color: '#003665' }}
                     >
                       {optionComponent(option, selected, fsnToggle)}
                     </Link>
                   ) : (
                     <div style={{ textDecoration: 'none', color: '#003665' }}>
-                      {' '}
-                      {optionComponent(option, selected, fsnToggle)}{' '}
+                      {optionComponent(option, selected, fsnToggle)}
                     </div>
                   )}
                 </li>

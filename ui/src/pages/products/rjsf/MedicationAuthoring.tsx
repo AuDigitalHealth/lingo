@@ -184,7 +184,7 @@ function MedicationAuthoring({
             validator={validator}
             disabled={isPending}
             noHtml5Validate={true}
-            noValidate={true}
+            noValidate={false}
           >
             <Box
               sx={{
