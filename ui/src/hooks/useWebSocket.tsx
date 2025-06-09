@@ -30,7 +30,11 @@ function useWebSocket() {
     (frame: Stomp.Frame | undefined): void => {
       const headers = frame?.headers as StompHeaders;
       const username = headers['user-name'];
-      if (username !== null && stompClientRef.current) {
+      if (
+        username !== null &&
+        stompClientRef.current &&
+        stompClientRef.current.ws.readyState === WebSocket.OPEN
+      ) {
         stompClientRef.current.subscribe(
           `/topic/user/${user?.login}/notifications`,
           subscriptionHandler,

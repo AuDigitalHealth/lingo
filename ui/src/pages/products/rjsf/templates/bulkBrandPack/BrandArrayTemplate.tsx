@@ -1,64 +1,133 @@
 import React from 'react';
 import { ArrayFieldTemplateProps } from '@rjsf/utils';
-import {
-  Avatar,
-  Box,
-  IconButton,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
-  ListSubheader,
-} from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import MedicationIcon from '@mui/icons-material/Medication';
-import { FieldChips } from '../../../components/ArtgFieldChips.tsx';
-import { sortExternalIdentifiers } from '../../../../../utils/helpers/tickets/additionalFieldsUtils.ts';
+import { Box, List, ListItem, Typography, Divider } from '@mui/material';
+import BrandDetails from '../../fields/bulkBrandPack/BrandDetails.tsx';
 
 const BrandArrayTemplate: React.FC<ArrayFieldTemplateProps> = props => {
-  const { items, uiSchema } = props;
-  const options = uiSchema['ui:options'] || {};
-  const listTitle = options.listTitle || 'Brands';
-  const isReadOnly = options.readOnly || false;
+  const { items, uiSchema, registry, formData, onChange, schema, title } =
+    props;
+
+  const { formContext } = registry;
+  const options = uiSchema?.['ui:options'] || {};
+  const {
+    listTitle = title || 'Brands',
+    readOnly = false,
+    allowDelete = true,
+    requireEditButton = false,
+    skipTitle = false,
+    mandatorySchemes = [],
+    multiValuedSchemes = [],
+  } = options;
+
+  const handleDeleteBrand = (index: number) => {
+    const element = items[index];
+    if (element?.onDropIndexClick) {
+      element.onDropIndexClick(index)();
+    }
+
+    // Also notify through formContext
+    if (formContext?.onFormDataChange) {
+      const newBrands = formData.filter((_: any, i: number) => i !== index);
+      const fieldName = schema?.title?.toLowerCase().includes('existing')
+        ? 'existingBrands'
+        : 'brands';
+
+      const newFormData = {
+        ...formContext.formData,
+        [fieldName]: newBrands,
+      };
+      formContext.onFormDataChange(newFormData);
+    }
+  };
+
+  const handleBrandDetailsChange = (index: number, updatedBrandData: any) => {
+    const newFormData = [...formData];
+    newFormData[index] = updatedBrandData;
+    onChange(newFormData);
+
+    // Also notify through formContext
+    if (formContext?.onFormDataChange) {
+      const fieldName = schema?.title?.toLowerCase().includes('existing')
+        ? 'existingBrands'
+        : 'brands';
+
+      const newContextData = {
+        ...formContext.formData,
+        [fieldName]: newFormData,
+      };
+      formContext.onFormDataChange(newContextData);
+    }
+  };
 
   return (
-    <Box sx={{ width: '100%' }}>
-      <ListSubheader>{listTitle}</ListSubheader>
-      <List sx={{ mb: 1 }}>
-        {items.map((item, index) =>
-          item.children.props.formData.brand ? (
-            <ListItem
-              key={item.key || index}
-              secondaryAction={
-                !isReadOnly &&
-                item.hasRemove && (
-                  <IconButton
-                    edge="end"
-                    aria-label="delete"
-                    onClick={item.onDropIndexClick(index)}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                )
-              }
-            >
-              <ListItemAvatar>
-                <Avatar>
-                  <MedicationIcon />
-                </Avatar>
-              </ListItemAvatar>
-              <Box>
-                <ListItemText
-                  primary={item.children.props.formData.brand.pt?.term}
-                />
-                <FieldChips
-                  items={sortExternalIdentifiers(
-                    item.children.props.formData.externalIdentifiers,
-                  )}
-                />
-              </Box>
-            </ListItem>
-          ) : null,
+    <Box>
+      {!skipTitle && listTitle && (
+        <Typography variant="h6" gutterBottom>
+          {listTitle}
+        </Typography>
+      )}
+
+      <List
+        sx={{
+          border: 1,
+          borderColor: 'grey.300',
+          borderRadius: 1,
+          p: 1,
+          bgcolor: 'background.paper',
+        }}
+      >
+        {items.length > 0 ? (
+          items.map((element, index) => {
+            const brandFormData = element.children.props.formData;
+
+            return (
+              <React.Fragment key={element.key || index}>
+                <ListItem
+                  sx={{
+                    position: 'relative',
+                    flexDirection: 'column',
+                    alignItems: 'stretch',
+                    py: 2,
+                  }}
+                >
+                  <BrandDetails
+                    {...element.children.props}
+                    formData={brandFormData}
+                    onChange={(updatedData: any) =>
+                      handleBrandDetailsChange(index, updatedData)
+                    }
+                    onDelete={
+                      allowDelete ? () => handleDeleteBrand(index) : undefined
+                    }
+                    index={index}
+                    uiSchema={{
+                      ...(element.children.props.uiSchema || {}),
+                      'ui:options': {
+                        ...(element.children.props.uiSchema?.['ui:options'] ||
+                          {}),
+                        readOnly,
+                        allowDelete,
+                        requireEditButton,
+                        mandatorySchemes,
+                        multiValuedSchemes,
+                      },
+                    }}
+                    schema={element.children.props.schema}
+                    registry={registry}
+                    formContext={formContext}
+                    errorSchema={element.children.props.errorSchema}
+                  />
+                </ListItem>
+                {index < items.length - 1 && <Divider />}
+              </React.Fragment>
+            );
+          })
+        ) : (
+          <ListItem>
+            <Typography variant="body2" color="textSecondary">
+              No brands added
+            </Typography>
+          </ListItem>
         )}
       </List>
     </Box>
