@@ -1,111 +1,88 @@
 {
-  "ui:order": [
-    "selectedProduct",
-    "newPackSizeInput",
-    "existingPackSizes",
-    "packSizes",
-    "unitOfMeasure"
-
-  ],
   "ui:options": {
-    "layout": {
-      "grid": [
-        { "name": "selectedProduct", "xs": 12 },
-        { "name": "newPackSizeInput", "xs": 8 },
-        { "name": "existingPackSizes", "xs": 6 },
-        { "name": "packSizes", "xs": 6 }
-      ]
+    "skipTitle": true
+  },
+  "ui:grid": [
+    {
+      "columnA": 12,
+      "columnB": 12
     }
+  ],
+  "columnA": {
+    "ui:grid": [
+      {
+        "selectedProduct": 24
+      },
+      {
+        "existingPackSizes": 24
+      }
+    ]
+  },
+  "columnB": {
+    "ui:title": null,
+    "ui:options": {
+      "label": false
+    },
+    "ui:grid": [
+      {
+        "newPackSizeInput": 23,
+        "addButton": 1
+      },
+      {
+        "packSizes": 24
+      }
+    ]
   },
   "selectedProduct": {
     "ui:readonly": true,
     "ui:widget": "TitleWidget",
     "ui:options": {
+      "inputType": "text",
+      "ui:disabled": true,
       "skipTitle": true
     }
   },
+  "newPackSizeInput": {
+    "ui:field": "PackDetails",
+    "ui:options": {
+      "readOnly": false,
+      "allowDelete": false,
+      "requireEditButton": false,
+      "multiValuedSchemes": ["artgid"]
+    }
+  },
+  "addButton": {
+    "ui:field": "AddButtonField",
+    "ui:options": {
+      "skipTitle": true,
+      "tooltipTitle": "Add Pack Size",
+      "sourcePath": "newPackSizeInput",
+      "targetPath": "packSizes",
+      "existingPath": "existingPackSizes"
+    }
+  },
   "existingPackSizes": {
+    "ui:template": "PackSizeArrayTemplate",
     "ui:options": {
       "orderable": false,
       "skipTitle": true,
       "listTitle": "Existing Pack Sizes",
-      "readOnly": true
-    },
-    "items": {
-      "ui:readonly": true,
-      "ui:options": {
-        "skipTitle": true
-      },
-      "packSize": {
-        "ui:readonly": true,
-        "ui:options": {
-          "label": ""
-        }
-      },
-      "externalIdentifiers": {
-        "ui:widget": "OneOfArrayWidget",
-        "ui:readonly": true,
-        "ui:options": {
-          "label": false,
-          "skipTitle": true,
-          "mandatorySchemes": [],
-          "multiValuedSchemes": ["artgid"]
-        }
-      }
+      "readOnly": true,
+      "allowDelete": false,
+      "requireEditButton": false,
+      "multiValuedSchemes": ["artgid"]
     }
   },
   "packSizes": {
+    "ui:template": "PackSizeArrayTemplate",
     "ui:options": {
       "orderable": false,
       "skipTitle": true,
       "listTitle": "Newly Added Pack Sizes",
-      "readOnly": false
-    },
-    "items": {
-      "ui:readonly": false,
-      "ui:options": {
-        "skipTitle": true
-      },
-      "packSize": {
-        "ui:readonly": true,
-        "ui:options": {
-          "label": ""
-        }
-      },
-      "externalIdentifiers": {
-        "ui:widget": "OneOfArrayWidget",
-        "ui:readonly": true,
-        "ui:options": {
-          "label": false,
-          "skipTitle": true,
-          "mandatorySchemes": [],
-          "multiValuedSchemes": ["artgid"]
-        }
-      }
-    }
-  },
-  "unitOfMeasure": {
-    "ui:widget": "hidden"
-  },
-  "newPackSizeInput": {
-    "ui:field": "NewPackSizeInputField",
-    "ui:options": {
-      "skipTitle": true
-    },
-    "packSize": {
-      "ui:options": {
-        "label": "Pack Size",
-        "skipTitle": true
-      }
-    },
-    "externalIdentifiers": {
-      "ui:widget": "OneOfArrayWidget",
-      "ui:options": {
-        "label": false,
-        "skipTitle": true,
-        "mandatorySchemes": [],
-        "multiValuedSchemes": ["artgid"]
-      }
+      "readOnly": false,
+      "allowDelete": true,
+      "requireEditButton": false,
+      "multiValuedSchemes": ["artgid"]
     }
   }
 }

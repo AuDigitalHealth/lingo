@@ -1,18 +1,24 @@
 /* eslint @typescript-eslint/restrict-plus-operands: "off" */
-import React, {useEffect, useRef, useState} from 'react';
-import {Concept, NewConceptDetails} from '../../types/concept';
+import React, { useEffect, useRef, useState } from 'react';
+import { Concept, NewConceptDetails } from '../../types/concept';
 import {
   drawConceptDiagram,
   DrawConceptDiagramArgs,
   drawNewConceptDiagram,
 } from './conceptDiagramUtils';
-import {useSearchConceptById} from '../../hooks/api/products/useSearchConcept';
+import { useSearchConceptById } from '../../hooks/api/products/useSearchConcept';
 import useApplicationConfigStore from '../../stores/ApplicationConfigStore';
-import {ButtonGroup, IconButton, Stack, ToggleButton, ToggleButtonGroup,} from '@mui/material';
+import {
+  ButtonGroup,
+  IconButton,
+  Stack,
+  ToggleButton,
+  ToggleButtonGroup,
+} from '@mui/material';
 import Loading from '../Loading';
-import {ZoomIn, ZoomOut} from '@mui/icons-material';
+import { ZoomIn, ZoomOut } from '@mui/icons-material';
 import useScreenSize from '../../hooks/useScreenSize';
-import {useParams} from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
 interface ConceptDiagramProps {
   concept: Concept | null;
@@ -42,7 +48,10 @@ export default function ConceptDiagram({
   const [imageUri, setImageUri] = useState<string | undefined>(undefined);
   const { applicationConfig } = useApplicationConfigStore();
   const fullBranch = `/${applicationConfig.apDefaultBranch}${branchKey ? `/${branchKey}` : ''}`;
-  const { data, isLoading } = useSearchConceptById(concept?.conceptId, fullBranch);
+  const { data, isLoading } = useSearchConceptById(
+    concept?.conceptId,
+    fullBranch,
+  );
 
   const [formType, setFormType] = useState<FormType>('stated');
   const [containerHeight, setContainerHeight] = useState(screenSize.height);

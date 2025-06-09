@@ -204,7 +204,6 @@ export default function Jobs() {
   ) => {
     return (
       <Dropdown
-        // eslint-disable-next-line
         value={options.value}
         options={jobNames}
         onChange={e => options.filterCallback(e.value)}

@@ -475,7 +475,6 @@ function extractAllConcepts(obj: MedicationPackageDetails): Concept[] {
         for (const key in o) {
           // eslint-disable-next-line
           if (o.hasOwnProperty(key)) {
-            // eslint-disable-next-line
             recurse(o[key]);
           }
         }
@@ -491,9 +490,7 @@ function isConceptType(obj: any): obj is Concept {
   return (
     typeof obj === 'object' &&
     obj !== null &&
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     typeof obj.conceptId === 'string' &&
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     typeof obj.id === 'string'
   );
 }

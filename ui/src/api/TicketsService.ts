@@ -570,12 +570,10 @@ const TicketsService = {
     });
 
     const blob: Blob = new Blob([response.data], {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       type: response.headers['content-type'],
     });
 
     const actualFileName = getFileNameFromContentDisposition(
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       response.headers['content-disposition'],
     );
 
