@@ -1,12 +1,10 @@
-import React, {useEffect, useState} from 'react';
-import {Autocomplete, CircularProgress, TextField} from '@mui/material';
-import {Concept} from '../../../../types/concept.ts';
-import {useSearchConceptOntoServerByUrl} from '../../../../hooks/api/products/useSearchConcept.tsx';
-import {
-  convertFromValueSetExpansionContainsListToSnowstormConceptMiniList
-} from '../../../../utils/helpers/getValueSetExpansionContainsPt.ts';
+import React, { useEffect, useState } from 'react';
+import { Autocomplete, CircularProgress, TextField } from '@mui/material';
+import { Concept } from '../../../../types/concept.ts';
+import { useSearchConceptOntoServerByUrl } from '../../../../hooks/api/products/useSearchConcept.tsx';
+import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../../utils/helpers/getValueSetExpansionContainsPt.ts';
 import useApplicationConfigStore from '../../../../stores/ApplicationConfigStore.ts';
-import {FieldProps} from '@rjsf/utils';
+import { FieldProps } from '@rjsf/utils';
 
 interface ValueSetAutocompleteProps extends FieldProps {
   label?: string;
@@ -88,23 +86,157 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
 
   return (
     <Autocomplete
+      sx={{ width: '100%' }}
       data-testid={idSchema?.$id || name}
       loading={isLoading}
       options={disabled ? [] : options}
-      getOptionLabel={option => (option?.conceptId ? option.conceptId + " - " + option?.pt?.term : '')}
+      getOptionLabel={option =>
+        option?.conceptId ? option.conceptId + ' - ' + option?.pt?.term : ''
+      }
       value={selectedConcept} // Controlled by selectedConcept
       onInputChange={(_, newInputValue) => setInputValue(newInputValue)}
       onChange={(_, selectedValue) => handleChange(selectedValue as Concept)}
       isOptionEqualToValue={(option, val) =>
-        option?.conceptId === val?.conceptId
+        option?.conceptId === val?.conceptId ||
+        option?.pt?.term === val?.pt?.term
       }
       renderOption={(props, option) => {
         const { key, ...otherProps } = props;
         return (
-        <li {...otherProps} key={option.conceptId}>
-          {option.conceptId + " - " + option?.pt?.term}
-        </li>
-      )}}
+          <li {...otherProps} key={option.conceptId}>
+            {option.conceptId + ' - ' + option?.pt?.term}
+          </li>
+        );
+      }}
+      renderInput={params => (
+        <TextField
+          {...params}
+          label={label}
+          error={!!error}
+          helperText={error}
+          InputProps={{
+            ...params.InputProps,
+            endAdornment: (
+              <>
+                {isLoading ? <CircularProgress size={20} /> : null}
+                {params.InputProps.endAdornment}
+              </>
+            ),
+          }}
+          disabled={disabled}
+        />
+      )}
+    />
+  );
+};
+
+interface MultiValueValueSetAutocompleteProps extends FieldProps {
+  label?: string;
+  url: string;
+  showDefaultOptions?: boolean;
+  value: string | null; // Concept ID only
+  onChange: (value: string[]) => void;
+  disabled?: boolean;
+  error?: string;
+}
+
+export const MultiValueValueSetAutocomplete: React.FC<
+  MultiValueValueSetAutocompleteProps
+> = ({
+  idSchema,
+  name,
+  label,
+  url,
+  showDefaultOptions = false,
+  value, // Concept ID only
+  onChange,
+  disabled = false,
+  error,
+}) => {
+  const [inputValue, setInputValue] = useState('');
+  const [options, setOptions] = useState<Concept[]>([]);
+  const [selectedConcept, setSelectedConcept] = useState<Concept[]>([]);
+  const { applicationConfig } = useApplicationConfigStore();
+  const { isLoading, data } = useSearchConceptOntoServerByUrl(
+    inputValue,
+    url && url.length > 0 ? url : undefined,
+    showDefaultOptions,
+  );
+
+  // Update options when search data changes
+  useEffect(() => {
+    if (data?.expansion?.contains) {
+      const concepts =
+        convertFromValueSetExpansionContainsListToSnowstormConceptMiniList(
+          data.expansion.contains,
+          applicationConfig.fhirPreferredForLanguage,
+        ); //TODO we may not need this conversion as we only need the code and display
+      const uniqueOptions = Array.from(
+        new Map(concepts.map(item => [item.conceptId, item])).values(),
+      );
+      setOptions(uniqueOptions);
+
+      // If value exists and matches a fetched option, set selectedConcept
+      if (value && !selectedConcept) {
+        const matchingConcept = uniqueOptions.find(
+          option => option.conceptId === value,
+        );
+        if (matchingConcept && matchingConcept?.pt) {
+          setSelectedConcept([matchingConcept]);
+          setInputValue(matchingConcept?.pt?.term);
+        }
+      }
+    }
+  }, [
+    data,
+    applicationConfig.fhirPreferredForLanguage,
+    value,
+    selectedConcept,
+  ]);
+
+  // Trigger API search with conceptId when value changes
+  useEffect(() => {
+    if (value && (!selectedConcept || selectedConcept.conceptId !== value)) {
+      setInputValue(value); // Use conceptId as initial search term
+    } else if (!value) {
+      setSelectedConcept([]);
+      setInputValue('');
+    }
+  }, [value, selectedConcept]);
+
+  // Handle selection change
+  const handleChange = (selectedValue: Concept[] | null) => {
+    if (!selectedValue) return;
+    setSelectedConcept(selectedValue);
+    const changVal = selectedValue.flatMap(val =>
+      val.conceptId ? [val.conceptId] : [],
+    );
+    onChange(changVal);
+  };
+
+  return (
+    <Autocomplete
+      multiple
+      sx={{ width: '100%' }}
+      data-testid={idSchema?.$id || name}
+      loading={isLoading}
+      options={disabled ? [] : options}
+      getOptionLabel={option => option?.pt?.term || ''}
+      value={selectedConcept} // Controlled by selectedConcept
+      onInputChange={(_, newInputValue) => setInputValue(newInputValue)}
+      onChange={(_, selectedValue) => handleChange(selectedValue as Concept)}
+      isOptionEqualToValue={(option, val) =>
+        option?.conceptId === val?.conceptId ||
+        option?.pt?.term === val?.pt?.term
+      }
+      renderOption={(props, option) => {
+        const { key, ...otherProps } = props;
+        return (
+          <li {...otherProps} key={option.conceptId}>
+            {option.conceptId + ' - ' + option?.pt?.term}
+          </li>
+        );
+      }}
       renderInput={params => (
         <TextField
           {...params}

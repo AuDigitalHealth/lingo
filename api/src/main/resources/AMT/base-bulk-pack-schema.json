@@ -30,7 +30,7 @@
     },
     "ExternalIdentifier": {
       "type": "object",
-      "oneOf": [
+      "anyOf": [
         {
           "title": "ARTGID",
           "type": "object",
@@ -96,27 +96,11 @@
         "$ref": "#/$defs/PackDetails"
       }
     },
-    "unitOfMeasure": {
-      "$ref": "#/$defs/SnowstormConceptMini"
-    },
     "newPackSizeInput": {
-      "type": "object",
-      "properties": {
-        "packSize": {
-          "type": "integer",
-          "minimum": 1,
-          "errorMessage": {
-            "minimum": "Pack size must be at least 1."
-          }
-        },
-        "externalIdentifiers": {
-          "type": "array",
-          "title": "External identifiers",
-          "items": {
-            "$ref": "#/$defs/ExternalIdentifier"
-          }
-        }
-      }
+      "$ref": "#/$defs/PackDetails"
+    },
+    "addButton": {
+      "type": "null"
     }
   }
 }

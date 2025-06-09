@@ -1,3 +1,19 @@
+const originalConsoleError = console.error;
+console.error = (...args: unknown[]) => {
+  if (
+    args.some(
+      arg =>
+        typeof arg === 'string' &&
+        arg.includes('WebSocket') &&
+        arg.includes('local'),
+    )
+  ) {
+    // Ignore errors that include 'WebSocket' and 'local'
+    return;
+  }
+  originalConsoleError(...args);
+};
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 

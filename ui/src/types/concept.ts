@@ -15,7 +15,11 @@
 ///
 
 import { RefsetMember } from './RefsetMember.ts';
-import { ExternalIdentifier, NonDefiningProperty, ReferenceSet } from './product.ts';
+import {
+  ExternalIdentifier,
+  NonDefiningProperty,
+  ReferenceSet,
+} from './product.ts';
 
 export enum DefinitionStatus {
   Primitive = 'PRIMITIVE',

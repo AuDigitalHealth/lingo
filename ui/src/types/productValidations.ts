@@ -27,10 +27,6 @@ import {
 import { Product } from './concept.ts';
 import { BulkAddExternalRequestorRequest } from './tickets/ticket.ts';
 
-export const PACK_SIZE_THRESHOLD = 2 * 20000000.0;
-
-const PACKSIZE_EXCEEDS_THRESHOLD = `The pack size must not exceed the ${PACK_SIZE_THRESHOLD} limit`;
-
 export const WARNING_INVALID_COMBO_STRENGTH_SIZE_AND_TOTALQTY =
   'Invalid combination for Unit size, Concentration strength and Unit Strength';
 
