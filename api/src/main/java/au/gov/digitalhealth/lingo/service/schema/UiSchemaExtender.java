@@ -37,6 +37,8 @@ public class UiSchemaExtender {
   public static final String ITEMS = "items";
   public static final String UI_OPTIONS = "ui:options";
   public static final String UI_WIDGET = "ui:widget";
+
+  public static final String UI_FIELD = "ui:field";
   public static final String CONTAINED_PRODUCTS = "containedProducts";
   public static final String PRODUCT_DETAILS = "productDetails";
   private static final String PACKAGE_DETAILS = "packageDetails";
@@ -45,23 +47,6 @@ public class UiSchemaExtender {
 
   public UiSchemaExtender(ObjectMapper objectMapper) {
     this.objectMapper = objectMapper;
-  }
-
-  private static void insertNodeInUiOrder(ObjectNode uiSchemaNode, String propertyName) {
-    ArrayNode uiOrderArray = uiSchemaNode.withArray("ui:order");
-    int index = -1;
-    for (int i = 0; i < uiOrderArray.size(); i++) {
-      if (CONTAINED_PRODUCTS.equals(uiOrderArray.get(i).asText())
-          || "activeIngredients".equals(uiOrderArray.get(i).asText())) {
-        index = i;
-        break;
-      }
-    }
-    if (index != -1) {
-      uiOrderArray.insert(index, propertyName);
-    } else {
-      uiOrderArray.add(propertyName);
-    }
   }
 
   public void updateUiSchema(ModelConfiguration modelConfiguration, JsonNode uiSchemaNode) {
@@ -116,7 +101,7 @@ public class UiSchemaExtender {
     if (!filteredPropertySet.isEmpty()) {
 
       ObjectNode uiNode = objectMapper.createObjectNode();
-      uiNode.put(UI_WIDGET, "OneOfArrayWidget");
+      uiNode.put(UI_FIELD, "ExternalIdentifiers");
       ObjectNode uiOptions = getUiOptions(false);
 
       processNonDefiningPropertyBaseMembers(filteredPropertySet, uiOptions);
@@ -125,7 +110,6 @@ public class UiSchemaExtender {
 
       uiSchemaNode.set(nodeName, uiNode);
 
-      insertNodeInUiOrder(uiSchemaNode, nodeName);
       uiSchemaNode.set(nodeName, uiNode);
     }
   }
