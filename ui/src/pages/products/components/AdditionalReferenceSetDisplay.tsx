@@ -1,9 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Product } from '../../../types/concept.ts';
-import { Box, Chip, CircularProgress, Tooltip, Typography } from '@mui/material';
 import {
-  useRefsetMembersByComponentIds
-} from '../../../hooks/api/refset/useRefsetMembersByComponentIds.tsx';
+  Box,
+  Chip,
+  CircularProgress,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import { useRefsetMembersByComponentIds } from '../../../hooks/api/refset/useRefsetMembersByComponentIds.tsx';
 import { useReferenceSetConcepts } from '../../../hooks/api/refset/useReferenceSetConcepts.tsx';
 
 // Locally defined interface to replace the imported ReferenceSet
@@ -19,16 +23,16 @@ interface AdditionalReferenceSetsProps {
 }
 
 export const AdditionalReferenceSetDisplay = ({
-                                                product,
-                                                branch,
-                                              }: AdditionalReferenceSetsProps) => {
+  product,
+  branch,
+}: AdditionalReferenceSetsProps) => {
   const [referenceSets, setReferenceSets] = useState<LocalReferenceSet[]>([]);
   const CHARACTER_LIMIT = 30;
 
   // Only fetch refset members if this is not a new concept
   const { refsetData: refsetMembersResponse, isRefsetLoading } =
     useRefsetMembersByComponentIds(branch, [product.conceptId], {
-      enabled: !product.newConcept && !!product.conceptId && !!branch
+      enabled: !product.newConcept && !!product.conceptId && !!branch,
     });
 
   // Get filtered reference set members
@@ -43,13 +47,23 @@ export const AdditionalReferenceSetDisplay = ({
     }
 
     // Filter out reference sets that are already in product.referenceSets or excluded
-    return referenceSetMembers.filter(member =>
-      !product.referenceSets?.some(refSet => refSet.identifier === member.refsetId) &&
-      !product.externalIdentifiers?.some(extId => extId.identifier === member.refsetId) &&
-      member.refsetId !== '733073007' // OWL reference set
+    return referenceSetMembers.filter(
+      member =>
+        !product.referenceSets?.some(
+          refSet => refSet.identifier === member.refsetId,
+        ) &&
+        !product.externalIdentifiers?.some(
+          extId => extId.identifier === member.refsetId,
+        ) &&
+        member.refsetId !== '733073007', // OWL reference set
     );
-  }, [product.newConcept, product.newConceptDetails?.referenceSetMembers, refsetMembersResponse,
-    product.referenceSets, product.externalIdentifiers]);
+  }, [
+    product.newConcept,
+    product.newConceptDetails?.referenceSetMembers,
+    refsetMembersResponse,
+    product.referenceSets,
+    product.externalIdentifiers,
+  ]);
 
   // Extract unique refsetIds for concept lookup
   const uniqueRefsetIds = useMemo(() => {
@@ -60,7 +74,7 @@ export const AdditionalReferenceSetDisplay = ({
   const {
     data: refsetConceptMap,
     isLoading: isConceptsLoading,
-    isFetching: isConceptsFetching
+    isFetching: isConceptsFetching,
   } = useReferenceSetConcepts(uniqueRefsetIds, branch);
 
   // Update reference sets when the data changes
@@ -73,9 +87,11 @@ export const AdditionalReferenceSetDisplay = ({
     // If we have concept data, use it to create the reference sets
     if (refsetConceptMap) {
       const convertedReferenceSets = filteredRefsetMembers.map(member => ({
-        title: refsetConceptMap[member.refsetId]?.pt?.term || `Reference Set ${member.refsetId}`,
+        title:
+          refsetConceptMap[member.refsetId]?.pt?.term ||
+          `Reference Set ${member.refsetId}`,
         identifier: member.refsetId,
-        additionalFields: member.additionalFields
+        additionalFields: member.additionalFields,
       }));
 
       setReferenceSets(convertedReferenceSets);
@@ -83,8 +99,9 @@ export const AdditionalReferenceSetDisplay = ({
   }, [filteredRefsetMembers, refsetConceptMap]);
 
   // Determine if we're in a loading state
-  const isLoading = (isRefsetLoading && !product.newConcept) ||
-    (isConceptsLoading || isConceptsFetching) && uniqueRefsetIds.length > 0;
+  const isLoading =
+    (isRefsetLoading && !product.newConcept) ||
+    ((isConceptsLoading || isConceptsFetching) && uniqueRefsetIds.length > 0);
 
   // Display loading state
   if (isLoading) {
@@ -106,7 +123,8 @@ export const AdditionalReferenceSetDisplay = ({
   return (
     <>
       {referenceSets.map((refSet, index) => {
-        const isLongTitle = refSet.title && refSet.title.length > CHARACTER_LIMIT;
+        const isLongTitle =
+          refSet.title && refSet.title.length > CHARACTER_LIMIT;
 
         // Build tooltip content
         let tooltipContent = isLongTitle
@@ -114,7 +132,10 @@ export const AdditionalReferenceSetDisplay = ({
           : refSet.identifier || '';
 
         // Add additional fields to tooltip if present
-        if (refSet.additionalFields && Object.keys(refSet.additionalFields).length > 0) {
+        if (
+          refSet.additionalFields &&
+          Object.keys(refSet.additionalFields).length > 0
+        ) {
           Object.entries(refSet.additionalFields).forEach(([key, value]) => {
             tooltipContent += `\n${key}: ${value}`;
           });
@@ -131,9 +152,9 @@ export const AdditionalReferenceSetDisplay = ({
                   fontSize: '0.75rem',
                   padding: '8px',
                   whiteSpace: 'pre-line',
-                  maxWidth: '300px'
-                }
-              }
+                  maxWidth: '300px',
+                },
+              },
             }}
           >
             <Chip
@@ -156,4 +177,4 @@ export const AdditionalReferenceSetDisplay = ({
       })}
     </>
   );
-}
+};

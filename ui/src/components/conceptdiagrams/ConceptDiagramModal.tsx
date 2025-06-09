@@ -1,12 +1,17 @@
-import { Accordion, AccordionDetails, AccordionSummary, Button, Typography } from '@mui/material';
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Button,
+  Typography,
+} from '@mui/material';
 import { NewConceptDetails, Product } from '../../types/concept';
 import BaseModal from '../modal/BaseModal';
 import BaseModalBody from '../modal/BaseModalBody';
 import BaseModalFooter from '../modal/BaseModalFooter';
 import BaseModalHeader from '../modal/BaseModalHeader';
 import ConceptDiagram from './ConceptDiagram';
-import AdditionalPropertiesDisplay
-  from '../../pages/products/components/AdditionalPropertiesDisplay.tsx';
+import AdditionalPropertiesDisplay from '../../pages/products/components/AdditionalPropertiesDisplay.tsx';
 import React from 'react';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
@@ -25,7 +30,7 @@ export default function ConceptDiagramModal({
   newConcept,
   product,
   keepMounted,
-  branch
+  branch,
 }: ConceptDiagramModalProps) {
   return (
     <BaseModal open={open} handleClose={handleClose} keepMounted={keepMounted}>
@@ -37,7 +42,7 @@ export default function ConceptDiagramModal({
             maxHeight: '25%', // Maximum height when expanded
             '&.Mui-expanded': {
               margin: 0, // Override default margin
-            }
+            },
           }}
           defaultExpanded={false} // Start collapsed by default
         >
@@ -51,16 +56,18 @@ export default function ConceptDiagramModal({
               minHeight: '48px',
               '&.Mui-expanded': {
                 minHeight: '48px', // Override default expanded height
-              }
+              },
             }}
           >
             <Typography>Additional Properties</Typography>
           </AccordionSummary>
-          <AccordionDetails sx={{
-            padding: 2,
-            overflowY: 'auto', // Enable scrolling for content
-            maxHeight: 'calc(25vh - 48px)' // Maximum height minus header
-          }}>
+          <AccordionDetails
+            sx={{
+              padding: 2,
+              overflowY: 'auto', // Enable scrolling for content
+              maxHeight: 'calc(25vh - 48px)', // Maximum height minus header
+            }}
+          >
             <AdditionalPropertiesDisplay
               product={product}
               branch={branch}
@@ -68,7 +75,6 @@ export default function ConceptDiagramModal({
             />
           </AccordionDetails>
         </Accordion>
-
       </BaseModalBody>
       <BaseModalFooter
         startChildren={<></>}

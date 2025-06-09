@@ -1,27 +1,32 @@
-import {useQuery, useQueryClient} from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import ConceptService from '../../../api/ConceptService';
-import {useEffect, useMemo, useState} from 'react';
-import {snowstormErrorHandler, unavailableErrorHandler,} from '../../../types/ErrorHandler.ts';
-import {useServiceStatus} from '../useServiceStatus.tsx';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  snowstormErrorHandler,
+  unavailableErrorHandler,
+} from '../../../types/ErrorHandler.ts';
+import { useServiceStatus } from '../useServiceStatus.tsx';
 
-import {FieldBindings} from '../../../types/FieldBindings.ts';
-import {emptySnowstormResponse, isSctIds,} from '../../../utils/helpers/conceptUtils.ts';
+import { FieldBindings } from '../../../types/FieldBindings.ts';
+import {
+  emptySnowstormResponse,
+  isSctIds,
+} from '../../../utils/helpers/conceptUtils.ts';
 import OntoserverService from '../../../api/OntoserverService.ts';
-import {ConceptSearchResult} from '../../../pages/products/components/SearchProduct.tsx';
-import {
-  isValueSetExpansionContains
-} from '../../../types/predicates/isValueSetExpansionContains.ts';
-import {generateEclFromBinding} from '../../../utils/helpers/EclUtils.ts';
-import {Concept, ConceptResponse} from '../../../types/concept.ts';
-import type {ValueSet} from 'fhir/r4';
-import {
-  convertFromValueSetExpansionContainsListToSnowstormConceptMiniList
-} from '../../../utils/helpers/getValueSetExpansionContainsPt.ts';
+import { ConceptSearchResult } from '../../../pages/products/components/SearchProduct.tsx';
+import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
+import { generateEclFromBinding } from '../../../utils/helpers/EclUtils.ts';
+import { Concept, ConceptResponse } from '../../../types/concept.ts';
+import type { ValueSet } from 'fhir/r4';
+import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../utils/helpers/getValueSetExpansionContainsPt.ts';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
-import {PUBLISHED_CONCEPTS, UNPUBLISHED_CONCEPTS,} from '../../../utils/statics/responses.ts';
-import {ServiceStatus} from '../../../types/applicationConfig.ts';
-import {AxiosError} from 'axios';
-import {parseSearchTermsSctId} from '../../../utils/helpers/commonUtils.ts';
+import {
+  PUBLISHED_CONCEPTS,
+  UNPUBLISHED_CONCEPTS,
+} from '../../../utils/statics/responses.ts';
+import { ServiceStatus } from '../../../types/applicationConfig.ts';
+import { AxiosError } from 'axios';
+import { parseSearchTermsSctId } from '../../../utils/helpers/commonUtils.ts';
 
 export function useSearchConceptOntoserver(
   providedEcl: string,
@@ -41,7 +46,7 @@ export function useSearchConceptOntoserver(
       searchTerm !== undefined &&
       providedEcl !== undefined &&
       providedEcl !== 'undefined' &&
-      searchTerm.length > 2 &&
+      searchTerm?.length > 2 &&
       !(allData && checkConceptSearchResultAlreadyExists(allData, searchTerm));
 
     return validConfig && (showDefaultOptions || validSearch);
@@ -205,7 +210,9 @@ export function useSearchConceptOntoServerByUrl(
       queryKey: [`onto-concept-url-${url}-${searchTerm}`],
       queryFn: () => {
         return OntoserverService.searchConceptByUrl(
-          applicationConfig.fhirServerBaseUrl,
+          searchTerm === 'cod'
+            ? 'https://ontology.snowstorm.dc4h.link/staging-auth-proxy/fhir'
+            : applicationConfig.fhirServerBaseUrl,
           url,
           applicationConfig.fhirRequestCount,
           searchTerm,
