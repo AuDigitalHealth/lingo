@@ -14,7 +14,6 @@
 /// limitations under the License.
 ///
 
-/* eslint-disable */
 import axios from 'axios';
 import useUserStore from '../stores/UserStore';
 import { useQueryClient } from '@tanstack/react-query';

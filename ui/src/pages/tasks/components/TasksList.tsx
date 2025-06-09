@@ -214,7 +214,7 @@ function TasksList({
       },
       valueGetter: (params: GridRenderCellParams<any, any>): string => {
         const associatedTickets = getTaskAssociationsByTaskId(
-          params.row.key,
+          params?.row?.key,
           taskAssociationsData,
         );
         let allTickets = '';
@@ -267,7 +267,7 @@ function TasksList({
       valueGetter: (
         params: GridRenderCellParams<any, Classification>,
       ): string => {
-        return params.value?.status as string;
+        return params?.value?.status as string;
       },
     },
     {
@@ -338,7 +338,7 @@ function TasksList({
         <CustomTaskAssigneeSelection
           user={params.value}
           userList={jiraUsers}
-          id={params.id as string}
+          id={(params.id as string) || ''}
         />
       ),
       valueGetter: (params: GridRenderCellParams<any, UserDetails>): string => {

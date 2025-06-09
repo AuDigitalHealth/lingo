@@ -6,7 +6,6 @@ import WarningModal from '../../../themes/overrides/WarningModal';
 import useAuthoringStore from '../../../stores/AuthoringStore';
 import { useFetchBulkAuthorBrands } from '../../../hooks/api/tickets/useTicketProduct';
 import { findWarningsForBrandPackSizes } from '../../../types/productValidationUtils';
-
 import { Concept } from '../../../types/concept.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
 import { Task } from '../../../types/task.ts';
@@ -18,21 +17,21 @@ import ajvErrors from 'ajv-errors';
 import AutoCompleteField from './fields/AutoCompleteField.tsx';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 import BrandArrayTemplate from './templates/bulkBrandPack/BrandArrayTemplate.tsx';
-import CustomFieldTemplate from './templates/CustomFieldTemplate.tsx';
-import NewBrandInputField from './fields/bulkBrandPack/NewBrandInputField.tsx';
-import ObjectFieldTemplate from './templates/ObjectFieldTemplate.tsx';
 import { BrandPackSizeCreationDetails } from '../../../types/product.ts';
 import TitleWidget from './widgets/TitleWidget.tsx';
 import { useQuery } from '@tanstack/react-query';
+import MuiGridTemplate from './templates/MuiGridTemplate.tsx';
+import AddBrandButton from './fields/bulkBrandPack/AddBrandButton.tsx';
+import BrandDetails from './fields/bulkBrandPack/BrandDetails.tsx';
+import ExternalIdentifier from './fields/bulkBrandPack/ExternalIdentifiers.tsx';
 import { ConfigService } from '../../../api/ConfigService.ts';
 
-// Define FormData interface
 interface FormData {
   selectedProduct?: string;
   existingBrands?: any[];
   brands: any[];
   newBrandInput: {
-    brand?: string;
+    brand?: any;
     externalIdentifiers: any[];
   };
 }
@@ -76,7 +75,11 @@ function BrandAuthoring({
 
   const [runningWarningsCheck, setRunningWarningsCheck] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]);
-  const [formData, setFormData] = useState<FormData>();
+  const [formData, setFormData] = useState<FormData>({
+    brands: [],
+    newBrandInput: { brand: undefined, externalIdentifiers: [] },
+  });
+
   const { data, isFetching } = useFetchBulkAuthorBrands(
     selectedProduct,
     task.branchPath,
@@ -90,7 +93,9 @@ function BrandAuthoring({
 
   const fields = {
     AutoCompleteField,
-    NewBrandInputField,
+    BrandDetails,
+    AddBrandButtonField: AddBrandButton,
+    ExternalIdentifier,
   };
 
   const handleClear = useCallback(() => {
@@ -109,6 +114,7 @@ function BrandAuthoring({
       const newData: FormData = {
         selectedProduct: selectedProduct.pt?.term || '',
         existingBrands: data.brands || [],
+        brands: [],
         newBrandInput: { brand: undefined, externalIdentifiers: [] },
       };
       console.log('Initial formData:', newData);
@@ -116,16 +122,21 @@ function BrandAuthoring({
     }
   }, [selectedProduct, data]);
 
-  const onSubmit = async ({ formData }: { formData: FormData }) => {
+  const onSubmit = async (submittedFormData: FormData) => {
+    setFormData(submittedFormData);
     setBrandPackSizePreviewDetails(undefined);
     const brandPackSizeDetails: BrandPackSizeCreationDetails = {
       type: 'brand-pack-size',
       productId: selectedProduct?.id,
-      brands: { productId: selectedProduct?.id, brands: formData.brands },
+      brands: {
+        productId: selectedProduct?.id,
+        brands: submittedFormData.brands,
+      },
       externalIdentifiers: [],
     };
     setBrandPackSizePreviewDetails(brandPackSizeDetails);
     setRunningWarningsCheck(true);
+
     try {
       const warnings = await findWarningsForBrandPackSizes(
         brandPackSizeDetails,
@@ -155,15 +166,22 @@ function BrandAuthoring({
     }
   };
 
+  const handlePreviewClick = () => {
+    if (formRef.current && formData) {
+      onSubmit(formData);
+    }
+  };
+
   const formContext = {
-    onChange: (newFormData: FormData) => {
-      console.log('Form context onChange:', newFormData);
+    formData,
+    onFormDataChange: (newFormData: FormData) => {
+      console.log('Form data changed:', newFormData);
       setFormData(newFormData);
     },
-    formData,
     handleClear,
-    onSubmit,
+    validator,
   };
+
   if (isSchemaLoading || isUiSchemaLoading) {
     return <ProductLoader message="Loading Schema" />;
   }
@@ -181,6 +199,7 @@ function BrandAuthoring({
     );
   if (runningWarningsCheck)
     return <ProductLoader message={`Running validation before Preview`} />;
+
   if (!selectedProduct || !data) {
     return (
       <Alert severity="info">
@@ -229,13 +248,12 @@ function BrandAuthoring({
                 onChange={({ formData: newFormData }) =>
                   setFormData(newFormData as FormData)
                 }
-                onSubmit={onSubmit}
+                onSubmit={({ formData }) => onSubmit(formData)}
                 widgets={widgets}
                 fields={fields}
                 templates={{
-                  FieldTemplate: CustomFieldTemplate,
                   ArrayFieldTemplate: BrandArrayTemplate,
-                  ObjectFieldTemplate,
+                  ObjectFieldTemplate: MuiGridTemplate,
                 }}
                 validator={validator}
                 formContext={formContext}
@@ -249,10 +267,11 @@ function BrandAuthoring({
                   }}
                 >
                   <Button
-                    type="submit"
+                    onClick={handlePreviewClick}
                     variant="contained"
                     color="primary"
                     size="small"
+                    disabled={!formData.brands || formData.brands.length === 0}
                   >
                     Preview
                   </Button>
@@ -265,6 +284,7 @@ function BrandAuthoring({
     </Box>
   );
 }
+
 export const useSchemaQuery = (branchPath: string) => {
   return useQuery({
     queryKey: ['bulk-brand-schema', branchPath],

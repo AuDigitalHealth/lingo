@@ -5,10 +5,12 @@
       "type": "object",
       "properties": {
         "conceptId": {
-          "type": "string"
+          "type": "string",
+          "default": ""
         },
         "pt": {
-          "$ref": "#/$defs/SnowstormTermLangPojo"
+          "$ref": "#/$defs/SnowstormTermLangPojo",
+          "default": {}
         }
       },
       "minProperties": 1,
@@ -97,14 +99,7 @@
           }
         },
         "preciseIngredient": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/SnowstormConceptMini"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "$ref": "#/$defs/SnowstormConceptMini"
         },
         "basisOfStrengthSubstance": {
           "$ref": "#/$defs/SnowstormConceptMini"
@@ -117,7 +112,9 @@
           "$ref": "#/$defs/Quantity"
         }
       },
-      "required": ["activeIngredient"]
+      "required": [
+        "activeIngredient"
+      ]
     },
     "ProductDetails": {
       "type": "object",
@@ -151,14 +148,7 @@
           "title": "Generic Dose Form"
         },
         "specificForm": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/SnowstormConceptMini"
-            },
-            {
-              "type": "null"
-            }
-          ],
+          "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Specific Dose Form"
         },
         "quantity": {
@@ -170,14 +160,7 @@
           "title": "Container Type"
         },
         "deviceType": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/SnowstormConceptMini"
-            },
-            {
-              "type": "null"
-            }
-          ],
+          "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Device Type"
         },
         "otherIdentifyingInformation": {
@@ -197,21 +180,41 @@
           "if": {
             "properties": {
               "genericForm": {
-                "type": ["object", "null"],
-                "not": { "type": "object", "minProperties": 1 }
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "not": {
+                  "type": "object",
+                  "minProperties": 1
+                }
               },
               "containerType": {
-                "type": ["object", "null"],
-                "not": { "type": "object", "minProperties": 1 }
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "not": {
+                  "type": "object",
+                  "minProperties": 1
+                }
               },
               "deviceType": {
-                "type": ["object", "null"],
-                "not": { "type": "object", "minProperties": 1 }
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "not": {
+                  "type": "object",
+                  "minProperties": 1
+                }
               }
             }
           },
           "then": {
-            "not": { "type": "object" },
+            "not": {
+              "type": "object"
+            },
             "errorMessage": {
               "not": "You must provide at least one of Generic Form, Container Type, or Device Type."
             }
@@ -242,7 +245,11 @@
           "$ref": "#/$defs/ProductDetails"
         }
       },
-      "required": ["unit", "value", "productDetails"],
+      "required": [
+        "unit",
+        "value",
+        "productDetails"
+      ],
       "errorMessage": {
         "required": "Contained product must be populated."
       },
@@ -260,7 +267,9 @@
                       }
                     }
                   },
-                  "required": ["conceptId"]
+                  "required": [
+                    "conceptId"
+                  ]
                 },
                 "value": {
                   "type": "integer",
@@ -279,7 +288,11 @@
               "properties": {
                 "unit": {
                   "properties": {
-                    "conceptId": { "not": { "const": "732935002" } }
+                    "conceptId": {
+                      "not": {
+                        "const": "732935002"
+                      }
+                    }
                   }
                 },
                 "value": {
@@ -293,9 +306,7 @@
               },
               "errorMessage": {
                 "oneOf": "Unit must not be 'Each' and value must be a number >= 0"
-
               }
-
             }
           ]
         }
@@ -324,7 +335,11 @@
           "$ref": "#/$defs/PackageDetails"
         }
       },
-      "required": ["unit", "value", "packageDetails"],
+      "required": [
+        "unit",
+        "value",
+        "packageDetails"
+      ],
       "errorMessage": {
         "required": "Contained Package must be populated."
       },
@@ -342,7 +357,9 @@
                       }
                     }
                   },
-                  "required": ["conceptId"]
+                  "required": [
+                    "conceptId"
+                  ]
                 },
                 "value": {
                   "type": "integer",
@@ -361,7 +378,11 @@
               "properties": {
                 "unit": {
                   "properties": {
-                    "conceptId": { "not": { "const": "732935002" } }
+                    "conceptId": {
+                      "not": {
+                        "const": "732935002"
+                      }
+                    }
                   }
                 },
                 "value": {
@@ -375,9 +396,7 @@
               },
               "errorMessage": {
                 "oneOf": "Unit must not be 'Each' and value must be a number >= 0"
-
               }
-
             }
           ]
         }
@@ -424,7 +443,6 @@
         "required": "Fields must be populated."
       }
     }
-
   },
   "properties": {
     "productName": {
@@ -486,5 +504,4 @@
       "not": "At least one of 'Contained Products' or 'Contained Packages' must be populated."
     }
   }
-
 }
