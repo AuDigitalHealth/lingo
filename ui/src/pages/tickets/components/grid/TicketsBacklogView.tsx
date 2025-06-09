@@ -107,7 +107,6 @@ export function TicketsBacklogView({
       <>
         <InputText
           data-testid="title-filter-input"
-          // eslint-disable-next-line
           value={options.value}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             options.filterCallback(e.target.value);
@@ -125,7 +124,6 @@ export function TicketsBacklogView({
       <>
         <InputText
           data-testid="ticket-number-filter-input"
-          // eslint-disable-next-line
           value={options.value}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             options.filterCallback(e.target.value);
@@ -147,7 +145,6 @@ export function TicketsBacklogView({
         <MultiSelect
           filter
           data-testid="label-filter-input"
-          // eslint-disable-next-line
           value={options.value}
           optionDisabled={(option: LabelType) => {
             if (labelFilterOperatorMode === 'and') {
@@ -196,7 +193,6 @@ export function TicketsBacklogView({
         <div className="mb-3 font-bold">External Requester Picker</div>
         <MultiSelect
           data-testid="external-requestor-filter-input"
-          // eslint-disable-next-line
           value={options.value}
           optionDisabled={(option: ExternalRequestor) => {
             if (externalRequestorFilterOperatorMode === 'and') {
@@ -242,7 +238,6 @@ export function TicketsBacklogView({
           display="chip"
           filter
           data-testid="state-filter-input"
-          // eslint-disable-next-line
           value={options.value}
           options={availableStates}
           itemTemplate={StateItemTemplate}
@@ -268,7 +263,6 @@ export function TicketsBacklogView({
           display="chip"
           filterBy="displayName"
           data-testid="assignee-filter-input"
-          // eslint-disable-next-line
           value={options.value}
           options={jiraUsers}
           itemTemplate={AssigneeItemTemplate}
@@ -292,7 +286,6 @@ export function TicketsBacklogView({
           filter
           display="chip"
           data-testid="priority-filter-input"
-          // eslint-disable-next-line
           value={options.value}
           options={priorityBuckets}
           onChange={(e: MultiSelectChangeEvent) =>
@@ -315,7 +308,6 @@ export function TicketsBacklogView({
           filter
           display="chip"
           data-testid="schedule-filter-input"
-          // eslint-disable-next-line
           value={options.value}
           options={schedules}
           onChange={(e: MultiSelectChangeEvent) =>
@@ -339,7 +331,6 @@ export function TicketsBacklogView({
           filter
           display="chip"
           data-testid="iteration-filter-input"
-          // eslint-disable-next-line
           value={options.value}
           options={iterations}
           itemTemplate={IterationItemTemplate}
@@ -362,7 +353,6 @@ export function TicketsBacklogView({
         <Dropdown
           filter
           data-testid="task-filter-input"
-          // eslint-disable-next-line
           value={options.value}
           options={allTasks}
           onChange={(e: MultiSelectChangeEvent) =>
@@ -380,7 +370,6 @@ export function TicketsBacklogView({
     return (
       <Calendar
         data-testid="date-filter-input"
-        // eslint-disable-next-line
         value={options.value}
         onChange={e => options.filterCallback(e.value, options.index)}
         selectionMode={'single'}
@@ -398,7 +387,6 @@ export function TicketsBacklogView({
     return (
       <Calendar
         data-testid="date-range-filter-input"
-        // eslint-disable-next-line
         value={options.value}
         onChange={e => options.filterCallback(e.value, options.index)}
         selectionMode={'range'}
@@ -458,7 +446,6 @@ export function TicketsBacklogView({
       emptyMessage="No Tickets Found"
       header={header}
       selectionMode={selectable ? 'checkbox' : null}
-      // eslint-disable-next-line
       selection={selectedTickets!}
       selectionPageOnly={true}
       isDataSelectable={isRowSelectable}

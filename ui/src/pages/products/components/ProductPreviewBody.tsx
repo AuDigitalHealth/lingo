@@ -1,4 +1,4 @@
-import {ProductSummary} from '../../../types/concept.ts';
+import { ProductSummary } from '../../../types/concept.ts';
 import {
   Control,
   UseFormGetValues,
@@ -8,18 +8,19 @@ import {
 } from 'react-hook-form';
 
 import useCanEditTask from '../../../hooks/useCanEditTask.tsx';
-import React, {useState} from 'react';
-import {useFieldBindings} from '../../../hooks/api/useInitializeConfig.tsx';
-import {
-  useRefsetMembersByComponentIds
-} from '../../../hooks/api/refset/useRefsetMembersByComponentIds.tsx';
-import {Box, Button, Grid} from '@mui/material';
+import React, { useState } from 'react';
+import { useFieldBindings } from '../../../hooks/api/useInitializeConfig.tsx';
+import { useRefsetMembersByComponentIds } from '../../../hooks/api/refset/useRefsetMembersByComponentIds.tsx';
+import { Box, Button, Grid } from '@mui/material';
 import ProductTypeGroupPreview from './ProductTypeGroupPreview.tsx';
-import {filterByLabel, getProductDisplayName,} from '../../../utils/helpers/conceptUtils.ts';
-import {Stack} from '@mui/system';
+import {
+  filterByLabel,
+  getProductDisplayName,
+} from '../../../utils/helpers/conceptUtils.ts';
+import { Stack } from '@mui/system';
 import UnableToEditTooltip from '../../tasks/components/UnableToEditTooltip.tsx';
 
-import {Ticket} from '../../../types/tickets/ticket.ts';
+import { Ticket } from '../../../types/tickets/ticket.ts';
 import ProductLoader from './ProductLoader.tsx';
 
 interface ProductPreviewBodyProps {
@@ -143,28 +144,28 @@ function ProductPreviewBody({
 
               // Only render the component if there are items to display
               return filteredItems && filteredItems.length > 0 ? (
-                  <ProductTypeGroupPreview
-                      key={`left-${label}-${index}`}
-                      productLabelItems={filteredItems}
-                      label={label}
-                      control={control}
-                      productModel={productModel}
-                      activeConcept={activeConcept}
-                      setActiveConcept={setActiveConcept}
-                      expandedConcepts={expandedConcepts}
-                      setExpandedConcepts={setExpandedConcepts}
-                      register={register}
-                      watch={watch}
-                      getValues={getValues}
-                      idsWithInvalidName={idsWithInvalidName}
-                      setIdsWithInvalidName={setIdsWithInvalidName}
-                      fieldBindings={fieldBindings}
-                      branch={branch}
-                      refsetData={refsetData}
-                      editProduct={editProduct}
-                      setValue={setValue}
-                      ticket={ticket}
-                  />
+                <ProductTypeGroupPreview
+                  key={`left-${label}-${index}`}
+                  productLabelItems={filteredItems}
+                  label={label}
+                  control={control}
+                  productModel={productModel}
+                  activeConcept={activeConcept}
+                  setActiveConcept={setActiveConcept}
+                  expandedConcepts={expandedConcepts}
+                  setExpandedConcepts={setExpandedConcepts}
+                  register={register}
+                  watch={watch}
+                  getValues={getValues}
+                  idsWithInvalidName={idsWithInvalidName}
+                  setIdsWithInvalidName={setIdsWithInvalidName}
+                  fieldBindings={fieldBindings}
+                  branch={branch}
+                  refsetData={refsetData}
+                  editProduct={editProduct}
+                  setValue={setValue}
+                  ticket={ticket}
+                />
               ) : null;
             })}
           </Grid>

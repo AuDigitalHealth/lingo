@@ -85,13 +85,13 @@ export default function TicketAutocomplete({
       }}
       autoComplete
       inputValue={inputValue}
-      onInputChange={(e, value) => {
+      onInputChange={(_event, value) => {
         setInputValue(value);
         if (!value) {
           setOpen(false);
         }
       }}
-      onChange={(e, value) => {
+      onChange={(_event, value) => {
         handleChange(value);
       }}
       options={options.sort((a, b) => {
@@ -139,6 +139,7 @@ export default function TicketAutocomplete({
     ></Autocomplete>
   );
 }
+
 const filterOptions = createFilterOptions({
   matchFrom: 'any',
   stringify: (option: Ticket) => `${option.title} ${option.ticketNumber}`, // Concatenates title and ticket number
