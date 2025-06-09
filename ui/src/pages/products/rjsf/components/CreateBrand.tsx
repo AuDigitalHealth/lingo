@@ -7,7 +7,7 @@ import { Ticket } from '../../../../types/tickets/ticket.ts';
 import useDebounce from '../../../../hooks/useDebounce.tsx';
 import {
   getSearchConceptsByEclOptions,
-  useSearchConceptsByEcl
+  useSearchConceptsByEcl,
 } from '../../../../hooks/api/useInitializeConcepts.tsx';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCreateBrand } from '../../../../hooks/api/products/useCreateBrand.tsx';

@@ -185,10 +185,8 @@ export function hasFiltersChanged(filters: TicketDataTableFilters): boolean {
           return true;
         }
       } else {
-        // eslint-disable-next-line
         const defaultValue =
           generateDefaultFilters()[key as keyof TicketDataTableFilters].value;
-        // eslint-disable-next-line
         const currentValue = filters[key as keyof TicketDataTableFilters].value;
 
         if (JSON.stringify(defaultValue) !== JSON.stringify(currentValue)) {
