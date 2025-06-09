@@ -4,39 +4,30 @@ import { Grid, Box, Typography } from '@mui/material';
 import AutoCompleteField from './AutoCompleteField.tsx';
 import { ConceptMini } from '../../../../types/concept.ts';
 import _ from 'lodash';
-import { getFieldName, getParentPath } from '../helpers/helpers.ts';
-import { getFieldErrors, getUniqueErrors } from '../helpers/errorUtils.ts';
-import { ErrorDisplay } from '../components/ErrorDisplay.tsx';
 
-const MutuallyExclusiveAutocompleteField = ({
-  name,
-  formData,
-  uiSchema,
-  errorSchema = {},
-  registry,
-  formContext,
-  idSchema,
-  rawErrors,
-}: FieldProps) => {
+import { RjsfUtils } from '../helpers/rjsfUtils.ts';
+
+const MutuallyExclusiveAutocompleteField: React.FC<
+  FieldProps<any, any>
+> = props => {
+  const { onChange, idSchema } = props;
+  const [formContext, setFormContext] = useState(props.formContext || {});
+  const [formData, setFormData] = useState(props.formData || {});
+  const [uiSchema, setUiSchema] = useState(props.uiSchema || {});
+  const [rootFormData, setRootFormData] = useState(formContext?.formData || {});
+  const [rootUiSchema, setRootUiSchema] = useState(formContext?.uiSchema || {});
+
   const {
-    fieldAName = '',
-    fieldBName = '',
+    fieldAPath = '',
+    fieldBPath = '',
     fieldAOptions,
     fieldBOptions,
   } = uiSchema['ui:options'] || {};
 
-  const fieldName = getFieldName(idSchema);
-  const parentPath = getParentPath(fieldName);
-  const rootFormData = _.get(
-    registry,
-    'rootSchema.formData',
-    formContext?.formData || formData || {},
-  );
+  const fieldName = RjsfUtils.rjsfIdToFormDataPath(idSchema.$id);
+  const parentPath = RjsfUtils.getParentIdOrPath(fieldName);
+  const fieldBId = RjsfUtils.resolveRelativeIdOrPath(idSchema.$id, fieldBPath);
 
-  // Get the current data at parentPath to preserve other fields
-  const currentData = _.get(rootFormData, parentPath) || {};
-
-  const initialFieldAValue = _.get(currentData, fieldAName) || null;
   const initialFieldBValue = _.get(currentData, fieldBName) || null;
 
   const [fieldAValue, setFieldAValue] = useState<ConceptMini | null>(
@@ -99,77 +90,79 @@ const MutuallyExclusiveAutocompleteField = ({
     formContext?.onChange(newRootFormData);
   };
 
-  const fieldAErrors = getUniqueErrors(rawErrors, errorSchema);
-  const fieldBErrors = getFieldErrors(
-    formContext?.errorSchema || {},
-    `${parentPath}.${fieldBName}`,
-  );
+  // const fieldAErrors = getUniqueErrors(rawErrors, errorSchema);
+  // const fieldBErrors = getFieldErrors(
+  //   formContext?.errorSchema || {},
+  //   `${parentPath}.${fieldBName}`,
+  // );
 
   return (
-    <Grid container spacing={2} alignItems="center">
-      {/* Field A (e.g., containerType) */}
-      <Grid item xs={5}>
-        <Box>
-          {!fieldAOptions?.skipTitle && (
-            <Typography variant="h6" gutterBottom>
-              {fieldAOptions?.title}
-              {/*{required && <span style={{ color: 'red' }}>*</span>}*/}
-            </Typography>
-          )}
-          <AutoCompleteField
-            name={idSchema.$id}
-            schema={{ title: fieldAOptions?.title }}
-            uiSchema={{
-              'ui:options': {
-                ...fieldAOptions,
-                disabled: isFieldADisabled,
-              },
-            }}
-            formData={fieldAValue}
-            onChange={handleFieldAChange}
-            errorSchema={errorSchema}
-          />
-          <ErrorDisplay errors={fieldAErrors} />
-        </Box>
-      </Grid>
+    <span data-component-name="MutuallyExclusiveAutocompleteField">
+      <Grid container spacing={2} alignItems="center">
+        {/* Field A (e.g., containerType) */}
+        <Grid item xs={5}>
+          <Box>
+            {!fieldAOptions?.skipTitle && (
+              <Typography variant="h6" gutterBottom>
+                {fieldAOptions?.title}
+                {/*{required && <span style={{ color: 'red' }}>*</span>}*/}
+              </Typography>
+            )}
+            <AutoCompleteField
+              name={idSchema.$id}
+              schema={{ title: fieldAOptions?.title }}
+              uiSchema={{
+                'ui:options': {
+                  ...fieldAOptions,
+                  disabled: isFieldADisabled,
+                },
+              }}
+              formData={fieldAValue}
+              onChange={handleFieldAChange}
+              errorSchema={errorSchema}
+            />
+            {/*<ErrorDisplay errors={fieldAErrors} />*/}
+          </Box>
+        </Grid>
 
-      {/* OR Label */}
-      <Grid item xs={2}>
-        <Typography
-          variant="h6"
-          align="center"
-          color="textSecondary"
-          style={{ fontWeight: 'bold' }}
-        >
-          OR
-        </Typography>
-      </Grid>
+        {/* OR Label */}
+        <Grid item xs={2}>
+          <Typography
+            variant="h6"
+            align="center"
+            color="textSecondary"
+            style={{ fontWeight: 'bold' }}
+          >
+            OR
+          </Typography>
+        </Grid>
 
-      {/* Field B (e.g., deviceType) */}
-      <Grid item xs={5}>
-        <Box>
-          {!fieldBOptions?.skipTitle && (
-            <Typography variant="h6" gutterBottom>
-              {fieldBOptions?.title}
-            </Typography>
-          )}
-          <AutoCompleteField
-            name={idSchema.$id.replaceAll(`_${fieldAName}`, `_${fieldBName}`)}
-            schema={{ title: fieldBOptions?.title }}
-            uiSchema={{
-              'ui:widget': 'hidden',
-              'ui:options': {
-                ...fieldBOptions,
-                disabled: isFieldBDisabled,
-              },
-            }}
-            formData={fieldBValue}
-            onChange={handleFieldBChange}
-          />
-          <ErrorDisplay errors={fieldBErrors} />
-        </Box>
+        {/* Field B (e.g., deviceType) */}
+        <Grid item xs={5}>
+          <Box>
+            {!fieldBOptions?.skipTitle && (
+              <Typography variant="h6" gutterBottom>
+                {fieldBOptions?.title}
+              </Typography>
+            )}
+            <AutoCompleteField
+              name={idSchema.$id.replaceAll(`_${fieldAName}`, `_${fieldBName}`)}
+              schema={{ title: fieldBOptions?.title }}
+              uiSchema={{
+                'ui:widget': 'hidden',
+                'ui:options': {
+                  ...fieldBOptions,
+                  disabled: isFieldBDisabled,
+                },
+              }}
+              formData={fieldBValue}
+              onChange={handleFieldBChange}
+            />
+            {/*<ErrorDisplay errors={fieldBErrors} />*/}
+          </Box>
+        </Grid>
       </Grid>
-    </Grid>
+    </span>
   );
 };
 

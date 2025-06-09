@@ -124,9 +124,9 @@ public class SchemaExtender {
 
     ArrayProperty resultingProperty = null;
     if (!levelMatchingProperties.isEmpty()) {
-      OneOfList referenceSetList = new OneOfList();
+      AnyOfList referenceSetList = new AnyOfList();
       levelMatchingProperties.forEach(
-          refset -> referenceSetList.getOneOf().add(SchemaFactory.create(refset)));
+          refset -> referenceSetList.getAnyOf().add(SchemaFactory.create(refset)));
 
       String updatedJsonTypeName = productPackageType + "_" + jsonTypeName;
       schemaNode
