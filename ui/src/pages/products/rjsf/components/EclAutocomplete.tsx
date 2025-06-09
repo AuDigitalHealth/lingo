@@ -1,8 +1,8 @@
-import React, {useEffect, useState} from 'react';
-import {Autocomplete, CircularProgress, TextField} from '@mui/material';
-import {Concept, ConceptMini} from '../../../../types/concept.ts';
-import {useSearchConceptsByEcl} from '../../../../hooks/api/useInitializeConcepts.tsx';
-import {FieldProps} from '@rjsf/utils';
+import React, { useEffect, useState } from 'react';
+import { Autocomplete, CircularProgress, TextField } from '@mui/material';
+import { Concept, ConceptMini } from '../../../../types/concept.ts';
+import { useSearchConceptsByEcl } from '../../../../hooks/api/useInitializeConcepts.tsx';
+import { FieldProps } from '@rjsf/utils';
 
 const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
   const {
