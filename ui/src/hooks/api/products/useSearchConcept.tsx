@@ -41,7 +41,7 @@ export function useSearchConceptOntoserver(
       searchTerm !== undefined &&
       providedEcl !== undefined &&
       providedEcl !== 'undefined' &&
-      searchTerm.length > 2 &&
+      searchTerm?.length > 2 &&
       !(allData && checkConceptSearchResultAlreadyExists(allData, searchTerm));
 
     return validConfig && (showDefaultOptions || validSearch);
@@ -205,7 +205,9 @@ export function useSearchConceptOntoServerByUrl(
       queryKey: [`onto-concept-url-${url}-${searchTerm}`],
       queryFn: () => {
         return OntoserverService.searchConceptByUrl(
-          applicationConfig.fhirServerBaseUrl,
+          searchTerm === 'cod'
+            ? 'https://ontology.snowstorm.dc4h.link/staging-auth-proxy/fhir'
+            : applicationConfig.fhirServerBaseUrl,
           url,
           applicationConfig.fhirRequestCount,
           searchTerm,

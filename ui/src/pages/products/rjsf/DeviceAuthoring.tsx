@@ -1,11 +1,10 @@
 import React, { useCallback, useState, useRef } from 'react';
 import { Form } from '@rjsf/mui';
-import { Container, Button, Box, Paper } from '@mui/material';
+import { Container, Button, Box, Paper, Autocomplete } from '@mui/material';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import _ from 'lodash';
 import ajvErrors from 'ajv-errors';
 import AutoCompleteField from './fields/AutoCompleteField.tsx';
-import ParentChildAutoCompleteField from './fields/ParentChildAutoCompleteField.tsx';
 import UnitValueUnWrappedField from './fields/UnitValueUnWrappedField.tsx';
 import ProductLoader from '../components/ProductLoader.tsx';
 import ProductPreviewCreateModal from '../components/ProductPreviewCreateModal.tsx';
@@ -32,6 +31,8 @@ import {
 import { useTicketProductQuery } from './hooks/useTicketProductQuery.ts';
 import ProductPartialSaveModal from './components/ProductPartialSaveModal.tsx';
 import { DraftSubmitPanel } from './components/DarftSubmitPanel.tsx';
+import MuiGridTemplate from './templates/MuiGridTemplate.tsx';
+import ExternalIdentifiers from './fields/bulkBrandPack/ExternalIdentifiers.tsx';
 export interface DeviceAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
   task: Task;
@@ -161,12 +162,12 @@ function DeviceAuthoring({
             fields={{
               UnitValueUnWrappedField: UnitValueUnWrappedField,
               AutoCompleteField,
-              ParentChildAutoCompleteField,
+              ExternalIdentifiers,
             }}
             templates={{
               FieldTemplate: CustomFieldTemplate,
               ArrayFieldTemplate: CustomArrayFieldTemplate,
-              ObjectFieldTemplate: CustomObjectFieldTemplate,
+              ObjectFieldTemplate: MuiGridTemplate,
             }}
             validator={validator}
             widgets={{

@@ -15,15 +15,15 @@ import ProductPreviewCreateModal from '../components/ProductPreviewCreateModal.t
 import { customizeValidator } from '@rjsf/validator-ajv8';
 import ajvErrors from 'ajv-errors';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
-
-import CustomFieldTemplate from './templates/CustomFieldTemplate.tsx';
-import ObjectFieldTemplate from './templates/ObjectFieldTemplate.tsx';
-import PackSizeArrayTemplate from './templates/bulkBrandPack/PackSizeArrayTemplate.tsx'; // You'll need to create this if you want custom array rendering
+import PackSizeArrayTemplate from './templates/bulkBrandPack/PackSizeArrayTemplate.tsx';
 import { BrandPackSizeCreationDetails } from '../../../types/product.ts';
-import NewPackSizeInputField from './fields/bulkBrandPack/NewPackSizeInputField.tsx';
 import TitleWidget from './widgets/TitleWidget.tsx';
 import AutoCompleteField from './fields/AutoCompleteField.tsx';
 import { useQuery } from '@tanstack/react-query';
+import MuiGridTemplate from './templates/MuiGridTemplate.tsx';
+import AddPackSizeButton from './fields/bulkBrandPack/AddPackSizeButton.tsx';
+import ExternalIdentifiers from './fields/bulkBrandPack/ExternalIdentifiers.tsx';
+import PackDetails from './fields/bulkBrandPack/PackDetails.tsx';
 import { ConfigService } from '../../../api/ConfigService.ts';
 
 interface FormData {
@@ -34,6 +34,7 @@ interface FormData {
     packSize?: number;
     externalIdentifiers: any[];
   };
+  unitOfMeasure?: any;
 }
 
 const Form = withTheme(Theme);
@@ -75,7 +76,11 @@ function PackSizeAuthoring({
 
   const [runningWarningsCheck, setRunningWarningsCheck] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]);
-  const [formData, setFormData] = useState<FormData>({});
+  const [formData, setFormData] = useState<FormData>({
+    packSizes: [],
+    newPackSizeInput: { packSize: undefined, externalIdentifiers: [] },
+  });
+
   const { data, isFetching } = useFetchBulkAuthorPackSizes(
     selectedProduct,
     task.branchPath,
@@ -88,8 +93,10 @@ function PackSizeAuthoring({
   };
 
   const fields = {
-    NewPackSizeInputField,
+    AddButtonField: AddPackSizeButton,
     AutoCompleteField,
+    PackDetails,
+    ExternalIdentifiers,
   };
 
   const handleClear = useCallback(() => {
@@ -109,6 +116,7 @@ function PackSizeAuthoring({
         selectedProduct: selectedProduct.pt?.term || '',
         existingPackSizes: data.packSizes || [],
         unitOfMeasure: data.unitOfMeasure,
+        packSizes: [],
         newPackSizeInput: { packSize: undefined, externalIdentifiers: [] },
       };
       console.log('Initial formData:', newData);
@@ -124,7 +132,7 @@ function PackSizeAuthoring({
       productId: selectedProduct?.id,
       packSizes: {
         productId: selectedProduct?.id,
-        unitOfMeasure: data?.unitOfMeasure, // Assuming this comes from the fetched data
+        unitOfMeasure: data?.unitOfMeasure,
         packSizes: submittedFormData.packSizes,
       },
       externalIdentifiers: [],
@@ -166,13 +174,15 @@ function PackSizeAuthoring({
       onSubmit(formData);
     }
   };
+
   const formContext = {
-    onChange: (newFormData: FormData) => {
+    formData,
+    onFormDataChange: (newFormData: FormData) => {
+      console.log('Form data changed:', newFormData);
       setFormData(newFormData);
     },
-    formData,
+    unitOfMeasure: data?.unitOfMeasure,
     handleClear,
-    onSubmit: (data: { formData: FormData }) => onSubmit(data.formData),
     validator,
   };
 
@@ -190,6 +200,7 @@ function PackSizeAuthoring({
     );
   if (runningWarningsCheck)
     return <ProductLoader message={`Running validation before Preview`} />;
+
   if (!selectedProduct || !data) {
     return (
       <Alert severity="info">
@@ -242,9 +253,8 @@ function PackSizeAuthoring({
                 widgets={widgets}
                 fields={fields}
                 templates={{
-                  FieldTemplate: CustomFieldTemplate,
-                  ArrayFieldTemplate: PackSizeArrayTemplate, // Create this if needed
-                  ObjectFieldTemplate,
+                  ArrayFieldTemplate: PackSizeArrayTemplate,
+                  ObjectFieldTemplate: MuiGridTemplate,
                 }}
                 validator={validator}
                 formContext={formContext}
@@ -263,8 +273,7 @@ function PackSizeAuthoring({
                     color="primary"
                     size="small"
                     disabled={
-                      !formContext.formData.packSizes ||
-                      formContext.formData.packSizes.length === 0
+                      !formData.packSizes || formData.packSizes.length === 0
                     }
                   >
                     Preview
@@ -278,6 +287,7 @@ function PackSizeAuthoring({
     </Box>
   );
 }
+
 export const useSchemaQuery = (branchPath: string) => {
   return useQuery({
     queryKey: ['bulk-pack-schema', branchPath],
@@ -293,4 +303,5 @@ export const useUiSchemaQuery = (branchPath: string) => {
     enabled: !!branchPath,
   });
 };
+
 export default PackSizeAuthoring;

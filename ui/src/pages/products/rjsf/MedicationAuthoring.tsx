@@ -4,19 +4,18 @@ import {Box, Button, Container, Paper} from '@mui/material';
 import {useMutation, useQuery} from '@tanstack/react-query';
 import _ from 'lodash';
 import ajvErrors from 'ajv-errors';
+
 import UnitValueField from './fields/UnitValueField.tsx';
 import AutoCompleteField from './fields/AutoCompleteField.tsx';
-import ParentChildAutoCompleteField from './fields/ParentChildAutoCompleteField.tsx';
-import MutuallyExclusiveAutocompleteField from './fields/MutuallyExclusiveAutocompleteField.tsx';
 import ConditionalArrayField from './fields/ConditionalArrayField.tsx';
 import CompactQuantityField from './fields/CompactQuantityField.tsx';
 import UnitValueUnWrappedField from './fields/UnitValueUnWrappedField.tsx';
 import ProductLoader from '../components/ProductLoader.tsx';
 import ProductPreviewCreateModal from '../components/ProductPreviewCreateModal.tsx';
-import CustomFieldTemplate from './templates/CustomFieldTemplate.tsx';
 import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
 import CustomObjectFieldTemplate from './templates/CustomObjectFieldTemplate.tsx';
 import NumberWidget from './widgets/NumberWidget.tsx';
+import ExternalIdentifiers from './fields/bulkBrandPack/ExternalIdentifiers.tsx';
 import TextFieldWidget from './widgets/TextFieldWidget.tsx';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 import productService from '../../../api/ProductService.ts';
@@ -37,6 +36,7 @@ import {
 import {useTicketProductQuery} from './hooks/useTicketProductQuery.ts';
 import {DraftSubmitPanel} from './components/DarftSubmitPanel.tsx';
 import ProductPartialSaveModal from './components/ProductPartialSaveModal.tsx';
+import MuiGridTemplate from './templates/MuiGridTemplate.tsx';
 
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -60,12 +60,14 @@ function MedicationAuthoring({
   const [isDirty, setIsDirty] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const formRef = useRef<any>(null);
+
   const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
     task.branchPath,
   );
   const { data: uiSchema, isLoading: isUiSchemaLoading } = useUiSchemaQuery(
     task.branchPath,
   );
+
   const { isLoading, isFetching } = useProductQuery({
     selectedProduct,
     task,
@@ -149,20 +151,6 @@ function MedicationAuthoring({
       return acc;
     }, {});
     setErrorSchema(newErrorSchema);
-    // enqueueSnackbar(
-    //   'Error Validating Product Definition.',
-    //   {
-    //     variant: 'error',
-    //     autoHideDuration: 2000,
-    //   },
-    // );
-    // enqueueSnackbar(
-    //   'Error Validating Product Definition' +
-    //     (newErrorSchema ? `: ${formatErrors(newErrorSchema)}` : ``),
-    //   {
-    //     variant: 'error',
-    //   },
-    // );
   };
 
   return (
@@ -171,37 +159,34 @@ function MedicationAuthoring({
         <Container data-testid="product-creation-grid">
           <Form
             ref={formRef}
-            schema={schema}
-            uiSchema={uiSchema}
+            schema={schema as any}
+            uiSchema={uiSchema as any}
             formData={formData}
             formContext={formContext}
+            fields={{
+              AutoCompleteField,
+              ConditionalArrayField,
+              ExternalIdentifiers,
+              UnitValueUnWrappedField,
+              UnitValueField,
+              CompactQuantityField,
+            }}
+            widgets={{
+              TextFieldWidget,
+              OneOfArrayWidget,
+              NumberWidget,
+            }}
+            templates={{
+              ArrayFieldTemplate: CustomArrayFieldTemplate,
+              ObjectFieldTemplate: MuiGridTemplate,
+            }}
             onChange={handleChange}
             onSubmit={handleFormSubmit}
             onError={onError}
-            fields={{
-              UnitValueField,
-              AutoCompleteField,
-              ParentChildAutoCompleteField,
-              MutuallyExclusiveAutocompleteField,
-              ConditionalArrayField,
-              CompactQuantityField,
-              UnitValueUnWrappedField,
-            }}
-            templates={{
-              FieldTemplate: CustomFieldTemplate,
-              ArrayFieldTemplate: CustomArrayFieldTemplate,
-              ObjectFieldTemplate: CustomObjectFieldTemplate,
-            }}
             validator={validator}
-            noValidate={true}
-            noHtml5Validate={true}
-
-            widgets={{
-              NumberWidget,
-              TextFieldWidget,
-              OneOfArrayWidget,
-            }}
             disabled={isPending}
+            noHtml5Validate={true}
+            noValidate={false}
           >
             <Box
               sx={{

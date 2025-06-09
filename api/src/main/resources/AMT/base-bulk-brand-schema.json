@@ -33,7 +33,7 @@
     },
     "ExternalIdentifier": {
       "type": "object",
-      "oneOf": [
+      "anyOf": [
         {
           "title": "ARTGID",
           "type": "object",
@@ -77,8 +77,8 @@
             "$ref": "#/$defs/ExternalIdentifier"
           }
         }
-
-      }
+      },
+      "required": ["brand"]
     }
   },
   "properties": {
@@ -95,19 +95,16 @@
     },
     "brands": {
       "type": "array",
-      "title": "Newly Added Brands",
+      "title": "New Brands",
       "items": {
         "$ref": "#/$defs/BrandDetails"
       }
     },
     "newBrandInput": {
-      "$ref": "#/$defs/BrandDetails",
-      "title": "Add New Brand"
+      "$ref": "#/$defs/BrandDetails"
+    },
+    "addButton": {
+      "type": "null"
     }
-  },
-  "required": ["brands"],
-  "errorMessage": {
-    "required": "Fields must be populated."
-  },
-  "additionalProperties": false
+  }
 }
