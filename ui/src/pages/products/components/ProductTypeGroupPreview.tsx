@@ -1,4 +1,4 @@
-import {Product, ProductSummary} from '../../../types/concept.ts';
+import { Product, ProductSummary } from '../../../types/concept.ts';
 import {
   Control,
   UseFormGetValues,
@@ -7,14 +7,22 @@ import {
   UseFormWatch,
 } from 'react-hook-form';
 import React from 'react';
-import {FieldBindings} from '../../../types/FieldBindings.ts';
-import {RefsetMember} from '../../../types/RefsetMember.ts';
-import {AccordionDetails, AccordionSummary, Grid, Typography,} from '@mui/material';
+import { FieldBindings } from '../../../types/FieldBindings.ts';
+import { RefsetMember } from '../../../types/RefsetMember.ts';
+import {
+  AccordionDetails,
+  AccordionSummary,
+  Grid,
+  Typography,
+} from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import {isFsnToggleOn, OWL_EXPRESSION_ID,} from '../../../utils/helpers/conceptUtils.ts';
+import {
+  isFsnToggleOn,
+  OWL_EXPRESSION_ID,
+} from '../../../utils/helpers/conceptUtils.ts';
 import ProductPreviewPanel from './ProductPreviewPanel.tsx';
-import {ProductPreviewAccordion} from './ProductPreviewAccordion.tsx';
-import {Ticket} from '../../../types/tickets/ticket.ts';
+import { ProductPreviewAccordion } from './ProductPreviewAccordion.tsx';
+import { Ticket } from '../../../types/tickets/ticket.ts';
 
 interface ProductTypeGroupPreviewProps {
   productLabelItems: Product[];
@@ -58,7 +66,6 @@ function ProductTypeGroupPreview({
   setValue,
   ticket,
 }: ProductTypeGroupPreviewProps) {
-
   return (
     <Grid>
       <ProductPreviewAccordion

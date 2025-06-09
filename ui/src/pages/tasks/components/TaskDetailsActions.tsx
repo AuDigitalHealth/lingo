@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { Button, ButtonGroup, Grid, SxProps } from '@mui/material';
 import useTaskById from '../../../hooks/useTaskById';
 import NotificationsIcon from '@mui/icons-material/Notifications';

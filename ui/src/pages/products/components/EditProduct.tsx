@@ -1,13 +1,13 @@
-import React, {useCallback, useState} from 'react';
-import {ActionType} from '../../../types/product.ts';
-import {Alert, AlertTitle, Box, Button, Grid} from '@mui/material';
+import React, { useCallback, useState } from 'react';
+import { ActionType } from '../../../types/product.ts';
+import { Alert, AlertTitle, Box, Button, Grid } from '@mui/material';
 
-import {Concept} from '../../../types/concept.ts';
+import { Concept } from '../../../types/concept.ts';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 
-import {Ticket} from '../../../types/tickets/ticket.ts';
-import {isFsnToggleOn} from '../../../utils/helpers/conceptUtils.ts';
-import {useConceptModel} from '../../../hooks/api/products/useConceptModel.tsx';
+import { Ticket } from '../../../types/tickets/ticket.ts';
+import { isFsnToggleOn } from '../../../utils/helpers/conceptUtils.ts';
+import { useConceptModel } from '../../../hooks/api/products/useConceptModel.tsx';
 import Loading from '../../../components/Loading.tsx';
 import ProductPreviewEditMode from '../ProductPreviewEditMode.tsx';
 

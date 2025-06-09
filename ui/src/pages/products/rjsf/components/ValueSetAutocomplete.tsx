@@ -1,12 +1,10 @@
-import React, {useEffect, useState} from 'react';
-import {Autocomplete, CircularProgress, TextField} from '@mui/material';
-import {Concept} from '../../../../types/concept.ts';
-import {useSearchConceptOntoServerByUrl} from '../../../../hooks/api/products/useSearchConcept.tsx';
-import {
-  convertFromValueSetExpansionContainsListToSnowstormConceptMiniList
-} from '../../../../utils/helpers/getValueSetExpansionContainsPt.ts';
+import React, { useEffect, useState } from 'react';
+import { Autocomplete, CircularProgress, TextField } from '@mui/material';
+import { Concept } from '../../../../types/concept.ts';
+import { useSearchConceptOntoServerByUrl } from '../../../../hooks/api/products/useSearchConcept.tsx';
+import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../../utils/helpers/getValueSetExpansionContainsPt.ts';
 import useApplicationConfigStore from '../../../../stores/ApplicationConfigStore.ts';
-import {FieldProps} from '@rjsf/utils';
+import { FieldProps } from '@rjsf/utils';
 
 interface ValueSetAutocompleteProps extends FieldProps {
   label?: string;
@@ -92,7 +90,9 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
       data-testid={idSchema?.$id || name}
       loading={isLoading}
       options={disabled ? [] : options}
-      getOptionLabel={option => (option?.conceptId ? option.conceptId + " - " + option?.pt?.term : '')}
+      getOptionLabel={option =>
+        option?.conceptId ? option.conceptId + ' - ' + option?.pt?.term : ''
+      }
       value={selectedConcept} // Controlled by selectedConcept
       onInputChange={(_, newInputValue) => setInputValue(newInputValue)}
       onChange={(_, selectedValue) => handleChange(selectedValue as Concept)}
@@ -103,10 +103,11 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
       renderOption={(props, option) => {
         const { key, ...otherProps } = props;
         return (
-            <li {...otherProps} key={option.conceptId}>
-              {option.conceptId + " - " + option?.pt?.term}
-            </li>
-        )}}
+          <li {...otherProps} key={option.conceptId}>
+            {option.conceptId + ' - ' + option?.pt?.term}
+          </li>
+        );
+      }}
       renderInput={params => (
         <TextField
           {...params}
@@ -231,10 +232,11 @@ export const MultiValueValueSetAutocomplete: React.FC<
       renderOption={(props, option) => {
         const { key, ...otherProps } = props;
         return (
-            <li {...otherProps} key={option.conceptId}>
-              {option.conceptId + " - " + option?.pt?.term}
-            </li>
-        )}}
+          <li {...otherProps} key={option.conceptId}>
+            {option.conceptId + ' - ' + option?.pt?.term}
+          </li>
+        );
+      }}
       renderInput={params => (
         <TextField
           {...params}

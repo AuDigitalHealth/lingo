@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react';
+import { useEffect, useState } from 'react';
 import {
   Autocomplete,
   Box,
@@ -21,7 +21,7 @@ import {
   GridValidRowModel,
   GridValueGetterParams,
 } from '@mui/x-data-grid';
-import {LoadingButton} from '@mui/lab';
+import { LoadingButton } from '@mui/lab';
 import ClearIcon from '@mui/icons-material/Clear';
 import SearchIcon from '@mui/icons-material/Search';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -31,16 +31,16 @@ import BaseModal from '../../../components/modal/BaseModal.tsx';
 import BaseModalBody from '../../../components/modal/BaseModalBody.tsx';
 import BaseModalHeader from '../../../components/modal/BaseModalHeader.tsx';
 import BaseModalFooter from '../../../components/modal/BaseModalFooter.tsx';
-import {ECL_SCOPES} from '../utils/constants.tsx';
-import {useConceptsByEcl} from '../../../hooks/eclRefset/useConceptsByEcl.tsx';
+import { ECL_SCOPES } from '../utils/constants.tsx';
+import { useConceptsByEcl } from '../../../hooks/eclRefset/useConceptsByEcl.tsx';
 import useDebounce from '../../../hooks/useDebounce.tsx';
-import {Concept, Term} from '../../../types/concept.ts';
-import {useServiceStatus} from '../../../hooks/api/useServiceStatus.tsx';
+import { Concept, Term } from '../../../types/concept.ts';
+import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import ConceptDetailsModal from './ConceptDetailsModal.tsx';
-import {SnowstormError} from '../../../types/ErrorHandler.ts';
-import {AxiosError} from 'axios';
+import { SnowstormError } from '../../../types/ErrorHandler.ts';
+import { AxiosError } from 'axios';
 import InvalidEclError from './InvalidEclError.tsx';
-import {useValidateConcepts} from '../../../hooks/eclRefset/useValidateConcepts.tsx';
+import { useValidateConcepts } from '../../../hooks/eclRefset/useValidateConcepts.tsx';
 
 interface ScopeOption {
   label: string;
@@ -312,15 +312,23 @@ export default function TickFlickSearchModal({
                     return option.ecl;
                   }}
                   renderOption={(props: object, option) => {
-                    const { key, ...otherProps } = props;
+                    const { key: key, ...otherProps } = props;
                     return (
-                    <Box {...otherProps} key={`${option.ecl} ${option.custom}`}>
-                      <Box width={'100%'}>
-                        <Typography variant="body1">{option.label}</Typography>
-                        <Typography variant="caption">{option.ecl}</Typography>
+                      <Box
+                        {...otherProps}
+                        key={`${option.ecl} ${option.custom}`}
+                      >
+                        <Box width={'100%'}>
+                          <Typography variant="body1">
+                            {option.label}
+                          </Typography>
+                          <Typography variant="caption">
+                            {option.ecl}
+                          </Typography>
+                        </Box>
                       </Box>
-                    </Box>
-                  )}}
+                    );
+                  }}
                   sx={{ flex: 1, width: 500 }}
                 />
               </Stack>

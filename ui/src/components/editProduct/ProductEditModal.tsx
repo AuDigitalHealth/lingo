@@ -9,7 +9,7 @@ import {
   Select,
   Switch,
   TextField,
-  Typography
+  Typography,
 } from '@mui/material';
 import BaseModal from '../modal/BaseModal';
 import BaseModalBody from '../modal/BaseModalBody';
@@ -19,7 +19,7 @@ import { Acceptability, Description, Product } from '../../types/concept.ts';
 import { Box, Stack } from '@mui/system';
 import {
   FieldLabelRequired,
-  InnerBoxSmall
+  InnerBoxSmall,
 } from '../../pages/products/components/style/ProductBoxes.tsx';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -31,25 +31,25 @@ import {
   useFieldArray,
   useForm,
   UseFormHandleSubmit,
-  useFormState
+  useFormState,
 } from 'react-hook-form';
 import {
   ExternalIdentifier,
   ProductDescriptionUpdateRequest,
   ProductExternalRequesterUpdateRequest,
-  ProductUpdateRequest
+  ProductUpdateRequest,
 } from '../../types/product.ts';
 import ArtgAutoComplete from '../../pages/products/components/ArtgAutoComplete.tsx';
 import {
   useUpdateProductDescription,
-  useUpdateProductExternalIdentifiers
+  useUpdateProductExternalIdentifiers,
 } from '../../hooks/api/products/useUpdateProductDescription.tsx';
 import { Ticket } from '../../types/tickets/ticket.ts';
 import ConceptService from '../../api/ConceptService.ts';
 import { useTheme } from '@mui/material/styles';
 import {
   areTwoExternalIdentifierArraysEqual,
-  sortExternalIdentifiers
+  sortExternalIdentifiers,
 } from '../../utils/helpers/tickets/additionalFieldsUtils.ts';
 import { getSearchConceptsByEclOptions } from '../../hooks/api/useInitializeConcepts.tsx';
 import { generateEclFromBinding } from '../../utils/helpers/EclUtils.ts';
@@ -63,12 +63,13 @@ import { SnowstormError } from '../../types/ErrorHandler.ts';
 import { useSearchConceptById } from '../../hooks/api/products/useSearchConcept.tsx';
 import { cloneDeep, isEqual } from 'lodash';
 import { Add, Delete } from '@mui/icons-material';
-import useAvailableProjects, { getProjectFromKey } from '../../hooks/api/useInitializeProjects.tsx';
+import useAvailableProjects, {
+  getProjectFromKey,
+} from '../../hooks/api/useInitializeProjects.tsx';
 import useApplicationConfigStore from '../../stores/ApplicationConfigStore.ts';
 import { LanguageRefset, Project } from '../../types/Project.ts';
 import ConfirmationModal from '../../themes/overrides/ConfirmationModal.tsx';
-import AdditionalPropertiesDisplay
-  from '../../pages/products/components/AdditionalPropertiesDisplay.tsx';
+import AdditionalPropertiesDisplay from '../../pages/products/components/AdditionalPropertiesDisplay.tsx';
 
 const USLangRefset: LanguageRefset = {
   default: 'false',
@@ -536,158 +537,154 @@ function EditConceptBody({
   };
 
   return (
-      <Box sx={{ width: '100%' }}>
-        <Grid
-          container
-          direction="row"
-          spacing={3}
-          paddingTop={2}
-          paddingBottom={3}
-          alignItems="start"
-        >
-          {/* Main Content */}
-          <Grid item xs={12}>
-            <Grid container spacing={2} sx={{ width: '100%' }} paddingLeft={2}>
-              {/* Wrapper for Left and Right Sections */}
+    <Box sx={{ width: '100%' }}>
+      <Grid
+        container
+        direction="row"
+        spacing={3}
+        paddingTop={2}
+        paddingBottom={3}
+        alignItems="start"
+      >
+        {/* Main Content */}
+        <Grid item xs={12}>
+          <Grid container spacing={2} sx={{ width: '100%' }} paddingLeft={2}>
+            {/* Wrapper for Left and Right Sections */}
+            <Grid
+              item
+              container
+              xs={12}
+              sx={{
+                display: 'flex',
+                alignItems: 'stretch', // Ensures both sections stretch equally
+              }}
+            >
+              {/* Left Section */}
+              <LeftSection
+                product={product}
+                descriptions={sortedDescriptions}
+                dialects={langRefsets}
+                branch={branch}
+              />
+
+              {/* Right Section */}
               <Grid
                 item
-                container
-                xs={12}
+                xs={6}
                 sx={{
                   display: 'flex',
-                  alignItems: 'stretch', // Ensures both sections stretch equally
+                  flexDirection: 'column',
+                  paddingLeft: 1,
+                  position: 'relative',
                 }}
               >
-                {/* Left Section */}
-                <LeftSection
-                  product={product}
-                  descriptions={sortedDescriptions}
-                  dialects={langRefsets}
-                  branch={branch}
-                />
-
-                {/* Right Section */}
-                <Grid
-                  item
-                  xs={6}
+                <Typography variant="h6" marginBottom={1}>
+                  New
+                </Typography>
+                <Box
+                  border={0.1}
+                  borderColor="grey.200"
+                  padding={2}
                   sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    paddingLeft: 1,
-                    position: 'relative',
+                    height: '100%',
+                    width: '100%',
+                    flexGrow: 1,
                   }}
                 >
-                  <Typography variant="h6" marginBottom={1}>
-                    New
-                  </Typography>
-                  <Box
-                    border={0.1}
-                    borderColor="grey.200"
-                    padding={2}
-                    sx={{
-                      height: '100%',
-                      width: '100%',
-                      flexGrow: 1,
-                    }}
-                  >
-                    <form
-                      onSubmit={event => void handleSubmit(onSubmit)(event)}
-                    >
-                      <ConfirmationModal
-                        keepMounted={true}
-                        open={confirmationModalOpen}
-                        content={
-                          'Any Changes to the FSN or PT will not cascade to any other products that use this concept. Is that okay?'
-                        }
-                        handleClose={handleCloseModal}
-                        title={'Confirm Change'}
-                        action={'Confirm'}
-                        handleAction={handleConfirmAction}
-                      />
-                      <InnerBoxSmall component="fieldset">
-                        <FieldLabelRequired>FSN</FieldLabelRequired>
-                        {/* {!isLoading && */}
-                        {!isLoading &&
-                          fields.map((field, index) => {
-                            return (
-                              <FieldDescriptions
-                                field={field}
-                                sortedDescriptions={sortedDescriptions}
-                                index={index}
-                                handleDeleteDescription={
-                                  handleDeleteDescription
-                                }
-                                isPreferredTerm={isPreferredTerm}
-                                langRefsets={langRefsets}
-                                control={control}
-                                project={project}
-                                disabled={isUpdating}
-                              />
-                            );
-                          })}
-                      </InnerBoxSmall>
-                      <IconButton
-                        onClick={handleAddDescription}
-                        aria-label="add description"
-                      >
-                        <Add />
-                      </IconButton>
-                      {isCtpp && (
-                        <Grid>
-                          <InnerBoxSmall component="fieldset">
-                            <legend>bar Ids</legend>
-                            <Grid paddingTop={1}></Grid>
-                            <ArtgAutoComplete
-                              name="externalRequesterUpdate.externalIdentifiers"
+                  <form onSubmit={event => void handleSubmit(onSubmit)(event)}>
+                    <ConfirmationModal
+                      keepMounted={true}
+                      open={confirmationModalOpen}
+                      content={
+                        'Any Changes to the FSN or PT will not cascade to any other products that use this concept. Is that okay?'
+                      }
+                      handleClose={handleCloseModal}
+                      title={'Confirm Change'}
+                      action={'Confirm'}
+                      handleAction={handleConfirmAction}
+                    />
+                    <InnerBoxSmall component="fieldset">
+                      <FieldLabelRequired>FSN</FieldLabelRequired>
+                      {/* {!isLoading && */}
+                      {!isLoading &&
+                        fields.map((field, index) => {
+                          return (
+                            <FieldDescriptions
+                              field={field}
+                              sortedDescriptions={sortedDescriptions}
+                              index={index}
+                              handleDeleteDescription={handleDeleteDescription}
+                              isPreferredTerm={isPreferredTerm}
+                              langRefsets={langRefsets}
                               control={control}
-                              error={
-                                errors?.externalRequesterUpdate
-                                  ?.externalIdentifiers as FieldError
-                              }
-                              dataTestId="package-brand"
-                              optionValues={[]}
-                              handleChange={(
-                                artgs: ExternalIdentifier[] | null,
-                              ) => {
-                                setArtgOptVals(artgs ? artgs : []);
-                              }}
+                              project={project}
+                              disabled={isUpdating}
                             />
-                            {artgOptVals.length === 0 &&
-                              product.externalIdentifiers &&
-                              product.externalIdentifiers?.length > 0 && (
-                                <Box style={{ marginBottom: '-2' }}>
-                                  <span
-                                    style={{
-                                      color: `${theme.palette.warning.darker}`,
-                                    }}
-                                  >
-                                    Warning!: This will remove all the artg
-                                    ids{' '}
-                                  </span>
-                                </Box>
-                              )}
-                          </InnerBoxSmall>
-                        </Grid>
-                      )}
-                    </form>
-                  </Box>
-                </Grid>
+                          );
+                        })}
+                    </InnerBoxSmall>
+                    <IconButton
+                      onClick={handleAddDescription}
+                      aria-label="add description"
+                    >
+                      <Add />
+                    </IconButton>
+                    {isCtpp && (
+                      <Grid>
+                        <InnerBoxSmall component="fieldset">
+                          <legend>bar Ids</legend>
+                          <Grid paddingTop={1}></Grid>
+                          <ArtgAutoComplete
+                            name="externalRequesterUpdate.externalIdentifiers"
+                            control={control}
+                            error={
+                              errors?.externalRequesterUpdate
+                                ?.externalIdentifiers as FieldError
+                            }
+                            dataTestId="package-brand"
+                            optionValues={[]}
+                            handleChange={(
+                              artgs: ExternalIdentifier[] | null,
+                            ) => {
+                              setArtgOptVals(artgs ? artgs : []);
+                            }}
+                          />
+                          {artgOptVals.length === 0 &&
+                            product.externalIdentifiers &&
+                            product.externalIdentifiers?.length > 0 && (
+                              <Box style={{ marginBottom: '-2' }}>
+                                <span
+                                  style={{
+                                    color: `${theme.palette.warning.darker}`,
+                                  }}
+                                >
+                                  Warning!: This will remove all the artg
+                                  ids{' '}
+                                </span>
+                              </Box>
+                            )}
+                        </InnerBoxSmall>
+                      </Grid>
+                    )}
+                  </form>
+                </Box>
               </Grid>
             </Grid>
           </Grid>
-
-          {/* Buttons - Positioned at the Right Bottom */}
-          <ActionButton
-            control={control}
-            resetAndClose={resetAndClose}
-            isSubmitting={isUpdating}
-            handleSubmit={handleSubmit}
-            onSubmit={onSubmit}
-            toggleDisplayRetiredDescriptions={toggleDisplayRetiredDescriptions}
-            displayRetiredDescriptions={displayRetiredDescriptions}
-          />
         </Grid>
-      </Box>
+
+        {/* Buttons - Positioned at the Right Bottom */}
+        <ActionButton
+          control={control}
+          resetAndClose={resetAndClose}
+          isSubmitting={isUpdating}
+          handleSubmit={handleSubmit}
+          onSubmit={onSubmit}
+          toggleDisplayRetiredDescriptions={toggleDisplayRetiredDescriptions}
+          displayRetiredDescriptions={displayRetiredDescriptions}
+        />
+      </Grid>
+    </Box>
   );
 }
 interface LeftSectionProps {
@@ -702,7 +699,7 @@ function LeftSection({
   product,
   descriptions,
   dialects,
-  branch
+  branch,
 }: LeftSectionProps) {
   // Function to determine preferred term based on AU dialect
   const isPreferredTerm = (description: Description): boolean => {
@@ -802,7 +799,11 @@ function LeftSection({
           })}
         </InnerBoxSmall>
 
-        <AdditionalPropertiesDisplay product={product} branch={branch} showWrapper={false} />
+        <AdditionalPropertiesDisplay
+          product={product}
+          branch={branch}
+          showWrapper={false}
+        />
       </Box>
     </Grid>
   );

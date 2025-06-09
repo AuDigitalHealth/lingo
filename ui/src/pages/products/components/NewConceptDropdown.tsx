@@ -1,8 +1,16 @@
 import { Product, ProductSummary } from '../../../types/concept.ts';
-import { Control, Controller, UseFormGetValues, UseFormRegister } from 'react-hook-form';
+import {
+  Control,
+  Controller,
+  UseFormGetValues,
+  UseFormRegister,
+} from 'react-hook-form';
 import { FormHelperText, Grid, Stack, TextField } from '@mui/material';
 import { InnerBoxSmall } from './style/ProductBoxes.tsx';
-import { filterKeypress, setEmptyToNull } from '../../../utils/helpers/conceptUtils.ts';
+import {
+  filterKeypress,
+  setEmptyToNull,
+} from '../../../utils/helpers/conceptUtils.ts';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import { replaceAllWithWhiteSpace } from '../../../types/productValidationUtils.ts';
 import { convertStringToRegex } from '../../../utils/helpers/stringUtils.ts';
