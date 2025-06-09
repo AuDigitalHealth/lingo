@@ -95,7 +95,7 @@
               "ui:field": "AutoCompleteField",
               "ui:title": "VTM Active Ingredient",
               "ui:options": {
-                "ecl": "(<763158003 {{ D term=\"medicinal product\" }}).732943007",
+                "ecl": "(<763158003 {{ D term=\"medicinal product\" }}).127489000",
                 "extendedEcl": "<105590001",
                 "showDefaultOptions": false
               }
