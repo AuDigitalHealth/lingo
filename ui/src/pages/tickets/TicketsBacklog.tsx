@@ -539,7 +539,6 @@ function SaveFilterModal({
   const onInputChange = (
     event: SyntheticEvent<Element, Event>,
     value: string,
-    // eslint-disable-next-line
     reason: AutocompleteInputChangeReason,
   ) => {
     setValue({ name: value, group: AutocompleteGroupOptionType.New });

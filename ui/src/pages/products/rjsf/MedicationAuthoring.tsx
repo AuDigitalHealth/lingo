@@ -1,7 +1,7 @@
-import React, {useCallback, useRef, useState} from 'react';
-import {Form} from '@rjsf/mui';
-import {Box, Button, Container, Paper} from '@mui/material';
-import {useMutation, useQuery} from '@tanstack/react-query';
+import React, { useCallback, useRef, useState } from 'react';
+import { Form } from '@rjsf/mui';
+import { Box, Button, Container, Paper } from '@mui/material';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import _ from 'lodash';
 import ajvErrors from 'ajv-errors';
 
@@ -19,22 +19,20 @@ import ExternalIdentifiers from './fields/bulkBrandPack/ExternalIdentifiers.tsx'
 import TextFieldWidget from './widgets/TextFieldWidget.tsx';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 import productService from '../../../api/ProductService.ts';
-import {ConfigService} from '../../../api/ConfigService.ts';
-import {
-  isValueSetExpansionContains
-} from '../../../types/predicates/isValueSetExpansionContains.ts';
-import {customizeValidator} from '@rjsf/validator-ajv8';
-import {Concept} from '../../../types/concept.ts';
-import type {ValueSetExpansionContains} from 'fhir/r4';
-import {Task} from '../../../types/task.ts';
-import {Ticket} from '../../../types/tickets/ticket.ts';
+import { ConfigService } from '../../../api/ConfigService.ts';
+import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
+import { customizeValidator } from '@rjsf/validator-ajv8';
+import { Concept } from '../../../types/concept.ts';
+import type { ValueSetExpansionContains } from 'fhir/r4';
+import { Task } from '../../../types/task.ts';
+import { Ticket } from '../../../types/tickets/ticket.ts';
 import {
   MedicationPackageDetails,
   ProductCreationDetails,
   ProductType,
 } from '../../../types/product.ts';
-import {useTicketProductQuery} from './hooks/useTicketProductQuery.ts';
-import {DraftSubmitPanel} from './components/DarftSubmitPanel.tsx';
+import { useTicketProductQuery } from './hooks/useTicketProductQuery.ts';
+import { DraftSubmitPanel } from './components/DarftSubmitPanel.tsx';
 import ProductPartialSaveModal from './components/ProductPartialSaveModal.tsx';
 import MuiGridTemplate from './templates/MuiGridTemplate.tsx';
 
@@ -304,10 +302,7 @@ const fetchProductDataFn = async ({
     ? selectedProduct.code
     : selectedProduct.conceptId;
 
-  return await productService.fetchMedication(
-    productId || '',
-    task.branchPath,
-  );
+  return await productService.fetchMedication(productId || '', task.branchPath);
 };
 
 const useProductQuery = ({
