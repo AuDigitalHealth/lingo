@@ -3,20 +3,23 @@ import {
   UseFormGetValues,
   UseFormRegister,
   UseFormSetValue,
-  useWatch
+  useWatch,
 } from 'react-hook-form';
 import {
   Concept,
   Edge,
   Product,
   Product7BoxBGColour,
-  ProductSummary
+  ProductSummary,
 } from '../../../types/concept.ts';
 import React, { useState } from 'react';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import { RefsetMember } from '../../../types/RefsetMember.ts';
 import { useTheme } from '@mui/material/styles';
-import { findProductUsingId, findRelations } from '../../../utils/helpers/conceptUtils.ts';
+import {
+  findProductUsingId,
+  findRelations,
+} from '../../../utils/helpers/conceptUtils.ts';
 import ConceptDiagramModal from '../../../components/conceptdiagrams/ConceptDiagramModal.tsx';
 import {
   AccordionDetails,
@@ -30,13 +33,18 @@ import {
   Tab,
   Tabs,
   Tooltip,
-  Typography
+  Typography,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Stack } from '@mui/system';
 import LinkViews from './LinkViews.tsx';
 import { FormattedMessage } from 'react-intl';
-import { AccountTreeOutlined, Edit, NewReleases, NewReleasesOutlined } from '@mui/icons-material';
+import {
+  AccountTreeOutlined,
+  Edit,
+  NewReleases,
+  NewReleasesOutlined,
+} from '@mui/icons-material';
 import CircleIcon from '@mui/icons-material/Circle';
 import ExistingConceptDropdown from './ExistingConceptDropdown.tsx';
 import NewConceptDropdown from './NewConceptDropdown.tsx';
@@ -54,7 +62,7 @@ import ClearIcon from '@mui/icons-material/Clear';
 import { ProductPreviewAccordion } from './ProductPreviewAccordion.tsx';
 import {
   getColorByDefinitionStatus,
-  isNameContainsKeywords
+  isNameContainsKeywords,
 } from '../../../utils/helpers/ProductPreviewUtils.ts';
 import ProductEditModal from '../../../components/editProduct/ProductEditModal.tsx';
 
@@ -93,7 +101,6 @@ function ProductPreviewPanel({
   idsWithInvalidName,
   setIdsWithInvalidName,
   fieldBindings,
-  refsetMembers,
   editProduct,
   setValue,
   branch,
