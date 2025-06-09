@@ -15,16 +15,16 @@ import ProductPreviewCreateModal from '../components/ProductPreviewCreateModal.t
 import { customizeValidator } from '@rjsf/validator-ajv8';
 import ajvErrors from 'ajv-errors';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
-
-import PackSizeArrayTemplate from './templates/bulkBrandPack/PackSizeArrayTemplate.tsx'; // You'll need to create this if you want custom array rendering
+import PackSizeArrayTemplate from './templates/bulkBrandPack/PackSizeArrayTemplate.tsx';
 import { BrandPackSizeCreationDetails } from '../../../types/product.ts';
 import TitleWidget from './widgets/TitleWidget.tsx';
 import AutoCompleteField from './fields/AutoCompleteField.tsx';
 import { useQuery } from '@tanstack/react-query';
 import MuiGridTemplate from './templates/MuiGridTemplate.tsx';
-import AddButtonField from './fields/AddButtonField.tsx';
+import AddPackSizeButton from './fields/bulkBrandPack/AddPackSizeButton.tsx';
 import ExternalIdentifiers from './fields/bulkBrandPack/ExternalIdentifiers.tsx';
 import PackDetails from './fields/bulkBrandPack/PackDetails.tsx';
+import { ConfigService } from '../../../api/ConfigService.ts';
 
 interface FormData {
   selectedProduct?: string;
@@ -34,6 +34,7 @@ interface FormData {
     packSize?: number;
     externalIdentifiers: any[];
   };
+  unitOfMeasure?: any;
 }
 
 const Form = withTheme(Theme);
@@ -75,7 +76,11 @@ function PackSizeAuthoring({
 
   const [runningWarningsCheck, setRunningWarningsCheck] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]);
-  const [formData, setFormData] = useState<FormData>({});
+  const [formData, setFormData] = useState<FormData>({
+    packSizes: [],
+    newPackSizeInput: { packSize: undefined, externalIdentifiers: [] },
+  });
+
   const { data, isFetching } = useFetchBulkAuthorPackSizes(
     selectedProduct,
     task.branchPath,
@@ -88,7 +93,7 @@ function PackSizeAuthoring({
   };
 
   const fields = {
-    AddButtonField,
+    AddButtonField: AddPackSizeButton,
     AutoCompleteField,
     PackDetails,
     ExternalIdentifiers,
@@ -111,6 +116,7 @@ function PackSizeAuthoring({
         selectedProduct: selectedProduct.pt?.term || '',
         existingPackSizes: data.packSizes || [],
         unitOfMeasure: data.unitOfMeasure,
+        packSizes: [],
         newPackSizeInput: { packSize: undefined, externalIdentifiers: [] },
       };
       console.log('Initial formData:', newData);
@@ -126,7 +132,7 @@ function PackSizeAuthoring({
       productId: selectedProduct?.id,
       packSizes: {
         productId: selectedProduct?.id,
-        unitOfMeasure: data?.unitOfMeasure, // Assuming this comes from the fetched data
+        unitOfMeasure: data?.unitOfMeasure,
         packSizes: submittedFormData.packSizes,
       },
       externalIdentifiers: [],
@@ -168,13 +174,15 @@ function PackSizeAuthoring({
       onSubmit(formData);
     }
   };
+
   const formContext = {
-    onChange: (newFormData: FormData) => {
+    formData,
+    onFormDataChange: (newFormData: FormData) => {
+      console.log('Form data changed:', newFormData);
       setFormData(newFormData);
     },
-    formData,
+    unitOfMeasure: data?.unitOfMeasure,
     handleClear,
-    onSubmit: (data: { formData: FormData }) => onSubmit(data.formData),
     validator,
   };
 
@@ -193,7 +201,6 @@ function PackSizeAuthoring({
   if (runningWarningsCheck)
     return <ProductLoader message={`Running validation before Preview`} />;
 
-  // TODO: Re-enable
   if (!selectedProduct || !data) {
     return (
       <Alert severity="info">
@@ -246,14 +253,11 @@ function PackSizeAuthoring({
                 widgets={widgets}
                 fields={fields}
                 templates={{
-                  ArrayFieldTemplate: PackSizeArrayTemplate, // Create this if needed
+                  ArrayFieldTemplate: PackSizeArrayTemplate,
                   ObjectFieldTemplate: MuiGridTemplate,
                 }}
                 validator={validator}
-                formContext={{
-                  formData,
-                  onFormDataChange: setFormData,
-                }}
+                formContext={formContext}
               >
                 <Box
                   sx={{
@@ -269,8 +273,7 @@ function PackSizeAuthoring({
                     color="primary"
                     size="small"
                     disabled={
-                      !formContext.formData.packSizes ||
-                      formContext.formData.packSizes.length === 0
+                      !formData.packSizes || formData.packSizes.length === 0
                     }
                   >
                     Preview
@@ -286,322 +289,19 @@ function PackSizeAuthoring({
 }
 
 export const useSchemaQuery = (branchPath: string) => {
-  // return useQuery({
-  //   queryKey: ['bulk-pack-schema', branchPath],
-  //   // queryFn: () => ConfigService.fetchBulkPackSchemaData(branchPath),
-  //   queryFn: () => async () => {
-  return {
-    isLoading: false,
-    data: {
-      type: 'object',
-      $defs: {
-        SnowstormConceptMini: {
-          type: 'object',
-          properties: {
-            conceptId: {
-              type: 'string',
-            },
-            pt: {
-              $ref: '#/$defs/SnowstormTermLangPojo',
-            },
-          },
-          minProperties: 1,
-          errorMessage: {
-            minProperties: 'Field must be populated.',
-          },
-        },
-        SnowstormTermLangPojo: {
-          type: 'object',
-          additionalProperties: false,
-          properties: {
-            lang: {
-              type: 'string',
-            },
-            term: {
-              type: 'string',
-            },
-          },
-        },
-        ExternalIdentifier: {
-          type: 'object',
-          anyOf: [
-            {
-              title: 'ARTGID',
-              type: 'object',
-              properties: {
-                identifierScheme: {
-                  type: 'string',
-                  const: 'artgid',
-                },
-                relationshipType: {
-                  title: 'Relationship type',
-                  type: 'string',
-                  const: 'RELATED',
-                },
-                identifierValue: {
-                  title: 'ARTGID',
-                  type: 'string',
-                  pattern: '\\d{1,8}',
-                  errorMessage: {
-                    pattern: 'Please enter a valid ARTGID matching \\d{1,8}',
-                  },
-                },
-              },
-            },
-            {
-              title: 'GTIN',
-              type: 'object',
-              properties: {
-                identifierScheme: {
-                  type: 'string',
-                  const: 'gtin',
-                },
-                relationshipType: {
-                  title: 'Relationship type',
-                  type: 'string',
-                  const: 'RELATED',
-                },
-                identifierValue: {
-                  title: 'GTIN',
-                  type: 'string',
-                  pattern: '\\d{1,8}',
-                  errorMessage: {
-                    pattern: 'Please enter a valid GTIN matching \\d{1,8}',
-                  },
-                },
-              },
-            },
-            {
-              title: 'ATC level 5 code',
-              type: 'object',
-              properties: {
-                identifierScheme: {
-                  type: 'string',
-                  const: 'atc',
-                },
-                relationshipType: {
-                  title: 'Relationship type',
-                  type: 'string',
-                  const: 'RELATED',
-                },
-                identifierValue: {
-                  title: 'ATC level 5 code',
-                  type: 'string',
-                  pattern: '^.+$',
-                  errorMessage: {
-                    pattern:
-                      'Please enter a valid ATC level 5 code matching ^.+$',
-                  },
-                },
-              },
-            },
-            {
-              title: 'GMS Reimbursable Number',
-              type: 'object',
-              properties: {
-                identifierScheme: {
-                  type: 'string',
-                  const: 'pcrs',
-                },
-                relationshipType: {
-                  title: 'Relationship type',
-                  type: 'string',
-                  const: 'RELATED',
-                },
-                identifierValue: {
-                  title: 'GMS Reimbursable Number',
-                  type: 'string',
-                  pattern: '^.+$',
-                  errorMessage: {
-                    pattern:
-                      'Please enter a valid GMS Reimbursable Number matching ^.+$',
-                  },
-                },
-              },
-            },
-          ],
-        },
-        PackDetails: {
-          type: 'object',
-          properties: {
-            packSize: {
-              type: 'integer',
-              minimum: 1,
-              errorMessage: {
-                minimum: 'Pack size must be at least 1.',
-              },
-            },
-            externalIdentifiers: {
-              type: 'array',
-              title: 'External identifiers',
-              items: {
-                $ref: '#/$defs/ExternalIdentifier',
-              },
-            },
-          },
-          required: ['packSize'],
-        },
-      },
-      properties: {
-        selectedProduct: {
-          type: 'string',
-          title: 'Selected Product',
-        },
-        existingPackSizes: {
-          type: 'array',
-          title: 'Existing Pack Sizes',
-          items: {
-            $ref: '#/$defs/PackDetails',
-          },
-        },
-        packSizes: {
-          type: 'array',
-          title: 'New Pack Sizes',
-          items: {
-            $ref: '#/$defs/PackDetails',
-          },
-        },
-        newPackSizeInput: {
-          $ref: '#/$defs/PackDetails',
-        },
-        addButton: {
-          type: 'null',
-        },
-      },
-    },
-  };
-  //   },
-  //   enabled: !!branchPath,
-  // });
+  return useQuery({
+    queryKey: ['bulk-pack-schema', branchPath],
+    queryFn: () => ConfigService.fetchBulkPackSchemaData(branchPath),
+    enabled: !!branchPath,
+  });
 };
 
 export const useUiSchemaQuery = (branchPath: string) => {
-  // return useQuery({
-  //   queryKey: ['bulk-pack-uiSchema', branchPath],
-  //   // queryFn: () => ConfigService.fetchBulkPackUiSchemaData(branchPath),
-  //   queryFn: () => async () => {
-  return {
-    isLoading: false,
-    data: {
-      'ui:options': {
-        skipTitle: true,
-      },
-      'ui:grid': [
-        {
-          _columnA: 12,
-          _columnB: 12,
-        },
-      ],
-      _columnA: {
-        'ui:grid': [
-          {
-            selectedProduct: 24,
-          },
-          {
-            existingPackSizes: 24,
-          },
-        ],
-      },
-      _columnB: {
-        'ui:title': null,
-        'ui:options': {
-          label: false,
-        },
-        'ui:grid': [
-          {
-            newPackSizeInput: 23,
-            addButton: 1,
-          },
-          {
-            packSizes: 24,
-          },
-        ],
-      },
-      selectedProduct: {
-        'ui:readonly': true,
-        'ui:widget': 'TitleWidget',
-        'ui:options': {
-          inputType: 'text',
-          'ui:disabled': true,
-          skipTitle: true,
-        },
-      },
-      newPackSizeInput: {
-        'ui:field': PackDetails,
-        'ui:options': {
-          readOnly: false,
-          allowDelete: false,
-          requireEditButton: false,
-          binding: {
-            atc: {
-              valueSet: 'http://www.whocc.no/atc/vs',
-            },
-            pcrs: {
-              valueSet: 'https://nmpc.hse.ie/PCRS/vs',
-            },
-          },
-          multiValuedSchemes: ['atc', 'ean', 'pan', 'gtin'],
-        },
-      },
-
-      addButton: {
-        'ui:field': 'AddButtonField',
-        'ui:options': {
-          skipTitle: true,
-          tooltipTitle: 'Add Pack Size',
-          sourcePath: 'newPackSizeInput',
-          targetPath: 'packSizes',
-          isEnabled: (source: any, target: any) => {
-            console.log('SOURCE: ' + JSON.stringify(source, null, 2));
-            const packSize =
-              source && typeof source === 'object' && source.packSize;
-            return (
-              !isNaN(packSize) &&
-              target.filter((item: any) => item.packSize === packSize)
-                .length === 0
-            );
-          },
-          onAddClick: (source: any, target: any, clear: Function) => {
-            target.push(source);
-            clear();
-          },
-        },
-      },
-      existingPackSizes: {
-        'ui:template': PackSizeArrayTemplate,
-        'ui:options': {
-          orderable: false,
-          skipTitle: true,
-          listTitle: 'Existing Pack Sizes',
-          readOnly: true,
-          allowDelete: false,
-          requireEditButton: true,
-          multiValuedSchemes: ['atc', 'ean', 'pan', 'gtin'],
-          binding: {
-            atc: {
-              valueSet: 'http://www.whocc.no/atc/vs',
-            },
-            pcrs: {
-              valueSet: 'https://nmpc.hse.ie/PCRS/vs',
-            },
-          },
-        },
-      },
-      packSizes: {
-        'ui:template': PackSizeArrayTemplate,
-        'ui:options': {
-          orderable: false,
-          skipTitle: true,
-          listTitle: 'Newly Added Pack Sizes',
-          readOnly: false,
-          allowDelete: true,
-          requireEditButton: true,
-        },
-      },
-    },
-  };
-  //   },
-  //   enabled: !!branchPath,
-  // }});
+  return useQuery({
+    queryKey: ['bulk-pack-uiSchema', branchPath],
+    queryFn: () => ConfigService.fetchBulkPackUiSchemaData(branchPath),
+    enabled: !!branchPath,
+  });
 };
+
 export default PackSizeAuthoring;

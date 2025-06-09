@@ -32,6 +32,7 @@ import { useTicketProductQuery } from './hooks/useTicketProductQuery.ts';
 import ProductPartialSaveModal from './components/ProductPartialSaveModal.tsx';
 import { DraftSubmitPanel } from './components/DarftSubmitPanel.tsx';
 import MuiGridTemplate from './templates/MuiGridTemplate.tsx';
+import ExternalIdentifiers from './fields/bulkBrandPack/ExternalIdentifiers.tsx';
 export interface DeviceAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
   task: Task;
@@ -161,6 +162,7 @@ function DeviceAuthoring({
             fields={{
               UnitValueUnWrappedField: UnitValueUnWrappedField,
               AutoCompleteField,
+              ExternalIdentifiers,
             }}
             templates={{
               FieldTemplate: CustomFieldTemplate,

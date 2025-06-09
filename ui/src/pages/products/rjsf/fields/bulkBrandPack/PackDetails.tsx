@@ -1,6 +1,4 @@
-// components/rjsf/templates/PackDetails.tsx
-
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   IconButton,
@@ -10,12 +8,18 @@ import {
   Typography,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import ExternalIdentifiers from './ExternalIdentifiers.tsx';
-import { sortExternalIdentifiers } from '../../../../../utils/helpers/tickets/additionalFieldsUtils.ts';
 import EditIcon from '@mui/icons-material/Edit';
 import { FieldProps } from '@rjsf/utils';
+import ExternalIdentifiers from './ExternalIdentifiers.tsx';
+import { sortExternalIdentifiers } from '../../../../../utils/helpers/tickets/additionalFieldsUtils.ts';
 
-const PackDetails: React.FC<FieldProps> = props => {
+interface PackDetailsProps extends FieldProps {
+  onDelete?: () => void;
+  unitOfMeasure?: any;
+  index?: number;
+}
+
+const PackDetails: React.FC<PackDetailsProps> = props => {
   const {
     onChange,
     formContext,
@@ -25,113 +29,143 @@ const PackDetails: React.FC<FieldProps> = props => {
     errorSchema,
     onDelete,
     unitOfMeasure,
+    formData = {},
   } = props;
-  const { readOnly, allowDelete, requireEditButton } =
-    (uiSchema && uiSchema['ui:options']) || {};
 
-  //   const [formData, setFormData] = useState(props.formData || {});
-  const formData = props.formData || {};
+  // Extract options with defaults
+  const options = uiSchema?.['ui:options'] || {};
+  const {
+    readOnly = false,
+    allowDelete = true,
+    requireEditButton = false,
+    binding = {},
+    multiValuedSchemes = [],
+  } = options;
+
+  const [editMode, setEditMode] = useState(!readOnly && !requireEditButton);
+  const [packSize, setPackSize] = useState(
+    formData?.packSize?.toString() || '',
+  );
+
+  // Update local state when formData changes
+  useEffect(() => {
+    setPackSize(formData?.packSize?.toString() || '');
+  }, [formData?.packSize]);
+
   const externalIdentifiers = sortExternalIdentifiers(
     formData?.externalIdentifiers || [],
   );
-  const [editMode, setEditMode] = useState(
-    (!readOnly && !requireEditButton) || false,
-  );
+
+  const handlePackSizeChange = (newValue: string) => {
+    setPackSize(newValue);
+    const parsedValue = newValue === '' ? undefined : parseInt(newValue, 10);
+    const updated = {
+      ...formData,
+      packSize: parsedValue,
+    };
+    onChange(updated);
+  };
+
+  const handleExternalIdentifiersChange = (updated: any[]) => {
+    const current = {
+      ...formData,
+      externalIdentifiers: updated,
+    };
+    onChange(current);
+  };
+
+  const isValidPackSize =
+    packSize && !isNaN(parseInt(packSize, 10)) && parseInt(packSize, 10) > 0;
 
   return (
-    <>
+    <Box sx={{ position: 'relative', width: '100%' }}>
+      {/* Action Buttons */}
       <Box
         sx={{
           position: 'absolute',
-          right: 30,
+          right: 0,
+          top: 0,
+          zIndex: 1,
+          display: 'flex',
+          gap: 1,
         }}
       >
         {!readOnly && requireEditButton && (
           <Tooltip title={editMode ? 'Done' : 'Edit'}>
-            <IconButton
-              edge="end"
-              aria-label="edit"
-              onClick={() => setEditMode(prev => !prev)}
-            >
+            <IconButton size="small" onClick={() => setEditMode(prev => !prev)}>
               <EditIcon />
             </IconButton>
           </Tooltip>
         )}
         {!readOnly && allowDelete && onDelete && (
-          <Tooltip
-            title="Delete"
-            sx={{
-              marginLeft: 2,
-            }}
-          >
+          <Tooltip title="Delete">
             <IconButton
-              edge="end"
-              aria-label="delete"
-              disabled={!editMode}
-              onClick={() => onDelete(formData)}
+              size="small"
+              disabled={requireEditButton && !editMode}
+              onClick={onDelete}
+              color="error"
             >
               <DeleteIcon />
             </IconButton>
           </Tooltip>
         )}
       </Box>
+
+      {/* Content */}
       <Box
         display="flex"
         flexDirection="column"
-        sx={{ width: '100%', paddingBottom: '1em' }}
+        sx={{ width: '100%', paddingRight: allowDelete ? '80px' : '0px' }}
       >
-        <Stack gap={1}>
-          <Stack flexDirection={'row'}>
-            {readOnly || !editMode ? (
-              <Typography variant="body1" sx={{ mr: 1, fontWeight: 'bold' }}>
+        <Stack gap={2}>
+          {/* Pack Size Input */}
+          <Stack direction="row" alignItems="center" gap={1}>
+            {readOnly || (requireEditButton && !editMode) ? (
+              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                 {formData?.packSize ?? 'N/A'}
               </Typography>
             ) : (
               <TextField
                 label="Pack Size"
+                type="number"
+                value={packSize}
+                onChange={e => handlePackSizeChange(e.target.value)}
+                error={packSize !== '' && !isValidPackSize}
+                helperText={
+                  packSize !== '' && !isValidPackSize
+                    ? 'Pack size must be a positive number'
+                    : ''
+                }
                 sx={{ maxWidth: '200px' }}
-                schema={schema?.properties?.packSize}
-                uiSchema={uiSchema?.packSize}
-                value={formData?.packSize}
-                defaultValue={1}
-                type={'number'}
-                onChange={e => {
-                  const newValue = parseInt(e.target.value, 10);
-                  const updated = {
-                    ...formData,
-                    packSize: isNaN(newValue) ? undefined : newValue,
-                  };
-                  onChange(updated);
-                }}
+                inputProps={{ min: 1 }}
               />
             )}
+
             {unitOfMeasure && (
               <Typography variant="body1" color="textSecondary">
-                {unitOfMeasure.pt.term}
+                {unitOfMeasure.pt?.term}
               </Typography>
             )}
           </Stack>
+
+          {/* External Identifiers */}
           <ExternalIdentifiers
-            sx={{ margin: 1 }}
             formData={externalIdentifiers}
-            onChange={updated => {
-              const current = { ...formData, externalIdentifiers: updated };
-              onChange(current);
-            }}
+            onChange={handleExternalIdentifiersChange}
             schema={schema?.properties?.externalIdentifiers}
-            uiSchema={uiSchema}
-            // uiSchema={{
-            //   ...(uiSchema?.externalIdentifiers || {}),
-            //   'ui:options': {
-            //     ...(uiSchema?.externalIdentifiers?.['ui:options'] || {}),
-            //     readOnly: readOnly || !editMode,
-            //   },
-            // }}
+            uiSchema={{
+              'ui:options': {
+                readOnly: readOnly || (requireEditButton && !editMode),
+                binding,
+                multiValuedSchemes,
+              },
+            }}
             registry={registry}
+            formContext={formContext}
           />
         </Stack>
       </Box>
-    </>
+    </Box>
   );
 };
 

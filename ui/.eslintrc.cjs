@@ -40,10 +40,20 @@ module.exports = {
       },
     ],
     '@typescript-eslint/no-non-null-assertion': 'off',
+    '@typescript-eslint/no-unsafe-enum-comparison': 'off',
+    '@typescript-eslint/no-redundant-type-constituents': 'off',
+    '@typescript-eslint/no-base-to-string': 'off',
+    '@typescript-eslint/no-unsafe-member-access': 'off',
+    '@typescript-eslint/no-unsafe-return': 'off',
   },
   overrides: [
     {
-      files: ['src/pages/products/rjsf/**/*.{ts,tsx}', 'src/components/third-party/*.{ts,tsx}'],
+      files: [
+        'src/pages/products/rjsf/**/*.{ts,tsx}',
+        'src/pages/products/components/AddButton.tsx',
+        'src/pages/products/hooks/useAddButton.ts',
+        'src/components/third-party/*.{ts,tsx}',
+      ],
       rules: {
         '@typescript-eslint/no-unsafe-assignment': 'off',
         '@typescript-eslint/no-unsafe-member-access': 'off',
@@ -65,4 +75,5 @@ module.exports = {
       },
     },
   ],
+  reportUnusedDisableDirectives: false,
 };

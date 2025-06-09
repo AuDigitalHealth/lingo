@@ -95,12 +95,11 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
       onInputChange={(_, newInputValue) => setInputValue(newInputValue)}
       onChange={(_, selectedValue) => handleChange(selectedValue as Concept)}
       isOptionEqualToValue={(option, val) =>
-        option?.conceptId === val?.conceptId
+        option?.conceptId === val?.conceptId ||
+        option?.pt?.term === val?.pt?.term
       }
       renderOption={(props, option) => (
-        <li {...props} key={option.conceptId}>
-          {option.pt.term}
-        </li>
+        <li {...props} key={option?.conceptId || option?.pt?.term}></li>
       )}
       renderInput={params => (
         <TextField
@@ -220,10 +219,11 @@ export const MultiValueValueSetAutocomplete: React.FC<
       onInputChange={(_, newInputValue) => setInputValue(newInputValue)}
       onChange={(_, selectedValue) => handleChange(selectedValue as Concept)}
       isOptionEqualToValue={(option, val) =>
-        option?.conceptId === val?.conceptId
+        option?.conceptId === val?.conceptId ||
+        option?.pt?.term === val?.pt?.term
       }
       renderOption={(props, option) => (
-        <li {...props} key={option.conceptId}>
+        <li {...props} key={option?.conceptId || option?.pt?.term}>
           {option?.pt?.term}
         </li>
       )}

@@ -187,7 +187,6 @@ export function hasFiltersChanged(filters: TicketDataTableFilters): boolean {
       } else {
         // eslint-disable-next-line
         const defaultValue =
-          // eslint-disable-next-line
           generateDefaultFilters()[key as keyof TicketDataTableFilters].value;
         // eslint-disable-next-line
         const currentValue = filters[key as keyof TicketDataTableFilters].value;
