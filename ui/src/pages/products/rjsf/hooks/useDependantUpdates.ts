@@ -95,11 +95,6 @@ export const useDependantUpdates = (
         RjsfUtils.setUiSchemaById(rootUiSchema, dependantId, {
           ...newUiSchema,
         });
-        // @ts-ignore
-        if (formContext?.onChange) {
-          // @ts-ignore
-          formContext.onChange({ ...rootFormData });
-        }
       }
     }
   };
