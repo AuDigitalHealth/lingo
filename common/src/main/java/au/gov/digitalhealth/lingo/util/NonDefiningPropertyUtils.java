@@ -17,6 +17,7 @@ package au.gov.digitalhealth.lingo.util;
 
 import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import au.gov.digitalhealth.lingo.configuration.model.NonDefiningPropertyDefinition;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,21 +37,17 @@ public class NonDefiningPropertyUtils {
 
   public static Map<String, Set<NonDefiningProperty>> getNonDefiningPropertyFromConcepts(
       Collection<SnowstormConcept> concepts,
-      Set<au.gov.digitalhealth.lingo.configuration.model.NonDefiningProperty>
-          nonDefiningProperties) {
+      Set<NonDefiningPropertyDefinition> nonDefiningProperties) {
 
     if (nonDefiningProperties.isEmpty()) {
       return Map.of();
     }
 
-    Map<String, au.gov.digitalhealth.lingo.configuration.model.NonDefiningProperty>
-        nonDefiningPropertyMap =
-            nonDefiningProperties.stream()
-                .collect(
-                    Collectors.toMap(
-                        au.gov.digitalhealth.lingo.configuration.model.NonDefiningProperty
-                            ::getIdentifier,
-                        Function.identity()));
+    Map<String, NonDefiningPropertyDefinition> nonDefiningPropertyMap =
+        nonDefiningProperties.stream()
+            .collect(
+                Collectors.toMap(
+                    NonDefiningPropertyDefinition::getIdentifier, Function.identity()));
     return concepts.stream()
         .flatMap(concept -> concept.getRelationships().stream())
         .filter(relationship -> nonDefiningPropertyMap.containsKey(relationship.getTypeId()))
@@ -66,21 +63,17 @@ public class NonDefiningPropertyUtils {
 
   public static Mono<Map<String, List<NonDefiningProperty>>> getNonDefiningPropertyFromConcepts(
       Mono<Map<String, SnowstormConcept>> concepts,
-      Set<au.gov.digitalhealth.lingo.configuration.model.NonDefiningProperty>
-          nonDefiningProperties) {
+      Set<NonDefiningPropertyDefinition> nonDefiningProperties) {
 
     if (nonDefiningProperties.isEmpty()) {
       return Mono.just(Map.of());
     }
 
-    Map<String, au.gov.digitalhealth.lingo.configuration.model.NonDefiningProperty>
-        nonDefiningPropertyMap =
-            nonDefiningProperties.stream()
-                .collect(
-                    Collectors.toMap(
-                        au.gov.digitalhealth.lingo.configuration.model.NonDefiningProperty
-                            ::getIdentifier,
-                        Function.identity()));
+    Map<String, NonDefiningPropertyDefinition> nonDefiningPropertyMap =
+        nonDefiningProperties.stream()
+            .collect(
+                Collectors.toMap(
+                    NonDefiningPropertyDefinition::getIdentifier, Function.identity()));
 
     return concepts
         .flatMapIterable(Map::values)
@@ -101,8 +94,7 @@ public class NonDefiningPropertyUtils {
 
   public static Set<NonDefiningProperty> getNonDefiningProperties(
       Set<SnowstormRelationship> nonDefiningProperties,
-      Map<String, au.gov.digitalhealth.lingo.configuration.model.NonDefiningProperty>
-          nonDefiningPropertiesForModelLevel) {
+      Map<String, NonDefiningPropertyDefinition> nonDefiningPropertiesForModelLevel) {
     if (nonDefiningProperties.isEmpty()) {
       return Set.of();
     }

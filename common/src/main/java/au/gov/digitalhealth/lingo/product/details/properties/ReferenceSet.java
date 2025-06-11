@@ -17,30 +17,45 @@ package au.gov.digitalhealth.lingo.product.details.properties;
 
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
+import au.gov.digitalhealth.lingo.configuration.model.ReferenceSetDefinition;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.io.Serializable;
+import java.util.Collection;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@NoArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonTypeName("referenceSet")
 public class ReferenceSet extends NonDefiningBase implements Serializable {
-  public ReferenceSet(
-      SnowstormReferenceSetMember r,
-      au.gov.digitalhealth.lingo.configuration.model.ReferenceSet referenceSet) {
-    this.setIdentifierScheme(referenceSet.getName());
-    this.setIdentifier(r.getRefsetId());
-    this.setTitle(referenceSet.getTitle());
-    this.setDescription(referenceSet.getDescription());
+  public ReferenceSet() {
+    this.setType(PropertyType.REFERENCE_SET);
   }
 
   public ReferenceSet(
-      SnowstormReferenceSetMemberViewComponent r,
-      au.gov.digitalhealth.lingo.configuration.model.ReferenceSet referenceSet) {
-    this.setIdentifierScheme(referenceSet.getName());
+      SnowstormReferenceSetMember r, ReferenceSetDefinition referenceSetDefinition) {
+    this.setIdentifierScheme(referenceSetDefinition.getName());
     this.setIdentifier(r.getRefsetId());
-    this.setTitle(referenceSet.getTitle());
-    this.setDescription(referenceSet.getDescription());
+    this.setTitle(referenceSetDefinition.getTitle());
+    this.setDescription(referenceSetDefinition.getDescription());
+    this.setType(PropertyType.REFERENCE_SET);
+  }
+
+  public ReferenceSet(
+      SnowstormReferenceSetMemberViewComponent r, ReferenceSetDefinition referenceSetDefinition) {
+    this.setIdentifierScheme(referenceSetDefinition.getName());
+    this.setIdentifier(r.getRefsetId());
+    this.setTitle(referenceSetDefinition.getTitle());
+    this.setDescription(referenceSetDefinition.getDescription());
+    this.setType(PropertyType.REFERENCE_SET);
+  }
+
+  public static Collection<ReferenceSet> filter(Collection<NonDefiningBase> properties) {
+    return properties.stream()
+        .filter(p -> p.getType().equals(PropertyType.REFERENCE_SET))
+        .map(p -> (ReferenceSet) p)
+        .toList();
   }
 }

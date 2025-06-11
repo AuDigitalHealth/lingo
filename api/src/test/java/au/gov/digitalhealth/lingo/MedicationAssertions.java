@@ -97,10 +97,10 @@ public class MedicationAssertions {
         .isEqualTo(packageDetails.getProductName());
     Assertions.assertThat(packageDetailsPostCreation.getContainerType())
         .isEqualTo(packageDetails.getContainerType());
-    Assertions.assertThat(packageDetailsPostCreation.getExternalIdentifiers())
-        .containsAll(packageDetails.getExternalIdentifiers());
-    Assertions.assertThat(packageDetails.getExternalIdentifiers())
-        .containsAll(packageDetailsPostCreation.getExternalIdentifiers());
+    Assertions.assertThat(packageDetailsPostCreation.getNonDefiningProperties())
+        .containsAll(packageDetails.getNonDefiningProperties());
+    Assertions.assertThat(packageDetails.getNonDefiningProperties())
+        .containsAll(packageDetailsPostCreation.getNonDefiningProperties());
 
     Assertions.assertThat(packageDetailsPostCreation.getContainedProducts())
         .containsAll(packageDetails.getContainedProducts());
@@ -311,7 +311,7 @@ public class MedicationAssertions {
                         + " "
                         + n.getNewConceptDetails().getReferenceSetMembers());
               } else if (n.getNewConceptDetails().getReferenceSetMembers() != null
-                  && packageDetails.getExternalIdentifiers() != null) {
+                  && packageDetails.getNonDefiningProperties() != null) {
                 Set<String> identifiers =
                     n.getNewConceptDetails().getReferenceSetMembers().stream()
                         .filter(r -> Objects.equals(r.getRefsetId(), ARTGID_REFSET.getValue()))
@@ -321,8 +321,9 @@ public class MedicationAssertions {
 
                 Assertions.assertThat(identifiers)
                     .isEqualTo(
-                        packageDetails.getExternalIdentifiers().stream()
-                            .map(ExternalIdentifier::getIdentifierValue)
+                        ExternalIdentifier.filter(packageDetails.getNonDefiningProperties())
+                            .stream()
+                            .map(ExternalIdentifier::getValue)
                             .collect(Collectors.toSet()));
 
                 log.info(
@@ -331,8 +332,9 @@ public class MedicationAssertions {
                         + " "
                         + identifiers
                         + " matches "
-                        + packageDetails.getExternalIdentifiers().stream()
-                            .map(ExternalIdentifier::getIdentifierValue)
+                        + ExternalIdentifier.filter(packageDetails.getNonDefiningProperties())
+                            .stream()
+                            .map(ExternalIdentifier::getValue)
                             .collect(Collectors.toSet()));
               }
             });

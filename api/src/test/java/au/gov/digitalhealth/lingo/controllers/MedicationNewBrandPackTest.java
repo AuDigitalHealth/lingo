@@ -37,6 +37,7 @@ import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.bulk.BrandPackSizeCreationDetails;
 import au.gov.digitalhealth.lingo.product.bulk.BulkProductAction;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import au.gov.digitalhealth.tickets.models.Ticket;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -176,7 +177,7 @@ class MedicationNewBrandPackTest extends LingoTestBase {
     ExternalIdentifier testArtg =
         ExternalIdentifier.builder()
             .identifierScheme(ARTG_SCHEME)
-            .identifierValue("273936")
+            .value("273936")
             .relationshipType(MappingType.RELATED)
             .build();
 
@@ -186,7 +187,7 @@ class MedicationNewBrandPackTest extends LingoTestBase {
 
     PackSizeWithIdentifiers packSizeWithIdentifier = new PackSizeWithIdentifiers();
     packSizeWithIdentifier.setPackSize(new BigDecimal("15.0"));
-    packSizeWithIdentifier.setExternalIdentifiers(Collections.singleton(testArtg));
+    packSizeWithIdentifier.setNonDefiningProperties(Collections.singleton(testArtg));
 
     productPackSizes.getPackSizes().add(packSizeWithIdentifier);
 
@@ -278,11 +279,11 @@ class MedicationNewBrandPackTest extends LingoTestBase {
             .anyMatch(
                 p ->
                     p.getPackSize().equals(BigDecimal.valueOf(15.0))
-                        && p.getExternalIdentifiers()
+                        && ExternalIdentifier.filter(p.getNonDefiningProperties())
                             .iterator()
                             .next()
-                            .getIdentifierValue()
-                            .equals(testArtg.getIdentifierValue()));
+                            .getValue()
+                            .equals(testArtg.getValue()));
     Assertions.assertThat(newPackSizeFound).isTrue();
   }
 
@@ -296,7 +297,7 @@ class MedicationNewBrandPackTest extends LingoTestBase {
 
     PackSizeWithIdentifiers packSizeWithIdentifier = new PackSizeWithIdentifiers();
     packSizeWithIdentifier.setPackSize(new BigDecimal("12.0"));
-    packSizeWithIdentifier.setExternalIdentifiers(Collections.emptySet());
+    packSizeWithIdentifier.setNonDefiningProperties(Collections.emptySet());
 
     productPackSizes.getPackSizes().add(packSizeWithIdentifier);
 
@@ -413,16 +414,16 @@ class MedicationNewBrandPackTest extends LingoTestBase {
         getLingoTestClient().getMedicationProductBrands(ZOLADEX_3_6_MG_IMPLANT_1_SYRINGE);
 
     // Create a set of ExternalIdentifiers to assign to all brands
-    Set<ExternalIdentifier> testExternalIdentifiers =
+    Set<NonDefiningBase> testExternalIdentifiers =
         Set.of(
             ExternalIdentifier.builder()
                 .identifierScheme(ARTG_SCHEME)
-                .identifierValue("273936")
+                .value("273936")
                 .relationshipType(MappingType.RELATED)
                 .build(),
             ExternalIdentifier.builder()
                 .identifierScheme(ARTG_SCHEME)
-                .identifierValue("321677")
+                .value("321677")
                 .relationshipType(MappingType.RELATED)
                 .build());
 
@@ -432,7 +433,7 @@ class MedicationNewBrandPackTest extends LingoTestBase {
     // Assign ExternalIdentifiers to each brand and store in a new set
     Set<BrandWithIdentifiers> newBrandExternalIdentifiers =
         productBrands.getBrands().stream()
-            .peek(brand -> brand.setExternalIdentifiers(testExternalIdentifiers))
+            .peek(brand -> brand.setNonDefiningProperties(testExternalIdentifiers))
             .collect(Collectors.toSet());
 
     productBrands.setBrands(newBrandExternalIdentifiers);
@@ -503,7 +504,7 @@ class MedicationNewBrandPackTest extends LingoTestBase {
                   .getBrands()
                   .forEach(
                       brandWithIdentifiers ->
-                          Assertions.assertThat(brandWithIdentifiers.getExternalIdentifiers())
+                          Assertions.assertThat(brandWithIdentifiers.getNonDefiningProperties())
                               .hasSize(2));
             });
   }

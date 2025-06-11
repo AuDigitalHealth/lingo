@@ -9,7 +9,7 @@ import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getIdAndFsnTerm;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.gov.digitalhealth.lingo.configuration.FieldBindingConfiguration;
-import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
+import au.gov.digitalhealth.lingo.configuration.model.ExternalIdentifierDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
@@ -27,7 +27,7 @@ import jakarta.validation.Valid;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -52,36 +52,40 @@ public class AmtMedicationDetailsValidator implements MedicationDetailsValidator
     this.fieldBindingConfiguration = fieldBindingConfiguration;
   }
 
-  private static void validateExternalIdentifier(
-      ExternalIdentifier externalIdentifier, Map<String, MappingRefset> mappingRefsets) {
+  static void validateExternalIdentifier(
+      ExternalIdentifier externalIdentifier,
+      Map<String, ExternalIdentifierDefinition> mappingRefsets) {
     if (!mappingRefsets.containsKey(externalIdentifier.getIdentifierScheme())) {
       throw new ProductAtomicDataValidationProblem(
           "External identifier scheme "
               + externalIdentifier.getIdentifierScheme()
               + " is not valid for this product");
     }
-    MappingRefset mappingRefset = mappingRefsets.get(externalIdentifier.getIdentifierScheme());
-    if (!mappingRefset.getMappingTypes().contains(externalIdentifier.getRelationshipType())) {
+    ExternalIdentifierDefinition externalIdentifierDefinition =
+        mappingRefsets.get(externalIdentifier.getIdentifierScheme());
+    if (!externalIdentifierDefinition
+        .getMappingTypes()
+        .contains(externalIdentifier.getRelationshipType())) {
       throw new ProductAtomicDataValidationProblem(
           "External identifier relationship type "
               + externalIdentifier.getRelationshipType()
               + " is not valid for scheme "
               + externalIdentifier.getIdentifierScheme());
     }
-    if (!mappingRefset.getDataType().isValidValue(externalIdentifier.getIdentifierValue())) {
+    if (!externalIdentifierDefinition.getDataType().isValidValue(externalIdentifier.getValue())) {
       throw new ProductAtomicDataValidationProblem(
           "External identifier value "
-              + externalIdentifier.getIdentifierValue()
+              + externalIdentifier.getValue()
               + " is not valid for scheme "
               + externalIdentifier.getIdentifierScheme());
     }
-    if (mappingRefset.getValueRegexValidation() != null
+    if (externalIdentifierDefinition.getValueRegexValidation() != null
         && !externalIdentifier
-            .getIdentifierValue()
-            .matches(mappingRefset.getValueRegexValidation())) {
+            .getValue()
+            .matches(externalIdentifierDefinition.getValueRegexValidation())) {
       throw new ProductAtomicDataValidationProblem(
           "External identifier value "
-              + externalIdentifier.getIdentifierValue()
+              + externalIdentifier.getValue()
               + " does not match the regex validation for scheme "
               + externalIdentifier.getIdentifierScheme());
     }
@@ -182,7 +186,8 @@ public class AmtMedicationDetailsValidator implements MedicationDetailsValidator
       throw new ProductAtomicDataValidationProblem("Product name must be populated");
     }
 
-    validateExternalIdentifiers(branch, PRODUCT, productDetails.getExternalIdentifiers());
+    validateExternalIdentifiers(
+        branch, PRODUCT, ExternalIdentifier.filter(productDetails.getNonDefiningProperties()));
 
     productDetails.getActiveIngredients().forEach(this::validateIngredient);
   }
@@ -190,21 +195,21 @@ public class AmtMedicationDetailsValidator implements MedicationDetailsValidator
   private void validateExternalIdentifiers(
       String branch,
       ProductPackageType product,
-      List<@Valid ExternalIdentifier> externalIdentifiers) {
-    Set<MappingRefset> mandatoryMappingRefsets =
+      Collection<@Valid ExternalIdentifier> externalIdentifiers) {
+    Set<ExternalIdentifierDefinition> mandatoryExternalIdentifierDefinitions =
         models.getModelConfiguration(branch).getMappings().stream()
-            .filter(MappingRefset::isMandatory)
+            .filter(ExternalIdentifierDefinition::isMandatory)
             .filter(mr -> mr.getLevel().equals(product))
             .collect(Collectors.toSet());
 
     // validate the external identifiers
     if (externalIdentifiers != null) {
-      Map<String, MappingRefset> mappingRefsets =
+      Map<String, ExternalIdentifierDefinition> mappingRefsets =
           models.getModelConfiguration(branch).getMappings().stream()
               .filter(mr -> mr.getLevel().equals(product))
               .collect(
                   Collectors.toMap(
-                      MappingRefset::getName,
+                      ExternalIdentifierDefinition::getName,
                       Function.identity(),
                       (existing, replacement) -> {
                         throw new IllegalStateException(
@@ -217,13 +222,13 @@ public class AmtMedicationDetailsValidator implements MedicationDetailsValidator
               .collect(Collectors.toSet());
 
       if (!populatedSchemes.containsAll(
-          mandatoryMappingRefsets.stream()
-              .map(MappingRefset::getName)
+          mandatoryExternalIdentifierDefinitions.stream()
+              .map(ExternalIdentifierDefinition::getName)
               .collect(Collectors.toSet()))) {
         throw new ProductAtomicDataValidationProblem(
             "External identifiers for schemes "
-                + mandatoryMappingRefsets.stream()
-                    .map(MappingRefset::getName)
+                + mandatoryExternalIdentifierDefinitions.stream()
+                    .map(ExternalIdentifierDefinition::getName)
                     .collect(Collectors.joining(", "))
                 + " must be populated for this product");
       }
@@ -232,7 +237,7 @@ public class AmtMedicationDetailsValidator implements MedicationDetailsValidator
           .collect(Collectors.toMap(ExternalIdentifier::getIdentifierScheme, e -> 1, Integer::sum))
           .forEach(
               (key, value) -> {
-                MappingRefset refset = mappingRefsets.get(key);
+                ExternalIdentifierDefinition refset = mappingRefsets.get(key);
 
                 if (refset == null) {
                   throw new ProductAtomicDataValidationProblem(
@@ -246,11 +251,11 @@ public class AmtMedicationDetailsValidator implements MedicationDetailsValidator
       for (ExternalIdentifier externalIdentifier : externalIdentifiers) {
         validateExternalIdentifier(externalIdentifier, mappingRefsets);
       }
-    } else if (!mandatoryMappingRefsets.isEmpty()) {
+    } else if (!mandatoryExternalIdentifierDefinitions.isEmpty()) {
       throw new ProductAtomicDataValidationProblem(
           "External identifiers for schemes "
-              + mandatoryMappingRefsets.stream()
-                  .map(MappingRefset::getTitle)
+              + mandatoryExternalIdentifierDefinitions.stream()
+                  .map(ExternalIdentifierDefinition::getTitle)
                   .collect(Collectors.joining(", "))
               + " must be populated for this product");
     }
@@ -326,7 +331,8 @@ public class AmtMedicationDetailsValidator implements MedicationDetailsValidator
           "If the package contains other packages it must have a container type of 'Pack'");
     }
 
-    validateExternalIdentifiers(branch, PACKAGE, packageDetails.getExternalIdentifiers());
+    validateExternalIdentifiers(
+        branch, PACKAGE, ExternalIdentifier.filter(packageDetails.getNonDefiningProperties()));
 
     for (ProductQuantity<MedicationProductDetails> productQuantity :
         packageDetails.getContainedProducts()) {
