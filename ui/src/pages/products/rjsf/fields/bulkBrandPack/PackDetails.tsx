@@ -1,17 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  IconButton,
-  Stack,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { Box, IconButton, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import { FieldProps } from '@rjsf/utils';
 import ExternalIdentifiers from './ExternalIdentifiers.tsx';
-import { sortExternalIdentifiers } from '../../../../../utils/helpers/tickets/additionalFieldsUtils.ts';
+import {
+  sortExternalIdentifiers
+} from '../../../../../utils/helpers/tickets/additionalFieldsUtils.ts';
 
 interface PackDetailsProps extends FieldProps {
   onDelete?: () => void;
@@ -162,6 +157,7 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
             }}
             registry={registry}
             formContext={formContext}
+            branch={branch}
           />
         </Stack>
       </Box>

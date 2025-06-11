@@ -5,10 +5,12 @@
       "type": "object",
       "properties": {
         "conceptId": {
-          "type": "string"
+          "type": "string",
+          "default": ""
         },
         "pt": {
-          "$ref": "#/$defs/SnowstormTermLangPojo"
+          "$ref": "#/$defs/SnowstormTermLangPojo",
+          "default": {}
         }
       },
       "minProperties": 1,
@@ -101,14 +103,8 @@
           "title": "VMP Active Ingredient"
         },
         "preciseIngredient": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/SnowstormConceptMini"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "AMP Active Ingredient"
         },
         "basisOfStrengthSubstance": {
           "$ref": "#/$defs/SnowstormConceptMini"
@@ -136,26 +132,54 @@
         "preciseIngredient"
       ]
     },
-    "GenericAndSpecificForms": {
+    "ProductDetails": {
       "type": "object",
+      "title": "Product Details",
       "properties": {
+        "type": {
+          "type": "string",
+          "default": "medication"
+        },
+        "productName": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Brand Name",
+          "minProperties": 1,
+          "errorMessage": {
+            "minProperties": "Brand Name must be populated."
+          }
+        },
+        "activeIngredients": {
+          "type": "array",
+          "title": "Active Ingredients",
+          "items": {
+            "$ref": "#/$defs/Ingredient"
+          },
+          "minItems": 1,
+          "errorMessage": {
+            "minItems": "At least one active ingredient must be present."
+          }
+        },
         "genericForm": {
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Generic Dose Form"
         },
         "specificForm": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/SnowstormConceptMini"
-            },
-            {
-              "type": "null"
-            }
-          ],
+          "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Specific Dose Form"
+        },
+        "unitOfPresentation": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Unit of Presentation"
         }
       },
-      "title": "Generic and Specific Forms"
+      "required": [
+        "productName",
+        "genericForm",
+        "activeIngredients"
+      ],
+      "errorMessage": {
+        "required": "Product Details must be populated."
+      }
     },
     "ContainedProduct": {
       "type": "object",
@@ -246,117 +270,35 @@
           ]
         }
       }
-    },
-    "ProductDetails": {
-      "type": "object",
-      "title": "Product Details",
-      "properties": {
-        "productName": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "Product Name",
-          "minProperties": 1,
-          "errorMessage": {
-            "minProperties": "Product Name must be populated."
-          }
-        },
-        "activeIngredients": {
-          "type": "array",
-          "title": "Active Ingredients",
-          "items": {
-            "$ref": "#/$defs/Ingredient"
-          },
-          "minItems": 1,
-          "errorMessage": {
-            "minItems": "At least one active ingredient must be present."
-          }
-        },
-        "genericForm": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "Generic Dose Form"
-        },
-        "specificForm": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/SnowstormConceptMini"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "title": "Specific Dose Form"
-        },
-        "unitOfPresentation": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "Unit of Presentation"
-        }
-      },
-      "required": [
-        "productName",
-        "activeIngredients",
-        "unitOfPresentation",
-        "packSize"
-      ],
-      "errorMessage": {
-        "required": "Product Details must be populated."
-      }
-    },
-    "PackageDetails": {
-      "type": "object",
-      "title": "Package Details",
-      "properties": {
-        "containedProducts": {
-          "type": "array",
-          "title": "Contained Products",
-          "items": {
-            "$ref": "#/$defs/ProductDetails"
-          }
-        },
-        "packSize": {
-          "$ref": "#/$defs/Quantity",
-          "title": "Pack Size"
-        }
-      },
-      "required": [
-        "productName",
-        "containedProducts",
-        "packSize"
-      ],
-      "errorMessage": {
-        "required": "Fields must be populated."
-      }
     }
   },
   "properties": {
+    "containerType": {
+      "$ref": "#/$defs/SnowstormConceptMini",
+      "title": "Container Type",
+      "minProperties": 1,
+      "errorMessage": {
+        "minProperties": "Container Type must be populated."
+      }
+    },
     "containedProducts": {
       "type": "array",
       "title": "Contained Products",
       "items": {
         "$ref": "#/$defs/ContainedProduct"
+      },
+      "minItems": 1,
+      "errorMessage": {
+        "minItems": "At least one Contained Products."
       }
     }
   },
   "required": [
-    "productName",
+    "containerType",
     "containedProducts"
   ],
   "errorMessage": {
     "required": "Fields must be populated."
   },
-  "additionalProperties": false,
-  "if": {
-    "properties": {
-      "containedProducts": {
-        "type": "array",
-        "maxItems": 0
-      }
-    }
-  },
-  "then": {
-    "not": {
-      "type": "object"
-    },
-    "errorMessage": {
-      "not": "'Contained Products' must be populated."
-    }
-  }
+  "additionalProperties": false
 }
