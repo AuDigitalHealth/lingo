@@ -16,15 +16,14 @@
 package au.gov.digitalhealth.lingo.service.schema;
 
 import static au.gov.digitalhealth.lingo.service.schema.SchemaConstants.DEFS;
-import static au.gov.digitalhealth.lingo.service.schema.SchemaConstants.EXTERNAL_IDENTIFIERS;
 import static au.gov.digitalhealth.lingo.service.schema.SchemaConstants.NON_DEFINING_PROPERTIES;
-import static au.gov.digitalhealth.lingo.service.schema.SchemaConstants.REFERENCE_SETS;
 
+import au.gov.digitalhealth.lingo.configuration.model.BasePropertyDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
-import au.gov.digitalhealth.lingo.configuration.model.NonDefiningBase;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
@@ -44,35 +43,23 @@ public class SchemaExtender {
   }
 
   public void updateSchema(ModelConfiguration modelConfiguration, JsonNode schemaNode) {
+
+    Set<BasePropertyDefinition> properties = new HashSet<>();
+    properties.addAll(modelConfiguration.getMappings());
+    properties.addAll(modelConfiguration.getNonDefiningProperties());
+    properties.addAll(modelConfiguration.getReferenceSets());
+
     updateSchemaForProperties(
         schemaNode,
-        modelConfiguration.getNonDefiningProperties().stream()
-            .map(NonDefiningBase.class::cast)
-            .collect(Collectors.toSet()),
+        properties,
         "NonDefiningProperty",
         "Non Defining Properties",
         NON_DEFINING_PROPERTIES);
-    updateSchemaForProperties(
-        schemaNode,
-        modelConfiguration.getReferenceSets().stream()
-            .map(NonDefiningBase.class::cast)
-            .collect(Collectors.toSet()),
-        "ReferenceSet",
-        "Reference Sets",
-        REFERENCE_SETS);
-    updateSchemaForProperties(
-        schemaNode,
-        modelConfiguration.getMappings().stream()
-            .map(NonDefiningBase.class::cast)
-            .collect(Collectors.toSet()),
-        "MappingRefset",
-        "External Identifiers",
-        EXTERNAL_IDENTIFIERS);
   }
 
   private void updateSchemaForProperties(
       JsonNode schemaNode,
-      Set<NonDefiningBase> properties,
+      Set<BasePropertyDefinition> properties,
       String jsonTypeName,
       String title,
       String propertyName) {
@@ -112,12 +99,12 @@ public class SchemaExtender {
 
   private ArrayProperty getArrayProperties(
       JsonNode schemaNode,
-      Set<NonDefiningBase> properties,
+      Set<BasePropertyDefinition> properties,
       String jsonTypeName,
       String title,
       ProductPackageType productPackageType) {
 
-    Set<NonDefiningBase> levelMatchingProperties =
+    Set<BasePropertyDefinition> levelMatchingProperties =
         properties.stream()
             .filter(m -> m.getLevel().equals(productPackageType))
             .collect(Collectors.toSet());

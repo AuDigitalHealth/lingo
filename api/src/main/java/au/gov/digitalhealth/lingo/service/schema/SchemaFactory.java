@@ -15,10 +15,10 @@
  */
 package au.gov.digitalhealth.lingo.service.schema;
 
-import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
-import au.gov.digitalhealth.lingo.configuration.model.NonDefiningBase;
-import au.gov.digitalhealth.lingo.configuration.model.NonDefiningProperty;
-import au.gov.digitalhealth.lingo.configuration.model.ReferenceSet;
+import au.gov.digitalhealth.lingo.configuration.model.BasePropertyDefinition;
+import au.gov.digitalhealth.lingo.configuration.model.ExternalIdentifierDefinition;
+import au.gov.digitalhealth.lingo.configuration.model.NonDefiningPropertyDefinition;
+import au.gov.digitalhealth.lingo.configuration.model.ReferenceSetDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.NonDefiningPropertyDataType;
 
 public class SchemaFactory {
@@ -29,23 +29,25 @@ public class SchemaFactory {
 
   private SchemaFactory() {}
 
-  public static ObjectProperty create(NonDefiningBase baseProperty) {
-    if (baseProperty instanceof MappingRefset mappingRefset) {
-      return create(mappingRefset);
-    } else if (baseProperty instanceof NonDefiningProperty nonDefiningProperty) {
-      return create(nonDefiningProperty);
-    } else if (baseProperty instanceof ReferenceSet referenceSet) {
-      return create(referenceSet);
+  public static ObjectProperty create(BasePropertyDefinition baseProperty) {
+    if (baseProperty instanceof ExternalIdentifierDefinition externalIdentifierDefinition) {
+      return create(externalIdentifierDefinition);
+    } else if (baseProperty
+        instanceof NonDefiningPropertyDefinition nonDefiningPropertyDefinition) {
+      return create(nonDefiningPropertyDefinition);
+    } else if (baseProperty instanceof ReferenceSetDefinition referenceSetDefinition) {
+      return create(referenceSetDefinition);
     } else {
       throw new IllegalArgumentException(
           "Unknown NonDefiningBase property type: " + baseProperty.getClass());
     }
   }
 
-  public static ObjectProperty create(MappingRefset mapping) {
+  public static ObjectProperty create(ExternalIdentifierDefinition mapping) {
     ObjectProperty identifierSchema = new ObjectProperty();
     identifierSchema.setTitle(mapping.getTitle());
     identifierSchema.addProperty(IDENTIFIER_SCHEME, ConstProperty.create(mapping.getName()));
+    identifierSchema.addProperty("type", ConstProperty.create(mapping.getPropertyType().name()));
 
     if (mapping.getDataType().equals(NonDefiningPropertyDataType.CONCEPT)) {
       ReferenceProperty property = new ReferenceProperty();
@@ -86,12 +88,13 @@ public class SchemaFactory {
     return identifierSchema;
   }
 
-  public static ObjectProperty create(NonDefiningProperty property) {
+  public static ObjectProperty create(NonDefiningPropertyDefinition property) {
     ObjectProperty propertySchema = new ObjectProperty();
     propertySchema.setTitle(property.getTitle());
     // TODO change this to "name" instead of "identifierScheme"? More general than just external
     // identifiers
     propertySchema.addProperty(IDENTIFIER_SCHEME, ConstProperty.create(property.getName()));
+    propertySchema.addProperty("type", ConstProperty.create(property.getPropertyType().name()));
 
     propertySchema.addProperty(
         getPropertyNameForType(property.getDataType().toString()), getProperty(property));
@@ -99,36 +102,38 @@ public class SchemaFactory {
     return propertySchema;
   }
 
-  private static Property getProperty(NonDefiningProperty nonDefiningProperty) {
+  private static Property getProperty(NonDefiningPropertyDefinition nonDefiningPropertyDefinition) {
     Property returnValue = null;
 
-    if (nonDefiningProperty.getAllowedValues() != null
-        && !nonDefiningProperty.getAllowedValues().isEmpty()) {
+    if (nonDefiningPropertyDefinition.getAllowedValues() != null
+        && !nonDefiningPropertyDefinition.getAllowedValues().isEmpty()) {
       EnumProperty property = new EnumProperty();
-      property.getEnumValues().addAll(nonDefiningProperty.getAllowedValues());
+      property.getEnumValues().addAll(nonDefiningPropertyDefinition.getAllowedValues());
       returnValue = property;
-    } else if (nonDefiningProperty.getDataType().equals(NonDefiningPropertyDataType.CONCEPT)) {
+    } else if (nonDefiningPropertyDefinition
+        .getDataType()
+        .equals(NonDefiningPropertyDataType.CONCEPT)) {
       ReferenceProperty property = new ReferenceProperty();
-      property.setTitle(nonDefiningProperty.getTitle());
+      property.setTitle(nonDefiningPropertyDefinition.getTitle());
       property.setReference("#/$defs/SnowstormConceptMini");
       returnValue = property;
     } else {
       StringProperty items = new StringProperty();
-      if (nonDefiningProperty.getValueRegexValidation() != null) {
-        items.setPattern(nonDefiningProperty.getValueRegexValidation());
+      if (nonDefiningPropertyDefinition.getValueRegexValidation() != null) {
+        items.setPattern(nonDefiningPropertyDefinition.getValueRegexValidation());
         items
             .getErrorMessage()
             .put(
                 "pattern",
                 "Please enter a valid "
-                    + nonDefiningProperty.getTitle()
+                    + nonDefiningPropertyDefinition.getTitle()
                     + " matching "
-                    + nonDefiningProperty.getValueRegexValidation());
+                    + nonDefiningPropertyDefinition.getValueRegexValidation());
       }
       returnValue = items;
     }
 
-    returnValue.setTitle(nonDefiningProperty.getTitle());
+    returnValue.setTitle(nonDefiningPropertyDefinition.getTitle());
     return returnValue;
   }
 
@@ -139,10 +144,13 @@ public class SchemaFactory {
     return VALUE_FIELD;
   }
 
-  public static ObjectProperty create(ReferenceSet referenceSet) {
+  public static ObjectProperty create(ReferenceSetDefinition referenceSetDefinition) {
     ObjectProperty referenceSetSchema = new ObjectProperty();
-    referenceSetSchema.setTitle(referenceSet.getTitle());
-    referenceSetSchema.addProperty(IDENTIFIER_SCHEME, ConstProperty.create(referenceSet.getName()));
+    referenceSetSchema.setTitle(referenceSetDefinition.getTitle());
+    referenceSetSchema.addProperty(
+        IDENTIFIER_SCHEME, ConstProperty.create(referenceSetDefinition.getName()));
+    referenceSetSchema.addProperty(
+        "type", ConstProperty.create(referenceSetDefinition.getPropertyType().name()));
 
     return referenceSetSchema;
   }

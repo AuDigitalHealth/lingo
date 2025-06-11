@@ -72,8 +72,10 @@ import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
+import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
+import au.gov.digitalhealth.lingo.product.OriginalNode;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.details.*;
 import au.gov.digitalhealth.lingo.service.validators.MedicationDetailsValidator;
@@ -84,6 +86,7 @@ import au.gov.digitalhealth.lingo.util.RelationshipSorter;
 import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import au.gov.digitalhealth.tickets.service.TicketServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Valid;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -98,6 +101,8 @@ import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
@@ -114,6 +119,8 @@ public class MedicationProductCalculationService {
   ObjectMapper objectMapper;
   NodeGeneratorService nodeGeneratorService;
   Models models;
+  ProductSummaryService productSummaryService;
+  MedicationProductCalculationService self;
 
   @Value("${snomio.decimal-scale}")
   int decimalScale;
@@ -127,7 +134,9 @@ public class MedicationProductCalculationService {
       ObjectMapper objectMapper,
       NodeGeneratorService nodeGeneratorService,
       Models models,
-      Map<String, MedicationDetailsValidator> medicationDetailsValidatorByQualifier) {
+      Map<String, MedicationDetailsValidator> medicationDetailsValidatorByQualifier,
+      ProductSummaryService productSummaryService,
+      @Lazy MedicationProductCalculationService self) {
     this.snowstormClient = snowstormClient;
     this.nameGenerationService = nameGenerationService;
     this.ticketService = ticketService;
@@ -206,6 +215,23 @@ public class MedicationProductCalculationService {
         }
       }
     }
+  }
+
+  @Async
+  public CompletableFuture<ProductSummary> calculateProductFromAtomicDataAsync(
+      String branch, PackageDetails<MedicationProductDetails> packageDetails) {
+    return CompletableFuture.supplyAsync(
+        () -> {
+          try {
+            return calculateProductFromAtomicData(branch, packageDetails);
+          } catch (InterruptedException e) {
+            // Re-interrupt the thread
+            Thread.currentThread().interrupt();
+            throw new LingoProblem("Product calculation interrupted", e);
+          } catch (Exception e) {
+            throw new LingoProblem("Failed calculating product asynchronously from atomic data", e);
+          }
+        });
   }
 
   /**

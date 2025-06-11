@@ -15,6 +15,9 @@
  */
 package au.gov.digitalhealth.lingo.product.details.properties;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -26,9 +29,17 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonSubTypes({
+  @JsonSubTypes.Type(value = ExternalIdentifier.class, name = "EXTERNAL_IDENTIFIER"),
+  @JsonSubTypes.Type(value = NonDefiningProperty.class, name = "NON_DEFINING_PROPERTY"),
+  @JsonSubTypes.Type(value = ReferenceSet.class, name = "REFERENCE_SET"),
+})
 public abstract class NonDefiningBase {
   @NotNull @NotEmpty String identifierScheme;
   String identifier;
   String title;
   String description;
+  PropertyType type;
 }
