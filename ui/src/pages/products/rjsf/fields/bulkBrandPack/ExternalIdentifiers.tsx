@@ -139,7 +139,7 @@ const ExternalIdentifierRender: React.FC<
       const currentCount = (formData?.length ?? 0) + newItems.length;
       if (maxItems && schemeEntries && currentCount >= maxItems) {
         setTooltip(
-          `Only ${maxItems} items allowed for ${schema.properties.identifierScheme.const}`,
+          `Only ${maxItems} items allowed for ${schema.title}`,
         );
         break; // Stop processing further items
       }
@@ -196,7 +196,7 @@ const ExternalIdentifierRender: React.FC<
       >
         {useValueSetAutocomplete && isMultiValued && (
           <MultiValueValueSetAutocomplete
-            label={schema.properties.identifierScheme.const}
+            label={schema.title}
             url={binding.valueSet || ''}
             showDefaultOptions={false}
             value={schemeEntries}
@@ -207,7 +207,7 @@ const ExternalIdentifierRender: React.FC<
         )}
         {useValueSetAutocomplete && !isMultiValued && (
           <ValueSetAutocomplete
-            label={schema.properties.identifierScheme.const}
+            label={schema.title}
             url={binding.valueSet || ''}
             showDefaultOptions={false}
             value={schemeEntries}
@@ -225,7 +225,7 @@ const ExternalIdentifierRender: React.FC<
             showDefaultOptions={false}
             isDisabled={readOnly ? true : false}
             // errorMessage={errorMessage}
-            title={schema.properties.identifierScheme.const}
+            title={schema.title}
           />
         )}
         {!useEclAutocomplete && !useValueSetAutocomplete && (
@@ -273,7 +273,7 @@ const ExternalIdentifierRender: React.FC<
             renderInput={params => (
               <TextField
                 {...params}
-                label={schema.properties.identifierScheme.const}
+                label={schema.title}
                 InputProps={{
                   ...params.InputProps,
                   endAdornment: readOnly
