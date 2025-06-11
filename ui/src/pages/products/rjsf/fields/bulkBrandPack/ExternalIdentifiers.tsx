@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Autocomplete, TextField, Chip, Box, Stack, Grid } from '@mui/material';
+import { Autocomplete, Box, Chip, Grid, Stack, TextField } from '@mui/material';
 import { FieldProps } from '@rjsf/utils';
 import ValueSetAutocomplete, {
-  MultiValueValueSetAutocomplete,
+  MultiValueValueSetAutocomplete
 } from '../../components/ValueSetAutocomplete';
 import EclAutocomplete from '../../components/EclAutocomplete';
 
@@ -35,6 +35,7 @@ const ExternalIdentifiers: React.FC<
     freeSoloByScheme = {},
     onChipClick,
     readOnly,
+    branch,
   } = (uiSchema && uiSchema['ui:options']) || {};
 
   const formData = props.formData;
@@ -56,6 +57,7 @@ const ExternalIdentifiers: React.FC<
                 schema={schema}
                 uiSchema={uiSchema}
                 registry={registry}
+                branch={branch}
               />
             </Grid>
           );
@@ -75,6 +77,7 @@ const ExternalIdentifierRender: React.FC<
     freeSoloByScheme = {},
     onChipClick,
     readOnly,
+    branch
   } = (uiSchema && uiSchema['ui:options']) || {};
 
   const schemeName = schema?.properties?.identifierScheme?.const;
