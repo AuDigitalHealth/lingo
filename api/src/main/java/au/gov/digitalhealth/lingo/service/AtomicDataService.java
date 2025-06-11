@@ -154,9 +154,9 @@ public abstract class AtomicDataService<T extends ProductDetails> {
                                 .forEach(
                                     externalIdentifier -> {
                                       if (!details
-                                          .getExternalIdentifiers()
+                                          .getNonDefiningProperties()
                                           .contains(externalIdentifier)) {
-                                        details.getExternalIdentifiers().add(externalIdentifier);
+                                        details.getNonDefiningProperties().add(externalIdentifier);
                                       }
                                     });
                           }
@@ -187,8 +187,10 @@ public abstract class AtomicDataService<T extends ProductDetails> {
                                             .equals(referenceSetDefinition.getName()))
                                 .forEach(
                                     referenceSet -> {
-                                      if (!details.getReferenceSets().contains(referenceSet)) {
-                                        details.getReferenceSets().add(referenceSet);
+                                      if (!details
+                                          .getNonDefiningProperties()
+                                          .contains(referenceSet)) {
+                                        details.getNonDefiningProperties().add(referenceSet);
                                       }
                                     });
                           }
@@ -429,22 +431,29 @@ public abstract class AtomicDataService<T extends ProductDetails> {
                     "No pack size found for ", productId.toString());
               });
 
-      packSizeWithIdentifier.setExternalIdentifiers(
-          ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMembers(
-              packVariantRefsetMemebersResult,
-              packVariant.getConceptId(),
-              getModelConfiguration(branch).getMappings().stream()
-                  .filter(m -> m.getLevel().equals(ProductPackageType.PACKAGE))
-                  .collect(Collectors.toSet()),
-              getFhirClient()));
-      packSizeWithIdentifier.setReferenceSets(
-          ReferenceSetUtils.getReferenceSetsFromRefsetMembers(
-                  packVariantRefsetMemebersResult, getModelConfiguration(branch).getReferenceSets())
-              .getOrDefault(packVariant.getConceptId(), new HashSet<>()));
-      packSizeWithIdentifier.setNonDefiningProperties(
-          NonDefiningPropertyUtils.getNonDefiningPropertyFromConcepts(
-                  Set.of(packVariant), getModelConfiguration(branch).getNonDefiningProperties())
-              .getOrDefault(packVariant.getConceptId(), new HashSet<>()));
+      packSizeWithIdentifier
+          .getNonDefiningProperties()
+          .addAll(
+              ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMembers(
+                  packVariantRefsetMemebersResult,
+                  packVariant.getConceptId(),
+                  getModelConfiguration(branch).getMappings().stream()
+                      .filter(m -> m.getLevel().equals(ProductPackageType.PACKAGE))
+                      .collect(Collectors.toSet()),
+                  getFhirClient()));
+      packSizeWithIdentifier
+          .getNonDefiningProperties()
+          .addAll(
+              ReferenceSetUtils.getReferenceSetsFromRefsetMembers(
+                      packVariantRefsetMemebersResult,
+                      getModelConfiguration(branch).getReferenceSets())
+                  .getOrDefault(packVariant.getConceptId(), new HashSet<>()));
+      packSizeWithIdentifier
+          .getNonDefiningProperties()
+          .addAll(
+              NonDefiningPropertyUtils.getNonDefiningPropertyFromConcepts(
+                      Set.of(packVariant), getModelConfiguration(branch).getNonDefiningProperties())
+                  .getOrDefault(packVariant.getConceptId(), new HashSet<>()));
 
       packSizeWithIdentifiers.add(packSizeWithIdentifier);
     }
@@ -567,7 +576,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
       }
 
       brandWithIdentifiers
-          .getExternalIdentifiers()
+          .getNonDefiningProperties()
           .addAll(
               ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMembers(
                   packVariantRefsetMemebersResult,
@@ -577,7 +586,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
                       .collect(Collectors.toSet()),
                   getFhirClient()));
       brandWithIdentifiers
-          .getReferenceSets()
+          .getNonDefiningProperties()
           .addAll(
               ReferenceSetUtils.getReferenceSetsFromRefsetMembers(
                       packVariantRefsetMemebersResult,

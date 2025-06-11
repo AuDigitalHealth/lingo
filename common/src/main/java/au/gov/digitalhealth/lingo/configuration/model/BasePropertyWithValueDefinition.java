@@ -29,7 +29,7 @@ import lombok.EqualsAndHashCode;
 @OnlyOnePopulated(
     fields = {"eclBinding", "valueSetReference"},
     message = "Only eclBinding or valueSetReference can be populated, not both")
-public abstract class NonDefiningPropertyBase extends NonDefiningBase {
+public abstract class BasePropertyWithValueDefinition extends BasePropertyDefinition {
 
   /** The data type of the property. */
   @NotNull private NonDefiningPropertyDataType dataType;

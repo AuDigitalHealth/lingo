@@ -31,8 +31,9 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.STATED_RELATIONSHU
 
 import au.csiro.snowstorm_client.model.*;
 import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
-import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
+import au.gov.digitalhealth.lingo.configuration.model.ExternalIdentifierDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
+import au.gov.digitalhealth.lingo.configuration.model.ReferenceSetDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.MappingType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.exception.AtomicDataExtractionProblem;
@@ -533,21 +534,23 @@ public class SnowstormDtoUtil {
           ModelConfiguration modelConfiguration,
           ModelLevelType modelLevelType) {
 
-    Map<String, MappingRefset> mappingRefsetMap = modelConfiguration.getMappingsByName();
+    Map<String, ExternalIdentifierDefinition> mappingRefsetMap =
+        modelConfiguration.getMappingsByName();
     Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers = new HashSet<>();
     for (ExternalIdentifier identifier : externalIdentifiers) {
-      MappingRefset mappingRefset = mappingRefsetMap.get(identifier.getIdentifierScheme());
+      ExternalIdentifierDefinition externalIdentifierDefinition =
+          mappingRefsetMap.get(identifier.getIdentifierScheme());
 
-      if (mappingRefset == null) {
+      if (externalIdentifierDefinition == null) {
         throw new ProductAtomicDataValidationProblem(
             "Unknown identifier scheme " + identifier.getIdentifierScheme());
       }
 
-      if (mappingRefset.getModelLevels().contains(modelLevelType)) {
+      if (externalIdentifierDefinition.getModelLevels().contains(modelLevelType)) {
 
         Map<String, String> additionalFields = new HashMap<>();
 
-        additionalFields.put("mapTarget", identifier.getIdentifierValue());
+        additionalFields.put("mapTarget", identifier.getValue());
 
         if (!MappingType.RELATED.equals(identifier.getRelationshipType())) {
           additionalFields.put("mapType", identifier.getRelationshipType().getSctid());
@@ -556,7 +559,7 @@ public class SnowstormDtoUtil {
         SnowstormReferenceSetMemberViewComponent refsetMember =
             new SnowstormReferenceSetMemberViewComponent()
                 .active(true)
-                .refsetId(mappingRefset.getIdentifier())
+                .refsetId(externalIdentifierDefinition.getIdentifier())
                 .additionalFields(additionalFields);
 
         referenceSetMembers.add(refsetMember);
@@ -570,10 +573,10 @@ public class SnowstormDtoUtil {
       createSnowstormReferenceSetMemberViewComponent(
           ExternalIdentifier externalIdentifier,
           String referencedComponentId,
-          Collection<MappingRefset> mappingRefsets) {
+          Collection<ExternalIdentifierDefinition> externalIdentifierDefinitions) {
 
-    MappingRefset mappingRefset =
-        mappingRefsets.stream()
+    ExternalIdentifierDefinition externalIdentifierDefinition =
+        externalIdentifierDefinitions.stream()
             .filter(m -> m.getName().equals(externalIdentifier.getIdentifierScheme()))
             .findFirst()
             .orElseThrow(
@@ -583,7 +586,7 @@ public class SnowstormDtoUtil {
 
     Map<String, String> additionalFields = new HashMap<>();
 
-    additionalFields.put(MAP_TARGET.getValue(), externalIdentifier.getIdentifierValue());
+    additionalFields.put(MAP_TARGET.getValue(), externalIdentifier.getValue());
 
     if (!MappingType.RELATED.equals(externalIdentifier.getRelationshipType())) {
       additionalFields.put(
@@ -593,7 +596,7 @@ public class SnowstormDtoUtil {
     return new SnowstormReferenceSetMemberViewComponent()
         .active(true)
         .referencedComponentId(referencedComponentId)
-        .refsetId(mappingRefset.getIdentifier())
+        .refsetId(externalIdentifierDefinition.getIdentifier())
         .additionalFields(additionalFields);
   }
 
@@ -601,11 +604,10 @@ public class SnowstormDtoUtil {
       createSnowstormReferenceSetMemberViewComponent(
           ReferenceSet referenceSet,
           String referencedComponentId,
-          Collection<au.gov.digitalhealth.lingo.configuration.model.ReferenceSet>
-              referenceSetDefinitions) {
+          Collection<ReferenceSetDefinition> referenceSetDefinitionDefinitions) {
 
-    au.gov.digitalhealth.lingo.configuration.model.ReferenceSet referenceSetDefinition =
-        referenceSetDefinitions.stream()
+    ReferenceSetDefinition referenceSetDefinition =
+        referenceSetDefinitionDefinitions.stream()
             .filter(m -> m.getName().equals(referenceSet.getIdentifierScheme()))
             .findFirst()
             .orElseThrow(

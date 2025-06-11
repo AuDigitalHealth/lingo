@@ -27,16 +27,17 @@ import au.csiro.snowstorm_client.model.SnowstormItemsPageRelationship;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
-import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
+import au.gov.digitalhealth.lingo.configuration.model.ExternalIdentifierDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
-import au.gov.digitalhealth.lingo.configuration.model.NonDefiningProperty;
-import au.gov.digitalhealth.lingo.configuration.model.ReferenceSet;
+import au.gov.digitalhealth.lingo.configuration.model.NonDefiningPropertyDefinition;
+import au.gov.digitalhealth.lingo.configuration.model.ReferenceSetDefinition;
 import au.gov.digitalhealth.lingo.exception.SingleConceptExpectedProblem;
 import au.gov.digitalhealth.lingo.product.NewConceptDetails;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import au.gov.digitalhealth.lingo.util.EclBuilder;
 import au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils;
@@ -123,7 +124,7 @@ public class NodeGeneratorService {
   private Flux<Void> addNonDefiningProperties(
       String branch, ModelLevel modelLevel, ModelConfiguration modelConfiguration, Node node) {
 
-    Map<String, NonDefiningProperty> nonDefiningPropertiesMap =
+    Map<String, NonDefiningPropertyDefinition> nonDefiningPropertiesMap =
         modelConfiguration.getNonDefiningPropertiesByIdentifierForModelLevel(modelLevel);
 
     if (!nonDefiningPropertiesMap.isEmpty()) {
@@ -153,9 +154,9 @@ public class NodeGeneratorService {
 
   private Flux<Void> addRefsetAndMapping(
       String branch, ModelLevel modelLevel, ModelConfiguration modelConfiguration, Node node) {
-    final Map<String, ReferenceSet> refsetMap =
+    final Map<String, ReferenceSetDefinition> refsetMap =
         modelConfiguration.getReferenceSetsByIdentifierForModelLevel(modelLevel);
-    final Map<String, MappingRefset> mappingMap =
+    final Map<String, ExternalIdentifierDefinition> mappingMap =
         modelConfiguration.getMappingsByIdentifierForModelLevel(modelLevel);
     // get reference set members for the concept
 
@@ -168,14 +169,14 @@ public class NodeGeneratorService {
             member -> {
               if (refsetMap.containsKey(member.getRefsetId())) {
                 return Mono.just(
-                    node.getReferenceSets()
+                    node.getNonDefiningProperties()
                         .add(
                             new au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet(
                                 member, refsetMap.get(member.getRefsetId()))));
               } else if (mappingMap.containsKey(member.getRefsetId())) {
                 return au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier
                     .create(member, mappingMap.get(member.getRefsetId()), fhirClient)
-                    .doOnNext(p -> node.getExternalIdentifiers().add(p))
+                    .doOnNext(p -> node.getNonDefiningProperties().add(p))
                     .then(Mono.empty());
               } else {
                 return Mono.empty();
@@ -366,21 +367,25 @@ public class NodeGeneratorService {
       newConceptDetails.setReferenceSetMembers(referenceSetMembers);
       newConceptDetails.setNonDefiningProperties(nonDefiningProperties);
       node.setNewConceptDetails(newConceptDetails);
-      node.setNonDefiningProperties(
-          NonDefiningPropertyUtils.getNonDefiningProperties(
-              nonDefiningProperties,
-              modelConfiguration.getNonDefiningPropertiesByIdentifierForModelLevel(modelLevel)));
-      node.setReferenceSets(
+
+      Set<NonDefiningBase> properties =
+          new HashSet<>(
+              NonDefiningPropertyUtils.getNonDefiningProperties(
+                  nonDefiningProperties,
+                  modelConfiguration.getNonDefiningPropertiesByIdentifierForModelLevel(
+                      modelLevel)));
+      properties.addAll(
           ReferenceSetUtils.getReferenceSetsFromNewRefsetComponentViewMembers(
               referenceSetMembers,
               modelConfiguration.getReferenceSetsByIdentifierForModelLevel(modelLevel).values()));
-      node.setExternalIdentifiers(
+      properties.addAll(
           ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMemberViewComponents(
               referenceSetMembers,
               null,
               new HashSet<>(
                   modelConfiguration.getMappingsByIdentifierForModelLevel(modelLevel).values()),
               fhirClient));
+      node.setNonDefiningProperties(properties);
       log.fine("New concept for " + label + " " + newConceptDetails.getConceptId());
     } else {
       log.fine("Concept found for " + label + " " + node.getConceptId());

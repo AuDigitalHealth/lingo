@@ -18,10 +18,12 @@ package au.gov.digitalhealth.lingo.util;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
+import au.gov.digitalhealth.lingo.configuration.model.ReferenceSetDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.details.PackageProductDetailsBase;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet;
 import jakarta.validation.constraints.NotNull;
 import java.util.Collection;
@@ -43,19 +45,15 @@ public class ReferenceSetUtils {
 
   public static Set<ReferenceSet> getReferenceSetsFromNewRefsetComponentViewMembers(
       Collection<SnowstormReferenceSetMemberViewComponent> refsetMembers,
-      Collection<au.gov.digitalhealth.lingo.configuration.model.ReferenceSet> mappingRefsets) {
+      Collection<ReferenceSetDefinition> mappingRefsets) {
 
     if (mappingRefsets.isEmpty()) {
       return Set.of();
     }
 
-    Map<String, au.gov.digitalhealth.lingo.configuration.model.ReferenceSet>
-        referenceSetsConfigured =
-            mappingRefsets.stream()
-                .collect(
-                    Collectors.toMap(
-                        au.gov.digitalhealth.lingo.configuration.model.ReferenceSet::getIdentifier,
-                        Function.identity()));
+    Map<String, ReferenceSetDefinition> referenceSetsConfigured =
+        mappingRefsets.stream()
+            .collect(Collectors.toMap(ReferenceSetDefinition::getIdentifier, Function.identity()));
 
     return refsetMembers.stream()
         .filter(r -> referenceSetsConfigured.containsKey(r.getRefsetId()))
@@ -65,19 +63,15 @@ public class ReferenceSetUtils {
 
   public static Map<String, Set<ReferenceSet>> getReferenceSetsFromRefsetMembers(
       Collection<SnowstormReferenceSetMember> refsetMembers,
-      Set<au.gov.digitalhealth.lingo.configuration.model.ReferenceSet> mappingRefsets) {
+      Set<ReferenceSetDefinition> mappingRefsets) {
 
     if (mappingRefsets.isEmpty()) {
       return Map.of();
     }
 
-    Map<String, au.gov.digitalhealth.lingo.configuration.model.ReferenceSet>
-        referenceSetsConfigured =
-            mappingRefsets.stream()
-                .collect(
-                    Collectors.toMap(
-                        au.gov.digitalhealth.lingo.configuration.model.ReferenceSet::getIdentifier,
-                        Function.identity()));
+    Map<String, ReferenceSetDefinition> referenceSetsConfigured =
+        mappingRefsets.stream()
+            .collect(Collectors.toMap(ReferenceSetDefinition::getIdentifier, Function.identity()));
 
     return refsetMembers.stream()
         .filter(r -> referenceSetsConfigured.containsKey(r.getRefsetId()))
@@ -92,20 +86,15 @@ public class ReferenceSetUtils {
   }
 
   public static Mono<Map<String, List<ReferenceSet>>> getReferenceSetsFromRefsetMembers(
-      Flux<SnowstormReferenceSetMember> refsetMembers,
-      Set<au.gov.digitalhealth.lingo.configuration.model.ReferenceSet> mappingRefsets) {
+      Flux<SnowstormReferenceSetMember> refsetMembers, Set<ReferenceSetDefinition> mappingRefsets) {
 
     if (mappingRefsets.isEmpty()) {
       return Mono.just(Map.of());
     }
 
-    Map<String, au.gov.digitalhealth.lingo.configuration.model.ReferenceSet>
-        referenceSetsConfigured =
-            mappingRefsets.stream()
-                .collect(
-                    Collectors.toMap(
-                        au.gov.digitalhealth.lingo.configuration.model.ReferenceSet::getIdentifier,
-                        Function.identity()));
+    Map<String, ReferenceSetDefinition> referenceSetsConfigured =
+        mappingRefsets.stream()
+            .collect(Collectors.toMap(ReferenceSetDefinition::getIdentifier, Function.identity()));
 
     return refsetMembers
         .filter(r -> referenceSetsConfigured.containsKey(r.getRefsetId()))
@@ -126,19 +115,15 @@ public class ReferenceSetUtils {
       ModelLevelType modelLevelType) {
 
     return getReferenceSetMembers(
-        details.getExternalIdentifiers(),
-        details.getReferenceSets(),
-        modelConfiguration,
-        modelLevelType);
+        details.getNonDefiningProperties(), modelConfiguration, modelLevelType);
   }
 
   public static Set<SnowstormReferenceSetMemberViewComponent> getReferenceSetMembers(
-      Collection<ExternalIdentifier> externalIdentifiers,
-      Collection<ReferenceSet> referenceSets,
+      Collection<NonDefiningBase> properties,
       ModelConfiguration modelConfiguration,
       @NotNull ModelLevelType modelLevelType) {
 
-    Map<String, au.gov.digitalhealth.lingo.configuration.model.ReferenceSet> referenceSetMap =
+    Map<String, ReferenceSetDefinition> referenceSetMap =
         modelConfiguration.getReferenceSetsByName();
 
     Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers = new HashSet<>();
@@ -149,26 +134,26 @@ public class ReferenceSetUtils {
             .active(true)
             .moduleId(modelConfiguration.getModuleId()));
 
-    for (ReferenceSet referenceSet : referenceSets) {
-      au.gov.digitalhealth.lingo.configuration.model.ReferenceSet configReferenceSet =
+    for (ReferenceSet referenceSet : ReferenceSet.filter(properties)) {
+      ReferenceSetDefinition configReferenceSetDefinition =
           referenceSetMap.get(referenceSet.getIdentifierScheme());
-      if (configReferenceSet == null) {
+      if (configReferenceSetDefinition == null) {
         throw new ProductAtomicDataValidationProblem(
             "Reference set "
                 + referenceSet.getIdentifierScheme()
                 + " is not valid for this product");
       }
-      if (configReferenceSet.getModelLevels().contains(modelLevelType)) {
+      if (configReferenceSetDefinition.getModelLevels().contains(modelLevelType)) {
         referenceSetMembers.add(
             new SnowstormReferenceSetMemberViewComponent()
-                .refsetId(configReferenceSet.getIdentifier())
+                .refsetId(configReferenceSetDefinition.getIdentifier())
                 .active(true));
       }
     }
 
     final Set<SnowstormReferenceSetMemberViewComponent> externalIdentifierReferenceSetEntries =
         SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(
-            externalIdentifiers, modelConfiguration, modelLevelType);
+            ExternalIdentifier.filter(properties), modelConfiguration, modelLevelType);
 
     referenceSetMembers.addAll(externalIdentifierReferenceSetEntries);
 

@@ -15,7 +15,10 @@
  */
 package au.gov.digitalhealth.lingo.configuration.model;
 
+import static au.gov.digitalhealth.lingo.product.details.properties.PropertyType.EXTERNAL_IDENTIFIER;
+
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.MappingType;
+import au.gov.digitalhealth.lingo.product.details.properties.PropertyType;
 import au.gov.digitalhealth.lingo.validation.ValidDefaultMappingType;
 import java.util.Set;
 import lombok.Data;
@@ -25,7 +28,7 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @ValidDefaultMappingType
-public class MappingRefset extends NonDefiningPropertyBase {
+public class ExternalIdentifierDefinition extends BasePropertyWithValueDefinition {
 
   /** Default mapping type. */
   private MappingType defaultMappingType;
@@ -35,4 +38,8 @@ public class MappingRefset extends NonDefiningPropertyBase {
 
   /** CodeSystem URI for the value */
   private String codeSystem;
+
+  public PropertyType getPropertyType() {
+    return EXTERNAL_IDENTIFIER;
+  }
 }
