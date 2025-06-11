@@ -172,12 +172,12 @@ class ProductControllerTest extends LingoTestBase {
             Set.of(
                 ExternalIdentifier.builder()
                     .identifierScheme(ARTG_SCHEME)
-                    .identifierValue("123")
+                    .value("123")
                     .relationshipType(MappingType.RELATED)
                     .build(),
                 ExternalIdentifier.builder()
                     .identifierScheme(ARTG_SCHEME)
-                    .identifierValue("345")
+                    .value("345")
                     .relationshipType(MappingType.RELATED)
                     .build()),
             ticketResponse.getId());
@@ -187,10 +187,10 @@ class ProductControllerTest extends LingoTestBase {
                 productExternalIdentifierUpdateRequest, existingCtpp.getConceptId());
     Assertions.assertThat(updatedExternalIdentifiers).hasSize(2);
     Assertions.assertThat(
-            updatedExternalIdentifiers.stream().anyMatch(e -> e.getIdentifierValue().equals("123")))
+            updatedExternalIdentifiers.stream().anyMatch(e -> e.getValue().equals("123")))
         .isTrue();
     Assertions.assertThat(
-            updatedExternalIdentifiers.stream().anyMatch(e -> e.getIdentifierValue().equals("345")))
+            updatedExternalIdentifiers.stream().anyMatch(e -> e.getValue().equals("345")))
         .isTrue();
 
     productExternalIdentifierUpdateRequest =
@@ -198,12 +198,12 @@ class ProductControllerTest extends LingoTestBase {
             Set.of(
                 ExternalIdentifier.builder()
                     .identifierScheme(ARTG_SCHEME)
-                    .identifierValue("123")
+                    .value("123")
                     .relationshipType(MappingType.RELATED)
                     .build(),
                 ExternalIdentifier.builder()
                     .identifierScheme(ARTG_SCHEME)
-                    .identifierValue("222")
+                    .value("222")
                     .relationshipType(MappingType.RELATED)
                     .build()),
             ticketResponse.getId());
@@ -213,10 +213,10 @@ class ProductControllerTest extends LingoTestBase {
                 productExternalIdentifierUpdateRequest, existingCtpp.getConceptId());
     Assertions.assertThat(updatedExternalIdentifiers).hasSize(2);
     Assertions.assertThat(
-            updatedExternalIdentifiers.stream().anyMatch(e -> e.getIdentifierValue().equals("123")))
+            updatedExternalIdentifiers.stream().anyMatch(e -> e.getValue().equals("123")))
         .isTrue();
     Assertions.assertThat(
-            updatedExternalIdentifiers.stream().anyMatch(e -> e.getIdentifierValue().equals("222")))
+            updatedExternalIdentifiers.stream().anyMatch(e -> e.getValue().equals("222")))
         .isTrue();
 
     // Test for removing artg id

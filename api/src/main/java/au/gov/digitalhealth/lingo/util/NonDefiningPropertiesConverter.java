@@ -19,11 +19,12 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.ADDITIONAL_RELATIO
 
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
-import au.gov.digitalhealth.lingo.configuration.model.NonDefiningProperty;
+import au.gov.digitalhealth.lingo.configuration.model.NonDefiningPropertyDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.NonDefiningPropertyDataType;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.details.PackageProductDetailsBase;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -45,35 +46,38 @@ public class NonDefiningPropertiesConverter {
 
   public static Set<SnowstormRelationship> calculateNonDefiningRelationships(
       ModelConfiguration modelConfiguration,
-      Collection<au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty>
-          nonDefiningProperties,
+      Collection<NonDefiningBase> nonDefiningProperties,
       ModelLevelType modelLevelType) {
 
     if (nonDefiningProperties.isEmpty()) {
       return Set.of();
     }
 
-    Map<String, NonDefiningProperty> nonDefiningPropertiesByName =
+    Map<String, NonDefiningPropertyDefinition> nonDefiningPropertiesByName =
         modelConfiguration.getNonDefiningPropertiesByName();
 
     Set<SnowstormRelationship> snowstormRelationships = new HashSet<>();
 
     for (au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty
-        nonDefiningProperty : nonDefiningProperties) {
-      NonDefiningProperty modelNonDefiningProperty =
+        nonDefiningProperty :
+            au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty.filter(
+                nonDefiningProperties)) {
+      NonDefiningPropertyDefinition modelNonDefiningPropertyDefinition =
           nonDefiningPropertiesByName.get(nonDefiningProperty.getIdentifierScheme());
 
-      if (modelNonDefiningProperty == null) {
+      if (modelNonDefiningPropertyDefinition == null) {
         throw new ProductAtomicDataValidationProblem(
             "Non-defining property "
                 + nonDefiningProperty.getIdentifierScheme()
                 + " is not valid for this product");
       }
 
-      if (modelNonDefiningProperty.getModelLevels().contains(modelLevelType)) {
+      if (modelNonDefiningPropertyDefinition.getModelLevels().contains(modelLevelType)) {
         snowstormRelationships.add(
             convertToRelationship(
-                nonDefiningProperty, modelConfiguration.getModuleId(), modelNonDefiningProperty));
+                nonDefiningProperty,
+                modelConfiguration.getModuleId(),
+                modelNonDefiningPropertyDefinition));
       }
     }
 
@@ -83,10 +87,10 @@ public class NonDefiningPropertiesConverter {
   public static SnowstormRelationship calculateNonDefiningRelationships(
       au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty value,
       String conceptId,
-      Collection<NonDefiningProperty> propertyDefinitions,
+      Collection<NonDefiningPropertyDefinition> propertyDefinitions,
       String moduleId) {
 
-    List<NonDefiningProperty> filteredPropertyDefinition =
+    List<NonDefiningPropertyDefinition> filteredPropertyDefinition =
         propertyDefinitions.stream()
             .filter(
                 propertyDefinition ->
@@ -104,7 +108,7 @@ public class NonDefiningPropertiesConverter {
               + value.getIdentifierScheme()
               + " is defined multiple times in the model");
     }
-    NonDefiningProperty propertyDefinition = filteredPropertyDefinition.get(0);
+    NonDefiningPropertyDefinition propertyDefinition = filteredPropertyDefinition.get(0);
 
     SnowstormRelationship snowstormRelationship =
         convertToRelationship(value, moduleId, propertyDefinition);
@@ -115,7 +119,7 @@ public class NonDefiningPropertiesConverter {
   private static SnowstormRelationship convertToRelationship(
       au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty value,
       String moduleId,
-      NonDefiningProperty propertyDefinition) {
+      NonDefiningPropertyDefinition propertyDefinition) {
     SnowstormRelationship snowstormRelationship;
     if (propertyDefinition.getDataType().equals(NonDefiningPropertyDataType.CONCEPT)) {
       if (value.getValueObject() == null) {

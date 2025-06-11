@@ -17,41 +17,55 @@ package au.gov.digitalhealth.lingo.product.details.properties;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import au.gov.digitalhealth.lingo.configuration.model.NonDefiningPropertyDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.NonDefiningPropertyDataType;
 import au.gov.digitalhealth.lingo.validation.OnlyOneNotEmpty;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.Collection;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@NoArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonTypeName("nonDefiningProperty")
 @OnlyOneNotEmpty(fields = {"value", "valueObject"})
 public class NonDefiningProperty extends NonDefiningBase implements Serializable {
   String value;
   SnowstormConceptMini valueObject;
 
+  public NonDefiningProperty() {
+    this.setType(PropertyType.NON_DEFINING_PROPERTY);
+  }
+
   public NonDefiningProperty(
       SnowstormRelationship r,
-      @NotNull
-          au.gov.digitalhealth.lingo.configuration.model.NonDefiningProperty nonDefiningProperty) {
-    this.setIdentifierScheme(nonDefiningProperty.getName());
-    this.setIdentifier(nonDefiningProperty.getIdentifier());
-    this.setTitle(nonDefiningProperty.getTitle());
-    this.setDescription(nonDefiningProperty.getDescription());
-    if (!r.getTypeId().equals(nonDefiningProperty.getIdentifier())) {
+      @NotNull NonDefiningPropertyDefinition nonDefiningPropertyDefinition) {
+    this.setIdentifierScheme(nonDefiningPropertyDefinition.getName());
+    this.setIdentifier(nonDefiningPropertyDefinition.getIdentifier());
+    this.setTitle(nonDefiningPropertyDefinition.getTitle());
+    this.setDescription(nonDefiningPropertyDefinition.getDescription());
+    if (!r.getTypeId().equals(nonDefiningPropertyDefinition.getIdentifier())) {
       throw new IllegalArgumentException(
           "The relationship type "
               + r.getTypeId()
               + " does not match the identifier of the non-defining property "
-              + nonDefiningProperty.getIdentifier());
+              + nonDefiningPropertyDefinition.getIdentifier());
     }
-    if (nonDefiningProperty.getDataType().equals(NonDefiningPropertyDataType.CONCEPT)) {
+    if (nonDefiningPropertyDefinition.getDataType().equals(NonDefiningPropertyDataType.CONCEPT)) {
       valueObject = r.getTarget();
     } else {
       value = r.getConcreteValue().getValue();
     }
+  }
+
+  public static Collection<NonDefiningProperty> filter(Collection<NonDefiningBase> properties) {
+    return properties.stream()
+        .filter(p -> p.getType().equals(PropertyType.NON_DEFINING_PROPERTY))
+        .map(p -> (NonDefiningProperty) p)
+        .toList();
   }
 }
