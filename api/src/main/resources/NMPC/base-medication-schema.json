@@ -110,19 +110,47 @@
           "$ref": "#/$defs/SnowstormConceptMini"
         },
         "concentrationStrengthNumerator": {
-          "$ref": "#/$defs/Quantity",
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "title": "Concentration Strength Numerator"
         },
         "concentrationStrengthDenominator": {
-          "$ref": "#/$defs/Quantity",
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "title": "Concentration Strength Denominator"
         },
         "presentationStrengthNumerator": {
-          "$ref": "#/$defs/Quantity",
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "title": "Presentation Strength Numerator"
         },
         "presentationStrengthDenominator": {
-          "$ref": "#/$defs/Quantity",
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Quantity"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "title": "Presentation Strength Denominator"
         }
       },
@@ -275,11 +303,7 @@
   "properties": {
     "containerType": {
       "$ref": "#/$defs/SnowstormConceptMini",
-      "title": "Container Type",
-      "minProperties": 1,
-      "errorMessage": {
-        "minProperties": "Container Type must be populated."
-      }
+      "title": "Container Type"
     },
     "containedProducts": {
       "type": "array",
