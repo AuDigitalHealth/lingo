@@ -176,6 +176,7 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
               }}
               registry={registry}
               formContext={formContext}
+              branch={branch}
             />
           </Box>
         </Stack>
