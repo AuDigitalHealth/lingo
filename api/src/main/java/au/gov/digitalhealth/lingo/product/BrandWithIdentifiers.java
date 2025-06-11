@@ -16,9 +16,7 @@
 package au.gov.digitalhealth.lingo.product;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
-import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
-import au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -37,10 +35,5 @@ public class BrandWithIdentifiers implements Serializable {
   @NotNull private SnowstormConceptMini brand;
 
   @Builder.Default @NotNull @Valid
-  private Set<@Valid ExternalIdentifier> externalIdentifiers = new HashSet<>();
-
-  @Builder.Default @NotNull @Valid
-  private Set<@Valid NonDefiningProperty> nonDefiningProperties = new HashSet<>();
-
-  @Builder.Default @NotNull @Valid private Set<@Valid ReferenceSet> referenceSets = new HashSet<>();
+  private Set<@Valid NonDefiningBase> nonDefiningProperties = new HashSet<>();
 }

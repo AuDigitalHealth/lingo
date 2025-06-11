@@ -54,9 +54,7 @@ import au.gov.digitalhealth.lingo.product.ProductBrands;
 import au.gov.digitalhealth.lingo.product.ProductPackSizes;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.bulk.BrandPackSizeCreationDetails;
-import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
-import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
-import au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import au.gov.digitalhealth.lingo.util.AmtConstants;
 import au.gov.digitalhealth.lingo.util.BigDecimalFormatter;
 import au.gov.digitalhealth.lingo.util.RelationshipSorter;
@@ -455,7 +453,6 @@ public class BrandPackSizeService {
 
     PackSizeWithIdentifiers leafPackSize = new PackSizeWithIdentifiers();
     leafPackSize.setPackSize(leafPackSizeValue);
-    leafPackSize.setExternalIdentifiers(Collections.emptySet());
 
     boolean isDevice =
         getSingleOptionalActiveTarget(
@@ -515,8 +512,6 @@ public class BrandPackSizeService {
                                 concepts.get(node.getConceptId()),
                                 brand,
                                 atomicCache,
-                                brandPackSizeEntry.getExternalIdentifiers(),
-                                brandPackSizeEntry.getReferenceSets(),
                                 brandPackSizeEntry.getNonDefiningProperties(),
                                 isDevice,
                                 node.getModelLevel())
@@ -551,8 +546,6 @@ public class BrandPackSizeService {
                                 packSize.getPackSize(),
                                 concepts.get(node.getConceptId()),
                                 atomicCache,
-                                packSize.getExternalIdentifiers(),
-                                packSize.getReferenceSets(),
                                 packSize.getNonDefiningProperties(),
                                 isDevice,
                                 node.getModelLevel())
@@ -613,15 +606,7 @@ public class BrandPackSizeService {
                       genericPackageFutureMap, packSize.getPackSize(), modelConfiguration)
                   : leafUnbrandedPackageNode;
 
-          Set<ExternalIdentifier> unionOfBrandAndPackExternalIdentifiers =
-              new HashSet<>(packSize.getExternalIdentifiers());
-          unionOfBrandAndPackExternalIdentifiers.addAll(brandPackSize.getExternalIdentifiers());
-
-          Set<ReferenceSet> unionOfBrandAndPackReferenceSets =
-              new HashSet<>(packSize.getReferenceSets());
-          unionOfBrandAndPackReferenceSets.addAll(brandPackSize.getReferenceSets());
-
-          Set<NonDefiningProperty> unionOfBrandAndPackNonDefiningProperties =
+          Set<NonDefiningBase> unionOfBrandAndPackNonDefiningProperties =
               new HashSet<>(packSize.getNonDefiningProperties());
           unionOfBrandAndPackNonDefiningProperties.addAll(brandPackSize.getNonDefiningProperties());
 
@@ -641,8 +626,6 @@ public class BrandPackSizeService {
                         brand,
                         newBrandedProductLeafNode,
                         atomicCache,
-                        unionOfBrandAndPackExternalIdentifiers,
-                        unionOfBrandAndPackReferenceSets,
                         unionOfBrandAndPackNonDefiningProperties,
                         isDevice,
                         modelConfiguration.getLevelOfType(type)));
@@ -736,9 +719,7 @@ public class BrandPackSizeService {
       SnowstormConceptMini brand,
       Node newLeafBrandedProductNode,
       AtomicCache atomicCache,
-      Set<ExternalIdentifier> externalIdentifiers,
-      Set<ReferenceSet> referenceSets,
-      Set<NonDefiningProperty> nonDefiningProperties,
+      Set<NonDefiningBase> properties,
       boolean isDevice,
       ModelLevel modelLevel) {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
@@ -764,14 +745,9 @@ public class BrandPackSizeService {
             modelLevel,
             isDevice ? modelLevel.getDrugDeviceSemanticTag() : modelLevel.getMedicineSemanticTag(),
             getReferenceSetMembers(
-                externalIdentifiers,
-                referenceSets,
-                models.getModelConfiguration(branch),
-                modelLevel.getModelLevelType()),
+                properties, models.getModelConfiguration(branch), modelLevel.getModelLevelType()),
             calculateNonDefiningRelationships(
-                models.getModelConfiguration(branch),
-                nonDefiningProperties,
-                modelLevel.getModelLevelType()),
+                models.getModelConfiguration(branch), properties, modelLevel.getModelLevelType()),
             List.of(),
             false,
             false,
@@ -789,9 +765,7 @@ public class BrandPackSizeService {
       BigDecimal packSize,
       SnowstormConcept mppConcept,
       AtomicCache atomicCache,
-      Set<ExternalIdentifier> externalIdentifiers,
-      Set<ReferenceSet> referenceSets,
-      Set<NonDefiningProperty> nonDefiningProperties,
+      Set<NonDefiningBase> properties,
       boolean isDevice,
       ModelLevelType modelLevelType) {
 
@@ -840,14 +814,9 @@ public class BrandPackSizeService {
             modelLevel,
             isDevice ? modelLevel.getDrugDeviceSemanticTag() : modelLevel.getMedicineSemanticTag(),
             getReferenceSetMembers(
-                externalIdentifiers,
-                referenceSets,
-                models.getModelConfiguration(branch),
-                modelLevel.getModelLevelType()),
+                properties, models.getModelConfiguration(branch), modelLevel.getModelLevelType()),
             calculateNonDefiningRelationships(
-                models.getModelConfiguration(branch),
-                nonDefiningProperties,
-                modelLevel.getModelLevelType()),
+                models.getModelConfiguration(branch), properties, modelLevel.getModelLevelType()),
             List.of(),
             false,
             false,
@@ -865,9 +834,7 @@ public class BrandPackSizeService {
       SnowstormConcept leafProductConcept,
       SnowstormConceptMini brand,
       AtomicCache atomicCache,
-      Set<ExternalIdentifier> externalIdentifiers,
-      Set<ReferenceSet> referenceSets,
-      Set<NonDefiningProperty> nonDefiningProperties,
+      Set<NonDefiningBase> properties,
       boolean isDevice,
       ModelLevelType modelLevelType) {
 
@@ -917,14 +884,9 @@ public class BrandPackSizeService {
             modelLevel,
             isDevice ? modelLevel.getDrugDeviceSemanticTag() : modelLevel.getMedicineSemanticTag(),
             getReferenceSetMembers(
-                externalIdentifiers,
-                referenceSets,
-                models.getModelConfiguration(branch),
-                modelLevel.getModelLevelType()),
+                properties, models.getModelConfiguration(branch), modelLevel.getModelLevelType()),
             calculateNonDefiningRelationships(
-                models.getModelConfiguration(branch),
-                nonDefiningProperties,
-                modelLevel.getModelLevelType()),
+                models.getModelConfiguration(branch), properties, modelLevel.getModelLevelType()),
             List.of(),
             false,
             false,

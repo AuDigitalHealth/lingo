@@ -54,16 +54,16 @@ public class ModelConfiguration {
   @NotEmpty private List<@Valid ModelLevel> levels;
 
   /** The mappings that can be used in the model for map type refsets. */
-  private Set<@Valid MappingRefset> mappings = new HashSet<>();
+  private Set<@Valid ExternalIdentifierDefinition> mappings = new HashSet<>();
 
   /**
    * The non-defining properties that can be used in the model. This encompasses relationships, and
    * concrete domains.
    */
-  private Set<@Valid NonDefiningProperty> nonDefiningProperties = new HashSet<>();
+  private Set<@Valid NonDefiningPropertyDefinition> nonDefiningProperties = new HashSet<>();
 
   /** The additional simple reference sets that products/packages can be added into. */
-  private Set<@Valid ReferenceSet> referenceSets = new HashSet<>();
+  private Set<@Valid ReferenceSetDefinition> referenceSets = new HashSet<>();
 
   @NotEmpty private String baseMedicationSchema;
   @NotEmpty private String baseMedicationUiSchema;
@@ -139,15 +139,15 @@ public class ModelConfiguration {
     }
   }
 
-  private void validateProperties(Set<? extends NonDefiningBase> properties)
+  private void validateProperties(Set<? extends BasePropertyDefinition> properties)
       throws ValidationException {
     List<String> propertyNames = new ArrayList<>();
-    for (NonDefiningBase property : properties) {
+    for (BasePropertyDefinition property : properties) {
       validateUnique(
           property.getName(),
           propertyNames,
           "Property names must be unique within a model duplicate name: ");
-      if (property instanceof NonDefiningProperty p) {
+      if (property instanceof NonDefiningPropertyDefinition p) {
         if (p.getDataType().equals(NonDefiningPropertyDataType.CODED)) {
           throw new ValidationException(
               "Non-defining property "
@@ -161,7 +161,7 @@ public class ModelConfiguration {
                   + p.getName()
                   + " of type CONCEPT must have an ECL binding defined. Please update the model configuration.");
         }
-      } else if (property instanceof MappingRefset p) {
+      } else if (property instanceof ExternalIdentifierDefinition p) {
         if (p.getDataType().equals(NonDefiningPropertyDataType.CONCEPT)) {
           throw new ValidationException(
               "Mapping refset "
@@ -194,19 +194,24 @@ public class ModelConfiguration {
     list.add(value);
   }
 
-  public Map<String, ReferenceSet> getReferenceSetsByName() {
+  public Map<String, ReferenceSetDefinition> getReferenceSetsByName() {
     return referenceSets.stream()
-        .collect(Collectors.toMap(ReferenceSet::getName, Function.identity(), (a, b) -> a));
+        .collect(
+            Collectors.toMap(ReferenceSetDefinition::getName, Function.identity(), (a, b) -> a));
   }
 
-  public Map<String, MappingRefset> getMappingsByName() {
+  public Map<String, ExternalIdentifierDefinition> getMappingsByName() {
     return mappings.stream()
-        .collect(Collectors.toMap(MappingRefset::getName, Function.identity(), (a, b) -> a));
+        .collect(
+            Collectors.toMap(
+                ExternalIdentifierDefinition::getName, Function.identity(), (a, b) -> a));
   }
 
-  public Map<String, NonDefiningProperty> getNonDefiningPropertiesByName() {
+  public Map<String, NonDefiningPropertyDefinition> getNonDefiningPropertiesByName() {
     return nonDefiningProperties.stream()
-        .collect(Collectors.toMap(NonDefiningProperty::getName, Function.identity(), (a, b) -> a));
+        .collect(
+            Collectors.toMap(
+                NonDefiningPropertyDefinition::getName, Function.identity(), (a, b) -> a));
   }
 
   public Set<ModelLevel> getProductLevels() {
@@ -289,24 +294,27 @@ public class ModelConfiguration {
     return levels.stream().anyMatch(level -> level.getModelLevelType().equals(modelLevelType));
   }
 
-  public Map<String, ReferenceSet> getReferenceSetsByIdentifierForModelLevel(
+  public Map<String, ReferenceSetDefinition> getReferenceSetsByIdentifierForModelLevel(
       ModelLevel modelLevel) {
     return getReferenceSets().stream()
         .filter(r -> r.getModelLevels().contains(modelLevel.getModelLevelType()))
-        .collect(Collectors.toMap(ReferenceSet::getIdentifier, Function.identity()));
+        .collect(Collectors.toMap(ReferenceSetDefinition::getIdentifier, Function.identity()));
   }
 
-  public Map<String, MappingRefset> getMappingsByIdentifierForModelLevel(ModelLevel modelLevel) {
+  public Map<String, ExternalIdentifierDefinition> getMappingsByIdentifierForModelLevel(
+      ModelLevel modelLevel) {
     return getMappings().stream()
         .filter(r -> r.getModelLevels().contains(modelLevel.getModelLevelType()))
-        .collect(Collectors.toMap(MappingRefset::getIdentifier, Function.identity()));
+        .collect(
+            Collectors.toMap(ExternalIdentifierDefinition::getIdentifier, Function.identity()));
   }
 
-  public Map<String, NonDefiningProperty> getNonDefiningPropertiesByIdentifierForModelLevel(
-      ModelLevel modelLevel) {
+  public Map<String, NonDefiningPropertyDefinition>
+      getNonDefiningPropertiesByIdentifierForModelLevel(ModelLevel modelLevel) {
     return getNonDefiningProperties().stream()
         .filter(r -> r.getModelLevels().contains(modelLevel.getModelLevelType()))
-        .collect(Collectors.toMap(NonDefiningProperty::getIdentifier, Function.identity()));
+        .collect(
+            Collectors.toMap(NonDefiningPropertyDefinition::getIdentifier, Function.identity()));
   }
 
   public String getReferenceSetIdForModelLevelType(ModelLevelType modelLevelType) {

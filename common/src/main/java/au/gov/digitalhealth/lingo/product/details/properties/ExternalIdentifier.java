@@ -21,93 +21,109 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.MAP_TYPE;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
-import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
+import au.gov.digitalhealth.lingo.configuration.model.ExternalIdentifierDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.MappingType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.NonDefiningPropertyDataType;
 import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import au.gov.digitalhealth.lingo.validation.OnlyOneNotEmpty;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.Collection;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import reactor.core.publisher.Mono;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@NoArgsConstructor
 @SuperBuilder
-@OnlyOneNotEmpty(fields = {"identifierValue", "identifierValueObject"})
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonTypeName("externalIdentifier")
+@OnlyOneNotEmpty(fields = {"value", "valueObject"})
 public class ExternalIdentifier extends NonDefiningBase implements Serializable {
-  String identifierValue;
-  SnowstormConceptMini identifierValueObject;
+  String value;
+  SnowstormConceptMini valueObject;
   @NotNull MappingType relationshipType;
+
+  public ExternalIdentifier() {
+    this.setType(PropertyType.EXTERNAL_IDENTIFIER);
+  }
 
   public static Mono<ExternalIdentifier> create(
       SnowstormReferenceSetMember referenceSetMember,
-      MappingRefset mappingRefset,
+      ExternalIdentifierDefinition externalIdentifierDefinition,
       FhirClient fhirClient) {
 
     ExternalIdentifier identifier = new ExternalIdentifier();
 
-    identifier.setIdentifierScheme(mappingRefset.getName());
-    identifier.setTitle(mappingRefset.getTitle());
-    identifier.setDescription(mappingRefset.getDescription());
+    identifier.setIdentifierScheme(externalIdentifierDefinition.getName());
+    identifier.setTitle(externalIdentifierDefinition.getTitle());
+    identifier.setDescription(externalIdentifierDefinition.getDescription());
     identifier.setIdentifier(referenceSetMember.getRefsetId());
 
     final String mapTargetId = referenceSetMember.getAdditionalFields().get(MAP_TARGET.getValue());
-    if (mappingRefset.getMappingTypes().size() == 1) {
-      identifier.setRelationshipType(mappingRefset.getMappingTypes().iterator().next());
+    if (externalIdentifierDefinition.getMappingTypes().size() == 1) {
+      identifier.setRelationshipType(
+          externalIdentifierDefinition.getMappingTypes().iterator().next());
     } else {
       identifier.setRelationshipType(
           MappingType.fromSctid(referenceSetMember.getAdditionalFields().get(MAP_TYPE.getValue())));
     }
 
-    if (mappingRefset.getDataType().equals(NonDefiningPropertyDataType.CODED)) {
+    if (externalIdentifierDefinition.getDataType().equals(NonDefiningPropertyDataType.CODED)) {
       return fhirClient
-          .getConcept(mapTargetId, mappingRefset.getCodeSystem())
+          .getConcept(mapTargetId, externalIdentifierDefinition.getCodeSystem())
           .map(
               c -> {
-                identifier.setIdentifierValueObject(c);
+                identifier.setValueObject(c);
                 return identifier;
               });
     } else {
-      identifier.setIdentifierValue(mapTargetId);
+      identifier.setValue(mapTargetId);
       return Mono.just(identifier);
     }
   }
 
   public static Mono<ExternalIdentifier> create(
       SnowstormReferenceSetMemberViewComponent referenceSetMember,
-      MappingRefset mappingRefset,
+      ExternalIdentifierDefinition externalIdentifierDefinition,
       FhirClient fhirClient) {
     ExternalIdentifier identifier = new ExternalIdentifier();
 
-    identifier.setIdentifierScheme(mappingRefset.getName());
-    identifier.setTitle(mappingRefset.getTitle());
-    identifier.setDescription(mappingRefset.getDescription());
+    identifier.setIdentifierScheme(externalIdentifierDefinition.getName());
+    identifier.setTitle(externalIdentifierDefinition.getTitle());
+    identifier.setDescription(externalIdentifierDefinition.getDescription());
     identifier.setIdentifier(referenceSetMember.getRefsetId());
 
     final String mapTargetId = referenceSetMember.getAdditionalFields().get(MAP_TARGET.getValue());
-    if (mappingRefset.getMappingTypes().size() == 1) {
-      identifier.setRelationshipType(mappingRefset.getMappingTypes().iterator().next());
+    if (externalIdentifierDefinition.getMappingTypes().size() == 1) {
+      identifier.setRelationshipType(
+          externalIdentifierDefinition.getMappingTypes().iterator().next());
     } else {
       identifier.setRelationshipType(
           MappingType.fromSctid(referenceSetMember.getAdditionalFields().get(MAP_TYPE.getValue())));
     }
 
-    if (mappingRefset.getDataType().equals(NonDefiningPropertyDataType.CODED)) {
+    if (externalIdentifierDefinition.getDataType().equals(NonDefiningPropertyDataType.CODED)) {
       return fhirClient
-          .getConcept(mapTargetId, mappingRefset.getCodeSystem())
+          .getConcept(mapTargetId, externalIdentifierDefinition.getCodeSystem())
           .map(
               c -> {
-                identifier.setIdentifierValueObject(c);
+                identifier.setValueObject(c);
                 return identifier;
               });
     } else {
-      identifier.setIdentifierValue(mapTargetId);
+      identifier.setValue(mapTargetId);
       return Mono.just(identifier);
     }
+  }
+
+  public static Collection<ExternalIdentifier> filter(Collection<NonDefiningBase> properties) {
+    return properties.stream()
+        .filter(p -> p.getType().equals(PropertyType.EXTERNAL_IDENTIFIER))
+        .map(p -> (ExternalIdentifier) p)
+        .toList();
   }
 }
