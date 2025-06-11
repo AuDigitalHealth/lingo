@@ -1,12 +1,33 @@
 {
-  "ui:order": [
-    "productName",
-    "containerType",
-    "containedProducts",
-    "containedPackages"
+  "ui:grid": [
+    {
+      "containedProducts": 24
+    },
+    {
+      "containerType": 12,
+      "_empty": 12
+    },
+    {
+      "externalIdentifiers": 24
+    },
+    {
+      "nonDefiningProperties": 24
+    },
+    {
+      "referenceSets": 24
+    }
   ],
+  "containerType": {
+    "ui:field": "AutoCompleteField",
+    "ui:options": {
+      "ecl": "^929360051000036108.30465011000036106",
+      "extendedEcl": "<49062001",
+      "showDefaultOptions": true
+    }
+  },
   "containedProducts": {
     "ui:options": {
+      "arrayTemplate": "accordion",
       "skipTitle": true,
       "searchAndAddProduct": {
         "ecl": "<763158003 {{ D term=\"real clinical drug\" }}",
@@ -15,53 +36,78 @@
       }
     },
     "items": {
-      "ui:order": [
-        "productDetails",
-        "unit",
-        "value"
+      "ui:grid": [
+        {
+          "productDetails": 24
+        },
+        {
+          "value": 6,
+          "unit": 6,
+          "_empty": 12
+        }
       ],
       "ui:options": {
         "titleSource": "productDetails.productName.pt.term",
         "defaultTitle": "Product",
-        "style": {
-          "border": "1px solid #ddd",
-          "padding": "10px",
-          "marginBottom": "20px",
-          "borderRadius": "8px"
-        },
         "skipTitle": true
       },
-      "unit": {
-        "ui:field": "UnitValueUnWrappedField",
-        "ui:title": "Pack Size",
+      "value": {
+        "ui:widget": "text",
         "ui:options": {
-          "pairWith": "value",
-          "ecl": "((<781405001 {{ D term=\"*.real packaged clinical drug.*\" }}) : (774160008 /* OR 999000081000168101 */) = *).774163005",
-          "showDefaultOptions": true
+          "inputType": "number",
+          "title": "Pack Size"
         }
       },
-      "value": {
-        "ui:widget": "hidden",
+      "unit": {
+        "ui:field": "AutoCompleteField",
+        "ui:title": "Unit",
         "ui:options": {
-          "skipTitle": true
+          "ecl": "((<781405001 {{ D term=\"*.real packaged clinical drug.*\" }}) : (774160008 /* OR 999000081000168101 */) = *).774163005",
+          "showDefaultOptions": true
         }
       },
       "productDetails": {
         "ui:options": {
           "skipTitle": true
         },
-        "ui:order": [
-          "productName",
-          "activeIngredients",
-          "genericForm",
-          "specificForm",
-          "unitOfPresentation",
-          "supplier"
+        "ui:grid": [
+          {
+            "productName": 12,
+            "genericForm": 12
+          },
+          {
+            "activeIngredients": 12,
+            "_columnB": 12
+          }
         ],
+        "_columnB": {
+          "ui:grid": [
+            {
+              "specificForm": 24
+            },
+            {
+              "unitOfPresentation": 24
+            },
+            {
+              "externalIdentifiers": 24
+            },
+            {
+              "nonDefiningProperties": 24
+            },
+            {
+              "referenceSets": 24
+            }
+          ]
+        },
+        "type": {
+          "ui:widget": "hidden",
+          "ui:options": {
+            "skipTitle": true
+          }
+        },
         "productName": {
           "ui:field": "AutoCompleteField",
           "ui:options": {
-            "branch": "MAIN",
             "ecl": "<774167006",
             "showDefaultOptions": false,
             "createBrand": {
@@ -76,15 +122,31 @@
             "arrayTemplate": "accordion"
           },
           "items": {
-            "ui:order": [
-              "activeIngredient",
-              "refinedActiveIngredient",
-              "preciseIngredient",
-              "basisOfStrengthSubstance",
-              "concentrationStrengthNumerator",
-              "concentrationStrengthDenominator",
-              "presentationStrengthNumerator",
-              "presentationStrengthDenominator"
+            "ui:grid": [
+              {
+                "activeIngredient": 24
+              },
+              {
+                "refinedActiveIngredient": 24
+              },
+              {
+                "preciseIngredient": 24
+              },
+              {
+                "basisOfStrengthSubstance": 24
+              },
+              {
+                "concentrationStrengthNumerator": 24
+              },
+              {
+                "concentrationStrengthDenominator": 24
+              },
+              {
+                "presentationStrengthNumerator": 24
+              },
+              {
+                "presentationStrengthDenominator": 24
+              }
             ],
             "ui:options": {
               "titleSource": "activeIngredient.pt.term",
@@ -95,56 +157,82 @@
               "ui:field": "AutoCompleteField",
               "ui:title": "VTM Active Ingredient",
               "ui:options": {
+                "skipTitle": true,
+                "dependants": [
+                  {
+                    "path": "../refinedActiveIngredient",
+                    "ui:options": {
+                      "getEcl": "<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent)) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))))",
+                      "showDefaultOptions": true
+                    }
+                  },
+                  {
+                    "path": "../basisOfStrengthSubstance",
+                    "ui:options": {
+                      "showDefaultOptions": true
+                    }
+                  }
+                ],
                 "ecl": "(<763158003 {{ D term=\"medicinal product\" }}).127489000",
                 "extendedEcl": "<105590001",
                 "showDefaultOptions": false
               }
             },
             "refinedActiveIngredient": {
-              "ui:field": "ParentChildAutoCompleteField",
+              "ui:field": "AutoCompleteField",
+              "ui:title": "VMP Active Ingredient",
               "ui:options": {
-                "parentFieldName": "refinedActiveIngredient",
-                "childFieldName": "preciseIngredient",
-                "parentFieldOptions": {
-                  "ecl": ">>(<763158003 {{ D term=\"real clinical drug\" }}).127489000",
-                  "extendedEcl": "<105590001",
-                  "showDefaultOptions": false,
-                  "title": "Has Active Ingredient",
-                  "skipTitle": true
-                },
-                "childFieldOptions": {
-                  "ecl": "",
-                  "showDefaultOptions": true,
-                  "title": "Precise Ingredient",
-                  "getEcl": "<<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent)) OR (< 410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))))"
-                }
+                "skipTitle": true,
+                "dependants": [
+                  {
+                    "path": "../preciseIngredient",
+                    "ui:options": {
+                      "getEcl": "<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent)) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))))",
+                      "showDefaultOptions": true
+                    }
+                  }
+                ]
               }
             },
             "preciseIngredient": {
-              "ui:widget": "hidden",
+              "ui:title": "AMP Ingredient",
+              "ui:field": "AutoCompleteField",
               "ui:options": {
-                "skipTitle": true
+                "skipTitle": true,
+                "showDefaultOptions": true
               }
             },
             "basisOfStrengthSubstance": {
               "ui:field": "AutoCompleteField",
               "ui:title": "BoSS",
               "ui:options": {
-                "branch": "MAIN",
                 "ecl": "(<763158003 {{ D term=\"real clinical drug\" }}).732943007",
                 "extendedEcl": "<105590001",
-                "showDefaultOptions": false
+                "showDefaultOptions": false,
+                "placeholder": "Basis of Strength Substance (Optional)",
+                "description": "Only enabled if Active Ingredient is set."
               }
             },
             "concentrationStrengthNumerator": {
-              "ui:field": "CompactQuantityField",
-              "ui:title": "Concentration Strength",
               "ui:options": {
-                "isNumerator": true,
-                "pairWith": "concentrationStrengthDenominator",
                 "skipTitle": true
               },
+              "ui:grid": [
+                {
+                  "value": 12,
+                  "unit": 12
+                }
+              ],
+              "value": {
+                "ui:widget": "text",
+                "ui:title": "Concentration Strength Numerator",
+                "ui:options": {
+                  "inputType": "number"
+                }
+              },
               "unit": {
+                "ui:field": "AutoCompleteField",
+                "ui:title": "Unit",
                 "ui:options": {
                   "ecl": "<763158003 {{ D term=\"real clinical drug\" }}.733725009",
                   "extendedEcl": "<767524001",
@@ -153,16 +241,26 @@
               }
             },
             "concentrationStrengthDenominator": {
-              "ui:field": "CompactQuantityField",
-              "ui:title": "Concentration Strength",
               "ui:options": {
-                "isNumerator": false,
-                "pairWith": "concentrationStrengthNumerator",
                 "skipTitle": true
               },
-              "unit": {
+              "ui:grid": [
+                {
+                  "value": 12,
+                  "unit": 12
+                }
+              ],
+              "value": {
+                "ui:widget": "text",
+                "ui:title": "Concentration Strength Denominator",
                 "ui:options": {
-                  "branch": "MAIN",
+                  "inputType": "number"
+                }
+              },
+              "unit": {
+                "ui:field": "AutoCompleteField",
+                "ui:title": "Unit",
+                "ui:options": {
                   "ecl": "<763158003 {{ D term=\"real clinical drug\" }}.733722007",
                   "extendedEcl": "<767524001",
                   "showDefaultOptions": true
@@ -170,16 +268,26 @@
               }
             },
             "presentationStrengthNumerator": {
-              "ui:field": "CompactQuantityField",
-              "ui:title": "Presentation Strength",
               "ui:options": {
-                "isNumerator": true,
-                "pairWith": "presentationStrengthDenominator",
                 "skipTitle": true
               },
-              "unit": {
+              "ui:grid": [
+                {
+                  "value": 12,
+                  "unit": 12
+                }
+              ],
+              "value": {
+                "ui:widget": "text",
+                "ui:title": "Presentation Strength Numerator",
                 "ui:options": {
-                  "branch": "MAIN",
+                  "inputType": "number"
+                }
+              },
+              "unit": {
+                "ui:field": "AutoCompleteField",
+                "ui:title": "Unit",
+                "ui:options": {
                   "ecl": "(<763158003 {{ D term=\"real clinical drug\" }}).732945000",
                   "extendedEcl": "<767524001",
                   "showDefaultOptions": true
@@ -187,16 +295,26 @@
               }
             },
             "presentationStrengthDenominator": {
-              "ui:field": "CompactQuantityField",
-              "ui:title": "Presentation Strength",
               "ui:options": {
-                "isNumerator": false,
-                "pairWith": "presentationStrengthNumerator",
                 "skipTitle": true
               },
-              "unit": {
+              "ui:grid": [
+                {
+                  "value": 12,
+                  "unit": 12
+                }
+              ],
+              "value": {
+                "ui:widget": "text",
+                "ui:title": "Presentation Strength Denominator",
                 "ui:options": {
-                  "branch": "MAIN",
+                  "inputType": "number"
+                }
+              },
+              "unit": {
+                "ui:field": "AutoCompleteField",
+                "ui:title": "Unit",
+                "ui:options": {
                   "ecl": "(<763158003 {{ D term=\"real clinical drug\" }}).732947008",
                   "extendedEcl": "<767524001",
                   "showDefaultOptions": true
@@ -206,55 +324,37 @@
           }
         },
         "genericForm": {
-          "ui:field": "ParentChildAutoCompleteField",
+          "ui:field": "AutoCompleteField",
+          "ui:title": "Generic Dose Form",
           "ui:options": {
-            "parentFieldName": "genericForm",
-            "childFieldName": "specificForm",
-            "skipTitle": true,
-            "parentFieldOptions": {
-              "branch": "MAIN",
-              "ecl": "(>>(<763158003 {{ D term=\"real clinical drug\" }})).411116001",
-              "extendedEcl": "<736542009",
-              "showDefaultOptions": false,
-              "title": "Generic Dose Form"
-            },
-            "childFieldOptions": {
-              "branch": "MAIN",
-              "ecl": "",
-              "showDefaultOptions": true,
-              "title": "Specific Dose Form",
-              "getEcl": "<@parent"
-            }
+            "dependants": [
+              {
+                "path": "../specificForm",
+                "ui:options": {
+                  "getEcl": "<@parent",
+                  "showDefaultOptions": true
+                }
+              }
+            ],
+            "ecl": "(>>(<763158003 {{ D term=\"real clinical drug\" }})).411116001",
+            "extendedEcl": "<736542009",
+            "showDefaultOptions": false
           }
         },
         "specificForm": {
-          "ui:widget": "hidden",
+          "ui:title": "Specific Dose Form",
+          "ui:field": "AutoCompleteField",
           "ui:options": {
-            "skipTitle": true
+            "showDefaultOptions": true
           }
         },
         "unitOfPresentation": {
           "ui:field": "AutoCompleteField",
           "ui:title": "Unit of Presentation",
           "ui:options": {
-            "branch": "MAIN",
             "ecl": "(<763158003 {{ D term=\"real clinical drug\" }}).763032000",
             "extendedEcl": "<105590001",
             "showDefaultOptions": false
-          }
-        },
-        "packSize": {
-          "ui:field": "UnitValueField",
-          "ui:title": "Pack Size",
-          "value": {
-            "ui:widget": "text"
-          },
-          "unit": {
-            "ui:options": {
-              "branch": "MAIN",
-              "ecl": "<781405001.774163005",
-              "showDefaultOptions": true
-            }
           }
         }
       }
