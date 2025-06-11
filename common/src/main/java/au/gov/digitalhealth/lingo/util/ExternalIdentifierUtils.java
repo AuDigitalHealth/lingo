@@ -17,7 +17,7 @@ package au.gov.digitalhealth.lingo.util;
 
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
-import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
+import au.gov.digitalhealth.lingo.configuration.model.ExternalIdentifierDefinition;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import java.util.AbstractMap;
@@ -42,19 +42,20 @@ public class ExternalIdentifierUtils {
   public static Set<ExternalIdentifier> getExternalIdentifiersFromRefsetMemberViewComponents(
       Collection<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
       String referencedComponentId,
-      Set<MappingRefset> mappingRefsets,
+      Set<ExternalIdentifierDefinition> externalIdentifierDefinitions,
       FhirClient fhirClient) {
 
     Set<ExternalIdentifier> externalIdentifiers = new HashSet<>();
 
-    Map<String, Set<MappingRefset>> mappingRefsetMap = createMappingToIdentifierMap(mappingRefsets);
+    Map<String, Set<ExternalIdentifierDefinition>> mappingRefsetMap =
+        createMappingToIdentifierMap(externalIdentifierDefinitions);
 
     referenceSetMembers.forEach(
         r -> {
           if (r.getActive() != null && r.getActive() && r.getReferencedComponentId() == null
               || r.getReferencedComponentId().equals(referencedComponentId)
-                  && mappingRefsets.stream()
-                      .map(MappingRefset::getIdentifier)
+                  && externalIdentifierDefinitions.stream()
+                      .map(ExternalIdentifierDefinition::getIdentifier)
                       .collect(Collectors.toSet())
                       .contains(r.getRefsetId())) {
 
@@ -71,20 +72,21 @@ public class ExternalIdentifierUtils {
   public static Set<ExternalIdentifier> getExternalIdentifiersFromRefsetMembers(
       Collection<SnowstormReferenceSetMember> referenceSetMembers,
       String referencedComponentId,
-      Set<MappingRefset> mappingRefsets,
+      Set<ExternalIdentifierDefinition> externalIdentifierDefinitions,
       FhirClient fhirClient) {
 
     Set<ExternalIdentifier> externalIdentifiers = new HashSet<>();
 
-    Map<String, Set<MappingRefset>> mappingRefsetMap = createMappingToIdentifierMap(mappingRefsets);
+    Map<String, Set<ExternalIdentifierDefinition>> mappingRefsetMap =
+        createMappingToIdentifierMap(externalIdentifierDefinitions);
 
     referenceSetMembers.forEach(
         r -> {
           if (r.getActive() != null
               && r.getActive()
               && r.getReferencedComponentId().equals(referencedComponentId)
-              && mappingRefsets.stream()
-                  .map(MappingRefset::getIdentifier)
+              && externalIdentifierDefinitions.stream()
+                  .map(ExternalIdentifierDefinition::getIdentifier)
                   .collect(Collectors.toSet())
                   .contains(r.getRefsetId())) {
 
@@ -101,12 +103,13 @@ public class ExternalIdentifierUtils {
   public static Set<ExternalIdentifier> getExternalIdentifiersFromRefsetMembers(
       Flux<SnowstormReferenceSetMember> referenceSetMembers,
       String referencedComponentId,
-      Set<MappingRefset> mappingRefsets,
+      Set<ExternalIdentifierDefinition> externalIdentifierDefinitions,
       FhirClient fhirClient) {
 
     Set<ExternalIdentifier> externalIdentifiers = new HashSet<>();
 
-    Map<String, Set<MappingRefset>> mappingRefsetMap = createMappingToIdentifierMap(mappingRefsets);
+    Map<String, Set<ExternalIdentifierDefinition>> mappingRefsetMap =
+        createMappingToIdentifierMap(externalIdentifierDefinitions);
 
     referenceSetMembers
         .toStream()
@@ -115,8 +118,8 @@ public class ExternalIdentifierUtils {
               if (r.getActive() != null
                   && r.getActive()
                   && r.getReferencedComponentId().equals(referencedComponentId)
-                  && mappingRefsets.stream()
-                      .map(MappingRefset::getIdentifier)
+                  && externalIdentifierDefinitions.stream()
+                      .map(ExternalIdentifierDefinition::getIdentifier)
                       .collect(Collectors.toSet())
                       .contains(r.getRefsetId())) {
 
@@ -130,33 +133,38 @@ public class ExternalIdentifierUtils {
     return externalIdentifiers;
   }
 
-  private static Map<String, Set<MappingRefset>> createMappingToIdentifierMap(
-      Set<MappingRefset> mappingRefsets) {
-    return mappingRefsets.stream()
-        .collect(Collectors.groupingBy(MappingRefset::getIdentifier, Collectors.toSet()));
+  private static Map<String, Set<ExternalIdentifierDefinition>> createMappingToIdentifierMap(
+      Set<ExternalIdentifierDefinition> externalIdentifierDefinitions) {
+    return externalIdentifierDefinitions.stream()
+        .collect(
+            Collectors.groupingBy(ExternalIdentifierDefinition::getIdentifier, Collectors.toSet()));
   }
 
   public static Mono<Map<String, List<ExternalIdentifier>>>
       getExternalIdentifiersMapFromRefsetMembers(
           Flux<SnowstormReferenceSetMember> refsetMembers,
-          Set<MappingRefset> mappingRefsets,
+          Set<ExternalIdentifierDefinition> externalIdentifierDefinitions,
           FhirClient fhirClient) {
 
-    if (mappingRefsets.isEmpty()) {
+    if (externalIdentifierDefinitions.isEmpty()) {
       return Mono.just(Map.of());
     }
 
-    Map<String, Set<MappingRefset>> mappingRefsetMap = createMappingToIdentifierMap(mappingRefsets);
+    Map<String, Set<ExternalIdentifierDefinition>> mappingRefsetMap =
+        createMappingToIdentifierMap(externalIdentifierDefinitions);
 
     Set<String> refsetIdentifiers =
-        mappingRefsets.stream().map(MappingRefset::getIdentifier).collect(Collectors.toSet());
+        externalIdentifierDefinitions.stream()
+            .map(ExternalIdentifierDefinition::getIdentifier)
+            .collect(Collectors.toSet());
 
     return refsetMembers
         .filter(r -> r.getActive() != null && r.getActive())
         .filter(r -> refsetIdentifiers.contains(r.getRefsetId()))
         .flatMap(
             r -> {
-              Set<MappingRefset> mappingRefsetsList = mappingRefsetMap.get(r.getRefsetId());
+              Set<ExternalIdentifierDefinition> mappingRefsetsList =
+                  mappingRefsetMap.get(r.getRefsetId());
               if (mappingRefsetsList == null || mappingRefsetsList.isEmpty()) {
                 return Mono.empty();
               }

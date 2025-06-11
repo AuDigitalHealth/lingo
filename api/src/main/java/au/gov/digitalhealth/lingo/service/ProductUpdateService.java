@@ -22,8 +22,10 @@ import static java.lang.Boolean.TRUE;
 
 import au.csiro.snowstorm_client.model.*;
 import au.gov.digitalhealth.lingo.configuration.FieldBindingConfiguration;
-import au.gov.digitalhealth.lingo.configuration.model.MappingRefset;
+import au.gov.digitalhealth.lingo.configuration.model.ExternalIdentifierDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
+import au.gov.digitalhealth.lingo.configuration.model.NonDefiningPropertyDefinition;
+import au.gov.digitalhealth.lingo.configuration.model.ReferenceSetDefinition;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
@@ -65,12 +67,10 @@ public class ProductUpdateService {
     this.models = models;
   }
 
-  private static String getIdentifierKey(MappingRefset m, ExternalIdentifier id) {
+  private static String getIdentifierKey(ExternalIdentifierDefinition m, ExternalIdentifier id) {
     return m.getIdentifier()
         + " "
-        + (id.getIdentifierValue() == null
-            ? id.getIdentifierValueObject().getConceptId()
-            : id.getIdentifierValue());
+        + (id.getValue() == null ? id.getValueObject().getConceptId() : id.getValue());
   }
 
   private static String getIdentifierKey(SnowstormReferenceSetMember id) {
@@ -103,13 +103,12 @@ public class ProductUpdateService {
   }
 
   private static String getNonDefiningPropertyKey(
-      au.gov.digitalhealth.lingo.configuration.model.NonDefiningProperty nonDefiningProperty,
-      NonDefiningProperty prop) {
+      NonDefiningPropertyDefinition nonDefiningPropertyDefinition, NonDefiningProperty prop) {
 
     final String value =
         prop.getValue() == null ? prop.getValueObject().getConceptId() : prop.getValue();
 
-    return nonDefiningProperty.getIdentifier() + " " + value;
+    return nonDefiningPropertyDefinition.getIdentifier() + " " + value;
   }
 
   public SnowstormConceptMini updateProductDescriptions(
@@ -199,7 +198,7 @@ public class ProductUpdateService {
       @Valid ProductExternalIdentifierUpdateRequest productExternalIdentifierUpdateRequest)
       throws InterruptedException {
 
-    Map<String, MappingRefset> mappingRefsets =
+    Map<String, ExternalIdentifierDefinition> mappingRefsets =
         models.getModelConfiguration(branch).getMappingsByName();
 
     Map<String, ExternalIdentifier> requestedExternalIdentifiers =
@@ -216,7 +215,7 @@ public class ProductUpdateService {
                 branch,
                 Set.of(conceptId),
                 mappingRefsets.values().stream()
-                    .map(MappingRefset::getIdentifier)
+                    .map(ExternalIdentifierDefinition::getIdentifier)
                     .collect(Collectors.toSet()))
             .stream()
             .filter(r -> r.getActive() != null && r.getActive())
@@ -256,7 +255,7 @@ public class ProductUpdateService {
       @Valid ProductReferenceSetUpdateRequest productReferenceSetUpdateRequest)
       throws InterruptedException {
 
-    Map<String, au.gov.digitalhealth.lingo.configuration.model.ReferenceSet> referenceSetMap =
+    Map<String, ReferenceSetDefinition> referenceSetMap =
         models.getModelConfiguration(branch).getReferenceSetsByName();
 
     Map<String, ReferenceSet> requestedRefsets =
@@ -272,7 +271,7 @@ public class ProductUpdateService {
                 branch,
                 Set.of(conceptId),
                 referenceSetMap.values().stream()
-                    .map(au.gov.digitalhealth.lingo.configuration.model.ReferenceSet::getIdentifier)
+                    .map(ReferenceSetDefinition::getIdentifier)
                     .collect(Collectors.toSet()))
             .stream()
             .filter(r -> r.getActive() != null && r.getActive())
@@ -313,9 +312,8 @@ public class ProductUpdateService {
       String conceptId,
       @Valid ProductNonDefiningPropertyUpdateRequest productNonDefiningPropertyUpdateRequest) {
 
-    Map<String, au.gov.digitalhealth.lingo.configuration.model.NonDefiningProperty>
-        nonDefiningPropertiesByName =
-            models.getModelConfiguration(branch).getNonDefiningPropertiesByName();
+    Map<String, NonDefiningPropertyDefinition> nonDefiningPropertiesByName =
+        models.getModelConfiguration(branch).getNonDefiningPropertiesByName();
 
     Map<String, NonDefiningProperty> requestedProperties =
         productNonDefiningPropertyUpdateRequest.getNonDefiningProperties().stream()
@@ -329,7 +327,7 @@ public class ProductUpdateService {
 
     Set<String> definedTypeIds =
         nonDefiningPropertiesByName.values().stream()
-            .map(au.gov.digitalhealth.lingo.configuration.model.NonDefiningProperty::getIdentifier)
+            .map(NonDefiningPropertyDefinition::getIdentifier)
             .collect(Collectors.toSet());
 
     final SnowstormConcept browserConcept =

@@ -17,6 +17,7 @@ package au.gov.digitalhealth.lingo.configuration.model;
 
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
+import au.gov.digitalhealth.lingo.product.details.properties.PropertyType;
 import au.gov.digitalhealth.lingo.util.PartionIdentifier;
 import au.gov.digitalhealth.lingo.validation.ValidSctId;
 import jakarta.validation.constraints.NotBlank;
@@ -30,7 +31,7 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(of = "name")
-public abstract class NonDefiningBase {
+public abstract class BasePropertyDefinition {
 
   /** The name of the property, used in generated JSON Schema. */
   @NotBlank
@@ -57,4 +58,6 @@ public abstract class NonDefiningBase {
   @NotBlank
   @ValidSctId(partitionIdentifier = PartionIdentifier.CONCEPT)
   private String identifier;
+
+  public abstract PropertyType getPropertyType();
 }
