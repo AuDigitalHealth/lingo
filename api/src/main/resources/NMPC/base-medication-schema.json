@@ -110,47 +110,19 @@
           "$ref": "#/$defs/SnowstormConceptMini"
         },
         "concentrationStrengthNumerator": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/Quantity"
-            },
-            {
-              "type": "null"
-            }
-          ],
+          "$ref": "#/$defs/Quantity",
           "title": "Concentration Strength Numerator"
         },
         "concentrationStrengthDenominator": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/Quantity"
-            },
-            {
-              "type": "null"
-            }
-          ],
+          "$ref": "#/$defs/Quantity",
           "title": "Concentration Strength Denominator"
         },
         "presentationStrengthNumerator": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/Quantity"
-            },
-            {
-              "type": "null"
-            }
-          ],
+          "$ref": "#/$defs/Quantity",
           "title": "Presentation Strength Numerator"
         },
         "presentationStrengthDenominator": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/Quantity"
-            },
-            {
-              "type": "null"
-            }
-          ],
+          "$ref": "#/$defs/Quantity",
           "title": "Presentation Strength Denominator"
         }
       },
