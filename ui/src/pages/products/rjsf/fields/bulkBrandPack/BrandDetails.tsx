@@ -21,6 +21,7 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
     errorSchema,
     onDelete,
     formData = {},
+    branch,
   } = props;
 
   // Extract options with defaults
@@ -36,8 +37,8 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
   const [editMode, setEditMode] = useState(!readOnly && !requireEditButton);
 
   // Ensure externalIdentifiers is always an array
-  const externalIdentifiers = Array.isArray(formData?.externalIdentifiers)
-    ? formData.externalIdentifiers
+  const nonDefiningProperties = Array.isArray(formData?.nonDefiningProperties)
+    ? formData.nonDefiningProperties
     : [];
 
   const handleBrandChange = (newBrand: any) => {
@@ -51,21 +52,21 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
   const handleExternalIdentifiersChange = (updated: any[]) => {
     const current = {
       ...formData,
-      externalIdentifiers: Array.isArray(updated) ? updated : [],
+      nonDefiningProperties: Array.isArray(updated) ? updated : [],
     };
     onChange(current);
   };
 
   const handleAddExternalIdentifier = (newIdentifier: any) => {
     if (newIdentifier) {
-      const updatedIdentifiers = [...externalIdentifiers, newIdentifier];
+      const updatedIdentifiers = [...nonDefiningProperties, newIdentifier];
       handleExternalIdentifiersChange(updatedIdentifiers);
     }
   };
 
   const handleDeleteExternalIdentifier = (index: number) => {
-    if (index >= 0 && index < externalIdentifiers.length) {
-      const updatedIdentifiers = externalIdentifiers.filter(
+    if (index >= 0 && index < nonDefiningProperties.length) {
+      const updatedIdentifiers = nonDefiningProperties.filter(
         (_: any, i: number) => i !== index,
       );
       handleExternalIdentifiersChange(updatedIdentifiers);
@@ -76,8 +77,8 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
     index: number,
     updatedIdentifier: any,
   ) => {
-    if (index >= 0 && index < externalIdentifiers.length && updatedIdentifier) {
-      const updatedIdentifiers = [...externalIdentifiers];
+    if (index >= 0 && index < nonDefiningProperties.length && updatedIdentifier) {
+      const updatedIdentifiers = [...nonDefiningProperties];
       updatedIdentifiers[index] = updatedIdentifier;
       handleExternalIdentifiersChange(updatedIdentifiers);
     }
@@ -159,12 +160,12 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
           <Box>
             <ExternalIdentifier
               {...props}
-              formData={externalIdentifiers}
+              formData={nonDefiningProperties}
               onChange={handleExternalIdentifiersChange}
               onAdd={handleAddExternalIdentifier}
               onDelete={handleDeleteExternalIdentifier}
               onUpdate={handleUpdateExternalIdentifier}
-              schema={schema?.properties?.externalIdentifiers}
+              schema={schema?.properties?.nonDefiningProperties}
               uiSchema={{
                 'ui:options': {
                   readOnly: readOnly || (requireEditButton && !editMode),

@@ -15,11 +15,7 @@
 ///
 
 import { RefsetMember } from './RefsetMember.ts';
-import {
-  ExternalIdentifier,
-  NonDefiningProperty,
-  ReferenceSet,
-} from './product.ts';
+import { NonDefiningProperty } from './product.ts';
 
 export enum DefinitionStatus {
   Primitive = 'PRIMITIVE',
@@ -293,9 +289,7 @@ export interface Product {
   generatedFullySpecifiedName?: string;
   newInTask: boolean;
   newInProject: boolean;
-  externalIdentifiers?: ExternalIdentifier[];
   nonDefiningProperties?: NonDefiningProperty[];
-  referenceSets?: ReferenceSet[];
   isModified?: boolean;
 }
 

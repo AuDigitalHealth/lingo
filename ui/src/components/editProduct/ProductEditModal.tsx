@@ -9,7 +9,7 @@ import {
   Select,
   Switch,
   TextField,
-  Typography,
+  Typography
 } from '@mui/material';
 import BaseModal from '../modal/BaseModal';
 import BaseModalBody from '../modal/BaseModalBody';
@@ -19,7 +19,7 @@ import { Acceptability, Description, Product } from '../../types/concept.ts';
 import { Box, Stack } from '@mui/system';
 import {
   FieldLabelRequired,
-  InnerBoxSmall,
+  InnerBoxSmall
 } from '../../pages/products/components/style/ProductBoxes.tsx';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -31,25 +31,25 @@ import {
   useFieldArray,
   useForm,
   UseFormHandleSubmit,
-  useFormState,
+  useFormState
 } from 'react-hook-form';
 import {
-  ExternalIdentifier,
+  NonDefiningProperty,
   ProductDescriptionUpdateRequest,
   ProductExternalRequesterUpdateRequest,
-  ProductUpdateRequest,
+  ProductUpdateRequest
 } from '../../types/product.ts';
 import ArtgAutoComplete from '../../pages/products/components/ArtgAutoComplete.tsx';
 import {
   useUpdateProductDescription,
-  useUpdateProductExternalIdentifiers,
+  useUpdateProductExternalIdentifiers
 } from '../../hooks/api/products/useUpdateProductDescription.tsx';
 import { Ticket } from '../../types/tickets/ticket.ts';
 import ConceptService from '../../api/ConceptService.ts';
 import { useTheme } from '@mui/material/styles';
 import {
   areTwoExternalIdentifierArraysEqual,
-  sortExternalIdentifiers,
+  sortNonDefiningProperties
 } from '../../utils/helpers/tickets/additionalFieldsUtils.ts';
 import { getSearchConceptsByEclOptions } from '../../hooks/api/useInitializeConcepts.tsx';
 import { generateEclFromBinding } from '../../utils/helpers/EclUtils.ts';
@@ -63,13 +63,12 @@ import { SnowstormError } from '../../types/ErrorHandler.ts';
 import { useSearchConceptById } from '../../hooks/api/products/useSearchConcept.tsx';
 import { cloneDeep, isEqual } from 'lodash';
 import { Add, Delete } from '@mui/icons-material';
-import useAvailableProjects, {
-  getProjectFromKey,
-} from '../../hooks/api/useInitializeProjects.tsx';
+import useAvailableProjects, { getProjectFromKey } from '../../hooks/api/useInitializeProjects.tsx';
 import useApplicationConfigStore from '../../stores/ApplicationConfigStore.ts';
 import { LanguageRefset, Project } from '../../types/Project.ts';
 import ConfirmationModal from '../../themes/overrides/ConfirmationModal.tsx';
-import AdditionalPropertiesDisplay from '../../pages/products/components/AdditionalPropertiesDisplay.tsx';
+import AdditionalPropertiesDisplay
+  from '../../pages/products/components/AdditionalPropertiesDisplay.tsx';
 
 const USLangRefset: LanguageRefset = {
   default: 'false',
@@ -185,8 +184,8 @@ function EditConceptBody({
       }) || []
     );
   }, [data?.descriptions, displayRetiredDescriptions]);
-  const [artgOptVals, setArtgOptVals] = useState<ExternalIdentifier[]>(
-    product.externalIdentifiers ? product.externalIdentifiers : [],
+  const [artgOptVals, setArtgOptVals] = useState<NonDefiningProperty[]>(
+    product.nonDefiningProperties ? product.nonDefiningProperties : [],
   );
 
   const defaultLangRefset = langRefsets.find(langRefsets => {
@@ -230,8 +229,8 @@ function EditConceptBody({
   const defaultValues = useMemo(() => {
     return {
       externalRequesterUpdate: {
-        externalIdentifiers: product.externalIdentifiers
-          ? sortExternalIdentifiers(product.externalIdentifiers)
+        nonDefiningProperties: product.nonDefiningProperties
+          ? sortNonDefiningProperties(product.nonDefiningProperties)
           : [],
         ticketId: ticket.id,
       },
@@ -375,7 +374,7 @@ function EditConceptBody({
         { externalRequesterUpdate, productId, branch },
         {
           onSuccess: result => {
-            product.externalIdentifiers = result;
+            product.nonDefiningProperties = result;
             resolve();
           },
           onError: reject,
@@ -435,8 +434,8 @@ function EditConceptBody({
     );
 
     const artgModified = !areTwoExternalIdentifierArraysEqual(
-      data.externalRequesterUpdate.externalIdentifiers,
-      product.externalIdentifiers ? product.externalIdentifiers : [],
+      data.externalRequesterUpdate.nonDefiningProperties,
+      product.nonDefiningProperties ? product.nonDefiningProperties : [],
     );
 
     if (
@@ -485,7 +484,7 @@ function EditConceptBody({
   };
   const resetAndClose = () => {
     setArtgOptVals(
-      product.externalIdentifiers ? product.externalIdentifiers : [],
+      product.nonDefiningProperties ? product.nonDefiningProperties : [],
     );
     reset(defaultValues);
 
@@ -635,11 +634,11 @@ function EditConceptBody({
                           <legend>bar Ids</legend>
                           <Grid paddingTop={1}></Grid>
                           <ArtgAutoComplete
-                            name="externalRequesterUpdate.externalIdentifiers"
+                            name="externalRequesterUpdate.nonDefiningProperties"
                             control={control}
                             error={
                               errors?.externalRequesterUpdate
-                                ?.externalIdentifiers as FieldError
+                                ?.nonDefiningProperties as FieldError
                             }
                             dataTestId="package-brand"
                             optionValues={[]}
@@ -650,8 +649,8 @@ function EditConceptBody({
                             }}
                           />
                           {artgOptVals.length === 0 &&
-                            product.externalIdentifiers &&
-                            product.externalIdentifiers?.length > 0 && (
+                            product.nonDefiningProperties &&
+                            product.nonDefiningProperties?.length > 0 && (
                               <Box style={{ marginBottom: '-2' }}>
                                 <span
                                   style={{

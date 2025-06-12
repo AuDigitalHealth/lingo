@@ -33,26 +33,19 @@ export enum ActionType {
   editProduct = 'editProduct',
 }
 
-export interface ExternalIdentifier {
-  title: string;
-  identifierScheme: string;
-  identifier: string;
-  identifierValue: string;
-  identifierValueObject: SnowstormConceptMini;
+export enum NonDefiningPropertyType {
+  EXTERNAL_IDENTIFIER = "EXTERNAL_IDENTIFIER",
+  REFERENCE_SET = "REFERENCE_SET",
+  NON_DEFINING_PROPERTY = "NON_DEFINING_PROPERTY"
 }
 
 export interface NonDefiningProperty {
   title: string;
   identifierScheme: string;
   identifier: string;
-  value: string;
-  valueObject: SnowstormConceptMini;
-}
-
-export interface ReferenceSet {
-  title: string;
-  identifierScheme: string;
-  identifier: string;
+  value: string | null;
+  valueObject: SnowstormConceptMini | null;
+  type: NonDefiningPropertyType;
 }
 
 export interface Quantity {
@@ -92,7 +85,7 @@ export interface MedicationProductDetails {
 export interface MedicationPackageDetails {
   productName?: Concept | null;
   containerType?: Concept | null;
-  externalIdentifiers?: ExternalIdentifier[];
+  nonDefiningProperties?: NonDefiningProperty[];
   containedProducts: MedicationProductQuantity[];
   containedPackages: MedicationPackageQuantity[];
   selectedConceptIdentifiers?: string[];
@@ -130,7 +123,7 @@ export interface DeviceProductQuantity {
 export interface DevicePackageDetails {
   productName?: Concept | null;
   containerType?: Concept;
-  externalIdentifiers?: ExternalIdentifier[];
+  nonDefiningProperties?: NonDefiningProperty[];
   containedProducts: DeviceProductQuantity[];
   selectedConceptIdentifiers?: string[];
 }
@@ -163,7 +156,7 @@ export interface ProductDescriptionUpdateRequest {
   ticketId: number;
 }
 export interface ProductExternalRequesterUpdateRequest {
-  externalIdentifiers: ExternalIdentifier[];
+  nonDefiningProperties?: NonDefiningProperty[];
   ticketId: number;
 }
 export interface BulkProductCreationDetails {
@@ -185,12 +178,12 @@ export interface ProductPackSizes {
 
 export interface BrandWithIdentifiers {
   brand: SnowstormConceptMini;
-  externalIdentifiers: ExternalIdentifier[];
+  nonDefiningProperties?: NonDefiningProperty[];
 }
 
 export interface PackSizeWithIdentifiers {
   packSize: BigDecimal;
-  externalIdentifiers: ExternalIdentifier[];
+  nonDefiningProperties?: NonDefiningProperty[];
 }
 
 export type SnowstormConceptMini = Concept;
