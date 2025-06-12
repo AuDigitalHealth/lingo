@@ -5,8 +5,12 @@ import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
 import au.gov.digitalhealth.lingo.service.fhir.FhirParameters.Parameter;
 import au.gov.digitalhealth.lingo.service.fhir.FhirParameters.Parameter.Part;
 import au.gov.digitalhealth.lingo.util.CacheConstants;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -47,8 +51,9 @@ public class FhirClient {
   @Cacheable(
       value = CacheConstants.FHIR_CONCEPTS,
       key = "#code + '_' + #system",
-      unless = "#result == null || #result.pt == null || #result.pt.term == null")
-  public Mono<SnowstormConceptMini> getConcept(String code, String system) {
+      unless = "#result == null")
+  public Mono<Pair<SnowstormConceptMini, Map<String, String>>> getConcept(
+      String code, String system) {
     if (code == null || code.isEmpty()) {
       return Mono.error(new IllegalArgumentException("Code must not be null or empty"));
     }
@@ -65,6 +70,7 @@ public class FhirClient {
                     .path("/CodeSystem/$lookup")
                     .queryParam("code", code)
                     .queryParam("system", system)
+                    .queryParam("property", "*")
                     .build())
         .retrieve()
         .bodyToMono(FhirParameters.class)
@@ -80,7 +86,38 @@ public class FhirClient {
               SnowstormTermLangPojo fsn =
                   new SnowstormTermLangPojo().lang("en").term(getDisplayName(parameters));
               snowstormConceptMini.setFsn(fsn);
-              return snowstormConceptMini;
+
+              // Create the map of properties
+              Map<String, String> propertyMap = new HashMap<>();
+
+              // Process property parts
+              parameters.getParameter().stream()
+                  .filter(param -> "property".equals(param.getName()) && param.getPart() != null)
+                  .forEach(
+                      propertyParam -> {
+                        // Find code part
+                        Optional<Part> codePart =
+                            propertyParam.getPart().stream()
+                                .filter(part -> "code".equals(part.getName()))
+                                .findFirst();
+
+                        // Find value part
+                        Optional<Part> valuePart =
+                            propertyParam.getPart().stream()
+                                .filter(part -> "value".equals(part.getName()))
+                                .findFirst();
+
+                        if (codePart.isPresent() && valuePart.isPresent()) {
+                          String propertyCode = codePart.get().getValueAsString();
+                          String propertyValue = valuePart.get().getValueAsString();
+
+                          if (propertyCode != null && propertyValue != null) {
+                            propertyMap.put(propertyCode, propertyValue);
+                          }
+                        }
+                      });
+
+              return Pair.of(snowstormConceptMini, propertyMap);
             });
   }
 }
