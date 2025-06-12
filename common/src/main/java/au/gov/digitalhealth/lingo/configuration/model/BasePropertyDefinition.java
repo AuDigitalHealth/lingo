@@ -59,5 +59,11 @@ public abstract class BasePropertyDefinition {
   @ValidSctId(partitionIdentifier = PartionIdentifier.CONCEPT)
   private String identifier;
 
+  /**
+   * This is used to order the properties in the UI, lower numbers appear first. If two fields have
+   * the same order then their name will be used to sort them.
+   */
+  private int order;
+
   public abstract PropertyType getPropertyType();
 }
