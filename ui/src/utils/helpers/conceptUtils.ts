@@ -247,7 +247,7 @@ export const defaultPackage = (
         : undefined,
       containerType: undefined,
 
-      externalIdentifiers: [],
+      nonDefiningProperties: [],
       containedPackages: [],
       containedProducts: [defaultProduct(defaultUnit, defaultBrandName)],
     },
