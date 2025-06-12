@@ -47,6 +47,8 @@ export interface NonDefiningProperty {
   relationshipType: string | null;
   valueObject: SnowstormConceptMini | null;
   type: NonDefiningPropertyType;
+  codeSystem?: string;
+  additionalProperties?: { [key: string]: string };
 }
 
 export interface Quantity {
