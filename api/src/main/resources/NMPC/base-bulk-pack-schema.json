@@ -28,34 +28,6 @@
         }
       }
     },
-    "ExternalIdentifier": {
-      "type": "object",
-      "oneOf": [
-        {
-          "title": "ARTGID",
-          "type": "object",
-          "properties": {
-            "identifierScheme": {
-              "type": "string",
-              "const": "artgid"
-            },
-            "relationshipType": {
-              "title": "Relationship type",
-              "type": "string",
-              "const": "RELATED"
-            },
-            "identifierValue": {
-              "title": "ARTGID",
-              "type": "string",
-              "pattern": "\\d{1,8}",
-              "errorMessage": {
-                "pattern": "Please enter a valid ARTGID matching \\d{1,8}"
-              }
-            }
-          }
-        }
-      ]
-    },
     "PackDetails": {
       "type": "object",
       "properties": {
@@ -66,15 +38,17 @@
             "minimum": "Pack size must be at least 1."
           }
         },
-        "externalIdentifiers": {
+        "nonDefiningProperties": {
           "type": "array",
-          "title": "External identifiers",
+          "title": "Properties",
           "items": {
-            "$ref": "#/$defs/ExternalIdentifier"
+            "$ref": "#/$defs/PACKAGE_NonDefiningProperty"
           }
         }
       },
-      "required": ["packSize"]
+      "required": [
+        "packSize"
+      ]
     }
   },
   "properties": {
@@ -96,27 +70,11 @@
         "$ref": "#/$defs/PackDetails"
       }
     },
-    "unitOfMeasure": {
-      "$ref": "#/$defs/SnowstormConceptMini"
-    },
     "newPackSizeInput": {
-      "type": "object",
-      "properties": {
-        "packSize": {
-          "type": "integer",
-          "minimum": 1,
-          "errorMessage": {
-            "minimum": "Pack size must be at least 1."
-          }
-        },
-        "externalIdentifiers": {
-          "type": "array",
-          "title": "External identifiers",
-          "items": {
-            "$ref": "#/$defs/ExternalIdentifier"
-          }
-        }
-      }
+      "$ref": "#/$defs/PackDetails"
+    },
+    "addButton": {
+      "type": "null"
     }
   }
 }
