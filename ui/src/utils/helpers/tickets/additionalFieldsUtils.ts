@@ -15,7 +15,7 @@
 ///
 
 import { AdditionalFieldType } from '../../../types/tickets/ticket';
-import { ExternalIdentifier } from '../../../types/product.ts';
+import { ExternalIdentifier, NonDefiningProperty } from '../../../types/product.ts';
 
 export const sortAdditionalFields = (
   unsortedFields: AdditionalFieldType[] | null,
@@ -83,6 +83,45 @@ export const sortExternalIdentifiers = (
     return valA - valB; // Numeric comparison for valid numbers
   });
 };
+
+export const sortNonDefiningProperties = (
+  properties: NonDefiningProperty[]
+): NonDefiningProperty[] => {
+  if (!properties || properties.length === 0) {
+    return [];
+  }
+
+  return properties.slice().sort((a, b) => {
+    // First sort by identifierScheme
+    const schemeA = a.identifierScheme || '';
+    const schemeB = b.identifierScheme || '';
+
+    const schemeComparison = schemeA.localeCompare(schemeB);
+    if (schemeComparison !== 0) {
+      return schemeComparison;
+    }
+
+    // Then sort by value if identifierScheme is the same
+    // For numeric values, try to sort numerically
+    const aValue = a.value !== null ? a.value :
+      (a.valueObject?.pt?.term || a.valueObject?.conceptId || '');
+    const bValue = b.value !== null ? b.value :
+      (b.valueObject?.pt?.term || b.valueObject?.conceptId || '');
+
+    // Try numeric sorting if both values can be parsed as numbers
+    const numA = parseFloat(String(aValue));
+    const numB = parseFloat(String(bValue));
+
+    if (!isNaN(numA) && !isNaN(numB)) {
+      return numA - numB;
+    }
+
+    // Fall back to string comparison for non-numeric values
+    return String(aValue).localeCompare(String(bValue));
+  });
+};
+
+
 export function areTwoExternalIdentifierArraysEqual(
   array1: ExternalIdentifier[],
   array2: ExternalIdentifier[],
