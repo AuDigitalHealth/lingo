@@ -1,8 +1,14 @@
 {
-  "ui:order": [
-    "containedProducts"
+  "ui:grid": [
+    {
+      "containedProducts": 24
+    },
+    {
+      "nonDefiningProperties": 24
+    }
   ],
   "containedProducts": {
+    "ui:field": "ConditionalArrayField",
     "ui:options": {
       "skipTitle": true,
       "arrayTemplate": "accordion",
@@ -13,34 +19,34 @@
       }
     },
     "items": {
-      "ui:order": [
-        "productDetails",
-        "unit",
-        "value"
-      ],
       "ui:options": {
-        "style": {
-          "border": "1px solid #ddd",
-          "padding": "10px",
-          "marginBottom": "20px",
-          "borderRadius": "8px"
-        },
-        "titleSource": "productDetails.productName.pt.term",
-        "defaultTitle": "Product",
         "skipTitle": true
       },
-      "unit": {
-        "ui:field": "UnitValueUnWrappedField",
-        "ui:title": "Pack Size",
+      "ui:grid": [
+        {
+          "productDetails": 24
+        },
+        {
+          "value": 6,
+          "unit": 6,
+          "_empty": 12
+        }
+      ],
+      "value": {
+        "ui:widget": "text",
         "ui:options": {
-          "pairWith": "value",
-          "ecl": "<767524001",
-          "showDefaultOptions": true
+          "inputType": "number",
+          "title": "Pack Size",
+          "skipTitle": true
         }
       },
-      "value": {
-        "ui:widget": "hidden",
+      "unit": {
+        "ui:field": "AutoCompleteField",
+        "ui:title": "Unit",
         "ui:options": {
+          "ecl": "(^660401000220107 : (774160008 OR 999000081000168101) = *).774163005",
+          "extendedEcl": "<767524001",
+          "showDefaultOptions": true,
           "skipTitle": true
         }
       },
@@ -48,11 +54,22 @@
         "ui:options": {
           "skipTitle": true
         },
-        "ui:order": [
-          "productName",
-          "deviceType",
-          "specificDeviceType",
-          "type"
+        "ui:grid": [
+          {
+            "productName": 12,
+            "deviceType": 12
+          },
+          {
+            "_empty": 12,
+            "specificDeviceType": 12
+          },
+          {
+            "newSpecificDeviceName": 12,
+            "otherParentConcepts": 12
+          },
+          {
+            "nonDefiningProperties": 24
+          }
         ],
         "type": {
           "ui:widget": "hidden",
@@ -63,33 +80,60 @@
         "productName": {
           "ui:field": "AutoCompleteField",
           "ui:options": {
+            "skipTitle": true,
             "branch": "MAIN",
             "ecl": "<774167006",
             "showDefaultOptions": false
           }
         },
         "deviceType": {
-          "ui:field": "ParentChildAutoCompleteField",
+          "ui:field": "AutoCompleteField",
+          "ui:title": "Device Type",
           "ui:options": {
-            "parentFieldName": "deviceType",
-            "childFieldName": "specificDeviceType",
-            "parentFieldOptions": {
-              "ecl": "(((<< 49062001) MINUS ((< 49062001 MINUS >(< 49062001)))) MINUS (<<^660371000220109))",
-              "showDefaultOptions": false,
-              "title": "Device Type"
-            },
-            "childFieldOptions": {
-              "ecl": "",
-              "showDefaultOptions": true,
-              "title": "Specific Device Type",
-              "getEcl": "<@parent"
-            }
+            "skipTitle": true,
+            "ecl": "(((<< 49062001) MINUS ((< 49062001 MINUS >(< 49062001)))) MINUS (<<^660371000220109))",
+            "extendedEcl": "(<63653004 MINUS ^660371000220109) : [0..0] 774158006 = *",
+            "showDefaultOptions": false,
+            "dependants": [
+              {
+                "path": "../specificDeviceType",
+                "ui:options": {
+                  "skipTitle": true,
+                  "getEcl": "<@parent",
+                  "showDefaultOptions": true
+                }
+              }
+            ]
           }
         },
         "specificDeviceType": {
-          "ui:widget": "hidden",
+          "ui:field": "AutoCompleteField",
+          "ui:title": "Specific Device Type",
           "ui:options": {
+            "skipTitle": true,
+            "showDefaultOptions": true
+          }
+        },
+        "newSpecificDeviceName": {
+          "type": "string",
+          "title": "New Specific Device Name",
+          "ui:widget": "text",
+          "ui:options": {
+            "inputType": "text",
             "skipTitle": true
+          }
+        },
+        "otherParentConcepts": {
+          "type": "array",
+          "title": "Other Parent Concepts",
+          "items": {
+            "$ref": "#/$defs/SnowstormConceptMini"
+          },
+          "ui:field": "AutoCompleteField",
+          "ui:options": {
+            "ecl": "<774167006",
+            "skipTitle": true,
+            "showDefaultOptions": false
           }
         }
       }
