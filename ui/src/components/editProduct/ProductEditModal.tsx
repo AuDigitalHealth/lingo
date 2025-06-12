@@ -36,19 +36,19 @@ import {
 import {
   NonDefiningProperty,
   ProductDescriptionUpdateRequest,
-  ProductExternalRequesterUpdateRequest,
+  ProductNonDefiningPropertyUpdateRequest,
   ProductUpdateRequest
 } from '../../types/product.ts';
 import ArtgAutoComplete from '../../pages/products/components/ArtgAutoComplete.tsx';
 import {
   useUpdateProductDescription,
-  useUpdateProductExternalIdentifiers
+  useUpdateProductNonDefiningProperties
 } from '../../hooks/api/products/useUpdateProductDescription.tsx';
 import { Ticket } from '../../types/tickets/ticket.ts';
 import ConceptService from '../../api/ConceptService.ts';
 import { useTheme } from '@mui/material/styles';
 import {
-  areTwoExternalIdentifierArraysEqual,
+  areTwoNonDefiningPropertiesArraysEqual,
   sortNonDefiningProperties
 } from '../../utils/helpers/tickets/additionalFieldsUtils.ts';
 import { getSearchConceptsByEclOptions } from '../../hooks/api/useInitializeConcepts.tsx';
@@ -99,12 +99,12 @@ export default function ProductEditModal({
   isCtpp,
 }: ProductEditModalProps) {
   const updateProductDescriptionMutation = useUpdateProductDescription();
-  const updateProductExternalIdentifierMutation =
-    useUpdateProductExternalIdentifiers();
+  const updateProductPropertyMutation =
+    useUpdateProductNonDefiningProperties();
   const { isPending } = updateProductDescriptionMutation;
-  const { isPending: isExternalIdentifiersPending } =
-    updateProductExternalIdentifierMutation;
-  const isUpdating = isPending || isExternalIdentifiersPending;
+  const { isPending: isPropertyPending } =
+    updateProductPropertyMutation;
+  const isUpdating = isPending || isPropertyPending;
   const closeHandle = () => {
     if (!isUpdating) {
       handleClose();
@@ -228,7 +228,7 @@ function EditConceptBody({
 
   const defaultValues = useMemo(() => {
     return {
-      externalRequesterUpdate: {
+      updateRequest: {
         nonDefiningProperties: product.nonDefiningProperties
           ? sortNonDefiningProperties(product.nonDefiningProperties)
           : [],
@@ -282,21 +282,21 @@ function EditConceptBody({
 
   const theme = useTheme();
   const updateProductDescriptionMutation = useUpdateProductDescription();
-  const updateProductExternalIdentifierMutation =
-    useUpdateProductExternalIdentifiers();
+  const updateProductPropertyMutation =
+    useUpdateProductNonDefiningProperties();
 
   const { isPending, data: updateProductDescriptionData } =
     updateProductDescriptionMutation;
   const {
-    isPending: isExternalIdentifiersPending,
-    data: updateExternalIdentifierData,
-  } = updateProductExternalIdentifierMutation;
-  const isUpdating = isPending || isExternalIdentifiersPending;
+    isPending: isPropertyPending,
+    data: updatePropertyData,
+  } = updateProductPropertyMutation;
+  const isUpdating = isPending || isPropertyPending;
 
   useEffect(() => {
     if (
-      !(isPending || isExternalIdentifiersPending) &&
-      (updateProductDescriptionData || updateExternalIdentifierData)
+      !(isPending || isPropertyPending) &&
+      (updateProductDescriptionData || updatePropertyData)
     ) {
       reset();
       handleClose();
@@ -306,8 +306,8 @@ function EditConceptBody({
     handleClose,
     isPending,
     updateProductDescriptionData,
-    isExternalIdentifiersPending,
-    updateExternalIdentifierData,
+    isPropertyPending,
+    updatePropertyData,
   ]);
 
   const onSubmit = (data: ProductUpdateRequest) => {
@@ -364,14 +364,14 @@ function EditConceptBody({
   };
 
   const updateArtgIds = (
-    externalRequesterUpdate: ProductExternalRequesterUpdateRequest,
+    updateRequest: ProductNonDefiningPropertyUpdateRequest,
     productId: string,
     ticketId: number,
   ) => {
-    externalRequesterUpdate.ticketId = ticketId;
+    updateRequest.ticketId = ticketId;
     return new Promise<void>((resolve, reject) => {
-      updateProductExternalIdentifierMutation.mutate(
-        { externalRequesterUpdate, productId, branch },
+      updateProductPropertyMutation.mutate(
+        { updateRequest: updateRequest, productId, branch },
         {
           onSuccess: result => {
             product.nonDefiningProperties = result;
@@ -433,8 +433,8 @@ function EditConceptBody({
       data.descriptionUpdate?.descriptions,
     );
 
-    const artgModified = !areTwoExternalIdentifierArraysEqual(
-      data.externalRequesterUpdate.nonDefiningProperties,
+    const artgModified = !areTwoNonDefiningPropertiesArraysEqual(
+      data.updateRequest.nonDefiningProperties,
       product.nonDefiningProperties ? product.nonDefiningProperties : [],
     );
 
@@ -454,14 +454,14 @@ function EditConceptBody({
     try {
       if (artgModified && anyDescriptionModified) {
         void (await updateArtgIds(
-          data.externalRequesterUpdate,
+          data.updateRequest,
           productId,
           ticket.id,
         ));
         updateDescription(data.descriptionUpdate);
       } else if (artgModified) {
         void (await updateArtgIds(
-          data.externalRequesterUpdate,
+          data.updateRequest,
           productId,
           ticket.id,
         ));
@@ -634,16 +634,16 @@ function EditConceptBody({
                           <legend>bar Ids</legend>
                           <Grid paddingTop={1}></Grid>
                           <ArtgAutoComplete
-                            name="externalRequesterUpdate.nonDefiningProperties"
+                            name="updateRequest.nonDefiningProperties"
                             control={control}
                             error={
-                              errors?.externalRequesterUpdate
+                              errors?.updateRequest
                                 ?.nonDefiningProperties as FieldError
                             }
                             dataTestId="package-brand"
                             optionValues={[]}
                             handleChange={(
-                              artgs: ExternalIdentifier[] | null,
+                              artgs: NonDefiningProperty[] | null,
                             ) => {
                               setArtgOptVals(artgs ? artgs : []);
                             }}

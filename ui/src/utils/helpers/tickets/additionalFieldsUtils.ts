@@ -122,19 +122,20 @@ export const sortNonDefiningProperties = (
 };
 
 
-export function areTwoExternalIdentifierArraysEqual(
-  array1: ExternalIdentifier[],
-  array2: ExternalIdentifier[],
+export function areTwoNonDefiningPropertiesArraysEqual(
+  array1: NonDefiningProperty[],
+  array2: NonDefiningProperty[],
 ): boolean {
   if (array1.length !== array2.length) {
     return false; // Arrays must have the same length
   }
 
-  const sortedArray1 = sortExternalIdentifiers(array1);
-  const sortedArray2 = sortExternalIdentifiers(array2);
+  const sortedArray1 = sortNonDefiningProperties(array1);
+  const sortedArray2 = sortNonDefiningProperties(array2);
   return sortedArray1.every(
     (item, index) =>
       item.identifierScheme === sortedArray2[index].identifierScheme &&
-      item.identifierValue === sortedArray2[index].identifierValue,
+      item.value === sortedArray2[index].value &&
+      item.valueObject === sortedArray2[index].valueObject,
   );
 }
