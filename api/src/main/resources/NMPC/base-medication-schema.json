@@ -272,10 +272,6 @@
     }
   },
   "properties": {
-    "containerType": {
-      "$ref": "#/$defs/SnowstormConceptMini",
-      "title": "Container Type"
-    },
     "containedProducts": {
       "type": "array",
       "title": "Contained Products",
