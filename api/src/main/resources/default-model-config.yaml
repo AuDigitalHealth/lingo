@@ -172,6 +172,7 @@ models:
         defaultMappingType: RELATED
         mappingTypes:
           - RELATED
+        order: 30
       - name: packagePan
         title: PAN
         description: HPRA or EMA product authorisation number
@@ -185,18 +186,7 @@ models:
         defaultMappingType: RELATED
         mappingTypes:
           - RELATED
-      - name: ean
-        title: EAN
-        identifier: 410607006
-        level: PACKAGE
-        dataType: UNSIGNED_INTEGER
-        valueRegexValidation: \d{13}
-        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
-        mandatory: false
-        multiValued: true
-        defaultMappingType: RELATED
-        mappingTypes:
-          - RELATED
+        order: 30
       - name: gtin
         title: GTIN
         identifier: 71388002
@@ -209,6 +199,7 @@ models:
         defaultMappingType: RELATED
         mappingTypes:
           - RELATED
+        order: 90
       - name: atc
         title: ATC code
         identifier: 84676004
@@ -223,20 +214,7 @@ models:
         defaultMappingType: RELATED
         mappingTypes:
           - RELATED
-      - name: pcrs
-        title: GMS Reimbursable
-        identifier: 105590001
-        level: PACKAGE
-        dataType: CODED,
-        valueRegexValidation: ^.+$
-        valueSetReference: https://nmpc.hse.ie/PCRS/vs
-        codeSystem: https://nmpc.hse.ie/PCRS
-        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
-        mandatory: false
-        multiValued: false
-        defaultMappingType: RELATED
-        mappingTypes:
-          - RELATED
+        order: 100
     referenceSets:
       - name: blackTriangle
         title: Black Triangle
@@ -244,24 +222,28 @@ models:
         identifier: 419036000
         level: PRODUCT
         modelLevels: REAL_CLINICAL_DRUG
+        order: 60
       - name: combinationOnly
         title: Combination pack only
         description: Combination pack only
         identifier: 431134006
         level: PACKAGE
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        order: 1
       - name: parallelImport
         title: Parallel import
         description: Parallel import
         identifier: 433741003
         level: PRODUCT
         modelLevels: REAL_CLINICAL_DRUG
+        order: 80
       - name: vmpNonPrescribable
         title: Non-prescribable VMP
         description: Non-prescribable VMP
         identifier: 1514151000168100
         level: PRODUCT
         modelLevels: REAL_CLINICAL_DRUG
+        order: 70
     nonDefiningProperties:
       - name: supplier
         title: Supplier
@@ -273,6 +255,7 @@ models:
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: false
+        order: 10
       - name: licencedRoute
         title: Licenced Route
         description: Licenced Route of Administration
@@ -283,6 +266,7 @@ models:
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: true
+        order: 20
       - name: pil
         title: Leaflet URL
         description: Product information leaflet
@@ -293,6 +277,7 @@ models:
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: true
+        order: 50
       - name: smpc
         title: SmPC
         description: SmPC
@@ -303,6 +288,7 @@ models:
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: true
+        order: 51
       - name: packagePil
         title: Leaflet URL
         description: Product information leaflet
@@ -313,6 +299,7 @@ models:
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
+        order: 50
       - name: packageSmpc
         title: SmPC
         description: SmPC
@@ -323,3 +310,4 @@ models:
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
+        order: 51
