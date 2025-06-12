@@ -31,34 +31,6 @@
         }
       }
     },
-    "ExternalIdentifier": {
-      "type": "object",
-      "oneOf": [
-        {
-          "title": "ARTGID",
-          "type": "object",
-          "properties": {
-            "identifierScheme": {
-              "type": "string",
-              "const": "artgid"
-            },
-            "relationshipType": {
-              "title": "Relationship type",
-              "type": "string",
-              "const": "RELATED"
-            },
-            "identifierValue": {
-              "title": "ARTGID",
-              "type": "string",
-              "pattern": "\\d{1,8}",
-              "errorMessage": {
-                "pattern": "Please enter a valid ARTGID matching \\d{1,8}"
-              }
-            }
-          }
-        }
-      ]
-    },
     "BrandDetails": {
       "type": "object",
       "properties": {
@@ -70,15 +42,17 @@
             "minProperties": "Brand Name must be populated."
           }
         },
-        "externalIdentifiers": {
+        "nonDefiningProperties": {
           "type": "array",
-          "title": "External identifiers",
+          "title": "Properties",
           "items": {
-            "$ref": "#/$defs/ExternalIdentifier"
+            "$ref": "#/$defs/PACKAGE_NonDefiningProperty"
           }
         }
-
-      }
+      },
+      "required": [
+        "brand"
+      ]
     }
   },
   "properties": {
@@ -95,19 +69,16 @@
     },
     "brands": {
       "type": "array",
-      "title": "Newly Added Brands",
+      "title": "New Brands",
       "items": {
         "$ref": "#/$defs/BrandDetails"
       }
     },
     "newBrandInput": {
-      "$ref": "#/$defs/BrandDetails",
-      "title": "Add New Brand"
+      "$ref": "#/$defs/BrandDetails"
+    },
+    "addButton": {
+      "type": "null"
     }
-  },
-  "required": ["brands"],
-  "errorMessage": {
-    "required": "Fields must be populated."
-  },
-  "additionalProperties": false
+  }
 }
