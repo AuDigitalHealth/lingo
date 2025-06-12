@@ -32,7 +32,7 @@ interface FormData {
   brands: any[];
   newBrandInput: {
     brand?: any;
-    externalIdentifiers: any[];
+    nonDefiningProperties: any[];
   };
 }
 
@@ -77,7 +77,7 @@ function BrandAuthoring({
   const [warnings, setWarnings] = useState<string[]>([]);
   const [formData, setFormData] = useState<FormData>({
     brands: [],
-    newBrandInput: { brand: undefined, externalIdentifiers: [] },
+    newBrandInput: { brand: undefined, nonDefiningProperties: [] },
   });
 
   const { data, isFetching } = useFetchBulkAuthorBrands(
@@ -101,7 +101,7 @@ function BrandAuthoring({
   const handleClear = useCallback(() => {
     const newData: FormData = {
       ...formData,
-      newBrandInput: { brand: undefined, externalIdentifiers: [] },
+      newBrandInput: { brand: undefined, nonDefiningProperties: [] },
     };
     setFormData(newData);
     if (formRef.current) {
@@ -115,7 +115,7 @@ function BrandAuthoring({
         selectedProduct: selectedProduct.pt?.term || '',
         existingBrands: data.brands || [],
         brands: [],
-        newBrandInput: { brand: undefined, externalIdentifiers: [] },
+        newBrandInput: { brand: undefined, nonDefiningProperties: [] },
       };
       console.log('Initial formData:', newData);
       setFormData(newData);
@@ -132,7 +132,7 @@ function BrandAuthoring({
         productId: selectedProduct?.id,
         brands: submittedFormData.brands,
       },
-      externalIdentifiers: [],
+      nonDefiningProperties: [],
     };
     setBrandPackSizePreviewDetails(brandPackSizeDetails);
     setRunningWarningsCheck(true);
