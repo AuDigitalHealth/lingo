@@ -125,7 +125,10 @@
         "deviceType"
       ],
       "errorMessage": {
-        "required": "Product Details must be populated."
+        "required": {
+          "productName": "Product Name is required",
+          "deviceType": "Device Type is required"
+        }
       }
     },
     "ContainedProduct": {
@@ -167,7 +170,11 @@
         "productDetails"
       ],
       "errorMessage": {
-        "required": "Contained product must be populated."
+        "required": {
+          "unit": "Unit is required",
+          "value": "Value is required",
+          "productDetails": "Product Details are required"
+        }
       },
       "dependencies": {
         "unit": {
@@ -240,11 +247,12 @@
     }
   },
   "required": [
-    "productName",
     "containedProducts"
   ],
   "errorMessage": {
-    "required": "Fields must be populated."
+    "required": {
+      "containedProducts": "At least one Contained Product is required"
+    }
   },
   "additionalProperties": false
 }
