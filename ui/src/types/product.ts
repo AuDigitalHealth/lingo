@@ -149,13 +149,13 @@ export interface ProductCreationDetails {
 
 export interface ProductUpdateRequest {
   descriptionUpdate: ProductDescriptionUpdateRequest;
-  externalRequesterUpdate: ProductExternalRequesterUpdateRequest;
+  updateRequest: ProductNonDefiningPropertyUpdateRequest;
 }
 export interface ProductDescriptionUpdateRequest {
   descriptions: Description[] | undefined;
   ticketId: number;
 }
-export interface ProductExternalRequesterUpdateRequest {
+export interface ProductNonDefiningPropertyUpdateRequest {
   nonDefiningProperties?: NonDefiningProperty[];
   ticketId: number;
 }

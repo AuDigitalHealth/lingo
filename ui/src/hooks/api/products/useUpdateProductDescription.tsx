@@ -1,6 +1,6 @@
 import {
   ProductDescriptionUpdateRequest,
-  ProductExternalRequesterUpdateRequest,
+  ProductNonDefiningPropertyUpdateRequest
 } from '../../../types/product.ts';
 import { useMutation } from '@tanstack/react-query';
 import { enqueueSnackbar } from 'notistack';
@@ -41,21 +41,21 @@ export function useUpdateProductDescription() {
   return mutation;
 }
 
-interface useUpdateProductExternalIdentifiersArguments {
-  externalRequesterUpdate: ProductExternalRequesterUpdateRequest;
+interface useUpdateProductNonDefiningPropertyArguments {
+  propertyUpdate: ProductNonDefiningPropertyUpdateRequest;
   productId: string;
   branch: string;
 }
 
-export function useUpdateProductExternalIdentifiers() {
+export function useUpdateProductNonDefiningProperties() {
   const mutation = useMutation({
     mutationFn: ({
-      externalRequesterUpdate,
+      propertyUpdate,
       productId,
       branch,
-    }: useUpdateProductExternalIdentifiersArguments) => {
-      return productService.editProductExternalIdentifiers(
-        externalRequesterUpdate,
+    }: useUpdateProductNonDefiningPropertyArguments) => {
+      return productService.editProductNonDefiningProperties(
+        propertyUpdate,
         productId,
         branch,
       );
@@ -64,14 +64,14 @@ export function useUpdateProductExternalIdentifiers() {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       enqueueSnackbar(
-        `Error Editing Product Artg Ids:${error.response?.data.detail}`,
+        `Error Editing Product properties Ids:${error.response?.data.detail}`,
         {
           variant: 'error',
         },
       );
     },
     onSuccess: () => {
-      enqueueSnackbar('Product Artg Ids edited successfully.', {
+      enqueueSnackbar('Product properties edited successfully.', {
         variant: 'success',
       });
     },

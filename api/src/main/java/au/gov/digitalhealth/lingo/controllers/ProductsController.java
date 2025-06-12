@@ -21,13 +21,9 @@ import au.gov.digitalhealth.lingo.aspect.LogExecutionTime;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
-import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
-import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
-import au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import au.gov.digitalhealth.lingo.product.update.ProductDescriptionUpdateRequest;
-import au.gov.digitalhealth.lingo.product.update.ProductExternalIdentifierUpdateRequest;
-import au.gov.digitalhealth.lingo.product.update.ProductNonDefiningPropertyUpdateRequest;
-import au.gov.digitalhealth.lingo.product.update.ProductReferenceSetUpdateRequest;
+import au.gov.digitalhealth.lingo.product.update.ProductPropertiesUpdateRequest;
 import au.gov.digitalhealth.lingo.service.ProductSummaryService;
 import au.gov.digitalhealth.lingo.service.ProductUpdateService;
 import au.gov.digitalhealth.lingo.service.TaskManagerService;
@@ -82,45 +78,16 @@ public class ProductsController {
   }
 
   @LogExecutionTime
-  @PutMapping("/{branch}/product-model/{conceptId}/external-identifiers")
-  public ResponseEntity<Collection<ExternalIdentifier>> updateProductExternalIdentifiers(
+  @PutMapping("/{branch}/product-model/{conceptId}/properties")
+  public ResponseEntity<Collection<NonDefiningBase>> updateProductProperties(
       @PathVariable String branch,
       @PathVariable Long conceptId,
-      @RequestBody @Valid
-          ProductExternalIdentifierUpdateRequest productExternalIdentifierUpdateRequest)
+      @RequestBody @Valid ProductPropertiesUpdateRequest productPropertiesUpdateRequest)
       throws InterruptedException {
     taskManagerService.validateTaskState(branch);
     return new ResponseEntity<>(
-        productUpdateService.updateProductExternalIdentifiers(
-            branch, String.valueOf(conceptId), productExternalIdentifierUpdateRequest),
-        HttpStatus.OK);
-  }
-
-  @LogExecutionTime
-  @PutMapping("/{branch}/product-model/{conceptId}/reference-sets")
-  public ResponseEntity<Collection<ReferenceSet>> updateProductReferenceSets(
-      @PathVariable String branch,
-      @PathVariable Long conceptId,
-      @RequestBody @Valid ProductReferenceSetUpdateRequest productReferenceSetUpdateRequest)
-      throws InterruptedException {
-    taskManagerService.validateTaskState(branch);
-    return new ResponseEntity<>(
-        productUpdateService.updateProductReferenceSets(
-            branch, String.valueOf(conceptId), productReferenceSetUpdateRequest),
-        HttpStatus.OK);
-  }
-
-  @LogExecutionTime
-  @PutMapping("/{branch}/product-model/{conceptId}/non-defining-properties")
-  public ResponseEntity<Collection<NonDefiningProperty>> updateProductNonDefiningProperties(
-      @PathVariable String branch,
-      @PathVariable Long conceptId,
-      @RequestBody @Valid
-          ProductNonDefiningPropertyUpdateRequest productNonDefiningPropertyUpdateRequest) {
-    taskManagerService.validateTaskState(branch);
-    return new ResponseEntity<>(
-        productUpdateService.updateProductNonDefiningProperties(
-            branch, String.valueOf(conceptId), productNonDefiningPropertyUpdateRequest),
+        productUpdateService.updateProductProperties(
+            branch, String.valueOf(conceptId), productPropertiesUpdateRequest),
         HttpStatus.OK);
   }
 
