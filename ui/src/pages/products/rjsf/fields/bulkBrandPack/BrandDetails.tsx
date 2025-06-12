@@ -49,7 +49,7 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
     onChange(updated);
   };
 
-  const handleExternalIdentifiersChange = (updated: any[]) => {
+  const handleNonDefiningPropertyChange = (updated: any[]) => {
     const current = {
       ...formData,
       nonDefiningProperties: Array.isArray(updated) ? updated : [],
@@ -57,30 +57,30 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
     onChange(current);
   };
 
-  const handleAddExternalIdentifier = (newIdentifier: any) => {
+  const handleAddNonDefiningProperty = (newIdentifier: any) => {
     if (newIdentifier) {
       const updatedIdentifiers = [...nonDefiningProperties, newIdentifier];
-      handleExternalIdentifiersChange(updatedIdentifiers);
+      handleNonDefiningPropertyChange(updatedIdentifiers);
     }
   };
 
-  const handleDeleteExternalIdentifier = (index: number) => {
+  const handleDeleteNonDefiningProperty = (index: number) => {
     if (index >= 0 && index < nonDefiningProperties.length) {
       const updatedIdentifiers = nonDefiningProperties.filter(
         (_: any, i: number) => i !== index,
       );
-      handleExternalIdentifiersChange(updatedIdentifiers);
+      handleNonDefiningPropertyChange(updatedIdentifiers);
     }
   };
 
-  const handleUpdateExternalIdentifier = (
+  const handleUpdateNonDefiningProperty = (
     index: number,
     updatedIdentifier: any,
   ) => {
     if (index >= 0 && index < nonDefiningProperties.length && updatedIdentifier) {
       const updatedIdentifiers = [...nonDefiningProperties];
       updatedIdentifiers[index] = updatedIdentifier;
-      handleExternalIdentifiersChange(updatedIdentifiers);
+      handleNonDefiningPropertyChange(updatedIdentifiers);
     }
   };
 
@@ -156,22 +156,21 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
             )}
           </Box>
 
-          {/* External Identifiers */}
           <Box>
             <ExternalIdentifier
               {...props}
               formData={nonDefiningProperties}
-              onChange={handleExternalIdentifiersChange}
-              onAdd={handleAddExternalIdentifier}
-              onDelete={handleDeleteExternalIdentifier}
-              onUpdate={handleUpdateExternalIdentifier}
+              onChange={handleNonDefiningPropertyChange}
+              onAdd={handleAddNonDefiningProperty}
+              onDelete={handleDeleteNonDefiningProperty}
+              onUpdate={handleUpdateNonDefiningProperty}
               schema={schema?.properties?.nonDefiningProperties}
               uiSchema={{
                 'ui:options': {
                   readOnly: readOnly || (requireEditButton && !editMode),
                   mandatorySchemes,
                   multiValuedSchemes,
-                  label: 'External Identifiers',
+                  label: 'Properties',
                   skipTitle: false,
                 },
               }}
