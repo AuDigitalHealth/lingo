@@ -29,70 +29,61 @@
       }
     },
     "Quantity": {
-      "oneOf": [
-        {
-          "type": "null"
+      "type": "object",
+      "nullable": true,
+      "minProperties": 2,
+      "properties": {
+        "unit": {
+          "$ref": "#/$defs/SnowstormConceptMini"
         },
-        {
-          "type": "object",
-          "properties": {
-            "unit": {
-              "$ref": "#/$defs/SnowstormConceptMini"
-            },
-            "value": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "unit",
-            "value"
-          ],
-          "errorMessage": {
-            "required": "Both 'unit' and 'value' must be provided when specified."
-          },
-          "dependencies": {
-            "unit": {
-              "oneOf": [
-                {
+        "value": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "errorMessage": {
+        "minProperties": "Both 'unit' and 'value' must be provided when specified."
+      },
+      "dependencies": {
+        "unit": {
+          "oneOf": [
+            {
+              "properties": {
+                "unit": {
                   "properties": {
-                    "unit": {
-                      "properties": {
-                        "conceptId": {
-                          "const": "732935002"
-                        }
-                      }
-                    },
-                    "value": {
-                      "type": "integer",
-                      "minimum": 1
+                    "conceptId": {
+                      "const": "732935002"
                     }
-                  },
-                  "required": [
-                    "value"
-                  ]
+                  }
                 },
-                {
+                "value": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "value"
+              ]
+            },
+            {
+              "properties": {
+                "unit": {
                   "properties": {
-                    "unit": {
-                      "properties": {
-                        "conceptId": {
-                          "not": {
-                            "const": "732935002"
-                          }
-                        }
+                    "conceptId": {
+                      "not": {
+                        "const": "732935002"
                       }
                     }
                   }
                 }
-              ],
-              "errorMessage": {
-                "oneOf": "Must be an integer >= 1 when 'unit' is 'Each'"
               }
             }
+          ],
+          "errorMessage": {
+            "oneOf": "Must be an integer >= 1 when 'unit' is 'Each'"
           }
         }
-      ]
+      }
     },
     "Ingredient": {
       "type": "object",
