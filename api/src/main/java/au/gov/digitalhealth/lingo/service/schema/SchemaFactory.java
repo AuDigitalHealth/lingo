@@ -49,7 +49,8 @@ public class SchemaFactory {
     identifierSchema.addProperty(IDENTIFIER_SCHEME, ConstProperty.create(mapping.getName()));
     identifierSchema.addProperty("type", ConstProperty.create(mapping.getPropertyType().name()));
 
-    if (mapping.getDataType().equals(NonDefiningPropertyDataType.CONCEPT)) {
+    if (mapping.getDataType().equals(NonDefiningPropertyDataType.CONCEPT)
+        || mapping.getDataType().equals(NonDefiningPropertyDataType.CODED)) {
       ReferenceProperty property = new ReferenceProperty();
       property.setTitle(mapping.getTitle());
       property.setReference("#/$defs/SnowstormConceptMini");
@@ -65,7 +66,7 @@ public class SchemaFactory {
                   + mapping.getTitle()
                   + " matching "
                   + mapping.getValueRegexValidation());
-      identifierSchema.addProperty("identifierValue", property);
+      identifierSchema.addProperty("value", property);
     }
 
     if (mapping.getMappingTypes().isEmpty()) {
