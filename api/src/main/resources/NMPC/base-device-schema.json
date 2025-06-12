@@ -89,7 +89,6 @@
     },
     "ProductDetails": {
       "type": "object",
-      "title": "Product Details",
       "properties": {
         "type": {
           "type": "string",
@@ -104,8 +103,21 @@
           }
         },
         "deviceType": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "Device Type"
+          "$ref": "#/$defs/SnowstormConceptMini"
+        },
+        "specificDeviceType": {
+          "$ref": "#/$defs/SnowstormConceptMini"
+        },
+        "newSpecificDeviceName": {
+          "type": "string",
+          "title": "New Specific Device Name"
+        },
+        "otherParentConcepts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SnowstormConceptMini"
+          },
+          "title": "Other Parent Concepts"
         }
       },
       "required": [
@@ -118,7 +130,6 @@
     },
     "ContainedProduct": {
       "type": "object",
-      "title": "Contained Product",
       "properties": {
         "unit": {
           "$ref": "#/$defs/SnowstormConceptMini",
@@ -229,6 +240,7 @@
     }
   },
   "required": [
+    "productName",
     "containedProducts"
   ],
   "errorMessage": {
