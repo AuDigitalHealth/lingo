@@ -269,11 +269,11 @@ const ExternalIdentifierRender: React.FC<
                     key={`${schema.properties.identifierScheme.const}-${val}-${index}`}
                   >
                     {renderChip({
-                      identifierValue: val,
+                      value: val,
                       identifierScheme:
                         schema.properties.identifierScheme.const,
                       relationshipType:
-                        schema.properties.relationshipType.const,
+                        schema.properties.relationshipType?.const,
                     })}
                   </React.Fragment>
                 ))}

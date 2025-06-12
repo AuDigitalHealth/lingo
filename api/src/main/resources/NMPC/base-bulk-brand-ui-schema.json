@@ -1,135 +1,97 @@
 {
-  "ui:order": [
-    "selectedProduct",
-    "newBrandInput",
-    "existingBrands",
-    "brands"
-  ],
   "ui:options": {
-    "layout": {
-      "grid": [
-        {
-          "name": "selectedProduct",
-          "xs": 12
-        },
-        {
-          "name": "newBrandInput",
-          "xs": 8
-        },
-        {
-          "name": "existingBrands",
-          "xs": 6
-        },
-        {
-          "name": "brands",
-          "xs": 6
-        }
-      ]
+    "skipTitle": true
+  },
+  "ui:grid": [
+    {
+      "columnA": 12,
+      "columnB": 12
     }
+  ],
+  "columnA": {
+    "ui:grid": [
+      {
+        "selectedProduct": 24
+      },
+      {
+        "existingBrands": 24
+      }
+    ]
+  },
+  "columnB": {
+    "ui:title": null,
+    "ui:options": {
+      "label": false
+    },
+    "ui:grid": [
+      {
+        "newBrandInput": 23,
+        "addButton": 1
+      },
+      {
+        "brands": 24
+      }
+    ]
   },
   "selectedProduct": {
     "ui:readonly": true,
     "ui:widget": "TitleWidget",
     "ui:options": {
+      "inputType": "text",
+      "ui:disabled": true,
       "skipTitle": true
     }
   },
+  "newBrandInput": {
+    "ui:field": "BrandDetails",
+    "ui:options": {
+      "readOnly": false,
+      "allowDelete": false,
+      "requireEditButton": false,
+      "multiValuedSchemes": [
+        "artgid"
+      ],
+      "mandatorySchemes": []
+    }
+  },
+  "addButton": {
+    "ui:field": "AddBrandButtonField",
+    "ui:options": {
+      "skipTitle": true,
+      "tooltipTitle": "Add Brand",
+      "sourcePath": "newBrandInput",
+      "targetPath": "brands",
+      "existingPath": "existingBrands"
+    }
+  },
   "existingBrands": {
+    "ui:template": "BrandArrayTemplate",
     "ui:options": {
       "orderable": false,
       "skipTitle": true,
       "listTitle": "Existing Brands",
-      "readOnly": true
-    },
-    "items": {
-      "ui:readonly": true,
-      "ui:options": {
-        "skipTitle": true
-      },
-      "brand": {
-        "ui:field": "AutoCompleteField",
-        "ui:readonly": true,
-        "ui:options": {
-          "label": "",
-          "skipTitle": true
-        }
-      },
-      "externalIdentifiers": {
-        "ui:widget": "OneOfArrayWidget",
-        "ui:readonly": true,
-        "ui:options": {
-          "label": false,
-          "skipTitle": true,
-          "mandatorySchemes": [],
-          "multiValuedSchemes": [
-            "artgid"
-          ]
-        }
-      }
+      "readOnly": true,
+      "allowDelete": false,
+      "requireEditButton": false,
+      "mandatorySchemes": [],
+      "multiValuedSchemes": [
+        "artgid"
+      ]
     }
   },
   "brands": {
+    "ui:template": "BrandArrayTemplate",
     "ui:options": {
       "orderable": false,
       "skipTitle": true,
       "listTitle": "Newly Added Brands",
-      "readOnly": false
-    },
-    "items": {
-      "ui:readonly": false,
-      "ui:options": {
-        "skipTitle": true
-      },
-      "brand": {
-        "ui:field": "AutoCompleteField",
-        "ui:readonly": true,
-        "ui:options": {
-          "label": "",
-          "skipTitle": true
-        }
-      },
-      "externalIdentifiers": {
-        "ui:widget": "OneOfArrayWidget",
-        "ui:readonly": true,
-        "ui:options": {
-          "label": false,
-          "skipTitle": true,
-          "mandatorySchemes": [],
-          "multiValuedSchemes": [
-            "artgid"
-          ]
-        }
-      }
-    }
-  },
-  "newBrandInput": {
-    "ui:field": "NewBrandInputField",
-    "ui:options": {
-      "skipTitle": true
-    },
-    "brand": {
-      "ui:field": "AutoCompleteField",
-      "ui:options": {
-        "ecl": "<774167006",
-        "showDefaultOptions": false,
-        "label": "",
-        "skipTitle": true,
-        "createBrand": {
-          "ecl": "<774167006",
-          "semanticTags": "(product name)"
-        }
-      }
-    },
-    "externalIdentifiers": {
-      "ui:widget": "OneOfArrayWidget",
-      "ui:options": {
-        "label": false,
-        "skipTitle": true,
-        "mandatorySchemes": [],
-        "multiValuedSchemes": [
-          "artgid"
-        ]
-      }
+      "readOnly": false,
+      "allowDelete": true,
+      "requireEditButton": false,
+      "mandatorySchemes": [],
+      "multiValuedSchemes": [
+        "artgid"
+      ]
     }
   }
 }
