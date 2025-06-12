@@ -43,6 +43,7 @@ import au.gov.digitalhealth.lingo.product.NewConceptDetails;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.details.Quantity;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -567,6 +568,30 @@ public class SnowstormDtoUtil {
     }
 
     return referenceSetMembers;
+  }
+
+  public static SnowstormReferenceSetMemberViewComponent
+      createSnowstormReferenceSetMemberViewComponent(
+          NonDefiningBase baseProperty,
+          String referencedComponentId,
+          Collection<ExternalIdentifierDefinition> externalIdentifierDefinitions,
+          Collection<ReferenceSetDefinition> referenceSetDefinitions) {
+    switch (baseProperty.getType()) {
+      case REFERENCE_SET -> {
+        return createSnowstormReferenceSetMemberViewComponent(
+            (ReferenceSet) baseProperty, referencedComponentId, referenceSetDefinitions);
+      }
+      case EXTERNAL_IDENTIFIER -> {
+        return createSnowstormReferenceSetMemberViewComponent(
+            (ExternalIdentifier) baseProperty,
+            referencedComponentId,
+            externalIdentifierDefinitions);
+      }
+      default ->
+          throw new ProductAtomicDataValidationProblem(
+              "Cannot create a reference set member for a property of type "
+                  + baseProperty.getType());
+    }
   }
 
   public static SnowstormReferenceSetMemberViewComponent
