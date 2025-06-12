@@ -30,7 +30,7 @@ import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.update.ProductDescriptionUpdateRequest;
-import au.gov.digitalhealth.lingo.product.update.ProductExternalIdentifierUpdateRequest;
+import au.gov.digitalhealth.lingo.product.update.ProductPropertiesUpdateRequest;
 import au.gov.digitalhealth.tickets.controllers.BulkProductActionDto;
 import au.gov.digitalhealth.tickets.models.Ticket;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -174,11 +174,11 @@ public class LingoTestClient {
         SnowstormConceptMini.class);
   }
 
-  public Set<ExternalIdentifier> updateProductExternalIdentifiers(
-      ProductExternalIdentifierUpdateRequest request, String productId) {
+  public Set<ExternalIdentifier> updateProductProperties(
+      ProductPropertiesUpdateRequest request, String productId) {
     Type responseType = new ParameterizedTypeReference<Set<ExternalIdentifier>>() {}.getType();
     return putRequest(
-        "/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/" + productId + "/external-identifiers",
+        "/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/" + productId + "/properties",
         request,
         HttpStatus.OK,
         responseType);

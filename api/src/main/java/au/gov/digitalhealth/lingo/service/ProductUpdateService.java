@@ -28,14 +28,11 @@ import au.gov.digitalhealth.lingo.configuration.model.NonDefiningPropertyDefinit
 import au.gov.digitalhealth.lingo.configuration.model.ReferenceSetDefinition;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
-import au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet;
 import au.gov.digitalhealth.lingo.product.update.ProductDescriptionUpdateRequest;
-import au.gov.digitalhealth.lingo.product.update.ProductExternalIdentifierUpdateRequest;
-import au.gov.digitalhealth.lingo.product.update.ProductNonDefiningPropertyUpdateRequest;
-import au.gov.digitalhealth.lingo.product.update.ProductReferenceSetUpdateRequest;
+import au.gov.digitalhealth.lingo.product.update.ProductPropertiesUpdateRequest;
 import au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter;
-import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import au.gov.digitalhealth.tickets.service.TicketServiceImpl;
 import jakarta.validation.Valid;
 import java.util.*;
@@ -50,7 +47,6 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 public class ProductUpdateService {
 
   SnowstormClient snowstormClient;
-
   TicketServiceImpl ticketService;
   FieldBindingConfiguration fieldBindingConfiguration;
   Models models;
@@ -126,7 +122,7 @@ public class ProductUpdateService {
         SnowstormConceptView updatedConcept =
             snowstormClient.updateConcept(
                 branch, conceptsNeedUpdate.getConceptId(), conceptsNeedUpdate, false);
-        return SnowstormDtoUtil.toSnowstormConceptMini(updatedConcept);
+        return toSnowstormConceptMini(updatedConcept);
       } catch (WebClientResponseException ex) {
 
         String errorBody = ex.getResponseBodyAsString();
@@ -134,7 +130,7 @@ public class ProductUpdateService {
         throw new ProductAtomicDataValidationProblem(String.format("%s", errorBody));
       }
     }
-    return SnowstormDtoUtil.toSnowstormConceptMini(existingConcepts.get(0));
+    return toSnowstormConceptMini(existingConcepts.get(0));
   }
 
   private SnowstormConceptView prepareConceptUpdate(
@@ -149,12 +145,10 @@ public class ProductUpdateService {
     if (!areDescriptionsModified) {
       throw new ProductAtomicDataValidationProblem("No descriptions modified");
     }
-    SnowstormConceptView conceptNeedToUpdate =
-        SnowstormDtoUtil.toSnowstormConceptView(existingConcept);
+    SnowstormConceptView conceptNeedToUpdate = toSnowstormConceptView(existingConcept);
 
     String fsn =
-        SnowstormDtoUtil.getFsnFromDescriptions(productDescriptionUpdateRequest.getDescriptions())
-            .getTerm();
+        getFsnFromDescriptions(productDescriptionUpdateRequest.getDescriptions()).getTerm();
     String existingFsn =
         Objects.requireNonNull(
                 existingConcept.getFsn(),
@@ -192,21 +186,48 @@ public class ProductUpdateService {
         .block();
   }
 
-  public Collection<ExternalIdentifier> updateProductExternalIdentifiers(
+  public Collection<NonDefiningBase> updateProductProperties(
       String branch,
       String conceptId,
-      @Valid ProductExternalIdentifierUpdateRequest productExternalIdentifierUpdateRequest)
+      ProductPropertiesUpdateRequest productPropertiesUpdateRequest)
       throws InterruptedException {
 
+    HashSet<NonDefiningBase> nonDefiningBaseSet = new HashSet<>();
+
+    // Handle external identifiers and reference sets
+    nonDefiningBaseSet.addAll(
+        handleExternalIdentifiersAndReferenceSets(
+            branch, conceptId, productPropertiesUpdateRequest));
+    // Handle non-defining properties
+    nonDefiningBaseSet.addAll(
+        handleNonDefiningProperties(branch, conceptId, productPropertiesUpdateRequest));
+    return nonDefiningBaseSet;
+  }
+
+  private Collection<NonDefiningBase> handleExternalIdentifiersAndReferenceSets(
+      String branch,
+      String conceptId,
+      ProductPropertiesUpdateRequest productPropertiesUpdateRequest)
+      throws InterruptedException {
     Map<String, ExternalIdentifierDefinition> mappingRefsets =
         models.getModelConfiguration(branch).getMappingsByName();
+    Map<String, ReferenceSetDefinition> referenceSetDefinitionMap =
+        models.getModelConfiguration(branch).getReferenceSetsByName();
 
-    Map<String, ExternalIdentifier> requestedExternalIdentifiers =
-        productExternalIdentifierUpdateRequest.getExternalIdentifiers().stream()
-            .filter(id -> mappingRefsets.containsKey(id.getIdentifierScheme()))
+    Map<String, NonDefiningBase> requestedExternalIdentifiers =
+        productPropertiesUpdateRequest.getNonDefiningProperties().stream()
+            .filter(
+                id ->
+                    mappingRefsets.containsKey(id.getIdentifierScheme())
+                        || referenceSetDefinitionMap.containsKey(id.getIdentifierScheme()))
             .collect(
                 Collectors.toMap(
-                    id -> getIdentifierKey(mappingRefsets.get(id.getIdentifierScheme()), id),
+                    id ->
+                        mappingRefsets.get(id.getIdentifierScheme()) == null
+                            ? id.getIdentifierScheme()
+                            : getIdentifierKey(
+                                mappingRefsets.get(id.getIdentifierScheme()),
+                                (ExternalIdentifier) id),
                     id -> id));
 
     Map<String, SnowstormReferenceSetMember> existingMembers =
@@ -224,7 +245,7 @@ public class ProductUpdateService {
     Set<SnowstormReferenceSetMember> idsToBeRemoved =
         existingMembers.entrySet().stream()
             .filter(entry -> !requestedExternalIdentifiers.containsKey(entry.getKey()))
-            .map(Map.Entry::getValue)
+            .map(Entry::getValue)
             .collect(Collectors.toSet());
 
     Set<SnowstormReferenceSetMemberViewComponent> idsToBeAdded =
@@ -233,7 +254,10 @@ public class ProductUpdateService {
             .map(
                 entry ->
                     createSnowstormReferenceSetMemberViewComponent(
-                        entry.getValue(), conceptId, mappingRefsets.values()))
+                        entry.getValue(),
+                        conceptId,
+                        mappingRefsets.values(),
+                        referenceSetDefinitionMap.values()))
             .collect(Collectors.toSet());
 
     if (!idsToBeAdded.isEmpty()) {
@@ -245,79 +269,19 @@ public class ProductUpdateService {
       // Remove outdated members from Snowstorm
       snowstormClient.removeRefsetMembers(branch, idsToBeRemoved);
     }
-
     return requestedExternalIdentifiers.values();
   }
 
-  public Collection<ReferenceSet> updateProductReferenceSets(
-      String branch,
-      String conceptId,
-      @Valid ProductReferenceSetUpdateRequest productReferenceSetUpdateRequest)
-      throws InterruptedException {
-
-    Map<String, ReferenceSetDefinition> referenceSetMap =
-        models.getModelConfiguration(branch).getReferenceSetsByName();
-
-    Map<String, ReferenceSet> requestedRefsets =
-        productReferenceSetUpdateRequest.getReferenceSets().stream()
-            .filter(refset -> referenceSetMap.containsKey(refset.getIdentifierScheme()))
-            .collect(
-                Collectors.toMap(
-                    id -> referenceSetMap.get(id.getIdentifierScheme()).getIdentifier(), id -> id));
-
-    Map<String, SnowstormReferenceSetMember> existingMembers =
-        snowstormClient
-            .getRefsetMembers(
-                branch,
-                Set.of(conceptId),
-                referenceSetMap.values().stream()
-                    .map(ReferenceSetDefinition::getIdentifier)
-                    .collect(Collectors.toSet()))
-            .stream()
-            .filter(r -> r.getActive() != null && r.getActive())
-            .collect(Collectors.toMap(SnowstormReferenceSetMember::getRefsetId, r -> r));
-
-    Set<SnowstormReferenceSetMember> idsToBeRemoved =
-        existingMembers.entrySet().stream()
-            .filter(entry -> !requestedRefsets.containsKey(entry.getKey()))
-            .map(Map.Entry::getValue)
-            .collect(Collectors.toSet());
-
-    // create a list of SnowstormReferenceSetMember in requestedExternalIdentifiers where the
-    // requestedExternalIdentifiers key is not present in existingMembers keyset
-    Set<SnowstormReferenceSetMemberViewComponent> idsToBeAdded =
-        requestedRefsets.entrySet().stream()
-            .filter(entry -> !existingMembers.containsKey(entry.getKey()))
-            .map(
-                entry ->
-                    createSnowstormReferenceSetMemberViewComponent(
-                        entry.getValue(), conceptId, referenceSetMap.values()))
-            .collect(Collectors.toSet());
-
-    if (!idsToBeAdded.isEmpty()) {
-      // Create new members in Snowstorm
-      snowstormClient.createRefsetMembers(branch, List.copyOf(idsToBeAdded));
-    }
-
-    if (!idsToBeRemoved.isEmpty()) {
-      // Remove outdated members from Snowstorm
-      snowstormClient.removeRefsetMembers(branch, idsToBeRemoved);
-    }
-
-    return requestedRefsets.values();
-  }
-
-  public Collection<NonDefiningProperty> updateProductNonDefiningProperties(
-      String branch,
-      String conceptId,
-      @Valid ProductNonDefiningPropertyUpdateRequest productNonDefiningPropertyUpdateRequest) {
+  public Collection<NonDefiningProperty> handleNonDefiningProperties(
+      String branch, String conceptId, @Valid ProductPropertiesUpdateRequest updateRequest) {
 
     Map<String, NonDefiningPropertyDefinition> nonDefiningPropertiesByName =
         models.getModelConfiguration(branch).getNonDefiningPropertiesByName();
 
     Map<String, NonDefiningProperty> requestedProperties =
-        productNonDefiningPropertyUpdateRequest.getNonDefiningProperties().stream()
+        updateRequest.getNonDefiningProperties().stream()
             .filter(prop -> nonDefiningPropertiesByName.containsKey(prop.getIdentifierScheme()))
+            .map(p -> (NonDefiningProperty) p)
             .collect(
                 Collectors.toMap(
                     prop ->
@@ -372,7 +336,7 @@ public class ProductUpdateService {
       browserConcept.getRelationships().removeAll(idsToBeRemoved);
       browserConcept.getRelationships().addAll(idsToBeAdded);
       snowstormClient.updateConcept(
-          branch, conceptId, SnowstormDtoUtil.toSnowstormConceptView(browserConcept), false);
+          branch, conceptId, toSnowstormConceptView(browserConcept), false);
     }
 
     return requestedProperties.values();
