@@ -4,7 +4,7 @@ import { Box, Divider, List, ListItem, Typography } from '@mui/material';
 import BrandDetails from '../../fields/bulkBrandPack/BrandDetails.tsx';
 
 const BrandArrayTemplate: React.FC<ArrayFieldTemplateProps> = props => {
-  const { items, uiSchema, registry, formData, onChange, schema, title } =
+  const { items, uiSchema, registry, formData, onChange, schema, title, branch } =
     props;
 
   const { formContext } = registry;

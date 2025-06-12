@@ -4,10 +4,6 @@
       "containedProducts": 24
     },
     {
-      "containerType": 12,
-      "_empty": 12
-    },
-    {
       "externalIdentifiers": 24
     },
     {
@@ -17,14 +13,6 @@
       "referenceSets": 24
     }
   ],
-  "containerType": {
-    "ui:field": "AutoCompleteField",
-    "ui:options": {
-      "ecl": "^929360051000036108.30465011000036106",
-      "extendedEcl": "<49062001",
-      "showDefaultOptions": true
-    }
-  },
   "containedProducts": {
     "ui:options": {
       "arrayTemplate": "accordion",

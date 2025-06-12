@@ -5,7 +5,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import { FieldProps } from '@rjsf/utils';
 import ExternalIdentifiers from './ExternalIdentifiers.tsx';
 import {
-  sortExternalIdentifiers, sortNonDefiningProperties
+  sortNonDefiningProperties
 } from '../../../../../utils/helpers/tickets/additionalFieldsUtils.ts';
 
 interface PackDetailsProps extends FieldProps {
@@ -62,7 +62,7 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
     onChange(updated);
   };
 
-  const handleExternalIdentifiersChange = (updated: any[]) => {
+  const handleNonDefiningPropertiesChange = (updated: any[]) => {
     const current = {
       ...formData,
       nonDefiningProperties: updated,
@@ -147,8 +147,8 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
           {/* External Identifiers */}
           <ExternalIdentifiers
             formData={nonDefiningProperties}
-            onChange={handleExternalIdentifiersChange}
-            schema={schema?.properties?.externalIdentifiers}
+            onChange={handleNonDefiningPropertiesChange}
+            schema={schema?.properties?.nonDefiningProperties}
             uiSchema={{
               'ui:options': {
                 readOnly: readOnly || (requireEditButton && !editMode),
