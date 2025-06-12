@@ -25,9 +25,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -92,10 +93,12 @@ public class UiSchemaExtender {
       String nodeName,
       ProductPackageType productPackageType) {
 
-    Set<? extends BasePropertyDefinition> filteredPropertySet =
+    List<? extends BasePropertyDefinition> filteredPropertySet =
         inputPropertySet.stream()
             .filter(m -> m.getLevel().equals(productPackageType))
-            .collect(Collectors.toSet());
+            .sorted(Comparator.comparingInt(BasePropertyDefinition::getOrder)
+                .thenComparing(BasePropertyDefinition::getName))
+            .toList();
 
     if (!filteredPropertySet.isEmpty()) {
 
@@ -106,6 +109,14 @@ public class UiSchemaExtender {
 
       processNonDefiningPropertyBaseMembers(filteredPropertySet, uiOptions);
 
+      ArrayNode propertyOrder = objectMapper.createArrayNode();
+
+      for (BasePropertyDefinition property : filteredPropertySet) {
+        propertyOrder.add(property.getName());
+      }
+
+      uiOptions.set("propertyOrder", propertyOrder);
+
       uiNode.set(UI_OPTIONS, uiOptions);
 
       uiSchemaNode.set(nodeName, uiNode);
@@ -115,7 +126,7 @@ public class UiSchemaExtender {
   }
 
   private void processNonDefiningPropertyBaseMembers(
-      Set<? extends BasePropertyDefinition> filteredPropertySet, ObjectNode uiOptions) {
+      List<? extends BasePropertyDefinition> filteredPropertySet, ObjectNode uiOptions) {
     ArrayNode mandatoryFields = objectMapper.createArrayNode();
     ArrayNode multiValuedFields = objectMapper.createArrayNode();
     ObjectNode bindingNode = objectMapper.createObjectNode();
