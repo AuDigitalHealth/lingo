@@ -1,6 +1,6 @@
 import React from 'react';
 import { ArrayFieldTemplateProps } from '@rjsf/utils';
-import { Box, List, ListItem, Typography, Divider } from '@mui/material';
+import { Box, Divider, List, ListItem, Typography } from '@mui/material';
 import BrandDetails from '../../fields/bulkBrandPack/BrandDetails.tsx';
 
 const BrandArrayTemplate: React.FC<ArrayFieldTemplateProps> = props => {
@@ -116,6 +116,7 @@ const BrandArrayTemplate: React.FC<ArrayFieldTemplateProps> = props => {
                     registry={registry}
                     formContext={formContext}
                     errorSchema={element.children.props.errorSchema}
+                    branch={branch}
                   />
                 </ListItem>
                 {index < items.length - 1 && <Divider />}

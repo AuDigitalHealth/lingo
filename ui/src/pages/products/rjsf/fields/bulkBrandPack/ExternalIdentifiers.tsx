@@ -5,6 +5,7 @@ import ValueSetAutocomplete, {
   MultiValueValueSetAutocomplete
 } from '../../components/ValueSetAutocomplete';
 import EclAutocomplete from '../../components/EclAutocomplete';
+import { NonDefiningProperty, NonDefiningPropertyType } from '../../../../../types/product.ts';
 
 const SCHEME_COLORS = ['primary', 'secondary', 'success', 'error', 'warning'];
 
@@ -14,11 +15,19 @@ const getColorByScheme = (scheme: string) => {
     SCHEME_COLORS.length;
   return SCHEME_COLORS[index];
 };
+//
+// interface ExternalIdentifier {
+//   identifierScheme: string;
+//   relationshipType: string;
+//   identifierValue: string;
+// }
 
-interface ExternalIdentifier {
+interface NonDefiningPropertyDefinition {
   identifierScheme: string;
   relationshipType: string;
-  identifierValue: string;
+  valueObject: string;
+  value: string;
+  type: NonDefiningPropertyType;
 }
 
 interface BindingConfig {
@@ -26,7 +35,7 @@ interface BindingConfig {
 }
 
 const ExternalIdentifiers: React.FC<
-  FieldProps<ExternalIdentifier[]>
+  FieldProps<NonDefiningProperty[]>
 > = props => {
   const { onChange, schema, uiSchema, registry } = props;
   const {
@@ -40,7 +49,7 @@ const ExternalIdentifiers: React.FC<
 
   const formData = props.formData;
 
-  const schemas = schema?.items?.anyOf as ExternalIdentifier[];
+  const schemas = schema?.items?.anyOf as NonDefiningPropertyDefinition[];
 
   return (
     <>
@@ -68,7 +77,7 @@ const ExternalIdentifiers: React.FC<
 };
 
 const ExternalIdentifierRender: React.FC<
-  FieldProps<ExternalIdentifier[]>
+  FieldProps<NonDefiningProperty[]>
 > = props => {
   const { onChange, schema, uiSchema, registry } = props;
   const {
@@ -117,7 +126,7 @@ const ExternalIdentifierRender: React.FC<
     // Convert single string to array for uniform processing
     const values = Array.isArray(value) ? value : [value];
 
-    const newItems: ExternalIdentifier[] = [];
+    const newItems: NonDefiningProperty[] = [];
 
     for (const val of values) {
       const trimmed = val.trim();
@@ -127,7 +136,7 @@ const ExternalIdentifierRender: React.FC<
       if (
         formData?.some(
           item =>
-            item.identifierValue === trimmed &&
+            item.value === trimmed &&
             item.identifierScheme === schema.properties.identifierScheme.const,
         )
       ) {
@@ -144,7 +153,7 @@ const ExternalIdentifierRender: React.FC<
         break; // Stop processing further items
       }
 
-      const testObj: ExternalIdentifier = {
+      const testObj: NonDefiningProperty = {
         identifierScheme: schema.properties.identifierScheme.const,
         relationshipType: schema.properties.relationshipType.const,
         identifierValue: trimmed,
@@ -163,21 +172,21 @@ const ExternalIdentifierRender: React.FC<
   const handleDelete = (value: string, scheme: string) => {
     const returnFormData = formData?.filter(item => {
       const returnVal = !(
-        item.identifierValue === value && item.identifierScheme === scheme
+        item.value === value && item.identifierScheme === scheme
       );
       return returnVal;
     });
     onChange(returnFormData);
   };
 
-  const renderChip = (item: ExternalIdentifier) => (
+  const renderChip = (item: NonDefiningProperty) => (
     <Chip
       variant="filled"
-      key={`${item.identifierScheme}-${item.identifierValue}`}
-      label={`${item.identifierValue}`}
+      key={`${item.identifierScheme}-${item.value}`}
+      label={`${item.value}`}
       onDelete={
         !readOnly
-          ? () => handleDelete(item.identifierValue, item.identifierScheme)
+          ? () => handleDelete(item.value, item.identifierScheme)
           : undefined
       }
     />
@@ -240,7 +249,7 @@ const ExternalIdentifierRender: React.FC<
             filterSelectedOptions
             options={availableOptions}
             getOptionLabel={option => option}
-            value={schemeEntries?.map(e => e.identifierValue)}
+            value={schemeEntries?.map(e => e.value)}
             inputValue={inputValue}
             onInputChange={(_, newVal) => {
               setInputValue(newVal);

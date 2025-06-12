@@ -5,7 +5,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import { FieldProps } from '@rjsf/utils';
 import ExternalIdentifiers from './ExternalIdentifiers.tsx';
 import {
-  sortExternalIdentifiers
+  sortExternalIdentifiers, sortNonDefiningProperties
 } from '../../../../../utils/helpers/tickets/additionalFieldsUtils.ts';
 
 interface PackDetailsProps extends FieldProps {
@@ -25,6 +25,7 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
     onDelete,
     unitOfMeasure,
     formData = {},
+    branch,
   } = props;
 
   // Extract options with defaults
@@ -47,8 +48,8 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
     setPackSize(formData?.packSize?.toString() || '');
   }, [formData?.packSize]);
 
-  const externalIdentifiers = sortExternalIdentifiers(
-    formData?.externalIdentifiers || [],
+  const nonDefiningProperties = sortNonDefiningProperties(
+    formData?.nonDefiningProperties || [],
   );
 
   const handlePackSizeChange = (newValue: string) => {
@@ -64,7 +65,7 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
   const handleExternalIdentifiersChange = (updated: any[]) => {
     const current = {
       ...formData,
-      externalIdentifiers: updated,
+      nonDefiningProperties: updated,
     };
     onChange(current);
   };
@@ -145,7 +146,7 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
 
           {/* External Identifiers */}
           <ExternalIdentifiers
-            formData={externalIdentifiers}
+            formData={nonDefiningProperties}
             onChange={handleExternalIdentifiersChange}
             schema={schema?.properties?.externalIdentifiers}
             uiSchema={{

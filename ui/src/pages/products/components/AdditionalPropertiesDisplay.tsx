@@ -1,11 +1,7 @@
 // ItemDetailsDisplay.tsx
 import React, { useMemo } from 'react';
 import { Box, Chip, Paper, Stack, Tooltip, Typography } from '@mui/material';
-import {
-  ExternalIdentifier,
-  NonDefiningProperty,
-  ReferenceSet,
-} from '../../../types/product.ts';
+import { NonDefiningProperty, NonDefiningPropertyType } from '../../../types/product.ts';
 import { Product } from '../../../types/concept.ts';
 import { AdditionalReferenceSetDisplay } from './AdditionalReferenceSetDisplay.tsx';
 
@@ -24,39 +20,18 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
   labelColor = '#184E6B',
   showWrapper = true,
 }) => {
-  const { externalIdentifiers, nonDefiningProperties, referenceSets } =
+  const { nonDefiningProperties } =
     useMemo(() => {
-      const externalIds = product?.externalIdentifiers || [];
       const nonDefProps = product?.nonDefiningProperties || [];
-      const refSets = product?.referenceSets || [];
 
       return {
-        externalIdentifiers: externalIds,
         nonDefiningProperties: nonDefProps,
-        referenceSets: refSets,
       };
     }, [product]);
 
   // Function to get display value for properties and identifiers
   const getItemValue = React.useCallback(
-    (item: ExternalIdentifier | NonDefiningProperty): string => {
-      // Handle external identifier type items
-      if ('identifierValueObject' in item && item.identifierValueObject) {
-        return (
-          (item.identifierValueObject.conceptId || '') +
-          (item.identifierValueObject.conceptId &&
-          item.identifierValueObject.pt?.term
-            ? ' - '
-            : '') +
-          (item.identifierValueObject.pt?.term || '')
-        );
-      } else if (
-        'identifierValue' in item &&
-        item.identifierValue !== undefined
-      ) {
-        return String(item.identifierValue);
-      }
-
+    (item: NonDefiningProperty): string => {
       // Handle non-defining property type items
       if ('valueObject' in item && item.valueObject) {
         return (
@@ -110,7 +85,7 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
 
   // Combine and sort properties and identifiers
   const combinedItems = React.useMemo(() => {
-    const allItems = [...externalIdentifiers, ...nonDefiningProperties];
+    const allItems = [...nonDefiningProperties].filter(a => a.type !== NonDefiningPropertyType.REFERENCE_SET);
 
     // Sort all items by their titles
     allItems.sort((a, b) => {
@@ -131,34 +106,36 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
     });
 
     return groupItemsByTitle(allItems);
-  }, [externalIdentifiers, nonDefiningProperties, groupItemsByTitle]);
+  }, [groupItemsByTitle, nonDefiningProperties]);
 
   // Sort reference sets
   const sortedReferenceSets = React.useMemo(() => {
-    if (!referenceSets || referenceSets.length === 0) return [];
+    if (!nonDefiningProperties || nonDefiningProperties.length === 0) return [];
 
-    return [...referenceSets].sort((a, b) => {
+    return [...nonDefiningProperties]
+    .filter(a => a.type == NonDefiningPropertyType.REFERENCE_SET)
+    .sort((a, b) => {
       // Use optional chaining and provide default values with String type assertions
       const titleA = String(a.title ?? '');
       const titleB = String(b.title ?? '');
       return titleA.localeCompare(titleB);
     });
-  }, [referenceSets]);
+  }, [nonDefiningProperties]);
 
   // Function to safely get display name for reference sets
-  const getRefSetDisplayName = (refSet: ReferenceSet): string => {
+  const getRefSetDisplayName = (refSet: NonDefiningProperty): string => {
     // Use optional chaining to safely access properties that might not exist
     return String(refSet.title ?? 'Unknown');
   };
 
   // Function to safely get key for reference set items
-  const getRefSetKey = (refSet: ReferenceSet, index: number): string => {
+  const getRefSetKey = (refSet: NonDefiningProperty, index: number): string => {
     return `refset-${index}-${String(refSet.title ?? '')}`;
   };
 
-  const renderChip = (item: ExternalIdentifier | NonDefiningProperty) => {
+  const renderChip = (item: NonDefiningProperty) => {
     // For non-defining properties with valueObject, show term with ID tooltip
-    if ('valueObject' in item && item.valueObject?.pt?.term) {
+    if (item.type === NonDefiningPropertyType.NON_DEFINING_PROPERTY && 'valueObject' in item && item.valueObject?.pt?.term) {
       return (
         <Tooltip title={`${item.valueObject.conceptId || ''}`} arrow>
           <Chip
@@ -176,12 +153,7 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
           />
         </Tooltip>
       );
-    }
-
-    if (
-      'identifierValueObject' in item &&
-      item.identifierValueObject?.pt?.term
-    ) {
+    } else if (item.type === NonDefiningPropertyType.EXTERNAL_IDENTIFIER && 'valueObject' in item && item.valueObject?.pt?.term) {
       return (
         <Box
           sx={{
@@ -206,7 +178,7 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
               },
             }}
           >
-            {item.identifierValueObject.conceptId}
+            {item.valueObject.conceptId}
           </Box>
           <Box
             sx={{
@@ -218,7 +190,7 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
               },
             }}
           >
-            {item.identifierValueObject?.pt?.term}
+            {item.valueObject?.pt?.term}
           </Box>
         </Box>
       );
