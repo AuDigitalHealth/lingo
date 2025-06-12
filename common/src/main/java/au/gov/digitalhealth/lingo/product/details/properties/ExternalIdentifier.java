@@ -31,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.SuperBuilder;
@@ -46,6 +47,11 @@ public class ExternalIdentifier extends NonDefiningBase implements Serializable 
   String value;
   SnowstormConceptMini valueObject;
   @NotNull MappingType relationshipType;
+
+  String codeSystem;
+
+  /** Additional properties from the target concept, purely for display purposes. */
+  Map<String, String> additionalProperties;
 
   public ExternalIdentifier() {
     this.setType(PropertyType.EXTERNAL_IDENTIFIER);
@@ -77,7 +83,9 @@ public class ExternalIdentifier extends NonDefiningBase implements Serializable 
           .getConcept(mapTargetId, externalIdentifierDefinition.getCodeSystem())
           .map(
               c -> {
-                identifier.setValueObject(c);
+                identifier.setValueObject(c.getFirst());
+                identifier.setAdditionalProperties(c.getSecond());
+                identifier.setCodeSystem(externalIdentifierDefinition.getCodeSystem());
                 return identifier;
               });
     } else {
@@ -111,7 +119,9 @@ public class ExternalIdentifier extends NonDefiningBase implements Serializable 
           .getConcept(mapTargetId, externalIdentifierDefinition.getCodeSystem())
           .map(
               c -> {
-                identifier.setValueObject(c);
+                identifier.setValueObject(c.getFirst());
+                identifier.setAdditionalProperties(c.getSecond());
+                identifier.setCodeSystem(externalIdentifierDefinition.getCodeSystem());
                 return identifier;
               });
     } else {
