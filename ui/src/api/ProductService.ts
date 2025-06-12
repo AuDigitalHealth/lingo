@@ -21,14 +21,14 @@ import {
   BulkProductCreationDetails,
   DevicePackageDetails,
   DeviceProductDetails,
-  ExternalIdentifier,
   MedicationPackageDetails,
   MedicationProductDetails,
+  NonDefiningProperty,
   ProductBrands,
   ProductCreationDetails,
   ProductDescriptionUpdateRequest,
-  ProductExternalRequesterUpdateRequest,
-  ProductPackSizes,
+  ProductNonDefiningPropertyUpdateRequest,
+  ProductPackSizes
 } from '../types/product.ts';
 
 import { api } from './api.ts';
@@ -258,19 +258,19 @@ const ProductService = {
     const concept = response.data as Concept;
     return concept;
   },
-  async editProductExternalIdentifiers(
-    externalRequesterUpdate: ProductExternalRequesterUpdateRequest,
+  async editProductNonDefiningProperties(
+    externalRequesterUpdate: ProductNonDefiningPropertyUpdateRequest,
     productId: string,
     branch: string,
-  ): Promise<ExternalIdentifier[]> {
+  ): Promise<NonDefiningProperty[]> {
     const response = await api.put(
-      `/api/${branch}/product-model/${productId}/external-identifiers`,
+      `/api/${branch}/product-model/${productId}/properties`,
       externalRequesterUpdate,
     );
     if (response.status != 200 && response.status != 422) {
       this.handleErrors();
     }
-    const result = response.data as ExternalIdentifier[];
+    const result = response.data as NonDefiningProperty[];
     return result;
   },
 };
