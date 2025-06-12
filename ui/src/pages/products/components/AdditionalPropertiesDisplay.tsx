@@ -4,6 +4,9 @@ import { Box, Chip, Paper, Stack, Tooltip, Typography } from '@mui/material';
 import { NonDefiningProperty, NonDefiningPropertyType } from '../../../types/product.ts';
 import { Product } from '../../../types/concept.ts';
 import { AdditionalReferenceSetDisplay } from './AdditionalReferenceSetDisplay.tsx';
+import WarningIcon from '@mui/icons-material/Warning';
+import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 interface ItemDetailsDisplayProps {
   product: Product;
@@ -20,6 +23,9 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
   labelColor = '#184E6B',
   showWrapper = true,
 }) => {
+
+  const { applicationConfig } = useApplicationConfigStore();
+
   const { nonDefiningProperties } =
     useMemo(() => {
       const nonDefProps = product?.nonDefiningProperties || [];
@@ -155,44 +161,88 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
       );
     } else if (item.type === NonDefiningPropertyType.EXTERNAL_IDENTIFIER && 'valueObject' in item && item.valueObject?.pt?.term) {
       return (
-        <Box
-          sx={{
-            display: 'inline-flex',
-            borderRadius: 1,
-            overflow: 'hidden',
-            border: '1px solid #e0e0e0',
-            '&:hover': {
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-            },
-          }}
+        <Tooltip
+          title={
+            item.additionalProperties && Object.keys(item.additionalProperties).length > 0
+              ? (
+                <>
+                  {Object.entries(item.additionalProperties).map(([key, value], index) => (
+                    <React.Fragment key={index}>
+                      {index > 0 && <br />}
+                      {key}: {value}
+                    </React.Fragment>
+                  ))}
+                </>
+              )
+              : "No properties"
+          }
+          placement="top"
         >
           <Box
             sx={{
-              backgroundColor: '#f0f7ff',
-              padding: '4px 8px',
-              fontWeight: 'medium',
-              fontSize: '0.8125rem',
-              borderRight: '1px solid #e0e0e0',
+              display: 'inline-flex',
+              borderRadius: 1,
+              overflow: 'hidden',
+              border: '1px solid #e0e0e0',
               '&:hover': {
-                backgroundColor: '#e1f0ff',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
               },
             }}
           >
-            {item.valueObject.conceptId}
+            <Box
+              sx={{
+                backgroundColor: '#f0f7ff',
+                padding: '4px 8px',
+                fontWeight: 'medium',
+                fontSize: '0.8125rem',
+                borderRight: '1px solid #e0e0e0',
+                display: 'flex',
+                alignItems: 'center',
+                '&:hover': {
+                  backgroundColor: '#e1f0ff',
+                },
+              }}
+            >
+              {item.additionalProperties?.inactive === 'true' && (
+                <Tooltip title="This code is inactive" arrow placement="bottom">
+                  <WarningIcon
+                    fontSize="small"
+                    color="warning"
+                    sx={{ marginRight: '4px', fontSize: '16px' }}
+                  />
+                </Tooltip>
+              )}
+              {item.valueObject.conceptId}
+              <a
+                href={`https://ontoserver.csiro.au/shrimp/?fhir=${encodeURIComponent(applicationConfig.fhirServerBaseUrl)}&concept=${encodeURIComponent(item.valueObject.conceptId)}&system=${encodeURIComponent(item.codeSystem)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: 'inherit',
+                  marginLeft: '4px',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+                onClick={(e) => e.stopPropagation()}
+                title="Open in Shrimp browser"
+              >
+                <OpenInNewIcon fontSize="small" sx={{ fontSize: '14px' }} />
+              </a>
+            </Box>
+            <Box
+              sx={{
+                backgroundColor: '#f0f7ff',
+                padding: '4px 8px',
+                fontSize: '0.8125rem',
+                '&:hover': {
+                  backgroundColor: '#e1f0ff',
+                },
+              }}
+            >
+              {item.valueObject?.pt?.term}
+            </Box>
           </Box>
-          <Box
-            sx={{
-              backgroundColor: '#f0f7ff',
-              padding: '4px 8px',
-              fontSize: '0.8125rem',
-              '&:hover': {
-                backgroundColor: '#e1f0ff',
-              },
-            }}
-          >
-            {item.valueObject?.pt?.term}
-          </Box>
-        </Box>
+        </Tooltip>
       );
     }
 
