@@ -1,13 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Product } from '../../../types/concept.ts';
+import { Box, Chip, CircularProgress, Tooltip, Typography } from '@mui/material';
 import {
-  Box,
-  Chip,
-  CircularProgress,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import { useRefsetMembersByComponentIds } from '../../../hooks/api/refset/useRefsetMembersByComponentIds.tsx';
+  useRefsetMembersByComponentIds
+} from '../../../hooks/api/refset/useRefsetMembersByComponentIds.tsx';
 import { useReferenceSetConcepts } from '../../../hooks/api/refset/useReferenceSetConcepts.tsx';
 
 // Locally defined interface to replace the imported ReferenceSet
@@ -49,10 +45,10 @@ export const AdditionalReferenceSetDisplay = ({
     // Filter out reference sets that are already in product.referenceSets or excluded
     return referenceSetMembers.filter(
       member =>
-        !product.referenceSets?.some(
+        !product.nonDefiningProperties?.some(
           refSet => refSet.identifier === member.refsetId,
         ) &&
-        !product.externalIdentifiers?.some(
+        !product.nonDefiningProperties?.some(
           extId => extId.identifier === member.refsetId,
         ) &&
         member.refsetId !== '733073007', // OWL reference set
@@ -61,8 +57,7 @@ export const AdditionalReferenceSetDisplay = ({
     product.newConcept,
     product.newConceptDetails?.referenceSetMembers,
     refsetMembersResponse,
-    product.referenceSets,
-    product.externalIdentifiers,
+    product.nonDefiningProperties,
   ]);
 
   // Extract unique refsetIds for concept lookup

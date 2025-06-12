@@ -32,7 +32,7 @@ interface FormData {
   packSizes: any[];
   newPackSizeInput: {
     packSize?: number;
-    externalIdentifiers: any[];
+    nonDefiningProperties: any[];
   };
   unitOfMeasure?: any;
 }
@@ -78,7 +78,7 @@ function PackSizeAuthoring({
   const [warnings, setWarnings] = useState<string[]>([]);
   const [formData, setFormData] = useState<FormData>({
     packSizes: [],
-    newPackSizeInput: { packSize: undefined, externalIdentifiers: [] },
+    newPackSizeInput: { packSize: undefined, nonDefiningProperties: [] },
   });
 
   const { data, isFetching } = useFetchBulkAuthorPackSizes(
@@ -102,7 +102,7 @@ function PackSizeAuthoring({
   const handleClear = useCallback(() => {
     const newData: FormData = {
       ...formData,
-      newPackSizeInput: { packSize: undefined, externalIdentifiers: [] },
+      newPackSizeInput: { packSize: undefined, nonDefiningProperties: [] },
     };
     setFormData(newData);
     if (formRef.current) {
@@ -117,7 +117,7 @@ function PackSizeAuthoring({
         existingPackSizes: data.packSizes || [],
         unitOfMeasure: data.unitOfMeasure,
         packSizes: [],
-        newPackSizeInput: { packSize: undefined, externalIdentifiers: [] },
+        newPackSizeInput: { packSize: undefined, nonDefiningProperties: [] },
       };
       console.log('Initial formData:', newData);
       setFormData(newData);
@@ -135,7 +135,7 @@ function PackSizeAuthoring({
         unitOfMeasure: data?.unitOfMeasure,
         packSizes: submittedFormData.packSizes,
       },
-      externalIdentifiers: [],
+      nonDefiningProperties: [],
     };
     setBrandPackSizePreviewDetails(packSizeDetails);
     setRunningWarningsCheck(true);

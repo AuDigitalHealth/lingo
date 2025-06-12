@@ -7,11 +7,11 @@ const NewBrandInputField: React.FC<FieldProps> = props => {
   const { formData, onChange, formContext, registry } = props;
 
   const [inputValue, setInputValue] = useState(
-    formData || { brand: undefined, externalIdentifiers: [] },
+    formData || { brand: undefined, nonDefiningProperties: [] },
   );
 
   useEffect(() => {
-    setInputValue(formData || { brand: undefined, externalIdentifiers: [] });
+    setInputValue(formData || { brand: undefined, nonDefiningProperties: [] });
   }, [formData]);
 
   const handleAdd = () => {
@@ -26,7 +26,7 @@ const NewBrandInputField: React.FC<FieldProps> = props => {
       const updatedFormData = {
         ...currentFormData,
         brands: updatedBrands,
-        newBrandInput: { brand: undefined, externalIdentifiers: [] },
+        newBrandInput: { brand: undefined, nonDefiningProperties: [] },
       };
 
       formContext.onChange(updatedFormData);
