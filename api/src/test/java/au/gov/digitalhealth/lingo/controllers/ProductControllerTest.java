@@ -34,7 +34,7 @@ import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.update.ProductDescriptionUpdateRequest;
-import au.gov.digitalhealth.lingo.product.update.ProductExternalIdentifierUpdateRequest;
+import au.gov.digitalhealth.lingo.product.update.ProductPropertiesUpdateRequest;
 import au.gov.digitalhealth.lingo.service.ProductUpdateService;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import au.gov.digitalhealth.tickets.helper.JsonReader;
@@ -167,8 +167,8 @@ class ProductControllerTest extends LingoTestBase {
         getLingoTestClient().getProductModel(AmtTestData.EMLA_5_PERCENT_PATCH_20_CARTON);
     Node existingCtpp = productSummary.getSubjects().iterator().next();
 
-    ProductExternalIdentifierUpdateRequest productExternalIdentifierUpdateRequest =
-        new ProductExternalIdentifierUpdateRequest(
+    ProductPropertiesUpdateRequest productPropertiesUpdateRequest =
+        new ProductPropertiesUpdateRequest(
             Set.of(
                 ExternalIdentifier.builder()
                     .identifierScheme(ARTG_SCHEME)
@@ -183,8 +183,7 @@ class ProductControllerTest extends LingoTestBase {
             ticketResponse.getId());
     Set<ExternalIdentifier> updatedExternalIdentifiers =
         getLingoTestClient()
-            .updateProductExternalIdentifiers(
-                productExternalIdentifierUpdateRequest, existingCtpp.getConceptId());
+            .updateProductProperties(productPropertiesUpdateRequest, existingCtpp.getConceptId());
     Assertions.assertThat(updatedExternalIdentifiers).hasSize(2);
     Assertions.assertThat(
             updatedExternalIdentifiers.stream().anyMatch(e -> e.getValue().equals("123")))
@@ -193,8 +192,8 @@ class ProductControllerTest extends LingoTestBase {
             updatedExternalIdentifiers.stream().anyMatch(e -> e.getValue().equals("345")))
         .isTrue();
 
-    productExternalIdentifierUpdateRequest =
-        new ProductExternalIdentifierUpdateRequest(
+    productPropertiesUpdateRequest =
+        new ProductPropertiesUpdateRequest(
             Set.of(
                 ExternalIdentifier.builder()
                     .identifierScheme(ARTG_SCHEME)
@@ -209,8 +208,7 @@ class ProductControllerTest extends LingoTestBase {
             ticketResponse.getId());
     updatedExternalIdentifiers =
         getLingoTestClient()
-            .updateProductExternalIdentifiers(
-                productExternalIdentifierUpdateRequest, existingCtpp.getConceptId());
+            .updateProductProperties(productPropertiesUpdateRequest, existingCtpp.getConceptId());
     Assertions.assertThat(updatedExternalIdentifiers).hasSize(2);
     Assertions.assertThat(
             updatedExternalIdentifiers.stream().anyMatch(e -> e.getValue().equals("123")))
@@ -220,12 +218,11 @@ class ProductControllerTest extends LingoTestBase {
         .isTrue();
 
     // Test for removing artg id
-    productExternalIdentifierUpdateRequest =
-        new ProductExternalIdentifierUpdateRequest(Collections.emptySet(), ticketResponse.getId());
+    productPropertiesUpdateRequest =
+        new ProductPropertiesUpdateRequest(Collections.emptySet(), ticketResponse.getId());
     updatedExternalIdentifiers =
         getLingoTestClient()
-            .updateProductExternalIdentifiers(
-                productExternalIdentifierUpdateRequest, existingCtpp.getConceptId());
+            .updateProductProperties(productPropertiesUpdateRequest, existingCtpp.getConceptId());
     Assertions.assertThat(updatedExternalIdentifiers).isEmpty();
   }
 }
