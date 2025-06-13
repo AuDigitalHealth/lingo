@@ -9,7 +9,7 @@ import {
   Select,
   Switch,
   TextField,
-  Typography
+  Typography,
 } from '@mui/material';
 import BaseModal from '../modal/BaseModal';
 import BaseModalBody from '../modal/BaseModalBody';
@@ -19,7 +19,7 @@ import { Acceptability, Description, Product } from '../../types/concept.ts';
 import { Box, Stack } from '@mui/system';
 import {
   FieldLabelRequired,
-  InnerBoxSmall
+  InnerBoxSmall,
 } from '../../pages/products/components/style/ProductBoxes.tsx';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -31,25 +31,25 @@ import {
   useFieldArray,
   useForm,
   UseFormHandleSubmit,
-  useFormState
+  useFormState,
 } from 'react-hook-form';
 import {
   NonDefiningProperty,
   ProductDescriptionUpdateRequest,
   ProductNonDefiningPropertyUpdateRequest,
-  ProductUpdateRequest
+  ProductUpdateRequest,
 } from '../../types/product.ts';
 import ArtgAutoComplete from '../../pages/products/components/ArtgAutoComplete.tsx';
 import {
   useUpdateProductDescription,
-  useUpdateProductNonDefiningProperties
+  useUpdateProductNonDefiningProperties,
 } from '../../hooks/api/products/useUpdateProductDescription.tsx';
 import { Ticket } from '../../types/tickets/ticket.ts';
 import ConceptService from '../../api/ConceptService.ts';
 import { useTheme } from '@mui/material/styles';
 import {
   areTwoNonDefiningPropertiesArraysEqual,
-  sortNonDefiningProperties
+  sortNonDefiningProperties,
 } from '../../utils/helpers/tickets/additionalFieldsUtils.ts';
 import { getSearchConceptsByEclOptions } from '../../hooks/api/useInitializeConcepts.tsx';
 import { generateEclFromBinding } from '../../utils/helpers/EclUtils.ts';
@@ -63,12 +63,13 @@ import { SnowstormError } from '../../types/ErrorHandler.ts';
 import { useSearchConceptById } from '../../hooks/api/products/useSearchConcept.tsx';
 import { cloneDeep, isEqual } from 'lodash';
 import { Add, Delete } from '@mui/icons-material';
-import useAvailableProjects, { getProjectFromKey } from '../../hooks/api/useInitializeProjects.tsx';
+import useAvailableProjects, {
+  getProjectFromKey,
+} from '../../hooks/api/useInitializeProjects.tsx';
 import useApplicationConfigStore from '../../stores/ApplicationConfigStore.ts';
 import { LanguageRefset, Project } from '../../types/Project.ts';
 import ConfirmationModal from '../../themes/overrides/ConfirmationModal.tsx';
-import AdditionalPropertiesDisplay
-  from '../../pages/products/components/AdditionalPropertiesDisplay.tsx';
+import AdditionalPropertiesDisplay from '../../pages/products/components/AdditionalPropertiesDisplay.tsx';
 
 const USLangRefset: LanguageRefset = {
   default: 'false',
@@ -99,11 +100,9 @@ export default function ProductEditModal({
   isCtpp,
 }: ProductEditModalProps) {
   const updateProductDescriptionMutation = useUpdateProductDescription();
-  const updateProductPropertyMutation =
-    useUpdateProductNonDefiningProperties();
+  const updateProductPropertyMutation = useUpdateProductNonDefiningProperties();
   const { isPending } = updateProductDescriptionMutation;
-  const { isPending: isPropertyPending } =
-    updateProductPropertyMutation;
+  const { isPending: isPropertyPending } = updateProductPropertyMutation;
   const isUpdating = isPending || isPropertyPending;
   const closeHandle = () => {
     if (!isUpdating) {
@@ -282,15 +281,12 @@ function EditConceptBody({
 
   const theme = useTheme();
   const updateProductDescriptionMutation = useUpdateProductDescription();
-  const updateProductPropertyMutation =
-    useUpdateProductNonDefiningProperties();
+  const updateProductPropertyMutation = useUpdateProductNonDefiningProperties();
 
   const { isPending, data: updateProductDescriptionData } =
     updateProductDescriptionMutation;
-  const {
-    isPending: isPropertyPending,
-    data: updatePropertyData,
-  } = updateProductPropertyMutation;
+  const { isPending: isPropertyPending, data: updatePropertyData } =
+    updateProductPropertyMutation;
   const isUpdating = isPending || isPropertyPending;
 
   useEffect(() => {
@@ -453,18 +449,10 @@ function EditConceptBody({
     }
     try {
       if (artgModified && anyDescriptionModified) {
-        void (await updateArtgIds(
-          data.updateRequest,
-          productId,
-          ticket.id,
-        ));
+        void (await updateArtgIds(data.updateRequest, productId, ticket.id));
         updateDescription(data.descriptionUpdate);
       } else if (artgModified) {
-        void (await updateArtgIds(
-          data.updateRequest,
-          productId,
-          ticket.id,
-        ));
+        void (await updateArtgIds(data.updateRequest, productId, ticket.id));
       } else if (anyDescriptionModified) {
         updateDescription(data.descriptionUpdate);
       }
