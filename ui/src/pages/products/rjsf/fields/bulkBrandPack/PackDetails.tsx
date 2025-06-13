@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { Box, IconButton, Stack, TextField, Tooltip, Typography } from '@mui/material';
+import {
+  Box,
+  IconButton,
+  Stack,
+  TextField,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import { FieldProps } from '@rjsf/utils';
 import ExternalIdentifiers from './ExternalIdentifiers.tsx';
-import {
-  sortNonDefiningProperties
-} from '../../../../../utils/helpers/tickets/additionalFieldsUtils.ts';
+import { sortNonDefiningProperties } from '../../../../../utils/helpers/tickets/additionalFieldsUtils.ts';
 
 interface PackDetailsProps extends FieldProps {
   onDelete?: () => void;
