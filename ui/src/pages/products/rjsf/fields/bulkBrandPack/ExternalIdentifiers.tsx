@@ -269,8 +269,8 @@ const ExternalIdentifierRender: React.FC<ExternalIdentifierRenderProps> = props 
             label={schema.title}
             url={binding.valueSet || ''}
             showDefaultOptions={false}
-            value={schemeEntries[0] ? schemeEntries[0].valueObject : schemeEntries}
-            onChange={handleChangeConcepts}
+            value={schemeEntries}
+            onChange={handleAdd}
             disabled={readOnly ? true : false}
             //   error={!!errorMessage}
           />
