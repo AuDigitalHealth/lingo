@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Autocomplete, Box, Chip, Grid, Stack, TextField } from '@mui/material';
+import {Autocomplete, Box, Checkbox, Chip, FormControlLabel, Grid, Stack, TextField} from '@mui/material';
 import { FieldProps } from '@rjsf/utils';
 import ValueSetAutocomplete, {
   MultiValueValueSetAutocomplete
 } from '../../components/ValueSetAutocomplete';
 import EclAutocomplete from '../../components/EclAutocomplete';
 import { NonDefiningProperty, NonDefiningPropertyType } from '../../../../../types/product.ts';
+
 
 const SCHEME_COLORS = ['primary', 'secondary', 'success', 'error', 'warning'];
 
@@ -103,6 +104,7 @@ const ExternalIdentifierRender: React.FC<
     uiSchema['ui:options']?.multiValuedSchemes || [];
 
   const isMultiValued = multiValuedSchemes.includes(schemeName);
+  const isCheckBox = schema?.properties?.type?.const === 'REFERENCE_SET';
 
   const bindingConfig: BindingConfig = uiSchema['ui:options']?.binding || {};
 
@@ -237,7 +239,32 @@ const ExternalIdentifierRender: React.FC<
             title={schema.title}
           />
         )}
-        {!useEclAutocomplete && !useValueSetAutocomplete && (
+        {isCheckBox && (
+            <FormControlLabel
+                label={schema.title}
+                labelPlacement="start"
+                control={
+                  <Checkbox
+                      checked={formData?.some(item =>
+                          item.type === 'REFERENCE_SET' &&
+                          item.identifierScheme === schema.properties.identifierScheme.const
+                      )}
+                      onChange={e => {
+                        const scheme = schema.properties.identifierScheme.const;
+                        const updated = e.target.checked
+                            ? [...(formData || []), { type: 'REFERENCE_SET', identifierScheme: scheme }]
+                            : formData?.filter(item =>
+                            !(item.type === 'REFERENCE_SET' && item.identifierScheme === scheme)
+                        ) || [];
+                        onChange(updated);
+                      }}
+                      disabled={readOnly}
+                  />
+                }
+            />
+        )}
+
+        {!useEclAutocomplete && !useValueSetAutocomplete   &&  !isCheckBox &&(
           <Autocomplete
             multiple={true}
             sx={{
