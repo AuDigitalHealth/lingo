@@ -1,11 +1,23 @@
 import React, { useState } from 'react';
-import {Autocomplete, Box, Checkbox, Chip, FormControlLabel, Grid, Stack, TextField} from '@mui/material';
+import {
+  Autocomplete,
+  Box,
+  Checkbox,
+  Chip,
+  FormControlLabel,
+  Grid,
+  Stack,
+  TextField,
+} from '@mui/material';
 import { FieldProps } from '@rjsf/utils';
 import ValueSetAutocomplete, {
-  MultiValueValueSetAutocomplete
+  MultiValueValueSetAutocomplete,
 } from '../../components/ValueSetAutocomplete';
 import EclAutocomplete from '../../components/EclAutocomplete';
-import { NonDefiningProperty, NonDefiningPropertyType } from '../../../../../types/product.ts';
+import {
+  NonDefiningProperty,
+  NonDefiningPropertyType,
+} from '../../../../../types/product.ts';
 import useTaskById from "../../../../../hooks/useTaskById.tsx";
 import {ConceptMini} from "../../../../../types/concept.ts";
 
@@ -47,6 +59,7 @@ const ExternalIdentifiers: React.FC<
     freeSoloByScheme = {},
     onChipClick,
     readOnly,
+    propertyOrder = [],
   } = (uiSchema && uiSchema['ui:options']) || {};
 
   const formData = props.formData;
@@ -56,7 +69,18 @@ const ExternalIdentifiers: React.FC<
   return (
     <>
       <Grid container spacing={2}>
-        {schemas.map((schema, index) => {
+        {schemas
+            .sort((a, b) => {
+              const aScheme = a.properties?.identifierScheme?.const || '';
+              const bScheme = b.properties?.identifierScheme?.const || '';
+              const aIdx = propertyOrder.indexOf(aScheme);
+              const bIdx = propertyOrder.indexOf(bScheme);
+              if (aIdx !== -1 && bIdx !== -1) {
+                return aIdx - bIdx; // Sort by propertyOrder index
+              }
+              return aScheme.localeCompare(bScheme);
+            })
+            .map((schema, index) => {
           return (
             <Grid item xs={12} md={6} key={index}>
               <ExternalIdentifierRender
@@ -77,7 +101,9 @@ const ExternalIdentifiers: React.FC<
     </>
   );
 };
-interface ExternalIdentifierRenderProps extends FieldProps<NonDefiningProperty[]> {
+interface ExternalIdentifierRenderProps extends FieldProps<
+    NonDefiningProperty[]
+> {
   branch: string | undefined;
 }
 const ExternalIdentifierRender: React.FC<ExternalIdentifierRenderProps> = props => {
@@ -149,9 +175,7 @@ const ExternalIdentifierRender: React.FC<ExternalIdentifierRenderProps> = props 
       // Check if adding this item would exceed maxItems
       const currentCount = (formData?.length ?? 0) + newItems.length;
       if (maxItems && schemeEntries && currentCount >= maxItems) {
-        setTooltip(
-          `Only ${maxItems} items allowed for ${schema.title}`,
-        );
+        setTooltip(`Only ${maxItems} items allowed for ${schema.title}`);
         break; // Stop processing further items
       }
 
@@ -312,7 +336,7 @@ const ExternalIdentifierRender: React.FC<ExternalIdentifierRenderProps> = props 
             />
         )}
 
-        {!useEclAutocomplete && !useValueSetAutocomplete   &&  !isCheckBox &&(
+        {!useEclAutocomplete && !useValueSetAutocomplete && !isCheckBox && (
           <Autocomplete
             multiple={true}
             sx={{
