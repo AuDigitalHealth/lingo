@@ -1,6 +1,6 @@
 import {
   ProductDescriptionUpdateRequest,
-  ProductNonDefiningPropertyUpdateRequest
+  ProductNonDefiningPropertyUpdateRequest,
 } from '../../../types/product.ts';
 import { useMutation } from '@tanstack/react-query';
 import { enqueueSnackbar } from 'notistack';
