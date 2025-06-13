@@ -6,6 +6,8 @@ import ValueSetAutocomplete, {
 } from '../../components/ValueSetAutocomplete';
 import EclAutocomplete from '../../components/EclAutocomplete';
 import { NonDefiningProperty, NonDefiningPropertyType } from '../../../../../types/product.ts';
+import useTaskById from "../../../../../hooks/useTaskById.tsx";
+import {ConceptMini} from "../../../../../types/concept.ts";
 
 
 const SCHEME_COLORS = ['primary', 'secondary', 'success', 'error', 'warning'];
@@ -45,13 +47,12 @@ const ExternalIdentifiers: React.FC<
     freeSoloByScheme = {},
     onChipClick,
     readOnly,
-    branch,
   } = (uiSchema && uiSchema['ui:options']) || {};
 
   const formData = props.formData;
 
   const schemas = schema?.items?.anyOf as NonDefiningPropertyDefinition[];
-
+  const task = useTaskById();
   return (
     <>
       <Grid container spacing={2}>
@@ -67,7 +68,7 @@ const ExternalIdentifiers: React.FC<
                 schema={schema}
                 uiSchema={uiSchema}
                 registry={registry}
-                branch={branch}
+                branch={task?.branchPath}
               />
             </Grid>
           );
@@ -76,18 +77,17 @@ const ExternalIdentifiers: React.FC<
     </>
   );
 };
-
-const ExternalIdentifierRender: React.FC<
-  FieldProps<NonDefiningProperty[]>
-> = props => {
-  const { onChange, schema, uiSchema, registry } = props;
+interface ExternalIdentifierRenderProps extends FieldProps<NonDefiningProperty[]> {
+  branch: string | undefined;
+}
+const ExternalIdentifierRender: React.FC<ExternalIdentifierRenderProps> = props => {
+  const { onChange, schema, uiSchema, registry,  branch } = props;
   const {
     optionsByScheme = {},
     schemeLimits = {},
     freeSoloByScheme = {},
     onChipClick,
     readOnly,
-    branch
   } = (uiSchema && uiSchema['ui:options']) || {};
 
   const schemeName = schema?.properties?.identifierScheme?.const;
@@ -158,7 +158,7 @@ const ExternalIdentifierRender: React.FC<
       const testObj: NonDefiningProperty = {
         identifierScheme: schema.properties.identifierScheme.const,
         relationshipType: schema.properties.relationshipType.const,
-        identifierValue: trimmed,
+        value: trimmed,
       };
 
       newItems.push(testObj);
@@ -180,6 +180,54 @@ const ExternalIdentifierRender: React.FC<
     });
     onChange(returnFormData);
   };
+  const handleChangeConcepts = (concepts: ConceptMini | ConceptMini[] | null) => {
+    const scheme = schema.properties.identifierScheme.const;
+
+    // If concept is null — clear all items for this identifierScheme
+    if (concepts === null) {
+      const cleared = formData?.filter(item => item.identifierScheme !== scheme) || [];
+      onChange(cleared);
+      return;
+    }
+
+    // Proceed with add logic
+    const conceptList = Array.isArray(concepts) ? concepts : [concepts];
+    const newItems: NonDefiningProperty[] = [];
+
+    for (const concept of conceptList) {
+      const conceptId = concept.conceptId?.trim();
+      if (!conceptId || !concept.conceptId) continue;
+
+      const isDuplicate = formData?.some(
+          item =>
+              (item.value === conceptId || item.valueObject?.conceptId === conceptId) &&
+              item.identifierScheme === scheme
+      );
+
+      if (isDuplicate) {
+        setTooltip(`Concept "${conceptId}" is already added.`);
+        continue;
+      }
+
+      const currentCount = (formData?.length ?? 0) + newItems.length;
+      if (maxItems && currentCount >= maxItems) {
+        setTooltip(`Only ${maxItems} items allowed for ${schema.title}`);
+        break;
+      }
+
+      newItems.push({
+        identifierScheme: scheme,
+        valueObject: concept,
+      });
+    }
+
+    if (newItems.length > 0) {
+      onChange([...(formData ?? []), ...newItems]);
+    }
+  };
+
+
+
 
   const renderChip = (item: NonDefiningProperty) => (
     <Chip
@@ -221,25 +269,25 @@ const ExternalIdentifierRender: React.FC<
             label={schema.title}
             url={binding.valueSet || ''}
             showDefaultOptions={false}
-            value={schemeEntries}
-            onChange={handleAdd}
+            value={schemeEntries[0] ? schemeEntries[0].valueObject : schemeEntries}
+            onChange={handleChangeConcepts}
             disabled={readOnly ? true : false}
             //   error={!!errorMessage}
           />
         )}
         {useEclAutocomplete && (
           <EclAutocomplete
-            value={schemeEntries}
+            value={schemeEntries[0] ? schemeEntries[0].valueObject : schemeEntries}
             ecl={binding.ecl || ''}
             branch={branch}
-            onChange={handleAdd}
+            onChange={handleChangeConcepts}
             showDefaultOptions={false}
             isDisabled={readOnly ? true : false}
             // errorMessage={errorMessage}
             title={schema.title}
           />
         )}
-        {isCheckBox && (
+        {isCheckBox && (   // Checkbox implementation
             <FormControlLabel
                 label={schema.title}
                 labelPlacement="start"
