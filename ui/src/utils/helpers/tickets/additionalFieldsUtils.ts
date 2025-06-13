@@ -15,7 +15,10 @@
 ///
 
 import { AdditionalFieldType } from '../../../types/tickets/ticket';
-import { ExternalIdentifier, NonDefiningProperty } from '../../../types/product.ts';
+import {
+  ExternalIdentifier,
+  NonDefiningProperty,
+} from '../../../types/product.ts';
 
 export const sortAdditionalFields = (
   unsortedFields: AdditionalFieldType[] | null,
@@ -85,7 +88,7 @@ export const sortExternalIdentifiers = (
 };
 
 export const sortNonDefiningProperties = (
-  properties: NonDefiningProperty[]
+  properties: NonDefiningProperty[],
 ): NonDefiningProperty[] => {
   if (!properties || properties.length === 0) {
     return [];
@@ -103,10 +106,14 @@ export const sortNonDefiningProperties = (
 
     // Then sort by value if identifierScheme is the same
     // For numeric values, try to sort numerically
-    const aValue = a.value !== null ? a.value :
-      (a.valueObject?.pt?.term || a.valueObject?.conceptId || '');
-    const bValue = b.value !== null ? b.value :
-      (b.valueObject?.pt?.term || b.valueObject?.conceptId || '');
+    const aValue =
+      a.value !== null
+        ? a.value
+        : a.valueObject?.pt?.term || a.valueObject?.conceptId || '';
+    const bValue =
+      b.value !== null
+        ? b.value
+        : b.valueObject?.pt?.term || b.valueObject?.conceptId || '';
 
     // Try numeric sorting if both values can be parsed as numbers
     const numA = parseFloat(String(aValue));
@@ -120,7 +127,6 @@ export const sortNonDefiningProperties = (
     return String(aValue).localeCompare(String(bValue));
   });
 };
-
 
 export function areTwoNonDefiningPropertiesArraysEqual(
   array1: NonDefiningProperty[],

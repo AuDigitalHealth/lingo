@@ -77,7 +77,11 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
     index: number,
     updatedIdentifier: any,
   ) => {
-    if (index >= 0 && index < nonDefiningProperties.length && updatedIdentifier) {
+    if (
+      index >= 0 &&
+      index < nonDefiningProperties.length &&
+      updatedIdentifier
+    ) {
       const updatedIdentifiers = [...nonDefiningProperties];
       updatedIdentifiers[index] = updatedIdentifier;
       handleNonDefiningPropertyChange(updatedIdentifiers);
