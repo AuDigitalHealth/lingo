@@ -13,3 +13,8 @@ body {
 .field-number > .MuiTextField-root {
   width: inherit;
 }
+
+.MuiDataGrid-row .MuiAvatar-circular {
+  max-width: max-content;
+  margin-top: 5px;
+}
