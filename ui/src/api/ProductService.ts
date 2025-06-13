@@ -28,7 +28,7 @@ import {
   ProductCreationDetails,
   ProductDescriptionUpdateRequest,
   ProductNonDefiningPropertyUpdateRequest,
-  ProductPackSizes
+  ProductPackSizes,
 } from '../types/product.ts';
 
 import { api } from './api.ts';
