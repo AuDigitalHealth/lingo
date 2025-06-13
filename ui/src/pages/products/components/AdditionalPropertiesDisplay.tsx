@@ -1,7 +1,10 @@
 // ItemDetailsDisplay.tsx
 import React, { useMemo } from 'react';
 import { Box, Chip, Paper, Stack, Tooltip, Typography } from '@mui/material';
-import { NonDefiningProperty, NonDefiningPropertyType } from '../../../types/product.ts';
+import {
+  NonDefiningProperty,
+  NonDefiningPropertyType,
+} from '../../../types/product.ts';
 import { Product } from '../../../types/concept.ts';
 import { AdditionalReferenceSetDisplay } from './AdditionalReferenceSetDisplay.tsx';
 import WarningIcon from '@mui/icons-material/Warning';
@@ -23,17 +26,15 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
   labelColor = '#184E6B',
   showWrapper = true,
 }) => {
-
   const { applicationConfig } = useApplicationConfigStore();
 
-  const { nonDefiningProperties } =
-    useMemo(() => {
-      const nonDefProps = product?.nonDefiningProperties || [];
+  const { nonDefiningProperties } = useMemo(() => {
+    const nonDefProps = product?.nonDefiningProperties || [];
 
-      return {
-        nonDefiningProperties: nonDefProps,
-      };
-    }, [product]);
+    return {
+      nonDefiningProperties: nonDefProps,
+    };
+  }, [product]);
 
   // Function to get display value for properties and identifiers
   const getItemValue = React.useCallback(
@@ -91,7 +92,9 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
 
   // Combine and sort properties and identifiers
   const combinedItems = React.useMemo(() => {
-    const allItems = [...nonDefiningProperties].filter(a => a.type !== NonDefiningPropertyType.REFERENCE_SET);
+    const allItems = [...nonDefiningProperties].filter(
+      a => a.type !== NonDefiningPropertyType.REFERENCE_SET,
+    );
 
     // Sort all items by their titles
     allItems.sort((a, b) => {
@@ -119,13 +122,13 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
     if (!nonDefiningProperties || nonDefiningProperties.length === 0) return [];
 
     return [...nonDefiningProperties]
-    .filter(a => a.type == NonDefiningPropertyType.REFERENCE_SET)
-    .sort((a, b) => {
-      // Use optional chaining and provide default values with String type assertions
-      const titleA = String(a.title ?? '');
-      const titleB = String(b.title ?? '');
-      return titleA.localeCompare(titleB);
-    });
+      .filter(a => a.type == NonDefiningPropertyType.REFERENCE_SET)
+      .sort((a, b) => {
+        // Use optional chaining and provide default values with String type assertions
+        const titleA = String(a.title ?? '');
+        const titleB = String(b.title ?? '');
+        return titleA.localeCompare(titleB);
+      });
   }, [nonDefiningProperties]);
 
   // Function to safely get display name for reference sets
@@ -141,7 +144,11 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
 
   const renderChip = (item: NonDefiningProperty) => {
     // For non-defining properties with valueObject, show term with ID tooltip
-    if (item.type === NonDefiningPropertyType.NON_DEFINING_PROPERTY && 'valueObject' in item && item.valueObject?.pt?.term) {
+    if (
+      item.type === NonDefiningPropertyType.NON_DEFINING_PROPERTY &&
+      'valueObject' in item &&
+      item.valueObject?.pt?.term
+    ) {
       return (
         <Tooltip title={`${item.valueObject.conceptId || ''}`} arrow>
           <Chip
@@ -159,22 +166,29 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
           />
         </Tooltip>
       );
-    } else if (item.type === NonDefiningPropertyType.EXTERNAL_IDENTIFIER && 'valueObject' in item && item.valueObject?.pt?.term) {
+    } else if (
+      item.type === NonDefiningPropertyType.EXTERNAL_IDENTIFIER &&
+      'valueObject' in item &&
+      item.valueObject?.pt?.term
+    ) {
       return (
         <Tooltip
           title={
-            item.additionalProperties && Object.keys(item.additionalProperties).length > 0
-              ? (
-                <>
-                  {Object.entries(item.additionalProperties).map(([key, value], index) => (
+            item.additionalProperties &&
+            Object.keys(item.additionalProperties).length > 0 ? (
+              <>
+                {Object.entries(item.additionalProperties).map(
+                  ([key, value], index) => (
                     <React.Fragment key={index}>
                       {index > 0 && <br />}
                       {key}: {value}
                     </React.Fragment>
-                  ))}
-                </>
-              )
-              : "No properties"
+                  ),
+                )}
+              </>
+            ) : (
+              'No properties'
+            )
           }
           placement="top"
         >
@@ -221,9 +235,9 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
                   color: 'inherit',
                   marginLeft: '4px',
                   display: 'flex',
-                  alignItems: 'center'
+                  alignItems: 'center',
                 }}
-                onClick={(e) => e.stopPropagation()}
+                onClick={e => e.stopPropagation()}
                 title="Open in Shrimp browser"
               >
                 <OpenInNewIcon fontSize="small" sx={{ fontSize: '14px' }} />
