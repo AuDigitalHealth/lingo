@@ -1,9 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Product } from '../../../types/concept.ts';
-import { Box, Chip, CircularProgress, Tooltip, Typography } from '@mui/material';
 import {
-  useRefsetMembersByComponentIds
-} from '../../../hooks/api/refset/useRefsetMembersByComponentIds.tsx';
+  Box,
+  Chip,
+  CircularProgress,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import { useRefsetMembersByComponentIds } from '../../../hooks/api/refset/useRefsetMembersByComponentIds.tsx';
 import { useReferenceSetConcepts } from '../../../hooks/api/refset/useReferenceSetConcepts.tsx';
 
 // Locally defined interface to replace the imported ReferenceSet
