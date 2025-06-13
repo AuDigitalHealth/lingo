@@ -1,12 +1,23 @@
 import React, { useState } from 'react';
-import {Autocomplete, Box, Checkbox, Chip, FormControlLabel, Grid, Stack, TextField} from '@mui/material';
+import {
+  Autocomplete,
+  Box,
+  Checkbox,
+  Chip,
+  FormControlLabel,
+  Grid,
+  Stack,
+  TextField,
+} from '@mui/material';
 import { FieldProps } from '@rjsf/utils';
 import ValueSetAutocomplete, {
-  MultiValueValueSetAutocomplete
+  MultiValueValueSetAutocomplete,
 } from '../../components/ValueSetAutocomplete';
 import EclAutocomplete from '../../components/EclAutocomplete';
-import { NonDefiningProperty, NonDefiningPropertyType } from '../../../../../types/product.ts';
-
+import {
+  NonDefiningProperty,
+  NonDefiningPropertyType,
+} from '../../../../../types/product.ts';
 
 const SCHEME_COLORS = ['primary', 'secondary', 'success', 'error', 'warning'];
 
@@ -46,6 +57,7 @@ const ExternalIdentifiers: React.FC<
     onChipClick,
     readOnly,
     branch,
+    propertyOrder = [],
   } = (uiSchema && uiSchema['ui:options']) || {};
 
   const formData = props.formData;
@@ -55,23 +67,34 @@ const ExternalIdentifiers: React.FC<
   return (
     <>
       <Grid container spacing={2}>
-        {schemas.map((schema, index) => {
-          return (
-            <Grid item xs={12} md={6} key={index}>
-              <ExternalIdentifierRender
-                sx={{ margin: 1 }}
-                formData={formData}
-                onChange={updated => {
-                  onChange(updated);
-                }}
-                schema={schema}
-                uiSchema={uiSchema}
-                registry={registry}
-                branch={branch}
-              />
-            </Grid>
-          );
-        })}
+        {schemas
+          .sort((a, b) => {
+            const aScheme = a.properties?.identifierScheme?.const || '';
+            const bScheme = b.properties?.identifierScheme?.const || '';
+            const aIdx = propertyOrder.indexOf(aScheme);
+            const bIdx = propertyOrder.indexOf(bScheme);
+            if (aIdx !== -1 && bIdx !== -1) {
+              return aIdx - bIdx; // Sort by propertyOrder index
+            }
+            return aScheme.localeCompare(bScheme);
+          })
+          .map((schema, index) => {
+            return (
+              <Grid item xs={12} md={6} key={index}>
+                <ExternalIdentifierRender
+                  sx={{ margin: 1 }}
+                  formData={formData}
+                  onChange={updated => {
+                    onChange(updated);
+                  }}
+                  schema={schema}
+                  uiSchema={uiSchema}
+                  registry={registry}
+                  branch={branch}
+                />
+              </Grid>
+            );
+          })}
       </Grid>
     </>
   );
@@ -87,7 +110,7 @@ const ExternalIdentifierRender: React.FC<
     freeSoloByScheme = {},
     onChipClick,
     readOnly,
-    branch
+    branch,
   } = (uiSchema && uiSchema['ui:options']) || {};
 
   const schemeName = schema?.properties?.identifierScheme?.const;
@@ -149,9 +172,7 @@ const ExternalIdentifierRender: React.FC<
       // Check if adding this item would exceed maxItems
       const currentCount = (formData?.length ?? 0) + newItems.length;
       if (maxItems && schemeEntries && currentCount >= maxItems) {
-        setTooltip(
-          `Only ${maxItems} items allowed for ${schema.title}`,
-        );
+        setTooltip(`Only ${maxItems} items allowed for ${schema.title}`);
         break; // Stop processing further items
       }
 
@@ -240,31 +261,40 @@ const ExternalIdentifierRender: React.FC<
           />
         )}
         {isCheckBox && (
-            <FormControlLabel
-                label={schema.title}
-                labelPlacement="start"
-                control={
-                  <Checkbox
-                      checked={formData?.some(item =>
-                          item.type === 'REFERENCE_SET' &&
-                          item.identifierScheme === schema.properties.identifierScheme.const
-                      )}
-                      onChange={e => {
-                        const scheme = schema.properties.identifierScheme.const;
-                        const updated = e.target.checked
-                            ? [...(formData || []), { type: 'REFERENCE_SET', identifierScheme: scheme }]
-                            : formData?.filter(item =>
-                            !(item.type === 'REFERENCE_SET' && item.identifierScheme === scheme)
-                        ) || [];
-                        onChange(updated);
-                      }}
-                      disabled={readOnly}
-                  />
-                }
-            />
+          <FormControlLabel
+            label={schema.title}
+            labelPlacement="start"
+            control={
+              <Checkbox
+                checked={formData?.some(
+                  item =>
+                    item.type === 'REFERENCE_SET' &&
+                    item.identifierScheme ===
+                      schema.properties.identifierScheme.const,
+                )}
+                onChange={e => {
+                  const scheme = schema.properties.identifierScheme.const;
+                  const updated = e.target.checked
+                    ? [
+                        ...(formData || []),
+                        { type: 'REFERENCE_SET', identifierScheme: scheme },
+                      ]
+                    : formData?.filter(
+                        item =>
+                          !(
+                            item.type === 'REFERENCE_SET' &&
+                            item.identifierScheme === scheme
+                          ),
+                      ) || [];
+                  onChange(updated);
+                }}
+                disabled={readOnly}
+              />
+            }
+          />
         )}
 
-        {!useEclAutocomplete && !useValueSetAutocomplete   &&  !isCheckBox &&(
+        {!useEclAutocomplete && !useValueSetAutocomplete && !isCheckBox && (
           <Autocomplete
             multiple={true}
             sx={{
