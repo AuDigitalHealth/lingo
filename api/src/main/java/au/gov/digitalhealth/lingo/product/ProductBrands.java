@@ -46,4 +46,13 @@ public class ProductBrands implements Serializable {
         .filter(s -> s.getFsn() != null)
         .collect(Collectors.toMap(SnowstormConceptMini::getConceptId, s -> s.getFsn().getTerm()));
   }
+
+  @JsonIgnore
+  public Map<String, String> getIdPtMap() {
+    return brands.stream()
+        .map(BrandWithIdentifiers::getBrand)
+        .distinct()
+        .filter(s -> s.getPt() != null)
+        .collect(Collectors.toMap(SnowstormConceptMini::getConceptId, s -> s.getPt().getTerm()));
+  }
 }
