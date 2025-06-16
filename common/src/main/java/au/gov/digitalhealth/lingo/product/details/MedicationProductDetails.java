@@ -38,7 +38,6 @@ public class MedicationProductDetails extends ProductDetails {
   // These are the old unit of use/presentation attributes needed until purged
   @Valid Quantity quantity;
   SnowstormConceptMini containerType;
-  SnowstormConceptMini deviceType;
   SnowstormConceptMini unitOfPresentation;
 
   List<@Valid Ingredient> activeIngredients = new ArrayList<>();
@@ -58,11 +57,29 @@ public class MedicationProductDetails extends ProductDetails {
     if (containerType != null) {
       addToIdFsnMap(idMap, containerType);
     }
-    if (deviceType != null) {
-      addToIdFsnMap(idMap, deviceType);
-    }
     for (Ingredient ingredient : activeIngredients) {
       addToIdFsnMap(idMap, ingredient);
+    }
+    return idMap;
+  }
+
+  @Override
+  protected Map<String, String> getSpecialisedIdPtMap() {
+    Map<String, String> idMap = addToIdPtMap(null, quantity);
+    if (genericForm != null) {
+      addToIdPtMap(idMap, genericForm);
+    }
+    if (specificForm != null) {
+      addToIdPtMap(idMap, specificForm);
+    }
+    if (quantity != null) {
+      idMap.putAll(quantity.getIdPtMap());
+    }
+    if (containerType != null) {
+      addToIdPtMap(idMap, containerType);
+    }
+    for (Ingredient ingredient : activeIngredients) {
+      addToIdPtMap(idMap, ingredient);
     }
     return idMap;
   }

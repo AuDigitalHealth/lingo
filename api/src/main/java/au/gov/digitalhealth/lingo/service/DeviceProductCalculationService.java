@@ -177,7 +177,10 @@ public class DeviceProductCalculationService {
 
     AtomicCache cache =
         new AtomicCache(
-            packageDetails.getIdFsnMap(), AmtConstants.values(), SnomedConstants.values());
+            packageDetails.getIdFsnMap(),
+            packageDetails.getIdPtMap(),
+            AmtConstants.values(),
+            SnomedConstants.values());
 
     final DeviceDetailsValidator deviceDetailsValidator =
         deviceDetailsValidatorByQualifier.get(
@@ -451,6 +454,7 @@ public class DeviceProductCalculationService {
                 packageDetails,
                 modelLevel.getModelLevelType()),
             packageDetails.getSelectedConceptIdentifiers(),
+            packageDetails.getNonDefiningProperties(),
             true,
             ModelLevelType.PACKAGED_CLINICAL_DRUG.equals(modelLevel.getModelLevelType()),
             true)
@@ -614,6 +618,7 @@ public class DeviceProductCalculationService {
                 packageDetails,
                 leafBrandedProductModelLevel.getModelLevelType()),
             packageDetails.getSelectedConceptIdentifiers(),
+            productQuantity.getProductDetails().getNonDefiningProperties(),
             false,
             false,
             true);
@@ -664,6 +669,7 @@ public class DeviceProductCalculationService {
                   packageDetails,
                   rootBrandedProductLevel.getModelLevelType()),
               packageDetails.getSelectedConceptIdentifiers(),
+              productQuantity.getProductDetails().getNonDefiningProperties(),
               false,
               false,
               true);
