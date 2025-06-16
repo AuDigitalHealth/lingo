@@ -52,6 +52,13 @@ public class BrandPackSizeCreationDetails implements BulkProductActionDetails, S
     return returnMap;
   }
 
+  @JsonIgnore
+  public Map<String, String> getIdPtMap() {
+    Map<String, String> returnMap = brands == null ? new HashMap<>() : brands.getIdPtMap();
+    returnMap.putAll(packSizes == null ? Map.of() : packSizes.getIdPtMap());
+    return returnMap;
+  }
+
   @Override
   public String calculateSaveName() {
     return "Brand/pack size " + new Date();

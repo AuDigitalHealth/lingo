@@ -39,4 +39,9 @@ public class Quantity extends ProductBaseDto {
   public Map<String, String> getIdFsnMap() {
     return addToIdFsnMap(null, unit);
   }
+
+  @JsonIgnore
+  public Map<String, String> getIdPtMap() {
+    return addToIdPtMap(null, unit);
+  }
 }

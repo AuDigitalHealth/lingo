@@ -21,7 +21,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class ProductBaseDto {
@@ -35,12 +34,26 @@ public abstract class ProductBaseDto {
   @JsonIgnore
   public abstract Map<String, String> getIdFsnMap();
 
+  @JsonIgnore
+  public abstract Map<String, String> getIdPtMap();
+
   protected Map<String, String> addToIdFsnMap(
       Map<String, String> idMap, ProductBaseDto... productBaseDtos) {
     idMap = initialiseMap(idMap);
     for (ProductBaseDto productBaseDto : productBaseDtos) {
       if (productBaseDto != null) {
         idMap.putAll(productBaseDto.getIdFsnMap());
+      }
+    }
+    return idMap;
+  }
+
+  protected Map<String, String> addToIdPtMap(
+      Map<String, String> idMap, ProductBaseDto... productBaseDtos) {
+    idMap = initialiseMap(idMap);
+    for (ProductBaseDto productBaseDto : productBaseDtos) {
+      if (productBaseDto != null) {
+        idMap.putAll(productBaseDto.getIdPtMap());
       }
     }
     return idMap;
@@ -57,17 +70,14 @@ public abstract class ProductBaseDto {
     return idMap;
   }
 
-  protected Map<String, String> addToIdFsnMap(
-      Map<String, String> idMap, Set<SnowstormConceptMini> concepts) {
+  protected Map<String, String> addToIdPtMap(
+      Map<String, String> idMap, SnowstormConceptMini... conceptMinis) {
     idMap = initialiseMap(idMap);
-    if (concepts != null) {
-      for (SnowstormConceptMini conceptMini : concepts) {
-        if (conceptMini != null) {
-          idMap.put(conceptMini.getConceptId(), SnowstormDtoUtil.getFsnTerm(conceptMini));
-        }
+    for (SnowstormConceptMini conceptMini : conceptMinis) {
+      if (conceptMini != null) {
+        idMap.put(conceptMini.getConceptId(), SnowstormDtoUtil.getPtTerm(conceptMini));
       }
     }
-
     return idMap;
   }
 }

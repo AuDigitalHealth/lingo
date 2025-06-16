@@ -57,6 +57,24 @@ public class PackageDetails<T extends ProductDetails> extends PackageProductDeta
     return idMap;
   }
 
+  @JsonIgnore
+  public Map<String, String> getIdPtMap() {
+    Map<String, String> idMap = new HashMap<>();
+    if (productName != null) {
+      idMap.put(productName.getConceptId(), SnowstormDtoUtil.getPtTerm(productName));
+    }
+    if (containerType != null) {
+      idMap.put(containerType.getConceptId(), SnowstormDtoUtil.getPtTerm(containerType));
+    }
+    for (ProductQuantity<T> productQuantity : containedProducts) {
+      idMap.putAll(productQuantity.getIdPtMap());
+    }
+    for (PackageQuantity<T> packageQuantity : containedPackages) {
+      idMap.putAll(packageQuantity.getIdPtMap());
+    }
+    return idMap;
+  }
+
   public boolean hasDeviceType() {
     return containedProducts.stream()
             .anyMatch(productQuantity -> productQuantity.getProductDetails().hasDeviceType())
