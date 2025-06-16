@@ -49,6 +49,19 @@ public abstract class ProductDetails extends PackageProductDetailsBase {
     return idMap;
   }
 
+  @JsonIgnore
+  public Map<String, String> getIdPtMap() {
+    Map<String, String> idMap = new HashMap<>();
+    idMap.put(productName.getConceptId(), SnowstormDtoUtil.getPtTerm(productName));
+    if (deviceType != null) {
+      idMap.put(deviceType.getConceptId(), SnowstormDtoUtil.getPtTerm(deviceType));
+    }
+    idMap.putAll(getSpecialisedIdPtMap());
+    return idMap;
+  }
+
+  protected abstract Map<String, String> getSpecialisedIdPtMap();
+
   protected abstract Map<String, String> getSpecialisedIdFsnMap();
 
   public abstract boolean hasDeviceType();

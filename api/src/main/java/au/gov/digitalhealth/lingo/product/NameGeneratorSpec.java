@@ -15,6 +15,7 @@
  */
 package au.gov.digitalhealth.lingo.product;
 
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,4 +27,6 @@ public class NameGeneratorSpec {
 
   String tag;
   String owl;
+  String pt_owl;
+  List<String> order;
 }

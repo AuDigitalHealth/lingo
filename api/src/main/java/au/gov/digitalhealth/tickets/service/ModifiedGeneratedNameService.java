@@ -56,6 +56,7 @@ public class ModifiedGeneratedNameService {
 
   public void createAndSaveModifiedGeneratedNames(
       Map<String, String> idFsnMap,
+      Map<String, String> idPtMap,
       ProductSummary productSummaryClone,
       String branch,
       BidiMap<String, String> idMap) {
@@ -73,7 +74,7 @@ public class ModifiedGeneratedNameService {
                     Optional<NameGeneratorSpec> nameGeneratorSpec =
                         nameGenerationService.generateNameGeneratorSpec(
                             new AtomicCache(
-                                idFsnMap, AmtConstants.values(), SnomedConstants.values()),
+                                idFsnMap, idPtMap, AmtConstants.values(), SnomedConstants.values()),
                             newConceptDetails.getSemanticTag(),
                             node,
                             modelConfiguration);
