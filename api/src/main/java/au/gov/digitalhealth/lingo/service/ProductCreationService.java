@@ -195,7 +195,11 @@ public class ProductCreationService {
 
     if (productSummaryClone != null) {
       modifiedGeneratedNameService.createAndSaveModifiedGeneratedNames(
-          creationDetails.getDetails().getIdFsnMap(), productSummaryClone, branch, idMap);
+          creationDetails.getDetails().getIdFsnMap(),
+          creationDetails.getDetails().getIdPtMap(),
+          productSummaryClone,
+          branch,
+          idMap);
     }
 
     BulkProductActionDto dto =
@@ -245,6 +249,7 @@ public class ProductCreationService {
     if (productSummaryClone != null) {
       modifiedGeneratedNameService.createAndSaveModifiedGeneratedNames(
           productCreationDetails.getPackageDetails().getIdFsnMap(),
+          productCreationDetails.getPackageDetails().getIdPtMap(),
           productSummaryClone,
           branch,
           idMap);
@@ -259,7 +264,8 @@ public class ProductCreationService {
                     ? productCreationDetails.getNameOverride()
                     : productSummary.getSingleSubject().getFullySpecifiedName())
             .build();
-    updateTicket(productCreationDetails, ticket, productDto);
+
+    updateTicket(ticket, productDto, productCreationDetails.getPartialSaveName());
     return productSummary;
   }
 
@@ -713,10 +719,7 @@ public class ProductCreationService {
   }
 
   @SuppressWarnings("java:S1192")
-  private void updateTicket(
-      ProductCreationDetails<? extends ProductDetails> productCreationDetails,
-      TicketDto ticket,
-      ProductDto productDto) {
+  private void updateTicket(TicketDto ticket, ProductDto productDto, String partialSaveName) {
     try {
       ticketService.putProductOnTicket(ticket.getId(), productDto);
     } catch (Exception e) {
