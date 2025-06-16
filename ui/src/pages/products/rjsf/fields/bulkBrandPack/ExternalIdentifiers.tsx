@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import { FieldProps } from '@rjsf/utils';
 import ValueSetAutocomplete, {
-  MultiValueValueSetAutocomplete,
+
 } from '../../components/ValueSetAutocomplete';
 import EclAutocomplete from '../../components/EclAutocomplete';
 import {
@@ -20,6 +20,7 @@ import {
 } from '../../../../../types/product.ts';
 import useTaskById from "../../../../../hooks/useTaskById.tsx";
 import {ConceptMini} from "../../../../../types/concept.ts";
+import {MultiValueValueSetAutocomplete} from "../../components/MultiValueSetAutocomplete.tsx";
 
 
 const SCHEME_COLORS = ['primary', 'secondary', 'success', 'error', 'warning'];
@@ -204,52 +205,47 @@ const ExternalIdentifierRender: React.FC<ExternalIdentifierRenderProps> = props 
     });
     onChange(returnFormData);
   };
-  const handleChangeConcepts = (concepts: ConceptMini | ConceptMini[] | null) => {
+  const handleChangeConcepts = (
+      concepts: ConceptMini | ConceptMini[] | null
+  ) => {
     const scheme = schema.properties.identifierScheme.const;
 
-    // If concept is null — clear all items for this identifierScheme
-    if (concepts === null) {
-      const cleared = formData?.filter(item => item.identifierScheme !== scheme) || [];
+    // Normalize to array
+    const conceptList = !concepts
+        ? []
+        : Array.isArray(concepts)
+            ? concepts
+            : [concepts];
+
+    // If null or empty → remove all entries for this scheme
+    if (conceptList.length === 0) {
+      const cleared = (formData ?? []).filter(
+          item => item.identifierScheme !== scheme
+      );
       onChange(cleared);
       return;
     }
 
-    // Proceed with add logic
-    const conceptList = Array.isArray(concepts) ? concepts : [concepts];
-    const newItems: NonDefiningProperty[] = [];
+    // Build new entries for this scheme
+    const newEntries: NonDefiningProperty[] = conceptList
+        .map(concept => {
+          const conceptId = concept.conceptId?.trim();
+          if (!conceptId) return null;
+          return {
+            identifierScheme: scheme,
+            // relationshipType: schema.properties.relationshipType.const,
+            valueObject: concept,
+          };
+        })
+        .filter(Boolean) as NonDefiningProperty[];
 
-    for (const concept of conceptList) {
-      const conceptId = concept.conceptId?.trim();
-      if (!conceptId || !concept.conceptId) continue;
+    // Keep all other entries
+    const others = (formData ?? []).filter(
+        item => item.identifierScheme !== scheme
+    );
 
-      const isDuplicate = formData?.some(
-          item =>
-              (item.value === conceptId || item.valueObject?.conceptId === conceptId) &&
-              item.identifierScheme === scheme
-      );
-
-      if (isDuplicate) {
-        setTooltip(`Concept "${conceptId}" is already added.`);
-        continue;
-      }
-
-      const currentCount = (formData?.length ?? 0) + newItems.length;
-      if (maxItems && currentCount >= maxItems) {
-        setTooltip(`Only ${maxItems} items allowed for ${schema.title}`);
-        break;
-      }
-
-      newItems.push({
-        identifierScheme: scheme,
-        valueObject: concept,
-      });
-    }
-
-    if (newItems.length > 0) {
-      onChange([...(formData ?? []), ...newItems]);
-    }
+    onChange([...others, ...newEntries]);
   };
-
 
 
 
@@ -282,8 +278,8 @@ const ExternalIdentifierRender: React.FC<ExternalIdentifierRenderProps> = props 
             label={schema.title}
             url={binding.valueSet || ''}
             showDefaultOptions={false}
-            value={schemeEntries}
-            onChange={handleAdd}
+            value={schemeEntries.map(entry => entry.valueObject)}
+            onChange={handleChangeConcepts}
             disabled={readOnly ? true : false}
             //   error={!!errorMessage}
           />
@@ -292,8 +288,9 @@ const ExternalIdentifierRender: React.FC<ExternalIdentifierRenderProps> = props 
           <ValueSetAutocomplete
             label={schema.title}
             url={binding.valueSet || ''}
+
             showDefaultOptions={false}
-            value={schemeEntries}
+            value={schemeEntries[0] ? schemeEntries[0].value:schemeEntries}
             onChange={handleAdd}
             disabled={readOnly ? true : false}
             //   error={!!errorMessage}
