@@ -474,6 +474,13 @@ public class SnowstormDtoUtil {
     return snowstormConceptMini.getFsn().getTerm();
   }
 
+  public static String getPtTerm(SnowstormConceptMini snowstormConceptMini) {
+    if (snowstormConceptMini.getPt() == null) {
+      throw new ResourceNotFoundProblem("PT is null for " + snowstormConceptMini.getConceptId());
+    }
+    return snowstormConceptMini.getPt().getTerm();
+  }
+
   public static SnowstormReferenceSetMemberViewComponent toSnowstormReferenceSetMember(
       SnowstormReferenceSetMember referenceSetMember) {
     return new SnowstormReferenceSetMemberViewComponent()
