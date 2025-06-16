@@ -34,4 +34,10 @@ public class ProductQuantity<T extends ProductDetails> extends Quantity {
     idMap.putAll(super.getIdFsnMap());
     return idMap;
   }
+
+  public Map<String, String> getIdPtMap() {
+    Map<String, String> idMap = productDetails.getIdPtMap();
+    idMap.putAll(super.getIdPtMap());
+    return idMap;
+  }
 }
