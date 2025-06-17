@@ -155,10 +155,25 @@ const ExternalIdentifierRender: React.FC<
     const values = Array.isArray(value) ? value : [value];
 
     const newItems: NonDefiningProperty[] = [];
+    const pattern = schema.properties.value?.pattern;
 
     for (const val of values) {
       const trimmed = val.trim();
       if (!trimmed) continue; // Skip empty strings
+
+      // Check regex pattern validation
+      if (pattern && !new RegExp(`^${pattern}$`).test(trimmed)) {
+        const patternErrorMessage =
+          schema.properties.value?.errorMessage?.pattern;
+        if (patternErrorMessage) {
+          setTooltip(patternErrorMessage);
+        } else {
+          setTooltip(
+            `"${trimmed}" does not match the required pattern "${pattern}".`,
+          );
+        }
+        continue;
+      }
 
       // Check if this identifier already exists
       if (
@@ -169,14 +184,14 @@ const ExternalIdentifierRender: React.FC<
         )
       ) {
         setTooltip(`Identifier "${trimmed}" is already added.`);
-        continue; // Skip this one but continue with others
+        continue;
       }
 
       // Check if adding this item would exceed maxItems
       const currentCount = (formData?.length ?? 0) + newItems.length;
       if (maxItems && schemeEntries && currentCount >= maxItems) {
         setTooltip(`Only ${maxItems} items allowed for ${schema.title}`);
-        break; // Stop processing further items
+        break;
       }
 
       const testObj: NonDefiningProperty = {
@@ -397,6 +412,8 @@ const ExternalIdentifierRender: React.FC<
             renderInput={params => (
               <TextField
                 {...params}
+                error={!!tooltip}
+                helperText={tooltip || ' '}
                 label={schema.title}
                 InputProps={{
                   ...params.InputProps,
