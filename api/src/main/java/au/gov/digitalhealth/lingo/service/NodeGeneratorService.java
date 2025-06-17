@@ -137,6 +137,9 @@ public class NodeGeneratorService {
           configuration.getReferenceSetsBySchemeForModelLevel(modelLevel);
       Map<String, ExternalIdentifierDefinition> externalIdentifiersMap =
           configuration.getMappingsBySchemeForModelLevel(modelLevel);
+
+      node.setNonDefiningProperties(new HashSet<>());
+
       for (NonDefiningBase newProperty : newProperties) {
         if (newProperty instanceof NonDefiningProperty p
             && nonDefiningPropertiesMap.containsKey(p.getIdentifierScheme())) {
