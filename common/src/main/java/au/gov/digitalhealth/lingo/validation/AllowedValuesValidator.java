@@ -39,10 +39,26 @@ public class AllowedValuesValidator
 
     for (String value : property.getAllowedValues()) {
       if (regexPattern != null && !regexPattern.matcher(value).matches()) {
+        log.warning(
+            "Value '"
+                + value
+                + "' does not match the regex '"
+                + property.getValueRegexValidation()
+                + "' for property '"
+                + property.getIdentifier()
+                + "'");
         return false; // Value does not match the regex
       }
 
       if (!property.getDataType().isValidValue(value)) {
+        log.warning(
+            "Value '"
+                + value
+                + "' does not match the data type '"
+                + property.getDataType()
+                + "' for property '"
+                + property.getIdentifier()
+                + "'");
         return false; // Value does not match the data type
       }
     }
