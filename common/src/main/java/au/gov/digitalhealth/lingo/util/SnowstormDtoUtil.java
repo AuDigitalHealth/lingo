@@ -399,7 +399,7 @@ public class SnowstormDtoUtil {
         .moduleId(SCT_AU_MODULE.getValue());
   }
 
-  public static void addQuantityIfNotNull(
+  public static boolean addQuantityIfNotNull(
       Quantity quantity,
       int decimalScale,
       Set<SnowstormRelationship> relationships,
@@ -425,7 +425,9 @@ public class SnowstormDtoUtil {
               group,
               STATED_RELATIONSHIP,
               modelConfiguration.getModuleId()));
+      return true;
     }
+    return false;
   }
 
   public static void addRelationshipIfNotNull(
@@ -472,6 +474,13 @@ public class SnowstormDtoUtil {
       throw new ResourceNotFoundProblem("FSN is null for " + snowstormConceptMini.getConceptId());
     }
     return snowstormConceptMini.getFsn().getTerm();
+  }
+
+  public static String getPtTerm(SnowstormConceptMini snowstormConceptMini) {
+    if (snowstormConceptMini.getPt() == null) {
+      throw new ResourceNotFoundProblem("PT is null for " + snowstormConceptMini.getConceptId());
+    }
+    return snowstormConceptMini.getPt().getTerm();
   }
 
   public static SnowstormReferenceSetMemberViewComponent toSnowstormReferenceSetMember(
