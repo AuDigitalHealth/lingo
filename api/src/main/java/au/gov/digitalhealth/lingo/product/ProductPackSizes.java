@@ -42,6 +42,7 @@ public class ProductPackSizes implements Serializable {
         Objects.requireNonNull(Objects.requireNonNull(unitOfMeasure.getFsn()).getTerm()));
   }
 
+  @JsonIgnore
   public Map<String, String> getIdPtMap() {
     return Map.of(
         Objects.requireNonNull(unitOfMeasure.getConceptId()),

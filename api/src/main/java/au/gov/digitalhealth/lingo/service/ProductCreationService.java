@@ -24,7 +24,6 @@ import au.gov.digitalhealth.lingo.configuration.NamespaceConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
-import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.exception.EmptyProductCreationProblem;
 import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.exception.NamespaceNotConfiguredProblem;
@@ -409,42 +408,10 @@ public class ProductCreationService {
     final ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     Set<Node> subjects = productSummary.calculateSubject(singleSubject, modelConfiguration);
 
-    // todo this is a hack and should be addressed properly
-    String mpRefset;
-
-    if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
-      mpRefset =
-          modelConfiguration.getReferenceSetIdForModelLevelType(ModelLevelType.MEDICINAL_PRODUCT);
-    } else {
-      mpRefset =
-          modelConfiguration.getReferenceSetIdForModelLevelType(
-              ModelLevelType.MEDICINAL_PRODUCT_ONLY);
-    }
-
-    // This is really for the device scenario, where the user has selected an existing concept as
-    // the device type that isn't already an MP.
-    productSummary.getNodes().stream()
-        .filter(
-            n ->
-                !n.isNewConcept()
-                    && n.getLabel().equals(ProductSummaryService.MP_LABEL)
-                    && snowstormClient
-                        .getConceptIdsFromEcl(
-                            branch,
-                            "^" + mpRefset + " AND " + n.getConceptId(),
-                            0,
-                            1,
-                            modelConfiguration.isExecuteEclAsStated())
-                        .isEmpty())
-        .forEach(
-            n ->
-                snowstormClient.createRefsetMembership(
-                    branch, mpRefset, n.getConceptId(), true, modelConfiguration.getModuleId()));
-
     List<Node> nodeCreateOrder =
         productSummary.getNodes().stream()
             .filter(Node::isNewConcept)
-            .sorted(Node.getNodeComparator(productSummary.getNodes()))
+            .sorted(Node.getNewNodeComparator(productSummary.getNodes()))
             .toList();
 
     // Force Snowstorm to work from the ids rather than the SnowstormConceptMini objects
@@ -507,6 +474,7 @@ public class ProductCreationService {
 
   private void createConcepts(String branch, List<Node> nodeCreateOrder, Map<String, String> idMap)
       throws InterruptedException {
+    // todo update to retire/replace existing concepts
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
     Deque<String> preallocatedIdentifiers = new ArrayDeque<>();
@@ -738,15 +706,13 @@ public class ProductCreationService {
           e);
     }
 
-    if (productCreationDetails.getPartialSaveName() != null
-        && !productCreationDetails.getPartialSaveName().isEmpty()) {
+    if (partialSaveName != null && !partialSaveName.isEmpty()) {
       try {
-        ticketService.deleteProduct(
-            ticket.getId(), Long.parseLong(productCreationDetails.getPartialSaveName()));
+        ticketService.deleteProduct(ticket.getId(), Long.parseLong(partialSaveName));
       } catch (ResourceNotFoundProblem p) {
         log.warning(
             "Partial save name "
-                + productCreationDetails.getPartialSaveName()
+                + partialSaveName
                 + " on ticket "
                 + ticket.getId()
                 + " could not be found to be deleted on product creation. "
@@ -755,7 +721,7 @@ public class ProductCreationService {
         log.log(
             Level.SEVERE,
             "Delete of partial save name "
-                + productCreationDetails.getPartialSaveName()
+                + partialSaveName
                 + " on ticket "
                 + ticket.getId()
                 + " failed for new product creation. "

@@ -27,12 +27,14 @@ import java.io.Serializable;
 import java.util.Collection;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.extern.java.Log;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonTypeName("nonDefiningProperty")
 @OnlyOneNotEmpty(fields = {"value", "valueObject"})
+@Log
 public class NonDefiningProperty extends NonDefiningBase implements Serializable {
   String value;
   SnowstormConceptMini valueObject;
@@ -67,5 +69,45 @@ public class NonDefiningProperty extends NonDefiningBase implements Serializable
         .filter(p -> p.getType().equals(PropertyType.NON_DEFINING_PROPERTY))
         .map(p -> (NonDefiningProperty) p)
         .toList();
+  }
+
+  /**
+   * This method updates the NonDefiningProperty instance with values from the definition, this is
+   * because content from the UI may be partially filled in or unreliable.
+   *
+   * @param nonDefiningPropertyDefinition
+   */
+  public void updateFromDefinition(NonDefiningPropertyDefinition nonDefiningPropertyDefinition) {
+    this.setIdentifierScheme(nonDefiningPropertyDefinition.getName());
+    this.setIdentifier(nonDefiningPropertyDefinition.getIdentifier());
+    this.setTitle(nonDefiningPropertyDefinition.getTitle());
+    this.setDescription(nonDefiningPropertyDefinition.getDescription());
+    if (nonDefiningPropertyDefinition.getDataType().equals(NonDefiningPropertyDataType.CONCEPT)) {
+      if (this.valueObject == null) {
+        throw new IllegalArgumentException(
+            "Cannot have NonDefiningProperty with null valueObject for a CONCEPT data type. Value was: "
+                + this.value);
+      }
+      if (this.value != null) {
+        log.warning(
+            "Cannot have NonDefiningProperty with both value and valueObject for a CONCEPT data type. Value was: "
+                + this.value
+                + " being set to null.");
+        this.value = null;
+      }
+    } else {
+      if (this.value == null) {
+        throw new IllegalArgumentException(
+            "Cannot have NonDefiningProperty with null value for a CONCEPT data type. ValueObject was: "
+                + this.valueObject);
+      }
+      if (this.valueObject != null) {
+        log.warning(
+            "Cannot have NonDefiningProperty with both value and valueObject for a CONCEPT data type. ValueObject was: "
+                + this.valueObject
+                + " being set to null.");
+        this.valueObject = null;
+      }
+    }
   }
 }

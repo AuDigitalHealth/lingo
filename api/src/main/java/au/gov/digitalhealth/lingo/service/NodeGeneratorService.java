@@ -36,8 +36,12 @@ import au.gov.digitalhealth.lingo.configuration.model.ReferenceSetDefinition;
 import au.gov.digitalhealth.lingo.exception.SingleConceptExpectedProblem;
 import au.gov.digitalhealth.lingo.product.NewConceptDetails;
 import au.gov.digitalhealth.lingo.product.Node;
+import au.gov.digitalhealth.lingo.product.OriginalNode;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
+import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
+import au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet;
 import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import au.gov.digitalhealth.lingo.util.EclBuilder;
 import au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils;
@@ -80,7 +84,11 @@ public class NodeGeneratorService {
   }
 
   @Async
-  public CompletableFuture<Node> lookUpNode(String branch, Long productId, ModelLevel modelLevel) {
+  public CompletableFuture<Node> lookUpNode(
+      String branch,
+      Long productId,
+      ModelLevel modelLevel,
+      Collection<NonDefiningBase> newProperties) {
     Node node = new Node();
     node.setLabel(modelLevel.getDisplayLabel());
     node.setModelLevel(modelLevel.getModelLevelType());
@@ -94,7 +102,22 @@ public class NodeGeneratorService {
     }
     node.setConcept(concept);
 
-    populateNodeProperties(branch, modelLevel, node)
+    populateNodeProperties(branch, modelLevel, node, newProperties);
+
+    return CompletableFuture.completedFuture(node);
+  }
+
+  private void populateNodeProperties(
+      String branch, ModelLevel modelLevel, Node node, Collection<NonDefiningBase> newProperties) {
+    ModelConfiguration configuration = models.getModelConfiguration(branch);
+
+    Flux<Void> refsetMembersFlux = addRefsetAndMapping(branch, modelLevel, configuration, node);
+
+    Flux<Void> nonDefiningPropertiesFlux =
+        addNonDefiningProperties(branch, modelLevel, configuration, node);
+
+    // Create a Mono that completes when both Flux operations complete
+    Mono.when(refsetMembersFlux, nonDefiningPropertiesFlux)
         .doOnError(
             e ->
                 log.log(
@@ -106,19 +129,32 @@ public class NodeGeneratorService {
                     e))
         .block();
 
-    return CompletableFuture.completedFuture(node);
-  }
+    if (newProperties != null) {
+      node.setOriginalNode(new OriginalNode(node.clone(), null, true));
+      Map<String, NonDefiningPropertyDefinition> nonDefiningPropertiesMap =
+          configuration.getNonDefiningPropertiesBySchemeForModelLevel(modelLevel);
+      Map<String, ReferenceSetDefinition> referenceSetsMap =
+          configuration.getReferenceSetsBySchemeForModelLevel(modelLevel);
+      Map<String, ExternalIdentifierDefinition> externalIdentifiersMap =
+          configuration.getMappingsBySchemeForModelLevel(modelLevel);
+      for (NonDefiningBase newProperty : newProperties) {
+        if (newProperty instanceof NonDefiningProperty p
+            && nonDefiningPropertiesMap.containsKey(p.getIdentifierScheme())) {
+          p.updateFromDefinition(nonDefiningPropertiesMap.get(p.getIdentifierScheme()));
+          node.getNonDefiningProperties().add(p);
+        } else if (newProperty instanceof ReferenceSet r
+            && referenceSetsMap.containsKey(r.getIdentifierScheme())) {
+          r.updateFromDefinition(referenceSetsMap.get(r.getIdentifierScheme()));
+          node.getNonDefiningProperties().add(r);
+        } else if (newProperty instanceof ExternalIdentifier e
+            && externalIdentifiersMap.containsKey(e.getIdentifierScheme())) {
+          e.updateFromDefinition(externalIdentifiersMap.get(e.getIdentifierScheme()), fhirClient);
+          node.getNonDefiningProperties().add(e);
+        }
+      }
 
-  private Mono<Void> populateNodeProperties(String branch, ModelLevel modelLevel, Node node) {
-    ModelConfiguration configuration = models.getModelConfiguration(branch);
-
-    Flux<Void> refsetMembersFlux = addRefsetAndMapping(branch, modelLevel, configuration, node);
-
-    Flux<Void> nonDefiningPropertiesFlux =
-        addNonDefiningProperties(branch, modelLevel, configuration, node);
-
-    // Create a Mono that completes when both Flux operations complete
-    return Mono.when(refsetMembersFlux, nonDefiningPropertiesFlux);
+      node.getNonDefiningProperties().add(modelLevel.createMarkerRefset());
+    }
   }
 
   private Flux<Void> addNonDefiningProperties(
@@ -188,7 +224,10 @@ public class NodeGeneratorService {
 
   @Async
   public CompletableFuture<List<Node>> lookUpNodes(
-      String branch, Long productId, ModelLevel modelLevel) {
+      String branch,
+      Long productId,
+      ModelLevel modelLevel,
+      Collection<NonDefiningBase> newProperties) {
 
     return CompletableFuture.completedFuture(
         snowstormClient
@@ -207,8 +246,7 @@ public class NodeGeneratorService {
                   node.setModelLevel(modelLevel.getModelLevelType());
                   node.setDisplayName(modelLevel.getName());
                   node.setConcept(concept);
-                  final Mono<Void> combinedMono = populateNodeProperties(branch, modelLevel, node);
-                  combinedMono.block();
+                  populateNodeProperties(branch, modelLevel, node, newProperties);
                   return node;
                 })
             .toList());
@@ -225,6 +263,7 @@ public class NodeGeneratorService {
       Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
       Set<SnowstormRelationship> nonDefiningProperties,
       List<String> selectedConceptIdentifiers,
+      Collection<NonDefiningBase> newProperties,
       boolean suppressIsa,
       boolean suppressNegativeStatements,
       boolean enforceRefsets) {
@@ -239,6 +278,7 @@ public class NodeGeneratorService {
             referenceSetMembers,
             nonDefiningProperties,
             selectedConceptIdentifiers,
+            newProperties,
             suppressIsa,
             suppressNegativeStatements,
             enforceRefsets));
@@ -254,6 +294,7 @@ public class NodeGeneratorService {
       Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
       Set<SnowstormRelationship> nonDefiningProperties,
       List<String> selectedConceptIdentifiers,
+      Collection<NonDefiningBase> newProperties,
       boolean suppressIsa,
       boolean suppressNegativeStatements,
       boolean enforceRefsets) {
@@ -377,7 +418,7 @@ public class NodeGeneratorService {
       properties.addAll(
           ReferenceSetUtils.getReferenceSetsFromNewRefsetComponentViewMembers(
               referenceSetMembers,
-              modelConfiguration.getReferenceSetsByIdentifierForModelLevel(modelLevel).values()));
+              modelConfiguration.getReferenceSetsByIdentifierForModelLevel(modelLevel)));
       properties.addAll(
           ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMemberViewComponents(
               referenceSetMembers,
@@ -390,17 +431,7 @@ public class NodeGeneratorService {
     } else {
       log.fine("Concept found for " + label + " " + node.getConceptId());
 
-      // look up the non defining properties for the concept
-      Flux<Void> refsetMembersFlux =
-          addRefsetAndMapping(branch, modelLevel, modelConfiguration, node);
-
-      Flux<Void> nonDefiningPropertiesFlux =
-          addNonDefiningProperties(branch, modelLevel, modelConfiguration, node);
-
-      // Create a Mono that completes when both Flux operations complete
-      Mono<Void> combinedMono = Mono.when(refsetMembersFlux, nonDefiningPropertiesFlux);
-
-      combinedMono.block();
+      populateNodeProperties(branch, modelLevel, node, newProperties);
     }
 
     return node;

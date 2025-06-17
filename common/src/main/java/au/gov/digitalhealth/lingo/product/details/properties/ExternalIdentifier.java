@@ -35,6 +35,7 @@ import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.SuperBuilder;
+import lombok.extern.java.Log;
 import reactor.core.publisher.Mono;
 
 @EqualsAndHashCode(callSuper = true)
@@ -43,6 +44,7 @@ import reactor.core.publisher.Mono;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonTypeName("externalIdentifier")
 @OnlyOneNotEmpty(fields = {"value", "valueObject"})
+@Log
 public class ExternalIdentifier extends NonDefiningBase implements Serializable {
   String value;
   SnowstormConceptMini valueObject;
@@ -115,19 +117,27 @@ public class ExternalIdentifier extends NonDefiningBase implements Serializable 
     }
 
     if (externalIdentifierDefinition.getDataType().equals(NonDefiningPropertyDataType.CODED)) {
-      return fhirClient
-          .getConcept(mapTargetId, externalIdentifierDefinition.getCodeSystem())
-          .map(
-              c -> {
-                identifier.setValueObject(c.getFirst());
-                identifier.setAdditionalProperties(c.getSecond());
-                identifier.setCodeSystem(externalIdentifierDefinition.getCodeSystem());
-                return identifier;
-              });
+      return updateCodedValue(externalIdentifierDefinition, fhirClient, mapTargetId, identifier);
     } else {
       identifier.setValue(mapTargetId);
       return Mono.just(identifier);
     }
+  }
+
+  private static Mono<ExternalIdentifier> updateCodedValue(
+      ExternalIdentifierDefinition externalIdentifierDefinition,
+      FhirClient fhirClient,
+      String mapTargetId,
+      ExternalIdentifier identifier) {
+    return fhirClient
+        .getConcept(mapTargetId, externalIdentifierDefinition.getCodeSystem())
+        .map(
+            c -> {
+              identifier.setValueObject(c.getFirst());
+              identifier.setAdditionalProperties(c.getSecond());
+              identifier.setCodeSystem(externalIdentifierDefinition.getCodeSystem());
+              return identifier;
+            });
   }
 
   public static Collection<ExternalIdentifier> filter(Collection<NonDefiningBase> properties) {
@@ -135,5 +145,58 @@ public class ExternalIdentifier extends NonDefiningBase implements Serializable 
         .filter(p -> p.getType().equals(PropertyType.EXTERNAL_IDENTIFIER))
         .map(p -> (ExternalIdentifier) p)
         .toList();
+  }
+
+  public void updateFromDefinition(
+      ExternalIdentifierDefinition externalIdentifierDefinition, FhirClient fhirClient) {
+    this.setIdentifierScheme(externalIdentifierDefinition.getName());
+    this.setIdentifier(externalIdentifierDefinition.getIdentifier());
+    this.setTitle(externalIdentifierDefinition.getTitle());
+    this.setDescription(externalIdentifierDefinition.getDescription());
+    if (this.getRelationshipType() == null
+        && externalIdentifierDefinition.getMappingTypes().size() == 1) {
+      // If the relationship type is not set, and there is only one mapping type, set it.
+      // This is to ensure that the relationship type is always set when there is only one mapping
+      // type.
+      this.setRelationshipType(externalIdentifierDefinition.getMappingTypes().iterator().next());
+    } else if (this.getRelationshipType() == null) {
+      // If the relationship type is not set, and there are multiple mapping types, throw an error.
+      throw new IllegalArgumentException(
+          "ExternalIdentifierDefinition has multiple mapping types, but relationshipType is not set.");
+    }
+    this.setCodeSystem(externalIdentifierDefinition.getCodeSystem());
+
+    if (externalIdentifierDefinition.getDataType().equals(NonDefiningPropertyDataType.CODED)) {
+      if (this.valueObject == null) {
+        throw new IllegalArgumentException(
+            "Cannot have ExternalIdentifier with null valueObject for a CODED data type. Value was: "
+                + this.value);
+      }
+      if (this.value != null) {
+        log.warning(
+            "Cannot have ExternalIdentifier with both value and valueObject for a CODED data type. Value was: "
+                + this.value
+                + " being set to null.");
+        this.value = null;
+      }
+    } else {
+      if (this.valueObject != null) {
+        log.warning(
+            "Cannot have ExternalIdentifier with both value and valueObject for a non-CODED data type. ValueObject was: "
+                + this.valueObject
+                + " being set to null.");
+        this.valueObject = null;
+      }
+    }
+    if (externalIdentifierDefinition.getDataType().equals(NonDefiningPropertyDataType.CODED)) {
+      if (this.valueObject == null) {
+        throw new IllegalArgumentException(
+            "Cannot have ExternalIdentifier with null valueObject for a CODED data type. Value was: "
+                + this.value);
+      }
+      updateCodedValue(
+              externalIdentifierDefinition, fhirClient, this.valueObject.getConceptId(), this)
+          .block();
+    }
   }
 }

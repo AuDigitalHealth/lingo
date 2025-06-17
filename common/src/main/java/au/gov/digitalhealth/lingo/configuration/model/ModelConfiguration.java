@@ -301,6 +301,13 @@ public class ModelConfiguration {
         .collect(Collectors.toMap(ReferenceSetDefinition::getIdentifier, Function.identity()));
   }
 
+  public Map<String, ReferenceSetDefinition> getReferenceSetsBySchemeForModelLevel(
+      ModelLevel modelLevel) {
+    return getReferenceSets().stream()
+        .filter(r -> r.getModelLevels().contains(modelLevel.getModelLevelType()))
+        .collect(Collectors.toMap(ReferenceSetDefinition::getName, Function.identity()));
+  }
+
   public Map<String, ExternalIdentifierDefinition> getMappingsByIdentifierForModelLevel(
       ModelLevel modelLevel) {
     return getMappings().stream()
@@ -309,12 +316,26 @@ public class ModelConfiguration {
             Collectors.toMap(ExternalIdentifierDefinition::getIdentifier, Function.identity()));
   }
 
+  public Map<String, ExternalIdentifierDefinition> getMappingsBySchemeForModelLevel(
+      ModelLevel modelLevel) {
+    return getMappings().stream()
+        .filter(r -> r.getModelLevels().contains(modelLevel.getModelLevelType()))
+        .collect(Collectors.toMap(ExternalIdentifierDefinition::getName, Function.identity()));
+  }
+
   public Map<String, NonDefiningPropertyDefinition>
       getNonDefiningPropertiesByIdentifierForModelLevel(ModelLevel modelLevel) {
     return getNonDefiningProperties().stream()
         .filter(r -> r.getModelLevels().contains(modelLevel.getModelLevelType()))
         .collect(
             Collectors.toMap(NonDefiningPropertyDefinition::getIdentifier, Function.identity()));
+  }
+
+  public Map<String, NonDefiningPropertyDefinition> getNonDefiningPropertiesBySchemeForModelLevel(
+      ModelLevel modelLevel) {
+    return getNonDefiningProperties().stream()
+        .filter(r -> r.getModelLevels().contains(modelLevel.getModelLevelType()))
+        .collect(Collectors.toMap(NonDefiningPropertyDefinition::getName, Function.identity()));
   }
 
   public String getReferenceSetIdForModelLevelType(ModelLevelType modelLevelType) {
