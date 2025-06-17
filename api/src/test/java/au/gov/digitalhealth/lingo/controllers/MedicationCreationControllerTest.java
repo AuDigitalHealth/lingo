@@ -784,4 +784,130 @@ class MedicationCreationControllerTest extends LingoTestBase {
 
     checkExternalIdentifiers(productSummary, packageDetails);
   }
+
+  /**
+   * Test for the updateMedicationProductFromAtomicData REST method. This test loads an existing
+   * product, changes its properties, and checks the results of the calculation.
+   */
+  @Test
+  void calculateUpdateExistingProductWithChanges() {
+    // Step 1: Load an existing single ingredient/component product
+    PackageDetails<MedicationProductDetails> packageDetails =
+        getLingoTestClient()
+            .getMedicationPackDetails(AmtTestData.AMOXIL_500_MG_CAPSULE_28_BLISTER_PACK);
+
+    // Step 2: Change the strength of the ingredient to a unique value
+    Ingredient ingredient =
+        packageDetails
+            .getContainedProducts()
+            .get(0)
+            .getProductDetails()
+            .getActiveIngredients()
+            .get(0);
+    ingredient
+        .getTotalQuantity()
+        .setValue(BigDecimal.valueOf(750)); // Changed strength from 500 to 750
+
+    // Step 3: Perform a calculate/update operation
+    Long productId = AmtTestData.AMOXIL_500_MG_CAPSULE_28_BLISTER_PACK;
+    ProductSummary productSummary =
+        getLingoTestClient().calculateUpdateMedicationProductSummary(productId, packageDetails);
+
+    // Step 4: Verify the calculation
+    // The product summary should contain new concepts for the changed strength
+    Assertions.assertThat(productSummary.isContainsNewConcepts()).isTrue();
+
+    Assertions.assertThat(productSummary.getUnmatchedPreviouslyReferencedNodes()).isEmpty();
+
+    productSummary.getNodes().stream()
+        .forEach(
+            node -> {
+              if (node.getOriginalNode() != null) {
+                Assertions.assertThat(node.getNonDefiningProperties())
+                    .as(
+                        "New node "
+                            + node.getConceptId()
+                            + " non-defining properties should match original node "
+                            + node.getOriginalNode().getConceptId()
+                            + " non-defining properties")
+                    .containsExactlyInAnyOrderElementsOf(
+                        node.getOriginalNode().getNode().getNonDefiningProperties());
+
+                // this product is referenced by other products for each node being changed
+                Assertions.assertThat(node.getOriginalNode().isReferencedByOtherProducts())
+                    .isTrue();
+              }
+            });
+
+    // Check that the appropriate nodes are marked as new
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
+
+    // Check that external identifiers are preserved
+    checkExternalIdentifiers(productSummary, packageDetails);
+
+    // Verify that the original nodes are properly referenced
+    productSummary.getNodes().stream()
+        .filter(Node::isNewConcept)
+        .forEach(
+            node -> {
+              Assertions.assertThat(node.getOriginalNode()).isNotNull();
+              Assertions.assertThat(node.getOriginalNode().getNode()).isNotNull();
+            });
+
+    // Step 5: Change a non-defining property (e.g., pack size), change strength back to 500
+    ingredient.getTotalQuantity().setValue(BigDecimal.valueOf(500));
+    packageDetails
+        .getContainedProducts()
+        .iterator()
+        .next()
+        .setValue(BigDecimal.valueOf(56)); // Change pack size from 28 to 56
+
+    // Step 6: Perform another calculate/update operation
+    productSummary =
+        getLingoTestClient().calculateUpdateMedicationProductSummary(productId, packageDetails);
+
+    // Step 7: Verify the calculation
+    // The product summary should contain new concepts for the changed pack size
+    Assertions.assertThat(productSummary.isContainsNewConcepts()).isTrue();
+
+    Assertions.assertThat(productSummary.getUnmatchedPreviouslyReferencedNodes()).isEmpty();
+
+    productSummary.getNodes().stream()
+        .forEach(
+            node -> {
+              if (node.getOriginalNode() != null) {
+                Assertions.assertThat(node.getNonDefiningProperties())
+                    .as(
+                        "New node "
+                            + node.getConceptId()
+                            + " non-defining properties should match original node "
+                            + node.getOriginalNode().getConceptId()
+                            + " non-defining properties")
+                    .containsExactlyInAnyOrderElementsOf(
+                        node.getOriginalNode().getNode().getNonDefiningProperties());
+
+                // this product is referenced by other products for each node being changed
+                Assertions.assertThat(node.getOriginalNode().isReferencedByOtherProducts())
+                    .isTrue();
+              }
+            });
+
+    // Only the package-related nodes should be new, the product nodes should be reused
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
+
+    // Check that external identifiers are preserved
+    checkExternalIdentifiers(productSummary, packageDetails);
+  }
 }

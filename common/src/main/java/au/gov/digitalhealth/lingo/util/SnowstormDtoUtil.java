@@ -399,7 +399,7 @@ public class SnowstormDtoUtil {
         .moduleId(SCT_AU_MODULE.getValue());
   }
 
-  public static void addQuantityIfNotNull(
+  public static boolean addQuantityIfNotNull(
       Quantity quantity,
       int decimalScale,
       Set<SnowstormRelationship> relationships,
@@ -425,7 +425,9 @@ public class SnowstormDtoUtil {
               group,
               STATED_RELATIONSHIP,
               modelConfiguration.getModuleId()));
+      return true;
     }
+    return false;
   }
 
   public static void addRelationshipIfNotNull(
