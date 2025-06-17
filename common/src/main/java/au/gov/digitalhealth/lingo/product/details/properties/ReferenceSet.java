@@ -58,4 +58,12 @@ public class ReferenceSet extends NonDefiningBase implements Serializable {
         .map(p -> (ReferenceSet) p)
         .toList();
   }
+
+  public void updateFromDefinition(ReferenceSetDefinition referenceSetDefinition) {
+    this.setIdentifierScheme(referenceSetDefinition.getName());
+    this.setIdentifier(referenceSetDefinition.getIdentifier());
+    this.setTitle(referenceSetDefinition.getTitle());
+    this.setDescription(referenceSetDefinition.getDescription());
+    this.setType(PropertyType.REFERENCE_SET);
+  }
 }

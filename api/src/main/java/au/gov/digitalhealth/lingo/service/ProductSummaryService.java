@@ -15,7 +15,6 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
-
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
@@ -33,6 +32,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -96,6 +96,11 @@ public class ProductSummaryService {
       return getTransitiveEdges(productSummary, transitiveContainsEdges);
     }
     return transitiveContainsEdges;
+  }
+
+  @Async
+  public CompletableFuture<ProductSummary> getProductSummaryAsync(String branch, String productId) {
+    return CompletableFuture.completedFuture(getProductSummary(branch, productId));
   }
 
   public ProductSummary getProductSummary(String branch, String productId) {
@@ -162,7 +167,7 @@ public class ProductSummaryService {
     for (ModelLevel modelLevel : packagModelLevels) {
       CompletableFuture<Node> node =
           nodeGeneratorService
-              .lookUpNode(branch, productIdLong, modelLevel)
+              .lookUpNode(branch, productIdLong, modelLevel, null)
               .thenApply(
                   c -> {
                     productSummary.addNode(c);
@@ -265,7 +270,7 @@ public class ProductSummaryService {
       ModelLevel productNameLevel = model.getLevelOfType(ModelLevelType.PRODUCT_NAME);
       futures.add(
           nodeGeneratorService
-              .lookUpNode(branch, productIdLong, productNameLevel)
+              .lookUpNode(branch, productIdLong, productNameLevel, null)
               .thenApply(
                   c -> {
                     productSummary.addNode(c);
@@ -291,7 +296,7 @@ public class ProductSummaryService {
     ModelLevel leafProductLevel = ModelLevel.getLeafLevel(productModelLevels);
     CompletableFuture<Void> productNodesFuture =
         nodeGeneratorService
-            .lookUpNodes(branch, productIdLong, leafProductLevel)
+            .lookUpNodes(branch, productIdLong, leafProductLevel, null)
             .thenCompose(
                 productNodes -> {
                   Set<CompletableFuture<Void>> productFutures =
@@ -352,7 +357,10 @@ public class ProductSummaryService {
       futures.add(
           nodeGeneratorService
               .lookUpNode(
-                  branch, Long.parseLong(productNode.getConcept().getConceptId()), productNameLevel)
+                  branch,
+                  Long.parseLong(productNode.getConcept().getConceptId()),
+                  productNameLevel,
+                  null)
               .thenCompose(
                   productName -> {
                     productSummary.addNode(productName);
@@ -395,7 +403,8 @@ public class ProductSummaryService {
                 .lookUpNode(
                     branch,
                     Long.parseLong(productNode.getConcept().getConceptId()),
-                    parentModelLevel)
+                    parentModelLevel,
+                    null)
                 .thenCompose(
                     parent -> {
                       productSummary.addEdge(

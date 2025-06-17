@@ -27,7 +27,7 @@ import junit.framework.TestCase;
 import org.jgrapht.graph.GraphCycleProhibitedException;
 import org.junit.jupiter.api.Assertions;
 
-public class NodeDependencyComparatorTest extends TestCase {
+public class NewNodeDependencyComparatorTest extends TestCase {
 
   private static Node getNode(int x) {
     ModelLevel modelLevel = new ModelLevel();
@@ -42,7 +42,7 @@ public class NodeDependencyComparatorTest extends TestCase {
   }
 
   private static void assertExpectedOrder(
-      Set<Node> nodes, NodeDependencyComparator comparator, List<String> expectedOrder) {
+      Set<Node> nodes, NewNodeDependencyComparator comparator, List<String> expectedOrder) {
     Assertions.assertEquals(
         expectedOrder,
         nodes.stream().sorted(comparator).map(Node::getConceptId).toList(),
@@ -69,7 +69,7 @@ public class NodeDependencyComparatorTest extends TestCase {
     nodes.add(node1);
     nodes.add(node2);
 
-    NodeDependencyComparator comparator = new NodeDependencyComparator(nodes);
+    NewNodeDependencyComparator comparator = new NewNodeDependencyComparator(nodes);
 
     assertExpectedOrder(nodes, comparator, List.of(node1.getConceptId(), node2.getConceptId()));
   }
@@ -97,7 +97,7 @@ public class NodeDependencyComparatorTest extends TestCase {
     nodes.add(node5);
     nodes.add(node6);
 
-    NodeDependencyComparator comparator = new NodeDependencyComparator(nodes);
+    NewNodeDependencyComparator comparator = new NewNodeDependencyComparator(nodes);
 
     assertExpectedOrder(
         nodes,
@@ -136,7 +136,7 @@ public class NodeDependencyComparatorTest extends TestCase {
     nodes.add(node5);
     nodes.add(node6);
 
-    NodeDependencyComparator comparator = new NodeDependencyComparator(nodes);
+    NewNodeDependencyComparator comparator = new NewNodeDependencyComparator(nodes);
 
     assertExpectedOrder(
         nodes,
@@ -161,7 +161,7 @@ public class NodeDependencyComparatorTest extends TestCase {
     nodes.add(node2);
 
     Assertions.assertThrows(
-        GraphCycleProhibitedException.class, () -> new NodeDependencyComparator(nodes));
+        GraphCycleProhibitedException.class, () -> new NewNodeDependencyComparator(nodes));
   }
 
   public void testComplexCyclicDependency() {
@@ -185,7 +185,7 @@ public class NodeDependencyComparatorTest extends TestCase {
     nodes.add(node4);
 
     Assertions.assertThrows(
-        GraphCycleProhibitedException.class, () -> new NodeDependencyComparator(nodes));
+        GraphCycleProhibitedException.class, () -> new NewNodeDependencyComparator(nodes));
   }
 
   private void createDependency(Node node, Node node1) {
