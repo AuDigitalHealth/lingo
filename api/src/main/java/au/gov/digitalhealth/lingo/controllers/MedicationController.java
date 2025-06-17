@@ -32,6 +32,7 @@ import au.gov.digitalhealth.lingo.service.MedicationProductCalculationService;
 import au.gov.digitalhealth.lingo.service.MedicationService;
 import au.gov.digitalhealth.lingo.service.ProductCreationService;
 import au.gov.digitalhealth.lingo.service.TaskManagerService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.validation.Valid;
 import java.util.Map;
 import java.util.Set;
@@ -171,6 +172,21 @@ public class MedicationController {
     taskManagerService.validateTaskState(branch);
     return medicationProductCalculationService.calculateProductFromAtomicData(
         branch, productDetails);
+  }
+
+  @LogExecutionTime
+  @PostMapping("/{branch}/medications/product/{productId}/$calculateUpdate")
+  public ProductSummary updateMedicationProductFromAtomicData(
+      @PathVariable String branch,
+      @PathVariable Long productId,
+      @RequestBody @Valid PackageDetails<@Valid MedicationProductDetails> productDetails)
+      throws ExecutionException, InterruptedException, JsonProcessingException {
+    taskManagerService.validateTaskState(branch);
+    final ProductSummary productSummary =
+        medicationProductCalculationService.calculateUpdateProductFromAtomicData(
+            branch, productId, productDetails);
+
+    return productSummary;
   }
 
   @LogExecutionTime

@@ -17,6 +17,7 @@ package au.gov.digitalhealth.lingo.service;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptView;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.FsnAndPt;
 import au.gov.digitalhealth.lingo.product.NameGeneratorSpec;
@@ -25,6 +26,7 @@ import au.gov.digitalhealth.lingo.util.OwlAxiomService;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
@@ -98,9 +100,16 @@ public class NameGenerationService {
         throw new ProductAtomicDataValidationProblem(
             "Could not calculate one (and only one) axiom for concept " + scon.getConceptId());
       }
-      axiomN = atomicCache.substituteIdsInAxiom(axiomN, node.getNewConceptDetails().getConceptId());
+      String axiomFsn =
+          atomicCache.substituteIdsForFsnInAxiom(
+              axiomN, node.getNewConceptDetails().getConceptId());
+      String axiomPt =
+          modelConfiguration.getModelType().equals(ModelType.NMPC)
+              ? ""
+              : atomicCache.substituteIdsForPtInAxiom(
+                  axiomN, node.getNewConceptDetails().getConceptId());
 
-      return Optional.of(new NameGeneratorSpec(semanticTag, axiomN));
+      return Optional.of(new NameGeneratorSpec(semanticTag, axiomFsn, axiomPt, List.of()));
     }
 
     return Optional.empty();
