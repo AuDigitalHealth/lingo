@@ -45,10 +45,12 @@ import jakarta.validation.Valid;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 
+@Slf4j
 public class LingoTestClient {
 
   private final Cookie imsCookie;
@@ -210,6 +212,18 @@ public class LingoTestClient {
         brandPackSizeCreationDetails,
         HttpStatus.OK,
         ProductSummary.class);
+  }
+
+  public ProductSummary calculateUpdateMedicationProductSummary(
+      Long productId, PackageDetails<MedicationProductDetails> packageDetails) {
+    final ProductSummary productSummary =
+        postRequest(
+            "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/product/" + productId + "/$calculateUpdate",
+            packageDetails,
+            HttpStatus.OK,
+            ProductSummary.class);
+    log.info(productSummary.toString());
+    return productSummary;
   }
 
   public <T> @Valid T getRequest(String path, HttpStatus expectedStatus, Class<T> responseType) {

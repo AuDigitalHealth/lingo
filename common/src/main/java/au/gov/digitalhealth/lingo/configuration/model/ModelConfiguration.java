@@ -31,6 +31,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -73,6 +74,8 @@ public class ModelConfiguration {
   @NotEmpty private String baseBulkBrandUiSchema;
   @NotEmpty private String baseBulkPackSchema;
   @NotEmpty private String baseBulkPackUiSchema;
+  @NotEmpty private String baseEditSchema;
+  @NotEmpty private String baseEditUiSchema;
   @NotEmpty private String moduleId;
   private String subpackFromPackageEcl;
   private boolean executeEclAsStated = true;
@@ -301,6 +304,13 @@ public class ModelConfiguration {
         .collect(Collectors.toMap(ReferenceSetDefinition::getIdentifier, Function.identity()));
   }
 
+  public Map<String, ReferenceSetDefinition> getReferenceSetsBySchemeForModelLevel(
+      ModelLevel modelLevel) {
+    return getReferenceSets().stream()
+        .filter(r -> r.getModelLevels().contains(modelLevel.getModelLevelType()))
+        .collect(Collectors.toMap(ReferenceSetDefinition::getName, Function.identity()));
+  }
+
   public Map<String, ExternalIdentifierDefinition> getMappingsByIdentifierForModelLevel(
       ModelLevel modelLevel) {
     return getMappings().stream()
@@ -309,12 +319,26 @@ public class ModelConfiguration {
             Collectors.toMap(ExternalIdentifierDefinition::getIdentifier, Function.identity()));
   }
 
+  public Map<String, ExternalIdentifierDefinition> getMappingsBySchemeForModelLevel(
+      ModelLevel modelLevel) {
+    return getMappings().stream()
+        .filter(r -> r.getModelLevels().contains(modelLevel.getModelLevelType()))
+        .collect(Collectors.toMap(ExternalIdentifierDefinition::getName, Function.identity()));
+  }
+
   public Map<String, NonDefiningPropertyDefinition>
       getNonDefiningPropertiesByIdentifierForModelLevel(ModelLevel modelLevel) {
     return getNonDefiningProperties().stream()
         .filter(r -> r.getModelLevels().contains(modelLevel.getModelLevelType()))
         .collect(
             Collectors.toMap(NonDefiningPropertyDefinition::getIdentifier, Function.identity()));
+  }
+
+  public Map<String, NonDefiningPropertyDefinition> getNonDefiningPropertiesBySchemeForModelLevel(
+      ModelLevel modelLevel) {
+    return getNonDefiningProperties().stream()
+        .filter(r -> r.getModelLevels().contains(modelLevel.getModelLevelType()))
+        .collect(Collectors.toMap(NonDefiningPropertyDefinition::getName, Function.identity()));
   }
 
   public String getReferenceSetIdForModelLevelType(ModelLevelType modelLevelType) {
@@ -376,5 +400,41 @@ public class ModelConfiguration {
   public Map<@NotNull String, @NotNull String> getAcceptabilityMap() {
     return getPreferredLanguageRefsets().stream()
         .collect(Collectors.toMap(s -> s, s -> PREFERRED.getValue()));
+  }
+
+  public Collection<ExternalIdentifierDefinition> getMappingsByLevel(ModelLevel level) {
+    return mappings.stream()
+        .filter(mapping -> mapping.getModelLevels().contains(level.getModelLevelType()))
+        .collect(Collectors.toSet());
+  }
+
+  public Collection<NonDefiningPropertyDefinition> getNonDefiningPropertiesByLevel(
+      ModelLevel level) {
+    return nonDefiningProperties.stream()
+        .filter(
+            nonDefiningProperty ->
+                nonDefiningProperty.getModelLevels().contains(level.getModelLevelType()))
+        .collect(Collectors.toSet());
+  }
+
+  public Collection<ReferenceSetDefinition> getReferenceSetsByLevel(ModelLevel level) {
+    return referenceSets.stream()
+        .filter(
+            referenceSetDefinition ->
+                referenceSetDefinition.getModelLevels().contains(level.getModelLevelType()))
+        .collect(Collectors.toSet());
+  }
+
+  public ModelLevel getLevelByDisplayName(String type) {
+    return levels.stream()
+        .filter(level -> level.getDisplayLabel().equalsIgnoreCase(type))
+        .findFirst()
+        .orElseThrow(
+            () ->
+                new ValidationException(
+                    "No model level found for display name: "
+                        + type
+                        + " in model: "
+                        + this.modelType));
   }
 }

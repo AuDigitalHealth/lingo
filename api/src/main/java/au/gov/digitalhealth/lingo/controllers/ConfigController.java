@@ -112,4 +112,18 @@ public class ConfigController {
   public ResponseEntity<String> getBulkPackUiSchema(@PathVariable String branch) {
     return ResponseEntity.ok(schemaService.getBulkPackUiSchema(branch));
   }
+
+  @GetMapping(value = "/edit/{branch}/{type}/schema", produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<String> getEditSchema(
+      @PathVariable String branch, @PathVariable String type) {
+    return ResponseEntity.ok(schemaService.getEditSchema(branch, type));
+  }
+
+  @GetMapping(
+      value = "/edit/{branch}/{type}/ui-schema",
+      produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<String> getEditUiSchema(
+      @PathVariable String branch, @PathVariable String type) {
+    return ResponseEntity.ok(schemaService.getEditUiSchema(branch, type));
+  }
 }
