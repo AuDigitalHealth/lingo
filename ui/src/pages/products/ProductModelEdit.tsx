@@ -3,7 +3,6 @@ import {
   AccordionSummary,
   Box,
   Button,
-  FormHelperText,
   Grid,
   IconButton,
   MenuItem,
@@ -11,9 +10,8 @@ import {
   SelectChangeEvent,
   Tab,
   Tabs,
-  TextField,
   Tooltip,
-  Typography,
+  Typography
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import {
@@ -22,7 +20,7 @@ import {
   Edge,
   Product,
   Product7BoxBGColour,
-  ProductSummary,
+  ProductSummary
 } from '../../types/concept.ts';
 import {
   cleanBrandPackSizeDetails,
@@ -35,7 +33,7 @@ import {
   getProductDisplayName,
   isDeviceType,
   isFsnToggleOn,
-  OWL_EXPRESSION_ID,
+  OWL_EXPRESSION_ID
 } from '../../utils/helpers/conceptUtils.ts';
 import { styled, useTheme } from '@mui/material/styles';
 import MuiAccordion, { AccordionProps } from '@mui/material/Accordion';
@@ -45,15 +43,13 @@ import LinkViews from './components/LinkViews.tsx';
 import ClearIcon from '@mui/icons-material/Clear';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import Loading from '../../components/Loading.tsx';
-import { InnerBoxSmall } from './components/style/ProductBoxes.tsx';
 import {
   Control,
-  Controller,
   useForm,
   UseFormGetValues,
   UseFormRegister,
   UseFormWatch,
-  useWatch,
+  useWatch
 } from 'react-hook-form';
 
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -66,7 +62,7 @@ import {
   MedicationPackageDetails,
   ProductCreationDetails,
   ProductGroupType,
-  ProductType,
+  ProductType
 } from '../../types/product.ts';
 import { Ticket } from '../../types/tickets/ticket.ts';
 import { snowstormErrorHandler } from '../../types/ErrorHandler.ts';
@@ -77,14 +73,11 @@ import CustomTabPanel from './components/CustomTabPanel.tsx';
 import {
   getTicketBulkProductActionsByTicketIdOptions,
   getTicketProductsByTicketIdOptions,
-  useTicketByTicketNumber,
+  useTicketByTicketNumber
 } from '../../hooks/api/tickets/useTicketById.tsx';
 import useTaskById from '../../hooks/useTaskById.tsx';
 import useAuthoringStore from '../../stores/AuthoringStore.ts';
-import {
-  uniqueFsnValidator,
-  uniquePtValidator,
-} from '../../types/productValidations.ts';
+import { uniqueFsnValidator, uniquePtValidator } from '../../types/productValidations.ts';
 import WarningModal from '../../themes/overrides/WarningModal.tsx';
 import { closeSnackbar } from 'notistack';
 import ConceptDiagramModal from '../../components/conceptdiagrams/ConceptDiagramModal.tsx';
@@ -92,22 +85,22 @@ import {
   AccountTreeOutlined,
   NewReleases,
   NewReleasesOutlined,
+  SecurityUpdateWarning
 } from '@mui/icons-material';
 import { FormattedMessage } from 'react-intl';
 import { validateProductSummaryNodes } from '../../types/productValidationUtils.ts';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   getBulkAuthorBrandOptions,
-  getBulkAuthorPackSizeOptions,
+  getBulkAuthorPackSizeOptions
 } from '../../hooks/api/tickets/useTicketProduct.tsx';
-import {
-  bulkAuthorBrands,
-  bulkAuthorPackSizes,
-} from '../../types/queryKeys.ts';
+import { bulkAuthorBrands, bulkAuthorPackSizes } from '../../types/queryKeys.ts';
 import { isNameContainsKeywords } from '../../../cypress/e2e/helpers/product.ts';
 import { useFieldBindings } from '../../hooks/api/useInitializeConfig.tsx';
 import { FieldBindings } from '../../types/FieldBindings.ts';
-import { useRefsetMembersByComponentIds } from '../../hooks/api/refset/useRefsetMembersByComponentIds.tsx';
+import {
+  useRefsetMembersByComponentIds
+} from '../../hooks/api/refset/useRefsetMembersByComponentIds.tsx';
 import { RefsetMember } from '../../types/RefsetMember.ts';
 import productService from '../../api/ProductService.ts';
 import ExistingConceptDropdown from './components/ExistingConceptDropdown.tsx';
@@ -774,6 +767,8 @@ function ProductHeaderWatch({
     } else {
       handleChangeColor(Product7BoxBGColour.NEW);
     }
+  } else if (product.propertyUpdate) {
+    handleChangeColor(Product7BoxBGColour.PROPERTY_CHANGE);
   }
 
   if (showHighLite) {
@@ -1034,6 +1029,18 @@ function ProductPanel({
                     )}
                   </Grid>
                   <Grid container justifyContent="flex-end" alignItems="center">
+                    {product.propertyUpdate && (
+                      <Tooltip
+                        title={
+                          <FormattedMessage
+                            id="properties-updated"
+                            defaultMessage="Properties are updated"
+                          />
+                        }
+                      >
+                        <SecurityUpdateWarning />
+                      </Tooltip>
+                    )}
                     {product.newInTask ? (
                       <Tooltip
                         title={
@@ -1101,6 +1108,18 @@ function ProductPanel({
                       />
                     ) : (
                       <></>
+                    )}
+                    {product.propertyUpdate && (
+                      <Tooltip
+                        title={
+                          <FormattedMessage
+                            id="properties-updated"
+                            defaultMessage="Properties are updated"
+                          />
+                        }
+                      >
+                        <SecurityUpdateWarning />
+                      </Tooltip>
                     )}
                     {product.newInTask ? (
                       <Tooltip
@@ -1311,6 +1330,8 @@ const getColorByDefinitionStatus = (
       return Product7BoxBGColour.INCOMPLETE;
     }
     return Product7BoxBGColour.NEW;
+  } else if (product.propertyUpdate) {
+    return Product7BoxBGColour.PROPERTY_CHANGE;
   }
   return product.concept?.definitionStatus === DefinitionStatus.Primitive
     ? Product7BoxBGColour.PRIMITIVE
