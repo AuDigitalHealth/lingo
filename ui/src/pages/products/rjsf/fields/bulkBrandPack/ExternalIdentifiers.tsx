@@ -196,7 +196,8 @@ const ExternalIdentifierRender: React.FC<
 
       const testObj: NonDefiningProperty = {
         identifierScheme: schema.properties.identifierScheme.const,
-        relationshipType: schema.properties.relationshipType.const,
+        relationshipType: schema.properties.relationshipType?.const ?? null,
+        type: schema.properties.type?.const ?? null,
         value: trimmed,
       };
 
