@@ -5,7 +5,7 @@ import { useSearchConceptOntoServerByUrl } from '../../../../hooks/api/products/
 import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../../utils/helpers/getValueSetExpansionContainsPt.ts';
 import useApplicationConfigStore from '../../../../stores/ApplicationConfigStore.ts';
 import { FieldProps } from '@rjsf/utils';
-import {NonDefiningProperty} from "../../../../types/product.ts";
+import { NonDefiningProperty } from '../../../../types/product.ts';
 
 interface ValueSetAutocompleteProps extends FieldProps {
   label?: string;
@@ -130,7 +130,5 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
     />
   );
 };
-
-
 
 export default ValueSetAutocomplete;
