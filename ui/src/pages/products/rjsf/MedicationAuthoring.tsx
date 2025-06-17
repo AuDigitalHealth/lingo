@@ -52,6 +52,7 @@ function MedicationAuthoring({
   ticketProductId,
   ticket,
 }: MedicationAuthoringV2Props) {
+  const [formKey, setFormKey] = useState(0);
   const [formData, setFormData] = useState({});
   const [errorSchema, setErrorSchema] = useState({});
   const [saveModalOpen, setSaveModalOpen] = useState(false);
@@ -107,10 +108,9 @@ function MedicationAuthoring({
 
   const handleClear = useCallback(() => {
     setFormData({});
-    if (formRef.current) {
-      formRef.current.reset();
-    }
+    setErrorSchema({});
     setIsDirty(false);
+    setFormKey(prev => prev + 1); // force re-render
   }, []);
 
   if (
@@ -156,6 +156,7 @@ function MedicationAuthoring({
       <Box m={2} p={2}>
         <Container data-testid="product-creation-grid">
           <Form
+            key={formKey}
             ref={formRef}
             schema={schema as any}
             uiSchema={uiSchema as any}
