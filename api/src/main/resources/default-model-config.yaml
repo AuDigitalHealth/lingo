@@ -13,6 +13,8 @@ models:
     baseBulkBrandUiSchema: classpath:AMT/base-bulk-brand-ui-schema.json
     baseBulkPackSchema: classpath:AMT/base-bulk-pack-schema.json
     baseBulkPackUiSchema: classpath:AMT/base-bulk-pack-ui-schema.json
+    baseEditSchema: classpath:AMT/base-edit-schema.json
+    baseEditUiSchema: classpath:AMT/base-edit-ui-schema.json
     subpackFromPackageEcl: "((<id>.999000011000168107) or (<id>.999000111000168106))"
     medicationPackageDataExtractionEcl: "(<id> or (<id>.999000011000168107) or (<id>.774160008) or (<id>.999000011000168107.774160008) or ((>>((<id>.774160008) or (<id>.999000011000168107.774160008))) and (^929360071000036103))) and <373873005"
     medicationProductDataExtractionEcl: "(<id> or (>> <id> and ^929360071000036103)) and <373873005"
@@ -105,6 +107,8 @@ models:
     baseBulkBrandUiSchema: classpath:NMPC/base-bulk-brand-ui-schema.json
     baseBulkPackSchema: classpath:NMPC/base-bulk-pack-schema.json
     baseBulkPackUiSchema: classpath:NMPC/base-bulk-pack-ui-schema.json
+    baseEditSchema: classpath:NMPC/base-edit-schema.json
+    baseEditUiSchema: classpath:NMPC/base-edit-ui-schema.json
     medicationPackageDataExtractionEcl: "(<id> or (<id>.774160008) or (>>(>><id>.774160008) and (^660371000220109 or ^ 660351000220100))) and <373873005"
     medicationProductDataExtractionEcl: "(<id> or (>> <id> and (^660371000220109 or ^ 660351000220100)) and <373873005"
     devicePackageDataExtractionEcl: "(<id> or (<id>.999000111000168106) or (<id>.999000081000168101) or (<id>.999000111000168106.999000081000168101) or ((>>((<id>.999000081000168101) or (<id>.999000111000168106.999000081000168101))) and (^929360071000036103 or ^929360061000036106))) and < 260787004"
@@ -114,9 +118,9 @@ models:
       - name: Virtual Therapeutic Moiety
         displayLabel: MP
         modelLevelType: MEDICINAL_PRODUCT_ONLY
-        medicineSemanticTag: medicinal product
+        medicineSemanticTag: medicinal product only
         deviceSemanticTag: physical object
-        drugDeviceSemanticTag: medicinal product
+        drugDeviceSemanticTag: medicinal product only
         referenceSetIdentifier: 660351000220100
         productModelEcl: "((> <id>) and ^ 660351000220100) minus >((> <id>) and ^ 660351000220100)"
       - name: Virtual Medicinal Product
@@ -138,23 +142,23 @@ models:
       - name: Virtual Medicinal Product Pack
         displayLabel: MPP
         modelLevelType: PACKAGED_CLINICAL_DRUG
-        medicineSemanticTag: clinical drug package
-        deviceSemanticTag: physical object package
-        drugDeviceSemanticTag: clinical drug package
+        medicineSemanticTag: packaged clinical drug
+        deviceSemanticTag: packaged physical object
+        drugDeviceSemanticTag: packaged clinical drug
         referenceSetIdentifier: 660391000220105
         productModelEcl: "((> <id>) and ^ 660391000220105) minus >((> <id>) and ^ 660391000220105)"
       - name: Actual Medicinal Product Pack
         displayLabel: TPP
         modelLevelType: REAL_PACKAGED_CLINICAL_DRUG
-        medicineSemanticTag: real clinical drug package
-        deviceSemanticTag: branded physical object package
-        drugDeviceSemanticTag: real clinical drug package
+        medicineSemanticTag: real packaged clinical drug
+        deviceSemanticTag: real packaged physical object
+        drugDeviceSemanticTag: real packaged clinical drug
         referenceSetIdentifier: 660401000220107
       - name: Actual Therapeutic Moiety
         displayLabel: TP
         modelLevelType: REAL_MEDICINAL_PRODUCT
         medicineSemanticTag: real medicinal product
-        deviceSemanticTag: branded physical object
+        deviceSemanticTag: real physical object
         drugDeviceSemanticTag: real medicinal product
         referenceSetIdentifier: 660361000220103
         productModelEcl: "> <id> :774159003=*"
@@ -166,6 +170,7 @@ models:
         level: PRODUCT
         dataType: STRING
         valueRegexValidation: (PA\d{4,8}(\/\d{1,2})?(\/\d{1,2})?)|(EU\/\d{1,5}\/\d{1,5}\/\d{1,5})
+        valueValidationErrorMessage: "Must be a valid HPRA or EMA product authorisation number (PA12345678, PA1234/12, PA1234/12/34, EU/12345/67890/12345)"
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: true
@@ -180,6 +185,7 @@ models:
         level: PACKAGE
         dataType: STRING
         valueRegexValidation: (PA\d{4,8}(\/\d{1,2})?(\/\d{1,2})?)|(EU\/\d{1,5}\/\d{1,5}\/\d{1,5})
+        valueValidationErrorMessage: "Must be a valid HPRA or EMA product authorisation number (PA12345678, PA1234/12, PA1234/12/34, EU/12345/67890/12345)"
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
@@ -193,6 +199,7 @@ models:
         level: PACKAGE
         dataType: UNSIGNED_INTEGER
         valueRegexValidation: \d{8,14}
+        valueValidationErrorMessage: "Must be a valid number beteween 8 and 14 digits"
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
@@ -215,6 +222,20 @@ models:
         mappingTypes:
           - RELATED
         order: 100
+      - name: pcrs
+        title: GMS Reimbursable
+        identifier: 105590001
+        level: PACKAGE
+        dataType: CODED,
+        valueRegexValidation: ^.+$
+        valueSetReference: https://nmpc.hse.ie/PCRS/vs
+        codeSystem: https://nmpc.hse.ie/PCRS
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        defaultMappingType: RELATED
+        mappingTypes:
+          - RELATED
     referenceSets:
       - name: blackTriangle
         title: Black Triangle
@@ -242,7 +263,7 @@ models:
         description: Non-prescribable VMP
         identifier: 1514151000168100
         level: PRODUCT
-        modelLevels: REAL_CLINICAL_DRUG
+        modelLevels: CLINICAL_DRUG
         order: 70
     nonDefiningProperties:
       - name: supplier
@@ -274,6 +295,7 @@ models:
         level: PRODUCT
         dataType: URI
         valueRegexValidation: http(s)?://.+\.(pdf|html)
+        valueValidationErrorMessage: "Must be a valid URL ending in .pdf or .html"
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: true
@@ -285,6 +307,7 @@ models:
         level: PRODUCT
         dataType: URI
         valueRegexValidation: http(s)?://.+\.(pdf|html)
+        valueValidationErrorMessage: "Must be a valid URL ending in .pdf or .html"
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: true
@@ -296,6 +319,7 @@ models:
         level: PACKAGE
         dataType: URI
         valueRegexValidation: http(s)?://.+\.(pdf|html)
+        valueValidationErrorMessage: "Must be a valid URL ending in .pdf or .html"
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
@@ -307,6 +331,7 @@ models:
         level: PACKAGE
         dataType: URI
         valueRegexValidation: http(s)?://.+\.(pdf|html)
+        valueValidationErrorMessage: "Must be a valid URL ending in .pdf or .html"
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true

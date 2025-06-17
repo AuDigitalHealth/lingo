@@ -190,6 +190,7 @@ public class BrandPackSizeService {
         r -> {
           if (!Boolean.TRUE.equals(r.getConcrete()) && r.getTarget() != null) {
             atomicCache.addFsn(r.getDestinationId(), r.getTarget().getFsn().getTerm());
+            atomicCache.addPt(r.getDestinationId(), r.getTarget().getPt().getTerm());
           }
         });
 
@@ -386,6 +387,7 @@ public class BrandPackSizeService {
     AtomicCache atomicCache =
         new AtomicCache(
             brandPackSizeCreationDetails.getIdFsnMap(),
+            brandPackSizeCreationDetails.getIdPtMap(),
             AmtConstants.values(),
             SnomedConstants.values());
 
@@ -749,6 +751,7 @@ public class BrandPackSizeService {
             calculateNonDefiningRelationships(
                 models.getModelConfiguration(branch), properties, modelLevel.getModelLevelType()),
             List.of(),
+            properties,
             false,
             false,
             true)
@@ -818,6 +821,7 @@ public class BrandPackSizeService {
             calculateNonDefiningRelationships(
                 models.getModelConfiguration(branch), properties, modelLevel.getModelLevelType()),
             List.of(),
+            properties,
             false,
             false,
             true)
@@ -888,6 +892,7 @@ public class BrandPackSizeService {
             calculateNonDefiningRelationships(
                 models.getModelConfiguration(branch), properties, modelLevel.getModelLevelType()),
             List.of(),
+            properties,
             false,
             false,
             true)

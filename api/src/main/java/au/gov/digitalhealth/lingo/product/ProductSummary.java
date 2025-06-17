@@ -48,9 +48,16 @@ public class ProductSummary implements Serializable {
 
   @NotNull @NotEmpty final Set<@Valid Edge> edges = new HashSet<>();
 
+  @NotNull final Set<@Valid OriginalNode> unmatchedPreviouslyReferencedNodes = new HashSet<>();
+
   @JsonProperty(value = "containsNewConcepts", access = JsonProperty.Access.READ_ONLY)
   public boolean isContainsNewConcepts() {
     return nodes.stream().anyMatch(Node::isNewConcept);
+  }
+
+  @JsonProperty(value = "containsEditedConcepts", access = JsonProperty.Access.READ_ONLY)
+  public boolean isContainsEditedConcepts() {
+    return nodes.stream().anyMatch(Node::isConceptEdit);
   }
 
   public void addNode(Node node) {

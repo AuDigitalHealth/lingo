@@ -25,6 +25,7 @@ import au.csiro.snowstorm_client.model.SnowstormAsyncConceptChangeBatch.StatusEn
 import au.gov.digitalhealth.lingo.exception.BatchSnowstormRequestFailedProblem;
 import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
+import au.gov.digitalhealth.lingo.exception.ResourceNotFoundProblem;
 import au.gov.digitalhealth.lingo.exception.SingleConceptExpectedProblem;
 import au.gov.digitalhealth.lingo.log.SnowstormLogger;
 import au.gov.digitalhealth.lingo.service.ServiceStatus.SnowstormStatus;
@@ -45,6 +46,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -58,6 +60,7 @@ import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -168,6 +171,13 @@ public class SnowstormClient {
         branch, ecl, offset, limit, executeAsStated, Set.of(Pair.of("<id>", id)));
   }
 
+  @Async
+  public CompletableFuture<Collection<String>> getConceptIdsFromEclAsync(
+      String branch, String ecl, int offset, int limit, boolean executeEclAsStated) {
+    return CompletableFuture.completedFuture(
+        self.getConceptIdsFromEcl(branch, ecl, offset, limit, executeEclAsStated, Set.of()));
+  }
+
   public Collection<String> getConceptIdsFromEcl(
       String branch, String ecl, int offset, int limit, boolean executeEclAsStated) {
     return self.getConceptIdsFromEcl(branch, ecl, offset, limit, executeEclAsStated, Set.of());
@@ -208,11 +218,31 @@ public class SnowstormClient {
       snowstormConceptSearchRequest = snowstormConceptSearchRequest.eclFilter(ecl);
     }
 
+    String finalEcl = ecl;
     SnowstormItemsPageObject page =
         api.search(
                 branch,
                 snowstormConceptSearchRequest,
                 "en") // acceptability doesn't matter since this just returns ids
+            .doOnError(
+                e -> {
+                  if (e instanceof WebClientResponseException webex) {
+                    if (webex.getStatusCode().equals(HttpStatusCode.valueOf(404))) {
+                      throw new ResourceNotFoundProblem(
+                          "Concept not found for ECL '"
+                              + finalEcl
+                              + "' on branch '"
+                              + branch
+                              + "'");
+                    } else if (webex.getStatusCode().is4xxClientError()) {
+                      throw new LingoProblem(
+                          "ECL request: "
+                              + finalEcl
+                              + " message was "
+                              + webex.getResponseBodyAsString());
+                    }
+                  }
+                })
             .block();
 
     Instant end = Instant.now();

@@ -1,36 +1,39 @@
-import React, { useEffect, useState } from 'react';
-import { Autocomplete, CircularProgress, TextField } from '@mui/material';
+import { useState, useEffect } from 'react';
+import { FieldProps } from '@rjsf/utils';
 import { Concept } from '../../../../types/concept.ts';
+import useApplicationConfigStore from '../../../../stores/ApplicationConfigStore.ts';
 import { useSearchConceptOntoServerByUrl } from '../../../../hooks/api/products/useSearchConcept.tsx';
 import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../../utils/helpers/getValueSetExpansionContainsPt.ts';
-import useApplicationConfigStore from '../../../../stores/ApplicationConfigStore.ts';
-import { FieldProps } from '@rjsf/utils';
-import { NonDefiningProperty } from '../../../../types/product.ts';
+import { Autocomplete, CircularProgress, TextField } from '@mui/material';
 
-interface ValueSetAutocompleteProps extends FieldProps {
+interface MultiValueValueSetAutocompleteProps extends FieldProps {
   label?: string;
   url: string;
   showDefaultOptions?: boolean;
-  value: string | null; // Concept ID only
-  onChange: (value: string | null) => void;
+  value: Concept[] | null; // Array of Concept objects
+  onChange: (value: Concept[]) => void;
   disabled?: boolean;
   error?: string;
 }
 
-const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
+export const MultiValueValueSetAutocomplete: React.FC<
+  MultiValueValueSetAutocompleteProps
+> = ({
   idSchema,
   name,
   label,
   url,
   showDefaultOptions = false,
-  value, // Concept ID only
+  value, // Array of Concept objects
   onChange,
   disabled = false,
   error,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [options, setOptions] = useState<Concept[]>([]);
-  const [selectedConcept, setSelectedConcept] = useState<Concept | null>(null);
+  const [selectedConcept, setSelectedConcept] = useState<Concept[]>(
+    value || [],
+  );
   const { applicationConfig } = useApplicationConfigStore();
   const { isLoading, data } = useSearchConceptOntoServerByUrl(
     inputValue,
@@ -45,67 +48,78 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
         convertFromValueSetExpansionContainsListToSnowstormConceptMiniList(
           data.expansion.contains,
           applicationConfig.fhirPreferredForLanguage,
-        ); //TODO we may not need this conversion as we only need the code and display
+        );
       const uniqueOptions = Array.from(
         new Map(concepts.map(item => [item.conceptId, item])).values(),
       );
       setOptions(uniqueOptions);
 
-      // If value exists and matches a fetched option, set selectedConcept
-      if (value && !selectedConcept) {
-        const matchingConcept = uniqueOptions.find(
-          option => option.conceptId === value,
+      // If value exists, prefer matching concepts from options for display
+      if (value && value.length > 0) {
+        const matchingConcepts = uniqueOptions.filter(option =>
+          value.some(val => val.conceptId === option.conceptId),
         );
-        if (matchingConcept) {
-          setSelectedConcept(matchingConcept);
-          setInputValue(matchingConcept.pt.term);
+        // Only update selectedConcept if options provide new matches
+        if (matchingConcepts.length > 0) {
+          setSelectedConcept(matchingConcepts);
         }
       }
     }
-  }, [
-    data,
-    applicationConfig.fhirPreferredForLanguage,
-    value,
-    selectedConcept,
-  ]);
+  }, [data, applicationConfig.fhirPreferredForLanguage, value]);
 
-  // Trigger API search with conceptId when value changes
+  // Sync selectedConcept with value when value or options change
   useEffect(() => {
-    if (value && (!selectedConcept || selectedConcept.conceptId !== value)) {
-      setInputValue(value); // Use conceptId as initial search term
-    } else if (!value) {
-      setSelectedConcept(null);
+    if (!value || value.length === 0) {
+      setSelectedConcept([]);
       setInputValue('');
+    } else if (
+      value.length !== selectedConcept.length ||
+      !value.every(val =>
+        selectedConcept.some(concept => concept.conceptId === val.conceptId),
+      )
+    ) {
+      // Prefer options for display (e.g., to get pt.term), but fallback to value if no matches
+      const matchingConcepts =
+        options.length > 0
+          ? options.filter(option =>
+              value.some(val => val.conceptId === option.conceptId),
+            )
+          : value;
+      setSelectedConcept(matchingConcepts);
     }
-  }, [value, selectedConcept]);
+  }, [value, options]);
 
   // Handle selection change
-  const handleChange = (selectedValue: Concept | null) => {
+  const handleChange = (selectedValue: Concept[] | null) => {
+    if (!selectedValue) {
+      setSelectedConcept([]);
+      onChange([]);
+      return;
+    }
     setSelectedConcept(selectedValue);
-    onChange(selectedValue?.conceptId || null);
+    onChange(selectedValue);
   };
 
   return (
     <Autocomplete
+      multiple
       sx={{ width: '100%' }}
       data-testid={idSchema?.$id || name}
       loading={isLoading}
       options={disabled ? [] : options}
-      getOptionLabel={option =>
-        option?.conceptId ? option.conceptId + ' - ' + option?.pt?.term : ''
-      }
+      getOptionLabel={option => option?.pt?.term || ''}
       value={selectedConcept} // Controlled by selectedConcept
       onInputChange={(_, newInputValue) => setInputValue(newInputValue)}
-      onChange={(_, selectedValue) => handleChange(selectedValue as Concept)}
+      onChange={(_, selectedValue) => handleChange(selectedValue as Concept[])}
       isOptionEqualToValue={(option, val) =>
         option?.conceptId === val?.conceptId ||
-        option?.pt?.term === val?.pt?.term
+        (option?.pt?.term && val?.pt?.term && option.pt.term === val.pt.term)
       }
       renderOption={(props, option) => {
         const { key, ...otherProps } = props;
         return (
           <li {...otherProps} key={option.conceptId}>
-            {option.conceptId + ' - ' + option?.pt?.term}
+            {option.conceptId + ' - ' + (option?.pt?.term || '')}
           </li>
         );
       }}
@@ -131,4 +145,4 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
   );
 };
 
-export default ValueSetAutocomplete;
+export default MultiValueValueSetAutocomplete;
