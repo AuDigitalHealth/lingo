@@ -62,10 +62,12 @@ public class SchemaFactory {
           .getErrorMessage()
           .put(
               "pattern",
-              "Please enter a valid "
-                  + mapping.getTitle()
-                  + " matching "
-                  + mapping.getValueRegexValidation());
+              (mapping.getValueValidationErrorMessage() == null
+                  ? "Please enter a valid "
+                      + mapping.getTitle()
+                      + " matching "
+                      + mapping.getValueRegexValidation()
+                  : mapping.getValueValidationErrorMessage()));
       identifierSchema.addProperty("value", property);
     }
 
@@ -126,10 +128,12 @@ public class SchemaFactory {
             .getErrorMessage()
             .put(
                 "pattern",
-                "Please enter a valid "
-                    + nonDefiningPropertyDefinition.getTitle()
-                    + " matching "
-                    + nonDefiningPropertyDefinition.getValueRegexValidation());
+                (nonDefiningPropertyDefinition.getValueValidationErrorMessage() == null
+                    ? "Please enter a valid "
+                        + nonDefiningPropertyDefinition.getTitle()
+                        + " matching "
+                        + nonDefiningPropertyDefinition.getValueRegexValidation()
+                    : nonDefiningPropertyDefinition.getValueValidationErrorMessage()));
       }
       returnValue = items;
     }
