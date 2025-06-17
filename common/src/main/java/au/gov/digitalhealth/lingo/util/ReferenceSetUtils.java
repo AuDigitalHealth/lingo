@@ -45,15 +45,11 @@ public class ReferenceSetUtils {
 
   public static Set<ReferenceSet> getReferenceSetsFromNewRefsetComponentViewMembers(
       Collection<SnowstormReferenceSetMemberViewComponent> refsetMembers,
-      Collection<ReferenceSetDefinition> mappingRefsets) {
+      Map<String, ReferenceSetDefinition> referenceSetsConfigured) {
 
-    if (mappingRefsets.isEmpty()) {
+    if (referenceSetsConfigured.isEmpty()) {
       return Set.of();
     }
-
-    Map<String, ReferenceSetDefinition> referenceSetsConfigured =
-        mappingRefsets.stream()
-            .collect(Collectors.toMap(ReferenceSetDefinition::getIdentifier, Function.identity()));
 
     return refsetMembers.stream()
         .filter(r -> referenceSetsConfigured.containsKey(r.getRefsetId()))

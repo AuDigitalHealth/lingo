@@ -22,11 +22,11 @@ import org.jgrapht.alg.TransitiveClosure;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
 
-public class NodeDependencyComparator implements Comparator<Node> {
+public class NewNodeDependencyComparator implements Comparator<Node> {
 
   final DirectedAcyclicGraph<String, DefaultEdge> closure;
 
-  NodeDependencyComparator(Set<Node> nodeSet) {
+  NewNodeDependencyComparator(Set<Node> nodeSet) {
     closure = new DirectedAcyclicGraph<>(DefaultEdge.class);
     nodeSet.forEach(n -> closure.addVertex(n.getConceptId()));
     nodeSet.stream()
