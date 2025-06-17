@@ -166,6 +166,7 @@ models:
         level: PRODUCT
         dataType: STRING
         valueRegexValidation: (PA\d{4,8}(\/\d{1,2})?(\/\d{1,2})?)|(EU\/\d{1,5}\/\d{1,5}\/\d{1,5})
+        valueValidationErrorMessage: "Must be a valid HPRA or EMA product authorisation number (PA12345678, PA1234/12, PA1234/12/34, EU/12345/67890/12345)"
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: true
@@ -180,6 +181,7 @@ models:
         level: PACKAGE
         dataType: STRING
         valueRegexValidation: (PA\d{4,8}(\/\d{1,2})?(\/\d{1,2})?)|(EU\/\d{1,5}\/\d{1,5}\/\d{1,5})
+        valueValidationErrorMessage: "Must be a valid HPRA or EMA product authorisation number (PA12345678, PA1234/12, PA1234/12/34, EU/12345/67890/12345)"
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
@@ -193,6 +195,7 @@ models:
         level: PACKAGE
         dataType: UNSIGNED_INTEGER
         valueRegexValidation: \d{8,14}
+        valueValidationErrorMessage: "Must be a valid number beteween 8 and 14 digits"
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
@@ -288,6 +291,7 @@ models:
         level: PRODUCT
         dataType: URI
         valueRegexValidation: http(s)?://.+\.(pdf|html)
+        valueValidationErrorMessage: "Must be a valid URL ending in .pdf or .html"
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: true
@@ -299,6 +303,7 @@ models:
         level: PRODUCT
         dataType: URI
         valueRegexValidation: http(s)?://.+\.(pdf|html)
+        valueValidationErrorMessage: "Must be a valid URL ending in .pdf or .html"
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: true
@@ -310,6 +315,7 @@ models:
         level: PACKAGE
         dataType: URI
         valueRegexValidation: http(s)?://.+\.(pdf|html)
+        valueValidationErrorMessage: "Must be a valid URL ending in .pdf or .html"
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
@@ -321,6 +327,7 @@ models:
         level: PACKAGE
         dataType: URI
         valueRegexValidation: http(s)?://.+\.(pdf|html)
+        valueValidationErrorMessage: "Must be a valid URL ending in .pdf or .html"
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
