@@ -85,7 +85,9 @@ public class SecurityConfiguration {
             "/config/medication/(.*)/.*",
             "/config/device/(.*)/.*",
             "/config/bulk-brand/(.*)/.*",
-            "/config/bulk-pack/(.*)/.*"));
+            "/config/bulk-pack/(.*)/.*",
+            "/config/edit/(.*)/.*/schema",
+            "/config/edit/(.*)/.*/ui-schema"));
   }
 
   @Bean
