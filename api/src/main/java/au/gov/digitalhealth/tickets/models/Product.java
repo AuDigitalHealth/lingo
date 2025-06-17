@@ -71,9 +71,14 @@ public class Product extends BaseAuditableEntity {
 
   private Long conceptId;
 
+  private Long originalConceptId;
+
   @NotNull
   @JdbcTypeCode(SqlTypes.JSON)
   private PackageDetails<? extends ProductDetails> packageDetails;
+
+  @JdbcTypeCode(SqlTypes.JSON)
+  private PackageDetails<? extends ProductDetails> originalPackageDetails;
 
   @Override
   @SuppressWarnings("java:S6201") // Suppressed because code is direct from JPABuddy advice

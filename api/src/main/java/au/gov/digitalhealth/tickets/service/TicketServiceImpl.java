@@ -123,8 +123,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -1702,12 +1700,8 @@ public class TicketServiceImpl implements TicketService {
   @Async
   public CompletableFuture<Ticket> processArtgIdAsync(
       String artgId, List<ExternalRequestor> externalRequestorList) {
-    SecurityContext securityContext = SecurityContextHolder.getContext();
-    return CompletableFuture.supplyAsync(
-        () -> {
-          SecurityContextHolder.setContext(securityContext);
-          return processArtgId(Long.parseLong(artgId), externalRequestorList);
-        });
+    return CompletableFuture.completedFuture(
+          processArtgId(Long.parseLong(artgId), externalRequestorList));
   }
 
   private Ticket processArtgId(Long artgId, List<ExternalRequestor> externalRequestorList) {
