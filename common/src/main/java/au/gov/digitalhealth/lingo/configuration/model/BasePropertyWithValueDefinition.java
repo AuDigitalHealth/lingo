@@ -40,6 +40,12 @@ public abstract class BasePropertyWithValueDefinition extends BasePropertyDefini
    */
   private String valueRegexValidation;
 
+  /**
+   * Optional error message to be returned if the value does not match the valueRegexValidation. If
+   * not specified, a default message will be used.
+   */
+  private String valueValidationErrorMessage;
+
   /** ECL binding for concept values. Only valid if datatype = CONCEPT */
   private String eclBinding;
 
