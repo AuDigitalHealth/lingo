@@ -34,4 +34,12 @@ public class PackageQuantity<T extends ProductDetails> extends Quantity {
     idMap.putAll(super.getIdFsnMap());
     return idMap;
   }
+
+  @Override
+  @JsonIgnore
+  public Map<String, String> getIdPtMap() {
+    Map<String, String> idMap = packageDetails.getIdPtMap();
+    idMap.putAll(super.getIdPtMap());
+    return idMap;
+  }
 }

@@ -16,8 +16,11 @@
 package au.gov.digitalhealth.lingo.configuration.model;
 
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
+import au.gov.digitalhealth.lingo.product.details.properties.PropertyType;
+import au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet;
 import au.gov.digitalhealth.lingo.util.PartionIdentifier;
 import au.gov.digitalhealth.lingo.validation.ValidSctId;
+import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -127,5 +130,15 @@ public class ModelLevel {
 
   public boolean isContainerized() {
     return modelLevelType.isContainerized();
+  }
+
+  public @Valid ReferenceSet createMarkerRefset() {
+    ReferenceSet referenceSet = new ReferenceSet();
+    referenceSet.setIdentifierScheme("levelMarker");
+    referenceSet.setIdentifier(referenceSetIdentifier);
+    referenceSet.setTitle(name);
+    referenceSet.setType(PropertyType.REFERENCE_SET);
+
+    return referenceSet;
   }
 }

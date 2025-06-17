@@ -49,4 +49,17 @@ public class Ingredient extends ProductBaseDto {
     }
     return idMap;
   }
+
+  @JsonIgnore
+  public Map<String, String> getIdPtMap() {
+    Map<String, String> idMap = addToIdPtMap(null, totalQuantity, concentrationStrength);
+    addToIdPtMap(idMap, activeIngredient);
+    if (preciseIngredient != null) {
+      addToIdPtMap(idMap, preciseIngredient);
+    }
+    if (basisOfStrengthSubstance != null) {
+      addToIdPtMap(idMap, basisOfStrengthSubstance);
+    }
+    return idMap;
+  }
 }
