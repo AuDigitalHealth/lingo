@@ -103,6 +103,7 @@ export const MultiValueValueSetAutocomplete: React.FC<
   return (
     <Autocomplete
       multiple
+      disabled={disabled}
       sx={{ width: '100%' }}
       data-testid={idSchema?.$id || name}
       loading={isLoading}
