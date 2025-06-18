@@ -217,6 +217,9 @@ public class NodeGeneratorService {
                     .create(member, mappingMap.get(member.getRefsetId()), fhirClient)
                     .doOnNext(p -> node.getNonDefiningProperties().add(p))
                     .then(Mono.empty());
+              } else if (member.getRefsetId().equals(modelLevel.getReferenceSetIdentifier())) {
+                return Mono.just(
+                    node.getNonDefiningProperties().add(modelLevel.createMarkerRefset()));
               } else {
                 return Mono.empty();
               }
