@@ -28,6 +28,31 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
 }) => {
   const { applicationConfig } = useApplicationConfigStore();
 
+  // More accurate comparison function for properties
+  const arePropertiesEqual = (propA, propB) => {
+    // Compare identifierScheme
+    if (propA.identifierScheme !== propB.identifierScheme) return false;
+
+    // Compare value (handle null values)
+    if ((propA.value !== propB.value) &&
+      !(propA.value === null && propB.value === null)) return false;
+
+    // Compare valueObject (only compare conceptId)
+    if (propA.valueObject && propB.valueObject) {
+      if (propA.valueObject.conceptId !== propB.valueObject.conceptId) return false;
+    } else if (propA.valueObject || propB.valueObject) {
+      // One is null but not both
+      return false;
+    }
+
+    // Compare relationshipType for ExternalIdentifier
+    if (propA.type === 'externalIdentifier' && propB.type === 'externalIdentifier') {
+      if (propA.relationshipType !== propB.relationshipType) return false;
+    }
+
+    return true;
+  };
+
   const {
     nonDefiningProperties,
     newProperties,
@@ -41,30 +66,16 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
 
     // Identify new properties (in current but not in original)
     const newProps = nonDefProps.filter(
-      current =>
-        !originalProps.some(
-          original =>
-            original.identifier === current.identifier &&
-            original.title === current.title &&
-            original.value === current.value &&
-            original.valueObject?.conceptId ===
-              current.valueObject?.conceptId &&
-            original.relationshipType === current.relationshipType,
-        ),
+      current => !originalProps.some(original =>
+        arePropertiesEqual(current, original)
+      )
     );
 
     // Identify removed properties (in original but not in current)
     const removedProps = originalProps.filter(
-      original =>
-        !nonDefProps.some(
-          current =>
-            current.identifier === original.identifier &&
-            current.title === original.title &&
-            current.value === original.value &&
-            current.valueObject?.conceptId ===
-              original.valueObject?.conceptId &&
-            current.relationshipType === original.relationshipType,
-        ),
+      original => !nonDefProps.some(current => 
+        arePropertiesEqual(current, original)
+      )
     );
 
     // Identify new reference sets (in current but not in original)
@@ -439,7 +450,7 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
                     variant="outlined"
                     sx={{
                       borderRadius: 1,
-                      color: isNew ? '#4caf50' : '#1976d2',
+                      color: isNew ? '#000000' : '#1976d2',
                       backgroundColor: isNew ? '#e6f7e6' : 'white',
                       borderColor: isNew ? '#4caf50' : '#1976d2',
                       fontWeight: 500,
@@ -455,9 +466,6 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
         {/* Display removed reference sets */}
         {removedReferenceSets.length > 0 && (
           <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-            <Typography style={{ color: labelColor, minWidth: labelWidth }}>
-              Removed Reference Sets:
-            </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
               {removedReferenceSets.map((refSet, index) => (
                 <Tooltip
@@ -570,12 +578,8 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
                   <React.Fragment key={`${itemTitle}-item-${idx}`}>
                     {renderChip(
                       item,
-                      newProperties.some(
-                        p =>
-                          p.identifier === item.identifier &&
-                          p.title === item.title,
-                      ),
-                      false,
+                      newProperties.some(p => arePropertiesEqual(p, item)),
+                      false
                     )}
                   </React.Fragment>
                 ))
