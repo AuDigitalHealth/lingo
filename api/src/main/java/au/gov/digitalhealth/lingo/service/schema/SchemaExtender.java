@@ -20,6 +20,7 @@ import static au.gov.digitalhealth.lingo.service.schema.SchemaConstants.NON_DEFI
 
 import au.gov.digitalhealth.lingo.configuration.model.BasePropertyDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
+import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,6 +43,22 @@ public class SchemaExtender {
     this.objectMapper = objectMapper;
   }
 
+  public void updateEditSchema(
+      ModelConfiguration modelConfiguration, JsonNode schemaNode, ModelLevel level) {
+    Set<BasePropertyDefinition> properties = new HashSet<>();
+    properties.addAll(modelConfiguration.getMappingsByLevel(level));
+    properties.addAll(modelConfiguration.getNonDefiningPropertiesByLevel(level));
+    properties.addAll(modelConfiguration.getReferenceSetsByLevel(level));
+
+    updateEditSchemaForProperties(
+        schemaNode,
+        properties,
+        "NonDefiningProperty",
+        "Non Defining Properties",
+        NON_DEFINING_PROPERTIES,
+        level);
+  }
+
   public void updateSchema(ModelConfiguration modelConfiguration, JsonNode schemaNode) {
 
     Set<BasePropertyDefinition> properties = new HashSet<>();
@@ -55,6 +72,31 @@ public class SchemaExtender {
         "NonDefiningProperty",
         "Non Defining Properties",
         NON_DEFINING_PROPERTIES);
+  }
+
+  private void updateEditSchemaForProperties(
+      JsonNode schemaNode,
+      Set<BasePropertyDefinition> properties,
+      String jsonTypeName,
+      String title,
+      String propertyName,
+      ModelLevel level) {
+
+    ArrayProperty nonDefiningProperty =
+        getArrayProperties(
+            schemaNode,
+            properties,
+            jsonTypeName,
+            title,
+            level.getModelLevelType().isPackageLevel()
+                ? ProductPackageType.PACKAGE
+                : ProductPackageType.PRODUCT);
+
+    if (nonDefiningProperty != null) {
+      schemaNode
+          .withObjectProperty(PROPERTIES)
+          .set(propertyName, objectMapper.valueToTree(nonDefiningProperty));
+    }
   }
 
   private void updateSchemaForProperties(

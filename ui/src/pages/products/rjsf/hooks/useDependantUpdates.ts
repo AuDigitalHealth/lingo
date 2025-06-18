@@ -27,25 +27,30 @@ export const useDependantUpdates = (
       dependantUiSchema['ui:options'] = {};
     }
     if (parentConceptId) {
-      if (
-        dependantUiSchema['ui:options'].ecl &&
-        !dependantUiSchema['ui:options'].origEcl
-      ) {
-        dependantUiSchema['ui:options'].origEcl =
-          dependantInstance['ui:options']?.ecl;
-      }
       if (dependantUiSchema['ui:options']?.getEcl) {
-        dependantUiSchema['ui:options'].ecl = dependantUiSchema[
-          'ui:options'
-        ]?.getEcl.replace(/@parent/gi, parentConceptId);
+        if (
+            dependantUiSchema['ui:options'].ecl &&
+            !dependantUiSchema['ui:options'].origEcl
+        ) {
+          dependantUiSchema['ui:options'].origEcl =
+              dependantInstance['ui:options']?.ecl;
+        }
+        if (dependantUiSchema['ui:options']?.getEcl) {
+          dependantUiSchema['ui:options'].ecl = dependantUiSchema[
+              'ui:options'
+              ]?.getEcl.replace(/@parent/gi, parentConceptId);
+        }
       }
       dependantUiSchema['ui:options'].disabled = false;
     } else {
-      if (dependantUiSchema['ui:options'].origEcl) {
-        dependantUiSchema['ui:options'].ecl =
-          dependantUiSchema['ui:options'].origEcl;
-      } else {
-        dependantUiSchema['ui:options'].ecl = '';
+      if (dependantUiSchema['ui:options']?.getEcl) {
+        1
+        if (dependantUiSchema['ui:options'].origEcl) {
+          dependantUiSchema['ui:options'].ecl =
+              dependantUiSchema['ui:options'].origEcl;
+        } else {
+          dependantUiSchema['ui:options'].ecl = '';
+        }
       }
       dependantUiSchema['ui:options'].disabled = true;
     }

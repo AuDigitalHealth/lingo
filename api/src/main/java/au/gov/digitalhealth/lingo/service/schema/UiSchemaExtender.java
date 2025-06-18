@@ -20,6 +20,7 @@ import static au.gov.digitalhealth.lingo.service.schema.SchemaConstants.NON_DEFI
 import au.gov.digitalhealth.lingo.configuration.model.BasePropertyDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.BasePropertyWithValueDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
+import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -55,6 +56,30 @@ public class UiSchemaExtender {
     properties.addAll(modelConfiguration.getReferenceSets());
 
     updateUiSchemaForType(uiSchemaNode, NON_DEFINING_PROPERTIES, properties);
+  }
+
+  public void updateEditUiSchema(
+      ModelConfiguration modelConfiguration, JsonNode uiSchemaNode, ModelLevel level) {
+    Set<BasePropertyDefinition> properties = new HashSet<>(modelConfiguration.getMappings());
+    properties.addAll(modelConfiguration.getNonDefiningPropertiesByLevel(level));
+    properties.addAll(modelConfiguration.getReferenceSetsByLevel(level));
+    properties.addAll(modelConfiguration.getMappingsByLevel(level));
+
+    updateUiSchemaForLevel(uiSchemaNode, NON_DEFINING_PROPERTIES, properties, level);
+  }
+
+  private void updateUiSchemaForLevel(
+      JsonNode uiSchemaNode,
+      String nodeName,
+      Set<? extends BasePropertyDefinition> properties,
+      ModelLevel level) {
+    addUiNodeForPropertySet(
+        (ObjectNode) uiSchemaNode,
+        properties,
+        nodeName,
+        level.getModelLevelType().isPackageLevel()
+            ? ProductPackageType.PACKAGE
+            : ProductPackageType.PRODUCT);
   }
 
   private void updateUiSchemaForType(
@@ -96,8 +121,9 @@ public class UiSchemaExtender {
     List<? extends BasePropertyDefinition> filteredPropertySet =
         inputPropertySet.stream()
             .filter(m -> m.getLevel().equals(productPackageType))
-            .sorted(Comparator.comparingInt(BasePropertyDefinition::getOrder)
-                .thenComparing(BasePropertyDefinition::getName))
+            .sorted(
+                Comparator.comparingInt(BasePropertyDefinition::getOrder)
+                    .thenComparing(BasePropertyDefinition::getName))
             .toList();
 
     if (!filteredPropertySet.isEmpty()) {
