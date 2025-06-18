@@ -167,7 +167,7 @@ public class ProductSummaryService {
     for (ModelLevel modelLevel : packagModelLevels) {
       CompletableFuture<Node> node =
           nodeGeneratorService
-              .lookUpNode(branch, productIdLong, modelLevel, null)
+              .lookUpNode(branch, productIdLong, modelLevel, null, false)
               .thenApply(
                   c -> {
                     productSummary.addNode(c);
@@ -270,7 +270,7 @@ public class ProductSummaryService {
       ModelLevel productNameLevel = model.getLevelOfType(ModelLevelType.PRODUCT_NAME);
       futures.add(
           nodeGeneratorService
-              .lookUpNode(branch, productIdLong, productNameLevel, null)
+              .lookUpNode(branch, productIdLong, productNameLevel, null, false)
               .thenApply(
                   c -> {
                     productSummary.addNode(c);
@@ -296,7 +296,7 @@ public class ProductSummaryService {
     ModelLevel leafProductLevel = ModelLevel.getLeafLevel(productModelLevels);
     CompletableFuture<Void> productNodesFuture =
         nodeGeneratorService
-            .lookUpNodes(branch, productIdLong, leafProductLevel, null)
+            .lookUpNodes(branch, productIdLong, leafProductLevel, null, false)
             .thenCompose(
                 productNodes -> {
                   Set<CompletableFuture<Void>> productFutures =
@@ -360,7 +360,8 @@ public class ProductSummaryService {
                   branch,
                   Long.parseLong(productNode.getConcept().getConceptId()),
                   productNameLevel,
-                  null)
+                  null,
+                  false)
               .thenCompose(
                   productName -> {
                     productSummary.addNode(productName);
@@ -404,7 +405,8 @@ public class ProductSummaryService {
                     branch,
                     Long.parseLong(productNode.getConcept().getConceptId()),
                     parentModelLevel,
-                    null)
+                    null,
+                    false)
                 .thenCompose(
                     parent -> {
                       productSummary.addEdge(

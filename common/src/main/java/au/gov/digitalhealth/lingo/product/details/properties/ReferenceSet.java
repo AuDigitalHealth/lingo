@@ -23,9 +23,9 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.io.Serializable;
 import java.util.Collection;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonTypeName("referenceSet")
@@ -65,5 +65,26 @@ public class ReferenceSet extends NonDefiningBase implements Serializable {
     this.setTitle(referenceSetDefinition.getTitle());
     this.setDescription(referenceSetDefinition.getDescription());
     this.setType(PropertyType.REFERENCE_SET);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    ReferenceSet that = (ReferenceSet) o;
+
+    return new EqualsBuilder()
+        .append(getIdentifierScheme(), that.getIdentifierScheme())
+        .append(getIdentifier(), that.getIdentifier())
+        .isEquals();
+  }
+
+  @Override
+  public int hashCode() {
+    return new HashCodeBuilder(17, 37)
+        .append(getIdentifierScheme())
+        .append(getIdentifier())
+        .toHashCode();
   }
 }

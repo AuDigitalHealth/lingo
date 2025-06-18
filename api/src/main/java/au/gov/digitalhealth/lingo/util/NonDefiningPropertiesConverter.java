@@ -23,8 +23,8 @@ import au.gov.digitalhealth.lingo.configuration.model.NonDefiningPropertyDefinit
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.NonDefiningPropertyDataType;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
-import au.gov.digitalhealth.lingo.product.details.PackageProductDetailsBase;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
+import jakarta.validation.Valid;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -38,10 +38,10 @@ public class NonDefiningPropertiesConverter {
 
   public static Set<SnowstormRelationship> calculateNonDefiningRelationships(
       ModelConfiguration modelConfiguration,
-      PackageProductDetailsBase packageDetails,
-      ModelLevelType modelLevelType) {
+      ModelLevelType modelLevelType,
+      Collection<@Valid NonDefiningBase> nonDefiningProperties) {
     return calculateNonDefiningRelationships(
-        modelConfiguration, packageDetails.getNonDefiningProperties(), modelLevelType);
+        modelConfiguration, nonDefiningProperties, modelLevelType);
   }
 
   public static Set<SnowstormRelationship> calculateNonDefiningRelationships(
