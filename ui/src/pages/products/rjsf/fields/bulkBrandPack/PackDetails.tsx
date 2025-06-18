@@ -12,6 +12,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import { FieldProps } from '@rjsf/utils';
 import ExternalIdentifiers from './ExternalIdentifiers.tsx';
 import { sortNonDefiningProperties } from '../../../../../utils/helpers/tickets/additionalFieldsUtils.ts';
+import { RjsfUtils } from '../../helpers/rjsfUtils.ts';
 
 interface PackDetailsProps extends FieldProps {
   onDelete?: () => void;
@@ -33,15 +34,22 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
     branch,
   } = props;
 
+  const uiSchemaForNonDefiningProperties = RjsfUtils.getUiSchemaById(
+    registry.formContext.uiSchema,
+    'nonDefiningProperties',
+  );
   // Extract options with defaults
-  const options = uiSchema?.['ui:options'] || {};
+  const nonDefiningPropertyOptions =
+    uiSchemaForNonDefiningProperties?.['ui:options'] || {};
+  const packSizeUiSchemaOptions = uiSchema?.['ui:options'] || {};
+
+  const { binding = {}, multiValuedSchemes = [] } = nonDefiningPropertyOptions;
+
   const {
     readOnly = false,
     allowDelete = true,
     requireEditButton = false,
-    binding = {},
-    multiValuedSchemes = [],
-  } = options;
+  } = packSizeUiSchemaOptions;
 
   const [editMode, setEditMode] = useState(!readOnly && !requireEditButton);
   const [packSize, setPackSize] = useState(

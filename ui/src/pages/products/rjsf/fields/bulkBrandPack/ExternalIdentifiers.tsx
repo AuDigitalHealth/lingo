@@ -302,8 +302,10 @@ const ExternalIdentifierRender: React.FC<
             label={schema.title}
             url={binding.valueSet || ''}
             showDefaultOptions={false}
-            value={schemeEntries[0] ? schemeEntries[0].value : schemeEntries}
-            onChange={handleAdd}
+            value={
+              schemeEntries[0] ? schemeEntries[0].valueObject : schemeEntries
+            }
+            onChange={handleChangeConcepts}
             disabled={readOnly ? true : false}
             //   error={!!errorMessage}
           />
