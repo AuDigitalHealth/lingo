@@ -45,7 +45,7 @@ import lombok.extern.java.Log;
 @OnlyOnePopulated(
     fields = {"concept", "newConceptDetails"},
     message = "Node must represent a concept or a new concept, not both")
-public class Node implements Cloneable {
+public class Node {
   /**
    * Existing concept in the terminology for this node. Either this element or newConceptDetails is
    * populated, not both.
@@ -117,7 +117,7 @@ public class Node implements Cloneable {
 
   @JsonProperty(value = "preferredTerm", access = JsonProperty.Access.READ_ONLY)
   public String getPreferredTerm() {
-    if (isNewConcept()) {
+    if (concept == null && newConceptDetails != null) {
       return newConceptDetails.getPreferredTerm();
     }
     return Objects.requireNonNull(concept.getPt()).getTerm();
@@ -125,7 +125,7 @@ public class Node implements Cloneable {
 
   @JsonProperty(value = "fullySpecifiedName", access = JsonProperty.Access.READ_ONLY)
   public String getFullySpecifiedName() {
-    if (isNewConcept()) {
+    if (concept == null && newConceptDetails != null) {
       return newConceptDetails.getFullySpecifiedName();
     }
     return Objects.requireNonNull(concept.getFsn()).getTerm();
@@ -137,12 +137,21 @@ public class Node implements Cloneable {
    */
   @JsonProperty(value = "newConcept", access = JsonProperty.Access.READ_ONLY)
   public boolean isNewConcept() {
-    return concept == null && newConceptDetails != null;
+    return concept == null && newConceptDetails != null && !isRetireAndReplace();
+  }
+
+  /** Returns true if this node represents a retire and replace operation. */
+  @JsonProperty(value = "retireAndReplace", access = JsonProperty.Access.READ_ONLY)
+  public boolean isRetireAndReplace() {
+    return newConceptDetails != null
+        && originalNode != null
+        && !originalNode.isReferencedByOtherProducts()
+        && originalNode.getInactivationReason() != null;
   }
 
   /**
-   * Returns true if this node represents a new concept, or false if it represents an existing
-   * concept.
+   * Returns true if this node represents a concept edit, which means it has an original node and
+   * the concept details have changed. This may also include property changes.
    */
   @JsonProperty(value = "conceptEdit", access = JsonProperty.Access.READ_ONLY)
   public boolean isConceptEdit() {
@@ -150,8 +159,8 @@ public class Node implements Cloneable {
   }
 
   /**
-   * Returns true if this node represents a new concept, or false if it represents an existing
-   * concept.
+   * Returns true if this node represents a property update, which means it has an original node and
+   * the non-defining properties have changed, but the concept details haven't changed.
    */
   @JsonProperty(value = "propertyUpdate", access = JsonProperty.Access.READ_ONLY)
   public boolean isPropertyUpdate() {
@@ -168,174 +177,168 @@ public class Node implements Cloneable {
    *
    * @return A deep copy of this Node object
    */
-  @Override
-  public Node clone() {
-    try {
-      Node cloned = (Node) super.clone();
+  public Node cloneNode() {
+    Node cloned = new Node();
 
-      // Deep copy concept if it exists
-      if (concept != null) {
-        SnowstormConceptMini clonedConcept = new SnowstormConceptMini();
-        clonedConcept.setConceptId(concept.getConceptId());
+    // Deep copy concept if it exists
+    if (concept != null) {
+      SnowstormConceptMini clonedConcept = new SnowstormConceptMini();
+      clonedConcept.setConceptId(concept.getConceptId());
 
-        // Clone FSN if it exists
-        if (concept.getFsn() != null) {
-          SnowstormTermLangPojo clonedFsn = new SnowstormTermLangPojo();
-          clonedFsn.setTerm(concept.getFsn().getTerm());
-          clonedFsn.setLang(concept.getFsn().getLang());
-          clonedConcept.setFsn(clonedFsn);
-        }
-
-        // Clone PT if it exists
-        if (concept.getPt() != null) {
-          SnowstormTermLangPojo clonedPt = new SnowstormTermLangPojo();
-          clonedPt.setTerm(concept.getPt().getTerm());
-          clonedPt.setLang(concept.getPt().getLang());
-          clonedConcept.setPt(clonedPt);
-        }
-
-        cloned.concept = clonedConcept;
+      // Clone FSN if it exists
+      if (concept.getFsn() != null) {
+        SnowstormTermLangPojo clonedFsn = new SnowstormTermLangPojo();
+        clonedFsn.setTerm(concept.getFsn().getTerm());
+        clonedFsn.setLang(concept.getFsn().getLang());
+        clonedConcept.setFsn(clonedFsn);
       }
 
-      // Deep copy collections
-      if (conceptOptions != null && !conceptOptions.isEmpty()) {
-        cloned.conceptOptions = new ArrayList<>(conceptOptions);
+      // Clone PT if it exists
+      if (concept.getPt() != null) {
+        SnowstormTermLangPojo clonedPt = new SnowstormTermLangPojo();
+        clonedPt.setTerm(concept.getPt().getTerm());
+        clonedPt.setLang(concept.getPt().getLang());
+        clonedConcept.setPt(clonedPt);
       }
 
-      if (nonDefiningProperties != null && !nonDefiningProperties.isEmpty()) {
-        cloned.nonDefiningProperties = new HashSet<>(nonDefiningProperties);
-      }
-
-      // Deep copy NewConceptDetails
-      if (newConceptDetails != null) {
-        NewConceptDetails clonedDetails = new NewConceptDetails();
-        clonedDetails.setConceptId(newConceptDetails.getConceptId());
-        clonedDetails.setSpecifiedConceptId(newConceptDetails.getSpecifiedConceptId());
-        clonedDetails.setFullySpecifiedName(newConceptDetails.getFullySpecifiedName());
-        clonedDetails.setPreferredTerm(newConceptDetails.getPreferredTerm());
-        clonedDetails.setGeneratedFullySpecifiedName(
-            newConceptDetails.getGeneratedFullySpecifiedName());
-        clonedDetails.setGeneratedPreferredTerm(newConceptDetails.getGeneratedPreferredTerm());
-        clonedDetails.setSemanticTag(newConceptDetails.getSemanticTag());
-
-        // Deep copy collections in NewConceptDetails
-        if (newConceptDetails.getAxioms() != null && !newConceptDetails.getAxioms().isEmpty()) {
-          clonedDetails.setAxioms(new HashSet<>(newConceptDetails.getAxioms()));
-        }
-
-        if (newConceptDetails.getNonDefiningProperties() != null
-            && !newConceptDetails.getNonDefiningProperties().isEmpty()) {
-          clonedDetails.setNonDefiningProperties(
-              new HashSet<>(newConceptDetails.getNonDefiningProperties()));
-        }
-
-        if (newConceptDetails.getReferenceSetMembers() != null
-            && !newConceptDetails.getReferenceSetMembers().isEmpty()) {
-          clonedDetails.setReferenceSetMembers(
-              new HashSet<>(newConceptDetails.getReferenceSetMembers()));
-        }
-
-        cloned.newConceptDetails = clonedDetails;
-      }
-
-      // Handle circular reference with OriginalNode
-      if (originalNode != null) {
-        OriginalNode clonedOriginalNode = new OriginalNode();
-        clonedOriginalNode.setInactivationReason(originalNode.getInactivationReason());
-        clonedOriginalNode.setReferencedByOtherProducts(originalNode.isReferencedByOtherProducts());
-
-        // Clone the node inside originalNode
-        if (originalNode.getNode() != null) {
-          Node innerNode = originalNode.getNode();
-          Node clonedInnerNode = new Node();
-
-          // Copy all properties from the inner node
-          if (innerNode.getConcept() != null) {
-            SnowstormConceptMini innerConcept = innerNode.getConcept();
-            SnowstormConceptMini clonedInnerConcept = new SnowstormConceptMini();
-            clonedInnerConcept.setConceptId(innerConcept.getConceptId());
-
-            // Clone FSN if it exists
-            if (innerConcept.getFsn() != null) {
-              SnowstormTermLangPojo clonedFsn = new SnowstormTermLangPojo();
-              clonedFsn.setTerm(innerConcept.getFsn().getTerm());
-              clonedFsn.setLang(innerConcept.getFsn().getLang());
-              clonedInnerConcept.setFsn(clonedFsn);
-            }
-
-            // Clone PT if it exists
-            if (innerConcept.getPt() != null) {
-              SnowstormTermLangPojo clonedPt = new SnowstormTermLangPojo();
-              clonedPt.setTerm(innerConcept.getPt().getTerm());
-              clonedPt.setLang(innerConcept.getPt().getLang());
-              clonedInnerConcept.setPt(clonedPt);
-            }
-
-            clonedInnerNode.setConcept(clonedInnerConcept);
-          }
-
-          // Copy other properties
-          clonedInnerNode.setLabel(innerNode.getLabel());
-          clonedInnerNode.setDisplayName(innerNode.getDisplayName());
-          clonedInnerNode.setNewInTask(innerNode.isNewInTask());
-          clonedInnerNode.setNewInProject(innerNode.isNewInProject());
-          clonedInnerNode.setModelLevel(innerNode.getModelLevel());
-
-          // Deep copy collections
-          if (innerNode.getConceptOptions() != null && !innerNode.getConceptOptions().isEmpty()) {
-            clonedInnerNode.setConceptOptions(new ArrayList<>(innerNode.getConceptOptions()));
-          }
-
-          if (innerNode.getNonDefiningProperties() != null
-              && !innerNode.getNonDefiningProperties().isEmpty()) {
-            clonedInnerNode.setNonDefiningProperties(
-                new HashSet<>(innerNode.getNonDefiningProperties()));
-          }
-
-          // Deep copy NewConceptDetails if it exists
-          if (innerNode.getNewConceptDetails() != null) {
-            NewConceptDetails innerDetails = innerNode.getNewConceptDetails();
-            NewConceptDetails clonedInnerDetails = new NewConceptDetails();
-            clonedInnerDetails.setConceptId(innerDetails.getConceptId());
-            clonedInnerDetails.setSpecifiedConceptId(innerDetails.getSpecifiedConceptId());
-            clonedInnerDetails.setFullySpecifiedName(innerDetails.getFullySpecifiedName());
-            clonedInnerDetails.setPreferredTerm(innerDetails.getPreferredTerm());
-            clonedInnerDetails.setGeneratedFullySpecifiedName(
-                innerDetails.getGeneratedFullySpecifiedName());
-            clonedInnerDetails.setGeneratedPreferredTerm(innerDetails.getGeneratedPreferredTerm());
-            clonedInnerDetails.setSemanticTag(innerDetails.getSemanticTag());
-
-            // Deep copy collections in NewConceptDetails
-            if (innerDetails.getAxioms() != null && !innerDetails.getAxioms().isEmpty()) {
-              clonedInnerDetails.setAxioms(new HashSet<>(innerDetails.getAxioms()));
-            }
-
-            if (innerDetails.getNonDefiningProperties() != null
-                && !innerDetails.getNonDefiningProperties().isEmpty()) {
-              clonedInnerDetails.setNonDefiningProperties(
-                  new HashSet<>(innerDetails.getNonDefiningProperties()));
-            }
-
-            if (innerDetails.getReferenceSetMembers() != null
-                && !innerDetails.getReferenceSetMembers().isEmpty()) {
-              clonedInnerDetails.setReferenceSetMembers(
-                  new HashSet<>(innerDetails.getReferenceSetMembers()));
-            }
-
-            clonedInnerNode.setNewConceptDetails(clonedInnerDetails);
-          }
-
-          // Don't clone the originalNode of the inner node to avoid infinite recursion
-
-          clonedOriginalNode.setNode(clonedInnerNode);
-        }
-
-        cloned.originalNode = clonedOriginalNode;
-      }
-
-      return cloned;
-    } catch (CloneNotSupportedException e) {
-      throw new RuntimeException("Failed to clone Node", e);
+      cloned.concept = clonedConcept;
     }
+
+    // Deep copy collections
+    if (conceptOptions != null && !conceptOptions.isEmpty()) {
+      cloned.conceptOptions = new ArrayList<>(conceptOptions);
+    }
+
+    if (nonDefiningProperties != null && !nonDefiningProperties.isEmpty()) {
+      cloned.nonDefiningProperties = new HashSet<>(nonDefiningProperties);
+    }
+
+    // Deep copy NewConceptDetails
+    if (newConceptDetails != null) {
+      NewConceptDetails clonedDetails = new NewConceptDetails();
+      clonedDetails.setConceptId(newConceptDetails.getConceptId());
+      clonedDetails.setSpecifiedConceptId(newConceptDetails.getSpecifiedConceptId());
+      clonedDetails.setFullySpecifiedName(newConceptDetails.getFullySpecifiedName());
+      clonedDetails.setPreferredTerm(newConceptDetails.getPreferredTerm());
+      clonedDetails.setGeneratedFullySpecifiedName(
+          newConceptDetails.getGeneratedFullySpecifiedName());
+      clonedDetails.setGeneratedPreferredTerm(newConceptDetails.getGeneratedPreferredTerm());
+      clonedDetails.setSemanticTag(newConceptDetails.getSemanticTag());
+
+      // Deep copy collections in NewConceptDetails
+      if (newConceptDetails.getAxioms() != null && !newConceptDetails.getAxioms().isEmpty()) {
+        clonedDetails.setAxioms(new HashSet<>(newConceptDetails.getAxioms()));
+      }
+
+      if (newConceptDetails.getNonDefiningProperties() != null
+          && !newConceptDetails.getNonDefiningProperties().isEmpty()) {
+        clonedDetails.setNonDefiningProperties(
+            new HashSet<>(newConceptDetails.getNonDefiningProperties()));
+      }
+
+      if (newConceptDetails.getReferenceSetMembers() != null
+          && !newConceptDetails.getReferenceSetMembers().isEmpty()) {
+        clonedDetails.setReferenceSetMembers(
+            new HashSet<>(newConceptDetails.getReferenceSetMembers()));
+      }
+
+      cloned.newConceptDetails = clonedDetails;
+    }
+
+    // Handle circular reference with OriginalNode
+    if (originalNode != null) {
+      OriginalNode clonedOriginalNode = new OriginalNode();
+      clonedOriginalNode.setInactivationReason(originalNode.getInactivationReason());
+      clonedOriginalNode.setReferencedByOtherProducts(originalNode.isReferencedByOtherProducts());
+
+      // Clone the node inside originalNode
+      if (originalNode.getNode() != null) {
+        Node innerNode = originalNode.getNode();
+        Node clonedInnerNode = new Node();
+
+        // Copy all properties from the inner node
+        if (innerNode.getConcept() != null) {
+          SnowstormConceptMini innerConcept = innerNode.getConcept();
+          SnowstormConceptMini clonedInnerConcept = new SnowstormConceptMini();
+          clonedInnerConcept.setConceptId(innerConcept.getConceptId());
+
+          // Clone FSN if it exists
+          if (innerConcept.getFsn() != null) {
+            SnowstormTermLangPojo clonedFsn = new SnowstormTermLangPojo();
+            clonedFsn.setTerm(innerConcept.getFsn().getTerm());
+            clonedFsn.setLang(innerConcept.getFsn().getLang());
+            clonedInnerConcept.setFsn(clonedFsn);
+          }
+
+          // Clone PT if it exists
+          if (innerConcept.getPt() != null) {
+            SnowstormTermLangPojo clonedPt = new SnowstormTermLangPojo();
+            clonedPt.setTerm(innerConcept.getPt().getTerm());
+            clonedPt.setLang(innerConcept.getPt().getLang());
+            clonedInnerConcept.setPt(clonedPt);
+          }
+
+          clonedInnerNode.setConcept(clonedInnerConcept);
+        }
+
+        // Copy other properties
+        clonedInnerNode.setLabel(innerNode.getLabel());
+        clonedInnerNode.setDisplayName(innerNode.getDisplayName());
+        clonedInnerNode.setNewInTask(innerNode.isNewInTask());
+        clonedInnerNode.setNewInProject(innerNode.isNewInProject());
+        clonedInnerNode.setModelLevel(innerNode.getModelLevel());
+
+        // Deep copy collections
+        if (innerNode.getConceptOptions() != null && !innerNode.getConceptOptions().isEmpty()) {
+          clonedInnerNode.setConceptOptions(new ArrayList<>(innerNode.getConceptOptions()));
+        }
+
+        if (innerNode.getNonDefiningProperties() != null
+            && !innerNode.getNonDefiningProperties().isEmpty()) {
+          clonedInnerNode.setNonDefiningProperties(
+              new HashSet<>(innerNode.getNonDefiningProperties()));
+        }
+
+        // Deep copy NewConceptDetails if it exists
+        if (innerNode.getNewConceptDetails() != null) {
+          NewConceptDetails innerDetails = innerNode.getNewConceptDetails();
+          NewConceptDetails clonedInnerDetails = new NewConceptDetails();
+          clonedInnerDetails.setConceptId(innerDetails.getConceptId());
+          clonedInnerDetails.setSpecifiedConceptId(innerDetails.getSpecifiedConceptId());
+          clonedInnerDetails.setFullySpecifiedName(innerDetails.getFullySpecifiedName());
+          clonedInnerDetails.setPreferredTerm(innerDetails.getPreferredTerm());
+          clonedInnerDetails.setGeneratedFullySpecifiedName(
+              innerDetails.getGeneratedFullySpecifiedName());
+          clonedInnerDetails.setGeneratedPreferredTerm(innerDetails.getGeneratedPreferredTerm());
+          clonedInnerDetails.setSemanticTag(innerDetails.getSemanticTag());
+
+          // Deep copy collections in NewConceptDetails
+          if (innerDetails.getAxioms() != null && !innerDetails.getAxioms().isEmpty()) {
+            clonedInnerDetails.setAxioms(new HashSet<>(innerDetails.getAxioms()));
+          }
+
+          if (innerDetails.getNonDefiningProperties() != null
+              && !innerDetails.getNonDefiningProperties().isEmpty()) {
+            clonedInnerDetails.setNonDefiningProperties(
+                new HashSet<>(innerDetails.getNonDefiningProperties()));
+          }
+
+          if (innerDetails.getReferenceSetMembers() != null
+              && !innerDetails.getReferenceSetMembers().isEmpty()) {
+            clonedInnerDetails.setReferenceSetMembers(
+                new HashSet<>(innerDetails.getReferenceSetMembers()));
+          }
+
+          clonedInnerNode.setNewConceptDetails(clonedInnerDetails);
+        }
+
+        // Don't clone the originalNode of the inner node to avoid infinite recursion
+
+        clonedOriginalNode.setNode(clonedInnerNode);
+      }
+
+      cloned.originalNode = clonedOriginalNode;
+    }
+    return cloned;
   }
 }

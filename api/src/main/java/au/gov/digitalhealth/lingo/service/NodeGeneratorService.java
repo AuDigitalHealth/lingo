@@ -88,7 +88,8 @@ public class NodeGeneratorService {
       String branch,
       Long productId,
       ModelLevel modelLevel,
-      Collection<NonDefiningBase> newProperties) {
+      Collection<NonDefiningBase> newProperties,
+      boolean newPropertiesAdditive) {
     Node node = new Node();
     node.setLabel(modelLevel.getDisplayLabel());
     node.setModelLevel(modelLevel.getModelLevelType());
@@ -102,13 +103,17 @@ public class NodeGeneratorService {
     }
     node.setConcept(concept);
 
-    populateNodeProperties(branch, modelLevel, node, newProperties);
+    populateNodeProperties(branch, modelLevel, node, newProperties, newPropertiesAdditive);
 
     return CompletableFuture.completedFuture(node);
   }
 
   private void populateNodeProperties(
-      String branch, ModelLevel modelLevel, Node node, Collection<NonDefiningBase> newProperties) {
+      String branch,
+      ModelLevel modelLevel,
+      Node node,
+      Collection<NonDefiningBase> newProperties,
+      boolean newPropertiesAdditive) {
     ModelConfiguration configuration = models.getModelConfiguration(branch);
 
     Flux<Void> refsetMembersFlux = addRefsetAndMapping(branch, modelLevel, configuration, node);
@@ -129,16 +134,14 @@ public class NodeGeneratorService {
                     e))
         .block();
 
-    if (newProperties != null) {
-      node.setOriginalNode(new OriginalNode(node.clone(), null, true));
+    if (newProperties != null && newPropertiesAdditive) {
+      node.setOriginalNode(new OriginalNode(node.cloneNode(), null, true));
       Map<String, NonDefiningPropertyDefinition> nonDefiningPropertiesMap =
           configuration.getNonDefiningPropertiesBySchemeForModelLevel(modelLevel);
       Map<String, ReferenceSetDefinition> referenceSetsMap =
           configuration.getReferenceSetsBySchemeForModelLevel(modelLevel);
       Map<String, ExternalIdentifierDefinition> externalIdentifiersMap =
           configuration.getMappingsBySchemeForModelLevel(modelLevel);
-
-      node.setNonDefiningProperties(new HashSet<>());
 
       for (NonDefiningBase newProperty : newProperties) {
         if (newProperty instanceof NonDefiningProperty p
@@ -233,7 +236,8 @@ public class NodeGeneratorService {
       String branch,
       Long productId,
       ModelLevel modelLevel,
-      Collection<NonDefiningBase> newProperties) {
+      Collection<NonDefiningBase> newProperties,
+      boolean newPropertiesAdditive) {
 
     return CompletableFuture.completedFuture(
         snowstormClient
@@ -252,7 +256,8 @@ public class NodeGeneratorService {
                   node.setModelLevel(modelLevel.getModelLevelType());
                   node.setDisplayName(modelLevel.getName());
                   node.setConcept(concept);
-                  populateNodeProperties(branch, modelLevel, node, newProperties);
+                  populateNodeProperties(
+                      branch, modelLevel, node, newProperties, newPropertiesAdditive);
                   return node;
                 })
             .toList());
@@ -270,6 +275,7 @@ public class NodeGeneratorService {
       Set<SnowstormRelationship> nonDefiningProperties,
       List<String> selectedConceptIdentifiers,
       Collection<NonDefiningBase> newProperties,
+      boolean newPropertiesAdditive,
       boolean suppressIsa,
       boolean suppressNegativeStatements,
       boolean enforceRefsets) {
@@ -285,6 +291,7 @@ public class NodeGeneratorService {
             nonDefiningProperties,
             selectedConceptIdentifiers,
             newProperties,
+            newPropertiesAdditive,
             suppressIsa,
             suppressNegativeStatements,
             enforceRefsets));
@@ -301,6 +308,7 @@ public class NodeGeneratorService {
       Set<SnowstormRelationship> nonDefiningProperties,
       List<String> selectedConceptIdentifiers,
       Collection<NonDefiningBase> newProperties,
+      boolean newPropertiesAdditive,
       boolean suppressIsa,
       boolean suppressNegativeStatements,
       boolean enforceRefsets) {
@@ -424,7 +432,8 @@ public class NodeGeneratorService {
       properties.addAll(
           ReferenceSetUtils.getReferenceSetsFromNewRefsetComponentViewMembers(
               referenceSetMembers,
-              modelConfiguration.getReferenceSetsByIdentifierForModelLevel(modelLevel)));
+              modelConfiguration.getReferenceSetsByIdentifierForModelLevel(modelLevel),
+              modelLevel));
       properties.addAll(
           ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMemberViewComponents(
               referenceSetMembers,
@@ -437,7 +446,7 @@ public class NodeGeneratorService {
     } else {
       log.fine("Concept found for " + label + " " + node.getConceptId());
 
-      populateNodeProperties(branch, modelLevel, node, newProperties);
+      populateNodeProperties(branch, modelLevel, node, newProperties, newPropertiesAdditive);
     }
 
     return node;
