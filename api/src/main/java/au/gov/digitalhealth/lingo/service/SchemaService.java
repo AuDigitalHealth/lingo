@@ -139,4 +139,24 @@ public class SchemaService {
       throw new LingoProblem("Failed to read schema file from path " + filePath, e);
     }
   }
+
+  public String getEditSchema(String branch, String type) {
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+    JsonNode schemaNode = readFileContentAsJson(modelConfiguration.getBaseEditSchema());
+
+    schemaExtender.updateEditSchema(
+        modelConfiguration, schemaNode, modelConfiguration.getLevelByDisplayName(type));
+
+    return schemaNode.toString();
+  }
+
+  public String getEditUiSchema(String branch, String type) {
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+    JsonNode uiSchemaNode = readFileContentAsJson(modelConfiguration.getBaseEditUiSchema());
+
+    uiSchemaExtender.updateEditUiSchema(
+        modelConfiguration, uiSchemaNode, modelConfiguration.getLevelByDisplayName(type));
+
+    return uiSchemaNode.toString();
+  }
 }
