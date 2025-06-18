@@ -155,8 +155,9 @@ public class Node implements Cloneable {
    */
   @JsonProperty(value = "propertyUpdate", access = JsonProperty.Access.READ_ONLY)
   public boolean isPropertyUpdate() {
-    return concept == null
+    return concept != null
         && originalNode != null
+        && newConceptDetails == null
         && (!originalNode.getNode().getNonDefiningProperties().containsAll(nonDefiningProperties)
             || !nonDefiningProperties.containsAll(
                 originalNode.getNode().getNonDefiningProperties()));
@@ -285,8 +286,10 @@ public class Node implements Cloneable {
             clonedInnerNode.setConceptOptions(new ArrayList<>(innerNode.getConceptOptions()));
           }
 
-          if (innerNode.getNonDefiningProperties() != null && !innerNode.getNonDefiningProperties().isEmpty()) {
-            clonedInnerNode.setNonDefiningProperties(new HashSet<>(innerNode.getNonDefiningProperties()));
+          if (innerNode.getNonDefiningProperties() != null
+              && !innerNode.getNonDefiningProperties().isEmpty()) {
+            clonedInnerNode.setNonDefiningProperties(
+                new HashSet<>(innerNode.getNonDefiningProperties()));
           }
 
           // Deep copy NewConceptDetails if it exists
@@ -297,7 +300,8 @@ public class Node implements Cloneable {
             clonedInnerDetails.setSpecifiedConceptId(innerDetails.getSpecifiedConceptId());
             clonedInnerDetails.setFullySpecifiedName(innerDetails.getFullySpecifiedName());
             clonedInnerDetails.setPreferredTerm(innerDetails.getPreferredTerm());
-            clonedInnerDetails.setGeneratedFullySpecifiedName(innerDetails.getGeneratedFullySpecifiedName());
+            clonedInnerDetails.setGeneratedFullySpecifiedName(
+                innerDetails.getGeneratedFullySpecifiedName());
             clonedInnerDetails.setGeneratedPreferredTerm(innerDetails.getGeneratedPreferredTerm());
             clonedInnerDetails.setSemanticTag(innerDetails.getSemanticTag());
 
@@ -306,12 +310,16 @@ public class Node implements Cloneable {
               clonedInnerDetails.setAxioms(new HashSet<>(innerDetails.getAxioms()));
             }
 
-            if (innerDetails.getNonDefiningProperties() != null && !innerDetails.getNonDefiningProperties().isEmpty()) {
-              clonedInnerDetails.setNonDefiningProperties(new HashSet<>(innerDetails.getNonDefiningProperties()));
+            if (innerDetails.getNonDefiningProperties() != null
+                && !innerDetails.getNonDefiningProperties().isEmpty()) {
+              clonedInnerDetails.setNonDefiningProperties(
+                  new HashSet<>(innerDetails.getNonDefiningProperties()));
             }
 
-            if (innerDetails.getReferenceSetMembers() != null && !innerDetails.getReferenceSetMembers().isEmpty()) {
-              clonedInnerDetails.setReferenceSetMembers(new HashSet<>(innerDetails.getReferenceSetMembers()));
+            if (innerDetails.getReferenceSetMembers() != null
+                && !innerDetails.getReferenceSetMembers().isEmpty()) {
+              clonedInnerDetails.setReferenceSetMembers(
+                  new HashSet<>(innerDetails.getReferenceSetMembers()));
             }
 
             clonedInnerNode.setNewConceptDetails(clonedInnerDetails);
