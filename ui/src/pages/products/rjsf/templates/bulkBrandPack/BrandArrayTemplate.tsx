@@ -125,6 +125,7 @@ const BrandArrayTemplate: React.FC<ArrayFieldTemplateProps> = props => {
                     formContext={formContext}
                     errorSchema={element.children.props.errorSchema}
                     branch={branch}
+                    readOnly={readOnly}
                   />
                 </ListItem>
                 {index < items.length - 1 && <Divider />}

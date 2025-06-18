@@ -1,7 +1,10 @@
 // ItemDetailsDisplay.tsx
 import React, { useMemo } from 'react';
 import { Box, Chip, Paper, Stack, Tooltip, Typography } from '@mui/material';
-import { NonDefiningProperty, NonDefiningPropertyType } from '../../../types/product.ts';
+import {
+  NonDefiningProperty,
+  NonDefiningPropertyType,
+} from '../../../types/product.ts';
 import { Product } from '../../../types/concept.ts';
 import { AdditionalReferenceSetDisplay } from './AdditionalReferenceSetDisplay.tsx';
 import WarningIcon from '@mui/icons-material/Warning';
@@ -25,50 +28,69 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
 }) => {
   const { applicationConfig } = useApplicationConfigStore();
 
-  const { nonDefiningProperties, newProperties, removedProperties, newReferenceSets, removedReferenceSets } = useMemo(() => {
+  const {
+    nonDefiningProperties,
+    newProperties,
+    removedProperties,
+    newReferenceSets,
+    removedReferenceSets,
+  } = useMemo(() => {
     const nonDefProps = product?.nonDefiningProperties || [];
-    const originalProps = product?.originalNode?.node?.nonDefiningProperties || [];
+    const originalProps =
+      product?.originalNode?.node?.nonDefiningProperties || [];
 
     // Identify new properties (in current but not in original)
     const newProps = nonDefProps.filter(
-      current => !originalProps.some(original => 
-        original.identifier === current.identifier && 
-        original.title === current.title && original.value === current.value
-        && original.valueObject?.conceptId === current.valueObject?.conceptId
-        && original.relationshipType === current.relationshipType
-      )
+      current =>
+        !originalProps.some(
+          original =>
+            original.identifier === current.identifier &&
+            original.title === current.title &&
+            original.value === current.value &&
+            original.valueObject?.conceptId ===
+              current.valueObject?.conceptId &&
+            original.relationshipType === current.relationshipType,
+        ),
     );
 
     // Identify removed properties (in original but not in current)
     const removedProps = originalProps.filter(
-      original => !nonDefProps.some(current => 
-        current.identifier === original.identifier && 
-        current.title === original.title && current.value === original.value
-        && current.valueObject?.conceptId === original.valueObject?.conceptId
-        && current.relationshipType === original.relationshipType
-      )
+      original =>
+        !nonDefProps.some(
+          current =>
+            current.identifier === original.identifier &&
+            current.title === original.title &&
+            current.value === original.value &&
+            current.valueObject?.conceptId ===
+              original.valueObject?.conceptId &&
+            current.relationshipType === original.relationshipType,
+        ),
     );
 
     // Identify new reference sets (in current but not in original)
     const newRefSets = nonDefProps
       .filter(prop => prop.type === NonDefiningPropertyType.REFERENCE_SET)
-      .filter(current => 
-        !originalProps.some(original => 
-          original.type === NonDefiningPropertyType.REFERENCE_SET &&
-          original.identifier === current.identifier && 
-          original.title === current.title
-        )
+      .filter(
+        current =>
+          !originalProps.some(
+            original =>
+              original.type === NonDefiningPropertyType.REFERENCE_SET &&
+              original.identifier === current.identifier &&
+              original.title === current.title,
+          ),
       );
 
     // Identify removed reference sets (in original but not in current)
     const removedRefSets = originalProps
       .filter(prop => prop.type === NonDefiningPropertyType.REFERENCE_SET)
-      .filter(original => 
-        !nonDefProps.some(current => 
-          current.type === NonDefiningPropertyType.REFERENCE_SET &&
-          current.identifier === original.identifier && 
-          current.title === original.title
-        )
+      .filter(
+        original =>
+          !nonDefProps.some(
+            current =>
+              current.type === NonDefiningPropertyType.REFERENCE_SET &&
+              current.identifier === original.identifier &&
+              current.title === original.title,
+          ),
       );
 
     return {
@@ -186,7 +208,11 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
     return `refset-${index}-${String(refSet.title ?? '')}`;
   };
 
-  const renderChip = (item: NonDefiningProperty, isNew = false, isRemoved = false) => {
+  const renderChip = (
+    item: NonDefiningProperty,
+    isNew = false,
+    isRemoved = false,
+  ) => {
     // Determine styling based on whether the property is new or removed
     const getChipStyle = () => {
       if (isNew) {
@@ -227,8 +253,8 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
       item.valueObject?.pt?.term
     ) {
       return (
-        <Tooltip 
-          title={`${item.valueObject.conceptId || ''}${isNew ? ' (New)' : ''}${isRemoved ? ' (Removed)' : ''}`} 
+        <Tooltip
+          title={`${item.valueObject.conceptId || ''}${isNew ? ' (New)' : ''}${isRemoved ? ' (Removed)' : ''}`}
           arrow
         >
           <Chip
@@ -246,8 +272,16 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
     ) {
       const tooltipTitle = (
         <>
-          {isNew && <div style={{ fontWeight: 'bold', color: '#4caf50' }}>New property</div>}
-          {isRemoved && <div style={{ fontWeight: 'bold', color: '#f44336' }}>Removed property</div>}
+          {isNew && (
+            <div style={{ fontWeight: 'bold', color: '#4caf50' }}>
+              New property
+            </div>
+          )}
+          {isRemoved && (
+            <div style={{ fontWeight: 'bold', color: '#f44336' }}>
+              Removed property
+            </div>
+          )}
           {item.additionalProperties &&
           Object.keys(item.additionalProperties).length > 0 ? (
             <>
@@ -267,10 +301,7 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
       );
 
       return (
-        <Tooltip
-          title={tooltipTitle}
-          placement="top"
-        >
+        <Tooltip title={tooltipTitle} placement="top">
           <Box
             sx={{
               display: 'inline-flex',
@@ -285,7 +316,11 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
           >
             <Box
               sx={{
-                backgroundColor: isNew ? '#e6f7e6' : isRemoved ? '#ffebee' : '#f0f7ff',
+                backgroundColor: isNew
+                  ? '#e6f7e6'
+                  : isRemoved
+                    ? '#ffebee'
+                    : '#f0f7ff',
                 padding: '4px 8px',
                 fontWeight: 'medium',
                 fontSize: '0.8125rem',
@@ -293,7 +328,11 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 '&:hover': {
-                  backgroundColor: isNew ? '#d4ecd4' : isRemoved ? '#ffdde0' : '#e1f0ff',
+                  backgroundColor: isNew
+                    ? '#d4ecd4'
+                    : isRemoved
+                      ? '#ffdde0'
+                      : '#e1f0ff',
                 },
               }}
             >
@@ -325,11 +364,19 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
             </Box>
             <Box
               sx={{
-                backgroundColor: isNew ? '#e6f7e6' : isRemoved ? '#ffebee' : '#f0f7ff',
+                backgroundColor: isNew
+                  ? '#e6f7e6'
+                  : isRemoved
+                    ? '#ffebee'
+                    : '#f0f7ff',
                 padding: '4px 8px',
                 fontSize: '0.8125rem',
                 '&:hover': {
-                  backgroundColor: isNew ? '#d4ecd4' : isRemoved ? '#ffdde0' : '#e1f0ff',
+                  backgroundColor: isNew
+                    ? '#d4ecd4'
+                    : isRemoved
+                      ? '#ffdde0'
+                      : '#e1f0ff',
                 },
               }}
             >
@@ -349,7 +396,11 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
         variant="outlined"
         sx={{
           ...getChipStyle(),
-          backgroundColor: isNew ? '#e6f7e6' : isRemoved ? '#ffebee' : '#f5f5f5',
+          backgroundColor: isNew
+            ? '#e6f7e6'
+            : isRemoved
+              ? '#ffebee'
+              : '#f5f5f5',
         }}
       />
     ) : null;
@@ -357,8 +408,11 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
 
   function getPropertyContent() {
     // Only show legend if there are differences (new or removed properties or reference sets)
-    const showLegend = newProperties.length > 0 || removedProperties.length > 0 || 
-                       newReferenceSets.length > 0 || removedReferenceSets.length > 0;
+    const showLegend =
+      newProperties.length > 0 ||
+      removedProperties.length > 0 ||
+      newReferenceSets.length > 0 ||
+      removedReferenceSets.length > 0;
 
     return (
       <Box>
@@ -368,7 +422,9 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
             {sortedReferenceSets.map((refSet, index) => {
               // Check if this reference set is new
               const isNew = newReferenceSets.some(
-                newRef => newRef.identifier === refSet.identifier && newRef.title === refSet.title
+                newRef =>
+                  newRef.identifier === refSet.identifier &&
+                  newRef.title === refSet.title,
               );
 
               return (
@@ -431,16 +487,16 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
 
         {/* Legend for property and reference set changes */}
         {showLegend && product?.originalNode?.node && (
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              gap: 2, 
-              mb: 2, 
-              p: 1, 
-              backgroundColor: '#f5f5f5', 
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 2,
+              mb: 2,
+              p: 1,
+              backgroundColor: '#f5f5f5',
               borderRadius: 1,
               alignItems: 'center',
-              flexWrap: 'wrap'
+              flexWrap: 'wrap',
             }}
           >
             <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
@@ -448,41 +504,48 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
             </Typography>
             {(newProperties.length > 0 || newReferenceSets.length > 0) && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <Box 
-                  sx={{ 
-                    width: 12, 
-                    height: 12, 
-                    backgroundColor: '#e6f7e6', 
+                <Box
+                  sx={{
+                    width: 12,
+                    height: 12,
+                    backgroundColor: '#e6f7e6',
                     border: '1px solid #4caf50',
-                    borderRadius: 1 
-                  }} 
+                    borderRadius: 1,
+                  }}
                 />
                 <Typography variant="caption">
-                  New {newProperties.length > 0 && newReferenceSets.length > 0 
-                    ? 'properties & reference sets' 
-                    : newProperties.length > 0 
-                      ? 'properties' 
+                  New{' '}
+                  {newProperties.length > 0 && newReferenceSets.length > 0
+                    ? 'properties & reference sets'
+                    : newProperties.length > 0
+                      ? 'properties'
                       : 'reference sets'}
                 </Typography>
               </Box>
             )}
-            {(removedProperties.length > 0 || removedReferenceSets.length > 0) && (
+            {(removedProperties.length > 0 ||
+              removedReferenceSets.length > 0) && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <Box 
-                  sx={{ 
-                    width: 12, 
-                    height: 12, 
-                    backgroundColor: '#ffebee', 
+                <Box
+                  sx={{
+                    width: 12,
+                    height: 12,
+                    backgroundColor: '#ffebee',
                     border: '1px solid #f44336',
                     borderRadius: 1,
-                    textDecoration: 'line-through'
-                  }} 
+                    textDecoration: 'line-through',
+                  }}
                 />
-                <Typography variant="caption" sx={{ textDecoration: 'line-through' }}>
-                  Removed {removedProperties.length > 0 && removedReferenceSets.length > 0 
-                    ? 'properties & reference sets' 
-                    : removedProperties.length > 0 
-                      ? 'properties' 
+                <Typography
+                  variant="caption"
+                  sx={{ textDecoration: 'line-through' }}
+                >
+                  Removed{' '}
+                  {removedProperties.length > 0 &&
+                  removedReferenceSets.length > 0
+                    ? 'properties & reference sets'
+                    : removedProperties.length > 0
+                      ? 'properties'
                       : 'reference sets'}
                 </Typography>
               </Box>
@@ -506,9 +569,13 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
                 .map((item, idx) => (
                   <React.Fragment key={`${itemTitle}-item-${idx}`}>
                     {renderChip(
-                      item, 
-                      newProperties.some(p => p.identifier === item.identifier && p.title === item.title),
-                      false
+                      item,
+                      newProperties.some(
+                        p =>
+                          p.identifier === item.identifier &&
+                          p.title === item.title,
+                      ),
+                      false,
                     )}
                   </React.Fragment>
                 ))
@@ -520,30 +587,35 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
         {/* Display removed properties */}
         {removedProperties.length > 0 && (
           <Box sx={{ mt: 3, mb: 1, borderTop: '1px dashed #ccc', pt: 2 }}>
-
             {/* Group removed properties by title */}
-            {Object.entries(groupItemsByTitle(removedProperties)).map(([itemTitle, items]) => (
-              <Stack
-                key={`removed-${itemTitle}-items`}
-                direction="row"
-                spacing={2}
-                alignItems="center"
-                sx={{ mb: 1 }}
-              >
-                <Typography style={{ color: labelColor, minWidth: labelWidth }}>
-                  {itemTitle}:
-                </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {items
-                    .map((item, idx) => (
-                      <React.Fragment key={`removed-${itemTitle}-item-${idx}`}>
-                        {renderChip(item, false, true)}
-                      </React.Fragment>
-                    ))
-                    .filter(Boolean)}
-                </Box>
-              </Stack>
-            ))}
+            {Object.entries(groupItemsByTitle(removedProperties)).map(
+              ([itemTitle, items]) => (
+                <Stack
+                  key={`removed-${itemTitle}-items`}
+                  direction="row"
+                  spacing={2}
+                  alignItems="center"
+                  sx={{ mb: 1 }}
+                >
+                  <Typography
+                    style={{ color: labelColor, minWidth: labelWidth }}
+                  >
+                    {itemTitle}:
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {items
+                      .map((item, idx) => (
+                        <React.Fragment
+                          key={`removed-${itemTitle}-item-${idx}`}
+                        >
+                          {renderChip(item, false, true)}
+                        </React.Fragment>
+                      ))
+                      .filter(Boolean)}
+                  </Box>
+                </Stack>
+              ),
+            )}
           </Box>
         )}
       </Box>
