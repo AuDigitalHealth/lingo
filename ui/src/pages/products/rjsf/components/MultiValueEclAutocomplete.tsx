@@ -109,6 +109,7 @@ const MultiValueEclAutocomplete: React.FC<FieldProps<any, any>> = props => {
             label={title}
             error={!!errorMessage}
             helperText={errorMessage}
+            disabled={isDisabled}
             InputProps={{
               ...params.InputProps,
               endAdornment: (
