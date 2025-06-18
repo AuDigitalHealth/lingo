@@ -15,13 +15,17 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
+import static au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter.calculateNonDefiningRelationships;
+import static au.gov.digitalhealth.lingo.util.ReferenceSetUtils.calculateReferenceSetMembers;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.*;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.*;
+import static java.lang.Boolean.TRUE;
 
 import au.csiro.snowstorm_client.model.*;
 import au.gov.digitalhealth.lingo.configuration.FieldBindingConfiguration;
 import au.gov.digitalhealth.lingo.configuration.NamespaceConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
+import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.exception.EmptyProductCreationProblem;
@@ -52,6 +56,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
@@ -165,6 +170,18 @@ public class ProductCreationService {
     }
   }
 
+  private static void validateCreateOperation(ProductSummary productSummary) {
+    if (productSummary.getNodes().stream().anyMatch(Node::isConceptEdit)) {
+      throw new ProductAtomicDataValidationProblem(
+          "Cannot edit existing concepts as part of a create operation");
+    }
+
+    if (productSummary.getNodes().stream().anyMatch(Node::isRetireAndReplace)) {
+      throw new ProductAtomicDataValidationProblem(
+          "Cannot retire and replace concepts as part of a create operation");
+    }
+  }
+
   public ProductSummary createProductFromBrandPackSizeCreationDetails(
       String branch, @Valid BulkProductAction<BrandPackSizeCreationDetails> creationDetails)
       throws InterruptedException {
@@ -176,6 +193,9 @@ public class ProductCreationService {
     if (productSummary.getNodes().stream().noneMatch(Node::isNewConcept)) {
       throw new EmptyProductCreationProblem();
     }
+
+    validateCreateOperation(productSummary);
+
     ProductSummary productSummaryClone = null;
     try {
       productSummaryClone =
@@ -190,7 +210,7 @@ public class ProductCreationService {
             .filter(Node::isNewConcept)
             .collect(Collectors.toSet());
 
-    BidiMap<String, String> idMap = create(branch, productSummary, false);
+    BidiMap<String, String> idMap = createAndUpdate(branch, productSummary, false);
 
     if (productSummaryClone != null) {
       modifiedGeneratedNameService.createAndSaveModifiedGeneratedNames(
@@ -229,6 +249,8 @@ public class ProductCreationService {
     // validate the ticket exists
     TicketDtoExtended ticket = ticketService.findTicket(productCreationDetails.getTicketId());
 
+    validateCreateOperation(productCreationDetails.getProductSummary());
+
     ProductSummary productSummary = productCreationDetails.getProductSummary();
     ProductSummary productSummaryClone = null;
     try {
@@ -243,7 +265,7 @@ public class ProductCreationService {
       throw new EmptyProductCreationProblem();
     }
 
-    BidiMap<String, String> idMap = create(branch, productSummary, true);
+    BidiMap<String, String> idMap = createAndUpdate(branch, productSummary, true);
 
     if (productSummaryClone != null) {
       modifiedGeneratedNameService.createAndSaveModifiedGeneratedNames(
@@ -381,7 +403,7 @@ public class ProductCreationService {
     snowstormClient.createRefsetMembers(branch, refsetMembers);
   }
 
-  private BidiMap<String, String> create(
+  private BidiMap<String, String> createAndUpdate(
       String branch, ProductSummary productSummary, boolean singleSubject)
       throws InterruptedException {
 
@@ -407,6 +429,10 @@ public class ProductCreationService {
 
     final ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     Set<Node> subjects = productSummary.calculateSubject(singleSubject, modelConfiguration);
+
+    updateConceptsWithPropertyOnlyChanges(branch, modelConfiguration, productSummary);
+
+    // update refset properties for edits?
 
     List<Node> nodeCreateOrder =
         productSummary.getNodes().stream()
@@ -470,6 +496,171 @@ public class ProductCreationService {
         taskChangedConceptIds.block(), projectChangedConceptIds.block());
 
     return idMap;
+  }
+
+  private void updateConceptsWithPropertyOnlyChanges(
+      String branch, ModelConfiguration modelConfiguration, ProductSummary productSummary)
+      throws InterruptedException {
+    Map<String, Node> nodesWithPropertyUpdates =
+        productSummary.getNodes().stream()
+            .filter(Node::isPropertyUpdate)
+            .collect(Collectors.toMap(Node::getConceptId, n -> n));
+
+    if (nodesWithPropertyUpdates.isEmpty()) {
+      log.fine("No property updates found, skipping concept updates");
+      return;
+    }
+
+    log.fine("Updating concepts with property updates");
+
+    final Set<String> propertyUpdatedConceptIds =
+        nodesWithPropertyUpdates.values().stream()
+            .map(Node::getConceptId)
+            .collect(Collectors.toSet());
+
+    Mono<Set<SnowstormConcept>> browserConcepts =
+        snowstormClient
+            .getBrowserConcepts(branch, propertyUpdatedConceptIds)
+            .collect(Collectors.toSet());
+
+    Mono<List<SnowstormReferenceSetMember>> referenceSetMembers =
+        snowstormClient.getRefsetMembersMono(branch, propertyUpdatedConceptIds, null);
+
+    Set<SnowstormConceptView> conceptsToUpdate = new HashSet<>();
+
+    browserConcepts
+        .block()
+        .forEach(
+            concept -> {
+              Node node = nodesWithPropertyUpdates.get(concept.getConceptId());
+              Set<SnowstormRelationship> newRelationships =
+                  calculateNonDefiningRelationships(
+                      modelConfiguration, node.getModelLevel(), node.getNonDefiningProperties());
+
+              // Remove any existing relationships that are not in the new relationships
+              boolean relationshipsRemoved =
+                  concept
+                      .getRelationships()
+                      .removeIf(
+                          existingRelationship ->
+                              existingRelationship
+                                      .getCharacteristicType()
+                                      .equals(ADDITIONAL_RELATIONSHIP.getValue())
+                                  && newRelationships.stream()
+                                      .noneMatch(
+                                          newRelationship ->
+                                              existingRelationship
+                                                      .getTypeId()
+                                                      .equals(newRelationship.getTypeId())
+                                                  && existingRelationship
+                                                      .getDestinationId()
+                                                      .equals(newRelationship.getDestinationId())));
+
+              AtomicBoolean relationshipsAdded = new AtomicBoolean(false);
+              // Add the new relationships
+              newRelationships.forEach(
+                  newRelationship -> {
+                    if (concept.getRelationships().stream()
+                        .noneMatch(
+                            existingRelationship ->
+                                existingRelationship.getTypeId().equals(newRelationship.getTypeId())
+                                    && existingRelationship
+                                        .getDestinationId()
+                                        .equals(newRelationship.getDestinationId()))) {
+                      concept.getRelationships().add(newRelationship);
+                      relationshipsAdded.set(true);
+                    }
+                  });
+              if (relationshipsAdded.get() || relationshipsRemoved) {
+                conceptsToUpdate.add(toSnowstormConceptView(concept));
+              }
+            });
+
+    Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembershipToAdd = new HashSet<>();
+    Set<SnowstormReferenceSetMember> referenceSetMembershipToDelete = new HashSet<>();
+    List<SnowstormReferenceSetMember> referenceSetMemberList = referenceSetMembers.block();
+
+    for (Node node : nodesWithPropertyUpdates.values()) {
+      Set<SnowstormReferenceSetMemberViewComponent> newReferenceSetMembers =
+          calculateReferenceSetMembers(
+              node.getNonDefiningProperties(), modelConfiguration, node.getModelLevel());
+
+      Set<String> inScopeReferenceSetIds = new HashSet<>();
+      final ModelLevel modelLevel = modelConfiguration.getLevelOfType(node.getModelLevel());
+      inScopeReferenceSetIds.addAll(
+          modelConfiguration.getReferenceSetsByLevel(modelLevel).stream()
+              .map(m -> m.getIdentifier())
+              .toList());
+      inScopeReferenceSetIds.addAll(
+          modelConfiguration.getMappingsByLevel(modelLevel).stream()
+              .map(m -> m.getIdentifier())
+              .toList());
+      inScopeReferenceSetIds.add(modelLevel.getReferenceSetIdentifier());
+
+      // determine which reference set members to delete
+      referenceSetMemberList.stream()
+          .filter(
+              r -> TRUE.equals(r.getActive()) && inScopeReferenceSetIds.contains(r.getRefsetId()))
+          .filter(
+              existingMember ->
+                  existingMember.getReferencedComponentId().equals(node.getConceptId())
+                      && newReferenceSetMembers.stream()
+                          .noneMatch(
+                              newMember ->
+                                  newMember.getRefsetId().equals(existingMember.getRefsetId())
+                                      && Objects.equals(
+                                          newMember.getAdditionalFields(),
+                                          existingMember.getAdditionalFields())))
+          .forEach(referenceSetMembershipToDelete::add);
+
+      // determine which reference set members to add
+      newReferenceSetMembers.stream()
+          .filter(
+              newMember ->
+                  referenceSetMemberList.stream()
+                      .noneMatch(
+                          existingMember ->
+                              existingMember.getReferencedComponentId().equals(node.getConceptId())
+                                  && existingMember.getRefsetId().equals(newMember.getRefsetId())
+                                  && Objects.equals(
+                                      newMember.getAdditionalFields(),
+                                      existingMember.getAdditionalFields())))
+          .forEach(
+              newReferenceSetMember -> {
+                newReferenceSetMember.setReferencedComponentId(node.getConceptId());
+                referenceSetMembershipToAdd.add(newReferenceSetMember);
+              });
+    }
+    if (!conceptsToUpdate.isEmpty()) {
+      log.fine(
+          "Updating "
+              + conceptsToUpdate.size()
+              + " concepts with property updates: "
+              + conceptsToUpdate.stream()
+                  .map(SnowstormConceptView::getConceptId)
+                  .collect(Collectors.joining(",")));
+      snowstormClient.createUpdateBulkConcepts(branch, conceptsToUpdate);
+    }
+    if (!referenceSetMembershipToDelete.isEmpty()) {
+      log.fine(
+          "Deleting "
+              + referenceSetMembershipToDelete.size()
+              + " reference set members: "
+              + referenceSetMembershipToDelete.stream()
+                  .map(SnowstormReferenceSetMember::getMemberId)
+                  .collect(Collectors.joining(",")));
+      snowstormClient.removeRefsetMembers(branch, referenceSetMembershipToDelete);
+    }
+    if (!referenceSetMembershipToAdd.isEmpty()) {
+      log.fine(
+          "Adding "
+              + referenceSetMembershipToAdd.size()
+              + " reference set members: "
+              + referenceSetMembershipToAdd.stream()
+                  .map(SnowstormReferenceSetMemberViewComponent::getRefsetId)
+                  .collect(Collectors.joining(",")));
+      snowstormClient.createRefsetMemberships(branch, referenceSetMembershipToAdd);
+    }
   }
 
   private void createConcepts(String branch, List<Node> nodeCreateOrder, Map<String, String> idMap)
@@ -554,7 +745,7 @@ public class ProductCreationService {
 
     if (bulkCreate) {
       log.info("Creating " + concepts.size() + " concepts with preallocated identifiers");
-      createdConcepts = snowstormClient.createConcepts(branch, concepts);
+      createdConcepts = snowstormClient.createUpdateBulkConcepts(branch, concepts);
     } else {
       createdConcepts = concepts.stream().map(SnowstormDtoUtil::toSnowstormConceptMini).toList();
     }

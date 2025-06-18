@@ -18,6 +18,7 @@ package au.gov.digitalhealth.lingo.util;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
+import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.ReferenceSetDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
@@ -45,16 +46,20 @@ public class ReferenceSetUtils {
 
   public static Set<ReferenceSet> getReferenceSetsFromNewRefsetComponentViewMembers(
       Collection<SnowstormReferenceSetMemberViewComponent> refsetMembers,
-      Map<String, ReferenceSetDefinition> referenceSetsConfigured) {
+      Map<String, ReferenceSetDefinition> referenceSetsConfigured,
+      ModelLevel modelLevel) {
 
-    if (referenceSetsConfigured.isEmpty()) {
-      return Set.of();
+    Set<ReferenceSet> referenceSets =
+        refsetMembers.stream()
+            .filter(r -> referenceSetsConfigured.containsKey(r.getRefsetId()))
+            .map(s -> new ReferenceSet(s, referenceSetsConfigured.get(s.getRefsetId())))
+            .collect(Collectors.toSet());
+
+    if (refsetMembers.stream()
+        .anyMatch(r -> r.getRefsetId().equals(modelLevel.getReferenceSetIdentifier()))) {
+      referenceSets.add(modelLevel.createMarkerRefset());
     }
-
-    return refsetMembers.stream()
-        .filter(r -> referenceSetsConfigured.containsKey(r.getRefsetId()))
-        .map(s -> new ReferenceSet(s, referenceSetsConfigured.get(s.getRefsetId())))
-        .collect(Collectors.toSet());
+    return referenceSets;
   }
 
   public static Map<String, Set<ReferenceSet>> getReferenceSetsFromRefsetMembers(
@@ -105,16 +110,16 @@ public class ReferenceSetUtils {
                 Pair::getFirst, Collectors.mapping(Pair::getSecond, Collectors.toList())));
   }
 
-  public static Set<SnowstormReferenceSetMemberViewComponent> getReferenceSetMembers(
+  public static Set<SnowstormReferenceSetMemberViewComponent> calculateReferenceSetMembers(
       PackageProductDetailsBase details,
       ModelConfiguration modelConfiguration,
       ModelLevelType modelLevelType) {
 
-    return getReferenceSetMembers(
+    return calculateReferenceSetMembers(
         details.getNonDefiningProperties(), modelConfiguration, modelLevelType);
   }
 
-  public static Set<SnowstormReferenceSetMemberViewComponent> getReferenceSetMembers(
+  public static Set<SnowstormReferenceSetMemberViewComponent> calculateReferenceSetMembers(
       Collection<NonDefiningBase> properties,
       ModelConfiguration modelConfiguration,
       @NotNull ModelLevelType modelLevelType) {
@@ -133,6 +138,12 @@ public class ReferenceSetUtils {
     for (ReferenceSet referenceSet : ReferenceSet.filter(properties)) {
       ReferenceSetDefinition configReferenceSetDefinition =
           referenceSetMap.get(referenceSet.getIdentifierScheme());
+      if (referenceSet.getIdentifierScheme().equals("levelMarker")) {
+        // levelMarker is a special case, it is not defined in the model configuration
+        // but is always present in the product details.
+        configReferenceSetDefinition =
+            modelConfiguration.getReferenceSetDefinitionForLevelMarker(modelLevelType);
+      }
       if (configReferenceSetDefinition == null) {
         throw new ProductAtomicDataValidationProblem(
             "Reference set "

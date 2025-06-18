@@ -26,10 +26,10 @@ import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Collection;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.extern.java.Log;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonTypeName("nonDefiningProperty")
@@ -109,5 +109,30 @@ public class NonDefiningProperty extends NonDefiningBase implements Serializable
         this.valueObject = null;
       }
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    NonDefiningProperty that = (NonDefiningProperty) o;
+
+    return new EqualsBuilder()
+        .append(getIdentifierScheme(), that.getIdentifierScheme())
+        .append(value, that.value)
+        .append(
+            valueObject != null ? valueObject.getConceptId() : null,
+            that.valueObject != null ? that.valueObject.getConceptId() : null)
+        .isEquals();
+  }
+
+  @Override
+  public int hashCode() {
+    return new HashCodeBuilder(17, 37)
+        .append(getIdentifierScheme())
+        .append(value)
+        .append(valueObject != null ? valueObject.getConceptId() : null)
+        .toHashCode();
   }
 }
