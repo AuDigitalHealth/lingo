@@ -31,7 +31,7 @@ import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_TOTAL_QUANTITY_UN
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_TOTAL_QUANTITY_VALUE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.NO_OII_VALUE;
 import static au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter.calculateNonDefiningRelationships;
-import static au.gov.digitalhealth.lingo.util.ReferenceSetUtils.getReferenceSetMembers;
+import static au.gov.digitalhealth.lingo.util.ReferenceSetUtils.calculateReferenceSetMembers;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONTAINS_CD;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.COUNT_OF_ACTIVE_INGREDIENT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.COUNT_OF_BASE_ACTIVE_INGREDIENT;
@@ -82,6 +82,7 @@ import au.gov.digitalhealth.lingo.util.AmtConstants;
 import au.gov.digitalhealth.lingo.util.BigDecimalFormatter;
 import au.gov.digitalhealth.lingo.util.InactivationReason;
 import au.gov.digitalhealth.lingo.util.OwlAxiomService;
+import au.gov.digitalhealth.lingo.util.ReferenceSetUtils;
 import au.gov.digitalhealth.lingo.util.RelationshipSorter;
 import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import au.gov.digitalhealth.tickets.service.TicketServiceImpl;
@@ -525,12 +526,15 @@ public class MedicationProductCalculationService {
         refsets,
         packageLevel,
         label,
-        getReferenceSetMembers(
+        ReferenceSetUtils.calculateReferenceSetMembers(
             packageDetails, models.getModelConfiguration(branch), packageLevel.getModelLevelType()),
         calculateNonDefiningRelationships(
-            models.getModelConfiguration(branch), packageDetails, packageLevel.getModelLevelType()),
+            models.getModelConfiguration(branch),
+            packageLevel.getModelLevelType(),
+            packageDetails.getNonDefiningProperties()),
         packageDetails.getSelectedConceptIdentifiers(),
         packageDetails.getNonDefiningProperties(),
+        true,
         true,
         label.equals(
             modelConfiguration.getLevelOfType(ModelLevelType.PACKAGED_CLINICAL_DRUG).getName()),
@@ -933,12 +937,15 @@ public class MedicationProductCalculationService {
         productDetails.hasDeviceType()
             ? level.getDrugDeviceSemanticTag()
             : level.getMedicineSemanticTag(),
-        getReferenceSetMembers(
+        ReferenceSetUtils.calculateReferenceSetMembers(
             productDetails, models.getModelConfiguration(branch), modelLevelType),
         calculateNonDefiningRelationships(
-            models.getModelConfiguration(branch), productDetails, modelLevelType),
+            models.getModelConfiguration(branch),
+            modelLevelType,
+            productDetails.getNonDefiningProperties()),
         selectedConceptIdentifiers,
         productDetails.getNonDefiningProperties(),
+        true,
         !branded,
         false,
         enforceRefsets);
@@ -965,12 +972,15 @@ public class MedicationProductCalculationService {
         details.hasDeviceType()
             ? mpLevel.getDrugDeviceSemanticTag()
             : mpLevel.getMedicineSemanticTag(),
-        getReferenceSetMembers(
+        ReferenceSetUtils.calculateReferenceSetMembers(
             details, models.getModelConfiguration(branch), mpLevel.getModelLevelType()),
         calculateNonDefiningRelationships(
-            models.getModelConfiguration(branch), details, mpLevel.getModelLevelType()),
+            models.getModelConfiguration(branch),
+            mpLevel.getModelLevelType(),
+            details.getNonDefiningProperties()),
         selectedConceptIdentifiers,
         details.getNonDefiningProperties(),
+        true,
         false,
         false,
         false);

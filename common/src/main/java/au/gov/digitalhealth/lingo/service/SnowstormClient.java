@@ -39,8 +39,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PreDestroy;
 import jakarta.validation.constraints.NotNull;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -369,11 +371,15 @@ public class SnowstormClient {
 
   public List<SnowstormReferenceSetMember> getRefsetMembers(
       String branch, Collection<String> concepts, Set<String> referenceSetIds) {
+    return getRefsetMembersMono(branch, concepts, referenceSetIds).block();
+  }
+
+  public Mono<List<SnowstormReferenceSetMember>> getRefsetMembersMono(
+      String branch, Collection<String> concepts, Set<String> referenceSetIds) {
     return self.getRefsetMembers(branch, concepts, referenceSetIds, 0, 100)
         .mapNotNull(SnowstormItemsPageReferenceSetMember::getItems)
         .flatMapIterable(items -> items)
-        .collectList()
-        .block();
+        .collectList();
   }
 
   @Cacheable(
@@ -468,15 +474,15 @@ public class SnowstormClient {
   }
 
   @SuppressWarnings("java:S1192")
-  public List<SnowstormConceptMini> createConcepts(
-      String branch, List<SnowstormConceptView> concepts) throws InterruptedException {
+  public List<SnowstormConceptMini> createUpdateBulkConcepts(
+      String branch, Collection<SnowstormConceptView> concepts) throws InterruptedException {
 
     if (log.isLoggable(Level.FINE)) {
-      log.fine("Bulk creating concepts: " + concepts.size() + " on branch: " + branch);
+      log.fine("Bulk creating/updating concepts: " + concepts.size() + " on branch: " + branch);
     }
     ResponseEntity<Void> response =
         getConceptsApi()
-            .createUpdateConceptBulkChangeWithResponseSpec(branch, concepts)
+            .createUpdateConceptBulkChangeWithResponseSpec(branch, new ArrayList<>(concepts))
             .toBodilessEntity()
             .block();
     URI location =
@@ -486,7 +492,7 @@ public class SnowstormClient {
 
     if (location == null) {
       throw new BatchSnowstormRequestFailedProblem(
-          "Batch failed creating concepts on branch '"
+          "Batch failed creating/updating concepts on branch '"
               + branch
               + "' - no location was provided, response was "
               + response);
@@ -514,7 +520,7 @@ public class SnowstormClient {
             "no-batch",
             "No batch from Snowstorm",
             HttpStatus.BAD_GATEWAY,
-            "No batch from Snowstorm for creating concepts on branch '" + branch + "'");
+            "No batch from Snowstorm for creating/updating concepts on branch '" + branch + "'");
       }
 
       if (log.isLoggable(Level.FINE)) {
@@ -525,7 +531,7 @@ public class SnowstormClient {
       if (batch.getStatus() == StatusEnum.COMPLETED) {
         if (batch.getConceptIds() == null || batch.getConceptIds().isEmpty()) {
           throw new BatchSnowstormRequestFailedProblem(
-              "Batch failed creating concepts on branch '"
+              "Batch failed creating/updating concepts on branch '"
                   + branch
                   + "' - batch completed with no concept ids");
         }
@@ -533,7 +539,7 @@ public class SnowstormClient {
         Collection<String> batchIds = batch.getConceptIds().stream().map(String::valueOf).toList();
         if (!ids.containsAll(batchIds) || !batchIds.containsAll(ids)) {
           throw new BatchSnowstormRequestFailedProblem(
-              "Failed create concepts in batch "
+              "Failed create/update concepts in batch "
                   + batch.getId()
                   + " on branch '"
                   + branch
@@ -549,7 +555,7 @@ public class SnowstormClient {
         throw new BatchSnowstormRequestFailedProblem(
             "The batch "
                 + batch.getId()
-                + " to create concepts "
+                + " to create/update concepts "
                 + Objects.requireNonNull(batch.getConceptIds()).stream()
                     .map(Object::toString)
                     .collect(Collectors.joining(","))
@@ -565,7 +571,10 @@ public class SnowstormClient {
 
     if (!complete) {
       throw new BatchSnowstormRequestFailedProblem(
-          "Batch failed creating concepts on branch '" + branch + "' message was " + lastMessage);
+          "Batch failed creating/updating concepts on branch '"
+              + branch
+              + "' message was "
+              + lastMessage);
     }
 
     return self.getConceptsById(branch, ids);
@@ -919,20 +928,26 @@ public class SnowstormClient {
   }
 
   public void createRefsetMemberships(
-      String branch, List<SnowstormReferenceSetMemberViewComponent> refsetMember) {
+      String branch, Collection<SnowstormReferenceSetMemberViewComponent> refsetMember) {
     getRefsetMembersApi()
-        .createUpdateMembersBulkChangeWithResponseSpec(branch, refsetMember)
+        .createUpdateMembersBulkChangeWithResponseSpec(branch, new ArrayList<>(refsetMember))
         .onStatus(
             HttpStatusCode::isError,
             response -> {
               log.severe("Error creating refset members: " + response.statusCode());
-              return Mono.error(
-                  new WebClientResponseException(
-                      response.statusCode().value(),
-                      "Error creating refset members",
-                      null,
-                      null,
-                      null));
+              return response
+                  .bodyToMono(String.class)
+                  .flatMap(
+                      errorBody -> {
+                        log.severe("Error response body: " + errorBody);
+                        return Mono.error(
+                            new WebClientResponseException(
+                                response.statusCode().value(),
+                                "Error creating refset members: " + response.statusCode(),
+                                response.headers().asHttpHeaders(),
+                                errorBody.getBytes(),
+                                StandardCharsets.UTF_8));
+                      });
             })
         .toBodilessEntity()
         .block();
