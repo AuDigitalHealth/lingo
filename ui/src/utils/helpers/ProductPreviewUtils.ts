@@ -14,13 +14,20 @@
 /// limitations under the License.
 ///
 
-import { DefinitionStatus, Product, Product7BoxBGColour } from '../../types/concept.ts';
+import {
+  DefinitionStatus,
+  Product,
+  Product7BoxBGColour,
+} from '../../types/concept.ts';
 import {
   getBulkAuthorBrandOptions,
-  getBulkAuthorPackSizeOptions
+  getBulkAuthorPackSizeOptions,
 } from '../../hooks/api/tickets/useTicketProduct.tsx';
 import { queryClient } from 'ecl-builder/lib/queryClient';
-import { bulkAuthorBrands, bulkAuthorPackSizes } from '../../types/queryKeys.ts';
+import {
+  bulkAuthorBrands,
+  bulkAuthorPackSizes,
+} from '../../types/queryKeys.ts';
 
 export function isNameContainsKeywords(name: string, keywords: string[]) {
   return keywords.some(substring =>

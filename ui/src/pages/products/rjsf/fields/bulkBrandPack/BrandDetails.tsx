@@ -5,6 +5,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import { FieldProps } from '@rjsf/utils';
 import AutoCompleteField from '../AutoCompleteField.tsx';
 import ExternalIdentifier from './ExternalIdentifiers.tsx';
+import { RjsfUtils } from '../../helpers/rjsfUtils.ts';
 
 interface BrandDetailsProps extends FieldProps {
   onDelete?: () => void;
@@ -24,15 +25,26 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
     branch,
   } = props;
 
+  const uiSchemaForNonDefiningProperties = RjsfUtils.getUiSchemaById(
+    registry.formContext.uiSchema,
+    'nonDefiningProperties',
+  );
   // Extract options with defaults
-  const options = uiSchema?.['ui:options'] || {};
+  const nonDefiningPropertyOptions =
+    uiSchemaForNonDefiningProperties?.['ui:options'] || {};
+  const packSizeUiSchemaOptions = uiSchema?.['ui:options'] || {};
+
+  const {
+    binding = {},
+    multiValuedSchemes = [],
+    mandatorySchemes = [],
+  } = nonDefiningPropertyOptions;
+
   const {
     readOnly = false,
     allowDelete = true,
     requireEditButton = false,
-    mandatorySchemes = [],
-    multiValuedSchemes = [],
-  } = options;
+  } = packSizeUiSchemaOptions;
 
   const [editMode, setEditMode] = useState(!readOnly && !requireEditButton);
 
@@ -174,6 +186,7 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
                   readOnly: readOnly || (requireEditButton && !editMode),
                   mandatorySchemes,
                   multiValuedSchemes,
+                  binding,
                   label: 'Properties',
                   skipTitle: false,
                 },
