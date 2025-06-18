@@ -11,8 +11,8 @@ interface ValueSetAutocompleteProps extends FieldProps {
   label?: string;
   url: string;
   showDefaultOptions?: boolean;
-  value: string | null; // Concept ID only
-  onChange: (value: string | null) => void;
+  value: Concept | null; // Concept ID only
+  onChange: (value: Concept | null) => void;
   disabled?: boolean;
   error?: string;
 }
@@ -54,7 +54,7 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
       // If value exists and matches a fetched option, set selectedConcept
       if (value && !selectedConcept) {
         const matchingConcept = uniqueOptions.find(
-          option => option.conceptId === value,
+          option => option.conceptId === value.conceptId,
         );
         if (matchingConcept) {
           setSelectedConcept(matchingConcept);
@@ -72,7 +72,7 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
   // Trigger API search with conceptId when value changes
   useEffect(() => {
     if (value && (!selectedConcept || selectedConcept.conceptId !== value)) {
-      setInputValue(value); // Use conceptId as initial search term
+      setInputValue(value?.pt?.term || '');
     } else if (!value) {
       setSelectedConcept(null);
       setInputValue('');
@@ -82,7 +82,7 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
   // Handle selection change
   const handleChange = (selectedValue: Concept | null) => {
     setSelectedConcept(selectedValue);
-    onChange(selectedValue?.conceptId || null);
+    onChange(selectedValue);
   };
 
   return (
