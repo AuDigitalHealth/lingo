@@ -157,6 +157,7 @@
                   {
                     "path": "../basisOfStrengthSubstance",
                     "ui:options": {
+                      "getEcl": "(<763158003 {{ D term=\"real clinical drug\" }}).732943007",
                       "showDefaultOptions": true
                     }
                   }
@@ -170,16 +171,7 @@
               "ui:field": "AutoCompleteField",
               "ui:title": "VMP Active Ingredient",
               "ui:options": {
-                "skipTitle": true,
-                "dependants": [
-                  {
-                    "path": "../preciseIngredient",
-                    "ui:options": {
-                      "getEcl": "<<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent)) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))))",
-                      "showDefaultOptions": true
-                    }
-                  }
-                ]
+                "skipTitle": true
               }
             },
             "preciseIngredient": {
@@ -187,7 +179,9 @@
               "ui:field": "AutoCompleteField",
               "ui:options": {
                 "skipTitle": true,
-                "showDefaultOptions": true
+                "showDefaultOptions": true,
+                "ecl": "(<763158003 {{ D term=\"medicinal product\" }}).127489000",
+                "extendedEcl": "<105590001"
               }
             },
             "basisOfStrengthSubstance": {
