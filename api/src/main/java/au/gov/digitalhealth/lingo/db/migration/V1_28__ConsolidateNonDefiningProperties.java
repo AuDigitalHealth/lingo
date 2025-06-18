@@ -15,6 +15,7 @@
  */
 package au.gov.digitalhealth.lingo.db.migration;
 
+import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.product.details.properties.PropertyType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,11 +37,128 @@ import org.slf4j.LoggerFactory;
  * lists (externalIdentifiers, referenceSets, nonDefiningProperties) into one list
  * (nonDefiningProperties) of type NonDefiningBase.
  */
+@SuppressWarnings("squid:S00101") // Class name matches Flyway migration naming convention
 public class V1_28__ConsolidateNonDefiningProperties extends BaseJavaMigration {
 
+  public static final String CONTAINED_PRODUCTS = "containedProducts";
+  public static final String PRODUCT_DETAILS = "productDetails";
+  public static final String CONTAINED_PACKAGES = "containedPackages";
+  public static final String PACKAGE_DETAILS = "packageDetails";
+  public static final String EXTERNAL_IDENTIFIERS = "externalIdentifiers";
+  public static final String IDENTIFIER_VALUE = "identifierValue";
+  public static final String VALUE_OBJECT = "valueObject";
+  public static final String IDENTIFIER_VALUE_OBJECT = "identifierValueObject";
+  public static final String REFERENCE_SETS = "referenceSets";
+  public static final String NON_DEFINING_PROPERTIES = "nonDefiningProperties";
+  public static final String IDENTIFIER_SCHEME = "identifierScheme";
+  public static final String VALUE = "value";
+  public static final String TYPE = "type";
   private static final Logger logger =
       LoggerFactory.getLogger(V1_28__ConsolidateNonDefiningProperties.class);
   private static final ObjectMapper objectMapper = new ObjectMapper();
+
+  private static void processExternalIdentifiers(
+      ObjectNode node, ArrayNode consolidatedProperties) {
+    // Process externalIdentifiers
+    if (node.has(EXTERNAL_IDENTIFIERS) && node.get(EXTERNAL_IDENTIFIERS).isArray()) {
+      ArrayNode externalIdentifiers = (ArrayNode) node.get(EXTERNAL_IDENTIFIERS);
+      for (int i = 0; i < externalIdentifiers.size(); i++) {
+        processExternalIdentifier(consolidatedProperties, externalIdentifiers, i);
+      }
+      node.remove(EXTERNAL_IDENTIFIERS);
+    }
+  }
+
+  private static void processExternalIdentifier(
+      ArrayNode consolidatedProperties, ArrayNode externalIdentifiers, int i) {
+    ObjectNode externalIdentifier = (ObjectNode) externalIdentifiers.get(i);
+    if (externalIdentifier.has(IDENTIFIER_VALUE)) {
+      JsonNode valueNode = externalIdentifier.get(IDENTIFIER_VALUE);
+      if (externalIdentifier.get(IDENTIFIER_SCHEME).asText().equals("atc")
+          || externalIdentifier.get(IDENTIFIER_SCHEME).asText().equals("pcrs")) {
+        String conceptId = valueNode.asText();
+        // Create the valueObject structure as a SnowstormConceptMini
+        ObjectNode conceptMini = objectMapper.createObjectNode();
+        conceptMini.put("conceptId", conceptId);
+        conceptMini.put("id", conceptId);
+
+        // Create fsn and pt terms
+        ObjectNode fsn = objectMapper.createObjectNode();
+        fsn.put("lang", "en");
+        fsn.put("term", conceptId);
+        conceptMini.set("fsn", fsn);
+
+        ObjectNode pt = objectMapper.createObjectNode();
+        pt.put("lang", "en");
+        pt.put("term", conceptId);
+        conceptMini.set("pt", pt);
+
+        // Set the valueObject to our newly created SnowstormConceptMini
+        externalIdentifier.set(VALUE_OBJECT, conceptMini);
+
+      } else {
+        externalIdentifier.set(VALUE, valueNode);
+      }
+      externalIdentifier.remove(IDENTIFIER_VALUE);
+    }
+
+    if (externalIdentifier.has(IDENTIFIER_VALUE_OBJECT)) {
+      JsonNode valueObjectNode = externalIdentifier.get(IDENTIFIER_VALUE_OBJECT);
+      if (!externalIdentifier.get(IDENTIFIER_VALUE_OBJECT).isNull()) {
+        externalIdentifier.set(VALUE_OBJECT, valueObjectNode);
+      }
+      externalIdentifier.remove(IDENTIFIER_VALUE_OBJECT);
+    }
+
+    if (!externalIdentifier.has(TYPE)) {
+      externalIdentifier.put(TYPE, PropertyType.EXTERNAL_IDENTIFIER.name());
+    }
+    consolidatedProperties.add(externalIdentifier);
+  }
+
+  private static void processReferenceSets(ObjectNode node, ArrayNode consolidatedProperties) {
+    // Process referenceSets
+    if (node.has(REFERENCE_SETS) && node.get(REFERENCE_SETS).isArray()) {
+      ArrayNode referenceSets = (ArrayNode) node.get(REFERENCE_SETS);
+      for (int i = 0; i < referenceSets.size(); i++) {
+        ObjectNode referenceSet = (ObjectNode) referenceSets.get(i);
+
+        if (!referenceSet.has(TYPE)) {
+          referenceSet.put(TYPE, PropertyType.REFERENCE_SET.name());
+        }
+        consolidatedProperties.add(referenceSet);
+      }
+      node.remove(REFERENCE_SETS);
+    }
+  }
+
+  private static void processNonDefiningProperties(
+      ObjectNode node, ArrayNode consolidatedProperties) {
+    // Process existing nonDefiningProperties
+    if (node.has(NON_DEFINING_PROPERTIES) && node.get(NON_DEFINING_PROPERTIES).isArray()) {
+      ArrayNode nonDefiningProperties = (ArrayNode) node.get(NON_DEFINING_PROPERTIES);
+      for (int i = 0; i < nonDefiningProperties.size(); i++) {
+        ObjectNode nonDefiningProperty = (ObjectNode) nonDefiningProperties.get(i);
+        if (nonDefiningProperty.has(IDENTIFIER_VALUE)) {
+          JsonNode valueNode = nonDefiningProperty.get(IDENTIFIER_VALUE);
+          nonDefiningProperty.set(VALUE, valueNode);
+          nonDefiningProperty.remove(IDENTIFIER_VALUE);
+        }
+
+        if (nonDefiningProperty.has(IDENTIFIER_VALUE_OBJECT)) {
+          JsonNode valueObjectNode = nonDefiningProperty.get(IDENTIFIER_VALUE_OBJECT);
+          nonDefiningProperty.set(VALUE_OBJECT, valueObjectNode);
+          nonDefiningProperty.remove(IDENTIFIER_VALUE_OBJECT);
+        }
+
+        if (!nonDefiningProperty.has(TYPE)) {
+          nonDefiningProperty.put(TYPE, PropertyType.NON_DEFINING_PROPERTY.name());
+        }
+        consolidatedProperties.add(nonDefiningProperty);
+      }
+      node.remove(NON_DEFINING_PROPERTIES);
+    }
+  }
 
   @Override
   public void migrate(Context context) throws Exception {
@@ -76,8 +194,7 @@ public class V1_28__ConsolidateNonDefiningProperties extends BaseJavaMigration {
 
         logger.info("Successfully migrated product with ID: {}", product.id);
       } catch (Exception e) {
-        logger.error("Error migrating product with ID: {}", product.id, e);
-        throw e;
+        throw new LingoProblem("Error migrating product with ID:" + product.id, e);
       }
     }
   }
@@ -143,26 +260,26 @@ public class V1_28__ConsolidateNonDefiningProperties extends BaseJavaMigration {
     processPackageDetailsNode(updatedPackageDetails);
 
     // Process any ProductDetails within containedProducts
-    if (updatedPackageDetails.has("containedProducts")
-        && updatedPackageDetails.get("containedProducts").isArray()) {
-      ArrayNode containedProducts = (ArrayNode) updatedPackageDetails.get("containedProducts");
+    if (updatedPackageDetails.has(CONTAINED_PRODUCTS)
+        && updatedPackageDetails.get(CONTAINED_PRODUCTS).isArray()) {
+      ArrayNode containedProducts = (ArrayNode) updatedPackageDetails.get(CONTAINED_PRODUCTS);
       for (int i = 0; i < containedProducts.size(); i++) {
         JsonNode productQuantity = containedProducts.get(i);
-        if (productQuantity.has("productDetails")) {
-          ObjectNode productDetails = (ObjectNode) productQuantity.get("productDetails");
+        if (productQuantity.has(PRODUCT_DETAILS)) {
+          ObjectNode productDetails = (ObjectNode) productQuantity.get(PRODUCT_DETAILS);
           processPackageDetailsNode(productDetails);
         }
       }
     }
 
     // Process any PackageDetails within containedPackages
-    if (updatedPackageDetails.has("containedPackages")
-        && updatedPackageDetails.get("containedPackages").isArray()) {
-      ArrayNode containedPackages = (ArrayNode) updatedPackageDetails.get("containedPackages");
+    if (updatedPackageDetails.has(CONTAINED_PACKAGES)
+        && updatedPackageDetails.get(CONTAINED_PACKAGES).isArray()) {
+      ArrayNode containedPackages = (ArrayNode) updatedPackageDetails.get(CONTAINED_PACKAGES);
       for (int i = 0; i < containedPackages.size(); i++) {
         JsonNode packageQuantity = containedPackages.get(i);
-        if (packageQuantity.has("packageDetails")) {
-          ObjectNode nestedPackageDetails = (ObjectNode) packageQuantity.get("packageDetails");
+        if (packageQuantity.has(PACKAGE_DETAILS)) {
+          ObjectNode nestedPackageDetails = (ObjectNode) packageQuantity.get(PACKAGE_DETAILS);
           processPackageDetailsNode(nestedPackageDetails);
         }
       }
@@ -175,65 +292,14 @@ public class V1_28__ConsolidateNonDefiningProperties extends BaseJavaMigration {
     // Create a new consolidated array for nonDefiningProperties
     ArrayNode consolidatedProperties = objectMapper.createArrayNode();
 
-    // Process externalIdentifiers
-    if (node.has("externalIdentifiers") && node.get("externalIdentifiers").isArray()) {
-      ArrayNode externalIdentifiers = (ArrayNode) node.get("externalIdentifiers");
-      for (int i = 0; i < externalIdentifiers.size(); i++) {
-        ObjectNode externalIdentifier = (ObjectNode) externalIdentifiers.get(i);
-        if (externalIdentifier.has("identifierValue")) {
-          JsonNode valueNode = externalIdentifier.get("identifierValue");
-          externalIdentifier.set("value", valueNode);
-          externalIdentifier.remove("identifierValue");
-        }
+    processExternalIdentifiers(node, consolidatedProperties);
 
-        if (externalIdentifier.has("identifierValueObject")) {
-          JsonNode valueObjectNode = externalIdentifier.get("identifierValueObject");
-          externalIdentifier.set("valueObject", valueObjectNode);
-          externalIdentifier.remove("identifierValueObject");
-        }
+    processReferenceSets(node, consolidatedProperties);
 
-        externalIdentifier.put("type", PropertyType.EXTERNAL_IDENTIFIER.name());
-        consolidatedProperties.add(externalIdentifier);
-      }
-      node.remove("externalIdentifiers");
-    }
-
-    // Process referenceSets
-    if (node.has("referenceSets") && node.get("referenceSets").isArray()) {
-      ArrayNode referenceSets = (ArrayNode) node.get("referenceSets");
-      for (int i = 0; i < referenceSets.size(); i++) {
-        ObjectNode referenceSet = (ObjectNode) referenceSets.get(i);
-        referenceSet.put("type", PropertyType.REFERENCE_SET.name());
-        consolidatedProperties.add(referenceSet);
-      }
-      node.remove("referenceSets");
-    }
-
-    // Process existing nonDefiningProperties
-    if (node.has("nonDefiningProperties") && node.get("nonDefiningProperties").isArray()) {
-      ArrayNode nonDefiningProperties = (ArrayNode) node.get("nonDefiningProperties");
-      for (int i = 0; i < nonDefiningProperties.size(); i++) {
-        ObjectNode nonDefiningProperty = (ObjectNode) nonDefiningProperties.get(i);
-        if (nonDefiningProperty.has("identifierValue")) {
-          JsonNode valueNode = nonDefiningProperty.get("identifierValue");
-          nonDefiningProperty.set("value", valueNode);
-          nonDefiningProperty.remove("identifierValue");
-        }
-
-        if (nonDefiningProperty.has("identifierValueObject")) {
-          JsonNode valueObjectNode = nonDefiningProperty.get("identifierValueObject");
-          nonDefiningProperty.set("valueObject", valueObjectNode);
-          nonDefiningProperty.remove("identifierValueObject");
-        }
-
-        nonDefiningProperty.put("type", PropertyType.NON_DEFINING_PROPERTY.name());
-        consolidatedProperties.add(nonDefiningProperty);
-      }
-      node.remove("nonDefiningProperties");
-    }
+    processNonDefiningProperties(node, consolidatedProperties);
 
     // Add the consolidated properties back to the node
-    node.set("nonDefiningProperties", consolidatedProperties);
+    node.set(NON_DEFINING_PROPERTIES, consolidatedProperties);
   }
 
   private static class ProductRecord {
