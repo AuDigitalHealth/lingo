@@ -177,6 +177,7 @@ function PackSizeAuthoring({
 
   const formContext = {
     formData,
+    uiSchema,
     onFormDataChange: (newFormData: FormData) => {
       console.log('Form data changed:', newFormData);
       setFormData(newFormData);

@@ -97,9 +97,11 @@ const PackSizeArrayTemplate: React.FC<ArrayFieldTemplateProps> = props => {
                   <PackDetails
                     {...element.children.props}
                     formData={packFormData}
-                    onChange={(updatedData: any) =>
-                      handlePackDetailsChange(index, updatedData)
-                    }
+                    onChange={(updatedData: any) => {
+                      if (!readOnly) {
+                        handlePackDetailsChange(index, updatedData);
+                      }
+                    }}
                     onDelete={
                       allowDelete
                         ? () => handleDeletePackSize(index)
@@ -123,6 +125,7 @@ const PackSizeArrayTemplate: React.FC<ArrayFieldTemplateProps> = props => {
                     registry={registry}
                     formContext={formContext}
                     errorSchema={element.children.props.errorSchema}
+                    readOnly={readOnly}
                   />
                 </ListItem>
                 {index < items.length - 1 && <Divider />}
