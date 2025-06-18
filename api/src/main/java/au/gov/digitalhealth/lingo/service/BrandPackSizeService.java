@@ -21,7 +21,7 @@ import static au.gov.digitalhealth.lingo.service.ProductSummaryService.IS_A_LABE
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONTAINS_DEVICE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_DEVICE_TYPE;
 import static au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter.calculateNonDefiningRelationships;
-import static au.gov.digitalhealth.lingo.util.ReferenceSetUtils.getReferenceSetMembers;
+import static au.gov.digitalhealth.lingo.util.ReferenceSetUtils.calculateReferenceSetMembers;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONTAINS_CD;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_UNIT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_VALUE;
@@ -746,12 +746,13 @@ public class BrandPackSizeService {
             Set.of(modelLevel.getReferenceSetIdentifier()),
             modelLevel,
             isDevice ? modelLevel.getDrugDeviceSemanticTag() : modelLevel.getMedicineSemanticTag(),
-            getReferenceSetMembers(
+            calculateReferenceSetMembers(
                 properties, models.getModelConfiguration(branch), modelLevel.getModelLevelType()),
             calculateNonDefiningRelationships(
                 models.getModelConfiguration(branch), properties, modelLevel.getModelLevelType()),
             List.of(),
             properties,
+            false,
             false,
             false,
             true)
@@ -816,12 +817,13 @@ public class BrandPackSizeService {
             Set.of(modelLevel.getReferenceSetIdentifier()),
             modelLevel,
             isDevice ? modelLevel.getDrugDeviceSemanticTag() : modelLevel.getMedicineSemanticTag(),
-            getReferenceSetMembers(
+            calculateReferenceSetMembers(
                 properties, models.getModelConfiguration(branch), modelLevel.getModelLevelType()),
             calculateNonDefiningRelationships(
                 models.getModelConfiguration(branch), properties, modelLevel.getModelLevelType()),
             List.of(),
             properties,
+            false,
             false,
             false,
             true)
@@ -887,12 +889,13 @@ public class BrandPackSizeService {
             Set.of(modelLevel.getReferenceSetIdentifier()),
             modelLevel,
             isDevice ? modelLevel.getDrugDeviceSemanticTag() : modelLevel.getMedicineSemanticTag(),
-            getReferenceSetMembers(
+            calculateReferenceSetMembers(
                 properties, models.getModelConfiguration(branch), modelLevel.getModelLevelType()),
             calculateNonDefiningRelationships(
                 models.getModelConfiguration(branch), properties, modelLevel.getModelLevelType()),
             List.of(),
             properties,
+            false,
             false,
             false,
             true)

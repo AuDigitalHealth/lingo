@@ -425,7 +425,7 @@ public class DeviceProductCalculationService {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
     Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers =
-        ReferenceSetUtils.getReferenceSetMembers(
+        ReferenceSetUtils.calculateReferenceSetMembers(
             packageDetails, modelConfiguration, modelLevel.getModelLevelType());
 
     ModelLevel containedLevel;
@@ -451,10 +451,11 @@ public class DeviceProductCalculationService {
             referenceSetMembers,
             calculateNonDefiningRelationships(
                 models.getModelConfiguration(branch),
-                packageDetails,
-                modelLevel.getModelLevelType()),
+                modelLevel.getModelLevelType(),
+                packageDetails.getNonDefiningProperties()),
             packageDetails.getSelectedConceptIdentifiers(),
             packageDetails.getNonDefiningProperties(),
+            true,
             true,
             ModelLevelType.PACKAGED_CLINICAL_DRUG.equals(modelLevel.getModelLevelType()),
             true)
@@ -609,16 +610,17 @@ public class DeviceProductCalculationService {
             Set.of(leafBrandedProductModelLevel.getReferenceSetIdentifier()),
             leafBrandedProductModelLevel,
             leafBrandedProductModelLevel.getDeviceSemanticTag(),
-            ReferenceSetUtils.getReferenceSetMembers(
+            ReferenceSetUtils.calculateReferenceSetMembers(
                 packageDetails,
                 modelConfiguration,
                 leafBrandedProductModelLevel.getModelLevelType()),
             calculateNonDefiningRelationships(
                 models.getModelConfiguration(branch),
-                packageDetails,
-                leafBrandedProductModelLevel.getModelLevelType()),
+                leafBrandedProductModelLevel.getModelLevelType(),
+                packageDetails.getNonDefiningProperties()),
             packageDetails.getSelectedConceptIdentifiers(),
             productQuantity.getProductDetails().getNonDefiningProperties(),
+            true,
             false,
             false,
             true);
@@ -662,14 +664,15 @@ public class DeviceProductCalculationService {
               Set.of(rootBrandedProductLevel.getReferenceSetIdentifier()),
               rootBrandedProductLevel,
               rootBrandedProductLevel.getDeviceSemanticTag(),
-              ReferenceSetUtils.getReferenceSetMembers(
+              ReferenceSetUtils.calculateReferenceSetMembers(
                   packageDetails, modelConfiguration, rootBrandedProductLevel.getModelLevelType()),
               calculateNonDefiningRelationships(
                   models.getModelConfiguration(branch),
-                  packageDetails,
-                  rootBrandedProductLevel.getModelLevelType()),
+                  rootBrandedProductLevel.getModelLevelType(),
+                  packageDetails.getNonDefiningProperties()),
               packageDetails.getSelectedConceptIdentifiers(),
               productQuantity.getProductDetails().getNonDefiningProperties(),
+              true,
               false,
               false,
               true);
@@ -771,12 +774,12 @@ public class DeviceProductCalculationService {
     leafUnbrandedDetails.setNonDefiningProperties(
         calculateNonDefiningRelationships(
             modelConfiguration,
-            productDetails,
-            leafUnbrandedProductModelLevel.getModelLevelType()));
+            leafUnbrandedProductModelLevel.getModelLevelType(),
+            productDetails.getNonDefiningProperties()));
     leafUnbrandedDetails
         .getReferenceSetMembers()
         .addAll(
-            ReferenceSetUtils.getReferenceSetMembers(
+            ReferenceSetUtils.calculateReferenceSetMembers(
                 productDetails,
                 modelConfiguration,
                 leafUnbrandedProductModelLevel.getModelLevelType()));
