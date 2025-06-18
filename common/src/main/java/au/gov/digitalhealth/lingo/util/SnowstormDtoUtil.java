@@ -36,6 +36,7 @@ import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ReferenceSetDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.MappingType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.NonDefiningPropertyDataType;
 import au.gov.digitalhealth.lingo.exception.AtomicDataExtractionProblem;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.exception.ResourceNotFoundProblem;
@@ -560,7 +561,11 @@ public class SnowstormDtoUtil {
 
         Map<String, String> additionalFields = new HashMap<>();
 
-        additionalFields.put("mapTarget", identifier.getValue());
+        if (externalIdentifierDefinition.getDataType().equals(NonDefiningPropertyDataType.CODED)) {
+          additionalFields.put("mapTarget", identifier.getValueObject().getConceptId());
+        } else {
+          additionalFields.put("mapTarget", identifier.getValue());
+        }
 
         if (!MappingType.RELATED.equals(identifier.getRelationshipType())) {
           additionalFields.put("mapType", identifier.getRelationshipType().getSctid());
