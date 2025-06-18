@@ -275,6 +275,17 @@ export interface Edge {
   label: string;
 }
 
+class InactivationReason {
+  value: string;
+  label: string;
+}
+
+class OriginalNode {
+  node: Product | null;
+  inactivationReason: InactivationReason | null;
+  referencedByOtherProducts: boolean;
+}
+
 export interface Product {
   displayName: string;
   concept: Concept | null;
@@ -291,6 +302,8 @@ export interface Product {
   newInProject: boolean;
   nonDefiningProperties?: NonDefiningProperty[];
   isModified?: boolean;
+  propertyUpdate: boolean;
+  originalNode: OriginalNode | null;
 }
 
 export interface NewConceptDetails {
@@ -311,4 +324,5 @@ export enum Product7BoxBGColour {
   FULLY_DEFINED = '#CCCCFF',
   INVALID = '#F04134',
   INCOMPLETE = '#FFA500',
+  PROPERTY_CHANGE = '#FFD700',
 }
