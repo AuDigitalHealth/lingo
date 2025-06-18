@@ -33,12 +33,12 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.java.Log;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import reactor.core.publisher.Mono;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -145,6 +145,33 @@ public class ExternalIdentifier extends NonDefiningBase implements Serializable 
         .filter(p -> p.getType().equals(PropertyType.EXTERNAL_IDENTIFIER))
         .map(p -> (ExternalIdentifier) p)
         .toList();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    ExternalIdentifier that = (ExternalIdentifier) o;
+
+    return new EqualsBuilder()
+        .append(getIdentifierScheme(), that.getIdentifierScheme())
+        .append(value, that.value)
+        .append(relationshipType, that.relationshipType)
+        .append(
+            valueObject != null ? valueObject.getConceptId() : null,
+            that.valueObject != null ? that.valueObject.getConceptId() : null)
+        .isEquals();
+  }
+
+  @Override
+  public int hashCode() {
+    return new HashCodeBuilder(17, 37)
+        .append(getIdentifierScheme())
+        .append(value)
+        .append(relationshipType)
+        .append(valueObject != null ? valueObject.getConceptId() : null)
+        .toHashCode();
   }
 
   public void updateFromDefinition(

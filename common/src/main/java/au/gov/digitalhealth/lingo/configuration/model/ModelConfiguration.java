@@ -437,4 +437,15 @@ public class ModelConfiguration {
                         + " in model: "
                         + this.modelType));
   }
+
+  public ReferenceSetDefinition getReferenceSetDefinitionForLevelMarker(ModelLevelType type) {
+    ModelLevel level = getLevelOfType(type);
+    ReferenceSetDefinition definition = new ReferenceSetDefinition();
+    definition.setName("levelMarker");
+    definition.setIdentifier(level.getReferenceSetIdentifier());
+    definition.setTitle(level.getName());
+    definition.setDescription("Reference set for level marker of type " + level.getName());
+    definition.setModelLevels(List.of(type));
+    return definition;
+  }
 }
