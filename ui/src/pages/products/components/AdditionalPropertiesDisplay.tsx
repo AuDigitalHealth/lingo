@@ -61,6 +61,17 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
     removedReferenceSets,
   } = useMemo(() => {
     const nonDefProps = product?.nonDefiningProperties || [];
+
+    if (!product?.originalNode) {
+      return {
+        nonDefiningProperties: nonDefProps,
+        newProperties: [],
+        removedProperties: [],
+        newReferenceSets: [],
+        removedReferenceSets: [],
+      };
+    }
+
     const originalProps =
       product?.originalNode?.node?.nonDefiningProperties || [];
 
