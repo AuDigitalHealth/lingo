@@ -51,7 +51,7 @@ const ConceptService = {
   ): Promise<ConceptResponse> {
     let concepts: Concept[] = [];
 
-    const url = `/snowstorm/${branch}/concepts?term=${str}&statedEcl=${providedEcl}&termActive=true${useOldConcepts ? '' : '&isPublished=false'}`;
+    const url = `/snowstorm/${encodeURIComponent(branch)}/concepts?term=${str}&statedEcl=${providedEcl}&termActive=true${useOldConcepts ? '' : '&isPublished=false'}`;
     const response = await api.get(url, {
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
@@ -77,7 +77,7 @@ const ConceptService = {
     if (!limit) {
       limit = 50;
     }
-    let url = `/snowstorm/${branch}/concepts?statedEcl=${ecl}&termActive=true&limit=${limit}${useOldConcepts ? '' : '&isPublished=false'}`;
+    let url = `/snowstorm/${encodeURIComponent(branch)}/concepts?statedEcl=${ecl}&termActive=true&limit=${limit}${useOldConcepts ? '' : '&isPublished=false'}`;
     if (term && term.length > 2) {
       url += `&term=${term}`;
     }
@@ -109,8 +109,8 @@ const ConceptService = {
       providedEcl = appendIdsToEcl(providedEcl, id);
     }
     const url = providedEcl
-      ? `/snowstorm/${branch}/concepts?statedEcl=${providedEcl}&termActive=true&isPublished=false`
-      : `/snowstorm/${branch}/concepts/${id[0]}`;
+      ? `/snowstorm/${encodeURIComponent(branch)}/concepts?statedEcl=${providedEcl}&termActive=true&isPublished=false`
+      : `/snowstorm/${encodeURIComponent(branch)}/concepts/${id[0]}`;
     const response = await api.get(url, {
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
@@ -131,7 +131,7 @@ const ConceptService = {
   },
 
   async searchConceptById(id: string, branch: string): Promise<BrowserConcept> {
-    const url = `/snowstorm/browser/${branch}/concepts/${id}`;
+    const url = `/snowstorm/browser/${encodeURIComponent(branch)}/concepts/${id}`;
     const response = await api.get(url, {
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
@@ -144,7 +144,7 @@ const ConceptService = {
   },
 
   async searchConceptByIdNoEcl(id: string, branch: string): Promise<Concept[]> {
-    const url = `/snowstorm/${branch}/concepts/${id[0]}`;
+    const url = `/snowstorm/${encodeURIComponent(branch)}/concepts/${id[0]}`;
     const response = await api.get(url, {
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
@@ -171,7 +171,7 @@ const ConceptService = {
     ecl = eclSplit.join(conceptsSearchTerms);
 
     const encodedEcl = encodeURIComponent(ecl);
-    const url = `/snowstorm/${branch}/concepts?statedEcl=${encodedEcl}`;
+    const url = `/snowstorm/${encodeURIComponent(branch)}/concepts?statedEcl=${encodedEcl}`;
     const response = await api.get(url, {
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
@@ -189,7 +189,7 @@ const ConceptService = {
       form: 'inferred',
       termActive: true,
     };
-    const url = `/snowstorm/${branch}/concepts`;
+    const url = `/snowstorm/${encodeURIComponent(branch)}/concepts`;
     const response = await api.get(url, {
       params: params,
       headers: {
@@ -208,7 +208,7 @@ const ConceptService = {
     branch: string,
   ): Promise<ConceptResponseForIds> {
     const idList = ids.join(',');
-    const url = `/snowstorm/${branch}/concepts?conceptIds=${idList}&returnIdOnly=true&termActive=true`;
+    const url = `/snowstorm/${encodeURIComponent(branch)}/concepts?conceptIds=${idList}&returnIdOnly=true&termActive=true`;
     const response = await api.get(url, {
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
@@ -231,7 +231,7 @@ const ConceptService = {
       },
     };
     const response = await api.post(
-      `/snowstorm/${branch}/members/search`,
+      `/snowstorm/${encodeURIComponent(branch)}/members/search`,
       searchBody,
       {
         headers: {
@@ -271,7 +271,7 @@ const ConceptService = {
     limit = limit || 50;
     offset = offset || 0;
 
-    const url = `${useApplicationConfigStore.getState().applicationConfig?.snodineSnowstormProxy}/${branch}/concepts`;
+    const url = `${useApplicationConfigStore.getState().applicationConfig?.snodineSnowstormProxy}/${encodeURIComponent(branch)}/concepts`;
     const params: Record<string, string | number | boolean | undefined> = {
       ecl: ecl,
       includeLeafFlag: false,
@@ -300,7 +300,7 @@ const ConceptService = {
     return conceptResponse;
   },
   async getConceptById(id: string, branch: string): Promise<Concept> {
-    const url = `/snowstorm/${branch}/concepts/${id}`;
+    const url = `/snowstorm/${encodeURIComponent(branch)}/concepts/${id}`;
     const response = await api.get(url, {
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
@@ -323,7 +323,7 @@ const ConceptService = {
       eclFilter?: string;
     },
   ): Promise<ConceptResponseForIds> {
-    const url = `${useApplicationConfigStore.getState().applicationConfig?.snodineSnowstormProxy}/${branch}/concepts/search`;
+    const url = `${useApplicationConfigStore.getState().applicationConfig?.snodineSnowstormProxy}/${encodeURIComponent(branch)}/concepts/search`;
     const response = await api.post(
       url,
       { ...filters, returnIdOnly: true },
