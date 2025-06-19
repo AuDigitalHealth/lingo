@@ -3,23 +3,20 @@ import {
   UseFormGetValues,
   UseFormRegister,
   UseFormSetValue,
-  useWatch,
+  useWatch
 } from 'react-hook-form';
 import {
   Concept,
   Edge,
   Product,
   Product7BoxBGColour,
-  ProductSummary,
+  ProductSummary
 } from '../../../types/concept.ts';
 import React, { useState } from 'react';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import { RefsetMember } from '../../../types/RefsetMember.ts';
 import { useTheme } from '@mui/material/styles';
-import {
-  findProductUsingId,
-  findRelations,
-} from '../../../utils/helpers/conceptUtils.ts';
+import { findProductUsingId, findRelations } from '../../../utils/helpers/conceptUtils.ts';
 import ConceptDiagramModal from '../../../components/conceptdiagrams/ConceptDiagramModal.tsx';
 import {
   AccordionDetails,
@@ -33,19 +30,12 @@ import {
   Tab,
   Tabs,
   Tooltip,
-  Typography,
+  Typography
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Stack } from '@mui/system';
 import LinkViews from './LinkViews.tsx';
-import { FormattedMessage } from 'react-intl';
-import {
-  AccountTreeOutlined,
-  Edit,
-  NewReleases,
-  NewReleasesOutlined,
-  SecurityUpdateWarning,
-} from '@mui/icons-material';
+import { AccountTreeOutlined, Edit } from '@mui/icons-material';
 import CircleIcon from '@mui/icons-material/Circle';
 import ExistingConceptDropdown from './ExistingConceptDropdown.tsx';
 import NewConceptDropdown from './NewConceptDropdown.tsx';
@@ -63,9 +53,10 @@ import ClearIcon from '@mui/icons-material/Clear';
 import { ProductPreviewAccordion } from './ProductPreviewAccordion.tsx';
 import {
   getColorByDefinitionStatus,
-  isNameContainsKeywords,
+  isNameContainsKeywords
 } from '../../../utils/helpers/ProductPreviewUtils.ts';
 import ProductEditModal from '../../../components/editProduct/ProductEditModal.tsx';
+import { ProductStatusIndicators } from './ProductStatusIndicators.tsx';
 
 interface ProductPreviewPanelProps {
   control: Control<ProductSummary>;
@@ -299,41 +290,7 @@ function ProductPreviewPanel({
                     )}
                   </Grid>
                   <Grid container justifyContent="flex-end" alignItems="center">
-                    {product.propertyUpdate && (
-                      <Tooltip
-                        title={
-                          <FormattedMessage
-                            id="properties-updated"
-                            defaultMessage="Properties are updated"
-                          />
-                        }
-                      >
-                        <SecurityUpdateWarning />
-                      </Tooltip>
-                    )}
-                    {product.newInTask ? (
-                      <Tooltip
-                        title={
-                          <FormattedMessage
-                            id="changed-in-task"
-                            defaultMessage="Un-promoted changes in the task"
-                          />
-                        }
-                      >
-                        <NewReleases />
-                      </Tooltip>
-                    ) : product.newInProject ? (
-                      <Tooltip
-                        title={
-                          <FormattedMessage
-                            id="changed-in-project"
-                            defaultMessage="Unreleased changes in the project"
-                          />
-                        }
-                      >
-                        <NewReleasesOutlined />
-                      </Tooltip>
-                    ) : null}
+                    <ProductStatusIndicators product={product} />
                     <IconButton
                       size="small"
                       onClick={() => setConceptDiagramModalOpen(true)}
@@ -384,41 +341,7 @@ function ProductPreviewPanel({
                     ) : (
                       <></>
                     )}
-                    {product.propertyUpdate && (
-                      <Tooltip
-                        title={
-                          <FormattedMessage
-                            id="properties-updated"
-                            defaultMessage="Properties are updated"
-                          />
-                        }
-                      >
-                        <SecurityUpdateWarning />
-                      </Tooltip>
-                    )}
-                    {product.newInTask ? (
-                      <Tooltip
-                        title={
-                          <FormattedMessage
-                            id="changed-in-task"
-                            defaultMessage="Unpromoted changes in the task"
-                          />
-                        }
-                      >
-                        <NewReleases />
-                      </Tooltip>
-                    ) : product.newInProject ? (
-                      <Tooltip
-                        title={
-                          <FormattedMessage
-                            id="changed-in-project"
-                            defaultMessage="Unreleased changes in the project"
-                          />
-                        }
-                      >
-                        <NewReleasesOutlined />
-                      </Tooltip>
-                    ) : null}
+                    <ProductStatusIndicators product={product} />
                     <IconButton
                       size="small"
                       onClick={() => setConceptDiagramModalOpen(true)}
@@ -723,7 +646,7 @@ function ProductHeaderWatch({
     } else if (product.conceptOptions.length > 0 && !optionsIgnored) {
       handleChangeColor(Product7BoxBGColour.INVALID);
     }
-  } else if (product.propertyUpdate) {
+  } else if (product.propertyUpdate || product.statedFormChanged || product.inferredFormChanged) {
     handleChangeColor(Product7BoxBGColour.PROPERTY_CHANGE);
   }
 

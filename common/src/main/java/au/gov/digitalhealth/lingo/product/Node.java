@@ -15,7 +15,9 @@
  */
 package au.gov.digitalhealth.lingo.product;
 
+import au.csiro.snowstorm_client.model.SnowstormAxiom;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
@@ -79,6 +81,9 @@ public class Node {
   OriginalNode originalNode;
 
   ModelLevelType modelLevel;
+
+  Collection<SnowstormRelationship> relationships = new HashSet<>();
+  Collection<SnowstormAxiom> axioms = new HashSet<>();
 
   public Node(SnowstormConceptMini concept, ModelLevel level) {
     this.concept = concept;
@@ -170,6 +175,20 @@ public class Node {
         && (!originalNode.getNode().getNonDefiningProperties().containsAll(nonDefiningProperties)
             || !nonDefiningProperties.containsAll(
                 originalNode.getNode().getNonDefiningProperties()));
+  }
+
+  @JsonProperty(value = "statedFormChanged", access = JsonProperty.Access.READ_ONLY)
+  public boolean isStatedFormChanged() {
+    return originalNode != null
+        && axioms.containsAll(originalNode.getNode().getAxioms())
+        && originalNode.getNode().getAxioms().containsAll(axioms);
+  }
+
+  @JsonProperty(value = "inferredFormChanged", access = JsonProperty.Access.READ_ONLY)
+  public boolean isInferredFormChanged() {
+    return originalNode != null
+        && relationships.containsAll(originalNode.getNode().getRelationships())
+        && originalNode.getNode().getRelationships().containsAll(relationships);
   }
 
   /**
