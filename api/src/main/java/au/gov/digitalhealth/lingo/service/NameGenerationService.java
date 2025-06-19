@@ -67,7 +67,7 @@ public class NameGenerationService {
     FsnAndPt fsnAndPt = createFsnAndPreferredTerm(nameGeneratorSpec.get());
     node.getNewConceptDetails().setFullySpecifiedName(fsnAndPt.getFSN());
     node.getNewConceptDetails().setPreferredTerm(fsnAndPt.getPT());
-    atomicCache.addFsn(node.getConceptId(), fsnAndPt.getFSN());
+    atomicCache.addFsnAndPt(node.getConceptId(), fsnAndPt.getFSN(), fsnAndPt.getPT());
     if (log.isLoggable(java.util.logging.Level.FINE)) {
       log.fine(
           "Generated FSN and PT for "

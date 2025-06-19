@@ -134,7 +134,7 @@ public class NodeGeneratorService {
                     e))
         .block();
 
-    if (newProperties != null && newPropertiesAdditive) {
+    if (newProperties != null) {
       node.setOriginalNode(new OriginalNode(node.cloneNode(), null, true));
       Map<String, NonDefiningPropertyDefinition> nonDefiningPropertiesMap =
           configuration.getNonDefiningPropertiesBySchemeForModelLevel(modelLevel);
@@ -142,6 +142,10 @@ public class NodeGeneratorService {
           configuration.getReferenceSetsBySchemeForModelLevel(modelLevel);
       Map<String, ExternalIdentifierDefinition> externalIdentifiersMap =
           configuration.getMappingsBySchemeForModelLevel(modelLevel);
+
+      if (!newPropertiesAdditive) {
+        node.getNonDefiningProperties().clear();
+      }
 
       for (NonDefiningBase newProperty : newProperties) {
         if (newProperty instanceof NonDefiningProperty p
@@ -329,7 +333,7 @@ public class NodeGeneratorService {
         && relationships.stream()
             .noneMatch(
                 r ->
-                    !Boolean.TRUE.equals(r.getConcrete())
+                    r.getConcreteValue() == null
                         && r.getDestinationId() != null
                         && Long.parseLong(r.getDestinationId()) < 0)) {
       String ecl =
@@ -383,7 +387,8 @@ public class NodeGeneratorService {
       } else if (matchingConcepts.size() == 1
           && matchingConcepts.iterator().next().getDefinitionStatus().equals("FULLY_DEFINED")) {
         node.setConcept(matchingConcepts.iterator().next());
-        atomicCache.addFsn(node.getConceptId(), node.getFullySpecifiedName());
+        atomicCache.addFsnAndPt(
+            node.getConceptId(), node.getFullySpecifiedName(), node.getPreferredTerm());
       } else {
         node.setConceptOptions(matchingConcepts);
         Set<SnowstormConceptMini> selectedConcepts =
