@@ -82,6 +82,12 @@ export const useDependantUpdates = (
           formData?.conceptId,
         );
         const defaultValue = newUiSchema.defaultValue || null;
+
+        const subDependants = dependantInstance['ui:options'].dependants;
+        if (subDependants) {
+          newUiSchema['ui:options'].dependants = subDependants;
+        }
+
         if (newUiSchema.anyOf) {
           const subSchemas = [...newUiSchema.anyOf];
           newUiSchema.anyOf = [];

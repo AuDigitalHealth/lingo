@@ -171,7 +171,16 @@
               "ui:field": "AutoCompleteField",
               "ui:title": "VMP Active Ingredient",
               "ui:options": {
-                "skipTitle": true
+                "skipTitle": true,
+                "dependants": [
+                  {
+                    "path": "../preciseIngredient",
+                    "ui:options": {
+                      "getEcl": "<<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent)) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))))",
+                      "showDefaultOptions": true
+                    }
+                  }
+                ]
               }
             },
             "preciseIngredient": {
@@ -179,9 +188,7 @@
               "ui:field": "AutoCompleteField",
               "ui:options": {
                 "skipTitle": true,
-                "showDefaultOptions": true,
-                "ecl": "(<763158003 {{ D term=\"medicinal product\" }}).127489000",
-                "extendedEcl": "<105590001"
+                "showDefaultOptions": true
               }
             },
             "basisOfStrengthSubstance": {
