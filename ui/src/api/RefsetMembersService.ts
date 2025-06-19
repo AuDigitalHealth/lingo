@@ -38,7 +38,7 @@ const RefsetMembersService = {
   ): Promise<RefsetMembersResponse> {
     const { limit, offset, referencedComponentId, active } = options ?? {};
 
-    const url = `/snowstorm/${branch}/members`;
+    const url = `/snowstorm/${encodeURIComponent(branch)}/members`;
     const params = new URLSearchParams({
       referenceSet,
     });
@@ -76,7 +76,7 @@ const RefsetMembersService = {
   ): Promise<RefsetMembersResponse> {
     const { limit, offset, active } = options ?? {};
 
-    const url = `/snowstorm/${branch}/members/search`;
+    const url = `/snowstorm/${encodeURIComponent(branch)}/members/search`;
     const params = new URLSearchParams();
     if (limit) params.set('limit', `${limit}`);
     if (offset !== undefined) params.set('offset', `${offset}`);
@@ -116,7 +116,7 @@ const RefsetMembersService = {
       limit: limit,
     };
 
-    const url = `/snowstorm/${branch}/members`;
+    const url = `/snowstorm/${encodeURIComponent(branch)}/members`;
     const response = await api.get(url, {
       params: params,
       headers: {
@@ -136,7 +136,7 @@ const RefsetMembersService = {
     branch: string,
     memberId: string,
   ): Promise<RefsetMember> {
-    const url = `/snowstorm/${branch}/members/${memberId}`;
+    const url = `/snowstorm/${encodeURIComponent(branch)}/members/${memberId}`;
     const response = await api.get(url, {
       headers: {
         Accept: 'application/json',
@@ -158,7 +158,7 @@ const RefsetMembersService = {
     const { memberId } = member;
     if (!memberId) this.handleErrors();
 
-    const url = `/snowstorm/${branch}/members/${memberId}`;
+    const url = `/snowstorm/${encodeURIComponent(branch)}/members/${memberId}`;
     const response = await api.put(url, member, {
       headers: {
         Accept: 'application/json',
@@ -180,7 +180,7 @@ const RefsetMembersService = {
     const { referencedComponentId } = member;
     if (!referencedComponentId) this.handleErrors();
 
-    const url = `/snowstorm/${branch}/members`;
+    const url = `/snowstorm/${encodeURIComponent(branch)}/members`;
     const response = await api.post(url, member, {
       headers: {
         Accept: 'application/json',
@@ -199,7 +199,7 @@ const RefsetMembersService = {
     branch: string,
     members: RefsetMember[],
   ): Promise<string | undefined> {
-    const url = `/snowstorm/${branch}/members/bulk`;
+    const url = `/snowstorm/${encodeURIComponent(branch)}/members/bulk`;
     const response = await api.post(url, members, {
       headers: {
         Accept: 'application/json',
@@ -212,7 +212,7 @@ const RefsetMembersService = {
     return (response.headers.location as string)?.split('/').pop();
   },
   async bulkStatus(branch: string, bulkChangeId: string): Promise<BulkStatus> {
-    const url = `/snowstorm/${branch}/members/bulk/${bulkChangeId}`;
+    const url = `/snowstorm/${encodeURIComponent(branch)}/members/bulk/${bulkChangeId}`;
     const response = await api.get(url, {
       headers: {
         Accept: 'application/json',
