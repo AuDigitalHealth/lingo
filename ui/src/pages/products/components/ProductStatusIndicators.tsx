@@ -1,10 +1,10 @@
 import React from 'react';
-import { Stack, Tooltip } from '@mui/material';
-import { FormattedMessage } from 'react-intl';
-import { NewReleases, NewReleasesOutlined, SecurityUpdateWarning } from '@mui/icons-material';
-import { styled } from '@mui/system';
-import { Avatar } from 'antd';
-import { Product } from '../../../types/concept';
+import {Stack, Tooltip} from '@mui/material';
+import {FormattedMessage} from 'react-intl';
+import {NewReleases, NewReleasesOutlined} from '@mui/icons-material';
+import {styled} from '@mui/system';
+import {Avatar} from 'antd';
+import {Product} from '../../../types/concept';
 
 export interface ProductStatusProps {
   product: Product;
@@ -50,6 +50,19 @@ export const ProductStatusIndicators: React.FC<ProductStatusProps> = ({
         </Tooltip>
       )}
 
+      {product.propertyUpdate && (
+          <Tooltip
+              title={
+                <FormattedMessage
+                    id="properties-updated"
+                    defaultMessage="Properties are updated"
+                />
+              }
+          >
+            <SmallAvatar>P</SmallAvatar>
+          </Tooltip>
+      )}
+
       {product.newInTask && (
         <Tooltip
           title={
@@ -73,19 +86,6 @@ export const ProductStatusIndicators: React.FC<ProductStatusProps> = ({
           }
         >
           <NewReleasesOutlined />
-        </Tooltip>
-      )}
-
-      {product.propertyUpdate && (
-        <Tooltip
-          title={
-            <FormattedMessage
-              id="properties-updated"
-              defaultMessage="Properties are updated"
-            />
-          }
-        >
-          <SecurityUpdateWarning />
         </Tooltip>
       )}
     </Stack>
