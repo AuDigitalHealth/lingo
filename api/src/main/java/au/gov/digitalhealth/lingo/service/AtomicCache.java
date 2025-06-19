@@ -38,11 +38,7 @@ public class AtomicCache {
         .flatMap(Arrays::stream)
         .filter(LingoConstants::hasLabel)
         .filter(con -> !this.containsFsnFor(con.getValue()))
-        .forEach(
-            con -> {
-              this.addFsn(con.getValue(), con.getLabel());
-              this.addPt(con.getValue(), con.getLabel());
-            });
+        .forEach(con -> this.addFsnAndPt(con.getValue(), con.getLabel(), con.getLabel()));
   }
 
   public String substituteIdsForFsnInAxiom(String axiom, @NotNull Integer conceptId) {
@@ -80,13 +76,10 @@ public class AtomicCache {
     }
   }
 
-  public void addFsn(String id, String fsn) {
+  public void addFsnAndPt(String id, String fsn, String pt) {
     synchronized (idToFsnMap) {
       idToFsnMap.put(id, fsn);
     }
-  }
-
-  public void addPt(String id, String pt) {
     synchronized (idToPtMap) {
       idToPtMap.put(id, pt);
     }
