@@ -78,11 +78,19 @@ public class ApiWebConfiguration {
   @Bean
   public WebClient nameGeneratorApiClient(
       @Value("${name.generator.api.url}") String namegenApiUrl,
+      @Value("${name.generator.api.key}") String apiKeyHeader,
       WebClient.Builder webClientBuilder) {
-    return webClientBuilder
-        .baseUrl(namegenApiUrl)
-        .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-        .build();
+    WebClient.Builder builder =
+        webClientBuilder
+            .baseUrl(namegenApiUrl)
+            .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+
+    // Only add the API key header if it's not empty
+    if (apiKeyHeader != null && !apiKeyHeader.isEmpty()) {
+      builder.defaultHeader("X-API-Key", apiKeyHeader);
+    }
+
+    return builder.build();
   }
 
   @Bean
