@@ -33,6 +33,7 @@ import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.configuration.model.NonDefiningPropertyDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.ReferenceSetDefinition;
+import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.exception.SingleConceptExpectedProblem;
 import au.gov.digitalhealth.lingo.product.NewConceptDetails;
 import au.gov.digitalhealth.lingo.product.Node;
@@ -43,6 +44,7 @@ import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
 import au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet;
 import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
+import au.gov.digitalhealth.lingo.util.BranchPatternMatcher;
 import au.gov.digitalhealth.lingo.util.EclBuilder;
 import au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils;
 import au.gov.digitalhealth.lingo.util.NonDefiningPropertyUtils;
@@ -53,11 +55,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
@@ -71,16 +75,35 @@ public class NodeGeneratorService {
   SnowstormClient snowstormClient;
   Models models;
   FhirClient fhirClient;
+  NodeGeneratorService self;
 
   @Value("${snomio.node.concept.search.limit:50}")
   private int limit;
 
   @Autowired
   public NodeGeneratorService(
-      SnowstormClient snowstormClient, Models models, FhirClient fhirClient) {
+      SnowstormClient snowstormClient,
+      Models models,
+      FhirClient fhirClient,
+      @Lazy NodeGeneratorService nodeGeneratorService) {
     this.snowstormClient = snowstormClient;
     this.models = models;
     this.fhirClient = fhirClient;
+    this.self = nodeGeneratorService;
+  }
+
+  @Async
+  public CompletableFuture<Node> lookUpNode(
+      String branch, SnowstormConceptMini concept, ModelLevel modelLevel) {
+    Node node = new Node();
+    node.setLabel(modelLevel.getDisplayLabel());
+    node.setModelLevel(modelLevel.getModelLevelType());
+    node.setDisplayName(modelLevel.getName());
+    node.setConcept(concept);
+
+    populateNodeProperties(branch, modelLevel, node, null, false);
+
+    return CompletableFuture.completedFuture(node);
   }
 
   @Async
@@ -121,8 +144,24 @@ public class NodeGeneratorService {
     Flux<Void> nonDefiningPropertiesFlux =
         addNonDefiningProperties(branch, modelLevel, configuration, node);
 
+    Flux<SnowstormConcept> axiomsFlux = addAxioms(branch, node);
+
+    CompletableFuture<Void> originalNode = null;
+    if (newProperties == null
+        && node.getConcept() != null
+        && BranchPatternMatcher.isTaskPattern(branch)
+        && !snowstormClient
+            .conceptIdsThatExist(
+                BranchPatternMatcher.getProjectFromTask(branch), Set.of(node.getConceptId()))
+            .isEmpty()) {
+      originalNode =
+          self.lookUpNode(
+                  BranchPatternMatcher.getProjectFromTask(branch), node.getConcept(), modelLevel)
+              .thenAccept(original -> node.setOriginalNode(new OriginalNode(original, null, true)));
+    }
+
     // Create a Mono that completes when both Flux operations complete
-    Mono.when(refsetMembersFlux, nonDefiningPropertiesFlux)
+    Mono.when(refsetMembersFlux, nonDefiningPropertiesFlux, axiomsFlux)
         .doOnError(
             e ->
                 log.log(
@@ -134,7 +173,19 @@ public class NodeGeneratorService {
                     e))
         .block();
 
-    if (newProperties != null) {
+    if (originalNode != null) {
+      try {
+        originalNode.get();
+      } catch (InterruptedException | ExecutionException e) {
+        Thread.currentThread().interrupt();
+        throw new LingoProblem(
+            "Failed loading original node for "
+                + node.getConceptId()
+                + " from "
+                + BranchPatternMatcher.getProjectFromTask(branch),
+            e);
+      }
+    } else if (newProperties != null) {
       node.setOriginalNode(new OriginalNode(node.cloneNode(), null, true));
       Map<String, NonDefiningPropertyDefinition> nonDefiningPropertiesMap =
           configuration.getNonDefiningPropertiesBySchemeForModelLevel(modelLevel);
@@ -167,6 +218,15 @@ public class NodeGeneratorService {
     }
   }
 
+  private Flux<SnowstormConcept> addAxioms(String branch, Node node) {
+    if (node.getConcept() != null) {
+      return snowstormClient
+          .getBrowserConcepts(branch, Set.of(node.getConceptId()))
+          .doOnNext(c -> node.setAxioms(c.getClassAxioms()));
+    }
+    return Flux.empty();
+  }
+
   private Flux<Void> addNonDefiningProperties(
       String branch, ModelLevel modelLevel, ModelConfiguration modelConfiguration, Node node) {
 
@@ -177,6 +237,7 @@ public class NodeGeneratorService {
       return snowstormClient
           .getRelationships(branch, node.getConceptId())
           .map(SnowstormItemsPageRelationship::getItems)
+          .doOnNext(rels -> node.setRelationships(rels))
           .flatMapMany(Flux::fromIterable)
           .filter(SnowstormRelationship::getActive)
           .flatMap(
