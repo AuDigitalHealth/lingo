@@ -304,6 +304,8 @@ export interface Product {
   isModified?: boolean;
   propertyUpdate: boolean;
   originalNode: OriginalNode | null;
+  statedFormChanged: boolean | null;
+  inferredFormChanged: boolean | null;
 }
 
 export interface NewConceptDetails {
