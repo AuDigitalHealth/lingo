@@ -34,19 +34,26 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
     if (propA.identifierScheme !== propB.identifierScheme) return false;
 
     // Compare value (handle null values)
-    if ((propA.value !== propB.value) &&
-      !(propA.value === null && propB.value === null)) return false;
+    if (
+      propA.value !== propB.value &&
+      !(propA.value === null && propB.value === null)
+    )
+      return false;
 
     // Compare valueObject (only compare conceptId)
     if (propA.valueObject && propB.valueObject) {
-      if (propA.valueObject.conceptId !== propB.valueObject.conceptId) return false;
+      if (propA.valueObject.conceptId !== propB.valueObject.conceptId)
+        return false;
     } else if (propA.valueObject || propB.valueObject) {
       // One is null but not both
       return false;
     }
 
     // Compare relationshipType for ExternalIdentifier
-    if (propA.type === 'externalIdentifier' && propB.type === 'externalIdentifier') {
+    if (
+      propA.type === 'externalIdentifier' &&
+      propB.type === 'externalIdentifier'
+    ) {
       if (propA.relationshipType !== propB.relationshipType) return false;
     }
 
@@ -77,16 +84,14 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
 
     // Identify new properties (in current but not in original)
     const newProps = nonDefProps.filter(
-      current => !originalProps.some(original =>
-        arePropertiesEqual(current, original)
-      )
+      current =>
+        !originalProps.some(original => arePropertiesEqual(current, original)),
     );
 
     // Identify removed properties (in original but not in current)
     const removedProps = originalProps.filter(
-      original => !nonDefProps.some(current => 
-        arePropertiesEqual(current, original)
-      )
+      original =>
+        !nonDefProps.some(current => arePropertiesEqual(current, original)),
     );
 
     // Identify new reference sets (in current but not in original)
@@ -590,7 +595,7 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
                     {renderChip(
                       item,
                       newProperties.some(p => arePropertiesEqual(p, item)),
-                      false
+                      false,
                     )}
                   </React.Fragment>
                 ))
