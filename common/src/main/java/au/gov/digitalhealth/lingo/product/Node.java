@@ -180,15 +180,15 @@ public class Node {
   @JsonProperty(value = "statedFormChanged", access = JsonProperty.Access.READ_ONLY)
   public boolean isStatedFormChanged() {
     return originalNode != null
-        && axioms.containsAll(originalNode.getNode().getAxioms())
-        && originalNode.getNode().getAxioms().containsAll(axioms);
+        && (!axioms.containsAll(originalNode.getNode().getAxioms())
+            || !originalNode.getNode().getAxioms().containsAll(axioms));
   }
 
   @JsonProperty(value = "inferredFormChanged", access = JsonProperty.Access.READ_ONLY)
   public boolean isInferredFormChanged() {
     return originalNode != null
-        && relationships.containsAll(originalNode.getNode().getRelationships())
-        && originalNode.getNode().getRelationships().containsAll(relationships);
+        && (!relationships.containsAll(originalNode.getNode().getRelationships())
+            || !originalNode.getNode().getRelationships().containsAll(relationships));
   }
 
   /**
