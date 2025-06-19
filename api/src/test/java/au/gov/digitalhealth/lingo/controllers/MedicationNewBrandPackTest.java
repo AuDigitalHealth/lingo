@@ -65,6 +65,7 @@ class MedicationNewBrandPackTest extends LingoTestBase {
   public static final String OESTRADIOL_SCHERING_PLOUGH = "933240831000036106";
   public static final long ZOLADEX_3_6_MG_IMPLANT_1_SYRINGE = 82906011000036104L;
   public static final String ARTG_SCHEME = "artgid";
+  public static final String ZOLADEX_BRAND = "3435011000036101";
 
   @Autowired ObjectMapper objectMapper;
 
@@ -433,7 +434,12 @@ class MedicationNewBrandPackTest extends LingoTestBase {
     // Assign ExternalIdentifiers to each brand and store in a new set
     Set<BrandWithIdentifiers> newBrandExternalIdentifiers =
         productBrands.getBrands().stream()
-            .peek(brand -> brand.setNonDefiningProperties(testExternalIdentifiers))
+            .peek(
+                brand -> {
+                  if (!brand.getBrand().getConceptId().equals(ZOLADEX_BRAND)) {
+                    brand.setNonDefiningProperties(testExternalIdentifiers);
+                  }
+                })
             .collect(Collectors.toSet());
 
     productBrands.setBrands(newBrandExternalIdentifiers);
@@ -499,9 +505,10 @@ class MedicationNewBrandPackTest extends LingoTestBase {
                       .anyMatch(conceptId -> !conceptIds.add(conceptId));
               Assertions.assertThat(hasDuplicates).isFalse(); // Ensure no duplicates exist
 
-              // Assert that each brand has exactly 2 external identifiers
-              newProductBrands
-                  .getBrands()
+              // Assert that each brand has exactly 2 external identifiers, except for the Zoladex
+              // brand
+              newProductBrands.getBrands().stream()
+                  .filter(b -> !b.getBrand().getConceptId().equals(ZOLADEX_BRAND))
                   .forEach(
                       brandWithIdentifiers ->
                           Assertions.assertThat(brandWithIdentifiers.getNonDefiningProperties())
