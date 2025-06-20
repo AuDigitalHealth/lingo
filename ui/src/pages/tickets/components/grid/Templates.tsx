@@ -280,7 +280,7 @@ export const CreatedTemplate = (rowData: TicketDto) => {
   const date = new Date(rowData.created);
   return (
     <Typography>
-      {date.toLocaleDateString('en-AU', {
+      {date.toLocaleDateString(undefined, {
         day: '2-digit',
         month: '2-digit',
         year: '2-digit',
