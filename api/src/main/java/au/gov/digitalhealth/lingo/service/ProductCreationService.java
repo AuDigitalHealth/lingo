@@ -135,7 +135,7 @@ public class ProductCreationService {
         .flatMap(c -> c.getClassAxioms().stream().flatMap(a -> a.getRelationships().stream()))
         .anyMatch(
             r ->
-                Boolean.FALSE.equals(r.getConcrete())
+                r.getConcreteValue() == null
                     && Long.parseLong(Objects.requireNonNull(r.getDestinationId())) < 0)) {
 
       List<SnowstormConceptView> offendingConcepts =
@@ -148,7 +148,7 @@ public class ProductCreationService {
                                   a.getRelationships().stream()
                                       .anyMatch(
                                           r ->
-                                              Boolean.FALSE.equals(r.getConcrete())
+                                              r.getConcreteValue() == null
                                                   && Long.parseLong(
                                                           Objects.requireNonNull(
                                                               r.getDestinationId()))
@@ -467,7 +467,7 @@ public class ProductCreationService {
                   .flatMap(a -> a.getRelationships().stream())
                   .filter(
                       r ->
-                          Boolean.FALSE.equals(r.getConcrete())
+                          r.getConcreteValue() == null
                               && r.getDestinationId() != null
                               && Long.parseLong(r.getDestinationId()) < 0)
                   .forEach(

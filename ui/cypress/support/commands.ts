@@ -302,7 +302,7 @@ Cypress.Commands.add('waitForCreateBulkBrandPack', (branch: string) => {
 Cypress.Commands.add('waitForConceptSearch', (branch: string) => {
   cy.intercept({
     method: 'GET',
-    url: `/snowstorm/${branch}/concepts?*`,
+    url: `/snowstorm/${encodeURIComponent(branch)}/concepts?*`,
   }).as('getConceptSearch');
 });
 

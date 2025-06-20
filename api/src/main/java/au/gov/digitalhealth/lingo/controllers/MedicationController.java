@@ -28,9 +28,10 @@ import au.gov.digitalhealth.lingo.product.bulk.BulkProductAction;
 import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.service.BrandPackSizeService;
-import au.gov.digitalhealth.lingo.service.MedicationProductCalculationService;
 import au.gov.digitalhealth.lingo.service.MedicationService;
+import au.gov.digitalhealth.lingo.service.ProductCalculationServiceFactory;
 import au.gov.digitalhealth.lingo.service.ProductCreationService;
+import au.gov.digitalhealth.lingo.service.ProductUpdateService;
 import au.gov.digitalhealth.lingo.service.TaskManagerService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.validation.Valid;
@@ -55,25 +56,28 @@ import org.springframework.web.bind.annotation.RestController;
 public class MedicationController {
 
   private final MedicationService medicationService;
-  private final MedicationProductCalculationService medicationProductCalculationService;
   private final TaskManagerService taskManagerService;
   private final FieldBindingConfiguration fieldBindingConfiguration;
   private final ProductCreationService productCreationService;
   private final BrandPackSizeService brandPackSizeService;
+  private final ProductUpdateService productUpdateService;
+  private final ProductCalculationServiceFactory productCalculationServiceFactory;
 
   MedicationController(
       MedicationService medicationService,
-      MedicationProductCalculationService medicationProductCalculationService,
       TaskManagerService taskManagerService,
       FieldBindingConfiguration fieldBindingConfiguration,
       ProductCreationService productCreationService,
-      BrandPackSizeService brandPackSizeService) {
+      BrandPackSizeService brandPackSizeService,
+      ProductUpdateService productUpdateService,
+      ProductCalculationServiceFactory productCalculationServiceFactory) {
     this.medicationService = medicationService;
-    this.medicationProductCalculationService = medicationProductCalculationService;
     this.fieldBindingConfiguration = fieldBindingConfiguration;
     this.taskManagerService = taskManagerService;
     this.productCreationService = productCreationService;
     this.brandPackSizeService = brandPackSizeService;
+    this.productUpdateService = productUpdateService;
+    this.productCalculationServiceFactory = productCalculationServiceFactory;
   }
 
   @LogExecutionTime
@@ -170,8 +174,9 @@ public class MedicationController {
       @RequestBody @Valid PackageDetails<@Valid MedicationProductDetails> productDetails)
       throws ExecutionException, InterruptedException {
     taskManagerService.validateTaskState(branch);
-    return medicationProductCalculationService.calculateProductFromAtomicData(
-        branch, productDetails);
+    return productCalculationServiceFactory
+        .getCalculationService(MedicationProductDetails.class)
+        .calculateProductFromAtomicData(branch, productDetails);
   }
 
   @LogExecutionTime
@@ -182,11 +187,8 @@ public class MedicationController {
       @RequestBody @Valid PackageDetails<@Valid MedicationProductDetails> productDetails)
       throws ExecutionException, InterruptedException, JsonProcessingException {
     taskManagerService.validateTaskState(branch);
-    final ProductSummary productSummary =
-        medicationProductCalculationService.calculateUpdateProductFromAtomicData(
-            branch, productId, productDetails);
-
-    return productSummary;
+    return productUpdateService.calculateUpdateProductFromAtomicData(
+        branch, productId, productDetails);
   }
 
   @LogExecutionTime
