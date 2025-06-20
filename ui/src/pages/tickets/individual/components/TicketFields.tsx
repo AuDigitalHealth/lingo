@@ -67,7 +67,7 @@ export default function TicketFields({
 
   const formatField = (item: AdditionalFieldValue) => {
     return item.additionalFieldType.type === AdditionalFieldTypeEnum.DATE
-      ? new Date(Date.parse(item.valueOf)).toLocaleDateString('en-AU')
+      ? new Date(Date.parse(item.valueOf)).toLocaleDateString()
       : item.valueOf;
   };
 

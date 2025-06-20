@@ -348,13 +348,13 @@ const ResultItemTitleTemplate = (rowData: ResultItem) => {
 
 const FinishedTimeTemplate = (rowData: JobResult) => {
   const date = new Date(rowData.finishedTime);
-  const dateString = date.toLocaleDateString('en-AU', {
+  const dateString = date.toLocaleDateString(undefined, {
     day: '2-digit',
     month: '2-digit',
     year: '2-digit',
   });
 
-  const timeString = date.toLocaleTimeString('en-AU', {
+  const timeString = date.toLocaleTimeString(undefined, {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false, // This ensures 24-hour format
