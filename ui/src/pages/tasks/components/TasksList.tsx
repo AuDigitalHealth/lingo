@@ -333,7 +333,7 @@ function TasksList({
     {
       field: 'assignee',
       headerName: 'Owner',
-      width: 150,
+      width: 100,
       type: 'singleSelect',
       valueOptions: mapToUserOptions(jiraUsers),
       getApplyQuickFilterFn: (value: string) => {
