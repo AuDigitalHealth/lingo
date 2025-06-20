@@ -96,7 +96,7 @@ function Attachments({ ticket }: AttachmentProps) {
                   key={attachment.id}
                   filename={attachment.filename}
                   id={attachment.id}
-                  created={created.toLocaleString('en-AU')}
+                  created={created.toLocaleString()}
                   thumbnail={attachment.thumbnailLocation}
                 />
               );

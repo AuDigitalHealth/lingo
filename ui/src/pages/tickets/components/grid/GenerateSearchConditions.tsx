@@ -219,7 +219,7 @@ export const generateSearchConditions = (
       first = firstArray[0];
       const second = firstArray[1];
 
-      let value = first.toLocaleDateString('en-AU', {
+      let value = first.toLocaleDateString(undefined, {
         day: '2-digit',
         month: '2-digit',
         year: '2-digit',
@@ -227,7 +227,7 @@ export const generateSearchConditions = (
 
       if (second !== null && second !== undefined) {
         value += '-';
-        value += second.toLocaleDateString('en-AU', {
+        value += second.toLocaleDateString(undefined, {
           day: '2-digit',
           month: '2-digit',
           year: '2-digit',
@@ -236,7 +236,7 @@ export const generateSearchConditions = (
 
       setValue = value;
     } else {
-      const value = first.toLocaleDateString('en-AU', {
+      const value = first.toLocaleDateString(undefined, {
         day: '2-digit',
         month: '2-digit',
         year: '2-digit',
