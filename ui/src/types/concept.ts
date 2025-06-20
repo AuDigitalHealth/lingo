@@ -304,6 +304,14 @@ export interface Product {
   isModified?: boolean;
   propertyUpdate: boolean;
   originalNode: OriginalNode | null;
+  statedFormChanged: boolean | null;
+  inferredFormChanged: boolean | null;
+}
+
+export function hasDescriptionChange(product: Product): boolean {
+  return product.originalNode != null &&
+    (product.fullySpecifiedName !== product.originalNode.node?.fullySpecifiedName
+    || product.preferredTerm !== product.originalNode.node?.preferredTerm);
 }
 
 export interface NewConceptDetails {

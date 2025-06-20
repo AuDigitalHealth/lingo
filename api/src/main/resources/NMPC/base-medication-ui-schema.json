@@ -157,7 +157,8 @@
                   {
                     "path": "../basisOfStrengthSubstance",
                     "ui:options": {
-                      "getEcl": "(<763158003 {{ D term=\"real clinical drug\" }}).732943007",
+                      "getEcl": "<<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent)) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))))",
+                      "getExtendedEcl": "<105590001",
                       "showDefaultOptions": true
                     }
                   }
@@ -195,8 +196,6 @@
               "ui:field": "AutoCompleteField",
               "ui:title": "BoSS",
               "ui:options": {
-                "ecl": "(<763158003 {{ D term=\"real clinical drug\" }}).732943007",
-                "extendedEcl": "<105590001",
                 "showDefaultOptions": false,
                 "placeholder": "Basis of Strength Substance (Optional)",
                 "description": "Only enabled if Active Ingredient is set."

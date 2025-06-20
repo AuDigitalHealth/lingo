@@ -129,12 +129,7 @@ public class ReferenceSetUtils {
 
     Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers = new HashSet<>();
 
-    referenceSetMembers.add(
-        new SnowstormReferenceSetMemberViewComponent()
-            .refsetId(modelConfiguration.getReferenceSetIdForModelLevelType(modelLevelType))
-            .active(true)
-            .moduleId(modelConfiguration.getModuleId()));
-
+    boolean markerAdded = false;
     for (ReferenceSet referenceSet : ReferenceSet.filter(properties)) {
       ReferenceSetDefinition configReferenceSetDefinition =
           referenceSetMap.get(referenceSet.getIdentifierScheme());
@@ -143,6 +138,7 @@ public class ReferenceSetUtils {
         // but is always present in the product details.
         configReferenceSetDefinition =
             modelConfiguration.getReferenceSetDefinitionForLevelMarker(modelLevelType);
+        markerAdded = true;
       }
       if (configReferenceSetDefinition == null) {
         throw new ProductAtomicDataValidationProblem(
@@ -156,6 +152,14 @@ public class ReferenceSetUtils {
                 .refsetId(configReferenceSetDefinition.getIdentifier())
                 .active(true));
       }
+    }
+
+    if (!markerAdded) {
+      referenceSetMembers.add(
+          new SnowstormReferenceSetMemberViewComponent()
+              .refsetId(modelConfiguration.getReferenceSetIdForModelLevelType(modelLevelType))
+              .active(true)
+              .moduleId(modelConfiguration.getModuleId()));
     }
 
     final Set<SnowstormReferenceSetMemberViewComponent> externalIdentifierReferenceSetEntries =
