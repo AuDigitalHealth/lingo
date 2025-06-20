@@ -456,7 +456,6 @@ public class DeviceProductCalculationService {
             packageDetails.getSelectedConceptIdentifiers(),
             packageDetails.getNonDefiningProperties(),
             true,
-            true,
             ModelLevelType.PACKAGED_CLINICAL_DRUG.equals(modelLevel.getModelLevelType()),
             true)
         .thenApply(
@@ -620,7 +619,6 @@ public class DeviceProductCalculationService {
                 packageDetails.getNonDefiningProperties()),
             packageDetails.getSelectedConceptIdentifiers(),
             productQuantity.getProductDetails().getNonDefiningProperties(),
-            true,
             false,
             false,
             true);
@@ -672,7 +670,6 @@ public class DeviceProductCalculationService {
                   packageDetails.getNonDefiningProperties()),
               packageDetails.getSelectedConceptIdentifiers(),
               productQuantity.getProductDetails().getNonDefiningProperties(),
-              true,
               false,
               false,
               true);
