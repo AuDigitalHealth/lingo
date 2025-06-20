@@ -82,8 +82,8 @@ public class Node {
 
   ModelLevelType modelLevel;
 
-  Collection<SnowstormRelationship> relationships = new HashSet<>();
-  Collection<SnowstormAxiom> axioms = new HashSet<>();
+  @Builder.Default Collection<SnowstormRelationship> relationships = new HashSet<>();
+  @Builder.Default Collection<SnowstormAxiom> axioms = new HashSet<>();
 
   public Node(SnowstormConceptMini concept, ModelLevel level) {
     this.concept = concept;

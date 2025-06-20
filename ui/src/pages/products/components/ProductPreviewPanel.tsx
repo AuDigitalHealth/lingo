@@ -8,6 +8,7 @@ import {
 import {
   Concept,
   Edge,
+  hasDescriptionChange,
   Product,
   Product7BoxBGColour,
   ProductSummary
@@ -646,7 +647,7 @@ function ProductHeaderWatch({
     } else if (product.conceptOptions.length > 0 && !optionsIgnored) {
       handleChangeColor(Product7BoxBGColour.INVALID);
     }
-  } else if (product.propertyUpdate || product.statedFormChanged || product.inferredFormChanged) {
+  } else if (product.propertyUpdate || product.statedFormChanged || product.inferredFormChanged || hasDescriptionChange(product)) {
     handleChangeColor(Product7BoxBGColour.PROPERTY_CHANGE);
   }
 

@@ -18,6 +18,7 @@ import {
   Concept,
   DefinitionStatus,
   Edge,
+  hasDescriptionChange,
   Product,
   Product7BoxBGColour,
   ProductSummary
@@ -762,7 +763,7 @@ function ProductHeaderWatch({
     } else {
       handleChangeColor(Product7BoxBGColour.NEW);
     }
-  } else if (product.propertyUpdate || product.inferredFormChanged || product.statedFormChanged) {
+  } else if (product.propertyUpdate || product.inferredFormChanged || product.statedFormChanged || hasDescriptionChange(product)) {
     handleChangeColor(Product7BoxBGColour.PROPERTY_CHANGE);
   }
 
