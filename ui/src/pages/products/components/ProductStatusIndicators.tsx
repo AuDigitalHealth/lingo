@@ -1,10 +1,10 @@
 import React from 'react';
-import {Stack, Tooltip} from '@mui/material';
-import {FormattedMessage} from 'react-intl';
-import {NewReleases, NewReleasesOutlined} from '@mui/icons-material';
-import {styled} from '@mui/system';
-import {Avatar} from 'antd';
-import {Product} from '../../../types/concept';
+import { Stack, Tooltip } from '@mui/material';
+import { FormattedMessage } from 'react-intl';
+import { NewReleases, NewReleasesOutlined } from '@mui/icons-material';
+import { styled } from '@mui/system';
+import { Avatar } from 'antd';
+import { hasDescriptionChange, Product } from '../../../types/concept';
 
 export interface ProductStatusProps {
   product: Product;
@@ -47,6 +47,19 @@ export const ProductStatusIndicators: React.FC<ProductStatusProps> = ({
           }
         >
           <SmallAvatar>I</SmallAvatar>
+        </Tooltip>
+      )}
+
+      {hasDescriptionChange(product) && (
+        <Tooltip
+          title={
+            <FormattedMessage
+              id="description-updated"
+              defaultMessage="Description changed"
+            />
+          }
+        >
+          <SmallAvatar>D</SmallAvatar>
         </Tooltip>
       )}
 

@@ -764,7 +764,6 @@ public class BrandPackSizeService {
             properties,
             false,
             false,
-            false,
             true)
         .thenApply(
             n -> {
@@ -841,7 +840,6 @@ public class BrandPackSizeService {
             properties,
             false,
             false,
-            false,
             true)
         .thenApply(
             n -> {
@@ -914,7 +912,6 @@ public class BrandPackSizeService {
                 models.getModelConfiguration(branch), properties, modelLevel.getModelLevelType()),
             List.of(),
             properties,
-            false,
             false,
             false,
             true)

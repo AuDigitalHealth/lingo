@@ -308,6 +308,12 @@ export interface Product {
   inferredFormChanged: boolean | null;
 }
 
+export function hasDescriptionChange(product: Product): boolean {
+  return product.originalNode != null &&
+    (product.fullySpecifiedName !== product.originalNode.node?.fullySpecifiedName
+    || product.preferredTerm !== product.originalNode.node?.preferredTerm);
+}
+
 export interface NewConceptDetails {
   conceptId: number;
   specifiedConceptId: string | null;
