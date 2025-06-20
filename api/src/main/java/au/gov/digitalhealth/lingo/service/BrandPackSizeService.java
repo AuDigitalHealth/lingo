@@ -188,9 +188,11 @@ public class BrandPackSizeService {
 
     newRelationships.forEach(
         r -> {
-          if (!Boolean.TRUE.equals(r.getConcrete()) && r.getTarget() != null) {
-            atomicCache.addFsn(r.getDestinationId(), r.getTarget().getFsn().getTerm());
-            atomicCache.addPt(r.getDestinationId(), r.getTarget().getPt().getTerm());
+          if (r.getConcreteValue() == null && r.getTarget() != null) {
+            atomicCache.addFsnAndPt(
+                r.getDestinationId(),
+                r.getTarget().getFsn().getTerm(),
+                r.getTarget().getPt().getTerm());
           }
         });
 
@@ -519,12 +521,16 @@ public class BrandPackSizeService {
                                 node.getModelLevel())
                             .thenApply(
                                 n -> {
-                                  atomicCache.addFsn(n.getConceptId(), n.getFullySpecifiedName());
+                                  atomicCache.addFsnAndPt(
+                                      n.getConceptId(),
+                                      n.getFullySpecifiedName(),
+                                      n.getPreferredTerm());
                                   return n;
                                 }));
               } else {
                 log.fine("Reusing existing " + type + " node");
-                atomicCache.addFsn(node.getConceptId(), node.getFullySpecifiedName());
+                atomicCache.addFsnAndPt(
+                    node.getConceptId(), node.getFullySpecifiedName(), node.getPreferredTerm());
               }
             });
       }
@@ -553,11 +559,15 @@ public class BrandPackSizeService {
                                 node.getModelLevel())
                             .thenApply(
                                 m -> {
-                                  atomicCache.addFsn(m.getConceptId(), m.getFullySpecifiedName());
+                                  atomicCache.addFsnAndPt(
+                                      m.getConceptId(),
+                                      m.getFullySpecifiedName(),
+                                      m.getPreferredTerm());
                                   return m;
                                 }));
               } else {
-                atomicCache.addFsn(node.getConceptId(), node.getFullySpecifiedName());
+                atomicCache.addFsnAndPt(
+                    node.getConceptId(), node.getFullySpecifiedName(), node.getPreferredTerm());
                 log.fine("Reusing existing MPP node");
               }
             });
@@ -754,7 +764,6 @@ public class BrandPackSizeService {
             properties,
             false,
             false,
-            false,
             true)
         .thenApply(
             n -> {
@@ -795,14 +804,20 @@ public class BrandPackSizeService {
           }
           if (r.getTypeId().equals(CONTAINS_DEVICE.getValue())
               || r.getTypeId().equals(CONTAINS_CD.getValue())) {
-            atomicCache.addFsn(r.getDestinationId(), r.getTarget().getFsn().getTerm());
+            atomicCache.addFsnAndPt(
+                r.getDestinationId(),
+                r.getTarget().getFsn().getTerm(),
+                r.getTarget().getPt().getTerm());
           }
         });
 
     relationships.forEach(
         r -> {
-          if (!Boolean.TRUE.equals(r.getConcrete()) && r.getTarget() != null) {
-            atomicCache.addFsn(r.getDestinationId(), r.getTarget().getFsn().getTerm());
+          if (r.getConcreteValue() == null && r.getTarget() != null) {
+            atomicCache.addFsnAndPt(
+                r.getDestinationId(),
+                r.getTarget().getFsn().getTerm(),
+                r.getTarget().getPt().getTerm());
           }
         });
 
@@ -823,7 +838,6 @@ public class BrandPackSizeService {
                 models.getModelConfiguration(branch), properties, modelLevel.getModelLevelType()),
             List.of(),
             properties,
-            false,
             false,
             false,
             true)
@@ -873,8 +887,11 @@ public class BrandPackSizeService {
 
     relationships.forEach(
         r -> {
-          if (!Boolean.TRUE.equals(r.getConcrete()) && r.getTarget() != null) {
-            atomicCache.addFsn(r.getDestinationId(), r.getTarget().getFsn().getTerm());
+          if (r.getConcreteValue() == null && r.getTarget() != null) {
+            atomicCache.addFsnAndPt(
+                r.getDestinationId(),
+                r.getTarget().getFsn().getTerm(),
+                r.getTarget().getPt().getTerm());
           }
         });
 
@@ -895,7 +912,6 @@ public class BrandPackSizeService {
                 models.getModelConfiguration(branch), properties, modelLevel.getModelLevelType()),
             List.of(),
             properties,
-            false,
             false,
             false,
             true)
