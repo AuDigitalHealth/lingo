@@ -19,12 +19,16 @@ import au.gov.digitalhealth.lingo.aspect.LogExecutionTime;
 import au.gov.digitalhealth.lingo.product.ProductCreationDetails;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.details.DeviceProductDetails;
+import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
-import au.gov.digitalhealth.lingo.service.DeviceProductCalculationService;
 import au.gov.digitalhealth.lingo.service.DeviceService;
+import au.gov.digitalhealth.lingo.service.ProductCalculationServiceFactory;
 import au.gov.digitalhealth.lingo.service.ProductCreationService;
+import au.gov.digitalhealth.lingo.service.ProductUpdateService;
 import au.gov.digitalhealth.lingo.service.TaskManagerService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.validation.Valid;
+import java.util.concurrent.ExecutionException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -42,19 +46,22 @@ import org.springframework.web.bind.annotation.RestController;
 public class DeviceController {
 
   private final DeviceService deviceService;
-  private final DeviceProductCalculationService deviceProductCalculationService;
   private final TaskManagerService taskManagerService;
   private final ProductCreationService productCreationService;
+  private final ProductUpdateService productUpdateService;
+  ProductCalculationServiceFactory productCalculationServiceFactory;
 
   DeviceController(
       DeviceService deviceService,
-      DeviceProductCalculationService deviceProductCalculationService,
       TaskManagerService taskManagerService,
-      ProductCreationService productCreationService) {
+      ProductCreationService productCreationService,
+      ProductUpdateService productUpdateService,
+      ProductCalculationServiceFactory productCalculationServiceFactory) {
     this.deviceService = deviceService;
-    this.deviceProductCalculationService = deviceProductCalculationService;
     this.taskManagerService = taskManagerService;
     this.productCreationService = productCreationService;
+    this.productUpdateService = productUpdateService;
+    this.productCalculationServiceFactory = productCalculationServiceFactory;
   }
 
   @LogExecutionTime
@@ -87,8 +94,23 @@ public class DeviceController {
   @PostMapping("/{branch}/devices/product/$calculate")
   public ProductSummary calculateDeviceProductFromAtomioData(
       @PathVariable String branch,
-      @RequestBody @Valid PackageDetails<@Valid DeviceProductDetails> productDetails) {
+      @RequestBody @Valid PackageDetails<@Valid DeviceProductDetails> productDetails)
+      throws ExecutionException, InterruptedException {
     taskManagerService.validateTaskState(branch);
-    return deviceProductCalculationService.calculateProductFromAtomicData(branch, productDetails);
+    return productCalculationServiceFactory
+        .getCalculationService(DeviceProductDetails.class)
+        .calculateProductFromAtomicData(branch, productDetails);
+  }
+
+  @LogExecutionTime
+  @PostMapping("/{branch}/devices/product/{productId}/$calculateUpdate")
+  public ProductSummary updateMedicationProductFromAtomicData(
+      @PathVariable String branch,
+      @PathVariable Long productId,
+      @RequestBody @Valid PackageDetails<@Valid MedicationProductDetails> productDetails)
+      throws ExecutionException, InterruptedException, JsonProcessingException {
+    taskManagerService.validateTaskState(branch);
+    return productUpdateService.calculateUpdateProductFromAtomicData(
+        branch, productId, productDetails);
   }
 }

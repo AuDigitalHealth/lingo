@@ -731,7 +731,7 @@ public class SnowstormDtoUtil {
                 new SnowstormRelationship()
                     .active(r.getActive())
                     .characteristicType(r.getCharacteristicType())
-                    .concrete(r.getConcrete())
+                    .concrete(r.getConcreteValue() != null)
                     .concreteValue(
                         r.getConcreteValue() == null
                             ? null
