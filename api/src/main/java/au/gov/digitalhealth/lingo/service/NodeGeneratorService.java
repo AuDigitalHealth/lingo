@@ -101,7 +101,7 @@ public class NodeGeneratorService {
     node.setDisplayName(modelLevel.getName());
     node.setConcept(concept);
 
-    populateNodeProperties(branch, modelLevel, node, null, false);
+    populateNodeProperties(branch, modelLevel, node, null);
 
     return CompletableFuture.completedFuture(node);
   }
@@ -111,8 +111,7 @@ public class NodeGeneratorService {
       String branch,
       Long productId,
       ModelLevel modelLevel,
-      Collection<NonDefiningBase> newProperties,
-      boolean newPropertiesAdditive) {
+      Collection<NonDefiningBase> newProperties) {
     Node node = new Node();
     node.setLabel(modelLevel.getDisplayLabel());
     node.setModelLevel(modelLevel.getModelLevelType());
@@ -126,17 +125,13 @@ public class NodeGeneratorService {
     }
     node.setConcept(concept);
 
-    populateNodeProperties(branch, modelLevel, node, newProperties, newPropertiesAdditive);
+    populateNodeProperties(branch, modelLevel, node, newProperties);
 
     return CompletableFuture.completedFuture(node);
   }
 
   private void populateNodeProperties(
-      String branch,
-      ModelLevel modelLevel,
-      Node node,
-      Collection<NonDefiningBase> newProperties,
-      boolean newPropertiesAdditive) {
+      String branch, ModelLevel modelLevel, Node node, Collection<NonDefiningBase> newProperties) {
     ModelConfiguration configuration = models.getModelConfiguration(branch);
 
     Flux<Void> refsetMembersFlux = addRefsetAndMapping(branch, modelLevel, configuration, node);
@@ -194,9 +189,7 @@ public class NodeGeneratorService {
       Map<String, ExternalIdentifierDefinition> externalIdentifiersMap =
           configuration.getMappingsBySchemeForModelLevel(modelLevel);
 
-      if (!newPropertiesAdditive) {
-        node.getNonDefiningProperties().clear();
-      }
+      node.getNonDefiningProperties().clear();
 
       for (NonDefiningBase newProperty : newProperties) {
         if (newProperty instanceof NonDefiningProperty p
@@ -301,8 +294,7 @@ public class NodeGeneratorService {
       String branch,
       Long productId,
       ModelLevel modelLevel,
-      Collection<NonDefiningBase> newProperties,
-      boolean newPropertiesAdditive) {
+      Collection<NonDefiningBase> newProperties) {
 
     return CompletableFuture.completedFuture(
         snowstormClient
@@ -321,8 +313,7 @@ public class NodeGeneratorService {
                   node.setModelLevel(modelLevel.getModelLevelType());
                   node.setDisplayName(modelLevel.getName());
                   node.setConcept(concept);
-                  populateNodeProperties(
-                      branch, modelLevel, node, newProperties, newPropertiesAdditive);
+                  populateNodeProperties(branch, modelLevel, node, newProperties);
                   return node;
                 })
             .toList());
@@ -340,7 +331,6 @@ public class NodeGeneratorService {
       Set<SnowstormRelationship> nonDefiningProperties,
       List<String> selectedConceptIdentifiers,
       Collection<NonDefiningBase> newProperties,
-      boolean newPropertiesAdditive,
       boolean suppressIsa,
       boolean suppressNegativeStatements,
       boolean enforceRefsets) {
@@ -356,7 +346,6 @@ public class NodeGeneratorService {
             nonDefiningProperties,
             selectedConceptIdentifiers,
             newProperties,
-            newPropertiesAdditive,
             suppressIsa,
             suppressNegativeStatements,
             enforceRefsets));
@@ -373,7 +362,6 @@ public class NodeGeneratorService {
       Set<SnowstormRelationship> nonDefiningProperties,
       List<String> selectedConceptIdentifiers,
       Collection<NonDefiningBase> newProperties,
-      boolean newPropertiesAdditive,
       boolean suppressIsa,
       boolean suppressNegativeStatements,
       boolean enforceRefsets) {
@@ -512,7 +500,7 @@ public class NodeGeneratorService {
     } else {
       log.fine("Concept found for " + label + " " + node.getConceptId());
 
-      populateNodeProperties(branch, modelLevel, node, newProperties, newPropertiesAdditive);
+      populateNodeProperties(branch, modelLevel, node, newProperties);
     }
 
     return node;
