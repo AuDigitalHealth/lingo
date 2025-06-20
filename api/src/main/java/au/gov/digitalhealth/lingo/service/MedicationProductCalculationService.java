@@ -31,7 +31,6 @@ import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_TOTAL_QUANTITY_UN
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_TOTAL_QUANTITY_VALUE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.NO_OII_VALUE;
 import static au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter.calculateNonDefiningRelationships;
-import static au.gov.digitalhealth.lingo.util.ReferenceSetUtils.calculateReferenceSetMembers;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONTAINS_CD;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.COUNT_OF_ACTIVE_INGREDIENT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.COUNT_OF_BASE_ACTIVE_INGREDIENT;
@@ -535,7 +534,6 @@ public class MedicationProductCalculationService {
         packageDetails.getSelectedConceptIdentifiers(),
         packageDetails.getNonDefiningProperties(),
         true,
-        true,
         label.equals(
             modelConfiguration.getLevelOfType(ModelLevelType.PACKAGED_CLINICAL_DRUG).getName()),
         enforceRefsets);
@@ -945,7 +943,6 @@ public class MedicationProductCalculationService {
             productDetails.getNonDefiningProperties()),
         selectedConceptIdentifiers,
         productDetails.getNonDefiningProperties(),
-        true,
         !branded,
         false,
         enforceRefsets);
@@ -980,7 +977,6 @@ public class MedicationProductCalculationService {
             details.getNonDefiningProperties()),
         selectedConceptIdentifiers,
         details.getNonDefiningProperties(),
-        true,
         false,
         false,
         false);
