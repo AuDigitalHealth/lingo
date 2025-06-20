@@ -159,7 +159,7 @@ function UserTasksList({
       maxWidth: 100,
       valueFormatter: ({ value }: GridValueFormatterParams<string>) => {
         const date = new Date(value);
-        return date.toLocaleDateString('en-AU');
+        return date.toLocaleDateString();
       },
     },
     {

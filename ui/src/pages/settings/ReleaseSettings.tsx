@@ -92,7 +92,7 @@ export function ReleaseSettings({
       valueFormatter: ({ value }: GridValueFormatterParams<string>) => {
         if (value) {
           const date = new Date(value);
-          return date.toLocaleDateString('en-AU');
+          return date.toLocaleDateString();
         }
       },
       filterable: false,
@@ -108,7 +108,7 @@ export function ReleaseSettings({
       valueFormatter: ({ value }: GridValueFormatterParams<string>) => {
         if (value) {
           const date = new Date(value);
-          return date.toLocaleDateString('en-AU');
+          return date.toLocaleDateString();
         }
       },
     },

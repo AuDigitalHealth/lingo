@@ -20,6 +20,8 @@ import { ReactNode, useCallback, useEffect, useState } from 'react';
 import statusToColor from '../../../utils/statusToColor.ts';
 import { ValidationColor } from '../../../types/validationColor.ts';
 
+import { parseISO } from 'date-fns';
+
 import {
   isUserExists,
   mapToUserNameArray,
@@ -160,14 +162,13 @@ function TasksList({
     {
       field: 'summary',
       headerName: 'Name',
-      width: 150,
+      width: 350,
+      flex: 1,
     },
     {
       field: 'key',
       headerName: 'Task ID',
-      minWidth: 90,
-      flex: 1,
-      maxWidth: 90,
+      width: 90,
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
         <AuthoringPlatformLink
           to={`/dashboard/tasks/edit/${params.value}`}
@@ -180,12 +181,18 @@ function TasksList({
     {
       field: 'updated',
       headerName: 'Modified',
-      minWidth: 100,
-      flex: 1,
-      maxWidth: 100,
+      width: 100,
       valueFormatter: ({ value }: GridValueFormatterParams<string>) => {
-        const date = new Date(value);
-        return date.toLocaleDateString('en-AU');
+        if (value) {
+          const date = parseISO('' + value);
+          return date.toLocaleDateString(undefined, {
+            day: '2-digit',
+            month: '2-digit',
+            year: '2-digit',
+          });
+        } else {
+          return '';
+        }
       },
     },
     {
@@ -228,9 +235,9 @@ function TasksList({
     {
       field: 'branchState',
       headerName: 'Rebase',
-      minWidth: 100,
-      flex: 1,
-      maxWidth: 200,
+      width: 120,
+      align: 'center',
+      headerAlign: 'center',
       valueOptions: Array.from(branchStateMap.entries()).map(
         ([key, value]) => ({
           value: key,
@@ -248,9 +255,9 @@ function TasksList({
     {
       field: 'latestClassificationJson',
       headerName: 'Classification',
-      minWidth: 100,
-      flex: 1,
-      maxWidth: 150,
+      width: 120,
+      align: 'center',
+      headerAlign: 'center',
       valueOptions: Array.from(classificationStatusMap.entries()).map(
         ([key, value]) => ({
           value: key,
@@ -273,9 +280,9 @@ function TasksList({
     {
       field: 'latestValidationStatus',
       headerName: 'Validation',
-      minWidth: 100,
-      flex: 1,
-      maxWidth: 200,
+      width: 120,
+      align: 'center',
+      headerAlign: 'center',
       valueOptions: Array.from(validationStatusMap.entries()).map(
         ([key, value]) => ({
           value: key,
@@ -295,6 +302,8 @@ function TasksList({
     {
       field: 'status',
       headerName: 'Status',
+      align: 'center',
+      headerAlign: 'center',
       valueOptions: Object.values(TaskStatus),
       type: 'singleSelect',
       renderCell: (
@@ -304,7 +313,9 @@ function TasksList({
     {
       field: 'feedbackMessagesStatus',
       headerName: 'Feedback',
-      width: 150,
+      width: 120,
+      align: 'center',
+      headerAlign: 'center',
       valueOptions: Array.from(feedbackStatusMap.entries()).map(
         ([key, value]) => ({
           value: key, // Use the key for the actual value
@@ -322,8 +333,7 @@ function TasksList({
     {
       field: 'assignee',
       headerName: 'Owner',
-      minWidth: 100,
-      maxWidth: 100,
+      width: 150,
       type: 'singleSelect',
       valueOptions: mapToUserOptions(jiraUsers),
       getApplyQuickFilterFn: (value: string) => {
@@ -348,10 +358,7 @@ function TasksList({
     {
       field: 'reviewers',
       headerName: 'Reviewers',
-
-      minWidth: 150,
-      flex: 1,
-      maxWidth: 250,
+      width: 350,
       type: 'singleSelect',
       filterable: false,
       sortable: true,
