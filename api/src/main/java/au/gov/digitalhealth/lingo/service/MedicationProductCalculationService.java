@@ -31,7 +31,6 @@ import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_TOTAL_QUANTITY_UN
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_TOTAL_QUANTITY_VALUE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.NO_OII_VALUE;
 import static au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter.calculateNonDefiningRelationships;
-import static au.gov.digitalhealth.lingo.util.ReferenceSetUtils.calculateReferenceSetMembers;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONTAINS_CD;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.COUNT_OF_ACTIVE_INGREDIENT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.COUNT_OF_BASE_ACTIVE_INGREDIENT;
@@ -74,30 +73,23 @@ import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
-import au.gov.digitalhealth.lingo.product.OriginalNode;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.details.*;
 import au.gov.digitalhealth.lingo.service.validators.MedicationDetailsValidator;
 import au.gov.digitalhealth.lingo.util.AmtConstants;
 import au.gov.digitalhealth.lingo.util.BigDecimalFormatter;
-import au.gov.digitalhealth.lingo.util.InactivationReason;
 import au.gov.digitalhealth.lingo.util.OwlAxiomService;
 import au.gov.digitalhealth.lingo.util.ReferenceSetUtils;
 import au.gov.digitalhealth.lingo.util.RelationshipSorter;
 import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import au.gov.digitalhealth.tickets.service.TicketServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
-import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -114,7 +106,8 @@ import reactor.core.publisher.Mono;
 
 @Service
 @Log
-public class MedicationProductCalculationService {
+public class MedicationProductCalculationService
+    implements ProductCalculationService<MedicationProductDetails> {
 
   private final Map<String, MedicationDetailsValidator> medicationDetailsValidatorByQualifier;
   SnowstormClient snowstormClient;
@@ -535,7 +528,6 @@ public class MedicationProductCalculationService {
         packageDetails.getSelectedConceptIdentifiers(),
         packageDetails.getNonDefiningProperties(),
         true,
-        true,
         label.equals(
             modelConfiguration.getLevelOfType(ModelLevelType.PACKAGED_CLINICAL_DRUG).getName()),
         enforceRefsets);
@@ -945,7 +937,6 @@ public class MedicationProductCalculationService {
             productDetails.getNonDefiningProperties()),
         selectedConceptIdentifiers,
         productDetails.getNonDefiningProperties(),
-        true,
         !branded,
         false,
         enforceRefsets);
@@ -980,7 +971,6 @@ public class MedicationProductCalculationService {
             details.getNonDefiningProperties()),
         selectedConceptIdentifiers,
         details.getNonDefiningProperties(),
-        true,
         false,
         false,
         false);
@@ -1220,247 +1210,5 @@ public class MedicationProductCalculationService {
     }
 
     return relationships;
-  }
-
-  public ProductSummary calculateUpdateProductFromAtomicData(
-      String branch,
-      Long productId,
-      @Valid PackageDetails<@Valid MedicationProductDetails> productDetails)
-      throws ExecutionException, InterruptedException {
-
-    // async call to get product summary by productId
-    CompletableFuture<ProductSummary> existingProductSummary =
-        productSummaryService.getProductSummaryAsync(branch, productId.toString());
-
-    // async call to calculate the product from atomic data
-    CompletableFuture<ProductSummary> newProductSummary =
-        self.calculateProductFromAtomicDataAsync(branch, productDetails);
-
-    CompletableFuture.allOf(existingProductSummary, newProductSummary).join();
-
-    ProductSummary existingSummary = existingProductSummary.get();
-    ProductSummary newSummary = newProductSummary.get();
-
-    // correlate the existing product summary nodes to the new product summary nodes
-    Map<String, Node> existingNodesByConceptId =
-        existingSummary.getNodes().stream()
-            .collect(Collectors.toMap(Node::getConceptId, Function.identity()));
-
-    Set<String> allocatedExistingNodes = new HashSet<>();
-
-    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
-    newSummary.getNodes().stream()
-        .filter(
-            node ->
-                !node.isNewConcept() && existingNodesByConceptId.containsKey(node.getConceptId()))
-        .forEach(node -> allocatedExistingNodes.add(node.getConceptId()));
-
-    // for all the new nodes in the new summary, find the corresponding exisitng node
-    newSummary.getNodes().stream()
-        .filter(Node::isNewConcept)
-        .forEach(
-            newNode -> {
-              final Node bestMatchingNode =
-                  getBestMatchingNode(newNode, existingNodesByConceptId, allocatedExistingNodes);
-              if (bestMatchingNode != null) {
-                newNode.setOriginalNode(new OriginalNode(bestMatchingNode, null, true));
-                allocatedExistingNodes.add(bestMatchingNode.getConceptId());
-              }
-            });
-
-    // include in the product summary all the unmatched existing nodes
-    existingNodesByConceptId.values().stream()
-        .filter(node -> !allocatedExistingNodes.contains(node.getConceptId()))
-        .forEach(
-            node ->
-                newSummary
-                    .getUnmatchedPreviouslyReferencedNodes()
-                    .add(new OriginalNode(node, null, true)));
-
-    // update all the existing nodes to indicate if they are referenced by other concepts outside
-    // the ones in the summary
-    Set<String> replacedConceptIds =
-        newSummary.getNodes().stream()
-            .filter(
-                node ->
-                    node.getOriginalNode() != null
-                        && !node.getConceptId()
-                            .equals(node.getOriginalNode().getNode().getConceptId()))
-            .map(node -> node.getOriginalNode().getNode().getConceptId())
-            .collect(Collectors.toSet());
-    replacedConceptIds.addAll(
-        newSummary.getUnmatchedPreviouslyReferencedNodes().stream()
-            .map(on -> on.getNode().getConceptId())
-            .collect(Collectors.toSet()));
-
-    Map<String, OriginalNode> originalNodes =
-        new HashMap<>(
-            newSummary.getUnmatchedPreviouslyReferencedNodes().stream()
-                .collect(Collectors.toMap(OriginalNode::getConceptId, Function.identity())));
-    originalNodes.putAll(
-        newSummary.getNodes().stream()
-            .map(Node::getOriginalNode)
-            .filter(Objects::nonNull)
-            .collect(Collectors.toMap(on -> on.getNode().getConceptId(), Function.identity())));
-
-    List<CompletableFuture<Void>> referencedByOtherProductsFutures = new ArrayList<>();
-    originalNodes
-        .values()
-        .forEach(
-            node -> {
-              String originalConceptId = node.getNode().getConceptId();
-
-              referencedByOtherProductsFutures.add(
-                  snowstormClient
-                      .getConceptIdsFromEclAsync(
-                          branch,
-                          "(<" + originalConceptId + ") or (*:*=" + originalConceptId + ")",
-                          0,
-                          100,
-                          modelConfiguration.isExecuteEclAsStated())
-                      .thenAccept(
-                          c -> {
-                            final boolean referencedByOtherProducts =
-                                !replacedConceptIds.containsAll(c);
-
-                            node.setReferencedByOtherProducts(referencedByOtherProducts);
-                            node.setInactivationReason(
-                                referencedByOtherProducts ? null : InactivationReason.ERRONEOUS);
-                          }));
-            });
-
-    CompletableFuture.allOf(referencedByOtherProductsFutures.toArray(new CompletableFuture[0]))
-        .join();
-
-    markDependentNodesAsReferenced(originalNodes, existingProductSummary.get().getEdges());
-
-    return newSummary;
-  }
-
-  /**
-   * Propagates reference status to dependent nodes in a directed graph.
-   *
-   * <p>This method iterates through nodes in dependency order (from least to most dependent) and
-   * updates their reference status based on their dependencies. If a node is referenced by other
-   * products, any nodes that depend on it (through directed edges) will also be marked as
-   * referenced by other products.
-   *
-   * <p>The nodes are sorted to ensure proper propagation: 1. Nodes referenced by other nodes appear
-   * before nodes that reference them 2. When no direct reference exists, nodes with fewer incoming
-   * edges appear first 3. For nodes with equal incoming edges, sorting is by conceptId for
-   * deterministic results
-   *
-   * @param originalNodes Map of concept IDs to their node representations
-   * @param edges Set of directed edges connecting the nodes
-   */
-  private void markDependentNodesAsReferenced(
-      Map<String, OriginalNode> originalNodes, @NotNull @NotEmpty Set<@Valid Edge> edges) {
-
-    List<OriginalNode> sortedOriginalNodes =
-        originalNodes.values().stream()
-            .sorted(
-                (node1, node2) -> {
-                  String id1 = node1.getConceptId();
-                  String id2 = node2.getConceptId();
-
-                  // Check references
-                  boolean node1ReferencesNode2 =
-                      edges.stream()
-                          .anyMatch(e -> e.getSource().equals(id1) && e.getTarget().equals(id2));
-                  boolean node2ReferencesNode1 =
-                      edges.stream()
-                          .anyMatch(e -> e.getSource().equals(id2) && e.getTarget().equals(id1));
-
-                  if (node1ReferencesNode2 && node2ReferencesNode1) {
-                    throw new IllegalStateException(
-                        "Circular reference detected between nodes: " + id1 + " and " + id2);
-                  }
-
-                  if (node1ReferencesNode2 && !node2ReferencesNode1) {
-                    return 1;
-                  }
-                  if (node2ReferencesNode1 && !node1ReferencesNode2) {
-                    return -1;
-                  }
-
-                  // Compare by incoming edges
-                  long incomingCount1 =
-                      edges.stream().filter(e -> e.getTarget().equals(id1)).count();
-                  long incomingCount2 =
-                      edges.stream().filter(e -> e.getTarget().equals(id2)).count();
-
-                  if (incomingCount1 != incomingCount2) {
-                    return Long.compare(incomingCount1, incomingCount2);
-                  }
-
-                  // Sort by conceptId as final tie-breaker
-                  return id1.compareTo(id2);
-                })
-            .toList();
-
-    for (OriginalNode originalNode : sortedOriginalNodes) {
-      if (!originalNode.isReferencedByOtherProducts()
-          && edges.stream()
-              .anyMatch(
-                  e ->
-                      e.getTarget().equals(originalNode.getConceptId())
-                          && originalNodes.get(e.getSource()).isReferencedByOtherProducts())) {
-
-        originalNode.setReferencedByOtherProducts(true);
-      }
-    }
-  }
-
-  /**
-   * Finds the best matching existing node for the specified new node from existingNodesByConceptId
-   * discounting any nodes that have already been allocated to other new nodes in
-   * allocatedExistingNodes. Matches are based on best fully specified name match and limited to
-   * nodes of the same ModelLevelType.
-   */
-  private Node getBestMatchingNode(
-      @Valid Node newNode,
-      Map<String, Node> existingNodesByConceptId,
-      Set<String> allocatedExistingNodes) {
-    return existingNodesByConceptId.values().stream()
-        .filter(node -> !allocatedExistingNodes.contains(node.getConceptId()))
-        .filter(node -> node.getModelLevel().equals(newNode.getModelLevel()))
-        .filter(
-            node ->
-                node.getFullySpecifiedName() != null
-                    && newNode.getFullySpecifiedName() != null
-                    && StringUtils.hasText(node.getFullySpecifiedName())
-                    && StringUtils.hasText(newNode.getFullySpecifiedName()))
-        .min(
-            (a, b) ->
-                Double.compare(
-                    calculateLevenshteinDistance(
-                        a.getFullySpecifiedName(), newNode.getFullySpecifiedName()),
-                    calculateLevenshteinDistance(
-                        b.getFullySpecifiedName(), newNode.getFullySpecifiedName())))
-        .orElse(null);
-  }
-
-  private double calculateLevenshteinDistance(String str1, String str2) {
-    int[][] dp = new int[str1.length() + 1][str2.length() + 1];
-
-    for (int i = 0; i <= str1.length(); i++) {
-      dp[i][0] = i;
-    }
-
-    for (int j = 0; j <= str2.length(); j++) {
-      dp[0][j] = j;
-    }
-
-    for (int i = 1; i <= str1.length(); i++) {
-      for (int j = 1; j <= str2.length(); j++) {
-        if (str1.charAt(i - 1) == str2.charAt(j - 1)) {
-          dp[i][j] = dp[i - 1][j - 1];
-        } else {
-          dp[i][j] = 1 + Math.min(dp[i - 1][j - 1], Math.min(dp[i - 1][j], dp[i][j - 1]));
-        }
-      }
-    }
-
-    return dp[str1.length()][str2.length()] / (double) Math.max(str1.length(), str2.length());
   }
 }

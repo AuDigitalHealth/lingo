@@ -11,16 +11,17 @@ import {
   Tab,
   Tabs,
   Tooltip,
-  Typography,
+  Typography
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import {
   Concept,
   DefinitionStatus,
   Edge,
+  hasDescriptionChange,
   Product,
   Product7BoxBGColour,
-  ProductSummary,
+  ProductSummary
 } from '../../types/concept.ts';
 import {
   cleanBrandPackSizeDetails,
@@ -33,7 +34,7 @@ import {
   getProductDisplayName,
   isDeviceType,
   isFsnToggleOn,
-  OWL_EXPRESSION_ID,
+  OWL_EXPRESSION_ID
 } from '../../utils/helpers/conceptUtils.ts';
 import { styled, useTheme } from '@mui/material/styles';
 import MuiAccordion, { AccordionProps } from '@mui/material/Accordion';
@@ -49,7 +50,7 @@ import {
   UseFormGetValues,
   UseFormRegister,
   UseFormWatch,
-  useWatch,
+  useWatch
 } from 'react-hook-form';
 
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -62,7 +63,7 @@ import {
   MedicationPackageDetails,
   ProductCreationDetails,
   ProductGroupType,
-  ProductType,
+  ProductType
 } from '../../types/product.ts';
 import { Ticket } from '../../types/tickets/ticket.ts';
 import { snowstormErrorHandler } from '../../types/ErrorHandler.ts';
@@ -73,42 +74,33 @@ import CustomTabPanel from './components/CustomTabPanel.tsx';
 import {
   getTicketBulkProductActionsByTicketIdOptions,
   getTicketProductsByTicketIdOptions,
-  useTicketByTicketNumber,
+  useTicketByTicketNumber
 } from '../../hooks/api/tickets/useTicketById.tsx';
 import useTaskById from '../../hooks/useTaskById.tsx';
 import useAuthoringStore from '../../stores/AuthoringStore.ts';
-import {
-  uniqueFsnValidator,
-  uniquePtValidator,
-} from '../../types/productValidations.ts';
+import { uniqueFsnValidator, uniquePtValidator } from '../../types/productValidations.ts';
 import WarningModal from '../../themes/overrides/WarningModal.tsx';
 import { closeSnackbar } from 'notistack';
 import ConceptDiagramModal from '../../components/conceptdiagrams/ConceptDiagramModal.tsx';
-import {
-  AccountTreeOutlined,
-  NewReleases,
-  NewReleasesOutlined,
-  SecurityUpdateWarning,
-} from '@mui/icons-material';
-import { FormattedMessage } from 'react-intl';
+import { AccountTreeOutlined } from '@mui/icons-material';
 import { validateProductSummaryNodes } from '../../types/productValidationUtils.ts';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   getBulkAuthorBrandOptions,
-  getBulkAuthorPackSizeOptions,
+  getBulkAuthorPackSizeOptions
 } from '../../hooks/api/tickets/useTicketProduct.tsx';
-import {
-  bulkAuthorBrands,
-  bulkAuthorPackSizes,
-} from '../../types/queryKeys.ts';
+import { bulkAuthorBrands, bulkAuthorPackSizes } from '../../types/queryKeys.ts';
 import { isNameContainsKeywords } from '../../../cypress/e2e/helpers/product.ts';
 import { useFieldBindings } from '../../hooks/api/useInitializeConfig.tsx';
 import { FieldBindings } from '../../types/FieldBindings.ts';
-import { useRefsetMembersByComponentIds } from '../../hooks/api/refset/useRefsetMembersByComponentIds.tsx';
+import {
+  useRefsetMembersByComponentIds
+} from '../../hooks/api/refset/useRefsetMembersByComponentIds.tsx';
 import { RefsetMember } from '../../types/RefsetMember.ts';
 import productService from '../../api/ProductService.ts';
 import ExistingConceptDropdown from './components/ExistingConceptDropdown.tsx';
 import NewConceptDropdown from './components/NewConceptDropdown.tsx';
+import { ProductStatusIndicators } from './components/ProductStatusIndicators.tsx';
 
 interface ProductModelEditProps {
   productCreationDetails?: ProductCreationDetails;
@@ -771,7 +763,7 @@ function ProductHeaderWatch({
     } else {
       handleChangeColor(Product7BoxBGColour.NEW);
     }
-  } else if (product.propertyUpdate) {
+  } else if (product.propertyUpdate || product.inferredFormChanged || product.statedFormChanged || hasDescriptionChange(product)) {
     handleChangeColor(Product7BoxBGColour.PROPERTY_CHANGE);
   }
 
@@ -1033,41 +1025,7 @@ function ProductPanel({
                     )}
                   </Grid>
                   <Grid container justifyContent="flex-end" alignItems="center">
-                    {product.propertyUpdate && (
-                      <Tooltip
-                        title={
-                          <FormattedMessage
-                            id="properties-updated"
-                            defaultMessage="Properties are updated"
-                          />
-                        }
-                      >
-                        <SecurityUpdateWarning />
-                      </Tooltip>
-                    )}
-                    {product.newInTask ? (
-                      <Tooltip
-                        title={
-                          <FormattedMessage
-                            id="changed-in-task"
-                            defaultMessage="Un-promoted changes in the task"
-                          />
-                        }
-                      >
-                        <NewReleases />
-                      </Tooltip>
-                    ) : product.newInProject ? (
-                      <Tooltip
-                        title={
-                          <FormattedMessage
-                            id="changed-in-project"
-                            defaultMessage="Unreleased changes in the project"
-                          />
-                        }
-                      >
-                        <NewReleasesOutlined />
-                      </Tooltip>
-                    ) : null}
+                    <ProductStatusIndicators product={product} />
                     <IconButton
                       size="small"
                       onClick={() => setConceptDiagramModalOpen(true)}
@@ -1113,41 +1071,7 @@ function ProductPanel({
                     ) : (
                       <></>
                     )}
-                    {product.propertyUpdate && (
-                      <Tooltip
-                        title={
-                          <FormattedMessage
-                            id="properties-updated"
-                            defaultMessage="Properties are updated"
-                          />
-                        }
-                      >
-                        <SecurityUpdateWarning />
-                      </Tooltip>
-                    )}
-                    {product.newInTask ? (
-                      <Tooltip
-                        title={
-                          <FormattedMessage
-                            id="changed-in-task"
-                            defaultMessage="Unpromoted changes in the task"
-                          />
-                        }
-                      >
-                        <NewReleases />
-                      </Tooltip>
-                    ) : product.newInProject ? (
-                      <Tooltip
-                        title={
-                          <FormattedMessage
-                            id="changed-in-project"
-                            defaultMessage="Unreleased changes in the project"
-                          />
-                        }
-                      >
-                        <NewReleasesOutlined />
-                      </Tooltip>
-                    ) : null}
+                    <ProductStatusIndicators product={product} />
                     <IconButton
                       size="small"
                       onClick={() => setConceptDiagramModalOpen(true)}

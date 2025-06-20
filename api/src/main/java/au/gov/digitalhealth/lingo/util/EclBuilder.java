@@ -100,7 +100,7 @@ public class EclBuilder {
             .filter(r -> r.getGroupId() != 0)
             .filter(
                 r ->
-                    Boolean.TRUE.equals(r.getConcrete())
+                    r.getConcreteValue() != null
                         || (r.getDestinationId() != null && r.getDestinationId().matches("\\d+")))
             .collect(
                 Collectors.groupingBy(
@@ -184,7 +184,7 @@ public class EclBuilder {
         .filter(r -> !r.getTypeId().equals(SnomedConstants.IS_A.getValue()))
         .filter(
             r ->
-                Boolean.TRUE.equals(r.getConcrete())
+                r.getConcreteValue() != null
                     || (r.getDestinationId() != null && Long.parseLong(r.getDestinationId()) > 0))
         .map(EclBuilder::toRelationshipEclFilter)
         .distinct()
@@ -195,7 +195,7 @@ public class EclBuilder {
     StringBuilder response = new StringBuilder();
     response.append(r.getTypeId());
     response.append(" = ");
-    if (Boolean.TRUE.equals(r.getConcrete())) {
+    if (r.getConcreteValue() != null) {
       if (Objects.equals(
           Objects.requireNonNull(r.getConcreteValue()).getDataType(), DataTypeEnum.STRING)) {
         response.append("\"");
@@ -226,7 +226,7 @@ public class EclBuilder {
               .filter(r -> r.getTypeId().equals(typeId))
               .collect(Collectors.toSet());
 
-      if (relationshipSet.stream().allMatch(r -> Boolean.TRUE.equals(r.getConcrete()))) {
+      if (relationshipSet.stream().allMatch(r -> r.getConcreteValue() != null)) {
         DataTypeEnum datatype = relationshipSet.iterator().next().getConcreteValue().getDataType();
 
         if (!relationshipSet.stream()
@@ -281,7 +281,7 @@ public class EclBuilder {
     String isARelationships =
         relationships.stream()
             .filter(r -> r.getTypeId().equals(SnomedConstants.IS_A.getValue()))
-            .filter(r -> Boolean.FALSE.equals(r.getConcrete()))
+            .filter(r -> r.getConcreteValue() == null)
             .filter(r -> r.getDestinationId() != null && Long.parseLong(r.getDestinationId()) > 0)
             .map(r -> "<" + r.getDestinationId())
             .collect(Collectors.joining(" AND "));

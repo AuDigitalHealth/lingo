@@ -70,15 +70,19 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 
 @Service
-public class DeviceProductCalculationService {
+public class DeviceProductCalculationService
+    implements ProductCalculationService<DeviceProductDetails> {
 
   private final Models models;
   private final Map<String, DeviceDetailsValidator> deviceDetailsValidatorByQualifier;
+  private final DeviceProductCalculationService self;
   SnowstormClient snowstormClient;
   NodeGeneratorService nodeGeneratorService;
 
@@ -89,11 +93,13 @@ public class DeviceProductCalculationService {
       SnowstormClient snowstormClient,
       NodeGeneratorService nodeGeneratorService,
       Models models,
-      Map<String, DeviceDetailsValidator> deviceDetailsValidatorByQualifier) {
+      Map<String, DeviceDetailsValidator> deviceDetailsValidatorByQualifier,
+      @Lazy DeviceProductCalculationService self) {
     this.snowstormClient = snowstormClient;
     this.nodeGeneratorService = nodeGeneratorService;
     this.models = models;
     this.deviceDetailsValidatorByQualifier = deviceDetailsValidatorByQualifier;
+    this.self = self;
   }
 
   private static Set<SnowstormRelationship> getLeafBrandedProductRelationships(
@@ -163,6 +169,13 @@ public class DeviceProductCalculationService {
                 + Objects.requireNonNull(
                         productQuantity.getUnit().getPt(), "Unit must have a preferred term")
                     .getTerm());
+  }
+
+  @Async
+  public CompletableFuture<ProductSummary> calculateProductFromAtomicDataAsync(
+      String branch, @Valid PackageDetails<@Valid DeviceProductDetails> packageDetails) {
+    return CompletableFuture.completedFuture(
+        self.calculateProductFromAtomicData(branch, packageDetails));
   }
 
   public ProductSummary calculateProductFromAtomicData(
@@ -456,7 +469,6 @@ public class DeviceProductCalculationService {
             packageDetails.getSelectedConceptIdentifiers(),
             packageDetails.getNonDefiningProperties(),
             true,
-            true,
             ModelLevelType.PACKAGED_CLINICAL_DRUG.equals(modelLevel.getModelLevelType()),
             true)
         .thenApply(
@@ -620,7 +632,6 @@ public class DeviceProductCalculationService {
                 packageDetails.getNonDefiningProperties()),
             packageDetails.getSelectedConceptIdentifiers(),
             productQuantity.getProductDetails().getNonDefiningProperties(),
-            true,
             false,
             false,
             true);
@@ -672,7 +683,6 @@ public class DeviceProductCalculationService {
                   packageDetails.getNonDefiningProperties()),
               packageDetails.getSelectedConceptIdentifiers(),
               productQuantity.getProductDetails().getNonDefiningProperties(),
-              true,
               false,
               false,
               true);
