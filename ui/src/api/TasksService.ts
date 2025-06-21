@@ -228,7 +228,9 @@ const TasksServices = {
     return returnTask;
   },
   async fetchBranchDetails(branchPath: string): Promise<BranchDetails | null> {
-    const response = await api.get(`/snowstorm/branches/${encodeURIComponent(branchPath)}`);
+    const response = await api.get(
+      `/snowstorm/branches/${encodeURIComponent(branchPath)}`,
+    );
     if (response.status === 404) {
       return null;
     }

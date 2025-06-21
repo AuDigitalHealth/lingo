@@ -12,9 +12,9 @@ export interface ProductStatusProps {
 }
 
 export const ProductStatusIndicators: React.FC<ProductStatusProps> = ({
-                                                                        product,
-                                                                        spacing = 0.2
-                                                                      }) => {
+  product,
+  spacing = 0.2,
+}) => {
   const SmallAvatar = styled(Avatar)(({ theme }) => ({
     width: 24,
     height: 24,
@@ -64,16 +64,16 @@ export const ProductStatusIndicators: React.FC<ProductStatusProps> = ({
       )}
 
       {product.propertyUpdate && (
-          <Tooltip
-              title={
-                <FormattedMessage
-                    id="properties-updated"
-                    defaultMessage="Properties are updated"
-                />
-              }
-          >
-            <SmallAvatar>P</SmallAvatar>
-          </Tooltip>
+        <Tooltip
+          title={
+            <FormattedMessage
+              id="properties-updated"
+              defaultMessage="Properties are updated"
+            />
+          }
+        >
+          <SmallAvatar>P</SmallAvatar>
+        </Tooltip>
       )}
 
       {product.newInTask && (
