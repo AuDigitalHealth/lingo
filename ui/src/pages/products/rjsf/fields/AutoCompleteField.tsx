@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FieldProps } from '@rjsf/utils';
 import { Box, IconButton, Tooltip } from '@mui/material';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
@@ -23,6 +23,17 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
   const [rootUiSchema, setRootUiSchema] = useState(
     props?.formContext?.uiSchema || {},
   );
+
+  // Sync local state with props changes (important for Safari)
+  useEffect(() => {
+    setFormData(props.formData || {});
+    setRootFormData(props.formData || {});
+  }, [props.formData]);
+
+  useEffect(() => {
+    setFormContext(props.formContext || {});
+    setRootUiSchema(props?.formContext?.uiSchema || {});
+  }, [props.formContext]);
 
   const { ecl, extendedEcl, createBrand, disabled } =
     (uiSchema && uiSchema['ui:options']) || {};
@@ -55,8 +66,12 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
     if (!conceptMini && uiSchema.defaultValue) {
       conceptMini = uiSchema.defaultValue;
     }
-    setFormData(conceptMini);
-    onChange(conceptMini);
+
+    // Create new object reference for Safari compatibility
+    const newValue = conceptMini ? { ...conceptMini } : null;
+
+    setFormData(newValue);
+    onChange(newValue);
   };
 
   const handleAddBrand = (brand: Concept) => {
