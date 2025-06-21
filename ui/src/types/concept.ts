@@ -309,9 +309,12 @@ export interface Product {
 }
 
 export function hasDescriptionChange(product: Product): boolean {
-  return product.originalNode != null &&
-    (product.fullySpecifiedName !== product.originalNode.node?.fullySpecifiedName
-    || product.preferredTerm !== product.originalNode.node?.preferredTerm);
+  return (
+    product.originalNode != null &&
+    (product.fullySpecifiedName !==
+      product.originalNode.node?.fullySpecifiedName ||
+      product.preferredTerm !== product.originalNode.node?.preferredTerm)
+  );
 }
 
 export interface NewConceptDetails {
