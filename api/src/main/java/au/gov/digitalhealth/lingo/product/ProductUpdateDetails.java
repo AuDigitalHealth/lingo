@@ -19,6 +19,9 @@ import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.ProductDetails;
 import au.gov.digitalhealth.tickets.controllers.ProductDto;
 import au.gov.digitalhealth.tickets.models.ProductAction;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -31,22 +34,36 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @Data
-public class ProductCreationDetails<T extends ProductDetails>
-    extends ProductCreateUpdateDetails<T> {
+@JsonTypeName("update")
+public class ProductUpdateDetails<T extends ProductDetails> extends ProductCreateUpdateDetails<T> {
+  /** The productId of the product to update */
+  String originalConceptId;
 
-  public ProductCreationDetails(
+  /**
+   * Atomic data loaded before the edit started - used for a reference of the edit starting point
+   */
+  @NotNull @Valid PackageDetails<T> originalPackageDetails;
+
+  public ProductUpdateDetails(
+      String originalConceptId,
       ProductSummary productSummary,
       PackageDetails<T> packageDetails,
+      PackageDetails<T> originalPackageDetails,
       Long ticketIt,
       String partialSaveName,
       String nameOverride) {
     super(productSummary, packageDetails, ticketIt, partialSaveName, nameOverride);
+    this.originalConceptId = originalConceptId;
+    this.originalPackageDetails = originalPackageDetails;
   }
 
   @Override
   public ProductDto toProductDto() {
     ProductDto productDto = super.toProductDto();
-    productDto.setAction(ProductAction.CREATE);
+    productDto.setOriginalConceptId(originalConceptId);
+    productDto.setOriginalPackageDetails(originalPackageDetails);
+    productDto.setAction(ProductAction.UPDATE);
+
     return productDto;
   }
 }

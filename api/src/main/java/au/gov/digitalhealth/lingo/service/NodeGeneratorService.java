@@ -118,8 +118,23 @@ public class NodeGeneratorService {
     node.setDisplayName(modelLevel.getName());
     SnowstormConceptMini concept;
     if (modelLevel.getProductModelEcl() != null && !modelLevel.getProductModelEcl().isBlank()) {
-      concept =
-          snowstormClient.getConceptFromEcl(branch, modelLevel.getProductModelEcl(), productId);
+      try {
+        concept =
+            snowstormClient.getConceptFromEcl(
+                branch,
+                modelLevel.getProductModelEcl(),
+                productId,
+                models.getModelConfiguration(branch).isExecuteEclAsStated());
+      } catch (SingleConceptExpectedProblem e) {
+        throw new LingoProblem(
+            "Unable to load "
+                + productId
+                + " with ECL "
+                + modelLevel.getProductModelEcl()
+                + " of type "
+                + modelLevel.getName(),
+            e);
+      }
     } else {
       concept = snowstormClient.getConcept(branch, productId.toString());
     }

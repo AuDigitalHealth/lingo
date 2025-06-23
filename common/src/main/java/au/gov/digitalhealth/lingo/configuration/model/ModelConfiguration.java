@@ -448,4 +448,23 @@ public class ModelConfiguration {
     definition.setModelLevels(List.of(type));
     return definition;
   }
+
+  public Set<String> getInScopeReferenceSetIds(Set<ModelLevelType> modelLevelTypes) {
+    Set<String> referenceSetIds =
+        getReferenceSetIdsForModelLevelTypes(modelLevelTypes.toArray(new ModelLevelType[0]));
+
+    modelLevelTypes.forEach(
+        modelLevelType -> {
+          referenceSetIds.addAll(
+              getMappingsByLevel(getLevelOfType(modelLevelType)).stream()
+                  .map(BasePropertyDefinition::getIdentifier)
+                  .collect(Collectors.toSet()));
+          referenceSetIds.addAll(
+              getReferenceSetsByLevel(getLevelOfType(modelLevelType)).stream()
+                  .map(BasePropertyDefinition::getIdentifier)
+                  .collect(Collectors.toSet()));
+        });
+
+    return referenceSetIds;
+  }
 }
