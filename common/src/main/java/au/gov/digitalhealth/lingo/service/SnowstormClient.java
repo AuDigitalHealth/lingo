@@ -137,18 +137,20 @@ public class SnowstormClient {
     return api.findConcept(branch, id, languageHeader).block();
   }
 
-  public final SnowstormConceptMini getConceptFromEcl(String branch, String ecl, Long id)
+  public final SnowstormConceptMini getConceptFromEcl(
+      String branch, String ecl, Long id, boolean executeAsStated)
       throws SingleConceptExpectedProblem {
-    return getConceptFromEcl(branch, ecl, Set.of(Pair.of("<id>", id)));
+    return getConceptFromEcl(branch, ecl, executeAsStated, Set.of(Pair.of("<id>", id)));
   }
 
   public SnowstormConceptMini getConceptFromEcl(
-      String branch, String ecl, Set<Pair<String, Object>> params)
+      String branch, String ecl, boolean executeAsStated, Set<Pair<String, Object>> params)
       throws SingleConceptExpectedProblem {
     ecl = populateParameters(ecl, params);
-    Collection<SnowstormConceptMini> concepts = self.getConceptsFromEcl(branch, ecl, 0, 2, true);
+    Collection<SnowstormConceptMini> concepts =
+        self.getConceptsFromEcl(branch, ecl, 0, 2, executeAsStated);
     if (concepts.size() != 1) {
-      concepts = self.getConceptsFromEcl(branch, ecl, 0, 2, false);
+      concepts = self.getConceptsFromEcl(branch, ecl, 0, 2, executeAsStated);
       if (concepts.size() != 1) {
         throw new SingleConceptExpectedProblem(branch, ecl, concepts);
       }

@@ -15,29 +15,25 @@
  */
 package au.gov.digitalhealth.lingo.util;
 
-import static au.gov.digitalhealth.lingo.util.HistoricalAssociationReferenceSet.POSSIBLY_EQUIVALENT_TO;
-import static au.gov.digitalhealth.lingo.util.HistoricalAssociationReferenceSet.REPLACED_BY;
-import static au.gov.digitalhealth.lingo.util.HistoricalAssociationReferenceSet.SAME_AS;
-
-import lombok.Getter;
-
-public enum InactivationReason implements LingoConstants {
-  AMBIGUOUS("900000000000484002", "Ambiguous", POSSIBLY_EQUIVALENT_TO),
-  DUPLICATE("900000000000482003", "Duplicate", SAME_AS),
-  ERRONEOUS("900000000000485001", "Erroneous", REPLACED_BY),
-  OUTDATED("900000000000483008", "Outdated", REPLACED_BY);
+public enum HistoricalAssociationReferenceSet implements LingoConstants {
+  ALTERNATIVE("900000000000530003", "ALTERNATIVE association reference set"),
+  MOVED_FROM("900000000000525002", "MOVED FROM association reference set"),
+  MOVED_TO("900000000000524003", "MOVED TO association reference set"),
+  PARTIALLY_EQUIVALENT_TO("1186924009", "PARTIALLY EQUIVALENT TO association reference set"),
+  POSSIBLY_EQUIVALENT_TO("900000000000523009", "POSSIBLY EQUIVALENT TO association reference set"),
+  POSSIBLY_REPLACED_BY("1186921001", "POSSIBLY REPLACED BY association reference set"),
+  REFERS_TO("900000000000531004", "REFERS TO concept association reference set"),
+  REPLACED_BY("900000000000526001", "REPLACED BY association reference set"),
+  SAME_AS("900000000000527005", "SAME AS association reference set"),
+  SIMILAR_TO("900000000000529008", "SIMILAR TO association reference set"),
+  WAS_A("900000000000528000", "WAS A association reference set");
 
   private final String value;
   private final String label;
-  @Getter private final HistoricalAssociationReferenceSet historicalAssociationReferenceSet;
 
-  InactivationReason(
-      String value,
-      String label,
-      HistoricalAssociationReferenceSet historicalAssociationReferenceSet) {
+  HistoricalAssociationReferenceSet(String value, String label) {
     this.value = value;
     this.label = label;
-    this.historicalAssociationReferenceSet = historicalAssociationReferenceSet;
   }
 
   @Override

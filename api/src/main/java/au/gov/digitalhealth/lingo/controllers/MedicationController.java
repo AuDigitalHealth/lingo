@@ -23,6 +23,7 @@ import au.gov.digitalhealth.lingo.product.ProductBrands;
 import au.gov.digitalhealth.lingo.product.ProductCreationDetails;
 import au.gov.digitalhealth.lingo.product.ProductPackSizes;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
+import au.gov.digitalhealth.lingo.product.ProductUpdateDetails;
 import au.gov.digitalhealth.lingo.product.bulk.BrandPackSizeCreationDetails;
 import au.gov.digitalhealth.lingo.product.bulk.BulkProductAction;
 import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
@@ -33,8 +34,8 @@ import au.gov.digitalhealth.lingo.service.ProductCalculationServiceFactory;
 import au.gov.digitalhealth.lingo.service.ProductCreationService;
 import au.gov.digitalhealth.lingo.service.ProductUpdateService;
 import au.gov.digitalhealth.lingo.service.TaskManagerService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -45,6 +46,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -150,8 +152,28 @@ public class MedicationController {
       throws InterruptedException {
     taskManagerService.validateTaskState(branch);
     return new ResponseEntity<>(
-        productCreationService.createProductFromAtomicData(branch, productCreationDetails),
+        productCreationService.createUpdateProductFromAtomicData(branch, productCreationDetails),
         HttpStatus.CREATED);
+  }
+
+  @LogExecutionTime
+  @PutMapping("/{branch}/medications/product/{productId}")
+  public ResponseEntity<ProductSummary> updateMedicationProductFromAtomioData(
+      @PathVariable String branch,
+      @PathVariable @NotNull Long productId,
+      @RequestBody @NotNull @Valid
+          ProductUpdateDetails<@Valid MedicationProductDetails> productUpdateDetails)
+      throws InterruptedException {
+    if (!productId.toString().equals(productUpdateDetails.getOriginalConceptId())) {
+      throw new IllegalArgumentException(
+          String.format(
+              "Product ID in the path (%d) must match the product ID in the request body (%s).",
+              productId, productUpdateDetails.getOriginalConceptId()));
+    }
+    taskManagerService.validateTaskState(branch);
+    return new ResponseEntity<>(
+        productCreationService.updateProductFromAtomicData(branch, productUpdateDetails),
+        HttpStatus.OK);
   }
 
   @LogExecutionTime
@@ -185,7 +207,7 @@ public class MedicationController {
       @PathVariable String branch,
       @PathVariable Long productId,
       @RequestBody @Valid PackageDetails<@Valid MedicationProductDetails> productDetails)
-      throws ExecutionException, InterruptedException, JsonProcessingException {
+      throws ExecutionException, InterruptedException {
     taskManagerService.validateTaskState(branch);
     return productUpdateService.calculateUpdateProductFromAtomicData(
         branch, productId, productDetails);
