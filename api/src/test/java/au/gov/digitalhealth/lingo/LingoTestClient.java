@@ -23,6 +23,7 @@ import au.gov.digitalhealth.lingo.product.ProductBrands;
 import au.gov.digitalhealth.lingo.product.ProductCreationDetails;
 import au.gov.digitalhealth.lingo.product.ProductPackSizes;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
+import au.gov.digitalhealth.lingo.product.ProductUpdateDetails;
 import au.gov.digitalhealth.lingo.product.bulk.BrandPackSizeCreationDetails;
 import au.gov.digitalhealth.lingo.product.bulk.BulkProductAction;
 import au.gov.digitalhealth.lingo.product.details.DeviceProductDetails;
@@ -325,5 +326,15 @@ public class LingoTestClient {
   public List<BulkProductActionDto> getBulkProductAction(Long id) {
     return getRequest(
         "/api/tickets/" + id + "/bulk-product-actions", HttpStatus.OK, new TypeRef<>() {});
+  }
+
+  public ProductSummary updateMedicationProductFromAtomicData(
+      Long productId,
+      ProductUpdateDetails<MedicationProductDetails> medicationProductDetailsProductUpdateDetails) {
+    return putRequest(
+        "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/product/" + productId,
+        medicationProductDetailsProductUpdateDetails,
+        HttpStatus.OK,
+        ProductSummary.class);
   }
 }
