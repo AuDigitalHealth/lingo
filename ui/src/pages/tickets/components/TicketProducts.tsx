@@ -237,7 +237,7 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
         <Grid container sx={{ marginTop: 'auto' }}>
           <div
             className="custom-datatable ticket-products-table"
-            style={{ display: 'flex', justifyContent: 'flex-start' }}
+            style={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}
           >
             <DataTable
               paginator
