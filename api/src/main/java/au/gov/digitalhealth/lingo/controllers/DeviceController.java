@@ -18,6 +18,7 @@ package au.gov.digitalhealth.lingo.controllers;
 import au.gov.digitalhealth.lingo.aspect.LogExecutionTime;
 import au.gov.digitalhealth.lingo.product.ProductCreationDetails;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
+import au.gov.digitalhealth.lingo.product.ProductUpdateDetails;
 import au.gov.digitalhealth.lingo.product.details.DeviceProductDetails;
 import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
@@ -28,6 +29,7 @@ import au.gov.digitalhealth.lingo.service.ProductUpdateService;
 import au.gov.digitalhealth.lingo.service.TaskManagerService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import java.util.concurrent.ExecutionException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -35,6 +37,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -86,8 +89,28 @@ public class DeviceController {
       throws InterruptedException {
     taskManagerService.validateTaskState(branch);
     return new ResponseEntity<>(
-        productCreationService.createProductFromAtomicData(branch, creationDetails),
+        productCreationService.createUpdateProductFromAtomicData(branch, creationDetails),
         HttpStatus.CREATED);
+  }
+
+  @LogExecutionTime
+  @PutMapping("/{branch}/devices/product/{productId}")
+  public ResponseEntity<ProductSummary> updateDeviceProductFromAtomioData(
+      @PathVariable String branch,
+      @PathVariable @NotNull Long productId,
+      @RequestBody @NotNull @Valid
+          ProductUpdateDetails<@Valid DeviceProductDetails> productUpdateDetails)
+      throws InterruptedException {
+    if (!productId.toString().equals(productUpdateDetails.getOriginalConceptId())) {
+      throw new IllegalArgumentException(
+          String.format(
+              "Product ID in the path (%d) must match the product ID in the request body (%s).",
+              productId, productUpdateDetails.getOriginalConceptId()));
+    }
+    taskManagerService.validateTaskState(branch);
+    return new ResponseEntity<>(
+        productCreationService.updateProductFromAtomicData(branch, productUpdateDetails),
+        HttpStatus.OK);
   }
 
   @LogExecutionTime
