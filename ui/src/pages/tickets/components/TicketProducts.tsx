@@ -2,19 +2,10 @@ import React, { useState } from 'react';
 import { DataTable } from 'primereact/datatable';
 
 import { Column } from 'primereact/column';
-import {
-  ProductStatus,
-  ProductTableRow,
-} from '../../../types/TicketProduct.ts';
-import { Link } from 'react-router-dom';
+import { ProductStatus, ProductTableRow } from '../../../types/TicketProduct.ts';
+import { Link, useNavigate } from 'react-router-dom';
 import { ActionType, ProductType } from '../../../types/product.ts';
-import {
-  Grid,
-  IconButton,
-  InputLabel,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { Grid, IconButton, InputLabel, Tooltip, Typography } from '@mui/material';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import { AddCircle, Delete } from '@mui/icons-material';
 import UnableToEditTooltip from '../../tasks/components/UnableToEditTooltip.tsx';
@@ -23,9 +14,8 @@ import { useCanEditTicket } from '../../../hooks/api/tickets/useCanEditTicket.ts
 import {
   filterProductRowById,
   mapToProductDetailsArray,
-  mapToProductDetailsArrayFromBulkActions,
+  mapToProductDetailsArrayFromBulkActions
 } from '../../../utils/helpers/ticketProductsUtils.ts';
-import { useNavigate } from 'react-router-dom';
 import useCanEditTask from '../../../hooks/useCanEditTask.tsx';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 import { Stack } from '@mui/system';
@@ -246,7 +236,7 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
 
         <Grid container sx={{ marginTop: 'auto' }}>
           <div
-            className="custom-datatable"
+            className="custom-datatable ticket-products-table"
             style={{ display: 'flex', justifyContent: 'flex-start' }}
           >
             <DataTable
@@ -257,6 +247,7 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
                 minHeight: '100%',
                 maxHeight: '100%',
               }}
+              size="small"
               sortField={'created'}
               sortOrder={-1}
               value={data}
@@ -281,23 +272,54 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
                 style={{
                   maxWidth: '125px',
                   overflow: 'hidden',
-                  maxHeight: '20px',
+                  maxHeight: '18px',
                   textOverflow: 'ellipsis',
                 }}
               />
-              <Column field="productType" header="Product Type" />
+              <Column 
+                field="actionProductType" 
+                header="Action"
+                body={(rowData: ProductTableRow) => {
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <div>{rowData.productType || ''}</div>
+                      <div>{rowData.action ? rowData.action.toLowerCase() : ''}</div>
+                    </div>
+                  );
+                }}
+                style={{
+                  maxWidth: '3.5em',
+                  overflow: 'hidden',
+                  maxHeight: '18px',
+                  textOverflow: 'ellipsis',
+                }}
+              />
               <Column
                 field="created"
                 header="Created"
                 body={(rowData: ProductTableRow) => {
                   const date = new Date(rowData.created);
-                  return date.toISOString().split('T')[0];
+                  const day = date.getDate();
+                  const month = date.toLocaleString('en-US', { month: 'short' });
+                  const year = date.getFullYear();
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <div>{day} {month}</div>
+                      <div>{year}</div>
+                    </div>
+                  );
+                }}
+                style={{
+                  maxWidth: '3em',
+                  overflow: 'hidden',
+                  maxHeight: '18px',
+                  textOverflow: 'ellipsis',
                 }}
               />
               <Column
-                header="Actions"
+                header=""
                 body={actionBodyTemplate}
-                style={{ textAlign: 'center', width: '10em' }}
+                style={{ textAlign: 'center', width: '1em' }}
               />
             </DataTable>
           </div>
