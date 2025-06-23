@@ -31,6 +31,7 @@ export interface ProductTableRow {
   bulkProductActionId?: number;
   conceptIds?: string[];
   created?: Date;
+  action?: string;
 }
 export enum ProductStatus {
   Completed = 'completed',

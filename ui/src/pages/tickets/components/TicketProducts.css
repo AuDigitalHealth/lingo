@@ -24,12 +24,18 @@
     230
   ); /* Light gray background color for the rows */
 }
+.ticket-products-table .p-datatable-tbody > tr {
+  font-size: 0.85rem; /* Reduced font size for table rows */
+}
 .custom-datatable .p-datatable-tbody > tr.partial-row {
   background-color: rgb(
     255,
     240,
     187
   ); /* Light gray background color for the rows */
+}
+.ticket-products-table .p-datatable-tbody > tr.partial-row {
+  font-size: 0.85rem; /* Reduced font size for partial rows */
 }
 
 .hover-underline {
@@ -38,4 +44,9 @@
 
 .hover-underline:hover {
   text-decoration: underline;
+}
+
+/* Reduced font size for table headers */
+.ticket-products-table .p-datatable-thead > tr > th {
+  font-size: 0.85rem;
 }

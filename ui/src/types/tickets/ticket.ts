@@ -18,7 +18,7 @@ import { Embedded, PagedItem } from '../pagesResponse';
 import {
   BrandPackSizeCreationDetails,
   DevicePackageDetails,
-  MedicationPackageDetails,
+  MedicationPackageDetails
 } from '../product.ts';
 import { SearchConditionBody } from './search.ts';
 import { ColorCode } from '../ColorCode.ts';
@@ -259,6 +259,11 @@ export interface TaskAssocationDto {
   id?: number;
 }
 
+export enum ProductAction {
+  CREATE = 'CREATE',
+  UPDATE = 'UPDATE',
+}
+
 export interface TicketProductDto {
   id?: number;
   ticketId: number;
@@ -270,6 +275,9 @@ export interface TicketProductDto {
   name: string;
   conceptId: string | null;
   packageDetails: MedicationPackageDetails | DevicePackageDetails;
+  originalPackageDetails: MedicationPackageDetails | DevicePackageDetails | null;
+  originalConceptId: string | null;
+  action: ProductAction;
 }
 
 export interface TicketBulkProductActionDto {
