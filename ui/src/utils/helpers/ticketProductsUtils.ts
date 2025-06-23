@@ -187,6 +187,7 @@ export function mapToProductDetailsArray(
       version: item.version as number,
       productType: findProductType(item.packageDetails),
       created: item.created,
+      action: item.action,
     };
     return productDto;
   });
@@ -217,6 +218,7 @@ export function mapToProductDetailsArrayFromBulkActions(
           ? ProductType.bulkPackSize
           : ProductType.bulkBrand,
       created: item.created,
+      action: 'CREATE', // Default action for bulk actions is CREATE
     };
     return productDto;
   });
