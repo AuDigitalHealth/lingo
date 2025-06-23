@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
@@ -40,6 +41,7 @@ import org.springframework.http.HttpStatus;
  * labels indicating their type.
  */
 @Getter
+@EqualsAndHashCode
 public class ProductSummary implements Serializable {
 
   @NotNull final Set<Node> subjects = new HashSet<>();

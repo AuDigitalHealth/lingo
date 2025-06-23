@@ -33,8 +33,11 @@ import au.gov.digitalhealth.lingo.MedicationAssertions;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductCreationDetails;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
+import au.gov.digitalhealth.lingo.product.ProductUpdateDetails;
 import au.gov.digitalhealth.lingo.product.details.*;
 import au.gov.digitalhealth.tickets.models.Ticket;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import java.math.BigDecimal;
 import java.util.List;
@@ -485,7 +488,7 @@ class MedicationCreationControllerTest extends LingoTestBase {
   }
 
   @Test
-  void createComplexProductFromExistingWithProductSizeChange() {
+  void createComplexProductFromExistingWithProductSizeChange() throws JsonProcessingException {
     // get Oxaliccord
     PackageDetails<MedicationProductDetails> packageDetails =
         getLingoTestClient().getMedicationPackDetails(AmtTestData.NEXIUM_HP7);
@@ -535,6 +538,18 @@ class MedicationCreationControllerTest extends LingoTestBase {
                     productSummary, packageDetails, ticketResponse.getId(), null, null));
 
     Assertions.assertThat(createdProduct.getSingleSubject().getConceptId()).matches("\\d{7,18}");
+
+    ObjectMapper objectMapper = new ObjectMapper();
+    log.fine("Created product is " + objectMapper.writeValueAsString(createdProduct));
+
+    Assertions.assertThat(createdProduct.isContainsNewConcepts()).isFalse();
+    MedicationAssertions.assertProductSummaryHas(createdProduct, 0, 4, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(createdProduct, 0, 4, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(createdProduct, 0, 4, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(createdProduct, 0, 3, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(createdProduct, 0, 3, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(createdProduct, 0, 3, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(createdProduct, 0, 4, TP_LABEL);
 
     // load product model
     ProductSummary productModelPostCreation =
@@ -787,31 +802,97 @@ class MedicationCreationControllerTest extends LingoTestBase {
 
   /**
    * Test for the updateMedicationProductFromAtomicData REST method. This test loads an existing
-   * product, changes its properties, and checks the results of the calculation.
+   * product and checks that no changes are made when the product is updated with the same data.
    */
   @Test
-  void calculateUpdateExistingProductWithChanges() {
+  void updateExistingProductWithNoChanges() {
     // Step 1: Load an existing single ingredient/component product
     PackageDetails<MedicationProductDetails> packageDetails =
         getLingoTestClient()
             .getMedicationPackDetails(AmtTestData.AMOXIL_500_MG_CAPSULE_28_BLISTER_PACK);
 
+    // Step 2: Perform a calculate/update operation
+    Long productId = AmtTestData.AMOXIL_500_MG_CAPSULE_28_BLISTER_PACK;
+    ProductSummary productSummary =
+        getLingoTestClient().calculateUpdateMedicationProductSummary(productId, packageDetails);
+
+    // Step 3: Verify the calculation
+    Assertions.assertThat(productSummary.isContainsNewConcepts()).isFalse();
+    Assertions.assertThat(productSummary.getUnmatchedPreviouslyReferencedNodes()).isEmpty();
+
+    productSummary.getNodes().stream()
+        .forEach(
+            node -> {
+              if (node.getOriginalNode() != null) {
+                Assertions.assertThat(node.getNonDefiningProperties())
+                    .as(
+                        "Node "
+                            + node.getConceptId()
+                            + " non-defining properties should match original node "
+                            + node.getOriginalNode().getConceptId()
+                            + " non-defining properties")
+                    .containsExactlyInAnyOrderElementsOf(
+                        node.getOriginalNode().getNode().getNonDefiningProperties());
+
+                // this product is referenced by other products for each node being unchanged
+                Assertions.assertThat(node.getOriginalNode().isReferencedByOtherProducts())
+                    .isTrue();
+              }
+            });
+
+    // Check that no new concepts are created
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
+
+    // Check that external identifiers are preserved
+    checkExternalIdentifiers(productSummary, packageDetails);
+
+    // Verify that the original nodes are properly referenced
+    productSummary.getNodes().stream()
+        .forEach(
+            node -> {
+              Assertions.assertThat(node.isNewConcept()).isFalse();
+              Assertions.assertThat(node.isConceptEdit()).isFalse();
+              Assertions.assertThat(node.isRetireAndReplace()).isFalse();
+              Assertions.assertThat(node.isPropertyUpdate()).isFalse();
+            });
+  }
+
+  /**
+   * Test for the updateMedicationProductFromAtomicData REST method. This test loads an existing
+   * product, changes its properties, and checks the results of the calculation.
+   */
+  @Test
+  void updateExistingProductWithChanges() {
+    // Step 1: Load an existing single ingredient/component product
+    PackageDetails<MedicationProductDetails> originalPackageDetails =
+        getLingoTestClient().getMedicationPackDetails(AmtTestData.YAZ_FLEX);
+
+    PackageDetails<MedicationProductDetails> newPackageDetails =
+        getLingoTestClient().getMedicationPackDetails(AmtTestData.YAZ_FLEX);
+
     // Step 2: Change the strength of the ingredient to a unique value
     Ingredient ingredient =
-        packageDetails
+        newPackageDetails
             .getContainedProducts()
             .get(0)
             .getProductDetails()
             .getActiveIngredients()
             .get(0);
+    BigDecimal originalStrengthValue = ingredient.getTotalQuantity().getValue();
     ingredient
         .getTotalQuantity()
         .setValue(BigDecimal.valueOf(750)); // Changed strength from 500 to 750
 
     // Step 3: Perform a calculate/update operation
-    Long productId = AmtTestData.AMOXIL_500_MG_CAPSULE_28_BLISTER_PACK;
+    Long productId = AmtTestData.YAZ_FLEX;
     ProductSummary productSummary =
-        getLingoTestClient().calculateUpdateMedicationProductSummary(productId, packageDetails);
+        getLingoTestClient().calculateUpdateMedicationProductSummary(productId, newPackageDetails);
 
     // Step 4: Verify the calculation
     // The product summary should contain new concepts for the changed strength
@@ -849,7 +930,7 @@ class MedicationCreationControllerTest extends LingoTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
 
     // Check that external identifiers are preserved
-    checkExternalIdentifiers(productSummary, packageDetails);
+    checkExternalIdentifiers(productSummary, newPackageDetails);
 
     // Verify that the original nodes are properly referenced
     productSummary.getNodes().stream()
@@ -861,8 +942,8 @@ class MedicationCreationControllerTest extends LingoTestBase {
             });
 
     // Step 5: Change a non-defining property (e.g., pack size), change strength back to 500
-    ingredient.getTotalQuantity().setValue(BigDecimal.valueOf(500));
-    packageDetails
+    ingredient.getTotalQuantity().setValue(originalStrengthValue);
+    newPackageDetails
         .getContainedProducts()
         .iterator()
         .next()
@@ -870,7 +951,7 @@ class MedicationCreationControllerTest extends LingoTestBase {
 
     // Step 6: Perform another calculate/update operation
     productSummary =
-        getLingoTestClient().calculateUpdateMedicationProductSummary(productId, packageDetails);
+        getLingoTestClient().calculateUpdateMedicationProductSummary(productId, newPackageDetails);
 
     // Step 7: Verify the calculation
     // The product summary should contain new concepts for the changed pack size
@@ -908,6 +989,37 @@ class MedicationCreationControllerTest extends LingoTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
 
     // Check that external identifiers are preserved
-    checkExternalIdentifiers(productSummary, packageDetails);
+    checkExternalIdentifiers(productSummary, newPackageDetails);
+
+    // update the product with the new data
+    Ticket ticketResponse = getLingoTestClient().createTicket("updateExistingProductWithChanges");
+    ProductSummary updatedProduct =
+        getLingoTestClient()
+            .updateMedicationProductFromAtomicData(
+                productId,
+                new ProductUpdateDetails<>(
+                    Long.toString(AmtTestData.YAZ_FLEX),
+                    productSummary,
+                    newPackageDetails,
+                    originalPackageDetails,
+                    ticketResponse.getId(),
+                    null,
+                    null));
+
+    Assertions.assertThat(updatedProduct.isContainsNewConcepts()).isFalse();
+
+    Assertions.assertThat(updatedProduct.getUnmatchedPreviouslyReferencedNodes()).isEmpty();
+
+    // Only the package-related nodes should be new, the product nodes should be reused
+    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 1, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 1, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 1, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 1, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 1, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 1, TP_LABEL);
+
+    // Check that external identifiers are preserved
+    checkExternalIdentifiers(updatedProduct, newPackageDetails);
   }
 }
