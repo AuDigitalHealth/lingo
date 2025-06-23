@@ -95,7 +95,9 @@ public enum SnomedConstants implements LingoConstants {
       "1142137007", "Has concentration strength denominator value (attribute)"),
   HAS_CONCENTRATION_STRENGTH_DENOMINATOR_UNIT(
       "733722007", "Has concentration strength denominator unit (attribute)"),
-  PRODUCT_NAME("774167006", "Product name (product name)");
+  PRODUCT_NAME("774167006", "Product name (product name)"),
+  CONCEPT_INACTIVATION_INDICATOR_REFERENCE_SET(
+      "900000000000489007", "Concept inactivation indicator (core metadata concept)");
 
   private final String value;
   private final String label;

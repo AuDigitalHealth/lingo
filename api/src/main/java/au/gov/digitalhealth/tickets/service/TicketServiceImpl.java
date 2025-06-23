@@ -1171,6 +1171,12 @@ public class TicketServiceImpl implements TicketService {
         product.setConceptId(Long.valueOf(productDto.getConceptId()));
       }
       product.setPackageDetails(productDto.getPackageDetails());
+      product.setOriginalPackageDetails(productDto.getOriginalPackageDetails());
+      if (productDto.getOriginalConceptId() != null) {
+        // If the original concept ID is provided, we set it
+        // Otherwise, we leave it as null
+        product.setOriginalConceptId(Long.parseLong(productDto.getOriginalConceptId()));
+      }
     } else {
       product = productMapper.toEntity(productDto);
       product.setTicket(ticketToUpdate);
@@ -1701,7 +1707,7 @@ public class TicketServiceImpl implements TicketService {
   public CompletableFuture<Ticket> processArtgIdAsync(
       String artgId, List<ExternalRequestor> externalRequestorList) {
     return CompletableFuture.completedFuture(
-          processArtgId(Long.parseLong(artgId), externalRequestorList));
+        processArtgId(Long.parseLong(artgId), externalRequestorList));
   }
 
   private Ticket processArtgId(Long artgId, List<ExternalRequestor> externalRequestorList) {
