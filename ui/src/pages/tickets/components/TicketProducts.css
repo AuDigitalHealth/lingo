@@ -1,5 +1,15 @@
 /* DataTableStyles.css */
 
+/* Ensure the datatable container takes full width */
+.custom-datatable.ticket-products-table {
+  width: 100%;
+}
+
+/* Ensure the datatable itself takes full width */
+.ticket-products-table .p-datatable {
+  width: 100%;
+}
+
 /* Style for the table header */
 .custom-header {
   font-family: 'Arial, sans-serif'; /* Change to your desired font */
@@ -49,4 +59,72 @@
 /* Reduced font size for table headers */
 .ticket-products-table .p-datatable-thead > tr > th {
   font-size: 0.85rem;
+}
+
+/* Reduced font size for pagination controls */
+.ticket-products-table .p-paginator {
+  font-size: 0.85rem;
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  padding: 0.25rem;
+}
+
+/* Ensure page numbers container doesn't wrap */
+.ticket-products-table .p-paginator .p-paginator-pages {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+
+/* Ensure all pagination elements have consistent font size and compact size */
+.ticket-products-table .p-paginator .p-paginator-pages .p-paginator-page,
+.ticket-products-table .p-paginator .p-paginator-first,
+.ticket-products-table .p-paginator .p-paginator-prev,
+.ticket-products-table .p-paginator .p-paginator-next,
+.ticket-products-table .p-paginator .p-paginator-last,
+.ticket-products-table .p-paginator .p-dropdown {
+  font-size: 0.85rem;
+  min-width: 2rem;
+  height: 2rem;
+  margin: 0 0.1rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0; /* Prevent page numbers from shrinking */
+}
+
+/* Additional selectors for dropdown elements */
+.ticket-products-table .p-paginator .p-dropdown .p-dropdown-label,
+.ticket-products-table .p-paginator .p-dropdown .p-dropdown-trigger,
+.ticket-products-table .p-paginator .p-dropdown-panel .p-dropdown-items,
+.ticket-products-table .p-paginator .p-dropdown-panel .p-dropdown-item {
+  font-size: 0.85rem;
+}
+
+/* Adjust the size of the dropdown box and chevron */
+.ticket-products-table .p-paginator .p-dropdown {
+  height: 2rem;
+  min-height: 2rem;
+  width: auto;
+  min-width: 3rem;
+}
+
+.ticket-products-table .p-paginator .p-dropdown .p-dropdown-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.25rem;
+}
+
+.ticket-products-table .p-paginator .p-dropdown .p-dropdown-trigger {
+  width: 1.5rem;
+  height: 100%;
+}
+
+.ticket-products-table .p-paginator .p-dropdown .p-dropdown-trigger-icon {
+  font-size: 0.85rem;
+  width: 0.85rem;
+  height: 0.85rem;
 }
