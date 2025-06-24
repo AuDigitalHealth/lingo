@@ -66,7 +66,7 @@ public class Product extends BaseAuditableEntity {
   @Exclude
   private Ticket ticket;
 
-  @NotNull
+  @NotNull(message = "Name must not be set for a product")
   @NotEmpty
   @Column(nullable = false, length = 2048)
   private String name;
@@ -75,14 +75,14 @@ public class Product extends BaseAuditableEntity {
 
   private Long originalConceptId;
 
-  @NotNull
+  @NotNull(message = "Package details must not be null")
   @JdbcTypeCode(SqlTypes.JSON)
   private PackageDetails<? extends ProductDetails> packageDetails;
 
   @JdbcTypeCode(SqlTypes.JSON)
   private PackageDetails<? extends ProductDetails> originalPackageDetails;
 
-  @NotNull
+  @NotNull(message = "Product action must not be null")
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private ProductAction action;
