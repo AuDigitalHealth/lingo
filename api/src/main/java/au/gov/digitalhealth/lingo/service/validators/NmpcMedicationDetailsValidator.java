@@ -15,11 +15,21 @@
  */
 package au.gov.digitalhealth.lingo.service.validators;
 
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.UNIT_OF_PRESENTATION;
+
+import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.gov.digitalhealth.lingo.configuration.FieldBindingConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
+import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
+import au.gov.digitalhealth.lingo.product.details.Ingredient;
 import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
+import au.gov.digitalhealth.lingo.product.details.ProductQuantity;
+import au.gov.digitalhealth.lingo.product.details.Quantity;
 import au.gov.digitalhealth.lingo.service.SnowstormClient;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Service;
 
@@ -39,10 +49,226 @@ public class NmpcMedicationDetailsValidator implements MedicationDetailsValidato
     this.fieldBindingConfiguration = fieldBindingConfiguration;
   }
 
+  private static void validateNumeratorDenominatorSet(
+      @Valid Quantity strengthNumerator, @Valid Quantity strengthDenominator, String typeName) {
+    if (strengthNumerator == null
+        || strengthNumerator.getValue() == null
+        || BigDecimal.ZERO.equals(strengthNumerator.getValue())) {
+      throw new ProductAtomicDataValidationProblem(
+          "Medication product details must have a "
+              + typeName
+              + " strength numerator value greater than zero");
+    }
+    if (strengthNumerator.getUnit() == null) {
+      throw new ProductAtomicDataValidationProblem(
+          "Medication product details must have a "
+              + typeName
+              + " strength numerator unit defined");
+    }
+    if (strengthDenominator == null
+        || strengthDenominator.getValue() == null
+        || BigDecimal.ZERO.equals(strengthDenominator.getValue())) {
+      throw new ProductAtomicDataValidationProblem(
+          "Medication product details must have a "
+              + typeName
+              + " strength denominator value greater than zero");
+    }
+    if (strengthDenominator.getUnit() == null) {
+      throw new ProductAtomicDataValidationProblem(
+          "Medication product details must have a "
+              + typeName
+              + " strength denominator unit defined");
+    }
+  }
+
+  private static void validateStrengthNotPopulated(
+      @Valid Quantity strengthNumerator, @Valid Quantity strengthDenominator, String strengthType) {
+    if (strengthNumerator != null) {
+      throw new ProductAtomicDataValidationProblem(
+          "Medication product details must not have a "
+              + strengthType
+              + " strength numerator defined when unit of presentation exists");
+    }
+    if (strengthDenominator != null) {
+      throw new ProductAtomicDataValidationProblem(
+          "Medication product details must not have a "
+              + strengthType
+              + " strength denominator defined when unit of presentation exists");
+    }
+  }
+
+  private static void validatePopulatedConcept(SnowstormConceptMini conceptMini, String message) {
+    if (isUnpopulated(conceptMini)) {
+      throw new ProductAtomicDataValidationProblem(message);
+    }
+  }
+
+  private static void validateConceptNotSet(SnowstormConceptMini conceptMini, String message) {
+    if (isPopulated(conceptMini)) {
+      throw new ProductAtomicDataValidationProblem(message);
+    }
+  }
+
+  private static boolean isPopulated(SnowstormConceptMini conceptMini) {
+    return !isUnpopulated(conceptMini);
+  }
+
+  private static boolean isUnpopulated(SnowstormConceptMini conceptMini) {
+    return conceptMini == null
+        || conceptMini.getConceptId() == null
+        || conceptMini.getConceptId().isEmpty()
+        || conceptMini.getPt() == null
+        || conceptMini.getPt().getTerm() == null
+        || conceptMini.getPt().getTerm().isEmpty()
+        || conceptMini.getFsn() == null
+        || conceptMini.getFsn().getTerm() == null
+        || conceptMini.getFsn().getTerm().isEmpty();
+  }
+
+  private static void validateQuantityNotZero(Quantity productQuantity, String message) {
+    if (productQuantity.getValue() == null || BigDecimal.ZERO.equals(productQuantity.getValue())) {
+      throw new ProductAtomicDataValidationProblem(message);
+    }
+  }
+
   @Override
   public void validatePackageDetails(
       PackageDetails<MedicationProductDetails> packageDetails, String branch) {
-    // TODO implement rules
 
+    if (!packageDetails.getContainedPackages().isEmpty()) {
+      throw new ProductAtomicDataValidationProblem(
+          "Medication packages cannot contain other packages");
+    }
+    if (packageDetails.getContainedProducts().isEmpty()) {
+      throw new ProductAtomicDataValidationProblem(
+          "Medication packages must contain at least one product");
+    }
+    validateConceptNotSet(
+        packageDetails.getContainerType(),
+        "Medication packages cannot have a container type defined");
+    validateConceptNotSet(
+        packageDetails.getProductName(), "Medication packages cannot have a product name defined");
+
+    for (@Valid
+    ProductQuantity<MedicationProductDetails> productQuantity :
+        packageDetails.getContainedProducts()) {
+      validatePopulatedConcept(
+          productQuantity.getUnit(), "Medication product quantity must have a unit defined");
+      validateQuantityNotZero(
+          productQuantity, "Medication product quantity must have a value greater than zero");
+      if (UNIT_OF_PRESENTATION.getValue().equals(productQuantity.getUnit().getConceptId())
+          && !productQuantity.getValue().equals(BigDecimal.ONE)) {
+        throw new ProductAtomicDataValidationProblem(
+            "Medication product quantity must be one if unit is 'unit of presentation'");
+      }
+      validateProductDetails(productQuantity.getProductDetails(), branch);
+    }
+  }
+
+  private void validateProductDetails(
+      @NotNull @Valid MedicationProductDetails productDetails, String branch) {
+    // validate non-defining properties
+    //  container type and device type must not be populated.
+    validateConceptNotSet(
+        productDetails.getContainerType(),
+        "Medication product details cannot have a container type defined");
+    validateConceptNotSet(
+        productDetails.getDeviceType(),
+        "Medication product details cannot have a device type defined");
+    // Generic form must be populated.
+    validatePopulatedConcept(
+        productDetails.getGenericForm(),
+        "Medication product details must have a generic form defined");
+    // Specific form can only be set if generic form is set.
+    if (isPopulated(productDetails.getSpecificForm())
+        && isUnpopulated(productDetails.getGenericForm())) {
+      throw new ProductAtomicDataValidationProblem(
+          "Medication product details cannot have a specific form defined without a generic form");
+    }
+    // Product name must be populated.
+    validatePopulatedConcept(
+        productDetails.getProductName(),
+        "Medication product details must have a product name defined");
+    // if quantity is set, it must have a unit and a value greater than zero.
+    if (productDetails.getQuantity() != null) {
+      validatePopulatedConcept(
+          productDetails.getQuantity().getUnit(),
+          "Medication product details quantity must have a unit defined");
+      validateQuantityNotZero(
+          productDetails.getQuantity(),
+          "Medication product details quantity must have a value greater than zero");
+    }
+
+    for (Ingredient ingredient : productDetails.getActiveIngredients()) {
+      validateIngredient(ingredient, productDetails.getUnitOfPresentation() != null, branch);
+    }
+  }
+
+  private void validateIngredient(
+      Ingredient ingredient, boolean unitOfPresentationExists, String branch) {
+    // active ingredient must not be null.
+    if (ingredient.getActiveIngredient() == null) {
+      throw new ProductAtomicDataValidationProblem(
+          "Medication product details must have an active ingredient defined");
+    }
+    // refined active ingredient must be set.
+    if (ingredient.getRefinedActiveIngredient() == null) {
+      throw new ProductAtomicDataValidationProblem(
+          "Medication product details must have a refined active ingredient defined");
+    }
+    // precise ingredient must be set
+    if (ingredient.getPreciseIngredient() == null) {
+      throw new ProductAtomicDataValidationProblem(
+          "Medication product details must have a precise ingredient defined");
+    }
+
+    // if one of the concentration strength numerator or presentation strength numerator is set BoSS
+    // must be set.
+    if (((ingredient.getConcentrationStrengthNumerator() != null
+                && ingredient.getConcentrationStrengthNumerator().getValue() != null)
+            || (ingredient.getPresentationStrengthNumerator() != null
+                && ingredient.getPresentationStrengthNumerator().getValue() != null))
+        && ingredient.getBasisOfStrengthSubstance() == null) {
+      throw new ProductAtomicDataValidationProblem(
+          "Medication product details must have a basis of strength substance defined when concentration strength or presentation strength numerator is set");
+    }
+
+    // if unit of presentation exists, presentation strength numerator and denominator value and
+    // unit must be set and value must be non-zero.
+    if (unitOfPresentationExists) {
+      validateNumeratorDenominatorSet(
+          ingredient.getPresentationStrengthNumerator(),
+          ingredient.getPresentationStrengthDenominator(),
+          "presentation");
+      // concentration strength numerator and denominator value and unit must not be set
+      validateStrengthNotPopulated(
+          ingredient.getConcentrationStrengthNumerator(),
+          ingredient.getConcentrationStrengthDenominator(),
+          "concentration");
+    } else {
+      // if unit of presentation does not exist, presentation strength numerator and denominator
+      // value and unit must not be set.
+      validateStrengthNotPopulated(
+          ingredient.getPresentationStrengthNumerator(),
+          ingredient.getPresentationStrengthDenominator(),
+          "presentation");
+      // concentration strength numerator and denominator value and unit must be set and value must
+      // be non-zero.
+      validateNumeratorDenominatorSet(
+          ingredient.getConcentrationStrengthNumerator(),
+          ingredient.getConcentrationStrengthDenominator(),
+          "concentration");
+    }
+
+    // validate that total quantity is not populated
+    if (ingredient.getTotalQuantity() != null) {
+      throw new ProductAtomicDataValidationProblem(
+          "Medication product details must not have a total quantity defined for an ingredient, use presentation numerator and denominator instead");
+    }
+
+    if (ingredient.getConcentrationStrength() != null) {
+      throw new ProductAtomicDataValidationProblem(
+          "Medication product details must not have a concentration strength ratio defined for an ingredient, use numerator and denominator instead");
+    }
   }
 }
