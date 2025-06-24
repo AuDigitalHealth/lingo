@@ -1,11 +1,9 @@
+import { DevicePackageDetails, MedicationPackageDetails } from '../../../../types/product.ts';
 import {
-  DevicePackageDetails,
-  MedicationPackageDetails,
-} from '../../../../types/product.ts';
-import {
-  Ticket,
   AutocompleteGroupOption,
   AutocompleteGroupOptionType,
+  ProductAction,
+  Ticket
 } from '../../../../types/tickets/ticket.ts';
 import React, { useCallback, useState } from 'react';
 import useUserStore from '../../../../stores/UserStore.ts';
@@ -16,25 +14,21 @@ import {
   generateSuggestedProductName,
   generateSuggestedProductNameForDevice,
   mapToProductOptions,
-  mapToTicketProductDto,
+  mapToTicketProductDto
 } from '../../../../utils/helpers/ticketProductsUtils.ts';
 import TicketProductService from '../../../../api/TicketProductService.ts';
 import { snowstormErrorHandler } from '../../../../types/ErrorHandler.ts';
 import Loading from '../../../../components/Loading.tsx';
-import {
-  Autocomplete,
-  Box,
-  Button,
-  FormControl,
-  TextField,
-} from '@mui/material';
+import { Autocomplete, Box, Button, FormControl, TextField } from '@mui/material';
 import { Stack } from '@mui/system';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import useAuthoringStore from '../../../../stores/AuthoringStore.ts';
 import { isDeviceType } from '../../../../utils/helpers/conceptUtils.ts';
 import { ProductStatus } from '../../../../types/TicketProduct.ts';
-import { getTicketProductsByTicketIdOptions } from '../../../../hooks/api/tickets/useTicketById.tsx';
+import {
+  getTicketProductsByTicketIdOptions
+} from '../../../../hooks/api/tickets/useTicketById.tsx';
 import { useQueryClient } from '@tanstack/react-query';
 import { FieldProps } from '@rjsf/utils';
 
@@ -130,6 +124,7 @@ function ProductPartialSave({
       productName?.name as string,
       !existingProductNames.includes(productName?.name as string) ||
         productStatus === ProductStatus.Completed,
+      ProductAction.CREATE
     );
     setForceNavigation(true);
     TicketProductService.draftTicketProduct(ticket.id, ticketProductDto)
