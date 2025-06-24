@@ -334,26 +334,28 @@ public class SnowstormDtoUtil {
     }
   }
 
-  public static void addSynoynms(SnowstormConceptView concept, Set<SnowstormDescription> descriptions){
-    if(descriptions == null){
+  public static void addSynoynms(
+      SnowstormConceptView concept, Set<SnowstormDescription> descriptions) {
+    if (descriptions == null) {
       return;
     }
 
-    descriptions.forEach(snowstormDescription -> {
-      SnowstormDescription desc = new SnowstormDescription()
-          .active(true)
-          .lang("en")
-          .term(snowstormDescription.getTerm())
-          .type(SnomedConstants.SYNONYM.toString())
-          .caseSignificance(ENTIRE_TERM_CASE_SENSITIVE.getValue())
-          .moduleId(SCT_AU_MODULE.getValue())
-          .acceptabilityMap(
-              Map.of(
-                  AmtConstants.ADRS.getValue(),
-                  SnomedConstants.ACCEPTABLE.getValue()));
-      concept.getDescriptions().add(desc);
-    });
+    descriptions.forEach(
+        snowstormDescription -> {
+          SnowstormDescription desc =
+              new SnowstormDescription()
+                  .active(true)
+                  .lang("en")
+                  .term(snowstormDescription.getTerm())
+                  .type(SnomedConstants.SYNONYM.toString())
+                  .caseSignificance(ENTIRE_TERM_CASE_SENSITIVE.getValue())
+                  .moduleId(SCT_AU_MODULE.getValue())
+                  .acceptabilityMap(
+                      Map.of(AmtConstants.ADRS.getValue(), SnomedConstants.ACCEPTABLE.getValue()));
+          concept.getDescriptions().add(desc);
+        });
   }
+
   public static void addDescription(SnowstormConceptView concept, String term, String type) {
     Set<SnowstormDescription> descriptions = concept.getDescriptions();
 
@@ -509,7 +511,7 @@ public class SnowstormDtoUtil {
                 new SnowstormRelationship()
                     .active(r.getActive())
                     .characteristicType(r.getCharacteristicType())
-                    .concrete(r.getConcrete())
+                    .concrete(r.getConcreteValue() != null)
                     .concreteValue(
                         r.getConcreteValue() == null
                             ? null
@@ -530,19 +532,28 @@ public class SnowstormDtoUtil {
         .collect(Collectors.toSet());
   }
 
-  public static SnowstormDescription getFsnFromDescriptions(Set<SnowstormDescription> descriptions) {
+  public static SnowstormDescription getFsnFromDescriptions(
+      Set<SnowstormDescription> descriptions) {
 
     return descriptions.stream()
-        .filter(description ->  {return description.getType().equals("FSN") && description.getActive();})
+        .filter(
+            description -> {
+              return description.getType().equals("FSN") && description.getActive();
+            })
         .findFirst()
         .orElse(null);
   }
 
-  public static SnowstormDescription getPreferredTerm(Set<SnowstormDescription> descriptions, String dialectKey) {
+  public static SnowstormDescription getPreferredTerm(
+      Set<SnowstormDescription> descriptions, String dialectKey) {
     return descriptions.stream()
-        .filter(description -> {
-          return description.getType().equals("SYNONYM") && description.getAcceptabilityMap() != null && description.getAcceptabilityMap().get(dialectKey) != null && description.getAcceptabilityMap().get(dialectKey).equals("PREFERRED");
-        })
+        .filter(
+            description -> {
+              return description.getType().equals("SYNONYM")
+                  && description.getAcceptabilityMap() != null
+                  && description.getAcceptabilityMap().get(dialectKey) != null
+                  && description.getAcceptabilityMap().get(dialectKey).equals("PREFERRED");
+            })
         .findFirst()
         .orElse(null);
   }
@@ -614,12 +625,17 @@ public class SnowstormDtoUtil {
         .inactivationIndicator(description.getInactivationIndicator())
 
         // Collection fields - creating new instances to avoid sharing references
-        .acceptabilityMap(description.getAcceptabilityMap() != null ?
-            new HashMap<>(description.getAcceptabilityMap()) : new HashMap<>())
-        .acceptabilityMapFromLangRefsetMembers(description.getAcceptabilityMapFromLangRefsetMembers() != null ?
-            new HashMap<>(description.getAcceptabilityMapFromLangRefsetMembers()) : new HashMap<>())
-        .associationTargets(description.getAssociationTargets() != null ?
-            new HashMap<>(description.getAssociationTargets()) : new HashMap<>());
+        .acceptabilityMap(
+            description.getAcceptabilityMap() != null
+                ? new HashMap<>(description.getAcceptabilityMap())
+                : new HashMap<>())
+        .acceptabilityMapFromLangRefsetMembers(
+            description.getAcceptabilityMapFromLangRefsetMembers() != null
+                ? new HashMap<>(description.getAcceptabilityMapFromLangRefsetMembers())
+                : new HashMap<>())
+        .associationTargets(
+            description.getAssociationTargets() != null
+                ? new HashMap<>(description.getAssociationTargets())
+                : new HashMap<>());
   }
-
 }
