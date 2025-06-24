@@ -78,6 +78,9 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
     }
   };
 
+  // Check if the selected value needs attention
+  const needsAttention = value && value.pt?.term && !value.conceptId;
+
   return (
     <span data-component-name="EclAutocomplete" style={{ width: 'inherit' }}>
       <Autocomplete
@@ -107,6 +110,12 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
             {...params}
             data-test-id={id}
             label={title}
+            error={!!errorMessage || needsAttention}
+            helperText={
+              needsAttention
+                ? 'Please search for and select a valid option'
+                : errorMessage || ''
+            }
             InputProps={{
               ...params.InputProps,
               endAdornment: (
@@ -119,14 +128,14 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
             disabled={isThisDisabled}
             sx={{
               '& .MuiFormHelperText-root': {
-                m: 0, // Remove margin to keep layout tight
-                minHeight: '1em', // Reserve consistent space
-                color: errorMessage ? 'error.main' : 'text.secondary', // Change color based on errorMessage
+                m: 0,
+                minHeight: '1em',
+                color: errorMessage || needsAttention ? 'error.main' : 'text.secondary',
               },
             }}
           />
         )}
-        sx={sx || { width: '100%' }} // Pass external styles
+        sx={sx || { width: '100%' }}
       />
     </span>
   );
