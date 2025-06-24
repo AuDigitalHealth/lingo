@@ -53,7 +53,8 @@ import org.springframework.stereotype.Service;
 
 @Service("AMT-MedicationDetailsValidator")
 @Log
-public class AmtMedicationDetailsValidator implements MedicationDetailsValidator {
+public class AmtMedicationDetailsValidator extends DetailsValidator
+    implements MedicationDetailsValidator {
   Models models;
   SnowstormClient snowstormClient;
   FieldBindingConfiguration fieldBindingConfiguration;
@@ -70,6 +71,7 @@ public class AmtMedicationDetailsValidator implements MedicationDetailsValidator
   static void validateExternalIdentifier(
       ExternalIdentifier externalIdentifier,
       Map<String, ExternalIdentifierDefinition> mappingRefsets) {
+
     if (!mappingRefsets.containsKey(externalIdentifier.getIdentifierScheme())) {
       throw new ProductAtomicDataValidationProblem(
           "External identifier scheme "
@@ -87,7 +89,9 @@ public class AmtMedicationDetailsValidator implements MedicationDetailsValidator
               + " is not valid for scheme "
               + externalIdentifier.getIdentifierScheme());
     }
-    if (!externalIdentifierDefinition.getDataType().isValidValue(externalIdentifier.getValue())) {
+    if (!externalIdentifierDefinition
+        .getDataType()
+        .isValidValue(externalIdentifier.getValue(), externalIdentifier.getValueObject())) {
       throw new ProductAtomicDataValidationProblem(
           "External identifier value "
               + externalIdentifier.getValue()
@@ -165,6 +169,12 @@ public class AmtMedicationDetailsValidator implements MedicationDetailsValidator
   }
 
   private void validateProductDetails(MedicationProductDetails productDetails, String branch) {
+
+    validateNonDefiningProperties(
+        productDetails.getNonDefiningProperties(),
+        ProductPackageType.PACKAGE,
+        models.getModelConfiguration(branch));
+
     boolean genericFormPopulated = productDetails.getGenericForm() != null;
     boolean specificFormPopulated = productDetails.getSpecificForm() != null;
     boolean containerTypePopulated = productDetails.getContainerType() != null;
@@ -309,12 +319,11 @@ public class AmtMedicationDetailsValidator implements MedicationDetailsValidator
 
   public void validatePackageDetails(
       PackageDetails<MedicationProductDetails> packageDetails, String branch) {
-    // Leave the MRCM validation to the MRCM - the UI should already enforce this and the validation
-    // in the MS will catch it. Validating here will just slow things down.
 
-    // validate the package details
-    // - product name is a product name - MRCM?
-    // - container type is a container type - MRCM?
+    validateNonDefiningProperties(
+        packageDetails.getNonDefiningProperties(),
+        ProductPackageType.PACKAGE,
+        models.getModelConfiguration(branch));
 
     // product name must be populated
     if (packageDetails.getProductName() == null) {
