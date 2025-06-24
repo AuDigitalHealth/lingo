@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Autocomplete, CircularProgress, TextField } from '@mui/material';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { Concept } from '../../../../types/concept.ts';
-import { useSearchConceptOntoServerByUrl } from '../../../../hooks/api/products/useSearchConcept.tsx';
-import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../../utils/helpers/getValueSetExpansionContainsPt.ts';
+import {
+  useSearchConceptOntoServerByUrl
+} from '../../../../hooks/api/products/useSearchConcept.tsx';
+import {
+  convertFromValueSetExpansionContainsListToSnowstormConceptMiniList
+} from '../../../../utils/helpers/getValueSetExpansionContainsPt.ts';
 import useApplicationConfigStore from '../../../../stores/ApplicationConfigStore.ts';
 import { FieldProps } from '@rjsf/utils';
-import { NonDefiningProperty } from '../../../../types/product.ts';
 
 interface ValueSetAutocompleteProps extends FieldProps {
   label?: string;
@@ -18,16 +22,16 @@ interface ValueSetAutocompleteProps extends FieldProps {
 }
 
 const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
-  idSchema,
-  name,
-  label,
-  url,
-  showDefaultOptions = false,
-  value, // Concept ID only
-  onChange,
-  disabled = false,
-  error,
-}) => {
+                                                                     idSchema,
+                                                                     name,
+                                                                     label,
+                                                                     url,
+                                                                     showDefaultOptions = false,
+                                                                     value, // Concept ID only
+                                                                     onChange,
+                                                                     disabled = false,
+                                                                     error,
+                                                                   }) => {
   const [inputValue, setInputValue] = useState('');
   const [options, setOptions] = useState<Concept[]>([]);
   const [selectedConcept, setSelectedConcept] = useState<Concept | null>(null);
@@ -38,20 +42,18 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
     showDefaultOptions,
   );
 
-  // Update options when search data changes
   useEffect(() => {
     if (data?.expansion?.contains) {
       const concepts =
         convertFromValueSetExpansionContainsListToSnowstormConceptMiniList(
           data.expansion.contains,
           applicationConfig.fhirPreferredForLanguage,
-        ); //TODO we may not need this conversion as we only need the code and display
+        );
       const uniqueOptions = Array.from(
         new Map(concepts.map(item => [item.conceptId, item])).values(),
       );
       setOptions(uniqueOptions);
 
-      // If value exists and matches a fetched option, set selectedConcept
       if (value && !selectedConcept) {
         const matchingConcept = uniqueOptions.find(
           option => option.conceptId === value.conceptId,
@@ -69,7 +71,6 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
     selectedConcept,
   ]);
 
-  // Trigger API search with conceptId when value changes
   useEffect(() => {
     if (value && (!selectedConcept || selectedConcept.conceptId !== value)) {
       setInputValue(value?.pt?.term || '');
@@ -79,11 +80,13 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
     }
   }, [value, selectedConcept]);
 
-  // Handle selection change
   const handleChange = (selectedValue: Concept | null) => {
     setSelectedConcept(selectedValue);
     onChange(selectedValue);
   };
+
+  // Highlight if selected value needs attention
+  const needsAttention = selectedConcept && selectedConcept.pt?.term && !selectedConcept.conceptId;
 
   return (
     <Autocomplete
@@ -94,7 +97,7 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
       getOptionLabel={option =>
         option?.conceptId ? option.conceptId + ' - ' + option?.pt?.term : ''
       }
-      value={selectedConcept} // Controlled by selectedConcept
+      value={selectedConcept}
       onInputChange={(_, newInputValue) => setInputValue(newInputValue)}
       onChange={(_, selectedValue) => handleChange(selectedValue as Concept)}
       isOptionEqualToValue={(option, val) =>
@@ -113,8 +116,12 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
         <TextField
           {...params}
           label={label}
-          error={!!error}
-          helperText={error}
+          error={!!error || needsAttention}
+          helperText={
+            needsAttention
+              ? 'Please select a valid option (conceptId required)'
+              : error
+          }
           InputProps={{
             ...params.InputProps,
             endAdornment: (
@@ -125,6 +132,13 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
             ),
           }}
           disabled={disabled}
+          sx={{
+            '& .MuiFormHelperText-root': {
+              m: 0,
+              minHeight: '1em',
+              color: error || needsAttention ? 'error.main' : 'text.secondary',
+            },
+          }}
         />
       )}
     />
