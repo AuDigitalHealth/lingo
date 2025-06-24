@@ -74,7 +74,7 @@ public class Node {
   /** Indicates if this node is new in the project. */
   boolean newInProject;
 
-  Set<ExternalIdentifier> externalIdentifiers = new HashSet<>();
+  @Builder.Default Set<ExternalIdentifier> externalIdentifiers = new HashSet<>();
 
   public Node(SnowstormConceptMini concept, String label) {
     this.concept = concept;

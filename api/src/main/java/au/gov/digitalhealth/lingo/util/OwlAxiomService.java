@@ -140,7 +140,7 @@ public class OwlAxiomService {
               relationship.getModifierId() != null
                   && relationship.getModifierId().equals(Concepts.UNIVERSAL_RESTRICTION_MODIFIER);
           int unionGroup = 0;
-          if (!Boolean.TRUE.equals(relationship.getConcrete())) {
+          if (relationship.getConcreteValue() == null) {
             taxonomy.addOrModifyRelationship(
                 relationship.getInferred() == null || !relationship.getInferred(),
                 conceptId,
