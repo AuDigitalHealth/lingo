@@ -61,6 +61,8 @@ class MedicationNewBrandPackTest extends LingoTestBase {
   public static final long OESTRADIOL_SCHERING_PLOUGH_100_MG_IMPLANT_1_TUBE = 933246291000036106L;
   public static final String OESTRADIOL_SCHERING_PLOUGH = "933240831000036106";
   public static final long ZOLADEX_3_6_MG_IMPLANT_1_SYRINGE = 82906011000036104L;
+  public static final String ZOLADEX_BRAND = "3435011000036101";
+  public static final String GOZERELIN_AZ_BRAND = "944301000168103";
 
   @Autowired ObjectMapper objectMapper;
 
@@ -416,6 +418,7 @@ class MedicationNewBrandPackTest extends LingoTestBase {
     // Assign ExternalIdentifiers to each brand and store in a new set
     Set<BrandWithIdentifiers> newBrandExternalIdentifiers =
         productBrands.getBrands().stream()
+            .filter(brand -> !brand.getBrand().getConceptId().equals(ZOLADEX_BRAND))
             .peek(brand -> brand.setExternalIdentifiers(testExternalIdentifiers))
             .collect(Collectors.toSet());
 
@@ -460,28 +463,36 @@ class MedicationNewBrandPackTest extends LingoTestBase {
         .getSubjects()
         .forEach(subject -> Assertions.assertThat(subject.getConceptId()).matches("\\d{7,18}"));
 
-    // Verify one of the newly created brands by loading the conceptId
-    Long conceptToLoad =
-        Long.parseLong(createdProduct.getSubjects().iterator().next().getConceptId());
-    ProductBrands newProductBrands = getLingoTestClient().getMedicationProductBrands(conceptToLoad);
-
-    // Assert that the new brands are not empty and there are exactly four brands
-    Assertions.assertThat(newProductBrands.getBrands()).isNotEmpty();
-    Assertions.assertThat(newProductBrands.getBrands()).hasSize(4);
-
-    // Check for duplicate conceptIds in the new brands
-    Set<String> conceptIds = new HashSet<>();
-    boolean hasDuplicates =
-        newProductBrands.getBrands().stream()
-            .map(b -> b.getBrand().getConceptId())
-            .anyMatch(conceptId -> !conceptIds.add(conceptId));
-    Assertions.assertThat(hasDuplicates).isFalse(); // Ensure no duplicates exist
-
-    // Assert that each brand has exactly 2 external identifiers
-    newProductBrands
-        .getBrands()
+    createdProduct.getSubjects().stream()
+        .map(n -> Long.parseLong(n.getConceptId()))
         .forEach(
-            brandWithIdentifiers ->
-                Assertions.assertThat(brandWithIdentifiers.getExternalIdentifiers()).hasSize(2));
+            conceptToLoad -> {
+              ProductBrands newProductBrands =
+                  getLingoTestClient().getMedicationProductBrands(conceptToLoad);
+
+              // Assert that the new brands are not empty and there are exactly four brands
+              Assertions.assertThat(newProductBrands.getBrands()).isNotEmpty();
+              Assertions.assertThat(newProductBrands.getBrands()).hasSize(4);
+
+              // Check for duplicate conceptIds in the new brands
+              Set<String> conceptIds = new HashSet<>();
+              boolean hasDuplicates =
+                  newProductBrands.getBrands().stream()
+                      .map(b -> b.getBrand().getConceptId())
+                      .anyMatch(conceptId -> !conceptIds.add(conceptId));
+              Assertions.assertThat(hasDuplicates).isFalse(); // Ensure no duplicates exist
+
+              // Assert that each brand has exactly 2 external identifiers, except for the Zoladex
+              // brand and the existing Gozerelin AZ brand
+              newProductBrands.getBrands().stream()
+                  .filter(
+                      b ->
+                          !b.getBrand().getConceptId().equals(ZOLADEX_BRAND)
+                              && !b.getBrand().getConceptId().equals(GOZERELIN_AZ_BRAND))
+                  .forEach(
+                      brandWithIdentifiers ->
+                          Assertions.assertThat(brandWithIdentifiers.getExternalIdentifiers())
+                              .hasSize(2));
+            });
   }
 }

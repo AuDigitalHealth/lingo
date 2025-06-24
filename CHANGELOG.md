@@ -8,11 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
 
+### Fixed
 
-## [1.2.10.4] - 2025-05-29
-
+- Detection of datatypes or object properties based on the SnowstormRelationship.getConcrete() Boolean result was unreliable due to null values. This led to missing clauses in the ECL and overly broad detection of existing concepts.
 
 ## [1.2.10.4] - 2025-05-29
 

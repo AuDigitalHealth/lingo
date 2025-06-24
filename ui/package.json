@@ -92,7 +92,7 @@
     "react-hook-form": "7.49.2",
     "react-intl": "^6.4.4",
     "react-router-dom": "6.22.0",
-    "simplebar-react": "^3.2.4",
+    "simplebar-react": "3.3.0",
     "socket.io-client": "^4.7.2",
     "sockjs-client": "^1.6.1",
     "stompjs": "^2.3.3",

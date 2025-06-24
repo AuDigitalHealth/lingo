@@ -18,6 +18,7 @@ package au.gov.digitalhealth.lingo.service;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONCENTRATION_STRENGTH_UNIT;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONCENTRATION_STRENGTH_VALUE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONTAINS_PACKAGED_CD;
+import static au.gov.digitalhealth.lingo.util.AmtConstants.COUNT_OF_CD_TYPE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.COUNT_OF_CONTAINED_COMPONENT_INGREDIENT;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.COUNT_OF_CONTAINED_PACKAGE_TYPE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CTPP_REFSET_ID;
@@ -523,6 +524,20 @@ public class MedicationProductCalculationService {
       group++;
     }
 
+    if (!innnerProductSummaries.isEmpty()) {
+      relationships.add(
+          getSnowstormDatatypeComponent(
+              COUNT_OF_CD_TYPE,
+              // get the unique set of CD types
+              Integer.toString(
+                  innnerProductSummaries.values().stream()
+                      .map(v -> v.getSingleSubject().getConceptId())
+                      .collect(Collectors.toSet())
+                      .size()),
+              DataTypeEnum.INTEGER,
+              0));
+    }
+
     for (Entry<PackageQuantity<MedicationProductDetails>, ProductSummary> entry :
         innerPackageSummaries.entrySet()) {
       Node contained;
@@ -551,7 +566,7 @@ public class MedicationProductCalculationService {
       relationships.add(
           getSnowstormDatatypeComponent(
               COUNT_OF_CONTAINED_PACKAGE_TYPE,
-              // get the unique set of active ingredients
+              // get the unique set of package types
               Integer.toString(
                   innerPackageSummaries.values().stream()
                       .map(v -> v.getSingleSubject().getConceptId())

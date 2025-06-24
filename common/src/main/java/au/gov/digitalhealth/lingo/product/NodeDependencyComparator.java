@@ -37,8 +37,7 @@ public class NodeDependencyComparator implements Comparator<Node> {
                     .flatMap(axoim -> axoim.getRelationships().stream())
                     .filter(
                         r ->
-                            r.getConcrete() != null
-                                && !r.getConcrete()
+                            r.getConcreteValue() == null
                                 && Long.parseLong(Objects.requireNonNull(r.getDestinationId())) < 0)
                     .forEach(r -> closure.addEdge(n.getConceptId(), r.getDestinationId())));
 

@@ -143,7 +143,7 @@ public class NodeGeneratorService {
         && relationships.stream()
             .noneMatch(
                 r ->
-                    !Boolean.TRUE.equals(r.getConcrete())
+                    r.getConcreteValue() == null
                         && r.getDestinationId() != null
                         && Long.parseLong(r.getDestinationId()) < 0)) {
       String ecl =
