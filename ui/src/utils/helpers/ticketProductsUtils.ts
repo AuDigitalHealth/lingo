@@ -17,14 +17,15 @@
 import {
   DevicePackageDetails,
   MedicationPackageDetails,
-  ProductType,
+  ProductType
 } from '../../types/product.ts';
 import {
   AutocompleteGroupOption,
   AutocompleteGroupOptionType,
+  ProductAction,
   Ticket,
   TicketBulkProductActionDto,
-  TicketProductDto,
+  TicketProductDto
 } from '../../types/tickets/ticket.ts';
 import { ProductStatus, ProductTableRow } from '../../types/TicketProduct.ts';
 
@@ -34,6 +35,7 @@ export function mapToTicketProductDto(
   login: string,
   productName: string,
   create: boolean,
+  action: ProductAction
 ) {
   const ticketProductDto: TicketProductDto = {
     ticketId: ticket.id,
@@ -43,6 +45,7 @@ export function mapToTicketProductDto(
     createdBy: create ? login : undefined,
     modifiedBy: login,
     version: null,
+    action: action,
   };
   return ticketProductDto;
 }
