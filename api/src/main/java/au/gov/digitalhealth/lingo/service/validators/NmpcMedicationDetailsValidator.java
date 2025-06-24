@@ -17,15 +17,14 @@ package au.gov.digitalhealth.lingo.service.validators;
 
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.UNIT_OF_PRESENTATION;
 
-import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.gov.digitalhealth.lingo.configuration.FieldBindingConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.details.Ingredient;
 import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.ProductQuantity;
-import au.gov.digitalhealth.lingo.product.details.Quantity;
 import au.gov.digitalhealth.lingo.service.SnowstormClient;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -35,7 +34,8 @@ import org.springframework.stereotype.Service;
 
 @Service("NMPC-MedicationDetailsValidator")
 @Log
-public class NmpcMedicationDetailsValidator implements MedicationDetailsValidator {
+public class NmpcMedicationDetailsValidator extends DetailsValidator
+    implements MedicationDetailsValidator {
   Models models;
   SnowstormClient snowstormClient;
   FieldBindingConfiguration fieldBindingConfiguration;
@@ -49,91 +49,14 @@ public class NmpcMedicationDetailsValidator implements MedicationDetailsValidato
     this.fieldBindingConfiguration = fieldBindingConfiguration;
   }
 
-  private static void validateNumeratorDenominatorSet(
-      @Valid Quantity strengthNumerator, @Valid Quantity strengthDenominator, String typeName) {
-    if (strengthNumerator == null
-        || strengthNumerator.getValue() == null
-        || BigDecimal.ZERO.equals(strengthNumerator.getValue())) {
-      throw new ProductAtomicDataValidationProblem(
-          "Medication product details must have a "
-              + typeName
-              + " strength numerator value greater than zero");
-    }
-    if (strengthNumerator.getUnit() == null) {
-      throw new ProductAtomicDataValidationProblem(
-          "Medication product details must have a "
-              + typeName
-              + " strength numerator unit defined");
-    }
-    if (strengthDenominator == null
-        || strengthDenominator.getValue() == null
-        || BigDecimal.ZERO.equals(strengthDenominator.getValue())) {
-      throw new ProductAtomicDataValidationProblem(
-          "Medication product details must have a "
-              + typeName
-              + " strength denominator value greater than zero");
-    }
-    if (strengthDenominator.getUnit() == null) {
-      throw new ProductAtomicDataValidationProblem(
-          "Medication product details must have a "
-              + typeName
-              + " strength denominator unit defined");
-    }
-  }
-
-  private static void validateStrengthNotPopulated(
-      @Valid Quantity strengthNumerator, @Valid Quantity strengthDenominator, String strengthType) {
-    if (strengthNumerator != null) {
-      throw new ProductAtomicDataValidationProblem(
-          "Medication product details must not have a "
-              + strengthType
-              + " strength numerator defined when unit of presentation exists");
-    }
-    if (strengthDenominator != null) {
-      throw new ProductAtomicDataValidationProblem(
-          "Medication product details must not have a "
-              + strengthType
-              + " strength denominator defined when unit of presentation exists");
-    }
-  }
-
-  private static void validatePopulatedConcept(SnowstormConceptMini conceptMini, String message) {
-    if (isUnpopulated(conceptMini)) {
-      throw new ProductAtomicDataValidationProblem(message);
-    }
-  }
-
-  private static void validateConceptNotSet(SnowstormConceptMini conceptMini, String message) {
-    if (isPopulated(conceptMini)) {
-      throw new ProductAtomicDataValidationProblem(message);
-    }
-  }
-
-  private static boolean isPopulated(SnowstormConceptMini conceptMini) {
-    return !isUnpopulated(conceptMini);
-  }
-
-  private static boolean isUnpopulated(SnowstormConceptMini conceptMini) {
-    return conceptMini == null
-        || conceptMini.getConceptId() == null
-        || conceptMini.getConceptId().isEmpty()
-        || conceptMini.getPt() == null
-        || conceptMini.getPt().getTerm() == null
-        || conceptMini.getPt().getTerm().isEmpty()
-        || conceptMini.getFsn() == null
-        || conceptMini.getFsn().getTerm() == null
-        || conceptMini.getFsn().getTerm().isEmpty();
-  }
-
-  private static void validateQuantityNotZero(Quantity productQuantity, String message) {
-    if (productQuantity.getValue() == null || BigDecimal.ZERO.equals(productQuantity.getValue())) {
-      throw new ProductAtomicDataValidationProblem(message);
-    }
-  }
-
   @Override
   public void validatePackageDetails(
       PackageDetails<MedicationProductDetails> packageDetails, String branch) {
+
+    validateNonDefiningProperties(
+        packageDetails.getNonDefiningProperties(),
+        ProductPackageType.PACKAGE,
+        models.getModelConfiguration(branch));
 
     if (!packageDetails.getContainedPackages().isEmpty()) {
       throw new ProductAtomicDataValidationProblem(
@@ -168,6 +91,11 @@ public class NmpcMedicationDetailsValidator implements MedicationDetailsValidato
   private void validateProductDetails(
       @NotNull @Valid MedicationProductDetails productDetails, String branch) {
     // validate non-defining properties
+    validateNonDefiningProperties(
+        productDetails.getNonDefiningProperties(),
+        ProductPackageType.PRODUCT,
+        models.getModelConfiguration(branch));
+
     //  container type and device type must not be populated.
     validateConceptNotSet(
         productDetails.getContainerType(),

@@ -15,6 +15,7 @@
  */
 package au.gov.digitalhealth.lingo.configuration.model.enumeration;
 
+import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
 import au.gov.digitalhealth.lingo.util.PartionIdentifier;
 import au.gov.digitalhealth.lingo.util.SnomedIdentifierUtil;
@@ -27,8 +28,11 @@ import java.time.format.DateTimeParseException;
 public enum NonDefiningPropertyDataType {
   DECIMAL {
     @Override
-    public boolean isValidValue(String value) {
+    public boolean isValidValue(String value, SnowstormConceptMini valueObject) {
       if (value == null) {
+        return false;
+      }
+      if (valueObject != null) {
         return false;
       }
       try {
@@ -46,8 +50,11 @@ public enum NonDefiningPropertyDataType {
   },
   INTEGER {
     @Override
-    public boolean isValidValue(String value) {
+    public boolean isValidValue(String value, SnowstormConceptMini valueObject) {
       if (value == null) {
+        return false;
+      }
+      if (valueObject != null) {
         return false;
       }
       try {
@@ -65,8 +72,8 @@ public enum NonDefiningPropertyDataType {
   },
   STRING {
     @Override
-    public boolean isValidValue(String value) {
-      return value != null;
+    public boolean isValidValue(String value, SnowstormConceptMini valueObject) {
+      return value != null && valueObject == null;
     }
 
     @Override
@@ -76,8 +83,11 @@ public enum NonDefiningPropertyDataType {
   },
   DATE {
     @Override
-    public boolean isValidValue(String value) {
+    public boolean isValidValue(String value, SnowstormConceptMini valueObject) {
       if (value == null) {
+        return false;
+      }
+      if (valueObject != null) {
         return false;
       }
       try {
@@ -95,8 +105,11 @@ public enum NonDefiningPropertyDataType {
   },
   TIME {
     @Override
-    public boolean isValidValue(String value) {
+    public boolean isValidValue(String value, SnowstormConceptMini valueObject) {
       if (value == null) {
+        return false;
+      }
+      if (valueObject != null) {
         return false;
       }
       try {
@@ -114,8 +127,11 @@ public enum NonDefiningPropertyDataType {
   },
   UNSIGNED_INTEGER {
     @Override
-    public boolean isValidValue(String value) {
+    public boolean isValidValue(String value, SnowstormConceptMini valueObject) {
       if (value == null) {
+        return false;
+      }
+      if (valueObject != null) {
         return false;
       }
       try {
@@ -133,8 +149,11 @@ public enum NonDefiningPropertyDataType {
   },
   URI {
     @Override
-    public boolean isValidValue(String value) {
+    public boolean isValidValue(String value, SnowstormConceptMini valueObject) {
       if (value == null) {
+        return false;
+      }
+      if (valueObject != null) {
         return false;
       }
       try {
@@ -152,8 +171,13 @@ public enum NonDefiningPropertyDataType {
   },
   CONCEPT {
     @Override
-    public boolean isValidValue(String value) {
-      return value != null && SnomedIdentifierUtil.isValid(value, PartionIdentifier.CONCEPT);
+    public boolean isValidValue(String value, SnowstormConceptMini valueObject) {
+      return value == null
+          && valueObject != null
+          && valueObject.getConceptId() != null
+          && valueObject.getPt() != null
+          && valueObject.getPt().getTerm() != null
+          && SnomedIdentifierUtil.isValid(valueObject.getConceptId(), PartionIdentifier.CONCEPT);
     }
 
     @Override
@@ -163,8 +187,12 @@ public enum NonDefiningPropertyDataType {
   },
   CODED {
     @Override
-    public boolean isValidValue(String value) {
-      return value != null && !value.isEmpty();
+    public boolean isValidValue(String value, SnowstormConceptMini valueObject) {
+      return value == null
+          && valueObject != null
+          && valueObject.getConceptId() != null
+          && valueObject.getPt() != null
+          && valueObject.getPt().getTerm() != null;
     }
 
     @Override
@@ -173,7 +201,7 @@ public enum NonDefiningPropertyDataType {
     }
   };
 
-  public abstract boolean isValidValue(String value);
+  public abstract boolean isValidValue(String value, SnowstormConceptMini valueObject);
 
   public abstract DataTypeEnum getSnowstormDatatype();
 }
