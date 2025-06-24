@@ -44,7 +44,9 @@ public interface MedicationDetailsValidator {
               + " is not valid for scheme "
               + externalIdentifier.getIdentifierScheme());
     }
-    if (!externalIdentifierDefinition.getDataType().isValidValue(externalIdentifier.getValue())) {
+    if (!externalIdentifierDefinition
+        .getDataType()
+        .isValidValue(externalIdentifier.getValue(), externalIdentifier.getValueObject())) {
       throw new ProductAtomicDataValidationProblem(
           "External identifier value "
               + externalIdentifier.getValue()

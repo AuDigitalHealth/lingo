@@ -50,7 +50,7 @@ public class AllowedValuesValidator
         return false; // Value does not match the regex
       }
 
-      if (!property.getDataType().isValidValue(value)) {
+      if (!property.getDataType().isValidValue(value, null)) {
         log.warning(
             "Value '"
                 + value
