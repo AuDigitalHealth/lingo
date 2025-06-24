@@ -15,6 +15,8 @@
  */
 package au.gov.digitalhealth.lingo.service.validators;
 
+import au.gov.digitalhealth.lingo.configuration.model.Models;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.details.DeviceProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
@@ -25,10 +27,21 @@ import org.springframework.stereotype.Service;
 
 @Service("NMPC-DeviceDetailsValidator")
 @Log
-public class NmpcDeviceDetailsValidator implements DeviceDetailsValidator {
+public class NmpcDeviceDetailsValidator extends DetailsValidator implements DeviceDetailsValidator {
+  Models models;
+
+  public NmpcDeviceDetailsValidator(Models models) {
+    this.models = models;
+  }
+
   @Override
   public void validatePackageDetails(
       PackageDetails<DeviceProductDetails> packageDetails, String branch) {
+
+    validateNonDefiningProperties(
+        packageDetails.getNonDefiningProperties(),
+        ProductPackageType.PACKAGE,
+        models.getModelConfiguration(branch));
 
     // device packages should not contain other packages
     if (!packageDetails.getContainedPackages().isEmpty()) {
@@ -59,14 +72,19 @@ public class NmpcDeviceDetailsValidator implements DeviceDetailsValidator {
         packageDetails.getContainedProducts()) {
       // validate quantity is one if unit is each
       ValidationUtil.validateQuantityValueIsOneIfUnitIsEach(productQuantity);
-      validateDeviceType(productQuantity.getProductDetails());
+      validateDeviceType(productQuantity.getProductDetails(), branch);
     }
   }
 
-  private void validateDeviceType(DeviceProductDetails deviceProductDetails) {
+  private void validateDeviceType(DeviceProductDetails deviceProductDetails, String branch) {
     // validate device type is not null
     if (deviceProductDetails.getDeviceType() == null) {
       throw new ProductAtomicDataValidationProblem("Device type is required");
     }
+
+    validateNonDefiningProperties(
+        deviceProductDetails.getNonDefiningProperties(),
+        ProductPackageType.PACKAGE,
+        models.getModelConfiguration(branch));
   }
 }
