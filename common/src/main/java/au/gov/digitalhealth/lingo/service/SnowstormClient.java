@@ -150,7 +150,8 @@ public class SnowstormClient {
     Collection<SnowstormConceptMini> concepts =
         self.getConceptsFromEcl(branch, ecl, 0, 2, executeAsStated);
     if (concepts.size() != 1) {
-      concepts = self.getConceptsFromEcl(branch, ecl, 0, 2, executeAsStated);
+      // todo this is a workaround for non-migrated NMPC date
+      concepts = self.getConceptsFromEcl(branch, ecl, 0, 2, false);
       if (concepts.size() != 1) {
         throw new SingleConceptExpectedProblem(branch, ecl, concepts);
       }
