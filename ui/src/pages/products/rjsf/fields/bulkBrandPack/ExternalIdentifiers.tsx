@@ -141,7 +141,11 @@ const ExternalIdentifierRender: React.FC<
   const multiValuedSchemes: string[] =
     uiSchema['ui:options']?.multiValuedSchemes || [];
 
+  const showDefaultOptionSchemes: string[] =
+    uiSchema['ui:options']?.showDefaultOptionSchemes || [];
+
   const isMultiValued = multiValuedSchemes.includes(schemeName);
+  const showDefaultOptions = showDefaultOptionSchemes.includes(schemeName);
   const isCheckBox = schema?.properties?.type?.const === 'REFERENCE_SET';
 
   const bindingConfig: BindingConfig = uiSchema['ui:options']?.binding || {};
@@ -302,7 +306,7 @@ const ExternalIdentifierRender: React.FC<
           <MultiValueValueSetAutocomplete
             label={schema.title}
             url={binding.valueSet || ''}
-            showDefaultOptions={binding.showDefaultOptions || false}
+            showDefaultOptions={showDefaultOptions || false}
             value={schemeEntries.map(entry => entry.valueObject)}
             onChange={handleChangeConcepts}
             disabled={readOnly ? true : false}
@@ -313,7 +317,7 @@ const ExternalIdentifierRender: React.FC<
           <ValueSetAutocomplete
             label={schema.title}
             url={binding.valueSet || ''}
-            showDefaultOptions={binding.showDefaultOptions || false}
+            showDefaultOptions={showDefaultOptions || false}
             value={
               schemeEntries[0] ? schemeEntries[0].valueObject : schemeEntries
             }
@@ -328,7 +332,7 @@ const ExternalIdentifierRender: React.FC<
             ecl={binding.ecl || ''}
             branch={branch}
             onChange={handleChangeConcepts}
-            showDefaultOptions={binding.showDefaultOptions || false}
+            showDefaultOptions={showDefaultOptions || false}
             isDisabled={readOnly ? true : false}
             // errorMessage={errorMessage}
             title={schema.title}
@@ -342,7 +346,7 @@ const ExternalIdentifierRender: React.FC<
             ecl={binding.ecl || ''}
             branch={branch}
             onChange={handleChangeConcepts}
-            showDefaultOptions={binding.showDefaultOptions || false}
+            showDefaultOptions={showDefaultOptions || false}
             isDisabled={readOnly ? true : false}
             // errorMessage={errorMessage}
             title={schema.title}
