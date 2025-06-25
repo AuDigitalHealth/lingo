@@ -630,7 +630,7 @@ export default function SearchProduct({
                   New Brands
                 </ToggleButton>
                 <ToggleButton value={ActionType.editProduct}>
-                  Edit Product
+                  Edit Terms
                 </ToggleButton>
               </ToggleButtonGroup>
             </span>
