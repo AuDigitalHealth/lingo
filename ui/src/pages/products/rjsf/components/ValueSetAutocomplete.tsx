@@ -105,7 +105,7 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
         const { key, ...otherProps } = props;
         return (
           <li {...otherProps} key={option.conceptId}>
-            {option.conceptId + ' - ' + option?.pt?.term}
+            {option.pt.term}
           </li>
         );
       }}
