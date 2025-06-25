@@ -127,7 +127,7 @@ const ProductService = {
   ): Promise<ProductSummary> {
     let response;
 
-    if ((productCreationDetails.type = ProductActionType.update)) {
+    if (productCreationDetails.type === ProductActionType.update) {
       // Update existing product
       response = await api.put(
         `/api/${branch}/medications/product/${productCreationDetails.originalConceptId}`,
