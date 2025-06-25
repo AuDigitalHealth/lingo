@@ -16,9 +16,9 @@ const MultiValueEclAutocomplete: React.FC<FieldProps<any, any>> = props => {
     onChange,
     schema,
     uiSchema,
+    showDefaultOptions,
   } = props;
 
-  const { showDefaultOptions } = (uiSchema && uiSchema['ui:options']) || {};
   const [inputValue, setInputValue] = useState('');
   const [options, setOptions] = useState<Concept[]>([]);
   const [selectedConcepts, setSelectedConcepts] = useState<ConceptMini[]>(
