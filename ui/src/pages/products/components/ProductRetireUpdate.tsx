@@ -49,10 +49,10 @@ export const ProductRetireUpdate: React.FC<ProductRetireUpdateProps> = ({
       elevation={1}
       sx={{
         p: 2,
-        pb: 3, // bottom padding
+        mb: 1,
         backgroundColor: '#ffffff',
         border: '2px solid #e0e0e0',
-        borderRadius: 3,
+        borderRadius: 2,
         position: 'relative',
       }}
     >
