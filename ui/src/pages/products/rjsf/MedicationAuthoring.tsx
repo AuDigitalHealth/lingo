@@ -32,8 +32,8 @@ import {
   ProductSaveDetails,
   ProductType,
 } from '../../../types/product.ts';
-import {useTicketProductQuery} from './hooks/useTicketProductQuery.ts';
-import {DraftSubmitPanel} from './components/DarftSubmitPanel.tsx';
+import { useTicketProductQuery } from './hooks/useTicketProductQuery.ts';
+import { DraftSubmitPanel } from './components/DarftSubmitPanel.tsx';
 import ProductPartialSaveModal from './components/ProductPartialSaveModal.tsx';
 import MuiGridTemplate from './templates/MuiGridTemplate.tsx';
 
@@ -42,6 +42,7 @@ export interface MedicationAuthoringV2Props {
   task: Task;
   ticket: Ticket;
   ticketProductId?: string;
+  schemaType: string;
 }
 
 const validator = customizeValidator();
@@ -52,6 +53,7 @@ function MedicationAuthoring({
   selectedProduct,
   ticketProductId,
   ticket,
+  schemaType,
 }: MedicationAuthoringV2Props) {
   const [formKey, setFormKey] = useState(0);
   const [formData, setFormData] = useState({});
@@ -65,10 +67,10 @@ function MedicationAuthoring({
   const targetedProductId = selectedProduct?.id;
 
   const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
-    task.branchPath,
+    task.branchPath, schemaType,
   );
   const { data: uiSchema, isLoading: isUiSchemaLoading } = useUiSchemaQuery(
-    task.branchPath,
+    task.branchPath, schemaType,
   );
 
   const { isLoading, isFetching } = useProductQuery({
@@ -318,18 +320,18 @@ function useCalculateProduct() {
   return mutation;
 }
 
-const useSchemaQuery = (branchPath: string) => {
+const useSchemaQuery = (branchPath: string, schemaType: string) => {
   return useQuery({
-    queryKey: ['medication-schema', branchPath],
-    queryFn: () => ConfigService.fetchMeddicationSchemaData(branchPath),
+    queryKey: [(schemaType + '-Schema'), branchPath],
+    queryFn: () => ConfigService.fetchMedicationSchemaData(branchPath, schemaType),
     enabled: !!branchPath,
   });
 };
 
-const useUiSchemaQuery = (branchPath: string) => {
+const useUiSchemaQuery = (branchPath: string, schemaType: string) => {
   return useQuery({
-    queryKey: ['medication-uiSchema', branchPath],
-    queryFn: () => ConfigService.fetchMedicationUiSchemaData(branchPath),
+    queryKey: [(schemaType + '-uiSchema'), branchPath],
+    queryFn: () => ConfigService.fetchMedicationUiSchemaData(branchPath, schemaType),
     enabled: !!branchPath,
   });
 };
