@@ -30,7 +30,7 @@ public class NewNodeDependencyComparator implements Comparator<Node> {
     closure = new DirectedAcyclicGraph<>(DefaultEdge.class);
     nodeSet.forEach(n -> closure.addVertex(n.getConceptId()));
     nodeSet.stream()
-        .filter(Node::isNewConcept)
+        .filter(n -> n.isNewConcept() || n.isConceptEdit() || n.isRetireAndReplace())
         .forEach(
             n ->
                 n.getNewConceptDetails().getAxioms().stream()
