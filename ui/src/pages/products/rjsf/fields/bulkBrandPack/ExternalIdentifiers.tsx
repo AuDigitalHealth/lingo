@@ -7,12 +7,15 @@ import {
   FormControlLabel,
   Grid,
   Stack,
-  TextField
+  TextField,
 } from '@mui/material';
 import { FieldProps } from '@rjsf/utils';
 import ValueSetAutocomplete from '../../components/ValueSetAutocomplete';
 import EclAutocomplete from '../../components/EclAutocomplete';
-import { NonDefiningProperty, NonDefiningPropertyType } from '../../../../../types/product.ts';
+import {
+  NonDefiningProperty,
+  NonDefiningPropertyType,
+} from '../../../../../types/product.ts';
 import useTaskById from '../../../../../hooks/useTaskById.tsx';
 import { ConceptMini } from '../../../../../types/concept.ts';
 import { MultiValueValueSetAutocomplete } from '../../components/MultiValueSetAutocomplete.tsx';
@@ -76,7 +79,12 @@ const ExternalIdentifiers: React.FC<
             }
             return aScheme.localeCompare(bScheme);
           })
-          .filter(schema => !uiSchema['ui:options']?.readOnlyProperties?.includes(schema.properties.identifierScheme.const))
+          .filter(
+            schema =>
+              !uiSchema['ui:options']?.readOnlyProperties?.includes(
+                schema.properties.identifierScheme.const,
+              ),
+          )
           .map((schema, index) => {
             return (
               <Grid item xs={12} md={6} key={index}>

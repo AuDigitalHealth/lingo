@@ -19,7 +19,7 @@ interface ProductPreviewManageModalProps {
   productType: ProductType;
   branch: string;
   ticket: Ticket;
-  isProductUpdate:boolean;
+  isProductUpdate: boolean;
 }
 export default function ProductPreviewManageModal({
   open,
@@ -27,7 +27,7 @@ export default function ProductPreviewManageModal({
   productCreationDetails,
   branch,
   ticket,
-                                                    isProductUpdate
+  isProductUpdate,
 }: ProductPreviewManageModalProps) {
   return (
     <BaseModal
@@ -36,7 +36,11 @@ export default function ProductPreviewManageModal({
       data-testid={'preview-modal'}
       sx={{ width: '75%' }}
     >
-      <BaseModalHeader title={isProductUpdate ? 'Preview Update Product':'Preview New Product'} />
+      <BaseModalHeader
+        title={
+          isProductUpdate ? 'Preview Update Product' : 'Preview New Product'
+        }
+      />
       <BaseModalBody>
         <Box height={'90%'} overflow={'auto'} width={'100%'}>
           {!productCreationDetails ? (
