@@ -49,10 +49,10 @@ public class ProductUpdateDetails<T extends ProductDetails> extends ProductCreat
       ProductSummary productSummary,
       PackageDetails<T> packageDetails,
       PackageDetails<T> originalPackageDetails,
-      Long ticketIt,
+      Long ticketId,
       String partialSaveName,
       String nameOverride) {
-    super(productSummary, packageDetails, ticketIt, partialSaveName, nameOverride);
+    super(productSummary, packageDetails, ticketId, partialSaveName, nameOverride);
     this.originalConceptId = originalConceptId;
     this.originalPackageDetails = originalPackageDetails;
   }

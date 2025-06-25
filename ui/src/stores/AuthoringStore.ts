@@ -21,7 +21,7 @@ import {
   BrandPackSizeCreationDetails,
   DevicePackageDetails,
   MedicationPackageDetails,
-  ProductCreationDetails,
+  ProductSaveDetails,
   ProductType,
 } from '../types/product.ts';
 import { snowstormErrorHandler } from '../types/ErrorHandler.ts';
@@ -62,9 +62,9 @@ interface AuthoringStoreConfig {
   setPreviewErrorKeys: (errorKeys: string[]) => void;
   //
 
-  productCreationDetails: ProductCreationDetails | undefined;
+  productCreationDetails: ProductSaveDetails | undefined;
   setProductCreationDetails: (
-    details: ProductCreationDetails | undefined,
+    details: ProductSaveDetails | undefined,
   ) => void;
   productPreviewDetails: MedicationPackageDetails | undefined;
   setProductPreviewDetails: (
@@ -209,7 +209,7 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
       productService
         .previewNewMedicationBrandPackSizes(request, branch)
         .then(mp => {
-          const productCreationObj: ProductCreationDetails = {
+          const productCreationObj: ProductSaveDetails = {
             productSummary: mp,
             packageDetails: validatedData,
             ticketId: ticket.id,
@@ -249,9 +249,9 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
       get().setPreviewModalOpen(true);
       const validatedData = cleanPackageDetails(request);
       productService
-        .previewNewMedicationProduct(validatedData, branch)
+        .previewCreateMedicationProduct(validatedData, branch)
         .then(mp => {
-          const productCreationObj: ProductCreationDetails = {
+          const productCreationObj: ProductSaveDetails = {
             productSummary: mp,
             packageDetails: validatedData,
             ticketId: ticket.id,
@@ -293,7 +293,7 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
       productService
         .previewNewDeviceProduct(validatedData, branch)
         .then(mp => {
-          const productCreationObj: ProductCreationDetails = {
+          const productCreationObj: ProductSaveDetails = {
             productSummary: mp,
             packageDetails: validatedData,
             ticketId: ticket.id,

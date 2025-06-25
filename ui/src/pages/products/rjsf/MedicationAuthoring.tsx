@@ -1,7 +1,7 @@
-import React, { useCallback, useRef, useState } from 'react';
-import { Form } from '@rjsf/mui';
-import { Box, Button, Container, Paper } from '@mui/material';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import React, {useCallback, useRef, useState} from 'react';
+import {Form} from '@rjsf/mui';
+import {Box, Button, Container, Paper} from '@mui/material';
+import {useMutation, useQuery} from '@tanstack/react-query';
 import _ from 'lodash';
 import ajvErrors from 'ajv-errors';
 
@@ -11,28 +11,29 @@ import ConditionalArrayField from './fields/ConditionalArrayField.tsx';
 import CompactQuantityField from './fields/CompactQuantityField.tsx';
 import UnitValueUnWrappedField from './fields/UnitValueUnWrappedField.tsx';
 import ProductLoader from '../components/ProductLoader.tsx';
-import ProductPreviewCreateModal from '../components/ProductPreviewCreateModal.tsx';
+import ProductPreviewManageModal from '../components/ProductPreviewManageModal.tsx';
 import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
-import CustomObjectFieldTemplate from './templates/CustomObjectFieldTemplate.tsx';
+
 import NumberWidget from './widgets/NumberWidget.tsx';
 import ExternalIdentifiers from './fields/bulkBrandPack/ExternalIdentifiers.tsx';
 import TextFieldWidget from './widgets/TextFieldWidget.tsx';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 import productService from '../../../api/ProductService.ts';
-import { ConfigService } from '../../../api/ConfigService.ts';
-import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
-import { customizeValidator } from '@rjsf/validator-ajv8';
-import { Concept } from '../../../types/concept.ts';
-import type { ValueSetExpansionContains } from 'fhir/r4';
-import { Task } from '../../../types/task.ts';
-import { Ticket } from '../../../types/tickets/ticket.ts';
+import {ConfigService} from '../../../api/ConfigService.ts';
+import {isValueSetExpansionContains} from '../../../types/predicates/isValueSetExpansionContains.ts';
+import {customizeValidator} from '@rjsf/validator-ajv8';
+import {Concept} from '../../../types/concept.ts';
+import type {ValueSetExpansionContains} from 'fhir/r4';
+import {Task} from '../../../types/task.ts';
+import {Ticket} from '../../../types/tickets/ticket.ts';
 import {
   MedicationPackageDetails,
-  ProductCreationDetails,
+  ProductActionType,
+  ProductSaveDetails,
   ProductType,
 } from '../../../types/product.ts';
-import { useTicketProductQuery } from './hooks/useTicketProductQuery.ts';
-import { DraftSubmitPanel } from './components/DarftSubmitPanel.tsx';
+import {useTicketProductQuery} from './hooks/useTicketProductQuery.ts';
+import {DraftSubmitPanel} from './components/DarftSubmitPanel.tsx';
 import ProductPartialSaveModal from './components/ProductPartialSaveModal.tsx';
 import MuiGridTemplate from './templates/MuiGridTemplate.tsx';
 
@@ -54,11 +55,14 @@ function MedicationAuthoring({
 }: MedicationAuthoringV2Props) {
   const [formKey, setFormKey] = useState(0);
   const [formData, setFormData] = useState({});
+  const [initialformData, setInitialFormData] = useState({});
   const [errorSchema, setErrorSchema] = useState({});
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const formRef = useRef<any>(null);
+  const [isProductUpdate, setIsProductUpdate] = useState(false);
+  const targetedProductId = selectedProduct?.id;
 
   const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
     task.branchPath,
@@ -70,7 +74,10 @@ function MedicationAuthoring({
   const { isLoading, isFetching } = useProductQuery({
     selectedProduct,
     task,
-    setFunction: setFormData,
+    setFunction: (data: any) => {
+      setFormData(data);
+      setInitialFormData(data);
+    },
   });
   const {
     isLoading: isTicketProductLoading,
@@ -78,7 +85,10 @@ function MedicationAuthoring({
   } = useTicketProductQuery({
     ticketProductId,
     ticket,
-    setFunction: setFormData,
+    setFunction: (data: any) => {
+      setFormData(data);
+      setInitialFormData(data);
+    },
   });
   const mutation = useCalculateProduct();
   const { isPending, data } = mutation;
@@ -97,13 +107,19 @@ function MedicationAuthoring({
     setSaveModalOpen(!saveModalOpen);
   };
 
+
   const handleFormSubmit = ({ formData }: any) => {
-    mutation.mutate({
-      formData,
-      ticket: ticket,
-      toggleModalOpen: handleToggleCreateModal,
-      task,
-    });
+      mutation.mutate({
+        formData,
+        initialformData,
+        ticket: ticket,
+        toggleModalOpen: handleToggleCreateModal,
+        task,
+        isProductUpdate,
+        selectedProduct
+      });
+
+
   };
 
   const handleClear = useCallback(() => {
@@ -206,13 +222,24 @@ function MedicationAuthoring({
               </Button>
               <DraftSubmitPanel isDirty={isDirty} saveDraft={saveDraft} />
               <Button
-                data-testid={'preview-btn'}
+                data-testid={'create-btn'}
                 type="submit"
                 variant="contained"
                 color="primary"
                 disabled={isPending}
+                onClick={() => setIsProductUpdate(false)}
               >
-                {isPending ? 'Submitting...' : 'Preview'}
+                {isPending ? 'Submitting...' : 'Create'}
+              </Button>
+              <Button
+                  data-testid={'update-btn'}
+                  type="submit"
+                  variant="contained"
+                  color="secondary"
+                  disabled={isPending}
+                  onClick={() => setIsProductUpdate(true)}
+              >
+                {isPending ? 'Submitting...' : 'Update'}
               </Button>
             </Box>
           </Form>
@@ -223,13 +250,14 @@ function MedicationAuthoring({
             ticket={ticket}
             existingProductId={ticketProductId}
           />
-          <ProductPreviewCreateModal
+          <ProductPreviewManageModal
             open={createModalOpen}
             handleClose={handleToggleCreateModal}
             productCreationDetails={data}
             branch={task.branchPath}
             ticket={ticket}
             productType={ProductType.medication}
+            isProductUpdate={isProductUpdate}
           />
         </Container>
       </Box>
@@ -239,31 +267,49 @@ function MedicationAuthoring({
 
 interface UseCalculateProductArguments {
   formData: any;
+  initialformData:any;
   ticket: Ticket;
   toggleModalOpen: () => void;
   task: Task;
+  isProductUpdate:boolean,
+  selectedProduct: Concept | ValueSetExpansionContains | null;
 }
 
 function useCalculateProduct() {
   const mutation = useMutation({
     mutationFn: async ({
       formData,
+                         initialformData,
       ticket,
       task,
+        isProductUpdate,
+                         selectedProduct
     }: UseCalculateProductArguments) => {
-      const productSummary = await productService.previewNewMedicationProduct(
-        formData,
-        task.branchPath,
-      );
-      const productCreationObj: ProductCreationDetails = {
+      let productSummary;
+      if(isProductUpdate){
+        productSummary = await productService.previewUpdateMedicationProduct(
+            formData,
+            selectedProduct?.id,
+            task.branchPath,
+        );
+      }else{
+        productSummary = await productService.previewCreateMedicationProduct(
+            formData,
+            task.branchPath,
+        );
+      }
+
+      const productSaveDetails: ProductSaveDetails = {
+        type:isProductUpdate ? ProductActionType.update:ProductActionType.create,
         productSummary,
         packageDetails: formData as MedicationPackageDetails,
         ticketId: ticket.id,
         partialSaveName: null,
-        saveName: '',
         nameOverride: null,
+        originalConceptId:selectedProduct?.id,
+        originalPackageDetails: initialformData as MedicationPackageDetails,
       };
-      return productCreationObj;
+      return productSaveDetails;
     },
     onSuccess: (_, variables) => {
       variables.toggleModalOpen();

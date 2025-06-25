@@ -30,7 +30,8 @@ interface ProductPreviewBodyProps {
   watch: UseFormWatch<ProductSummary>;
   getValues: UseFormGetValues<ProductSummary>;
   readOnlyMode: boolean;
-  editProduct: boolean;
+  isSimpleEdit: boolean;
+  isProductUpdate: boolean;
   newConceptFound: boolean;
 
   branch: string;
@@ -48,13 +49,14 @@ function ProductPreviewBody({
   register,
   watch,
   branch,
-  editProduct,
+  isSimpleEdit,
   newConceptFound,
   readOnlyMode,
   handleClose,
 
   setValue,
   ticket,
+                              isProductUpdate
 }: ProductPreviewBodyProps) {
   const lableTypesRight = ['TP', 'TPUU', 'TPP'];
   const lableTypesLeft = ['MP', 'MPUU', 'MPP'];
@@ -106,9 +108,10 @@ function ProductPreviewBody({
                 fieldBindings={fieldBindings}
                 branch={branch}
                 refsetData={refsetData}
-                editProduct={editProduct}
+                isSimpleEdit={isSimpleEdit}
                 setValue={setValue}
                 ticket={ticket}
+
               />
             ))}
           </Grid>
@@ -132,9 +135,10 @@ function ProductPreviewBody({
                 fieldBindings={fieldBindings}
                 branch={branch}
                 refsetData={refsetData}
-                editProduct={editProduct}
+                isSimpleEdit={isSimpleEdit}
                 setValue={setValue}
                 ticket={ticket}
+
               />
             ))}
           </Grid>
@@ -162,7 +166,7 @@ function ProductPreviewBody({
                   fieldBindings={fieldBindings}
                   branch={branch}
                   refsetData={refsetData}
-                  editProduct={editProduct}
+                  isSimpleEdit={isSimpleEdit}
                   setValue={setValue}
                   ticket={ticket}
                 />
@@ -171,11 +175,12 @@ function ProductPreviewBody({
           </Grid>
         </Grid>
       </Box>
-      {!readOnlyMode && !editProduct ? (
+      {!readOnlyMode && !isSimpleEdit ? (
         <SubmitPanel
           idsWithInvalidName={idsWithInvalidName}
           newConceptFound={newConceptFound}
           handleClose={handleClose}
+          isProductUpdate={isProductUpdate}
         />
       ) : (
         <div />
@@ -187,6 +192,7 @@ interface SubmitPanelProps {
   newConceptFound: boolean;
 
   idsWithInvalidName: string[];
+  isProductUpdate:boolean;
   handleClose?:
     | ((event: object, reason: 'backdropClick' | 'escapeKeyDown') => void)
     | (() => void);
@@ -195,6 +201,7 @@ function SubmitPanel({
   newConceptFound,
 
   idsWithInvalidName,
+                       isProductUpdate,
   handleClose,
 }: SubmitPanelProps) {
   const { canEdit, lockDescription } = useCanEditTask();
@@ -222,9 +229,9 @@ function SubmitPanel({
             disabled={
               !newConceptFound || !canEdit || idsWithInvalidName.length > 0
             }
-            data-testid={'create-product-btn'}
+            data-testid={ isProductUpdate ? 'update-product-btn':'create-product-btn' }
           >
-            Create
+            { isProductUpdate ? 'Update':'Create' }
           </Button>
         </UnableToEditTooltip>
       </Stack>

@@ -19,7 +19,7 @@ import { RefsetMember } from '../../../types/RefsetMember.ts';
 import { useTheme } from '@mui/material/styles';
 import {
   findProductUsingId,
-  findRelations,
+  findRelations, isNewConcept,
 } from '../../../utils/helpers/conceptUtils.ts';
 import ConceptDiagramModal from '../../../components/conceptdiagrams/ConceptDiagramModal.tsx';
 import {
@@ -61,6 +61,7 @@ import {
 } from '../../../utils/helpers/ProductPreviewUtils.ts';
 import ProductEditModal from '../../../components/editProduct/ProductEditModal.tsx';
 import { ProductStatusIndicators } from './ProductStatusIndicators.tsx';
+import {ProductRetireView} from "./ProductRetireView.tsx";
 
 interface ProductPreviewPanelProps {
   control: Control<ProductSummary>;
@@ -78,9 +79,10 @@ interface ProductPreviewPanelProps {
   fieldBindings: FieldBindings;
   branch: string;
   refsetMembers: RefsetMember[];
-  editProduct: boolean;
+  isSimpleEdit: boolean;
   setValue: UseFormSetValue<ProductSummary>;
   ticket?: Ticket;
+
 }
 
 function ProductPreviewPanel({
@@ -97,10 +99,11 @@ function ProductPreviewPanel({
   idsWithInvalidName,
   setIdsWithInvalidName,
   fieldBindings,
-  editProduct,
+  isSimpleEdit,
   setValue,
   branch,
   ticket,
+
 }: ProductPreviewPanelProps) {
   const theme = useTheme();
   const [conceptDiagramModalOpen, setConceptDiagramModalOpen] = useState(false);
@@ -179,7 +182,7 @@ function ProductPreviewPanel({
       setActiveConcept(conceptId);
     }
   };
-  const isEditingCTPP = editProduct && product.label === 'CTPP';
+  const isEditingCTPP = isSimpleEdit && product.label === 'CTPP';
   const shouldRenderDropdownAsReadonly = product.concept && product.conceptId;
 
   return (
@@ -198,7 +201,7 @@ function ProductPreviewPanel({
         keepMounted={true}
         branch={branch}
       />
-      {editProduct && ticket && (
+      {isSimpleEdit && ticket && (
         <ProductEditModal
           isCtpp={isEditingCTPP}
           open={editModalOpen}
@@ -243,7 +246,7 @@ function ProductPreviewPanel({
               <Grid xs={40} item={true}>
                 <Stack direction="row" spacing={2} alignItems="center">
                   <Grid item xs={10}>
-                    {product.newConcept ? (
+                    {isNewConcept(product) ? (
                       <ProductHeaderWatch
                         control={control}
                         index={index}
@@ -295,13 +298,14 @@ function ProductPreviewPanel({
                   </Grid>
                   <Grid container justifyContent="flex-end" alignItems="center">
                     <ProductStatusIndicators product={product} />
+                    <ProductRetireView product={product} />
                     <IconButton
                       size="small"
                       onClick={() => setConceptDiagramModalOpen(true)}
                     >
                       <AccountTreeOutlined />
                     </IconButton>
-                    {editProduct && (
+                    {isSimpleEdit && (
                       <IconButton
                         size="small"
                         onClick={() => setEditModalOpen(true)}
@@ -316,7 +320,7 @@ function ProductPreviewPanel({
               <Grid xs={40} item={true}>
                 <Stack direction="row" spacing={2} alignItems="center">
                   <Grid item xs={10}>
-                    {product.newConcept ? (
+                    {isNewConcept(product) ? (
                       <ProductHeaderWatch
                         control={control}
                         index={index}
@@ -346,13 +350,16 @@ function ProductPreviewPanel({
                       <></>
                     )}
                     <ProductStatusIndicators product={product} />
+                    <ProductRetireView product={product} />
+
+
                     <IconButton
                       size="small"
                       onClick={() => setConceptDiagramModalOpen(true)}
                     >
                       <AccountTreeOutlined />
                     </IconButton>
-                    {editProduct && (
+                    {isSimpleEdit && (
                       <IconButton
                         size="small"
                         onClick={() => setEditModalOpen(true)}
@@ -374,7 +381,7 @@ function ProductPreviewPanel({
             {product.concept === null &&
               product.conceptOptions &&
               product.conceptOptions.length === 0 &&
-              product.newConcept && (
+                isNewConcept(product)  && (
                 <NewConceptDropdown
                   product={product}
                   index={index}
@@ -389,7 +396,7 @@ function ProductPreviewPanel({
             {product.concept === null &&
               product.conceptOptions &&
               product.conceptOptions.length > 0 &&
-              product.newConcept && (
+                isNewConcept(product)  && (
                 <ConceptOptionsDropdown
                   product={product}
                   index={index}
@@ -427,6 +434,7 @@ function ConceptOptionsDropdown({
   control,
   fieldBindings,
   branch,
+
 }: ConceptOptionsDropdownProps) {
   const { ticketNumber } = useParams();
   const { data: ticket } = useTicketByTicketNumber(ticketNumber, true);
@@ -596,6 +604,7 @@ function ProductHeaderWatch({
   partialNameCheckKeywords,
   nameGeneratorErrorKeywords,
   optionsIgnored,
+
 }: {
   control: Control<ProductSummary>;
   index: number;
@@ -619,7 +628,7 @@ function ProductHeaderWatch({
     control,
     name: `nodes[${index}].newConceptDetails.fullySpecifiedName` as 'nodes.0.newConceptDetails.fullySpecifiedName',
   });
-  if (product.newConcept) {
+  if (isNewConcept(product)) {
     if (
       (fsn && isNameContainsKeywords(fsn, nameGeneratorErrorKeywords)) ||
       (pt && isNameContainsKeywords(pt, nameGeneratorErrorKeywords))
