@@ -296,7 +296,7 @@
               "ui:field": "AutoCompleteField",
               "ui:title": "Qualitative Strength",
               "ui:options": {
-                "ecl": "<1149484003s",
+                "ecl": "<1149484003",
                 "showDefaultOptions": false
               }
             }
@@ -497,7 +497,7 @@
               "ui:field": "AutoCompleteField",
               "ui:title": "Qualitative Strength",
               "ui:options": {
-                "ecl": "<1149484003s",
+                "ecl": "<1149484003",
                 "showDefaultOptions": false
               }
             }

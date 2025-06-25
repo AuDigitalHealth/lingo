@@ -39,9 +39,11 @@ import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
+import au.gov.digitalhealth.lingo.configuration.model.NonDefiningPropertyDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.product.Edge;
@@ -51,6 +53,7 @@ import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.details.DeviceProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.ProductQuantity;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
 import au.gov.digitalhealth.lingo.service.validators.DeviceDetailsValidator;
 import au.gov.digitalhealth.lingo.util.AmtConstants;
 import au.gov.digitalhealth.lingo.util.BigDecimalFormatter;
@@ -182,6 +185,25 @@ public class DeviceProductCalculationService
       String branch, @Valid PackageDetails<@Valid DeviceProductDetails> packageDetails) {
 
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+
+    if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
+      NonDefiningPropertyDefinition nmpcDefinition =
+          modelConfiguration.getNonDefiningPropertiesByName().get("nmpcType");
+      NonDefiningProperty nmpcType = new NonDefiningProperty();
+      nmpcType.setIdentifierScheme(nmpcDefinition.getName());
+      nmpcType.setIdentifier(nmpcDefinition.getIdentifier());
+      nmpcType.setTitle(nmpcDefinition.getTitle());
+      nmpcType.setDescription(nmpcDefinition.getDescription());
+
+      SnowstormConceptMini valueObject =
+          new SnowstormConceptMini()
+              .conceptId("680581000220102")
+              .pt(new SnowstormTermLangPojo().term("NMPC Device").lang("en"))
+              .fsn(new SnowstormTermLangPojo().term("NMPC Device (qualifier value)").lang("en"));
+
+      nmpcType.setValueObject(valueObject);
+      packageDetails.getNonDefiningProperties().add(nmpcType);
+    }
 
     Mono<List<String>> taskChangedConceptIds = snowstormClient.getConceptIdsChangedOnTask(branch);
 
