@@ -24,7 +24,8 @@ api.interceptors.response.use(
     return response;
   },
   error => {
-    const errorMessage = error.response?.data?.detail ||
+    const errorMessage =
+      error.response?.data?.detail ||
       error.message ||
       error.data?.error ||
       'Unknown error';
