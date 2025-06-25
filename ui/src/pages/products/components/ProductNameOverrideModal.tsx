@@ -4,11 +4,11 @@ import BaseModalBody from '../../../components/modal/BaseModalBody';
 import BaseModalFooter from '../../../components/modal/BaseModalFooter';
 import BaseModalHeader from '../../../components/modal/BaseModalHeader';
 import { useEffect, useState } from 'react';
-import { ProductCreationDetails } from '../../../types/product';
+import { ProductSaveDetails } from '../../../types/product';
 
 interface ProductNameOverrideModalProps {
   open: boolean;
-  productCreationDetails?: ProductCreationDetails;
+  productCreationDetails?: ProductSaveDetails;
   productName?: string;
   handleClose: () => void;
   ignore: () => void;
