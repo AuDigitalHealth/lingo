@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FieldProps } from '@rjsf/utils';
 import { Box, IconButton, Tooltip } from '@mui/material';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
@@ -84,6 +84,7 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
     const newValue = {
       conceptId: brand.conceptId,
       pt: brand.pt || { term: brand.fsn?.term || 'Unnamed Brand' },
+      fsn: brand.fsn || { term: brand.pt?.term || 'Unnamed Brand' },
     };
 
     if (isMultivalued) {
