@@ -3,7 +3,7 @@ import { useConceptsForReview } from '../../../../hooks/api/task/useConceptsForR
 import useTaskById from '../../../../hooks/useTaskById.tsx';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 
-import { Typography, Box, Paper } from '@mui/material';
+import { Box, Paper, Typography } from '@mui/material';
 import { CheckCircle } from '@mui/icons-material';
 import { useShowReviewControls } from '../../../../hooks/api/task/useReviews.tsx';
 
@@ -11,7 +11,7 @@ function ConceptReviewList() {
   const task = useTaskById();
   const { conceptReviews } = useConceptsForReview(task?.branchPath);
   const showReviewControls = useShowReviewControls({ task });
-  if ((!conceptReviews || conceptReviews.length < 1) && showReviewControls) {
+  if (!conceptReviews || conceptReviews.length < 1 || !showReviewControls) {
     return <></>;
   }
 
