@@ -48,6 +48,7 @@ import {
   invalidateBulkActionQueriesById,
 } from '../../utils/helpers/ProductPreviewUtils.ts';
 import { ProductNameOverrideModal } from './components/ProductNameOverrideModal.tsx';
+import { useConceptsForReview } from '../../hooks/api/task/useConceptsForReview.js';
 
 interface ProductPreviewSaveOrViewModeProps {
   productSaveDetails?: ProductSaveDetails;
@@ -83,6 +84,7 @@ function ProductPreviewSaveOrViewMode({
 
   const [duplicateNameModalOpen, setDuplicateNameModalOpen] = useState(false);
   const [overrideDuplicateName, setOverrideDuplicateName] = useState(false);
+  useConceptsForReview(branch);
 
   const productWithNameAlreadyExists = (
     ticket: Ticket | undefined,

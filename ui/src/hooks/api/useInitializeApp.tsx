@@ -1,5 +1,5 @@
 import useInitializeTickets from './useInitializeTickets';
-import useInitializeTasks from './useAllTasks';
+import useInitializeTasks from './task/useAllTasks';
 import { useJiraUsers } from './useInitializeJiraUsers';
 import useAvailableProjects from './useInitializeProjects';
 import { useServiceStatus } from './useServiceStatus';
