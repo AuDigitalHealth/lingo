@@ -86,14 +86,27 @@ public class UiSchemaExtender {
       JsonNode uiSchemaNode, String nodeName, Set<? extends BasePropertyDefinition> properties) {
     addUiNodeForPropertySet(
         (ObjectNode) uiSchemaNode, properties, nodeName, ProductPackageType.PACKAGE);
-    addUiNodeForPropertySet(
-        uiSchemaNode
-            .withObjectProperty(CONTAINED_PRODUCTS)
-            .withObjectProperty(ITEMS)
-            .withObjectProperty(PRODUCT_DETAILS),
-        properties,
-        nodeName,
-        ProductPackageType.PRODUCT);
+    JsonNode containedProductsNode = uiSchemaNode.get(CONTAINED_PRODUCTS);
+    if (containedProductsNode != null && containedProductsNode.has(ITEMS)) {
+      JsonNode itemsNode = containedProductsNode.get(ITEMS);
+      if (itemsNode != null && itemsNode.has(PRODUCT_DETAILS)) {
+        JsonNode productDetailsNode = itemsNode.get(PRODUCT_DETAILS);
+
+        // Check for oneOf array
+        if (productDetailsNode.has("oneOf") && productDetailsNode.get("oneOf").isArray()) {
+          ArrayNode oneOfArray = (ArrayNode) productDetailsNode.get("oneOf");
+          for (JsonNode oneOfMember : oneOfArray) {
+            // Apply your logic to each member
+            addUiNodeForPropertySet(
+                (ObjectNode) oneOfMember, properties, nodeName, ProductPackageType.PRODUCT);
+          }
+        } else {
+          // Fallback to original logic
+          addUiNodeForPropertySet(
+              (ObjectNode) productDetailsNode, properties, nodeName, ProductPackageType.PRODUCT);
+        }
+      }
+    }
     addUiNodeForPropertySet(
         uiSchemaNode.withObjectProperty("containedPackages").withObjectProperty(ITEMS),
         properties,
