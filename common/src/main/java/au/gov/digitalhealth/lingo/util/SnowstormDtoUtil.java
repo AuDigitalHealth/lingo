@@ -130,7 +130,7 @@ public class SnowstormDtoUtil {
   }
 
   public static boolean relationshipOfTypeExists(
-      Set<SnowstormRelationship> subRoleGroup, String type) {
+      Set<SnowstormRelationship> subRoleGroup, String... type) {
     return !filterActiveStatedRelationshipByType(subRoleGroup, type).isEmpty();
   }
 
