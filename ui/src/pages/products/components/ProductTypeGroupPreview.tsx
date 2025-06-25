@@ -65,7 +65,6 @@ function ProductTypeGroupPreview({
   isSimpleEdit,
   setValue,
   ticket,
-
 }: ProductTypeGroupPreviewProps) {
   return (
     <Grid>
