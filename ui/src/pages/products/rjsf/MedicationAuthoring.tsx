@@ -1,6 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { Form } from '@rjsf/mui';
-import { Box, Button, Container, Paper } from '@mui/material';
+import { Box, Button, Container, Paper, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import _ from 'lodash';
 import ajvErrors from 'ajv-errors';
@@ -20,7 +20,9 @@ import TextFieldWidget from './widgets/TextFieldWidget.tsx';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 import productService from '../../../api/ProductService.ts';
 import { ConfigService } from '../../../api/ConfigService.ts';
-import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
+import {
+  isValueSetExpansionContains
+} from '../../../types/predicates/isValueSetExpansionContains.ts';
 import { customizeValidator } from '@rjsf/validator-ajv8';
 import { Concept } from '../../../types/concept.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
@@ -30,7 +32,7 @@ import {
   MedicationPackageDetails,
   ProductActionType,
   ProductSaveDetails,
-  ProductType,
+  ProductType
 } from '../../../types/product.ts';
 import { useTicketProductQuery } from './hooks/useTicketProductQuery.ts';
 import { DraftSubmitPanel } from './components/DarftSubmitPanel.tsx';
@@ -64,6 +66,8 @@ function MedicationAuthoring({
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const formRef = useRef<any>(null);
   const [isProductUpdate, setIsProductUpdate] = useState(false);
+
+  const [mode, setMode] = useState<'create' | 'update'>('create');
 
   const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
     task.branchPath,
@@ -192,16 +196,16 @@ function MedicationAuthoring({
               ExternalIdentifiers,
               UnitValueUnWrappedField,
               UnitValueField,
-              CompactQuantityField,
+              CompactQuantityField
             }}
             widgets={{
               TextFieldWidget,
               OneOfArrayWidget,
-              NumberWidget,
+              NumberWidget
             }}
             templates={{
               ArrayFieldTemplate: CustomArrayFieldTemplate,
-              ObjectFieldTemplate: MuiGridTemplate,
+              ObjectFieldTemplate: MuiGridTemplate
             }}
             onChange={handleChange}
             onSubmit={handleFormSubmit}
@@ -216,7 +220,7 @@ function MedicationAuthoring({
                 mt: 2,
                 display: 'flex',
                 justifyContent: 'flex-end',
-                gap: 2,
+                gap: 2
               }}
             >
               <Button
@@ -229,26 +233,36 @@ function MedicationAuthoring({
                 Clear
               </Button>
               <DraftSubmitPanel isDirty={isDirty} saveDraft={saveDraft} />
-              <Button
-                data-testid={'create-btn'}
-                type="submit"
-                variant="contained"
-                color="primary"
-                disabled={isPending}
-                onClick={() => setIsProductUpdate(false)}
-              >
-                {isPending ? 'Submitting...' : 'Create'}
-              </Button>
-              <Button
-                data-testid={'update-btn'}
-                type="submit"
-                variant="contained"
-                color="secondary"
-                disabled={isPending}
-                onClick={() => setIsProductUpdate(true)}
-              >
-                {isPending ? 'Submitting...' : 'Update'}
-              </Button>
+              <Box>
+                <ToggleButtonGroup
+                  value={mode}
+                  exclusive
+                  onChange={(_, value) => value && setMode(value)}
+                  aria-label="product action mode"
+                  color="standard"
+                  size="small"
+                  sx={{ borderRadius: 4, overflow: 'hidden' }} // Rounded group
+                >
+                  <ToggleButton value="create" aria-label="create">
+                    Create
+                  </ToggleButton>
+                  <ToggleButton value="update" aria-label="update">
+                    Update
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                <Button
+                  data-testid={mode === 'create' ? 'create-btn' : 'update-btn'}
+                  type="submit"
+                  variant="contained"
+                  color={mode === 'create' ? 'primary' : 'secondary'}
+                  disabled={isPending}
+                  onClick={() => setIsProductUpdate(mode === 'update')}
+                >
+                  {isPending ? 'Submitting...' : mode.charAt(0).toUpperCase() + mode.slice(1)}
+                </Button>
+              </Box>
             </Box>
           </Form>
           <ProductPartialSaveModal
