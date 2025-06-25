@@ -18,7 +18,7 @@
       "arrayTemplate": "accordion",
       "skipTitle": true,
       "searchAndAddProduct": {
-        "ecl": "(<763158003 and ^ 660381000220107)",
+        "ecl": "(<763158003 minus >(<763158003))",
         "type": "medication",
         "package": false
       }
@@ -50,7 +50,7 @@
         "ui:field": "AutoCompleteField",
         "ui:title": "Unit",
         "ui:options": {
-          "ecl": "((<781405001 and ^ 660401000220107) : (774160008 /* OR 999000081000168101 */) = *).774163005",
+          "ecl": "((<781405001 minus >(<781405001)) : (774160008 /* OR 999000081000168101 */) = *).774163005",
           "showDefaultOptions": true
         }
       },
@@ -218,7 +218,7 @@
                 "ui:field": "AutoCompleteField",
                 "ui:title": "Unit",
                 "ui:options": {
-                  "ecl": "((<763158003 and ^ 660381000220107)).732945000",
+                  "ecl": "((<763158003 minus >(<763158003))).732945000",
                   "extendedEcl": "<767524001",
                   "showDefaultOptions": true
                 }
@@ -245,7 +245,7 @@
                 "ui:field": "AutoCompleteField",
                 "ui:title": "Unit",
                 "ui:options": {
-                  "ecl": "((<763158003 and ^ 660381000220107)).732947008",
+                  "ecl": "((<763158003 minus >(<763158003))).732947008",
                   "extendedEcl": "<767524001",
                   "showDefaultOptions": true
                 }
@@ -266,7 +266,7 @@
                 }
               }
             ],
-            "ecl": "(>>((<763158003 and ^ 660381000220107))).411116001",
+            "ecl": "(>>((<763158003 minus >(<763158003)))).411116001",
             "extendedEcl": "<736542009",
             "showDefaultOptions": false
           }
@@ -282,7 +282,7 @@
           "ui:field": "AutoCompleteField",
           "ui:title": "Unit of Presentation",
           "ui:options": {
-            "ecl": "((<763158003 and ^ 660381000220107)).763032000",
+            "ecl": "((<763158003 minus >(<763158003))).763032000",
             "extendedEcl": "<105590001",
             "showDefaultOptions": false
           }
