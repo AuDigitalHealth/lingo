@@ -83,6 +83,7 @@ public class SecurityConfiguration {
             "/api/(.*)/product-model/.*",
             "/api/(.*)/product-model-graph/.*",
             "/config/medication/(.*)/.*",
+            "/config/vaccine/(.*)/.*",
             "/config/device/(.*)/.*",
             "/config/bulk-brand/(.*)/.*",
             "/config/bulk-pack/(.*)/.*",
