@@ -1,6 +1,13 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { Form } from '@rjsf/mui';
-import { Box, Button, Container, Paper, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import {
+  Box,
+  Button,
+  Container,
+  Paper,
+  ToggleButton,
+  ToggleButtonGroup,
+} from '@mui/material';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import _ from 'lodash';
 import ajvErrors from 'ajv-errors';
@@ -20,9 +27,7 @@ import TextFieldWidget from './widgets/TextFieldWidget.tsx';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 import productService from '../../../api/ProductService.ts';
 import { ConfigService } from '../../../api/ConfigService.ts';
-import {
-  isValueSetExpansionContains
-} from '../../../types/predicates/isValueSetExpansionContains.ts';
+import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
 import { customizeValidator } from '@rjsf/validator-ajv8';
 import { Concept } from '../../../types/concept.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
@@ -32,7 +37,7 @@ import {
   MedicationPackageDetails,
   ProductActionType,
   ProductSaveDetails,
-  ProductType
+  ProductType,
 } from '../../../types/product.ts';
 import { useTicketProductQuery } from './hooks/useTicketProductQuery.ts';
 import { DraftSubmitPanel } from './components/DarftSubmitPanel.tsx';
@@ -196,16 +201,16 @@ function MedicationAuthoring({
               ExternalIdentifiers,
               UnitValueUnWrappedField,
               UnitValueField,
-              CompactQuantityField
+              CompactQuantityField,
             }}
             widgets={{
               TextFieldWidget,
               OneOfArrayWidget,
-              NumberWidget
+              NumberWidget,
             }}
             templates={{
               ArrayFieldTemplate: CustomArrayFieldTemplate,
-              ObjectFieldTemplate: MuiGridTemplate
+              ObjectFieldTemplate: MuiGridTemplate,
             }}
             onChange={handleChange}
             onSubmit={handleFormSubmit}
@@ -220,7 +225,7 @@ function MedicationAuthoring({
                 mt: 2,
                 display: 'flex',
                 justifyContent: 'flex-end',
-                gap: 2
+                gap: 2,
               }}
             >
               <Button
@@ -260,7 +265,9 @@ function MedicationAuthoring({
                   disabled={isPending}
                   onClick={() => setIsProductUpdate(mode === 'update')}
                 >
-                  {isPending ? 'Submitting...' : mode.charAt(0).toUpperCase() + mode.slice(1)}
+                  {isPending
+                    ? 'Submitting...'
+                    : mode.charAt(0).toUpperCase() + mode.slice(1)}
                 </Button>
               </Box>
             </Box>

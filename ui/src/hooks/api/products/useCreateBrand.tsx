@@ -22,7 +22,10 @@ export function useCreateBrand() {
       });
     },
     onSuccess: () => {
-      enqueueSnackbar('Brand created successfully.', { variant: 'success', autoHideDuration: 5000 });
+      enqueueSnackbar('Brand created successfully.', {
+        variant: 'success',
+        autoHideDuration: 5000,
+      });
     },
   });
 
