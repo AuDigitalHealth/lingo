@@ -16,7 +16,6 @@
 
 import axios from 'axios';
 import useUserStore from '../stores/UserStore';
-import { enqueueSnackbar } from 'notistack';
 
 export const api = axios.create({});
 
@@ -25,15 +24,10 @@ api.interceptors.response.use(
     return response;
   },
   error => {
-    debugger;
     const errorMessage = error.response?.data?.detail ||
       error.message ||
       error.data?.error ||
       'Unknown error';
-
-    enqueueSnackbar(`Error: ${error.status} - ${error.message}: ${errorMessage}`, {
-      variant: 'error'
-    });
 
     if (
       error.response?.status === 403 &&
