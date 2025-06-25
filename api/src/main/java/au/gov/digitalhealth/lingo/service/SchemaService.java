@@ -56,7 +56,7 @@ public class SchemaService {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     JsonNode schemaNode = readFileContentAsJson(modelConfiguration.getBaseMedicationSchema());
 
-    schemaExtender.updateSchema(modelConfiguration, schemaNode);
+    schemaExtender.updateSchema(modelConfiguration, schemaNode, "ProductDetails");
 
     return schemaNode.toString();
   }
@@ -70,11 +70,30 @@ public class SchemaService {
     return uiSchemaNode.toString();
   }
 
+  public String getVaccineSchema(String branch) {
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+    JsonNode schemaNode = readFileContentAsJson(modelConfiguration.getBaseVaccineSchema());
+
+    schemaExtender.updateSchema(
+        modelConfiguration, schemaNode, "PresentationProductDetails", "QualitativeProductDetails");
+
+    return schemaNode.toString();
+  }
+
+  public String getVaccineUiSchema(String branch) {
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+    JsonNode uiSchemaNode = readFileContentAsJson(modelConfiguration.getBaseVaccineUiSchema());
+
+    uiSchemaExtender.updateUiSchema(modelConfiguration, uiSchemaNode);
+
+    return uiSchemaNode.toString();
+  }
+
   public String getDeviceSchema(String branch) {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     JsonNode schemaNode = readFileContentAsJson(modelConfiguration.getBaseDeviceSchema());
 
-    schemaExtender.updateSchema(modelConfiguration, schemaNode);
+    schemaExtender.updateSchema(modelConfiguration, schemaNode, "ProductDetails");
 
     return schemaNode.toString();
   }
@@ -83,7 +102,7 @@ public class SchemaService {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     JsonNode schemaNode = readFileContentAsJson(modelConfiguration.getBaseBulkBrandSchema());
 
-    schemaExtender.updateSchema(modelConfiguration, schemaNode);
+    schemaExtender.updateSchema(modelConfiguration, schemaNode, "ProductDetails");
 
     return schemaNode.toString();
   }
@@ -101,7 +120,7 @@ public class SchemaService {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     JsonNode schemaNode = readFileContentAsJson(modelConfiguration.getBaseBulkPackSchema());
 
-    schemaExtender.updateSchema(modelConfiguration, schemaNode);
+    schemaExtender.updateSchema(modelConfiguration, schemaNode, "ProductDetails");
 
     return schemaNode.toString();
   }
