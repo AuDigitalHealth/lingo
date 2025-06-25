@@ -19,7 +19,8 @@ import { RefsetMember } from '../../../types/RefsetMember.ts';
 import { useTheme } from '@mui/material/styles';
 import {
   findProductUsingId,
-  findRelations, isNewConcept,
+  findRelations,
+  isNewConcept,
 } from '../../../utils/helpers/conceptUtils.ts';
 import ConceptDiagramModal from '../../../components/conceptdiagrams/ConceptDiagramModal.tsx';
 import {
@@ -61,7 +62,7 @@ import {
 } from '../../../utils/helpers/ProductPreviewUtils.ts';
 import ProductEditModal from '../../../components/editProduct/ProductEditModal.tsx';
 import { ProductStatusIndicators } from './ProductStatusIndicators.tsx';
-import {ProductRetireView} from "./ProductRetireView.tsx";
+import { ProductRetireView } from './ProductRetireView.tsx';
 
 interface ProductPreviewPanelProps {
   control: Control<ProductSummary>;
@@ -82,7 +83,6 @@ interface ProductPreviewPanelProps {
   isSimpleEdit: boolean;
   setValue: UseFormSetValue<ProductSummary>;
   ticket?: Ticket;
-
 }
 
 function ProductPreviewPanel({
@@ -103,7 +103,6 @@ function ProductPreviewPanel({
   setValue,
   branch,
   ticket,
-
 }: ProductPreviewPanelProps) {
   const theme = useTheme();
   const [conceptDiagramModalOpen, setConceptDiagramModalOpen] = useState(false);
@@ -352,7 +351,6 @@ function ProductPreviewPanel({
                     <ProductStatusIndicators product={product} />
                     <ProductRetireView product={product} />
 
-
                     <IconButton
                       size="small"
                       onClick={() => setConceptDiagramModalOpen(true)}
@@ -381,7 +379,7 @@ function ProductPreviewPanel({
             {product.concept === null &&
               product.conceptOptions &&
               product.conceptOptions.length === 0 &&
-                isNewConcept(product)  && (
+              isNewConcept(product) && (
                 <NewConceptDropdown
                   product={product}
                   index={index}
@@ -396,7 +394,7 @@ function ProductPreviewPanel({
             {product.concept === null &&
               product.conceptOptions &&
               product.conceptOptions.length > 0 &&
-                isNewConcept(product)  && (
+              isNewConcept(product) && (
                 <ConceptOptionsDropdown
                   product={product}
                   index={index}
@@ -434,7 +432,6 @@ function ConceptOptionsDropdown({
   control,
   fieldBindings,
   branch,
-
 }: ConceptOptionsDropdownProps) {
   const { ticketNumber } = useParams();
   const { data: ticket } = useTicketByTicketNumber(ticketNumber, true);
@@ -604,7 +601,6 @@ function ProductHeaderWatch({
   partialNameCheckKeywords,
   nameGeneratorErrorKeywords,
   optionsIgnored,
-
 }: {
   control: Control<ProductSummary>;
   index: number;

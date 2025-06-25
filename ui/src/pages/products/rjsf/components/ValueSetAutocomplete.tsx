@@ -2,12 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Autocomplete, CircularProgress, TextField } from '@mui/material';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { Concept } from '../../../../types/concept.ts';
-import {
-  useSearchConceptOntoServerByUrl
-} from '../../../../hooks/api/products/useSearchConcept.tsx';
-import {
-  convertFromValueSetExpansionContainsListToSnowstormConceptMiniList
-} from '../../../../utils/helpers/getValueSetExpansionContainsPt.ts';
+import { useSearchConceptOntoServerByUrl } from '../../../../hooks/api/products/useSearchConcept.tsx';
+import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../../utils/helpers/getValueSetExpansionContainsPt.ts';
 import useApplicationConfigStore from '../../../../stores/ApplicationConfigStore.ts';
 import { FieldProps } from '@rjsf/utils';
 
@@ -22,16 +18,16 @@ interface ValueSetAutocompleteProps extends FieldProps {
 }
 
 const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
-                                                                     idSchema,
-                                                                     name,
-                                                                     label,
-                                                                     url,
-                                                                     showDefaultOptions = false,
-                                                                     value, // Concept ID only
-                                                                     onChange,
-                                                                     disabled = false,
-                                                                     error,
-                                                                   }) => {
+  idSchema,
+  name,
+  label,
+  url,
+  showDefaultOptions = false,
+  value, // Concept ID only
+  onChange,
+  disabled = false,
+  error,
+}) => {
   const [inputValue, setInputValue] = useState('');
   const [options, setOptions] = useState<Concept[]>([]);
   const [selectedConcept, setSelectedConcept] = useState<Concept | null>(null);
@@ -86,7 +82,8 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
   };
 
   // Highlight if selected value needs attention
-  const needsAttention = selectedConcept && selectedConcept.pt?.term && !selectedConcept.conceptId;
+  const needsAttention =
+    selectedConcept && selectedConcept.pt?.term && !selectedConcept.conceptId;
 
   return (
     <Autocomplete

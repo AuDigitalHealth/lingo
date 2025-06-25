@@ -2,10 +2,19 @@ import React, { useState } from 'react';
 import { DataTable } from 'primereact/datatable';
 
 import { Column } from 'primereact/column';
-import { ProductStatus, ProductTableRow } from '../../../types/TicketProduct.ts';
+import {
+  ProductStatus,
+  ProductTableRow,
+} from '../../../types/TicketProduct.ts';
 import { Link, useNavigate } from 'react-router-dom';
 import { ActionType, ProductType } from '../../../types/product.ts';
-import { Grid, IconButton, InputLabel, Tooltip, Typography } from '@mui/material';
+import {
+  Grid,
+  IconButton,
+  InputLabel,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import { AddCircle, Delete } from '@mui/icons-material';
 import UnableToEditTooltip from '../../tasks/components/UnableToEditTooltip.tsx';
@@ -14,7 +23,7 @@ import { useCanEditTicket } from '../../../hooks/api/tickets/useCanEditTicket.ts
 import {
   filterProductRowById,
   mapToProductDetailsArray,
-  mapToProductDetailsArrayFromBulkActions
+  mapToProductDetailsArrayFromBulkActions,
 } from '../../../utils/helpers/ticketProductsUtils.ts';
 import useCanEditTask from '../../../hooks/useCanEditTask.tsx';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
@@ -237,7 +246,11 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
         <Grid container sx={{ marginTop: 'auto' }}>
           <div
             className="custom-datatable ticket-products-table"
-            style={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}
+            style={{
+              display: 'flex',
+              justifyContent: 'flex-start',
+              width: '100%',
+            }}
           >
             <DataTable
               paginator
@@ -276,14 +289,16 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
                   textOverflow: 'ellipsis',
                 }}
               />
-              <Column 
-                field="actionProductType" 
+              <Column
+                field="actionProductType"
                 header="Action"
                 body={(rowData: ProductTableRow) => {
                   return (
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                       <div>{rowData.productType || ''}</div>
-                      <div>{rowData.action ? rowData.action.toLowerCase() : ''}</div>
+                      <div>
+                        {rowData.action ? rowData.action.toLowerCase() : ''}
+                      </div>
                     </div>
                   );
                 }}
@@ -300,11 +315,15 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
                 body={(rowData: ProductTableRow) => {
                   const date = new Date(rowData.created);
                   const day = date.getDate();
-                  const month = date.toLocaleString('en-US', { month: 'short' });
+                  const month = date.toLocaleString('en-US', {
+                    month: 'short',
+                  });
                   const year = date.getFullYear();
                   return (
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <div>{day} {month}</div>
+                      <div>
+                        {day} {month}
+                      </div>
                       <div>{year}</div>
                     </div>
                   );

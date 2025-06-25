@@ -56,7 +56,7 @@ function ProductPreviewBody({
 
   setValue,
   ticket,
-                              isProductUpdate
+  isProductUpdate,
 }: ProductPreviewBodyProps) {
   const lableTypesRight = ['TP', 'TPUU', 'TPP'];
   const lableTypesLeft = ['MP', 'MPUU', 'MPP'];
@@ -111,7 +111,6 @@ function ProductPreviewBody({
                 isSimpleEdit={isSimpleEdit}
                 setValue={setValue}
                 ticket={ticket}
-
               />
             ))}
           </Grid>
@@ -138,7 +137,6 @@ function ProductPreviewBody({
                 isSimpleEdit={isSimpleEdit}
                 setValue={setValue}
                 ticket={ticket}
-
               />
             ))}
           </Grid>
@@ -192,7 +190,7 @@ interface SubmitPanelProps {
   newConceptFound: boolean;
 
   idsWithInvalidName: string[];
-  isProductUpdate:boolean;
+  isProductUpdate: boolean;
   handleClose?:
     | ((event: object, reason: 'backdropClick' | 'escapeKeyDown') => void)
     | (() => void);
@@ -201,7 +199,7 @@ function SubmitPanel({
   newConceptFound,
 
   idsWithInvalidName,
-                       isProductUpdate,
+  isProductUpdate,
   handleClose,
 }: SubmitPanelProps) {
   const { canEdit, lockDescription } = useCanEditTask();
@@ -229,9 +227,11 @@ function SubmitPanel({
             disabled={
               !newConceptFound || !canEdit || idsWithInvalidName.length > 0
             }
-            data-testid={ isProductUpdate ? 'update-product-btn':'create-product-btn' }
+            data-testid={
+              isProductUpdate ? 'update-product-btn' : 'create-product-btn'
+            }
           >
-            { isProductUpdate ? 'Update':'Create' }
+            {isProductUpdate ? 'Update' : 'Create'}
           </Button>
         </UnableToEditTooltip>
       </Stack>

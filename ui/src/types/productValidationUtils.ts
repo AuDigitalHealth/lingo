@@ -39,7 +39,7 @@ import {
 } from './productValidations.ts';
 import { FieldBindings } from './FieldBindings.ts';
 import { generateEclFromBinding } from '../utils/helpers/EclUtils.ts';
-import {Concept, Product} from './concept.ts';
+import { Concept, Product } from './concept.ts';
 import * as yup from 'yup';
 import { showErrors, snowstormErrorHandler } from './ErrorHandler.ts';
 import { ServiceStatus } from './applicationConfig.ts';

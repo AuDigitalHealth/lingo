@@ -17,7 +17,7 @@ import { convertStringToRegex } from '../../../utils/helpers/stringUtils.ts';
 import { getValueFromFieldBindings } from '../../../utils/helpers/FieldBindingUtils.ts';
 import React, { useState } from 'react';
 import AdditionalPropertiesDisplay from './AdditionalPropertiesDisplay.tsx';
-import {ProductRetireUpdate} from "./ProductRetireUpdate.tsx";
+import { ProductRetireUpdate } from './ProductRetireUpdate.tsx';
 
 interface NewConceptDropdownProps {
   product: Product;
@@ -79,7 +79,11 @@ function NewConceptDropdown({
             onKeyDown={filterKeypress}
           />
         </InnerBoxSmall>
-        <ProductRetireUpdate product={product} control={control} index={index}/>
+        <ProductRetireUpdate
+          product={product}
+          control={control}
+          index={index}
+        />
         <AdditionalPropertiesDisplay product={product} branch={branch} />
       </Grid>
     </div>

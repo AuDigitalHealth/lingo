@@ -164,7 +164,7 @@ export function containsNewConcept(nodes: Product[]) {
   });
   return product !== undefined;
 }
-export function isNewConcept(product:Product){
+export function isNewConcept(product: Product) {
   return product.newConcept || product.newConceptDetails;
 }
 export const isValidConceptName = (concept: Concept) => {
