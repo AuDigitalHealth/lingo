@@ -150,6 +150,25 @@ function ProductAuthoring({
               task={task}
               ticketProductId={productId}
               ticket={ticket}
+              schemaType='medication'
+            />
+          ) : getActionType(actionType, selectedActionType) ===
+            ActionType.newVaccine ? (
+            <MedicationAuthoring
+              selectedProduct={selectedProduct}
+              task={task}
+              ticketProductId={productId}
+              ticket={ticket}
+              schemaType='vaccine'
+            />
+          ) : getActionType(actionType, selectedActionType) ===
+            ActionType.newNutritionalProduct ? (
+            <MedicationAuthoring
+              selectedProduct={selectedProduct}
+              task={task}
+              ticketProductId={productId}
+              ticket={ticket}
+              schemaType='nutritional'
             />
           ) : getActionType(actionType, selectedActionType) ===
             ActionType.newDevice ? (
