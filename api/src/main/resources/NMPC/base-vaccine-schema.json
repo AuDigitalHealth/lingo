@@ -85,7 +85,7 @@
         }
       }
     },
-    "PresentationStrengthIngredient": {
+    "Ingredient": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -120,40 +120,10 @@
       "required": [
         "activeIngredient",
         "refinedActiveIngredient",
-        "preciseIngredient",
-        "basisOfStrengthSubstance",
-        "presentationStrengthNumerator",
-        "presentationStrengthDenominator"
-      ]
-    },
-    "QualtitativeStrengthIngredient": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "activeIngredient": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "VTM Active Ingredient",
-          "errorMessage": {
-            "minProperties": "Active Ingredient must be populated.",
-            "type": "Active Ingredient must be populated."
-          }
-        },
-        "refinedActiveIngredient": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "VMP Active Ingredient"
-        },
-        "preciseIngredient": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "AMP Active Ingredient"
-        }
-      },
-      "required": [
-        "activeIngredient",
-        "refinedActiveIngredient",
         "preciseIngredient"
       ]
     },
-    "PresentationProductDetails": {
+    "ProductDetails": {
       "type": "object",
       "title": "Presentation Strength Product Details",
       "properties": {
@@ -173,7 +143,7 @@
           "type": "array",
           "title": "Active Ingredients",
           "items": {
-            "$ref": "#/$defs/PresentationStrengthIngredient"
+            "$ref": "#/$defs/Ingredient"
           },
           "minItems": 1,
           "errorMessage": {
@@ -202,70 +172,10 @@
         "ingredientQualitativeStrength": {
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Ingredient Qualitative Strength"
-        }
-      },
-      "required": [
-        "productName",
-        "genericForm",
-        "activeIngredients"
-      ],
-      "errorMessage": {
-        "required": "Product Details must be populated."
-      }
-    },
-    "QualitativeProductDetails": {
-      "type": "object",
-      "title": "Presentation Strength Product Details",
-      "properties": {
-        "type": {
-          "type": "string",
-          "default": "medication"
-        },
-        "productName": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "Brand Name",
-          "minProperties": 1,
-          "errorMessage": {
-            "minProperties": "Brand Name must be populated."
-          }
-        },
-        "activeIngredients": {
-          "type": "array",
-          "title": "Active Ingredients",
-          "items": {
-            "$ref": "#/$defs/PresentationStrengthIngredient"
-          },
-          "minItems": 1,
-          "errorMessage": {
-            "minItems": "At least one active ingredient must be present."
-          }
-        },
-        "genericForm": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "Generic Dose Form"
-        },
-        "specificForm": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "Specific Dose Form"
         },
         "unitOfPresentation": {
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Unit of Presentation"
-        },
-        "playsRole": {
-          "type": "array",
-          "title": "Plays Role",
-          "items": {
-            "$ref": "#/$defs/SnowstormConceptMini"
-          }
-        },
-        "targetPopulation": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "Target Population"
-        },
-        "ingredientQualitativeStrength": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "Ingredient Qualitative Strength"
         },
         "unit": {
           "$ref": "#/$defs/SnowstormConceptMini",
@@ -288,10 +198,7 @@
       "required": [
         "productName",
         "genericForm",
-        "activeIngredients",
-        "unitOfPresentation",
-        "unit",
-        "value"
+        "activeIngredients"
       ],
       "errorMessage": {
         "required": "Product Details must be populated."
@@ -317,16 +224,7 @@
           }
         },
         "productDetails": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/PresentationProductDetails",
-              "title": "Presentation Strength"
-            },
-            {
-              "$ref": "#/$defs/QualitativeProductDetails",
-              "title": "Qualitative Strength Details"
-            }
-          ]
+          "$ref": "#/$defs/ProductDetails"
         }
       },
       "required": [

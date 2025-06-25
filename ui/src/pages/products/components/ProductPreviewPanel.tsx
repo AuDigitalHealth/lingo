@@ -40,7 +40,13 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Stack } from '@mui/system';
 import LinkViews from './LinkViews.tsx';
-import { AccountTreeOutlined, Edit } from '@mui/icons-material';
+import { FormattedMessage } from 'react-intl';
+import {
+  AccountTreeOutlined,
+  Edit,
+  NewReleases,
+  NewReleasesOutlined,
+} from '@mui/icons-material';
 import CircleIcon from '@mui/icons-material/Circle';
 import ExistingConceptDropdown from './ExistingConceptDropdown.tsx';
 import NewConceptDropdown from './NewConceptDropdown.tsx';
@@ -63,6 +69,10 @@ import {
 import ProductEditModal from '../../../components/editProduct/ProductEditModal.tsx';
 import { ProductStatusIndicators } from './ProductStatusIndicators.tsx';
 import { ProductRetireView } from './ProductRetireView.tsx';
+import { useConceptsForReview } from '../../../hooks/api/task/useConceptsForReview.js';
+import ConceptReviews from './reviews/ConceptReviews.tsx';
+import ProductLoader from './ProductLoader.tsx';
+import { useShowReviewControls } from '../../../hooks/api/task/useReviews.tsx';
 
 interface ProductPreviewPanelProps {
   control: Control<ProductSummary>;
@@ -105,8 +115,15 @@ function ProductPreviewPanel({
   ticket,
 }: ProductPreviewPanelProps) {
   const theme = useTheme();
+  const task = useTaskById();
+  const showReviewControls = useShowReviewControls({ task });
   const [conceptDiagramModalOpen, setConceptDiagramModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const { conceptReviews, isLoadingConceptReviews } =
+    useConceptsForReview(branch);
+  const filteredConceptReviews = conceptReviews
+    ? conceptReviews.find(c => c.conceptId === product.conceptId)
+    : undefined;
 
   const links = activeConcept
     ? findRelations(productModel?.edges, activeConcept, product.conceptId)
@@ -183,6 +200,10 @@ function ProductPreviewPanel({
   };
   const isEditingCTPP = isSimpleEdit && product.label === 'CTPP';
   const shouldRenderDropdownAsReadonly = product.concept && product.conceptId;
+
+  if (isLoadingConceptReviews) {
+    <ProductLoader message={'Loading'} />;
+  }
 
   return (
     <>
@@ -296,6 +317,36 @@ function ProductPreviewPanel({
                     )}
                   </Grid>
                   <Grid container justifyContent="flex-end" alignItems="center">
+                    {showReviewControls && (
+                      <ConceptReviews
+                        conceptReview={filteredConceptReviews}
+                        branch={branch}
+                        ticket={ticket}
+                      />
+                    )}
+                    {product.newInTask ? (
+                      <Tooltip
+                        title={
+                          <FormattedMessage
+                            id="changed-in-task"
+                            defaultMessage="Un-promoted changes in the task"
+                          />
+                        }
+                      >
+                        <NewReleases />
+                      </Tooltip>
+                    ) : product.newInProject ? (
+                      <Tooltip
+                        title={
+                          <FormattedMessage
+                            id="changed-in-project"
+                            defaultMessage="Unreleased changes in the project"
+                          />
+                        }
+                      >
+                        <NewReleasesOutlined />
+                      </Tooltip>
+                    ) : null}
                     <ProductStatusIndicators product={product} />
                     <ProductRetireView product={product} />
                     <IconButton
@@ -341,6 +392,14 @@ function ProductPreviewPanel({
                     )}
                   </Grid>
                   <Grid container justifyContent="flex-end" alignItems="center">
+                    {showReviewControls && (
+                      <ConceptReviews
+                        conceptReview={filteredConceptReviews}
+                        branch={branch}
+                        ticket={ticket}
+                      />
+                    )}
+
                     {activeConcept === product.conceptId ? (
                       <CircleIcon
                         style={{ color: theme.palette.warning.light }}
