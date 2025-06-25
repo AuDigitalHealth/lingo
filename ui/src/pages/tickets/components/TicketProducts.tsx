@@ -2,19 +2,10 @@ import React, { useState } from 'react';
 import { DataTable } from 'primereact/datatable';
 
 import { Column } from 'primereact/column';
-import {
-  ProductStatus,
-  ProductTableRow,
-} from '../../../types/TicketProduct.ts';
+import { ProductStatus, ProductTableRow } from '../../../types/TicketProduct.ts';
 import { Link, useNavigate } from 'react-router-dom';
 import { ActionType, ProductType } from '../../../types/product.ts';
-import {
-  Grid,
-  IconButton,
-  InputLabel,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { Grid, IconButton, InputLabel, Tooltip, Typography } from '@mui/material';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import { AddCircle, Delete } from '@mui/icons-material';
 import UnableToEditTooltip from '../../tasks/components/UnableToEditTooltip.tsx';
@@ -23,7 +14,7 @@ import { useCanEditTicket } from '../../../hooks/api/tickets/useCanEditTicket.ts
 import {
   filterProductRowById,
   mapToProductDetailsArray,
-  mapToProductDetailsArrayFromBulkActions,
+  mapToProductDetailsArrayFromBulkActions
 } from '../../../utils/helpers/ticketProductsUtils.ts';
 import useCanEditTask from '../../../hooks/useCanEditTask.tsx';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
@@ -402,7 +393,7 @@ const productNameTemplate = (
   } else {
     return (
       <Tooltip
-        title={'Product no longer exists or is inactive.'}
+        title={`Product ${rowData.conceptId} no longer exists or is inactive.`}
         key={`tooltip-${rowData.id}`}
       >
         <div>
