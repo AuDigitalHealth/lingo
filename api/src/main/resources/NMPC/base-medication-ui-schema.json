@@ -4,13 +4,7 @@
       "containedProducts": 24
     },
     {
-      "externalIdentifiers": 24
-    },
-    {
       "nonDefiningProperties": 24
-    },
-    {
-      "referenceSets": 24
     }
   ],
   "containedProducts": {
@@ -77,13 +71,7 @@
               "unitOfPresentation": 24
             },
             {
-              "externalIdentifiers": 24
-            },
-            {
               "nonDefiningProperties": 24
-            },
-            {
-              "referenceSets": 24
             }
           ]
         },
