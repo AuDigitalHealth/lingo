@@ -14,7 +14,10 @@
 /// limitations under the License.
 ///
 
-import ApplicationConfig, { SecureAppConfig, ServiceStatus } from '../types/applicationConfig';
+import ApplicationConfig, {
+  SecureAppConfig,
+  ServiceStatus,
+} from '../types/applicationConfig';
 import { FieldBindings } from '../types/FieldBindings.ts';
 import { api } from './api.ts';
 import { unauthorizedApi } from './unauthorizedApi.ts';
@@ -80,9 +83,7 @@ export const ConfigService = {
     return (await uiSchemaResponse.json()) as string;
   },
   async fetchMedicationSchemaData(branchPath: string, type: string) {
-    const schemaResponse = await fetch(
-      `/config/${type}/${branchPath}/schema`,
-    );
+    const schemaResponse = await fetch(`/config/${type}/${branchPath}/schema`);
     if (!schemaResponse.ok) {
       throw new Error(`HTTP error! status: ${schemaResponse.status}`);
     }
