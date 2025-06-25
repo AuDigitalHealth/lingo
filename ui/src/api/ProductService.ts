@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import {Concept, ProductSummary} from '../types/concept.ts';
+import { Concept, ProductSummary } from '../types/concept.ts';
 
 import {
   BrandPackSizeCreationDetails,
@@ -32,7 +32,7 @@ import {
   ProductPackSizes,
 } from '../types/product.ts';
 
-import {api} from './api.ts';
+import { api } from './api.ts';
 
 const ProductService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
@@ -107,13 +107,13 @@ const ProductService = {
     return productModel;
   },
   async previewUpdateMedicationProduct(
-      medicationPackage: MedicationProductDetails,
-      productId:string| undefined,
-      branch: string,
+    medicationPackage: MedicationProductDetails,
+    productId: string | undefined,
+    branch: string,
   ): Promise<ProductSummary> {
     const response = await api.post(
-        `/api/${branch}/medications/product/${productId}/$calculateUpdate`,
-        medicationPackage,
+      `/api/${branch}/medications/product/${productId}/$calculateUpdate`,
+      medicationPackage,
     );
     if (response.status != 200) {
       this.handleErrors();
@@ -122,16 +122,16 @@ const ProductService = {
     return productModel;
   },
   async saveMedicationProduct(
-      productCreationDetails: ProductSaveDetails,
-      branch: string
+    productCreationDetails: ProductSaveDetails,
+    branch: string,
   ): Promise<ProductSummary> {
     let response;
 
-    if (productCreationDetails.type= ProductActionType.update) {
+    if ((productCreationDetails.type = ProductActionType.update)) {
       // Update existing product
       response = await api.put(
-          `/api/${branch}/medications/product/${productCreationDetails.originalConceptId}`,
-          productCreationDetails,
+        `/api/${branch}/medications/product/${productCreationDetails.originalConceptId}`,
+        productCreationDetails,
       );
       if (response.status !== 200 && response.status !== 422) {
         this.handleErrors();
@@ -139,8 +139,8 @@ const ProductService = {
     } else {
       // Create new product
       response = await api.post(
-          `/api/${branch}/medications/product`,
-          productCreationDetails,
+        `/api/${branch}/medications/product`,
+        productCreationDetails,
       );
       if (response.status !== 201 && response.status !== 422) {
         this.handleErrors();

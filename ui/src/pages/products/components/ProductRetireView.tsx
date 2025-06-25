@@ -9,10 +9,11 @@ export interface ProductRetireViewProps {
 }
 
 export const ProductRetireView: React.FC<ProductRetireViewProps> = ({
-                                                              product,
-                                                              spacing = 0.5,
-                                                            }) => {
-  const show = product.originalNode !== null && product.newConceptDetails !== null;
+  product,
+  spacing = 0.5,
+}) => {
+  const show =
+    product.originalNode !== null && product.newConceptDetails !== null;
   if (!show) return null;
 
   const term = product.originalNode?.node.concept.pt.term;
@@ -20,22 +21,23 @@ export const ProductRetireView: React.FC<ProductRetireViewProps> = ({
   if (!term) return null;
 
   return (
-      <Stack direction="row" spacing={spacing} alignItems="center">
-        <Tooltip
-            title={
-              <>
-                <div><strong>Retired concept:</strong> {term}</div>
-                <div>
-                  <strong>Reason:</strong>{' '}
-                  <span>{reason}</span>
-                </div>
-              </>
-            }
-            placement="top"
-            enterDelay={300}
-        >
-          <ArchiveOutlined color="action" fontSize="medium" />
-        </Tooltip>
-      </Stack>
+    <Stack direction="row" spacing={spacing} alignItems="center">
+      <Tooltip
+        title={
+          <>
+            <div>
+              <strong>Retired concept:</strong> {term}
+            </div>
+            <div>
+              <strong>Reason:</strong> <span>{reason}</span>
+            </div>
+          </>
+        }
+        placement="top"
+        enterDelay={300}
+      >
+        <ArchiveOutlined color="action" fontSize="medium" />
+      </Tooltip>
+    </Stack>
   );
 };
