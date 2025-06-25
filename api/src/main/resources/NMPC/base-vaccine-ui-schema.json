@@ -99,7 +99,7 @@
           "ui:field": "AutoCompleteField",
           "ui:options": {
             "ecl": "<774167006",
-            "showDefaultOptions": false,
+            "showDefaultOptions": true,
             "createBrand": {
               "ecl": "<774167006",
               "semanticTags": "(product name)"
@@ -161,7 +161,7 @@
                 ],
                 "ecl": "(<763158003 {{ D term=\"medicinal product\" }}).127489000",
                 "extendedEcl": "<105590001",
-                "showDefaultOptions": false
+                "showDefaultOptions": true
               }
             },
             "refinedActiveIngredient": {
@@ -192,7 +192,7 @@
               "ui:field": "AutoCompleteField",
               "ui:title": "BoSS",
               "ui:options": {
-                "showDefaultOptions": false,
+                "showDefaultOptions": true,
                 "placeholder": "Basis of Strength Substance (Optional)",
                 "description": "Only enabled if Active Ingredient is set."
               }
@@ -268,7 +268,7 @@
             ],
             "ecl": "(>>((<763158003 minus >(<763158003)))).411116001",
             "extendedEcl": "<736542009",
-            "showDefaultOptions": false
+            "showDefaultOptions": true
           }
         },
         "specificForm": {
@@ -284,7 +284,7 @@
           "ui:options": {
             "ecl": "((<763158003 minus >(<763158003))).763032000",
             "extendedEcl": "<105590001",
-            "showDefaultOptions": false
+            "showDefaultOptions": true
           }
         },
         "value": {
@@ -308,7 +308,7 @@
           "ui:title": "Target Population",
           "ui:options": {
             "ecl": "<27821000087106",
-            "showDefaultOptions": false
+            "showDefaultOptions": true
           }
         },
         "playsRole": {
@@ -316,8 +316,8 @@
           "ui:title": "Plays Role",
           "ui:options": {
             "ecl": "<766940004",
-            "showDefaultOptions": false,
-            "isMultivalued": true
+            "showDefaultOptions": true,
+            "multiValued": true
           }
         },
         "ingredientQualitativeStrength": {
@@ -325,7 +325,7 @@
           "ui:title": "Qualitative Strength",
           "ui:options": {
             "ecl": "<1149484003",
-            "showDefaultOptions": false
+            "showDefaultOptions": true
           }
         }
       }
