@@ -26,6 +26,7 @@ import {
   Quantity,
 } from './product.ts';
 import {
+  isNewConcept,
   isValidConcept,
   UnitMgId,
   UnitMLId,
@@ -38,7 +39,7 @@ import {
 } from './productValidations.ts';
 import { FieldBindings } from './FieldBindings.ts';
 import { generateEclFromBinding } from '../utils/helpers/EclUtils.ts';
-import { Concept, Product } from './concept.ts';
+import {Concept, Product} from './concept.ts';
 import * as yup from 'yup';
 import { showErrors, snowstormErrorHandler } from './ErrorHandler.ts';
 import { ServiceStatus } from './applicationConfig.ts';
@@ -507,7 +508,7 @@ export async function validateProductSummaryNodes(
 ): Promise<void | ReturnType<typeof showErrors>> {
   // Extract concept IDs from products that are not new concepts
   const conceptIdsToBeChecked = products
-    .filter(p => !p.newConcept)
+    .filter(p => !isNewConcept(p))
     .map(p => p.conceptId);
 
   // Get distinct concept IDs
