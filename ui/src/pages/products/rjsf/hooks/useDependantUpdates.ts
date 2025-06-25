@@ -28,6 +28,7 @@ interface UiSchemaOptions {
   origExtendedEcl?: string;
   disabled?: boolean;
   defaultValue?: any;
+  showDefaultOptions?: boolean;
 }
 
 interface UiSchema {
@@ -153,6 +154,10 @@ export const useDependantUpdates = (
       if (dependantInstance['ui:options']?.dependants) {
         newUiSchema['ui:options'].dependants =
           dependantInstance['ui:options'].dependants;
+      }
+      if (dependantInstance['ui:options']?.showDefaultOptions) {
+        newUiSchema['ui:options'].showDefaultOptions =
+          dependantInstance['ui:options'].showDefaultOptions;
       }
 
       // Handle anyOf sub-schemas
