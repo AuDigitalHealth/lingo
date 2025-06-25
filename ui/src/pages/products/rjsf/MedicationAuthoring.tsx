@@ -64,7 +64,6 @@ function MedicationAuthoring({
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const formRef = useRef<any>(null);
   const [isProductUpdate, setIsProductUpdate] = useState(false);
-  const targetedProductId = selectedProduct?.id;
 
   const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
     task.branchPath,
@@ -140,7 +139,15 @@ function MedicationAuthoring({
   }
 
   if (isPending) {
-    return <ProductLoader message="Previewing product" />;
+    return (
+      <ProductLoader
+        message={
+          isProductUpdate
+            ? 'Previewing update product'
+            : 'Previewing new product'
+        }
+      />
+    );
   }
 
   if (isSchemaLoading || isUiSchemaLoading) {
