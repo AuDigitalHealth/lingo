@@ -16,8 +16,7 @@
 
 import axios from 'axios';
 import useUserStore from '../stores/UserStore';
-import { useQueryClient } from '@tanstack/react-query';
-import { getAuthorizationQueryOptions } from '../hooks/api/auth/useAuthorization';
+import { enqueueSnackbar } from 'notistack';
 
 export const api = axios.create({});
 
@@ -26,13 +25,23 @@ api.interceptors.response.use(
     return response;
   },
   error => {
-    const message = error.response?.data?.message || error.message;
+    debugger;
+    const errorMessage = error.response?.data?.detail ||
+      error.message ||
+      error.data?.error ||
+      'Unknown error';
+
+    enqueueSnackbar(`Error: ${error.status} - ${error.message}: ${errorMessage}`, {
+      variant: 'error'
+    });
+
     if (
       error.response?.status === 403 &&
       window.location.href.includes('/dashboard')
     ) {
       useUserStore.setState({ loginRefreshRequired: true });
     }
+
     return Promise.reject(error);
   },
 );
