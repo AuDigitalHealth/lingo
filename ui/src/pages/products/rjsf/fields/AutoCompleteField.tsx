@@ -17,7 +17,9 @@ import { useExclusionUpdates } from './../hooks/useExclusionUpdates.ts';
 const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
   const { onChange, idSchema } = props;
   const uiSchema = props.uiSchema;
-  const isMultivalued = uiSchema?.['ui:options']?.isMultivalued === true;
+  const isMultivalued = uiSchema?.['ui:options']?.multiValued === true;
+  const isShowDefaultOptions =
+    uiSchema?.['ui:options']?.showDefaultOptions === true;
 
   const [formContext, setFormContext] = useState(props.formContext || {});
   const [formData, setFormData] = useState(
@@ -114,6 +116,7 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
                 <MultiValueEclAutocomplete
                   {...props}
                   ecl={currentEcl}
+                  showDefaultOptions={isShowDefaultOptions}
                   value={formData}
                   isDisabled={disabled || props.disabled || false}
                   branch={task?.branchPath}
@@ -127,6 +130,7 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
                 <EclAutocomplete
                   {...props}
                   ecl={currentEcl}
+                  showDefaultOptions={isShowDefaultOptions}
                   value={formData}
                   isDisabled={disabled || props.disabled || false}
                   branch={task?.branchPath}
