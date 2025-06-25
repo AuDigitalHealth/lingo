@@ -318,6 +318,7 @@ models:
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: true
+        showDefaultOptions: true
         order: 20
       - name: pil
         title: Leaflet URL
