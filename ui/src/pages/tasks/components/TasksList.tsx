@@ -34,7 +34,7 @@ import CustomTaskReviewerSelection from './CustomTaskReviewerSelection.tsx';
 import { TableHeaders } from '../../../components/TableHeaders.tsx';
 import TasksActionBar from './TasksActionBar.tsx';
 import AuthoringPlatformLink from '../../../components/AuthoringPlatformLink.tsx';
-import { useAllTasks } from '../../../hooks/api/useAllTasks.tsx';
+import { useAllTasks } from '../../../hooks/api/task/useAllTasks.js';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import { unavailableTasksErrorHandler } from '../../../types/ErrorHandler.ts';
