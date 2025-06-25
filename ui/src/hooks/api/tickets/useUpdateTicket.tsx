@@ -6,7 +6,7 @@ import {
   ExternalRequestor,
   LabelType,
   Ticket,
-  TicketDto,
+  TicketDto
 } from '../../../types/tickets/ticket';
 import TicketsService from '../../../api/TicketsService';
 import { enqueueSnackbar } from 'notistack';
@@ -175,6 +175,7 @@ export function useBulkCreateTickets() {
     onSuccess: data => {
       enqueueSnackbar(`Updated ${data.length} rows`, {
         variant: 'success',
+        autoHideDuration: 5000
       });
     },
   });
@@ -199,6 +200,7 @@ export function useBulkCreateExternalRequestors() {
     onSuccess: () => {
       enqueueSnackbar('Process complete.', {
         variant: 'success',
+        autoHideDuration: 5000
       });
     },
   });
