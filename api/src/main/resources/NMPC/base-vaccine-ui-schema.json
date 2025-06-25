@@ -316,7 +316,9 @@
           "ui:title": "Plays Role",
           "ui:options": {
             "ecl": "<766940004",
-            "showDefaultOptions": false
+            "showDefaultOptions": false,
+            "isMultivalued": true
+
           }
         },
         "ingredientQualitativeStrength": {
