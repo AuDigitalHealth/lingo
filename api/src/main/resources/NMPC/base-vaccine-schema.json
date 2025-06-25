@@ -1,0 +1,420 @@
+{
+  "type": "object",
+  "$defs": {
+    "SnowstormConceptMini": {
+      "type": "object",
+      "properties": {
+        "conceptId": {
+          "type": "string"
+        },
+        "pt": {
+          "$ref": "#/$defs/SnowstormTermLangPojo"
+        }
+      },
+      "minProperties": 1,
+      "errorMessage": {
+        "minProperties": "Field must be populated."
+      }
+    },
+    "SnowstormTermLangPojo": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "lang": {
+          "type": "string"
+        },
+        "term": {
+          "type": "string"
+        }
+      }
+    },
+    "Quantity": {
+      "type": "object",
+      "nullable": true,
+      "minProperties": 2,
+      "properties": {
+        "unit": {
+          "$ref": "#/$defs/SnowstormConceptMini"
+        },
+        "value": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "errorMessage": {
+        "minProperties": "Both 'unit' and 'value' must be provided when specified."
+      },
+      "dependencies": {
+        "unit": {
+          "oneOf": [
+            {
+              "properties": {
+                "unit": {
+                  "properties": {
+                    "conceptId": {
+                      "const": "732935002"
+                    }
+                  }
+                },
+                "value": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "value"
+              ]
+            },
+            {
+              "properties": {
+                "unit": {
+                  "properties": {
+                    "conceptId": {
+                      "not": {
+                        "const": "732935002"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "errorMessage": {
+            "oneOf": "Must be an integer >= 1 when 'unit' is 'Each'"
+          }
+        }
+      }
+    },
+    "PresentationStrengthIngredient": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "activeIngredient": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "VTM Active Ingredient",
+          "errorMessage": {
+            "minProperties": "Active Ingredient must be populated.",
+            "type": "Active Ingredient must be populated."
+          }
+        },
+        "refinedActiveIngredient": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "VMP Active Ingredient"
+        },
+        "preciseIngredient": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "AMP Active Ingredient"
+        },
+        "basisOfStrengthSubstance": {
+          "$ref": "#/$defs/SnowstormConceptMini"
+        },
+        "presentationStrengthNumerator": {
+          "$ref": "#/$defs/Quantity",
+          "title": "Presentation Strength Numerator"
+        },
+        "presentationStrengthDenominator": {
+          "$ref": "#/$defs/Quantity",
+          "title": "Presentation Strength Denominator"
+        }
+      },
+      "required": [
+        "activeIngredient",
+        "refinedActiveIngredient",
+        "preciseIngredient",
+        "basisOfStrengthSubstance",
+        "presentationStrengthNumerator",
+        "presentationStrengthDenominator"
+      ]
+    },
+    "QualtitativeStrengthIngredient": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "activeIngredient": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "VTM Active Ingredient",
+          "errorMessage": {
+            "minProperties": "Active Ingredient must be populated.",
+            "type": "Active Ingredient must be populated."
+          }
+        },
+        "refinedActiveIngredient": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "VMP Active Ingredient"
+        },
+        "preciseIngredient": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "AMP Active Ingredient"
+        }
+      },
+      "required": [
+        "activeIngredient",
+        "refinedActiveIngredient",
+        "preciseIngredient"
+      ]
+    },
+    "PresentationProductDetails": {
+      "type": "object",
+      "title": "Presentation Strength Product Details",
+      "properties": {
+        "type": {
+          "type": "string",
+          "default": "medication"
+        },
+        "productName": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Brand Name",
+          "minProperties": 1,
+          "errorMessage": {
+            "minProperties": "Brand Name must be populated."
+          }
+        },
+        "activeIngredients": {
+          "type": "array",
+          "title": "Active Ingredients",
+          "items": {
+            "$ref": "#/$defs/PresentationStrengthIngredient"
+          },
+          "minItems": 1,
+          "errorMessage": {
+            "minItems": "At least one active ingredient must be present."
+          }
+        },
+        "genericForm": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Generic Dose Form"
+        },
+        "specificForm": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Specific Dose Form"
+        },
+        "playsRole": {
+          "type": "array",
+          "title": "Plays Role",
+          "items": {
+            "$ref": "#/$defs/SnowstormConceptMini"
+          }
+        },
+        "targetPopulation": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Target Population"
+        },
+        "ingredientQualitativeStrength": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Ingredient Qualitative Strength"
+        }
+      },
+      "required": [
+        "productName",
+        "genericForm",
+        "activeIngredients"
+      ],
+      "errorMessage": {
+        "required": "Product Details must be populated."
+      }
+    },
+    "QualitativeProductDetails": {
+      "type": "object",
+      "title": "Presentation Strength Product Details",
+      "properties": {
+        "type": {
+          "type": "string",
+          "default": "medication"
+        },
+        "productName": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Brand Name",
+          "minProperties": 1,
+          "errorMessage": {
+            "minProperties": "Brand Name must be populated."
+          }
+        },
+        "activeIngredients": {
+          "type": "array",
+          "title": "Active Ingredients",
+          "items": {
+            "$ref": "#/$defs/PresentationStrengthIngredient"
+          },
+          "minItems": 1,
+          "errorMessage": {
+            "minItems": "At least one active ingredient must be present."
+          }
+        },
+        "genericForm": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Generic Dose Form"
+        },
+        "specificForm": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Specific Dose Form"
+        },
+        "unitOfPresentation": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Unit of Presentation"
+        },
+        "playsRole": {
+          "type": "array",
+          "title": "Plays Role",
+          "items": {
+            "$ref": "#/$defs/SnowstormConceptMini"
+          }
+        },
+        "targetPopulation": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Target Population"
+        },
+        "ingredientQualitativeStrength": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Ingredient Qualitative Strength"
+        },
+        "unit": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Unit of presentation size unit",
+          "errorMessage": {
+            "type": "Invalid Pack Size Unit",
+            "minProperties": "Field must be populated."
+          }
+        },
+        "value": {
+          "type": "number",
+          "title": "Unit of presentation size quantity",
+          "minimum": 0,
+          "errorMessage": {
+            "type": "Value must be a number",
+            "minimum": "Value must be at least 0"
+          }
+        }
+      },
+      "required": [
+        "productName",
+        "genericForm",
+        "activeIngredients",
+        "unitOfPresentation",
+        "unit",
+        "value"
+      ],
+      "errorMessage": {
+        "required": "Product Details must be populated."
+      }
+    },
+    "ContainedProduct": {
+      "type": "object",
+      "title": "Contained Product",
+      "properties": {
+        "unit": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "errorMessage": {
+            "type": "Invalid Pack Size Unit",
+            "minProperties": "Field must be populated."
+          }
+        },
+        "value": {
+          "type": "number",
+          "minimum": 0,
+          "errorMessage": {
+            "type": "Value must be a number",
+            "minimum": "Value must be at least 0"
+          }
+        },
+        "productDetails": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/PresentationProductDetails",
+              "title": "Presentation Strength"
+            },
+            {
+              "$ref": "#/$defs/QualitativeProductDetails",
+              "title": "Qualitative Strength Details"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unit",
+        "value",
+        "productDetails"
+      ],
+      "errorMessage": {
+        "required": "Contained product must be populated."
+      },
+      "dependencies": {
+        "unit": {
+          "oneOf": [
+            {
+              "properties": {
+                "unit": {
+                  "properties": {
+                    "conceptId": {
+                      "const": "732935002",
+                      "errorMessage": {
+                        "const": "Invalid Unit and Value"
+                      }
+                    }
+                  },
+                  "required": [
+                    "conceptId"
+                  ]
+                },
+                "value": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "errorMessage": {
+                    "type": "Value must be an integer when Unit is 'Each'",
+                    "const": "Unit must be 'Each' for this value constraint"
+                  }
+                }
+              },
+              "errorMessage": {
+                "oneOf": "Unit must be 'Each' with an integer value >= 1"
+              }
+            },
+            {
+              "properties": {
+                "unit": {
+                  "properties": {
+                    "conceptId": {
+                      "not": {
+                        "const": "732935002"
+                      }
+                    }
+                  }
+                },
+                "value": {
+                  "type": "number",
+                  "minimum": 0,
+                  "errorMessage": {
+                    "type": "Value must be a number ",
+                    "minimum": "Value must be at least 0"
+                  }
+                }
+              },
+              "errorMessage": {
+                "oneOf": "Unit must not be 'Each' and value must be a number >= 0"
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "properties": {
+    "containedProducts": {
+      "type": "array",
+      "title": "Contained Products",
+      "items": {
+        "$ref": "#/$defs/ContainedProduct"
+      },
+      "minItems": 1,
+      "errorMessage": {
+        "minItems": "At least one Contained Products."
+      }
+    }
+  },
+  "required": [
+    "containedProducts"
+  ],
+  "errorMessage": {
+    "required": "Fields must be populated."
+  },
+  "additionalProperties": false
+}
