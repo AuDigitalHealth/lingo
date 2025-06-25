@@ -28,6 +28,12 @@ import {
   Project,
 } from '../types/Project';
 import { api } from './api';
+import {
+  ConceptReviewFeedback,
+  ReviewMessage,
+  ReviewMessagePost,
+  ReviewedList,
+} from '../types/ConceptReview';
 
 const TasksServices = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
@@ -171,6 +177,34 @@ const TasksServices = {
     const returnTask = await this.getTask(projectKey, taskKey);
     return returnTask;
   },
+  async completeReview(
+    projectKey: string | undefined,
+    taskKey: string | undefined,
+    reviewers: UserDetails[],
+  ): Promise<Task> {
+    if (
+      projectKey === undefined ||
+      taskKey === undefined ||
+      reviewers === undefined
+    ) {
+      this.handleErrors();
+    }
+
+    const reviewRequest = {
+      reviewers: reviewers,
+      status: 'REVIEW_COMPLETED',
+    };
+
+    const response = await api.put(
+      `/authoring-services/projects/${projectKey}/tasks/${taskKey}`,
+      reviewRequest,
+    );
+    if (response.status !== 200) {
+      this.handleErrors();
+    }
+    const returnTask = await this.getTask(projectKey, taskKey);
+    return returnTask;
+  },
   async updateTask(
     projectKey: string | undefined,
     taskKey: string | undefined,
@@ -261,6 +295,102 @@ const TasksServices = {
     }
 
     return response.data as Task[];
+  },
+  async getConceptReviewsForTask(
+    projectKey: string | undefined,
+    taskKey: string | undefined,
+  ): Promise<ConceptReviewFeedback[]> {
+    if (projectKey === undefined || taskKey === undefined) {
+      this.handleErrors();
+    }
+    const response = await api.get(
+      `/authoring-services/projects/${projectKey}/tasks/${taskKey}/review`,
+    );
+    if (response.status !== 200) {
+      this.handleErrors();
+    }
+    return response.data as ConceptReviewFeedback[];
+  },
+  async postConceptReviewsMessageForTask(
+    projectKey: string | undefined,
+    taskKey: string | undefined,
+    message: ReviewMessagePost,
+  ): Promise<ReviewMessage> {
+    if (projectKey === undefined || taskKey === undefined) {
+      this.handleErrors();
+    }
+    const response = await api.post(
+      `/authoring-services/projects/${projectKey}/tasks/${taskKey}/review/message`,
+      message,
+    );
+    if (response.status !== 200) {
+      this.handleErrors();
+    }
+    return response.data as ReviewMessage;
+  },
+  async getReviewedList(
+    projectKey: string | undefined,
+    taskKey: string | undefined,
+  ): Promise<ReviewedList> {
+    if (projectKey === undefined || taskKey === undefined) {
+      this.handleErrors();
+    }
+    const response = await api.get(
+      `/authoring-services/projects/${projectKey}/tasks/${taskKey}/shared-ui-state/reviewed-list`,
+    );
+    if (response.status !== 200) {
+      this.handleErrors();
+    }
+    return response.data as ReviewedList;
+  },
+  async updateReviewedList(
+    projectKey: string | undefined,
+    taskKey: string | undefined,
+    reviewedList: ReviewedList,
+  ): Promise<ReviewedList> {
+    if (projectKey === undefined || taskKey === undefined) {
+      this.handleErrors();
+    }
+    const response = await api.post(
+      `/authoring-services/projects/${projectKey}/tasks/${taskKey}/shared-ui-state/reviewed-list`,
+      reviewedList,
+    );
+    if (response.status !== 200) {
+      this.handleErrors();
+    }
+    return response.data as ReviewedList;
+  },
+  async getFeedbackUnread(
+    projectKey: string | undefined,
+    taskKey: string | undefined,
+  ): Promise<string[]> {
+    if (projectKey === undefined || taskKey === undefined) {
+      this.handleErrors();
+    }
+    const response = await api.get(
+      `/authoring-services/projects/${projectKey}/tasks/${taskKey}/ui-state/feedback-unread`,
+    );
+    if (response.status !== 200) {
+      this.handleErrors();
+    }
+    return response.data as string[];
+  },
+  async postFeedbackUnread(
+    projectKey: string | undefined,
+    taskKey: string | undefined,
+    conceptIds: string[],
+  ): Promise<string[]> {
+    if (projectKey === undefined || taskKey === undefined) {
+      this.handleErrors();
+    }
+    const response = await api.post(
+      `/authoring-services/projects/${projectKey}/tasks/${taskKey}/ui-state/feedback-unread`,
+      conceptIds,
+    );
+    if (response.status !== 200) {
+      this.handleErrors();
+    }
+    return response.data as string[];
   },
 };
 

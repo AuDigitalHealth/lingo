@@ -5,7 +5,7 @@ import TasksServices from '../api/TasksService';
 import { useSnackbar } from 'notistack';
 import TasksSnackbar from '../components/snackbar/TasksSnackbar';
 import { useQueryClient } from '@tanstack/react-query';
-import { updateTaskCache, useAllTasksOptions } from './api/useAllTasks';
+import { updateTaskCache, useAllTasksOptions } from './api/task/useAllTasks';
 import useApplicationConfigStore from '../stores/ApplicationConfigStore';
 
 function useWebsocketEventHandler() {
