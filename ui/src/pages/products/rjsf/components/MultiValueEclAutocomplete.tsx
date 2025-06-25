@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Autocomplete, CircularProgress, TextField } from '@mui/material';
 import { Concept, ConceptMini } from '../../../../types/concept.ts';
 import { useSearchConceptsByEcl } from '../../../../hooks/api/useInitializeConcepts.tsx';
@@ -26,6 +26,8 @@ const MultiValueEclAutocomplete: React.FC<FieldProps<any, any>> = props => {
   );
   const isThisDisabled = isDisabled || props.disabled || false;
 
+  const isTypingRef = useRef(false);
+
   const { isLoading, allData } = useSearchConceptsByEcl(
     inputValue,
     ecl && ecl.length > 0 ? ecl : undefined,
@@ -45,39 +47,38 @@ const MultiValueEclAutocomplete: React.FC<FieldProps<any, any>> = props => {
   }, [allData]);
 
   useEffect(() => {
-    if (!value || value.length === 0) {
-      setSelectedConcepts([]);
-      setInputValue('');
-    } else if (
-      value.length !== selectedConcepts.length ||
-      !value.every(val =>
-        selectedConcepts.some(sel => sel.conceptId === val.conceptId),
-      )
-    ) {
-      // Prefer options for display (e.g., to get updated pt.term), fallback to value
-      const matching =
-        options.length > 0
-          ? options.filter(opt =>
-              value.some(val => val.conceptId === opt.conceptId),
-            )
-          : value;
-      setSelectedConcepts(matching);
+    const safeValue: ConceptMini[] = value || [];
+
+    // Only update selected concepts if they differ
+    const isDifferent =
+      safeValue.length !== selectedConcepts.length ||
+      !safeValue.every(v =>
+        selectedConcepts.some(s => s.conceptId === v.conceptId),
+      );
+
+    if (isDifferent) {
+      setSelectedConcepts(safeValue);
     }
-  }, [value, options]);
+  }, [value]);
 
   const handleChange = (selected: Concept[] | null) => {
+    isTypingRef.current = false;
     if (!selected) {
       setSelectedConcepts([]);
       onChange([]);
+      setInputValue(''); // Clear input value after selection
       return;
     }
+
     const conceptMinis: ConceptMini[] = selected.map(s => ({
       conceptId: s.conceptId,
       pt: s.pt,
       fsn: s.fsn,
     }));
+
     setSelectedConcepts(conceptMinis);
     onChange(conceptMinis);
+    setInputValue('');
   };
 
   return (
@@ -89,17 +90,24 @@ const MultiValueEclAutocomplete: React.FC<FieldProps<any, any>> = props => {
         multiple
         loading={isLoading}
         disabled={isThisDisabled}
-        options={isDisabled ? [] : options}
+        options={isThisDisabled ? [] : options}
         getOptionLabel={(option: Concept) => option?.pt?.term || ''}
         value={selectedConcepts}
-        onInputChange={(_, newInputValue) => setInputValue(newInputValue)}
+        inputValue={inputValue}
+        onInputChange={(_, newInputValue, reason) => {
+          // Only set typing flag if it's user input
+          if (reason === 'input') {
+            isTypingRef.current = true;
+            setInputValue(newInputValue);
+          }
+        }}
         onChange={(_, selected) => handleChange(selected as Concept[])}
         isOptionEqualToValue={(option: Concept, val: ConceptMini) =>
           option?.conceptId === val?.conceptId
         }
         renderOption={(props, option: Concept) => (
           <li {...props} key={option.conceptId}>
-            {option.conceptId + ' - ' + (option?.pt?.term || '')}
+            {option.pt.term}
           </li>
         )}
         renderInput={params => (
@@ -109,12 +117,12 @@ const MultiValueEclAutocomplete: React.FC<FieldProps<any, any>> = props => {
             label={title}
             error={!!errorMessage}
             helperText={errorMessage}
-            disabled={isDisabled}
+            disabled={isThisDisabled}
             InputProps={{
               ...params.InputProps,
               endAdornment: (
                 <>
-                  {isLoading ? <CircularProgress size={20} /> : null}
+                  {isLoading && <CircularProgress size={20} />}
                   {params.InputProps.endAdornment}
                 </>
               ),
