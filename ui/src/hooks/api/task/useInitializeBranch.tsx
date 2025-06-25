@@ -11,7 +11,7 @@ import {
   snowstormErrorHandler,
 } from '../../../types/ErrorHandler.ts';
 import { useServiceStatus } from '../useServiceStatus.tsx';
-import { useAllTasksOptions } from '../useAllTasks.tsx';
+import { useAllTasksOptions } from './useAllTasks.js';
 import { enqueueSnackbar } from 'notistack';
 
 export function useFetchAndCreateBranch(task: Task | undefined | null) {

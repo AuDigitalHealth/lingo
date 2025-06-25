@@ -29,7 +29,7 @@ import { Button } from 'primereact/button';
 import { useBulkCreateTickets } from '../../../hooks/api/tickets/useUpdateTicket.tsx';
 import { useRef } from 'react';
 import { AvatarUrls } from '../../../types/JiraUserResponse';
-import { useAllTasks } from '../../../hooks/api/useAllTasks.tsx';
+import { useAllTasks } from '../../../hooks/api/task/useAllTasks';
 import {
   useAllExternalRequestors,
   useAllIterations,
