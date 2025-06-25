@@ -354,6 +354,7 @@ models:
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: false
+        showDefaultOptions: true
         order: 91
       - name: marketingStatus
         title: Marketing Status
@@ -365,6 +366,7 @@ models:
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: false
+        showDefaultOptions: true
         order: 92
       - name: marketingAuthHolder
         title: Marketing Authorisation Holder
@@ -376,6 +378,7 @@ models:
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: true
         multiValued: false
+        showDefaultOptions: true
         order: 93
       - name: notifyingWholesaler
         title: Notifying Wholesaler
@@ -387,6 +390,7 @@ models:
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: true
+        showDefaultOptions: true
         order: 94
       - name: legalSupplyStatus
         title: Legal Supply Status
@@ -398,6 +402,7 @@ models:
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: true
         multiValued: false
+        showDefaultOptions: true
         order: 95
       - name: placeOfSale
         title: Place of Sale
@@ -409,6 +414,7 @@ models:
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: true
         multiValued: false
+        showDefaultOptions: true
         order: 96
       - name: placeOfSupply
         title: Place of Supply
@@ -420,6 +426,7 @@ models:
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: true
         multiValued: false
+        showDefaultOptions: true
         order: 96
       - name: controlledDrugStatus
         title: Controlled Drug Status
@@ -431,6 +438,7 @@ models:
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: false
+        showDefaultOptions: true
         order: 97
       - name: packageType
         title: Package Type
@@ -442,6 +450,7 @@ models:
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: false
+        showDefaultOptions: true
         order: 99
       - name: lastDateOfMan
         title: Last Date of Manufacture
@@ -542,6 +551,7 @@ models:
         modelLevels: CLINICAL_DRUG
         mandatory: false
         multiValued: true
+        showDefaultOptions: true
         order: 90
       - name: nonPrescReason
         title: Non-Prescribable Reason
@@ -553,4 +563,5 @@ models:
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: false
+        showDefaultOptions: true
         order: 71
