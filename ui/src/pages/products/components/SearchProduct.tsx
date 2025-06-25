@@ -9,7 +9,7 @@ import {
   MenuItem,
   TextField,
   ToggleButton,
-  ToggleButtonGroup,
+  ToggleButtonGroup
 } from '@mui/material';
 import TuneIcon from '@mui/icons-material/Tune';
 import { Concept } from '../../../types/concept.ts';
@@ -23,7 +23,7 @@ import { isFsnToggleOn } from '../../../utils/helpers/conceptUtils.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import {
   useSearchConcept,
-  useSearchConceptOntoserver,
+  useSearchConceptOntoserver
 } from '../../../hooks/api/products/useSearchConcept.tsx';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 
@@ -34,12 +34,13 @@ import { ConceptSearchSidebar } from '../../../components/ConceptSearchSidebar.t
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 
 import type { ValueSetExpansionContains } from 'fhir/r4';
-import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
-import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../utils/helpers/getValueSetExpansionContainsPt.ts';
 import {
-  PUBLISHED_CONCEPTS,
-  UNPUBLISHED_CONCEPTS,
-} from '../../../utils/statics/responses.ts';
+  isValueSetExpansionContains
+} from '../../../types/predicates/isValueSetExpansionContains.ts';
+import {
+  convertFromValueSetExpansionContainsListToSnowstormConceptMiniList
+} from '../../../utils/helpers/getValueSetExpansionContainsPt.ts';
+import { PUBLISHED_CONCEPTS, UNPUBLISHED_CONCEPTS } from '../../../utils/statics/responses.ts';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 
 export interface ConceptSearchResult extends Concept {
@@ -135,6 +136,18 @@ export default function SearchProduct({
         returnVal = generateEclFromBinding(
           fieldBindings,
           'medicationProduct.search',
+        );
+        break;
+      case ActionType.newVaccine:
+        returnVal = generateEclFromBinding(
+          fieldBindings,
+          'vaccineProduct.search',
+        );
+        break;
+      case ActionType.newNutritionalProduct:
+        returnVal = generateEclFromBinding(
+          fieldBindings,
+          'nutritionalProduct.search',
         );
         break;
       default:
@@ -592,6 +605,18 @@ export default function SearchProduct({
                   data-testid={'medication-toggle'}
                 >
                   Medication
+                </ToggleButton>
+                <ToggleButton
+                  value={ActionType.newVaccine}
+                  data-testid={'vaccine-toggle'}
+                >
+                  Vaccine
+                </ToggleButton>
+                <ToggleButton
+                  value={ActionType.newNutritionalProduct}
+                  data-testid={'nutritional-toggle'}
+                >
+                  Nutritional Product
                 </ToggleButton>
                 <ToggleButton
                   value={ActionType.newPackSize}
