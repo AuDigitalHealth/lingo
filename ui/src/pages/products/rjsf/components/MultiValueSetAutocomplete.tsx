@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FieldProps } from '@rjsf/utils';
 import { Concept } from '../../../../types/concept.ts';
 import useApplicationConfigStore from '../../../../stores/ApplicationConfigStore.ts';
@@ -34,6 +34,7 @@ export const MultiValueValueSetAutocomplete: React.FC<
   const [selectedConcept, setSelectedConcept] = useState<Concept[]>(
     value || [],
   );
+  const isTypingRef = useRef(false);
   const { applicationConfig } = useApplicationConfigStore();
   const { isLoading, data } = useSearchConceptOntoServerByUrl(
     inputValue,
@@ -71,7 +72,9 @@ export const MultiValueValueSetAutocomplete: React.FC<
   useEffect(() => {
     if (!value || value.length === 0) {
       setSelectedConcept([]);
-      setInputValue('');
+      if (!isTypingRef.current) {
+        setInputValue('');
+      }
     } else if (
       value.length !== selectedConcept.length ||
       !value.every(val =>
@@ -91,13 +94,16 @@ export const MultiValueValueSetAutocomplete: React.FC<
 
   // Handle selection change
   const handleChange = (selectedValue: Concept[] | null) => {
+    isTypingRef.current = false; // Reset typing flag
     if (!selectedValue) {
       setSelectedConcept([]);
       onChange([]);
+      setInputValue(''); // Clear input after selection
       return;
     }
     setSelectedConcept(selectedValue);
     onChange(selectedValue);
+    setInputValue(''); // Clear input after selection
   };
 
   return (
@@ -110,7 +116,14 @@ export const MultiValueValueSetAutocomplete: React.FC<
       options={disabled ? [] : options}
       getOptionLabel={option => option?.pt?.term || ''}
       value={selectedConcept} // Controlled by selectedConcept
-      onInputChange={(_, newInputValue) => setInputValue(newInputValue)}
+      inputValue={inputValue} // Controlled input value
+      onInputChange={(_, newInputValue, reason) => {
+        // Only update inputValue on user input
+        if (reason === 'input') {
+          isTypingRef.current = true;
+          setInputValue(newInputValue);
+        }
+      }}
       onChange={(_, selectedValue) => handleChange(selectedValue as Concept[])}
       isOptionEqualToValue={(option, val) =>
         option?.conceptId === val?.conceptId ||
@@ -120,7 +133,7 @@ export const MultiValueValueSetAutocomplete: React.FC<
         const { key, ...otherProps } = props;
         return (
           <li {...otherProps} key={option.conceptId}>
-            {option.conceptId + ' - ' + (option?.pt?.term || '')}
+            {option.pt.term}
           </li>
         );
       }}
