@@ -11,7 +11,7 @@ import type { ValueSetExpansionContains } from 'fhir/r4';
 import { Task } from '../../../types/task.ts';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import ProductLoader from '../components/ProductLoader.tsx';
-import ProductPreviewCreateModal from '../components/ProductPreviewCreateModal.tsx';
+import ProductPreviewManageModal from '../components/ProductPreviewManageModal.tsx';
 import { customizeValidator } from '@rjsf/validator-ajv8';
 import ajvErrors from 'ajv-errors';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
@@ -228,7 +228,7 @@ function PackSizeAuthoring({
             )
           }
         />
-        <ProductPreviewCreateModal
+        <ProductPreviewManageModal
           productType="medication"
           productCreationDetails={productCreationDetails}
           handleClose={handlePreviewToggleModal}

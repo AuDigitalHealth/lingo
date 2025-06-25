@@ -7,7 +7,7 @@ import ajvErrors from 'ajv-errors';
 import AutoCompleteField from './fields/AutoCompleteField.tsx';
 import UnitValueUnWrappedField from './fields/UnitValueUnWrappedField.tsx';
 import ProductLoader from '../components/ProductLoader.tsx';
-import ProductPreviewCreateModal from '../components/ProductPreviewCreateModal.tsx';
+import ProductPreviewManageModal from '../components/ProductPreviewManageModal.tsx';
 import CustomFieldTemplate from './templates/CustomFieldTemplate.tsx';
 import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
 import CustomObjectFieldTemplate from './templates/CustomObjectFieldTemplate.tsx';
@@ -24,7 +24,7 @@ import { Task } from '../../../types/task.ts';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import {
   DevicePackageDetails,
-  ProductCreationDetails,
+  ProductSaveDetails,
   ProductType,
 } from '../../../types/product.ts';
 
@@ -211,7 +211,7 @@ function DeviceAuthoring({
             ticket={ticket}
             existingProductId={ticketProductId}
           />
-          <ProductPreviewCreateModal
+          <ProductPreviewManageModal
             open={createModalOpen}
             handleClose={handleToggleCreateModal}
             productCreationDetails={data}
@@ -243,7 +243,7 @@ export function useCalculateProduct() {
         formData,
         task.branchPath,
       );
-      const productCreationObj: ProductCreationDetails = {
+      const productCreationObj: ProductSaveDetails = {
         productSummary,
         packageDetails: formData as DevicePackageDetails,
         ticketId: ticket.id,

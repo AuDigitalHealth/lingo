@@ -61,7 +61,7 @@ import {
   BulkProductCreationDetails,
   DevicePackageDetails,
   MedicationPackageDetails,
-  ProductCreationDetails,
+  ProductSaveDetails,
   ProductGroupType,
   ProductType,
 } from '../../types/product.ts';
@@ -107,7 +107,7 @@ import NewConceptDropdown from './components/NewConceptDropdown.tsx';
 import { ProductStatusIndicators } from './components/ProductStatusIndicators.tsx';
 
 interface ProductModelEditProps {
-  productCreationDetails?: ProductCreationDetails;
+  productCreationDetails?: ProductSaveDetails;
   productModel: ProductSummary;
   handleClose?:
     | ((event: object, reason: 'backdropClick' | 'escapeKeyDown') => void)
@@ -289,7 +289,7 @@ function ProductModelEdit({
           productCreationDetails.packageDetails as MedicationPackageDetails,
         );
         productService
-          .createNewMedicationProduct(productCreationDetails, branch)
+          .saveMedicationProduct(productCreationDetails, branch)
           .then(v => {
             if (handleClose) handleClose({}, 'escapeKeyDown');
             setLoading(false);

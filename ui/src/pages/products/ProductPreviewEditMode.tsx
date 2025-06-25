@@ -42,12 +42,13 @@ function ProductPreviewEditMode({
           watch={watch}
           getValues={getValues}
           readOnlyMode={false}
-          editProduct={true}
+          isSimpleEdit={true}
           newConceptFound={false}
           branch={branch}
           handleClose={handlePreviewToggleModal}
           setValue={setValue}
           ticket={ticket}
+          isProductUpdate={false}
         />
       </Box>
     </>

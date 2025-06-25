@@ -160,9 +160,12 @@ export function findConceptUsingPT(pt: string, concepts: Concept[]) {
 
 export function containsNewConcept(nodes: Product[]) {
   const product = nodes.find(function (p) {
-    return p.newConcept;
+    return isNewConcept(p);
   });
   return product !== undefined;
+}
+export function isNewConcept(product:Product){
+  return product.newConcept || product.newConceptDetails;
 }
 export const isValidConceptName = (concept: Concept) => {
   return concept && concept.pt?.term !== '' && concept.pt?.term !== null;
