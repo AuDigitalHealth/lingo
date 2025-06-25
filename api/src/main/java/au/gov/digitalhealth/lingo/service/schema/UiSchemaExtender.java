@@ -168,11 +168,12 @@ public class UiSchemaExtender {
       List<? extends BasePropertyDefinition> filteredPropertySet, ObjectNode uiOptions) {
     ArrayNode mandatoryFields = objectMapper.createArrayNode();
     ArrayNode multiValuedFields = objectMapper.createArrayNode();
+    ArrayNode showDefaultOptionsFields = objectMapper.createArrayNode();
     ArrayNode readOnlyFields = objectMapper.createArrayNode();
     ObjectNode bindingNode = objectMapper.createObjectNode();
     for (BasePropertyDefinition m : filteredPropertySet) {
       processNonDefiningPropertyBaseMember(
-          m, mandatoryFields, multiValuedFields, bindingNode, readOnlyFields);
+          m, mandatoryFields, multiValuedFields, bindingNode, readOnlyFields,showDefaultOptionsFields);
     }
 
     if (!mandatoryFields.isEmpty()) {
@@ -181,6 +182,9 @@ public class UiSchemaExtender {
 
     if (!multiValuedFields.isEmpty()) {
       uiOptions.set("multiValuedSchemes", multiValuedFields);
+    }
+    if (!showDefaultOptionsFields.isEmpty()) {
+      uiOptions.set("showDefaultOptionSchemes", showDefaultOptionsFields);
     }
 
     if (!bindingNode.isEmpty()) {
@@ -197,7 +201,7 @@ public class UiSchemaExtender {
       ArrayNode mandatoryFields,
       ArrayNode multiValuedFields,
       ObjectNode bindingNode,
-      ArrayNode readOnlyFields) {
+      ArrayNode readOnlyFields,ArrayNode showDefaultOptionsFields) {
     if (m instanceof BasePropertyWithValueDefinition nonDefiningPropertyBase) {
 
       if (nonDefiningPropertyBase.isMandatory()) {
@@ -206,6 +210,9 @@ public class UiSchemaExtender {
 
       if (nonDefiningPropertyBase.isMultiValued()) {
         multiValuedFields.add(nonDefiningPropertyBase.getName());
+      }
+      if (nonDefiningPropertyBase.isShowDefaultOptions()) {
+        showDefaultOptionsFields.add(nonDefiningPropertyBase.getName());
       }
 
       if (nonDefiningPropertyBase.getValueSetReference() != null) {

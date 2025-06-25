@@ -58,6 +58,8 @@ public abstract class BasePropertyWithValueDefinition extends BasePropertyDefini
   /** Indicates if the property allows multiple values. */
   private boolean isMultiValued;
 
+  private boolean isShowDefaultOptions;
+
   /**
    * Provies a list of allowed values for the property, if blank the user is not restricted to a set
    * of values. These values must match the data type of the property and the valueRegexValidation
