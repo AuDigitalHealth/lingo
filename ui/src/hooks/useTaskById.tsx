@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Task } from '../types/task';
-import { getTaskById, useAllTasks } from './api/useAllTasks';
+import { getTaskById, useAllTasks } from './api/task/useAllTasks';
 
 function useTaskById() {
   const [task, setTask] = useState<Task | null>();

@@ -31,7 +31,7 @@ import CustomTicketExternalRequestorSelection, {
 import { DropdownProps } from 'primereact/dropdown';
 import { StyledFakeLink } from './TicketDrawer.tsx';
 import { isTaskCurrent } from './helpers/isTaskCurrent.ts';
-import { useAllTasks } from '../../../../hooks/api/useAllTasks.tsx';
+import { useAllTasks } from '../../../../hooks/api/task/useAllTasks';
 import { useJiraUsers } from '../../../../hooks/api/useInitializeJiraUsers.tsx';
 import {
   useAllExternalRequestors,

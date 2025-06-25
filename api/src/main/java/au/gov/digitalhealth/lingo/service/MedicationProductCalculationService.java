@@ -70,15 +70,18 @@ import au.csiro.snowstorm_client.model.SnowstormAxiom;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
+import au.gov.digitalhealth.lingo.configuration.model.NonDefiningPropertyDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.details.*;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
 import au.gov.digitalhealth.lingo.service.validators.MedicationDetailsValidator;
 import au.gov.digitalhealth.lingo.util.AmtConstants;
 import au.gov.digitalhealth.lingo.util.BigDecimalFormatter;
@@ -545,6 +548,38 @@ public class MedicationProductCalculationService
       boolean container,
       ModelConfiguration modelConfiguration) {
 
+    if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
+      NonDefiningPropertyDefinition nmpcDefinition =
+          modelConfiguration.getNonDefiningPropertiesByName().get("nmpcType");
+      NonDefiningProperty nmpcType = new NonDefiningProperty();
+      nmpcType.setIdentifierScheme(nmpcDefinition.getName());
+      nmpcType.setIdentifier(nmpcDefinition.getIdentifier());
+      nmpcType.setTitle(nmpcDefinition.getTitle());
+      nmpcType.setDescription(nmpcDefinition.getDescription());
+
+      SnowstormConceptMini valueObject;
+      if (packageDetails.getContainedProducts().iterator().next().getProductDetails()
+          instanceof VaccineProductDetails) {
+        valueObject =
+            new SnowstormConceptMini()
+                .conceptId("680601000220106")
+                .pt(new SnowstormTermLangPojo().term("NMPC Vaccine").lang("en"))
+                .fsn(new SnowstormTermLangPojo().term("NMPC Vaccine (qualifier value)").lang("en"));
+      } else {
+        valueObject =
+            new SnowstormConceptMini()
+                .conceptId("680591000220104")
+                .pt(new SnowstormTermLangPojo().term("NMPC Medication").lang("en"))
+                .fsn(
+                    new SnowstormTermLangPojo()
+                        .term("NMPC Medication (qualifier value)")
+                        .lang("en"));
+      }
+
+      nmpcType.setValueObject(valueObject);
+      packageDetails.getNonDefiningProperties().add(nmpcType);
+    }
+
     Set<SnowstormRelationship> relationships = new HashSet<>();
     relationships.add(
         getSnowstormRelationship(
@@ -697,6 +732,37 @@ public class MedicationProductCalculationService
       throws ExecutionException, InterruptedException {
 
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+
+    if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
+      NonDefiningPropertyDefinition nmpcDefinition =
+          modelConfiguration.getNonDefiningPropertiesByName().get("nmpcType");
+      NonDefiningProperty nmpcType = new NonDefiningProperty();
+      nmpcType.setIdentifierScheme(nmpcDefinition.getName());
+      nmpcType.setIdentifier(nmpcDefinition.getIdentifier());
+      nmpcType.setTitle(nmpcDefinition.getTitle());
+      nmpcType.setDescription(nmpcDefinition.getDescription());
+
+      SnowstormConceptMini valueObject;
+      if (productDetails instanceof VaccineProductDetails) {
+        valueObject =
+            new SnowstormConceptMini()
+                .conceptId("680601000220106")
+                .pt(new SnowstormTermLangPojo().term("NMPC Vaccine").lang("en"))
+                .fsn(new SnowstormTermLangPojo().term("NMPC Vaccine (qualifier value)").lang("en"));
+      } else {
+        valueObject =
+            new SnowstormConceptMini()
+                .conceptId("680591000220104")
+                .pt(new SnowstormTermLangPojo().term("NMPC Medication").lang("en"))
+                .fsn(
+                    new SnowstormTermLangPojo()
+                        .term("NMPC Medication (qualifier value)")
+                        .lang("en"));
+      }
+
+      nmpcType.setValueObject(valueObject);
+      productDetails.getNonDefiningProperties().add(nmpcType);
+    }
 
     ProductSummary productSummary = new ProductSummary();
 

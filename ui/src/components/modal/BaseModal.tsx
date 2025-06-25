@@ -6,7 +6,8 @@ interface BaseModalProps {
   open: boolean;
   handleClose?:
     | ((event: object, reason: 'backdropClick' | 'escapeKeyDown') => void)
-    | (() => void);
+    | (() => void)
+    | ((e: React.MouseEvent) => void);
   children?: ReactNode;
   sx?: SxProps;
   keepMounted?: boolean;
