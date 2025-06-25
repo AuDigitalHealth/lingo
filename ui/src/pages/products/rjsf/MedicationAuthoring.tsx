@@ -13,14 +13,15 @@ import UnitValueUnWrappedField from './fields/UnitValueUnWrappedField.tsx';
 import ProductLoader from '../components/ProductLoader.tsx';
 import ProductPreviewCreateModal from '../components/ProductPreviewCreateModal.tsx';
 import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
-import CustomObjectFieldTemplate from './templates/CustomObjectFieldTemplate.tsx';
 import NumberWidget from './widgets/NumberWidget.tsx';
 import ExternalIdentifiers from './fields/bulkBrandPack/ExternalIdentifiers.tsx';
 import TextFieldWidget from './widgets/TextFieldWidget.tsx';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 import productService from '../../../api/ProductService.ts';
 import { ConfigService } from '../../../api/ConfigService.ts';
-import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
+import {
+  isValueSetExpansionContains
+} from '../../../types/predicates/isValueSetExpansionContains.ts';
 import { customizeValidator } from '@rjsf/validator-ajv8';
 import { Concept } from '../../../types/concept.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
@@ -29,7 +30,7 @@ import { Ticket } from '../../../types/tickets/ticket.ts';
 import {
   MedicationPackageDetails,
   ProductCreationDetails,
-  ProductType,
+  ProductType
 } from '../../../types/product.ts';
 import { useTicketProductQuery } from './hooks/useTicketProductQuery.ts';
 import { DraftSubmitPanel } from './components/DarftSubmitPanel.tsx';
@@ -41,6 +42,7 @@ export interface MedicationAuthoringV2Props {
   task: Task;
   ticket: Ticket;
   ticketProductId?: string;
+  schemaType: string;
 }
 
 const validator = customizeValidator();
@@ -51,6 +53,7 @@ function MedicationAuthoring({
   selectedProduct,
   ticketProductId,
   ticket,
+  schemaType,
 }: MedicationAuthoringV2Props) {
   const [formKey, setFormKey] = useState(0);
   const [formData, setFormData] = useState({});
@@ -61,10 +64,10 @@ function MedicationAuthoring({
   const formRef = useRef<any>(null);
 
   const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
-    task.branchPath,
+    task.branchPath, schemaType,
   );
   const { data: uiSchema, isLoading: isUiSchemaLoading } = useUiSchemaQuery(
-    task.branchPath,
+    task.branchPath, schemaType,
   );
 
   const { isLoading, isFetching } = useProductQuery({
@@ -272,18 +275,18 @@ function useCalculateProduct() {
   return mutation;
 }
 
-const useSchemaQuery = (branchPath: string) => {
+const useSchemaQuery = (branchPath: string, schemaType: string) => {
   return useQuery({
-    queryKey: ['medication-schema', branchPath],
-    queryFn: () => ConfigService.fetchMeddicationSchemaData(branchPath),
+    queryKey: [(schemaType + '-Schema'), branchPath],
+    queryFn: () => ConfigService.fetchMedicationSchemaData(branchPath, schemaType),
     enabled: !!branchPath,
   });
 };
 
-const useUiSchemaQuery = (branchPath: string) => {
+const useUiSchemaQuery = (branchPath: string, schemaType: string) => {
   return useQuery({
-    queryKey: ['medication-uiSchema', branchPath],
-    queryFn: () => ConfigService.fetchMedicationUiSchemaData(branchPath),
+    queryKey: [(schemaType + '-uiSchema'), branchPath],
+    queryFn: () => ConfigService.fetchMedicationUiSchemaData(branchPath, schemaType),
     enabled: !!branchPath,
   });
 };

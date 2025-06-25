@@ -20,8 +20,10 @@ import au.gov.digitalhealth.lingo.validation.OnlyOnePopulated;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import jakarta.validation.Valid;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -40,6 +42,8 @@ public class MedicationProductDetails extends ProductDetails {
   SnowstormConceptMini containerType;
   SnowstormConceptMini unitOfPresentation;
 
+  Set<SnowstormConceptMini> playsRole = new HashSet<>();
+
   List<@Valid Ingredient> activeIngredients = new ArrayList<>();
 
   @Override
@@ -56,6 +60,9 @@ public class MedicationProductDetails extends ProductDetails {
     }
     if (containerType != null) {
       addToIdFsnMap(idMap, containerType);
+    }
+    for (SnowstormConceptMini role : playsRole) {
+      addToIdFsnMap(idMap, role);
     }
     for (Ingredient ingredient : activeIngredients) {
       addToIdFsnMap(idMap, ingredient);
@@ -77,6 +84,9 @@ public class MedicationProductDetails extends ProductDetails {
     }
     if (containerType != null) {
       addToIdPtMap(idMap, containerType);
+    }
+    for (SnowstormConceptMini role : playsRole) {
+      addToIdPtMap(idMap, role);
     }
     for (Ingredient ingredient : activeIngredients) {
       addToIdPtMap(idMap, ingredient);
