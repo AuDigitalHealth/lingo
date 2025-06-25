@@ -2,7 +2,7 @@ import { Autocomplete, TextField } from '@mui/material';
 import { useState } from 'react';
 import { Stack } from '@mui/system';
 import { Task } from '../../../../../types/task';
-import { useAllTasks } from '../../../../../hooks/api/useAllTasks';
+import { useAllTasks } from '../../../../../hooks/api/task/useAllTasks';
 
 interface TaskAutoCompleteProps {
   handleChange: (task: Task | null) => void;

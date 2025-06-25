@@ -303,7 +303,7 @@ models:
         level: PRODUCT
         dataType: CONCEPT
         eclBinding: <679901000220102
-        modelLevels: REAL_CLINICAL_DRUG
+        modelLevels: MEDICINAL_PRODUCT_ONLY,CLINICAL_DRUG,REAL_MEDICINAL_PRODUCT,REAL_CLINICAL_DRUG,PACKAGED_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
         readOnly: true

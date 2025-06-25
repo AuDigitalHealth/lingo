@@ -5,15 +5,15 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import useTaskStore from '../../stores/TaskStore';
-import TasksServices from '../../api/TasksService';
+import useTaskStore from '../../../stores/TaskStore';
+import TasksServices from '../../../api/TasksService';
 import { useMemo } from 'react';
-import ApplicationConfig from '../../types/applicationConfig';
-import useApplicationConfigStore from '../../stores/ApplicationConfigStore';
-import { Task, UserDetails } from '../../types/task';
+import ApplicationConfig from '../../../types/applicationConfig';
+import useApplicationConfigStore from '../../../stores/ApplicationConfigStore';
+import { Task, UserDetails } from '../../../types/task';
 import { enqueueSnackbar } from 'notistack';
-import { authoringPlatformErrorHandler } from '../../types/ErrorHandler';
-import { useServiceStatus } from './useServiceStatus';
+import { authoringPlatformErrorHandler } from '../../../types/ErrorHandler';
+import { useServiceStatus } from '../useServiceStatus';
 
 export default function useInitializeTasks() {
   const { allTasksIsLoading } = useAllTasks();
