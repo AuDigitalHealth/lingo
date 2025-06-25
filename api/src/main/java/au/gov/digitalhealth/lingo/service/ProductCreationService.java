@@ -217,10 +217,7 @@ public class ProductCreationService {
                     && newRelationships.stream()
                         .noneMatch(
                             newRelationship ->
-                                existingRelationship.getTypeId().equals(newRelationship.getTypeId())
-                                    && existingRelationship
-                                        .getDestinationId()
-                                        .equals(newRelationship.getDestinationId())));
+                                isTypeAndDestinationMatch(existingRelationship, newRelationship)));
 
     AtomicBoolean relationshipsAdded = new AtomicBoolean(false);
     // Add the new relationships
@@ -229,15 +226,34 @@ public class ProductCreationService {
           if (existingRelationships.stream()
               .noneMatch(
                   existingRelationship ->
-                      existingRelationship.getTypeId().equals(newRelationship.getTypeId())
-                          && existingRelationship
-                              .getDestinationId()
-                              .equals(newRelationship.getDestinationId()))) {
+                      isTypeAndDestinationMatch(existingRelationship, newRelationship))) {
             existingRelationships.add(newRelationship);
             relationshipsAdded.set(true);
           }
         });
     return relationshipsAdded.get() || relationshipsRemoved;
+  }
+
+  private static boolean isTypeAndDestinationMatch(
+      SnowstormRelationship existingRelationship, SnowstormRelationship newRelationship) {
+    return existingRelationship.getTypeId().equals(newRelationship.getTypeId())
+        && ((newRelationship.getDestinationId() != null
+                && existingRelationship.getDestinationId() != null
+                && existingRelationship
+                    .getDestinationId()
+                    .equals(newRelationship.getDestinationId()))
+            || (newRelationship.getConcreteValue() != null
+                && existingRelationship.getConcreteValue() != null
+                && existingRelationship
+                    .getConcreteValue()
+                    .equals(newRelationship.getConcreteValue())));
+  }
+
+  private static boolean isMatchingRefsetTypeAndAdditionalProperties(
+      SnowstormReferenceSetMember existingMember,
+      SnowstormReferenceSetMemberViewComponent newMember) {
+    return newMember.getRefsetId().equals(existingMember.getRefsetId())
+        && Objects.equals(newMember.getAdditionalFields(), existingMember.getAdditionalFields());
   }
 
   /**
@@ -645,10 +661,8 @@ public class ProductCreationService {
                       && newReferenceSetMembers.stream()
                           .noneMatch(
                               newMember ->
-                                  newMember.getRefsetId().equals(existingMember.getRefsetId())
-                                      && Objects.equals(
-                                          newMember.getAdditionalFields(),
-                                          existingMember.getAdditionalFields())))
+                                  isMatchingRefsetTypeAndAdditionalProperties(
+                                      existingMember, newMember)))
           .forEach(referenceSetMembershipToDelete::add);
 
       // determine which reference set members to add
@@ -659,10 +673,8 @@ public class ProductCreationService {
                       .noneMatch(
                           existingMember ->
                               existingMember.getReferencedComponentId().equals(node.getConceptId())
-                                  && existingMember.getRefsetId().equals(newMember.getRefsetId())
-                                  && Objects.equals(
-                                      newMember.getAdditionalFields(),
-                                      existingMember.getAdditionalFields())))
+                                  && isMatchingRefsetTypeAndAdditionalProperties(
+                                      existingMember, newMember)))
           .forEach(
               newReferenceSetMember -> {
                 newReferenceSetMember.setReferencedComponentId(node.getConceptId());
