@@ -205,8 +205,8 @@ const getTitle = (
   }
 
   return productName
-    ? `Create New Product (Loaded from ${productName})`
-    : 'Create New Product';
+    ? `Manage Product (Loaded from ${productName})`
+    : 'Manage Product';
 };
 const getActionType = (
   actionType: ActionType | undefined,

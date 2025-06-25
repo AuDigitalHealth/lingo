@@ -137,8 +137,12 @@ export interface BrandPackSizeCreationDetails {
   brands?: ProductBrands;
   packSizes?: ProductPackSizes;
 }
-
-export interface ProductCreationDetails {
+export enum ProductActionType {
+  create = 'create',
+  update = 'update',
+}
+export interface ProductSaveDetails {
+  type:ProductActionType;
   productSummary: ProductSummary;
   packageDetails:
     | MedicationPackageDetails
@@ -146,8 +150,11 @@ export interface ProductCreationDetails {
     | BrandPackSizeCreationDetails;
   ticketId: number;
   partialSaveName: string | null;
-  saveName: string;
   nameOverride: string | null;
+  originalConceptId:string|null| undefined;
+  originalPackageDetails: | MedicationPackageDetails
+      | DevicePackageDetails
+      | BrandPackSizeCreationDetails;
 }
 
 export interface ProductUpdateRequest {
