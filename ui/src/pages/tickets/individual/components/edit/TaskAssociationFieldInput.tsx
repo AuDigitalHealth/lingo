@@ -10,7 +10,7 @@ import UnableToEditTicketTooltip from '../../../components/UnableToEditTicketToo
 import { useCanEditTicket } from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
 import { useDeleteTaskAssociation } from '../../../../../hooks/api/tickets/useUpdateTicket.tsx';
 import { isTaskCurrent } from '../../../components/grid/helpers/isTaskCurrent.ts';
-import { useAllTasks } from '../../../../../hooks/api/useAllTasks.tsx';
+import { useAllTasks } from '../../../../../hooks/api/task/useAllTasks';
 import { TaskTypographyTemplate } from '../../../components/grid/Templates.tsx';
 import { useAllTaskAssociations } from '../../../../../hooks/api/useInitializeTickets.tsx';
 

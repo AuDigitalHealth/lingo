@@ -26,7 +26,7 @@ import useSearchTaskByKey from '../../../../hooks/api/task/useSearchTaskByKey.ts
 import { TaskTypographyTemplate } from '../../components/grid/Templates.tsx';
 
 import { TaskStatusIcon } from '../../../../components/icons/TaskStatusIcon.tsx';
-import { useAllTasks } from '../../../../hooks/api/useAllTasks.tsx';
+import { useAllTasks } from '../../../../hooks/api/task/useAllTasks';
 import {
   useAllExternalRequestors,
   useAllLabels,

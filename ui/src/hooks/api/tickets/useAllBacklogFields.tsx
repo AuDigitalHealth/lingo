@@ -1,4 +1,4 @@
-import { useAllTasks } from '../useAllTasks';
+import { useAllTasks } from '../task/useAllTasks';
 import { useJiraUsers } from '../useInitializeJiraUsers';
 import {
   useAllExternalRequestors,
