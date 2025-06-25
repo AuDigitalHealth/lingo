@@ -45,7 +45,11 @@ interface NonDefiningPropertyDefinition {
 }
 
 interface BindingConfig {
-  [key: string]: { valueSet?: string; ecl?: string };
+  [key: string]: {
+    valueSet?: string;
+    ecl?: string;
+    showDefaultOptions?: boolean;
+  };
 }
 
 const ExternalIdentifiers: React.FC<
@@ -296,7 +300,7 @@ const ExternalIdentifierRender: React.FC<
           <MultiValueValueSetAutocomplete
             label={schema.title}
             url={binding.valueSet || ''}
-            showDefaultOptions={false}
+            showDefaultOptions={binding.showDefaultOptions || false}
             value={schemeEntries.map(entry => entry.valueObject)}
             onChange={handleChangeConcepts}
             disabled={readOnly ? true : false}
@@ -307,7 +311,7 @@ const ExternalIdentifierRender: React.FC<
           <ValueSetAutocomplete
             label={schema.title}
             url={binding.valueSet || ''}
-            showDefaultOptions={false}
+            showDefaultOptions={binding.showDefaultOptions || false}
             value={
               schemeEntries[0] ? schemeEntries[0].valueObject : schemeEntries
             }
@@ -322,7 +326,7 @@ const ExternalIdentifierRender: React.FC<
             ecl={binding.ecl || ''}
             branch={branch}
             onChange={handleChangeConcepts}
-            showDefaultOptions={false}
+            showDefaultOptions={binding.showDefaultOptions || false}
             isDisabled={readOnly ? true : false}
             // errorMessage={errorMessage}
             title={schema.title}
@@ -336,7 +340,7 @@ const ExternalIdentifierRender: React.FC<
             ecl={binding.ecl || ''}
             branch={branch}
             onChange={handleChangeConcepts}
-            showDefaultOptions={false}
+            showDefaultOptions={binding.showDefaultOptions || false}
             isDisabled={readOnly ? true : false}
             // errorMessage={errorMessage}
             title={schema.title}
