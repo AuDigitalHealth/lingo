@@ -1,6 +1,6 @@
 import {
   ProductDescriptionUpdateRequest,
-  ProductNonDefiningPropertyUpdateRequest
+  ProductNonDefiningPropertyUpdateRequest,
 } from '../../../types/product.ts';
 import { useMutation } from '@tanstack/react-query';
 import { enqueueSnackbar } from 'notistack';
@@ -34,7 +34,10 @@ export function useUpdateProductDescription() {
       });
     },
     onSuccess: () => {
-      enqueueSnackbar('Product edited successfully.', { variant: 'success', autoHideDuration: 5000 });
+      enqueueSnackbar('Product edited successfully.', {
+        variant: 'success',
+        autoHideDuration: 5000,
+      });
     },
   });
 
