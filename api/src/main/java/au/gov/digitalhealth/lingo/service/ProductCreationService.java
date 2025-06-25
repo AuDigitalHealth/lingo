@@ -349,7 +349,12 @@ public class ProductCreationService {
       log.severe("Could not clone product summary - potentially missed ModifiedGeneratedNames");
     }
 
-    if (productSummary.getNodes().stream().noneMatch(Node::isNewConcept)) {
+    if ((createOnly && productSummary.getNodes().stream().noneMatch(Node::isNewConcept))
+        || (!createOnly
+            && productSummary.getNodes().stream().noneMatch(Node::isNewConcept)
+            && productSummary.getNodes().stream().noneMatch(Node::isConceptEdit)
+            && productSummary.getNodes().stream().noneMatch(Node::isRetireAndReplace)
+            && productSummary.getNodes().stream().noneMatch(Node::isPropertyUpdate))) {
       throw new EmptyProductCreationProblem();
     }
 
