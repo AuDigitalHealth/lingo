@@ -7,6 +7,8 @@ models:
       - 900000000000509007
     baseMedicationSchema: classpath:AMT/base-medication-schema.json
     baseMedicationUiSchema: classpath:AMT/base-medication-ui-schema.json
+    baseVaccineSchema: classpath:AMT/base-medication-schema.json
+    baseVaccineUiSchema: classpath:AMT/base-medication-ui-schema.json
     baseDeviceSchema: classpath:AMT/base-device-schema.json
     baseDeviceUiSchema: classpath:AMT/base-device-ui-schema.json
     baseBulkBrandSchema: classpath:AMT/base-bulk-brand-schema.json
@@ -101,6 +103,8 @@ models:
       - 900000000000509007
     baseMedicationSchema: classpath:NMPC/base-medication-schema.json
     baseMedicationUiSchema: classpath:NMPC/base-medication-ui-schema.json
+    baseVaccineSchema: classpath:NMPC/base-vaccine-schema.json
+    baseVaccineUiSchema: classpath:NMPC/base-vaccine-ui-schema.json
     baseDeviceSchema: classpath:NMPC/base-device-schema.json
     baseDeviceUiSchema: classpath:NMPC/base-device-ui-schema.json
     baseBulkBrandSchema: classpath:NMPC/base-bulk-brand-schema.json
@@ -166,22 +170,7 @@ models:
       - name: pan
         title: PAN
         description: HPRA or EMA product authorisation number
-        identifier: 11000168105
-        level: PRODUCT
-        dataType: STRING
-        valueRegexValidation: (PA\d{4,8}(\/\d{1,2})?(\/\d{1,2})?)|(EU\/\d{1,5}\/\d{1,5}\/\d{1,5})
-        valueValidationErrorMessage: "Must be a valid HPRA or EMA product authorisation number (PA12345678, PA1234/12, PA1234/12/34, EU/12345/67890/12345)"
-        modelLevels: REAL_CLINICAL_DRUG
-        mandatory: false
-        multiValued: true
-        defaultMappingType: RELATED
-        mappingTypes:
-          - RELATED
-        order: 30
-      - name: packagePan
-        title: PAN
-        description: HPRA or EMA product authorisation number
-        identifier: 11000168105
+        identifier: 680041000220101
         level: PACKAGE
         dataType: STRING
         valueRegexValidation: (PA\d{4,8}(\/\d{1,2})?(\/\d{1,2})?)|(EU\/\d{1,5}\/\d{1,5}\/\d{1,5})
@@ -195,7 +184,7 @@ models:
         order: 30
       - name: gtin
         title: GTIN
-        identifier: 71388002
+        identifier: 680371000220106
         level: PACKAGE
         dataType: UNSIGNED_INTEGER
         valueRegexValidation: \d{8,14}
@@ -210,12 +199,12 @@ models:
       - name: atc
         title: ATC code
         identifier: 84676004
-        level: PACKAGE
+        level: PRODUCT
         dataType: CODED,
         valueRegexValidation: ^.+$
         valueSetReference: http://nmpc.hse.ie/ValueSet/atcselectable
         codeSystem: http://www.whocc.no/atc
-        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        modelLevels: CLINICAL_DRUG
         mandatory: false
         multiValued: true
         defaultMappingType: RELATED
@@ -224,7 +213,7 @@ models:
         order: 100
       - name: pcrs
         title: GMS Reimbursable
-        identifier: 105590001
+        identifier: 680391000220107
         level: PACKAGE
         dataType: CODED,
         valueRegexValidation: ^.+$
@@ -236,47 +225,77 @@ models:
         defaultMappingType: RELATED
         mappingTypes:
           - RELATED
+      - name: indicativePrice
+        title: Indicative Price
+        description: Indicative Price
+        identifier: 680351000220102
+        level: PRODUCT
+        dataType: DECIMAL
+        valueRegexValidation: \d+(\.\d{2})?
+        valueValidationErrorMessage: "Must be a valid decimal number with two decimal places"
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        mappingTypes:
+          - RELATED
+        order: 98
     referenceSets:
       - name: blackTriangle
         title: Black Triangle
         description: Medicines on the Black Triangle Scheme
-        identifier: 419036000
+        identifier: 679961000220101
         level: PRODUCT
         modelLevels: REAL_CLINICAL_DRUG
         order: 60
       - name: combinationOnly
         title: Combination pack only
         description: Combination pack only
-        identifier: 431134006
+        identifier: 679981000220105
         level: PACKAGE
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         order: 1
+      - name: ulmFlag
+        title: ULM flag
+        description: Unlicensed Medicine flag
+        identifier: 680761000220104
+        level: PRODUCT
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        order: 81
       - name: parallelImport
         title: Parallel import
         description: Parallel import
-        identifier: 433741003
+        identifier: 679941000220100
         level: PRODUCT
         modelLevels: REAL_CLINICAL_DRUG
         order: 80
       - name: vmpNonPrescribable
-        title: Non-prescribable VMP
-        description: Non-prescribable VMP
-        identifier: 1514151000168100
+        title: Non-prescribable
+        description: Non-prescribable
+        identifier: 679971000220107
         level: PRODUCT
         modelLevels: CLINICAL_DRUG
         order: 70
-    nonDefiningProperties:
-      - name: supplier
-        title: Supplier
-        description: Supplier
-        identifier: 774159003
+      - name: discontNotification
+        title: Discontinuation Notification
+        description: Discontinuation Notification
+        identifier: 680291000220102
+        level: PACKAGE
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        order: 99
+      - name: recallIndicator
+        title: Recall Indicator
+        description: Recall Indicator
+        identifier: 680301000220101
         level: PRODUCT
-        dataType: CONCEPT
-        eclBinding: <774164004
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: false
-        order: 10
+        order: 100
+    nonDefiningProperties:
       - name: licencedRoute
         title: Licenced Route
         description: Licenced Route of Administration
@@ -291,43 +310,142 @@ models:
       - name: pil
         title: Leaflet URL
         description: Product information leaflet
-        identifier: 26366004
-        level: PRODUCT
+        identifier: 680181000220107
+        level: PACKAGE
         dataType: URI
         valueRegexValidation: http(s)?://.+\.(pdf|html)
         valueValidationErrorMessage: "Must be a valid URL ending in .pdf or .html"
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: true
-        order: 50
+        order: 51
       - name: smpc
         title: SmPC
         description: SmPC
-        identifier: 243642004
-        level: PRODUCT
+        identifier: 680171000220109
+        level: PACKAGE
         dataType: URI
         valueRegexValidation: http(s)?://.+\.(pdf|html)
         valueValidationErrorMessage: "Must be a valid URL ending in .pdf or .html"
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: true
-        order: 51
-      - name: packagePil
-        title: Leaflet URL
-        description: Product information leaflet
-        identifier: 243638002
-        level: PACKAGE
-        dataType: URI
-        valueRegexValidation: http(s)?://.+\.(pdf|html)
-        valueValidationErrorMessage: "Must be a valid URL ending in .pdf or .html"
-        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
-        mandatory: false
-        multiValued: true
         order: 50
-      - name: packageSmpc
-        title: SmPC
-        description: SmPC
-        identifier: 1445111000168100
+      - name: licensingStatus
+        title: Licensing Status
+        description: Licensing Status
+        identifier: 680341000220104
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: <679931000220109
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        order: 91
+      - name: marketingStatus
+        title: Marketing Status
+        description: Marketing Status
+        identifier: 680051000220104
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: <679951000220103
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        order: 92
+      - name: marketingAuthHolder
+        title: Marketing Authorisation Holder
+        description: Marketing Authorisation Holder
+        identifier: 680061000220102
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: <774164004
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: true
+        multiValued: false
+        order: 93
+      - name: notifyingWholesaler
+        title: Notifying Wholesaler
+        description: Notifying Wholesaler
+        identifier: 680071000220108
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: <774164004
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+        order: 94
+      - name: legalSupplyStatus
+        title: Legal Supply Status
+        description: Legal Supply Status
+        identifier: 680081000220106
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: <670041000220107
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: true
+        multiValued: false
+        order: 95
+      - name: placeOfSale
+        title: Place of Sale
+        description: Place of Sale
+        identifier: 680771000220105
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: <680711000220102
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: true
+        multiValued: false
+        order: 96
+      - name: placeOfSupply
+        title: Place of Supply
+        description: Place of Supply
+        identifier: 680211000220106
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: <680711000220102
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: true
+        multiValued: false
+        order: 96
+      - name: controlledDrugStatus
+        title: Controlled Drug Status
+        description: Controlled Drug Status
+        identifier: 680091000220109
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: <670021000220101
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        order: 97
+      - name: packageType
+        title: Package Type
+        description: Package Type
+        identifier: 680161000220103
+        level: PACKAGE
+        dataType: CONCEPT
+        eclBinding: <732935002
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        order: 99
+      - name: lastDateOfMan
+        title: Last Date of Manufacture
+        description: Last Date of Manufacture
+        identifier: 680191000220105
+        level: PACKAGE
+        dataType: DATE
+        valueRegexValidation: \d{4}-\d{2}-\d{2}
+        valueValidationErrorMessage: "Must be a valid date in the format YYYY-MM-DD"
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        order: 100
+      - name: discontinuationUrl
+        title: Discontinuation Notification Letter URL
+        description: URL to the discontinuation notification letter
+        identifier: 680201000220108
         level: PACKAGE
         dataType: URI
         valueRegexValidation: http(s)?://.+\.(pdf|html)
@@ -335,4 +453,91 @@ models:
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
-        order: 51
+        order: 101
+      - name: recallDate
+        title: Recall Published Date
+        description: Date of recall
+        identifier: 680221000220104
+        level: PRODUCT
+        dataType: DATE
+        valueRegexValidation: \d{4}-\d{2}-\d{2}
+        valueValidationErrorMessage: "Must be a valid date in the format YYYY-MM-DD"
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        order: 102
+        group: recall
+      - name: recallActions
+        title: Recall Marketing Actions
+        description: Marketing actions taken for the recall
+        identifier: 680231000220101
+        level: PRODUCT
+        dataType: STRING
+        valueRegexValidation: ^.+$
+        valueValidationErrorMessage: "Must be a valid string"
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+        order: 103
+        group: recall
+      - name: recallCategory
+        title: Recall Defect Category
+        description: Category of defect for the recall
+        identifier: 680241000220105
+        level: PRODUCT
+        dataType: STRING
+        valueRegexValidation: ^.+$
+        valueValidationErrorMessage: "Must be a valid string"
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        order: 104
+        group: recall
+      - name: recallLevel
+        title: Recall Level
+        description: Level of recall
+        identifier: 680261000220109
+        level: PRODUCT
+        dataType: STRING
+        valueRegexValidation: ^.+$
+        valueValidationErrorMessage: "Must be a valid string"
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        order: 105
+        group: recall
+      - name: recallDocuments
+        title: Recall Associated Documents
+        description: Documents associated with the recall
+        identifier: 680251000220107
+        level: PRODUCT
+        dataType: URI
+        valueRegexValidation: http(s)?://.+
+        valueValidationErrorMessage: "Must be a valid URL"
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+        order: 106
+        group: recall
+      - name: doseFormType
+        title: Dose Form Type
+        description: Documents associated with the recall
+        identifier: 680311000220103
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: <679911000220104
+        modelLevels: CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+        order: 90
+      - name: nonPrescReason
+        title: Non-Prescribable Reason
+        description: Reason for non-prescribability
+        identifier: 680331000220108
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: <679921000220106
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        order: 71
