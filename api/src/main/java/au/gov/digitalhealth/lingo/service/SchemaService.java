@@ -74,8 +74,7 @@ public class SchemaService {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     JsonNode schemaNode = readFileContentAsJson(modelConfiguration.getBaseVaccineSchema());
 
-    schemaExtender.updateSchema(
-        modelConfiguration, schemaNode, "PresentationProductDetails", "QualitativeProductDetails");
+    schemaExtender.updateSchema(modelConfiguration, schemaNode, "ProductDetails");
 
     return schemaNode.toString();
   }
