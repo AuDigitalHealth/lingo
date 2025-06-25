@@ -15,9 +15,9 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
     sx,
     onChange,
     schema,
+    showDefaultOptions,
     uiSchema,
   } = props;
-  const { showDefaultOptions } = (uiSchema && uiSchema['ui:options']) || {};
 
   let isThisDisabled = isDisabled || props.disabled || false;
   useEffect(() => {
