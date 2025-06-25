@@ -5,6 +5,7 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { Concept, ConceptMini } from '../../../../types/concept.ts';
 import { SetExtendedEclButton } from '../../components/SetExtendedEclButton.tsx';
 import EclAutocomplete from '../components/EclAutocomplete.tsx';
+import MultiValueEclAutocomplete from '../components/MultiValueEclAutocomplete.tsx';
 import CreateBrand from '../components/CreateBrand.tsx';
 import useTaskById from '../../../../hooks/useTaskById.tsx';
 import { useTicketByTicketNumber } from '../../../../hooks/api/tickets/useTicketById.tsx';
@@ -15,20 +16,26 @@ import { useExclusionUpdates } from './../hooks/useExclusionUpdates.ts';
 
 const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
   const { onChange, idSchema } = props;
+  const uiSchema = props.uiSchema;
+  const isMultivalued = uiSchema?.['ui:options']?.isMultivalued === true;
 
   const [formContext, setFormContext] = useState(props.formContext || {});
-  const [formData, setFormData] = useState(props.formData || {});
-  const uiSchema = props.uiSchema;
-  const [rootFormData, setRootFormData] = useState(props?.formData || {});
+  const [formData, setFormData] = useState(
+    props.formData ?? (isMultivalued ? [] : null),
+  );
+  const [rootFormData, setRootFormData] = useState(
+    props.formData ?? (isMultivalued ? [] : null),
+  );
   const [rootUiSchema, setRootUiSchema] = useState(
     props?.formContext?.uiSchema || {},
   );
 
   // Sync local state with props changes (important for Safari)
   useEffect(() => {
-    setFormData(props.formData || {});
-    setRootFormData(props.formData || {});
-  }, [props.formData]);
+    const data = props.formData ?? (isMultivalued ? [] : null);
+    setFormData(data);
+    setRootFormData(data);
+  }, [props.formData, isMultivalued]);
 
   useEffect(() => {
     setFormContext(props.formContext || {});
@@ -67,7 +74,6 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
       conceptMini = uiSchema.defaultValue;
     }
 
-    // Create new object reference for Safari compatibility
     const newValue = conceptMini ? { ...conceptMini } : null;
 
     setFormData(newValue);
@@ -75,17 +81,24 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
   };
 
   const handleAddBrand = (brand: Concept) => {
-    onChange({
+    const newValue = {
       conceptId: brand.conceptId,
       pt: brand.pt || { term: brand.fsn?.term || 'Unnamed Brand' },
-    });
+    };
+
+    if (isMultivalued) {
+      const updatedList = [...(formData || []), newValue];
+      setFormData(updatedList);
+      onChange(updatedList);
+    } else {
+      setFormData(newValue);
+      onChange(newValue);
+    }
+
     setOpenCreateBrandModal(false);
   };
 
-  let paddingRight = 0;
-  if (createBrand) {
-    paddingRight = 5;
-  }
+  const paddingRight = createBrand ? 5 : 0;
 
   return (
     <span data-component-name="AutoCompleteField">
@@ -95,17 +108,31 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
             flex={50}
             sx={{ position: 'relative', paddingRight: paddingRight }}
           >
-            {task?.branchPath && (
-              <EclAutocomplete
-                {...props}
-                ecl={currentEcl}
-                value={formData}
-                isDisabled={disabled || props.disabled || false}
-                branch={task?.branchPath}
-                onChange={handleSelect}
-                errorMessage=""
-              />
-            )}
+            {task?.branchPath &&
+              (isMultivalued ? (
+                <MultiValueEclAutocomplete
+                  {...props}
+                  ecl={currentEcl}
+                  value={formData}
+                  isDisabled={disabled || props.disabled || false}
+                  branch={task?.branchPath}
+                  onChange={(val: ConceptMini[]) => {
+                    setFormData(val);
+                    onChange(val);
+                  }}
+                  errorMessage=""
+                />
+              ) : (
+                <EclAutocomplete
+                  {...props}
+                  ecl={currentEcl}
+                  value={formData}
+                  isDisabled={disabled || props.disabled || false}
+                  branch={task?.branchPath}
+                  onChange={handleSelect}
+                  errorMessage=""
+                />
+              ))}
             {createBrand && (
               <Tooltip title="Create Brand">
                 <IconButton
