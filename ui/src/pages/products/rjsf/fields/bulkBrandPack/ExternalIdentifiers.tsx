@@ -6,6 +6,7 @@ import {
   Chip,
   FormControlLabel,
   Grid,
+  IconButton,
   Stack,
   TextField,
 } from '@mui/material';
@@ -20,6 +21,7 @@ import useTaskById from '../../../../../hooks/useTaskById.tsx';
 import { ConceptMini } from '../../../../../types/concept.ts';
 import { MultiValueValueSetAutocomplete } from '../../components/MultiValueSetAutocomplete.tsx';
 import MultiValueEclAutocomplete from '../../components/MultiValueEclAutocomplete.tsx';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 
 const SCHEME_COLORS = ['primary', 'secondary', 'success', 'error', 'warning'];
 
@@ -382,14 +384,11 @@ const ExternalIdentifierRender: React.FC<
 
         {!useEclAutocomplete && !useValueSetAutocomplete && !isCheckBox && (
           <Autocomplete
-            multiple={true}
-            sx={{
-              width: '100%',
-            }}
-            disableClearable={true}
-            disabled={readOnly ? true : false}
-            freeSolo={freeSolo}
+            multiple
+            freeSolo
+            disableClearable
             filterSelectedOptions
+            disabled={readOnly}
             options={availableOptions}
             getOptionLabel={option => option}
             value={schemeEntries?.map(e => e.value)}
@@ -406,15 +405,12 @@ const ExternalIdentifierRender: React.FC<
               }
             }}
             renderTags={(values, getTagProps) => (
-              <Stack flexDirection={'row'} gap={1} flexWrap={'wrap'}>
+              <Stack direction="row" gap={1} flexWrap="wrap">
                 {values.map((val, index) => (
-                  <React.Fragment
-                    key={`${schema.properties.identifierScheme.const}-${val}-${index}`}
-                  >
+                  <React.Fragment key={`${schemeName}-${val}-${index}`}>
                     {renderChip({
                       value: val,
-                      identifierScheme:
-                        schema.properties.identifierScheme.const,
+                      identifierScheme: schemeName,
                       relationshipType:
                         schema.properties.relationshipType?.const,
                     })}
@@ -425,17 +421,37 @@ const ExternalIdentifierRender: React.FC<
             renderInput={params => (
               <TextField
                 {...params}
+                label={schema.title}
                 error={!!tooltip}
                 helperText={tooltip || ' '}
-                label={schema.title}
                 InputProps={{
                   ...params.InputProps,
-                  endAdornment: readOnly
-                    ? null
-                    : params.InputProps.endAdornment,
+                  endAdornment: (
+                    <>
+                      {params.InputProps.endAdornment}
+                      {!readOnly && inputValue?.trim() && (
+                        <IconButton
+                          edge="end"
+                          size="small"
+                          onClick={() => {
+                            handleAdd(inputValue.trim());
+                            setInputValue('');
+                          }}
+                          disabled={schemeEntries.some(
+                            entry => entry.value === inputValue.trim(),
+                          )}
+                          sx={{ ml: 1 }}
+                          title="Add value"
+                        >
+                          <AddCircleOutlineIcon color="primary" />
+                        </IconButton>
+                      )}
+                    </>
+                  ),
                 }}
               />
             )}
+            sx={{ width: '100%' }}
           />
         )}
       </Stack>
