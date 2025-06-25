@@ -10,9 +10,9 @@ import {
 } from '../../utils/helpers/conceptUtils.ts';
 import Loading from '../../components/Loading.tsx';
 
-import {useForm} from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 
-import {useNavigate} from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import {
   ActionType,
@@ -22,20 +22,23 @@ import {
   ProductActionType,
   ProductSaveDetails,
 } from '../../types/product.ts';
-import {Ticket} from '../../types/tickets/ticket.ts';
-import {lingoErrorHandler} from '../../types/ErrorHandler.ts';
+import { Ticket } from '../../types/tickets/ticket.ts';
+import { lingoErrorHandler } from '../../types/ErrorHandler.ts';
 
-import {useServiceStatus} from '../../hooks/api/useServiceStatus.tsx';
+import { useServiceStatus } from '../../hooks/api/useServiceStatus.tsx';
 import {
   getTicketBulkProductActionsByTicketIdOptions,
   getTicketProductsByTicketIdOptions,
 } from '../../hooks/api/tickets/useTicketById.tsx';
 import useAuthoringStore from '../../stores/AuthoringStore.ts';
-import {uniqueFsnValidator, uniquePtValidator,} from '../../types/productValidations.ts';
+import {
+  uniqueFsnValidator,
+  uniquePtValidator,
+} from '../../types/productValidations.ts';
 import WarningModal from '../../themes/overrides/WarningModal.tsx';
-import {closeSnackbar} from 'notistack';
-import {validateProductSummaryNodes} from '../../types/productValidationUtils.ts';
-import {useQueryClient} from '@tanstack/react-query';
+import { closeSnackbar } from 'notistack';
+import { validateProductSummaryNodes } from '../../types/productValidationUtils.ts';
+import { useQueryClient } from '@tanstack/react-query';
 
 import productService from '../../api/ProductService.ts';
 import ProductPreviewBody from './components/ProductPreviewBody.tsx';
@@ -44,7 +47,7 @@ import {
   invalidateBulkActionQueries,
   invalidateBulkActionQueriesById,
 } from '../../utils/helpers/ProductPreviewUtils.ts';
-import {ProductNameOverrideModal} from './components/ProductNameOverrideModal.tsx';
+import { ProductNameOverrideModal } from './components/ProductNameOverrideModal.tsx';
 
 interface ProductPreviewSaveOrViewModeProps {
   productSaveDetails?: ProductSaveDetails;
@@ -190,7 +193,7 @@ function ProductPreviewSaveOrViewMode({
             );
             setErrorKey(snackbarKey as string);
           });
-      } else if (selectedActionType === ActionType.newMedication) {
+      } else if (selectedActionType === ActionType.newMedication || selectedActionType === ActionType.newVaccine || selectedActionType === ActionType.newNutritionalProduct) {
         // TODO: Fix these 'clean package details' stuff?
         // productCreationDetails.packageDetails = cleanPackageDetails(
         //   productCreationDetails.packageDetails as MedicationPackageDetails,

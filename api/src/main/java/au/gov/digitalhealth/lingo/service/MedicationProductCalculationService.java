@@ -49,10 +49,14 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRESENTATION_S
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRESENTATION_STRENGTH_NUMERATOR_UNIT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRESENTATION_STRENGTH_NUMERATOR_VALUE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRODUCT_NAME;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_TARGET_POPULATION;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_UNIT_OF_PRESENTATION;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_UNIT_OF_PRESENTATION_SIZE_QUANTITY;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_UNIT_OF_PRESENTATION_SIZE_UNIT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.IS_A;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.MEDICINAL_PRODUCT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.MEDICINAL_PRODUCT_PACKAGE;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.PLAYS_ROLE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.STATED_RELATIONSHIP;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.VIRTUAL_MEDICINAL_PRODUCT;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.addQuantityIfNotNull;
@@ -856,6 +860,31 @@ public class MedicationProductCalculationService
     Set<SnowstormRelationship> relationships = new HashSet<>();
     relationships.add(
         getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT, 0, modelConfiguration.getModuleId()));
+
+    if (productDetails.getPlaysRole() != null) {
+      productDetails
+          .getPlaysRole()
+          .forEach(
+              playsRole ->
+                  addRelationshipIfNotNull(
+                      relationships, playsRole, PLAYS_ROLE, 0, modelConfiguration.getModuleId()));
+    }
+
+    if (productDetails instanceof VaccineProductDetails vaccineProductDetails) {
+      addRelationshipIfNotNull(
+          relationships,
+          vaccineProductDetails.getTargetPopulation(),
+          HAS_TARGET_POPULATION,
+          0,
+          modelConfiguration.getModuleId());
+      addRelationshipIfNotNull(
+          relationships,
+          vaccineProductDetails.getQualitiativeStrength(),
+          HAS_TARGET_POPULATION,
+          0,
+          modelConfiguration.getModuleId());
+    }
+
     int group = 1;
     for (Ingredient ingredient : productDetails.getActiveIngredients()) {
       relationships.add(
@@ -1066,6 +1095,30 @@ public class MedicationProductCalculationService
               modelConfiguration.getModuleId()));
     }
 
+    if (productDetails.getPlaysRole() != null) {
+      productDetails
+          .getPlaysRole()
+          .forEach(
+              playsRole ->
+                  addRelationshipIfNotNull(
+                      relationships, playsRole, PLAYS_ROLE, 0, modelConfiguration.getModuleId()));
+    }
+
+    if (productDetails instanceof VaccineProductDetails vaccineProductDetails) {
+      addRelationshipIfNotNull(
+          relationships,
+          vaccineProductDetails.getTargetPopulation(),
+          HAS_TARGET_POPULATION,
+          0,
+          modelConfiguration.getModuleId());
+      addRelationshipIfNotNull(
+          relationships,
+          vaccineProductDetails.getQualitiativeStrength(),
+          HAS_TARGET_POPULATION,
+          0,
+          modelConfiguration.getModuleId());
+    }
+
     int group = 1;
 
     if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
@@ -1075,6 +1128,19 @@ public class MedicationProductCalculationService
           relationships,
           HAS_PACK_SIZE_VALUE,
           HAS_PACK_SIZE_UNIT,
+          DataTypeEnum.DECIMAL,
+          group,
+          modelConfiguration)) {
+
+        group++;
+      }
+    } else if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
+      if (addQuantityIfNotNull(
+          productDetails.getQuantity(),
+          decimalScale,
+          relationships,
+          HAS_UNIT_OF_PRESENTATION_SIZE_QUANTITY,
+          HAS_UNIT_OF_PRESENTATION_SIZE_UNIT,
           DataTypeEnum.DECIMAL,
           group,
           modelConfiguration)) {

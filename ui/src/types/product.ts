@@ -28,6 +28,8 @@ export enum ActionType {
   newProduct = 'newProduct', //All product types including medication and device
   newDevice = 'newDevice',
   newMedication = 'newMedication',
+  newVaccine = 'newVaccine',
+  newNutritionalProduct = 'newNutritionalProduct',
   newPackSize = 'newPackSize',
   newBrand = 'newBrand',
   editProduct = 'editProduct',
