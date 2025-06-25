@@ -2,31 +2,33 @@ import BaseModal from '../../../components/modal/BaseModal';
 import BaseModalBody from '../../../components/modal/BaseModalBody';
 import BaseModalHeader from '../../../components/modal/BaseModalHeader';
 
-import { ProductCreationDetails, ProductType } from '../../../types/product.ts';
-import ProductPreviewCreateOrViewMode from '../ProductPreviewCreateOrViewMode.tsx';
+import { ProductSaveDetails, ProductType } from '../../../types/product.ts';
+import ProductPreviewSaveOrViewMode from '../ProductPreviewSaveOrViewMode.tsx';
 import Loading from '../../../components/Loading.tsx';
 import React from 'react';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import { Box } from '@mui/system';
 
-interface ProductPreviewCreateModalProps {
+interface ProductPreviewManageModalProps {
   open: boolean;
   handleClose: (
     event: object,
     reason: 'backdropClick' | 'escapeKeyDown',
   ) => void;
-  productCreationDetails: ProductCreationDetails | undefined;
+  productCreationDetails: ProductSaveDetails | undefined;
   productType: ProductType;
   branch: string;
   ticket: Ticket;
+  isProductUpdate:boolean;
 }
-export default function ProductPreviewCreateModal({
+export default function ProductPreviewManageModal({
   open,
   handleClose,
   productCreationDetails,
   branch,
   ticket,
-}: ProductPreviewCreateModalProps) {
+                                                    isProductUpdate
+}: ProductPreviewManageModalProps) {
   return (
     <BaseModal
       open={open}
@@ -34,14 +36,14 @@ export default function ProductPreviewCreateModal({
       data-testid={'preview-modal'}
       sx={{ width: '75%' }}
     >
-      <BaseModalHeader title={'Preview New Product'} />
+      <BaseModalHeader title={isProductUpdate ? 'Preview Update Product':'Preview New Product'} />
       <BaseModalBody>
         <Box height={'90%'} overflow={'auto'} width={'100%'}>
           {!productCreationDetails ? (
             <Loading message={`Loading Product Preview details`} />
           ) : (
-            <ProductPreviewCreateOrViewMode
-              productCreationDetails={productCreationDetails}
+            <ProductPreviewSaveOrViewMode
+              productSaveDetails={productCreationDetails}
               handleClose={handleClose}
               readOnlyMode={false}
               branch={branch}

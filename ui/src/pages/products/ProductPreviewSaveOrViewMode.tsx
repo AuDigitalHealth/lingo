@@ -1,6 +1,6 @@
-import { Box } from '@mui/material';
-import { useEffect, useState } from 'react';
-import { Concept, ProductSummary } from '../../types/concept.ts';
+import {Box} from '@mui/material';
+import {useEffect, useState} from 'react';
+import {Concept, ProductSummary} from '../../types/concept.ts';
 import {
   cleanBrandPackSizeDetails,
   cleanDevicePackageDetails,
@@ -10,34 +10,32 @@ import {
 } from '../../utils/helpers/conceptUtils.ts';
 import Loading from '../../components/Loading.tsx';
 
-import { useForm } from 'react-hook-form';
+import {useForm} from 'react-hook-form';
 
-import { useNavigate } from 'react-router-dom';
+import {useNavigate} from 'react-router-dom';
 
 import {
   ActionType,
   BrandPackSizeCreationDetails,
   BulkProductCreationDetails,
   DevicePackageDetails,
-  ProductCreationDetails,
+  ProductActionType,
+  ProductSaveDetails,
 } from '../../types/product.ts';
-import { Ticket } from '../../types/tickets/ticket.ts';
-import { lingoErrorHandler } from '../../types/ErrorHandler.ts';
+import {Ticket} from '../../types/tickets/ticket.ts';
+import {lingoErrorHandler} from '../../types/ErrorHandler.ts';
 
-import { useServiceStatus } from '../../hooks/api/useServiceStatus.tsx';
+import {useServiceStatus} from '../../hooks/api/useServiceStatus.tsx';
 import {
   getTicketBulkProductActionsByTicketIdOptions,
   getTicketProductsByTicketIdOptions,
 } from '../../hooks/api/tickets/useTicketById.tsx';
 import useAuthoringStore from '../../stores/AuthoringStore.ts';
-import {
-  uniqueFsnValidator,
-  uniquePtValidator,
-} from '../../types/productValidations.ts';
+import {uniqueFsnValidator, uniquePtValidator,} from '../../types/productValidations.ts';
 import WarningModal from '../../themes/overrides/WarningModal.tsx';
-import { closeSnackbar } from 'notistack';
-import { validateProductSummaryNodes } from '../../types/productValidationUtils.ts';
-import { useQueryClient } from '@tanstack/react-query';
+import {closeSnackbar} from 'notistack';
+import {validateProductSummaryNodes} from '../../types/productValidationUtils.ts';
+import {useQueryClient} from '@tanstack/react-query';
 
 import productService from '../../api/ProductService.ts';
 import ProductPreviewBody from './components/ProductPreviewBody.tsx';
@@ -46,10 +44,10 @@ import {
   invalidateBulkActionQueries,
   invalidateBulkActionQueriesById,
 } from '../../utils/helpers/ProductPreviewUtils.ts';
-import { ProductNameOverrideModal } from './components/ProductNameOverrideModal.tsx';
+import {ProductNameOverrideModal} from './components/ProductNameOverrideModal.tsx';
 
-interface ProductPreviewCreateOrViewModeProps {
-  productCreationDetails?: ProductCreationDetails;
+interface ProductPreviewSaveOrViewModeProps {
+  productSaveDetails?: ProductSaveDetails;
   productModel: ProductSummary;
   handleClose?:
     | ((event: object, reason: 'backdropClick' | 'escapeKeyDown') => void)
@@ -59,14 +57,15 @@ interface ProductPreviewCreateOrViewModeProps {
   ticket?: Ticket;
 }
 
-function ProductPreviewCreateOrViewMode({
-  productCreationDetails,
+function ProductPreviewSaveOrViewMode({
+  productSaveDetails,
   handleClose,
   readOnlyMode,
   branch,
   productModel,
   ticket,
-}: ProductPreviewCreateOrViewModeProps) {
+
+}: ProductPreviewSaveOrViewModeProps) {
   const [isLoading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { serviceStatus } = useServiceStatus();
@@ -86,7 +85,7 @@ function ProductPreviewCreateOrViewMode({
   const productWithNameAlreadyExists = (
     ticket: Ticket | undefined,
     productSummary: ProductSummary,
-    productCreationDetails: ProductCreationDetails | undefined,
+    productCreationDetails: ProductSaveDetails | undefined,
   ) => {
     const duplicateName = ticket?.products?.find(product => {
       return product.name === productSummary.subjects[0].fullySpecifiedName;
@@ -118,7 +117,7 @@ function ProductPreviewCreateOrViewMode({
     }
     setLastValidatedData(data);
     if (
-      productWithNameAlreadyExists(ticket, data, productCreationDetails) &&
+      productWithNameAlreadyExists(ticket, data, productSaveDetails) &&
       !overrideDuplicateName
     ) {
       setDuplicateNameModalOpen(true);
@@ -149,19 +148,19 @@ function ProductPreviewCreateOrViewMode({
     if (
       !readOnlyMode &&
       newConceptFound &&
-      productCreationDetails &&
+      productSaveDetails &&
       usedData
     ) {
       setForceNavigation(true);
-      productCreationDetails.productSummary = usedData;
+      productSaveDetails.productSummary = usedData;
       setLoading(true);
 
       if (isDeviceType(selectedProductType)) {
-        productCreationDetails.packageDetails = cleanDevicePackageDetails(
-          productCreationDetails.packageDetails as DevicePackageDetails,
+        productSaveDetails.packageDetails = cleanDevicePackageDetails(
+          productSaveDetails.packageDetails as DevicePackageDetails,
         );
         productService
-          .createDeviceProduct(productCreationDetails, branch)
+          .createDeviceProduct(productSaveDetails, branch)
           .then(v => {
             if (handleClose) handleClose({}, 'escapeKeyDown');
             setLoading(false);
@@ -200,7 +199,7 @@ function ProductPreviewCreateOrViewMode({
         //   productCreationDetails.productSummary,
         // );
         productService
-          .createNewMedicationProduct(productCreationDetails, branch)
+          .saveMedicationProduct(productSaveDetails, branch )
           .then(v => {
             if (handleClose) handleClose({}, 'escapeKeyDown');
             setLoading(false);
@@ -234,9 +233,9 @@ function ProductPreviewCreateOrViewMode({
       } else {
         const bulkProductCreationDetails = {
           details:
-            productCreationDetails.packageDetails as BrandPackSizeCreationDetails,
-          productSummary: productCreationDetails.productSummary,
-          ticketId: productCreationDetails.ticketId,
+            productSaveDetails.packageDetails as BrandPackSizeCreationDetails,
+          productSummary: productSaveDetails.productSummary,
+          ticketId: productSaveDetails.ticketId,
         } as BulkProductCreationDetails;
         bulkProductCreationDetails.details = cleanBrandPackSizeDetails(
           bulkProductCreationDetails.details,
@@ -302,7 +301,7 @@ function ProductPreviewCreateOrViewMode({
             }
           }}
           productName={lastValidatedData?.subjects[0]?.fullySpecifiedName}
-          productCreationDetails={productCreationDetails}
+          productCreationDetails={productSaveDetails}
           open={duplicateNameModalOpen}
           ignore={() => {
             setOverrideDuplicateName(true);
@@ -338,11 +337,12 @@ function ProductPreviewCreateOrViewMode({
               watch={watch}
               getValues={getValues}
               readOnlyMode={readOnlyMode}
-              editProduct={false}
+              isSimpleEdit={false}
               newConceptFound={newConceptFound}
               branch={branch}
               handleClose={handleClose}
               setValue={setValue}
+              isProductUpdate={productSaveDetails?.type === ProductActionType.update}
             />
           </form>
         </Box>
@@ -351,4 +351,4 @@ function ProductPreviewCreateOrViewMode({
   }
 }
 
-export default ProductPreviewCreateOrViewMode;
+export default ProductPreviewSaveOrViewMode;

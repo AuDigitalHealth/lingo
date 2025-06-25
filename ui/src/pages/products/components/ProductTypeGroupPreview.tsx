@@ -41,7 +41,7 @@ interface ProductTypeGroupPreviewProps {
   fieldBindings: FieldBindings;
   branch: string;
   refsetData: RefsetMember[] | undefined;
-  editProduct: boolean;
+  isSimpleEdit: boolean;
   setValue: UseFormSetValue<ProductSummary>;
   ticket?: Ticket;
 }
@@ -62,9 +62,10 @@ function ProductTypeGroupPreview({
   fieldBindings,
   branch,
   refsetData,
-  editProduct,
+  isSimpleEdit,
   setValue,
   ticket,
+
 }: ProductTypeGroupPreviewProps) {
   return (
     <Grid>
@@ -111,7 +112,7 @@ function ProductTypeGroupPreview({
                   fieldBindings={fieldBindings}
                   branch={branch}
                   refsetMembers={productRefSetMembers}
-                  editProduct={editProduct}
+                  isSimpleEdit={isSimpleEdit}
                   setValue={setValue}
                   ticket={ticket}
                 />
