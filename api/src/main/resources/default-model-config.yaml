@@ -296,6 +296,18 @@ models:
         multiValued: false
         order: 100
     nonDefiningProperties:
+      - name: nmpcType
+        title: NMPC Type
+        description: Type of NMPC item
+        identifier: 680011000220100
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: <679901000220102
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+        readOnly: true
+        order: 20
       - name: licencedRoute
         title: Licenced Route
         description: Licenced Route of Administration
