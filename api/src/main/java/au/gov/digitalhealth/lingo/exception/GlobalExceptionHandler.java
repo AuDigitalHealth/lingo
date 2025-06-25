@@ -25,16 +25,26 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.springframework.http.*;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+
+  public static final String MESSAGE = "message";
+  public static final String FIELD = "field";
+  public static final String ERRORS = "errors";
+  public static final String ERROR = "error";
+  public static final String PATH = "path";
+  public static final String CAUSE = "cause";
+
   @ExceptionHandler(AuthenticationProblem.class)
   ProblemDetail handleAuthenticationProblem(AuthenticationProblem e) {
     return e.getBody();
@@ -81,20 +91,43 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     List<Map<String, String>> errorList = new ArrayList<>();
     ex.getAllErrors()
         .forEach(
-            (error) -> {
+            error -> {
               Map<String, String> errorMap = new HashMap<>();
-              if (error instanceof FieldError) {
-                FieldError fieldError = (FieldError) error;
-                errorMap.put("field", fieldError.getField());
-                errorMap.put("message", fieldError.getDefaultMessage());
+              if (error instanceof FieldError fieldError) {
+                errorMap.put(FIELD, fieldError.getField());
+                errorMap.put(MESSAGE, fieldError.getDefaultMessage());
               } else {
-                errorMap.put("message", error.getDefaultMessage());
+                errorMap.put(MESSAGE, error.getDefaultMessage());
               }
               errorList.add(errorMap);
             });
 
-    problemDetail.setProperty("errors", errorList);
+    problemDetail.setProperty(ERRORS, errorList);
 
     return new ResponseEntity<>(problemDetail, HttpStatus.BAD_REQUEST);
+  }
+
+  @Override
+  protected ResponseEntity<Object> handleHttpMessageNotReadable(
+      HttpMessageNotReadableException ex,
+      HttpHeaders headers,
+      HttpStatusCode status,
+      WebRequest request) {
+
+    Map<String, Object> errorDetails = new HashMap<>();
+    errorDetails.put(ERROR, "Malformed JSON request");
+    errorDetails.put(MESSAGE, ex.getMessage());
+
+    // Extract path information from request if available
+    if (request instanceof ServletWebRequest servletRequest) {
+      errorDetails.put(PATH, servletRequest.getRequest().getRequestURI());
+    }
+
+    Throwable cause = ex.getCause();
+    if (cause != null) {
+      errorDetails.put(CAUSE, cause.getMessage());
+    }
+
+    return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
   }
 }
