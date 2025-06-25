@@ -1,6 +1,6 @@
-import {Box} from '@mui/material';
-import {useEffect, useState} from 'react';
-import {Concept, ProductSummary} from '../../types/concept.ts';
+import { Box } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { Concept, ProductSummary } from '../../types/concept.ts';
 import {
   cleanBrandPackSizeDetails,
   cleanDevicePackageDetails,
@@ -67,7 +67,6 @@ function ProductPreviewSaveOrViewMode({
   branch,
   productModel,
   ticket,
-
 }: ProductPreviewSaveOrViewModeProps) {
   const [isLoading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -148,12 +147,7 @@ function ProductPreviewSaveOrViewMode({
   const submitData = (data?: ProductSummary) => {
     const usedData = data ? data : lastValidatedData;
 
-    if (
-      !readOnlyMode &&
-      newConceptFound &&
-      productSaveDetails &&
-      usedData
-    ) {
+    if (!readOnlyMode && newConceptFound && productSaveDetails && usedData) {
       setForceNavigation(true);
       productSaveDetails.productSummary = usedData;
       setLoading(true);
@@ -193,7 +187,11 @@ function ProductPreviewSaveOrViewMode({
             );
             setErrorKey(snackbarKey as string);
           });
-      } else if (selectedActionType === ActionType.newMedication || selectedActionType === ActionType.newVaccine || selectedActionType === ActionType.newNutritionalProduct) {
+      } else if (
+        selectedActionType === ActionType.newMedication ||
+        selectedActionType === ActionType.newVaccine ||
+        selectedActionType === ActionType.newNutritionalProduct
+      ) {
         // TODO: Fix these 'clean package details' stuff?
         // productCreationDetails.packageDetails = cleanPackageDetails(
         //   productCreationDetails.packageDetails as MedicationPackageDetails,
@@ -202,7 +200,7 @@ function ProductPreviewSaveOrViewMode({
         //   productCreationDetails.productSummary,
         // );
         productService
-          .saveMedicationProduct(productSaveDetails, branch )
+          .saveMedicationProduct(productSaveDetails, branch)
           .then(v => {
             if (handleClose) handleClose({}, 'escapeKeyDown');
             setLoading(false);
@@ -345,7 +343,9 @@ function ProductPreviewSaveOrViewMode({
               branch={branch}
               handleClose={handleClose}
               setValue={setValue}
-              isProductUpdate={productSaveDetails?.type === ProductActionType.update}
+              isProductUpdate={
+                productSaveDetails?.type === ProductActionType.update
+              }
             />
           </form>
         </Box>

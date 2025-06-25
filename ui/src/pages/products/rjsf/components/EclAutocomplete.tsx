@@ -130,7 +130,10 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
               '& .MuiFormHelperText-root': {
                 m: 0,
                 minHeight: '1em',
-                color: errorMessage || needsAttention ? 'error.main' : 'text.secondary',
+                color:
+                  errorMessage || needsAttention
+                    ? 'error.main'
+                    : 'text.secondary',
               },
             }}
           />

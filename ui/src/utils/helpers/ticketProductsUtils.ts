@@ -17,7 +17,7 @@
 import {
   DevicePackageDetails,
   MedicationPackageDetails,
-  ProductType
+  ProductType,
 } from '../../types/product.ts';
 import {
   AutocompleteGroupOption,
@@ -25,7 +25,7 @@ import {
   ProductAction,
   Ticket,
   TicketBulkProductActionDto,
-  TicketProductDto
+  TicketProductDto,
 } from '../../types/tickets/ticket.ts';
 import { ProductStatus, ProductTableRow } from '../../types/TicketProduct.ts';
 
@@ -35,7 +35,7 @@ export function mapToTicketProductDto(
   login: string,
   productName: string,
   create: boolean,
-  action: ProductAction
+  action: ProductAction,
 ) {
   const ticketProductDto: TicketProductDto = {
     ticketId: ticket.id,

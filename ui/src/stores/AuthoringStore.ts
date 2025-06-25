@@ -63,9 +63,7 @@ interface AuthoringStoreConfig {
   //
 
   productCreationDetails: ProductSaveDetails | undefined;
-  setProductCreationDetails: (
-    details: ProductSaveDetails | undefined,
-  ) => void;
+  setProductCreationDetails: (details: ProductSaveDetails | undefined) => void;
   productPreviewDetails: MedicationPackageDetails | undefined;
   setProductPreviewDetails: (
     details: MedicationPackageDetails | undefined,

@@ -308,7 +308,6 @@ export interface Product {
   inferredFormChanged: boolean | null;
 }
 
-
 export function hasDescriptionChange(product: Product): boolean {
   return (
     product.originalNode != null &&

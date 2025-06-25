@@ -144,7 +144,7 @@ export enum ProductActionType {
   update = 'update',
 }
 export interface ProductSaveDetails {
-  type:ProductActionType;
+  type: ProductActionType;
   productSummary: ProductSummary;
   packageDetails:
     | MedicationPackageDetails
@@ -153,10 +153,11 @@ export interface ProductSaveDetails {
   ticketId: number;
   partialSaveName: string | null;
   nameOverride: string | null;
-  originalConceptId:string|null| undefined;
-  originalPackageDetails: | MedicationPackageDetails
-      | DevicePackageDetails
-      | BrandPackSizeCreationDetails;
+  originalConceptId: string | null | undefined;
+  originalPackageDetails:
+    | MedicationPackageDetails
+    | DevicePackageDetails
+    | BrandPackSizeCreationDetails;
 }
 
 export interface ProductUpdateRequest {
