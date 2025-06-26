@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { DataTable } from 'primereact/datatable';
 
 import { Column } from 'primereact/column';
@@ -42,6 +42,7 @@ interface TicketProductsProps {
   ticket: Ticket;
   branch: string;
 }
+
 interface RowToExpand {
   [p: number]: boolean;
 }
@@ -54,16 +55,27 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [idToDelete, setIdToDelete] = useState<number | undefined>(undefined);
   const [deleteModalContent, setDeleteModalContent] = useState('');
-  const productDetailsArray = products
-    ? mapToProductDetailsArray(products, 0)
-    : [];
-  const bulkProductActionDetailsArray = bulkProductActions
-    ? mapToProductDetailsArrayFromBulkActions(
-        bulkProductActions,
-        productDetailsArray.length,
-      )
-    : [];
-  const data = productDetailsArray.concat(bulkProductActionDetailsArray);
+  const productDetailsArray = useMemo(
+    () => (products ? mapToProductDetailsArray(products, 0) : []),
+    [products],
+  );
+
+  const bulkProductActionDetailsArray = useMemo(
+    () =>
+      bulkProductActions
+        ? mapToProductDetailsArrayFromBulkActions(
+            bulkProductActions,
+            productDetailsArray.length,
+          )
+        : [],
+    [bulkProductActions, productDetailsArray.length],
+  );
+
+  const data = useMemo(
+    () => [...productDetailsArray, ...bulkProductActionDetailsArray],
+    [productDetailsArray, bulkProductActionDetailsArray],
+  );
+
   const navigate = useNavigate();
   const { canEdit, lockDescription } = useCanEditTask();
   const queryClient = useQueryClient();
@@ -71,12 +83,31 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
   const [expandedRows, setExpandedRows] = useState<ProductTableRow[]>([]);
 
   const [expandedRowIds, setExpandedRowIds] = useState<number[]>([]);
-  const { activeConceptIds } = useActiveConceptIdsByIds(
-    branch,
-    Array.from(
+
+  // Extract all concept IDs from data
+  const conceptIds = useMemo(() => {
+    return Array.from(
       new Set(data.flatMap(row => (row.conceptId ? [row.conceptId] : []))),
-    ),
+    );
+  }, [data]); // This dependency is now properly memoized
+
+  // Use the hook with memoized conceptIds
+  const { activeConceptIds, activeConceptsLoading } = useActiveConceptIdsByIds(
+    branch,
+    conceptIds,
   );
+
+  // Create a memoized version of data that includes the active status
+  const enrichedData = useMemo(() => {
+    if (!activeConceptIds) return data;
+
+    return data.map(row => ({
+      ...row,
+      isActive: row.conceptId
+        ? activeConceptIds.items?.includes(row.conceptId)
+        : false,
+    }));
+  }, [data, activeConceptIds]);
 
   const handleDeleteProduct = () => {
     if (idToDelete === undefined) {
@@ -200,6 +231,77 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
     setExpandedRows(e.data as ProductTableRow[]);
   };
 
+  // Memoized product name template function
+  const productNameTemplateWithActiveStatus = useCallback(
+    (rowData: ProductTableRow) => {
+      const activeIds = activeConceptIds ? activeConceptIds.items : [];
+
+      if (isBulkPackProductAction(rowData)) {
+        return (
+          <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
+            <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>
+              {rowData.name}
+            </span>
+          </Tooltip>
+        );
+      } else if (isPartialProduct(rowData)) {
+        return (
+          <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
+            <Link
+              to="product/edit"
+              state={{
+                productId: rowData?.productId,
+                productName: rowData?.name,
+                productType: rowData?.productType,
+                actionType: isDeviceType(rowData.productType as ProductType)
+                  ? ActionType.newDevice
+                  : ActionType.newMedication,
+              }}
+              className={'product-edit-link'}
+              key={`link-${rowData?.name}`}
+              data-testid={`link-${rowData?.name}`}
+              style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+            >
+              {trimName(rowData.name)}
+            </Link>
+          </Tooltip>
+        );
+      } else if (rowData.conceptId && activeIds.includes(rowData.conceptId)) {
+        return (
+          <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
+            <Link
+              to={`product/view/${rowData.conceptId}`}
+              className={'product-view-link'}
+              key={`link-${rowData.id}`}
+              data-testid={`link-${rowData.id}`}
+              style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+            >
+              {trimName(rowData.name)}
+            </Link>
+          </Tooltip>
+        );
+      } else {
+        return (
+          <Tooltip
+            title={'Product no longer exists or is inactive.'}
+            key={`tooltip-${rowData.id}`}
+          >
+            <div>
+              <WarningIcon color="warning" />
+              <Typography>{trimName(rowData.name)}</Typography>
+            </div>
+          </Tooltip>
+        );
+      }
+    },
+    [activeConceptIds], // This ensures the function is recreated when activeConceptIds changes
+  );
+
+  // Show a loading indicator if we're still loading active concept IDs
+  if (activeConceptsLoading) {
+    return <Loading message={'Loading Products...'} />;
+  }
+
   return (
     <>
       <ConfirmationModal
@@ -245,12 +347,8 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
 
         <Grid container sx={{ marginTop: 'auto' }}>
           <div
-            className="custom-datatable ticket-products-table"
-            style={{
-              display: 'flex',
-              justifyContent: 'flex-start',
-              width: '100%',
-            }}
+            className="custom-datatable"
+            style={{ display: 'flex', justifyContent: 'flex-start' }}
           >
             <DataTable
               paginator
@@ -263,7 +361,7 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
               size="small"
               sortField={'created'}
               sortOrder={-1}
-              value={data}
+              value={enrichedData} // Use the enriched data here
               expandedRows={expandedRows}
               onRowClick={e => {
                 manuallyTriggerRowToggle(e.data as ProductTableRow);
@@ -275,70 +373,28 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
             >
               <Column
                 field="name"
-                body={(rowData: ProductTableRow) =>
-                  productNameTemplate(
-                    rowData,
-                    activeConceptIds ? activeConceptIds.items : [],
-                  )
-                }
+                body={productNameTemplateWithActiveStatus} // Use the memoized function
                 header="Product Name"
                 style={{
                   maxWidth: '125px',
                   overflow: 'hidden',
-                  maxHeight: '18px',
+                  maxHeight: '20px',
                   textOverflow: 'ellipsis',
                 }}
               />
-              <Column
-                field="actionProductType"
-                header="Action"
-                body={(rowData: ProductTableRow) => {
-                  return (
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <div>{rowData.productType || ''}</div>
-                      <div>
-                        {rowData.action ? rowData.action.toLowerCase() : ''}
-                      </div>
-                    </div>
-                  );
-                }}
-                style={{
-                  maxWidth: '3.5em',
-                  overflow: 'hidden',
-                  maxHeight: '18px',
-                  textOverflow: 'ellipsis',
-                }}
-              />
+              <Column field="productType" header="Product Type" />
               <Column
                 field="created"
                 header="Created"
                 body={(rowData: ProductTableRow) => {
                   const date = new Date(rowData.created);
-                  const day = date.getDate();
-                  const month = date.toLocaleString('en-US', {
-                    month: 'short',
-                  });
-                  const year = date.getFullYear();
-                  return (
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <div>
-                        {day} {month}
-                      </div>
-                      <div>{year}</div>
-                    </div>
-                  );
-                }}
-                style={{
-                  maxWidth: '3em',
-                  overflow: 'hidden',
-                  maxHeight: '18px',
-                  textOverflow: 'ellipsis',
+                  return date.toISOString().split('T')[0];
                 }}
               />
               <Column
-                header=""
+                header="Actions"
                 body={actionBodyTemplate}
-                style={{ textAlign: 'center', width: '1em' }}
+                style={{ textAlign: 'center', width: '10em' }}
               />
             </DataTable>
           </div>
@@ -348,71 +404,7 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
   );
 }
 
-const productNameTemplate = (
-  rowData: ProductTableRow,
-  activeConceptIds: string[],
-) => {
-  if (isBulkPackProductAction(rowData)) {
-    return (
-      <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
-        <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>
-          {rowData.name}
-        </span>
-      </Tooltip>
-    );
-  } else if (isPartialProduct(rowData)) {
-    return (
-      <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
-        <Link
-          to="product/edit"
-          state={{
-            productId: rowData?.productId,
-            productName: rowData?.name,
-            productType: rowData?.productType,
-            actionType: isDeviceType(rowData.productType as ProductType)
-              ? ActionType.newDevice
-              : ActionType.newMedication,
-          }}
-          className={'product-edit-link'}
-          key={`link-${rowData?.name}`}
-          data-testid={`link-${rowData?.name}`}
-          style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
-        >
-          {trimName(rowData.name)}
-        </Link>
-      </Tooltip>
-    );
-  } else if (
-    rowData.conceptId &&
-    activeConceptIds.includes(rowData.conceptId)
-  ) {
-    return (
-      <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
-        <Link
-          to={`product/view/${rowData.conceptId}`}
-          className={'product-view-link'}
-          key={`link-${rowData.id}`}
-          data-testid={`link-${rowData.id}`}
-          style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
-        >
-          {trimName(rowData.name)}
-        </Link>
-      </Tooltip>
-    );
-  } else {
-    return (
-      <Tooltip
-        title={`Product ${rowData.conceptId} no longer exists or is inactive.`}
-        key={`tooltip-${rowData.id}`}
-      >
-        <div>
-          <WarningIcon color="warning" />
-          <Typography>{trimName(rowData.name)}</Typography>
-        </div>
-      </Tooltip>
-    );
-  }
-};
+// Keep these helper functions outside the component
 const trimName = (name: string) => {
   const maxChars = 50;
   if (name.length <= maxChars) {
@@ -433,6 +425,7 @@ const isBulkPackProductAction = (
   }
   return false;
 };
+
 const showActionLoadInToAtomicForm = (product: ProductTableRow | undefined) => {
   if (!product) {
     return false;
@@ -500,4 +493,5 @@ function BulkActionChildConcepts({
     </div>
   );
 }
+
 export default TicketProducts;
