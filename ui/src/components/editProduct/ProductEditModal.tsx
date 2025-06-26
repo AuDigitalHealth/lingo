@@ -169,7 +169,14 @@ function EditConceptBody({
       return [];
     }
     const fromApi = [...project.metadata.requiredLanguageRefsets];
-    fromApi.push(USLangRefset);
+    if (
+      fromApi.filter(item => {
+        return item.en === USLangRefset.en;
+      }).length === 0
+    ) {
+      fromApi.push(USLangRefset);
+    }
+
     return fromApi;
   }, [project]);
 
@@ -227,7 +234,7 @@ function EditConceptBody({
 
   const defaultValues = useMemo(() => {
     return {
-      updateRequest: {
+      externalRequesterUpdate: {
         nonDefiningProperties: product.nonDefiningProperties
           ? sortNonDefiningProperties(product.nonDefiningProperties)
           : [],
@@ -430,7 +437,7 @@ function EditConceptBody({
     );
 
     const artgModified = !areTwoNonDefiningPropertiesArraysEqual(
-      data.updateRequest.nonDefiningProperties,
+      data.externalRequesterUpdate.nonDefiningProperties,
       product.nonDefiningProperties ? product.nonDefiningProperties : [],
     );
 
@@ -449,10 +456,18 @@ function EditConceptBody({
     }
     try {
       if (artgModified && anyDescriptionModified) {
-        void (await updateArtgIds(data.updateRequest, productId, ticket.id));
+        void (await updateArtgIds(
+          data.externalRequesterUpdate,
+          productId,
+          ticket.id,
+        ));
         updateDescription(data.descriptionUpdate);
       } else if (artgModified) {
-        void (await updateArtgIds(data.updateRequest, productId, ticket.id));
+        void (await updateArtgIds(
+          data.externalRequesterUpdate,
+          productId,
+          ticket.id,
+        ));
       } else if (anyDescriptionModified) {
         updateDescription(data.descriptionUpdate);
       }
@@ -625,7 +640,7 @@ function EditConceptBody({
                             name="updateRequest.nonDefiningProperties"
                             control={control}
                             error={
-                              errors?.updateRequest
+                              errors?.externalRequesterUpdate
                                 ?.nonDefiningProperties as FieldError
                             }
                             dataTestId="package-brand"
