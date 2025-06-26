@@ -66,7 +66,4 @@ public abstract class BasePropertyWithValueDefinition extends BasePropertyDefini
    * if specified.
    */
   private List<String> allowedValues;
-
-  /** If the property is read only it will not be displayed in the UI for editing. */
-  private boolean readOnly;
 }

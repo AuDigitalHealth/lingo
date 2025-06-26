@@ -40,7 +40,9 @@ public enum NmpcConstants implements LingoConstants {
   NMPC_MEDICATION("680591000220104", "NMPC Mediciation (qualifier value)"),
   NMPC_VACCINE("680601000220106", "NMPC Vaccine (qualifier value))"),
   NPMC_PRODUCT_TYPE("679901000220102", "NMPC Product Type (qualifier value)"),
-  NMPC_NUTRITIONAL_SUPPLEMENT("680611000220109", "NMPC Nutritional Supplement (qualifier value)");
+  NMPC_NUTRITIONAL_SUPPLEMENT("680611000220109", "NMPC Nutritional Supplement (qualifier value)"),
+  VIRTUAL_MEDICINAL_PRODUCT("660341000220102", "Virtual medicinal product (product)"),
+  ACTIVE_IMMUNITY_STIMULANT("318331000221102", "Active immunity stimulant role (role)");
 
   private final String value;
   private final String label;
