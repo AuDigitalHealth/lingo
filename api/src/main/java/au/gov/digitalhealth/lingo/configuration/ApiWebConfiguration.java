@@ -18,6 +18,8 @@ package au.gov.digitalhealth.lingo.configuration;
 import au.gov.digitalhealth.lingo.auth.helper.AuthHelper;
 import au.gov.digitalhealth.lingo.log.SnowstormLogger;
 import au.gov.digitalhealth.lingo.util.AuthSnowstormLogger;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.logging.LogLevel;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +28,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -53,10 +56,14 @@ public class ApiWebConfiguration {
                 "reactor.netty.http.client.HttpClient",
                 LogLevel.DEBUG,
                 AdvancedByteBufFormat.TEXTUAL);
+    ObjectMapper customMapper =
+        new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    Jackson2JsonEncoder encoder = new Jackson2JsonEncoder(customMapper, MediaType.APPLICATION_JSON);
     return webClientBuilder
         .codecs(
             clientCodecConfigurer ->
                 clientCodecConfigurer.defaultCodecs().maxInMemorySize(1024 * 1024 * 100))
+        .codecs(clientCodecConfigurer -> clientCodecConfigurer.customCodecs().register(encoder))
         .baseUrl(authoringServiceUrl)
         .clientConnector(new ReactorClientHttpConnector(httpClient))
         .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
