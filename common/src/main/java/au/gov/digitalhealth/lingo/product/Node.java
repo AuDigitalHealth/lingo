@@ -161,11 +161,10 @@ public class Node {
    */
   @JsonProperty(value = "conceptEdit", access = JsonProperty.Access.READ_ONLY)
   public boolean isConceptEdit() {
-    return concept != null
-        && originalNode != null
+    return originalNode != null
         && newConceptDetails != null
-        && (originalNode.isReferencedByOtherProducts()
-            || originalNode.getInactivationReason() == null);
+        && !originalNode.isReferencedByOtherProducts()
+        && originalNode.getInactivationReason() == null;
   }
 
   /**
