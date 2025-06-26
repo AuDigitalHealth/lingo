@@ -65,5 +65,8 @@ public abstract class BasePropertyDefinition {
    */
   private int order;
 
+  /** If the property is read only it will not be displayed in the UI for editing. */
+  private boolean readOnly;
+
   public abstract PropertyType getPropertyType();
 }
