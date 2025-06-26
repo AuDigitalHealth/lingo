@@ -324,7 +324,8 @@ public class SnowstormDtoUtil {
     } else {
       throw new IllegalArgumentException("Unknown characteristic type " + characteristicType);
     }
-    relationship.setInferred(false);
+
+    relationship.setInferred(null);
     return relationship;
   }
 
