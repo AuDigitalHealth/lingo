@@ -4,6 +4,7 @@ import {
   Controller,
   UseFormGetValues,
   UseFormRegister,
+  UseFormSetValue,
 } from 'react-hook-form';
 import { FormHelperText, Grid, Stack, TextField } from '@mui/material';
 import { InnerBoxSmall } from './style/ProductBoxes.tsx';
@@ -27,6 +28,7 @@ interface NewConceptDropdownProps {
   control: Control<ProductSummary>;
   fieldBindings: FieldBindings;
   branch: string;
+  setValue?: UseFormSetValue<ProductSummary>;
 }
 
 function NewConceptDropdown({
@@ -37,6 +39,7 @@ function NewConceptDropdown({
   control,
   fieldBindings,
   branch,
+  setValue,
 }: NewConceptDropdownProps) {
   return (
     <div key={'div-' + product.conceptId}>
@@ -79,11 +82,15 @@ function NewConceptDropdown({
             onKeyDown={filterKeypress}
           />
         </InnerBoxSmall>
-        <ProductRetireUpdate
-          product={product}
-          control={control}
-          index={index}
-        />
+        {setValue && (
+          <ProductRetireUpdate
+            product={product}
+            control={control}
+            index={index}
+            setValue={setValue}
+          />
+        )}
+
         <AdditionalPropertiesDisplay product={product} branch={branch} />
       </Grid>
     </div>
