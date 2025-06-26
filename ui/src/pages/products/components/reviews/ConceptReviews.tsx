@@ -84,10 +84,11 @@ function ConceptReviews({ conceptReview }: ConceptReviewsProps) {
   };
 
   const handleToggleReview = (e: React.MouseEvent) => {
+    
     e.stopPropagation();
-    const currentReviewedList = conceptsReviewed;
+    let currentReviewedList = conceptsReviewed;
 
-    if (!currentReviewedList || !conceptReview.concept?.id) {
+    if (!conceptReview.concept?.id) {
       console.error('Missing required data for review toggle');
       return;
     }
@@ -95,6 +96,12 @@ function ConceptReviews({ conceptReview }: ConceptReviewsProps) {
     const conceptId = conceptReview.concept.id;
     let updatedConceptIds: string[];
 
+    if( !currentReviewedList) {
+      currentReviewedList = {
+        conceptIds: [],
+        approvalDate: new Date().toISOString(),
+      };
+    }
     if (conceptReview.approved) {
       // If currently approved, remove from the list
       updatedConceptIds = currentReviewedList.conceptIds.filter(
