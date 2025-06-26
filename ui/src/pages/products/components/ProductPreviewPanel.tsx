@@ -324,29 +324,6 @@ function ProductPreviewPanel({
                         ticket={ticket}
                       />
                     )}
-                    {product.newInTask ? (
-                      <Tooltip
-                        title={
-                          <FormattedMessage
-                            id="changed-in-task"
-                            defaultMessage="Un-promoted changes in the task"
-                          />
-                        }
-                      >
-                        <NewReleases />
-                      </Tooltip>
-                    ) : product.newInProject ? (
-                      <Tooltip
-                        title={
-                          <FormattedMessage
-                            id="changed-in-project"
-                            defaultMessage="Unreleased changes in the project"
-                          />
-                        }
-                      >
-                        <NewReleasesOutlined />
-                      </Tooltip>
-                    ) : null}
                     <ProductStatusIndicators product={product} />
                     <ProductRetireView product={product} />
                     <IconButton
