@@ -348,7 +348,11 @@ function ProductPreviewPanel({
                       </Tooltip>
                     ) : null}
                     <ProductStatusIndicators product={product} />
-                    <ProductRetireView product={product} />
+                    <ProductRetireView
+                      product={product}
+                      index={index}
+                      control={control}
+                    />
                     <IconButton
                       size="small"
                       onClick={() => setConceptDiagramModalOpen(true)}
@@ -408,7 +412,11 @@ function ProductPreviewPanel({
                       <></>
                     )}
                     <ProductStatusIndicators product={product} />
-                    <ProductRetireView product={product} />
+                    <ProductRetireView
+                      product={product}
+                      index={index}
+                      control={control}
+                    />
 
                     <IconButton
                       size="small"
