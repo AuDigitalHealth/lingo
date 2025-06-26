@@ -30,6 +30,8 @@ import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_OTHER_IDENTIFYING
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_TOTAL_QUANTITY_UNIT;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_TOTAL_QUANTITY_VALUE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.NO_OII_VALUE;
+import static au.gov.digitalhealth.lingo.util.NmpcConstants.ACTIVE_IMMUNITY_STIMULANT;
+import static au.gov.digitalhealth.lingo.util.NmpcConstants.VIRTUAL_MEDICINAL_PRODUCT;
 import static au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter.calculateNonDefiningRelationships;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONTAINS_CD;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.COUNT_OF_ACTIVE_INGREDIENT;
@@ -58,7 +60,6 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.MEDICINAL_PRODUCT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.MEDICINAL_PRODUCT_PACKAGE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.PLAYS_ROLE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.STATED_RELATIONSHIP;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.VIRTUAL_MEDICINAL_PRODUCT;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.addQuantityIfNotNull;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.addRelationshipIfNotNull;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getSingleAxiom;
@@ -755,10 +756,7 @@ public class MedicationProductCalculationService
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
     optionallyAddNmpcType(
-        branch,
-        modelConfiguration,
-        productDetails,
-        productDetails.getNonDefiningProperties());
+        branch, modelConfiguration, productDetails, productDetails.getNonDefiningProperties());
 
     ProductSummary productSummary = new ProductSummary();
 
@@ -1090,6 +1088,13 @@ public class MedicationProductCalculationService
       relationships.add(
           getSnowstormRelationship(
               IS_A, VIRTUAL_MEDICINAL_PRODUCT, 0, modelConfiguration.getModuleId()));
+    }
+
+    if (modelConfiguration.getModelType().equals(ModelType.NMPC)
+        && productDetails instanceof VaccineProductDetails) {
+      relationships.add(
+          getSnowstormRelationship(
+              PLAYS_ROLE, ACTIVE_IMMUNITY_STIMULANT, 0, modelConfiguration.getModuleId()));
     }
 
     if (branded) {
