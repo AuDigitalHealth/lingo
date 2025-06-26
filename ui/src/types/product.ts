@@ -162,7 +162,7 @@ export interface ProductSaveDetails {
 
 export interface ProductUpdateRequest {
   descriptionUpdate: ProductDescriptionUpdateRequest;
-  updateRequest: ProductNonDefiningPropertyUpdateRequest;
+  externalRequesterUpdate: ProductNonDefiningPropertyUpdateRequest;
 }
 export interface ProductDescriptionUpdateRequest {
   descriptions: Description[] | undefined;
