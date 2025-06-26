@@ -129,9 +129,12 @@ export const sortNonDefiningProperties = (
 };
 
 export function areTwoNonDefiningPropertiesArraysEqual(
-  array1: NonDefiningProperty[],
-  array2: NonDefiningProperty[],
+  array1: NonDefiningProperty[] | undefined,
+  array2: NonDefiningProperty[] | undefined,
 ): boolean {
+  if (array1 === undefined && array2 === undefined) return true;
+  if (array1 === undefined || array2 === undefined) return true;
+
   if (array1.length !== array2.length) {
     return false; // Arrays must have the same length
   }
