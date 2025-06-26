@@ -97,7 +97,7 @@ export const getSearchConceptsByEclOptions = (
     },
 
     staleTime: 60 * (60 * 1000),
-    enabled: isValidEclSearch(searchString, ecl, showDefaultOptions),
+    enabled: isValidEclSearch(searchString, ecl, showDefaultOptions, branch),
   };
 };
 
@@ -191,8 +191,9 @@ function isValidEclSearch(
   searchString: string,
   ecl: string | undefined,
   showDefaultOptions: boolean,
+  branch: string,
 ) {
-  if (!ecl) {
+  if (!ecl || !branch) {
     return false;
   }
   return (
