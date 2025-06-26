@@ -61,7 +61,11 @@ import org.assertj.core.api.Assertions;
 public class MedicationAssertions {
 
   public static void assertProductSummaryHas(
-      ProductSummary productSummary, int numberOfNew, int numberOfExisting, String label) {
+      ProductSummary productSummary,
+      int numberOfNew,
+      int numberUpdated,
+      int numberOfExisting,
+      String label) {
     Set<Node> nodeSet =
         productSummary.getNodes().stream()
             .filter(n -> n.getLabel().equals(label))
@@ -78,7 +82,22 @@ public class MedicationAssertions {
               + label);
     }
 
-    long countExisting = nodeSet.stream().filter(n -> !n.isNewConcept()).count();
+    long countUpdated =
+        nodeSet.stream().filter(node -> node.isRetireAndReplace() || node.isConceptEdit()).count();
+    if (countUpdated != numberUpdated) {
+      throw new AssertionFailedError(
+          "Product summary had "
+              + countUpdated
+              + " updated nodes rather than expected "
+              + numberUpdated
+              + " of type "
+              + label);
+    }
+
+    long countExisting =
+        nodeSet.stream()
+            .filter(n -> !n.isNewConcept() && !n.isRetireAndReplace() && !n.isConceptEdit())
+            .count();
     if (countExisting != numberOfExisting) {
       throw new AssertionFailedError(
           "Product summary had "
