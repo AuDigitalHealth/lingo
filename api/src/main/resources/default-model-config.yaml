@@ -165,7 +165,7 @@ models:
         deviceSemanticTag: real physical object
         drugDeviceSemanticTag: real medicinal product
         referenceSetIdentifier: 660361000220103
-        productModelEcl: "> <id> :774159003=*"
+        productModelEcl: "> <id> and ^ 660361000220103"
     mappings:
       - name: pan
         title: PAN

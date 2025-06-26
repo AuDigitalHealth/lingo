@@ -75,13 +75,13 @@ class MedicationCreationControllerTest extends LingoTestBase {
         getLingoTestClient().calculateMedicationProductSummary(packageDetails);
 
     Assertions.assertThat(productSummary.isContainsNewConcepts()).isFalse();
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, CTPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TP_LABEL);
 
     checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(productSummary, false, false, false);
@@ -316,13 +316,13 @@ class MedicationCreationControllerTest extends LingoTestBase {
         getLingoTestClient().calculateMedicationProductSummary(packageDetails);
 
     Assertions.assertThat(productSummary.isContainsNewConcepts()).isTrue();
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, CTPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, TPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, MPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TP_LABEL);
 
     checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(productSummary, false, false, false);
@@ -354,13 +354,13 @@ class MedicationCreationControllerTest extends LingoTestBase {
         getLingoTestClient().getProductModel(createdProduct.getSingleSubject().getConceptId());
 
     Assertions.assertThat(productModelPostCreation.isContainsNewConcepts()).isFalse();
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, CTPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, TP_LABEL);
 
     checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(productModelPostCreation, false, false, false);
@@ -405,13 +405,13 @@ class MedicationCreationControllerTest extends LingoTestBase {
         getLingoTestClient().calculateMedicationProductSummary(packageDetails);
 
     Assertions.assertThat(productSummary.isContainsNewConcepts()).isTrue();
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, CTPP_LABEL); // new CTPP
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, TPP_LABEL); // new TPP
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, TPUU_LABEL); // new TPU
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, CTPP_LABEL); // new CTPP
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, TPP_LABEL); // new TPP
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, TPUU_LABEL); // new TPU
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TP_LABEL);
 
     checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(productSummary, false, false, false);
@@ -441,13 +441,13 @@ class MedicationCreationControllerTest extends LingoTestBase {
         getLingoTestClient().calculateMedicationProductSummary(packageDetails);
 
     Assertions.assertThat(productSummary.isContainsNewConcepts()).isTrue();
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 3, CTPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 3, TPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 3, MPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 3, TPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 3, MPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 3, MP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 4, TP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 3, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 3, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 3, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 3, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 3, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 3, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 4, TP_LABEL);
 
     checkExternalIdentifiers(productSummary, packageDetails);
 
@@ -468,13 +468,13 @@ class MedicationCreationControllerTest extends LingoTestBase {
         getLingoTestClient().getProductModel(createdProduct.getSingleSubject().getConceptId());
 
     Assertions.assertThat(productModelPostCreation.isContainsNewConcepts()).isFalse();
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 4, CTPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 4, TPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 4, MPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 3, TPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 3, MPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 3, MP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 4, TP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 4, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 4, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 4, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 3, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 3, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 3, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 4, TP_LABEL);
 
     checkExternalIdentifiers(productSummary, packageDetails);
 
@@ -519,13 +519,13 @@ class MedicationCreationControllerTest extends LingoTestBase {
         getLingoTestClient().calculateMedicationProductSummary(packageDetails);
 
     Assertions.assertThat(productSummary.isContainsNewConcepts()).isTrue();
-    MedicationAssertions.assertProductSummaryHas(productSummary, 2, 2, CTPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 2, 2, TPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 2, 2, MPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 3, TPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 3, MPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 3, MP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 4, TP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 2, 0, 2, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 2, 0, 2, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 2, 0, 2, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 3, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 3, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 3, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 4, TP_LABEL);
 
     Ticket ticketResponse =
         getLingoTestClient().createTicket("createComplexProductFromExistingWithProductSizeChange");
@@ -543,26 +543,26 @@ class MedicationCreationControllerTest extends LingoTestBase {
     log.fine("Created product is " + objectMapper.writeValueAsString(createdProduct));
 
     Assertions.assertThat(createdProduct.isContainsNewConcepts()).isFalse();
-    MedicationAssertions.assertProductSummaryHas(createdProduct, 0, 4, CTPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(createdProduct, 0, 4, TPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(createdProduct, 0, 4, MPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(createdProduct, 0, 3, TPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(createdProduct, 0, 3, MPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(createdProduct, 0, 3, MP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(createdProduct, 0, 4, TP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(createdProduct, 0, 0, 4, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(createdProduct, 0, 0, 4, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(createdProduct, 0, 0, 4, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(createdProduct, 0, 0, 3, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(createdProduct, 0, 0, 3, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(createdProduct, 0, 0, 3, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(createdProduct, 0, 0, 4, TP_LABEL);
 
     // load product model
     ProductSummary productModelPostCreation =
         getLingoTestClient().getProductModel(createdProduct.getSingleSubject().getConceptId());
 
     Assertions.assertThat(productModelPostCreation.isContainsNewConcepts()).isFalse();
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 4, CTPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 4, TPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 4, MPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 3, TPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 3, MPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 3, MP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 4, TP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 4, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 4, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 4, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 3, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 3, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 3, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 4, TP_LABEL);
 
     confirmAmtModelLinks(productModelPostCreation, false, false, false);
 
@@ -601,9 +601,9 @@ class MedicationCreationControllerTest extends LingoTestBase {
     // Group product summary assertions into one block
     List<String> labels = List.of(CTPP_LABEL, TPP_LABEL, MPP_LABEL, TPUU_LABEL, MPUU_LABEL);
     labels.forEach(
-        label -> MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, label));
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
+        label -> MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, label));
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TP_LABEL);
 
     // Combine assertions for MPUU nodes
     List<Node> mpuuNodes =
@@ -645,9 +645,9 @@ class MedicationCreationControllerTest extends LingoTestBase {
 
     labels.forEach(
         label ->
-            MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, label));
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TP_LABEL);
+            MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, label));
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, TP_LABEL);
 
     checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(productModelPostCreation, false, false, false);
@@ -680,13 +680,13 @@ class MedicationCreationControllerTest extends LingoTestBase {
         getLingoTestClient().calculateMedicationProductSummary(packageDetails);
 
     Assertions.assertThat(productSummary.isContainsNewConcepts()).isTrue();
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, CTPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, TPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, MPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, TPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, MPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TP_LABEL);
 
     List<Node> mpuuNodes =
         productSummary.getNodes().stream().filter(n -> n.getLabel().equals(MPUU_LABEL)).toList();
@@ -704,13 +704,13 @@ class MedicationCreationControllerTest extends LingoTestBase {
     productSummary = getLingoTestClient().calculateMedicationProductSummary(packageDetails);
 
     Assertions.assertThat(productSummary.isContainsNewConcepts()).isFalse();
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, CTPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TP_LABEL);
 
     checkExternalIdentifiers(productSummary, packageDetails);
   }
@@ -738,13 +738,13 @@ class MedicationCreationControllerTest extends LingoTestBase {
 
     // Step 4: Verify the calculation
     Assertions.assertThat(productSummary.isContainsNewConcepts()).isTrue();
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, CTPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, TPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, MPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, TPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, MPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TP_LABEL);
 
     checkExternalIdentifiers(productSummary, packageDetails);
 
@@ -761,13 +761,13 @@ class MedicationCreationControllerTest extends LingoTestBase {
     ProductSummary productModelPostCreation =
         getLingoTestClient().getProductModel(createdProduct.getSingleSubject().getConceptId());
     Assertions.assertThat(productModelPostCreation.isContainsNewConcepts()).isFalse();
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, CTPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, TP_LABEL);
 
     checkExternalIdentifiers(productSummary, packageDetails);
 
@@ -783,13 +783,13 @@ class MedicationCreationControllerTest extends LingoTestBase {
 
     // Step 9: Verify the calculation
     Assertions.assertThat(productSummary.isContainsNewConcepts()).isTrue();
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, CTPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, TPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, MPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TP_LABEL);
 
     // Step 10: Ensure MPUU and TPUU concepts are from the previously created product
     Assertions.assertThat(productSummary.getSingleConceptWithLabel(MPUU_LABEL).getConceptId())
@@ -841,13 +841,13 @@ class MedicationCreationControllerTest extends LingoTestBase {
             });
 
     // Check that no new concepts are created
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, CTPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TP_LABEL);
 
     // Check that external identifiers are preserved
     checkExternalIdentifiers(productSummary, packageDetails);
@@ -868,7 +868,7 @@ class MedicationCreationControllerTest extends LingoTestBase {
    * product, changes its properties, and checks the results of the calculation.
    */
   @Test
-  void updateExistingProductWithChanges() {
+  void updateExistingProductReferencedAlreadyNewConceptsCreated() {
     // Step 1: Load an existing single ingredient/component product
     PackageDetails<MedicationProductDetails> originalPackageDetails =
         getLingoTestClient().getMedicationPackDetails(AmtTestData.YAZ_FLEX);
@@ -921,13 +921,13 @@ class MedicationCreationControllerTest extends LingoTestBase {
             });
 
     // Check that the appropriate nodes are marked as new
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, CTPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, TPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, MPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, TPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, MPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TP_LABEL);
 
     // Check that external identifiers are preserved
     checkExternalIdentifiers(productSummary, newPackageDetails);
@@ -980,13 +980,13 @@ class MedicationCreationControllerTest extends LingoTestBase {
             });
 
     // Only the package-related nodes should be new, the product nodes should be reused
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, CTPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, TPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, MPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TP_LABEL);
 
     // Check that external identifiers are preserved
     checkExternalIdentifiers(productSummary, newPackageDetails);
@@ -1011,15 +1011,122 @@ class MedicationCreationControllerTest extends LingoTestBase {
     Assertions.assertThat(updatedProduct.getUnmatchedPreviouslyReferencedNodes()).isEmpty();
 
     // Only the package-related nodes should be new, the product nodes should be reused
-    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 1, CTPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 1, TPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 1, MPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 1, TPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 1, MPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 1, MP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 1, TP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 0, 1, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 0, 1, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 0, 1, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 0, 1, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 0, 1, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 0, 1, TP_LABEL);
 
     // Check that external identifiers are preserved
     checkExternalIdentifiers(updatedProduct, newPackageDetails);
+
+    ProductSummary productModelPostUpdate =
+        getLingoTestClient().getProductModel(updatedProduct.getSingleSubject().getConceptId());
+
+    Assertions.assertThat(productModelPostUpdate.isContainsNewConcepts()).isFalse();
+
+    MedicationAssertions.assertProductSummaryHas(productModelPostUpdate, 0, 0, 1, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostUpdate, 0, 0, 1, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostUpdate, 0, 0, 1, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostUpdate, 0, 0, 1, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostUpdate, 0, 0, 1, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostUpdate, 0, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostUpdate, 0, 0, 1, TP_LABEL);
+  }
+
+  /**
+   * Test for the updateMedicationProductFromAtomicData REST method. This test loads an existing
+   * product, changes its properties, and checks the results of the calculation.
+   */
+  @Test
+  void updateExistingProductNotReferencedRetireConcepts() {
+    // Step 1: Load an existing single ingredient/component product
+    PackageDetails<MedicationProductDetails> originalPackageDetails =
+        getLingoTestClient().getMedicationPackDetails(45711000036100L);
+
+    PackageDetails<MedicationProductDetails> newPackageDetails =
+        getLingoTestClient().getMedicationPackDetails(45711000036100L);
+
+    // Step 2: Change the pack size
+    newPackageDetails.getContainedProducts().iterator().next().setValue(BigDecimal.TEN);
+
+    // Step 3: Perform a calculate/update operation
+    Long productId = 45711000036100L;
+    ProductSummary productSummary =
+        getLingoTestClient().calculateUpdateMedicationProductSummary(productId, newPackageDetails);
+
+    // Step 4: Verify the calculation
+    // The product summary should contain new concepts for the changed strength
+    Assertions.assertThat(productSummary.getNodes().stream().anyMatch(Node::isRetireAndReplace))
+        .isTrue();
+
+    Assertions.assertThat(productSummary.getUnmatchedPreviouslyReferencedNodes()).isEmpty();
+
+    // Check that the appropriate nodes are marked as new
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, 0, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, 0, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, 0, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TP_LABEL);
+
+    // Check that external identifiers are preserved
+    checkExternalIdentifiers(productSummary, newPackageDetails);
+
+    // Verify that the original nodes are properly referenced
+    productSummary.getNodes().stream()
+        .filter(Node::isNewConcept)
+        .forEach(
+            node -> {
+              Assertions.assertThat(node.getOriginalNode()).isNotNull();
+              Assertions.assertThat(node.getOriginalNode().getNode()).isNotNull();
+            });
+
+    // update the product with the new data
+    Ticket ticketResponse = getLingoTestClient().createTicket("updateExistingProductWithChanges");
+    ProductSummary updatedProduct =
+        getLingoTestClient()
+            .updateMedicationProductFromAtomicData(
+                productId,
+                new ProductUpdateDetails<>(
+                    Long.toString(45711000036100L),
+                    productSummary,
+                    newPackageDetails,
+                    originalPackageDetails,
+                    ticketResponse.getId(),
+                    null,
+                    null));
+
+    Assertions.assertThat(updatedProduct.isContainsNewConcepts()).isFalse();
+
+    Assertions.assertThat(updatedProduct.getUnmatchedPreviouslyReferencedNodes()).isEmpty();
+
+    // Only the package-related nodes should be new, the product nodes should be reused
+    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 1, 0, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 1, 0, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 1, 0, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 0, 1, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 0, 1, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 0, 1, TP_LABEL);
+
+    // Check that external identifiers are preserved
+    checkExternalIdentifiers(updatedProduct, newPackageDetails);
+
+    ProductSummary productModelPostUpdate =
+        getLingoTestClient().getProductModel(updatedProduct.getSingleSubject().getConceptId());
+
+    Assertions.assertThat(productModelPostUpdate.isContainsNewConcepts()).isFalse();
+
+    MedicationAssertions.assertProductSummaryHas(productModelPostUpdate, 0, 0, 1, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostUpdate, 0, 0, 1, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostUpdate, 0, 0, 1, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostUpdate, 0, 0, 1, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostUpdate, 0, 0, 1, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostUpdate, 0, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostUpdate, 0, 0, 1, TP_LABEL);
   }
 }
