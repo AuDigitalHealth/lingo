@@ -510,6 +510,10 @@
       <groupId>org.ehcache</groupId>
       <version>3.10.8</version>
     </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-web</artifactId>
+    </dependency>
   </dependencies>
   <description>Api for Lingo</description>
   <modelVersion>4.0.0</modelVersion>
