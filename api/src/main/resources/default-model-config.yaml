@@ -294,7 +294,18 @@ models:
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: false
+        readOnly: true
         order: 100
+      - name: shortagesFlag
+        title: Shortages Flag
+        description: Shortages Flag
+        identifier: 680281000220100
+        level: PRODUCT
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        readOnly: true
+        order: 101
     nonDefiningProperties:
       - name: nmpcType
         title: NMPC Type
@@ -487,6 +498,7 @@ models:
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: false
+        readOnly: true
         order: 102
         group: recall
       - name: recallActions
@@ -500,6 +512,7 @@ models:
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: true
+        readOnly: true
         order: 103
         group: recall
       - name: recallCategory
@@ -513,6 +526,7 @@ models:
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: false
+        readOnly: true
         order: 104
         group: recall
       - name: recallLevel
@@ -526,6 +540,7 @@ models:
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: false
+        readOnly: true
         order: 105
         group: recall
       - name: recallDocuments
@@ -539,6 +554,7 @@ models:
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: true
+        readOnly: true
         order: 106
         group: recall
       - name: doseFormType
@@ -550,7 +566,7 @@ models:
         eclBinding: <679911000220104
         modelLevels: CLINICAL_DRUG
         mandatory: false
-        multiValued: true
+        multiValued: false
         showDefaultOptions: true
         order: 90
       - name: nonPrescReason
@@ -565,3 +581,75 @@ models:
         multiValued: false
         showDefaultOptions: true
         order: 71
+      - name: shortagesReason
+        title: Shortages Reason
+        description: Reason for shortages
+        identifier: 680101000220104
+        level: PRODUCT
+        dataType: STRING
+        valueRegexValidation: ^.+$
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        readOnly: true
+        order: 106
+      - name: theraAlternatve
+        title: Shortages Therapeutic Alternative
+        description: Therapeutic alternative for shortages
+        identifier: 680111000220101
+        level: PRODUCT
+        dataType: STRING
+        valueRegexValidation: ^.+$
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        readOnly: true
+        order: 106
+      - name: dateOfShortages
+        title: Date shortages reported
+        description: Date when shortages were reported
+        identifier: 680121000220108
+        level: PRODUCT
+        dataType: STRING
+        valueRegexValidation: ^.+$
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        readOnly: true
+        order: 106
+      - name: dateShortageUpdated
+        title: Date Shortage Updated
+        description: Date when the shortage information was last updated
+        identifier: 680131000220106
+        level: PRODUCT
+        dataType: STRING
+        valueRegexValidation: ^.+$
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        readOnly: true
+        order: 106
+      - name: shortageReturn
+        title: Expected Return Date
+        description: Date when the product is expected to return
+        identifier: 680141000220102
+        level: PRODUCT
+        dataType: STRING
+        valueRegexValidation: ^.+$
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        readOnly: true
+        order: 106
+      - name: shortageInfo
+        title: Shortage Additional Information
+        description: Additional information about the shortage
+        identifier: 680151000220100
+        level: PRODUCT
+        dataType: URI
+        valueRegexValidation: ^.+$
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        readOnly: true
+        order: 106
