@@ -6,9 +6,11 @@ import { useQuery } from '@tanstack/react-query';
 import useTaskById from '../../useTaskById';
 import TasksServices from '../../../api/TasksService';
 import { useConceptsThatHaveBeenReviewed } from './useConceptsThatHaveBeenReviewed';
+import { useShowReviewControls } from './useReviews';
 
 export function useConceptsForReview(branchPath: string | undefined) {
   const task = useTaskById(); // Gives projectKey and taskKey
+  const showReviewControls = useShowReviewControls({ task });
   const projectKey = task?.projectKey;
   const taskKey = task?.key;
 
@@ -16,11 +18,12 @@ export function useConceptsForReview(branchPath: string | undefined) {
     activities,
     activitiesIsLoading,
     isError: activitiesError,
-  } = useTaskActivities(task?.branchPath);
+  } = useTaskActivities(task?.branchPath, showReviewControls);
 
   const { conceptsReviewed } = useConceptsThatHaveBeenReviewed(
     task?.projectKey,
     task?.key,
+    showReviewControls,
   );
 
   // Extract concept IDs
@@ -48,13 +51,14 @@ export function useConceptsForReview(branchPath: string | undefined) {
   } = useQuery({
     queryKey: ['concept-reviews', projectKey, taskKey],
     queryFn: () => TasksServices.getConceptReviewsForTask(projectKey, taskKey),
-    enabled: !!projectKey && !!taskKey,
+    enabled: !!projectKey && !!taskKey && showReviewControls,
   });
 
   // Fetch unread concept IDs
   const { unreadConceptIds, unreadIsLoading, unreadError } = useFeedbackUnread(
     projectKey,
     taskKey,
+    showReviewControls,
   );
 
   // Compose full ConceptReview array
@@ -97,6 +101,7 @@ export function useConceptsForReview(branchPath: string | undefined) {
 export function useFeedbackUnread(
   projectKey: string | undefined,
   taskKey: string | undefined,
+  enabled: boolean,
 ) {
   const {
     data: unreadConceptIds,
@@ -105,7 +110,7 @@ export function useFeedbackUnread(
   } = useQuery({
     queryKey: ['feedback-unread', projectKey, taskKey],
     queryFn: () => TasksServices.getFeedbackUnread(projectKey, taskKey),
-    enabled: !!projectKey && !!taskKey,
+    enabled: !!projectKey && !!taskKey && enabled,
   });
 
   return { unreadConceptIds, unreadIsLoading, unreadError };

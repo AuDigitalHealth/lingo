@@ -37,7 +37,11 @@ import { Column } from 'primereact/column';
 import ConceptReviewList from '../../products/components/reviews/ConceptReviewList.tsx';
 import { Done } from '@mui/icons-material';
 import { ServiceStatus } from '../../../types/applicationConfig.ts';
-import { useCanCompleteReview } from '../../../hooks/api/task/useReviews.tsx';
+import {
+  useCanCompleteReview,
+  useShowReviewControls,
+} from '../../../hooks/api/task/useReviews.tsx';
+import { useCompleteReviewMutation } from '../../../hooks/api/task/useCompleteReviewMutation.tsx';
 
 const customSx: SxProps = {
   justifyContent: 'flex-start',
@@ -49,6 +53,7 @@ function TaskDetailsActions() {
     task: task,
     branch: task?.branchPath,
   });
+  const showReviewControls = useShowReviewControls({ task });
   const [classifying, setClassifying] = useState(false);
   const [classified, setClassified] = useState(false);
   const [validating, setValidating] = useState(false);
@@ -129,7 +134,7 @@ function TaskDetailsActions() {
 
   return (
     <>
-      <ConceptReviewList></ConceptReviewList>
+      {showReviewControls && <ConceptReviewList />}
       <div
         style={{
           marginTop: 'auto',
@@ -257,40 +262,5 @@ function TaskDetailsActions() {
     </>
   );
 }
-
-export const useCompleteReviewMutation = (
-  task: Task | null | undefined,
-  serviceStatus: ServiceStatus | undefined,
-  queryKey: string[] & {
-    [dataTagSymbol]: Task[];
-    [dataTagErrorSymbol]: Error;
-  },
-) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async () => {
-      if (!serviceStatus?.authoringPlatform.running) {
-        unavailableErrorHandler('', 'Authoring Platform');
-        throw new Error('Authoring Platform is not running');
-      }
-
-      const returnedTask = await TasksServices.completeReview(
-        task?.projectKey,
-        task?.key,
-        [],
-      );
-
-      return returnedTask;
-    },
-    onSuccess: returnedTask => {
-      updateTaskCache(queryClient, queryKey, returnedTask);
-    },
-    onError: error => {
-      console.error('Failed to complete review:', error);
-      // Add any additional error handling here
-    },
-  });
-};
 
 export default TaskDetailsActions;
