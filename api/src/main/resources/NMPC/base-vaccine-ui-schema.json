@@ -62,7 +62,6 @@
         "ui:grid": [
           {
             "productName": 12,
-            "playsRole": 12,
             "targetPopulation": 12,
             "ingredientQualitativeStrength": 12
           },
@@ -309,15 +308,6 @@
           "ui:options": {
             "ecl": "<27821000087106",
             "showDefaultOptions": true
-          }
-        },
-        "playsRole": {
-          "ui:field": "AutoCompleteField",
-          "ui:title": "Plays Role",
-          "ui:options": {
-            "ecl": "<766940004",
-            "showDefaultOptions": true,
-            "multiValued": true
           }
         },
         "ingredientQualitativeStrength": {

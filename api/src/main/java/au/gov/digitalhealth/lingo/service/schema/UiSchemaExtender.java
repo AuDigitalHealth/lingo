@@ -173,7 +173,12 @@ public class UiSchemaExtender {
     ObjectNode bindingNode = objectMapper.createObjectNode();
     for (BasePropertyDefinition m : filteredPropertySet) {
       processNonDefiningPropertyBaseMember(
-          m, mandatoryFields, multiValuedFields, bindingNode, readOnlyFields,showDefaultOptionsFields);
+          m,
+          mandatoryFields,
+          multiValuedFields,
+          bindingNode,
+          readOnlyFields,
+          showDefaultOptionsFields);
     }
 
     if (!mandatoryFields.isEmpty()) {
@@ -201,7 +206,8 @@ public class UiSchemaExtender {
       ArrayNode mandatoryFields,
       ArrayNode multiValuedFields,
       ObjectNode bindingNode,
-      ArrayNode readOnlyFields,ArrayNode showDefaultOptionsFields) {
+      ArrayNode readOnlyFields,
+      ArrayNode showDefaultOptionsFields) {
     if (m instanceof BasePropertyWithValueDefinition nonDefiningPropertyBase) {
 
       if (nonDefiningPropertyBase.isMandatory()) {
@@ -225,10 +231,10 @@ public class UiSchemaExtender {
         binding.set("ecl", objectMapper.valueToTree(nonDefiningPropertyBase.getEclBinding()));
         bindingNode.set(m.getName(), binding);
       }
+    }
 
-      if (nonDefiningPropertyBase.isReadOnly()) {
-        readOnlyFields.add(nonDefiningPropertyBase.getName());
-      }
+    if (m.isReadOnly()) {
+      readOnlyFields.add(m.getName());
     }
   }
 
