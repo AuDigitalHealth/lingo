@@ -65,13 +65,13 @@ class ProductControllerTest extends LingoTestBase {
   void getSimpleProductModel() {
     ProductSummary productSummary =
         getLingoTestClient().getProductModel(AmtTestData.EMLA_5_PERCENT_PATCH_20_CARTON);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, CTPP_LABEL);
 
     MedicationAssertions.confirmAmtModelLinks(productSummary, false, false, false);
   }
@@ -79,13 +79,13 @@ class ProductControllerTest extends LingoTestBase {
   @Test
   void getComplexProductModel() {
     ProductSummary productSummary = getLingoTestClient().getProductModel(AmtTestData.NEXIUM_HP7);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 4, TP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 3, MP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 3, MPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 3, TPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 4, MPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 4, TPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 4, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 4, TP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 3, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 3, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 3, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 4, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 4, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 4, CTPP_LABEL);
 
     MedicationAssertions.confirmAmtModelLinks(productSummary, false, false, false);
   }
@@ -95,13 +95,13 @@ class ProductControllerTest extends LingoTestBase {
   void getProductModelExposingSnowstormEclDefect() {
     ProductSummary productSummary =
         getLingoTestClient().getProductModel(AmtTestData.PICATO_0_015_PERCENT_GEL_3_X_470_MG_TUBES);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 2, MPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 2, TPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 2, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 2, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 2, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 2, CTPP_LABEL);
 
     MedicationAssertions.confirmAmtModelLinks(productSummary, false, false, false);
   }
