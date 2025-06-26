@@ -152,7 +152,11 @@
         },
         "genericForm": {
           "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "Generic Dose Form"
+          "title": "Generic Dose Form",
+          "minProperties": 2,
+          "errorMessage": {
+            "minProperties": "Generic Dose Form must be populated."
+          }
         },
         "specificForm": {
           "$ref": "#/$defs/SnowstormConceptMini",
