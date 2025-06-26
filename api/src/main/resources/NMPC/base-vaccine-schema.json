@@ -158,13 +158,6 @@
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Specific Dose Form"
         },
-        "playsRole": {
-          "type": "array",
-          "title": "Plays Role",
-          "items": {
-            "$ref": "#/$defs/SnowstormConceptMini"
-          }
-        },
         "targetPopulation": {
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Target Population"
