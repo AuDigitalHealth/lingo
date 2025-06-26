@@ -22,4 +22,5 @@ import lombok.Data;
 @Data
 public abstract class Property {
   String title;
+  String description;
 }

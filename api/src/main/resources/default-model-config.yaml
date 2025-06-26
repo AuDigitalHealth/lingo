@@ -271,8 +271,8 @@ models:
         modelLevels: REAL_CLINICAL_DRUG
         order: 80
       - name: vmpNonPrescribable
-        title: Non-prescribable
-        description: Non-prescribable
+        title: Non-prescribable VMP
+        description: Non-prescribable at VMP level, must be brand prescribed
         identifier: 679971000220107
         level: PRODUCT
         modelLevels: CLINICAL_DRUG
