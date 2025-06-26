@@ -410,7 +410,7 @@ public class SnowstormDtoUtil {
       DataTypeEnum datatype,
       int group,
       ModelConfiguration modelConfiguration) {
-    if (quantity != null) {
+    if (quantity != null && quantity.getValue() != null && quantity.getUnit() != null) {
       relationships.add(
           getSnowstormDatatypeComponent(
               valueType,
