@@ -70,7 +70,6 @@ import au.csiro.snowstorm_client.model.SnowstormAxiom;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
-import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
@@ -81,6 +80,7 @@ import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.details.*;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
 import au.gov.digitalhealth.lingo.service.validators.MedicationDetailsValidator;
 import au.gov.digitalhealth.lingo.util.AmtConstants;
@@ -92,6 +92,8 @@ import au.gov.digitalhealth.lingo.util.RelationshipSorter;
 import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import au.gov.digitalhealth.tickets.service.TicketServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -551,42 +553,11 @@ public class MedicationProductCalculationService
       boolean container,
       ModelConfiguration modelConfiguration) {
 
-    if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
-      NonDefiningPropertyDefinition nmpcDefinition =
-          modelConfiguration.getNonDefiningPropertiesByName().get("nmpcType");
-      if (nmpcDefinition != null
-          && snowstormClient
-              .conceptIdsThatExist(
-                  branch,
-                  Set.of(
-                      NmpcConstants.NMPC_VACCINE.getValue(),
-                      NmpcConstants.NMPC_MEDICATION.getValue(),
-                      nmpcDefinition.getIdentifier()))
-              .containsAll(
-                  Set.of(
-                      NmpcConstants.NMPC_VACCINE.getValue(),
-                      NmpcConstants.NMPC_MEDICATION.getValue(),
-                      nmpcDefinition.getIdentifier()))) {
-        NonDefiningProperty nmpcType = new NonDefiningProperty();
-        nmpcType.setIdentifierScheme(nmpcDefinition.getName());
-        nmpcType.setIdentifier(nmpcDefinition.getIdentifier());
-        nmpcType.setTitle(nmpcDefinition.getTitle());
-        nmpcType.setDescription(nmpcDefinition.getDescription());
-
-        SnowstormConceptMini valueObject;
-        if (packageDetails.getContainedProducts().iterator().next().getProductDetails()
-            instanceof VaccineProductDetails) {
-          valueObject = NmpcConstants.NMPC_VACCINE.snowstormConceptMini();
-        } else {
-          valueObject = NmpcConstants.NMPC_MEDICATION.snowstormConceptMini();
-        }
-
-        nmpcType.setValueObject(valueObject);
-        packageDetails.getNonDefiningProperties().add(nmpcType);
-      } else {
-        log.severe("NMPC model type is configured but the required concepts do not exist.");
-      }
-    }
+    optionallyAddNmpcType(
+        branch,
+        modelConfiguration,
+        packageDetails.getContainedProducts().iterator().next().getProductDetails(),
+        packageDetails.getNonDefiningProperties());
 
     Set<SnowstormRelationship> relationships = new HashSet<>();
     relationships.add(
@@ -732,6 +703,48 @@ public class MedicationProductCalculationService
     return relationships;
   }
 
+  private void optionallyAddNmpcType(
+      String branch,
+      ModelConfiguration modelConfiguration,
+      @NotNull @Valid MedicationProductDetails productDetails,
+      List<@Valid NonDefiningBase> nonDefiningProperties) {
+    if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
+      NonDefiningPropertyDefinition nmpcDefinition =
+          modelConfiguration.getNonDefiningPropertiesByName().get("nmpcType");
+      if (nmpcDefinition != null
+          && snowstormClient
+              .conceptIdsThatExist(
+                  branch,
+                  Set.of(
+                      NmpcConstants.NMPC_VACCINE.getValue(),
+                      NmpcConstants.NMPC_MEDICATION.getValue(),
+                      nmpcDefinition.getIdentifier()))
+              .containsAll(
+                  Set.of(
+                      NmpcConstants.NMPC_VACCINE.getValue(),
+                      NmpcConstants.NMPC_MEDICATION.getValue(),
+                      nmpcDefinition.getIdentifier()))) {
+        NonDefiningProperty nmpcType = new NonDefiningProperty();
+        nmpcType.setIdentifierScheme(nmpcDefinition.getName());
+        nmpcType.setIdentifier(nmpcDefinition.getIdentifier());
+        nmpcType.setTitle(nmpcDefinition.getTitle());
+        nmpcType.setDescription(nmpcDefinition.getDescription());
+
+        SnowstormConceptMini valueObject;
+        if (productDetails instanceof VaccineProductDetails) {
+          valueObject = NmpcConstants.NMPC_VACCINE.snowstormConceptMini();
+        } else {
+          valueObject = NmpcConstants.NMPC_MEDICATION.snowstormConceptMini();
+        }
+
+        nmpcType.setValueObject(valueObject);
+        nonDefiningProperties.add(nmpcType);
+      } else {
+        log.severe("NMPC model type is configured but the required concepts do not exist.");
+      }
+    }
+  }
+
   private ProductSummary createProduct(
       String branch,
       MedicationProductDetails productDetails,
@@ -741,36 +754,11 @@ public class MedicationProductCalculationService
 
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
-    if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
-      NonDefiningPropertyDefinition nmpcDefinition =
-          modelConfiguration.getNonDefiningPropertiesByName().get("nmpcType");
-      NonDefiningProperty nmpcType = new NonDefiningProperty();
-      nmpcType.setIdentifierScheme(nmpcDefinition.getName());
-      nmpcType.setIdentifier(nmpcDefinition.getIdentifier());
-      nmpcType.setTitle(nmpcDefinition.getTitle());
-      nmpcType.setDescription(nmpcDefinition.getDescription());
-
-      SnowstormConceptMini valueObject;
-      if (productDetails instanceof VaccineProductDetails) {
-        valueObject =
-            new SnowstormConceptMini()
-                .conceptId("680601000220106")
-                .pt(new SnowstormTermLangPojo().term("NMPC Vaccine").lang("en"))
-                .fsn(new SnowstormTermLangPojo().term("NMPC Vaccine (qualifier value)").lang("en"));
-      } else {
-        valueObject =
-            new SnowstormConceptMini()
-                .conceptId("680591000220104")
-                .pt(new SnowstormTermLangPojo().term("NMPC Medication").lang("en"))
-                .fsn(
-                    new SnowstormTermLangPojo()
-                        .term("NMPC Medication (qualifier value)")
-                        .lang("en"));
-      }
-
-      nmpcType.setValueObject(valueObject);
-      productDetails.getNonDefiningProperties().add(nmpcType);
-    }
+    optionallyAddNmpcType(
+        branch,
+        modelConfiguration,
+        productDetails,
+        productDetails.getNonDefiningProperties());
 
     ProductSummary productSummary = new ProductSummary();
 
