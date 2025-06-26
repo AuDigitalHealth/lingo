@@ -133,7 +133,8 @@ export const MultiValueValueSetAutocomplete: React.FC<
         const { key, ...otherProps } = props;
         return (
           <li {...otherProps} key={option.conceptId}>
-            {option.pt.term}
+            {/* Code is added to the term, some ValueSets have terms that are only distinquished by the code */}
+            {option.conceptId} - {option.pt.term}
           </li>
         );
       }}
