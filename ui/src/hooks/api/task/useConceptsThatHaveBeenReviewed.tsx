@@ -5,6 +5,7 @@ import TasksServices from '../../../api/TasksService';
 export const useConceptsThatHaveBeenReviewedOptions = (
   projectKey: string | undefined,
   taskKey: string | undefined,
+  enabled: boolean,
 ) => {
   const queryKey = [`concepts-reviewed-${projectKey}-${taskKey}`];
   return queryOptions({
@@ -12,16 +13,17 @@ export const useConceptsThatHaveBeenReviewedOptions = (
     queryFn: () => TasksServices.getReviewedList(projectKey, taskKey),
     staleTime: 1 * (60 * 1000),
     refetchInterval: 1 * (60 * 1000),
-    enabled: !!projectKey && !!taskKey,
+    enabled: !!projectKey && !!taskKey && enabled,
   });
 };
 
 export function useConceptsThatHaveBeenReviewed(
   projectKey: string | undefined,
   taskKey: string | undefined,
+  enabled: boolean,
 ) {
   const { isLoading, data, isError } = useQuery({
-    ...useConceptsThatHaveBeenReviewedOptions(projectKey, taskKey),
+    ...useConceptsThatHaveBeenReviewedOptions(projectKey, taskKey, enabled),
     staleTime: 1 * (60 * 1000),
     refetchInterval: 1 * (60 * 1000),
   });
