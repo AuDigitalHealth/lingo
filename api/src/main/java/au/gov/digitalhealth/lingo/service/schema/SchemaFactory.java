@@ -45,18 +45,18 @@ public class SchemaFactory {
 
   public static ObjectProperty create(ExternalIdentifierDefinition mapping) {
     ObjectProperty identifierSchema = new ObjectProperty();
-    identifierSchema.setTitle(mapping.getTitle());
+    setTitleAndDescription(mapping, identifierSchema);
     identifierSchema.addProperty(IDENTIFIER_SCHEME, ConstProperty.create(mapping.getName()));
     identifierSchema.addProperty("type", ConstProperty.create(mapping.getPropertyType().name()));
 
     if (mapping.getDataType().equals(NonDefiningPropertyDataType.CONCEPT)
         || mapping.getDataType().equals(NonDefiningPropertyDataType.CODED)) {
       ReferenceProperty property = new ReferenceProperty();
-      property.setTitle(mapping.getTitle());
+      setTitleAndDescription(mapping, property);
       property.setReference("#/$defs/SnowstormConceptMini");
     } else {
       StringProperty property = new StringProperty();
-      property.setTitle(mapping.getTitle());
+      setTitleAndDescription(mapping, property);
       property.setPattern(mapping.getValueRegexValidation());
       property
           .getErrorMessage()
@@ -93,7 +93,7 @@ public class SchemaFactory {
 
   public static ObjectProperty create(NonDefiningPropertyDefinition property) {
     ObjectProperty propertySchema = new ObjectProperty();
-    propertySchema.setTitle(property.getTitle());
+    setTitleAndDescription(property, propertySchema);
     // TODO change this to "name" instead of "identifierScheme"? More general than just external
     // identifiers
     propertySchema.addProperty(IDENTIFIER_SCHEME, ConstProperty.create(property.getName()));
@@ -111,13 +111,14 @@ public class SchemaFactory {
     if (nonDefiningPropertyDefinition.getAllowedValues() != null
         && !nonDefiningPropertyDefinition.getAllowedValues().isEmpty()) {
       EnumProperty property = new EnumProperty();
+      setTitleAndDescription(nonDefiningPropertyDefinition, property);
       property.getEnumValues().addAll(nonDefiningPropertyDefinition.getAllowedValues());
       returnValue = property;
     } else if (nonDefiningPropertyDefinition
         .getDataType()
         .equals(NonDefiningPropertyDataType.CONCEPT)) {
       ReferenceProperty property = new ReferenceProperty();
-      property.setTitle(nonDefiningPropertyDefinition.getTitle());
+      setTitleAndDescription(nonDefiningPropertyDefinition, property);
       property.setReference("#/$defs/SnowstormConceptMini");
       returnValue = property;
     } else {
@@ -138,8 +139,16 @@ public class SchemaFactory {
       returnValue = items;
     }
 
-    returnValue.setTitle(nonDefiningPropertyDefinition.getTitle());
+    setTitleAndDescription(nonDefiningPropertyDefinition, returnValue);
     return returnValue;
+  }
+
+  private static void setTitleAndDescription(
+      BasePropertyDefinition nonDefiningPropertyDefinition, Property property) {
+    property.setTitle(nonDefiningPropertyDefinition.getTitle());
+    if (nonDefiningPropertyDefinition.getDescription() != null) {
+      property.setDescription(nonDefiningPropertyDefinition.getDescription());
+    }
   }
 
   private static String getPropertyNameForType(String dataType) {
@@ -151,7 +160,7 @@ public class SchemaFactory {
 
   public static ObjectProperty create(ReferenceSetDefinition referenceSetDefinition) {
     ObjectProperty referenceSetSchema = new ObjectProperty();
-    referenceSetSchema.setTitle(referenceSetDefinition.getTitle());
+    setTitleAndDescription(referenceSetDefinition, referenceSetSchema);
     referenceSetSchema.addProperty(
         IDENTIFIER_SCHEME, ConstProperty.create(referenceSetDefinition.getName()));
     referenceSetSchema.addProperty(
