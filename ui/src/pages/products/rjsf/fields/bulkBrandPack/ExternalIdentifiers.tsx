@@ -22,6 +22,9 @@ import { ConceptMini } from '../../../../../types/concept.ts';
 import { MultiValueValueSetAutocomplete } from '../../components/MultiValueSetAutocomplete.tsx';
 import MultiValueEclAutocomplete from '../../components/MultiValueEclAutocomplete.tsx';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import { DesktopDatePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs, { Dayjs } from 'dayjs';
 
 const SCHEME_COLORS = ['primary', 'secondary', 'success', 'error', 'warning'];
 
@@ -129,6 +132,8 @@ const ExternalIdentifierRender: React.FC<
   } = (uiSchema && uiSchema['ui:options']) || {};
 
   const schemeName = schema?.properties?.identifierScheme?.const;
+  const dataType = schema?.properties?.value?.type;
+  const pattern = schema?.properties?.value?.pattern;
 
   const [availableOptions, setAvailableOptions] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -385,79 +390,117 @@ const ExternalIdentifierRender: React.FC<
             }
           />
         )}
-
-        {!useEclAutocomplete && !useValueSetAutocomplete && !isCheckBox && (
-          <Autocomplete
-            multiple
-            freeSolo
-            disableClearable
-            filterSelectedOptions
-            disabled={readOnly}
-            options={availableOptions}
-            getOptionLabel={option => option}
-            value={schemeEntries?.map(e => e.value)}
-            inputValue={inputValue}
-            onInputChange={(_, newVal) => {
-              setInputValue(newVal);
-              setTooltip('');
-            }}
-            onChange={(_, values, reason, details) => {
-              if (reason === 'selectOption' && details?.option) {
-                handleAdd(details.option);
-              } else if (reason === 'createOption') {
-                handleAdd(values[values.length - 1]);
+        {dataType === 'date' && (
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DesktopDatePicker
+              label={schema.title}
+              format={'YYYY-MM-DD'}
+              value={
+                schemeEntries?.[0]?.value ? dayjs(schemeEntries[0].value) : null
               }
-            }}
-            renderTags={(values, getTagProps) => (
-              <Stack direction="row" gap={1} flexWrap="wrap">
-                {values.map((val, index) => (
-                  <React.Fragment key={`${schemeName}-${val}-${index}`}>
-                    {renderChip({
-                      value: val,
-                      identifierScheme: schemeName,
-                      relationshipType:
-                        schema.properties.relationshipType?.const,
-                    })}
-                  </React.Fragment>
-                ))}
-              </Stack>
-            )}
-            renderInput={params => (
-              <TextField
-                {...params}
-                label={schema.title}
-                error={!!tooltip}
-                helperText={tooltip || ' '}
-                InputProps={{
-                  ...params.InputProps,
-                  endAdornment: (
-                    <>
-                      {params.InputProps.endAdornment}
-                      {!readOnly && inputValue?.trim() && (
-                        <IconButton
-                          edge="end"
-                          size="small"
-                          onClick={() => {
-                            handleAdd(inputValue.trim());
-                            setInputValue('');
-                          }}
-                          disabled={schemeEntries.some(
-                            entry => entry.value === inputValue.trim(),
-                          )}
-                          sx={{ ml: 1 }}
-                          title="Add value"
-                        >
-                          <AddCircleOutlineIcon color="primary" />
-                        </IconButton>
-                      )}
-                    </>
-                  ),
-                }}
-              />
-            )}
-            sx={{ width: '100%' }}
-          />
+              onChange={(newVal: Dayjs | null) => {
+                const isoDate = newVal?.toISOString().split('T')[0];
+                const updatedEntry: NonDefiningProperty = {
+                  identifierScheme: schemeName,
+                  relationshipType:
+                    schema.properties.relationshipType?.const ?? null,
+                  type: schema.properties.type?.const ?? null,
+                  value: isoDate ?? '',
+                };
+
+                const filtered = (formData ?? []).filter(
+                  item => item.identifierScheme !== schemeName,
+                );
+
+                onChange([...filtered, updatedEntry]);
+              }}
+              disabled={readOnly}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  error: !!tooltip,
+                  helperText: tooltip || ' ',
+                },
+              }}
+            />
+          </LocalizationProvider>
         )}
+
+        {dataType === 'string' &&
+          !useEclAutocomplete &&
+          !useValueSetAutocomplete &&
+          !isCheckBox && (
+            <Autocomplete
+              multiple
+              freeSolo
+              disableClearable
+              filterSelectedOptions
+              disabled={readOnly}
+              options={availableOptions}
+              getOptionLabel={option => option}
+              value={schemeEntries?.map(e => e.value)}
+              inputValue={inputValue}
+              onInputChange={(_, newVal) => {
+                setInputValue(newVal);
+                setTooltip('');
+              }}
+              onChange={(_, values, reason, details) => {
+                if (reason === 'selectOption' && details?.option) {
+                  handleAdd(details.option);
+                } else if (reason === 'createOption') {
+                  handleAdd(values[values.length - 1]);
+                }
+              }}
+              renderTags={(values, getTagProps) => (
+                <Stack direction="row" gap={1} flexWrap="wrap">
+                  {values.map((val, index) => (
+                    <React.Fragment key={`${schemeName}-${val}-${index}`}>
+                      {renderChip({
+                        value: val,
+                        identifierScheme: schemeName,
+                        relationshipType:
+                          schema.properties.relationshipType?.const,
+                      })}
+                    </React.Fragment>
+                  ))}
+                </Stack>
+              )}
+              renderInput={params => (
+                <TextField
+                  {...params}
+                  label={schema.title}
+                  error={!!tooltip}
+                  helperText={tooltip || ' '}
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <>
+                        {params.InputProps.endAdornment}
+                        {!readOnly && inputValue?.trim() && (
+                          <IconButton
+                            edge="end"
+                            size="small"
+                            onClick={() => {
+                              handleAdd(inputValue.trim());
+                              setInputValue('');
+                            }}
+                            disabled={schemeEntries.some(
+                              entry => entry.value === inputValue.trim(),
+                            )}
+                            sx={{ ml: 1 }}
+                            title="Add value"
+                          >
+                            <AddCircleOutlineIcon color="primary" />
+                          </IconButton>
+                        )}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+              sx={{ width: '100%' }}
+            />
+          )}
       </Stack>
     </Box>
   );
