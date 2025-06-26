@@ -447,6 +447,7 @@ function ProductPreviewPanel({
                   control={control}
                   fieldBindings={fieldBindings}
                   branch={branch}
+                  setValue={setValue}
                 />
               )}
             {/*there is an option to pick a concept, but you could also create a new concept if you so desire.*/}
@@ -481,6 +482,7 @@ interface ConceptOptionsDropdownProps {
   getValues: UseFormGetValues<ProductSummary>;
   fieldBindings: FieldBindings;
   branch: string;
+  setValue: UseFormSetValue<ProductSummary>;
 }
 function ConceptOptionsDropdown({
   product,
@@ -491,6 +493,7 @@ function ConceptOptionsDropdown({
   control,
   fieldBindings,
   branch,
+  setValue,
 }: ConceptOptionsDropdownProps) {
   const { ticketNumber } = useParams();
   const { data: ticket } = useTicketByTicketNumber(ticketNumber, true);
@@ -640,6 +643,7 @@ function ConceptOptionsDropdown({
             control={control}
             fieldBindings={fieldBindings}
             branch={branch}
+            setValue={setValue}
           />
         )}
       </CustomTabPanel>
