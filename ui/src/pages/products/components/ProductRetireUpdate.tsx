@@ -116,12 +116,8 @@ export const ProductRetireUpdate: React.FC<ProductRetireUpdateProps> = ({
             gap: 2,
             mb: 2,
             p: 1,
-            backgroundColor: referencedByOtherProducts
-              ? theme.palette.warning.light
-              : theme.palette.grey[300],
-            color: referencedByOtherProducts
-              ? theme.palette.warning.main
-              : theme.palette.text.primary,
+            backgroundColor: theme.palette.grey[300],
+            color: theme.palette.text.primary,
             borderRadius: 1,
             fontSize: '0.875rem',
           }}

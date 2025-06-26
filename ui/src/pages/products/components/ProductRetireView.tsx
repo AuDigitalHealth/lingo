@@ -1,23 +1,32 @@
 import React from 'react';
 import { Stack, Tooltip } from '@mui/material';
 import { ArchiveOutlined } from '@mui/icons-material';
-import { Product } from '../../../types/concept';
+import { Product, ProductSummary } from '../../../types/concept';
+import { Control, UseFormGetValues, useWatch } from 'react-hook-form';
 
 export interface ProductRetireViewProps {
   product: Product;
+  control: Control<ProductSummary>;
+  index: number;
   spacing?: number;
 }
 
 export const ProductRetireView: React.FC<ProductRetireViewProps> = ({
   product,
   spacing = 0.5,
+  control,
+  index,
 }) => {
   const show =
     product.originalNode !== null && product.newConceptDetails !== null;
   if (!show) return null;
 
   const term = product.originalNode?.node.concept.pt.term;
-  const reason = product.originalNode?.inactivationReason;
+
+  const reason = useWatch({
+    control,
+    name: `nodes[${index}].originalNode.inactivationReason` as 'nodes.0.originalNode.inactivationReason',
+  });
   if (!term) return null;
 
   return (
