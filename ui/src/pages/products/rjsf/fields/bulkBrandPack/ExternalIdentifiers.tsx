@@ -269,7 +269,8 @@ const ExternalIdentifierRender: React.FC<
         if (!conceptId) return null;
         return {
           identifierScheme: scheme,
-          // relationshipType: schema.properties.relationshipType.const,
+          relationshipType: schema.properties.relationshipType?.const,
+          type: schema.properties.type.const,
           valueObject: concept,
         };
       })
