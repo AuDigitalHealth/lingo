@@ -84,7 +84,6 @@ function ConceptReviews({ conceptReview }: ConceptReviewsProps) {
   };
 
   const handleToggleReview = (e: React.MouseEvent) => {
-    
     e.stopPropagation();
     let currentReviewedList = conceptsReviewed;
 
@@ -96,7 +95,7 @@ function ConceptReviews({ conceptReview }: ConceptReviewsProps) {
     const conceptId = conceptReview.concept.id;
     let updatedConceptIds: string[];
 
-    if( !currentReviewedList) {
+    if (!currentReviewedList) {
       currentReviewedList = {
         conceptIds: [],
         approvalDate: new Date().toISOString(),
