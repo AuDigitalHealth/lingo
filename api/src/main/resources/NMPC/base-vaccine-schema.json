@@ -125,7 +125,7 @@
     },
     "ProductDetails": {
       "type": "object",
-      "title": "Presentation Strength Product Details",
+      "title": "Product Details",
       "properties": {
         "type": {
           "type": "string",
