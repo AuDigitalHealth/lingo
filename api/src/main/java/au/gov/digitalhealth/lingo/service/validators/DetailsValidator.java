@@ -55,13 +55,15 @@ public class DetailsValidator {
 
   protected static void validateStrengthNotPopulated(
       @Valid Quantity strengthNumerator, @Valid Quantity strengthDenominator, String strengthType) {
-    if (strengthNumerator != null) {
+    if (strengthNumerator != null
+        && (strengthNumerator.getValue() != null || strengthNumerator.getUnit() != null)) {
       throw new ProductAtomicDataValidationProblem(
           "Medication product details must not have a "
               + strengthType
               + " strength numerator defined when unit of presentation exists");
     }
-    if (strengthDenominator != null) {
+    if (strengthDenominator != null
+        && (strengthDenominator.getValue() != null || strengthDenominator.getUnit() != null)) {
       throw new ProductAtomicDataValidationProblem(
           "Medication product details must not have a "
               + strengthType
