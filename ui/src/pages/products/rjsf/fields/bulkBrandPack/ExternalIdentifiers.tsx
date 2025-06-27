@@ -22,9 +22,7 @@ import { ConceptMini } from '../../../../../types/concept.ts';
 import { MultiValueValueSetAutocomplete } from '../../components/MultiValueSetAutocomplete.tsx';
 import MultiValueEclAutocomplete from '../../components/MultiValueEclAutocomplete.tsx';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import { DesktopDatePicker, LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import dayjs, { Dayjs } from 'dayjs';
+import DesktopDatePickerField from '../../components/DesktopDatePickerField.tsx';
 
 const SCHEME_COLORS = ['primary', 'secondary', 'success', 'error', 'warning'];
 
@@ -132,7 +130,7 @@ const ExternalIdentifierRender: React.FC<
   } = (uiSchema && uiSchema['ui:options']) || {};
 
   const schemeName = schema?.properties?.identifierScheme?.const;
-  const dataType = schema?.properties?.value?.type;
+  const dateFormat = schema?.properties?.value?.dateFormat;
   const pattern = schema?.properties?.value?.pattern;
 
   const [availableOptions, setAvailableOptions] = useState<string[]>([]);
@@ -230,6 +228,20 @@ const ExternalIdentifierRender: React.FC<
       const newFormData = [...(formData ?? []), ...newItems];
       onChange(newFormData);
     }
+  };
+  const handleDateChange = (newDate: string | null) => {
+    const updatedEntry: NonDefiningProperty = {
+      identifierScheme: schemeName,
+      type: schema.properties.type?.const ?? null,
+      value: newDate ?? '',
+    };
+
+    const filtered = (formData ?? []).filter(
+      item => item.identifierScheme !== schemeName,
+    );
+
+    const newData = newDate ? [...filtered, updatedEntry] : filtered;
+    onChange(newData);
   };
 
   const handleDelete = (value: string, scheme: string) => {
@@ -391,46 +403,23 @@ const ExternalIdentifierRender: React.FC<
             }
           />
         )}
-        {dataType === 'date' && (
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DesktopDatePicker
-              label={schema.title}
-              format={'YYYY-MM-DD'}
-              value={
-                schemeEntries?.[0]?.value ? dayjs(schemeEntries[0].value) : null
-              }
-              onChange={(newVal: Dayjs | null) => {
-                const isoDate = newVal?.toISOString().split('T')[0];
-                const updatedEntry: NonDefiningProperty = {
-                  identifierScheme: schemeName,
-                  relationshipType:
-                    schema.properties.relationshipType?.const ?? null,
-                  type: schema.properties.type?.const ?? null,
-                  value: isoDate ?? '',
-                };
-
-                const filtered = (formData ?? []).filter(
-                  item => item.identifierScheme !== schemeName,
-                );
-
-                onChange([...filtered, updatedEntry]);
-              }}
-              disabled={readOnly}
-              slotProps={{
-                textField: {
-                  fullWidth: true,
-                  error: !!tooltip,
-                  helperText: tooltip || ' ',
-                },
-              }}
-            />
-          </LocalizationProvider>
+        {dateFormat && (
+          <DesktopDatePickerField
+            label={schema.title}
+            format={dateFormat}
+            value={schemeEntries?.[0]?.value ? schemeEntries[0].value : null}
+            onChange={handleDateChange}
+            disabled={readOnly ? true : false}
+            error={!!tooltip}
+            helperText={tooltip || ' '}
+          />
         )}
 
-        {dataType === 'string' &&
+        {!dateFormat &&
           !useEclAutocomplete &&
           !useValueSetAutocomplete &&
-          !isCheckBox && (
+          !isCheckBox &&
+          isMultiValued && (
             <Autocomplete
               multiple
               freeSolo
@@ -500,6 +489,47 @@ const ExternalIdentifierRender: React.FC<
                 />
               )}
               sx={{ width: '100%' }}
+            />
+          )}
+        {!dateFormat &&
+          !useEclAutocomplete &&
+          !useValueSetAutocomplete &&
+          !isCheckBox &&
+          !isMultiValued && (
+            <TextField
+              fullWidth
+              disabled={readOnly}
+              label={schema.title}
+              value={schemeEntries?.[0]?.value || ''}
+              onChange={e => {
+                const val = e.target.value.trim();
+
+                if (val === '') {
+                  // Remove the entry if value is cleared
+                  onChange(
+                    (formData ?? []).filter(
+                      item => item.identifierScheme !== schemeName,
+                    ),
+                  );
+                } else {
+                  // Replace or add the value
+                  const updatedEntry: NonDefiningProperty = {
+                    identifierScheme: schemeName,
+                    relationshipType:
+                      schema.properties.relationshipType?.const ?? null,
+                    type: schema.properties.type?.const ?? null,
+                    value: val,
+                  };
+
+                  const others = (formData ?? []).filter(
+                    item => item.identifierScheme !== schemeName,
+                  );
+
+                  onChange([...others, updatedEntry]);
+                }
+              }}
+              error={!!tooltip}
+              helperText={tooltip || ' '}
             />
           )}
       </Stack>

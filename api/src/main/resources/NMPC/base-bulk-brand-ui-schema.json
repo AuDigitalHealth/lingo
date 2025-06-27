@@ -51,7 +51,12 @@
       "multiValuedSchemes": [
         "artgid"
       ],
-      "mandatorySchemes": []
+      "mandatorySchemes": [],
+      "ecl": "<774167006",
+      "createBrand": {
+        "ecl": "<774167006",
+        "semanticTags": "(product name)"
+      }
     }
   },
   "addButton": {
