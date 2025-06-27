@@ -418,7 +418,8 @@ const ExternalIdentifierRender: React.FC<
         {!dateFormat &&
           !useEclAutocomplete &&
           !useValueSetAutocomplete &&
-          !isCheckBox && (
+          !isCheckBox &&
+          isMultiValued && (
             <Autocomplete
               multiple
               freeSolo
@@ -488,6 +489,47 @@ const ExternalIdentifierRender: React.FC<
                 />
               )}
               sx={{ width: '100%' }}
+            />
+          )}
+        {!dateFormat &&
+          !useEclAutocomplete &&
+          !useValueSetAutocomplete &&
+          !isCheckBox &&
+          !isMultiValued && (
+            <TextField
+              fullWidth
+              disabled={readOnly}
+              label={schema.title}
+              value={schemeEntries?.[0]?.value || ''}
+              onChange={e => {
+                const val = e.target.value.trim();
+
+                if (val === '') {
+                  // Remove the entry if value is cleared
+                  onChange(
+                    (formData ?? []).filter(
+                      item => item.identifierScheme !== schemeName,
+                    ),
+                  );
+                } else {
+                  // Replace or add the value
+                  const updatedEntry: NonDefiningProperty = {
+                    identifierScheme: schemeName,
+                    relationshipType:
+                      schema.properties.relationshipType?.const ?? null,
+                    type: schema.properties.type?.const ?? null,
+                    value: val,
+                  };
+
+                  const others = (formData ?? []).filter(
+                    item => item.identifierScheme !== schemeName,
+                  );
+
+                  onChange([...others, updatedEntry]);
+                }
+              }}
+              error={!!tooltip}
+              helperText={tooltip || ' '}
             />
           )}
       </Stack>
