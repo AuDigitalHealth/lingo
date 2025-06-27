@@ -105,6 +105,16 @@ const MultiValueEclAutocomplete: React.FC<FieldProps<any, any>> = props => {
         isOptionEqualToValue={(option: Concept, val: ConceptMini) =>
           option?.conceptId === val?.conceptId
         }
+        renderTags={(value, getTagProps) =>
+          value.map((option, index) => (
+            <Tooltip key={option.conceptId} title={`${option.conceptId} - ${option.pt?.term}`}>
+              <Chip
+                label={option.pt?.term || ''}
+                {...getTagProps({ index })}
+              />
+            </Tooltip>
+          ))
+        }
         renderOption={(props, option: Concept) => (
           <li {...props} key={option.conceptId}>
             {option.pt.term}
