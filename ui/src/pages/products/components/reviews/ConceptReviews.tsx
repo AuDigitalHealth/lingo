@@ -52,7 +52,10 @@ import { LoadingButton } from '@mui/lab';
 import { Lock, LockOpen, TextFields } from '@mui/icons-material';
 import { usePostReviewMessageMutation } from '../../../../hooks/api/task/usePostReviewMessageMutation.tsx';
 import { useFeedbackUnreadMutation } from '../../../../hooks/api/task/useFeedbackUnreadMutation.tsx';
-import { useIsReviewEnabled } from '../../../../hooks/api/task/useReviews.tsx';
+import {
+  useIsReviewEnabled,
+  useShowReviewControls,
+} from '../../../../hooks/api/task/useReviews.tsx';
 
 interface ConceptReviewsProps {
   conceptReview: ConceptReview | undefined;
@@ -65,13 +68,16 @@ function ConceptReviews({ conceptReview }: ConceptReviewsProps) {
   const projectKey = task?.projectKey;
 
   const taskKey = task?.key;
+  const showReviewControls = useShowReviewControls({ task });
+  const isReviewEnabled = useIsReviewEnabled({ task });
   const { conceptsReviewed } = useConceptsThatHaveBeenReviewed(
     projectKey,
     taskKey,
+    showReviewControls,
   );
   const approveReviewMutation = useApproveReviewMutation();
 
-  const isReviewEnabled = useIsReviewEnabled({ task });
+  debugger;
   if (!conceptReview) {
     return <></>;
   }
@@ -234,7 +240,7 @@ function ReviewMessageModal({
   const task = useTaskById();
   const projectKey = task?.projectKey;
   const taskKey = task?.key;
-  const { unreadConceptIds } = useFeedbackUnread(projectKey, taskKey);
+  const { unreadConceptIds } = useFeedbackUnread(projectKey, taskKey, true);
   const hasUnread = unreadConceptIds?.includes(
     conceptReview.conceptId as string,
   );

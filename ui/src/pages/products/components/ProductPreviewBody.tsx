@@ -175,6 +175,7 @@ function ProductPreviewBody({
       </Box>
       {!readOnlyMode && !isSimpleEdit ? (
         <SubmitPanel
+          productModel={productModel}
           idsWithInvalidName={idsWithInvalidName}
           newConceptFound={newConceptFound}
           handleClose={handleClose}
@@ -188,7 +189,7 @@ function ProductPreviewBody({
 }
 interface SubmitPanelProps {
   newConceptFound: boolean;
-
+  productModel: ProductSummary;
   idsWithInvalidName: string[];
   isProductUpdate: boolean;
   handleClose?:
@@ -197,13 +198,31 @@ interface SubmitPanelProps {
 }
 function SubmitPanel({
   newConceptFound,
-
+  productModel,
   idsWithInvalidName,
   isProductUpdate,
   handleClose,
 }: SubmitPanelProps) {
   const { canEdit, lockDescription } = useCanEditTask();
 
+  const hasUpdatedProperties =
+    productModel?.nodes?.filter(subject => {
+      return (
+        subject.propertyUpdate ||
+        subject.statedFormChanged ||
+        subject.inferredFormChanged ||
+        subject.isModified
+      );
+    }).length > 0;
+
+  const canSubmitNonProductUpdates =
+    !isProductUpdate &&
+    canEdit &&
+    newConceptFound &&
+    idsWithInvalidName.length === 0;
+  const canSubmitProductUpdate =
+    isProductUpdate && canEdit && (hasUpdatedProperties || newConceptFound);
+  debugger;
   return (
     <Box m={1} p={1}>
       <Stack spacing={2} direction="row" justifyContent="end">
@@ -225,7 +244,8 @@ function SubmitPanel({
             type="submit"
             color="primary"
             disabled={
-              !newConceptFound || !canEdit || idsWithInvalidName.length > 0
+              (!isProductUpdate && !canSubmitNonProductUpdates) ||
+              (isProductUpdate && !canSubmitProductUpdate)
             }
             data-testid={
               isProductUpdate ? 'update-product-btn' : 'create-product-btn'
