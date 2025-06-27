@@ -227,7 +227,6 @@ models:
           - RELATED
       - name: indicativePrice
         title: Indicative Price
-        description: Indicative Price
         identifier: 680351000220102
         level: PRODUCT
         dataType: DECIMAL
@@ -265,7 +264,6 @@ models:
         order: 81
       - name: parallelImport
         title: Parallel import
-        description: Parallel import
         identifier: 679941000220100
         level: PRODUCT
         modelLevels: REAL_CLINICAL_DRUG
@@ -279,7 +277,6 @@ models:
         order: 70
       - name: discontNotification
         title: Discontinuation Notification
-        description: Discontinuation Notification
         identifier: 680291000220102
         level: PACKAGE
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
@@ -288,7 +285,6 @@ models:
         order: 99
       - name: recallIndicator
         title: Recall Indicator
-        description: Recall Indicator
         identifier: 680301000220101
         level: PRODUCT
         modelLevels: REAL_CLINICAL_DRUG
@@ -298,7 +294,6 @@ models:
         order: 100
       - name: shortagesFlag
         title: Shortages Flag
-        description: Shortages Flag
         identifier: 680281000220100
         level: PRODUCT
         modelLevels: REAL_CLINICAL_DRUG
@@ -309,7 +304,6 @@ models:
     nonDefiningProperties:
       - name: nmpcType
         title: NMPC Type
-        description: Type of NMPC item
         identifier: 680011000220100
         level: PRODUCT
         dataType: CONCEPT
@@ -321,7 +315,6 @@ models:
         order: 20
       - name: licencedRoute
         title: Licenced Route
-        description: Licenced Route of Administration
         identifier: 243637007
         level: PRODUCT
         dataType: CONCEPT
@@ -333,7 +326,6 @@ models:
         order: 20
       - name: pil
         title: Leaflet URL
-        description: Product information leaflet
         identifier: 680181000220107
         level: PACKAGE
         dataType: URI
@@ -345,7 +337,6 @@ models:
         order: 51
       - name: smpc
         title: SmPC
-        description: SmPC
         identifier: 680171000220109
         level: PACKAGE
         dataType: URI
@@ -357,7 +348,6 @@ models:
         order: 50
       - name: licensingStatus
         title: Licensing Status
-        description: Licensing Status
         identifier: 680341000220104
         level: PRODUCT
         dataType: CONCEPT
@@ -369,7 +359,6 @@ models:
         order: 91
       - name: marketingStatus
         title: Marketing Status
-        description: Marketing Status
         identifier: 680051000220104
         level: PRODUCT
         dataType: CONCEPT
@@ -381,7 +370,6 @@ models:
         order: 92
       - name: marketingAuthHolder
         title: Marketing Authorisation Holder
-        description: Marketing Authorisation Holder
         identifier: 680061000220102
         level: PRODUCT
         dataType: CONCEPT
@@ -393,7 +381,6 @@ models:
         order: 93
       - name: notifyingWholesaler
         title: Notifying Wholesaler
-        description: Notifying Wholesaler
         identifier: 680071000220108
         level: PRODUCT
         dataType: CONCEPT
@@ -405,7 +392,6 @@ models:
         order: 94
       - name: legalSupplyStatus
         title: Legal Supply Status
-        description: Legal Supply Status
         identifier: 680081000220106
         level: PRODUCT
         dataType: CONCEPT
@@ -417,7 +403,6 @@ models:
         order: 95
       - name: placeOfSale
         title: Place of Sale
-        description: Place of Sale
         identifier: 680771000220105
         level: PRODUCT
         dataType: CONCEPT
@@ -428,8 +413,7 @@ models:
         showDefaultOptions: true
         order: 96
       - name: placeOfSupply
-        title: Place of Supply
-        description: Place of Supply
+        title: Supply Legal Status
         identifier: 680211000220106
         level: PRODUCT
         dataType: CONCEPT
@@ -441,7 +425,6 @@ models:
         order: 96
       - name: controlledDrugStatus
         title: Controlled Drug Status
-        description: Controlled Drug Status
         identifier: 680091000220109
         level: PRODUCT
         dataType: CONCEPT
@@ -453,7 +436,6 @@ models:
         order: 97
       - name: packageType
         title: Package Type
-        description: Package Type
         identifier: 680161000220103
         level: PACKAGE
         dataType: CONCEPT
@@ -465,10 +447,10 @@ models:
         order: 99
       - name: lastDateOfMan
         title: Last Date of Manufacture
-        description: Last Date of Manufacture
         identifier: 680191000220105
         level: PACKAGE
         dataType: DATE
+        format: YYYY-MM-DD
         valueRegexValidation: \d{4}-\d{2}-\d{2}
         valueValidationErrorMessage: "Must be a valid date in the format YYYY-MM-DD"
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
@@ -489,10 +471,10 @@ models:
         order: 101
       - name: recallDate
         title: Recall Published Date
-        description: Date of recall
         identifier: 680221000220104
         level: PRODUCT
         dataType: DATE
+        format: YYYY-MM-DD
         valueRegexValidation: \d{4}-\d{2}-\d{2}
         valueValidationErrorMessage: "Must be a valid date in the format YYYY-MM-DD"
         modelLevels: REAL_CLINICAL_DRUG
@@ -503,7 +485,6 @@ models:
         group: recall
       - name: recallActions
         title: Recall Marketing Actions
-        description: Marketing actions taken for the recall
         identifier: 680231000220101
         level: PRODUCT
         dataType: STRING
@@ -517,7 +498,6 @@ models:
         group: recall
       - name: recallCategory
         title: Recall Defect Category
-        description: Category of defect for the recall
         identifier: 680241000220105
         level: PRODUCT
         dataType: STRING
@@ -531,7 +511,6 @@ models:
         group: recall
       - name: recallLevel
         title: Recall Level
-        description: Level of recall
         identifier: 680261000220109
         level: PRODUCT
         dataType: STRING
@@ -545,7 +524,6 @@ models:
         group: recall
       - name: recallDocuments
         title: Recall Associated Documents
-        description: Documents associated with the recall
         identifier: 680251000220107
         level: PRODUCT
         dataType: URI
@@ -559,7 +537,6 @@ models:
         group: recall
       - name: doseFormType
         title: Dose Form Type
-        description: Documents associated with the recall
         identifier: 680311000220103
         level: PRODUCT
         dataType: CONCEPT
@@ -571,7 +548,6 @@ models:
         order: 90
       - name: nonPrescReason
         title: Non-Prescribable Reason
-        description: Reason for non-prescribability
         identifier: 680331000220108
         level: PRODUCT
         dataType: CONCEPT
@@ -583,7 +559,6 @@ models:
         order: 71
       - name: shortagesReason
         title: Shortages Reason
-        description: Reason for shortages
         identifier: 680101000220104
         level: PRODUCT
         dataType: STRING
@@ -595,7 +570,6 @@ models:
         order: 106
       - name: theraAlternatve
         title: Shortages Therapeutic Alternative
-        description: Therapeutic alternative for shortages
         identifier: 680111000220101
         level: PRODUCT
         dataType: STRING
@@ -610,7 +584,8 @@ models:
         description: Date when shortages were reported
         identifier: 680121000220108
         level: PRODUCT
-        dataType: STRING
+        dataType: DATE
+        format: YYYY-MM-DD
         valueRegexValidation: ^.+$
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
@@ -622,7 +597,8 @@ models:
         description: Date when the shortage information was last updated
         identifier: 680131000220106
         level: PRODUCT
-        dataType: STRING
+        dataType: DATE
+        format: YYYY-MM-DD
         valueRegexValidation: ^.+$
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
@@ -634,7 +610,8 @@ models:
         description: Date when the product is expected to return
         identifier: 680141000220102
         level: PRODUCT
-        dataType: STRING
+        dataType: DATE
+        format: YYYY-MM-DD
         valueRegexValidation: ^.+$
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
