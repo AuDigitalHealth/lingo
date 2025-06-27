@@ -469,6 +469,7 @@ models:
         identifier: 680191000220105
         level: PACKAGE
         dataType: DATE
+        format: YYYY-MM-DD
         valueRegexValidation: \d{4}-\d{2}-\d{2}
         valueValidationErrorMessage: "Must be a valid date in the format YYYY-MM-DD"
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
@@ -493,6 +494,7 @@ models:
         identifier: 680221000220104
         level: PRODUCT
         dataType: DATE
+        format: YYYY-MM-DD
         valueRegexValidation: \d{4}-\d{2}-\d{2}
         valueValidationErrorMessage: "Must be a valid date in the format YYYY-MM-DD"
         modelLevels: REAL_CLINICAL_DRUG
@@ -610,7 +612,8 @@ models:
         description: Date when shortages were reported
         identifier: 680121000220108
         level: PRODUCT
-        dataType: STRING
+        dataType: DATE
+        format: YYYY-MM-DD
         valueRegexValidation: ^.+$
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
@@ -622,7 +625,8 @@ models:
         description: Date when the shortage information was last updated
         identifier: 680131000220106
         level: PRODUCT
-        dataType: STRING
+        dataType: DATE
+        format: YYYY-MM-DD
         valueRegexValidation: ^.+$
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
@@ -634,7 +638,8 @@ models:
         description: Date when the product is expected to return
         identifier: 680141000220102
         level: PRODUCT
-        dataType: STRING
+        dataType: DATE
+        format: YYYY-MM-DD
         valueRegexValidation: ^.+$
         modelLevels: REAL_CLINICAL_DRUG
         mandatory: false
