@@ -361,7 +361,7 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
               size="small"
               sortField={'created'}
               sortOrder={-1}
-              value={enrichedData} // Use the enriched data here
+              value={enrichedData}
               expandedRows={expandedRows}
               onRowClick={e => {
                 manuallyTriggerRowToggle(e.data as ProductTableRow);
@@ -373,16 +373,35 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
             >
               <Column
                 field="name"
-                body={productNameTemplateWithActiveStatus} // Use the memoized function
+                body={productNameTemplateWithActiveStatus}
                 header="Product Name"
                 style={{
                   maxWidth: '125px',
                   overflow: 'hidden',
-                  maxHeight: '20px',
+                  maxHeight: '18px',
                   textOverflow: 'ellipsis',
                 }}
               />
-              <Column field="productType" header="Product Type" />
+              <Column
+                field="actionProductType"
+                header="Action"
+                body={(rowData: ProductTableRow) => {
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <div>{rowData.productType || ''}</div>
+                      <div>
+                        {rowData.action ? rowData.action.toLowerCase() : ''}
+                      </div>
+                    </div>
+                  );
+                }}
+                style={{
+                  maxWidth: '3.5em',
+                  overflow: 'hidden',
+                  maxHeight: '18px',
+                  textOverflow: 'ellipsis',
+                }}
+              />
               <Column
                 field="created"
                 header="Created"
@@ -390,11 +409,17 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
                   const date = new Date(rowData.created);
                   return date.toISOString().split('T')[0];
                 }}
+                style={{
+                  maxWidth: '3em',
+                  overflow: 'hidden',
+                  maxHeight: '18px',
+                  textOverflow: 'ellipsis',
+                }}
               />
               <Column
-                header="Actions"
+                header=""
                 body={actionBodyTemplate}
-                style={{ textAlign: 'center', width: '10em' }}
+                style={{ textAlign: 'center', width: '1em' }}
               />
             </DataTable>
           </div>
