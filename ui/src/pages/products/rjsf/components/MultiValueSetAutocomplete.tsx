@@ -1,10 +1,15 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FieldProps } from '@rjsf/utils';
 import { Concept } from '../../../../types/concept.ts';
 import useApplicationConfigStore from '../../../../stores/ApplicationConfigStore.ts';
-import { useSearchConceptOntoServerByUrl } from '../../../../hooks/api/products/useSearchConcept.tsx';
-import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../../utils/helpers/getValueSetExpansionContainsPt.ts';
-import { Autocomplete, CircularProgress, TextField } from '@mui/material';
+import {
+  useSearchConceptOntoServerByUrl
+} from '../../../../hooks/api/products/useSearchConcept.tsx';
+import {
+  convertFromValueSetExpansionContainsListToSnowstormConceptMiniList
+} from '../../../../utils/helpers/getValueSetExpansionContainsPt.ts';
+import { Autocomplete, Chip, CircularProgress, TextField } from '@mui/material';
+import { Tooltip } from 'antd';
 
 interface MultiValueValueSetAutocompleteProps extends FieldProps {
   label?: string;
