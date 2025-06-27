@@ -88,6 +88,7 @@ function NewConceptDropdown({
             control={control}
             index={index}
             setValue={setValue}
+            branch={branch}
           />
         )}
 
