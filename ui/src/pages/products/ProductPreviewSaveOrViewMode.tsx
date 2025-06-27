@@ -149,7 +149,7 @@ function ProductPreviewSaveOrViewMode({
   const submitData = (data?: ProductSummary) => {
     const usedData = data ? data : lastValidatedData;
 
-    if (!readOnlyMode && newConceptFound && productSaveDetails && usedData) {
+    if (!readOnlyMode && productSaveDetails && usedData) {
       setForceNavigation(true);
       productSaveDetails.productSummary = usedData;
       setLoading(true);
