@@ -458,6 +458,13 @@ const ExternalIdentifierRender: React.FC<
               renderInput={params => (
                 <TextField
                   {...params}
+                  onBlur={() => {
+                    const trimmed = inputValue.trim();
+                    if (trimmed && !readOnly) {
+                      handleAdd(trimmed);
+                      setInputValue('');
+                    }
+                  }}
                   label={schema.title}
                   error={!!tooltip}
                   helperText={tooltip || ' '}
