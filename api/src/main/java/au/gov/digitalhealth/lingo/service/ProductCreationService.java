@@ -779,7 +779,7 @@ public class ProductCreationService {
       // if retire and replace, then need to create refset rows - could do at the end?
       if (bulkCreate) {
         if (node.isConceptEdit()) {
-          concept.setConceptId(node.getConcept().getConceptId());
+          concept.setConceptId(node.getOriginalNode().getConceptId());
         } else if (node.getNewConceptDetails().getSpecifiedConceptId() != null) {
           concept.setConceptId(node.getNewConceptDetails().getSpecifiedConceptId());
         } else {
@@ -823,6 +823,15 @@ public class ProductCreationService {
         });
 
     createandUpdateRefsetMemberships(branch, nodeCreateOrder);
+
+    nodeCreateOrder.forEach(
+        node -> {
+          if (!node.isConceptEdit()) {
+            // if it isn't a concept edit, then we must have just made the concept
+            node.setNewInTask(true);
+          }
+          node.setNewConceptDetails(null); // setting to null, we've done the create
+        });
 
     log.fine("Concepts created and refset members created");
   }
