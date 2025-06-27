@@ -11,7 +11,8 @@ function ConceptReviewList() {
   const task = useTaskById();
   const { conceptReviews } = useConceptsForReview(task?.branchPath);
   const showReviewControls = useShowReviewControls({ task });
-  if (!conceptReviews || conceptReviews.length < 1 || !showReviewControls) {
+
+  if (!showReviewControls) {
     return <></>;
   }
 

@@ -1,6 +1,9 @@
 import { useMemo } from 'react';
 import { useTaskActivities } from './useTaskActivities';
-import { useConceptsByIds } from '../../eclRefset/useConceptsById';
+import {
+  useConceptsByIds,
+  useConceptsByIdsPost,
+} from '../../eclRefset/useConceptsById';
 import { ConceptReview } from '../../../types/ConceptReview';
 import { useQuery } from '@tanstack/react-query';
 import useTaskById from '../../useTaskById';
@@ -41,7 +44,7 @@ export function useConceptsForReview(branchPath: string | undefined) {
     data: concepts,
     isLoading: conceptsIsLoading,
     error: conceptsError,
-  } = useConceptsByIds(branchPath || '', conceptIds);
+  } = useConceptsByIdsPost(branchPath || '', conceptIds);
 
   // Fetch concept reviews/messages
   const {
