@@ -197,10 +197,14 @@ public class ProductSummary implements Serializable {
     synchronized (nodes) {
       nodes.forEach(
           n -> {
-            n.setNewInTask(
-                taskChangedIds.contains(n.getConceptId())
-                    && !projectChangedIds.contains(n.getConceptId()));
-            n.setNewInProject(projectChangedIds.contains(n.getConceptId()));
+            if (!n.isNewInTask()) {
+              n.setNewInTask(
+                  taskChangedIds.contains(n.getConceptId())
+                      && !projectChangedIds.contains(n.getConceptId()));
+            }
+            if (!n.isNewInProject()) {
+              n.setNewInProject(projectChangedIds.contains(n.getConceptId()));
+            }
           });
     }
   }
