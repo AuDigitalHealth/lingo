@@ -3,6 +3,8 @@ import { Autocomplete, CircularProgress, TextField } from '@mui/material';
 import { Concept, ConceptMini } from '../../../../types/concept.ts';
 import { useSearchConceptsByEcl } from '../../../../hooks/api/useInitializeConcepts.tsx';
 import { FieldProps } from '@rjsf/utils';
+import { Tooltip } from '@mui/material';
+import { Chip } from '@mui/material';
 
 const MultiValueEclAutocomplete: React.FC<FieldProps<any, any>> = props => {
   const {
