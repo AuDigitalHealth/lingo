@@ -779,7 +779,7 @@ public class ProductCreationService {
       // if retire and replace, then need to create refset rows - could do at the end?
       if (bulkCreate) {
         if (node.isConceptEdit()) {
-          concept.setConceptId(node.getConcept().getConceptId());
+          concept.setConceptId(node.getOriginalNode().getConceptId());
         } else if (node.getNewConceptDetails().getSpecifiedConceptId() != null) {
           concept.setConceptId(node.getNewConceptDetails().getSpecifiedConceptId());
         } else {
