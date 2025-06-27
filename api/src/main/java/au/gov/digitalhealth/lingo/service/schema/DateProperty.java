@@ -18,13 +18,8 @@ package au.gov.digitalhealth.lingo.service.schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class DateProperty extends Property {
-  String type = "date";
-  String pattern;
-  Map<String, String> errorMessage = new HashMap<>();
+public class DateProperty extends StringProperty {
+  String dateFormat;
 }
