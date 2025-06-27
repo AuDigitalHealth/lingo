@@ -184,7 +184,7 @@ models:
         order: 30
       - name: gtin
         title: GTIN
-        identifier: 680371000220106
+        identifier: 680431000220102
         level: PACKAGE
         dataType: UNSIGNED_INTEGER
         valueRegexValidation: \d{8,14}
@@ -213,7 +213,7 @@ models:
         order: 100
       - name: pcrs
         title: GMS Reimbursable
-        identifier: 680391000220107
+        identifier: 680461000220105
         level: PACKAGE
         dataType: CODED,
         valueRegexValidation: ^.+$
