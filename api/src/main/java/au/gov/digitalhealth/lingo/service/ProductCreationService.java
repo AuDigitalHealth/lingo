@@ -846,6 +846,28 @@ public class ProductCreationService {
       throws InterruptedException {
     log.fine("Creating refset members");
 
+    final ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+    // for edited concepts, remove any existing members that are not in the new members
+    final Set<Node> nodesToEdit =
+        nodeCreateOrder.stream().filter(Node::isConceptEdit).collect(Collectors.toSet());
+    final Map<String, List<SnowstormReferenceSetMember>> editNodeExistingRefsetMembers =
+        snowstormClient
+            .getRefsetMembers(
+                branch,
+                nodesToEdit.stream().map(n -> n.getConceptId()).toList(),
+                modelConfiguration.getInScopeReferenceSetIds(
+                    nodesToEdit.stream().map(Node::getModelLevel).collect(Collectors.toSet())))
+            .stream()
+            .collect(
+                Collectors.toMap(
+                    SnowstormReferenceSetMember::getReferencedComponentId,
+                    Collections::singletonList,
+                    (existing, replacement) -> {
+                      List<SnowstormReferenceSetMember> combined = new ArrayList<>(existing);
+                      combined.addAll(replacement);
+                      return combined;
+                    }));
+
     List<SnowstormReferenceSetMemberViewComponent> membersToCreate =
         new ArrayList<>(
             nodeCreateOrder.stream()
@@ -857,7 +879,15 @@ public class ProductCreationService {
                         for (SnowstormReferenceSetMemberViewComponent member :
                             n.getNewConceptDetails().getReferenceSetMembers()) {
                           member.setReferencedComponentId(n.getConcept().getConceptId());
-                          refsetMembers.add(member);
+                          if (!editNodeExistingRefsetMembers.containsKey(n.getConceptId())
+                              || (editNodeExistingRefsetMembers.containsKey(n.getConceptId())
+                                  && editNodeExistingRefsetMembers.get(n.getConceptId()).stream()
+                                      .noneMatch(
+                                          existingMember ->
+                                              isMatchingRefsetTypeAndAdditionalProperties(
+                                                  existingMember, member)))) {
+                            refsetMembers.add(member);
+                          }
                         }
                       }
                       return refsetMembers;
@@ -871,7 +901,6 @@ public class ProductCreationService {
     final Set<Node> retireAndReplaceNodes =
         nodeCreateOrder.stream().filter(Node::isRetireAndReplace).collect(Collectors.toSet());
 
-    final ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     if (!retireAndReplaceNodes.isEmpty()) {
       retireAndReplaceNodes.forEach(
           node -> {
@@ -921,25 +950,15 @@ public class ProductCreationService {
                   .forEach(r -> r.setReferencedComponentId(n.getConceptId())));
     }
 
-    // for edited concepts, remove any existing members that are not in the new members
-    final Set<Node> nodesToEdit =
-        nodeCreateOrder.stream().filter(Node::isConceptEdit).collect(Collectors.toSet());
-
     if (!nodesToEdit.isEmpty()) {
-      final Set<String> inScopeReferenceSetIds =
-          modelConfiguration.getInScopeReferenceSetIds(
-              nodesToEdit.stream().map(Node::getModelLevel).collect(Collectors.toSet()));
-      final List<String> originalConceptIds =
-          nodesToEdit.stream().map(node -> node.getOriginalNode().getConceptId()).toList();
       final Set<SnowstormReferenceSetMemberViewComponent> requiredNewRefsetMembers =
           nodesToEdit.stream()
               .map(n -> n.getNewConceptDetails().getReferenceSetMembers())
               .flatMap(Collection::stream)
               .collect(Collectors.toSet());
       membersToDelete.addAll(
-          snowstormClient
-              .getRefsetMembers(branch, originalConceptIds, inScopeReferenceSetIds)
-              .stream()
+          editNodeExistingRefsetMembers.values().stream()
+              .flatMap(Collection::stream)
               .filter(
                   existingRefset ->
                       Boolean.TRUE.equals(existingRefset.getActive())
