@@ -135,8 +135,8 @@ public enum NonDefiningPropertyDataType {
         return false;
       }
       try {
-        int intValue = Integer.parseInt(value);
-        return intValue >= 0;
+        long longValue = Long.parseLong(value);
+        return longValue >= 0;
       } catch (NumberFormatException e) {
         return false;
       }
