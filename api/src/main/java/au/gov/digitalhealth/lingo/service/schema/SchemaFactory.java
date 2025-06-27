@@ -55,7 +55,15 @@ public class SchemaFactory {
       setTitleAndDescription(mapping, property);
       property.setReference("#/$defs/SnowstormConceptMini");
     } else {
-      StringProperty property = new StringProperty();
+      StringProperty property;
+      if (mapping.getDataType().equals(NonDefiningPropertyDataType.DATE)){
+        DateProperty dateProperty = new DateProperty();
+        dateProperty.setDateFormat(mapping.getFormat());
+        property = dateProperty;
+      }else{
+        property = new StringProperty();
+      }
+
       setTitleAndDescription(mapping, property);
       property.setPattern(mapping.getValueRegexValidation());
       property
@@ -122,7 +130,14 @@ public class SchemaFactory {
       property.setReference("#/$defs/SnowstormConceptMini");
       returnValue = property;
     } else {
-      StringProperty items = new StringProperty();
+      StringProperty items;
+      if (nonDefiningPropertyDefinition.getDataType().equals(NonDefiningPropertyDataType.DATE)){
+        DateProperty dateProperty = new DateProperty();
+        dateProperty.setDateFormat(nonDefiningPropertyDefinition.getFormat());
+        items = dateProperty;
+      }else{
+        items = new StringProperty();
+      }
       if (nonDefiningPropertyDefinition.getValueRegexValidation() != null) {
         items.setPattern(nonDefiningPropertyDefinition.getValueRegexValidation());
         items
