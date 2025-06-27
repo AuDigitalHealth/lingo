@@ -44,6 +44,8 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
     readOnly = false,
     allowDelete = true,
     requireEditButton = false,
+    ecl,
+    createBrand,
   } = packSizeUiSchemaOptions;
 
   const [editMode, setEditMode] = useState(!readOnly && !requireEditButton);
@@ -160,10 +162,11 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
                   ...(uiSchema?.brand || {}),
                   'ui:options': {
                     ...(uiSchema?.brand?.['ui:options'] || {}),
-                    ecl: '<774167006',
+                    ecl: ecl,
                     showDefaultOptions: false,
                     label: 'Brand',
                     skipTitle: false,
+                    createBrand: createBrand,
                   },
                 }}
                 registry={registry}
