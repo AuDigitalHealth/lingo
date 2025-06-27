@@ -34,14 +34,8 @@
       "minProperties": 2,
       "properties": {
         "unit": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/SnowstormConceptMini"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "type": ["object", "null"],
+          "$ref": "#/$defs/SnowstormConceptMini"
         },
         "value": {
           "type": "number",
