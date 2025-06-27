@@ -202,6 +202,33 @@ const ConceptService = {
     const conceptResponse = response.data as ConceptResponse;
     return conceptResponse.items;
   },
+  async searchConceptsByIdsPost(
+    branch: string,
+    filters: {
+      limit?: number;
+      offset?: number;
+      conceptIds?: string[];
+      activeFilter?: boolean;
+      searchAfter?: string;
+      eclFilter?: string;
+    },
+  ): Promise<Concept[]> {
+    const url = `/snowstorm/${encodeURIComponent(branch)}/concepts/search`;
+    const response = await api.post(
+      url,
+      { ...filters },
+      {
+        headers: {
+          'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
+        },
+      },
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const conceptResponse = response.data as ConceptResponse;
+    return conceptResponse.items;
+  },
   /* Quicker for searching compared to id based*/
   async searchConceptIdsByIds(
     ids: string[],
