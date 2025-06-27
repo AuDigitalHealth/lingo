@@ -1,22 +1,23 @@
 import React from 'react';
 import {
-  Stack,
-  Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormControlLabel,
-  Tooltip,
-  Paper,
-  Switch,
   Box,
+  FormControl,
+  FormControlLabel,
+  InputLabel,
+  Link,
+  MenuItem,
+  Paper,
+  Select,
+  Stack,
+  Switch,
+  Tooltip,
+  Typography
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { ArchiveOutlined } from '@mui/icons-material';
-import { Controller, useFormContext, UseFormSetValue } from 'react-hook-form';
+import { ArchiveOutlined, OpenInNew } from '@mui/icons-material';
+import { Control, Controller, UseFormSetValue } from 'react-hook-form';
 import { Product, ProductSummary } from '../../../types/concept';
-import { Control } from 'react-hook-form';
+import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 
 interface ProductRetireUpdateProps {
   product: Product;
@@ -55,16 +56,27 @@ export const ProductRetireUpdate: React.FC<ProductRetireUpdateProps> = ({
   index,
   control,
   setValue,
+  branch,
 }) => {
   const show =
     product.originalNode !== null && product.newConceptDetails !== null;
   if (!show) return null;
 
   const theme = useTheme();
+  const id = product.originalNode?.node.concept.conceptId;
   const term = product.originalNode?.node.concept.pt.term;
   const reason = product.originalNode?.inactivationReason ?? null;
   const referencedByOtherProducts =
     product.originalNode?.referencedByOtherProducts ?? false;
+
+  const { applicationConfig } = useApplicationConfigStore();
+  const snowstormBaseUrl = applicationConfig.apApiBaseUrl;
+
+  const branchParts = branch.split('/');
+  const edition = branchParts.slice(0, 3).join('/');
+  const release = branchParts[3] || '';
+
+  const conceptBrowserUrl = `${snowstormBaseUrl}/browser/?perspective=full&conceptId1=${id}&edition=${edition}&release=${release}&languages=en`;
 
   const [retireAndReplace, setRetireAndReplace] = React.useState(
     getIsRetireAndReplace(product),
@@ -103,11 +115,33 @@ export const ProductRetireUpdate: React.FC<ProductRetireUpdateProps> = ({
 
       <Stack spacing={2}>
         {/* Retired Concept Display */}
-        <Stack direction="row" spacing={1} alignItems="center">
+        <Stack direction="row" spacing={2} alignItems="center">
           <ArchiveOutlined color="action" fontSize="medium" />
-          <Typography variant="body2" color="textSecondary">
-            {term}
-          </Typography>
+          <Tooltip title={id} placement="top" enterDelay={300}>
+            <Typography variant="body2" color="textSecondary">
+              {term}
+            </Typography>
+          </Tooltip>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <Tooltip title="Open in TS Browser" arrow>
+              <Link
+                href={conceptBrowserUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  ml: 1,
+                  color: '#1976d2',
+                  '&:hover': {
+                    color: '#0f5baa',
+                  },
+                }}
+              >
+                <OpenInNew fontSize="small" />
+              </Link>
+            </Tooltip>
+          </div>
         </Stack>
 
         <Box
