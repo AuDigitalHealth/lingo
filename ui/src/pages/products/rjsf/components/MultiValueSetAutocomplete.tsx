@@ -129,6 +129,16 @@ export const MultiValueValueSetAutocomplete: React.FC<
         option?.conceptId === val?.conceptId ||
         (option?.pt?.term && val?.pt?.term && option.pt.term === val.pt.term)
       }
+      renderTags={(value, getTagProps) =>
+        value.map((option, index) => (
+          <Tooltip key={option.conceptId} title={`${option.conceptId} - ${option.pt?.term}`}>
+            <Chip
+              label={option.pt?.term || ''}
+              {...getTagProps({ index })}
+            />
+          </Tooltip>
+        ))
+      }
       renderOption={(props, option) => {
         const { key, ...otherProps } = props;
         return (
