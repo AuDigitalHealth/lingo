@@ -26,7 +26,7 @@ const AuthoringTraceabilityServices = {
 
   async getTaskActivities(taskKey: string | undefined): Promise<Activity[]> {
     const response = await api.get(
-      `/authoring-traceability-service/activities?onBranch=${taskKey}`,
+      `/traceability-service/activities?onBranch=${taskKey}`,
     );
     if (response.status != 200) {
       this.handleErrors();
