@@ -68,7 +68,7 @@ export function useConceptsByIdsPost(branch: string, conceptIds: string[]) {
       if (conceptIds.length) {
         return ConceptService.searchConceptsByIdsPost(branch, {
           conceptIds: conceptIds,
-          limit: 50,
+          limit: 500,
           offset: 0,
         });
       }
