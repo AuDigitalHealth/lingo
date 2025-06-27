@@ -66,4 +66,6 @@ public abstract class BasePropertyWithValueDefinition extends BasePropertyDefini
    * if specified.
    */
   private List<String> allowedValues;
+
+  private String format;
 }
