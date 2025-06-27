@@ -252,8 +252,14 @@ public class ProductCreationService {
   private static boolean isMatchingRefsetTypeAndAdditionalProperties(
       SnowstormReferenceSetMember existingMember,
       SnowstormReferenceSetMemberViewComponent newMember) {
+    final boolean bothNullOrEmpty =
+        (newMember.getAdditionalFields() == null || newMember.getAdditionalFields().isEmpty())
+            && (existingMember.getAdditionalFields() == null
+                || existingMember.getAdditionalFields().isEmpty());
     return newMember.getRefsetId().equals(existingMember.getRefsetId())
-        && Objects.equals(newMember.getAdditionalFields(), existingMember.getAdditionalFields());
+        && (bothNullOrEmpty
+            || Objects.equals(
+                newMember.getAdditionalFields(), existingMember.getAdditionalFields()));
   }
 
   /**
