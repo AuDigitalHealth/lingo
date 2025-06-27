@@ -824,6 +824,15 @@ public class ProductCreationService {
 
     createandUpdateRefsetMemberships(branch, nodeCreateOrder);
 
+    nodeCreateOrder.forEach(
+        node -> {
+          if (!node.isConceptEdit()) {
+            // if it isn't a concept edit, then we must have just made the concept
+            node.setNewInTask(true);
+          }
+          node.setNewConceptDetails(null); // setting to null, we've done the create
+        });
+
     log.fine("Concepts created and refset members created");
   }
 
