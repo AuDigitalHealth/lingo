@@ -1,9 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Autocomplete, Chip, CircularProgress, TextField } from '@mui/material';
+import React, { useEffect, useState, useRef } from 'react';
+import { Autocomplete, CircularProgress, TextField } from '@mui/material';
 import { Concept, ConceptMini } from '../../../../types/concept.ts';
 import { useSearchConceptsByEcl } from '../../../../hooks/api/useInitializeConcepts.tsx';
 import { FieldProps } from '@rjsf/utils';
-import { Tooltip } from 'antd';
+import { Tooltip } from '@mui/material';
+import { Chip } from '@mui/material';
 
 const MultiValueEclAutocomplete: React.FC<FieldProps<any, any>> = props => {
   const {
