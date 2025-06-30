@@ -222,7 +222,6 @@ function SubmitPanel({
     idsWithInvalidName.length === 0;
   const canSubmitProductUpdate =
     isProductUpdate && canEdit && (hasUpdatedProperties || newConceptFound);
-  debugger;
   return (
     <Box m={1} p={1}>
       <Stack spacing={2} direction="row" justifyContent="end">
