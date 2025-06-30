@@ -247,10 +247,9 @@ models:
         modelLevels: REAL_CLINICAL_DRUG
         order: 60
       - name: combinationOnly
-        title: Combination pack only
-        description: Combination pack only
+        title: Multi component indicator
         identifier: 679981000220105
-        level: PACKAGE
+        level: PRODUCT
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         order: 1
       - name: ulmFlag
@@ -391,7 +390,7 @@ models:
         showDefaultOptions: true
         order: 94
       - name: legalSupplyStatus
-        title: Legal Supply Status
+        title: Dispensing Legal Status
         identifier: 680081000220106
         level: PRODUCT
         dataType: CONCEPT
@@ -404,17 +403,6 @@ models:
       - name: placeOfSale
         title: Place of Sale
         identifier: 680771000220105
-        level: PRODUCT
-        dataType: CONCEPT
-        eclBinding: <680711000220102
-        modelLevels: REAL_CLINICAL_DRUG
-        mandatory: true
-        multiValued: false
-        showDefaultOptions: true
-        order: 96
-      - name: placeOfSupply
-        title: Supply Legal Status
-        identifier: 680211000220106
         level: PRODUCT
         dataType: CONCEPT
         eclBinding: <680711000220102
