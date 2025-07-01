@@ -8,8 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
 
+### Fixed
+
+- Fixed handling of primitive concept selection as component of a multicomponent, multipack product in one of the packs
 
 ## [1.2.10.5] - 2025-06-24
 
