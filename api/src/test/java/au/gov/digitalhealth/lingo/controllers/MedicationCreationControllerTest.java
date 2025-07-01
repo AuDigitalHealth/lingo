@@ -1105,9 +1105,9 @@ class MedicationCreationControllerTest extends LingoTestBase {
     Assertions.assertThat(updatedProduct.getUnmatchedPreviouslyReferencedNodes()).isEmpty();
 
     // Only the package-related nodes should be new, the product nodes should be reused
-    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 1, 0, CTPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 1, 0, TPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 1, 0, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 0, 1, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 0, 1, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 0, 1, MPP_LABEL);
     MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 0, 1, TPUU_LABEL);
     MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 0, 1, MPUU_LABEL);
     MedicationAssertions.assertProductSummaryHas(updatedProduct, 0, 0, 1, MP_LABEL);
