@@ -96,9 +96,11 @@ public class NodeGeneratorService {
   public CompletableFuture<Node> lookUpNode(
       String branch, SnowstormConceptMini concept, ModelLevel modelLevel) {
     Node node = new Node();
-    node.setLabel(modelLevel.getDisplayLabel());
-    node.setModelLevel(modelLevel.getModelLevelType());
-    node.setDisplayName(modelLevel.getName());
+    if (modelLevel != null) {
+      node.setLabel(modelLevel.getDisplayLabel());
+      node.setModelLevel(modelLevel.getModelLevelType());
+      node.setDisplayName(modelLevel.getName());
+    }
     node.setConcept(concept);
 
     populateNodeProperties(branch, modelLevel, node, null);
@@ -113,11 +115,15 @@ public class NodeGeneratorService {
       ModelLevel modelLevel,
       Collection<NonDefiningBase> newProperties) {
     Node node = new Node();
-    node.setLabel(modelLevel.getDisplayLabel());
-    node.setModelLevel(modelLevel.getModelLevelType());
-    node.setDisplayName(modelLevel.getName());
+    if (modelLevel != null) {
+      node.setLabel(modelLevel.getDisplayLabel());
+      node.setModelLevel(modelLevel.getModelLevelType());
+      node.setDisplayName(modelLevel.getName());
+    }
     SnowstormConceptMini concept;
-    if (modelLevel.getProductModelEcl() != null && !modelLevel.getProductModelEcl().isBlank()) {
+    if (modelLevel != null
+        && modelLevel.getProductModelEcl() != null
+        && !modelLevel.getProductModelEcl().isBlank()) {
       try {
         concept =
             snowstormClient.getConceptFromEcl(
@@ -239,36 +245,38 @@ public class NodeGeneratorService {
       String branch, ModelLevel modelLevel, ModelConfiguration modelConfiguration, Node node) {
 
     Map<String, NonDefiningPropertyDefinition> nonDefiningPropertiesMap =
-        modelConfiguration.getNonDefiningPropertiesByIdentifierForModelLevel(modelLevel);
+        modelLevel != null
+            ? modelConfiguration.getNonDefiningPropertiesByIdentifierForModelLevel(modelLevel)
+            : Map.of();
 
-    if (!nonDefiningPropertiesMap.isEmpty()) {
-      return snowstormClient
-          .getRelationships(branch, node.getConceptId())
-          .map(SnowstormItemsPageRelationship::getItems)
-          .doOnNext(rels -> node.setRelationships(rels))
-          .flatMapMany(Flux::fromIterable)
-          .filter(SnowstormRelationship::getActive)
-          .flatMap(
-              relationship -> {
-                if (nonDefiningPropertiesMap.containsKey(relationship.getTypeId())) {
-                  node.getNonDefiningProperties()
-                      .add(
-                          new au.gov.digitalhealth.lingo.product.details.properties
-                              .NonDefiningProperty(
-                              relationship,
-                              nonDefiningPropertiesMap.get(relationship.getTypeId())));
-                }
-                return Mono.empty();
-              })
-          .then()
-          .flux();
-    } else {
-      return Flux.empty();
-    }
+    return snowstormClient
+        .getRelationships(branch, node.getConceptId())
+        .map(SnowstormItemsPageRelationship::getItems)
+        .doOnNext(rels -> node.setRelationships(rels))
+        .flatMapMany(Flux::fromIterable)
+        .filter(SnowstormRelationship::getActive)
+        .flatMap(
+            relationship -> {
+              if (nonDefiningPropertiesMap.containsKey(relationship.getTypeId())) {
+                node.getNonDefiningProperties()
+                    .add(
+                        new au.gov.digitalhealth.lingo.product.details.properties
+                            .NonDefiningProperty(
+                            relationship, nonDefiningPropertiesMap.get(relationship.getTypeId())));
+              }
+              return Mono.empty();
+            })
+        .then()
+        .flux();
   }
 
   private Flux<Void> addRefsetAndMapping(
       String branch, ModelLevel modelLevel, ModelConfiguration modelConfiguration, Node node) {
+
+    if (modelLevel == null) {
+      return Flux.empty();
+    }
+
     final Map<String, ReferenceSetDefinition> refsetMap =
         modelConfiguration.getReferenceSetsByIdentifierForModelLevel(modelLevel);
     final Map<String, ExternalIdentifierDefinition> mappingMap =

@@ -211,11 +211,7 @@ function ProductPreviewPanel({
         open={conceptDiagramModalOpen}
         handleClose={() => setConceptDiagramModalOpen(false)}
         newConcept={
-          product.newConcept
-            ? product.newConceptDetails
-              ? product.newConceptDetails
-              : undefined
-            : undefined
+          product.newConceptDetails ? product.newConceptDetails : undefined
         }
         product={product}
         keepMounted={true}
