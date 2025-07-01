@@ -165,7 +165,7 @@ function TaskTicketPage({
         sx={{ width: '100%', display: 'flex', flexDirection: 'row' }}
       >
         <Link
-          to={`${useTicketQuery.data.ticketNumber}`}
+          to={`ticket/${useTicketQuery.data.ticketNumber}`}
           key={useTicketQuery.data.ticketNumber}
           style={{ textDecoration: 'none', color: 'inherit', width: '100%' }}
         >

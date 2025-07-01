@@ -11,7 +11,7 @@ import {
   Stack,
   Switch,
   Tooltip,
-  Typography
+  Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { ArchiveOutlined, OpenInNew } from '@mui/icons-material';
