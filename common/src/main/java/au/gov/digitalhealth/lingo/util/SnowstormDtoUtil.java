@@ -540,6 +540,35 @@ public class SnowstormDtoUtil {
     return concept;
   }
 
+  public static SnowstormConceptView toSnowstormConceptView(
+      Node node, ModelConfiguration modelConfiguration, @NotNull SnowstormConcept existingConcept) {
+    SnowstormConceptView conceptView = toSnowstormConceptView(node, modelConfiguration);
+
+    // merge the existing concept's properties into the new concept view
+    if (existingConcept != null) {
+      // Merge descriptions
+      if (existingConcept.getDescriptions() != null) {
+        // add in the existing descriptions that are not the FSN or PT
+        conceptView
+            .getDescriptions()
+            .addAll(
+                existingConcept.getDescriptions().stream()
+                    .filter(
+                        d ->
+                            !d.getTerm().equals(existingConcept.getFsn().getTerm())
+                                && !d.getTerm().equals(existingConcept.getPt().getTerm()))
+                    .collect(Collectors.toSet()));
+      }
+      // no need to keep the inferred axiomx - classification is required anyway
+      // class axioms have been updated so nothing to keep from the existing concept
+
+      // add back any GCIs
+      conceptView.setGciAxioms(existingConcept.getGciAxioms());
+    }
+
+    return conceptView;
+  }
+
   public static Set<SnowstormReferenceSetMemberViewComponent>
       getExternalIdentifierReferenceSetEntries(
           Collection<ExternalIdentifier> externalIdentifiers,

@@ -318,7 +318,7 @@ function TaskAssociationField({ ticket }: TaskAssociationFieldProps) {
     return (
       <Stack alignItems={'center'} gap={1} direction={'row'}>
         <Link
-          to={`/dashboard/tasks/edit/${taskAssociation?.taskId}/${ticket.ticketNumber}`}
+          to={`/dashboard/tasks/edit/${taskAssociation?.taskId}/ticket/${ticket.ticketNumber}`}
         >
           {ticket?.taskAssociation.taskId}
         </Link>
