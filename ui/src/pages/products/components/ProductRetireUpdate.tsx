@@ -25,6 +25,7 @@ interface ProductRetireUpdateProps {
   index: number;
   control: Control<ProductSummary>;
   setValue: UseFormSetValue<ProductSummary>;
+  branch: string;
 }
 
 const inactivationReasonOptions = [
