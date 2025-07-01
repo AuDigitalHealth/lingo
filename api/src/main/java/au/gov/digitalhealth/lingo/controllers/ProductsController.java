@@ -59,6 +59,12 @@ public class ProductsController {
   }
 
   @LogExecutionTime
+  @GetMapping("/{branch}/node/{conceptId}")
+  public Node getNode(@PathVariable String branch, @PathVariable Long conceptId) {
+    return productService.getNode(branch, conceptId);
+  }
+
+  @LogExecutionTime
   @GetMapping("/{branch}/product-model/{productId}")
   public ProductSummary getProductModel(@PathVariable String branch, @PathVariable Long productId) {
     return productService.getProductSummary(branch, productId.toString());
