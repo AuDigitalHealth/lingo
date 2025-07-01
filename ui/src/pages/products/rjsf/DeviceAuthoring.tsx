@@ -72,7 +72,9 @@ function DeviceAuthoring({
   } = useTicketProductQuery({
     ticketProductId,
     ticket,
-    setFunction: setFormData,
+    setFunction: (data: any) => {
+      setFormData(data.packageDetails);
+    },
   });
   const mutation = useCalculateProduct();
   const { isPending, data } = mutation;
