@@ -42,7 +42,9 @@ import au.gov.digitalhealth.lingo.product.bulk.BrandPackSizeCreationDetails;
 import au.gov.digitalhealth.lingo.product.bulk.BulkProductAction;
 import au.gov.digitalhealth.lingo.product.details.ProductDetails;
 import au.gov.digitalhealth.lingo.service.identifier.IdentifierSource;
+import au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter;
 import au.gov.digitalhealth.lingo.util.OwlAxiomService;
+import au.gov.digitalhealth.lingo.util.ReferenceSetUtils;
 import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import au.gov.digitalhealth.tickets.TicketDto;
@@ -175,9 +177,43 @@ public class ProductCreationService {
           "Cannot edit existing concepts as part of a create operation");
     }
 
-    if (productSummary.getNodes().stream().anyMatch(Node::isRetireAndReplace)) {
+    if (productSummary.getNodes().stream()
+        .anyMatch(node -> node.isRetireAndReplace() || node.isRetireAndReplaceWithExisting())) {
       throw new ProductAtomicDataValidationProblem(
           "Cannot retire and replace concepts as part of a create operation");
+    }
+  }
+
+  private static void validateUpdateOperation(ProductSummary productSummary) {
+    if (productSummary.getNodes().stream()
+        .anyMatch(
+            node ->
+                node.getConcept() != null
+                    && node.getNewConceptDetails() == null
+                    && node.getOriginalNode() != null
+                    && !node.getConcept()
+                        .getConceptId()
+                        .equals(node.getOriginalNode().getConceptId())
+                    && node.getOriginalNode().getInactivationReason() == null)) {
+
+      String offendingConcepts =
+          productSummary.getNodes().stream()
+              .filter(
+                  node ->
+                      node.getConcept() != null
+                          && node.getNewConceptDetails() == null
+                          && node.getOriginalNode() != null
+                          && !node.getConcept()
+                              .getConceptId()
+                              .equals(node.getOriginalNode().getConceptId())
+                          && node.getOriginalNode().getInactivationReason() == null)
+              .map(Node::getFullySpecifiedName)
+              .collect(Collectors.joining(", "));
+
+      throw new ProductAtomicDataValidationProblem(
+          "Cannot edit existing concept identified as the replacement with no defining changes "
+              + "required - retire and replace must be chosen instead. Offending concepts: "
+              + offendingConcepts);
     }
   }
 
@@ -188,19 +224,24 @@ public class ProductCreationService {
               + nodeCreateOrder.stream()
                   .map(n -> n.getConceptId() + "_" + n.getLabel())
                   .collect(Collectors.joining(", ")));
-      nodeCreateOrder.forEach(
-          n ->
-              n.getNewConceptDetails().getAxioms().stream()
-                  .flatMap(a -> a.getRelationships().stream())
-                  .filter(
-                      r ->
-                          r.getConcreteValue() == null
-                              && r.getDestinationId() != null
-                              && Long.parseLong(r.getDestinationId()) < 0)
-                  .forEach(
-                      r ->
-                          log.fine(
-                              "Relationship " + n.getConceptId() + " -> " + r.getDestinationId())));
+      nodeCreateOrder.stream()
+          .filter(n -> n.getNewConceptDetails() != null)
+          .forEach(
+              n ->
+                  n.getNewConceptDetails().getAxioms().stream()
+                      .flatMap(a -> a.getRelationships().stream())
+                      .filter(
+                          r ->
+                              r.getConcreteValue() == null
+                                  && r.getDestinationId() != null
+                                  && Long.parseLong(r.getDestinationId()) < 0)
+                      .forEach(
+                          r ->
+                              log.fine(
+                                  "Relationship "
+                                      + n.getConceptId()
+                                      + " -> "
+                                      + r.getDestinationId())));
     }
   }
 
@@ -376,6 +417,7 @@ public class ProductCreationService {
             && productSummary.getNodes().stream().noneMatch(Node::isNewConcept)
             && productSummary.getNodes().stream().noneMatch(Node::isConceptEdit)
             && productSummary.getNodes().stream().noneMatch(Node::isRetireAndReplace)
+            && productSummary.getNodes().stream().noneMatch(Node::isRetireAndReplaceWithExisting)
             && productSummary.getNodes().stream().noneMatch(Node::isPropertyUpdate))) {
       throw new EmptyProductCreationProblem();
     }
@@ -515,6 +557,8 @@ public class ProductCreationService {
 
     if (createOnly) {
       validateCreateOperation(productSummary);
+    } else {
+      validateUpdateOperation(productSummary);
     }
 
     Mono<List<String>> taskChangedConceptIds = snowstormClient.getConceptIdsChangedOnTask(branch);
@@ -545,24 +589,30 @@ public class ProductCreationService {
     List<Node> nodeCreateOrder =
         productSummary.getNodes().stream()
             .filter(
-                node -> node.isConceptEdit() || node.isNewConcept() || node.isRetireAndReplace())
+                node ->
+                    node.isConceptEdit()
+                        || node.isNewConcept()
+                        || node.isRetireAndReplace()
+                        || node.isRetireAndReplaceWithExisting())
             .sorted(Node.getNewNodeComparator(productSummary.getNodes()))
             .toList();
 
     // Force Snowstorm to work from the ids rather than the SnowstormConceptMini objects
     // which were added for diagramming
-    nodeCreateOrder.forEach(
-        n ->
-            n.getNewConceptDetails()
-                .getAxioms()
-                .forEach(
-                    a ->
-                        a.getRelationships()
-                            .forEach(
-                                r -> {
-                                  r.setTarget(null);
-                                  r.setType(null);
-                                })));
+    nodeCreateOrder.stream()
+        .filter(n -> n.getNewConceptDetails() != null)
+        .forEach(
+            n ->
+                n.getNewConceptDetails()
+                    .getAxioms()
+                    .forEach(
+                        a ->
+                            a.getRelationships()
+                                .forEach(
+                                    r -> {
+                                      r.setTarget(null);
+                                      r.setType(null);
+                                    })));
 
     logCreationOrder(nodeCreateOrder);
 
@@ -724,56 +774,48 @@ public class ProductCreationService {
       throws InterruptedException {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
-    Deque<String> preallocatedIdentifiers = new ArrayDeque<>();
+    final Deque<String> preallocatedIdentifiers =
+        getPreallocatedIdentifiers(branch, nodeCreateOrder);
 
-    if (identifierSource.isReservationAvailable()) {
-      int namespace = getNamespace(branch);
-
-      log.fine("Reserving identifiers for new concepts, namespace is " + namespace);
-      try {
-        preallocatedIdentifiers.addAll(
-            identifierSource
-                .reserveIds(
-                    namespace,
-                    NamespaceConfiguration.getConceptPartitionId(namespace),
-                    nodeCreateOrder.stream()
-                        .filter(n -> n.getNewConceptDetails().getSpecifiedConceptId() == null)
-                        .toList()
-                        .size())
-                .stream()
-                .map(String::valueOf)
-                .toList());
-      } catch (LingoProblem e) {
-        log.log(
-            Level.SEVERE,
-            "Failed to reserve identifiers, falling back to sequential concept creation",
-            e);
-        preallocatedIdentifiers.clear();
-      }
-    }
-
-    if (log.isLoggable(Level.FINE)) {
-      log.fine("Preallocated identifiers " + String.join(",", preallocatedIdentifiers));
-    }
-
-    log.fine("Validating specified identifiers");
-    // check if any concepts already exist if ids are specified
-    validateSpecifiedIdentifiers(branch, nodeCreateOrder);
-
-    log.fine("Preparing concepts");
     boolean bulkCreate = !preallocatedIdentifiers.isEmpty();
+    log.fine("Preparing concepts for creation, bulk create is " + bulkCreate);
+
+    final Map<String, SnowstormConcept> editAndRetireConceptMap =
+        getExistingConceptsToEditAndRetire(branch, nodeCreateOrder);
+
     // set up the concepts to create
     List<SnowstormConceptView> concepts = new ArrayList<>();
     for (Node node : nodeCreateOrder) {
-      SnowstormConceptView concept =
-          SnowstormDtoUtil.toSnowstormConceptView(node, modelConfiguration);
+      SnowstormConceptView concept;
+
+      // if it is an edit, look up the existing concept
+      if (node.isConceptEdit()) {
+        concept =
+            SnowstormDtoUtil.toSnowstormConceptView(
+                node,
+                modelConfiguration,
+                editAndRetireConceptMap.get(node.getOriginalNode().getConceptId()));
+      } else if (node.isRetireAndReplaceWithExisting()) {
+        concept =
+            SnowstormDtoUtil.toSnowstormConceptView(
+                editAndRetireConceptMap.get(node.getConceptId()));
+      } else {
+        concept = SnowstormDtoUtil.toSnowstormConceptView(node, modelConfiguration);
+      }
 
       updateAxiomIdentifierReferences(idMap, concept);
 
       updateConceptNonDefiningRelationships(
-          concept.getRelationships(), node.getNewConceptDetails().getNonDefiningProperties());
+          concept.getRelationships(),
+          node.getNewConceptDetails() != null
+              ? node.getNewConceptDetails().getNonDefiningProperties()
+              : NonDefiningPropertiesConverter.calculateNonDefiningRelationships(
+                  modelConfiguration, node.getModelLevel(), node.getNonDefiningProperties()));
 
-      String conceptId = node.getNewConceptDetails().getConceptId().toString();
+      String conceptId =
+          node.isRetireAndReplaceWithExisting()
+              ? node.getOriginalNode().getConceptId()
+              : node.getNewConceptDetails().getConceptId().toString();
 
       // Guard for createOnly mode
       if (Long.parseLong(conceptId) >= 0 && createOnly) {
@@ -784,7 +826,7 @@ public class ProductCreationService {
       // if edit, then nothing to do
       // if retire and replace, then need to create refset rows - could do at the end?
       if (bulkCreate) {
-        if (node.isConceptEdit()) {
+        if (node.isConceptEdit() || node.isRetireAndReplaceWithExisting()) {
           concept.setConceptId(node.getOriginalNode().getConceptId());
         } else if (node.getNewConceptDetails().getSpecifiedConceptId() != null) {
           concept.setConceptId(node.getNewConceptDetails().getSpecifiedConceptId());
@@ -792,10 +834,37 @@ public class ProductCreationService {
           concept.setConceptId(preallocatedIdentifiers.pop());
           log.fine("Allocated identifier " + concept.getConceptId() + " for " + conceptId);
         }
+        // if it is a retire and replace, then we need to set the active flag to false
+        if (node.isRetireAndReplace() || node.isRetireAndReplaceWithExisting()) {
+          SnowstormConcept conceptToRetire =
+              editAndRetireConceptMap.get(node.getOriginalNode().getConceptId());
+          conceptToRetire.setActive(false);
+          concepts.add(SnowstormDtoUtil.toSnowstormConceptView(conceptToRetire));
+        }
       } else {
         log.warning("Creating concept sequentially - this will be slow");
-        concept.setConceptId(node.getNewConceptDetails().getSpecifiedConceptId());
-        concept = snowstormClient.createConcept(branch, concept, false);
+        // if it isn't a replacement with an existing concept, we need to create it
+        if (node.isConceptEdit()) {
+          concept.setConceptId(node.getOriginalNode().getConceptId());
+          concept = snowstormClient.updateConcept(branch, concept.getConceptId(), concept, false);
+        } else if (node.isRetireAndReplaceWithExisting()) {
+          concept = snowstormClient.updateConcept(branch, concept.getConceptId(), concept, false);
+        } else {
+          concept.setConceptId(node.getNewConceptDetails().getSpecifiedConceptId());
+          concept = snowstormClient.createConcept(branch, concept, false);
+        }
+
+        // if it is a retire and replace, then we need to set the active flag to false
+        if (node.isRetireAndReplace() || node.isRetireAndReplaceWithExisting()) {
+          SnowstormConcept conceptToRetire =
+              editAndRetireConceptMap.get(node.getOriginalNode().getConceptId());
+          conceptToRetire.setActive(false);
+          snowstormClient.updateConcept(
+              branch,
+              conceptToRetire.getConceptId(),
+              SnowstormDtoUtil.toSnowstormConceptView(conceptToRetire),
+              false);
+        }
       }
       idMap.put(conceptId, concept.getConceptId());
 
@@ -824,7 +893,10 @@ public class ProductCreationService {
     nodeCreateOrder.forEach(
         node -> {
           String allocatedIdentifier =
-              idMap.get(node.getNewConceptDetails().getConceptId().toString());
+              idMap.get(
+                  node.getNewConceptDetails() != null
+                      ? node.getNewConceptDetails().getConceptId().toString()
+                      : node.getOriginalNode().getConceptId());
           node.setConcept(conceptMap.get(allocatedIdentifier));
         });
 
@@ -842,6 +914,70 @@ public class ProductCreationService {
     log.fine("Concepts created and refset members created");
   }
 
+  private Map<String, SnowstormConcept> getExistingConceptsToEditAndRetire(
+      String branch, List<Node> nodeCreateOrder) {
+    Set<String> editAndRetireConceptIds = new HashSet<>();
+
+    nodeCreateOrder.stream()
+        .filter(
+            n -> n.isConceptEdit() || n.isRetireAndReplace() || n.isRetireAndReplaceWithExisting())
+        .forEach(
+            n -> {
+              editAndRetireConceptIds.add(n.getOriginalNode().getConceptId());
+              if (n.isRetireAndReplaceWithExisting()) {
+                editAndRetireConceptIds.add(n.getConceptId());
+              }
+            });
+
+    return snowstormClient
+        .getBrowserConcepts(branch, editAndRetireConceptIds)
+        .collect(Collectors.toMap(SnowstormConcept::getConceptId, c -> c))
+        .block();
+  }
+
+  private Deque<String> getPreallocatedIdentifiers(String branch, List<Node> nodeCreateOrder)
+      throws InterruptedException {
+    Deque<String> preallocatedIdentifiers = new ArrayDeque<>();
+
+    if (identifierSource.isReservationAvailable()) {
+      int namespace = getNamespace(branch);
+
+      log.fine("Reserving identifiers for new concepts, namespace is " + namespace);
+      try {
+        preallocatedIdentifiers.addAll(
+            identifierSource
+                .reserveIds(
+                    namespace,
+                    NamespaceConfiguration.getConceptPartitionId(namespace),
+                    nodeCreateOrder.stream()
+                        .filter(
+                            n ->
+                                n.getNewConceptDetails() != null
+                                    && n.getNewConceptDetails().getSpecifiedConceptId() == null)
+                        .toList()
+                        .size())
+                .stream()
+                .map(String::valueOf)
+                .toList());
+      } catch (LingoProblem e) {
+        log.log(
+            Level.SEVERE,
+            "Failed to reserve identifiers, falling back to sequential concept creation",
+            e);
+        preallocatedIdentifiers.clear();
+      }
+    }
+
+    if (log.isLoggable(Level.FINE)) {
+      log.fine("Preallocated identifiers " + String.join(",", preallocatedIdentifiers));
+    }
+
+    log.fine("Validating specified identifiers");
+    // check if any concepts already exist if ids are specified
+    validateSpecifiedIdentifiers(branch, nodeCreateOrder);
+    return preallocatedIdentifiers;
+  }
+
   public void createandUpdateRefsetMemberships(String branch, List<Node> nodeCreateOrder)
       throws InterruptedException {
     log.fine("Creating refset members");
@@ -849,7 +985,9 @@ public class ProductCreationService {
     final ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     // for edited concepts, remove any existing members that are not in the new members
     final Set<Node> nodesToEdit =
-        nodeCreateOrder.stream().filter(Node::isConceptEdit).collect(Collectors.toSet());
+        nodeCreateOrder.stream()
+            .filter(n -> n.isConceptEdit() || n.isRetireAndReplaceWithExisting())
+            .collect(Collectors.toSet());
     final Map<String, List<SnowstormReferenceSetMember>> editNodeExistingRefsetMembers =
         snowstormClient
             .getRefsetMembers(
@@ -875,18 +1013,24 @@ public class ProductCreationService {
                     n -> {
                       List<SnowstormReferenceSetMemberViewComponent> refsetMembers =
                           new ArrayList<>();
-                      if (n.getNewConceptDetails().getReferenceSetMembers() != null) {
-                        for (SnowstormReferenceSetMemberViewComponent member :
-                            n.getNewConceptDetails().getReferenceSetMembers()) {
-                          member.setReferencedComponentId(n.getConcept().getConceptId());
+                      Set<SnowstormReferenceSetMemberViewComponent> newRefsetMembers =
+                          n.getNewConceptDetails() != null
+                              ? n.getNewConceptDetails().getReferenceSetMembers()
+                              : ReferenceSetUtils.calculateReferenceSetMembers(
+                                  n.getNonDefiningProperties(),
+                                  modelConfiguration,
+                                  n.getModelLevel());
+                      if (newRefsetMembers != null) {
+                        for (SnowstormReferenceSetMemberViewComponent newMember :
+                            newRefsetMembers) {
+                          newMember.setReferencedComponentId(n.getConcept().getConceptId());
                           if (!editNodeExistingRefsetMembers.containsKey(n.getConceptId())
-                              || (editNodeExistingRefsetMembers.containsKey(n.getConceptId())
-                                  && editNodeExistingRefsetMembers.get(n.getConceptId()).stream()
-                                      .noneMatch(
-                                          existingMember ->
-                                              isMatchingRefsetTypeAndAdditionalProperties(
-                                                  existingMember, member)))) {
-                            refsetMembers.add(member);
+                              || editNodeExistingRefsetMembers.get(n.getConceptId()).stream()
+                                  .noneMatch(
+                                      existingMember ->
+                                          isMatchingRefsetTypeAndAdditionalProperties(
+                                              existingMember, newMember))) {
+                            refsetMembers.add(newMember);
                           }
                         }
                       }
@@ -899,7 +1043,9 @@ public class ProductCreationService {
 
     // add retire and replace to inactivation refset and historical association refset
     final Set<Node> retireAndReplaceNodes =
-        nodeCreateOrder.stream().filter(Node::isRetireAndReplace).collect(Collectors.toSet());
+        nodeCreateOrder.stream()
+            .filter(node -> node.isRetireAndReplace() || node.isRetireAndReplaceWithExisting())
+            .collect(Collectors.toSet());
 
     if (!retireAndReplaceNodes.isEmpty()) {
       retireAndReplaceNodes.forEach(
@@ -943,19 +1089,39 @@ public class ProductCreationService {
               .filter(r -> Boolean.TRUE.equals(r.getActive()))
               .toList());
 
-      nodeCreateOrder.forEach(
-          n ->
-              n.getNewConceptDetails()
-                  .getReferenceSetMembers()
-                  .forEach(r -> r.setReferencedComponentId(n.getConceptId())));
+      nodeCreateOrder.stream()
+          .filter(n -> n.getNewConceptDetails() != null)
+          .forEach(
+              n ->
+                  n.getNewConceptDetails()
+                      .getReferenceSetMembers()
+                      .forEach(r -> r.setReferencedComponentId(n.getConceptId())));
     }
 
     if (!nodesToEdit.isEmpty()) {
       final Set<SnowstormReferenceSetMemberViewComponent> requiredNewRefsetMembers =
+          new HashSet<>();
+      requiredNewRefsetMembers.addAll(
           nodesToEdit.stream()
+              .filter(node -> node.getNewConceptDetails() != null)
               .map(n -> n.getNewConceptDetails().getReferenceSetMembers())
               .flatMap(Collection::stream)
-              .collect(Collectors.toSet());
+              .collect(Collectors.toSet()));
+      requiredNewRefsetMembers.addAll(
+          nodesToEdit.stream()
+              .filter(node -> node.getNewConceptDetails() == null)
+              .map(
+                  node -> {
+                    Set<SnowstormReferenceSetMemberViewComponent> refsetMembers =
+                        ReferenceSetUtils.calculateReferenceSetMembers(
+                            node.getNonDefiningProperties(),
+                            modelConfiguration,
+                            node.getModelLevel());
+                    refsetMembers.forEach(r -> r.setReferencedComponentId(node.getConceptId()));
+                    return refsetMembers;
+                  })
+              .flatMap(Collection::stream)
+              .collect(Collectors.toSet()));
       membersToDelete.addAll(
           editNodeExistingRefsetMembers.values().stream()
               .flatMap(Collection::stream)
@@ -1004,6 +1170,7 @@ public class ProductCreationService {
   private void validateSpecifiedIdentifiers(String branch, List<Node> nodeCreateOrder) {
     Set<String> idsToCreate =
         nodeCreateOrder.stream()
+            .filter(n -> n.getNewConceptDetails() != null)
             .map(n -> n.getNewConceptDetails().getSpecifiedConceptId())
             .filter(Objects::nonNull)
             .collect(Collectors.toSet());
