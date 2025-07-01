@@ -17,6 +17,7 @@ package au.gov.digitalhealth.lingo.product;
 
 import au.csiro.snowstorm_client.model.SnowstormAxiom;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
@@ -85,6 +86,7 @@ public class Node {
 
   @Builder.Default Collection<SnowstormRelationship> relationships = new HashSet<>();
   @Builder.Default Collection<SnowstormAxiom> axioms = new HashSet<>();
+  @Builder.Default Collection<SnowstormReferenceSetMember> historicalAssociations = new HashSet<>();
 
   public Node(SnowstormConceptMini concept, ModelLevel level) {
     this.concept = concept;
