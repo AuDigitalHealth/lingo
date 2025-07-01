@@ -554,11 +554,14 @@ public class MedicationProductCalculationService
       boolean container,
       ModelConfiguration modelConfiguration) {
 
-    optionallyAddNmpcType(
-        branch,
-        modelConfiguration,
-        packageDetails.getContainedProducts().iterator().next().getProductDetails(),
-        packageDetails.getNonDefiningProperties());
+    if (packageDetails.getContainedProducts() != null
+        && !packageDetails.getContainedProducts().isEmpty()) {
+      optionallyAddNmpcType(
+          branch,
+          modelConfiguration,
+          packageDetails.getContainedProducts().iterator().next().getProductDetails(),
+          packageDetails.getNonDefiningProperties());
+    }
 
     Set<SnowstormRelationship> relationships = new HashSet<>();
     relationships.add(
