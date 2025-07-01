@@ -26,6 +26,7 @@
   <cache alias="snowstorm-concepts-by-ids" uses-template="lru-20min-template"/>
   <cache alias="snowstorm-concept-ids-exist" uses-template="lru-20min-template"/>
   <cache alias="snowstorm-concepts-for-branch" uses-template="lru-20min-template"/>
+  <cache alias="snowstorm-historical-associations-for-branch" uses-template="lru-20min-template"/>
   <cache alias="fhir-concepts" uses-template="lru-20min-template"/>
   <cache-template name="lru-20min-template">
     <expiry>
