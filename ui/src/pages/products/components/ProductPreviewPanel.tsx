@@ -645,8 +645,9 @@ function ProductHeaderWatch({
   partialNameCheckKeywords,
   nameGeneratorErrorKeywords,
   optionsIgnored,
+  isEditMode
 }: {
-  control: Control<ProductSummary>;
+  control?: Control<ProductSummary>;
   index: number;
   fsnToggle: boolean;
   showHighLite: boolean;
@@ -655,32 +656,41 @@ function ProductHeaderWatch({
   productModel: ProductSummary;
   activeConcept: string | undefined;
   handleChangeColor: (value: string) => void;
-  partialNameCheckKeywords: string[];
-  nameGeneratorErrorKeywords: string[];
+  partialNameCheckKeywords?: string[];
+  nameGeneratorErrorKeywords?: string[];
   optionsIgnored: boolean;
+  isEditMode: boolean;
 }) {
-  const pt = useWatch({
+  let pt = useWatch({
     control,
     name: `nodes[${index}].newConceptDetails.preferredTerm` as 'nodes.0.newConceptDetails.preferredTerm',
   });
 
-  const fsn = useWatch({
+  let fsn = useWatch({
     control,
     name: `nodes[${index}].newConceptDetails.fullySpecifiedName` as 'nodes.0.newConceptDetails.fullySpecifiedName',
   });
-  if (isNewConcept(product)) {
+
+  if(!control){
+    fsn = product.fullySpecifiedName as string;
+    pt = product.preferredTerm as string;
+  }
+
+  if (isNewConcept(product) && isEditMode) {
     if (
-      (fsn && isNameContainsKeywords(fsn, nameGeneratorErrorKeywords)) ||
-      (pt && isNameContainsKeywords(pt, nameGeneratorErrorKeywords))
+      (fsn && nameGeneratorErrorKeywords && isNameContainsKeywords(fsn, nameGeneratorErrorKeywords)) ||
+      (pt && nameGeneratorErrorKeywords && isNameContainsKeywords(pt, nameGeneratorErrorKeywords))
     ) {
       handleChangeColor(Product7BoxBGColour.INVALID);
     } else if (
-      (fsn && isNameContainsKeywords(fsn, partialNameCheckKeywords)) ||
-      (pt && isNameContainsKeywords(pt, partialNameCheckKeywords))
+      (fsn && partialNameCheckKeywords && isNameContainsKeywords(fsn, partialNameCheckKeywords)) ||
+      (pt && partialNameCheckKeywords && isNameContainsKeywords(pt, partialNameCheckKeywords))
     ) {
       handleChangeColor(Product7BoxBGColour.INCOMPLETE);
     } else if (
       fsn &&
+      partialNameCheckKeywords
+      &&
       !isNameContainsKeywords(fsn, partialNameCheckKeywords) &&
       pt &&
       !isNameContainsKeywords(pt, partialNameCheckKeywords) &&
@@ -689,6 +699,8 @@ function ProductHeaderWatch({
       handleChangeColor(Product7BoxBGColour.NEW);
     } else if (
       fsn &&
+      partialNameCheckKeywords
+      &&
       !isNameContainsKeywords(fsn, partialNameCheckKeywords) &&
       pt &&
       !isNameContainsKeywords(pt, partialNameCheckKeywords) &&
@@ -708,7 +720,7 @@ function ProductHeaderWatch({
     handleChangeColor(Product7BoxBGColour.PROPERTY_CHANGE);
   }
 
-  if (showHighLite) {
+  if (showHighLite && control) {
     return (
       <Tooltip
         title={
