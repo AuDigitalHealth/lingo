@@ -36,6 +36,8 @@ public class CacheConstants {
   public static final String SNOWSTORM_CONCEPTS_BY_IDS = "snowstorm-concepts-by-ids";
   public static final String SNOWSTORM_CONCEPT_IDS_EXIST = "snowstorm-concept-ids-exist";
   public static final String SNOWSTORM_CONCEPTS_FOR_BRANCH = "snowstorm-concepts-for-branch";
+  public static final String SNOWSTORM_HIST_ASSOC_FOR_BRANCH =
+      "snowstorm-historical-associations-for-branch";
   public static final String FHIR_CONCEPTS = "fhir-concepts";
 
   private CacheConstants() {
