@@ -3,12 +3,13 @@ import { Card, Tab, Tabs } from '@mui/material';
 
 import TaskDetails from './TaskDetails';
 import TaskTicketList from './TaskTicketList';
-import { useLocation } from 'react-router-dom';
+import { Route, Routes, useLocation } from 'react-router-dom';
 
 import useTaskById from '../../../hooks/useTaskById.tsx';
 import { Task } from '../../../types/task.ts';
 import Loading from '../../../components/Loading.tsx';
 import { useFetchAndCreateBranch } from '../../../hooks/api/task/useInitializeBranch.tsx';
+import { Stack } from '@mui/material';
 
 interface LocationState {
   openTab: number;
@@ -100,6 +101,17 @@ function TaskEditCard({ menuOpen }: TaskEditCardProps) {
         </Card>
       )}
     </>
+  );
+}
+
+export function TaskEdit({ menuOpen }: TaskEditCardProps) {
+  return (
+    <Stack flexDirection="row">
+      <TaskEditCard menuOpen={menuOpen} />
+      <Routes>
+        <Route path="review/:conceptId/*" element={<>This is a review!</>} />
+      </Routes>
+    </Stack>
   );
 }
 
