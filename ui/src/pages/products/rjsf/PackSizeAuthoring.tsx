@@ -56,7 +56,7 @@ function PackSizeAuthoring({
   fieldBindings,
 }: PackSizeAuthoringV2Props) {
   const {
-    productCreationDetails,
+    productSaveDetails,
     previewModalOpen,
     setPreviewModalOpen,
     loadingPreview,
@@ -230,7 +230,7 @@ function PackSizeAuthoring({
         />
         <ProductPreviewManageModal
           productType="medication"
-          productCreationDetails={productCreationDetails}
+          productCreationDetails={productSaveDetails}
           handleClose={handlePreviewToggleModal}
           open={previewModalOpen}
           branch={task.branchPath}
