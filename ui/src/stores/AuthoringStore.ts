@@ -63,7 +63,8 @@ interface AuthoringStoreConfig {
   setForceNavigation: (bool: boolean) => void;
   previewErrorKeys: string[];
   setPreviewErrorKeys: (errorKeys: string[]) => void;
-
+  originalConceptId: string;
+  setOriginalConceptId: (conceptId: string) => void;
   productSaveDetails: ProductSaveDetails | undefined;
   setProductSaveDetails: (details: ProductSaveDetails | undefined) => void;
   productPreviewDetails: MedicationPackageDetails | undefined;
@@ -163,7 +164,10 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
   setSearchInputValue: value => {
     set({ searchInputValue: value });
   },
-
+  originalConceptId: '',
+  setOriginalConceptId: value => {
+    set({ originalConceptId: value });
+  },
   productSaveDetails: undefined,
   setProductSaveDetails: details => {
     set({ productSaveDetails: details });
@@ -262,6 +266,9 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
     get().setPreviewModalOpen(true);
 
     const validatedData = cleanPackageDetails(request);
+    const originalConcept = get().selectedProduct
+      ? get().selectedProduct?.id
+      : get().originalConceptId;
 
     const handleSuccess = (mp: any) => {
       const productSaveObj: ProductSaveDetails = {
@@ -272,9 +279,7 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
         packageDetails: validatedData,
         ticketId: ticket.id,
         partialSaveName: partialSaveName ?? null,
-        originalConceptId: get().selectedProduct
-          ? get().selectedProduct?.id
-          : undefined,
+        originalConceptId: originalConcept,
         originalPackageDetails: originalPackageDetails,
       };
 
@@ -298,14 +303,8 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
     };
 
     if (get().isProductUpdate) {
-      const selectedProduct = get().selectedProduct;
-
       productService
-        .previewUpdateMedicationProduct(
-          validatedData,
-          selectedProduct?.id,
-          branch,
-        )
+        .previewUpdateMedicationProduct(validatedData, originalConcept, branch)
         .then(handleSuccess)
         .catch(handleError);
     } else {
