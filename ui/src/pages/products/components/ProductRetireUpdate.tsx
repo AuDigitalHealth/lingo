@@ -18,6 +18,7 @@ import { ArchiveOutlined, OpenInNew } from '@mui/icons-material';
 import { Control, Controller, UseFormSetValue } from 'react-hook-form';
 import { Product, ProductSummary } from '../../../types/concept';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
 interface ProductRetireUpdateProps {
   product: Product;
@@ -66,6 +67,7 @@ export const ProductRetireUpdate: React.FC<ProductRetireUpdateProps> = ({
   const id = product.originalNode?.node.concept.conceptId;
   const term = product.originalNode?.node.concept.pt.term;
   const reason = product.originalNode?.inactivationReason ?? null;
+  const originalConceptReleased = !product.originalNode?.node?.newInTask && !product.originalNode?.node?.newInProject;
   const referencedByOtherProducts =
     product.originalNode?.referencedByOtherProducts ?? false;
 
@@ -144,13 +146,37 @@ export const ProductRetireUpdate: React.FC<ProductRetireUpdateProps> = ({
           </div>
         </Stack>
 
+        {((retireAndReplace && !originalConceptReleased) || (conceptEdit && originalConceptReleased)) && (
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 2,
+              mb: 2,
+              p: 1,
+              backgroundColor: theme.palette.grey[100],
+              color: theme.palette.text.primary,
+              borderRadius: 1,
+              fontSize: '0.875rem',
+            }}
+          >
+            <Stack direction="row" spacing={1} alignItems="center">
+              <WarningAmberIcon sx={{ color: 'warning.main' }}></WarningAmberIcon>
+              <Typography>
+                {originalConceptReleased
+                  ? 'Previously released – likely should be retired, not edited.'
+                  : 'New and unreleased – likely should edit rather than retire.'}
+              </Typography>
+            </Stack>
+          </Box>
+        )}
+
         <Box
           sx={{
             display: 'flex',
             gap: 2,
             mb: 2,
             p: 1,
-            backgroundColor: theme.palette.grey[300],
+            backgroundColor: theme.palette.grey[100],
             color: theme.palette.text.primary,
             borderRadius: 1,
             fontSize: '0.875rem',
