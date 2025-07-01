@@ -21,6 +21,7 @@ import {
   BrandPackSizeCreationDetails,
   DevicePackageDetails,
   MedicationPackageDetails,
+  ProductActionType,
   ProductSaveDetails,
   ProductType,
 } from '../types/product.ts';
@@ -46,6 +47,8 @@ interface AuthoringStoreConfig {
   setSelectedActionType: (actionType: ActionType) => void;
   isLoadingProduct: boolean;
   setIsLoadingProduct: (bool: boolean) => void;
+  isProductUpdate: boolean;
+  setIsProductUpdate: (bool: boolean) => void;
   formContainsData: boolean;
   setFormContainsData: (bool: boolean) => void;
   handleSelectedProductChange: (
@@ -60,10 +63,9 @@ interface AuthoringStoreConfig {
   setForceNavigation: (bool: boolean) => void;
   previewErrorKeys: string[];
   setPreviewErrorKeys: (errorKeys: string[]) => void;
-  //
 
-  productCreationDetails: ProductSaveDetails | undefined;
-  setProductCreationDetails: (details: ProductSaveDetails | undefined) => void;
+  productSaveDetails: ProductSaveDetails | undefined;
+  setProductSaveDetails: (details: ProductSaveDetails | undefined) => void;
   productPreviewDetails: MedicationPackageDetails | undefined;
   setProductPreviewDetails: (
     details: MedicationPackageDetails | undefined,
@@ -135,6 +137,10 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
   setIsLoadingProduct: bool => {
     set({ isLoadingProduct: bool });
   },
+  isProductUpdate: false,
+  setIsProductUpdate: bool => {
+    set({ isProductUpdate: bool });
+  },
   formContainsData: false,
   setFormContainsData: bool => {
     set({ formContainsData: bool });
@@ -158,9 +164,9 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
     set({ searchInputValue: value });
   },
 
-  productCreationDetails: undefined,
-  setProductCreationDetails: details => {
-    set({ productCreationDetails: details });
+  productSaveDetails: undefined,
+  setProductSaveDetails: details => {
+    set({ productSaveDetails: details });
   },
   productPreviewDetails: undefined,
   setProductPreviewDetails: details => {
@@ -201,7 +207,7 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
     const request = data ? data : get().brandPackSizePreviewDetails;
 
     if (request) {
-      get().setProductCreationDetails(undefined);
+      get().setProductSaveDetails(undefined);
       get().setPreviewModalOpen(true);
       const validatedData = cleanBrandPackSizeDetails(request);
       productService
@@ -213,7 +219,7 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
             ticketId: ticket.id,
             partialSaveName: partialSaveName ? partialSaveName : null,
           };
-          get().setProductCreationDetails(productCreationObj);
+          get().setProductSaveDetails(productCreationObj);
           get().setPreviewModalOpen(true);
           get().setLoadingPreview(false);
         })
@@ -240,38 +246,73 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
     partialSaveName,
   ) => {
     get().setWarningModalOpen(false);
+    get().setLoadingPreview(true);
+
     const request = data ? data : get().productPreviewDetails;
 
-    if (request) {
-      get().setProductCreationDetails(undefined);
+    if (!request) {
+      get().setLoadingPreview(false);
+      return;
+    }
+    const originalPackageDetails = get().productSaveDetails
+      ? get().productSaveDetails?.originalPackageDetails
+      : undefined;
+
+    get().setProductSaveDetails(undefined);
+    get().setPreviewModalOpen(true);
+
+    const validatedData = cleanPackageDetails(request);
+
+    const handleSuccess = (mp: any) => {
+      const productSaveObj: ProductSaveDetails = {
+        type: get().isProductUpdate
+          ? ProductActionType.update
+          : ProductActionType.create,
+        productSummary: mp,
+        packageDetails: validatedData,
+        ticketId: ticket.id,
+        partialSaveName: partialSaveName ?? null,
+        originalConceptId: get().selectedProduct
+          ? get().selectedProduct?.id
+          : undefined,
+        originalPackageDetails: originalPackageDetails,
+      };
+
+      get().setProductSaveDetails(productSaveObj);
       get().setPreviewModalOpen(true);
-      const validatedData = cleanPackageDetails(request);
+      get().setLoadingPreview(false);
+    };
+
+    const handleError = (err: any) => {
+      const snackBarKey = snowstormErrorHandler(
+        err,
+        `Failed preview for [${request.productName?.pt?.term}]`,
+        serviceStatus,
+      );
+      const errorKeys = get().previewErrorKeys;
+      errorKeys.push(snackBarKey as string);
+      get().setPreviewErrorKeys(errorKeys);
+
+      get().setLoadingPreview(false);
+      get().setPreviewModalOpen(false);
+    };
+
+    if (get().isProductUpdate) {
+      const selectedProduct = get().selectedProduct;
+
+      productService
+        .previewUpdateMedicationProduct(
+          validatedData,
+          selectedProduct?.id,
+          branch,
+        )
+        .then(handleSuccess)
+        .catch(handleError);
+    } else {
       productService
         .previewCreateMedicationProduct(validatedData, branch)
-        .then(mp => {
-          const productCreationObj: ProductSaveDetails = {
-            productSummary: mp,
-            packageDetails: validatedData,
-            ticketId: ticket.id,
-            partialSaveName: partialSaveName ? partialSaveName : null,
-          };
-          get().setProductCreationDetails(productCreationObj);
-          get().setPreviewModalOpen(true);
-          get().setLoadingPreview(false);
-        })
-        .catch(err => {
-          const snackBarKey = snowstormErrorHandler(
-            err,
-            `Failed preview for  [${request.productName?.pt?.term}]`,
-            serviceStatus,
-          );
-          const errorKeys = get().previewErrorKeys;
-          errorKeys.push(snackBarKey as string);
-          get().setPreviewErrorKeys(errorKeys);
-
-          get().setLoadingPreview(false);
-          get().setPreviewModalOpen(false);
-        });
+        .then(handleSuccess)
+        .catch(handleError);
     }
   },
   previewDeviceProduct: (
@@ -285,7 +326,7 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
     const request = data ? data : get().devicePreviewDetails;
 
     if (request) {
-      get().setProductCreationDetails(undefined);
+      get().setProductSaveDetails(undefined);
       get().setPreviewModalOpen(true);
       const validatedData = cleanDevicePackageDetails(request);
       productService
@@ -297,7 +338,7 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
             ticketId: ticket.id,
             partialSaveName: partialSaveName ? partialSaveName : null,
           };
-          get().setProductCreationDetails(productCreationObj);
+          get().setProductSaveDetails(productCreationObj);
           get().setPreviewModalOpen(true);
           get().setLoadingPreview(false);
         })
