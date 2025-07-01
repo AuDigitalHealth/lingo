@@ -494,21 +494,23 @@ public class ProductUpdateService {
                 node.getOriginalNode()
                     .getNode()
                     .setNewInTask(
-                        taskChangedIds != null && taskChangedIds.contains(node.getConceptId()));
+                        taskChangedIds != null
+                            && taskChangedIds.contains(node.getOriginalNode().getConceptId()));
                 node.getOriginalNode()
                     .getNode()
                     .setNewInProject(
                         projectChangedIds != null
-                            && projectChangedIds.contains(node.getConceptId()));
+                            && projectChangedIds.contains(node.getOriginalNode().getConceptId()));
               }
             });
 
     List<CompletableFuture<Void>> referencedByOtherProductsFutures = new ArrayList<>();
-    originalNodes
-        .values()
+    newSummary
+        .getNodes()
         .forEach(
-            node -> {
-              String originalConceptId = node.getNode().getConceptId();
+            newNode -> {
+              OriginalNode originalNode = newNode.getOriginalNode();
+              String originalConceptId = originalNode.getNode().getConceptId();
 
               referencedByOtherProductsFutures.add(
                   snowstormClient
@@ -523,17 +525,23 @@ public class ProductUpdateService {
                             final boolean referencedByOtherProducts =
                                 !replacedConceptIds.containsAll(c);
 
-                            node.setReferencedByOtherProducts(referencedByOtherProducts);
-                            // if the node is referenced by other products, it should not be
-                            // inactivated
-                            // if it is new in task or project, it should be edited rather than
-                            // inactivated
-                            node.setInactivationReason(
-                                referencedByOtherProducts
-                                        || (node.getNode().isNewInTask()
-                                            || node.getNode().isNewInProject())
-                                    ? null
-                                    : InactivationReason.ERRONEOUS);
+                            originalNode.setReferencedByOtherProducts(referencedByOtherProducts);
+
+                            if (referencedByOtherProducts) {
+                              // if the original node is referenced by other products, it should not
+                              // be retired or modified
+                              originalNode.setInactivationReason(null);
+                            } else if (!newNode.isNewInTask() && !newNode.isNewInProject()) {
+                              // if the node is not new in task or project, the original node should
+                              // be retired
+                              originalNode.setInactivationReason(InactivationReason.ERRONEOUS);
+                            } else if (originalNode.getNode().isNewInTask()
+                                || originalNode.getNode().isNewInProject()) {
+                              // if the original node is new it should be edited
+                              originalNode.setInactivationReason(null);
+                            } else {
+                              originalNode.setInactivationReason(InactivationReason.ERRONEOUS);
+                            }
                           }));
             });
 
