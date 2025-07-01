@@ -469,4 +469,11 @@ public class ModelConfiguration {
 
     return referenceSetIds;
   }
+
+  public Map<String, ModelLevel> getLevelsByRefsetId() {
+    return levels.stream()
+        .collect(
+            Collectors.toMap(
+                ModelLevel::getReferenceSetIdentifier, Function.identity(), (a, b) -> a));
+  }
 }

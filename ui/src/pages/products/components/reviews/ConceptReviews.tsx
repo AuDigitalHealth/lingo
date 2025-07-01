@@ -77,7 +77,6 @@ function ConceptReviews({ conceptReview }: ConceptReviewsProps) {
   );
   const approveReviewMutation = useApproveReviewMutation();
 
-  debugger;
   if (!conceptReview) {
     return <></>;
   }

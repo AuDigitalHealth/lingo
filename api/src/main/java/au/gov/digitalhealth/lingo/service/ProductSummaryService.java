@@ -15,6 +15,7 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
+import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
@@ -423,5 +424,29 @@ public class ProductSummaryService {
     }
 
     return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+  }
+
+  public Node getNode(String branch, Long conceptId) {
+    log.info("Getting product model node for " + conceptId + " on branch " + branch);
+    ModelConfiguration model = models.getModelConfiguration(branch);
+
+    Map<String, ModelLevel> levelMap = model.getLevelsByRefsetId();
+
+    String refsetId =
+        snowStormApiClient
+            .getRefsetMembers(branch, Set.of(conceptId.toString()), levelMap.keySet())
+            .stream()
+            .map(SnowstormReferenceSetMember::getRefsetId)
+            .findFirst()
+            .orElse(null);
+
+    ModelLevel level = refsetId != null ? levelMap.get(refsetId) : null;
+
+    Node node = nodeGeneratorService.lookUpNode(branch, conceptId, level, null).join();
+    if (node == null) {
+      return null;
+    }
+    log.info("Done getting product model node for " + conceptId + " on branch " + branch);
+    return node;
   }
 }
