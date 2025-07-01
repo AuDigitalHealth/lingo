@@ -15,6 +15,7 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
+import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
@@ -35,6 +36,7 @@ import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /** Service for product-centric operations */
@@ -97,6 +99,20 @@ public class ProductSummaryService {
       return getTransitiveEdges(productSummary, transitiveContainsEdges);
     }
     return transitiveContainsEdges;
+  }
+
+  private static void updateNodeTaskStatus(
+      Node node,
+      Mono<List<String>> taskChangedConceptIds,
+      Mono<List<String>> projectChangedConceptIds) {
+    final List<String> taskIds = taskChangedConceptIds.block();
+    if (taskIds != null && taskIds.contains(node.getConceptId())) {
+      node.setNewInTask(true);
+    }
+    final List<String> projectIds = projectChangedConceptIds.block();
+    if (projectIds != null && projectIds.contains(node.getConceptId())) {
+      node.setNewInProject(true);
+    }
   }
 
   @Async
@@ -432,20 +448,35 @@ public class ProductSummaryService {
 
     Map<String, ModelLevel> levelMap = model.getLevelsByRefsetId();
 
-    String refsetId =
+    Mono<List<String>> taskChangedConceptIds =
+        snowStormApiClient.getConceptIdsChangedOnTask(branch);
+
+    Mono<List<String>> projectChangedConceptIds =
+        snowStormApiClient.getConceptIdsChangedOnProject(branch);
+
+    Mono<SnowstormConceptMini> conceptMono =
+        snowStormApiClient.getConceptMono(branch, conceptId.toString());
+
+    Flux<String> refsetId =
         snowStormApiClient
-            .getRefsetMembers(branch, Set.of(conceptId.toString()), levelMap.keySet())
-            .stream()
-            .map(SnowstormReferenceSetMember::getRefsetId)
-            .findFirst()
-            .orElse(null);
+            .getRefsetMembersMono(branch, Set.of(conceptId.toString()), levelMap.keySet())
+            .flatMapIterable(
+                members ->
+                    members.stream()
+                        .map(SnowstormReferenceSetMember::getRefsetId)
+                        .collect(Collectors.toSet()));
 
-    ModelLevel level = refsetId != null ? levelMap.get(refsetId) : null;
+    ModelLevel level = refsetId.blockFirst() != null ? levelMap.get(refsetId.blockFirst()) : null;
 
-    Node node = nodeGeneratorService.lookUpNode(branch, conceptId, level, null).join();
-    if (node == null) {
-      return null;
+    Node node = nodeGeneratorService.lookUpNode(branch, conceptMono.block(), level).join();
+
+    updateNodeTaskStatus(node, taskChangedConceptIds, projectChangedConceptIds);
+    if (node.getOriginalNode() != null && node.getOriginalNode().getNode() != null) {
+      // If this is a new concept, we need to update the task and project status
+      updateNodeTaskStatus(
+          node.getOriginalNode().getNode(), taskChangedConceptIds, projectChangedConceptIds);
     }
+
     log.info("Done getting product model node for " + conceptId + " on branch " + branch);
     return node;
   }

@@ -130,11 +130,15 @@ public class SnowstormClient {
     }
   }
 
-  @Cacheable(value = CacheConstants.SNOWSTORM_CONCEPT, keyGenerator = "branchAwareKeyGenerator")
   public SnowstormConceptMini getConcept(String branch, String id) {
+    return self.getConceptMono(branch, id).block();
+  }
+
+  @Cacheable(value = CacheConstants.SNOWSTORM_CONCEPT, keyGenerator = "branchAwareKeyGenerator")
+  public Mono<SnowstormConceptMini> getConceptMono(String branch, String id) {
     ConceptsApi api = getConceptsApi();
 
-    return api.findConcept(branch, id, languageHeader).block();
+    return api.findConcept(branch, id, languageHeader);
   }
 
   public final SnowstormConceptMini getConceptFromEcl(
