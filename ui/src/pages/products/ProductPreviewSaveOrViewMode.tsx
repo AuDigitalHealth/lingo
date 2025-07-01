@@ -4,6 +4,8 @@ import { Concept, ProductSummary } from '../../types/concept.ts';
 import {
   cleanBrandPackSizeDetails,
   cleanDevicePackageDetails,
+  cleanPackageDetails,
+  cleanProductSummary,
   containsNewConcept,
   getProductDisplayName,
   isDeviceType,
@@ -19,6 +21,7 @@ import {
   BrandPackSizeCreationDetails,
   BulkProductCreationDetails,
   DevicePackageDetails,
+  MedicationPackageDetails,
   ProductActionType,
   ProductSaveDetails,
 } from '../../types/product.ts';
@@ -195,12 +198,12 @@ function ProductPreviewSaveOrViewMode({
         selectedActionType === ActionType.newNutritionalProduct
       ) {
         // TODO: Fix these 'clean package details' stuff?
-        // productCreationDetails.packageDetails = cleanPackageDetails(
-        //   productCreationDetails.packageDetails as MedicationPackageDetails,
-        // );
-        // productCreationDetails.productSummary = cleanProductSummary(
-        //   productCreationDetails.productSummary,
-        // );
+        productSaveDetails.packageDetails = cleanPackageDetails(
+          productSaveDetails.packageDetails as MedicationPackageDetails,
+        );
+        productSaveDetails.productSummary = cleanProductSummary(
+          productSaveDetails.productSummary,
+        );
         productService
           .saveMedicationProduct(productSaveDetails, branch)
           .then(v => {
