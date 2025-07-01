@@ -156,6 +156,18 @@ public class Node {
   }
 
   /**
+   * Returns true if this node represents a retire and replace operation with an existing concept.
+   */
+  @JsonProperty(value = "retireAndReplaceWithExisting", access = JsonProperty.Access.READ_ONLY)
+  public boolean isRetireAndReplaceWithExisting() {
+    return newConceptDetails == null
+        && concept != null
+        && originalNode != null
+        && !originalNode.getNode().getConceptId().equals(concept.getConceptId())
+        && originalNode.getInactivationReason() != null;
+  }
+
+  /**
    * Returns true if this node represents a concept edit, which means it has an original node and
    * the concept details have changed. This may also include property changes.
    */
