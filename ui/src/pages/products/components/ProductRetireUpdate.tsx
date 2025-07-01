@@ -68,7 +68,9 @@ export const ProductRetireUpdate: React.FC<ProductRetireUpdateProps> = ({
   const id = product.originalNode?.node.concept.conceptId;
   const term = product.originalNode?.node.concept.pt.term;
   const reason = product.originalNode?.inactivationReason ?? null;
-  const originalConceptReleased = !product.originalNode?.node?.newInTask && !product.originalNode?.node?.newInProject;
+  const originalConceptReleased =
+    !product.originalNode?.node?.newInTask &&
+    !product.originalNode?.node?.newInProject;
   const referencedByOtherProducts =
     product.originalNode?.referencedByOtherProducts ?? false;
 
@@ -147,7 +149,8 @@ export const ProductRetireUpdate: React.FC<ProductRetireUpdateProps> = ({
           </div>
         </Stack>
 
-        {((retireAndReplace && !originalConceptReleased) || (conceptEdit && originalConceptReleased)) && (
+        {((retireAndReplace && !originalConceptReleased) ||
+          (conceptEdit && originalConceptReleased)) && (
           <Box
             sx={{
               display: 'flex',
@@ -161,7 +164,9 @@ export const ProductRetireUpdate: React.FC<ProductRetireUpdateProps> = ({
             }}
           >
             <Stack direction="row" spacing={1} alignItems="center">
-              <WarningAmberIcon sx={{ color: 'warning.main' }}></WarningAmberIcon>
+              <WarningAmberIcon
+                sx={{ color: 'warning.main' }}
+              ></WarningAmberIcon>
               <Typography>
                 {originalConceptReleased
                   ? 'Previously released – likely should be retired, not edited.'
