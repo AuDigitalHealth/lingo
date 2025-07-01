@@ -83,6 +83,8 @@ function MedicationAuthoring({
     schemaType,
   );
   const {
+    originalConceptId,
+    setOriginalConceptId,
     setProductPreviewDetails,
     setProductSaveDetails,
     productSaveDetails,
@@ -106,8 +108,9 @@ function MedicationAuthoring({
     ticketProductId,
     ticket,
     setFunction: (data: any) => {
-      setFormData(data);
-      setInitialFormData(data);
+      setFormData(data.packageDetails);
+      setInitialFormData(data.packageDetails);
+      setOriginalConceptId(data.conceptId);
     },
   });
   const mutation = useCalculateProduct();
@@ -138,6 +141,7 @@ function MedicationAuthoring({
       selectedProduct,
       setProductPreviewDetails,
       setProductSaveDetails: setProductSaveDetails,
+      originalConceptId,
     });
   };
 
@@ -315,6 +319,7 @@ interface UseCalculateProductArguments {
   selectedProduct: Concept | ValueSetExpansionContains | null;
   setProductPreviewDetails: MedicationPackageDetails | undefined;
   setProductSaveDetails: (details: ProductSaveDetails | undefined) => void;
+  originalConceptId: string | undefined;
 }
 
 function useCalculateProduct() {
@@ -328,12 +333,16 @@ function useCalculateProduct() {
       selectedProduct,
       setProductPreviewDetails,
       setProductSaveDetails,
+      originalConceptId,
     }: UseCalculateProductArguments) => {
       let productSummary;
+      const originalConcept = selectedProduct
+        ? selectedProduct.id
+        : originalConceptId;
       if (isProductUpdate) {
         productSummary = await productService.previewUpdateMedicationProduct(
           formData,
-          selectedProduct?.id,
+          originalConcept,
           task.branchPath,
         );
       } else {
@@ -352,7 +361,7 @@ function useCalculateProduct() {
         ticketId: ticket.id,
         partialSaveName: null,
         nameOverride: null,
-        originalConceptId: selectedProduct?.id,
+        originalConceptId: originalConcept,
         originalPackageDetails: initialformData as MedicationPackageDetails,
       };
       setProductPreviewDetails(formData);
