@@ -3,13 +3,15 @@ import { Card, Tab, Tabs } from '@mui/material';
 
 import TaskDetails from './TaskDetails';
 import TaskTicketList from './TaskTicketList';
-import { Route, Routes, useLocation } from 'react-router-dom';
+import { Route, Routes, useLocation, useParams } from 'react-router-dom';
 
 import useTaskById from '../../../hooks/useTaskById.tsx';
 import { Task } from '../../../types/task.ts';
 import Loading from '../../../components/Loading.tsx';
 import { useFetchAndCreateBranch } from '../../../hooks/api/task/useInitializeBranch.tsx';
 import { Stack } from '@mui/material';
+import { useNodeModel } from '../../../hooks/api/products/useNodeModel.tsx';
+import ProductPreviewSimple from '../../products/components/ProductPreviewSimple.tsx';
 
 interface LocationState {
   openTab: number;
@@ -109,10 +111,23 @@ export function TaskEdit({ menuOpen }: TaskEditCardProps) {
     <Stack flexDirection="row">
       <TaskEditCard menuOpen={menuOpen} />
       <Routes>
-        <Route path="review/:conceptId/*" element={<>This is a review!</>} />
+        <Route path="review/:conceptId/*" element={<TaskEditReview />} />
       </Routes>
     </Stack>
   );
+}
+
+export function TaskEditReview(){
+
+  const task = useTaskById();
+  const branch = task?.branchPath;
+  const {conceptId} = useParams();
+  const {data} = useNodeModel(conceptId, branch);
+
+  if(data && branch){
+    return <ProductPreviewSimple product={data} fsnToggle isSimpleEdit={false} branch={branch} activeConcept='' expandedConcepts={[]}/>
+  }
+  return <></>
 }
 
 export default TaskEditCard;
