@@ -6,6 +6,7 @@ import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Box, Paper, Typography } from '@mui/material';
 import { CheckCircle } from '@mui/icons-material';
 import { useShowReviewControls } from '../../../../hooks/api/task/useReviews.tsx';
+import { Link } from 'react-router-dom';
 
 function ConceptReviewList() {
   const task = useTaskById();
@@ -46,7 +47,9 @@ function ConceptReviewList() {
               fontWeight: 500,
             }}
           >
-            {params.value}
+            <Link to={`review/${params.row.concept?.conceptId}`}>
+              {params.value}
+            </Link>
           </Typography>
         </Box>
       ),

@@ -71,7 +71,7 @@ export default function TaskAssociationFieldInput({
           <>
             {isCurrent ? (
               <Link
-                to={`/dashboard/tasks/edit/${taskAssociation.taskId}/${ticket?.ticketNumber}`}
+                to={`/dashboard/tasks/edit/${taskAssociation.taskId}/ticket/${ticket?.ticketNumber}`}
               >
                 {taskAssociation.taskId}
               </Link>
