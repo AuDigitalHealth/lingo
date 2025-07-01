@@ -165,7 +165,7 @@ export function containsNewConcept(nodes: Product[]) {
   return product !== undefined;
 }
 export function isNewConcept(product: Product) {
-  return product.newConcept || product.newConceptDetails;
+  return (product.newConcept || product.newConceptDetails) && !product.concept;
 }
 export const isValidConceptName = (concept: Concept) => {
   return concept && concept.pt?.term !== '' && concept.pt?.term !== null;
@@ -337,10 +337,15 @@ function cleanDeviceProductQty(item: DeviceProductQuantity) {
   }
 }
 export function cleanPackageDetails(packageDetails: MedicationPackageDetails) {
-  packageDetails.containedPackages.forEach(function (packageQty) {
-    packageQty.packageDetails?.containedProducts.map(p => cleanProductQty(p));
-  });
-  packageDetails.containedProducts.map(p => cleanProductQty(p));
+  if (packageDetails.containedPackages) {
+    packageDetails.containedPackages.forEach(function (packageQty) {
+      packageQty.packageDetails?.containedProducts.map(p => cleanProductQty(p));
+    });
+  }
+  if (packageDetails.containedProducts) {
+    packageDetails.containedProducts.map(p => cleanProductQty(p));
+  }
+
   return packageDetails;
 }
 
