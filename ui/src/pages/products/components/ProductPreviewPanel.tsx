@@ -445,6 +445,7 @@ function ProductPreviewPanel({
                   getValues={getValues}
                   fieldBindings={fieldBindings}
                   branch={branch}
+                  setValue={setValue}
                 />
               )}
           </AccordionDetails>

@@ -55,7 +55,7 @@ function BrandAuthoring({
   fieldBindings,
 }: BrandAuthoringV2Props) {
   const {
-    productCreationDetails,
+    productSaveDetails,
     previewModalOpen,
     setPreviewModalOpen,
     loadingPreview,
@@ -229,7 +229,7 @@ function BrandAuthoring({
         />
         <ProductPreviewManageModal
           productType="medication"
-          productCreationDetails={productCreationDetails}
+          productCreationDetails={productSaveDetails}
           handleClose={handlePreviewToggleModal}
           open={previewModalOpen}
           branch={task.branchPath}
