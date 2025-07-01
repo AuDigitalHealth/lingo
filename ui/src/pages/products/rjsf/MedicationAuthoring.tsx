@@ -43,6 +43,7 @@ import { useTicketProductQuery } from './hooks/useTicketProductQuery.ts';
 import { DraftSubmitPanel } from './components/DarftSubmitPanel.tsx';
 import ProductPartialSaveModal from './components/ProductPartialSaveModal.tsx';
 import MuiGridTemplate from './templates/MuiGridTemplate.tsx';
+import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -70,7 +71,6 @@ function MedicationAuthoring({
   const [isDirty, setIsDirty] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const formRef = useRef<any>(null);
-  const [isProductUpdate, setIsProductUpdate] = useState(false);
 
   const [mode, setMode] = useState<'create' | 'update'>('create');
 
@@ -82,6 +82,14 @@ function MedicationAuthoring({
     task.branchPath,
     schemaType,
   );
+  const {
+    setProductPreviewDetails,
+    setProductSaveDetails,
+    productSaveDetails,
+    loadingPreview,
+    isProductUpdate,
+    setIsProductUpdate,
+  } = useAuthoringStore();
 
   const { isLoading, isFetching } = useProductQuery({
     selectedProduct,
@@ -128,6 +136,8 @@ function MedicationAuthoring({
       task,
       isProductUpdate,
       selectedProduct,
+      setProductPreviewDetails,
+      setProductSaveDetails: setProductSaveDetails,
     });
   };
 
@@ -142,6 +152,7 @@ function MedicationAuthoring({
     isLoading ||
     isFetching ||
     isTicketProductLoading ||
+    loadingPreview ||
     isTicketProductFetching
   ) {
     return <ProductLoader message="Loading Product details" />;
@@ -282,7 +293,7 @@ function MedicationAuthoring({
           <ProductPreviewManageModal
             open={createModalOpen}
             handleClose={handleToggleCreateModal}
-            productCreationDetails={data}
+            productCreationDetails={productSaveDetails}
             branch={task.branchPath}
             ticket={ticket}
             productType={ProductType.medication}
@@ -302,6 +313,8 @@ interface UseCalculateProductArguments {
   task: Task;
   isProductUpdate: boolean;
   selectedProduct: Concept | ValueSetExpansionContains | null;
+  setProductPreviewDetails: MedicationPackageDetails | undefined;
+  setProductSaveDetails: (details: ProductSaveDetails | undefined) => void;
 }
 
 function useCalculateProduct() {
@@ -313,6 +326,8 @@ function useCalculateProduct() {
       task,
       isProductUpdate,
       selectedProduct,
+      setProductPreviewDetails,
+      setProductSaveDetails,
     }: UseCalculateProductArguments) => {
       let productSummary;
       if (isProductUpdate) {
@@ -340,6 +355,9 @@ function useCalculateProduct() {
         originalConceptId: selectedProduct?.id,
         originalPackageDetails: initialformData as MedicationPackageDetails,
       };
+      setProductPreviewDetails(formData);
+      setProductSaveDetails(productSaveDetails);
+
       return productSaveDetails;
     },
     onSuccess: (_, variables) => {
