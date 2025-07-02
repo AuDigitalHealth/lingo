@@ -1,19 +1,27 @@
-import { Product } from '../../../types/concept.ts';
+import { Product, ProductSummary } from '../../../types/concept.ts';
 import { Stack } from '@mui/system';
 import { Link, Tooltip, Typography } from '@mui/material';
 import { OpenInNew } from '@mui/icons-material';
 import React from 'react';
 import AdditionalPropertiesDisplay from './AdditionalPropertiesDisplay.tsx';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
+import { ProductRetireUpdate } from './ProductRetireUpdate.tsx';
+import { Control, UseFormSetValue } from 'react-hook-form';
 
 interface ExistingConceptDropdownProps {
   product: Product;
   branch: string;
+  control: Control<ProductSummary>;
+  index: number;
+  setValue?: UseFormSetValue<ProductSummary>;
 }
 
 function ExistingConceptDropdown({
   product,
   branch,
+  control,
+  index,
+  setValue,
 }: ExistingConceptDropdownProps) {
   const { applicationConfig } = useApplicationConfigStore();
   const snowstormBaseUrl = applicationConfig.apApiBaseUrl;
@@ -54,10 +62,19 @@ function ExistingConceptDropdown({
         <Typography style={{ color: '#184E6B' }}>FSN:</Typography>
         <Typography>{product.concept?.fsn?.term}</Typography>
       </Stack>
-      <Stack direction="row" spacing={2}>
+      <Stack direction="row" spacing={2} mb={1}>
         <Typography style={{ color: '#184E6B' }}>Preferred Term:</Typography>
         <Typography>{product.concept?.pt?.term}</Typography>
       </Stack>
+      {setValue && (
+        <ProductRetireUpdate
+          product={product}
+          control={control}
+          index={index}
+          setValue={setValue}
+          branch={branch}
+        />
+      )}
       <AdditionalPropertiesDisplay
         product={product}
         branch={branch}
