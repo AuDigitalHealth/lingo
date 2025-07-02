@@ -155,6 +155,13 @@ public class NodeGeneratorService {
       String branch, ModelLevel modelLevel, Node node, Collection<NonDefiningBase> newProperties) {
     ModelConfiguration configuration = models.getModelConfiguration(branch);
 
+    Flux<Void> historicalAssociationFlux =
+        snowstormClient
+            .getHistoricalAssociations(branch, node.getConceptId())
+            .doOnNext(node::setHistoricalAssociations)
+            .then()
+            .flux();
+
     Flux<Void> refsetMembersFlux = addRefsetAndMapping(branch, modelLevel, configuration, node);
 
     Flux<Void> nonDefiningPropertiesFlux =
@@ -177,7 +184,7 @@ public class NodeGeneratorService {
     }
 
     // Create a Mono that completes when both Flux operations complete
-    Mono.when(refsetMembersFlux, nonDefiningPropertiesFlux, axiomsFlux)
+    Mono.when(refsetMembersFlux, nonDefiningPropertiesFlux, axiomsFlux, historicalAssociationFlux)
         .doOnError(
             e ->
                 log.log(

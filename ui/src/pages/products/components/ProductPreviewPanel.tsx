@@ -413,7 +413,13 @@ function ProductPreviewPanel({
           <AccordionDetails key={'accordion-details-' + product.conceptId}>
             {/* A single concept exists, you do not have an option to make a new concept */}
             {shouldRenderDropdownAsReadonly && (
-              <ExistingConceptDropdown product={product} branch={branch} />
+              <ExistingConceptDropdown
+                product={product}
+                branch={branch}
+                control={control}
+                index={index}
+                setValue={setValue}
+              />
             )}
             {/* a new concept has to be made, as one does not exist */}
             {product.concept === null &&

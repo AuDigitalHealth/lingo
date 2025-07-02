@@ -32,7 +32,7 @@ export const useTicketProductQuery = ({
     queryKey,
     queryFn: async () => {
       const data = await fetchTicketProductDataFn({ ticketProductId, ticket });
-      if (setFunction && data) setFunction(data.packageDetails);
+      if (setFunction && data) setFunction(data);
       return data;
     },
     enabled: !!ticketProductId && !!ticket.ticketNumber,
