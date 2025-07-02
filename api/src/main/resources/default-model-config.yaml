@@ -177,8 +177,8 @@ models:
         identifier: 680041000220101
         level: PACKAGE
         dataType: STRING
-        valueRegexValidation: (P(P)?A\d{4,8}(\/\d{1,2})?(\/\d{1,2})?)|(EU\/\d{1}\/\d{2}\/\d{3}\/\d{3})
-        valueValidationErrorMessage: "Must be a valid HPRA (PA/PPA) or EMA product authorisation number (PA1234, PA1234/12, PA1234/12/34, EU/0/12/345/678)"
+        valueRegexValidation: (P(P)?A\d{4,8}(\/\d{1,2})?(\/\d{1,2})?)|(EU\/\d{1}\/\d{1,3}\/\d{1,4}\/\d{1,4})
+        valueValidationErrorMessage: "Must be a valid HPRA (PA/PPA) or EMA product authorisation number (PA1234, PA1234/12, PA1234/12/34, EU/0/12/345/678, EU/0/12/3456/789)"
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
