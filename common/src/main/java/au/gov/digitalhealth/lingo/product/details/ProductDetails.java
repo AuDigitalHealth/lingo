@@ -32,7 +32,8 @@ import lombok.EqualsAndHashCode;
 @JsonSubTypes({
   @JsonSubTypes.Type(value = MedicationProductDetails.class, name = "medication"),
   @JsonSubTypes.Type(value = DeviceProductDetails.class, name = "device"),
-  @JsonSubTypes.Type(value = VaccineProductDetails.class, name = "vaccine")
+  @JsonSubTypes.Type(value = VaccineProductDetails.class, name = "vaccine"),
+  @JsonSubTypes.Type(value = NutritionalProductDetails.class, name = "nutritional")
 })
 public abstract class ProductDetails extends PackageProductDetailsBase {
   @NotNull SnowstormConceptMini productName;
