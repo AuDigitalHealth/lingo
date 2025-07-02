@@ -59,6 +59,7 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.IS_A;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.MEDICINAL_PRODUCT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.MEDICINAL_PRODUCT_PACKAGE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.PLAYS_ROLE;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.PRIMITIVE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.STATED_RELATIONSHIP;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.addQuantityIfNotNull;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.addRelationshipIfNotNull;
@@ -722,11 +723,13 @@ public class MedicationProductCalculationService
                   Set.of(
                       NmpcConstants.NMPC_VACCINE.getValue(),
                       NmpcConstants.NMPC_MEDICATION.getValue(),
+                      NmpcConstants.NMPC_NUTRITIONAL_SUPPLEMENT.getValue(),
                       nmpcDefinition.getIdentifier()))
               .containsAll(
                   Set.of(
                       NmpcConstants.NMPC_VACCINE.getValue(),
                       NmpcConstants.NMPC_MEDICATION.getValue(),
+                      NmpcConstants.NMPC_NUTRITIONAL_SUPPLEMENT.getValue(),
                       nmpcDefinition.getIdentifier()))) {
         NonDefiningProperty nmpcType = new NonDefiningProperty();
         nmpcType.setIdentifierScheme(nmpcDefinition.getName());
@@ -737,6 +740,8 @@ public class MedicationProductCalculationService
         SnowstormConceptMini valueObject;
         if (productDetails instanceof VaccineProductDetails) {
           valueObject = NmpcConstants.NMPC_VACCINE.snowstormConceptMini();
+        } else if (productDetails instanceof NutritionalProductDetails) {
+          valueObject = NmpcConstants.NMPC_NUTRITIONAL_SUPPLEMENT.snowstormConceptMini();
         } else {
           valueObject = NmpcConstants.NMPC_MEDICATION.snowstormConceptMini();
         }
@@ -793,6 +798,15 @@ public class MedicationProductCalculationService
 
     Map<ModelLevel, CompletableFuture<Node>> levelFutureMap = new HashMap<>();
     for (ModelLevel level : productLevels) {
+      if (productDetails instanceof NutritionalProductDetails
+          && (level.getModelLevelType() == ModelLevelType.MEDICINAL_PRODUCT_ONLY
+              || level.getModelLevelType() == ModelLevelType.REAL_MEDICINAL_PRODUCT
+              || level.getModelLevelType() == ModelLevelType.MEDICINAL_PRODUCT)) {
+        // Nutritional products do not have a medicinal product level or real medicinal product
+        // level
+        continue;
+      }
+
       Set<CompletableFuture<Node>> parents = new HashSet<>();
 
       for (ModelLevel parent : modelConfiguration.getParentModelLevels(level.getModelLevelType())) {
@@ -845,7 +859,23 @@ public class MedicationProductCalculationService
                                       modelConfiguration,
                                       productSummary,
                                       parentNodes,
-                                      modelConfiguration));
+                                      modelConfiguration))
+                              .thenApply(
+                                  node -> {
+                                    if (modelConfiguration.getModelType().equals(ModelType.NMPC)
+                                        && productDetails instanceof NutritionalProductDetails
+                                        && level.getModelLevelType() == CLINICAL_DRUG
+                                        && node.getNewConceptDetails() != null) {
+                                      node.getNewConceptDetails()
+                                          .getAxioms()
+                                          .forEach(
+                                              axiom -> {
+                                                axiom.setDefinitionStatusId(PRIMITIVE.getValue());
+                                                axiom.setDefinitionStatus("PRIMITIVE");
+                                              });
+                                    }
+                                    return node;
+                                  });
                       default ->
                           throw new IllegalArgumentException(
                               "Unsupported model level type: " + level.getModelLevelType());
@@ -1081,16 +1111,14 @@ public class MedicationProductCalculationService
         relationships.add(
             getSnowstormRelationship(IS_A, parent, 0, modelConfiguration.getModuleId()));
       }
-    } else {
-      relationships.add(
-          getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT, 0, modelConfiguration.getModuleId()));
-    }
-
-    if (modelConfiguration.getModelType().equals(ModelType.NMPC)
+    } else if (modelConfiguration.getModelType().equals(ModelType.NMPC)
         && level.getModelLevelType().equals(CLINICAL_DRUG)) {
       relationships.add(
           getSnowstormRelationship(
               IS_A, VIRTUAL_MEDICINAL_PRODUCT, 0, modelConfiguration.getModuleId()));
+    } else {
+      relationships.add(
+          getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT, 0, modelConfiguration.getModuleId()));
     }
 
     if (modelConfiguration.getModelType().equals(ModelType.NMPC)

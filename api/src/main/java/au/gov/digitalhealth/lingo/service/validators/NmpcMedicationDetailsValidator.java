@@ -23,6 +23,7 @@ import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackage
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.details.Ingredient;
 import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
+import au.gov.digitalhealth.lingo.product.details.NutritionalProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.ProductQuantity;
 import au.gov.digitalhealth.lingo.product.details.VaccineProductDetails;
@@ -73,8 +74,7 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
     validateConceptNotSet(
         packageDetails.getProductName(), "Medication packages cannot have a product name defined");
 
-    for (@Valid
-    ProductQuantity<MedicationProductDetails> productQuantity :
+    for (ProductQuantity<MedicationProductDetails> productQuantity :
         packageDetails.getContainedProducts()) {
       validatePopulatedConcept(
           productQuantity.getUnit(), "Medication product quantity must have a unit defined");
@@ -128,8 +128,8 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
           "Medication product details quantity must have a value greater than zero");
     }
 
+    final boolean unitOfPresentationExists = productDetails.getUnitOfPresentation() != null;
     for (Ingredient ingredient : productDetails.getActiveIngredients()) {
-      final boolean unitOfPresentationExists = productDetails.getUnitOfPresentation() != null;
 
       if (unitOfPresentationExists && productDetails instanceof VaccineProductDetails) {
         validateQuantityNotZero(
@@ -141,37 +141,56 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
           branch,
           ingredient,
           unitOfPresentationExists,
+          productDetails instanceof NutritionalProductDetails,
           productDetails instanceof VaccineProductDetails);
     }
   }
 
   private void validateIngredient(
-      String branch, Ingredient ingredient, boolean unitOfPresentationExists, boolean vaccine) {
-    // active ingredient must not be null.
-    if (ingredient.getActiveIngredient() == null) {
-      throw new ProductAtomicDataValidationProblem(
-          "Medication product details must have an active ingredient defined");
-    }
-    // refined active ingredient must be set.
-    if (ingredient.getRefinedActiveIngredient() == null) {
-      throw new ProductAtomicDataValidationProblem(
-          "Medication product details must have a refined active ingredient defined");
-    }
-    // precise ingredient must be set
-    if (ingredient.getPreciseIngredient() == null) {
-      throw new ProductAtomicDataValidationProblem(
-          "Medication product details must have a precise ingredient defined");
-    }
+      String branch,
+      Ingredient ingredient,
+      boolean unitOfPresentationExists,
+      boolean nutritionalProduct,
+      boolean vaccine) {
 
-    // if one of the concentration strength numerator or presentation strength numerator is set BoSS
-    // must be set.
-    if (((ingredient.getConcentrationStrengthNumerator() != null
-                && ingredient.getConcentrationStrengthNumerator().getValue() != null)
-            || (ingredient.getPresentationStrengthNumerator() != null
-                && ingredient.getPresentationStrengthNumerator().getValue() != null))
-        && ingredient.getBasisOfStrengthSubstance() == null) {
-      throw new ProductAtomicDataValidationProblem(
-          "Medication product details must have a basis of strength substance defined when concentration strength or presentation strength numerator is set");
+    if (nutritionalProduct) {
+      validateConceptNotSet(
+          ingredient.getActiveIngredient(),
+          "Medication product details must NOT have an active ingredient defined if primitive concept details are set");
+      validateConceptNotSet(
+          ingredient.getRefinedActiveIngredient(),
+          "Medication product details must NOT have an refined ingredient defined if primitive concept details are set");
+      validateConceptNotSet(
+          ingredient.getPreciseIngredient(),
+          "Medication product details must NOT have an precise ingredient defined if primitive concept details are set");
+      validateConceptNotSet(
+          ingredient.getBasisOfStrengthSubstance(),
+          "Medication product details must NOT have an BoSS ingredient defined if primitive concept details are set");
+    } else {
+      // active ingredient must not be null.
+      validatePopulatedConcept(
+          ingredient.getActiveIngredient(),
+          "Medication product details must have an active ingredient defined");
+      // refined active ingredient must be set.
+      validatePopulatedConcept(
+          ingredient.getRefinedActiveIngredient(),
+          "Medication product details must have an refined ingredient defined");
+      // precise ingredient must be set
+      validatePopulatedConcept(
+          ingredient.getPreciseIngredient(),
+          "Medication product details must have an precise ingredient defined");
+
+      // if one of the concentration strength numerator or presentation strength numerator is set
+      // BoSS
+      // must be set.
+      if (((ingredient.getConcentrationStrengthNumerator() != null
+                  && ingredient.getConcentrationStrengthNumerator().getValue() != null)
+              || (ingredient.getPresentationStrengthNumerator() != null
+                  && ingredient.getPresentationStrengthNumerator().getValue() != null))
+          && ingredient.getBasisOfStrengthSubstance() == null) {
+        throw new ProductAtomicDataValidationProblem(
+            "Medication product details must have a basis of strength substance defined when concentration strength or presentation strength numerator is set");
+      }
     }
 
     if (vaccine) {
@@ -201,19 +220,46 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
             ingredient.getConcentrationStrengthDenominator(),
             "concentration");
       }
+    } else if (nutritionalProduct) {
+      validateStrengthNotPopulated(
+          ingredient.getPresentationStrengthNumerator(),
+          ingredient.getPresentationStrengthDenominator(),
+          "presentation");
+      validateStrengthNotPopulated(
+          ingredient.getConcentrationStrengthNumerator(),
+          ingredient.getConcentrationStrengthDenominator(),
+          "concentration");
     } else {
       // if unit of presentation exists, presentation strength numerator and denominator value and
       // unit must be set and value must be non-zero.
       if (unitOfPresentationExists) {
-        validateNumeratorDenominatorSet(
-            ingredient.getPresentationStrengthNumerator(),
-            ingredient.getPresentationStrengthDenominator(),
-            "presentation");
-        // concentration strength numerator and denominator value and unit must not be set
-        validateStrengthNotPopulated(
-            ingredient.getConcentrationStrengthNumerator(),
-            ingredient.getConcentrationStrengthDenominator(),
-            "concentration");
+        if (ingredient.getPresentationStrengthNumerator() != null
+            && (ingredient.getPresentationStrengthNumerator().getValue() != null
+                || ingredient.getPresentationStrengthNumerator().getUnit() != null)) {
+          // if presentation strength numerator is set, then presentation strength denominator must
+          // also be set.
+          validateNumeratorDenominatorSet(
+              ingredient.getPresentationStrengthNumerator(),
+              ingredient.getPresentationStrengthDenominator(),
+              "presentation");
+          // concentration strength numerator and denominator value and unit must not be set
+          validateStrengthNotPopulated(
+              ingredient.getConcentrationStrengthNumerator(),
+              ingredient.getConcentrationStrengthDenominator(),
+              "concentration");
+        } else {
+          // if presentation strength isn't set with unit of presentation, then no strength should
+          // be set
+          validateStrengthNotPopulated(
+              ingredient.getPresentationStrengthNumerator(),
+              ingredient.getPresentationStrengthDenominator(),
+              "presentation");
+          // concentration strength numerator and denominator value and unit must not be set
+          validateStrengthNotPopulated(
+              ingredient.getConcentrationStrengthNumerator(),
+              ingredient.getConcentrationStrengthDenominator(),
+              "concentration");
+        }
       } else {
         // if unit of presentation does not exist, presentation strength numerator and denominator
         // value and unit must not be set.

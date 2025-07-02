@@ -88,6 +88,24 @@ public class SchemaService {
     return uiSchemaNode.toString();
   }
 
+  public String getSimpleSchema(String branch) {
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+    JsonNode schemaNode = readFileContentAsJson(modelConfiguration.getBaseSimpleSchema());
+
+    schemaExtender.updateSchema(modelConfiguration, schemaNode, "ProductDetails");
+
+    return schemaNode.toString();
+  }
+
+  public String getSimpleUiSchema(String branch) {
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+    JsonNode uiSchemaNode = readFileContentAsJson(modelConfiguration.getBaseSimpleUiSchema());
+
+    uiSchemaExtender.updateUiSchema(modelConfiguration, uiSchemaNode);
+
+    return uiSchemaNode.toString();
+  }
+
   public String getDeviceSchema(String branch) {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     JsonNode schemaNode = readFileContentAsJson(modelConfiguration.getBaseDeviceSchema());
