@@ -37,7 +37,7 @@ public enum NmpcConstants implements LingoConstants {
   // Relationship types
   //
   NMPC_DEVICE("680581000220102", "NMPC Device (qualifier value)"),
-  NMPC_MEDICATION("680591000220104", "NMPC Mediciation (qualifier value)"),
+  NMPC_MEDICATION("680591000220104", "NMPC Medication (qualifier value)"),
   NMPC_VACCINE("680601000220106", "NMPC Vaccine (qualifier value))"),
   HAS_NMPC_PRODUCT_TYPE("680011000220100", "Has NMPC Product Type (attribute)"),
   NMPC_NUTRITIONAL_SUPPLEMENT("680611000220109", "NMPC Nutritional Supplement (qualifier value)"),
