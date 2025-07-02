@@ -141,7 +141,7 @@
       "properties": {
         "type": {
           "type": "string",
-          "default": "medication"
+          "const": "medication"
         },
         "productName": {
           "$ref": "#/$defs/SnowstormConceptMini",
