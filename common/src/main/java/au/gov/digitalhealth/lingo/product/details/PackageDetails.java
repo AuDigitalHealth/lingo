@@ -52,4 +52,15 @@ public class PackageDetails<T extends ProductDetails> {
     }
     return idMap;
   }
+
+  public void cascadeSelectedIdentifiers() {
+    containedPackages.forEach(
+        containedPackage -> {
+          containedPackage
+              .getPackageDetails()
+              .getSelectedConceptIdentifiers()
+              .addAll(selectedConceptIdentifiers);
+          containedPackage.getPackageDetails().cascadeSelectedIdentifiers();
+        });
+  }
 }
