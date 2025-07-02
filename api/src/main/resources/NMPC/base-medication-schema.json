@@ -505,7 +505,7 @@
     },
     "ConcentrationStrengthIngredient": {
       "type": "object",
-      "additionalProperties": false,
+      "additionalProperties": true,
       "properties": {
         "activeIngredient": {
           "$ref": "#/$defs/SnowstormConceptMini",
