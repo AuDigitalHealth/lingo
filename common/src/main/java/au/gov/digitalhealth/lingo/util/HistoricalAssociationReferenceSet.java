@@ -15,6 +15,10 @@
  */
 package au.gov.digitalhealth.lingo.util;
 
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 public enum HistoricalAssociationReferenceSet implements LingoConstants {
   ALTERNATIVE("900000000000530003", "ALTERNATIVE association reference set"),
   MOVED_FROM("900000000000525002", "MOVED FROM association reference set"),
@@ -34,6 +38,12 @@ public enum HistoricalAssociationReferenceSet implements LingoConstants {
   HistoricalAssociationReferenceSet(String value, String label) {
     this.value = value;
     this.label = label;
+  }
+
+  public static Set<String> getRefsetIds() {
+    return Arrays.stream(HistoricalAssociationReferenceSet.values())
+        .map(HistoricalAssociationReferenceSet::getValue)
+        .collect(Collectors.toSet());
   }
 
   @Override

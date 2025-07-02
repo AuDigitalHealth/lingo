@@ -34,6 +34,7 @@ import au.gov.digitalhealth.lingo.util.AmtConstants;
 import au.gov.digitalhealth.lingo.util.BranchPatternMatcher;
 import au.gov.digitalhealth.lingo.util.CacheConstants;
 import au.gov.digitalhealth.lingo.util.ClientHelper;
+import au.gov.digitalhealth.lingo.util.HistoricalAssociationReferenceSet;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PreDestroy;
@@ -1050,5 +1051,32 @@ public class SnowstormClient {
         .map(SnowstormBranchPojo::getHeadTimestamp)
         .blockOptional()
         .orElse(null);
+  }
+
+  @Cacheable(
+      value = CacheConstants.SNOWSTORM_HIST_ASSOC_FOR_BRANCH,
+      keyGenerator = "branchAwareKeyGenerator")
+  public Mono<List<SnowstormReferenceSetMember>> getHistoricalAssociations(
+      String branch, String conceptId) {
+    log.fine(
+        "Retrieving historical associations for concept " + conceptId + " on branch " + branch);
+
+    return getRefsetMembersApi()
+        .findRefsetMembers1(
+            branch,
+            String.join(" OR ", HistoricalAssociationReferenceSet.getRefsetIds()),
+            null,
+            null,
+            true,
+            null,
+            Set.of(conceptId),
+            null,
+            null,
+            null,
+            0,
+            100,
+            null,
+            languageHeader)
+        .mapNotNull(SnowstormItemsPageReferenceSetMember::getItems);
   }
 }
