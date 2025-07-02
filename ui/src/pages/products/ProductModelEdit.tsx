@@ -1099,7 +1099,12 @@ function ProductPanel({
           <AccordionDetails key={'accordion-details-' + product.conceptId}>
             {/* A single concept exists, you do not have an option to make a new concept */}
             {product.concept && (
-              <ExistingConceptDropdown product={product} branch={branch} />
+              <ExistingConceptDropdown
+                product={product}
+                branch={branch}
+                control={control}
+                index={index}
+              />
             )}
             {/* a new concept has to be made, as one does not exist */}
             {product.concept === null &&
