@@ -19,6 +19,10 @@ import { Control, Controller, UseFormSetValue } from 'react-hook-form';
 import { Product, ProductSummary } from '../../../types/concept';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import {
+  isReplacedWithExistingConcept,
+  isReplacedWithNewConcept,
+} from '../../../utils/helpers/conceptUtils.ts';
 
 interface ProductRetireUpdateProps {
   product: Product;
@@ -60,9 +64,9 @@ export const ProductRetireUpdate: React.FC<ProductRetireUpdateProps> = ({
   setValue,
   branch,
 }) => {
-  const show =
-    product.originalNode !== null && product.newConceptDetails !== null;
-  if (!show) return null;
+  const isReplacedWithExisting = isReplacedWithExistingConcept(product);
+  const isReplacedWithNew = isReplacedWithNewConcept(product);
+  if (!isReplacedWithNew && !isReplacedWithExisting) return null;
 
   const theme = useTheme();
   const id = product.originalNode?.node.concept.conceptId;
@@ -115,7 +119,9 @@ export const ProductRetireUpdate: React.FC<ProductRetireUpdateProps> = ({
           color: 'text.primary',
         }}
       >
-        {referencedByOtherProducts ? 'Original Concept' : 'Edit/Retire Concept'}
+        {referencedByOtherProducts || isReplacedWithExisting
+          ? 'Original Concept'
+          : 'Edit/Retire Concept'}
       </Typography>
 
       <Stack spacing={2}>
@@ -196,56 +202,58 @@ export const ProductRetireUpdate: React.FC<ProductRetireUpdateProps> = ({
         {/* Toggles and Dropdown */}
         {!referencedByOtherProducts && (
           <>
-            <Box
-              sx={{
-                display: 'flex',
-                gap: 4,
-                alignItems: 'center',
-                flexWrap: 'wrap',
-              }}
-            >
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={retireAndReplace}
-                    onChange={e => {
-                      const isChecked = e.target.checked;
-                      setRetireAndReplace(isChecked);
-                      setConceptEdit(!isChecked);
+            {isReplacedWithNew && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 4,
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={retireAndReplace}
+                      onChange={e => {
+                        const isChecked = e.target.checked;
+                        setRetireAndReplace(isChecked);
+                        setConceptEdit(!isChecked);
 
-                      setValue(
-                        `nodes[${index}].originalNode.inactivationReason`,
-                        isChecked ? 'ERRONEOUS' : null,
-                      );
-                    }}
-                    color="primary"
-                  />
-                }
-                label="Retire and Replace"
-              />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={conceptEdit}
-                    onChange={e => {
-                      const isChecked = e.target.checked;
-                      setConceptEdit(isChecked);
-                      setRetireAndReplace(!isChecked);
+                        setValue(
+                          `nodes[${index}].originalNode.inactivationReason`,
+                          isChecked ? 'ERRONEOUS' : null,
+                        );
+                      }}
+                      color="primary"
+                    />
+                  }
+                  label="Retire and Replace"
+                />
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={conceptEdit}
+                      onChange={e => {
+                        const isChecked = e.target.checked;
+                        setConceptEdit(isChecked);
+                        setRetireAndReplace(!isChecked);
 
-                      setValue(
-                        `nodes[${index}].originalNode.inactivationReason`,
-                        isChecked ? null : 'ERRONEOUS',
-                      );
-                    }}
-                    color="primary"
-                  />
-                }
-                label="Edit in place"
-              />
-            </Box>
+                        setValue(
+                          `nodes[${index}].originalNode.inactivationReason`,
+                          isChecked ? null : 'ERRONEOUS',
+                        );
+                      }}
+                      color="primary"
+                    />
+                  }
+                  label="Edit in place"
+                />
+              </Box>
+            )}
 
             {/* Inactivation Reason Dropdown (Only when Retire and Replace is ON) */}
-            {retireAndReplace && (
+            {(retireAndReplace || isReplacedWithExisting) && (
               <FormControl fullWidth required>
                 <InputLabel id={`inactivation-reason-label-${index}`}>
                   Inactivation Reason

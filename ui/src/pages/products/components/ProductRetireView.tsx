@@ -2,7 +2,11 @@ import React from 'react';
 import { Stack, Tooltip } from '@mui/material';
 import { ArchiveOutlined } from '@mui/icons-material';
 import { Product, ProductSummary } from '../../../types/concept';
-import { Control, UseFormGetValues, useWatch } from 'react-hook-form';
+import { Control, useWatch } from 'react-hook-form';
+import {
+  isReplacedWithExistingConcept,
+  isReplacedWithNewConcept,
+} from '../../../utils/helpers/conceptUtils.ts';
 
 export interface ProductRetireViewProps {
   product: Product;
@@ -17,9 +21,11 @@ export const ProductRetireView: React.FC<ProductRetireViewProps> = ({
   control,
   index,
 }) => {
-  const show =
-    product.originalNode !== null && product.newConceptDetails !== null;
-  if (!show) return null;
+  if (
+    !isReplacedWithNewConcept(product) &&
+    !isReplacedWithExistingConcept(product)
+  )
+    return null;
 
   const term = product.originalNode?.node.concept.pt.term;
 
