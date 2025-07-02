@@ -34,7 +34,10 @@
       "minProperties": 2,
       "properties": {
         "unit": {
-          "type": ["object", "null"],
+          "type": [
+            "object",
+            "null"
+          ],
           "$ref": "#/$defs/SnowstormConceptMini"
         },
         "value": {
@@ -130,7 +133,7 @@
       "properties": {
         "type": {
           "type": "string",
-          "default": "medication"
+          "const": "vaccine"
         },
         "productName": {
           "$ref": "#/$defs/SnowstormConceptMini",
@@ -175,22 +178,9 @@
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Unit of Presentation"
         },
-        "unit": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "Unit of presentation size unit",
-          "errorMessage": {
-            "type": "Invalid Pack Size Unit",
-            "minProperties": "Field must be populated."
-          }
-        },
-        "value": {
-          "type": "number",
-          "title": "Unit of presentation size quantity",
-          "minimum": 0,
-          "errorMessage": {
-            "type": "Value must be a number",
-            "minimum": "Value must be at least 0"
-          }
+        "quantity": {
+          "$ref": "#/$defs/Quantity",
+          "title": "Unit of Presentation Quantity"
         }
       },
       "required": [
