@@ -28,6 +28,7 @@ import {
   bulkAuthorBrands,
   bulkAuthorPackSizes,
 } from '../../types/queryKeys.ts';
+import { isNewConcept, isReplacedWithExistingConcept } from './conceptUtils.ts';
 
 export function isNameContainsKeywords(name: string, keywords: string[]) {
   return keywords.some(substring =>
@@ -56,7 +57,7 @@ export const getColorByDefinitionStatus = (
   ) {
     return Product7BoxBGColour.NEW;
   }
-  if (product.newConcept) {
+  if (isNewConcept(product)) {
     if (
       (product.fullySpecifiedName &&
         isNameContainsKeywords(
@@ -86,7 +87,7 @@ export const getColorByDefinitionStatus = (
     }
     return Product7BoxBGColour.NEW;
   }
-  if (product.propertyUpdate) {
+  if (product.propertyUpdate || isReplacedWithExistingConcept(product)) {
     return Product7BoxBGColour.PROPERTY_CHANGE;
   }
   return product.concept?.definitionStatus === DefinitionStatus.Primitive

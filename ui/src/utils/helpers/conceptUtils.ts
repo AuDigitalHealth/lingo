@@ -167,6 +167,20 @@ export function containsNewConcept(nodes: Product[]) {
 export function isNewConcept(product: Product) {
   return (product.newConcept || product.newConceptDetails) && !product.concept;
 }
+export function isReplacedWithNewConcept(product: Product) {
+  return product.originalNode !== null && product.newConceptDetails !== null;
+}
+
+export function isReplacedWithExistingConcept(product: Product) {
+  return (
+    product.concept &&
+    !product.newConceptDetails &&
+    product.originalNode &&
+    !product.originalNode.referencedByOtherProducts &&
+    product.originalNode?.inactivationReason
+  );
+}
+
 export const isValidConceptName = (concept: Concept) => {
   return concept && concept.pt?.term !== '' && concept.pt?.term !== null;
 };
