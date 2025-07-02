@@ -40,7 +40,9 @@ public class Ingredient extends ProductBaseDto {
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
     Map<String, String> idMap = addToIdFsnMap(null, totalQuantity, concentrationStrength);
-    addToIdFsnMap(idMap, activeIngredient);
+    if (activeIngredient != null) {
+      addToIdFsnMap(idMap, activeIngredient);
+    }
     if (preciseIngredient != null) {
       addToIdFsnMap(idMap, preciseIngredient);
     }
