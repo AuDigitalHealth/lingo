@@ -124,62 +124,96 @@ export const useDependantUpdates = (
 
     return dependantUiSchema;
   };
+  const getUiSchemaFromAnyOf = (uiSchema: any, dependantId: string) => {
+    const anyOf = uiSchema.anyOf;
+    if (!Array.isArray(anyOf)) return undefined;
 
+    for (const option of anyOf) {
+      const maybe = RjsfUtils.getUiSchemaById(option, dependantId);
+      if (maybe) return maybe;
+    }
+    return undefined;
+  };
   const updateDependants = () => {
     if (!dependants?.length) return;
 
     const parentValueSelected =
-      !!formData?.conceptId && !formData.conceptId.match(/^$/);
+        !!formData?.conceptId && !formData.conceptId.match(/^$/);
 
     for (const dependant of dependants) {
-      const dependantId = RjsfUtils.resolveRelativeIdOrPath?.(
-        idSchema.$id,
-        dependant.path,
+      const dependantId = RjsfUtils.resolveRelativeIdOrPath(
+          idSchema.$id,
+          dependant.path,
       );
       if (!dependantId) continue;
 
-      const dependantInstance = RjsfUtils.getUiSchemaById?.(
-        formContext.uiSchema,
-        dependantId,
+      let dependantInstance = RjsfUtils.getUiSchemaById(
+          formContext.uiSchema,
+          dependantId,
       );
-      if (!dependantInstance) continue;
+
+      let anyOfIndex: number | null = null;
+
+      // Fallback: search inside anyOf array
+      if (!dependantInstance && Array.isArray(formContext.uiSchema?.anyOf)) {
+        for (let i = 0; i < formContext.uiSchema.anyOf.length; i++) {
+          const sub = formContext.uiSchema.anyOf[i];
+          const maybe = RjsfUtils.getUiSchemaById(sub, dependantId);
+          if (maybe) {
+            dependantInstance = maybe;
+            anyOfIndex = i;
+            break;
+          }
+        }
+      }
+
+      if (!dependantInstance) {
+        console.warn('Could not locate dependant UI schema:', dependantId);
+        continue;
+      }
 
       const newUiSchema = configureDependantUiSchema(
-        dependant,
-        dependantInstance,
-        parentValueSelected ? formData?.conceptId : undefined,
+          dependant,
+          dependantInstance,
+          parentValueSelected ? formData?.conceptId : undefined,
       );
 
       // Preserve sub-dependants
-      if (dependantInstance['ui:options']?.dependants) {
-        newUiSchema['ui:options'].dependants =
-          dependantInstance['ui:options'].dependants;
-      }
-      if (dependantInstance['ui:options']?.showDefaultOptions) {
-        newUiSchema['ui:options'].showDefaultOptions =
-          dependantInstance['ui:options'].showDefaultOptions;
-      }
+      const options = dependantInstance['ui:options'] ?? {};
+      newUiSchema['ui:options'] ??= {};
+      if (options.dependants)
+        newUiSchema['ui:options'].dependants = options.dependants;
+      if (options.showDefaultOptions)
+        newUiSchema['ui:options'].showDefaultOptions = options.showDefaultOptions;
 
-      // Handle anyOf sub-schemas
+      // Handle nested anyOfs
       if (newUiSchema.anyOf) {
-        newUiSchema.anyOf = newUiSchema.anyOf.map(subSchema =>
-          configureDependantUiSchema(
-            dependant,
-            subSchema,
-            parentValueSelected ? formData?.conceptId : undefined,
-          ),
+        newUiSchema.anyOf = newUiSchema.anyOf.map(sub =>
+            configureDependantUiSchema(
+                dependant,
+                sub,
+                parentValueSelected ? formData?.conceptId : undefined,
+            ),
         );
       }
 
-      // Update form data and UI schema
-      RjsfUtils.setFormDataById?.(
-        rootFormData,
-        dependantId,
-        newUiSchema.defaultValue ?? null,
+      // Update form data
+      RjsfUtils.setFormDataById(
+          formContext.formData,
+          dependantId,
+          newUiSchema.defaultValue ?? null,
       );
-      RjsfUtils.setUiSchemaById?.(rootUiSchema, dependantId, newUiSchema);
+
+      // Update the correct uiSchema: either main or inside anyOf
+      if (anyOfIndex !== null) {
+        const anyOfUiSchema = formContext.uiSchema.anyOf[anyOfIndex];
+        RjsfUtils.setUiSchemaById(anyOfUiSchema, dependantId, newUiSchema);
+      } else {
+        RjsfUtils.setUiSchemaById(formContext.uiSchema, dependantId, newUiSchema);
+      }
     }
   };
+
 
   useEffect(() => {
     updateDependants();
