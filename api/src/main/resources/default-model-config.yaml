@@ -9,6 +9,8 @@ models:
     baseMedicationUiSchema: classpath:AMT/base-medication-ui-schema.json
     baseVaccineSchema: classpath:AMT/base-medication-schema.json
     baseVaccineUiSchema: classpath:AMT/base-medication-ui-schema.json
+    baseSimpleSchema: classpath:NMPC/base-medication-schema.json
+    baseSimpleUiSchema: classpath:NMPC/base-medication-ui-schema.json
     baseDeviceSchema: classpath:AMT/base-device-schema.json
     baseDeviceUiSchema: classpath:AMT/base-device-ui-schema.json
     baseBulkBrandSchema: classpath:AMT/base-bulk-brand-schema.json
@@ -105,6 +107,8 @@ models:
     baseMedicationUiSchema: classpath:NMPC/base-medication-ui-schema.json
     baseVaccineSchema: classpath:NMPC/base-vaccine-schema.json
     baseVaccineUiSchema: classpath:NMPC/base-vaccine-ui-schema.json
+    baseSimpleSchema: classpath:NMPC/base-simple-schema.json
+    baseSimpleUiSchema: classpath:NMPC/base-simple-ui-schema.json
     baseDeviceSchema: classpath:NMPC/base-device-schema.json
     baseDeviceUiSchema: classpath:NMPC/base-device-ui-schema.json
     baseBulkBrandSchema: classpath:NMPC/base-bulk-brand-schema.json
