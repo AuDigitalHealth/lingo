@@ -117,7 +117,7 @@ export default function SearchProduct({
       case ActionType.newBrand:
         returnVal = generateEclFromBinding(
           fieldBindings,
-          'medicationProduct.search',
+          'bulk.new-brand-pack-sizes',
         );
         break;
       case ActionType.newDevice:
