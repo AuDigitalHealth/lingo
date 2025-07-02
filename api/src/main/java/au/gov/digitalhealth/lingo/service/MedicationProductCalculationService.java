@@ -35,7 +35,6 @@ import static au.gov.digitalhealth.lingo.util.NmpcConstants.VIRTUAL_MEDICINAL_PR
 import static au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter.calculateNonDefiningRelationships;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONTAINS_CD;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.COUNT_OF_ACTIVE_INGREDIENT;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.COUNT_OF_BASE_ACTIVE_INGREDIENT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_ACTIVE_INGREDIENT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_BOSS;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_CONCENTRATION_STRENGTH_DENOMINATOR_UNIT;
@@ -102,6 +101,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -226,6 +226,34 @@ public class MedicationProductCalculationService
               ProductSummaryService.HAS_PRODUCT_NAME_LABEL);
         }
       }
+    }
+  }
+
+  private static void addCountOfBaseActiveIngredient(
+      MedicationProductDetails productDetails,
+      ModelConfiguration modelConfiguration,
+      Set<SnowstormRelationship> relationships) {
+    if (productDetails.getActiveIngredients() != null
+        && !productDetails.getActiveIngredients().isEmpty()
+        && productDetails.getActiveIngredients().stream()
+            .anyMatch(i -> i != null && i.getBasisOfStrengthSubstance() != null)) {
+      relationships.add(
+          getSnowstormDatatypeComponent(
+              SnomedConstants.COUNT_OF_BASE_ACTIVE_INGREDIENT,
+              Integer.toString(
+                  productDetails.getActiveIngredients().stream()
+                      .map(
+                          i ->
+                              i == null || i.getBasisOfStrengthSubstance() == null
+                                  ? null
+                                  : i.getBasisOfStrengthSubstance().getConceptId())
+                      .map(Objects::nonNull)
+                      .collect(Collectors.toSet())
+                      .size()),
+              DataTypeEnum.INTEGER,
+              0,
+              SnomedConstants.STATED_RELATIONSHIP,
+              modelConfiguration.getModuleId()));
     }
   }
 
@@ -1004,18 +1032,7 @@ public class MedicationProductCalculationService
 
     if (EnumSet.of(MEDICINAL_PRODUCT_ONLY, REAL_MEDICINAL_PRODUCT)
         .contains(level.getModelLevelType())) {
-      relationships.add(
-          getSnowstormDatatypeComponent(
-              SnomedConstants.COUNT_OF_BASE_ACTIVE_INGREDIENT,
-              Integer.toString(
-                  productDetails.getActiveIngredients().stream()
-                      .map(i -> i.getBasisOfStrengthSubstance().getConceptId())
-                      .collect(Collectors.toSet())
-                      .size()),
-              DataTypeEnum.INTEGER,
-              0,
-              SnomedConstants.STATED_RELATIONSHIP,
-              modelConfiguration.getModuleId()));
+      addCountOfBaseActiveIngredient(productDetails, modelConfiguration, relationships);
     }
 
     return relationships;
@@ -1354,23 +1371,8 @@ public class MedicationProductCalculationService
               0,
               STATED_RELATIONSHIP,
               modelConfiguration.getModuleId()));
-    } else if (modelConfiguration.getModelType().equals(ModelType.NMPC)
-        && productDetails.getActiveIngredients() != null
-        && !productDetails.getActiveIngredients().isEmpty()) {
-
-      relationships.add(
-          getSnowstormDatatypeComponent(
-              COUNT_OF_BASE_ACTIVE_INGREDIENT,
-              // get the unique set of active ingredients
-              Integer.toString(
-                  productDetails.getActiveIngredients().stream()
-                      .map(i -> i.getBasisOfStrengthSubstance().getConceptId())
-                      .collect(Collectors.toSet())
-                      .size()),
-              DataTypeEnum.INTEGER,
-              0,
-              STATED_RELATIONSHIP,
-              modelConfiguration.getModuleId()));
+    } else if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
+      addCountOfBaseActiveIngredient(productDetails, modelConfiguration, relationships);
     }
 
     return relationships;
