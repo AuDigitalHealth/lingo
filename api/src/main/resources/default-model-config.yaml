@@ -177,8 +177,8 @@ models:
         identifier: 680041000220101
         level: PACKAGE
         dataType: STRING
-        valueRegexValidation: (PA\d{4,8}(\/\d{1,2})?(\/\d{1,2})?)|(EU\/\d{1}\/\d{2}\/\d{3}\/\d{3})
-        valueValidationErrorMessage: "Must be a valid HPRA or EMA product authorisation number (PA12345678, PA1234/12, PA1234/12/34, EU/0/12/345/678)"
+        valueRegexValidation: (P(P)?A\d{4,8}(\/\d{1,2})?(\/\d{1,2})?)|(EU\/\d{1}\/\d{2}\/\d{3}\/\d{3})
+        valueValidationErrorMessage: "Must be a valid HPRA (PA/PPA) or EMA product authorisation number (PA1234, PA1234/12, PA1234/12/34, EU/0/12/345/678)"
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
@@ -254,7 +254,7 @@ models:
         title: Multi component indicator
         identifier: 679981000220105
         level: PRODUCT
-        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        modelLevels: REAL_CLINICAL_DRUG
         order: 1
       - name: ulmFlag
         title: ULM flag
