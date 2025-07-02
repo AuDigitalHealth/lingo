@@ -826,7 +826,8 @@ public class MedicationProductCalculationService
 
     Map<ModelLevel, CompletableFuture<Node>> levelFutureMap = new HashMap<>();
     for (ModelLevel level : productLevels) {
-      if (productDetails instanceof NutritionalProductDetails
+      if (modelConfiguration.getModelType().equals(ModelType.NMPC)
+          && productDetails instanceof NutritionalProductDetails
           && (level.getModelLevelType() == ModelLevelType.MEDICINAL_PRODUCT_ONLY
               || level.getModelLevelType() == ModelLevelType.REAL_MEDICINAL_PRODUCT
               || level.getModelLevelType() == ModelLevelType.MEDICINAL_PRODUCT)) {

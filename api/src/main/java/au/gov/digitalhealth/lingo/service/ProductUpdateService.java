@@ -505,8 +505,8 @@ public class ProductUpdateService {
             });
 
     List<CompletableFuture<Void>> referencedByOtherProductsFutures = new ArrayList<>();
-    newSummary
-        .getNodes()
+    newSummary.getNodes().stream()
+        .filter(node -> node.getOriginalNode() != null)
         .forEach(
             newNode -> {
               OriginalNode originalNode = newNode.getOriginalNode();
