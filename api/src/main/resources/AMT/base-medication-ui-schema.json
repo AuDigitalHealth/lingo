@@ -21,7 +21,7 @@
     "ui:field": "AutoCompleteField",
     "ui:options": {
       "ecl": "<774167006",
-      "showDefaultOptions": false,
+      "showDefaultOptions": true,
       "createBrand": {
         "ecl": "<774167006",
         "semanticTags": "(product name)"
@@ -127,7 +127,7 @@
           "ui:field": "AutoCompleteField",
           "ui:options": {
             "ecl": "<774167006",
-            "showDefaultOptions": false
+            "showDefaultOptions": true
           }
         },
         "activeIngredients": {
@@ -273,7 +273,7 @@
             ],
             "ecl": "^929360071000036103.411116001",
             "extendedEcl": "<736542009",
-            "showDefaultOptions": false
+            "showDefaultOptions": true
           }
         },
         "specificForm": {
@@ -413,7 +413,7 @@
           "ui:field": "AutoCompleteField",
           "ui:options": {
             "ecl": "<774167006",
-            "showDefaultOptions": false
+            "showDefaultOptions": true
           }
         },
         "containerType": {
@@ -505,7 +505,7 @@
                 "ui:field": "AutoCompleteField",
                 "ui:options": {
                   "ecl": "<774167006",
-                  "showDefaultOptions": false
+                  "showDefaultOptions": true
                 }
               },
               "activeIngredients": {
@@ -651,7 +651,7 @@
                   ],
                   "ecl": "^929360071000036103.411116001",
                   "extendedEcl": "<736542009",
-                  "showDefaultOptions": false
+                  "showDefaultOptions": true
                 }
               },
               "specificForm": {
