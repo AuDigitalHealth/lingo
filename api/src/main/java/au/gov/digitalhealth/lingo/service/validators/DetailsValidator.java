@@ -22,52 +22,72 @@ import java.util.Map;
 public class DetailsValidator {
 
   protected static void validateNumeratorDenominatorSet(
-      @Valid Quantity strengthNumerator, @Valid Quantity strengthDenominator, String typeName) {
+      @Valid Quantity strengthNumerator,
+      @Valid Quantity strengthDenominator,
+      String typeName,
+      String objectName,
+      String message) {
     if (strengthNumerator == null
         || strengthNumerator.getValue() == null
         || BigDecimal.ZERO.equals(strengthNumerator.getValue())) {
       throw new ProductAtomicDataValidationProblem(
-          "Medication product details must have a "
+          objectName
+              + " must have a "
               + typeName
-              + " strength numerator value greater than zero");
+              + " strength numerator value greater than zero when "
+              + message);
     }
     if (strengthNumerator.getUnit() == null) {
       throw new ProductAtomicDataValidationProblem(
-          "Medication product details must have a "
+          objectName
+              + " must have a "
               + typeName
-              + " strength numerator unit defined");
+              + " strength numerator unit defined when "
+              + message);
     }
     if (strengthDenominator == null
         || strengthDenominator.getValue() == null
         || BigDecimal.ZERO.equals(strengthDenominator.getValue())) {
       throw new ProductAtomicDataValidationProblem(
-          "Medication product details must have a "
+          objectName
+              + " must have a "
               + typeName
-              + " strength denominator value greater than zero");
+              + " strength denominator value greater than zero when "
+              + message);
     }
     if (strengthDenominator.getUnit() == null) {
       throw new ProductAtomicDataValidationProblem(
-          "Medication product details must have a "
+          objectName
+              + " must have a "
               + typeName
-              + " strength denominator unit defined");
+              + " strength denominator unit defined when "
+              + message);
     }
   }
 
   protected static void validateStrengthNotPopulated(
-      @Valid Quantity strengthNumerator, @Valid Quantity strengthDenominator, String strengthType) {
+      @Valid Quantity strengthNumerator,
+      @Valid Quantity strengthDenominator,
+      String strengthType,
+      String objectName,
+      String message) {
     if (strengthNumerator != null
         && (strengthNumerator.getValue() != null || strengthNumerator.getUnit() != null)) {
       throw new ProductAtomicDataValidationProblem(
-          "Medication product details must not have a "
+          objectName
+              + " must not have a "
               + strengthType
-              + " strength numerator defined when unit of presentation exists");
+              + " strength numerator defined "
+              + message);
     }
     if (strengthDenominator != null
         && (strengthDenominator.getValue() != null || strengthDenominator.getUnit() != null)) {
       throw new ProductAtomicDataValidationProblem(
-          "Medication product details must not have a "
+          objectName
+              + " must not have a "
               + strengthType
-              + " strength denominator defined when unit of presentation exists");
+              + " strength denominator defined "
+              + message);
     }
   }
 
