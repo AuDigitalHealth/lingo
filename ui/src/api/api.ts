@@ -16,6 +16,8 @@
 
 import axios from 'axios';
 import useUserStore from '../stores/UserStore';
+import { enqueueSnackbar } from 'notistack';
+import {isAtomicDataValidationProblem} from './ProblemDetail';
 
 export const api = axios.create({});
 
@@ -37,6 +39,17 @@ api.interceptors.response.use(
       useUserStore.setState({ loginRefreshRequired: true });
     }
 
+    const potentialProblemDetail = error?.response?.data;
+    debugger;
+    if (
+      error.response?.status === 400 &&
+      isAtomicDataValidationProblem(potentialProblemDetail)
+    ) {
+      enqueueSnackbar(potentialProblemDetail.detail, {
+        variant: 'error'
+      });
+    }
+    
     return Promise.reject(error);
   },
 );
