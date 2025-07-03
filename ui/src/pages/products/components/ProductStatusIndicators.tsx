@@ -4,7 +4,11 @@ import { FormattedMessage } from 'react-intl';
 import { NewReleases, NewReleasesOutlined } from '@mui/icons-material';
 import { styled } from '@mui/system';
 import { Avatar } from 'antd';
-import { hasDescriptionChange, Product } from '../../../types/concept';
+import {
+  hasDescriptionChange,
+  hasHistoricalAssociationsChanged,
+  Product,
+} from '../../../types/concept';
 
 export interface ProductStatusProps {
   product: Product;
@@ -24,6 +28,18 @@ export const ProductStatusIndicators: React.FC<ProductStatusProps> = ({
 
   return (
     <Stack direction="row" spacing={spacing} alignItems="center">
+      {hasHistoricalAssociationsChanged(product) && (
+        <Tooltip
+          title={
+            <FormattedMessage
+              id="historical-associations-updated"
+              defaultMessage="Historical associations changed"
+            />
+          }
+        >
+          <SmallAvatar>H</SmallAvatar>
+        </Tooltip>
+      )}
       {product.statedFormChanged && (
         <Tooltip
           title={
