@@ -652,7 +652,7 @@ function ProductHeaderWatch({
   partialNameCheckKeywords,
   nameGeneratorErrorKeywords,
   optionsIgnored,
-  isEditMode
+  isEditMode,
 }: {
   control?: Control<ProductSummary>;
   index: number;
@@ -678,26 +678,33 @@ function ProductHeaderWatch({
     name: `nodes[${index}].newConceptDetails.fullySpecifiedName` as 'nodes.0.newConceptDetails.fullySpecifiedName',
   });
 
-  if(!control){
+  if (!control) {
     fsn = product.fullySpecifiedName as string;
     pt = product.preferredTerm as string;
   }
 
   if (isNewConcept(product) && isEditMode) {
     if (
-      (fsn && nameGeneratorErrorKeywords && isNameContainsKeywords(fsn, nameGeneratorErrorKeywords)) ||
-      (pt && nameGeneratorErrorKeywords && isNameContainsKeywords(pt, nameGeneratorErrorKeywords))
+      (fsn &&
+        nameGeneratorErrorKeywords &&
+        isNameContainsKeywords(fsn, nameGeneratorErrorKeywords)) ||
+      (pt &&
+        nameGeneratorErrorKeywords &&
+        isNameContainsKeywords(pt, nameGeneratorErrorKeywords))
     ) {
       handleChangeColor(Product7BoxBGColour.INVALID);
     } else if (
-      (fsn && partialNameCheckKeywords && isNameContainsKeywords(fsn, partialNameCheckKeywords)) ||
-      (pt && partialNameCheckKeywords && isNameContainsKeywords(pt, partialNameCheckKeywords))
+      (fsn &&
+        partialNameCheckKeywords &&
+        isNameContainsKeywords(fsn, partialNameCheckKeywords)) ||
+      (pt &&
+        partialNameCheckKeywords &&
+        isNameContainsKeywords(pt, partialNameCheckKeywords))
     ) {
       handleChangeColor(Product7BoxBGColour.INCOMPLETE);
     } else if (
       fsn &&
-      partialNameCheckKeywords
-      &&
+      partialNameCheckKeywords &&
       !isNameContainsKeywords(fsn, partialNameCheckKeywords) &&
       pt &&
       !isNameContainsKeywords(pt, partialNameCheckKeywords) &&
@@ -706,8 +713,7 @@ function ProductHeaderWatch({
       handleChangeColor(Product7BoxBGColour.NEW);
     } else if (
       fsn &&
-      partialNameCheckKeywords
-      &&
+      partialNameCheckKeywords &&
       !isNameContainsKeywords(fsn, partialNameCheckKeywords) &&
       pt &&
       !isNameContainsKeywords(pt, partialNameCheckKeywords) &&
