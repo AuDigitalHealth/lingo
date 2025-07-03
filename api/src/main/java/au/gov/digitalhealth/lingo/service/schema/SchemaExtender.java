@@ -21,6 +21,7 @@ import static au.gov.digitalhealth.lingo.service.schema.SchemaConstants.NON_DEFI
 import au.gov.digitalhealth.lingo.configuration.model.BasePropertyDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
+import au.gov.digitalhealth.lingo.configuration.model.ProductType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,11 +45,16 @@ public class SchemaExtender {
   }
 
   public void updateEditSchema(
-      ModelConfiguration modelConfiguration, JsonNode schemaNode, ModelLevel level) {
+      ModelConfiguration modelConfiguration,
+      JsonNode schemaNode,
+      ModelLevel level,
+      ProductType propertyType) {
     Set<BasePropertyDefinition> properties = new HashSet<>();
     properties.addAll(modelConfiguration.getMappingsByLevel(level));
     properties.addAll(modelConfiguration.getNonDefiningPropertiesByLevel(level));
     properties.addAll(modelConfiguration.getReferenceSetsByLevel(level));
+
+    properties.removeIf(p -> p.getSuppressOnProductTypes().contains(propertyType));
 
     updateEditSchemaForProperties(
         schemaNode,
@@ -60,12 +66,17 @@ public class SchemaExtender {
   }
 
   public void updateSchema(
-      ModelConfiguration modelConfiguration, JsonNode schemaNode, String... productPropertyNames) {
+      ModelConfiguration modelConfiguration,
+      JsonNode schemaNode,
+      ProductType propertyType,
+      String... productPropertyNames) {
 
     Set<BasePropertyDefinition> properties = new HashSet<>();
     properties.addAll(modelConfiguration.getMappings());
     properties.addAll(modelConfiguration.getNonDefiningProperties());
     properties.addAll(modelConfiguration.getReferenceSets());
+
+    properties.removeIf(p -> p.getSuppressOnProductTypes().contains(propertyType));
 
     updateSchemaForProperties(
         schemaNode,
