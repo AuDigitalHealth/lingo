@@ -30,7 +30,7 @@ function ConceptReviewList() {
       approveReviewMutation.mutate({
         projectKey: task.projectKey,
         taskKey: task.key,
-        reviewedList: {conceptIds: [], approvalDate: ''}, // Empty array to disapprove all
+        reviewedList: {conceptIds: [], approvalDate: new Date().toISOString()},
       });
     }
   };
