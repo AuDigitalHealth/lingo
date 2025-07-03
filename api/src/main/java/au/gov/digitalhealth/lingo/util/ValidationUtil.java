@@ -60,7 +60,9 @@ public class ValidationUtil {
                 r.getTypeId().equals(CONTAINS_PACKAGED_CD.getValue())
                     || r.getTypeId().equals(CONTAINS_PACKAGED_DEVICE.getValue()))) {
       throw new ProductAtomicDataValidationProblem(
-          "Cannot get brands for multi pack product " + concept.getConceptId());
+          "Cannot get brands/pack size for multi pack product "
+              + concept.getConceptId()
+              + " - bulk brand or pack size features are limited to single component products");
     }
 
     Set<SnowstormRelationship> containsProductRelationships =
@@ -74,7 +76,9 @@ public class ValidationUtil {
 
     if (containsProductRelationships.size() != 1) {
       throw new ProductAtomicDataValidationProblem(
-          "Cannot get brands for multi component product " + concept.getConceptId());
+          "Cannot get brands/pack size for multi component product "
+              + concept.getConceptId()
+              + " - bulk brand or pack size features are limited to single component products");
     }
   }
 }
