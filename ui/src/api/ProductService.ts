@@ -14,6 +14,7 @@
 /// limitations under the License.
 ///
 
+import { Product } from '../types/concept.ts';
 import { Concept, ProductSummary } from '../types/concept.ts';
 
 import {
@@ -40,7 +41,14 @@ const ProductService = {
   handleErrors: () => {
     throw new Error('invalid product response');
   },
-
+  async getNode(conceptId: string, branch: string): Promise<Product> {
+    const response = await api.get(`/api/${branch}/node/${conceptId}`);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const productModel = response.data as Product;
+    return productModel;
+  },
   async getProductModel(id: string, branch: string): Promise<ProductSummary> {
     const response = await api.get(`/api/${branch}/product-model/${id}`);
     if (response.status != 200) {
