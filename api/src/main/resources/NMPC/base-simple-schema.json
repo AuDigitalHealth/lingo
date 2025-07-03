@@ -89,51 +89,13 @@
         }
       }
     },
-    "Ingredient": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "activeIngredient": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "VTM Active Ingredient",
-          "errorMessage": {
-            "minProperties": "Active Ingredient must be populated.",
-            "type": "Active Ingredient must be populated."
-          }
-        },
-        "refinedActiveIngredient": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "VMP Active Ingredient"
-        },
-        "preciseIngredient": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "AMP Active Ingredient"
-        },
-        "basisOfStrengthSubstance": {
-          "$ref": "#/$defs/SnowstormConceptMini"
-        },
-        "presentationStrengthNumerator": {
-          "$ref": "#/$defs/Quantity",
-          "title": "Presentation Strength Numerator"
-        },
-        "presentationStrengthDenominator": {
-          "$ref": "#/$defs/Quantity",
-          "title": "Presentation Strength Denominator"
-        }
-      },
-      "required": [
-        "activeIngredient",
-        "refinedActiveIngredient",
-        "preciseIngredient"
-      ]
-    },
     "ProductDetails": {
       "type": "object",
       "title": "Product Details",
       "properties": {
         "type": {
           "type": "string",
-          "const": "vaccine"
+          "const": "nutritional"
         },
         "productName": {
           "$ref": "#/$defs/SnowstormConceptMini",
@@ -141,17 +103,6 @@
           "minProperties": 1,
           "errorMessage": {
             "minProperties": "Brand Name must be populated."
-          }
-        },
-        "activeIngredients": {
-          "type": "array",
-          "title": "Active Ingredients",
-          "items": {
-            "$ref": "#/$defs/Ingredient"
-          },
-          "minItems": 1,
-          "errorMessage": {
-            "minItems": "At least one active ingredient must be present."
           }
         },
         "genericForm": {
@@ -166,27 +117,15 @@
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Specific Dose Form"
         },
-        "targetPopulation": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "Target Population"
-        },
-        "ingredientQualitativeStrength": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "Ingredient Qualitative Strength"
-        },
         "unitOfPresentation": {
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Unit of Presentation"
-        },
-        "quantity": {
-          "$ref": "#/$defs/Quantity",
-          "title": "Unit of Presentation Quantity"
         }
       },
       "required": [
         "productName",
         "genericForm",
-        "activeIngredients"
+        "unitOfPresentation"
       ],
       "errorMessage": {
         "required": "Product Details must be populated."
