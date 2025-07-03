@@ -653,18 +653,13 @@ public class ProductCreationService {
 
     log.fine("Updating concepts with property updates");
 
-    final Set<String> propertyUpdatedConceptIds =
-        nodesWithPropertyUpdates.values().stream()
-            .map(Node::getConceptId)
-            .collect(Collectors.toSet());
-
     Mono<Set<SnowstormConcept>> browserConcepts =
         snowstormClient
-            .getBrowserConcepts(branch, propertyUpdatedConceptIds)
+            .getBrowserConcepts(branch, nodesWithPropertyUpdates.keySet())
             .collect(Collectors.toSet());
 
     Mono<List<SnowstormReferenceSetMember>> referenceSetMembers =
-        snowstormClient.getRefsetMembersMono(branch, propertyUpdatedConceptIds, null);
+        snowstormClient.getRefsetMembersMono(branch, nodesWithPropertyUpdates.keySet(), null);
 
     Set<SnowstormConceptView> conceptsToUpdate = new HashSet<>();
 
