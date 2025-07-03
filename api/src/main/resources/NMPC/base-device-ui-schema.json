@@ -83,7 +83,7 @@
             "skipTitle": true,
             "branch": "MAIN",
             "ecl": "<774167006",
-            "showDefaultOptions": false,
+            "showDefaultOptions": true,
             "createBrand": {
               "ecl": "<774167006",
               "semanticTags": "(product name)"
