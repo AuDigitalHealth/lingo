@@ -9,7 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import useTaskById from '../../useTaskById';
 import TasksServices from '../../../api/TasksService';
 import { useConceptsThatHaveBeenReviewed } from './useConceptsThatHaveBeenReviewed';
-import { useShowReviewControls } from './useReviews';
+import { UseReviewProps, useIsReviewEnabled, useShowReviewControls } from './useReviews';
 
 export function useConceptsForReview(branchPath: string | undefined) {
   const task = useTaskById(); // Gives projectKey and taskKey
@@ -117,4 +117,17 @@ export function useFeedbackUnread(
   });
 
   return { unreadConceptIds, unreadIsLoading, unreadError };
+}
+
+export function useCanCompleteReview({ task, branch }: UseReviewProps) {
+  const isReviewEnabled = useIsReviewEnabled({ task });
+  const { conceptReviews, isLoadingConceptReviews } =
+    useConceptsForReview(branch);
+
+  const allApproved =
+    conceptReviews.find(conceptReview => {
+      return conceptReview.approved === false;
+    }) === undefined;
+
+  return isReviewEnabled && allApproved;
 }
