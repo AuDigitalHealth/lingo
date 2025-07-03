@@ -110,21 +110,41 @@
           "title": "AMP Active Ingredient"
         },
         "basisOfStrengthSubstance": {
+          "type": [
+            "object",
+            "null"
+          ],
           "$ref": "#/$defs/SnowstormConceptMini"
         },
         "concentrationStrengthNumerator": {
+          "type": [
+            "object",
+            "null"
+          ],
           "$ref": "#/$defs/Quantity",
           "title": "Concentration Strength Numerator"
         },
         "concentrationStrengthDenominator": {
+          "type": [
+            "object",
+            "null"
+          ],
           "$ref": "#/$defs/Quantity",
           "title": "Concentration Strength Denominator"
         },
         "presentationStrengthNumerator": {
+          "type": [
+            "object",
+            "null"
+          ],
           "$ref": "#/$defs/Quantity",
           "title": "Presentation Strength Numerator"
         },
         "presentationStrengthDenominator": {
+          "type": [
+            "object",
+            "null"
+          ],
           "$ref": "#/$defs/Quantity",
           "title": "Presentation Strength Denominator"
         }
@@ -171,10 +191,18 @@
           }
         },
         "specificForm": {
+          "type": [
+            "object",
+            "null"
+          ],
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Specific Dose Form"
         },
         "unitOfPresentation": {
+          "type": [
+            "object",
+            "null"
+          ],
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Unit of Presentation"
         }
