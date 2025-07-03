@@ -4,19 +4,16 @@ import {
   Controller,
   UseFormGetValues,
   UseFormRegister,
-  UseFormSetValue,
+  UseFormSetValue
 } from 'react-hook-form';
-import { FormHelperText, Grid, Stack, TextField } from '@mui/material';
+import { FormControlLabel, FormHelperText, Grid, Stack, Switch, TextField } from '@mui/material';
 import { InnerBoxSmall } from './style/ProductBoxes.tsx';
-import {
-  filterKeypress,
-  setEmptyToNull,
-} from '../../../utils/helpers/conceptUtils.ts';
+import { filterKeypress, setEmptyToNull } from '../../../utils/helpers/conceptUtils.ts';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import { replaceAllWithWhiteSpace } from '../../../types/productValidationUtils.ts';
 import { convertStringToRegex } from '../../../utils/helpers/stringUtils.ts';
 import { getValueFromFieldBindings } from '../../../utils/helpers/FieldBindingUtils.ts';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import AdditionalPropertiesDisplay from './AdditionalPropertiesDisplay.tsx';
 import { ProductRetireUpdate } from './ProductRetireUpdate.tsx';
 
@@ -41,10 +38,43 @@ function NewConceptDropdown({
   branch,
   setValue,
 }: NewConceptDropdownProps) {
+  const initialStatusRef = useRef(product.newConceptDetails?.axioms[0].definitionStatus ?? 'PRIMITIVE');
+  const [currentStatus, setCurrentStatus] = useState(initialStatusRef.current);
   return (
     <div key={'div-' + product.conceptId}>
       <Grid item xs={12}>
         <Grid item xs={12}>
+          <Controller
+            name={`nodes[${index}].newConceptDetails.axioms.0.definitionStatus` as const}
+            control={control}
+            render={({ field }) => (
+              <>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={field.value === 'FULLY_DEFINED'}
+                      onChange={(_, checked: boolean) => {
+                        const status = checked ? 'FULLY_DEFINED' : 'PRIMITIVE';
+                        field.onChange(status);
+                        setCurrentStatus(status);
+                        setValue?.(
+                          `nodes.${index}.newConceptDetails.axioms.0.definitionStatusId`,
+                          checked ? '900000000000073002' : '900000000000074008'
+                        );
+                      }}
+                      color="primary"
+                    />
+                  }
+                  label={field.value === 'FULLY_DEFINED' ? 'Fully Defined' : 'Primitive'}
+                />
+                {currentStatus !== initialStatusRef.current && (
+                  <FormHelperText sx={{ color: t => `${t.palette.warning.main}` }}>
+                    Warning: You have changed the definition status from its calculated value.
+                  </FormHelperText>
+                )}
+              </>
+            )}
+          />
           <NewConceptDropdownField
             fieldName={`nodes[${index}].newConceptDetails.fullySpecifiedName`}
             originalValue={
