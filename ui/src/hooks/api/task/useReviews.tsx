@@ -1,8 +1,7 @@
 import useUserStore from '../../../stores/UserStore';
 import { TaskStatus, Task } from '../../../types/task';
-import { useConceptsForReview } from './useConceptsForReview';
 
-interface UseReviewProps {
+export interface UseReviewProps {
   task: Task | null | undefined;
   branch?: string;
 }
@@ -27,15 +26,4 @@ export function useShowReviewControls({ task }: UseReviewProps) {
   );
 }
 
-export function useCanCompleteReview({ task, branch }: UseReviewProps) {
-  const isReviewEnabled = useIsReviewEnabled({ task });
-  const { conceptReviews, isLoadingConceptReviews } =
-    useConceptsForReview(branch);
 
-  const allApproved =
-    conceptReviews.find(conceptReview => {
-      return conceptReview.approved === false;
-    }) === undefined;
-
-  return isReviewEnabled && allApproved;
-}

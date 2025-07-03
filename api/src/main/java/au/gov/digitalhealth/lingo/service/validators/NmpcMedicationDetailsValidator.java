@@ -86,6 +86,7 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
             "Medication product quantity must be one if unit is 'unit of presentation'");
       }
       validateProductDetails(productQuantity.getProductDetails(), branch);
+      
     }
   }
 
