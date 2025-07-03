@@ -7,6 +7,7 @@ import AdditionalPropertiesDisplay from './AdditionalPropertiesDisplay.tsx';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 import { ProductRetireUpdate } from './ProductRetireUpdate.tsx';
 import { Control, UseFormSetValue } from 'react-hook-form';
+import HistoricalAssociationsDisplay from './HistoricalAssociationsDisplay.tsx';
 
 interface ExistingConceptDropdownProps {
   product: Product;
@@ -78,6 +79,13 @@ function ExistingConceptDropdown({
       <AdditionalPropertiesDisplay
         product={product}
         branch={branch}
+        showWrapper={false}
+      />
+      <HistoricalAssociationsDisplay
+        product={product}
+        branch={branch}
+        labelWidth="100px"
+        labelColor="#184E6B"
         showWrapper={false}
       />
     </div>
