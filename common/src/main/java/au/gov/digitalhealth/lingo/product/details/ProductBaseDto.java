@@ -63,7 +63,7 @@ public abstract class ProductBaseDto {
       Map<String, String> idMap, SnowstormConceptMini... conceptMinis) {
     idMap = initialiseMap(idMap);
     for (SnowstormConceptMini conceptMini : conceptMinis) {
-      if (conceptMini != null) {
+      if (conceptMini != null && conceptMini.getConceptId() != null) {
         idMap.put(conceptMini.getConceptId(), SnowstormDtoUtil.getFsnTerm(conceptMini));
       }
     }
@@ -74,7 +74,7 @@ public abstract class ProductBaseDto {
       Map<String, String> idMap, SnowstormConceptMini... conceptMinis) {
     idMap = initialiseMap(idMap);
     for (SnowstormConceptMini conceptMini : conceptMinis) {
-      if (conceptMini != null) {
+      if (conceptMini != null && conceptMini.getConceptId() != null) {
         idMap.put(conceptMini.getConceptId(), SnowstormDtoUtil.getPtTerm(conceptMini));
       }
     }
