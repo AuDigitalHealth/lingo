@@ -1,10 +1,8 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { Autocomplete, CircularProgress, TextField } from '@mui/material';
+import React, { useEffect, useRef, useState } from 'react';
+import { Autocomplete, Chip, CircularProgress, TextField, Tooltip } from '@mui/material';
 import { Concept, ConceptMini } from '../../../../types/concept.ts';
 import { useSearchConceptsByEcl } from '../../../../hooks/api/useInitializeConcepts.tsx';
 import { FieldProps } from '@rjsf/utils';
-import { Tooltip } from '@mui/material';
-import { Chip } from '@mui/material';
 
 const MultiValueEclAutocomplete: React.FC<FieldProps<any, any>> = props => {
   const {
@@ -108,14 +106,17 @@ const MultiValueEclAutocomplete: React.FC<FieldProps<any, any>> = props => {
           option?.conceptId === val?.conceptId
         }
         renderTags={(value, getTagProps) =>
-          value.map((option, index) => (
-            <Tooltip
-              key={option.conceptId}
-              title={`${option.conceptId} - ${option.pt?.term}`}
-            >
-              <Chip label={option.pt?.term || ''} {...getTagProps({ index })} />
-            </Tooltip>
-          ))
+          value.map((option, index) => {
+            const { key, ...chipProps } = getTagProps({ index });
+            return (
+              <Tooltip
+                key={option.conceptId}
+                title={`${option.conceptId} - ${option.pt?.term}`}
+              >
+                <Chip label={option.pt?.term || ''} {...chipProps} />
+              </Tooltip>
+            );
+          })
         }
         renderOption={(props, option: Concept) => (
           <li {...props} key={option.conceptId}>
