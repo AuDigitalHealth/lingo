@@ -71,7 +71,7 @@ public class TaskManagerClient {
     Task[] tasks =
         authoringPlatformApiClient
             .get()
-            .uri("/projects/my-tasks")
+            .uri("/projects/" + apProject + "/tasks?lightweight=false")
             .retrieve()
             .bodyToMono(Task[].class)
             .block();
