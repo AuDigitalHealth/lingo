@@ -306,6 +306,7 @@ export interface Product {
   originalNode: OriginalNode | null;
   statedFormChanged: boolean | null;
   inferredFormChanged: boolean | null;
+  historicalAssociations?: RefsetMember[];
 }
 
 export function hasDescriptionChange(product: Product): boolean {
@@ -315,6 +316,14 @@ export function hasDescriptionChange(product: Product): boolean {
       product.originalNode.node?.fullySpecifiedName ||
       product.preferredTerm !== product.originalNode.node?.preferredTerm)
   );
+}
+
+export function hasHistoricalAssociationsChanged(product: Product): boolean {
+  const filtered = product?.historicalAssociations?.filter(ass => {
+    return ass.released === false;
+  });
+
+  return filtered?.length !== undefined && filtered?.length > 0;
 }
 
 export interface NewConceptDetails {
