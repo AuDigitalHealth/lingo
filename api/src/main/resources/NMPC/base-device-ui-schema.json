@@ -135,9 +135,10 @@
           },
           "ui:field": "AutoCompleteField",
           "ui:options": {
-            "ecl": "<774167006",
+            "ecl": "<63653004",
             "skipTitle": true,
-            "showDefaultOptions": false
+            "showDefaultOptions": false,
+            "multiValued": true
           }
         }
       }
