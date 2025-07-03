@@ -526,6 +526,10 @@ public class NodeGeneratorService {
                   modelConfiguration.getMappingsByIdentifierForModelLevel(modelLevel).values()),
               fhirClient));
       node.setNonDefiningProperties(properties);
+
+      if (selectedConcept) {
+        populateNodeProperties(branch, modelLevel, node, null);
+      }
       log.fine("New concept for " + label + " " + newConceptDetails.getConceptId());
     } else {
       log.fine("Concept found for " + label + " " + node.getConceptId());
