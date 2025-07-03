@@ -114,6 +114,10 @@
           }
         },
         "specificForm": {
+          "type": [
+            "object",
+            "null"
+          ],
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Specific Dose Form"
         },
