@@ -19,6 +19,8 @@ import { Concept, Description, ProductSummary } from './concept.ts';
 export enum ProductType {
   medication = 'medication',
   device = 'device',
+  vaccine = 'vaccine',
+  nutritional = 'nutritional',
   brandPackSize = 'brand-pack-size',
   bulkPackSize = 'bulk-pack-size',
   bulkBrand = 'bulk-brand',
