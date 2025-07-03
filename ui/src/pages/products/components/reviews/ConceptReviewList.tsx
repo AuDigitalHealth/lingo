@@ -7,15 +7,33 @@ import { Box, Paper, Typography } from '@mui/material';
 import { CheckCircle } from '@mui/icons-material';
 import { useShowReviewControls } from '../../../../hooks/api/task/useReviews.tsx';
 import { Link } from 'react-router-dom';
+import { useApproveReviewMutation } from '../../../../hooks/api/task/useApproveReviewMutation.tsx';
+import { Task } from '../../../../types/task.ts';
+import { Button } from '@mui/material';
+import { useConceptsThatHaveBeenReviewed } from '../../../../hooks/api/task/useConceptsThatHaveBeenReviewed.tsx';
 
 function ConceptReviewList() {
   const task = useTaskById();
+  const projectKey = task?.projectKey;
+  const taskKey = task?.key;
+  const { conceptsReviewed } = useConceptsThatHaveBeenReviewed(projectKey, taskKey, true);
   const { conceptReviews } = useConceptsForReview(task?.branchPath);
   const showReviewControls = useShowReviewControls({ task });
+  const approveReviewMutation = useApproveReviewMutation();
 
   if (!showReviewControls) {
     return <></>;
   }
+
+  const handleDisapproveAll = () => {
+    if (task) {
+      approveReviewMutation.mutate({
+        projectKey: task.projectKey,
+        taskKey: task.key,
+        reviewedList: {conceptIds: [], approvalDate: ''}, // Empty array to disapprove all
+      });
+    }
+  };
 
   const columns: GridColDef[] = [
     {
@@ -99,21 +117,43 @@ function ConceptReviewList() {
             borderBottom: '1px solid',
             borderColor: 'divider',
             backgroundColor: 'grey.50',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-end',
           }}
         >
-          <Typography
-            variant="h6"
+          <Box>
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 600,
+                color: 'text.primary',
+                mb: 0.5,
+              }}
+            >
+              Concept Review Status
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Review and approval status for concepts in this task
+            </Typography>
+          </Box>
+          <Button
+            disabled={conceptsReviewed === undefined || conceptsReviewed?.conceptIds.length === 0}
+            size='small'
+            variant="outlined"
+            onClick={handleDisapproveAll}
+            disabled={approveReviewMutation.isPending}
             sx={{
-              fontWeight: 600,
-              color: 'text.primary',
-              mb: 0.5,
+              color: 'error.main',
+              borderColor: 'error.main',
+              '&:hover': {
+                borderColor: 'error.dark',
+                backgroundColor: 'error.light',
+              },
             }}
           >
-            Concept Review Status
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Review and approval status for concepts in this task
-          </Typography>
+            {approveReviewMutation.isPending ? 'Processing...' : 'Disapprove All'}
+          </Button>
         </Box>
 
         <DataGrid
@@ -168,3 +208,4 @@ function ConceptReviewList() {
 }
 
 export default ConceptReviewList;
+

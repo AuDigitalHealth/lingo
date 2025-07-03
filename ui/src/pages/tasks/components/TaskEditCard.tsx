@@ -108,7 +108,7 @@ function TaskEditCard({ menuOpen }: TaskEditCardProps) {
 
 export function TaskEdit({ menuOpen }: TaskEditCardProps) {
   return (
-    <Stack flexDirection="row" sx={{width: '100%'}} gap={2}>
+    <Stack flexDirection="row" sx={{ width: '100%' }} gap={2}>
       <TaskEditCard menuOpen={menuOpen} />
       <Routes>
         <Route path="review/:conceptId/*" element={<TaskEditReview />} />
@@ -117,27 +117,31 @@ export function TaskEdit({ menuOpen }: TaskEditCardProps) {
   );
 }
 
-export function TaskEditReview(){
-
+export function TaskEditReview() {
   const task = useTaskById();
   const branch = task?.branchPath;
-  const {conceptId} = useParams();
-  const {data, isLoading} = useNodeModel(conceptId, branch);
+  const { conceptId } = useParams();
+  const { data, isLoading } = useNodeModel(conceptId, branch);
 
-  if(data && branch){
+  if (data && branch) {
     return (
-    <Stack flexDirection={'column'} gap={2}>
-        <ProductPreviewSimple product={data} fsnToggle isSimpleEdit={false} branch={branch} activeConcept='' expandedConcepts={[]}/>
-    </Stack>
-    )
+      <Stack flexDirection={'column'} gap={2}>
+        <ProductPreviewSimple
+          product={data}
+          fsnToggle
+          isSimpleEdit={false}
+          branch={branch}
+          activeConcept=""
+          expandedConcepts={[]}
+        />
+      </Stack>
+    );
   }
 
-  if(isLoading){
-    return (
-      <Loading message={`Loading review for ${conceptId}`}/>
-    )
+  if (isLoading) {
+    return <Loading message={`Loading review for ${conceptId}`} />;
   }
-  return <></>
+  return <></>;
 }
 
 export default TaskEditCard;
