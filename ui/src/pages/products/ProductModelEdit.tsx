@@ -254,7 +254,7 @@ function ProductModelEdit({
           productCreationDetails.packageDetails as DevicePackageDetails,
         );
         productService
-          .createDeviceProduct(productCreationDetails, branch)
+          .saveDeviceProduct(productCreationDetails, branch)
           .then(v => {
             if (handleClose) handleClose({}, 'escapeKeyDown');
             setLoading(false);
