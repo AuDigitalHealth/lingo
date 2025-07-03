@@ -2,10 +2,7 @@ import BaseModal from '../../../../components/modal/BaseModal.tsx';
 import BaseModalBody from '../../../../components/modal/BaseModalBody.tsx';
 import BaseModalHeader from '../../../../components/modal/BaseModalHeader.tsx';
 
-import {
-  DevicePackageDetails,
-  MedicationPackageDetails,
-} from '../../../../types/product.ts';
+import { DevicePackageDetails, MedicationPackageDetails } from '../../../../types/product.ts';
 import Loading from '../../../../components/Loading.tsx';
 import React, { useState } from 'react';
 import { Ticket } from '../../../../types/tickets/ticket.ts';
@@ -27,9 +24,12 @@ export default function ProductPartialSaveModal({
   open,
   handleClose,
   packageDetails,
+  originalPackageDetails,
+  originalConceptId,
   existingProductId,
   ticket,
   productStatus,
+  actionType,
 }: ProductPartialSaveModalProps) {
   const [isUpdating, setUpdating] = useState(false);
   const closeHandle = () => {
@@ -54,6 +54,9 @@ export default function ProductPartialSaveModal({
             productStatus={productStatus}
             setUpdating={setUpdating}
             isUpdating={isUpdating}
+            originalPackageDetails={originalPackageDetails}
+            originalConceptId={originalConceptId}
+            action={actionType}
           />
         )}
       </BaseModalBody>
