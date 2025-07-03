@@ -9,7 +9,7 @@ import {
   MenuItem,
   TextField,
   ToggleButton,
-  ToggleButtonGroup,
+  ToggleButtonGroup
 } from '@mui/material';
 import TuneIcon from '@mui/icons-material/Tune';
 import { Concept } from '../../../types/concept.ts';
@@ -23,7 +23,7 @@ import { isFsnToggleOn } from '../../../utils/helpers/conceptUtils.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import {
   useSearchConcept,
-  useSearchConceptOntoserver,
+  useSearchConceptOntoserver
 } from '../../../hooks/api/products/useSearchConcept.tsx';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 
@@ -34,12 +34,13 @@ import { ConceptSearchSidebar } from '../../../components/ConceptSearchSidebar.t
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 
 import type { ValueSetExpansionContains } from 'fhir/r4';
-import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
-import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../utils/helpers/getValueSetExpansionContainsPt.ts';
 import {
-  PUBLISHED_CONCEPTS,
-  UNPUBLISHED_CONCEPTS,
-} from '../../../utils/statics/responses.ts';
+  isValueSetExpansionContains
+} from '../../../types/predicates/isValueSetExpansionContains.ts';
+import {
+  convertFromValueSetExpansionContainsListToSnowstormConceptMiniList
+} from '../../../utils/helpers/getValueSetExpansionContainsPt.ts';
+import { PUBLISHED_CONCEPTS, UNPUBLISHED_CONCEPTS } from '../../../utils/statics/responses.ts';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 
 export interface ConceptSearchResult extends Concept {
@@ -116,7 +117,7 @@ export default function SearchProduct({
       case ActionType.newBrand:
         returnVal = generateEclFromBinding(
           fieldBindings,
-          'medicationProduct.search',
+          'bulk.new-brand-pack-sizes',
         );
         break;
       case ActionType.newDevice:
@@ -405,16 +406,30 @@ export default function SearchProduct({
               if (showConfirmationModalOnChange && v !== null) {
                 setChangeModalOpen(true);
               } else {
-                if (handleChange)
+                if (handleChange) {
+                  let productType: ProductType;
+                  switch (selectedActionType) {
+                    case ActionType.newDevice:
+                      productType = ProductType.device;
+                      break;
+                    case ActionType.newMedication:
+                      productType = ProductType.medication;
+                      break;
+                    case ActionType.newVaccine:
+                      productType = ProductType.vaccine;
+                      break;
+                    case ActionType.newNutritionalProduct:
+                      productType = ProductType.nutritional;
+                      break;
+                    default:
+                      productType = ProductType.medication;
+                  }
                   handleChange(
-                    v ? v : undefined,
-                    selectedActionType === ActionType.newDevice
-                      ? ProductType.device
-                      : ProductType.medication,
-                    selectedActionType
-                      ? selectedActionType
-                      : ActionType.newMedication,
+                    v ?? undefined,
+                    productType,
+                    selectedActionType || ActionType.newMedication
                   );
+                }
               }
             }}
             open={open}

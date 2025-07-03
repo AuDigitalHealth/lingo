@@ -100,7 +100,9 @@ public class DetailsValidator {
   }
 
   protected static void validateQuantityNotZero(Quantity productQuantity, String message) {
-    if (productQuantity.getValue() == null || BigDecimal.ZERO.equals(productQuantity.getValue())) {
+    if (productQuantity == null
+        || productQuantity.getValue() == null
+        || BigDecimal.ZERO.equals(productQuantity.getValue())) {
       throw new ProductAtomicDataValidationProblem(message);
     }
   }
