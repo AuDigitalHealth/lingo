@@ -35,13 +35,21 @@ export const isProblemDetail = (data: any): data is ProblemDetail => {
   );
 };
 
-export const isAtomicDataValidationProblem = (
+export const isUserReportableProblem = (
   // eslint-disable-next-line
   data: any,
 ): data is ProblemDetail => {
   const isPD = isProblemDetail(data);
   return (
     isPD &&
-    data.type === 'http://lingo.csiro.au/problem/atomic-data-validation-problem'
+    (data.type ===
+      'http://lingo.csiro.au/problem/atomic-data-validation-problem' ||
+      data.type === 'http://lingo.csiro.au/problem/resource-not-found' ||
+      data.type === 'http://lingo.csiro.au/problem/single-concept-ecl' ||
+      data.type === 'http://lingo.csiro.au/problem/batch-failed' ||
+      data.type === 'http://lingo.csiro.au/problem/model-configuration' ||
+      data.type === 'http://lingo.csiro.au/problem/model-configuration' ||
+      data.type ===
+        'http://lingo.csiro.au/problem/atomic-data-extraction-problem')
   );
 };
