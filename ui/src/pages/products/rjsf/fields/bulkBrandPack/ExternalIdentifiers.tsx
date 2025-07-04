@@ -8,12 +8,15 @@ import {
   Grid,
   IconButton,
   Stack,
-  TextField
+  TextField,
 } from '@mui/material';
 import { FieldProps } from '@rjsf/utils';
 import ValueSetAutocomplete from '../../components/ValueSetAutocomplete';
 import EclAutocomplete from '../../components/EclAutocomplete';
-import { NonDefiningProperty, NonDefiningPropertyType } from '../../../../../types/product.ts';
+import {
+  NonDefiningProperty,
+  NonDefiningPropertyType,
+} from '../../../../../types/product.ts';
 import useTaskById from '../../../../../hooks/useTaskById.tsx';
 import { ConceptMini } from '../../../../../types/concept.ts';
 import { MultiValueValueSetAutocomplete } from '../../components/MultiValueSetAutocomplete.tsx';
