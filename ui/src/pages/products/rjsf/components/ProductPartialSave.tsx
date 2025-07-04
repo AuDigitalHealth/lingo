@@ -1,9 +1,12 @@
-import { DevicePackageDetails, MedicationPackageDetails } from '../../../../types/product.ts';
+import {
+  DevicePackageDetails,
+  MedicationPackageDetails,
+} from '../../../../types/product.ts';
 import {
   AutocompleteGroupOption,
   AutocompleteGroupOptionType,
   ProductAction,
-  Ticket
+  Ticket,
 } from '../../../../types/tickets/ticket.ts';
 import React, { useCallback, useState } from 'react';
 import useUserStore from '../../../../stores/UserStore.ts';
@@ -14,21 +17,25 @@ import {
   generateSuggestedProductName,
   generateSuggestedProductNameForDevice,
   mapToProductOptions,
-  mapToTicketProductDto
+  mapToTicketProductDto,
 } from '../../../../utils/helpers/ticketProductsUtils.ts';
 import TicketProductService from '../../../../api/TicketProductService.ts';
 import { snowstormErrorHandler } from '../../../../types/ErrorHandler.ts';
 import Loading from '../../../../components/Loading.tsx';
-import { Autocomplete, Box, Button, FormControl, TextField } from '@mui/material';
+import {
+  Autocomplete,
+  Box,
+  Button,
+  FormControl,
+  TextField,
+} from '@mui/material';
 import { Stack } from '@mui/system';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import useAuthoringStore from '../../../../stores/AuthoringStore.ts';
 import { isDeviceType } from '../../../../utils/helpers/conceptUtils.ts';
 import { ProductStatus } from '../../../../types/TicketProduct.ts';
-import {
-  getTicketProductsByTicketIdOptions
-} from '../../../../hooks/api/tickets/useTicketById.tsx';
+import { getTicketProductsByTicketIdOptions } from '../../../../hooks/api/tickets/useTicketById.tsx';
 import { useQueryClient } from '@tanstack/react-query';
 import { FieldProps } from '@rjsf/utils';
 
@@ -40,7 +47,10 @@ interface ProductPartialSaveProps extends FieldProps {
   isUpdating: boolean;
   existingProductId?: string;
   productStatus?: string | undefined;
-  originalPackageDetails: MedicationPackageDetails | DevicePackageDetails | null;
+  originalPackageDetails:
+    | MedicationPackageDetails
+    | DevicePackageDetails
+    | null;
   originalConceptId: string | null;
   action: ProductAction;
 }

@@ -1,9 +1,7 @@
 /* eslint @typescript-eslint/restrict-plus-operands: "off" */
 import React, { useState } from 'react';
 import { Concept, NewConceptDetails } from '../../types/concept';
-import {
-  DrawConceptDiagramArgs,
-} from './conceptDiagramUtils';
+import { DrawConceptDiagramArgs } from './conceptDiagramUtils';
 import {
   ButtonGroup,
   IconButton,
