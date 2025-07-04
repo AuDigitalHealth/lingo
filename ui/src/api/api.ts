@@ -17,7 +17,7 @@
 import axios from 'axios';
 import useUserStore from '../stores/UserStore';
 import { enqueueSnackbar } from 'notistack';
-import { isAtomicDataValidationProblem } from './ProblemDetail';
+import { isUserReportableProblem } from './ProblemDetail';
 
 export const api = axios.create({});
 
@@ -41,10 +41,7 @@ api.interceptors.response.use(
 
     const potentialProblemDetail = error?.response?.data;
 
-    if (
-      error.response?.status === 400 &&
-      isAtomicDataValidationProblem(potentialProblemDetail)
-    ) {
+    if (isUserReportableProblem(potentialProblemDetail)) {
       enqueueSnackbar(potentialProblemDetail.detail, {
         variant: 'error',
       });
