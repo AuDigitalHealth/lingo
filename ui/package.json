@@ -76,7 +76,7 @@
     "ecl-builder": "^0.2.1",
     "file-saver": "^2.0.5",
     "framer-motion": "^10.15.1",
-    "jsdom": "^25.0.1",
+    "jsdom": "^26.1.0",
     "konva": "^9.3.6",
     "mui-tiptap": "^1.8.3",
     "nanoid": "^5.0.4",
