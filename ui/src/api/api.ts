@@ -17,7 +17,7 @@
 import axios from 'axios';
 import useUserStore from '../stores/UserStore';
 import { enqueueSnackbar } from 'notistack';
-import { isAtomicDataValidationProblem } from './ProblemDetail';
+import {isAtomicDataValidationProblem} from './ProblemDetail';
 
 export const api = axios.create({});
 
