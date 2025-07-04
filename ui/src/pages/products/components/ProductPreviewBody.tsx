@@ -181,9 +181,7 @@ function ProductPreviewBody({
           handleClose={handleClose}
           isProductUpdate={isProductUpdate}
         />
-      ) : (
-        <div />
-      )}
+      ) : null}
     </>
   );
 }
