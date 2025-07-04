@@ -1034,7 +1034,7 @@ public class SnowstormClient {
         getConceptsApi()
             .findConcepts(
                 branch, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, false, null, null, true, 0, 500, null, null);
+                null, false, null, null, true, 0, 1000, null, null);
 
     return concepts.map(
         p ->
