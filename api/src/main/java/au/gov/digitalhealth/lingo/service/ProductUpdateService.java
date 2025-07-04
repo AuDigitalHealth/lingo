@@ -427,7 +427,6 @@ public class ProductUpdateService {
                 !node.isNewConcept() && existingNodesByConceptId.containsKey(node.getConceptId()))
         .forEach(
             node -> {
-              node.setOriginalNode(new OriginalNode(node.cloneNode(), null, false));
               allocatedExistingNodes.add(node.getConceptId());
             });
 
