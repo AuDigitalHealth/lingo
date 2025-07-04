@@ -294,6 +294,7 @@ class OriginalNode {
 }
 
 export interface Product {
+  displayName: string;
   axioms?: SnowstormAxiom[];
   relationShips?: SnowstormRelationship[];
   displayName: string;
@@ -355,7 +356,3 @@ export enum Product7BoxBGColour {
   INCOMPLETE = '#FFA500',
   PROPERTY_CHANGE = '#FFD700',
 }
-
-export const newConceptBorderColor = '#4caf50';
-
-export const removedConceptBorderColor = '#f44336';
