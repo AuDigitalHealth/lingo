@@ -90,7 +90,8 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
         getOptionLabel={(option: Concept) => option?.pt?.term || ''}
         value={
           options && options.length > 0
-            ? options.find(option => option.conceptId === value?.conceptId) || null
+            ? options.find(option => option.conceptId === value?.conceptId) ||
+              null
             : null
         }
         onInputChange={(event, newInputValue) => setInputValue(newInputValue)}
@@ -98,7 +99,8 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
           handleProductChange(selectedValue as Concept)
         }
         isOptionEqualToValue={(option: Concept, selectedValue: Concept) =>
-          !!option?.conceptId && !!selectedValue?.conceptId &&
+          !!option?.conceptId &&
+          !!selectedValue?.conceptId &&
           option.conceptId === selectedValue.conceptId
         }
         renderOption={(props, option: Concept) => (
