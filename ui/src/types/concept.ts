@@ -356,3 +356,7 @@ export enum Product7BoxBGColour {
   INCOMPLETE = '#FFA500',
   PROPERTY_CHANGE = '#FFD700',
 }
+
+export const newConceptBorderColor = '#008040';
+
+export const removedConceptBorderColor = '#F04134';
