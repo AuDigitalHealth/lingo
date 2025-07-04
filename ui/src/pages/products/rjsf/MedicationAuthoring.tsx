@@ -1,6 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Form } from '@rjsf/mui';
-import { Box, Button, Container, Paper, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import {
+  Box,
+  Button,
+  Container,
+  Paper,
+  ToggleButton,
+  ToggleButtonGroup,
+} from '@mui/material';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import _ from 'lodash';
 import ajvErrors from 'ajv-errors';
@@ -20,9 +27,7 @@ import TextFieldWidget from './widgets/TextFieldWidget.tsx';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 import productService from '../../../api/ProductService.ts';
 import { ConfigService } from '../../../api/ConfigService.ts';
-import {
-  isValueSetExpansionContains
-} from '../../../types/predicates/isValueSetExpansionContains.ts';
+import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
 import { customizeValidator } from '@rjsf/validator-ajv8';
 import { Concept } from '../../../types/concept.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
@@ -32,7 +37,7 @@ import {
   MedicationPackageDetails,
   ProductActionType,
   ProductSaveDetails,
-  ProductType
+  ProductType,
 } from '../../../types/product.ts';
 import { useTicketProductQuery } from './hooks/useTicketProductQuery.ts';
 import { DraftSubmitPanel } from './components/DarftSubmitPanel.tsx';
@@ -266,8 +271,11 @@ function MedicationAuthoring({
                   <ToggleButton value="create" aria-label="create">
                     Create
                   </ToggleButton>
-                  <ToggleButton value="update" aria-label="update"
-                                disabled={!selectedProduct && !originalConceptId}>
+                  <ToggleButton
+                    value="update"
+                    aria-label="update"
+                    disabled={!selectedProduct && !originalConceptId}
+                  >
                     Update
                   </ToggleButton>
                 </ToggleButtonGroup>
@@ -279,7 +287,9 @@ function MedicationAuthoring({
                   variant="contained"
                   color={mode === 'create' ? 'primary' : 'secondary'}
                   disabled={isPending}
-                  onClick={() => {setIsProductUpdate(mode === 'update')}}
+                  onClick={() => {
+                    setIsProductUpdate(mode === 'update');
+                  }}
                 >
                   {isPending
                     ? 'Submitting...'

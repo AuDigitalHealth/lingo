@@ -36,9 +36,7 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import ConceptReviewList from '../../products/components/reviews/ConceptReviewList.tsx';
 import { Done } from '@mui/icons-material';
-import {
-  useShowReviewControls,
-} from '../../../hooks/api/task/useReviews.tsx';
+import { useShowReviewControls } from '../../../hooks/api/task/useReviews.tsx';
 import { useCompleteReviewMutation } from '../../../hooks/api/task/useCompleteReviewMutation.tsx';
 import { useCanCompleteReview } from '../../../hooks/api/task/useConceptsForReview.tsx';
 

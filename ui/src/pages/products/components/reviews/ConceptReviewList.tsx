@@ -16,7 +16,11 @@ function ConceptReviewList() {
   const task = useTaskById();
   const projectKey = task?.projectKey;
   const taskKey = task?.key;
-  const { conceptsReviewed } = useConceptsThatHaveBeenReviewed(projectKey, taskKey, true);
+  const { conceptsReviewed } = useConceptsThatHaveBeenReviewed(
+    projectKey,
+    taskKey,
+    true,
+  );
   const { conceptReviews } = useConceptsForReview(task?.branchPath);
   const showReviewControls = useShowReviewControls({ task });
   const approveReviewMutation = useApproveReviewMutation();
@@ -30,7 +34,10 @@ function ConceptReviewList() {
       approveReviewMutation.mutate({
         projectKey: task.projectKey,
         taskKey: task.key,
-        reviewedList: {conceptIds: [], approvalDate: new Date().toISOString()},
+        reviewedList: {
+          conceptIds: [],
+          approvalDate: new Date().toISOString(),
+        },
       });
     }
   };
@@ -138,8 +145,11 @@ function ConceptReviewList() {
             </Typography>
           </Box>
           <Button
-            disabled={conceptsReviewed === undefined || conceptsReviewed?.conceptIds.length === 0}
-            size='small'
+            disabled={
+              conceptsReviewed === undefined ||
+              conceptsReviewed?.conceptIds.length === 0
+            }
+            size="small"
             variant="outlined"
             onClick={handleDisapproveAll}
             disabled={approveReviewMutation.isPending}
@@ -152,7 +162,9 @@ function ConceptReviewList() {
               },
             }}
           >
-            {approveReviewMutation.isPending ? 'Processing...' : 'Disapprove All'}
+            {approveReviewMutation.isPending
+              ? 'Processing...'
+              : 'Disapprove All'}
           </Button>
         </Box>
 
@@ -208,4 +220,3 @@ function ConceptReviewList() {
 }
 
 export default ConceptReviewList;
-

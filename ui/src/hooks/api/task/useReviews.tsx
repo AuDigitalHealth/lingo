@@ -25,5 +25,3 @@ export function useShowReviewControls({ task }: UseReviewProps) {
     task?.status === TaskStatus.Completed
   );
 }
-
-
