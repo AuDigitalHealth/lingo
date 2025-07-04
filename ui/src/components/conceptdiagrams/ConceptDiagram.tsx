@@ -21,8 +21,8 @@ import useScreenSize from '../../hooks/useScreenSize';
 import { useParams } from 'react-router-dom';
 
 interface ConceptDiagramProps {
-  concept: Concept | null;
-  newConcept?: NewConceptDetails;
+  concept: Concept | null | undefined;
+  newConcept?: NewConceptDetails | null;
   args?: DrawConceptDiagramArgs;
 }
 
@@ -114,70 +114,72 @@ export default function ConceptDiagram({
 
   return (
     <>
-      <Stack sx={{ marginLeft: 'auto' }}>
-        <FormToggle
-          onChange={handleFormChange}
-          initialValue={formType}
-          hasInferredView={hasInferredView(data)}
-        />
-        {isLoading && newConcept === undefined ? null : (
-          <ButtonGroup sx={{ marginLeft: 'auto' }}>
-            <IconButton
-              onClick={() => {
-                zoomImage(0.9);
-              }}
-            >
-              <ZoomOut />
-            </IconButton>
-            <IconButton
-              onClick={() => {
-                zoomImage(1.1);
-              }}
-            >
-              <ZoomIn />
-            </IconButton>
-          </ButtonGroup>
-        )}
-      </Stack>
-
-      <Stack
-        alignItems={'start'}
-        sx={{
-          maxWidth: '100%',
-          maxHeight: '100%',
-          overflow: 'scroll',
-          position: 'relative',
-        }}
-      >
-        {isLoading && newConcept === undefined ? (
-          <Loading />
-        ) : (
-          <>
-            <div
-              ref={element}
-              id="konva-stage-container"
-              style={{ display: 'none' }}
-            ></div>
-            <Stack
-              alignItems={'start'}
-              sx={{
-                width: `${containerWidth}px`,
-                height: `${containerHeight}px`,
-              }}
-            >
-              <img
-                ref={imgRef}
-                src={imageUri}
-                alt="Image"
-                onLoad={handleImageLoad}
-                style={{ cursor: 'move', transformOrigin: '0 0' }}
+      <Stack flexDirection="column">
+        <Stack sx={{ marginLeft: 'auto' }}>
+          <FormToggle
+            onChange={handleFormChange}
+            initialValue={formType}
+            hasInferredView={hasInferredView(data)}
+          />
+          {isLoading && newConcept === undefined ? null : (
+            <ButtonGroup sx={{ marginLeft: 'auto' }}>
+              <IconButton
                 onClick={() => {
-                  console.log(imgRef.current?.naturalWidth);
+                  zoomImage(0.9);
                 }}
-              />
-            </Stack>
-          </>
-        )}
+              >
+                <ZoomOut />
+              </IconButton>
+              <IconButton
+                onClick={() => {
+                  zoomImage(1.1);
+                }}
+              >
+                <ZoomIn />
+              </IconButton>
+            </ButtonGroup>
+          )}
+        </Stack>
+
+        <Stack
+          alignItems={'start'}
+          sx={{
+            maxWidth: '100%',
+            maxHeight: '100%',
+            overflow: 'scroll',
+            position: 'relative',
+          }}
+        >
+          {isLoading && newConcept === undefined ? (
+            <Loading />
+          ) : (
+            <>
+              <div
+                ref={element}
+                id="konva-stage-container"
+                style={{ display: 'none' }}
+              ></div>
+              <Stack
+                alignItems={'start'}
+                sx={{
+                  width: `${containerWidth}px`,
+                  height: `${containerHeight}px`,
+                }}
+              >
+                <img
+                  ref={imgRef}
+                  src={imageUri}
+                  alt="Image"
+                  onLoad={handleImageLoad}
+                  style={{ cursor: 'move', transformOrigin: '0 0' }}
+                  onClick={() => {
+                    console.log(imgRef.current?.naturalWidth);
+                  }}
+                />
+              </Stack>
+            </>
+          )}
+        </Stack>
       </Stack>
     </>
   );
