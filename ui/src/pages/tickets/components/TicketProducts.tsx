@@ -2,19 +2,10 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { DataTable } from 'primereact/datatable';
 
 import { Column } from 'primereact/column';
-import {
-  ProductStatus,
-  ProductTableRow,
-} from '../../../types/TicketProduct.ts';
+import { ProductStatus, ProductTableRow } from '../../../types/TicketProduct.ts';
 import { Link, useNavigate } from 'react-router-dom';
 import { ActionType, ProductType } from '../../../types/product.ts';
-import {
-  Grid,
-  IconButton,
-  InputLabel,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { Grid, IconButton, InputLabel, Tooltip, Typography } from '@mui/material';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import { AddCircle, Delete } from '@mui/icons-material';
 import UnableToEditTooltip from '../../tasks/components/UnableToEditTooltip.tsx';
@@ -23,7 +14,7 @@ import { useCanEditTicket } from '../../../hooks/api/tickets/useCanEditTicket.ts
 import {
   filterProductRowById,
   mapToProductDetailsArray,
-  mapToProductDetailsArrayFromBulkActions,
+  mapToProductDetailsArrayFromBulkActions
 } from '../../../utils/helpers/ticketProductsUtils.ts';
 import useCanEditTask from '../../../hooks/useCanEditTask.tsx';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
@@ -32,7 +23,6 @@ import TicketProductService from '../../../api/TicketProductService.ts';
 import './TicketProducts.css';
 import { useSearchConceptByIds } from '../../../hooks/api/products/useSearchConcept.tsx';
 import Loading from '../../../components/Loading.tsx';
-import { isDeviceType } from '../../../utils/helpers/conceptUtils.ts';
 import { getTicketProductsByTicketIdOptions } from '../../../hooks/api/tickets/useTicketById.tsx';
 import { useQueryClient } from '@tanstack/react-query';
 import { useActiveConceptIdsByIds } from '../../../hooks/eclRefset/useConceptsById.tsx';
@@ -148,6 +138,25 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
     }
   };
 
+  function getActionTypeForProductType(productType: ProductType | undefined): ActionType {
+    switch (productType) {
+      case ProductType.device:
+        return ActionType.newDevice;
+      case ProductType.medication:
+        return ActionType.newMedication;
+      case ProductType.vaccine:
+        return ActionType.newVaccine;
+      case ProductType.nutritional:
+        return ActionType.newNutritionalProduct;
+      case ProductType.bulkPackSize:
+        return ActionType.newPackSize;
+      case ProductType.bulkBrand:
+        return ActionType.newBrand;
+      default:
+        throw new Error("Unknown product type " + productType);
+    }
+  }
+
   const actionBodyTemplate = (rowData: ProductTableRow) => {
     if (!isBulkPackProductAction(rowData)) {
       if (showActionLoadInToAtomicForm(rowData)) {
@@ -163,9 +172,7 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
                   productId: rowData?.productId,
                   productName: rowData?.name,
                   productType: rowData?.productType,
-                  actionType: isDeviceType(rowData.productType as ProductType)
-                    ? ActionType.newDevice
-                    : ActionType.newMedication,
+                  actionType: getActionTypeForProductType(rowData?.productType),
                 }}
                 className={'product-edit-link'}
                 key={`link-${rowData?.name}`}
@@ -253,9 +260,7 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
                 productId: rowData?.productId,
                 productName: rowData?.name,
                 productType: rowData?.productType,
-                actionType: isDeviceType(rowData.productType as ProductType)
-                  ? ActionType.newDevice
-                  : ActionType.newMedication,
+                actionType: getActionTypeForProductType(rowData?.productType),
               }}
               className={'product-edit-link'}
               key={`link-${rowData?.name}`}
