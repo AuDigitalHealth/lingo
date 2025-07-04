@@ -8,15 +8,12 @@ import {
   Grid,
   IconButton,
   Stack,
-  TextField,
+  TextField
 } from '@mui/material';
 import { FieldProps } from '@rjsf/utils';
 import ValueSetAutocomplete from '../../components/ValueSetAutocomplete';
 import EclAutocomplete from '../../components/EclAutocomplete';
-import {
-  NonDefiningProperty,
-  NonDefiningPropertyType,
-} from '../../../../../types/product.ts';
+import { NonDefiningProperty, NonDefiningPropertyType } from '../../../../../types/product.ts';
 import useTaskById from '../../../../../hooks/useTaskById.tsx';
 import { ConceptMini } from '../../../../../types/concept.ts';
 import { MultiValueValueSetAutocomplete } from '../../components/MultiValueSetAutocomplete.tsx';
@@ -150,6 +147,7 @@ const ExternalIdentifierRender: React.FC<
   const isMultiValued = multiValuedSchemes.includes(schemeName);
   const showDefaultOptions = showDefaultOptionSchemes.includes(schemeName);
   const isCheckBox = schema?.properties?.type?.const === 'REFERENCE_SET';
+  const isNumber = schema?.properties?.value?.type === 'number';
 
   const bindingConfig: BindingConfig = uiSchema['ui:options']?.binding || {};
 
@@ -505,6 +503,7 @@ const ExternalIdentifierRender: React.FC<
           !isMultiValued && (
             <TextField
               fullWidth
+              type={isNumber ? 'number' : 'text'}
               disabled={readOnly}
               label={schema.title}
               value={schemeEntries?.[0]?.value || ''}
