@@ -89,16 +89,17 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
         options={isDisabled ? [] : options}
         getOptionLabel={(option: Concept) => option?.pt?.term || ''}
         value={
-          options.find(option => option.conceptId === value?.conceptId) ||
-          value ||
-          null
+          options && options.length > 0
+            ? options.find(option => option.conceptId === value?.conceptId) || null
+            : null
         }
         onInputChange={(event, newInputValue) => setInputValue(newInputValue)}
         onChange={(event, selectedValue) =>
           handleProductChange(selectedValue as Concept)
         }
         isOptionEqualToValue={(option: Concept, selectedValue: Concept) =>
-          option?.conceptId === selectedValue?.conceptId
+          !!option?.conceptId && !!selectedValue?.conceptId &&
+          option.conceptId === selectedValue.conceptId
         }
         renderOption={(props, option: Concept) => (
           <li {...props} key={option.conceptId}>
