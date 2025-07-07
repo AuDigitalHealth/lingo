@@ -92,12 +92,13 @@
         },
         "deviceType": {
           "ui:field": "AutoCompleteField",
-          "ui:title": "Device Type",
+          "ui:title": "VTM Level Device Type",
           "ui:options": {
             "skipTitle": true,
             "ecl": "(((<< 49062001) MINUS ((< 49062001 MINUS >(< 49062001)))) MINUS (<<^660371000220109))",
             "extendedEcl": "(<63653004 MINUS ^660371000220109) : [0..0] 774158006 = *",
             "showDefaultOptions": false,
+            "showDescription": true,
             "dependants": [
               {
                 "path": "../specificDeviceType",
@@ -112,7 +113,7 @@
         },
         "specificDeviceType": {
           "ui:field": "AutoCompleteField",
-          "ui:title": "Specific Device Type",
+          "ui:title": "Existing VMP Level Device Type",
           "ui:options": {
             "skipTitle": true,
             "showDefaultOptions": true
@@ -120,7 +121,6 @@
         },
         "newSpecificDeviceName": {
           "type": "string",
-          "title": "New Specific Device Name",
           "ui:widget": "text",
           "ui:options": {
             "inputType": "text",
@@ -129,7 +129,6 @@
         },
         "otherParentConcepts": {
           "type": "array",
-          "title": "Other Parent Concepts",
           "items": {
             "$ref": "#/$defs/SnowstormConceptMini"
           },
