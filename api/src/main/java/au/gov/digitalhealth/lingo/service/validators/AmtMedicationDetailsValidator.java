@@ -175,6 +175,18 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
         ProductPackageType.PACKAGE,
         models.getModelConfiguration(branch));
 
+    if (productDetails.getExistingMedicinalProduct() != null
+        || productDetails.getExistingMedicinalProduct().getConceptId() != null) {
+      throw new ProductAtomicDataValidationProblem(
+          "Existing medicinal product is not supported in AMT medication details validation");
+    }
+
+    if (productDetails.getExistingClinicalDrug() != null
+        || productDetails.getExistingClinicalDrug().getConceptId() != null) {
+      throw new ProductAtomicDataValidationProblem(
+          "Existing clinical drug is not supported in AMT medication details validation");
+    }
+
     boolean genericFormPopulated = productDetails.getGenericForm() != null;
     boolean specificFormPopulated = productDetails.getSpecificForm() != null;
     boolean containerTypePopulated = productDetails.getContainerType() != null;
