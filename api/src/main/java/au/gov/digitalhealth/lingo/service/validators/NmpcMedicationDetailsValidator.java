@@ -119,21 +119,38 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
       validateQuantityPopulated(productDetails.getQuantity(), "Product quantity");
     }
 
+    final boolean nutritionalProduct = productDetails instanceof NutritionalProductDetails;
+
+    if (productDetails instanceof NutritionalProductDetails nutritionalProductDetails) {
+      validatePopulatedConcept(
+          productDetails.getExistingMedicinalProduct(),
+          "Nutritional product must have an existing medicinal product defined");
+      if (nutritionalProductDetails.getNewGenericProductName() == null
+          || nutritionalProductDetails.getNewGenericProductName().isBlank()) {
+        validatePopulatedConcept(
+            productDetails.getExistingClinicalDrug(),
+            "Either existing clinical drug or new generic product name must be set for nutritional products");
+      }
+    } else {
+      validateConceptNotSet(
+          productDetails.getExistingMedicinalProduct(),
+          "Only nutritional products can have an existing medicinal product defined");
+      validateConceptNotSet(
+          productDetails.getExistingClinicalDrug(),
+          "Only nutritional products can have an existing clinical drug defined");
+    }
+
     final boolean unitOfPresentationExists = productDetails.getUnitOfPresentation() != null;
     for (Ingredient ingredient : productDetails.getActiveIngredients()) {
 
-      if (unitOfPresentationExists && productDetails instanceof VaccineProductDetails) {
+      final boolean vaccine = productDetails instanceof VaccineProductDetails;
+      if (unitOfPresentationExists && vaccine) {
         validateQuantityNotZero(
             productDetails.getQuantity(),
             "Vaccine unit of presentation quantity must be set if the unit of presentation is set");
       }
 
-      validateIngredient(
-          branch,
-          ingredient,
-          unitOfPresentationExists,
-          productDetails instanceof NutritionalProductDetails,
-          productDetails instanceof VaccineProductDetails);
+      validateIngredient(branch, ingredient, unitOfPresentationExists, nutritionalProduct, vaccine);
     }
   }
 
