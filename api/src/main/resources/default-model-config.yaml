@@ -200,6 +200,21 @@ models:
         mappingTypes:
           - RELATED
         order: 90
+      - name: ceNumber
+        title: CE number
+        identifier: 681031000220102
+        level: PACKAGE
+        dataType: UNSIGNED_INTEGER
+        valueRegexValidation: \d{4}
+        valueValidationErrorMessage: "Must be a 4 digit number"
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        defaultMappingType: RELATED
+        mappingTypes:
+          - RELATED
+        order: 90
+        suppressOnProductTypes: MEDICATION,NUTRITIONAL,VACCINE
       - name: atc
         title: ATC code
         identifier: 84676004
@@ -380,6 +395,18 @@ models:
         showDefaultOptions: true
         order: 92
         suppressOnProductTypes: DEVICE
+      - name: deviceClass
+        title: Device Class
+        identifier: 681041000220106
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: <681051000220108
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: true
+        multiValued: false
+        showDefaultOptions: true
+        order: 93
+        suppressOnProductTypes: MEDICATION,NUTRITIONAL,VACCINE
       - name: marketingAuthHolder
         title: Marketing Authorisation Holder
         identifier: 680061000220102
