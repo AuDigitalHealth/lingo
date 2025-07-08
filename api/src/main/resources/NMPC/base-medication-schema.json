@@ -43,7 +43,10 @@
                 "value": { "type": "number", "minimum": 0 }
               }
             }
-          ]
+          ],
+          "errorMessage": {
+            "oneOf": "Both 'unit' and 'value' must be provided"
+          }
         }
       }
     },
@@ -55,6 +58,9 @@
         "unit": {
           "type": ["object", "null"],
           "$ref": "#/$defs/SnowstormConceptMini"
+        },
+        "errorMessage": {
+          "minProperties": "Both 'unit' and 'value' must be provided"
         },
         "value": { "type": "number", "minimum": 0 }
       },
