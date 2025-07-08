@@ -186,3 +186,6 @@ export const setUiSchemaById = (
   _.set(newUiSchema, lodashPath, value);
   return newUiSchema;
 };
+export const isEmptyObject = (obj: any): boolean => {
+  return obj && typeof obj === 'object' && Object.keys(obj).length === 0;
+};
