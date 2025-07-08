@@ -90,6 +90,18 @@ public class TaskManagerClient {
     return Arrays.asList(tasks);
   }
 
+  public List<Task> getAllTasksOverProject() throws AccessDeniedException {
+
+    Task[] tasks =
+        defaultAuthoringPlatformApiClient
+            .get()
+            .uri("/projects/tasks/search?criteria=" + apProject)
+            .retrieve()
+            .bodyToMono(Task[].class)
+            .block();
+    return Arrays.asList(tasks);
+  }
+
   public Task getTaskByKey(String branch, String key) throws AccessDeniedException {
     return authoringPlatformApiClient
         .get()
