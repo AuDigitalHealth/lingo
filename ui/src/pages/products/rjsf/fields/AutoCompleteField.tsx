@@ -15,12 +15,11 @@ import { useDependantUpdates } from './../hooks/useDependantUpdates.ts';
 import { useExclusionUpdates } from './../hooks/useExclusionUpdates.ts';
 
 const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
-  const { onChange, idSchema, rawErrors,errorSchema } = props;
+  const { onChange, idSchema } = props;
   const uiSchema = props.uiSchema;
   const isMultivalued = uiSchema?.['ui:options']?.multiValued === true;
   const isShowDefaultOptions =
     uiSchema?.['ui:options']?.showDefaultOptions === true;
-  const errorSche = props.formContext.errorSchema;
 
   const [formContext, setFormContext] = useState(props.formContext || {});
   const [formData, setFormData] = useState(
