@@ -71,19 +71,7 @@ public class TaskManagerClient {
     Task[] tasks =
         authoringPlatformApiClient
             .get()
-            .uri("/projects/my-tasks")
-            .retrieve()
-            .bodyToMono(Task[].class)
-            .block();
-    return Arrays.asList(tasks);
-  }
-
-  public List<Task> getAllTasksOverProject() throws AccessDeniedException {
-
-    Task[] tasks =
-        defaultAuthoringPlatformApiClient
-            .get()
-            .uri("/projects/tasks/search?criteria=" + apProject)
+            .uri("/projects/" + apProject + "/tasks?lightweight=false")
             .retrieve()
             .bodyToMono(Task[].class)
             .block();
