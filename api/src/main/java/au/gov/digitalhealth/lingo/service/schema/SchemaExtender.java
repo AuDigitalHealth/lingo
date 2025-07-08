@@ -60,7 +60,7 @@ public class SchemaExtender {
   }
 
   public void updateSchema(
-      ModelConfiguration modelConfiguration, JsonNode schemaNode, String... productPropertyNames) {
+      ModelConfiguration modelConfiguration, JsonNode schemaNode,String productType, String... productPropertyNames) {
 
     Set<BasePropertyDefinition> properties = new HashSet<>();
     properties.addAll(modelConfiguration.getMappings());
@@ -73,6 +73,7 @@ public class SchemaExtender {
         "NonDefiningProperty",
         "Non Defining Properties",
         NON_DEFINING_PROPERTIES,
+        productType,
         productPropertyNames);
   }
 
@@ -90,6 +91,7 @@ public class SchemaExtender {
             properties,
             jsonTypeName,
             title,
+            "",
             level.getModelLevelType().isPackageLevel()
                 ? ProductPackageType.PACKAGE
                 : ProductPackageType.PRODUCT);
@@ -107,10 +109,11 @@ public class SchemaExtender {
       String jsonTypeName,
       String title,
       String propertyName,
+      String productType,
       String... productPropertyNames) {
 
     ArrayProperty nonDefiningProperty =
-        getArrayProperties(schemaNode, properties, jsonTypeName, title, ProductPackageType.PACKAGE);
+        getArrayProperties(schemaNode, properties, jsonTypeName, title,productType, ProductPackageType.PACKAGE);
 
     if (nonDefiningProperty != null) {
       schemaNode
@@ -119,21 +122,21 @@ public class SchemaExtender {
     }
 
     ArrayProperty nonDefiningProductProperty =
-        getArrayProperties(schemaNode, properties, jsonTypeName, title, ProductPackageType.PRODUCT);
+        getArrayProperties(schemaNode, properties, jsonTypeName, title,productType, ProductPackageType.PRODUCT);
 
     if (nonDefiningProductProperty != null) {
       for (String productPropertyName : productPropertyNames) {
         schemaNode
-            .withObjectProperty(DEFS)
-            .withObjectProperty(productPropertyName)
-            .withObjectProperty(PROPERTIES)
-            .set(propertyName, objectMapper.valueToTree(nonDefiningProductProperty));
+            .withObjectProperty(DEFS);
+//            .withObjectProperty(productPropertyName)
+//            .withObjectProperty(PROPERTIES)
+//            .set(propertyName, objectMapper.valueToTree(nonDefiningProductProperty));
       }
     }
 
     ArrayProperty nonDefiningSubpackProperty =
         getArrayProperties(
-            schemaNode, properties, jsonTypeName, title, ProductPackageType.CONTAINED_PACKAGE);
+            schemaNode, properties, jsonTypeName, title,productType, ProductPackageType.CONTAINED_PACKAGE);
 
     if (nonDefiningSubpackProperty != null) {
       schemaNode
@@ -149,6 +152,7 @@ public class SchemaExtender {
       Set<BasePropertyDefinition> properties,
       String jsonTypeName,
       String title,
+      String productType,
       ProductPackageType productPackageType) {
 
     Set<BasePropertyDefinition> levelMatchingProperties =
@@ -162,7 +166,7 @@ public class SchemaExtender {
       levelMatchingProperties.forEach(
           refset -> referenceSetList.getAnyOf().add(SchemaFactory.create(refset)));
 
-      String updatedJsonTypeName = productPackageType + "_" + jsonTypeName;
+      String updatedJsonTypeName = productType.toUpperCase() +"_"+productPackageType + "_" + jsonTypeName;
       schemaNode
           .withObjectProperty(DEFS)
           .set(updatedJsonTypeName, objectMapper.valueToTree(referenceSetList));
