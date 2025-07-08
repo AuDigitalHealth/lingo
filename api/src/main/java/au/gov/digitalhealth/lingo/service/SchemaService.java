@@ -56,7 +56,7 @@ public class SchemaService {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     JsonNode schemaNode = readFileContentAsJson(modelConfiguration.getBaseMedicationSchema());
 
-    schemaExtender.updateSchema(modelConfiguration, schemaNode, "ProductDetails");
+    schemaExtender.updateSchema(modelConfiguration, schemaNode, "medication","ProductDetails");
 
     return schemaNode.toString();
   }
@@ -74,7 +74,7 @@ public class SchemaService {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     JsonNode schemaNode = readFileContentAsJson(modelConfiguration.getBaseVaccineSchema());
 
-    schemaExtender.updateSchema(modelConfiguration, schemaNode, "ProductDetails");
+    schemaExtender.updateSchema(modelConfiguration, schemaNode,"vaccine", "ProductDetails");
 
     return schemaNode.toString();
   }
@@ -92,7 +92,7 @@ public class SchemaService {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     JsonNode schemaNode = readFileContentAsJson(modelConfiguration.getBaseDeviceSchema());
 
-    schemaExtender.updateSchema(modelConfiguration, schemaNode, "ProductDetails");
+    schemaExtender.updateSchema(modelConfiguration, schemaNode,"device", "ProductDetails");
 
     return schemaNode.toString();
   }
@@ -101,7 +101,7 @@ public class SchemaService {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     JsonNode schemaNode = readFileContentAsJson(modelConfiguration.getBaseBulkBrandSchema());
 
-    schemaExtender.updateSchema(modelConfiguration, schemaNode, "ProductDetails");
+    schemaExtender.updateSchema(modelConfiguration, schemaNode,"bulkBrand", "ProductDetails");
 
     return schemaNode.toString();
   }
@@ -119,7 +119,7 @@ public class SchemaService {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     JsonNode schemaNode = readFileContentAsJson(modelConfiguration.getBaseBulkPackSchema());
 
-    schemaExtender.updateSchema(modelConfiguration, schemaNode, "ProductDetails");
+    schemaExtender.updateSchema(modelConfiguration, schemaNode,"bulkPack", "ProductDetails");
 
     return schemaNode.toString();
   }
