@@ -48,7 +48,7 @@
         },
         "type": { "ui:widget": "hidden" },
         "ui:grid": [
-          { "oneOf": 12 },
+           {"discriminator": 12, "productType": 12},
           {
             "productName": 12,
             "genericForm": 12

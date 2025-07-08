@@ -44,8 +44,6 @@ import { DraftSubmitPanel } from './components/DarftSubmitPanel.tsx';
 import ProductPartialSaveModal from './components/ProductPartialSaveModal.tsx';
 import MuiGridTemplate from './templates/MuiGridTemplate.tsx';
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
-import schema from './base-medication-schema.json';
-import uiSchema from './base-medication-ui-schema.json';
 import { validator } from './helpers/validator.ts';
 import {buildErrorSchema, cleanFormDataBySchema} from "./helpers/validationHelper.ts";
 import {ErrorDisplay} from "./components/ErrorDisplay.tsx";
@@ -78,8 +76,8 @@ function MedicationAuthoring({
   const [isDirty, setIsDirty] = useState(false);
   const [formErrors, setFormErrors] = useState<any[]>([]);
 
-  const { data: schemaTest, isLoading: isSchemaLoading } = useSchemaQuery(task.branchPath, schemaType);
-  const { data: uiSchemaTest, isLoading: isUiSchemaLoading } = useUiSchemaQuery(task.branchPath, schemaType);
+  const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(task.branchPath, schemaType);
+  const { data: uiSchema, isLoading: isUiSchemaLoading } = useUiSchemaQuery(task.branchPath, schemaType);
   const {
     originalConceptId,
     setOriginalConceptId,
