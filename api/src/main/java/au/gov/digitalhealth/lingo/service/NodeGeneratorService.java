@@ -111,6 +111,25 @@ public class NodeGeneratorService {
   @Async
   public CompletableFuture<Node> lookUpNode(
       String branch,
+      SnowstormConceptMini concept,
+      ModelLevel modelLevel,
+      Collection<NonDefiningBase> newProperties) {
+    Node node = new Node();
+    if (modelLevel != null) {
+      node.setLabel(modelLevel.getDisplayLabel());
+      node.setModelLevel(modelLevel.getModelLevelType());
+      node.setDisplayName(modelLevel.getName());
+    }
+    node.setConcept(concept);
+
+    populateNodeProperties(branch, modelLevel, node, newProperties);
+
+    return CompletableFuture.completedFuture(node);
+  }
+
+  @Async
+  public CompletableFuture<Node> lookUpNode(
+      String branch,
       Long productId,
       ModelLevel modelLevel,
       Collection<NonDefiningBase> newProperties) {
@@ -526,6 +545,10 @@ public class NodeGeneratorService {
                   modelConfiguration.getMappingsByIdentifierForModelLevel(modelLevel).values()),
               fhirClient));
       node.setNonDefiningProperties(properties);
+
+      if (selectedConcept) {
+        populateNodeProperties(branch, modelLevel, node, null);
+      }
       log.fine("New concept for " + label + " " + newConceptDetails.getConceptId());
     } else {
       log.fine("Concept found for " + label + " " + node.getConceptId());

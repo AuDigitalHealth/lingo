@@ -425,7 +425,10 @@ public class ProductUpdateService {
         .filter(
             node ->
                 !node.isNewConcept() && existingNodesByConceptId.containsKey(node.getConceptId()))
-        .forEach(node -> allocatedExistingNodes.add(node.getConceptId()));
+        .forEach(
+            node -> {
+              allocatedExistingNodes.add(node.getConceptId());
+            });
 
     // for all the new nodes in the new summary, find the corresponding exisitng node
     newSummary.getNodes().stream()
@@ -487,7 +490,9 @@ public class ProductUpdateService {
         .forEach(
             node -> {
               node.setNewInTask(
-                  taskChangedIds != null && taskChangedIds.contains(node.getConceptId()));
+                  taskChangedIds != null
+                      && (node.getConceptId().startsWith("-")
+                          || taskChangedIds.contains(node.getConceptId())));
               node.setNewInProject(
                   projectChangedIds != null && projectChangedIds.contains(node.getConceptId()));
               if (node.getOriginalNode() != null && node.getOriginalNode().getNode() != null) {
@@ -505,8 +510,8 @@ public class ProductUpdateService {
             });
 
     List<CompletableFuture<Void>> referencedByOtherProductsFutures = new ArrayList<>();
-    newSummary
-        .getNodes()
+    newSummary.getNodes().stream()
+        .filter(node -> node.getOriginalNode() != null)
         .forEach(
             newNode -> {
               OriginalNode originalNode = newNode.getOriginalNode();

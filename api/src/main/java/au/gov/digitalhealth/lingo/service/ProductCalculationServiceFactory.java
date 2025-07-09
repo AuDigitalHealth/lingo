@@ -17,7 +17,9 @@ package au.gov.digitalhealth.lingo.service;
 
 import au.gov.digitalhealth.lingo.product.details.DeviceProductDetails;
 import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
+import au.gov.digitalhealth.lingo.product.details.NutritionalProductDetails;
 import au.gov.digitalhealth.lingo.product.details.ProductDetails;
+import au.gov.digitalhealth.lingo.product.details.VaccineProductDetails;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,6 +36,8 @@ public class ProductCalculationServiceFactory {
 
     Map<Class<? extends ProductDetails>, ProductCalculationService<?>> map = new HashMap<>();
     map.put(MedicationProductDetails.class, medicationProductCalculationService);
+    map.put(VaccineProductDetails.class, medicationProductCalculationService);
+    map.put(NutritionalProductDetails.class, medicationProductCalculationService);
     map.put(DeviceProductDetails.class, deviceProductCalculationService);
     this.serviceMap = Collections.unmodifiableMap(map);
   }

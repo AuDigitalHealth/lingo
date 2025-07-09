@@ -1,3 +1,18 @@
+/*
+ * Copyright 2024 Australian Digital Health Agency ABN 84 425 496 912.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package au.gov.digitalhealth.lingo.service.validators;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
@@ -22,52 +37,72 @@ import java.util.Map;
 public class DetailsValidator {
 
   protected static void validateNumeratorDenominatorSet(
-      @Valid Quantity strengthNumerator, @Valid Quantity strengthDenominator, String typeName) {
+      @Valid Quantity strengthNumerator,
+      @Valid Quantity strengthDenominator,
+      String typeName,
+      String objectName,
+      String message) {
     if (strengthNumerator == null
         || strengthNumerator.getValue() == null
         || BigDecimal.ZERO.equals(strengthNumerator.getValue())) {
       throw new ProductAtomicDataValidationProblem(
-          "Medication product details must have a "
+          objectName
+              + " must have a "
               + typeName
-              + " strength numerator value greater than zero");
+              + " strength numerator value greater than zero when "
+              + message);
     }
     if (strengthNumerator.getUnit() == null) {
       throw new ProductAtomicDataValidationProblem(
-          "Medication product details must have a "
+          objectName
+              + " must have a "
               + typeName
-              + " strength numerator unit defined");
+              + " strength numerator unit defined when "
+              + message);
     }
     if (strengthDenominator == null
         || strengthDenominator.getValue() == null
         || BigDecimal.ZERO.equals(strengthDenominator.getValue())) {
       throw new ProductAtomicDataValidationProblem(
-          "Medication product details must have a "
+          objectName
+              + " must have a "
               + typeName
-              + " strength denominator value greater than zero");
+              + " strength denominator value greater than zero when "
+              + message);
     }
     if (strengthDenominator.getUnit() == null) {
       throw new ProductAtomicDataValidationProblem(
-          "Medication product details must have a "
+          objectName
+              + " must have a "
               + typeName
-              + " strength denominator unit defined");
+              + " strength denominator unit defined when "
+              + message);
     }
   }
 
   protected static void validateStrengthNotPopulated(
-      @Valid Quantity strengthNumerator, @Valid Quantity strengthDenominator, String strengthType) {
+      @Valid Quantity strengthNumerator,
+      @Valid Quantity strengthDenominator,
+      String strengthType,
+      String objectName,
+      String message) {
     if (strengthNumerator != null
         && (strengthNumerator.getValue() != null || strengthNumerator.getUnit() != null)) {
       throw new ProductAtomicDataValidationProblem(
-          "Medication product details must not have a "
+          objectName
+              + " must not have a "
               + strengthType
-              + " strength numerator defined when unit of presentation exists");
+              + " strength numerator defined "
+              + message);
     }
     if (strengthDenominator != null
         && (strengthDenominator.getValue() != null || strengthDenominator.getUnit() != null)) {
       throw new ProductAtomicDataValidationProblem(
-          "Medication product details must not have a "
+          objectName
+              + " must not have a "
               + strengthType
-              + " strength denominator defined when unit of presentation exists");
+              + " strength denominator defined "
+              + message);
     }
   }
 
@@ -100,7 +135,9 @@ public class DetailsValidator {
   }
 
   protected static void validateQuantityNotZero(Quantity productQuantity, String message) {
-    if (productQuantity.getValue() == null || BigDecimal.ZERO.equals(productQuantity.getValue())) {
+    if (productQuantity == null
+        || productQuantity.getValue() == null
+        || BigDecimal.ZERO.equals(productQuantity.getValue())) {
       throw new ProductAtomicDataValidationProblem(message);
     }
   }

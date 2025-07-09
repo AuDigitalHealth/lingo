@@ -116,7 +116,7 @@ export default function SearchProduct({
       case ActionType.newBrand:
         returnVal = generateEclFromBinding(
           fieldBindings,
-          'medicationProduct.search',
+          'bulk.new-brand-pack-sizes',
         );
         break;
       case ActionType.newDevice:
@@ -405,16 +405,30 @@ export default function SearchProduct({
               if (showConfirmationModalOnChange && v !== null) {
                 setChangeModalOpen(true);
               } else {
-                if (handleChange)
+                if (handleChange) {
+                  let productType: ProductType;
+                  switch (selectedActionType) {
+                    case ActionType.newDevice:
+                      productType = ProductType.device;
+                      break;
+                    case ActionType.newMedication:
+                      productType = ProductType.medication;
+                      break;
+                    case ActionType.newVaccine:
+                      productType = ProductType.vaccine;
+                      break;
+                    case ActionType.newNutritionalProduct:
+                      productType = ProductType.nutritional;
+                      break;
+                    default:
+                      productType = ProductType.medication;
+                  }
                   handleChange(
-                    v ? v : undefined,
-                    selectedActionType === ActionType.newDevice
-                      ? ProductType.device
-                      : ProductType.medication,
-                    selectedActionType
-                      ? selectedActionType
-                      : ActionType.newMedication,
+                    v ?? undefined,
+                    productType,
+                    selectedActionType || ActionType.newMedication,
                   );
+                }
               }
             }}
             open={open}
