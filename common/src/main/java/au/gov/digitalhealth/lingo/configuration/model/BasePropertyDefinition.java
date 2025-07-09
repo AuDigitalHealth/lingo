@@ -25,7 +25,9 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -67,6 +69,8 @@ public abstract class BasePropertyDefinition {
 
   /** If the property is read only it will not be displayed in the UI for editing. */
   private boolean readOnly;
+
+  private Set<ProductType> suppressOnProductTypes = new HashSet<>();
 
   public abstract PropertyType getPropertyType();
 }

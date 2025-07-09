@@ -34,7 +34,10 @@
       "minProperties": 2,
       "properties": {
         "unit": {
-          "type": ["object", "null"],
+          "type": [
+            "object",
+            "null"
+          ],
           "$ref": "#/$defs/SnowstormConceptMini"
         },
         "value": {
@@ -107,13 +110,25 @@
           "title": "AMP Active Ingredient"
         },
         "basisOfStrengthSubstance": {
+          "type": [
+            "object",
+            "null"
+          ],
           "$ref": "#/$defs/SnowstormConceptMini"
         },
         "presentationStrengthNumerator": {
+          "type": [
+            "object",
+            "null"
+          ],
           "$ref": "#/$defs/Quantity",
           "title": "Presentation Strength Numerator"
         },
         "presentationStrengthDenominator": {
+          "type": [
+            "object",
+            "null"
+          ],
           "$ref": "#/$defs/Quantity",
           "title": "Presentation Strength Denominator"
         }
@@ -130,7 +145,7 @@
       "properties": {
         "type": {
           "type": "string",
-          "default": "medication"
+          "const": "vaccine"
         },
         "productName": {
           "$ref": "#/$defs/SnowstormConceptMini",
@@ -160,37 +175,44 @@
           }
         },
         "specificForm": {
+          "type": [
+            "object",
+            "null"
+          ],
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Specific Dose Form"
         },
         "targetPopulation": {
+          "type": [
+            "object",
+            "null"
+          ],
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Target Population"
         },
         "ingredientQualitativeStrength": {
+          "type": [
+            "object",
+            "null"
+          ],
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Ingredient Qualitative Strength"
         },
         "unitOfPresentation": {
+          "type": [
+            "object",
+            "null"
+          ],
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Unit of Presentation"
         },
-        "unit": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "Unit of presentation size unit",
-          "errorMessage": {
-            "type": "Invalid Pack Size Unit",
-            "minProperties": "Field must be populated."
-          }
-        },
-        "value": {
-          "type": "number",
-          "title": "Unit of presentation size quantity",
-          "minimum": 0,
-          "errorMessage": {
-            "type": "Value must be a number",
-            "minimum": "Value must be at least 0"
-          }
+        "quantity": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "$ref": "#/$defs/Quantity",
+          "title": "Unit of Presentation Quantity"
         }
       },
       "required": [

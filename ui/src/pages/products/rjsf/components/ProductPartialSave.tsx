@@ -47,6 +47,12 @@ interface ProductPartialSaveProps extends FieldProps {
   isUpdating: boolean;
   existingProductId?: string;
   productStatus?: string | undefined;
+  originalPackageDetails:
+    | MedicationPackageDetails
+    | DevicePackageDetails
+    | null;
+  originalConceptId: string | null;
+  action: ProductAction;
 }
 function ProductPartialSave({
   idSchema,
@@ -58,6 +64,9 @@ function ProductPartialSave({
   isUpdating,
   existingProductId,
   productStatus,
+  originalPackageDetails,
+  originalConceptId,
+  action,
 }: ProductPartialSaveProps) {
   // alert(productStatus)
   const { login } = useUserStore();
@@ -126,12 +135,14 @@ function ProductPartialSave({
     setUpdating(true);
     const ticketProductDto = mapToTicketProductDto(
       packageDetails,
+      originalPackageDetails,
+      originalConceptId,
       ticket,
       login as string,
       productName?.name as string,
       !existingProductNames.includes(productName?.name as string) ||
         productStatus === ProductStatus.Completed,
-      ProductAction.CREATE,
+      action.toUpperCase(),
     );
     setForceNavigation(true);
     TicketProductService.draftTicketProduct(ticket.id, ticketProductDto)

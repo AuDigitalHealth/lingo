@@ -80,8 +80,7 @@
               "unitOfPresentation": 24
             },
             {
-              "value": 12,
-              "unit": 12
+              "quantity": 24
             },
             {
               "nonDefiningProperties": 24
@@ -286,20 +285,31 @@
             "showDefaultOptions": true
           }
         },
-        "value": {
-          "ui:widget": "text",
+        "quantity": {
           "ui:options": {
-            "inputType": "number",
-            "title": "Unit of presentation size quantity"
-          }
-        },
-        "unit": {
-          "ui:field": "AutoCompleteField",
-          "ui:title": "Unit of presentation size unit",
-          "ui:options": {
-            "ecl": "<763158003.320091000221107",
-            "extendedEcl": "<767524001",
-            "showDefaultOptions": true
+            "skipTitle": true
+          },
+          "ui:grid": [
+            {
+              "value": 12,
+              "unit": 12
+            }
+          ],
+          "value": {
+            "ui:widget": "text",
+            "ui:options": {
+              "inputType": "number",
+              "title": "Unit of presentation size quantity"
+            }
+          },
+          "unit": {
+            "ui:field": "AutoCompleteField",
+            "ui:title": "Unit of presentation size unit",
+            "ui:options": {
+              "ecl": "<763158003.320091000221107",
+              "extendedEcl": "<767524001",
+              "showDefaultOptions": true
+            }
           }
         },
         "targetPopulation": {

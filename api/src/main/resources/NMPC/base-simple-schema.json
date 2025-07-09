@@ -9,9 +9,6 @@
         },
         "pt": {
           "$ref": "#/$defs/SnowstormTermLangPojo"
-        },
-        "fsn": {
-          "$ref": "#/$defs/SnowstormTermLangPojo"
         }
       },
       "minProperties": 1,
@@ -33,8 +30,11 @@
     },
     "Quantity": {
       "type": "object",
+      "nullable": true,
+      "minProperties": 2,
       "properties": {
         "unit": {
+          "type": ["object", "null"],
           "$ref": "#/$defs/SnowstormConceptMini"
         },
         "value": {
@@ -42,9 +42,8 @@
           "minimum": 0
         }
       },
-      "minProperties": 2,
       "errorMessage": {
-        "minProperties": "Both 'unit' and 'value' must be provided."
+        "minProperties": "Both 'unit' and 'value' must be provided when specified."
       },
       "dependencies": {
         "unit": {
@@ -80,76 +79,80 @@
             }
           ],
           "errorMessage": {
-            "oneOf": "Must be an integer ≥ 1 when 'unit' is 'Each'"
+            "oneOf": "Must be an integer >= 1 when 'unit' is 'Each'"
           }
         }
       }
     },
     "ProductDetails": {
       "type": "object",
+      "title": "Product Details",
       "properties": {
         "type": {
           "type": "string",
-          "default": "device"
+          "const": "nutritional"
         },
         "productName": {
           "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "Product Name",
-          "description": "Select or create a product name (brand) for the device.",
+          "title": "Brand Name",
           "minProperties": 1,
           "errorMessage": {
-            "minProperties": "Product Name must be populated."
+            "minProperties": "Brand Name must be populated."
           }
         },
-        "deviceType": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "ui:title": "VTM Level Device Type",
-          "description": "Select a VTM level device type for the product."
+        "existingMedicinalProduct": {
+          "type": ["object", "null"],
+          "$ref": "#/$defs/SnowstormConceptMini"
         },
-        "specificDeviceType": {
+        "existingClinicalDrug": {
           "type": ["object", "null"],
           "$ref": "#/$defs/SnowstormConceptMini",
-          "ui:title": "Existing VMP Level Device Type",
-          "description": "Select an existing VMP level device type if available."
+          "description": "If an existing VMP is available, select it here."
         },
-        "newSpecificDeviceName": {
+        "newGenericProductName": {
           "type": "string",
-          "title": "New VMP Level Device Concept Name",
-          "description": "If the VMP level device type is not available, you can create a new VMP level device concept with this name."
+          "title": "New Generic Product Name",
+          "description": "If an existing VMP is not available, you can create a new generic product concept with this name."
         },
-        "otherParentConcepts": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/SnowstormConceptMini"
-          },
-          "title": "New VMP Level Concept Additional Parent Concepts",
-          "description": "If creating a new VMP level device concept, add any parent concepts additional to the VTM device type."
+        "genericForm": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Generic Dose Form",
+          "minProperties": 2,
+          "errorMessage": {
+            "minProperties": "Generic Dose Form must be populated."
+          }
+        },
+        "specificForm": {
+          "type": ["object", "null"],
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Specific Dose Form"
+        },
+        "unitOfPresentation": {
+          "type": ["object", "null"],
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Unit of Presentation"
+        },
+        "otherIdentifyingInformation": {
+          "type": "string",
+          "title": "Other Identifying Information"
+        },
+        "targetPopulation": {
+          "type": ["object", "null"],
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Target Population"
         }
       },
-      "required": ["productName", "deviceType"],
+      "required": ["productName", "genericForm", "unitOfPresentation"],
       "errorMessage": {
-        "required": {
-          "productName": "Product Name is required",
-          "deviceType": "Device Type is required"
-        }
+        "required": "Product Details must be populated."
       }
     },
     "ContainedProduct": {
       "type": "object",
+      "title": "Contained Product",
       "properties": {
         "unit": {
           "$ref": "#/$defs/SnowstormConceptMini",
-          "default": {
-            "conceptId": "732935002",
-            "pt": {
-              "lang": "en",
-              "term": "Unit of presentation"
-            },
-            "fsn": {
-              "lang": "en",
-              "term": "Unit of presentation (unit of presentation)"
-            }
-          },
           "errorMessage": {
             "type": "Invalid Pack Size Unit",
             "minProperties": "Field must be populated."
@@ -169,11 +172,7 @@
       },
       "required": ["unit", "value", "productDetails"],
       "errorMessage": {
-        "required": {
-          "unit": "Unit is required",
-          "value": "Value is required",
-          "productDetails": "Product Details are required"
-        }
+        "required": "Contained product must be populated."
       },
       "dependencies": {
         "unit": {
@@ -240,14 +239,15 @@
       "items": {
         "$ref": "#/$defs/ContainedProduct"
       },
-      "minItems": 1
+      "minItems": 1,
+      "errorMessage": {
+        "minItems": "At least one Contained Products."
+      }
     }
   },
   "required": ["containedProducts"],
   "errorMessage": {
-    "required": {
-      "containedProducts": "At least one Contained Product is required"
-    }
+    "required": "Fields must be populated."
   },
   "additionalProperties": false
 }

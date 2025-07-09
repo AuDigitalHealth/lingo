@@ -42,6 +42,8 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_QUALITATIVE_ST
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_SUPPLIER;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_TARGET_POPULATION;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_UNIT_OF_PRESENTATION;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_UNIT_OF_PRESENTATION_SIZE_QUANTITY;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_UNIT_OF_PRESENTATION_SIZE_UNIT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.IS_A;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.PLAYS_ROLE;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.filterActiveInferredRelationshipByType;
@@ -69,6 +71,7 @@ import au.gov.digitalhealth.lingo.product.details.Quantity;
 import au.gov.digitalhealth.lingo.product.details.VaccineProductDetails;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
 import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
+import au.gov.digitalhealth.lingo.util.NmpcConstants;
 import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import java.util.HashMap;
 import java.util.Map;
@@ -223,6 +226,16 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
               getSingleOptionalActiveBigDecimal(
                   productRelationships, HAS_PACK_SIZE_VALUE.getValue()),
               getSingleActiveTarget(productRelationships, HAS_PACK_SIZE_UNIT.getValue())));
+    }
+
+    if (relationshipOfTypeExists(
+        productRelationships, HAS_UNIT_OF_PRESENTATION_SIZE_QUANTITY.getValue())) {
+      productDetails.setQuantity(
+          new Quantity(
+              getSingleOptionalActiveBigDecimal(
+                  productRelationships, HAS_UNIT_OF_PRESENTATION_SIZE_QUANTITY.getValue()),
+              getSingleActiveTarget(
+                  productRelationships, HAS_UNIT_OF_PRESENTATION_SIZE_UNIT.getValue())));
     }
   }
 
@@ -496,7 +509,17 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
           productId);
     }
 
-    if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
+    if (modelConfiguration.getModelType().equals(ModelType.NMPC)
+        && browserMap.values().stream()
+            .noneMatch(
+                c ->
+                    c.getRelationships().stream()
+                        .anyMatch(
+                            r ->
+                                NmpcConstants.HAS_NMPC_PRODUCT_TYPE.getValue().equals(r.getTypeId())
+                                    && NmpcConstants.NMPC_NUTRITIONAL_SUPPLEMENT
+                                        .getValue()
+                                        .equals(r.getDestinationId())))) {
       // active ingredients aren't on the branded product, need to look at the clinical drug and MP
       final Map<String, SnowstormConceptMini> refinedActiveIngredients =
           getClinicalDrugRelationships(
