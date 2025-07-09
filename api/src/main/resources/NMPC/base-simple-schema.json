@@ -34,10 +34,7 @@
       "minProperties": 2,
       "properties": {
         "unit": {
-          "type": [
-            "object",
-            "null"
-          ],
+          "type": ["object", "null"],
           "$ref": "#/$defs/SnowstormConceptMini"
         },
         "value": {
@@ -65,9 +62,7 @@
                   "minimum": 1
                 }
               },
-              "required": [
-                "value"
-              ]
+              "required": ["value"]
             },
             {
               "properties": {
@@ -105,6 +100,20 @@
             "minProperties": "Brand Name must be populated."
           }
         },
+        "existingMedicinalProduct": {
+          "type": ["object", "null"],
+          "$ref": "#/$defs/SnowstormConceptMini"
+        },
+        "existingClinicalDrug": {
+          "type": ["object", "null"],
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "description": "If an existing VMP is available, select it here."
+        },
+        "newGenericProductName": {
+          "type": "string",
+          "title": "New Generic Product Name",
+          "description": "If an existing VMP is not available, you can create a new generic product concept with this name."
+        },
         "genericForm": {
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Generic Dose Form",
@@ -114,23 +123,26 @@
           }
         },
         "specificForm": {
-          "type": [
-            "object",
-            "null"
-          ],
+          "type": ["object", "null"],
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Specific Dose Form"
         },
         "unitOfPresentation": {
+          "type": ["object", "null"],
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Unit of Presentation"
+        },
+        "otherIdentifyingInformation": {
+          "type": "string",
+          "title": "Other Identifying Information"
+        },
+        "targetPopulation": {
+          "type": ["object", "null"],
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Target Population"
         }
       },
-      "required": [
-        "productName",
-        "genericForm",
-        "unitOfPresentation"
-      ],
+      "required": ["productName", "genericForm", "unitOfPresentation"],
       "errorMessage": {
         "required": "Product Details must be populated."
       }
@@ -158,11 +170,7 @@
           "$ref": "#/$defs/ProductDetails"
         }
       },
-      "required": [
-        "unit",
-        "value",
-        "productDetails"
-      ],
+      "required": ["unit", "value", "productDetails"],
       "errorMessage": {
         "required": "Contained product must be populated."
       },
@@ -180,9 +188,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "conceptId"
-                  ]
+                  "required": ["conceptId"]
                 },
                 "value": {
                   "type": "integer",
@@ -239,9 +245,7 @@
       }
     }
   },
-  "required": [
-    "containedProducts"
-  ],
+  "required": ["containedProducts"],
   "errorMessage": {
     "required": "Fields must be populated."
   },

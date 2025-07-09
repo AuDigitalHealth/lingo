@@ -17,6 +17,7 @@ package au.gov.digitalhealth.lingo.service;
 
 import static au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType.CLINICAL_DRUG;
 import static au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType.MEDICINAL_PRODUCT_ONLY;
+import static au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType.REAL_CLINICAL_DRUG;
 import static au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType.REAL_MEDICINAL_PRODUCT;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONCENTRATION_STRENGTH_UNIT;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONCENTRATION_STRENGTH_VALUE;
@@ -416,11 +417,10 @@ public class MedicationProductCalculationService
                   atomicCache)
               .thenApply(
                   n -> {
-                    nameGenerationService.addGeneratedFsnAndPt(
+                    generateName(
                         atomicCache,
-                        packageDetails.hasDeviceType()
-                            ? packageLevel.getDrugDeviceSemanticTag()
-                            : packageLevel.getMedicineSemanticTag(),
+                        packageDetails.hasDeviceType(),
+                        packageLevel,
                         n,
                         modelConfiguration);
                     productSummary.addNode(n);
@@ -826,16 +826,6 @@ public class MedicationProductCalculationService
 
     Map<ModelLevel, CompletableFuture<Node>> levelFutureMap = new HashMap<>();
     for (ModelLevel level : productLevels) {
-      if (modelConfiguration.getModelType().equals(ModelType.NMPC)
-          && productDetails instanceof NutritionalProductDetails
-          && (level.getModelLevelType() == ModelLevelType.MEDICINAL_PRODUCT_ONLY
-              || level.getModelLevelType() == ModelLevelType.REAL_MEDICINAL_PRODUCT
-              || level.getModelLevelType() == ModelLevelType.MEDICINAL_PRODUCT)) {
-        // Nutritional products do not have a medicinal product level or real medicinal product
-        // level
-        continue;
-      }
-
       Set<CompletableFuture<Node>> parents = new HashSet<>();
 
       for (ModelLevel parent : modelConfiguration.getParentModelLevels(level.getModelLevelType())) {
@@ -893,7 +883,8 @@ public class MedicationProductCalculationService
                                   node -> {
                                     if (modelConfiguration.getModelType().equals(ModelType.NMPC)
                                         && productDetails instanceof NutritionalProductDetails
-                                        && level.getModelLevelType() == CLINICAL_DRUG
+                                        && (level.getModelLevelType() == CLINICAL_DRUG
+                                            || level.getModelLevelType() == MEDICINAL_PRODUCT_ONLY)
                                         && node.getNewConceptDetails() != null) {
                                       node.getNewConceptDetails()
                                           .getAxioms()
@@ -946,13 +937,7 @@ public class MedicationProductCalculationService
       Set<Node> parentNodes,
       ModelConfiguration branchModelConfiguration) {
     return n -> {
-      nameGenerationService.addGeneratedFsnAndPt(
-          atomicCache,
-          productDetails.hasDeviceType()
-              ? level.getDrugDeviceSemanticTag()
-              : level.getMedicineSemanticTag(),
-          n,
-          modelConfiguration);
+      generateName(atomicCache, productDetails, level, n, modelConfiguration);
       productSummary.addNode(n);
       for (Node parent : parentNodes) {
         productSummary.addEdge(
@@ -973,6 +958,78 @@ public class MedicationProductCalculationService
       }
       return n;
     };
+  }
+
+  private void generateName(
+      AtomicCache atomicCache,
+      MedicationProductDetails productDetails,
+      ModelLevel level,
+      Node node,
+      ModelConfiguration modelConfiguration) {
+
+    if (productDetails instanceof NutritionalProductDetails nutritionalProductDetails) {
+      boolean isMedicinalProductOnly = level.getModelLevelType().equals(MEDICINAL_PRODUCT_ONLY);
+      boolean isExistingClinicalDrug =
+          level.getModelLevelType().equals(CLINICAL_DRUG)
+              && nutritionalProductDetails.getExistingClinicalDrug() != null
+              && nutritionalProductDetails.getExistingClinicalDrug().getConceptId() != null;
+
+      if (isMedicinalProductOnly || isExistingClinicalDrug) {
+        // Existing concept, no need to generate a new name
+        return;
+      }
+
+      boolean isClinicalOrRealClinicalDrug =
+          level.getModelLevelType().equals(CLINICAL_DRUG)
+              || level.getModelLevelType().equals(REAL_CLINICAL_DRUG);
+
+      if (isClinicalOrRealClinicalDrug) {
+        String genericName = nutritionalProductDetails.getNewGenericProductName();
+        String form =
+            nutritionalProductDetails.getGenericForm().getPt().getTerm().toLowerCase().trim();
+        String unit =
+            nutritionalProductDetails
+                .getUnitOfPresentation()
+                .getPt()
+                .getTerm()
+                .toLowerCase()
+                .trim();
+
+        String fsn =
+            ("Product containing only " + genericName + " " + form + " " + unit).trim()
+                + " ("
+                + level.getDrugDeviceSemanticTag()
+                + ")";
+        String pt = (genericName + " " + form + " " + unit).trim();
+
+        node.getNewConceptDetails().setFullySpecifiedName(fsn);
+        node.getNewConceptDetails().setPreferredTerm(pt);
+        atomicCache.addFsnAndPt(node.getConceptId(), fsn, pt);
+        return;
+      }
+    }
+
+    nameGenerationService.addGeneratedFsnAndPt(
+        atomicCache,
+        productDetails.hasDeviceType()
+            ? level.getDrugDeviceSemanticTag()
+            : level.getMedicineSemanticTag(),
+        node,
+        modelConfiguration);
+  }
+
+  private void generateName(
+      AtomicCache atomicCache,
+      boolean hasDeviceType,
+      ModelLevel level,
+      Node node,
+      ModelConfiguration modelConfiguration) {
+
+    nameGenerationService.addGeneratedFsnAndPt(
+        atomicCache,
+        hasDeviceType ? level.getDrugDeviceSemanticTag() : level.getMedicineSemanticTag(),
+        node,
+        modelConfiguration);
   }
 
   private Set<SnowstormRelationship> createMpRelationships(
@@ -1002,6 +1059,24 @@ public class MedicationProductCalculationService
       addRelationshipIfNotNull(
           relationships,
           vaccineProductDetails.getQualitiativeStrength(),
+          HAS_TARGET_POPULATION,
+          0,
+          modelConfiguration.getModuleId());
+    }
+
+    if (productDetails instanceof NutritionalProductDetails nutritionalProductDetails) {
+      if (level.isBranded()) {
+        relationships.add(
+            getSnowstormRelationship(
+                IS_A,
+                productDetails.getExistingMedicinalProduct(),
+                0,
+                STATED_RELATIONSHIP,
+                modelConfiguration.getModuleId()));
+      }
+      addRelationshipIfNotNull(
+          relationships,
+          nutritionalProductDetails.getTargetPopulation(),
           HAS_TARGET_POPULATION,
           0,
           modelConfiguration.getModuleId());
@@ -1051,6 +1126,18 @@ public class MedicationProductCalculationService
 
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
+    if (productDetails instanceof NutritionalProductDetails
+        && modelConfiguration.getModelType().equals(ModelType.NMPC)
+        && !branded
+        && productDetails.getExistingClinicalDrug() != null
+        && productDetails.getExistingClinicalDrug().getConceptId() != null) {
+      return nodeGeneratorService.lookUpNode(
+          branch,
+          productDetails.getExistingClinicalDrug(),
+          level,
+          productDetails.getNonDefiningProperties());
+    }
+
     ModelLevelType modelLevelType = level.getModelLevelType();
     Set<String> referencedIds = Set.of(level.getReferenceSetIdentifier());
 
@@ -1090,6 +1177,16 @@ public class MedicationProductCalculationService
       ModelLevel mpLevel) {
 
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+
+    if (details instanceof NutritionalProductDetails
+        && modelConfiguration.getModelType().equals(ModelType.NMPC)
+        && !mpLevel.isBranded()) {
+      return nodeGeneratorService.lookUpNode(
+          branch,
+          details.getExistingMedicinalProduct(),
+          mpLevel,
+          details.getNonDefiningProperties());
+    }
 
     Set<SnowstormRelationship> relationships =
         createMpRelationships(details, mpLevel, modelConfiguration);
@@ -1137,6 +1234,26 @@ public class MedicationProductCalculationService
     } else {
       relationships.add(
           getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT, 0, modelConfiguration.getModuleId()));
+    }
+
+    if (productDetails instanceof NutritionalProductDetails) {
+      if (level.equals(CLINICAL_DRUG)) {
+        relationships.add(
+            getSnowstormRelationship(
+                IS_A,
+                productDetails.getExistingMedicinalProduct(),
+                0,
+                STATED_RELATIONSHIP,
+                modelConfiguration.getModuleId()));
+      } else if (level.equals(REAL_CLINICAL_DRUG)) {
+        relationships.add(
+            getSnowstormRelationship(
+                IS_A,
+                productDetails.getExistingClinicalDrug(),
+                0,
+                STATED_RELATIONSHIP,
+                modelConfiguration.getModuleId()));
+      }
     }
 
     if (modelConfiguration.getModelType().equals(ModelType.NMPC)

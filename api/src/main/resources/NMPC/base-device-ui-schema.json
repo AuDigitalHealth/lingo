@@ -98,7 +98,6 @@
             "ecl": "(((<< 49062001) MINUS ((< 49062001 MINUS >(< 49062001)))) MINUS (<<^660371000220109))",
             "extendedEcl": "(<63653004 MINUS ^660371000220109) : [0..0] 774158006 = *",
             "showDefaultOptions": false,
-            "showDescription": true,
             "dependants": [
               {
                 "path": "../specificDeviceType",

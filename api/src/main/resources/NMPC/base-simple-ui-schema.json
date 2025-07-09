@@ -56,9 +56,14 @@
         "ui:grid": [
           {
             "productName": 12,
-            "genericForm": 12,
+            "targetPopulation": 12,
+            "existingMedicinalProduct": 12,
+            "existingClinicalDrug": 12,
+            "newGenericProductName": 12,
             "unitOfPresentation": 12,
-            "specificForm": 12
+            "genericForm": 12,
+            "specificForm": 12,
+            "otherIdentifyingInformation": 12
           },
           {
             "nonDefiningProperties": 24
@@ -79,6 +84,33 @@
               "ecl": "<774167006",
               "semanticTags": "(product name)"
             }
+          }
+        },
+        "existingMedicinalProduct": {
+          "ui:field": "AutoCompleteField",
+          "ui:title": "Existing VTM Level Concept",
+          "ui:options": {
+            "skipTitle": true,
+            "ecl": "<<327838005 OR <<373783004",
+            "showDefaultOptions": true,
+            "dependants": [
+              {
+                "path": "../existingClinicalDrug",
+                "ui:options": {
+                  "skipTitle": true,
+                  "getEcl": "<@parent",
+                  "showDefaultOptions": true
+                }
+              }
+            ]
+          }
+        },
+        "existingClinicalDrug": {
+          "ui:field": "AutoCompleteField",
+          "ui:title": "Existing VMP Level Concept",
+          "ui:options": {
+            "skipTitle": true,
+            "showDefaultOptions": true
           }
         },
         "genericForm": {
@@ -112,6 +144,24 @@
           "ui:options": {
             "ecl": "((<763158003 minus >(<763158003))).763032000",
             "extendedEcl": "<105590001",
+            "showDefaultOptions": true
+          }
+        },
+        "otherIdentifyingInformation": {
+          "ui:widget": "text",
+          "ui:title": "Other Identifying Information",
+          "ui:options": {
+            "placeholder": "Enter any additional identifying information"
+          }
+        },
+        "newGenericProductName": {
+          "ui:widget": "text"
+        },
+        "targetPopulation": {
+          "ui:field": "AutoCompleteField",
+          "ui:title": "Target Population",
+          "ui:options": {
+            "ecl": "<27821000087106",
             "showDefaultOptions": true
           }
         }
