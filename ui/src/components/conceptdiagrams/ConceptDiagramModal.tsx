@@ -13,6 +13,7 @@ import {
   SnowstormAxiom,
   SnowstormRelationship,
   SnowstormRelationshipNewOrRemoved,
+  hasHistoricalAssociationsChanged,
 } from '../../types/concept';
 import BaseModal from '../modal/BaseModal';
 import BaseModalBody from '../modal/BaseModalBody';
@@ -53,14 +54,14 @@ export default function ConceptDiagramModal({
 }: ConceptDiagramModalProps) {
   const { branchKey } = useParams();
   const { applicationConfig } = useApplicationConfigStore();
-  const fullBranch = `/${applicationConfig.apDefaultBranch}${branchKey ? `/${branchKey}` : ''}`;
+  const fullBranch = `/${applicationConfig.apDefaultBranch}`;
+  const historicalAssociationsChanged = hasHistoricalAssociationsChanged(product);
+  
+  const reviewConceptId = historicalAssociationsChanged ? product.conceptId : undefined;
+  const {data} = useSearchConceptById(reviewConceptId, fullBranch);
 
   let left: ConceptDiagramProp = { concept: undefined, isNewConcept: false };
   let right: ConceptDiagramProp = { concept: undefined, isNewConcept: false };
-
-  // if(product.originalNode?.conceptId === "556181000220106" || product.conceptId === "556181000220106"){
-  //   debugger;
-  // }
 
   if (
     product.concept === null &&
