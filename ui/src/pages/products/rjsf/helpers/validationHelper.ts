@@ -44,19 +44,16 @@ export const findDiscriminatorSchema = (
 ): { schema: Record<string, any>; path: string[] } | null => {
   if (!schema || typeof schema !== 'object') return null;
 
-  // Check for discriminator
   if (getDiscriminatorProperty(schema)) {
     return { schema, path };
   }
 
-  // Handle $ref
   if (schema.$ref) {
     const resolvedSchema = resolveRef(rootSchema, schema.$ref);
     const result = findDiscriminatorSchema(resolvedSchema, rootSchema, path);
     if (result) return result;
   }
 
-  // Check properties
   if (schema.properties) {
     for (const [key, value] of Object.entries(schema.properties)) {
       if (value && typeof value === 'object') {
@@ -66,7 +63,6 @@ export const findDiscriminatorSchema = (
     }
   }
 
-  // Check array items
   if (schema.items && typeof schema.items === 'object') {
     const result = findDiscriminatorSchema(schema.items, rootSchema, [...path, 'items']);
     if (result) return result;
@@ -99,7 +95,8 @@ export const getDiscriminatorValue = (
 export const cleanFormDataBySchema = (
     data: any,
     schema: Record<string, any>,
-    rootSchema: Record<string, any>
+    rootSchema: Record<string, any>,
+    context: { parentDiscriminatorValue?: string; isNewItem?: boolean } = {}
 ): any => {
   if (!data || typeof data !== 'object') return data;
 
@@ -124,11 +121,13 @@ export const cleanFormDataBySchema = (
     for (const key of Object.keys(data)) {
       if (validProperties.includes(key)) {
         const propSchema = matchingBranch.properties[key];
-        const cleanedValue = cleanFormDataBySchema(data[key], propSchema, rootSchema);
-        if (cleanedValue !== undefined && !isEmptyObject(cleanedValue)) {
-          cleanedData[key] = cleanedValue;
-        }
+        // Preserve all fields in matching branch, pass context
+        cleanedData[key] = cleanFormDataBySchema(data[key], propSchema, rootSchema, {
+          parentDiscriminatorValue: branchValue,
+          isNewItem: context.isNewItem
+        });
       }
+      // Non-matching branch fields are omitted
     }
     return Object.keys(cleanedData).length > 0 ? cleanedData : undefined;
   }
@@ -138,30 +137,40 @@ export const cleanFormDataBySchema = (
     const itemSchema = resolvedSchema.items?.$ref
         ? resolveRef(rootSchema, resolvedSchema.items.$ref)
         : resolvedSchema.items;
-    const cleanedItems = data
-        .map((item) => cleanFormDataBySchema(item, itemSchema, rootSchema))
-        .filter((item) => item !== undefined && !isEmptyObject(item));
-    return cleanedItems.length > 0 ? cleanedItems : undefined;
+    const cleanedItems = data.map((item) =>
+        cleanFormDataBySchema(item, itemSchema, rootSchema, context)
+    ).filter((item) => item !== undefined);
+    return cleanedItems.length > 0 ? cleanedItems : [];
   }
-
-  // Handle objects
-  if (resolvedSchema.type === 'object' && resolvedSchema.properties) {
-    const cleanedData: Record<string, any> = {};
-    for (const key of Object.keys(resolvedSchema.properties)) {
-      if (key in data) {
-        const propSchema = resolvedSchema.properties[key];
-        const cleanedValue = cleanFormDataBySchema(data[key], propSchema, rootSchema);
-        if (cleanedValue !== undefined && !isEmptyObject(cleanedValue)) {
-          cleanedData[key] = cleanedValue;
-        }
-      }
-    }
-    return Object.keys(cleanedData).length > 0 ? cleanedData : undefined;
-  }
-
   return data;
 };
- const safeStringify = (obj: any) => {
+
+// Build errorSchema from AJV errors
+export const buildErrorSchema = (errors: any[]) => {
+  const problematicErrors = errors.filter(e => !e.property && !e.instancePath);
+  if (problematicErrors.length > 0) {
+    console.log('Errors with empty property and instancePath:', safeStringify(problematicErrors));
+  }
+
+  const newErrorSchema = errors.reduce((acc: any, error: any) => {
+    let path = error.property
+        ? error.property.replace(/^\./, '')
+        : error.instancePath
+            ? error.instancePath.replace(/^\//, '').replace(/\//g, '.')
+            : null;
+
+    if (path && path !== '') {
+      _.set(acc, path, { __errors: [error.message || 'Validation error'] });
+    } else {
+      acc.__errors = acc.__errors || [];
+      acc.__errors.push(error.message || 'Validation error');
+    }
+    return acc;
+  }, {});
+  return newErrorSchema[""] ? newErrorSchema[""] : newErrorSchema;
+};
+
+export const safeStringify = (obj: any) => {
   const seen = new WeakSet();
   return JSON.stringify(obj, (key, value) => {
     if (typeof value === 'object' && value !== null) {
@@ -170,34 +179,5 @@ export const cleanFormDataBySchema = (
     }
     return value;
   }, 2);
-};
-// Build errorSchema from AJV errors
-export const buildErrorSchema = (errors: any[]) => {
-  // Log errors with empty property or instancePath for debugging
-  const problematicErrors = errors.filter(e => !e.property && !e.instancePath);
-  if (problematicErrors.length > 0) {
-    console.log('Errors with empty property and instancePath:', safeStringify(problematicErrors));
-  }
-
-  const newErrorSchema = errors.reduce((acc: any, error: any) => {
-    // Use error.property or instancePath, ensure no empty path
-    let path = error.property
-        ? error.property.replace(/^\./, '')
-        : error.instancePath
-            ? error.instancePath.replace(/^\//, '').replace(/\//g, '.')
-            : null;
-
-    // Explicitly check for empty string path
-    if (path && path !== '') {
-      _.set(acc, path, { __errors: [error.message || 'Validation error'] });
-    } else {
-      // Root-level errors
-      acc.__errors = acc.__errors || [];
-      acc.__errors.push(error.message || 'Validation error');
-    }
-    return acc;
-  }, {});
-  const cleaned= newErrorSchema[""] ? newErrorSchema[""] : newErrorSchema;
-  return cleaned;
 };
 
