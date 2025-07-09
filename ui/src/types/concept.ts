@@ -329,6 +329,7 @@ export function hasDescriptionChange(product: Product): boolean {
 }
 
 export function hasHistoricalAssociationsChanged(product: Product): boolean {
+  debugger;
   const filtered = product?.historicalAssociations?.filter(ass => {
     return ass.released === false;
   });
