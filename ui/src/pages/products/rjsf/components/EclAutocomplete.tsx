@@ -19,51 +19,58 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
     uiSchema,
   } = props;
 
-  let isThisDisabled = isDisabled || props.disabled || false;
-  useEffect(() => {
-    isThisDisabled = isDisabled || props.disabled || false;
-    // @ts-ignore
-    setInputValue(null);
-  }, [isDisabled]);
-
-  const [inputValue, setInputValue] = useState('');
-  const [options, setOptions] = useState<Concept[]>([]);
-  const { isLoading, allData } = useSearchConceptsByEcl(
-    inputValue,
-    ecl && ecl?.length > 0 ? ecl : undefined,
-    branch,
-    showDefaultOptions as boolean,
+  const [inputValue, setInputValue] = useState<string>(value?.pt?.term || '');
+  const [options, setOptions] = useState<Concept[]>(
+    value ? [value as Concept] : [],
   );
 
-  const title =
-    (props && props.title) ||
-    (schema && schema.title) ||
-    (uiSchema && uiSchema['ui:title']) ||
-    '';
+  const disabled = isDisabled || props.disabled || false;
+
+  // Clear state when disabled
+  useEffect(() => {
+    if (disabled) {
+      setInputValue('');
+      setOptions([]);
+      if (value) {
+        onChange(null);
+      }
+    }
+  }, [disabled, onChange, value]);
+
+  const { isLoading, allData } = useSearchConceptsByEcl(
+    inputValue,
+    ecl && ecl.length > 0 && !disabled ? ecl : undefined,
+    branch,
+    (showDefaultOptions as boolean) && !disabled,
+  );
+
+  const title = props?.title || schema?.title || uiSchema?.['ui:title'] || '';
 
   useEffect(() => {
+    if (disabled) return;
+    let uniqueOptions: Concept[] = [];
     if (allData) {
-      const uniqueOptions = Array.from(
-        new Map(
-          allData.map((item: Concept) => [item.conceptId, item]),
-        ).values(),
+      uniqueOptions = Array.from(
+        new Map(allData.map(item => [item.conceptId, item])).values(),
       );
-      setOptions(uniqueOptions);
     }
-  }, [allData]);
+    if (
+      value?.conceptId &&
+      !uniqueOptions.some(opt => opt.conceptId === value.conceptId)
+    ) {
+      uniqueOptions.push(value as Concept);
+    }
+    setOptions(uniqueOptions);
+  }, [allData, disabled, value]);
 
   useEffect(() => {
-    if (value && options?.length > 0) {
-      const selectedOption = options.find(
-        option => option.conceptId === value.conceptId,
-      );
-      setInputValue(selectedOption?.pt?.term || value?.pt?.term || '');
-    } else if (value) {
-      setInputValue(value?.pt?.term || '');
-    }
-  }, [value, options]);
+    if (disabled || !value) return;
+    const newTerm = value?.pt?.term || '';
+    setInputValue(prev => (prev !== newTerm ? newTerm : prev));
+  }, [value?.conceptId, disabled]);
 
   const handleProductChange = (selectedProduct: Concept | null) => {
+    if (disabled) return;
     if (selectedProduct) {
       const conceptMini: ConceptMini = {
         conceptId: selectedProduct.conceptId || '',
@@ -78,32 +85,29 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
     }
   };
 
-  // Check if the selected value needs attention
   const needsAttention = value && value.pt?.term && !value.conceptId;
 
   return (
     <span data-component-name="EclAutocomplete" style={{ width: 'inherit' }}>
       <Autocomplete
         loading={isLoading}
-        disabled={isThisDisabled}
-        options={isDisabled ? [] : options}
+        disabled={disabled}
+        options={disabled ? [] : options}
         getOptionLabel={(option: Concept) => option?.pt?.term || ''}
         value={
-          options && options.length > 0
-            ? options.find(option => option.conceptId === value?.conceptId) ||
-              null
-            : null
+          options.find(option => option.conceptId === value?.conceptId) || null
         }
-        onInputChange={(event, newInputValue) => setInputValue(newInputValue)}
+        inputValue={inputValue}
+        onInputChange={(event, newInputValue) =>
+          !disabled && setInputValue(newInputValue)
+        }
         onChange={(event, selectedValue) =>
           handleProductChange(selectedValue as Concept)
         }
-        isOptionEqualToValue={(option: Concept, selectedValue: Concept) =>
-          !!option?.conceptId &&
-          !!selectedValue?.conceptId &&
-          option.conceptId === selectedValue.conceptId
+        isOptionEqualToValue={(option, selectedValue) =>
+          option?.conceptId === selectedValue?.conceptId
         }
-        renderOption={(props, option: Concept) => (
+        renderOption={(props, option) => (
           <li {...props} key={option.conceptId}>
             {option.pt.term}
           </li>
@@ -128,7 +132,7 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
                 </>
               ),
             }}
-            disabled={isThisDisabled}
+            disabled={disabled}
             sx={{
               '& .MuiFormHelperText-root': {
                 m: 0,
