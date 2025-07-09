@@ -150,6 +150,7 @@ const ExternalIdentifierRender: React.FC<
   const isMultiValued = multiValuedSchemes.includes(schemeName);
   const showDefaultOptions = showDefaultOptionSchemes.includes(schemeName);
   const isCheckBox = schema?.properties?.type?.const === 'REFERENCE_SET';
+  const isNumber = schema?.properties?.value?.type === 'number';
 
   const bindingConfig: BindingConfig = uiSchema['ui:options']?.binding || {};
 
@@ -505,6 +506,7 @@ const ExternalIdentifierRender: React.FC<
           !isMultiValued && (
             <TextField
               fullWidth
+              type={isNumber ? 'number' : 'text'}
               disabled={readOnly}
               label={schema.title}
               value={schemeEntries?.[0]?.value || ''}

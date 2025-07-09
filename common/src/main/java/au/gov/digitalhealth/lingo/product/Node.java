@@ -189,7 +189,6 @@ public class Node {
   public boolean isPropertyUpdate() {
     return concept != null
         && originalNode != null
-        && newConceptDetails == null
         && (!originalNode.getNode().getNonDefiningProperties().containsAll(nonDefiningProperties)
             || !nonDefiningProperties.containsAll(
                 originalNode.getNode().getNonDefiningProperties()));

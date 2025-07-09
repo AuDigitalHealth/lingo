@@ -16,6 +16,8 @@
 
 import axios from 'axios';
 import useUserStore from '../stores/UserStore';
+import { enqueueSnackbar } from 'notistack';
+import { isUserReportableProblem } from './ProblemDetail';
 
 export const api = axios.create({});
 
@@ -35,6 +37,14 @@ api.interceptors.response.use(
       window.location.href.includes('/dashboard')
     ) {
       useUserStore.setState({ loginRefreshRequired: true });
+    }
+
+    const potentialProblemDetail = error?.response?.data;
+
+    if (isUserReportableProblem(potentialProblemDetail)) {
+      enqueueSnackbar(potentialProblemDetail.detail, {
+        variant: 'error',
+      });
     }
 
     return Promise.reject(error);

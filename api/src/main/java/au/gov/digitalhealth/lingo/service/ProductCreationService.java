@@ -653,18 +653,13 @@ public class ProductCreationService {
 
     log.fine("Updating concepts with property updates");
 
-    final Set<String> propertyUpdatedConceptIds =
-        nodesWithPropertyUpdates.values().stream()
-            .map(Node::getConceptId)
-            .collect(Collectors.toSet());
-
     Mono<Set<SnowstormConcept>> browserConcepts =
         snowstormClient
-            .getBrowserConcepts(branch, propertyUpdatedConceptIds)
+            .getBrowserConcepts(branch, nodesWithPropertyUpdates.keySet())
             .collect(Collectors.toSet());
 
     Mono<List<SnowstormReferenceSetMember>> referenceSetMembers =
-        snowstormClient.getRefsetMembersMono(branch, propertyUpdatedConceptIds, null);
+        snowstormClient.getRefsetMembersMono(branch, nodesWithPropertyUpdates.keySet(), null);
 
     Set<SnowstormConceptView> conceptsToUpdate = new HashSet<>();
 
@@ -889,6 +884,19 @@ public class ProductCreationService {
     Map<String, SnowstormConceptMini> conceptMap =
         createdConcepts.stream()
             .collect(Collectors.toMap(SnowstormConceptMini::getConceptId, c -> c));
+
+    concepts.forEach(
+        c -> {
+          SnowstormConceptMini newConcept = conceptMap.get(c.getConceptId());
+          if (newConcept != null) {
+            newConcept.setDefinitionStatusId(
+                c.getClassAxioms().iterator().next().getDefinitionStatusId());
+            newConcept.setDefinitionStatus(
+                c.getClassAxioms().iterator().next().getDefinitionStatus());
+          } else {
+            log.warning("Concept " + c.getConceptId() + " not found in created concepts map");
+          }
+        });
 
     nodeCreateOrder.forEach(
         node -> {

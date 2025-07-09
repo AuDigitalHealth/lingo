@@ -27,9 +27,12 @@ export default function ProductPartialSaveModal({
   open,
   handleClose,
   packageDetails,
+  originalPackageDetails,
+  originalConceptId,
   existingProductId,
   ticket,
   productStatus,
+  actionType,
 }: ProductPartialSaveModalProps) {
   const [isUpdating, setUpdating] = useState(false);
   const closeHandle = () => {
@@ -54,6 +57,9 @@ export default function ProductPartialSaveModal({
             productStatus={productStatus}
             setUpdating={setUpdating}
             isUpdating={isUpdating}
+            originalPackageDetails={originalPackageDetails}
+            originalConceptId={originalConceptId}
+            action={actionType}
           />
         )}
       </BaseModalBody>

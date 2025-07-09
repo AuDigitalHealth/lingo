@@ -54,6 +54,7 @@ import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty
 import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import au.gov.digitalhealth.lingo.util.EclBuilder;
 import au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils;
+import au.gov.digitalhealth.lingo.util.NmpcConstants;
 import au.gov.digitalhealth.lingo.util.NonDefiningPropertyUtils;
 import au.gov.digitalhealth.lingo.util.ReferenceSetUtils;
 import au.gov.digitalhealth.lingo.util.SnomedConstants;
@@ -354,8 +355,19 @@ public abstract class AtomicDataService<T extends ProductDetails> {
             .block();
 
     //     todo revisit this after NMPC migration
-    if (maps == null) {
-      // || !maps.typeMap.keySet().equals(maps.browserMap.keySet())) {
+    if (getModelConfiguration(branch).getModelType().equals(ModelType.NMPC)
+        && (!maps.browserMap.values().stream()
+                .allMatch(
+                    c ->
+                        c.getRelationships().stream()
+                            .anyMatch(
+                                r ->
+                                    r.getTypeId()
+                                        .equals(NmpcConstants.HAS_NMPC_PRODUCT_TYPE.getValue())))
+            || !maps.browserMap.keySet().stream().allMatch(id -> maps.typeMap.get(id) != null))) {
+      throw new AtomicDataExtractionProblem(
+          "Unable to load product - migration has not been run", productId);
+    } else if (maps == null || !maps.typeMap.keySet().equals(maps.browserMap.keySet())) {
       throw new AtomicDataExtractionProblem(
           "Mismatch between browser and refset members", productId);
     }
@@ -683,7 +695,12 @@ public abstract class AtomicDataService<T extends ProductDetails> {
 
     if (concepts.isEmpty()) {
       throw new ResourceNotFoundProblem(
-          "No matching concepts for " + productId + " of type " + getType());
+          "No matching product concepts for "
+              + productId
+              + " of type "
+              + getType()
+              + ", may be missing reference sets (is it fully migrated?). ECL: "
+              + ecl.replaceAll("\\<id\\>", productId));
     }
     return concepts;
   }

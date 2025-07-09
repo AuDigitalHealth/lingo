@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import { Form } from '@rjsf/mui';
 import {
   Box,
@@ -102,14 +102,12 @@ function MedicationAuthoring({
     ticketProductId,
     ticket,
     setFunction: (data: any) => {
-      setFormErrors([]);
+      setMode(data.action === 'UPDATE' ? 'update' : 'create');
       setFormData(data.packageDetails);
       setInitialFormData(data.packageDetails);
-      setOriginalConceptId(data.conceptId);
+      setOriginalConceptId(data.originalConceptId);
     },
   });
-
-  // const validator = createValidator(schema);
   const mutation = useCalculateProduct();
 
   const handleToggleCreateModal = useCallback(() => {
@@ -157,6 +155,11 @@ function MedicationAuthoring({
     setFormKey(prev => prev + 1);
   }, []);
 
+  // Clear form data when schemaType changes
+  useEffect(() => {
+    handleClear();
+  }, [schemaType, handleClear]);
+
   if (
       isLoading ||
       isFetching ||
@@ -199,27 +202,7 @@ function MedicationAuthoring({
     setErrorSchema(newErrorSchema);
     setFormErrors(errors);
   };
-  // const onError = (errors: any[]) => {
-  //   console.log('Validation Errors:', errors);
-  //   const transformedErrors = validator.transformErrors(errors, formData);
-  //
-  //   // Convert AJV errors to RJSF errorSchema
-  //   const newErrorSchema = transformedErrors.reduce((acc: any, error: any) => {
-  //     // Use instancePath, convert to dot notation if needed
-  //     const path = error.instancePath
-  //         ? error.instancePath.replace(/\//g, '.').slice(1) // Convert /path/to/field to path.to.field
-  //         : ''; // Handle root-level errors
-  //     if (path) {
-  //       _.set(acc, path, { __errors: [error.message] });
-  //     } else {
-  //       // Add root-level errors to __errors
-  //       acc.__errors = acc.__errors || [];
-  //       acc.__errors.push(error.message);
-  //     }
-  //     return acc;
-  //   }, {});
-  //   setErrorSchema(newErrorSchema);
-  // };
+
   return (
       <Paper sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1 }}>
         <Box m={2} p={2}>
@@ -262,69 +245,78 @@ function MedicationAuthoring({
                 showErrorList={false}
             >
               <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                <Button
-                    data-testid={'product-clear-btn'}
-                    variant="outlined"
-                    color="secondary"
-                    onClick={handleClear}
-                    disabled={mutation.isPending}
+              <Button
+                data-testid={'product-clear-btn'}
+                variant="outlined"
+                color="secondary"
+                onClick={handleClear}
+                disabled={mutation.isPending}
+              >
+                Clear
+              </Button>
+              <DraftSubmitPanel isDirty={isDirty} saveDraft={saveDraft} />
+              <Box>
+                <ToggleButtonGroup
+                  value={mode}
+                  exclusive
+                  onChange={(_, value) => value && setMode(value)}
+                  aria-label="product action mode"
+                  color="standard"
+                  size="small"
+                  sx={{ borderRadius: 4, overflow: 'hidden' }} // Rounded group
                 >
-                  Clear
-                </Button>
-                <DraftSubmitPanel isDirty={isDirty} saveDraft={saveDraft} />
-                <Box>
-                  <ToggleButtonGroup
-                      value={mode}
-                      exclusive
-                      onChange={(_, value) => value && setMode(value)}
-                      aria-label="product action mode"
-                      color="standard"
-                      size="small"
-                      sx={{ borderRadius: 4, overflow: 'hidden' }}
+                  <ToggleButton value="create" aria-label="create">
+                    Create
+                  </ToggleButton>
+                  <ToggleButton
+                    value="update"
+                    aria-label="update"
+                    disabled={!selectedProduct && !originalConceptId}
                   >
-                    <ToggleButton value="create" aria-label="create">
-                      Create
-                    </ToggleButton>
-                    <ToggleButton value="update" aria-label="update">
-                      Update
-                    </ToggleButton>
-                  </ToggleButtonGroup>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                  <Button
-                      data-testid={mode === 'create' ? 'create-btn' : 'update-btn'}
-                      type="submit"
-                      variant="contained"
-                      color={mode === 'create' ? 'primary' : 'secondary'}
-                      disabled={mutation.isPending}
-                      onClick={() => setIsProductUpdate(mode === 'update')}
-                  >
-                    {mutation.isPending
-                        ? 'Submitting...'
-                        : mode.charAt(0).toUpperCase() + mode.slice(1)}
-                  </Button>
-                </Box>
+                    Update
+                  </ToggleButton>
+                </ToggleButtonGroup>
               </Box>
-            </Form>
-            <ProductPartialSaveModal
-                packageDetails={formData}
-                handleClose={handleSaveToggleModal}
-                open={saveModalOpen}
-                ticket={ticket}
-                existingProductId={ticketProductId}
-            />
-            <ProductPreviewManageModal
-                open={createModalOpen}
-                handleClose={handleToggleCreateModal}
-                productCreationDetails={productSaveDetails}
-                branch={task.branchPath}
-                ticket={ticket}
-                productType={ProductType.medication}
-                isProductUpdate={isProductUpdate}
-            />
-          </Container>
-        </Box>
-      </Paper>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                <Button
+                  data-testid={mode === 'create' ? 'create-btn' : 'update-btn'}
+                  type="submit"
+                  variant="contained"
+                  color={mode === 'create' ? 'primary' : 'secondary'}
+                  disabled={mutation.isPending}
+                  onClick={() => {
+                    setIsProductUpdate(mode === 'update');
+                  }}
+                >
+                  {mutation.isPending
+                    ? 'Submitting...'
+                    : mode.charAt(0).toUpperCase() + mode.slice(1)}
+                </Button>
+              </Box>
+            </Box>
+          </Form>
+          <ProductPartialSaveModal
+            packageDetails={formData}
+            originalPackageDetails={initialFormData}
+            originalConceptId={selectedProduct?.id ?? originalConceptId}
+            handleClose={handleSaveToggleModal}
+            open={saveModalOpen}
+            ticket={ticket}
+            existingProductId={ticketProductId}
+            actionType={mode}
+          />
+          <ProductPreviewManageModal
+            open={createModalOpen}
+            handleClose={handleToggleCreateModal}
+            productCreationDetails={productSaveDetails}
+            branch={task.branchPath}
+            ticket={ticket}
+            productType={ProductType.medication}
+            isProductUpdate={isProductUpdate}
+          />
+        </Container>
+      </Box>
+    </Paper>
   );
 }
 

@@ -168,7 +168,12 @@ export function isNewConcept(product: Product) {
   return (product.newConcept || product.newConceptDetails) && !product.concept;
 }
 export function isReplacedWithNewConcept(product: Product) {
-  return product.originalNode !== null && product.newConceptDetails !== null;
+  return (
+    product.originalNode !== null &&
+    product.newConceptDetails !== null &&
+    (product.concept == null ||
+      product.concept.id != product.originalNode?.node?.concept?.id)
+  );
 }
 
 export function isReplacedWithExistingConcept(product: Product) {
@@ -176,6 +181,7 @@ export function isReplacedWithExistingConcept(product: Product) {
     product.concept &&
     !product.newConceptDetails &&
     product.originalNode &&
+    product.concept.id !== product.originalNode.node?.concept?.id &&
     !product.originalNode.referencedByOtherProducts &&
     product.originalNode?.inactivationReason
   );
