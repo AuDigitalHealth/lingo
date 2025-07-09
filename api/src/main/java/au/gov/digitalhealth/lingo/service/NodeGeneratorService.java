@@ -111,6 +111,25 @@ public class NodeGeneratorService {
   @Async
   public CompletableFuture<Node> lookUpNode(
       String branch,
+      SnowstormConceptMini concept,
+      ModelLevel modelLevel,
+      Collection<NonDefiningBase> newProperties) {
+    Node node = new Node();
+    if (modelLevel != null) {
+      node.setLabel(modelLevel.getDisplayLabel());
+      node.setModelLevel(modelLevel.getModelLevelType());
+      node.setDisplayName(modelLevel.getName());
+    }
+    node.setConcept(concept);
+
+    populateNodeProperties(branch, modelLevel, node, newProperties);
+
+    return CompletableFuture.completedFuture(node);
+  }
+
+  @Async
+  public CompletableFuture<Node> lookUpNode(
+      String branch,
       Long productId,
       ModelLevel modelLevel,
       Collection<NonDefiningBase> newProperties) {
