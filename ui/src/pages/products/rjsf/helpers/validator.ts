@@ -86,7 +86,8 @@ export const customTransformErrors = (errors: ErrorObject[], formData: any, sche
             //     return validProperties.includes(error.params?.missingProperty) && error.instancePath;
             // }
             if (error.keyword === 'additionalProperties') {
-                return !validProperties.includes(error.params?.additionalProperty) && error.instancePath;
+                // return !validProperties.includes(error.params?.additionalProperty) && error.instancePath;
+                return false;
             }
             return error.instancePath; // Only include errors with instancePath for fields
         })
