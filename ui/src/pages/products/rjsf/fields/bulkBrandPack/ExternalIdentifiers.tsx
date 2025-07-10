@@ -23,6 +23,7 @@ import { MultiValueValueSetAutocomplete } from '../../components/MultiValueSetAu
 import MultiValueEclAutocomplete from '../../components/MultiValueEclAutocomplete.tsx';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import DesktopDatePickerField from '../../components/DesktopDatePickerField.tsx';
+import {Tooltip} from "antd";
 
 const SCHEME_COLORS = ['primary', 'secondary', 'success', 'error', 'warning'];
 
@@ -298,16 +299,24 @@ const ExternalIdentifierRender: React.FC<
   };
 
   const renderChip = (item: NonDefiningProperty) => (
-    <Chip
-      variant="filled"
-      key={`${item.identifierScheme}-${item.value}`}
-      label={`${item.value}`}
-      onDelete={
-        !readOnly
-          ? () => handleDelete(item.value, item.identifierScheme)
-          : undefined
-      }
-    />
+      <Tooltip title={item.value} placement="top">
+        <Chip
+            variant="filled"
+            key={`${item.identifierScheme}-${item.value}`}
+            label={item.value}
+            onDelete={
+              !readOnly
+                  ? () => handleDelete(item.value, item.identifierScheme)
+                  : undefined
+            }
+            sx={{
+              maxWidth: '200px', // Constrain chip width
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+        />
+      </Tooltip>
   );
 
   if (readOnly && (!schemeEntries || schemeEntries.length === 0)) {
