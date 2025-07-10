@@ -40,7 +40,8 @@
                   }
                 },
                 "value": { "type": "number", "minimum": 0 }
-              }
+              },
+              "required": ["value"]
             }
           ],
           "errorMessage": {

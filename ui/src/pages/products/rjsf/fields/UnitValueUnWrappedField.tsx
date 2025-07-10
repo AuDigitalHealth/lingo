@@ -7,8 +7,7 @@ import _ from 'lodash';
 import { getFieldErrors, getUniqueErrors } from '../helpers/errorUtils.ts';
 
 import { getFieldName, getParentPath } from '../helpers/helpers.ts';
-import {ErrorDisplay} from "../components/ErrorDisplay.tsx";
-
+import { ErrorDisplay } from '../components/ErrorDisplay.tsx';
 
 const UnitValueUnWrappedField = (props: FieldProps) => {
   const {
