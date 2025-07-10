@@ -21,6 +21,7 @@ import {
   TicketProductDto,
 } from '../types/tickets/ticket.ts';
 import { api } from './api.ts';
+import { ProductUpdate } from '../types/product.ts';
 const TicketProductService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
 
@@ -42,6 +43,13 @@ const TicketProductService = {
       this.handleErrors();
     }
     return response.data as TicketProductDto[];
+  },
+  async getTicketProductUpdates(ticketId: number): Promise<ProductUpdate[]> {
+    const response = await api.get(`/api/tickets/${ticketId}/products-updates`);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    return response.data as ProductUpdate[];
   },
   async getTicketBulkProductActions(
     ticketId: number,

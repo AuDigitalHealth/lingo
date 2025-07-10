@@ -14,7 +14,7 @@ import React, { useEffect, useState } from 'react';
 import useGetTicketsByAssociations from '../../../hooks/api/tickets/useGetTicketsByAssociations';
 import { Add, Delete, Folder } from '@mui/icons-material';
 import { Stack } from '@mui/system';
-import useTaskById from '../../../hooks/useTaskById';
+import useTaskByKey from '../../../hooks/useTaskById';
 import TaskTicketAssociationModal from './TaskTicketAssociationModal';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal';
 import { Link } from 'react-router-dom';
@@ -27,7 +27,7 @@ import { useTicketByTicketNumber } from '../../../hooks/api/tickets/useTicketByI
 import Loading from '../../../components/Loading.tsx';
 
 function TaskTicketList() {
-  const task = useTaskById();
+  const task = useTaskByKey();
   const { taskAssociationsData } = useAllTaskAssociations();
   const deleteTaskAssociationMutation = useDeleteTaskAssociation();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);

@@ -1,8 +1,16 @@
 import { Product, ProductSummary } from '../../../types/concept.ts';
 import { Stack } from '@mui/system';
+import { IconButton, Link, Tooltip, Typography } from '@mui/material';
 import { Link, Tooltip, Typography } from '@mui/material';
 import { OpenInNew } from '@mui/icons-material';
 import React from 'react';
+import { sortExternalIdentifiers } from '../../../utils/helpers/tickets/additionalFieldsUtils.ts';
+import {
+  extractSemanticTag,
+  removeSemanticTagFromTerm,
+} from '../../../utils/helpers/ProductPreviewUtils.ts';
+import { ContentCopy } from '@mui/icons-material';
+import { enqueueSnackbar } from 'notistack';
 import AdditionalPropertiesDisplay from './AdditionalPropertiesDisplay.tsx';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 import { ProductRetireUpdate } from './ProductRetireUpdate.tsx';
@@ -17,13 +25,7 @@ interface ExistingConceptDropdownProps {
   setValue?: UseFormSetValue<ProductSummary>;
 }
 
-function ExistingConceptDropdown({
-  product,
-  branch,
-  control,
-  index,
-  setValue,
-}: ExistingConceptDropdownProps) {
+function ExistingConceptDropdown({ product }: ExistingConceptDropdownProps) {
   const { applicationConfig } = useApplicationConfigStore();
   const snowstormBaseUrl = applicationConfig.apApiBaseUrl;
 
@@ -32,6 +34,23 @@ function ExistingConceptDropdown({
   const release = branchParts[3] || '';
 
   const conceptBrowserUrl = `${snowstormBaseUrl}/browser/?perspective=full&conceptId1=${product.conceptId}&edition=${edition}&release=${release}&languages=en`;
+
+  const semanticTag = extractSemanticTag(product.concept?.fsn?.term)
+    ?.trim()
+    .toLocaleLowerCase();
+
+  const termWithoutTag = removeSemanticTagFromTerm(product.concept?.fsn?.term);
+
+  const handleCopy = () => {
+    if (product.concept?.fsn?.term) {
+      void navigator.clipboard.writeText(product.concept.fsn.term).then(() => {
+        enqueueSnackbar(`Copied '${product.concept?.fsn?.term}' to Clipboard`, {
+          variant: 'info',
+          autoHideDuration: 3000,
+        });
+      });
+    }
+  };
 
   return (
     <div key={`${product.conceptId}-div`}>
@@ -59,11 +78,33 @@ function ExistingConceptDropdown({
           </Tooltip>
         </div>
       </Stack>
-      <Stack direction="row" spacing={2}>
+      <Stack direction="row" spacing={2} alignItems={'center'}>
         <Typography style={{ color: '#184E6B' }}>FSN:</Typography>
-        <Typography>{product.concept?.fsn?.term}</Typography>
+        <Typography>
+          {termWithoutTag ? termWithoutTag : product.concept?.fsn?.term}
+        </Typography>
+        <Tooltip title="Copy with Semantic Tag">
+          <IconButton
+            size="small"
+            onClick={handleCopy}
+            sx={{
+              padding: 0, // Reduce padding to fit closer to text
+              '& .MuiSvgIcon-root': {
+                fontSize: '1rem', // Match the default Typography font size (usually 1rem = 16px)
+              },
+            }}
+          >
+            <ContentCopy />
+          </IconButton>
+        </Tooltip>
       </Stack>
-      <Stack direction="row" spacing={2} mb={1}>
+      {semanticTag && (
+        <Stack direction="row" spacing={2}>
+          <Typography style={{ color: '#184E6B' }}>Semantic Tag:</Typography>
+          <Typography>{semanticTag}</Typography>
+        </Stack>
+      )}
+      <Stack direction="row" spacing={2}>
         <Typography style={{ color: '#184E6B' }}>Preferred Term:</Typography>
         <Typography>{product.concept?.pt?.term}</Typography>
       </Stack>
