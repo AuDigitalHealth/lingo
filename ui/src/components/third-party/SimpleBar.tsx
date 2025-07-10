@@ -16,7 +16,7 @@ const RootStyle = styled(BrowserView)({
 });
 
 // scroll bar wrapper
-const SimpleBarStyle = styled(SimpleBar)(({ theme }) => ({
+const SimpleBarStyle = styled(SimpleBar)(({ theme }: { theme: Theme }) => ({
   maxHeight: '100%',
   '& .simplebar-scrollbar': {
     '&:before': {
@@ -47,12 +47,12 @@ export default function SimpleBarScroll({
   return (
     <>
       <RootStyle>
-        <SimpleBarStyle clickOnTrack={false} sx={sx} {...other}>
+        <SimpleBarStyle clickOnTrack={false} sx={sx || {}} {...other}>
           {children as ReactNode}
         </SimpleBarStyle>
       </RootStyle>
       <MobileView>
-        <Box sx={{ overflowX: 'auto', ...sx }} {...other}>
+        <Box sx={{ overflowX: 'auto', ...(sx || {}) }} {...other}>
           {children as ReactNode}
         </Box>
       </MobileView>

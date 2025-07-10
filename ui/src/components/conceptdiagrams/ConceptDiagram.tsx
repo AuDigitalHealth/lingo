@@ -72,7 +72,7 @@ export default function ConceptDiagram({
   }, [element, data, formType]);
 
   useEffect(() => {
-    if (newConcept !== undefined && element.current !== null) {
+    if (newConcept && element.current !== null) {
       const tempImageUri = drawNewConceptDiagram(
         newConcept,
         element,

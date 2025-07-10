@@ -5,7 +5,7 @@ import TaskDetails from './TaskDetails';
 import TaskTicketList from './TaskTicketList';
 import { Route, Routes, useLocation, useParams } from 'react-router-dom';
 
-import useTaskById from '../../../hooks/useTaskById.tsx';
+import useTaskByKey from '../../../hooks/useTaskById.tsx';
 import { Task } from '../../../types/task.ts';
 import Loading from '../../../components/Loading.tsx';
 import { useFetchAndCreateBranch } from '../../../hooks/api/task/useInitializeBranch.tsx';
@@ -51,7 +51,7 @@ function TaskEditCard({ menuOpen }: TaskEditCardProps) {
     event.preventDefault();
     setOpenTab(newValue);
   };
-  const task = useTaskById();
+  const task = useTaskByKey();
 
   const { isLoading } = useFetchAndCreateBranch(task as Task);
 
