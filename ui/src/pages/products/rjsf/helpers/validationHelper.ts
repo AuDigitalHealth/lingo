@@ -1,7 +1,10 @@
 import _ from 'lodash';
 
 // Resolve a $ref in the schema
-export const resolveRef = (schema: Record<string, any>, ref: string): Record<string, any> => {
+export const resolveRef = (
+  schema: Record<string, any>,
+  ref: string,
+): Record<string, any> => {
   const refPath = ref.replace('#/$defs/', '');
   return schema.$defs?.[refPath] || {};
 };
@@ -12,7 +15,9 @@ export const isEmptyObject = (obj: any): boolean => {
 };
 
 // Get discriminator property from oneOf/anyOf schema
-export const getDiscriminatorProperty = (schema: Record<string, any>): string | null => {
+export const getDiscriminatorProperty = (
+  schema: Record<string, any>,
+): string | null => {
   if (!schema || typeof schema !== 'object') return null;
 
   // Explicit discriminator
@@ -26,8 +31,10 @@ export const getDiscriminatorProperty = (schema: Record<string, any>): string | 
     const firstBranchProps = branches[0]?.properties || {};
     for (const prop in firstBranchProps) {
       if (
-          firstBranchProps[prop].const &&
-          branches.every((branch: any) => branch.properties?.[prop]?.const !== undefined)
+        firstBranchProps[prop].const &&
+        branches.every(
+          (branch: any) => branch.properties?.[prop]?.const !== undefined,
+        )
       ) {
         return prop;
       }
@@ -38,9 +45,9 @@ export const getDiscriminatorProperty = (schema: Record<string, any>): string | 
 
 // Find schema with discriminator and its path
 export const findDiscriminatorSchema = (
-    schema: Record<string, any>,
-    rootSchema: Record<string, any>,
-    path: string[] = []
+  schema: Record<string, any>,
+  rootSchema: Record<string, any>,
+  path: string[] = [],
 ): { schema: Record<string, any>; path: string[] } | null => {
   if (!schema || typeof schema !== 'object') return null;
 
@@ -57,14 +64,20 @@ export const findDiscriminatorSchema = (
   if (schema.properties) {
     for (const [key, value] of Object.entries(schema.properties)) {
       if (value && typeof value === 'object') {
-        const result = findDiscriminatorSchema(value, rootSchema, [...path, `properties.${key}`]);
+        const result = findDiscriminatorSchema(value, rootSchema, [
+          ...path,
+          `properties.${key}`,
+        ]);
         if (result) return result;
       }
     }
   }
 
   if (schema.items && typeof schema.items === 'object') {
-    const result = findDiscriminatorSchema(schema.items, rootSchema, [...path, 'items']);
+    const result = findDiscriminatorSchema(schema.items, rootSchema, [
+      ...path,
+      'items',
+    ]);
     if (result) return result;
   }
 
@@ -73,9 +86,9 @@ export const findDiscriminatorSchema = (
 
 // Get discriminator value from formData
 export const getDiscriminatorValue = (
-    formData: any,
-    schemaPath: string[],
-    discriminatorProp: string
+  formData: any,
+  schemaPath: string[],
+  discriminatorProp: string,
 ): any => {
   let current = formData;
   for (const part of schemaPath) {
@@ -91,73 +104,22 @@ export const getDiscriminatorValue = (
   return current?.[discriminatorProp];
 };
 
-// Clean form data based on schema
-export const cleanFormDataBySchema = (
-    data: any,
-    schema: Record<string, any>,
-    rootSchema: Record<string, any>,
-    context: { parentDiscriminatorValue?: string; isNewItem?: boolean } = {}
-): any => {
-  if (!data || typeof data !== 'object') return data;
-
-  // Resolve $ref
-  const resolvedSchema = schema.$ref ? resolveRef(rootSchema, schema.$ref) : schema;
-
-  // Handle oneOf/anyOf
-  const branches = resolvedSchema.oneOf || resolvedSchema.anyOf;
-  if (branches?.length) {
-    const discriminatorProp = getDiscriminatorProperty(resolvedSchema);
-    const branchValue = data[discriminatorProp];
-    if (!discriminatorProp || !branchValue) return data;
-
-    const matchingBranch = branches.find(
-        (branch: any) => branch.properties?.[discriminatorProp]?.const === branchValue
-    );
-    if (!matchingBranch) return data;
-
-    const validProperties = Object.keys(matchingBranch.properties || {});
-    const cleanedData: Record<string, any> = { [discriminatorProp]: branchValue };
-
-    for (const key of Object.keys(data)) {
-      if (validProperties.includes(key)) {
-        const propSchema = matchingBranch.properties[key];
-        // Preserve all fields in matching branch, pass context
-        cleanedData[key] = cleanFormDataBySchema(data[key], propSchema, rootSchema, {
-          parentDiscriminatorValue: branchValue,
-          isNewItem: context.isNewItem
-        });
-      }
-      // Non-matching branch fields are omitted
-    }
-    return Object.keys(cleanedData).length > 0 ? cleanedData : undefined;
-  }
-
-  // Handle arrays
-  if (resolvedSchema.type === 'array' && Array.isArray(data)) {
-    const itemSchema = resolvedSchema.items?.$ref
-        ? resolveRef(rootSchema, resolvedSchema.items.$ref)
-        : resolvedSchema.items;
-    const cleanedItems = data.map((item) =>
-        cleanFormDataBySchema(item, itemSchema, rootSchema, context)
-    ).filter((item) => item !== undefined);
-    return cleanedItems.length > 0 ? cleanedItems : [];
-  }
-  return data;
-};
-
 // Build errorSchema from AJV errors
 export const buildErrorSchema = (errors: any[]) => {
   const problematicErrors = errors.filter(e => !e.property && !e.instancePath);
   if (problematicErrors.length > 0) {
-    console.log('Errors with empty property and instancePath:', safeStringify(problematicErrors));
+    console.log(
+      'Errors with empty property and instancePath:',
+      safeStringify(problematicErrors),
+    );
   }
 
   const newErrorSchema = errors.reduce((acc: any, error: any) => {
     let path = error.property
-        ? error.property.replace(/^\./, '')
-        : error.instancePath
-            ? error.instancePath.replace(/^\//, '').replace(/\//g, '.')
-            : null;
+      ? error.property.replace(/^\./, '')
+      : error.instancePath
+        ? error.instancePath.replace(/^\//, '').replace(/\//g, '.')
+        : null;
 
     if (path && path !== '') {
       _.set(acc, path, { __errors: [error.message || 'Validation error'] });
@@ -167,17 +129,40 @@ export const buildErrorSchema = (errors: any[]) => {
     }
     return acc;
   }, {});
-  return newErrorSchema[""] ? newErrorSchema[""] : newErrorSchema;
+  return newErrorSchema[''] ? newErrorSchema[''] : newErrorSchema;
 };
 
 export const safeStringify = (obj: any) => {
   const seen = new WeakSet();
-  return JSON.stringify(obj, (key, value) => {
-    if (typeof value === 'object' && value !== null) {
-      if (seen.has(value)) return '[Circular]';
-      seen.add(value);
-    }
-    return value;
-  }, 2);
+  return JSON.stringify(
+    obj,
+    (key, value) => {
+      if (typeof value === 'object' && value !== null) {
+        if (seen.has(value)) return '[Circular]';
+        seen.add(value);
+      }
+      return value;
+    },
+    2,
+  );
 };
+export const filterErrors = (errors: any[]): any[] => {
+  // Deduplicate errors by path
+  const errorsByPath: { [path: string]: any } = errors.reduce(
+    (acc: any, error: any) => {
+      let path = error.property
+        ? error.property.replace(/^\./, '')
+        : error.instancePath
+          ? error.instancePath.replace(/^\//, '').replace(/\//g, '.')
+          : '';
+      if (!acc[path]) {
+        acc[path] = error;
+      }
+      return acc;
+    },
+    {},
+  );
 
+  // Return array of unique errors
+  return Object.values(errorsByPath);
+};
