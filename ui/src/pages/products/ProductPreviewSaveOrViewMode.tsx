@@ -1,5 +1,5 @@
-import { Box } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { Box, Typography } from '@mui/material';
+import { useEffect, useMemo, useState } from 'react';
 import { Concept, ProductSummary } from '../../types/concept.ts';
 import {
   cleanBrandPackSizeDetails,
@@ -8,6 +8,7 @@ import {
   cleanProductSummary,
   containsNewConcept,
   getProductDisplayName,
+  getSemanticTagChanges,
   isDeviceType,
 } from '../../utils/helpers/conceptUtils.ts';
 import Loading from '../../components/Loading.tsx';
@@ -46,16 +47,24 @@ import { useQueryClient } from '@tanstack/react-query';
 import productService from '../../api/ProductService.ts';
 import ProductPreviewBody from './components/ProductPreviewBody.tsx';
 import {
+  extractSemanticTag,
   getProductViewUrl,
   invalidateBulkActionQueries,
   invalidateBulkActionQueriesById,
+  removeSemanticTagFromTerm,
 } from '../../utils/helpers/ProductPreviewUtils.ts';
 import { ProductNameOverrideModal } from './components/ProductNameOverrideModal.tsx';
 import { useConceptsForReview } from '../../hooks/api/task/useConceptsForReview.js';
+import { SemanticTagOverrideModal } from './components/SemanticTagOverrideModal.tsx';
+import { cloneDeep } from 'lodash';
+import { reattachSemanticTags } from '../../utils/helpers/conceptUtils.ts';
+import ConceptService from '../../api/ConceptService.ts';
+import ErrorModal from '../../themes/overrides/ErrorModal.tsx';
+import { deepClone } from '@mui/x-data-grid/utils/utils';
 
 interface ProductPreviewSaveOrViewModeProps {
   productSaveDetails?: ProductSaveDetails;
-  productModel: ProductSummary;
+  productModelResponse: ProductSummary;
   handleClose?:
     | ((event: object, reason: 'backdropClick' | 'escapeKeyDown') => void)
     | (() => void);
@@ -69,9 +78,31 @@ function ProductPreviewSaveOrViewMode({
   handleClose,
   readOnlyMode,
   branch,
-  productModel,
+  productModelResponse,
   ticket,
 }: ProductPreviewSaveOrViewModeProps) {
+  const productModel = useMemo(() => {
+    const nodes = productModelResponse.nodes.map(node => {
+      if (node.newConceptDetails?.fullySpecifiedName) {
+        const semanticTag = extractSemanticTag(
+          node.newConceptDetails?.fullySpecifiedName,
+        );
+        if (semanticTag) {
+          node.newConceptDetails.semanticTag = semanticTag;
+          const termWithoutTag = removeSemanticTagFromTerm(
+            node.fullySpecifiedName,
+          );
+          node.newConceptDetails.fullySpecifiedName = termWithoutTag
+            ? termWithoutTag
+            : '';
+        }
+      }
+      return node;
+    });
+    productModelResponse.nodes = nodes;
+    return productModelResponse;
+  }, [productModelResponse]);
+
   const [isLoading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { serviceStatus } = useServiceStatus();
@@ -88,20 +119,107 @@ function ProductPreviewSaveOrViewMode({
   const [duplicateNameModalOpen, setDuplicateNameModalOpen] = useState(false);
   const [overrideDuplicateName, setOverrideDuplicateName] = useState(false);
   useConceptsForReview(branch);
+  const [overrideDuplicateProductName, setOverrideDuplicateProductName] =
+    useState(false);
+
+  const [duplicateConceptNameError, setDuplicateConceptNameError] =
+    useState(false);
+  const [
+    duplicateConceptNameErrorMessages,
+    setDuplicateConceptNameErrorMessages,
+  ] = useState<Concept[] | undefined>(undefined);
+  const [semanticChangeWarning, setSemanticChangeWarning] = useState(false);
+  const [semanticChangeWarningMessages, setSemanticChangeWarningMessage] =
+    useState<string[] | undefined>(undefined);
+  const [overrideSemanticChangeWarning, setOverrideSemanticChangeWarning] =
+    useState(false);
 
   const productWithNameAlreadyExists = (
     ticket: Ticket | undefined,
     productSummary: ProductSummary,
     productCreationDetails: ProductSaveDetails | undefined,
   ) => {
+    const clonedProductSummary = cloneDeep(productSummary);
+    reattachSemanticTags(clonedProductSummary);
+
     const duplicateName = ticket?.products?.find(product => {
-      return product.name === productSummary.subjects[0].fullySpecifiedName;
+      return (
+        product.name === clonedProductSummary.subjects[0].fullySpecifiedName
+      );
     });
     return (
       duplicateName !== undefined &&
       (!productCreationDetails?.nameOverride ||
         productCreationDetails?.nameOverride === duplicateName.name)
     );
+  };
+
+  const duplicateFsnCheck = async (
+    productSummary: ProductSummary | undefined,
+  ) => {
+    if (!productSummary) {
+      return {
+        hasDuplicates: false,
+        matchingConcepts: [],
+      };
+    }
+    const clonedProductSummary = cloneDeep(productSummary);
+    reattachSemanticTags(clonedProductSummary);
+    const newConcepts = clonedProductSummary?.nodes
+      ?.filter(node => {
+        return node.newConceptDetails !== null;
+      })
+      .map(node => {
+        return node.newConceptDetails;
+      });
+
+    // Array to store matches
+    const matchingConcepts: Array<Concept> = [];
+
+    if (newConcepts && newConcepts.length > 0) {
+      const conceptSearchPromises = newConcepts.map(async concept => {
+        if (concept && concept.fullySpecifiedName) {
+          return {
+            searchedName: concept.fullySpecifiedName,
+            response: await ConceptService.searchConceptNoEcl(
+              concept.fullySpecifiedName,
+              branch,
+              true,
+            ),
+          };
+        }
+        return null;
+      });
+
+      const conceptSearchResults = await Promise.all(conceptSearchPromises);
+
+      conceptSearchResults.forEach(result => {
+        if (!result) return;
+
+        const searchedName = result.searchedName;
+        const response = result.response;
+
+        const matches = response.items.filter(
+          item => item.fsn && item.fsn.term === searchedName,
+        );
+
+        // Add each matching concept to our result array
+        matches.forEach(match => {
+          matchingConcepts.push(match);
+        });
+      });
+    }
+
+    const uniqueMatchingConcepts = Array.from(
+      new Map(
+        matchingConcepts.map(concept => [concept.conceptId, concept]),
+      ).values(),
+    );
+
+    return {
+      hasDuplicates: uniqueMatchingConcepts.length > 0,
+      matchingConcepts: uniqueMatchingConcepts,
+    };
   };
 
   const { register, handleSubmit, reset, control, getValues, setValue, watch } =
@@ -123,6 +241,7 @@ function ProductPreviewSaveOrViewMode({
       setErrorKey(undefined);
     }
     setLastValidatedData(data);
+
     if (
       productWithNameAlreadyExists(ticket, data, productSaveDetails) &&
       !overrideDuplicateName
@@ -130,6 +249,13 @@ function ProductPreviewSaveOrViewMode({
       setDuplicateNameModalOpen(true);
       return;
     }
+    // check if any of the concept semantic tags have been changed from the recieved semantic tag
+    const semanticTagChanges = getSemanticTagChanges(data);
+    if (semanticTagChanges.hasChanged && !overrideSemanticChangeWarning) {
+      setSemanticChangeWarning(true);
+      setSemanticChangeWarningMessage(semanticTagChanges.changeMessages);
+    }
+
     const errKey = await validateProductSummaryNodes(
       data.nodes,
       branch,
@@ -139,20 +265,45 @@ function ProductPreviewSaveOrViewMode({
       setErrorKey(errKey as string);
       return;
     }
-    const fsnWarnings = uniqueFsnValidator(data.nodes);
-    const ptWarnings = uniquePtValidator(data.nodes);
+    const producSummaryClone = deepClone(data) as ProductSummary;
+    reattachSemanticTags(producSummaryClone);
+    const fsnWarnings = uniqueFsnValidator(producSummaryClone.nodes);
+    const ptWarnings = uniquePtValidator(producSummaryClone.nodes);
+
+    let ignoreErrorsOpen = false;
     if (!ignoreErrors && (fsnWarnings || ptWarnings)) {
       setIgnoreErrorsModalOpen(true);
+      ignoreErrorsOpen = true;
+    }
+    if (
+      ignoreErrorsOpen ||
+      (semanticTagChanges.hasChanged && !overrideSemanticChangeWarning)
+    ) {
       return;
     }
 
-    submitData(data);
+    void submitData(data);
   };
 
-  const submitData = (data?: ProductSummary) => {
+  const submitData = async (data?: ProductSummary) => {
     const usedData = data ? data : lastValidatedData;
+    setLoading(true);
+    const duplicateFsn = await duplicateFsnCheck(usedData);
 
-    if (!readOnlyMode && productSaveDetails && usedData) {
+    if (duplicateFsn.hasDuplicates) {
+      setLoading(false);
+      setDuplicateConceptNameError(true);
+      setDuplicateConceptNameErrorMessages(duplicateFsn.matchingConcepts);
+      setIgnoreErrors(false);
+      setOverrideSemanticChangeWarning(false);
+      return;
+    }
+    reattachSemanticTags(usedData as ProductSummary);
+    if (
+      !readOnlyMode &&
+      newConceptFound && productSaveDetails &&
+      usedData
+    ) {
       setForceNavigation(true);
       productSaveDetails.productSummary = usedData;
       setLoading(true);
@@ -160,6 +311,9 @@ function ProductPreviewSaveOrViewMode({
       if (isDeviceType(selectedProductType)) {
         productSaveDetails.packageDetails = cleanDevicePackageDetails(
           productSaveDetails.packageDetails as DevicePackageDetails,
+        );
+        productSaveDetails.productSummary = cleanProductSummary(
+            productSaveDetails.productSummary,
         );
         productService
           .createDeviceProduct(productSaveDetails, branch)
@@ -299,6 +453,24 @@ function ProductPreviewSaveOrViewMode({
   } else {
     return (
       <>
+        <ErrorModal
+          open={duplicateConceptNameError}
+          handleClose={() => setDuplicateConceptNameError(false)}
+          content={
+            <>
+              <Typography>
+                This would create concepts with FSN's that already exist
+              </Typography>
+              {duplicateConceptNameErrorMessages?.map(concept => {
+                return (
+                  <Typography>
+                    Existing Concept: {concept.idAndFsnTerm}
+                  </Typography>
+                );
+              })}
+            </>
+          }
+        />
         <ProductNameOverrideModal
           saveProduct={() => {
             setDuplicateNameModalOpen(false);
@@ -310,7 +482,7 @@ function ProductPreviewSaveOrViewMode({
           productCreationDetails={productSaveDetails}
           open={duplicateNameModalOpen}
           ignore={() => {
-            setOverrideDuplicateName(true);
+            setOverrideDuplicateProductName(true);
             setDuplicateNameModalOpen(false);
             if (lastValidatedData) {
               void onSubmit(lastValidatedData);
@@ -320,18 +492,38 @@ function ProductPreviewSaveOrViewMode({
             setDuplicateNameModalOpen(false);
           }}
         />
+        <SemanticTagOverrideModal
+          messages={semanticChangeWarningMessages}
+          open={semanticChangeWarning}
+          ignore={() => {
+            setOverrideSemanticChangeWarning(true);
+            setSemanticChangeWarning(false);
+            if (!ignoreErrorsModalOpen) {
+              void submitData();
+            }
+          }}
+          handleClose={() => {
+            setSemanticChangeWarning(false);
+            setIgnoreErrors(false);
+            setIgnoreErrorsModalOpen(false);
+          }}
+        />
         <WarningModal
-          open={ignoreErrorsModalOpen}
+          open={ignoreErrorsModalOpen && !semanticChangeWarning}
           content={`At least one FSN or PT is the same as another FSN or PT. Is this correct?`}
           handleClose={() => {
             setIgnoreErrorsModalOpen(false);
+            setSemanticChangeWarning(false);
+            setOverrideSemanticChangeWarning(false);
           }}
           disabled={false}
           action={'Ignore Duplicates'}
           handleAction={() => {
             setIgnoreErrors(true);
             setIgnoreErrorsModalOpen(false);
-            submitData();
+            if (!semanticChangeWarning) {
+              void submitData();
+            }
           }}
         />
         <Box width={'100%'}>

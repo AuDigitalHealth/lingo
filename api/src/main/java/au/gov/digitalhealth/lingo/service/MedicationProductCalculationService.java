@@ -278,6 +278,13 @@ public class MedicationProductCalculationService
   public ProductSummary calculateProductFromAtomicData(
       String branch, PackageDetails<MedicationProductDetails> packageDetails)
       throws ExecutionException, InterruptedException {
+
+    // todo - this is a work around because the UI doesn't know which package to put the selected
+    // identifiers in, so it puts them at the top level. They need to be cascaded down to the lower
+    // level packages. It is possible this isn't enough if there are different packages with
+    // intersecting conceptOptions, but this will do for the moment.
+    packageDetails.cascadeSelectedIdentifiers();
+
     return calculateCreatePackage(
         branch,
         packageDetails,
@@ -682,6 +689,20 @@ public class MedicationProductCalculationService
               modelConfiguration.getModuleId()));
     }
 
+    if (!innnerProductSummaries.isEmpty()) {
+      relationships.add(
+          getSnowstormDatatypeComponent(
+              COUNT_OF_CD_TYPE,
+              // get the unique set of CD types
+              Integer.toString(
+                  innnerProductSummaries.values().stream()
+                      .map(v -> v.getSingleSubject().getConceptId())
+                      .collect(Collectors.toSet())
+                      .size()),
+              DataTypeEnum.INTEGER,
+              0));
+    }
+
     for (Entry<PackageQuantity<MedicationProductDetails>, ProductSummary> entry :
         innerPackageSummaries.entrySet()) {
       Node contained;
@@ -721,7 +742,7 @@ public class MedicationProductCalculationService
       relationships.add(
           getSnowstormDatatypeComponent(
               COUNT_OF_CONTAINED_PACKAGE_TYPE,
-              // get the unique set of active ingredients
+              // get the unique set of package types
               Integer.toString(
                   innerPackageSummaries.values().stream()
                       .map(v -> v.getSingleSubject().getConceptId())

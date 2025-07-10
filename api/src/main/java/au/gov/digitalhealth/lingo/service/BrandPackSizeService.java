@@ -189,10 +189,7 @@ public class BrandPackSizeService {
     newRelationships.forEach(
         r -> {
           if (r.getConcreteValue() == null && r.getTarget() != null) {
-            atomicCache.addFsnAndPt(
-                r.getDestinationId(),
-                r.getTarget().getFsn().getTerm(),
-                r.getTarget().getPt().getTerm());
+            atomicCache.addFsn(r.getDestinationId(), r.getTarget().getFsn().getTerm());
           }
         });
 
@@ -814,10 +811,7 @@ public class BrandPackSizeService {
     relationships.forEach(
         r -> {
           if (r.getConcreteValue() == null && r.getTarget() != null) {
-            atomicCache.addFsnAndPt(
-                r.getDestinationId(),
-                r.getTarget().getFsn().getTerm(),
-                r.getTarget().getPt().getTerm());
+            atomicCache.addFsn(r.getDestinationId(), r.getTarget().getFsn().getTerm());
           }
         });
 
@@ -888,10 +882,7 @@ public class BrandPackSizeService {
     relationships.forEach(
         r -> {
           if (r.getConcreteValue() == null && r.getTarget() != null) {
-            atomicCache.addFsnAndPt(
-                r.getDestinationId(),
-                r.getTarget().getFsn().getTerm(),
-                r.getTarget().getPt().getTerm());
+            atomicCache.addFsn(r.getDestinationId(), r.getTarget().getFsn().getTerm());
           }
         });
 

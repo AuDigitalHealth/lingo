@@ -39,8 +39,6 @@ export default function CustomTaskAssigneeSelection({
 
   const [validUsersList, setValidUsersList] = useState<JiraUser[]>();
 
-  console.log('valid user list');
-  console.log(validUsersList);
   const mutation = useUpdateTask('owner');
 
   useEffect(() => {

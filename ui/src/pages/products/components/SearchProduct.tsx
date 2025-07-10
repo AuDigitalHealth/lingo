@@ -237,6 +237,7 @@ export default function SearchProduct({
     // if the user starts typing again
     if (inputValue === '' || !inputValue) {
       setResults([]);
+      setOntoResults([]);
     }
   }, [inputValue]);
 
@@ -285,6 +286,9 @@ export default function SearchProduct({
       }
       setAllData(tempAllData);
     }
+    if (!ontoResults && !results) {
+      setAllData([]);
+    }
   }, [ontoResults, results]);
 
   useEffect(() => {
@@ -297,15 +301,16 @@ export default function SearchProduct({
             )
           : ([] as Concept[]),
       );
+      return;
     }
+    setOntoResults([]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ontoData]);
 
   useEffect(() => {
-    if (data !== undefined) {
+    if (data) {
       localStorage.setItem('fsn_toggle', fsnToggle.toString());
       setResults(data.items);
-      setOpen(true);
     }
   }, [data, fsnToggle]);
 

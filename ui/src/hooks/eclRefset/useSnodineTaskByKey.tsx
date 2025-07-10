@@ -5,7 +5,7 @@ import {
   getTaskById,
   useInitializeUserReviewTasks,
   useInitializeUserTasks,
-} from '../api/task/useAllTasks';
+} from '../api/useAllTasks';
 
 function useSnodineTaskByKey(key?: string) {
   const [task, setTask] = useState<Task | null>();

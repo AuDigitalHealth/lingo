@@ -15,6 +15,8 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
+import static au.gov.digitalhealth.lingo.util.AmtConstants.ARTGID_REFSET;
+
 import au.csiro.snowstorm_client.api.BranchingApi;
 import au.csiro.snowstorm_client.api.ConceptsApi;
 import au.csiro.snowstorm_client.api.RefsetMembersApi;
@@ -36,6 +38,7 @@ import au.gov.digitalhealth.lingo.util.CacheConstants;
 import au.gov.digitalhealth.lingo.util.ClientHelper;
 import au.gov.digitalhealth.lingo.util.HistoricalAssociationReferenceSet;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PreDestroy;
 import jakarta.validation.constraints.NotNull;
@@ -50,6 +53,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -62,6 +67,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
+import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -459,6 +466,14 @@ public class SnowstormClient {
     return self.getBrowserConceptsAsList(branch, concepts).flatMapMany(Flux::fromIterable);
   }
 
+  public Mono<SnowstormConcept> getBrowserConcept(String branch, String conceptId) {
+    return snowStormApiClient.get()
+        .uri(uriBuilder -> uriBuilder
+            .path("/browser/{branch}/concepts/{conceptId}")
+            .build(branch, conceptId))
+        .retrieve()
+        .bodyToMono(SnowstormConcept.class);
+  }
   @Cacheable(
       value = CacheConstants.SNOWSTORM_RELATIONSHIPS,
       keyGenerator = "branchAwareKeyGenerator")
@@ -474,10 +489,42 @@ public class SnowstormClient {
     return getConceptsApi().createConcept(branch, concept, validate, languageHeader).block();
   }
 
-  public SnowstormConceptView updateConcept(
+  public SnowstormConceptView updateConceptView(
       String branch, String conceptId, SnowstormConceptView concept, boolean validate) {
+    try {
+      // Serialize the concept to JSON string to see what's being sent
+      objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+      String conceptJson = objectMapper.writeValueAsString(concept);
+      log.info(String.format("Sending concept update request: %s", conceptJson));
+    } catch (Exception e) {
+      log.severe("Error serializing concept object");
+    }
     return getConceptsApi()
         .updateConcept(branch, conceptId, concept, validate, languageHeader)
+        .block();
+  }
+
+  public SnowstormConcept updateConcept(String branch, String conceptId, SnowstormConcept concept, boolean validate) {
+    ObjectMapper customMapper = new ObjectMapper()
+        .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
+    // Create a custom encoder with this mapper
+    Jackson2JsonEncoder encoder = new Jackson2JsonEncoder(customMapper, MediaType.APPLICATION_JSON);
+
+    return snowStormApiClient
+        .mutate()
+        .codecs(configurer ->
+            configurer.defaultCodecs().jackson2JsonEncoder(encoder)
+        )
+        .build()
+        .put()
+        .uri(uriBuilder -> uriBuilder
+            .path("/browser/{branch}/concepts/{conceptId}")
+            .queryParam("validate", validate)
+            .build(branch, conceptId))
+        .bodyValue(concept)
+        .retrieve()
+        .bodyToMono(SnowstormConcept.class)
         .block();
   }
 
@@ -675,7 +722,8 @@ public class SnowstormClient {
     return refsetIds;
   }
 
-  public void removeRefsetMembers(String branch, Set<SnowstormReferenceSetMember> members) {
+  public void removeRefsetMembers(String branch, Set<SnowstormReferenceSetMember> members)
+      throws InterruptedException {
 
     Set<SnowstormReferenceSetMember> memberToDeactivate =
         members.stream()
@@ -727,19 +775,25 @@ public class SnowstormClient {
       log.fine("Deleted refset members: " + memberIdsToDelete.size() + " on branch: " + branch);
     }
 
+
     if (!memberToDeactivate.isEmpty()) {
       List<SnowstormReferenceSetMemberViewComponent> deactivatedMembersWithActiveFalse =
           memberToDeactivate.stream()
               .map(
-                  member ->
-                      new SnowstormReferenceSetMemberViewComponent()
-                          .active(false)
-                          .refsetId(member.getRefsetId())
-                          .moduleId(member.getModuleId())
-                          .referencedComponentId(member.getReferencedComponentId())
-                          .memberId(member.getMemberId()))
+                  member -> {
+                    return new SnowstormReferenceSetMemberViewComponent()
+                        .active(false)
+                        .refsetId(member.getRefsetId())
+                        .moduleId(member.getModuleId())
+                        .referencedComponentId(member.getReferencedComponentId())
+                        .additionalFields(member.getAdditionalFields())
+                        .memberId(member.getMemberId());
+                  })
               .toList();
-      createRefsetMemberships(branch, deactivatedMembersWithActiveFalse);
+
+        createRefsetMembers(branch, deactivatedMembersWithActiveFalse);
+
+
       log.fine(
           "Deleted refset members: "
               + deactivatedMembersWithActiveFalse.size()
