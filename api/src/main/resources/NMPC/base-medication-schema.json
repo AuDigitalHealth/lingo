@@ -3,13 +3,12 @@
   "type": "object",
   "$defs": {
     "SnowstormConceptMini": {
-      "type": "object",
+      "type": ["object"],
       "properties": {
         "conceptId": { "type": "string" },
         "pt": { "$ref": "#/$defs/SnowstormTermLangPojo" },
         "fsn": { "$ref": "#/$defs/SnowstormTermLangPojo" }
-      },
-      "minProperties": 1
+      }
     },
     "SnowstormTermLangPojo": {
       "type": "object",
@@ -114,7 +113,7 @@
           "title": "Presentation Strength Denominator"
         }
       },
-      "required": ["activeIngredient","refinedActiveIngredient","basisOfStrengthSubstance", "presentationStrengthNumerator"]
+      "required": ["activeIngredient", "refinedActiveIngredient", "basisOfStrengthSubstance", "presentationStrengthNumerator"]
     },
     "ConcentrationStrengthIngredient": {
       "type": "object",
@@ -146,7 +145,8 @@
         }
       },
       "required": [
-        "activeIngredient","refinedActiveIngredient","basisOfStrengthSubstance",
+        "activeIngredient",
+        "refinedActiveIngredient",
         "basisOfStrengthSubstance",
         "concentrationStrengthNumerator",
         "concentrationStrengthDenominator"
@@ -171,6 +171,7 @@
               "title": "Generic Dose Form"
             },
             "specificForm": {
+              "type": ["object", "null"],
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Specific Dose Form"
             },
@@ -183,6 +184,7 @@
               "minItems": 1
             },
             "unitOfPresentation": {
+              "type": ["object"],
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Unit of Presentation"
             },
@@ -215,6 +217,7 @@
               "title": "Generic Dose Form"
             },
             "specificForm": {
+              "type": ["object", "null"],
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Specific Dose Form"
             },
@@ -225,7 +228,8 @@
               "title": "Concentration Strength Ingredients",
               "items": { "$ref": "#/$defs/ConcentrationStrengthIngredient" },
               "minItems": 1
-            },"nonDefiningProperties": {
+            },
+            "nonDefiningProperties": {
               "title": "Non Defining Properties",
               "type": "array",
               "items": {
@@ -253,6 +257,7 @@
               "title": "Generic Dose Form"
             },
             "specificForm": {
+              "type": ["object", "null"],
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Specific Dose Form"
             },
@@ -297,6 +302,7 @@
               "title": "Generic Dose Form"
             },
             "specificForm": {
+              "type": ["object", "null"],
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Specific Dose Form"
             },
@@ -340,6 +346,7 @@
               "title": "Generic Dose Form"
             },
             "specificForm": {
+              "type": ["object", "null"],
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Specific Dose Form"
             },
@@ -381,8 +388,7 @@
       "type": "object",
       "properties": {
         "unit": { "$ref": "#/$defs/SnowstormConceptMini" },
-        "value": { "type": "number", "minimum": 0
-        },
+        "value": { "type": "number", "minimum": 0 },
         "productDetails": { "$ref": "#/$defs/ProductDetails" }
       },
       "required": ["unit", "value", "productDetails"]
