@@ -116,9 +116,9 @@ function MedicationAuthoring({
 
   const handleChange = ({ formData }: any) => {
 
-    const newFormData = cleanFormDataBySchema(formData, schema, schema);
+    // const newFormData = cleanFormDataBySchema(formData, schema, schema);
     //
-    setFormData(newFormData);
+    setFormData(formData);
     if (!_.isEmpty(formData.productName || formData.containedProducts)) {
       setIsDirty(true);
     }
@@ -129,7 +129,8 @@ function MedicationAuthoring({
   };
 
   const handleFormSubmit = async ({ formData }: { formData: any }) => {
-    const cleanedFormData = cleanFormDataBySchema(formData, schema, schema);
+    // const cleanedFormData = cleanFormDataBySchema(formData, schema, schema);
+    const cleanedFormData = formData;
     const validation = validator.validateFormData(cleanedFormData, schema);
     setFormErrors(validation.errors);
       setFormData(cleanedFormData);
@@ -209,7 +210,7 @@ function MedicationAuthoring({
           <Container data-testid="product-creation-grid">
 
               {/* Custom Error Modal */}
-              <ErrorDisplay errors={formErrors} />
+              {/*<ErrorDisplay errors={formErrors} />*/}
             <Form
                 key={formKey}
                 ref={formRef}
@@ -231,7 +232,7 @@ function MedicationAuthoring({
                   NumberWidget,
                 }}
                 templates={{
-                  FieldTemplate: CustomFieldTemplate,
+                  // FieldTemplate: CustomFieldTemplate,
                   ArrayFieldTemplate: CustomArrayFieldTemplate,
                   ObjectFieldTemplate: MuiGridTemplate,
                 }}
@@ -242,7 +243,7 @@ function MedicationAuthoring({
                 disabled={mutation.isPending}
                 noHtml5Validate={true}
                 noValidate={false}
-                showErrorList={false}
+                // showErrorList={false}
             >
               <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
               <Button
