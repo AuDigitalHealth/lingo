@@ -1,14 +1,17 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
+
   "$defs": {
     "SnowstormConceptMini": {
-      "type": ["object"],
+      "type": ["object","null"],
+      "nullable": true,
       "properties": {
         "conceptId": { "type": "string" },
         "pt": { "$ref": "#/$defs/SnowstormTermLangPojo" },
         "fsn": { "$ref": "#/$defs/SnowstormTermLangPojo" }
-      }
+      },
+      "minProperties": 1
     },
     "SnowstormTermLangPojo": {
       "type": "object",
@@ -156,6 +159,14 @@
     "NoStrengthIngredient": { "$ref": "#/$defs/BaseIngredient" },
     "ProductDetails": {
       "type": "object",
+      "properties": {
+        "productType": {
+          "type": "string",
+          "enum": ["presentationStrength", "concentrationStrength", "noStrength", "vaccinePresentation", "vaccineQualitative"],
+          "default": "presentationStrength"
+        }
+      },
+      "required": ["productType"],
       "discriminator": {
         "propertyName": "productType"
       },
@@ -173,6 +184,7 @@
             },
             "specificForm": {
               "type": ["object", "null"],
+              "nullable": true,
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Specific Dose Form"
             },
@@ -219,6 +231,7 @@
             },
             "specificForm": {
               "type": ["object", "null"],
+              "nullable": true,
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Specific Dose Form"
             },
@@ -259,6 +272,7 @@
             },
             "specificForm": {
               "type": ["object", "null"],
+              "nullable": true,
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Specific Dose Form"
             },
@@ -304,6 +318,7 @@
             },
             "specificForm": {
               "type": ["object", "null"],
+              "nullable": true,
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Specific Dose Form"
             },
@@ -348,6 +363,7 @@
             },
             "specificForm": {
               "type": ["object", "null"],
+              "nullable": true,
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Specific Dose Form"
             },
