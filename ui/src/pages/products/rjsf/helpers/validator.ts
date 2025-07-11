@@ -5,6 +5,7 @@ import {
   findDiscriminatorSchema,
   getDiscriminatorProperty,
   getDiscriminatorValue,
+  removeNullFields,
 } from './validationHelper';
 import { isEmptyObject } from './helpers';
 
@@ -28,7 +29,7 @@ export const customTransformErrors = (
 
   if (!schema || typeof schema !== 'object') {
     return errors
-      .filter(error => error.instancePath) // Only include errors with instancePath for fields
+      .filter(error => error.instancePath)
       .map(error => ({
         ...error,
         property: `.${error.instancePath.replace(/\//g, '.')}`,
@@ -113,19 +114,16 @@ export const customTransformErrors = (
   }
 
   const validProperties = Object.keys(matchingBranch.properties || {});
+  const validRequiredProperties = matchingBranch.required || [];
+
   return errors
     .filter(error => {
       if (error.keyword === 'discriminator') return true;
       if (error.keyword === 'const') return false;
-      // if (error.keyword === 'oneOf') return false;
-      // if (error.keyword === 'required') {
-      //     return validProperties.includes(error.params?.missingProperty) && error.instancePath;
-      // }
       if (error.keyword === 'additionalProperties') {
-        // return !validProperties.includes(error.params?.additionalProperty) && error.instancePath;
         return false;
       }
-      return error.instancePath; // Only include errors with instancePath for fields
+      return error.instancePath;
     })
     .map(error => {
       const isRelatedToDiscriminator =
@@ -149,6 +147,7 @@ export const customTransformErrors = (
         (error.keyword === 'minProperties' && isEmptyObject(error.data))
       ) {
         newError.message = `Field must be populated`;
+        newError.stack = `${newError.message} (at ${newError.property})`;
       } else if (
         error.keyword === 'additionalProperties' &&
         isRelatedToDiscriminator
@@ -175,7 +174,6 @@ export const validator = (() => {
     $data: true,
     discriminator: true,
     verbose: true,
-    // useDefaults: true,
   });
   addErrors(ajvMain);
 
@@ -184,20 +182,20 @@ export const validator = (() => {
     strict: false,
     $data: true,
     discriminator: true,
-    // useDefaults: true,
   });
 
   return {
     validateFormData: (formData: any, schema: any) => {
+      // Transform formData to remove null fields
+      const cleanedFormData = removeNullFields(formData);
       const validate = ajvMain.compile(schema);
-      const valid = validate(formData);
+      const valid = validate(cleanedFormData);
       const errors = customTransformErrors(
         validate.errors || [],
-        formData,
+        cleanedFormData,
         schema,
       );
       console.log('validateFormData errors:', JSON.stringify(errors, null, 2));
-      // Construct errorSchema to ensure rawErrors is populated
       const errorSchema = errors.reduce((acc: any, error: any) => {
         const path = error.instancePath
           ? error.instancePath.replace(/^\//, '').replace(/\//g, '.')
@@ -214,14 +212,15 @@ export const validator = (() => {
         'validateFormData errorSchema:',
         JSON.stringify(errorSchema, null, 2),
       );
-      return { errors, formData, errorSchema };
+      return { errors, formData: cleanedFormData, errorSchema };
     },
     isValid: (schema: any, formData: any, rootSchema: any) => {
       const schemaCopy = { ...schema };
       delete schemaCopy.$id;
+      const cleanedFormData = removeNullFields(formData);
       try {
         const validate = ajvIsValid.compile(schemaCopy);
-        return validate(formData) === true;
+        return validate(cleanedFormData) === true;
       } catch (e) {
         console.error('isValid compilation error:', e);
         return false;
