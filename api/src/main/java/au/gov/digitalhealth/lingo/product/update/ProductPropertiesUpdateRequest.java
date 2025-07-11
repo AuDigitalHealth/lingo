@@ -15,7 +15,7 @@
  */
 package au.gov.digitalhealth.lingo.product.update;
 
-import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import jakarta.validation.Valid;
 import java.io.Serializable;
 import java.util.Set;
@@ -29,6 +29,6 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProductExternalIdentifierUpdateRequest implements Serializable {
-  @Valid Set<@Valid ExternalIdentifier> externalIdentifiers;
+public class ProductPropertiesUpdateRequest implements Serializable {
+  @Valid Set<@Valid NonDefiningBase> nonDefiningProperties;
 }

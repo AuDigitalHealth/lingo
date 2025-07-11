@@ -40,6 +40,8 @@ import useAvailableProjects, {
 } from '../../../hooks/api/useInitializeProjects.tsx';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 import { PlusCircleOutlined } from '@ant-design/icons';
+import { IconButton } from '@mui/material';
+import { Button } from '@mui/material';
 
 interface NewConceptDropdownProps {
   product: Product;

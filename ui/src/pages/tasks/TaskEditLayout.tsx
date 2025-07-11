@@ -1,4 +1,4 @@
-import useTaskByKey from '../../hooks/useTaskById.tsx';
+import useTaskByKey from '../../hooks/useTaskByKey.tsx';
 import TaskEditCard, { TaskEdit } from './components/TaskEditCard.tsx';
 import TasksList from './components/TasksList.tsx';
 import TaskTicket from './components/TaskTicket.tsx';

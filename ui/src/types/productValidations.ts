@@ -25,8 +25,9 @@ import {
   ProductUpdateRequest,
   ProductExternalRequesterUpdateRequest,
   ProductDescriptionUpdateRequest,
+  NonDefiningProperty,
 } from './product.ts';
-import { Product } from './concept.ts';
+import { CaseSignificance, Product } from './concept.ts';
 import {
   Acceptability,
   Concept,
@@ -128,14 +129,16 @@ export const bulkAddExternalRequestorSchema: yup.ObjectSchema<BulkAddExternalReq
 export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateRequest> =
   yup
     .object({
-      externalRequesterUpdate: yup
-        .object<ProductExternalRequesterUpdateRequest>({
-          externalIdentifiers: yup
-            .array<Description>()
+      propertiesUpdateRequest: yup
+        .object<ProductUpdateRequest>({
+          nonDefiningProperties: yup
+            .array<NonDefiningProperty>()
             .of(
               yup.object({
                 identifierScheme: yup.string().required(),
-                identifierValue: yup.string().required(),
+                identifier: yup.string().required(),
+                title: yup.string().required(),
+                type: yup.string().required(),
               }),
             )
             .required(),
@@ -181,6 +184,7 @@ export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateReques
                 .test(
                   'Only One Preferred Synonym Per Language',
                   (value, context) => {
+                    const formattedPath = context.path.replace(/\[(\d+)\]/g, '.$1');
                     const thisDescription = context.from?.[1]
                       .value as Description;
 
@@ -212,7 +216,7 @@ export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateReques
                         const firstLanguage = Object.keys(
                           filteredAcceptability,
                         )[Object.keys(filteredAcceptability).length - 1];
-                        const errPath = `${context.path}.${firstLanguage}`;
+                        const errPath = `${formattedPath}.${firstLanguage}`;
                         return context.createError({
                           message: 'There must be at least one active synonym',
                           path: errPath,
@@ -233,7 +237,8 @@ export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateReques
                       const firstLanguage = Object.keys(filteredAcceptability)[
                         Object.keys(filteredAcceptability).length - 1
                       ];
-                      const errPath = `${context.path}.${firstLanguage}`;
+                      
+                      const errPath = `${formattedPath}.${firstLanguage}`;
                       return context.createError({
                         message:
                           "At least one term must not be 'NOT ACCEPTABLE'",
@@ -280,11 +285,11 @@ export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateReques
                         ([language, count]) => {
                           if (count > 1) {
                             onlyOneFail = true;
-                            errPath = `${context.path}.${language}`;
+                            errPath = `${formattedPath}.${language}`;
                           }
                           if (count === 0) {
                             exactlyOneFail = true;
-                            errPath = `${context.path}.${language}`;
+                            errPath = `${formattedPath}.${language}`;
                           }
                         },
                       );

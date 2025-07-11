@@ -54,7 +54,7 @@ import NewConceptDropdown from './NewConceptDropdown.tsx';
 
 import { useParams } from 'react-router-dom';
 import { useTicketByTicketNumber } from '../../../hooks/api/tickets/useTicketById.tsx';
-import useTaskByKey from '../../../hooks/useTaskById.tsx';
+import useTaskByKey from '../../../hooks/useTaskByKey.tsx';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 import { ProductType } from '../../../types/product.ts';
@@ -116,7 +116,7 @@ function ProductPreviewPanel({
   ticket,
 }: ProductPreviewPanelProps) {
   const theme = useTheme();
-  const task = useTaskById();
+  const task = useTaskByKey();
   const showReviewControls = useShowReviewControls({ task });
   const [conceptDiagramModalOpen, setConceptDiagramModalOpen] = useState(false);
   const [conceptRefsetModalOpen, setConceptRefsetModalOpen] = useState(false);

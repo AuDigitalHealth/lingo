@@ -15,9 +15,6 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
-import static au.gov.digitalhealth.lingo.util.SemanticTagUtil.extractSemanticTag;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.MAP_TARGET;
-import static au.gov.digitalhealth.lingo.service.AtomicDataService.MAP_TARGET;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.*;
 import static java.lang.Boolean.TRUE;
 
@@ -39,15 +36,12 @@ import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
 import au.gov.digitalhealth.lingo.product.bulk.ProductUpdateCreationDetails;
-import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.update.ProductDescriptionUpdateRequest;
 import au.gov.digitalhealth.lingo.product.update.ProductPropertiesUpdateRequest;
 import au.gov.digitalhealth.lingo.util.InactivationReason;
 import au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter;
-import au.gov.digitalhealth.lingo.product.update.ProductExternalIdentifierUpdateRequest;
 import au.gov.digitalhealth.lingo.product.update.ProductUpdateRequest;
 import au.gov.digitalhealth.lingo.product.update.ProductUpdateState;
-import au.gov.digitalhealth.lingo.util.AmtConstants;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import au.gov.digitalhealth.tickets.models.BulkProductAction;
 import au.gov.digitalhealth.tickets.models.Ticket;
@@ -63,7 +57,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.beans.BeanUtils;
@@ -71,6 +64,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.MAP_TARGET;
 
 @Log
 @Service
@@ -94,7 +88,6 @@ public class ProductUpdateService {
       Models models,
       ProductSummaryService productSummaryService,
       ProductCalculationServiceFactory productCalculationServiceFactory,
-      FieldBindingConfiguration fieldBindingConfiguration,
       TicketRepository ticketRepository,
       BulkProductActionRepository bulkProductActionRepository) {
     this.snowstormClient = snowstormClient;
@@ -152,7 +145,7 @@ public class ProductUpdateService {
     return nonDefiningPropertyDefinition.getIdentifier() + " " + value;
   }
 
-  public BulkProductAction updateProduct(
+  public BulkProductAction updateProductDescriptions(
       String branch, String productId, @Valid ProductUpdateRequest productUpdateRequest)
       throws InterruptedException {
 
@@ -160,8 +153,8 @@ public class ProductUpdateService {
     log.info(String.format("Product update for %s commencing", conceptId));
     ProductDescriptionUpdateRequest productDescriptionUpdateRequest =
         productUpdateRequest.getDescriptionUpdate();
-    ProductExternalIdentifierUpdateRequest productExternalIdentifierUpdateRequest =
-        productUpdateRequest.getExternalRequesterUpdate();
+    ProductPropertiesUpdateRequest productExternalIdentifierUpdateRequest =
+        productUpdateRequest.getPropertiesUpdateRequest();
     Ticket ticket = ticketRepository.findById(productUpdateRequest.getTicketId()).orElseThrow();
     String fsn =
         getFsnFromDescriptions(productDescriptionUpdateRequest.getDescriptions()).getTerm();
@@ -180,7 +173,7 @@ public class ProductUpdateService {
 
     if (productExternalIdentifierUpdateRequest != null) {
       log.info(String.format("Product update for %s contains ARTGIDS.", conceptId));
-      updateProductExternalIdentifiers(
+      updateProductProperties(
           branch, conceptId, productExternalIdentifierUpdateRequest, productUpdateCreationDetails);
     }
 
@@ -415,7 +408,7 @@ public class ProductUpdateService {
                 existingConcept.getFsn(),
                 "Concept " + existingConcept.getConceptId() + " has no FSN")
             .getTerm();
-    String existingFsn = conceptNeedToUpdate.getFsn().getTerm();
+
     if (fsn != null && existingFsn != null && !existingFsn.equals(fsn.trim())) {
       String newFsn = fsn.trim();
 
@@ -471,10 +464,10 @@ public class ProductUpdateService {
     return snowstormClient.getBrowserConcept(branch, conceptId).block();
   }
 
-  public Set<ExternalIdentifier> updateProductExternalIdentifiers(
+  public Set<NonDefiningBase> updateProductProperties(
       String branch,
       String conceptId,
-      @Valid ProductExternalIdentifierUpdateRequest productExternalIdentifierUpdateRequest,
+      @Valid ProductPropertiesUpdateRequest productPropertiesUpdateRequest,
       ProductUpdateCreationDetails productUpdateCreationDetails)
       throws InterruptedException {
 
@@ -622,7 +615,7 @@ public class ProductUpdateService {
       browserConcept.getRelationships().removeAll(idsToBeRemoved);
       browserConcept.getRelationships().addAll(idsToBeAdded);
       snowstormClient.updateConcept(
-          branch, conceptId, toSnowstormConceptView(browserConcept), false);
+          branch, conceptId, browserConcept, false);
     }
 
     return requestedProperties.values();

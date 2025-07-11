@@ -154,6 +154,20 @@ export enum ProductActionType {
 }
 export interface ProductSaveDetails {
   type: ProductActionType;
+  productSummary: ProductSummary;
+  packageDetails:
+    | MedicationPackageDetails
+    | DevicePackageDetails
+    | BrandPackSizeCreationDetails;
+  ticketId: number;
+  partialSaveName: string | null;
+  nameOverride: string | null;
+  originalConceptId: string | null | undefined;
+  originalPackageDetails:
+    | MedicationPackageDetails
+    | DevicePackageDetails
+    | BrandPackSizeCreationDetails;
+}
 
 export const isProductUpdateDetails = (
   details:
@@ -172,7 +186,7 @@ export interface ProductUpdateCreationDetails {
 
 export interface ProductUpdateState {
   concept: BrowserConcept;
-  externalIdentifiers: ExternalIdentifier[];
+  nonDefiningProperties: NonDefiningProperty[];
 }
 
 export interface ProductCreationDetails {
@@ -207,14 +221,14 @@ export interface ProductUpdateRequest {
   // the concept that is actually being edited
   conceptId: string;
   descriptionUpdate: ProductDescriptionUpdateRequest;
-  externalRequesterUpdate: ProductExternalRequesterUpdateRequest;
+  propertiesUpdateRequest: ProductPropertiesUpdateRequest;
 }
 export interface ProductDescriptionUpdateRequest {
   descriptions: Description[];
 }
 
-export interface ProductExternalRequesterUpdateRequest {
-  externalIdentifiers: ExternalIdentifier[];
+export interface ProductPropertiesUpdateRequest {
+  nonDefiningProperties: NonDefiningProperty[];
 }
 
 export interface BulkProductCreationDetails {

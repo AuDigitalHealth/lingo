@@ -164,9 +164,12 @@ public class SnowstormClient {
     if (concepts.size() != 1) {
       // todo this is a workaround for non-migrated NMPC date
       concepts = self.getConceptsFromEcl(branch, ecl, 0, 2, false);
-      if (concepts.size() != 1) {
-        throw new SingleConceptExpectedProblem(branch, ecl, concepts);
+      if(concepts.size() == 2) {
+        return concepts.iterator().next();
       }
+//      if (concepts.size() != 1) {
+//        throw new SingleConceptExpectedProblem(branch, ecl, concepts);
+//      }
     }
     return concepts.iterator().next();
   }
