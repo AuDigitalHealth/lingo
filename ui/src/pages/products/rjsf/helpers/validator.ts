@@ -175,6 +175,7 @@ export const validator = (() => {
     $data: true,
     discriminator: true,
     verbose: true,
+    // useDefaults: true,
   });
   addErrors(ajvMain);
 
@@ -183,6 +184,7 @@ export const validator = (() => {
     strict: false,
     $data: true,
     discriminator: true,
+    // useDefaults: true,
   });
 
   return {

@@ -121,8 +121,6 @@ function MedicationAuthoring({
   }, [createModalOpen]);
 
   const handleChange = ({ formData }: any) => {
-    // const newFormData = cleanFormDataBySchema(formData, schema, schema);
-    //
     setFormData(formData);
     if (!_.isEmpty(formData.productName || formData.containedProducts)) {
       setIsDirty(true);
@@ -134,13 +132,11 @@ function MedicationAuthoring({
   };
 
   const handleFormSubmit = async ({ formData }: { formData: any }) => {
-    // const cleanedFormData = cleanFormDataBySchema(formData, schema, schema);
-    const cleanedFormData = formData;
-    const validation = validator.validateFormData(cleanedFormData, schema);
+    const validation = validator.validateFormData(formData, schema);
     setFormErrors(validation.errors);
-    setFormData(cleanedFormData);
+    setFormData(formData);
     mutation.mutate({
-      formData: cleanedFormData,
+      formData: formData,
       initialformData: initialFormData,
       ticket,
       toggleModalOpen: handleToggleCreateModal,
