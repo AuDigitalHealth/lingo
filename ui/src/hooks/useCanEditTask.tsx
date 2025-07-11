@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import useUserStore from '../stores/UserStore';
-import useTaskByKey from './useTaskById';
+import useTaskByKey from './useTaskByKey.tsx';
 import { ClassificationStatus, Task, TaskStatus } from '../types/task.ts';
 import { useQuery } from '@tanstack/react-query';
 import TasksServices from '../api/TasksService.ts';

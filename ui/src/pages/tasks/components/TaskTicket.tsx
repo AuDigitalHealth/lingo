@@ -20,7 +20,7 @@ import { ArrowBack } from '@mui/icons-material';
 import { useTicketByTicketNumber } from '../../../hooks/api/tickets/useTicketById.tsx';
 import Loading from '../../../components/Loading';
 import ProductAuthoring from '../../products/ProductAuthoring';
-import useTaskByKey from '../../../hooks/useTaskById';
+import useTaskByKey from '../../../hooks/useTaskByKey.tsx';
 import ProductModelReadonly from '../../products/ProductModelReadonly.tsx';
 
 import { useEffect, useState } from 'react';

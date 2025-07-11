@@ -689,20 +689,6 @@ public class MedicationProductCalculationService
               modelConfiguration.getModuleId()));
     }
 
-    if (!innnerProductSummaries.isEmpty()) {
-      relationships.add(
-          getSnowstormDatatypeComponent(
-              COUNT_OF_CD_TYPE,
-              // get the unique set of CD types
-              Integer.toString(
-                  innnerProductSummaries.values().stream()
-                      .map(v -> v.getSingleSubject().getConceptId())
-                      .collect(Collectors.toSet())
-                      .size()),
-              DataTypeEnum.INTEGER,
-              0));
-    }
-
     for (Entry<PackageQuantity<MedicationProductDetails>, ProductSummary> entry :
         innerPackageSummaries.entrySet()) {
       Node contained;

@@ -14,7 +14,7 @@ import React, { useEffect, useState } from 'react';
 import useGetTicketsByAssociations from '../../../hooks/api/tickets/useGetTicketsByAssociations';
 import { Add, Delete, Folder } from '@mui/icons-material';
 import { Stack } from '@mui/system';
-import useTaskByKey from '../../../hooks/useTaskById';
+import useTaskByKey from '../../../hooks/useTaskByKey.tsx';
 import TaskTicketAssociationModal from './TaskTicketAssociationModal';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal';
 import { Link } from 'react-router-dom';

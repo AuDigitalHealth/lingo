@@ -17,7 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import { unavailableErrorHandler } from '../../../types/ErrorHandler.ts';
 import { useQueryClient } from '@tanstack/react-query';
-import { useAllTasksOptions } from '../../../hooks/api/useAllTasks.tsx';
+import { useAllTasksOptions } from '../../../hooks/api/task/useAllTasks.tsx';
 import {
   getProjectByTitle,
   getProjectFromKey,

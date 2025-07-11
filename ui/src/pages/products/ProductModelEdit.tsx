@@ -76,7 +76,7 @@ import {
   getTicketProductsByTicketIdOptions,
   useTicketByTicketNumber,
 } from '../../hooks/api/tickets/useTicketById.tsx';
-import useTaskByKey from '../../hooks/useTaskById.tsx';
+import useTaskByKey from '../../hooks/useTaskByKey.tsx';
 import useAuthoringStore from '../../stores/AuthoringStore.ts';
 import {
   uniqueFsnValidator,
