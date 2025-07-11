@@ -1,10 +1,9 @@
 import { Product, ProductSummary } from '../../../types/concept.ts';
 import { Stack } from '@mui/system';
 import { IconButton, Link, Tooltip, Typography } from '@mui/material';
-import { Link, Tooltip, Typography } from '@mui/material';
 import { OpenInNew } from '@mui/icons-material';
 import React from 'react';
-import { sortExternalIdentifiers } from '../../../utils/helpers/tickets/additionalFieldsUtils.ts';
+import { sortNonDefiningProperties } from '../../../utils/helpers/tickets/additionalFieldsUtils.ts';
 import {
   extractSemanticTag,
   removeSemanticTagFromTerm,
@@ -25,7 +24,12 @@ interface ExistingConceptDropdownProps {
   setValue?: UseFormSetValue<ProductSummary>;
 }
 
-function ExistingConceptDropdown({ product }: ExistingConceptDropdownProps) {
+function ExistingConceptDropdown({ product,
+  branch,
+  control,
+  index,
+  setValue,
+}: ExistingConceptDropdownProps) {
   const { applicationConfig } = useApplicationConfigStore();
   const snowstormBaseUrl = applicationConfig.apApiBaseUrl;
 

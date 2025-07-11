@@ -29,5 +29,5 @@ public class ProductUpdateRequest {
 
   private ProductDescriptionUpdateRequest descriptionUpdate;
 
-  private ProductExternalIdentifierUpdateRequest externalRequesterUpdate;
+  private ProductPropertiesUpdateRequest propertiesUpdateRequest;
 }

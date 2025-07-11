@@ -20,7 +20,7 @@ export function useUpdateProduct() {
       productId,
       branch,
     }: useUpdateProductDescriptionArguments) => {
-      return productService.editProduct(
+      return productService.editProductDescriptions(
         productUpdateRequest,
         productId,
         branch,

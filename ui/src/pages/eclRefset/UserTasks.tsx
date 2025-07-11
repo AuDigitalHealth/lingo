@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   useInitializeUserReviewTasks,
   useInitializeUserTasks,
-} from '../../hooks/api/useAllTasks.tsx';
+} from '../../hooks/api/task/useAllTasks.tsx';
 import { userExistsInList } from '../../utils/helpers/userUtils.ts';
 import useUserStore from '../../stores/UserStore.ts';
 

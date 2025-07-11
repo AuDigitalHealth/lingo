@@ -4,7 +4,7 @@ import React, { FC } from 'react';
 import { ExternalIdentifier } from '../../../types/product.ts';
 import { Control, Controller, FieldError } from 'react-hook-form';
 import { generateArtgObj } from '../../../utils/helpers/conceptUtils.ts';
-import { sortExternalIdentifiers } from '../../../utils/helpers/tickets/additionalFieldsUtils.ts';
+import { sortNonDefiningProperties } from '../../../utils/helpers/tickets/additionalFieldsUtils.ts';
 
 interface ArtgAutoCompleteProps {
   disabled?: boolean;
@@ -64,14 +64,14 @@ const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
                 tempValues.push(v);
               }
             });
-            const sortedValues = sortExternalIdentifiers(tempValues);
+            const sortedValues = sortNonDefiningProperties(tempValues);
             if (handleChange) {
               handleChange(sortedValues);
             }
-            onChange(sortExternalIdentifiers(sortedValues));
+            onChange(sortNonDefiningProperties(sortedValues));
           }}
           {...props}
-          value={sortExternalIdentifiers(
+          value={sortNonDefiningProperties(
             ((value as (ExternalIdentifier | string)[]) || []).map(v =>
               typeof v === 'string' ? generateArtgObj(v) : v,
             ),

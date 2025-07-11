@@ -461,6 +461,7 @@ public class SnowstormDtoUtil {
                   .caseSignificance(ENTIRE_TERM_CASE_SENSITIVE.getValue())
                   .moduleId(SCT_AU_MODULE.getValue())
                   .acceptabilityMap(
+                      // TODO: this needs to be set up for ireland.
                       Map.of(AmtConstants.ADRS.getValue(), SnomedConstants.ACCEPTABLE.getValue()));
           concept.getDescriptions().add(desc);
         });

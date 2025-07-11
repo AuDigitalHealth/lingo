@@ -26,6 +26,9 @@ public enum AmtConstants implements LingoConstants {
   //
   // Relationship types
   //
+  ADRS(
+      "32570271000036106",
+      "Australian English language reference set (foundation metadata concept)"),
   HAS_CONTAINER_TYPE("30465011000036106", "Has container type (attribute)"),
   CONTAINS_PACKAGED_CD("999000011000168107", "Contains packaged clinical drug (attribute)"),
   HAS_OTHER_IDENTIFYING_INFORMATION(

@@ -327,7 +327,6 @@ class OriginalNode {
 }
 
 export interface Product {
-  displayName: string;
   axioms?: SnowstormAxiom[];
   relationShips?: SnowstormRelationship[];
   displayName: string;
@@ -363,7 +362,6 @@ export function hasDescriptionChange(product: Product): boolean {
 }
 
 export function hasHistoricalAssociationsChanged(product: Product): boolean {
-  debugger;
   const filtered = product?.historicalAssociations?.filter(ass => {
     return ass.released === false;
   });

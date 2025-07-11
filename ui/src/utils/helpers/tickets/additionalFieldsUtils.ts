@@ -16,7 +16,6 @@
 
 import { AdditionalFieldType } from '../../../types/tickets/ticket';
 import {
-  ExternalIdentifier,
   NonDefiningProperty,
 } from '../../../types/product.ts';
 
@@ -70,21 +69,6 @@ export const sortAdditionalFields = (
   }
 
   return sortedFields;
-};
-export const sortExternalIdentifiers = (
-  artgIds: ExternalIdentifier[],
-): ExternalIdentifier[] => {
-  return artgIds?.slice().sort((a, b) => {
-    const valA = parseInt(a.identifierValue, 10);
-    const valB = parseInt(b.identifierValue, 10);
-
-    // Handle cases where parseInt fails (returns NaN)
-    if (isNaN(valA) && isNaN(valB)) return 0; // Both are invalid, maintain original order
-    if (isNaN(valA)) return 1; // Move invalid values to the end
-    if (isNaN(valB)) return -1; // Move invalid values to the end
-
-    return valA - valB; // Numeric comparison for valid numbers
-  });
 };
 
 export const sortNonDefiningProperties = (

@@ -52,6 +52,7 @@ import {
 } from 'react-hook-form';
 import {
   ExternalIdentifier,
+  NonDefiningProperty,
   ProductUpdateRequest,
 } from '../../types/product.ts';
 import ArtgAutoComplete from '../../pages/products/components/ArtgAutoComplete.tsx';
@@ -62,8 +63,8 @@ import {
 import { Ticket } from '../../types/tickets/ticket.ts';
 import { useTheme } from '@mui/material/styles';
 import {
-  areTwoExternalIdentifierArraysEqual,
-  sortExternalIdentifiers,
+  areTwoNonDefiningPropertiesArraysEqual,
+  sortNonDefiningProperties,
 } from '../../utils/helpers/tickets/additionalFieldsUtils.ts';
 import { getSearchConceptsByEclOptions } from '../../hooks/api/useInitializeConcepts.tsx';
 import { generateEclFromBinding } from '../../utils/helpers/EclUtils.ts';
@@ -131,6 +132,7 @@ export default function ProductEditModal({
   isCtpp,
   sevenBoxConceptId,
 }: ProductEditModalProps) {
+  
   const closeHandle = () => {
     handleClose();
   };
@@ -201,6 +203,7 @@ function EditConceptBody({
     useState(false);
 
   const langRefsets = useMemo(() => {
+    ;
     if (project === undefined || project.metadata === undefined) {
       return [];
     }
@@ -217,17 +220,20 @@ function EditConceptBody({
   }, [project]);
 
   const descriptions = useMemo(() => {
+    ;
     const existingDescriptions = data?.descriptions ? data.descriptions : [];
     return existingDescriptions;
   }, [data?.descriptions]);
 
-  const [artgOptVals, setArtgOptVals] = useState<ExternalIdentifier[]>(
-    product.externalIdentifiers ? product.externalIdentifiers : [],
+  const [artgOptVals, setArtgOptVals] = useState<NonDefiningProperty[]>(
+    product.nonDefiningProperties ? product.nonDefiningProperties : [],
   );
 
   const defaultLangRefset = findDefaultLangRefset(langRefsets);
 
+  ;
   const sortedDescriptions = useMemo(() => {
+    ;
     if (!descriptions) return [];
 
     return sortDescriptions(descriptions, defaultLangRefset);
@@ -244,11 +250,12 @@ function EditConceptBody({
   const ctppSearchEcl = generateEclFromBinding(fieldBindings, 'product.search');
 
   const defaultValues = useMemo(() => {
+    ;
     return {
       ticketId: ticket.id,
-      externalRequesterUpdate: {
-        externalIdentifiers: product.externalIdentifiers
-          ? sortExternalIdentifiers(product.externalIdentifiers)
+      propertiesUpdateRequest: {
+        nonDefiningProperties: product.nonDefiningProperties
+          ? sortNonDefiningProperties(product.nonDefiningProperties)
           : [],
       },
       descriptionUpdate: {
@@ -273,15 +280,18 @@ function EditConceptBody({
     defaultValues,
     resolver: yupResolver(productUpdateValidationSchema),
   });
+  console.log('defaultValues');
+  console.log(defaultValues);
 
-  useEffect(() => {
-    const subscription = watch((value, { name }) => {
-      if (name?.includes('term')) return;
-      void trigger();
-    });
+  // useEffect(() => {
+  //   ;
+  //   const subscription = watch((value, { name }) => {
+  //     if (name?.includes('term')) return;
+  //     void trigger();
+  //   });
 
-    return () => subscription.unsubscribe();
-  }, [watch, trigger]);
+  //   return () => subscription.unsubscribe();
+  // }, [watch, trigger]);
 
   const { fields, append } = useFieldArray({
     control,
@@ -289,6 +299,7 @@ function EditConceptBody({
   });
 
   useEffect(() => {
+    ;
     if (fields.length === 0 && sortedDescriptions.length > 0) {
       setValue('descriptionUpdate.descriptions', sortedDescriptions);
     }
@@ -300,6 +311,7 @@ function EditConceptBody({
       sortedDescriptionsWithoutSemanticTags.length > 0 &&
       !isEqual(currentDescriptions, sortedDescriptionsWithoutSemanticTags)
     ) {
+      ;
       reset({
         ...defaultValues,
         descriptionUpdate: {
@@ -330,6 +342,7 @@ function EditConceptBody({
       !isUpdating &&
       (updateProductDescriptionData || updateExternalIdentifierData)
     ) {
+      ;
       reset();
       handleClose();
     }
@@ -345,6 +358,7 @@ function EditConceptBody({
   const formSubmissionData = useRef<ProductUpdateRequest | null>(null);
 
   const onSubmit = (data: ProductUpdateRequest) => {
+    debugger;
     let shouldReturn = false;
     if (!isCtpp) {
       setCtppModalOpen(true);
@@ -478,9 +492,9 @@ function EditConceptBody({
       data.descriptionUpdate?.descriptions,
     );
 
-    const artgModified = !areTwoExternalIdentifierArraysEqual(
-      data.externalRequesterUpdate.externalIdentifiers,
-      product.externalIdentifiers ? product.externalIdentifiers : [],
+    const artgModified = !areTwoNonDefiningPropertiesArraysEqual(
+      data.propertiesUpdateRequest.nonDefiningProperties,
+      product.nonDefiningProperties ? product.nonDefiningProperties : [],
     );
 
     try {
@@ -504,7 +518,7 @@ function EditConceptBody({
 
   const resetAndClose = () => {
     setArtgOptVals(
-      product.externalIdentifiers ? product.externalIdentifiers : [],
+      product.nonDefiningProperties ? product.nonDefiningProperties : [],
     );
     reset(defaultValues);
 
@@ -611,11 +625,13 @@ function EditConceptBody({
                   <ExistingDescriptionsSection
                     displayRetiredDescriptions={displayRetiredDescriptions}
                     isFetching={isFetching}
-                    externalIdentifiers={product.externalIdentifiers}
+                    nonDefiningProperties={product.nonDefiningProperties}
                     descriptions={sortedDescriptions}
                     isCtpp={isCtpp}
                     dialects={langRefsets}
                     title={'Existing'}
+                    product={product}
+                    branch={branch}
                   />
                 </Grid>
                 <Grid
@@ -641,8 +657,7 @@ function EditConceptBody({
                       flexGrow: 1,
                     }}
                   >
-                    <form
-                      onSubmit={event => void handleSubmit(onSubmit)(event)}
+                    <form onSubmit={event => void handleSubmit(onSubmit)(event)}
                     >
                       <ConfirmationModal
                         keepMounted={true}
@@ -690,8 +705,8 @@ function EditConceptBody({
                               setArtgOptVals={setArtgOptVals}
                             />
                             {artgOptVals.length === 0 &&
-                              product.externalIdentifiers &&
-                              product.externalIdentifiers?.length > 0 && (
+                              product.nonDefiningProperties &&
+                              product.nonDefiningProperties?.length > 0 && (
                                 <Box style={{ marginBottom: '-2' }}>
                                   <span
                                     style={{
@@ -705,6 +720,7 @@ function EditConceptBody({
                           </InnerBoxSmall>
                         </Grid>
                       )}
+                     
                       <ActionButton
                         control={control}
                         resetAndClose={resetAndClose}
@@ -713,7 +729,7 @@ function EditConceptBody({
                           toggleDisplayRetiredDescriptions
                         }
                         displayRetiredDescriptions={displayRetiredDescriptions}
-                      />
+                      /> 
                     </form>
                   </Box>
                 </Grid>
@@ -730,11 +746,13 @@ function EditConceptBody({
 interface ExistingDescriptionsSectionProps {
   displayRetiredDescriptions: boolean;
   isFetching: boolean;
-  externalIdentifiers?: ExternalIdentifier[];
+  nonDefiningProperties?: NonDefiningProperty[];
   descriptions?: Description[];
   isCtpp: boolean;
   dialects: LanguageRefset[];
   title: string;
+  product: Product;
+  branch: string;
 }
 
 export function ExistingDescriptionsSection({
@@ -744,7 +762,9 @@ export function ExistingDescriptionsSection({
   isCtpp,
   dialects,
   title,
-  externalIdentifiers,
+  nonDefiningProperties,
+  product,
+  branch
 }: ExistingDescriptionsSectionProps) {
   // Function to determine preferred term based on AU dialect
   const isPreferredTerm = (description: Description): boolean => {
@@ -993,10 +1013,13 @@ function ActionButton({
   toggleDisplayRetiredDescriptions,
   displayRetiredDescriptions,
 }: ActionButtonProps) {
-  const { dirtyFields, errors } = useFormState({ control });
+  const { dirtyFields, errors, ...rest } = useFormState({ control });
   const hasErrors = Object.keys(errors).length > 0;
   const isDirty = Object.keys(dirtyFields).length > 0;
 
+  if(hasErrors){
+    debugger;
+  }
   const isButtonDisabled = () => isSubmitting || !isDirty || hasErrors;
   return (
     <Grid
@@ -1373,7 +1396,6 @@ function removeNotAcceptable(desc: Description) {
   if (desc.acceptabilityMap) {
     desc.acceptabilityMap = Object.fromEntries(
       Object.entries(desc.acceptabilityMap).filter(
-        // eslint-disable-next-line
         ([_, value]) => value !== 'NOT ACCEPTABLE',
       ),
     );
@@ -1453,12 +1475,12 @@ function ArtgAutoCompleteWrapper({
   return (
     <ArtgAutoComplete
       disabled={isUpdating}
-      name="externalRequesterUpdate.externalIdentifiers"
+      name="propertiesUpdateRequest.nonDefiningProperties"
       control={control}
-      error={errors?.externalRequesterUpdate?.externalIdentifiers as FieldError}
+      error={errors?.propertiesUpdateRequest?.nonDefiningProperties as FieldError}
       dataTestId="package-brand"
       optionValues={[]}
-      handleChange={(artgs: ExternalIdentifier[] | null) => {
+      handleChange={(artgs: NonDefiningProperty[] | null) => {
         setArtgOptVals(artgs ? artgs : []);
       }}
     />

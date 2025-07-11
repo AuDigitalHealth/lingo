@@ -8,7 +8,7 @@ import {
   getUiSchemaPath,
 } from '../helpers/helpers.ts';
 import EclAutocomplete from '../components/EclAutocomplete.tsx';
-import useTaskById from '../../../../hooks/useTaskById.tsx';
+import useTaskByKey from '../../../../hooks/useTaskByKey.tsx';
 import { Task } from '../../../../types/task.ts';
 
 import { ErrorDisplay } from '../components/ErrorDisplay.tsx';
@@ -29,7 +29,7 @@ const CompactQuantityField = ({
   errorSchema = {},
   registry,
 }: FieldProps) => {
-  const task = useTaskById();
+  const task = useTaskByKey();
   const mainValue = _.get(formData, 'value', undefined);
   const mainUnit = _.get(formData, 'unit', undefined);
   const title = _.get(uiSchema, 'ui:title', 'Quantity');
