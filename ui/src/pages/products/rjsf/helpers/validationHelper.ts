@@ -166,3 +166,23 @@ export const filterErrors = (errors: any[]): any[] => {
   // Return array of unique errors
   return Object.values(errorsByPath);
 };
+export const removeNullFields = (obj: any, path: string = ''): any => {
+  if (obj === null) return undefined;
+  if (Array.isArray(obj)) {
+    return obj
+      .map((item, i) => removeNullFields(item, `${path}[${i}]`))
+      .filter(item => item !== undefined);
+  }
+  if (typeof obj === 'object' && obj !== null) {
+    const result: any = {};
+    for (const key in obj) {
+      const newPath = path ? `${path}.${key}` : key;
+      const value = removeNullFields(obj[key], newPath);
+      if (value !== undefined) {
+        result[key] = value;
+      }
+    }
+    return Object.keys(result).length > 0 ? result : undefined;
+  }
+  return obj;
+};
