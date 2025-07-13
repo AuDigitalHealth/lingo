@@ -1004,7 +1004,7 @@ function ActionButton({
   toggleDisplayRetiredDescriptions,
   displayRetiredDescriptions,
 }: ActionButtonProps) {
-  const { dirtyFields, errors, ...rest } = useFormState({ control });
+  const { dirtyFields, errors } = useFormState({ control });
   const hasErrors = Object.keys(errors).length > 0;
   const isDirty = Object.keys(dirtyFields).length > 0;
 
