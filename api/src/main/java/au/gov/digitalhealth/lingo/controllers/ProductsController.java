@@ -20,6 +20,8 @@ import au.gov.digitalhealth.lingo.aspect.LogExecutionTime;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
+import au.gov.digitalhealth.lingo.product.update.ProductPropertiesUpdateRequest;
 import au.gov.digitalhealth.lingo.product.update.ProductUpdateRequest;
 import au.gov.digitalhealth.lingo.service.ProductSummaryService;
 import au.gov.digitalhealth.lingo.service.ProductUpdateService;
@@ -82,15 +84,6 @@ public class ProductsController {
         productUpdateService.updateProductDescriptions(branch, String.valueOf(productId), productUpdateRequest);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
-
-//  @LogExecutionTime
-//  @GetMapping("/{branch}/product-model/{productId}/externalIdentifiers")
-//  public ResponseEntity<Collection<NonDefiningBase>> getExternalIdentifiers(
-//      @PathVariable String branch, @PathVariable Long productId) throws InterruptedException {
-//    Set<NonDefiningBase> externalIdentifiers =
-//        productUpdateService.(branch, String.valueOf(productId));
-//    return new ResponseEntity<>(externalIdentifiers, HttpStatus.OK);
-//  }
 
   @LogExecutionTime
   @GetMapping("/{branch}/product-model-graph/{productId}")
