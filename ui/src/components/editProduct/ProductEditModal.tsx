@@ -203,7 +203,6 @@ function EditConceptBody({
     useState(false);
 
   const langRefsets = useMemo(() => {
-    ;
     if (project === undefined || project.metadata === undefined) {
       return [];
     }
@@ -220,7 +219,6 @@ function EditConceptBody({
   }, [project]);
 
   const descriptions = useMemo(() => {
-    ;
     const existingDescriptions = data?.descriptions ? data.descriptions : [];
     return existingDescriptions;
   }, [data?.descriptions]);
@@ -231,9 +229,7 @@ function EditConceptBody({
 
   const defaultLangRefset = findDefaultLangRefset(langRefsets);
 
-  ;
   const sortedDescriptions = useMemo(() => {
-    ;
     if (!descriptions) return [];
 
     return sortDescriptions(descriptions, defaultLangRefset);
@@ -250,7 +246,6 @@ function EditConceptBody({
   const ctppSearchEcl = generateEclFromBinding(fieldBindings, 'product.search');
 
   const defaultValues = useMemo(() => {
-    ;
     return {
       ticketId: ticket.id,
       propertiesUpdateRequest: {
@@ -299,7 +294,6 @@ function EditConceptBody({
   });
 
   useEffect(() => {
-    ;
     if (fields.length === 0 && sortedDescriptions.length > 0) {
       setValue('descriptionUpdate.descriptions', sortedDescriptions);
     }
@@ -311,7 +305,6 @@ function EditConceptBody({
       sortedDescriptionsWithoutSemanticTags.length > 0 &&
       !isEqual(currentDescriptions, sortedDescriptionsWithoutSemanticTags)
     ) {
-      ;
       reset({
         ...defaultValues,
         descriptionUpdate: {
@@ -342,7 +335,6 @@ function EditConceptBody({
       !isUpdating &&
       (updateProductDescriptionData || updateExternalIdentifierData)
     ) {
-      ;
       reset();
       handleClose();
     }
@@ -358,7 +350,6 @@ function EditConceptBody({
   const formSubmissionData = useRef<ProductUpdateRequest | null>(null);
 
   const onSubmit = (data: ProductUpdateRequest) => {
-    debugger;
     let shouldReturn = false;
     if (!isCtpp) {
       setCtppModalOpen(true);
@@ -1017,9 +1008,6 @@ function ActionButton({
   const hasErrors = Object.keys(errors).length > 0;
   const isDirty = Object.keys(dirtyFields).length > 0;
 
-  if(hasErrors){
-    debugger;
-  }
   const isButtonDisabled = () => isSubmitting || !isDirty || hasErrors;
   return (
     <Grid
