@@ -31,7 +31,6 @@ import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
-import au.gov.digitalhealth.lingo.product.update.ProductExternalIdentifierUpdateRequest;
 import au.gov.digitalhealth.lingo.product.update.ProductPropertiesUpdateRequest;
 import au.gov.digitalhealth.lingo.product.update.ProductUpdateRequest;
 import au.gov.digitalhealth.tickets.controllers.BulkProductActionDto;
@@ -180,11 +179,11 @@ public class LingoTestClient {
         au.gov.digitalhealth.tickets.models.BulkProductAction.class);
   }
 
-  public Set<NonDefiningBase> updateProductExternalIdentifiers(
+  public Set<ExternalIdentifier> updateProductProperties(
       ProductPropertiesUpdateRequest request, String productId) {
-    Type responseType = new ParameterizedTypeReference<Set<NonDefiningBase>>() {}.getType();
+    Type responseType = new ParameterizedTypeReference<Set<ExternalIdentifier>>() {}.getType();
     return putRequest(
-        "/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/" + productId + "/external-identifiers",
+        "/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/" + productId + "/properties",
         request,
         HttpStatus.OK,
         responseType);
