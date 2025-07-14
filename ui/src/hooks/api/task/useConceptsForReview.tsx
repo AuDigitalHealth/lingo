@@ -6,7 +6,7 @@ import {
 } from '../../eclRefset/useConceptsById';
 import { ConceptReview } from '../../../types/ConceptReview';
 import { useQuery } from '@tanstack/react-query';
-import useTaskById from '../../useTaskById';
+import useTaskByKey from '../../useTaskByKey';
 import TasksServices from '../../../api/TasksService';
 import { useConceptsThatHaveBeenReviewed } from './useConceptsThatHaveBeenReviewed';
 import {
@@ -16,7 +16,7 @@ import {
 } from './useReviews';
 
 export function useConceptsForReview(branchPath: string | undefined) {
-  const task = useTaskById(); // Gives projectKey and taskKey
+  const task = useTaskByKey(); // Gives projectKey and taskKey
   const showReviewControls = useShowReviewControls({ task });
   const projectKey = task?.projectKey;
   const taskKey = task?.key;

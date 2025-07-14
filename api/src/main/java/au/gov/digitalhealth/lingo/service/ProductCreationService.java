@@ -841,9 +841,9 @@ public class ProductCreationService {
         // if it isn't a replacement with an existing concept, we need to create it
         if (node.isConceptEdit()) {
           concept.setConceptId(node.getOriginalNode().getConceptId());
-          concept = snowstormClient.updateConcept(branch, concept.getConceptId(), concept, false);
+          concept = snowstormClient.updateConceptView(branch, concept.getConceptId(), concept, false);
         } else if (node.isRetireAndReplaceWithExisting()) {
-          concept = snowstormClient.updateConcept(branch, concept.getConceptId(), concept, false);
+          concept = snowstormClient.updateConceptView(branch, concept.getConceptId(), concept, false);
         } else {
           concept.setConceptId(node.getNewConceptDetails().getSpecifiedConceptId());
           concept = snowstormClient.createConcept(branch, concept, false);
@@ -854,7 +854,7 @@ public class ProductCreationService {
           SnowstormConcept conceptToRetire =
               editAndRetireConceptMap.get(node.getOriginalNode().getConceptId());
           conceptToRetire.setActive(false);
-          snowstormClient.updateConcept(
+          snowstormClient.updateConceptView(
               branch,
               conceptToRetire.getConceptId(),
               SnowstormDtoUtil.toSnowstormConceptView(conceptToRetire),
