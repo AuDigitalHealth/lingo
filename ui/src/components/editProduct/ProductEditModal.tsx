@@ -146,7 +146,7 @@ export default function ProductEditModal({
           keepMounted={keepMounted}
           sx={{ width: '80%' }}
         >
-          <BaseModalHeader title={'Edit Product'} />
+          <BaseModalHeader title={'Edit Terms'} />
           <BaseModalBody>
             <EditConceptBody
               product={product}
