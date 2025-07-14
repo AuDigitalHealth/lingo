@@ -410,13 +410,86 @@
       "required": ["unit", "value", "productDetails"]
     }
   },
-  "properties": {
-    "containedProducts": {
-      "type": "array",
-      "minItems": 1,
-      "items": { "$ref": "#/$defs/BaseContainer" }
-    }
+  "discriminator": {
+    "propertyName": "packType"
   },
-  "required": ["containedProducts"],
+  "required": ["packType", "containedProducts"],
+  "oneOf": [
+    {
+      "title": "Medication",
+      "properties": {
+        "packType": { "const": "medication" },
+        "containedProducts": {
+          "type": "array",
+          "minItems": 1,
+          "title": "Contained Products",
+          "items": {
+            "$ref": "#/$defs/BaseContainer",
+            "properties": {
+              "productDetails": {
+                "$ref": "#/$defs/ProductDetails",
+                "oneOf": [
+                  { "$ref": "#/$defs/ProductDetails/oneOf/0" },
+                  { "$ref": "#/$defs/ProductDetails/oneOf/1" },
+                  { "$ref": "#/$defs/ProductDetails/oneOf/2" }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "required": ["packType", "containedProducts"],
+      "additionalProperties": false
+    },
+    {
+      "title": "Vaccine",
+      "properties": {
+        "packType": { "const": "vaccine" },
+        "containedProducts": {
+          "title": "Contained Products",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/BaseContainer",
+            "properties": {
+              "productDetails": {
+                "$ref": "#/$defs/ProductDetails",
+                "oneOf": [
+                  { "$ref": "#/$defs/ProductDetails/oneOf/3" },
+                  { "$ref": "#/$defs/ProductDetails/oneOf/4" }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "required": ["packType", "containedProducts"],
+      "additionalProperties": false
+    },
+    {
+      "title": "Nutritional",
+      "properties": {
+        "packType": { "const": "nutritional" },
+        "containedProducts": {
+          "title": "Contained Products",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/BaseContainer",
+            "properties": {
+              "productDetails": {
+                "$ref": "#/$defs/ProductDetails",
+                "oneOf": [
+                  { "$ref": "#/$defs/ProductDetails/oneOf/2" }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "required": ["packType", "containedProducts"],
+      "additionalProperties": false
+    }
+  ],
   "additionalProperties": false
 }
