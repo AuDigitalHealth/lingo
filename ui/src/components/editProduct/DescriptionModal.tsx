@@ -46,7 +46,7 @@ export default function DescriptionModal({
 
   return (
     <BaseModal open={open} handleClose={handleClose} keepMounted={keepMounted}>
-      <BaseModalHeader title={'Concept Diagram Preview'} />
+      <BaseModalHeader title={'Descriptions'} />
       <BaseModalBody sx={{ overflow: 'auto' }}>
         {conceptId === undefined && (
           <Typography>New Concept, nothing to display.</Typography>
