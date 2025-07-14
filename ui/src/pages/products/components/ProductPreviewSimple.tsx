@@ -46,6 +46,7 @@ import {
   Edit,
   NewReleases,
   NewReleasesOutlined,
+  NotesOutlined,
 } from '@mui/icons-material';
 import CircleIcon from '@mui/icons-material/Circle';
 import ExistingConceptDropdown from './ExistingConceptDropdown.tsx';
@@ -73,6 +74,7 @@ import { useConceptsForReview } from '../../../hooks/api/task/useConceptsForRevi
 import ConceptReviews from './reviews/ConceptReviews.tsx';
 import ProductLoader from './ProductLoader.tsx';
 import { useShowReviewControls } from '../../../hooks/api/task/useReviews.tsx';
+import DescriptionModal from '../../../components/editProduct/DescriptionModal.tsx';
 
 interface ProductPreviewPanelProps {
   // control: Control<ProductSummary>;
@@ -115,6 +117,7 @@ export default function ProductPreviewSimple({
   const task = useTaskByKey();
   const showReviewControls = useShowReviewControls({ task });
   const [conceptDiagramModalOpen, setConceptDiagramModalOpen] = useState(false);
+  const [descriptionModalOpen, setDescriptionModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const { conceptReviews, isLoadingConceptReviews } =
     useConceptsForReview(branch);
@@ -122,28 +125,6 @@ export default function ProductPreviewSimple({
     ? conceptReviews.find(c => c.conceptId === product.conceptId)
     : undefined;
 
-  // const links = activeConcept
-  //   ? findRelations(productModel?.edges, activeConcept, product.conceptId)
-  //   : [];
-
-  // const index = productModel.nodes.findIndex(
-  //   x => x.conceptId === product.conceptId,
-  // );
-  // const partialNameCheckKeywords = fieldBindings
-  //   ? (
-  //       fieldBindings.bindingsMap.get(
-  //         'product.nameGenerator.incompleteNameCheck.keywords',
-  //       ) as string
-  //     ).split(',')
-  //   : [];
-
-  // const nameGeneratorErrorKeywords = fieldBindings
-  //   ? (
-  //       fieldBindings.bindingsMap.get(
-  //         'product.nameGenerator.error.keywords',
-  //       ) as string
-  //     ).split(',')
-  //   : [];
 
   const [optionsIgnored, setOptionsIgnored] = useState(false);
   const [productTitle, setProductTitle] = useState(
@@ -151,21 +132,7 @@ export default function ProductPreviewSimple({
       ? (product.concept?.fsn?.term as string)
       : product.concept?.pt?.term,
   );
-  // const populateInvalidNameIds = (bgColor: string) => {
-  //   if (bgColor) {
-  //     if (bgColor === Product7BoxBGColour.INVALID && !optionsIgnored) {
-  //       if (!idsWithInvalidName.includes(product.conceptId)) {
-  //         const temp = [...idsWithInvalidName];
-  //         temp.push(product.conceptId);
-  //         setIdsWithInvalidName(temp);
-  //       }
-  //     } else if (idsWithInvalidName.includes(product.conceptId)) {
-  //       setIdsWithInvalidName(
-  //         idsWithInvalidName.filter(id => id !== product.conceptId),
-  //       );
-  //     }
-  //   }
-  // };
+
   const [bgColor, setBgColor] = useState<string>(
     getColorByDefinitionStatus(product, optionsIgnored, [], []),
   );
@@ -174,23 +141,6 @@ export default function ProductPreviewSimple({
     return false;
   }
 
-  // const handleChangeColor = (color: string) => {
-  //   populateInvalidNameIds(color);
-  //   setBgColor(color);
-  // };
-
-  // const accordionClicked = (conceptId: string) => {
-  //   if (expandedConcepts.includes(conceptId)) {
-  //     setExpandedConcepts(
-  //       expandedConcepts.filter((value: string) => value !== conceptId),
-  //     );
-  //     setActiveConcept(undefined);
-  //   } else {
-  //     setExpandedConcepts([...expandedConcepts, conceptId]);
-  //     setActiveConcept(conceptId);
-  //   }
-  // };
-  const isEditingCTPP = isSimpleEdit && product.label === 'CTPP';
   const shouldRenderDropdownAsReadonly = product.concept && product.conceptId;
 
   if (isLoadingConceptReviews) {
@@ -210,6 +160,13 @@ export default function ProductPreviewSimple({
         branch={branch}
       />
 
+      <DescriptionModal 
+        handleClose={() => setDescriptionModalOpen(false)}
+        open={descriptionModalOpen}
+        product={product}
+        keepMounted={true}
+        branch={branch}
+      />
       <Grid>
         <ProductPreviewAccordion
           key={'accordion-' + product.conceptId}
@@ -239,55 +196,9 @@ export default function ProductPreviewSimple({
               <Grid xs={40} item={true}>
                 <Stack direction="row" spacing={2} alignItems="center">
                   <Grid item xs={10}>
-                    {/* {isNewConcept(product) ? (
-                        <ProductHeaderWatch
-                          control={control}
-                          index={index}
-                          fsnToggle={fsnToggle}
-                          showHighLite={showHighlite()}
-                          links={links}
-                          product={product}
-                          productModel={productModel}
-                          activeConcept={activeConcept}
-                          handleChangeColor={handleChangeColor}
-                          partialNameCheckKeywords={partialNameCheckKeywords}
-                          nameGeneratorErrorKeywords={nameGeneratorErrorKeywords}
-                          optionsIgnored={optionsIgnored}
-                        />
-                      ) : ( */}
-                    {/* <Tooltip
-                          title={
-                            <LinkViews
-                              links={links}
-                              linkedConcept={
-                                findProductUsingId(
-                                  activeConcept as string,
-                                  productModel?.nodes,
-                                ) as Product
-                              }
-                              currentConcept={product}
-                              key={'link-' + product.conceptId}
-                              productModel={productModel}
-                              fsnToggle={fsnToggle}
-                              control={control}
-                            />
-                          }
-                          componentsProps={{
-                            tooltip: {
-                              sx: {
-                                bgcolor: '#9bddff',
-                                color: '#262626',
-                                border: '1px solid #888888',
-                                borderRadius: '15px',
-                              },
-                            },
-                          }}
-                        > */}
                     <Typography>
                       <span>{productTitle}</span>
                     </Typography>
-                    {/* </Tooltip> */}
-                    {/* )} */}
                   </Grid>
                   <Grid container justifyContent="flex-end" alignItems="center">
                     {showReviewControls && (
@@ -298,16 +209,17 @@ export default function ProductPreviewSimple({
                       />
                     )}
                     <ProductStatusIndicators product={product} />
-                    {/* <ProductRetireView
-                        product={product}
-                        index={index}
-                        control={control}
-                      /> */}
                     <IconButton
                       size="small"
                       onClick={() => setConceptDiagramModalOpen(true)}
                     >
                       <AccountTreeOutlined />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={() => setDescriptionModalOpen(true)}
+                    >
+                      <NotesOutlined />
                     </IconButton>
                     {isSimpleEdit && (
                       <IconButton
@@ -373,6 +285,12 @@ export default function ProductPreviewSimple({
                       onClick={() => setConceptDiagramModalOpen(true)}
                     >
                       <AccountTreeOutlined />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={() => setDescriptionModalOpen(true)}
+                    >
+                      <NotesOutlined />
                     </IconButton>
                     {isSimpleEdit && (
                       <IconButton
