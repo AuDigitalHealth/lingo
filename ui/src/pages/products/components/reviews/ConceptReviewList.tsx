@@ -74,7 +74,7 @@ function ConceptReviewList() {
             }}
           >
             <Link to={`review/${params.row.concept?.conceptId}`}>
-              {truncate(params.value, {length: 100})}
+              {truncate(params.value, { length: 100 })}
             </Link>
           </Typography>
         </Box>

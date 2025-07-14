@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Task } from '../../types/task';
-import { getTaskById,
-  useInitializeUserReviewTasks, useInitializeUserTasks } from '../api/task/useAllTasks';
-
+import {
+  getTaskById,
+  useInitializeUserReviewTasks,
+  useInitializeUserTasks,
+} from '../api/task/useAllTasks';
 
 function useSnodineTaskByKey(key?: string) {
   const [task, setTask] = useState<Task | null>();

@@ -144,7 +144,7 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
               externalIdentifiers={historicExternalIdentifiers}
               title={'Old'}
               dialects={langRefsets}
-              displayMode='input'
+              displayMode="input"
               showBorder
             />
           </Box>
@@ -169,7 +169,7 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
               title={'Updated'}
               externalIdentifiers={updatedExternalIdentifiers}
               dialects={langRefsets}
-              displayMode='input'
+              displayMode="input"
               showBorder
             />
           </Box>
@@ -187,7 +187,7 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
             title={'Current state'}
             externalIdentifiers={externalIdentifiers}
             dialects={langRefsets}
-            displayMode='input'
+            displayMode="input"
             showBorder
           />
         )}
