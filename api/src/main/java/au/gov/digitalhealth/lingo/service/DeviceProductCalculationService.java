@@ -62,7 +62,6 @@ import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -83,7 +82,7 @@ import reactor.core.publisher.Mono;
 @Service
 @Log
 public class DeviceProductCalculationService
-    implements ProductCalculationService<DeviceProductDetails> {
+    extends ProductCalculationService<DeviceProductDetails> {
 
   private final Models models;
   private final Map<String, DeviceDetailsValidator> deviceDetailsValidatorByQualifier;
@@ -176,6 +175,16 @@ public class DeviceProductCalculationService
                     .getTerm());
   }
 
+  @Override
+  protected SnowstormClient getSnowstormClient() {
+    return snowstormClient;
+  }
+
+  @Override
+  protected NodeGeneratorService getNodeGeneratorService() {
+    return nodeGeneratorService;
+  }
+
   @Async
   public CompletableFuture<ProductSummary> calculateProductFromAtomicDataAsync(
       String branch, @Valid PackageDetails<@Valid DeviceProductDetails> packageDetails) {
@@ -188,30 +197,9 @@ public class DeviceProductCalculationService
 
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
-    NonDefiningPropertyDefinition nmpcDefinition =
-        modelConfiguration.getNonDefiningPropertiesByName().get("nmpcType");
-    if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
-      if (nmpcDefinition != null
-          && snowstormClient
-              .conceptIdsThatExist(
-                  branch,
-                  Set.of(NmpcConstants.NMPC_DEVICE.getValue(), nmpcDefinition.getIdentifier()))
-              .containsAll(
-                  Set.of(NmpcConstants.NMPC_DEVICE.getValue(), nmpcDefinition.getIdentifier()))) {
-        NonDefiningProperty nmpcType = new NonDefiningProperty();
-        nmpcType.setIdentifierScheme(nmpcDefinition.getName());
-        nmpcType.setIdentifier(nmpcDefinition.getIdentifier());
-        nmpcType.setTitle(nmpcDefinition.getTitle());
-        nmpcType.setDescription(nmpcDefinition.getDescription());
+    packageDetails.cascadeProperties(modelConfiguration);
 
-        SnowstormConceptMini valueObject = NmpcConstants.NMPC_DEVICE.snowstormConceptMini();
-
-        nmpcType.setValueObject(valueObject);
-        packageDetails.getNonDefiningProperties().add(nmpcType);
-      } else {
-        log.severe("NMPC model type is configured but the required concepts do not exist.");
-      }
-    }
+    addNmpcTypeIfApplicable(branch, packageDetails, modelConfiguration);
 
     Mono<List<String>> taskChangedConceptIds = snowstormClient.getConceptIdsChangedOnTask(branch);
 
@@ -253,14 +241,13 @@ public class DeviceProductCalculationService
       productSummary.addSummary(innerProductSummary);
     }
 
-    Map<ModelLevelType, CompletableFuture<Node>> packageLevelNodes =
-        new EnumMap<>(ModelLevelType.class);
+    Map<ModelLevel, CompletableFuture<Node>> packageLevelNodes = new HashMap<>();
     modelConfiguration
         .getPackageLevels()
         .forEach(
             level ->
                 packageLevelNodes.put(
-                    level.getModelLevelType(),
+                    level,
                     getPackageNode(
                         branch,
                         packageDetails,
@@ -277,14 +264,12 @@ public class DeviceProductCalculationService
           if (node.isNewConcept()) {
             String mppPreferredTerm =
                 calculatePreferredTerm(
-                    innerProductSummaries, type, packageDetails.getContainerType());
+                    innerProductSummaries,
+                    type.getModelLevelType(),
+                    packageDetails.getContainerType());
             node.getNewConceptDetails().setPreferredTerm(mppPreferredTerm);
             node.getNewConceptDetails()
-                .setFullySpecifiedName(
-                    mppPreferredTerm
-                        + " ("
-                        + modelConfiguration.getLevelOfType(type).getDeviceSemanticTag()
-                        + ")");
+                .setFullySpecifiedName(mppPreferredTerm + " (" + type.getDeviceSemanticTag() + ")");
           }
 
           if (modelConfiguration.getModelType().equals(ModelType.AMT) && type.isBranded()) {
@@ -302,13 +287,13 @@ public class DeviceProductCalculationService
     packageLevelNodes.forEach(
         (type, nodeFuture) -> {
           Node node = nodeFuture.join();
-          Set<ModelLevel> ancestorLevels = modelConfiguration.getAncestorModelLevels(type);
+          Set<ModelLevel> ancestorLevels =
+              modelConfiguration.getAncestorModelLevels(type.getModelLevelType());
           if (!ancestorLevels.isEmpty()) {
             Set<ModelLevel> parentLevels = ModelLevel.getLeafLevels(ancestorLevels);
             ancestorLevels.forEach(
                 ancestorLevel -> {
-                  Node ancestorNode =
-                      packageLevelNodes.get(ancestorLevel.getModelLevelType()).join();
+                  Node ancestorNode = packageLevelNodes.get(ancestorLevel).join();
                   productSummary.addEdge(
                       node.getConceptId(),
                       ancestorNode.getConceptId(),
@@ -332,18 +317,54 @@ public class DeviceProductCalculationService
         });
 
     productSummary.setSingleSubject(
-        packageLevelNodes
-            .get(modelConfiguration.getLeafPackageModelLevel().getModelLevelType())
-            .join());
+        packageLevelNodes.get(modelConfiguration.getLeafPackageModelLevel()).join());
 
     Set<Edge> transitiveContainsEdges =
         ProductSummaryService.getTransitiveEdges(productSummary, new HashSet<>());
     productSummary.getEdges().addAll(transitiveContainsEdges);
 
+    addPropertyChangeNodes(
+        branch,
+        modelConfiguration,
+        innerProductSummaries,
+        productSummary,
+        modelConfiguration.getPackageLevels(),
+        packageLevelNodes);
+
     productSummary.updateNodeChangeStatus(
         taskChangedConceptIds.block(), projectChangedConceptIds.block());
 
     return productSummary;
+  }
+
+  private void addNmpcTypeIfApplicable(
+      String branch,
+      PackageDetails<@Valid DeviceProductDetails> packageDetails,
+      ModelConfiguration modelConfiguration) {
+    NonDefiningPropertyDefinition nmpcDefinition =
+        modelConfiguration.getNonDefiningPropertiesByName().get("nmpcType");
+    if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
+      if (nmpcDefinition != null
+          && snowstormClient
+              .conceptIdsThatExist(
+                  branch,
+                  Set.of(NmpcConstants.NMPC_DEVICE.getValue(), nmpcDefinition.getIdentifier()))
+              .containsAll(
+                  Set.of(NmpcConstants.NMPC_DEVICE.getValue(), nmpcDefinition.getIdentifier()))) {
+        NonDefiningProperty nmpcType = new NonDefiningProperty();
+        nmpcType.setIdentifierScheme(nmpcDefinition.getName());
+        nmpcType.setIdentifier(nmpcDefinition.getIdentifier());
+        nmpcType.setTitle(nmpcDefinition.getTitle());
+        nmpcType.setDescription(nmpcDefinition.getDescription());
+
+        SnowstormConceptMini valueObject = NmpcConstants.NMPC_DEVICE.snowstormConceptMini();
+
+        nmpcType.setValueObject(valueObject);
+        packageDetails.getNonDefiningProperties().add(nmpcType);
+      } else {
+        log.severe("NMPC model type is configured but the required concepts do not exist.");
+      }
+    }
   }
 
   private void updateConceptReferences(
@@ -600,6 +621,8 @@ public class DeviceProductCalculationService
     ProductSummary innerProductSummary = new ProductSummary();
 
     ModelLevel rootUnbrandedProductLevel = modelConfiguration.getRootUnbrandedProductModelLevel();
+
+    Map<ModelLevel, CompletableFuture<Node>> levelFutureMap = new HashMap<>();
     Node rootUnbrandedProductNode =
         Node.builder()
             .concept(productQuantity.getProductDetails().getDeviceType())
@@ -608,6 +631,8 @@ public class DeviceProductCalculationService
             .label(rootUnbrandedProductLevel.getDisplayLabel())
             .build();
     innerProductSummary.addNode(rootUnbrandedProductNode);
+    levelFutureMap.put(
+        rootUnbrandedProductLevel, CompletableFuture.completedFuture(rootUnbrandedProductNode));
 
     ModelLevel leafUnbrandedProductModelLevel =
         modelConfiguration.getLeafUnbrandedProductModelLevel();
@@ -640,6 +665,9 @@ public class DeviceProductCalculationService
         leafUnbrandedProductNode.getConceptId(),
         rootUnbrandedProductNode.getConceptId(),
         ProductSummaryService.IS_A_LABEL);
+    levelFutureMap.put(
+        leafUnbrandedProductModelLevel,
+        CompletableFuture.completedFuture(leafUnbrandedProductNode));
 
     ModelLevel leafBrandedProductModelLevel = modelConfiguration.getLeafProductModelLevel();
 
@@ -684,14 +712,19 @@ public class DeviceProductCalculationService
         leafUnbrandedProductNode.getConceptId(),
         ProductSummaryService.IS_A_LABEL);
 
+    levelFutureMap.put(
+        leafBrandedProductModelLevel, CompletableFuture.completedFuture(leafBrandedProductNode));
+
     if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
       ModelLevel productNameLevel = modelConfiguration.getLevelOfType(ModelLevelType.PRODUCT_NAME);
 
-      innerProductSummary.addNode(packageDetails.getProductName(), productNameLevel);
+      Node node = innerProductSummary.addNode(packageDetails.getProductName(), productNameLevel);
       innerProductSummary.addEdge(
           leafBrandedProductNode.getConceptId(),
           packageDetails.getProductName().getConceptId(),
           ProductSummaryService.HAS_PRODUCT_NAME_LABEL);
+
+      levelFutureMap.put(productNameLevel, CompletableFuture.completedFuture(node));
     } else if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
       ModelLevel rootBrandedProductLevel = modelConfiguration.getRootBrandedProductModelLevel();
       Node rootBrandedProductNode =
@@ -745,7 +778,19 @@ public class DeviceProductCalculationService
           leafBrandedProductNode.getConceptId(),
           rootBrandedProductNode.getConceptId(),
           ProductSummaryService.IS_A_LABEL);
+
+      levelFutureMap.put(
+          rootBrandedProductLevel, CompletableFuture.completedFuture(rootBrandedProductNode));
     }
+
+    addPropertyChanges(
+        branch,
+        modelConfiguration.getProductLevels().stream().toList(),
+        levelFutureMap,
+        modelConfiguration,
+        innerProductSummary,
+        false,
+        null);
 
     innerProductSummary.setSingleSubject(leafBrandedProductNode);
     return innerProductSummary;
