@@ -1,11 +1,14 @@
 {
   "ui:grid": [
-    { "containedProducts": 24 },
-
+    { "packType": 24 },
+    {"containedProducts": 24},
     {
       "nonDefiningProperties": 24
     }
   ],
+  "packType": {
+    "ui:widget": "hidden"
+  },
   "containedProducts": {
     "ui:options": {
       "arrayTemplate": "accordion",
@@ -48,11 +51,8 @@
         },
         "type": { "ui:widget": "hidden" },
         "ui:grid": [
-           {"discriminator": 12, "productType": 12},
-          {
-            "productName": 12,
-            "genericForm": 12
-          },
+          { "discriminator": 12, "productType": 12 },
+          { "productName": 12, "genericForm": 12 },
           { "activeIngredients": 12, "_columnB": 12 }
         ],
         "_columnB": {
@@ -61,9 +61,7 @@
             { "unitOfPresentation": 24 },
             { "targetPopulation": 24 },
             { "ingredientQualitativeStrength": 24 },
-            {
-              "nonDefiningProperties": 24
-            }
+            { "nonDefiningProperties": 24 }
           ]
         },
         "productType": {
