@@ -24,7 +24,8 @@ interface ExistingConceptDropdownProps {
   setValue?: UseFormSetValue<ProductSummary>;
 }
 
-function ExistingConceptDropdown({ product,
+function ExistingConceptDropdown({
+  product,
   branch,
   control,
   index,

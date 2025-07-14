@@ -15,9 +15,7 @@
 ///
 
 import { AdditionalFieldType } from '../../../types/tickets/ticket';
-import {
-  NonDefiningProperty,
-} from '../../../types/product.ts';
+import { NonDefiningProperty } from '../../../types/product.ts';
 
 export const sortAdditionalFields = (
   unsortedFields: AdditionalFieldType[] | null,

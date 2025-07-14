@@ -125,7 +125,6 @@ export default function ProductPreviewSimple({
     ? conceptReviews.find(c => c.conceptId === product.conceptId)
     : undefined;
 
-
   const [optionsIgnored, setOptionsIgnored] = useState(false);
   const [productTitle, setProductTitle] = useState(
     fsnToggle
@@ -160,7 +159,7 @@ export default function ProductPreviewSimple({
         branch={branch}
       />
 
-      <DescriptionModal 
+      <DescriptionModal
         handleClose={() => setDescriptionModalOpen(false)}
         open={descriptionModalOpen}
         product={product}
