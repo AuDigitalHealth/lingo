@@ -417,6 +417,14 @@
   "discriminator": {
     "propertyName": "packType"
   },
+  "properties": {
+    "packType": {
+      "type": "string",
+      "enum": ["medication", "vaccine", "nutritional"],
+      "default": "medication",
+      "title": "Pack Type"
+    }
+  },
   "required": ["packType", "containedProducts"],
   "oneOf": [
     {
@@ -428,7 +436,7 @@
           "minItems": 1,
           "title": "Contained Products",
           "items": {
-            "$ref": "#/$defs/BaseContainer",
+            "type": "object",
             "properties": {
               "unit": {
                 "$ref": "#/$defs/SnowstormConceptMini",
@@ -440,8 +448,9 @@
                 "title": "Value"
               },
               "productDetails": {
-                "$ref": "#/$defs/ProductDetails",
+
                 "title": "Product Details",
+                "discriminator": { "propertyName": "productType" },
                 "oneOf": [
                   { "$ref": "#/$defs/ProductDetails/oneOf/0" },
                   { "$ref": "#/$defs/ProductDetails/oneOf/1" },
@@ -478,8 +487,9 @@
                 "title": "Value"
               },
               "productDetails": {
-                "$ref": "#/$defs/ProductDetails",
+
                 "title": "Product Details",
+                "discriminator": { "propertyName": "productType" },
                 "oneOf": [
                   { "$ref": "#/$defs/ProductDetails/oneOf/3" },
                   { "$ref": "#/$defs/ProductDetails/oneOf/4" }
@@ -515,8 +525,9 @@
                 "title": "Value"
               },
               "productDetails": {
-                "$ref": "#/$defs/ProductDetails",
+
                 "title": "Product Details",
+                "discriminator": { "propertyName": "productType" },
                 "oneOf": [
                   { "$ref": "#/$defs/ProductDetails/oneOf/2" }
                 ]
