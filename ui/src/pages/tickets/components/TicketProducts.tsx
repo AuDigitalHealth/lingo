@@ -238,17 +238,17 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
 
       if (isProductUpdate(rowData)) {
         return (
-            <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
-              <Link
-                  to={`product/view/update/${rowData.bulkProductActionId}`}
-                  className={'product-view-update-link'}
-                  key={`link-${rowData.id}`}
-                  data-testid={`link-${rowData.id}`}
-                  style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
-              >
-                {trimName(rowData.name)}
-              </Link>
-            </Tooltip>
+          <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
+            <Link
+              to={`product/view/update/${rowData.bulkProductActionId}`}
+              className={'product-view-update-link'}
+              key={`link-${rowData.id}`}
+              data-testid={`link-${rowData.id}`}
+              style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+            >
+              {trimName(rowData.name)}
+            </Link>
+          </Tooltip>
         );
       }
       if (isBulkPackProductAction(rowData)) {

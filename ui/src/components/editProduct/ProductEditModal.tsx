@@ -122,7 +122,6 @@ export default function ProductEditModal({
   isCtpp,
   sevenBoxConceptId,
 }: ProductEditModalProps) {
-  
   const closeHandle = () => {
     handleClose();
   };
@@ -192,8 +191,7 @@ function EditConceptBody({
   const [semanticTagWarningModalOpen, setSemanticTagWarningModalOpen] =
     useState(false);
 
-    const langRefsets = useProjectLangRefsets({project: project});
-  
+  const langRefsets = useProjectLangRefsets({ project: project });
 
   const descriptions = useMemo(() => {
     const existingDescriptions = data?.descriptions ? data.descriptions : [];
@@ -600,7 +598,7 @@ function EditConceptBody({
                     title={'Existing'}
                     product={product}
                     branch={branch}
-                    displayMode='input'
+                    displayMode="input"
                     showBorder
                   />
                 </Grid>
@@ -627,7 +625,8 @@ function EditConceptBody({
                       flexGrow: 1,
                     }}
                   >
-                    <form onSubmit={event => void handleSubmit(onSubmit)(event)}
+                    <form
+                      onSubmit={event => void handleSubmit(onSubmit)(event)}
                     >
                       <ConfirmationModal
                         keepMounted={true}
@@ -683,14 +682,15 @@ function EditConceptBody({
                                       color: `${theme.palette.warning.darker}`,
                                     }}
                                   >
-                                    Warning!: This will remove all the artg ids{' '}
+                                    Warning!: This will remove all the artg
+                                    ids{' '}
                                   </span>
                                 </Box>
                               )}
                           </InnerBoxSmall>
                         </Grid>
                       )}
-                     
+
                       <ActionButton
                         control={control}
                         resetAndClose={resetAndClose}
@@ -699,7 +699,7 @@ function EditConceptBody({
                           toggleDisplayRetiredDescriptions
                         }
                         displayRetiredDescriptions={displayRetiredDescriptions}
-                      /> 
+                      />
                     </form>
                   </Box>
                 </Grid>
@@ -1258,7 +1258,9 @@ function ArtgAutoCompleteWrapper({
       disabled={isUpdating}
       name="propertiesUpdateRequest.nonDefiningProperties"
       control={control}
-      error={errors?.propertiesUpdateRequest?.nonDefiningProperties as FieldError}
+      error={
+        errors?.propertiesUpdateRequest?.nonDefiningProperties as FieldError
+      }
       dataTestId="package-brand"
       optionValues={[]}
       handleChange={(artgs: NonDefiningProperty[] | null) => {
