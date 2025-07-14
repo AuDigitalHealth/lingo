@@ -1,7 +1,7 @@
 import { Box, FormControlLabel, Grid, Switch, Typography } from '@mui/material';
 import { Ticket } from '../../types/tickets/ticket';
 import { useParams } from 'react-router-dom';
-import { ExistingDescriptionsSection } from './ProductEditModal';
+// import { ExistingDescriptionsSection } from './ProductEditModal';
 import { useMemo, useState } from 'react';
 import useAvailableProjects, {
   getProjectFromKey,
@@ -19,6 +19,7 @@ import {
 import { useExternalIdentifiers } from '../../hooks/api/products/useExternalIdentifiers';
 import { useSearchConceptByIdNoCache } from '../../hooks/api/products/useSearchConcept';
 import { BrowserConcept } from '../../types/concept';
+import { ExistingDescriptionsSection } from './ExistingDescriptionsSection';
 
 const USLangRefset: LanguageRefset = {
   default: 'false',
@@ -143,6 +144,8 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
               externalIdentifiers={historicExternalIdentifiers}
               title={'Old'}
               dialects={langRefsets}
+              displayMode='input'
+              showBorder
             />
           </Box>
         </Grid>
@@ -166,6 +169,8 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
               title={'Updated'}
               externalIdentifiers={updatedExternalIdentifiers}
               dialects={langRefsets}
+              displayMode='input'
+              showBorder
             />
           </Box>
         </Grid>
@@ -182,6 +187,8 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
             title={'Current state'}
             externalIdentifiers={externalIdentifiers}
             dialects={langRefsets}
+            displayMode='input'
+            showBorder
           />
         )}
       </Grid>
