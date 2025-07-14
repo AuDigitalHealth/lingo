@@ -1,11 +1,18 @@
 {
   "ui:grid": [
-    { "packType": 24 },
-    {"containedProducts": 24},
+    {
+      "packType": 24
+    },
+    {
+      "containedProducts": 24
+    },
     {
       "nonDefiningProperties": 24
     }
   ],
+  "ui:options": {
+    "skipTitle": true
+  },
   "packType": {
     "ui:widget": "hidden"
   },
@@ -20,7 +27,15 @@
       }
     },
     "items": {
-      "ui:grid": [{ "productDetails": 24 }, { "value": 6, "unit": 6 }],
+      "ui:grid": [
+        {
+          "productDetails": 24
+        },
+        {
+          "value": 6,
+          "unit": 6
+        }
+      ],
       "ui:options": {
         "titleSource": "productDetails.productName.pt.term",
         "defaultTitle": "Product",
@@ -49,19 +64,40 @@
           "skipTitle": true,
           "validateHiddenFields": false
         },
-        "type": { "ui:widget": "hidden" },
+        "type": {
+          "ui:widget": "hidden"
+        },
         "ui:grid": [
-          { "discriminator": 12, "productType": 12 },
-          { "productName": 12, "genericForm": 12 },
-          { "activeIngredients": 12, "_columnB": 12 }
+          {
+            "discriminator": 12,
+            "productType": 12
+          },
+          {
+            "productName": 12,
+            "genericForm": 12
+          },
+          {
+            "activeIngredients": 12,
+            "_columnB": 12
+          }
         ],
         "_columnB": {
           "ui:grid": [
-            { "specificForm": 24 },
-            { "unitOfPresentation": 24 },
-            { "targetPopulation": 24 },
-            { "ingredientQualitativeStrength": 24 },
-            { "nonDefiningProperties": 24 }
+            {
+              "specificForm": 24
+            },
+            {
+              "unitOfPresentation": 24
+            },
+            {
+              "targetPopulation": 24
+            },
+            {
+              "ingredientQualitativeStrength": 24
+            },
+            {
+              "nonDefiningProperties": 24
+            }
           ]
         },
         "productType": {
@@ -147,14 +183,30 @@
               "skipTitle": true
             },
             "ui:grid": [
-              { "activeIngredient": 24 },
-              { "refinedActiveIngredient": 24 },
-              { "preciseIngredient": 24 },
-              { "basisOfStrengthSubstance": 24 },
-              { "presentationStrengthNumerator": 24 },
-              { "presentationStrengthDenominator": 24 },
-              { "concentrationStrengthNumerator": 24 },
-              { "concentrationStrengthDenominator": 24 }
+              {
+                "activeIngredient": 24
+              },
+              {
+                "refinedActiveIngredient": 24
+              },
+              {
+                "preciseIngredient": 24
+              },
+              {
+                "basisOfStrengthSubstance": 24
+              },
+              {
+                "presentationStrengthNumerator": 24
+              },
+              {
+                "presentationStrengthDenominator": 24
+              },
+              {
+                "concentrationStrengthNumerator": 24
+              },
+              {
+                "concentrationStrengthDenominator": 24
+              }
             ],
             "activeIngredient": {
               "ui:field": "AutoCompleteField",
@@ -217,8 +269,15 @@
               }
             },
             "presentationStrengthNumerator": {
-              "ui:options": { "skipTitle": true },
-              "ui:grid": [{ "value": 12, "unit": 12 }],
+              "ui:options": {
+                "skipTitle": true
+              },
+              "ui:grid": [
+                {
+                  "value": 12,
+                  "unit": 12
+                }
+              ],
               "value": {
                 "ui:widget": "text",
                 "ui:title": "Presentation Strength Numerator",
@@ -239,8 +298,15 @@
               }
             },
             "presentationStrengthDenominator": {
-              "ui:options": { "skipTitle": true },
-              "ui:grid": [{ "value": 12, "unit": 12 }],
+              "ui:options": {
+                "skipTitle": true
+              },
+              "ui:grid": [
+                {
+                  "value": 12,
+                  "unit": 12
+                }
+              ],
               "value": {
                 "ui:widget": "text",
                 "ui:title": "Presentation Strength Denominator",
@@ -261,8 +327,15 @@
               }
             },
             "concentrationStrengthNumerator": {
-              "ui:options": { "skipTitle": true },
-              "ui:grid": [{ "value": 12, "unit": 12 }],
+              "ui:options": {
+                "skipTitle": true
+              },
+              "ui:grid": [
+                {
+                  "value": 12,
+                  "unit": 12
+                }
+              ],
               "value": {
                 "ui:widget": "text",
                 "ui:title": "Concentration Strength Numerator",
@@ -283,8 +356,15 @@
               }
             },
             "concentrationStrengthDenominator": {
-              "ui:options": { "skipTitle": true },
-              "ui:grid": [{ "value": 12, "unit": 12 }],
+              "ui:options": {
+                "skipTitle": true
+              },
+              "ui:grid": [
+                {
+                  "value": 12,
+                  "unit": 12
+                }
+              ],
               "value": {
                 "ui:widget": "text",
                 "ui:title": "Concentration Strength Denominator",

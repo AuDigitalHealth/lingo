@@ -51,13 +51,10 @@ public class UiSchemaExtender {
     this.objectMapper = objectMapper;
   }
 
-  public void updateUiSchema(
-      ModelConfiguration modelConfiguration, JsonNode uiSchemaNode, ProductType productType) {
+  public void updateUiSchema(ModelConfiguration modelConfiguration, JsonNode uiSchemaNode) {
     Set<BasePropertyDefinition> properties = new HashSet<>(modelConfiguration.getMappings());
     properties.addAll(modelConfiguration.getNonDefiningProperties());
     properties.addAll(modelConfiguration.getReferenceSets());
-
-    properties.removeIf(p -> p.getSuppressOnProductTypes().contains(productType));
 
     updateUiSchemaForType(uiSchemaNode, NON_DEFINING_PROPERTIES, properties);
   }
