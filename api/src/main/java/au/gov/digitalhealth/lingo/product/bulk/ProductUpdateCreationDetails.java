@@ -13,21 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package au.gov.digitalhealth.lingo.service.schema;
+package au.gov.digitalhealth.lingo.product.bulk;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import au.gov.digitalhealth.lingo.product.update.ProductUpdateState;
+import au.gov.digitalhealth.lingo.util.PartionIdentifier;
+import au.gov.digitalhealth.lingo.validation.ValidSctId;
+import jakarta.validation.constraints.NotNull;
+import java.io.Serializable;
+import java.util.Date;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-@EqualsAndHashCode(callSuper = true)
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
 @Builder
-public class ReferenceProperty extends Property {
-  @JsonProperty("$ref")
-  String reference;
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class ProductUpdateCreationDetails implements BulkProductActionDetails, Serializable {
+  @NotNull
+  @ValidSctId(partitionIdentifier = PartionIdentifier.CONCEPT)
+  private String productId;
+
+  private ProductUpdateState historicState;
+
+  private ProductUpdateState updatedState;
+
+  @Override
+  public String calculateSaveName() {
+    return "Product Update " + new Date();
+  }
 }

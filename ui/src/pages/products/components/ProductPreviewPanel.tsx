@@ -23,6 +23,7 @@ import {
   isNewConcept,
 } from '../../../utils/helpers/conceptUtils.ts';
 import ConceptDiagramModal from '../../../components/conceptdiagrams/ConceptDiagramModal.tsx';
+import ProductRefsetModal from '../../../components/refset/ProductRefsetModal.tsx';
 import {
   AccordionDetails,
   AccordionSummary,
@@ -53,7 +54,7 @@ import NewConceptDropdown from './NewConceptDropdown.tsx';
 
 import { useParams } from 'react-router-dom';
 import { useTicketByTicketNumber } from '../../../hooks/api/tickets/useTicketById.tsx';
-import useTaskById from '../../../hooks/useTaskById.tsx';
+import useTaskByKey from '../../../hooks/useTaskByKey.tsx';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 import { ProductType } from '../../../types/product.ts';
@@ -115,9 +116,10 @@ function ProductPreviewPanel({
   ticket,
 }: ProductPreviewPanelProps) {
   const theme = useTheme();
-  const task = useTaskById();
+  const task = useTaskByKey();
   const showReviewControls = useShowReviewControls({ task });
   const [conceptDiagramModalOpen, setConceptDiagramModalOpen] = useState(false);
+  const [conceptRefsetModalOpen, setConceptRefsetModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const { conceptReviews, isLoadingConceptReviews } =
     useConceptsForReview(branch);
@@ -149,11 +151,10 @@ function ProductPreviewPanel({
     : [];
 
   const [optionsIgnored, setOptionsIgnored] = useState(false);
-  const [productTitle, setProductTitle] = useState(
-    fsnToggle
-      ? (product.concept?.fsn?.term as string)
-      : product.concept?.pt?.term,
-  );
+  const productTitle = fsnToggle
+    ? (product.concept?.fsn?.term as string)
+    : product.concept?.pt?.term;
+
   const populateInvalidNameIds = (bgColor: string) => {
     if (bgColor) {
       if (bgColor === Product7BoxBGColour.INVALID && !optionsIgnored) {
@@ -201,6 +202,10 @@ function ProductPreviewPanel({
   const isEditingCTPP = isSimpleEdit && product.label === 'CTPP';
   const shouldRenderDropdownAsReadonly = product.concept && product.conceptId;
 
+  const ctppId = productModel.subjects.find(subj => {
+    return subj.conceptId;
+  })?.conceptId;
+
   if (isLoadingConceptReviews) {
     <ProductLoader message={'Loading'} />;
   }
@@ -223,13 +228,10 @@ function ProductPreviewPanel({
           open={editModalOpen}
           handleClose={() => setEditModalOpen(false)}
           product={product}
-          keepMounted={true}
+          keepMounted={false}
           branch={branch}
           ticket={ticket}
-          handleProductChange={p => {
-            setProductTitle(fsnToggle ? p.fullySpecifiedName : p.preferredTerm);
-            setValue(`nodes[${index}]`, p, { shouldDirty: true });
-          }}
+          sevenBoxConceptId={ctppId}
         />
       )}
 
@@ -486,7 +488,7 @@ function ConceptOptionsDropdown({
   const { ticketNumber } = useParams();
   const { data: ticket } = useTicketByTicketNumber(ticketNumber, true);
 
-  const task = useTaskById();
+  const task = useTaskByKey();
   const { serviceStatus } = useServiceStatus();
 
   const {
@@ -506,7 +508,6 @@ function ConceptOptionsDropdown({
   };
 
   const handleSelectChange = (event: SelectChangeEvent) => {
-    console.log(event.target.value);
     const concept: Concept | undefined = product.conceptOptions.find(option => {
       return option.id === event.target.value;
     });

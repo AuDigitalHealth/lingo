@@ -2,7 +2,7 @@ import React from 'react';
 import { FieldProps } from '@rjsf/utils';
 import { Grid, TextField } from '@mui/material';
 import EclAutocomplete from '../components/EclAutocomplete.tsx';
-import useTaskById from '../../../../hooks/useTaskById.tsx';
+import useTaskByKey from '../../../../hooks/useTaskByKey.tsx';
 import _ from 'lodash';
 import { getFieldErrors, getUniqueErrors } from '../helpers/errorUtils.ts';
 import { ErrorDisplay } from '../components/ErrorDisplay.tsx';
@@ -25,7 +25,7 @@ const UnitValueUnWrappedField = (props: FieldProps) => {
   const valueFieldName = options.pairWith || 'value';
   const ecl = options.ecl || '';
   const showDefaultOptions = options.showDefaultOptions || false;
-  const task = useTaskById();
+  const task = useTaskByKey();
 
   const rootFormData = _.get(
     registry,

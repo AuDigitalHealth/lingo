@@ -444,6 +444,29 @@ public class SnowstormDtoUtil {
     }
   }
 
+  public static void addSynoynms(
+      SnowstormConceptView concept, Set<SnowstormDescription> descriptions) {
+    if (descriptions == null) {
+      return;
+    }
+
+    descriptions.forEach(
+        snowstormDescription -> {
+          SnowstormDescription desc =
+              new SnowstormDescription()
+                  .active(true)
+                  .lang("en")
+                  .term(snowstormDescription.getTerm())
+                  .type(SnomedConstants.SYNONYM.toString())
+                  .caseSignificance(ENTIRE_TERM_CASE_SENSITIVE.getValue())
+                  .moduleId(SCT_AU_MODULE.getValue())
+                  .acceptabilityMap(
+                      // TODO: this needs to be set up for ireland.
+                      Map.of(AmtConstants.ADRS.getValue(), SnomedConstants.ACCEPTABLE.getValue()));
+          concept.getDescriptions().add(desc);
+        });
+  }
+
   public static void addDescription(
       SnowstormConceptView concept,
       String term,
@@ -523,6 +546,8 @@ public class SnowstormDtoUtil {
         SnomedConstants.FSN.getValue(),
         modelConfiguration,
         ENTIRE_TERM_CASE_SENSITIVE.getValue());
+    SnowstormDtoUtil.addSynoynms(concept, node.getNewConceptDetails().getDescriptions());
+
 
     concept.setActive(true);
     concept.setDefinitionStatusId(
@@ -786,7 +811,10 @@ public class SnowstormDtoUtil {
       Set<SnowstormDescription> descriptions) {
 
     return descriptions.stream()
-        .filter(description -> FSN.getValue().equals(description.getType()))
+        .filter(
+            description -> {
+              return description.getType().equals("FSN") && description.getActive();
+            })
         .findFirst()
         .orElse(null);
   }
@@ -802,5 +830,86 @@ public class SnowstormDtoUtil {
                     && description.getAcceptabilityMap().get(dialectKey).equals("PREFERRED"))
         .findFirst()
         .orElse(null);
+  }
+
+  public static SnowstormConceptView cloneConceptView(SnowstormConceptView existingConcept) {
+    Set<SnowstormDescription> desc = new HashSet<>(existingConcept.getDescriptions());
+    return new SnowstormConceptView()
+        .fsn(existingConcept.getFsn())
+        .pt(existingConcept.getPt())
+        .descriptions(desc)
+        .conceptId(existingConcept.getConceptId())
+        .active(existingConcept.getActive())
+        .definitionStatusId(existingConcept.getDefinitionStatusId())
+        .classAxioms(existingConcept.getClassAxioms())
+        .gciAxioms(existingConcept.getGciAxioms())
+        .relationships(existingConcept.getRelationships())
+        .effectiveTime(existingConcept.getEffectiveTime())
+        .moduleId(existingConcept.getModuleId());
+  }
+
+  public static SnowstormConcept cloneConcept(SnowstormConcept existingConcept) {
+    Set<SnowstormDescription> desc = new HashSet<>(existingConcept.getDescriptions());
+    return new SnowstormConcept()
+        .definitionStatus(existingConcept.getDefinitionStatus())
+        .definitionStatusId(existingConcept.getDefinitionStatusId())
+        .fsn(existingConcept.getFsn())
+        .pt(existingConcept.getPt())
+        .descriptions(desc)
+        .conceptId(existingConcept.getConceptId())
+        .active(existingConcept.getActive())
+        .definitionStatusId(existingConcept.getDefinitionStatusId())
+        .classAxioms(existingConcept.getClassAxioms())
+        .gciAxioms(existingConcept.getGciAxioms())
+        .relationships(existingConcept.getRelationships())
+        .effectiveTime(existingConcept.getEffectiveTime())
+        .moduleId(existingConcept.getModuleId());
+  }
+
+  public static SnowstormDescription cloneSnowstormDescription(SnowstormDescription description) {
+    return new SnowstormDescription()
+        // Required fields (marked with @Nonnull)
+        .term(description.getTerm())
+        .languageCode(description.getLanguageCode())
+        .typeId(description.getTypeId())
+        .caseSignificanceId(description.getCaseSignificanceId())
+
+        // Optional fields (marked with @Nullable)
+        .internalId(description.getInternalId())
+        .path(description.getPath())
+        .start(description.getStart())
+        .end(description.getEnd())
+        .deleted(description.getDeleted())
+        .changed(description.getChanged())
+        .active(description.getActive())
+        .moduleId(description.getModuleId())
+        .effectiveTimeI(description.getEffectiveTimeI())
+        .released(description.getReleased())
+        .releaseHash(description.getReleaseHash())
+        .releasedEffectiveTime(description.getReleasedEffectiveTime())
+        .descriptionId(description.getDescriptionId())
+        .termFolded(description.getTermFolded())
+        .termLen(description.getTermLen())
+        .tag(description.getTag())
+        .conceptId(description.getConceptId())
+        .lang(description.getLang())
+        .caseSignificance(description.getCaseSignificance())
+        .type(description.getType())
+        .effectiveTime(description.getEffectiveTime())
+        .inactivationIndicator(description.getInactivationIndicator())
+
+        // Collection fields - creating new instances to avoid sharing references
+        .acceptabilityMap(
+            description.getAcceptabilityMap() != null
+                ? new HashMap<>(description.getAcceptabilityMap())
+                : new HashMap<>())
+        .acceptabilityMapFromLangRefsetMembers(
+            description.getAcceptabilityMapFromLangRefsetMembers() != null
+                ? new HashMap<>(description.getAcceptabilityMapFromLangRefsetMembers())
+                : new HashMap<>())
+        .associationTargets(
+            description.getAssociationTargets() != null
+                ? new HashMap<>(description.getAssociationTargets())
+                : new HashMap<>());
   }
 }

@@ -4,9 +4,10 @@ import React, { FC } from 'react';
 import { ExternalIdentifier } from '../../../types/product.ts';
 import { Control, Controller, FieldError } from 'react-hook-form';
 import { generateArtgObj } from '../../../utils/helpers/conceptUtils.ts';
-import { sortExternalIdentifiers } from '../../../utils/helpers/tickets/additionalFieldsUtils.ts';
+import { sortNonDefiningProperties } from '../../../utils/helpers/tickets/additionalFieldsUtils.ts';
 
 interface ArtgAutoCompleteProps {
+  disabled?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   control: Control<any>;
   optionValues: ExternalIdentifier[];
@@ -16,6 +17,7 @@ interface ArtgAutoCompleteProps {
   handleChange?: (artgs: ExternalIdentifier[] | null) => void;
 }
 const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
+  disabled,
   control,
   optionValues,
   name,
@@ -27,8 +29,10 @@ const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
     <Controller
       name={name as 'externalIdentifiers'}
       control={control}
+      disabled={disabled ? disabled : false}
       render={({ field: { onChange, value, onBlur }, ...props }) => (
         <Autocomplete
+          disabled={disabled ? disabled : false}
           options={optionValues}
           data-testid={dataTestId}
           multiple
@@ -60,14 +64,14 @@ const ArtgAutoComplete: FC<ArtgAutoCompleteProps> = ({
                 tempValues.push(v);
               }
             });
-            const sortedValues = sortExternalIdentifiers(tempValues);
+            const sortedValues = sortNonDefiningProperties(tempValues);
             if (handleChange) {
               handleChange(sortedValues);
             }
-            onChange(sortExternalIdentifiers(sortedValues));
+            onChange(sortNonDefiningProperties(sortedValues));
           }}
           {...props}
-          value={sortExternalIdentifiers(
+          value={sortNonDefiningProperties(
             ((value as (ExternalIdentifier | string)[]) || []).map(v =>
               typeof v === 'string' ? generateArtgObj(v) : v,
             ),
