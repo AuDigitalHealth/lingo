@@ -29,10 +29,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "lang",
-        "term"
-      ]
+      "required": ["lang", "term"]
     },
     "UnitValueConstraint": {
       "dependencies": {
@@ -52,9 +49,7 @@
                   "minimum": 1
                 }
               },
-              "required": [
-                "value"
-              ]
+              "required": ["value"]
             },
             {
               "properties": {
@@ -72,9 +67,7 @@
                   "minimum": 0
                 }
               },
-              "required": [
-                "value"
-              ]
+              "required": ["value"]
             }
           ],
           "errorMessage": {
@@ -89,10 +82,7 @@
       "minProperties": 2,
       "properties": {
         "unit": {
-          "type": [
-            "object",
-            "null"
-          ],
+          "type": ["object", "null"],
           "$ref": "#/$defs/SnowstormConceptMini"
         },
         "value": {
@@ -107,27 +97,6 @@
         {
           "$ref": "#/$defs/UnitValueConstraint"
         }
-      ]
-    },
-    "BaseIngredient": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "activeIngredient": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "VTM Active Ingredient"
-        },
-        "refinedActiveIngredient": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "VMP Active Ingredient"
-        },
-        "preciseIngredient": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "AMP Active Ingredient"
-        }
-      },
-      "required": [
-        "activeIngredient"
       ]
     },
     "PresentationStrengthIngredient": {
@@ -162,8 +131,10 @@
       "required": [
         "activeIngredient",
         "refinedActiveIngredient",
+        "preciseIngredient",
         "basisOfStrengthSubstance",
-        "presentationStrengthNumerator"
+        "presentationStrengthNumerator",
+        "presentationStrengthDenominator"
       ]
     },
     "ConcentrationStrengthIngredient": {
@@ -198,13 +169,22 @@
       "required": [
         "activeIngredient",
         "refinedActiveIngredient",
+        "preciseIngredient",
         "basisOfStrengthSubstance",
         "concentrationStrengthNumerator",
         "concentrationStrengthDenominator"
       ]
     },
     "NoStrengthIngredient": {
-      "$ref": "#/$defs/BaseIngredient"
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "activeIngredient": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "VTM Active Ingredient"
+        }
+      },
+      "required": ["activeIngredient"]
     },
     "ProductDetails": {
       "type": "object",
@@ -222,9 +202,7 @@
           "title": "Product Type"
         }
       },
-      "required": [
-        "productType"
-      ],
+      "required": ["productType"],
       "discriminator": {
         "propertyName": "productType"
       },
@@ -241,10 +219,7 @@
               "title": "Generic Dose Form"
             },
             "specificForm": {
-              "type": [
-                "object",
-                "null"
-              ],
+              "type": ["object", "null"],
               "nullable": true,
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Specific Dose Form"
@@ -298,10 +273,7 @@
               "title": "Generic Dose Form"
             },
             "specificForm": {
-              "type": [
-                "object",
-                "null"
-              ],
+              "type": ["object", "null"],
               "nullable": true,
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Specific Dose Form"
@@ -349,10 +321,7 @@
               "title": "Generic Dose Form"
             },
             "specificForm": {
-              "type": [
-                "object",
-                "null"
-              ],
+              "type": ["object", "null"],
               "nullable": true,
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Specific Dose Form"
@@ -366,7 +335,7 @@
             },
             "activeIngredients": {
               "type": "array",
-              "title": "No Strength Ingredients",
+              "title": "Ingredients with no strength",
               "items": {
                 "$ref": "#/$defs/NoStrengthIngredient"
               },
@@ -405,10 +374,7 @@
               "title": "Generic Dose Form"
             },
             "specificForm": {
-              "type": [
-                "object",
-                "null"
-              ],
+              "type": ["object", "null"],
               "nullable": true,
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Specific Dose Form"
@@ -429,12 +395,14 @@
               "minItems": 1
             },
             "targetPopulation": {
-              "type": [
-                "object",
-                "null"
-              ],
+              "type": ["object", "null"],
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Target Population"
+            },
+            "ingredientQualitativeStrength": {
+              "type": ["object", "null"],
+              "$ref": "#/$defs/SnowstormConceptMini",
+              "title": "Qualitative Strength"
             },
             "nonDefiningProperties": {
               "title": "Non Defining Properties",
@@ -464,10 +432,7 @@
               "title": "Generic Dose Form"
             },
             "specificForm": {
-              "type": [
-                "object",
-                "null"
-              ],
+              "type": ["object", "null"],
               "nullable": true,
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Specific Dose Form"
@@ -488,12 +453,24 @@
               "minItems": 1
             },
             "targetPopulation": {
+              "type": ["object", "null"],
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Target Population"
             },
             "ingredientQualitativeStrength": {
+              "type": ["object", "null"],
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Qualitative Strength"
+            },
+            "quantity": {
+              "type": ["object", "null"],
+              "$ref": "#/$defs/Quantity",
+              "title": "Unit of Presentation Quantity"
+            },
+            "unitOfPresentation": {
+              "type": "object",
+              "$ref": "#/$defs/SnowstormConceptMini",
+              "title": "Unit of Presentation"
             },
             "nonDefiningProperties": {
               "title": "Non Defining Properties",
@@ -507,7 +484,9 @@
             "productName",
             "genericForm",
             "productType",
-            "activeIngredients"
+            "activeIngredients",
+            "unitOfPresentation",
+            "quantity"
           ],
           "additionalProperties": false
         },
@@ -577,10 +556,7 @@
   "discriminator": {
     "propertyName": "packType"
   },
-  "required": [
-    "packType",
-    "containedProducts"
-  ],
+  "required": ["packType", "containedProducts"],
   "oneOf": [
     {
       "title": "Medication",
@@ -620,11 +596,7 @@
                 ]
               }
             },
-            "required": [
-              "unit",
-              "value",
-              "productDetails"
-            ],
+            "required": ["unit", "value", "productDetails"],
             "additionalProperties": false
           }
         },
@@ -636,10 +608,7 @@
           }
         }
       },
-      "required": [
-        "packType",
-        "containedProducts"
-      ],
+      "required": ["packType", "containedProducts"],
       "additionalProperties": false
     },
     {
@@ -677,11 +646,7 @@
                 ]
               }
             },
-            "required": [
-              "unit",
-              "value",
-              "productDetails"
-            ],
+            "required": ["unit", "value", "productDetails"],
             "additionalProperties": false
           }
         },
@@ -693,10 +658,7 @@
           }
         }
       },
-      "required": [
-        "packType",
-        "containedProducts"
-      ],
+      "required": ["packType", "containedProducts"],
       "additionalProperties": false
     },
     {
@@ -731,11 +693,7 @@
                 ]
               }
             },
-            "required": [
-              "unit",
-              "value",
-              "productDetails"
-            ],
+            "required": ["unit", "value", "productDetails"],
             "additionalProperties": false
           }
         },
@@ -747,10 +705,7 @@
           }
         }
       },
-      "required": [
-        "packType",
-        "containedProducts"
-      ],
+      "required": ["packType", "containedProducts"],
       "additionalProperties": false
     }
   ],

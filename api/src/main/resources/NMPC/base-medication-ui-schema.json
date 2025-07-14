@@ -90,6 +90,9 @@
               "unitOfPresentation": 24
             },
             {
+              "quantity": 24
+            },
+            {
               "targetPopulation": 24
             },
             {
@@ -151,6 +154,34 @@
             "extendedEcl": "<105590001",
             "showDefaultOptions": false,
             "placeholder": "Select unit of presentation"
+          }
+        },
+        "quantity": {
+          "ui:options": {
+            "skipTitle": true
+          },
+          "ui:grid": [
+            {
+              "value": 12,
+              "unit": 12
+            }
+          ],
+          "value": {
+            "ui:widget": "text",
+            "ui:options": {
+              "inputType": "number",
+              "title": "Unit of presentation size quantity"
+            }
+          },
+          "unit": {
+            "ui:field": "AutoCompleteField",
+            "ui:title": "Unit of presentation size unit",
+            "ui:options": {
+              "ecl": "<763158003.320091000221107",
+              "extendedEcl": "<767524001",
+              "showDefaultOptions": true,
+              "placeholder": "Select unit"
+            }
           }
         },
         "targetPopulation": {
