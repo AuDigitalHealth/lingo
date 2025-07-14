@@ -3,13 +3,14 @@
   "type": "object",
   "$defs": {
     "SnowstormConceptMini": {
-      "type": ["object"],
+      "type": "object",
       "properties": {
         "conceptId": { "type": "string" },
         "pt": { "$ref": "#/$defs/SnowstormTermLangPojo" },
         "fsn": { "$ref": "#/$defs/SnowstormTermLangPojo" }
       },
-      "minProperties": 1
+      "minProperties": 1,
+      "title": "Concept"
     },
     "SnowstormTermLangPojo": {
       "type": "object",
@@ -154,14 +155,17 @@
         "concentrationStrengthDenominator"
       ]
     },
-    "NoStrengthIngredient": { "$ref": "#/$defs/BaseIngredient" },
+    "NoStrengthIngredient": {
+      "$ref": "#/$defs/BaseIngredient"
+    },
     "ProductDetails": {
       "type": "object",
       "properties": {
         "productType": {
           "type": "string",
           "enum": ["presentationStrength", "concentrationStrength", "noStrength", "vaccinePresentation", "vaccineQualitative"],
-          "default": "presentationStrength"
+          "default": "presentationStrength",
+          "title": "Product Type"
         }
       },
       "required": ["productType"],
@@ -195,7 +199,7 @@
               "minItems": 1
             },
             "unitOfPresentation": {
-              "type": ["object"],
+              "type": "object",
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Unit of Presentation"
             },
@@ -426,15 +430,27 @@
           "items": {
             "$ref": "#/$defs/BaseContainer",
             "properties": {
+              "unit": {
+                "$ref": "#/$defs/SnowstormConceptMini",
+                "title": "Unit"
+              },
+              "value": {
+                "type": "number",
+                "minimum": 0,
+                "title": "Value"
+              },
               "productDetails": {
                 "$ref": "#/$defs/ProductDetails",
+                "title": "Product Details",
                 "oneOf": [
                   { "$ref": "#/$defs/ProductDetails/oneOf/0" },
                   { "$ref": "#/$defs/ProductDetails/oneOf/1" },
                   { "$ref": "#/$defs/ProductDetails/oneOf/2" }
                 ]
               }
-            }
+            },
+            "required": ["unit", "value", "productDetails"],
+            "additionalProperties": false
           }
         }
       },
@@ -446,20 +462,32 @@
       "properties": {
         "packType": { "const": "vaccine" },
         "containedProducts": {
-          "title": "Contained Products",
           "type": "array",
           "minItems": 1,
+          "title": "Contained Products",
           "items": {
-            "$ref": "#/$defs/BaseContainer",
+            "type": "object",
             "properties": {
+              "unit": {
+                "$ref": "#/$defs/SnowstormConceptMini",
+                "title": "Unit"
+              },
+              "value": {
+                "type": "number",
+                "minimum": 0,
+                "title": "Value"
+              },
               "productDetails": {
                 "$ref": "#/$defs/ProductDetails",
+                "title": "Product Details",
                 "oneOf": [
                   { "$ref": "#/$defs/ProductDetails/oneOf/3" },
                   { "$ref": "#/$defs/ProductDetails/oneOf/4" }
                 ]
               }
-            }
+            },
+            "required": ["unit", "value", "productDetails"],
+            "additionalProperties": false
           }
         }
       },
@@ -471,19 +499,31 @@
       "properties": {
         "packType": { "const": "nutritional" },
         "containedProducts": {
-          "title": "Contained Products",
           "type": "array",
           "minItems": 1,
+          "title": "Contained Products",
           "items": {
-            "$ref": "#/$defs/BaseContainer",
+            "type": "object",
             "properties": {
+              "unit": {
+                "$ref": "#/$defs/SnowstormConceptMini",
+                "title": "Unit"
+              },
+              "value": {
+                "type": "number",
+                "minimum": 0,
+                "title": "Value"
+              },
               "productDetails": {
                 "$ref": "#/$defs/ProductDetails",
+                "title": "Product Details",
                 "oneOf": [
                   { "$ref": "#/$defs/ProductDetails/oneOf/2" }
                 ]
               }
-            }
+            },
+            "required": ["unit", "value", "productDetails"],
+            "additionalProperties": false
           }
         }
       },
