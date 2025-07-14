@@ -1077,7 +1077,9 @@ public class MedicationProductCalculationService
       relationships.add(
           getSnowstormRelationship(
               HAS_ACTIVE_INGREDIENT,
-              modelConfiguration.getModelType().equals(ModelType.NMPC) && level.isBranded()
+              modelConfiguration.getModelType().equals(ModelType.NMPC)
+                      && level.isBranded()
+                      && ingredient.getRefinedActiveIngredient() != null
                   ? ingredient.getRefinedActiveIngredient()
                   : ingredient.getActiveIngredient(),
               group,
@@ -1396,6 +1398,7 @@ public class MedicationProductCalculationService
         addRelationshipIfNotNull(
             relationships,
             modelConfiguration.getModelType().equals(ModelType.AMT)
+                    || ingredient.getRefinedActiveIngredient() == null
                 ? ingredient.getActiveIngredient()
                 : ingredient.getRefinedActiveIngredient(),
             HAS_ACTIVE_INGREDIENT,
@@ -1404,9 +1407,17 @@ public class MedicationProductCalculationService
       }
 
       if (level.isBranded() || modelConfiguration.getModelType().equals(ModelType.AMT)) {
+        SnowstormConceptMini ingredientConcept;
+        if (ingredient.getPreciseIngredient() != null) {
+          ingredientConcept = ingredient.getPreciseIngredient();
+        } else if (ingredient.getRefinedActiveIngredient() != null) {
+          ingredientConcept = ingredient.getRefinedActiveIngredient();
+        } else {
+          ingredientConcept = ingredient.getActiveIngredient();
+        }
         addRelationshipIfNotNull(
             relationships,
-            ingredient.getPreciseIngredient(),
+            ingredientConcept,
             HAS_PRECISE_ACTIVE_INGREDIENT,
             group,
             modelConfiguration.getModuleId());
