@@ -10,6 +10,71 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 ## [Unreleased]
 - No updates yet.
 
+
+## [1.2.10.6] - 2025-07-02
+
+### Fixed
+
+- Fixed handling of primitive concept selection as component of a multicomponent, multipack product in one of the packs
+
+## [1.2.10.5] - 2025-06-24
+
+### Fixed
+
+- Detection of datatypes or object properties based on the SnowstormRelationship.getConcrete() Boolean result was unreliable due to null values. This led to missing clauses in the ECL and overly broad detection of existing concepts.
+
+## [1.2.10.4] - 2025-05-29
+
+### Added 
+
+- Ability to drag/drop attachments onto tickets
+- Can now filter for refsets with inactive concepts
+- Can now create tasks on the snodine page, on any project
+- Create additional synonyms in the 7 box create screen
+
+### Changed
+
+- Sort refset members by title
+- Reference sets are now handled on the front end, all data is queried when a reference set is loaded
+
+### Fixed
+
+- Pagination of reference set members now extends beyond 10,000
+- Issues with the artgid reference set
+- Issues with the semantic tags when the duplicate fsn/pt warning would appear on the 7 box create screen
+
+## [1.2.10.3] - 2025-04-24
+
+### Added
+
+- Ability to manually lock Snomio processes during a release week (#1350)
+- Display a concept model diagram for a concept using the inferred view (#870)
+- Create additional synonyms for new product concepts within the 7-box Preview screen (#159)
+- Ticket management: Attach multiple files to a ticket in a single manual operation (#1263)
+- Separation of semantic tags from concept descriptions in the 7-box Preview screen (#1354)
+- Validation of concept semantic tags within the Preview screen (#1353)
+- Sergio: Add/update additional URLs targeting product information (#1262)
+
+### Changed
+
+- In the dashboard screen, add the saved filter's name as a title for each cell (#867)
+- 7-box Preview screen does not remove newline characters from manually-edited descriptions (#1328)
+- Task Management: Sort tasks by reviewers (#1303)
+- Sergio: Remove BlackTriangle label from ticket when the product is no longer BTS (#1370)
+- Sergio: Additional stabilisation improvements (#1300)
+- Snodine: Overnight processing should skip broken reference sets without aborting the entire run (#1398)
+
+### Fixed
+
+- Unable to edit the description of a multi-component product (#1323)
+- Sergio: Tickets are being updated with incomplete comments (#1277)
+- Sergio: Incorrect title for product URL in tickets (#1409)
+
+## [1.2.10.2] - 2025-02-27
+
+
+## [1.2.10.1] - 2025-02-27
+
 ## [1.2.9] - 2024-12-06
 ### Added
 - "Help & Support" button for reporting bugs or requesting features
