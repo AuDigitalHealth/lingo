@@ -380,6 +380,11 @@ public class ModelConfiguration {
         getProductLevels().stream().filter(l -> !l.isBranded()).collect(Collectors.toSet()));
   }
 
+  public ModelLevel getRootUnbrandedPackageModelLevel() {
+    return ModelLevel.getRootLevel(
+        getPackageLevels().stream().filter(l -> !l.isBranded()).collect(Collectors.toSet()));
+  }
+
   public ModelLevel getRootUnbrandedProductModelLevel() {
     return ModelLevel.getRootLevel(
         getProductLevels().stream().filter(l -> !l.isBranded()).collect(Collectors.toSet()));
@@ -477,5 +482,17 @@ public class ModelConfiguration {
         .collect(
             Collectors.toMap(
                 ModelLevel::getReferenceSetIdentifier, Function.identity(), (a, b) -> a));
+  }
+
+  public BasePropertyDefinition getProperty(@NotNull @NotEmpty String identifierScheme) {
+    BasePropertyDefinition property = getMappingsByName().get(identifierScheme);
+    if (property != null) {
+      return property;
+    }
+    property = getNonDefiningPropertiesByName().get(identifierScheme);
+    if (property != null) {
+      return property;
+    }
+    return getReferenceSetsByName().get(identifierScheme);
   }
 }
