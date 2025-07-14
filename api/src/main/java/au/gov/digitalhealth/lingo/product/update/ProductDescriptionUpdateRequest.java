@@ -17,7 +17,6 @@ package au.gov.digitalhealth.lingo.product.update;
 
 import au.csiro.snowstorm_client.model.SnowstormDescription;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Objects;
@@ -35,9 +34,6 @@ import lombok.NoArgsConstructor;
 public class ProductDescriptionUpdateRequest implements Serializable {
 
   Set<SnowstormDescription> descriptions;
-
-  /** Ticket to record this against */
-  @NotNull Long ticketId;
 
   public boolean areDescriptionsModified(Set<SnowstormDescription> existingDescriptions) {
 

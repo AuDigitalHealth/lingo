@@ -66,6 +66,29 @@ const ConceptService = {
     conceptResponse.items = uniqueConcepts;
     return conceptResponse;
   },
+  async searchConceptNoEcl(
+    str: string,
+    branch: string,
+    useOldConcepts?: boolean,
+  ): Promise<ConceptResponse> {
+    let concepts: Concept[] = [];
+
+    const encodedString = encodeURIComponent(str);
+    const url = `/snowstorm/${branch}/concepts?term=${encodedString}&termActive=true${useOldConcepts ? '' : '&isPublished=false'}`;
+    const response = await api.get(url, {
+      headers: {
+        'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
+      },
+    });
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const conceptResponse = response.data as ConceptResponse;
+    concepts = conceptResponse.items;
+    const uniqueConcepts = filterByActiveConcepts(concepts);
+    conceptResponse.items = uniqueConcepts;
+    return conceptResponse;
+  },
   async searchConceptByEcl(
     ecl: string,
     branch: string,
@@ -291,9 +314,10 @@ const ConceptService = {
       term?: string;
       activeFilter?: boolean;
       termActive?: boolean;
+      searchAfter?: string;
     },
   ): Promise<ConceptResponse> {
-    const { term, termActive, activeFilter } = options ?? {};
+    const { term, termActive, activeFilter, searchAfter } = options ?? {};
     let { limit, offset } = options ?? {};
     limit = limit || 50;
     offset = offset || 0;
@@ -307,6 +331,7 @@ const ConceptService = {
       limit,
       activeFilter,
       termActive,
+      searchAfter,
     };
     if (term && term.length > 2) {
       params.term = term;

@@ -24,6 +24,7 @@ interface ConceptDiagramProps {
   concept: Concept | null | undefined;
   newConcept?: NewConceptDetails | null;
   args?: DrawConceptDiagramArgs;
+  isSideBySide?: boolean;
 }
 
 const args = {
@@ -39,6 +40,7 @@ const args = {
 export default function ConceptDiagram({
   concept,
   newConcept,
+  isSideBySide = false,
 }: ConceptDiagramProps) {
   const { branchKey } = useParams();
 
@@ -55,7 +57,9 @@ export default function ConceptDiagram({
 
   const [formType, setFormType] = useState<FormType>('stated');
   const [containerHeight, setContainerHeight] = useState(screenSize.height);
-  const [containerWidth, setContainerWidth] = useState(screenSize.width);
+  const [containerWidth, setContainerWidth] = useState(
+    isSideBySide ? 1800 / 2 - 20 : screenSize.width,
+  );
 
   useEffect(() => {
     if (data !== undefined && element.current !== undefined) {
@@ -68,7 +72,7 @@ export default function ConceptDiagram({
   }, [element, data, formType]);
 
   useEffect(() => {
-    if (newConcept !== undefined && element.current !== null) {
+    if (newConcept && element.current !== null) {
       const tempImageUri = drawNewConceptDiagram(
         newConcept,
         element,
@@ -80,19 +84,26 @@ export default function ConceptDiagram({
     }
   }, [newConcept, element]);
 
+  useEffect(() => {
+    setContainerWidth(isSideBySide ? 1800 / 2 - 20 : screenSize.width);
+  }, [screenSize.width, isSideBySide]);
+
   // set initial zoom for the image
   const handleImageLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
     const img = event.target as HTMLImageElement;
 
-    const minHeight = Math.min(containerHeight, img.naturalHeight);
+    // Calculate available width based on whether side by side
+    const availableWidth = isSideBySide ? 1800 / 2 - 20 : screenSize.width;
 
-    const minWidth = Math.min(containerWidth, img.naturalWidth);
+    const minHeight = Math.min(containerHeight, img.naturalHeight);
+    const minWidth = Math.min(availableWidth, img.naturalWidth);
 
     setContainerHeight(minHeight);
     setContainerWidth(minWidth);
 
     const widthRatio = minWidth / img.naturalWidth;
-    const initialZoom = widthRatio;
+    const heightRatio = minHeight / img.naturalHeight;
+    const initialZoom = Math.min(widthRatio, heightRatio); // Use the smaller ratio to maintain aspect ratio
 
     img.style.width = `${img.naturalWidth * initialZoom}px`;
     img.style.height = `${img.naturalHeight * initialZoom}px`;
@@ -174,6 +185,10 @@ export default function ConceptDiagram({
                   style={{ cursor: 'move', transformOrigin: '0 0' }}
                   onClick={() => {
                     console.log(imgRef.current?.naturalWidth);
+                    console.log(imgRef.current?.width);
+                    console.log(containerWidth);
+                    console.log(isSideBySide);
+                    console.log(screenSize.width);
                   }}
                 />
               </Stack>

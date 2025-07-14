@@ -7,7 +7,7 @@ import { SetExtendedEclButton } from '../../components/SetExtendedEclButton.tsx'
 import EclAutocomplete from '../components/EclAutocomplete.tsx';
 import MultiValueEclAutocomplete from '../components/MultiValueEclAutocomplete.tsx';
 import CreateBrand from '../components/CreateBrand.tsx';
-import useTaskById from '../../../../hooks/useTaskById.tsx';
+import useTaskByKey from '../../../../hooks/useTaskByKey.tsx';
 import { useTicketByTicketNumber } from '../../../../hooks/api/tickets/useTicketById.tsx';
 import { useParams } from 'react-router-dom';
 import { Ticket } from '../../../../types/tickets/ticket.ts';
@@ -50,7 +50,7 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
   const [localExtendedEcl, setLocalExtendedEcl] = useState<boolean>(false);
   const currentEcl = localExtendedEcl ? extendedEcl : ecl;
 
-  const task = useTaskById();
+  const task = useTaskByKey();
   const { ticketNumber } = useParams();
   const useTicketQuery = useTicketByTicketNumber(ticketNumber, false);
 
