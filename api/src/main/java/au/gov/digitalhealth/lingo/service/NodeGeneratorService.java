@@ -382,7 +382,8 @@ public class NodeGeneratorService {
       Collection<NonDefiningBase> newProperties,
       boolean suppressIsa,
       boolean suppressNegativeStatements,
-      boolean enforceRefsets) {
+      boolean enforceRefsets,
+      boolean definedIfNoMatch) {
     return CompletableFuture.completedFuture(
         generateNode(
             branch,
@@ -397,7 +398,8 @@ public class NodeGeneratorService {
             newProperties,
             suppressIsa,
             suppressNegativeStatements,
-            enforceRefsets));
+            enforceRefsets,
+            definedIfNoMatch));
   }
 
   public Node generateNode(
@@ -413,7 +415,8 @@ public class NodeGeneratorService {
       Collection<NonDefiningBase> newProperties,
       boolean suppressIsa,
       boolean suppressNegativeStatements,
-      boolean enforceRefsets) {
+      boolean enforceRefsets,
+      boolean definedIfNoMatch) {
 
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
@@ -514,9 +517,17 @@ public class NodeGeneratorService {
       NewConceptDetails newConceptDetails = new NewConceptDetails(atomicCache.getNextId());
       SnowstormAxiom axiom = new SnowstormAxiom();
       axiom.active(true);
-      axiom.setDefinitionStatusId(
-          node.getConceptOptions().isEmpty() ? DEFINED.getValue() : PRIMITIVE.getValue());
-      axiom.setDefinitionStatus(node.getConceptOptions().isEmpty() ? "FULLY_DEFINED" : "PRIMITIVE");
+      String definitionStatusId;
+      String definitionStatus;
+      if (node.getConceptOptions().isEmpty()) {
+        definitionStatusId = definedIfNoMatch ? DEFINED.getValue() : PRIMITIVE.getValue();
+        definitionStatus = definedIfNoMatch ? "FULLY_DEFINED" : "PRIMITIVE";
+      } else {
+        definitionStatusId = PRIMITIVE.getValue();
+        definitionStatus = "PRIMITIVE";
+      }
+      axiom.setDefinitionStatusId(definitionStatusId);
+      axiom.setDefinitionStatus(definitionStatus);
       axiom.setRelationships(relationships);
       axiom.setModuleId(modelConfiguration.getModuleId());
       axiom.setReleased(false);
