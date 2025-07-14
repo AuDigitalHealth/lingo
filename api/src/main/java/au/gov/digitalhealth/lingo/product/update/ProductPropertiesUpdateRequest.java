@@ -17,7 +17,6 @@ package au.gov.digitalhealth.lingo.product.update;
 
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Set;
 import lombok.AllArgsConstructor;
@@ -31,8 +30,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductPropertiesUpdateRequest implements Serializable {
-  private @Valid Set<@Valid NonDefiningBase> nonDefiningProperties;
-
-  /** Ticket to record this against */
-  private @NotNull Long ticketId;
+  @Valid Set<@Valid NonDefiningBase> nonDefiningProperties;
 }

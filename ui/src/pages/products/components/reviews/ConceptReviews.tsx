@@ -1,4 +1,4 @@
-import useTaskById from '../../../../hooks/useTaskById.tsx';
+import useTaskByKey from '../../../../hooks/useTaskByKey.tsx';
 import { useFeedbackUnread } from '../../../../hooks/api/task/useConceptsForReview.js';
 import {
   Badge,
@@ -64,7 +64,7 @@ interface ConceptReviewsProps {
 }
 function ConceptReviews({ conceptReview }: ConceptReviewsProps) {
   const [messageModalOpen, setMessageModalOpen] = useState(false);
-  const task = useTaskById();
+  const task = useTaskByKey();
   const projectKey = task?.projectKey;
 
   const taskKey = task?.key;
@@ -150,11 +150,8 @@ function ConceptReviews({ conceptReview }: ConceptReviewsProps) {
                 },
               }}
             >
-              <IconButton>
-                <MarkunreadIcon
-                  color="primary"
-                  onClick={handleToggleMessageModalOpen}
-                />
+              <IconButton onClick={handleToggleMessageModalOpen}>
+                <MarkunreadIcon color="primary" />
               </IconButton>
             </Badge>
           </Tooltip>
@@ -171,19 +168,13 @@ function ConceptReviews({ conceptReview }: ConceptReviewsProps) {
                   },
                 }}
               >
-                <IconButton>
-                  <MailIcon
-                    color="action"
-                    onClick={handleToggleMessageModalOpen}
-                  />
+                <IconButton onClick={handleToggleMessageModalOpen}>
+                  <MailIcon color="action" />
                 </IconButton>
               </Badge>
             ) : (
-              <IconButton>
-                <MailIcon
-                  color="action"
-                  onClick={handleToggleMessageModalOpen}
-                />
+              <IconButton onClick={handleToggleMessageModalOpen}>
+                <MailIcon color="action" />
               </IconButton>
             )}
           </Tooltip>
@@ -236,7 +227,7 @@ function ReviewMessageModal({
   handleClose,
 }: ReviewMessageModalProps) {
   const messages = conceptReview?.reviews?.messages;
-  const task = useTaskById();
+  const task = useTaskByKey();
   const projectKey = task?.projectKey;
   const taskKey = task?.key;
   const { unreadConceptIds } = useFeedbackUnread(projectKey, taskKey, true);
@@ -384,7 +375,7 @@ interface ReviewMessageEditorProps {
   conceptId: string;
 }
 function ReviewMessageEditor({ conceptId }: ReviewMessageEditorProps) {
-  const task = useTaskById();
+  const task = useTaskByKey();
   const projectKey = task?.projectKey;
   const taskKey = task?.key;
   const mutation = usePostReviewMessageMutation();
