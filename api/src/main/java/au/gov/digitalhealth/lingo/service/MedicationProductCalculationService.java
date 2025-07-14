@@ -59,7 +59,6 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.IS_A;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.MEDICINAL_PRODUCT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.MEDICINAL_PRODUCT_PACKAGE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.PLAYS_ROLE;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.PRIMITIVE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.STATED_RELATIONSHIP;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.addQuantityIfNotNull;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.addRelationshipIfNotNull;
@@ -578,7 +577,8 @@ public class MedicationProductCalculationService
         true,
         label.equals(
             modelConfiguration.getLevelOfType(ModelLevelType.PACKAGED_CLINICAL_DRUG).getName()),
-        enforceRefsets);
+        enforceRefsets,
+        true);
   }
 
   private Set<SnowstormRelationship> createPackagedClinicalDrugRelationships(
@@ -885,24 +885,7 @@ public class MedicationProductCalculationService
                                       modelConfiguration,
                                       productSummary,
                                       parentNodes,
-                                      modelConfiguration))
-                              .thenApply(
-                                  node -> {
-                                    if (modelConfiguration.getModelType().equals(ModelType.NMPC)
-                                        && productDetails instanceof NutritionalProductDetails
-                                        && (level.getModelLevelType() == CLINICAL_DRUG
-                                            || level.getModelLevelType() == MEDICINAL_PRODUCT_ONLY)
-                                        && node.getNewConceptDetails() != null) {
-                                      node.getNewConceptDetails()
-                                          .getAxioms()
-                                          .forEach(
-                                              axiom -> {
-                                                axiom.setDefinitionStatusId(PRIMITIVE.getValue());
-                                                axiom.setDefinitionStatus("PRIMITIVE");
-                                              });
-                                    }
-                                    return node;
-                                  });
+                                      modelConfiguration));
                       default ->
                           throw new IllegalArgumentException(
                               "Unsupported model level type: " + level.getModelLevelType());
@@ -1154,6 +1137,18 @@ public class MedicationProductCalculationService
 
     boolean enforceRefsets = modelConfiguration.getModelType().equals(ModelType.AMT);
 
+    // if the product has ingredients and they have some sort of strength or quantity then it can be
+    // defined, otherwise we'll guess primitive - user can always override the decision
+    boolean defined =
+        !productDetails.getActiveIngredients().isEmpty()
+            && productDetails.getActiveIngredients().stream()
+                .allMatch(
+                    i ->
+                        i.getConcentrationStrength() != null
+                            || i.getTotalQuantity() != null
+                            || i.getPresentationStrengthNumerator() != null
+                            || i.getConcentrationStrengthNumerator() != null);
+
     return nodeGeneratorService.generateNodeAsync(
         branch,
         atomicCache,
@@ -1173,7 +1168,8 @@ public class MedicationProductCalculationService
         productDetails.getNonDefiningProperties(),
         !branded,
         false,
-        enforceRefsets);
+        enforceRefsets,
+        defined);
   }
 
   private CompletableFuture<Node> findOrCreateMp(
@@ -1198,6 +1194,10 @@ public class MedicationProductCalculationService
     Set<SnowstormRelationship> relationships =
         createMpRelationships(details, mpLevel, modelConfiguration);
 
+    // if the product has ingredients it can be defined, otherwise we'll guess primitive - user can
+    // always override the decision
+    boolean defined = !details.getActiveIngredients().isEmpty();
+
     return nodeGeneratorService.generateNodeAsync(
         branch,
         atomicCache,
@@ -1217,7 +1217,8 @@ public class MedicationProductCalculationService
         details.getNonDefiningProperties(),
         false,
         false,
-        false);
+        false,
+        defined);
   }
 
   private Set<SnowstormRelationship> createClinicalDrugRelationships(
