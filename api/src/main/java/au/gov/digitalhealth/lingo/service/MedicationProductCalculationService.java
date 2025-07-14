@@ -59,7 +59,6 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.IS_A;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.MEDICINAL_PRODUCT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.MEDICINAL_PRODUCT_PACKAGE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.PLAYS_ROLE;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.PRIMITIVE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.STATED_RELATIONSHIP;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.addQuantityIfNotNull;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.addRelationshipIfNotNull;
@@ -278,6 +277,13 @@ public class MedicationProductCalculationService
   public ProductSummary calculateProductFromAtomicData(
       String branch, PackageDetails<MedicationProductDetails> packageDetails)
       throws ExecutionException, InterruptedException {
+
+    // todo - this is a work around because the UI doesn't know which package to put the selected
+    // identifiers in, so it puts them at the top level. They need to be cascaded down to the lower
+    // level packages. It is possible this isn't enough if there are different packages with
+    // intersecting conceptOptions, but this will do for the moment.
+    packageDetails.cascadeSelectedIdentifiers();
+
     return calculateCreatePackage(
         branch,
         packageDetails,
@@ -571,7 +577,8 @@ public class MedicationProductCalculationService
         true,
         label.equals(
             modelConfiguration.getLevelOfType(ModelLevelType.PACKAGED_CLINICAL_DRUG).getName()),
-        enforceRefsets);
+        enforceRefsets,
+        true);
   }
 
   private Set<SnowstormRelationship> createPackagedClinicalDrugRelationships(
@@ -721,7 +728,7 @@ public class MedicationProductCalculationService
       relationships.add(
           getSnowstormDatatypeComponent(
               COUNT_OF_CONTAINED_PACKAGE_TYPE,
-              // get the unique set of active ingredients
+              // get the unique set of package types
               Integer.toString(
                   innerPackageSummaries.values().stream()
                       .map(v -> v.getSingleSubject().getConceptId())
@@ -878,24 +885,7 @@ public class MedicationProductCalculationService
                                       modelConfiguration,
                                       productSummary,
                                       parentNodes,
-                                      modelConfiguration))
-                              .thenApply(
-                                  node -> {
-                                    if (modelConfiguration.getModelType().equals(ModelType.NMPC)
-                                        && productDetails instanceof NutritionalProductDetails
-                                        && (level.getModelLevelType() == CLINICAL_DRUG
-                                            || level.getModelLevelType() == MEDICINAL_PRODUCT_ONLY)
-                                        && node.getNewConceptDetails() != null) {
-                                      node.getNewConceptDetails()
-                                          .getAxioms()
-                                          .forEach(
-                                              axiom -> {
-                                                axiom.setDefinitionStatusId(PRIMITIVE.getValue());
-                                                axiom.setDefinitionStatus("PRIMITIVE");
-                                              });
-                                    }
-                                    return node;
-                                  });
+                                      modelConfiguration));
                       default ->
                           throw new IllegalArgumentException(
                               "Unsupported model level type: " + level.getModelLevelType());
@@ -1087,7 +1077,9 @@ public class MedicationProductCalculationService
       relationships.add(
           getSnowstormRelationship(
               HAS_ACTIVE_INGREDIENT,
-              modelConfiguration.getModelType().equals(ModelType.NMPC) && level.isBranded()
+              modelConfiguration.getModelType().equals(ModelType.NMPC)
+                      && level.isBranded()
+                      && ingredient.getRefinedActiveIngredient() != null
                   ? ingredient.getRefinedActiveIngredient()
                   : ingredient.getActiveIngredient(),
               group,
@@ -1147,6 +1139,18 @@ public class MedicationProductCalculationService
 
     boolean enforceRefsets = modelConfiguration.getModelType().equals(ModelType.AMT);
 
+    // if the product has ingredients and they have some sort of strength or quantity then it can be
+    // defined, otherwise we'll guess primitive - user can always override the decision
+    boolean defined =
+        !productDetails.getActiveIngredients().isEmpty()
+            && productDetails.getActiveIngredients().stream()
+                .allMatch(
+                    i ->
+                        i.getConcentrationStrength() != null
+                            || i.getTotalQuantity() != null
+                            || i.getPresentationStrengthNumerator() != null
+                            || i.getConcentrationStrengthNumerator() != null);
+
     return nodeGeneratorService.generateNodeAsync(
         branch,
         atomicCache,
@@ -1166,7 +1170,8 @@ public class MedicationProductCalculationService
         productDetails.getNonDefiningProperties(),
         !branded,
         false,
-        enforceRefsets);
+        enforceRefsets,
+        defined);
   }
 
   private CompletableFuture<Node> findOrCreateMp(
@@ -1191,6 +1196,10 @@ public class MedicationProductCalculationService
     Set<SnowstormRelationship> relationships =
         createMpRelationships(details, mpLevel, modelConfiguration);
 
+    // if the product has ingredients it can be defined, otherwise we'll guess primitive - user can
+    // always override the decision
+    boolean defined = !details.getActiveIngredients().isEmpty();
+
     return nodeGeneratorService.generateNodeAsync(
         branch,
         atomicCache,
@@ -1210,7 +1219,8 @@ public class MedicationProductCalculationService
         details.getNonDefiningProperties(),
         false,
         false,
-        false);
+        false,
+        defined);
   }
 
   private Set<SnowstormRelationship> createClinicalDrugRelationships(
@@ -1388,6 +1398,7 @@ public class MedicationProductCalculationService
         addRelationshipIfNotNull(
             relationships,
             modelConfiguration.getModelType().equals(ModelType.AMT)
+                    || ingredient.getRefinedActiveIngredient() == null
                 ? ingredient.getActiveIngredient()
                 : ingredient.getRefinedActiveIngredient(),
             HAS_ACTIVE_INGREDIENT,
@@ -1396,9 +1407,17 @@ public class MedicationProductCalculationService
       }
 
       if (level.isBranded() || modelConfiguration.getModelType().equals(ModelType.AMT)) {
+        SnowstormConceptMini ingredientConcept;
+        if (ingredient.getPreciseIngredient() != null) {
+          ingredientConcept = ingredient.getPreciseIngredient();
+        } else if (ingredient.getRefinedActiveIngredient() != null) {
+          ingredientConcept = ingredient.getRefinedActiveIngredient();
+        } else {
+          ingredientConcept = ingredient.getActiveIngredient();
+        }
         addRelationshipIfNotNull(
             relationships,
-            ingredient.getPreciseIngredient(),
+            ingredientConcept,
             HAS_PRECISE_ACTIVE_INGREDIENT,
             group,
             modelConfiguration.getModuleId());

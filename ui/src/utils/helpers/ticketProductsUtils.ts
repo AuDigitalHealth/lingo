@@ -207,7 +207,9 @@ export function mapToProductDetailsArrayFromBulkActions(
   bulkProductActions: TicketBulkProductActionDto[],
   indexStarts: number,
 ): ProductTableRow[] {
-  const productDetailsArray = bulkProductActions.map(function (item) {
+  // this may also be a product update, so that must be considered
+  const productDetailsArray = bulkProductActions.map(item => {
+    item.details.type;
     const id = indexStarts++;
     const productDto: ProductTableRow = {
       id: id,

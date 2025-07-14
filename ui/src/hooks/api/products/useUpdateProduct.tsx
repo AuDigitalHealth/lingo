@@ -1,6 +1,6 @@
 import {
-  ProductDescriptionUpdateRequest,
-  ProductNonDefiningPropertyUpdateRequest,
+  ProductExternalRequesterUpdateRequest,
+  ProductUpdateRequest,
 } from '../../../types/product.ts';
 import { useMutation } from '@tanstack/react-query';
 import { enqueueSnackbar } from 'notistack';
@@ -8,20 +8,20 @@ import { AxiosError } from 'axios';
 import productService from '../../../api/ProductService.ts';
 
 interface useUpdateProductDescriptionArguments {
-  productDescriptionUpdateRequest: ProductDescriptionUpdateRequest;
+  productUpdateRequest: ProductUpdateRequest;
   productId: string;
   branch: string;
 }
 
-export function useUpdateProductDescription() {
+export function useUpdateProduct() {
   const mutation = useMutation({
     mutationFn: ({
-      productDescriptionUpdateRequest,
+      productUpdateRequest,
       productId,
       branch,
     }: useUpdateProductDescriptionArguments) => {
       return productService.editProductDescriptions(
-        productDescriptionUpdateRequest,
+        productUpdateRequest,
         productId,
         branch,
       );
@@ -33,32 +33,26 @@ export function useUpdateProductDescription() {
         variant: 'error',
       });
     },
-    onSuccess: () => {
-      enqueueSnackbar('Product edited successfully.', {
-        variant: 'success',
-        autoHideDuration: 5000,
-      });
-    },
   });
 
   return mutation;
 }
 
-interface useUpdateProductNonDefiningPropertyArguments {
-  propertyUpdate: ProductNonDefiningPropertyUpdateRequest;
+interface useUpdateProductExternalIdentifiersArguments {
+  externalRequesterUpdate: ProductExternalRequesterUpdateRequest;
   productId: string;
   branch: string;
 }
 
-export function useUpdateProductNonDefiningProperties() {
+export function useUpdateProductExternalIdentifiers() {
   const mutation = useMutation({
     mutationFn: ({
-      propertyUpdate,
+      externalRequesterUpdate,
       productId,
       branch,
-    }: useUpdateProductNonDefiningPropertyArguments) => {
-      return productService.editProductNonDefiningProperties(
-        propertyUpdate,
+    }: useUpdateProductExternalIdentifiersArguments) => {
+      return productService.editProductExternalIdentifiers(
+        externalRequesterUpdate,
         productId,
         branch,
       );
@@ -67,16 +61,15 @@ export function useUpdateProductNonDefiningProperties() {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       enqueueSnackbar(
-        `Error Editing Product properties Ids:${error.response?.data.detail}`,
+        `Error Editing Product Artg Ids:${error.response?.data.detail}`,
         {
           variant: 'error',
         },
       );
     },
     onSuccess: () => {
-      enqueueSnackbar('Product properties edited successfully.', {
+      enqueueSnackbar('Product Artg Ids edited successfully.', {
         variant: 'success',
-        autoHideDuration: 5000,
       });
     },
   });

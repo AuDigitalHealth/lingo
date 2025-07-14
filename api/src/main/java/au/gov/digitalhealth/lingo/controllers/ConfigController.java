@@ -83,28 +83,6 @@ public class ConfigController {
     return ResponseEntity.ok(schemaService.getMedicationUiSchema(branch));
   }
 
-  @GetMapping(value = "/vaccine/{branch}/schema", produces = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<String> getVaccineSchema(@PathVariable String branch) {
-    return ResponseEntity.ok(schemaService.getVaccineSchema(branch));
-  }
-
-  @GetMapping(value = "/vaccine/{branch}/ui-schema", produces = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<String> getVaccineUiSchema(@PathVariable String branch) {
-    return ResponseEntity.ok(schemaService.getVaccineUiSchema(branch));
-  }
-
-  @GetMapping(value = "/nutritional/{branch}/schema", produces = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<String> getSimpleSchema(@PathVariable String branch) {
-    return ResponseEntity.ok(schemaService.getSimpleSchema(branch));
-  }
-
-  @GetMapping(
-      value = "/nutritional/{branch}/ui-schema",
-      produces = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<String> getSimpleUiSchema(@PathVariable String branch) {
-    return ResponseEntity.ok(schemaService.getSimpleUiSchema(branch));
-  }
-
   @GetMapping(value = "/device/{branch}/schema", produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<String> getDeviceSchema(@PathVariable String branch) {
     return ResponseEntity.ok(schemaService.getDeviceSchema(branch));

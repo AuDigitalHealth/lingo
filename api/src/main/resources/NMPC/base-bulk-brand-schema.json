@@ -46,13 +46,11 @@
           "type": "array",
           "title": "Properties",
           "items": {
-            "$ref": "#/$defs/PACKAGE_NonDefiningProperty"
+            "$ref": "#/$defs/MEDICATION_PACKAGE_NonDefiningProperty"
           }
         }
       },
-      "required": [
-        "brand"
-      ]
+      "required": ["brand"]
     }
   },
   "properties": {

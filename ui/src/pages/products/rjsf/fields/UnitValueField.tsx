@@ -2,12 +2,12 @@ import React from 'react';
 import { FieldProps } from '@rjsf/utils';
 import { Grid, TextField } from '@mui/material';
 import EclAutocomplete from '../components/EclAutocomplete.tsx';
-import useTaskById from '../../../../hooks/useTaskById.tsx';
+import useTaskByKey from '../../../../hooks/useTaskByKey.tsx';
 
 const UnitValueField: React.FC<FieldProps<any, any>> = props => {
   const { formData, uiSchema, onChange, idSchema } = props;
   const { value, unit } = formData || { value: undefined, unit: undefined };
-  const task = useTaskById();
+  const task = useTaskByKey();
   const unitOptions = uiSchema?.unit?.['ui:options'] || {};
 
   const title =

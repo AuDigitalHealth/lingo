@@ -17,12 +17,13 @@ import {
   NonDefiningProperty,
   NonDefiningPropertyType,
 } from '../../../../../types/product.ts';
-import useTaskById from '../../../../../hooks/useTaskById.tsx';
+import useTaskByKey from '../../../../../hooks/useTaskByKey.tsx';
 import { ConceptMini } from '../../../../../types/concept.ts';
 import { MultiValueValueSetAutocomplete } from '../../components/MultiValueSetAutocomplete.tsx';
 import MultiValueEclAutocomplete from '../../components/MultiValueEclAutocomplete.tsx';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import DesktopDatePickerField from '../../components/DesktopDatePickerField.tsx';
+import { Tooltip } from 'antd';
 
 const SCHEME_COLORS = ['primary', 'secondary', 'success', 'error', 'warning'];
 
@@ -71,7 +72,7 @@ const ExternalIdentifiers: React.FC<
   const formData = props.formData;
 
   const schemas = schema?.items?.anyOf as NonDefiningPropertyDefinition[];
-  const task = useTaskById();
+  const task = useTaskByKey();
   return (
     <>
       <Grid container spacing={2}>
@@ -298,16 +299,24 @@ const ExternalIdentifierRender: React.FC<
   };
 
   const renderChip = (item: NonDefiningProperty) => (
-    <Chip
-      variant="filled"
-      key={`${item.identifierScheme}-${item.value}`}
-      label={`${item.value}`}
-      onDelete={
-        !readOnly
-          ? () => handleDelete(item.value, item.identifierScheme)
-          : undefined
-      }
-    />
+    <Tooltip title={item.value} placement="top">
+      <Chip
+        variant="filled"
+        key={`${item.identifierScheme}-${item.value}`}
+        label={item.value}
+        onDelete={
+          !readOnly
+            ? () => handleDelete(item.value, item.identifierScheme)
+            : undefined
+        }
+        sx={{
+          maxWidth: '200px', // Constrain chip width
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      />
+    </Tooltip>
   );
 
   if (readOnly && (!schemeEntries || schemeEntries.length === 0)) {
