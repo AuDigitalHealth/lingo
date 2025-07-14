@@ -16,6 +16,9 @@
 package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.gov.digitalhealth.lingo.configuration.model.BasePropertyDefinition;
+import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import au.gov.digitalhealth.lingo.validation.OnlyOneNotEmpty;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -91,5 +94,38 @@ public class PackageDetails<T extends ProductDetails> extends PackageProductDeta
             .anyMatch(productQuantity -> productQuantity.getProductDetails().hasDeviceType())
         || containedPackages.stream()
             .anyMatch(packageQuantity -> packageQuantity.getPackageDetails().hasDeviceType());
+  }
+
+  public void cascadeProperties(ModelConfiguration modelConfiguration) {
+    // copy properties from this package to the contained products
+    nonDefiningProperties.forEach(
+        nonDefiningProperty -> {
+          BasePropertyDefinition propertyDefinition =
+              modelConfiguration.getProperty(nonDefiningProperty.getIdentifierScheme());
+          if (propertyDefinition.getModelLevels().stream()
+              .anyMatch(ModelLevelType::isProductLevel)) {
+            containedProducts.forEach(
+                product ->
+                    product
+                        .getProductDetails()
+                        .getNonDefiningProperties()
+                        .add(nonDefiningProperty));
+          }
+        });
+    // copy properties from the contained products to the packages
+    containedProducts.forEach(
+        containedProduct ->
+            containedProduct
+                .getProductDetails()
+                .nonDefiningProperties
+                .forEach(
+                    nonDefiningProperty -> {
+                      BasePropertyDefinition propertyDefinition =
+                          modelConfiguration.getProperty(nonDefiningProperty.getIdentifierScheme());
+                      if (propertyDefinition.getModelLevels().stream()
+                          .anyMatch(ModelLevelType::isPackageLevel)) {
+                        nonDefiningProperties.add(nonDefiningProperty);
+                      }
+                    }));
   }
 }
