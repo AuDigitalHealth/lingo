@@ -28,6 +28,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -37,6 +40,7 @@ public class SchemaExtender {
   public static final String UI_OPTIONS = "ui:options";
   public static final String UI_WIDGET = "ui:widget";
   public static final String PROPERTIES = "properties";
+  public static final String ONE_OF = "oneOf";
 
   ObjectMapper objectMapper;
 
@@ -127,9 +131,22 @@ public class SchemaExtender {
         getArrayProperties(schemaNode, properties, jsonTypeName, title,productType, ProductPackageType.PACKAGE);
 
     if (nonDefiningProperty != null) {
-      schemaNode
-          .withObjectProperty(PROPERTIES)
-          .set(propertyName, objectMapper.valueToTree(nonDefiningProperty));
+      ArrayNode oneOfArray = (ArrayNode) schemaNode.get(ONE_OF);
+      if (oneOfArray == null || !oneOfArray.isArray()) {
+        schemaNode
+                .withObjectProperty(PROPERTIES)
+                .set(propertyName, objectMapper.valueToTree(nonDefiningProperty));
+      }else{
+        for (JsonNode branch : oneOfArray) {
+          ObjectNode propertiesNode = (ObjectNode) branch.get(PROPERTIES);
+          if (propertiesNode == null) {
+            propertiesNode = objectMapper.createObjectNode();
+            ((ObjectNode) branch).set(PROPERTIES, propertiesNode);
+          }
+          propertiesNode.set(NON_DEFINING_PROPERTIES, objectMapper.valueToTree(nonDefiningProperty));
+        }
+      }
+
     }
 
     ArrayProperty nonDefiningProductProperty =
