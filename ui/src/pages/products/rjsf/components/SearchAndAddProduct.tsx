@@ -8,7 +8,7 @@ import {
   ProductAddDetails,
 } from '../../../../types/product.ts';
 import productService from '../../../../api/ProductService.ts';
-import useTaskById from '../../../../hooks/useTaskById.tsx';
+import useTaskByKey from '../../../../hooks/useTaskByKey.tsx';
 import ProductService from '../../../../api/ProductService.ts';
 import BaseModalFooter from '../../../../components/modal/BaseModalFooter.tsx';
 import BaseModal from '../../../../components/modal/BaseModal.tsx';
@@ -39,7 +39,7 @@ const SearchAndAddProduct: React.FC<SearchAndAddProductProps> = ({
     useState<ProductAddDetails | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
-  const task = useTaskById();
+  const task = useTaskByKey();
   const ecl = uiSchema?.['ui:options']?.searchAndAddProduct.ecl;
   const isPackage = uiSchema?.['ui:options']?.searchAndAddProduct.package;
   const type = uiSchema?.['ui:options']?.searchAndAddProduct.type;

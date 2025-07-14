@@ -1,6 +1,6 @@
-// import useTaskById from '../../../../hooks/useTaskById.tsx';
+// import useTaskByKey from '../../../../hooks/useTaskByKey.tsx';
 import { useConceptsForReview } from '../../../../hooks/api/task/useConceptsForReview.js';
-import useTaskById from '../../../../hooks/useTaskById.tsx';
+import useTaskByKey from '../../../../hooks/useTaskByKey.tsx';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 
 import { Box, Paper, Typography } from '@mui/material';
@@ -11,9 +11,10 @@ import { useApproveReviewMutation } from '../../../../hooks/api/task/useApproveR
 import { Task } from '../../../../types/task.ts';
 import { Button } from '@mui/material';
 import { useConceptsThatHaveBeenReviewed } from '../../../../hooks/api/task/useConceptsThatHaveBeenReviewed.tsx';
+import { truncate } from 'lodash';
 
 function ConceptReviewList() {
-  const task = useTaskById();
+  const task = useTaskByKey();
   const projectKey = task?.projectKey;
   const taskKey = task?.key;
   const { conceptsReviewed } = useConceptsThatHaveBeenReviewed(
@@ -73,7 +74,7 @@ function ConceptReviewList() {
             }}
           >
             <Link to={`review/${params.row.concept?.conceptId}`}>
-              {params.value}
+              {truncate(params.value, { length: 100 })}
             </Link>
           </Typography>
         </Box>
@@ -211,7 +212,7 @@ function ConceptReviewList() {
               backgroundColor: 'grey.50',
             },
           }}
-          getRowHeight={() => 'auto'}
+          getRowHeight={() => 100}
           disableRowSelectionOnClick
         />
       </Paper>
