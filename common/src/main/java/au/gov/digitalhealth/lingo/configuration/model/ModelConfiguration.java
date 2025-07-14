@@ -68,10 +68,6 @@ public class ModelConfiguration {
 
   @NotEmpty private String baseMedicationSchema;
   @NotEmpty private String baseMedicationUiSchema;
-  @NotEmpty private String baseVaccineSchema;
-  @NotEmpty private String baseVaccineUiSchema;
-  @NotEmpty private String baseSimpleSchema;
-  @NotEmpty private String baseSimpleUiSchema;
   @NotEmpty private String baseDeviceSchema;
   @NotEmpty private String baseDeviceUiSchema;
   @NotEmpty private String baseBulkBrandSchema;
