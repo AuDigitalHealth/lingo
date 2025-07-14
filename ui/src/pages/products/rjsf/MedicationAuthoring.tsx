@@ -10,7 +10,6 @@ import {
 } from '@mui/material';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import _ from 'lodash';
-import ajvErrors from 'ajv-errors';
 
 import UnitValueField from './fields/UnitValueField.tsx';
 import AutoCompleteField from './fields/AutoCompleteField.tsx';
@@ -28,7 +27,6 @@ import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 import productService from '../../../api/ProductService.ts';
 import { ConfigService } from '../../../api/ConfigService.ts';
 import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
-import { customizeValidator } from '@rjsf/validator-ajv8';
 import { Concept } from '../../../types/concept.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
 import { Task } from '../../../types/task.ts';
@@ -45,7 +43,10 @@ import ProductPartialSaveModal from './components/ProductPartialSaveModal.tsx';
 import MuiGridTemplate from './templates/MuiGridTemplate.tsx';
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 import { validator } from './helpers/validator.ts';
-import { buildErrorSchema, filterErrors } from './helpers/validationHelper.ts';
+import {
+  buildErrorSchema,
+  deDuplicateErrors,
+} from './helpers/validationHelper.ts';
 import { ErrorDisplay } from './components/ErrorDisplay.tsx';
 
 export interface MedicationAuthoringV2Props {
@@ -200,10 +201,9 @@ function MedicationAuthoring({
   };
 
   const onError = (errors: any) => {
-    const filteredErrors = filterErrors(errors);
-    const newErrorSchema = buildErrorSchema(filteredErrors);
+    const newErrorSchema = buildErrorSchema(errors);
     setErrorSchema(newErrorSchema);
-    setFormErrors(filteredErrors);
+    setFormErrors(errors);
   };
 
   return (
@@ -233,7 +233,6 @@ function MedicationAuthoring({
               NumberWidget,
             }}
             templates={{
-              // FieldTemplate: CustomFieldTemplate,
               ArrayFieldTemplate: CustomArrayFieldTemplate,
               ObjectFieldTemplate: MuiGridTemplate,
             }}

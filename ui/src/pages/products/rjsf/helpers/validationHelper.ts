@@ -146,7 +146,7 @@ export const safeStringify = (obj: any) => {
     2,
   );
 };
-export const filterErrors = (errors: any[]): any[] => {
+export const deDuplicateErrors = (errors: any[]): any[] => {
   // Deduplicate errors by path
   const errorsByPath: { [path: string]: any } = errors.reduce(
     (acc: any, error: any) => {
@@ -162,8 +162,6 @@ export const filterErrors = (errors: any[]): any[] => {
     },
     {},
   );
-
-  // Return array of unique errors
   return Object.values(errorsByPath);
 };
 export const removeNullFields = (obj: any, path: string = ''): any => {
