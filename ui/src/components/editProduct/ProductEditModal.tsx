@@ -23,6 +23,7 @@ import {
   DefinitionType,
   Description,
   Product,
+  caseSignificanceDisplay,
 } from '../../types/concept.ts';
 import { Box, Stack } from '@mui/system';
 import {
@@ -92,23 +93,12 @@ import { productUpdateValidationSchema } from '../../types/productValidations.ts
 import WarningModal from '../../themes/overrides/WarningModal.tsx';
 import { deepClone } from '@mui/x-data-grid/utils/utils';
 import AdditionalPropertiesDisplay from '../../pages/products/components/AdditionalPropertiesDisplay.tsx';
-
-const USLangRefset: LanguageRefset = {
-  default: 'false',
-  en: '900000000000509007',
-  dialectName: 'US',
-  readOnly: 'false',
-};
+import { ExistingDescriptionsSection } from './ExistingDescriptionsSection.tsx';
+import useProjectLangRefsets from '../../hooks/api/products/useProjectLangRefsets.tsx';
 
 const typeMap: Record<DefinitionType, string> = {
   [DefinitionType.FSN]: '900000000000003001',
   [DefinitionType.SYNONYM]: '900000000000013009',
-};
-
-const caseSignificanceDisplay: Record<CaseSignificance, string> = {
-  [CaseSignificance.ENTIRE_TERM_CASE_SENSITIVE]: 'CS',
-  [CaseSignificance.CASE_INSENSITIVE]: 'ci',
-  [CaseSignificance.INITIAL_CHARACTER_CASE_INSENSITIVE]: 'cI',
 };
 
 interface ProductEditModalProps {
@@ -202,21 +192,8 @@ function EditConceptBody({
   const [semanticTagWarningModalOpen, setSemanticTagWarningModalOpen] =
     useState(false);
 
-  const langRefsets = useMemo(() => {
-    if (project === undefined || project.metadata === undefined) {
-      return [];
-    }
-    const fromApi = [...project.metadata.requiredLanguageRefsets];
-    if (
-      fromApi.filter(item => {
-        return item.en === USLangRefset.en;
-      }).length === 0
-    ) {
-      fromApi.push(USLangRefset);
-    }
-
-    return fromApi;
-  }, [project]);
+    const langRefsets = useProjectLangRefsets({project: project});
+  
 
   const descriptions = useMemo(() => {
     const existingDescriptions = data?.descriptions ? data.descriptions : [];
@@ -623,6 +600,8 @@ function EditConceptBody({
                     title={'Existing'}
                     product={product}
                     branch={branch}
+                    displayMode='input'
+                    showBorder
                   />
                 </Grid>
                 <Grid
@@ -732,192 +711,6 @@ function EditConceptBody({
         </Grid>
       </Box>
     </>
-  );
-}
-interface ExistingDescriptionsSectionProps {
-  displayRetiredDescriptions: boolean;
-  isFetching: boolean;
-  nonDefiningProperties?: NonDefiningProperty[];
-  descriptions?: Description[];
-  isCtpp: boolean;
-  dialects: LanguageRefset[];
-  title: string;
-  product: Product;
-  branch: string;
-}
-
-export function ExistingDescriptionsSection({
-  displayRetiredDescriptions,
-  isFetching,
-  descriptions,
-  isCtpp,
-  dialects,
-  title,
-  nonDefiningProperties,
-  product,
-  branch
-}: ExistingDescriptionsSectionProps) {
-  // Function to determine preferred term based on AU dialect
-  const isPreferredTerm = (description: Description): boolean => {
-    const defaultDialectKey = dialects.find(langRefsets => {
-      return langRefsets.default === 'true';
-    });
-    return (
-      description.type === 'SYNONYM' &&
-      defaultDialectKey !== undefined &&
-      description.acceptabilityMap?.[defaultDialectKey.en] === 'PREFERRED'
-    );
-  };
-
-  return (
-    <Grid
-      item
-      xs={12}
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      <Typography variant="h6" marginBottom={1}>
-        {title}
-      </Typography>
-      <Box
-        border={0.1}
-        borderColor="grey.200"
-        padding={2}
-        sx={{
-          height: '100%',
-          width: '100%',
-          flexGrow: 1, // Ensures the height matches the right section
-        }}
-      >
-        {/* FSN and Synonyms Section */}
-        <InnerBoxSmall component="fieldset">
-          {isFetching && <Loading />}
-          {!isFetching && (
-            <>
-              {descriptions?.map((description, index) => {
-                const isPreferred = isPreferredTerm(description);
-                const label =
-                  description.type === 'FSN'
-                    ? 'FSN'
-                    : isPreferred
-                      ? 'Preferred Term'
-                      : 'Synonym';
-                if (!displayRetiredDescriptions && !description.active) {
-                  return <></>;
-                }
-                return (
-                  <Grid
-                    container
-                    spacing={1}
-                    key={`${description.descriptionId}-left`}
-                    alignItems="center"
-                  >
-                    <Grid item xs={12} md={2}>
-                      {/* <Typography variant="subtitle2">{label}</Typography> */}
-                      <FormControl fullWidth margin="dense" size="small">
-                        <InputLabel>Type</InputLabel>
-                        <Select
-                          // fullWidth
-                          // variant="standard"
-                          margin="dense"
-                          value={description.type}
-                          disabled
-                        >
-                          {Object.values(DefinitionType).map(
-                            (value: string) => (
-                              <MenuItem key={value} value={value}>
-                                {value}
-                              </MenuItem>
-                            ),
-                          )}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                    <Grid item xs={12} md={5}>
-                      <Switch
-                        disabled
-                        checked={description.active}
-                        color="primary"
-                        size="small"
-                      />
-                      <Typography variant="subtitle2">{label}</Typography>
-                      <TextField
-                        fullWidth
-                        variant="outlined"
-                        margin="dense"
-                        multiline
-                        minRows={1}
-                        maxRows={4}
-                        value={description.term || ''}
-                        disabled
-                      />
-                    </Grid>
-                    {/* Display Dialect Acceptability */}
-                    <Grid item xs={12} md={3}>
-                      <Grid container direction="column" spacing={1}>
-                        {dialects.map(dialect => (
-                          <Grid item xs={12} md={2.5} key={dialect.en}>
-                            <FormControl fullWidth margin="dense" size="small">
-                              <InputLabel>{dialect.dialectName}</InputLabel>
-                              <Select
-                                disabled
-                                defaultValue={() => {
-                                  return (
-                                    descriptions[index]?.acceptabilityMap?.[
-                                      dialect.en
-                                    ] || 'NOT ACCEPTABLE'
-                                  );
-                                }}
-                              >
-                                {['PREFERRED', 'ACCEPTABLE'].map(
-                                  (value: string) => (
-                                    <MenuItem key={value} value={value}>
-                                      {value}
-                                    </MenuItem>
-                                  ),
-                                )}
-                                <MenuItem value={'NOT ACCEPTABLE'}>
-                                  NOT ACCEPTABLE
-                                </MenuItem>
-                              </Select>
-                            </FormControl>
-                          </Grid>
-                        ))}
-                      </Grid>
-                    </Grid>
-                    <Grid item xs={12} md={2}>
-                      <FormControl fullWidth margin="dense" size="small">
-                        <InputLabel>Case Sensitivity</InputLabel>
-
-                        <Select
-                          disabled={true}
-                          value={description.caseSignificance}
-                        >
-                          {Object.values(CaseSignificance).map(value => (
-                            <MenuItem key={value} value={value}>
-                              {value}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                    <Divider sx={{ width: '100%', my: 1 }} />
-                  </Grid>
-                );
-              })}
-            </>
-          )}
-        </InnerBoxSmall>
-
-        <AdditionalPropertiesDisplay
-          product={product}
-          branch={branch}
-          showWrapper={false}
-        />
-      </Box>
-    </Grid>
   );
 }
 
