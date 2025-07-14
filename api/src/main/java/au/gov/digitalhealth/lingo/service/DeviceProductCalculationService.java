@@ -500,6 +500,7 @@ public class DeviceProductCalculationService
             packageDetails.getNonDefiningProperties(),
             true,
             ModelLevelType.PACKAGED_CLINICAL_DRUG.equals(modelLevel.getModelLevelType()),
+            true,
             true)
         .thenApply(
             n -> {
@@ -664,6 +665,7 @@ public class DeviceProductCalculationService
             productQuantity.getProductDetails().getNonDefiningProperties(),
             false,
             false,
+            true,
             true);
     if (leafBrandedProductNode.isNewConcept()) {
       leafBrandedProductNode
@@ -715,6 +717,7 @@ public class DeviceProductCalculationService
               productQuantity.getProductDetails().getNonDefiningProperties(),
               false,
               false,
+              true,
               true);
       if (rootBrandedProductNode.isNewConcept()) {
         rootBrandedProductNode
