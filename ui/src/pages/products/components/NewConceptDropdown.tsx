@@ -5,6 +5,7 @@ import {
   UseFormGetValues,
   UseFormRegister,
   UseFormSetValue,
+  useFieldArray,
 } from 'react-hook-form';
 import {
   FormControlLabel,
@@ -16,16 +17,31 @@ import {
 } from '@mui/material';
 import { InnerBoxSmall } from './style/ProductBoxes.tsx';
 import {
+  createDefaultDescription,
   filterKeypress,
+  findDefaultLangRefset,
   setEmptyToNull,
 } from '../../../utils/helpers/conceptUtils.ts';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import { replaceAllWithWhiteSpace } from '../../../types/productValidationUtils.ts';
 import { convertStringToRegex } from '../../../utils/helpers/stringUtils.ts';
 import { getValueFromFieldBindings } from '../../../utils/helpers/FieldBindingUtils.ts';
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import AdditionalPropertiesDisplay from './AdditionalPropertiesDisplay.tsx';
 import { ProductRetireUpdate } from './ProductRetireUpdate.tsx';
+import {
+  extractSemanticTag,
+  removeSemanticTagFromTerm,
+} from '../../../utils/helpers/ProductPreviewUtils.ts';
+import { ContentCopy, DeleteOutlined } from '@mui/icons-material';
+import { enqueueSnackbar } from 'notistack';
+import useAvailableProjects, {
+  getProjectFromKey,
+} from '../../../hooks/api/useInitializeProjects.tsx';
+import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
+import { PlusCircleOutlined } from '@ant-design/icons';
+import { IconButton } from '@mui/material';
+import { Button } from '@mui/material';
 
 interface NewConceptDropdownProps {
   product: Product;
@@ -48,6 +64,8 @@ function NewConceptDropdown({
   branch,
   setValue,
 }: NewConceptDropdownProps) {
+  const semanticTag = product.newConceptDetails?.semanticTag;
+
   const initialStatusRef = useRef(
     product.newConceptDetails?.axioms[0].definitionStatus ?? 'PRIMITIVE',
   );
@@ -107,6 +125,7 @@ function NewConceptDropdown({
             dataTestId={`fsn-input`}
             control={control}
             fieldBindings={fieldBindings}
+            semanticTag={semanticTag}
           />
         </Grid>
         <NewConceptDropdownField
@@ -118,6 +137,12 @@ function NewConceptDropdown({
           dataTestId={`pt-input`}
           control={control}
           fieldBindings={fieldBindings}
+        />
+        <AdditionalSynonymField
+          fieldName={`nodes[${index}].newConceptDetails.descriptions`}
+          register={register}
+          dataTestId={`pt-input`}
+          control={control}
         />
         <InnerBoxSmall component="fieldset">
           <legend>Specified Concept Id</legend>
@@ -149,6 +174,98 @@ function NewConceptDropdown({
   );
 }
 
+interface AdditionalSynonymFieldProps {
+  register: UseFormRegister<ProductSummary>;
+  fieldName: string;
+  dataTestId: string;
+  control: Control<ProductSummary>;
+}
+
+function AdditionalSynonymField({
+  register,
+  fieldName,
+  dataTestId,
+  control,
+}: AdditionalSynonymFieldProps) {
+  // Use useFieldArray to manage the array of descriptions
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: fieldName as 'nodes.0.newConceptDetails.descriptions',
+  });
+
+  const { data: projects } = useAvailableProjects();
+  const { applicationConfig } = useApplicationConfigStore();
+
+  const project = getProjectFromKey(applicationConfig?.apProjectKey, projects);
+
+  const langRefsets = useMemo(() => {
+    if (project === undefined || project.metadata === undefined) {
+      return [];
+    }
+    const fromApi = [...project.metadata.requiredLanguageRefsets];
+    return fromApi;
+  }, [project]);
+
+  const defaultLangRefset = findDefaultLangRefset(langRefsets);
+
+  // Handle adding a new synonym
+  const handleAddSynonym = () => {
+    const defaultDescription = createDefaultDescription(
+      '1',
+      '900000000000013009',
+      defaultLangRefset?.en,
+    );
+    append(defaultDescription);
+  };
+
+  return (
+    <Stack>
+      {/* <fieldset>
+        <legend>{legend}</legend> */}
+
+      {/* Display existing synonyms with ability to edit */}
+      {fields.map((field, index) => {
+        // For each description in the array, create an input field
+        const descriptionFieldName = `${fieldName}.${index}.term`;
+
+        return (
+          <InnerBoxSmall component="fieldset">
+            <legend>Synonym</legend>
+            <Stack flexDirection={'row'} alignItems={'center'}>
+              <TextField
+                type="text"
+                {...register(
+                  descriptionFieldName as `nodes.0.newConceptDetails.descriptions`,
+                )}
+                data-testid={`${dataTestId}-${index}`}
+                placeholder="Enter synonym term"
+                fullWidth
+              />
+              <IconButton color="error" onClick={() => remove(index)}>
+                <DeleteOutlined />
+              </IconButton>
+            </Stack>
+          </InnerBoxSmall>
+        );
+      })}
+
+      {/* Button to add a new synonym */}
+      <Stack flexDirection={'row'} justifyContent={'flex-end'}>
+        <Button
+          size="medium"
+          type="button"
+          onClick={handleAddSynonym}
+          data-testid={`${dataTestId}-add-button`}
+          startIcon={<PlusCircleOutlined />}
+        >
+          Add Synonym
+        </Button>
+      </Stack>
+      {/* </fieldset> */}
+    </Stack>
+  );
+}
+
 interface NewConceptDropdownFieldProps {
   register: UseFormRegister<ProductSummary>;
   originalValue: string;
@@ -158,36 +275,61 @@ interface NewConceptDropdownFieldProps {
   dataTestId: string;
   control: Control<ProductSummary>;
   fieldBindings: FieldBindings;
+  semanticTag?: string;
 }
 
 function NewConceptDropdownField({
   fieldName,
   legend,
+  originalValue,
   getValues,
   dataTestId,
   control,
   fieldBindings,
+  semanticTag,
 }: NewConceptDropdownFieldProps) {
   const [fieldChanged, setFieldChange] = useState(false);
-
   const regExp = convertStringToRegex(
-    getValueFromFieldBindings(fieldBindings, 'description.validation'),
+    getValueFromFieldBindings(fieldBindings, 'description.validation.regex'),
+  );
+  const originalValWithSemanticTag = semanticTag
+    ? `${originalValue} ${semanticTag}`
+    : originalValue;
+  const [copyVal, setCopyVal] = useState(originalValWithSemanticTag);
+  const preferredFieldName = fieldName.replace(
+    /\.(\w+)$/,
+    (match, p1: string) =>
+      `.generated${p1.charAt(0).toUpperCase() + p1.slice(1)}`,
   );
   const handleBlur = () => {
     const currentVal: string = getValues(
       fieldName as 'nodes.0.newConceptDetails.preferredTerm',
     );
-    const preferredFieldName = fieldName.replace(
-      /\.(\w+)$/,
-      (match, p1: string) =>
-        `.generated${p1.charAt(0).toUpperCase() + p1.slice(1)}`,
-    );
+
+    if (extractSemanticTag(currentVal)) {
+      setCopyVal(currentVal);
+    } else {
+      setCopyVal(`${currentVal} ${semanticTag}`);
+    }
+
     const generatedVal: string = getValues(
       preferredFieldName as 'nodes.0.newConceptDetails.preferredTerm',
     );
-    setFieldChange(!(currentVal === generatedVal));
+    const generatedValWithoutSemanticTag =
+      removeSemanticTagFromTerm(generatedVal);
+    setFieldChange(!(currentVal === generatedValWithoutSemanticTag));
   };
 
+  const handleCopy = () => {
+    if (copyVal) {
+      void navigator.clipboard.writeText(copyVal).then(() => {
+        enqueueSnackbar(`Copied '${copyVal}' to Clipboard`, {
+          variant: 'info',
+          autoHideDuration: 3000,
+        });
+      });
+    }
+  };
   return (
     <InnerBoxSmall component="fieldset">
       <legend>{legend}</legend>
@@ -197,32 +339,41 @@ function NewConceptDropdownField({
         control={control}
         defaultValue=""
         render={({ field }) => (
-          <Stack sx={{ alignItems: 'center', flexDirection: 'row' }}>
-            <TextField
-              {...field}
-              InputLabelProps={{ shrink: true }}
-              variant="outlined"
-              margin="dense"
-              fullWidth
-              multiline
-              minRows={1}
-              maxRows={4}
-              data-testid={dataTestId}
-              onChange={e => {
-                const value =
-                  regExp !== null
-                    ? replaceAllWithWhiteSpace(
-                        regExp,
+          <Stack sx={{ flexDirection: 'column' }}>
+            <Stack flexDirection={'row'} alignItems={'center'}>
+              <TextField
+                {...field}
+                InputLabelProps={{ shrink: true }}
+                variant="outlined"
+                margin="dense"
+                fullWidth
+                multiline
+                minRows={1}
+                maxRows={4}
+                data-testid={dataTestId}
+                onChange={e => {
+                  const value =
+                    regExp !== null
+                      ? replaceAllWithWhiteSpace(
+                          regExp,
 
-                        e.target.value,
-                      )
-                    : e.target.value;
+                          e.target.value,
+                        )
+                      : e.target.value;
 
-                field.onChange(value);
-              }}
-              color={fieldChanged ? 'error' : 'primary'}
-              onBlur={handleBlur}
-            />
+                  field.onChange(value);
+                }}
+                color={fieldChanged ? 'error' : 'primary'}
+                onBlur={handleBlur}
+              />
+              <IconButton onClick={handleCopy}>
+                <ContentCopy />
+              </IconButton>
+            </Stack>
+
+            {semanticTag && (
+              <FormHelperText>{`Semantic Tag: ${semanticTag}`}</FormHelperText>
+            )}
           </Stack>
         )}
       />

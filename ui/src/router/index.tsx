@@ -13,7 +13,6 @@ import CloseSnackbar from '../components/snackbar/CloseSnackBar';
 import MainLayout from '../layouts/MainLayout';
 import TasksRoutes from './TasksRoutes';
 import TaskEditLayout from '../pages/tasks/TaskEditLayout';
-import TasksList from '../pages/tasks/components/TasksList';
 import TicketsRoutes from './TicketsRoutes';
 import TicketsBacklog from '../pages/tickets/TicketsBacklog';
 import ProductRoutes from './ProductRoutes';
@@ -31,6 +30,7 @@ import Jobs from '../pages/jobs/Jobs.tsx';
 import MyBacklog from '../pages/tickets/MyBacklog.tsx';
 import { FilterSettings } from '../pages/settings/FilterSettings.tsx';
 import { ExternalProcessesSettings } from '../pages/settings/ExternalProcessesSettings.tsx';
+import TasksDisplay from '../pages/tasks/components/TasksDisplay.tsx';
 
 // ==============================|| ROUTING RENDER ||============================== //
 
@@ -106,16 +106,35 @@ export const browserRouter = createBrowserRouter(
         <Route path="/dashboard/tasks" element={<TasksRoutes />}>
           <Route
             path="/dashboard/tasks"
-            element={<TasksList path="" heading="My Tasks" />}
+            element={
+              <TasksDisplay
+                path=""
+                heading="My Tasks"
+                displayProject={false}
+                taskCreateRedirectUrl="/dashboard/tasks/edit"
+              />
+            }
           />
           <Route
             path="/dashboard/tasks/all"
-            element={<TasksList path="/all" heading="Tasks" />}
+            element={
+              <TasksDisplay
+                path="/all"
+                heading="Tasks"
+                displayProject={false}
+                taskCreateRedirectUrl="/dashboard/tasks/edit"
+              />
+            }
           />
           <Route
             path="/dashboard/tasks/needReview"
             element={
-              <TasksList path="/needReview" heading="Tasks Requiring Review" />
+              <TasksDisplay
+                path="/needReview"
+                heading="Tasks Requiring Review"
+                displayProject={false}
+                taskCreateRedirectUrl="/dashboard/tasks/edit"
+              />
             }
           />
 

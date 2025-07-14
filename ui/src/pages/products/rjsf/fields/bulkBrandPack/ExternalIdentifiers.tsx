@@ -17,7 +17,7 @@ import {
   NonDefiningProperty,
   NonDefiningPropertyType,
 } from '../../../../../types/product.ts';
-import useTaskById from '../../../../../hooks/useTaskById.tsx';
+import useTaskByKey from '../../../../../hooks/useTaskByKey.tsx';
 import { ConceptMini } from '../../../../../types/concept.ts';
 import { MultiValueValueSetAutocomplete } from '../../components/MultiValueSetAutocomplete.tsx';
 import MultiValueEclAutocomplete from '../../components/MultiValueEclAutocomplete.tsx';
@@ -72,7 +72,7 @@ const ExternalIdentifiers: React.FC<
   const formData = props.formData;
 
   const schemas = schema?.items?.anyOf as NonDefiningPropertyDefinition[];
-  const task = useTaskById();
+  const task = useTaskByKey();
   return (
     <>
       <Grid container spacing={2}>

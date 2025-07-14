@@ -23,8 +23,29 @@ import {
   BigDecimal,
   SnowstormConceptMini,
   ProductUpdateRequest,
+  ProductExternalRequesterUpdateRequest,
+  ProductDescriptionUpdateRequest,
+  NonDefiningProperty,
 } from './product.ts';
-import { Product } from './concept.ts';
+import { CaseSignificance, Product } from './concept.ts';
+import {
+  Acceptability,
+  Concept,
+  DefinitionType,
+  Description,
+  Product,
+  Term,
+} from './concept.ts';
+import {
+  isEmptyObjectByValue,
+  isUnitEach,
+  isValidConcept,
+} from '../utils/helpers/conceptUtils.ts';
+import {
+  calculateConcentrationStrength,
+  validateConceptExistence,
+  validComoOfProductIngredient,
+} from './productValidationUtils.ts';
 import { BulkAddExternalRequestorRequest } from './tickets/ticket.ts';
 
 export const WARNING_INVALID_COMBO_STRENGTH_SIZE_AND_TOTALQTY =
@@ -106,61 +127,344 @@ export const bulkAddExternalRequestorSchema: yup.ObjectSchema<BulkAddExternalReq
 
 // Define the validation schema
 export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateRequest> =
-  yup.object({
-    externalRequesterUpdate: yup
-      .object({
-        externalRequestors: yup.array(),
-        ticketId: yup.number().required('Ticket ID is required'),
-      })
-      .notRequired(),
+  yup
+    .object({
+      propertiesUpdateRequest: yup
+        .object<ProductUpdateRequest>({
+          nonDefiningProperties: yup
+            .array<NonDefiningProperty>()
+            .of(
+              yup.object({
+                identifierScheme: yup.string().required(),
+                identifier: yup.string().required(),
+                title: yup.string().required(),
+                type: yup.string().required(),
+              }),
+            )
+            .required(),
+        })
+        .defined(),
 
-    descriptionUpdate: yup
-      .object({
-        ticketId: yup.number().required('Ticket ID is required'),
+      descriptionUpdate: yup.object<ProductDescriptionUpdateRequest>({
         descriptions: yup
-          .array()
+          .array<Description>()
           .of(
-            yup.object({
+            yup.object<Description>({
               active: yup.boolean().required(),
               moduleId: yup.string().required(),
               released: yup.boolean().required(),
-              descriptionId: yup.string(),
-              term: yup.string().required('Term is required'),
+              descriptionId: yup.string().optional(),
+              term: yup
+                .string()
+                .required('Term cannot be blank')
+                .test(
+                  'Must not contain only a space character',
+                  (value, context) => {
+                    const isJustWhiteSpace = /^\s+$/.test(value);
+                    if (isJustWhiteSpace) {
+                      return context.createError({
+                        message: 'Must not contain only white space characters',
+                        path: context.path,
+                      });
+                    }
+                    const startsWithWhiteSpace = /^\s/.test(value);
+                    if (startsWithWhiteSpace) {
+                      return context.createError({
+                        message: 'Must not start with a whitespace character',
+                        path: context.path,
+                      });
+                    }
+                    return true;
+                  },
+                ),
               conceptId: yup.string().required(),
               typeId: yup.string().required(),
               acceptabilityMap: yup
-                .object()
+                .object<Record<string, Acceptability>>()
                 .test(
-                  'atLeastOneKey',
-                  'At least one acceptability entry is required',
-                  value => {
-                    return value !== undefined && Object.keys(value).length > 0;
+                  'Only One Preferred Synonym Per Language',
+                  (value, context) => {
+                    const formattedPath = context.path.replace(/\[(\d+)\]/g, '.$1');
+                    const thisDescription = context.from?.[1]
+                      .value as Description;
+
+                    const productDescriptionUpdateRequest = context.from?.[2]
+                      .value as ProductDescriptionUpdateRequest;
+
+                    const thisAcceptability = value as Record<
+                      string,
+                      Acceptability
+                    >;
+
+                    // Filter out the key '900000000000508004' for the "not acceptable" check
+                    const filteredAcceptability = Object.fromEntries(
+                      Object.entries(thisAcceptability).filter(
+                        ([key]) => key !== '900000000000508004',
+                      ),
+                    );
+
+                    if (!thisDescription.active) {
+                      const activeSynonyms =
+                        productDescriptionUpdateRequest.descriptions.filter(
+                          desc => {
+                            return (
+                              desc.type === 'SYNONYM' && desc.active === true
+                            );
+                          },
+                        );
+                      if (activeSynonyms.length === 0) {
+                        const firstLanguage = Object.keys(
+                          filteredAcceptability,
+                        )[Object.keys(filteredAcceptability).length - 1];
+                        const errPath = `${formattedPath}.${firstLanguage}`;
+                        return context.createError({
+                          message: 'There must be at least one active synonym',
+                          path: errPath,
+                        });
+                      }
+                      return true;
+                    }
+
+                    // Check if all remaining values are "NOT ACCEPTABLE"
+                    const allNotAcceptable =
+                      Object.keys(filteredAcceptability).length > 0 &&
+                      Object.values(filteredAcceptability).every(
+                        acceptability => acceptability === 'NOT ACCEPTABLE',
+                      );
+
+                    if (allNotAcceptable) {
+                      // Use the last language key from the filtered acceptabilityMap for the error path
+                      const firstLanguage = Object.keys(filteredAcceptability)[
+                        Object.keys(filteredAcceptability).length - 1
+                      ];
+                      
+                      const errPath = `${formattedPath}.${firstLanguage}`;
+                      return context.createError({
+                        message:
+                          "At least one term must not be 'NOT ACCEPTABLE'",
+                        path: errPath,
+                      });
+                    }
+
+                    if (
+                      thisDescription.active &&
+                      thisDescription.type === 'FSN'
+                    ) {
+                      const preferredCounter: Record<string, number> = {};
+                      const descriptions =
+                        productDescriptionUpdateRequest.descriptions;
+
+                      descriptions.forEach(desc => {
+                        if (
+                          desc.type === 'FSN' &&
+                          desc.active === true &&
+                          desc.acceptabilityMap
+                        ) {
+                          Object.keys(desc.acceptabilityMap)
+                            .filter(key => key !== '900000000000508004')
+                            .forEach(key => {
+                              if (desc.acceptabilityMap) {
+                                if (!preferredCounter[key]) {
+                                  preferredCounter[key] = 0;
+                                }
+                                if (
+                                  desc.acceptabilityMap[key] === 'PREFERRED'
+                                ) {
+                                  preferredCounter[key] += 1;
+                                }
+                              }
+                            });
+                        }
+                      });
+
+                      let onlyOneFail = false;
+                      let exactlyOneFail = false;
+                      let errPath = '';
+
+                      Object.entries(preferredCounter).forEach(
+                        ([language, count]) => {
+                          if (count > 1) {
+                            onlyOneFail = true;
+                            errPath = `${formattedPath}.${language}`;
+                          }
+                          if (count === 0) {
+                            exactlyOneFail = true;
+                            errPath = `${formattedPath}.${language}`;
+                          }
+                        },
+                      );
+
+                      if (onlyOneFail) {
+                        return context.createError({
+                          message: `Only one FSN can be preferred per language.`,
+                          path: errPath,
+                        });
+                      }
+
+                      if (exactlyOneFail) {
+                        return context.createError({
+                          message: `One FSN must be preferred for each language.`,
+                          path: errPath,
+                        });
+                      }
+                    }
+
+                    const preferredCounter: Record<string, number> = {};
+                    const descriptions =
+                      productDescriptionUpdateRequest.descriptions;
+
+                    descriptions.forEach(desc => {
+                      if (
+                        desc.type === 'SYNONYM' &&
+                        desc.active === true &&
+                        desc.acceptabilityMap
+                      ) {
+                        Object.keys(desc.acceptabilityMap)
+                          .filter(key => key !== '900000000000508004') // Filter out the specific key
+                          .forEach(key => {
+                            if (desc.acceptabilityMap) {
+                              if (!preferredCounter[key]) {
+                                preferredCounter[key] = 0;
+                              }
+                              if (desc.acceptabilityMap[key] === 'PREFERRED') {
+                                preferredCounter[key] += 1;
+                              }
+                            }
+                          });
+                      }
+                    });
+
+                    let onlyOneFail = false;
+                    let exactlyOneFail = false;
+                    let errPath = '';
+
+                    Object.entries(preferredCounter).forEach(
+                      ([language, count]) => {
+                        if (count > 1) {
+                          onlyOneFail = true;
+                          errPath = `${context.path}.${language}`;
+                        }
+                        if (count === 0) {
+                          exactlyOneFail = true;
+                          errPath = `${context.path}.${language}`;
+                        }
+                      },
+                    );
+
+                    if (onlyOneFail) {
+                      return context.createError({
+                        message: `Only one synonym can be preferred per language.`,
+                        path: errPath,
+                      });
+                    }
+
+                    if (exactlyOneFail) {
+                      return context.createError({
+                        message: `One synonym must be preferred for each language.`,
+                        path: errPath,
+                      });
+                    }
+
+                    return true;
                   },
                 )
-                .required(),
+                .optional(),
               type: yup
-                .mixed<'FSN' | 'SYNONYM' | 'TEXT_DEFINITION'>()
-                .oneOf(['FSN', 'SYNONYM', 'TEXT_DEFINITION'])
-                .required(),
+                .string()
+                .test('Exactly One Active Fsn', (value, context) => {
+                  // Get all descriptions from the form
+                  const productDescriptionUpdateRequest = context.from?.[1]
+                    .value as ProductDescriptionUpdateRequest;
+                  const descriptions =
+                    productDescriptionUpdateRequest.descriptions;
+
+                  // Count active FSNs
+                  let activeFsnCount = 0;
+                  descriptions.forEach(desc => {
+                    if (desc.type === DefinitionType.FSN && desc.active) {
+                      activeFsnCount += 1;
+                    }
+                  });
+
+                  // The current description we're validating
+                  const thisDescription = context.from?.[0]
+                    .value as Description;
+
+                  // If this is an active FSN being changed to something else, check if it's the only FSN
+                  if (
+                    thisDescription.type !== DefinitionType.FSN &&
+                    value === DefinitionType.FSN &&
+                    thisDescription.active
+                  ) {
+                    // If we're adding a new FSN and there's already one, that's an error
+                    if (activeFsnCount >= 1) {
+                      return context.createError({
+                        message: 'Can only be one active FSN',
+                        path: context.path,
+                      });
+                    }
+                  }
+                  // If this is an FSN being deactivated, check that there's another active FSN
+                  else if (
+                    thisDescription.type === DefinitionType.FSN &&
+                    !thisDescription.active
+                  ) {
+                    if (activeFsnCount === 0) {
+                      return context.createError({
+                        message: 'Must have at least one active FSN',
+                        path: context.path,
+                      });
+                    }
+                  }
+                  // If this is the only FSN and it's active, make sure it remains FSN
+                  else if (
+                    thisDescription.type === DefinitionType.FSN &&
+                    thisDescription.active
+                  ) {
+                    if (activeFsnCount === 1 && value !== DefinitionType.FSN) {
+                      return context.createError({
+                        message: 'Must have at least one active FSN',
+                        path: context.path,
+                      });
+                    }
+                  }
+
+                  // If we're not changing anything FSN-related, still validate the global state
+                  if (activeFsnCount > 1) {
+                    return context.createError({
+                      message: 'Can only be one active FSN',
+                      path: context.path,
+                    });
+                  }
+
+                  if (activeFsnCount === 0) {
+                    return context.createError({
+                      message: 'Must have at least one active FSN',
+                      path: context.path,
+                    });
+                  }
+
+                  return true;
+                }),
               lang: yup.string().required(),
               caseSignificance: yup
-                .mixed<
-                  | 'ENTIRE_TERM_CASE_SENSITIVE'
-                  | 'CASE_INSENSITIVE'
-                  | 'INITIAL_CHARACTER_CASE_INSENSITIVE'
-                >()
-                .oneOf([
-                  'ENTIRE_TERM_CASE_SENSITIVE',
-                  'CASE_INSENSITIVE',
-                  'INITIAL_CHARACTER_CASE_INSENSITIVE',
-                ])
-                .required(),
+                .string<CaseSignificance>()
+                .oneOf(
+                  [
+                    CaseSignificance.ENTIRE_TERM_CASE_SENSITIVE,
+                    CaseSignificance.CASE_INSENSITIVE,
+                    CaseSignificance.INITIAL_CHARACTER_CASE_INSENSITIVE,
+                  ],
+                  'Invalid case significance value',
+                )
+                .required('Case significance is required'),
             }),
           )
-          .required('At least one description must be provided'),
-      })
-      .notRequired(), // Makes the entire descriptionUpdate field optional
-  });
+
+          .required(),
+      }),
+    })
+    .defined();
 
 export function uniqueFsnValidator(products: Product[]): boolean {
   if (!products) return true; // Handle undefined or null cases
@@ -169,7 +473,7 @@ export function uniqueFsnValidator(products: Product[]): boolean {
     let fsn = '';
     if (product.concept) {
       fsn = product.concept.fsn ? product.concept.fsn.term : '';
-    } else {
+    } else if (product.newConceptDetails) {
       fsn = product.newConceptDetails['fullySpecifiedName'];
     }
 

@@ -30,12 +30,14 @@ import au.gov.digitalhealth.lingo.product.details.DeviceProductDetails;
 import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
-import au.gov.digitalhealth.lingo.product.update.ProductDescriptionUpdateRequest;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import au.gov.digitalhealth.lingo.product.update.ProductPropertiesUpdateRequest;
+import au.gov.digitalhealth.lingo.product.update.ProductUpdateRequest;
 import au.gov.digitalhealth.tickets.controllers.BulkProductActionDto;
 import au.gov.digitalhealth.tickets.models.Ticket;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.restassured.common.mapper.TypeRef;
 import io.restassured.http.ContentType;
 import io.restassured.http.Cookie;
@@ -168,13 +170,13 @@ public class LingoTestClient {
         SnowstormConceptMini.class);
   }
 
-  public SnowstormConceptMini updateProductDescription(
-      ProductDescriptionUpdateRequest productDescriptionUpdateRequest, String productId) {
+  public au.gov.digitalhealth.tickets.models.BulkProductAction updateProduct(
+      ProductUpdateRequest productUpdateRequest, String productId) {
     return putRequest(
-        "/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/" + productId + "/descriptions",
-        productDescriptionUpdateRequest,
+        "/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/" + productId + "/update",
+        productUpdateRequest,
         HttpStatus.OK,
-        SnowstormConceptMini.class);
+        au.gov.digitalhealth.tickets.models.BulkProductAction.class);
   }
 
   public Set<ExternalIdentifier> updateProductProperties(
@@ -284,6 +286,7 @@ public class LingoTestClient {
 
     try {
       ObjectMapper objectMapper = new ObjectMapper();
+      objectMapper.registerModule(new JavaTimeModule());
       return objectMapper.readValue(
           responseBody,
           new TypeReference<T>() {

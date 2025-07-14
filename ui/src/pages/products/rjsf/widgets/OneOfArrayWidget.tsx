@@ -14,7 +14,7 @@ import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ValueSetAutocomplete from '../components/ValueSetAutocomplete';
 import EclAutocomplete from '../components/EclAutocomplete';
-import useTaskById from '../../../../hooks/useTaskById.tsx';
+import useTaskByKey from '../../../../hooks/useTaskByKey.tsx';
 
 // Define interfaces for type safety
 interface SchemaProperty {
@@ -152,7 +152,7 @@ const OneOfArrayWidget: React.FC<WidgetProps> = props => {
     rawErrors = [],
   } = props;
 
-  const task = useTaskById();
+  const task = useTaskByKey();
   const oneOfOptions =
     (schema.items as { oneOf?: SchemaOption[] })?.oneOf || [];
   const items: Item[] = Array.isArray(value) ? value : [];
