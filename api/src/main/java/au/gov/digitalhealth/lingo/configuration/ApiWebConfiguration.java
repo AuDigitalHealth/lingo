@@ -85,7 +85,7 @@ public class ApiWebConfiguration {
   @Bean
   public WebClient nameGeneratorApiClient(
       @Value("${name.generator.api.url}") String namegenApiUrl,
-      @Value("${name.generator.api.key}") String apiKeyHeader,
+      @Value("${name.generator.api.key:}") String apiKeyHeader,
       WebClient.Builder webClientBuilder) {
     WebClient.Builder builder =
         webClientBuilder

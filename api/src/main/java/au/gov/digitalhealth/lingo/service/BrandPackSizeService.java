@@ -23,6 +23,7 @@ import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_DEVICE_TYPE;
 import static au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter.calculateNonDefiningRelationships;
 import static au.gov.digitalhealth.lingo.util.ReferenceSetUtils.calculateReferenceSetMembers;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONTAINS_CD;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.DEFINED;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_UNIT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_VALUE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRODUCT_NAME;
@@ -764,6 +765,7 @@ public class BrandPackSizeService {
             properties,
             false,
             false,
+            true,
             true)
         .thenApply(
             n -> {
@@ -840,6 +842,7 @@ public class BrandPackSizeService {
             properties,
             false,
             false,
+            true,
             true)
         .thenApply(
             n -> {
@@ -914,7 +917,11 @@ public class BrandPackSizeService {
             properties,
             false,
             false,
-            true)
+            true,
+            DEFINED
+                .getValue()
+                .equals(
+                    leafProductConcept.getClassAxioms().iterator().next().getDefinitionStatusId()))
         .thenApply(
             n -> {
               nameGenerationService.addGeneratedFsnAndPt(

@@ -42,6 +42,7 @@ export default function DiffConceptDiagram({
               ? leftConcept.concept?.newConceptDetails
               : undefined
           }
+          isSideBySide={true}
         />
         <ConceptDiagram
           concept={rightConcept.isNewConcept ? undefined : rightConcept.concept}
@@ -50,6 +51,7 @@ export default function DiffConceptDiagram({
               ? rightConcept.concept?.newConceptDetails
               : (rightConcept.concept as unknown as NewConceptDetails)
           }
+          isSideBySide={true}
         />
       </Stack>
     </>
