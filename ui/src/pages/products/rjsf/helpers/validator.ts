@@ -2,6 +2,7 @@ import Ajv, { ErrorObject } from 'ajv';
 import addErrors from 'ajv-errors';
 import _ from 'lodash';
 import {
+  deDuplicateErrors,
   findDiscriminatorSchema,
   getDiscriminatorProperty,
   getDiscriminatorValue,
@@ -116,54 +117,58 @@ export const customTransformErrors = (
   const validProperties = Object.keys(matchingBranch.properties || {});
   const validRequiredProperties = matchingBranch.required || [];
 
-  return errors
-    .filter(error => {
-      if (error.keyword === 'discriminator') return true;
-      if (error.keyword === 'const') return false;
-      if (error.keyword === 'additionalProperties') {
-        return false;
-      }
-      return error.instancePath;
-    })
-    .map(error => {
-      const isRelatedToDiscriminator =
-        error.instancePath &&
-        error.instancePath.includes(discriminatorPath.replace(/\.\d+\./g, '/'));
-      const newError: ErrorObject = {
-        ...error,
-        property: error.instancePath
-          ? '.' + error.instancePath.replace(/^\//, '').replace(/\//g, '.')
-          : '',
-        stack: '',
-      };
+  return deDuplicateErrors(
+    errors
+      .filter(error => {
+        if (error.keyword === 'discriminator') return true;
+        if (error.keyword === 'const') return false;
+        if (error.keyword === 'additionalProperties') {
+          return false;
+        }
+        return error.instancePath;
+      })
+      .map(error => {
+        const isRelatedToDiscriminator =
+          error.instancePath &&
+          error.instancePath.includes(
+            discriminatorPath.replace(/\.\d+\./g, '/'),
+          );
+        const newError: ErrorObject = {
+          ...error,
+          property: error.instancePath
+            ? '.' + error.instancePath.replace(/^\//, '').replace(/\//g, '.')
+            : '',
+          stack: '',
+        };
 
-      if (error.keyword === 'required') {
-        newError.property = `${newError.property}.${newError.params?.missingProperty}`;
-        newError.instancePath = `${newError.instancePath}/${newError.params?.missingProperty}`;
-        newError.message = 'Field must be populated';
-        newError.stack = `${newError.message} "${newError.params?.missingProperty}" ( at ${newError.property})`;
-      } else if (
-        (error.keyword === 'type' && error.data === null) ||
-        (error.keyword === 'minProperties' && isEmptyObject(error.data))
-      ) {
-        newError.message = `Field must be populated`;
-        newError.stack = `${newError.message} (at ${newError.property})`;
-      } else if (
-        error.keyword === 'additionalProperties' &&
-        isRelatedToDiscriminator
-      ) {
-        newError.message = `Invalid field ${error.params.additionalProperty} for ${discriminatorValue}`;
-      } else if (error.keyword === 'enum') {
-        newError.message = 'Please select a valid option';
-      } else if (error.keyword === 'discriminator') {
-        newError.message = `Invalid ${discriminatorProperty}: ${discriminatorValue || 'undefined'}`;
-      }
-      if (!newError.stack) {
-        newError.stack = `${newError.message}: (at ${newError.property})`;
-      }
+        if (error.keyword === 'required') {
+          newError.property = `${newError.property}.${newError.params?.missingProperty}`;
+          newError.instancePath = `${newError.instancePath}/${newError.params?.missingProperty}`;
+          newError.message = 'Field must be populated';
+          newError.stack = `${newError.message} "${newError.params?.missingProperty}" ( at ${newError.property})`;
+        } else if (
+          (error.keyword === 'type' && error.data === null) ||
+          (error.keyword === 'minProperties' && isEmptyObject(error.data))
+        ) {
+          newError.message = `Field must be populated`;
+          newError.stack = `${newError.message} (at ${newError.property})`;
+        } else if (
+          error.keyword === 'additionalProperties' &&
+          isRelatedToDiscriminator
+        ) {
+          newError.message = `Invalid field ${error.params.additionalProperty} for ${discriminatorValue}`;
+        } else if (error.keyword === 'enum') {
+          newError.message = 'Please select a valid option';
+        } else if (error.keyword === 'discriminator') {
+          newError.message = `Invalid ${discriminatorProperty}: ${discriminatorValue || 'undefined'}`;
+        }
+        if (!newError.stack) {
+          newError.stack = `${newError.message}: (at ${newError.property})`;
+        }
 
-      return newError;
-    });
+        return newError;
+      }),
+  );
 };
 
 // Create validator
