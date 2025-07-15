@@ -1406,7 +1406,7 @@ public class MedicationProductCalculationService
             modelConfiguration.getModuleId());
       }
 
-      if (level.isBranded() || modelConfiguration.getModelType().equals(ModelType.AMT)) {
+      if (level.isBranded() && modelConfiguration.getModelType().equals(ModelType.NMPC)) {
         SnowstormConceptMini ingredientConcept;
         if (ingredient.getPreciseIngredient() != null) {
           ingredientConcept = ingredient.getPreciseIngredient();
@@ -1418,6 +1418,13 @@ public class MedicationProductCalculationService
         addRelationshipIfNotNull(
             relationships,
             ingredientConcept,
+            HAS_PRECISE_ACTIVE_INGREDIENT,
+            group,
+            modelConfiguration.getModuleId());
+      } else if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
+        addRelationshipIfNotNull(
+            relationships,
+            ingredient.getPreciseIngredient(),
             HAS_PRECISE_ACTIVE_INGREDIENT,
             group,
             modelConfiguration.getModuleId());
