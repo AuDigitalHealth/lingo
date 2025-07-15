@@ -232,7 +232,7 @@ models:
         order: 100
         suppressOnProductTypes: DEVICE
       - name: pcrs
-        title: GMS Reimbursable
+        title: PCRS Identifier and Name
         identifier: 680461000220105
         level: PACKAGE
         dataType: CODED,
@@ -348,7 +348,7 @@ models:
         order: 20
         suppressOnProductTypes: DEVICE
       - name: pil
-        title: Leaflet URL
+        title: PIL Information
         identifier: 680181000220107
         level: PACKAGE
         dataType: URI
@@ -360,7 +360,7 @@ models:
         order: 51
         suppressOnProductTypes: DEVICE
       - name: smpc
-        title: SmPC
+        title: SmPC Information
         identifier: 680171000220109
         level: PACKAGE
         dataType: URI
