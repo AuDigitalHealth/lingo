@@ -299,11 +299,7 @@ function ProductPreviewSaveOrViewMode({
       return;
     }
     reattachSemanticTags(usedData as ProductSummary);
-    if (
-      !readOnlyMode &&
-      newConceptFound && productSaveDetails &&
-      usedData
-    ) {
+    if (!readOnlyMode && newConceptFound && productSaveDetails && usedData) {
       setForceNavigation(true);
       productSaveDetails.productSummary = usedData;
       setLoading(true);
@@ -313,7 +309,7 @@ function ProductPreviewSaveOrViewMode({
           productSaveDetails.packageDetails as DevicePackageDetails,
         );
         productSaveDetails.productSummary = cleanProductSummary(
-            productSaveDetails.productSummary,
+          productSaveDetails.productSummary,
         );
         productService
           .createDeviceProduct(productSaveDetails, branch)

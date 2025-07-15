@@ -178,24 +178,39 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
       // active ingredient must not be null.
       validatePopulatedConcept(
           ingredient.getActiveIngredient(), "Product must have an active ingredient defined");
-      // refined active ingredient must be set.
-      validatePopulatedConcept(
-          ingredient.getRefinedActiveIngredient(),
-          "Product must have an refined ingredient defined");
-      // precise ingredient must be set
-      validatePopulatedConcept(
-          ingredient.getPreciseIngredient(), "Product must have an precise ingredient defined");
 
       // if one of the concentration strength numerator or presentation strength numerator is set
-      // BoSS
-      // must be set.
-      if (((ingredient.getConcentrationStrengthNumerator() != null
-                  && ingredient.getConcentrationStrengthNumerator().getValue() != null)
-              || (ingredient.getPresentationStrengthNumerator() != null
-                  && ingredient.getPresentationStrengthNumerator().getValue() != null))
-          && ingredient.getBasisOfStrengthSubstance() == null) {
-        throw new ProductAtomicDataValidationProblem(
+      // BoSS must be set.
+      if ((ingredient.getConcentrationStrengthNumerator() != null
+              && ingredient.getConcentrationStrengthNumerator().getValue() != null)
+          || (ingredient.getPresentationStrengthNumerator() != null
+              && ingredient.getPresentationStrengthNumerator().getValue() != null)) {
+
+        // refined active ingredient must be set.
+        validatePopulatedConcept(
+            ingredient.getRefinedActiveIngredient(),
+            "Product must have an refined ingredient defined when concentration strength or presentation strength is set");
+        // precise ingredient must be set
+        validatePopulatedConcept(
+            ingredient.getPreciseIngredient(),
+            "Product must have an precise ingredient defined when concentration strength or presentation strength is set");
+        // boss ingredient must be set
+        validatePopulatedConcept(
+            ingredient.getBasisOfStrengthSubstance(),
             "Product must have a basis of strength substance defined when concentration strength or presentation strength is set");
+      } else {
+        // if concentration strength numerator and denominator is not set, then BoSS must not be set
+        validateConceptNotSet(
+            ingredient.getBasisOfStrengthSubstance(),
+            "Product must not have a basis of strength substance defined when concentration strength and presentation strength is not set");
+        // refined active ingredient must not be set.
+        validateConceptNotSet(
+            ingredient.getRefinedActiveIngredient(),
+            "Product must not have a refined ingredient defined when concentration strength and presentation strength is not set");
+        // precise ingredient must not be set
+        validateConceptNotSet(
+            ingredient.getPreciseIngredient(),
+            "Product must not have a precise ingredient defined when concentration strength and presentation strength is not set");
       }
     }
 

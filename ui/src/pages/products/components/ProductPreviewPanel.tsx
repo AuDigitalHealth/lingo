@@ -47,6 +47,7 @@ import {
   Edit,
   NewReleases,
   NewReleasesOutlined,
+  NotesOutlined,
 } from '@mui/icons-material';
 import CircleIcon from '@mui/icons-material/Circle';
 import ExistingConceptDropdown from './ExistingConceptDropdown.tsx';
@@ -74,6 +75,7 @@ import { useConceptsForReview } from '../../../hooks/api/task/useConceptsForRevi
 import ConceptReviews from './reviews/ConceptReviews.tsx';
 import ProductLoader from './ProductLoader.tsx';
 import { useShowReviewControls } from '../../../hooks/api/task/useReviews.tsx';
+import DescriptionModal from '../../../components/editProduct/DescriptionModal.tsx';
 
 interface ProductPreviewPanelProps {
   control: Control<ProductSummary>;
@@ -119,6 +121,7 @@ function ProductPreviewPanel({
   const task = useTaskByKey();
   const showReviewControls = useShowReviewControls({ task });
   const [conceptDiagramModalOpen, setConceptDiagramModalOpen] = useState(false);
+  const [descriptionModalOpen, setDescriptionModalOpen] = useState(false);
   const [conceptRefsetModalOpen, setConceptRefsetModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const { conceptReviews, isLoadingConceptReviews } =
@@ -218,6 +221,13 @@ function ProductPreviewPanel({
         newConcept={
           product.newConceptDetails ? product.newConceptDetails : undefined
         }
+        product={product}
+        keepMounted={true}
+        branch={branch}
+      />
+      <DescriptionModal
+        handleClose={() => setDescriptionModalOpen(false)}
+        open={descriptionModalOpen}
         product={product}
         keepMounted={true}
         branch={branch}
@@ -334,6 +344,12 @@ function ProductPreviewPanel({
                     >
                       <AccountTreeOutlined />
                     </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={() => setDescriptionModalOpen(true)}
+                    >
+                      <NotesOutlined />
+                    </IconButton>
                     {isSimpleEdit && (
                       <IconButton
                         size="small"
@@ -398,6 +414,12 @@ function ProductPreviewPanel({
                       onClick={() => setConceptDiagramModalOpen(true)}
                     >
                       <AccountTreeOutlined />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={() => setDescriptionModalOpen(true)}
+                    >
+                      <NotesOutlined />
                     </IconButton>
                     {isSimpleEdit && (
                       <IconButton
