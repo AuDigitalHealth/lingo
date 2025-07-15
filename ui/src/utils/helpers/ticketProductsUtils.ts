@@ -228,7 +228,7 @@ export function mapToProductDetailsArrayFromBulkActions(
         item.details.packSizes &&
         item.details.packSizes.packSizes
           ? ProductType.bulkPackSize
-          : ProductType.bulkBrand,
+          : item.details.type,
       created: item.created,
       action: 'CREATE', // Default action for bulk actions is CREATE
     };
