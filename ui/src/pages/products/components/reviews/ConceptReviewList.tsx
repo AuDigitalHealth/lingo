@@ -1,5 +1,8 @@
 // import useTaskByKey from '../../../../hooks/useTaskByKey.tsx';
-import { useConceptsForReview } from '../../../../hooks/api/task/useConceptsForReview.js';
+import {
+  useConceptsForReview,
+  useFeedbackUnread,
+} from '../../../../hooks/api/task/useConceptsForReview.js';
 import useTaskByKey from '../../../../hooks/useTaskByKey.tsx';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 
@@ -26,6 +29,8 @@ function ConceptReviewList() {
   const showReviewControls = useShowReviewControls({ task });
   const approveReviewMutation = useApproveReviewMutation();
 
+  const { unreadConceptIds } = useFeedbackUnread(projectKey, taskKey, true);
+
   if (!showReviewControls) {
     return <></>;
   }
@@ -40,6 +45,26 @@ function ConceptReviewList() {
           approvalDate: new Date().toISOString(),
         },
       });
+    }
+  };
+
+  // Helper function to get status value for sorting
+  const getStatusSortValue = params => {
+    if (params.row.approved) {
+      return 1; // Approved - highest priority
+    }
+
+    const hasUnread = unreadConceptIds?.includes(
+      params?.row?.conceptId as string,
+    );
+    const hasRead = params?.row?.reviews?.messages?.length > 0;
+
+    if (hasUnread) {
+      return 2; // Pending / Unread
+    } else if (hasRead) {
+      return 3; // Pending / Read
+    } else {
+      return 4; // Pending (no messages)
     }
   };
 
@@ -86,7 +111,24 @@ function ConceptReviewList() {
       width: 140,
       align: 'center',
       headerAlign: 'center',
+      sortable: true,
+      valueGetter: getStatusSortValue,
+      sortComparator: (v1, v2) => {
+        return v1 - v2; // Lower numbers (approved) come first in ascending order
+      },
       renderCell: params => {
+        const hasUnread = unreadConceptIds?.includes(
+          params?.row?.conceptId as string,
+        );
+
+        const hasRead = params?.row?.reviews?.messages?.length > 0;
+
+        let readOrUnreadMessage = undefined;
+        if (hasUnread) {
+          readOrUnreadMessage = 'Unread';
+        } else if (hasRead) {
+          readOrUnreadMessage = 'Read';
+        }
         return params.row.approved ? (
           <Box
             sx={{
@@ -109,7 +151,7 @@ function ConceptReviewList() {
               fontStyle: 'italic',
             }}
           >
-            Pending
+            Pending {readOrUnreadMessage && ` / ${readOrUnreadMessage}`}
           </Typography>
         );
       },
@@ -148,12 +190,12 @@ function ConceptReviewList() {
           <Button
             disabled={
               conceptsReviewed === undefined ||
-              conceptsReviewed?.conceptIds.length === 0
+              conceptsReviewed?.conceptIds.length === 0 ||
+              approveReviewMutation.isPending
             }
             size="small"
             variant="outlined"
             onClick={handleDisapproveAll}
-            disabled={approveReviewMutation.isPending}
             sx={{
               color: 'error.main',
               borderColor: 'error.main',
