@@ -105,6 +105,12 @@ export enum CaseSignificance {
   INITIAL_CHARACTER_CASE_INSENSITIVE = 'INITIAL_CHARACTER_CASE_INSENSITIVE',
 }
 
+export const caseSignificanceDisplay: Record<CaseSignificance, string> = {
+  [CaseSignificance.ENTIRE_TERM_CASE_SENSITIVE]: 'CS',
+  [CaseSignificance.CASE_INSENSITIVE]: 'ci',
+  [CaseSignificance.INITIAL_CHARACTER_CASE_INSENSITIVE]: 'cI',
+};
+
 export interface SnowstormAxiom {
   axiomId: string;
   moduleId: string;
