@@ -110,8 +110,7 @@ public class ProductCreationService {
       Map<String, String> idMap, SnowstormConceptView concept) {
     // if the concept references a concept that has just been created, update the destination
     // from the placeholder negative number to the new SCTID
-    concept
-        .getClassAxioms()
+    getActiveClassAxioms(concept)
         .forEach(
             a ->
                 a.getRelationships()
@@ -133,7 +132,7 @@ public class ProductCreationService {
           "All negative identifiers should have been replaced",
           HttpStatus.INTERNAL_SERVER_ERROR);
     } else if (concepts.stream()
-        .flatMap(c -> c.getClassAxioms().stream().flatMap(a -> a.getRelationships().stream()))
+        .flatMap(c -> getActiveClassAxioms(c).stream().flatMap(a -> a.getRelationships().stream()))
         .anyMatch(
             r ->
                 r.getConcreteValue() == null
@@ -143,7 +142,7 @@ public class ProductCreationService {
           concepts.stream()
               .filter(
                   c ->
-                      c.getClassAxioms().stream()
+                      getActiveClassAxioms(c).stream()
                           .anyMatch(
                               a ->
                                   a.getRelationships().stream()
@@ -840,10 +839,11 @@ public class ProductCreationService {
         log.warning("Creating concept sequentially - this will be slow");
         // if it isn't a replacement with an existing concept, we need to create it
         if (node.isConceptEdit()) {
-          concept.setConceptId(node.getOriginalNode().getConceptId());
-          concept = snowstormClient.updateConceptView(branch, concept.getConceptId(), concept, false);
+          concept =
+              snowstormClient.updateConceptView(branch, concept.getConceptId(), concept, false);
         } else if (node.isRetireAndReplaceWithExisting()) {
-          concept = snowstormClient.updateConceptView(branch, concept.getConceptId(), concept, false);
+          concept =
+              snowstormClient.updateConceptView(branch, concept.getConceptId(), concept, false);
         } else {
           concept.setConceptId(node.getNewConceptDetails().getSpecifiedConceptId());
           concept = snowstormClient.createConcept(branch, concept, false);
@@ -889,10 +889,8 @@ public class ProductCreationService {
         c -> {
           SnowstormConceptMini newConcept = conceptMap.get(c.getConceptId());
           if (newConcept != null) {
-            newConcept.setDefinitionStatusId(
-                c.getClassAxioms().iterator().next().getDefinitionStatusId());
-            newConcept.setDefinitionStatus(
-                c.getClassAxioms().iterator().next().getDefinitionStatus());
+            newConcept.setDefinitionStatusId(getSingleAxiom(c).getDefinitionStatusId());
+            newConcept.setDefinitionStatus(getSingleAxiom(c).getDefinitionStatus());
           } else {
             log.warning("Concept " + c.getConceptId() + " not found in created concepts map");
           }
