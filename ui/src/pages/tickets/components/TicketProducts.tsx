@@ -99,8 +99,9 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
 
   // Create a memoized version of data that includes the active status
   const enrichedData = useMemo(() => {
+    debugger;
     if (!activeConceptIds) return data;
-
+    debugger;
     return data.map(row => ({
       ...row,
       isActive: row.conceptId
@@ -236,6 +237,7 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
     (rowData: ProductTableRow) => {
       const activeIds = activeConceptIds ? activeConceptIds.items : [];
 
+      debugger;
       if (isProductUpdate(rowData)) {
         return (
           <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
