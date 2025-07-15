@@ -49,6 +49,7 @@ import au.gov.digitalhealth.lingo.util.EclBuilder;
 import au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils;
 import au.gov.digitalhealth.lingo.util.NonDefiningPropertyUtils;
 import au.gov.digitalhealth.lingo.util.ReferenceSetUtils;
+import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -605,7 +606,7 @@ public class NodeGeneratorService {
               : concepts.stream()
                   .filter(
                       c ->
-                          c.getClassAxioms().stream()
+                          SnowstormDtoUtil.getActiveClassAxioms(c).stream()
                               .anyMatch(
                                   a ->
                                       a.getRelationships().stream()

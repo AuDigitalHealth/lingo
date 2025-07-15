@@ -157,7 +157,7 @@ public class BrandPackSizeService {
       ModelConfiguration modelConfiguration) {
     Set<SnowstormRelationship> newRelationships =
         cloneNewRelationships(
-            tppConcept.getClassAxioms().iterator().next().getRelationships(),
+            SnowstormDtoUtil.getRelationshipsFromAxioms(tppConcept),
             modelConfiguration.getModuleId());
 
     for (SnowstormRelationship relationship : newRelationships) {
@@ -790,7 +790,7 @@ public class BrandPackSizeService {
 
     Set<SnowstormRelationship> relationships =
         cloneNewRelationships(
-            mppConcept.getClassAxioms().iterator().next().getRelationships(),
+            SnowstormDtoUtil.getRelationshipsFromAxioms(mppConcept),
             modelConfiguration.getModuleId());
 
     relationships.forEach(
@@ -866,7 +866,7 @@ public class BrandPackSizeService {
 
     Set<SnowstormRelationship> relationships =
         cloneNewRelationships(
-                leafProductConcept.getClassAxioms().iterator().next().getRelationships(),
+                SnowstormDtoUtil.getRelationshipsFromAxioms(leafProductConcept),
                 modelConfiguration.getModuleId())
             .stream()
             .filter(relationship -> !relationship.getTypeId().equals(IS_A.getValue()))
@@ -921,7 +921,7 @@ public class BrandPackSizeService {
             DEFINED
                 .getValue()
                 .equals(
-                    leafProductConcept.getClassAxioms().iterator().next().getDefinitionStatusId()))
+                    SnowstormDtoUtil.getSingleAxiom(leafProductConcept).getDefinitionStatusId()))
         .thenApply(
             n -> {
               nameGenerationService.addGeneratedFsnAndPt(
