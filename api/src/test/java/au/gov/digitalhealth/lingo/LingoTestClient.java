@@ -30,7 +30,6 @@ import au.gov.digitalhealth.lingo.product.details.DeviceProductDetails;
 import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
-import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import au.gov.digitalhealth.lingo.product.update.ProductPropertiesUpdateRequest;
 import au.gov.digitalhealth.lingo.product.update.ProductUpdateRequest;
 import au.gov.digitalhealth.tickets.controllers.BulkProductActionDto;
@@ -173,7 +172,7 @@ public class LingoTestClient {
   public au.gov.digitalhealth.tickets.models.BulkProductAction updateProduct(
       ProductUpdateRequest productUpdateRequest, String productId) {
     return putRequest(
-        "/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/" + productId + "/update",
+        "/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/" + productId + "/descriptions",
         productUpdateRequest,
         HttpStatus.OK,
         au.gov.digitalhealth.tickets.models.BulkProductAction.class);
