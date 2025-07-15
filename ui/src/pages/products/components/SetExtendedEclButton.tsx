@@ -20,6 +20,7 @@ export const SetExtendedEclButton = ({
         onClick={() => toggleUseExtendedEcl()}
         disabled={disabled}
         color={extendedEcl ? 'primary' : 'secondary'}
+        tabIndex={-1}
       >
         <Expand />
       </IconButton>
