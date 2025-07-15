@@ -128,7 +128,7 @@ public class OwlAxiomService {
 
     long relid = 0;
 
-    for (SnowstormAxiom axiom : concept.getClassAxioms()) {
+    for (SnowstormAxiom axiom : SnowstormDtoUtil.getActiveClassAxioms(concept)) {
       for (SnowstormRelationship relationship : axiom.getRelationships()) {
         if ((relationship.getActive() == null || relationship.getActive())
             && !relationship
