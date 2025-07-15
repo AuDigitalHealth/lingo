@@ -18,7 +18,7 @@ interface LocalReferenceSet {
 }
 
 interface AdditionalReferenceSetsProps {
-  product: Product;
+  product: Product | undefined;
   branch: string;
 }
 
@@ -31,14 +31,14 @@ export const AdditionalReferenceSetDisplay = ({
 
   // Only fetch refset members if this is not a new concept
   const { refsetData: refsetMembersResponse, isRefsetLoading } =
-    useRefsetMembersByComponentIds(branch, [product.conceptId], {
-      enabled: !product.newConcept && !!product.conceptId && !!branch,
+    useRefsetMembersByComponentIds(branch, [product?.conceptId], {
+      enabled: !product?.newConcept && !!product?.conceptId && !!branch,
     });
 
   // Get filtered reference set members
   const filteredRefsetMembers = useMemo(() => {
     // Choose the appropriate reference set members source based on product.newConcept
-    const referenceSetMembers = product.newConcept
+    const referenceSetMembers = product?.newConcept
       ? product.newConceptDetails?.referenceSetMembers || []
       : refsetMembersResponse || [];
 
@@ -49,19 +49,19 @@ export const AdditionalReferenceSetDisplay = ({
     // Filter out reference sets that are already in product.referenceSets or excluded
     return referenceSetMembers.filter(
       member =>
-        !product.nonDefiningProperties?.some(
+        !product?.nonDefiningProperties?.some(
           refSet => refSet.identifier === member.refsetId,
         ) &&
-        !product.nonDefiningProperties?.some(
+        !product?.nonDefiningProperties?.some(
           extId => extId.identifier === member.refsetId,
         ) &&
         member.refsetId !== '733073007', // OWL reference set
     );
   }, [
-    product.newConcept,
-    product.newConceptDetails?.referenceSetMembers,
+    product?.newConcept,
+    product?.newConceptDetails?.referenceSetMembers,
     refsetMembersResponse,
-    product.nonDefiningProperties,
+    product?.nonDefiningProperties,
   ]);
 
   // Extract unique refsetIds for concept lookup
@@ -99,7 +99,7 @@ export const AdditionalReferenceSetDisplay = ({
 
   // Determine if we're in a loading state
   const isLoading =
-    (isRefsetLoading && !product.newConcept) ||
+    (isRefsetLoading && !product?.newConcept) ||
     ((isConceptsLoading || isConceptsFetching) && uniqueRefsetIds.length > 0);
 
   // Display loading state
