@@ -184,7 +184,10 @@ export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateReques
                 .test(
                   'Only One Preferred Synonym Per Language',
                   (value, context) => {
-                    const formattedPath = context.path.replace(/\[(\d+)\]/g, '.$1');
+                    const formattedPath = context.path.replace(
+                      /\[(\d+)\]/g,
+                      '.$1',
+                    );
                     const thisDescription = context.from?.[1]
                       .value as Description;
 
@@ -237,7 +240,7 @@ export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateReques
                       const firstLanguage = Object.keys(filteredAcceptability)[
                         Object.keys(filteredAcceptability).length - 1
                       ];
-                      
+
                       const errPath = `${formattedPath}.${firstLanguage}`;
                       return context.createError({
                         message:

@@ -150,11 +150,8 @@ function ConceptReviews({ conceptReview }: ConceptReviewsProps) {
                 },
               }}
             >
-              <IconButton>
-                <MarkunreadIcon
-                  color="primary"
-                  onClick={handleToggleMessageModalOpen}
-                />
+              <IconButton onClick={handleToggleMessageModalOpen}>
+                <MarkunreadIcon color="primary" />
               </IconButton>
             </Badge>
           </Tooltip>
@@ -163,7 +160,7 @@ function ConceptReviews({ conceptReview }: ConceptReviewsProps) {
             {messageCount ? (
               <Badge
                 badgeContent={messageCount}
-                color="error"
+                color="primary"
                 sx={{
                   '& .MuiBadge-badge': {
                     fontSize: '0.75rem',
@@ -171,19 +168,13 @@ function ConceptReviews({ conceptReview }: ConceptReviewsProps) {
                   },
                 }}
               >
-                <IconButton>
-                  <MailIcon
-                    color="action"
-                    onClick={handleToggleMessageModalOpen}
-                  />
+                <IconButton onClick={handleToggleMessageModalOpen}>
+                  <MailIcon color="action" />
                 </IconButton>
               </Badge>
             ) : (
-              <IconButton>
-                <MailIcon
-                  color="action"
-                  onClick={handleToggleMessageModalOpen}
-                />
+              <IconButton onClick={handleToggleMessageModalOpen}>
+                <MailIcon color="action" />
               </IconButton>
             )}
           </Tooltip>

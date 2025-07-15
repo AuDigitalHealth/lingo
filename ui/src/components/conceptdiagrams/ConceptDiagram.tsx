@@ -40,7 +40,7 @@ const args = {
 export default function ConceptDiagram({
   concept,
   newConcept,
-  isSideBySide = false
+  isSideBySide = false,
 }: ConceptDiagramProps) {
   const { branchKey } = useParams();
 
@@ -58,7 +58,7 @@ export default function ConceptDiagram({
   const [formType, setFormType] = useState<FormType>('stated');
   const [containerHeight, setContainerHeight] = useState(screenSize.height);
   const [containerWidth, setContainerWidth] = useState(
-    isSideBySide ? 1800 / 2 - 20 : screenSize.width
+    isSideBySide ? 1800 / 2 - 20 : screenSize.width,
   );
 
   useEffect(() => {
@@ -94,7 +94,7 @@ export default function ConceptDiagram({
 
     // Calculate available width based on whether side by side
     const availableWidth = isSideBySide ? 1800 / 2 - 20 : screenSize.width;
-    
+
     const minHeight = Math.min(containerHeight, img.naturalHeight);
     const minWidth = Math.min(availableWidth, img.naturalWidth);
 
