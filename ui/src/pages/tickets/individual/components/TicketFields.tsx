@@ -188,7 +188,7 @@ export default function TicketFields({
                 fontWeight="bold"
                 sx={{ display: 'block', width: '120px' }}
               >
-                Iteration:
+                Release:
               </Typography>
             </Grid>
             {ticket?.iteration?.name ? (
@@ -210,7 +210,7 @@ export default function TicketFields({
                 fontWeight="bold"
                 sx={{ display: 'block', width: '120px' }}
               >
-                State:
+                Status:
               </Typography>
             </Grid>
             {ticket?.state?.label ? (
