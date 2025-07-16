@@ -44,6 +44,11 @@ public class DeviceProductDetails extends ProductDetails {
   }
 
   @Override
+  public String getProductType() {
+    return "";
+  }
+
+  @Override
   protected Map<String, String> getSpecialisedIdPtMap() {
     return specificDeviceType == null
         ? Map.of()

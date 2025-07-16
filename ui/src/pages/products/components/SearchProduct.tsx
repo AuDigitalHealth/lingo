@@ -624,18 +624,7 @@ export default function SearchProduct({
                 >
                   Medication
                 </ToggleButton>
-                <ToggleButton
-                  value={ActionType.newVaccine}
-                  data-testid={'vaccine-toggle'}
-                >
-                  Vaccine
-                </ToggleButton>
-                <ToggleButton
-                  value={ActionType.newNutritionalProduct}
-                  data-testid={'nutritional-toggle'}
-                >
-                  Nutritional Product
-                </ToggleButton>
+
                 <ToggleButton
                   value={ActionType.newPackSize}
                   data-testid={'bulk-pack-toggle'}

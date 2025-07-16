@@ -106,20 +106,20 @@
     }
   },
   "properties": {
-    "packType": {
+    "variant": {
       "type": "string",
       "enum": ["medication", "vaccine", "nutritional"],
       "default": "medication",
       "title": "Pack Type"
     }
   },
-  "required": ["packType", "containedProducts"],
-  "discriminator": { "propertyName": "packType" },
+  "required": ["variant", "containedProducts"],
+  "discriminator": { "propertyName": "variant" },
   "oneOf": [
     {
       "title": "Medication",
       "properties": {
-        "packType": { "const": "medication" },
+        "variant": { "const": "medication" },
         "containedProducts": {
           "type": "array",
           "minItems": 1,
@@ -211,13 +211,13 @@
         },
         "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PACKAGE_NonDefiningProperty" }, "title": "Non Defining Properties" }
       },
-      "required": ["packType", "containedProducts"],
+      "required": ["variant", "containedProducts"],
       "additionalProperties": false
     },
     {
       "title": "Vaccine",
       "properties": {
-        "packType": { "const": "vaccine" },
+        "variant": { "const": "vaccine" },
         "containedProducts": {
           "type": "array",
           "minItems": 1,
@@ -294,13 +294,13 @@
         },
         "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/VACCINE_PACKAGE_NonDefiningProperty" }, "title": "Non Defining Properties" }
       },
-      "required": ["packType", "containedProducts"],
+      "required": ["variant", "containedProducts"],
       "additionalProperties": false
     },
     {
       "title": "Nutritional Product",
       "properties": {
-        "packType": { "const": "nutritional" },
+        "variant": { "const": "nutritional" },
         "containedProducts": {
           "type": "array",
           "minItems": 1,
@@ -356,7 +356,7 @@
         },
         "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/NUTRITIONAL_PACKAGE_NonDefiningProperty" }, "title": "Non Defining Properties" }
       },
-      "required": ["packType", "containedProducts"],
+      "required": ["variant", "containedProducts"],
       "additionalProperties": false
     }
   ],

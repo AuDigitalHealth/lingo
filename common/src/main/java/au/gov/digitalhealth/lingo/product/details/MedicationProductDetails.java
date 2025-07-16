@@ -48,6 +48,17 @@ public class MedicationProductDetails extends ProductDetails {
   Set<SnowstormConceptMini> playsRole = new HashSet<>();
 
   List<@Valid Ingredient> activeIngredients = new ArrayList<>();
+  @Override
+  public String getProductType() {
+    for (Ingredient ingredient : activeIngredients) {
+      if (ingredient != null && (ingredient.getConcentrationStrength() != null ||ingredient.getConcentrationStrengthNumerator()!=null || ingredient.getPresentationStrengthDenominator() !=null)) {
+        return "concentrationStrength";
+      }else if(ingredient != null && (ingredient.getPresentationStrengthNumerator() != null || ingredient.getPresentationStrengthDenominator() != null)){
+        return "presentationStrength";
+      }
+    }
+    return "noStrength";
+  }
 
   @Override
   protected Map<String, String> getSpecialisedIdFsnMap() {
