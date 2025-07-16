@@ -1,5 +1,5 @@
 import useUserStore from '../../../stores/UserStore';
-import { TaskStatus, Task } from '../../../types/task';
+import { Task, TaskStatus } from '../../../types/task';
 
 export interface UseReviewProps {
   task: Task | null | undefined;
@@ -9,10 +9,13 @@ export interface UseReviewProps {
 export function useIsReviewEnabled({ task }: UseReviewProps) {
   const userLogin = useUserStore().login;
   const inReview = task?.status === TaskStatus.InReview;
+
+  const userInReviewList = task?.reviewers?.filter(reviewer => {
+    return reviewer.username === userLogin;
+  });
   const isUserReviewer =
-    task?.reviewers?.filter(reviewer => {
-      reviewer.username === userLogin;
-    }).length !== undefined;
+    userInReviewList !== undefined && userInReviewList.length > 0;
+
   const isReviewDisabled = !inReview || !isUserReviewer;
 
   return !isReviewDisabled;
@@ -25,5 +28,3 @@ export function useShowReviewControls({ task }: UseReviewProps) {
     task?.status === TaskStatus.Completed
   );
 }
-
-

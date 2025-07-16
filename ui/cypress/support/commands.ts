@@ -82,22 +82,13 @@ Cypress.Commands.add('login', (email: string, password: string) => {
     cy.contains('Log In').click();
 
     cy.url().should('include', 'ims.ihtsdotools.org');
-    cy.url().should('include', '/login');
 
     cy.get('#username').type(Cypress.env('ims_username'));
     cy.get('#password').type(Cypress.env('ims_password'));
 
     cy.intercept('/api/authenticate').as('authenticate');
 
-    cy.contains('button[type="submit"]', /log in/i)
-      .should(() => {})
-      .then($el => {
-        if ($el.length) {
-          cy.contains('button[type="submit"]', /log in/i).click();
-        } else {
-          cy.contains('button', /sign me in/i).click();
-        }
-      });
+    cy.contains('button', /Sign me in!/i).click();
 
     cy.wait('@authenticate');
 

@@ -15,8 +15,6 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
-import static au.gov.digitalhealth.lingo.util.SemanticTagUtil.extractSemanticTag;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.MAP_TARGET;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.*;
 import static java.lang.Boolean.TRUE;
 
@@ -37,14 +35,23 @@ import au.gov.digitalhealth.lingo.product.details.ProductDetails;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
+import au.gov.digitalhealth.lingo.product.bulk.ProductUpdateCreationDetails;
 import au.gov.digitalhealth.lingo.product.update.ProductDescriptionUpdateRequest;
 import au.gov.digitalhealth.lingo.product.update.ProductPropertiesUpdateRequest;
 import au.gov.digitalhealth.lingo.util.InactivationReason;
 import au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter;
+import au.gov.digitalhealth.lingo.product.update.ProductUpdateRequest;
+import au.gov.digitalhealth.lingo.product.update.ProductUpdateState;
+import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
+import au.gov.digitalhealth.tickets.models.BulkProductAction;
+import au.gov.digitalhealth.tickets.models.Ticket;
+import au.gov.digitalhealth.tickets.repository.BulkProductActionRepository;
+import au.gov.digitalhealth.tickets.repository.TicketRepository;
 import au.gov.digitalhealth.tickets.service.TicketServiceImpl;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import java.time.Instant;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
@@ -52,10 +59,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.MAP_TARGET;
 
 @Log
 @Service
@@ -63,10 +72,14 @@ public class ProductUpdateService {
 
   SnowstormClient snowstormClient;
   TicketServiceImpl ticketService;
+
+  TicketRepository ticketRepository;
   FieldBindingConfiguration fieldBindingConfiguration;
   Models models;
   ProductSummaryService productSummaryService;
   ProductCalculationServiceFactory productCalculationServiceFactory;
+
+  BulkProductActionRepository bulkProductActionRepository;
 
   public ProductUpdateService(
       SnowstormClient snowstormClient,
@@ -74,11 +87,15 @@ public class ProductUpdateService {
       FieldBindingConfiguration fieldBindingConfiguration,
       Models models,
       ProductSummaryService productSummaryService,
-      ProductCalculationServiceFactory productCalculationServiceFactory) {
+      ProductCalculationServiceFactory productCalculationServiceFactory,
+      TicketRepository ticketRepository,
+      BulkProductActionRepository bulkProductActionRepository) {
     this.snowstormClient = snowstormClient;
 
     this.ticketService = ticketService;
     this.fieldBindingConfiguration = fieldBindingConfiguration;
+    this.ticketRepository = ticketRepository;
+    this.bulkProductActionRepository = bulkProductActionRepository;
     this.models = models;
     this.productSummaryService = productSummaryService;
     this.productCalculationServiceFactory = productCalculationServiceFactory;
@@ -128,22 +145,243 @@ public class ProductUpdateService {
     return nonDefiningPropertyDefinition.getIdentifier() + " " + value;
   }
 
-  public SnowstormConceptMini updateProductDescriptions(
-      String branch,
-      String productId,
-      @Valid ProductDescriptionUpdateRequest productDescriptionUpdateRequest) {
+  public BulkProductAction updateProductDescriptions(
+      String branch, String productId, @Valid ProductUpdateRequest productUpdateRequest)
+      throws InterruptedException {
 
-    // Retrieve and update concepts
-    List<SnowstormConcept> existingConcepts = fetchBrowserConcepts(branch, Set.of(productId));
-    SnowstormConceptView conceptsNeedUpdate =
-        prepareConceptUpdate(existingConcepts.get(0), productDescriptionUpdateRequest, branch);
+    String conceptId = productUpdateRequest.getConceptId();
+    log.info(String.format("Product update for %s commencing", conceptId));
+    ProductDescriptionUpdateRequest productDescriptionUpdateRequest =
+        productUpdateRequest.getDescriptionUpdate();
+    ProductPropertiesUpdateRequest productExternalIdentifierUpdateRequest =
+        productUpdateRequest.getPropertiesUpdateRequest();
+    Ticket ticket = ticketRepository.findById(productUpdateRequest.getTicketId()).orElseThrow();
+    String fsn =
+        getFsnFromDescriptions(productDescriptionUpdateRequest.getDescriptions()).getTerm();
+    BulkProductAction productUpdate = BulkProductAction.builder().ticket(ticket).name(fsn).build();
+    ProductUpdateState historicState = ProductUpdateState.builder().build();
+    ProductUpdateState updateState = ProductUpdateState.builder().build();
+    ProductUpdateCreationDetails productUpdateCreationDetails =
+        ProductUpdateCreationDetails.builder()
+            .productId(productId)
+            .historicState(historicState)
+            .updatedState(updateState)
+            .build();
+
+    updateProductDescriptions(
+        branch, conceptId, productDescriptionUpdateRequest, productUpdateCreationDetails);
+
+    if (productExternalIdentifierUpdateRequest != null) {
+      log.info(String.format("Product update for %s contains ARTGIDS.", conceptId));
+      updateProductProperties(
+          branch, conceptId, productExternalIdentifierUpdateRequest, productUpdateCreationDetails);
+    }
+
+    productUpdate.setDetails(productUpdateCreationDetails);
+
+    Optional<BulkProductAction> existingBulkProductAction =
+        bulkProductActionRepository.findByNameAndTicketId(
+            productUpdate.getName(), productUpdateRequest.getTicketId());
+    if (existingBulkProductAction.isPresent()) {
+      productUpdate.setName(productUpdate.getName() + Instant.now().toString());
+    }
+    log.info(
+        String.format(
+            "Product description update for %s saving on ticket %s", conceptId, ticket.getId()));
+    return bulkProductActionRepository.save(productUpdate);
+  }
+
+  public ProductUpdateCreationDetails updateProductDescriptions(
+      String branch,
+      String conceptId,
+      @Valid ProductDescriptionUpdateRequest productDescriptionUpdateRequest,
+      ProductUpdateCreationDetails productUpdateCreationDetails) {
+
+    SnowstormConcept existingConceptView = fetchBrowserConcept(branch, conceptId);
+    existingConceptView.definitionStatusId(
+        mapFromDefinitionStatusToId(
+            Objects.requireNonNull(existingConceptView.getDefinitionStatus())));
+
+    productUpdateCreationDetails.getHistoricState().setConcept(existingConceptView);
+
+    Map<SnowstormDescription, SnowstormDescription> retireReplaceDescriptions =
+        getDescriptionsNeedingRetireReplace(existingConceptView, productDescriptionUpdateRequest);
+
+    if (!retireReplaceDescriptions.isEmpty()) {
+      log.info(
+          String.format("Product description update for %s requires retire/replace", conceptId));
+      // Create a map for quick lookup of keys by descriptionId
+      Map<String, SnowstormDescription> keyDescriptionsById =
+          retireReplaceDescriptions.keySet().stream()
+              .filter(desc -> desc.getDescriptionId() != null)
+              .collect(
+                  Collectors.toMap(SnowstormDescription::getDescriptionId, Function.identity()));
+
+      // Create a new set to hold the updated descriptions
+      Set<SnowstormDescription> updatedDescriptions = new HashSet<>();
+
+      // Process each description in the request
+      for (SnowstormDescription description : productDescriptionUpdateRequest.getDescriptions()) {
+        String descriptionId = description.getDescriptionId();
+
+        // If this matches a key in retireReplaceDescriptions, replace it
+        if (descriptionId != null && keyDescriptionsById.containsKey(descriptionId)) {
+          // Add the original description from the key set
+          updatedDescriptions.add(keyDescriptionsById.get(descriptionId));
+
+          // Find the corresponding value
+          SnowstormDescription valueDescription = null;
+          for (Map.Entry<SnowstormDescription, SnowstormDescription> entry :
+              retireReplaceDescriptions.entrySet()) {
+            if (descriptionId.equals(entry.getKey().getDescriptionId())) {
+              valueDescription = entry.getValue();
+              break;
+            }
+          }
+
+          // Create a new description based on the value with type SYNONYM
+          if (valueDescription != null) {
+            SnowstormDescription synonymDesc = new SnowstormDescription();
+            // Copy all properties from valueDescription
+            BeanUtils.copyProperties(valueDescription, synonymDesc);
+            // Set type to SYNONYM
+            synonymDesc.setType("SYNONYM");
+            synonymDesc.setDescriptionId(null);
+            synonymDesc.setReleased(false);
+            synonymDesc.setTypeId("900000000000013009");
+            // Add the new SYNONYM description
+            updatedDescriptions.add(synonymDesc);
+          }
+        } else {
+          // Keep descriptions that don't need replacement
+          updatedDescriptions.add(description);
+        }
+      }
+
+      // Update the request with the modified descriptions
+      productDescriptionUpdateRequest.setDescriptions(updatedDescriptions);
+    }
+
+    SnowstormConcept conceptsNeedUpdate =
+        prepareConceptUpdate(existingConceptView, productDescriptionUpdateRequest, branch);
+
+    productUpdateCreationDetails.getUpdatedState().setConcept(conceptsNeedUpdate);
+
+    boolean areDescriptionsModified =
+        productDescriptionUpdateRequest.areDescriptionsModified(
+            existingConceptView.getDescriptions());
+
+    if (!areDescriptionsModified) {
+      return productUpdateCreationDetails;
+    }
 
     if (conceptsNeedUpdate != null) {
       try {
-        SnowstormConceptView updatedConcept =
+        log.info(
+            String.format(
+                "Product description update for %s initial description update commencing",
+                conceptId));
+        SnowstormConcept response =
             snowstormClient.updateConcept(
                 branch, conceptsNeedUpdate.getConceptId(), conceptsNeedUpdate, false);
-        return toSnowstormConceptMini(updatedConcept);
+        log.info(
+            String.format(
+                "Product description update for %s initial description update completed",
+                conceptId));
+        productUpdateCreationDetails.getUpdatedState().setConcept(response);
+
+        if (!retireReplaceDescriptions.isEmpty()) {
+
+          Set<SnowstormDescription> descriptionsWithRetireReplaceCompleted = new HashSet<>();
+          response
+              .getDescriptions()
+              .forEach(
+                  desc -> {
+                    Optional<SnowstormDescription> descriptionForRetirement =
+                        retireReplaceDescriptions.keySet().stream()
+                            .filter(
+                                key ->
+                                    key.getDescriptionId() != null
+                                        && key.getDescriptionId().equals(desc.getDescriptionId()))
+                            .findFirst();
+
+                    Optional<SnowstormDescription> isAReplacementDescription =
+                        retireReplaceDescriptions.values().stream()
+                            .filter(
+                                key ->
+                                    key.getTerm() != null && key.getTerm().equals(desc.getTerm()))
+                            .findFirst();
+
+                    if (!descriptionForRetirement.isEmpty()) {
+                      // Get the matching key and its corresponding value from
+                      // retireReplaceDescriptions
+                      SnowstormDescription keyDescription = descriptionForRetirement.get();
+                      SnowstormDescription valueDescription =
+                          retireReplaceDescriptions.get(keyDescription);
+
+                      // Find the description in response that has the same term as valueDescription
+                      Optional<SnowstormDescription> matchingValueDesc =
+                          response.getDescriptions().stream()
+                              .filter(
+                                  responseDesc ->
+                                      valueDescription.getTerm() != null
+                                          && valueDescription
+                                              .getTerm()
+                                              .equals(responseDesc.getTerm()))
+                              .findFirst();
+
+                      if (matchingValueDesc.isPresent()) {
+                        // add the replaced by
+                        Map<String, Set<String>> replacedBy = new HashMap<>();
+                        Set<String> replacementIds = new HashSet<>();
+                        SnowstormDescription matchingDesc = matchingValueDesc.get();
+                        replacementIds.add(
+                            matchingDesc.getDescriptionId()); // Add the replacement ID
+
+                        replacedBy.put("REPLACED_BY", replacementIds);
+
+                        // Set the association targets on the description
+                        SnowstormDescription unwrappedDescriptionForRetirement =
+                            SnowstormDtoUtil.cloneSnowstormDescription(
+                                descriptionForRetirement.get());
+                        unwrappedDescriptionForRetirement.setInactivationIndicator("OUTDATED");
+                        unwrappedDescriptionForRetirement.setAssociationTargets(replacedBy);
+                        unwrappedDescriptionForRetirement.setActive(false);
+                        unwrappedDescriptionForRetirement.setAcceptabilityMap(new HashMap<>());
+
+                        // Add to the completed set
+                        descriptionsWithRetireReplaceCompleted.add(
+                            unwrappedDescriptionForRetirement);
+                      } else {
+                        // If no matching term found, add the original description
+                        descriptionsWithRetireReplaceCompleted.add(desc);
+                      }
+                    } else if (isAReplacementDescription.isPresent()) {
+                      SnowstormDescription replacement = isAReplacementDescription.get();
+                      replacement.setDescriptionId(desc.getDescriptionId());
+                      replacement.setReleased(false);
+                      descriptionsWithRetireReplaceCompleted.add(replacement);
+                    } else {
+                      descriptionsWithRetireReplaceCompleted.add(desc);
+                    }
+                  });
+
+          response.setDescriptions(descriptionsWithRetireReplaceCompleted);
+          response.setDefinitionStatusId(
+              mapFromDefinitionStatusToId(Objects.requireNonNull(response.getDefinitionStatus())));
+          log.info(
+              String.format(
+                  "Product description update for %s retire/replace description update commencing",
+                  conceptId));
+          SnowstormConcept response2 =
+              snowstormClient.updateConcept(
+                  branch, conceptsNeedUpdate.getConceptId(), response, false);
+          log.info(
+              String.format(
+                  "Product description update for %s retire/replace description update completed",
+                  conceptId));
+          productUpdateCreationDetails.getUpdatedState().setConcept(response2);
+        }
       } catch (WebClientResponseException ex) {
 
         String errorBody = ex.getResponseBodyAsString();
@@ -151,22 +389,17 @@ public class ProductUpdateService {
         throw new ProductAtomicDataValidationProblem(String.format("%s", errorBody));
       }
     }
-    return toSnowstormConceptMini(existingConcepts.get(0));
+
+    return productUpdateCreationDetails;
   }
 
-  private SnowstormConceptView prepareConceptUpdate(
+  private SnowstormConcept prepareConceptUpdate(
       SnowstormConcept existingConcept,
       ProductDescriptionUpdateRequest productDescriptionUpdateRequest,
       String branch) {
     if (productDescriptionUpdateRequest == null) return null;
 
-    boolean areDescriptionsModified =
-        productDescriptionUpdateRequest.areDescriptionsModified(existingConcept.getDescriptions());
-
-    if (!areDescriptionsModified) {
-      throw new ProductAtomicDataValidationProblem("No descriptions modified");
-    }
-    SnowstormConceptView conceptNeedToUpdate = toSnowstormConceptView(existingConcept);
+    SnowstormConcept conceptNeedToUpdate = SnowstormDtoUtil.cloneConcept(existingConcept);
 
     String fsn =
         getFsnFromDescriptions(productDescriptionUpdateRequest.getDescriptions()).getTerm();
@@ -175,16 +408,10 @@ public class ProductUpdateService {
                 existingConcept.getFsn(),
                 "Concept " + existingConcept.getConceptId() + " has no FSN")
             .getTerm();
+
     if (fsn != null && existingFsn != null && !existingFsn.equals(fsn.trim())) {
       String newFsn = fsn.trim();
 
-      String semanticTag = extractSemanticTag(existingFsn);
-      if (semanticTag != null && !newFsn.endsWith(semanticTag)) {
-        throw new ProductAtomicDataValidationProblem(
-            String.format(
-                "The required semantic tag \"%s\" is missing from the FSN \"%s\".",
-                semanticTag, newFsn));
-      }
       snowstormClient.checkForDuplicateFsn(newFsn, branch);
     }
 
@@ -200,17 +427,48 @@ public class ProductUpdateService {
     return conceptNeedToUpdate;
   }
 
-  public List<SnowstormConcept> fetchBrowserConcepts(String branch, Set<String> conceptIds) {
-    return snowstormClient
-        .getBrowserConcepts(branch, conceptIds)
-        .collect(Collectors.toList())
-        .block();
+  private Map<SnowstormDescription, SnowstormDescription> getDescriptionsNeedingRetireReplace(
+      SnowstormConcept existingConcept,
+      ProductDescriptionUpdateRequest productDescriptionUpdateRequest) {
+    if (productDescriptionUpdateRequest == null || existingConcept == null) {
+      return Collections.emptyMap();
+    }
+
+    Map<String, SnowstormDescription> existingDescriptionsById =
+        existingConcept.getDescriptions().stream()
+            .collect(Collectors.toMap(SnowstormDescription::getDescriptionId, Function.identity()));
+
+    Map<SnowstormDescription, SnowstormDescription> descriptionsNeedingUpdate = new HashMap<>();
+
+    for (SnowstormDescription newDescription : productDescriptionUpdateRequest.getDescriptions()) {
+      String descriptionId = newDescription.getDescriptionId();
+      if (descriptionId != null && existingDescriptionsById.containsKey(descriptionId)) {
+        SnowstormDescription oldDescription = existingDescriptionsById.get(descriptionId);
+
+        // Check if both are released and term has changed
+        if (oldDescription != null
+            && newDescription != null
+            && Boolean.TRUE.equals(oldDescription.getReleased())
+            && Boolean.TRUE.equals(newDescription.getReleased())
+            && !Objects.equals(oldDescription.getTerm(), newDescription.getTerm())) {
+
+          descriptionsNeedingUpdate.put(oldDescription, newDescription);
+        }
+      }
+    }
+
+    return descriptionsNeedingUpdate;
   }
 
-  public Collection<NonDefiningBase> updateProductProperties(
+  public SnowstormConcept fetchBrowserConcept(String branch, String conceptId) {
+    return snowstormClient.getBrowserConcept(branch, conceptId).block();
+  }
+
+  public Set<NonDefiningBase> updateProductProperties(
       String branch,
       String conceptId,
-      ProductPropertiesUpdateRequest productPropertiesUpdateRequest)
+      @Valid ProductPropertiesUpdateRequest productPropertiesUpdateRequest,
+      ProductUpdateCreationDetails productUpdateCreationDetails)
       throws InterruptedException {
 
     HashSet<NonDefiningBase> nonDefiningBaseSet = new HashSet<>();
@@ -357,7 +615,7 @@ public class ProductUpdateService {
       browserConcept.getRelationships().removeAll(idsToBeRemoved);
       browserConcept.getRelationships().addAll(idsToBeAdded);
       snowstormClient.updateConcept(
-          branch, conceptId, toSnowstormConceptView(browserConcept), false);
+          branch, conceptId, browserConcept, false);
     }
 
     return requestedProperties.values();
@@ -425,7 +683,10 @@ public class ProductUpdateService {
         .filter(
             node ->
                 !node.isNewConcept() && existingNodesByConceptId.containsKey(node.getConceptId()))
-        .forEach(node -> allocatedExistingNodes.add(node.getConceptId()));
+        .forEach(
+            node -> {
+              allocatedExistingNodes.add(node.getConceptId());
+            });
 
     // for all the new nodes in the new summary, find the corresponding exisitng node
     newSummary.getNodes().stream()
@@ -487,7 +748,9 @@ public class ProductUpdateService {
         .forEach(
             node -> {
               node.setNewInTask(
-                  taskChangedIds != null && taskChangedIds.contains(node.getConceptId()));
+                  taskChangedIds != null
+                      && (node.getConceptId().startsWith("-")
+                          || taskChangedIds.contains(node.getConceptId())));
               node.setNewInProject(
                   projectChangedIds != null && projectChangedIds.contains(node.getConceptId()));
               if (node.getOriginalNode() != null && node.getOriginalNode().getNode() != null) {
@@ -678,5 +941,15 @@ public class ProductUpdateService {
     }
 
     return dp[str1.length()][str2.length()] / (double) Math.max(str1.length(), str2.length());
+  }
+
+  private String mapFromDefinitionStatusToId(String definitionStatus) {
+    if (definitionStatus.equals("PRIMITIVE")) {
+      return "900000000000074008";
+    }
+    if (definitionStatus.equals("FULLY_DEFINED")) {
+      return "900000000000073002";
+    }
+    return null;
   }
 }

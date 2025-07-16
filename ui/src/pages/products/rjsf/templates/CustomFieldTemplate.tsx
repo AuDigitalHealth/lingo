@@ -45,19 +45,22 @@ const CustomFieldTemplate = (props: FieldProps) => {
 
   return (
     <Box className={classNames} sx={{ width: '100%' }}>
-      {!skipTitle && (
-        <div>
-          {label && (
-            <Typography variant="h6" gutterBottom>
-              {label}
-              {required && <span style={{ color: 'red' }}>*</span>}
-            </Typography>
-          )}
-          {description && (
-            <div className="field-description">{description}</div>
-          )}
-        </div>
-      )}
+      <div>
+        {description && (
+          <Typography
+            sx={{ fontSize: '0.85em', mb: 1 }}
+            className="field-description"
+          >
+            {description}
+          </Typography>
+        )}
+        {!skipTitle && label && (
+          <Typography variant="h6" gutterBottom>
+            {label}
+            {required && <span style={{ color: 'red' }}>*</span>}
+          </Typography>
+        )}
+      </div>
       {enhancedChildren}
     </Box>
   );

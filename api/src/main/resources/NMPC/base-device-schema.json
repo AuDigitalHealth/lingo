@@ -63,9 +63,7 @@
                   "minimum": 1
                 }
               },
-              "required": [
-                "value"
-              ]
+              "required": ["value"]
             },
             {
               "properties": {
@@ -97,37 +95,38 @@
         "productName": {
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Product Name",
+          "description": "Select or create a product name (brand) for the device.",
           "minProperties": 1,
           "errorMessage": {
             "minProperties": "Product Name must be populated."
           }
         },
         "deviceType": {
-          "$ref": "#/$defs/SnowstormConceptMini"
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "ui:title": "VTM Level Device Type",
+          "description": "Select a VTM level device type for the product."
         },
         "specificDeviceType": {
-          "type": [
-            "object",
-            "null"
-          ],
-          "$ref": "#/$defs/SnowstormConceptMini"
+          "type": ["object", "null"],
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "ui:title": "Existing VMP Level Device Type",
+          "description": "Select an existing VMP level device type if available."
         },
         "newSpecificDeviceName": {
           "type": "string",
-          "title": "New Specific Device Name"
+          "title": "New VMP Level Device Concept Name",
+          "description": "If the VMP level device type is not available, you can create a new VMP level device concept with this name."
         },
         "otherParentConcepts": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/SnowstormConceptMini"
           },
-          "title": "Other Parent Concepts"
+          "title": "New VMP Level Concept Additional Parent Concepts",
+          "description": "If creating a new VMP level device concept, add any parent concepts additional to the VTM device type."
         }
       },
-      "required": [
-        "productName",
-        "deviceType"
-      ],
+      "required": ["productName", "deviceType"],
       "errorMessage": {
         "required": {
           "productName": "Product Name is required",
@@ -168,11 +167,7 @@
           "$ref": "#/$defs/ProductDetails"
         }
       },
-      "required": [
-        "unit",
-        "value",
-        "productDetails"
-      ],
+      "required": ["unit", "value", "productDetails"],
       "errorMessage": {
         "required": {
           "unit": "Unit is required",
@@ -194,9 +189,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "conceptId"
-                  ]
+                  "required": ["conceptId"]
                 },
                 "value": {
                   "type": "integer",
@@ -250,9 +243,7 @@
       "minItems": 1
     }
   },
-  "required": [
-    "containedProducts"
-  ],
+  "required": ["containedProducts"],
   "errorMessage": {
     "required": {
       "containedProducts": "At least one Contained Product is required"

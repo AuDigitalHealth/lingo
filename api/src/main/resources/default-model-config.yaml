@@ -126,9 +126,9 @@ models:
       - name: Virtual Therapeutic Moiety
         displayLabel: MP
         modelLevelType: MEDICINAL_PRODUCT_ONLY
-        medicineSemanticTag: medicinal product only
+        medicineSemanticTag: medicinal product
         deviceSemanticTag: physical object
-        drugDeviceSemanticTag: medicinal product only
+        drugDeviceSemanticTag: medicinal product
         referenceSetIdentifier: 660351000220100
         productModelEcl: "((> <id>) and ^ 660351000220100) minus >((> <id>) and ^ 660351000220100)"
       - name: Virtual Medicinal Product
@@ -200,6 +200,21 @@ models:
         mappingTypes:
           - RELATED
         order: 90
+      - name: ceNumber
+        title: CE number
+        identifier: 681031000220102
+        level: PACKAGE
+        dataType: UNSIGNED_INTEGER
+        valueRegexValidation: \d{4}
+        valueValidationErrorMessage: "Must be a 4 digit number"
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        defaultMappingType: RELATED
+        mappingTypes:
+          - RELATED
+        order: 90
+        suppressOnProductTypes: MEDICATION,NUTRITIONAL,VACCINE
       - name: atc
         title: ATC code
         identifier: 84676004
@@ -215,8 +230,9 @@ models:
         mappingTypes:
           - RELATED
         order: 100
+        suppressOnProductTypes: DEVICE
       - name: pcrs
-        title: GMS Reimbursable
+        title: PCRS Identifier and Name
         identifier: 680461000220105
         level: PACKAGE
         dataType: CODED,
@@ -250,12 +266,14 @@ models:
         level: PRODUCT
         modelLevels: REAL_CLINICAL_DRUG
         order: 60
+        suppressOnProductTypes: DEVICE,NUTRITIONAL
       - name: combinationOnly
         title: Multi component indicator
         identifier: 679981000220105
         level: PRODUCT
         modelLevels: REAL_CLINICAL_DRUG
         order: 1
+        suppressOnProductTypes: DEVICE
       - name: ulmFlag
         title: ULM flag
         description: Unlicensed Medicine flag
@@ -265,6 +283,7 @@ models:
         mandatory: false
         multiValued: false
         order: 81
+        suppressOnProductTypes: DEVICE
       - name: parallelImport
         title: Parallel import
         identifier: 679941000220100
@@ -327,8 +346,9 @@ models:
         multiValued: true
         showDefaultOptions: true
         order: 20
+        suppressOnProductTypes: DEVICE
       - name: pil
-        title: Leaflet URL
+        title: PIL Information
         identifier: 680181000220107
         level: PACKAGE
         dataType: URI
@@ -338,8 +358,9 @@ models:
         mandatory: false
         multiValued: true
         order: 51
+        suppressOnProductTypes: DEVICE
       - name: smpc
-        title: SmPC
+        title: SmPC Information
         identifier: 680171000220109
         level: PACKAGE
         dataType: URI
@@ -349,6 +370,7 @@ models:
         mandatory: false
         multiValued: true
         order: 50
+        suppressOnProductTypes: DEVICE
       - name: licensingStatus
         title: Licensing Status
         identifier: 680341000220104
@@ -360,6 +382,7 @@ models:
         multiValued: false
         showDefaultOptions: true
         order: 91
+        suppressOnProductTypes: DEVICE
       - name: marketingStatus
         title: Marketing Status
         identifier: 680051000220104
@@ -371,6 +394,19 @@ models:
         multiValued: false
         showDefaultOptions: true
         order: 92
+        suppressOnProductTypes: DEVICE
+      - name: deviceClass
+        title: Device Class
+        identifier: 681041000220106
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: <681051000220108
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: true
+        multiValued: false
+        showDefaultOptions: true
+        order: 93
+        suppressOnProductTypes: MEDICATION,NUTRITIONAL,VACCINE
       - name: marketingAuthHolder
         title: Marketing Authorisation Holder
         identifier: 680061000220102
@@ -393,6 +429,7 @@ models:
         multiValued: true
         showDefaultOptions: true
         order: 94
+        suppressOnProductTypes: DEVICE
       - name: legalSupplyStatus
         title: Dispensing Legal Status
         identifier: 680081000220106
@@ -404,8 +441,9 @@ models:
         multiValued: false
         showDefaultOptions: true
         order: 95
+        suppressOnProductTypes: DEVICE
       - name: placeOfSale
-        title: Place of Sale
+        title: Supply Legal Status
         identifier: 680771000220105
         level: PRODUCT
         dataType: CONCEPT
@@ -415,8 +453,9 @@ models:
         multiValued: false
         showDefaultOptions: true
         order: 96
+        suppressOnProductTypes: DEVICE
       - name: controlledDrugStatus
-        title: Controlled Drug Status
+        title: Legal Status - MDA Schedule
         identifier: 680091000220109
         level: PRODUCT
         dataType: CONCEPT
@@ -426,6 +465,7 @@ models:
         multiValued: false
         showDefaultOptions: true
         order: 97
+        suppressOnProductTypes: DEVICE,VACCINE,NUTRITIONAL
       - name: packageType
         title: Package Type
         identifier: 680161000220103
@@ -436,7 +476,7 @@ models:
         mandatory: false
         multiValued: false
         showDefaultOptions: true
-        order: 99
+        order: 98
       - name: lastDateOfMan
         title: Last Date of Manufacture
         identifier: 680191000220105
@@ -538,6 +578,7 @@ models:
         multiValued: false
         showDefaultOptions: true
         order: 90
+        suppressOnProductTypes: DEVICE
       - name: nonPrescReason
         title: Non-Prescribable Reason
         identifier: 680331000220108

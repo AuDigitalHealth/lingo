@@ -23,6 +23,7 @@ import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_DEVICE_TYPE;
 import static au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter.calculateNonDefiningRelationships;
 import static au.gov.digitalhealth.lingo.util.ReferenceSetUtils.calculateReferenceSetMembers;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONTAINS_CD;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.DEFINED;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_UNIT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_VALUE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRODUCT_NAME;
@@ -156,7 +157,7 @@ public class BrandPackSizeService {
       ModelConfiguration modelConfiguration) {
     Set<SnowstormRelationship> newRelationships =
         cloneNewRelationships(
-            tppConcept.getClassAxioms().iterator().next().getRelationships(),
+            SnowstormDtoUtil.getRelationshipsFromAxioms(tppConcept),
             modelConfiguration.getModuleId());
 
     for (SnowstormRelationship relationship : newRelationships) {
@@ -764,6 +765,7 @@ public class BrandPackSizeService {
             properties,
             false,
             false,
+            true,
             true)
         .thenApply(
             n -> {
@@ -788,7 +790,7 @@ public class BrandPackSizeService {
 
     Set<SnowstormRelationship> relationships =
         cloneNewRelationships(
-            mppConcept.getClassAxioms().iterator().next().getRelationships(),
+            SnowstormDtoUtil.getRelationshipsFromAxioms(mppConcept),
             modelConfiguration.getModuleId());
 
     relationships.forEach(
@@ -840,6 +842,7 @@ public class BrandPackSizeService {
             properties,
             false,
             false,
+            true,
             true)
         .thenApply(
             n -> {
@@ -863,7 +866,7 @@ public class BrandPackSizeService {
 
     Set<SnowstormRelationship> relationships =
         cloneNewRelationships(
-                leafProductConcept.getClassAxioms().iterator().next().getRelationships(),
+                SnowstormDtoUtil.getRelationshipsFromAxioms(leafProductConcept),
                 modelConfiguration.getModuleId())
             .stream()
             .filter(relationship -> !relationship.getTypeId().equals(IS_A.getValue()))
@@ -914,7 +917,11 @@ public class BrandPackSizeService {
             properties,
             false,
             false,
-            true)
+            true,
+            DEFINED
+                .getValue()
+                .equals(
+                    SnowstormDtoUtil.getSingleAxiom(leafProductConcept).getDefinitionStatusId()))
         .thenApply(
             n -> {
               nameGenerationService.addGeneratedFsnAndPt(

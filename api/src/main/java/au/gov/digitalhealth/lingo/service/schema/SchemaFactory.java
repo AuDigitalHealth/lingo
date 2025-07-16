@@ -54,13 +54,30 @@ public class SchemaFactory {
       ReferenceProperty property = new ReferenceProperty();
       setTitleAndDescription(mapping, property);
       property.setReference("#/$defs/SnowstormConceptMini");
+    } else if (mapping.getDataType().equals(NonDefiningPropertyDataType.UNSIGNED_INTEGER)
+        || mapping.getDataType().equals(NonDefiningPropertyDataType.INTEGER)
+        || mapping.getDataType().equals(NonDefiningPropertyDataType.DECIMAL)) {
+      NumberProperty property = new NumberProperty();
+      setTitleAndDescription(mapping, property);
+      property.setPattern(mapping.getValueRegexValidation());
+      property
+          .getErrorMessage()
+          .put(
+              "pattern",
+              (mapping.getValueValidationErrorMessage() == null
+                  ? "Please enter a valid "
+                      + mapping.getTitle()
+                      + " matching "
+                      + mapping.getValueRegexValidation()
+                  : mapping.getValueValidationErrorMessage()));
+      identifierSchema.addProperty("value", property);
     } else {
       StringProperty property;
-      if (mapping.getDataType().equals(NonDefiningPropertyDataType.DATE)){
+      if (mapping.getDataType().equals(NonDefiningPropertyDataType.DATE)) {
         DateProperty dateProperty = new DateProperty();
         dateProperty.setDateFormat(mapping.getFormat());
         property = dateProperty;
-      }else{
+      } else {
         property = new StringProperty();
       }
 
@@ -131,11 +148,11 @@ public class SchemaFactory {
       returnValue = property;
     } else {
       StringProperty items;
-      if (nonDefiningPropertyDefinition.getDataType().equals(NonDefiningPropertyDataType.DATE)){
+      if (nonDefiningPropertyDefinition.getDataType().equals(NonDefiningPropertyDataType.DATE)) {
         DateProperty dateProperty = new DateProperty();
         dateProperty.setDateFormat(nonDefiningPropertyDefinition.getFormat());
         items = dateProperty;
-      }else{
+      } else {
         items = new StringProperty();
       }
       if (nonDefiningPropertyDefinition.getValueRegexValidation() != null) {

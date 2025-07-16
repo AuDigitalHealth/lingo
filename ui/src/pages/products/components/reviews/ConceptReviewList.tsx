@@ -1,6 +1,9 @@
-// import useTaskById from '../../../../hooks/useTaskById.tsx';
-import { useConceptsForReview } from '../../../../hooks/api/task/useConceptsForReview.js';
-import useTaskById from '../../../../hooks/useTaskById.tsx';
+// import useTaskByKey from '../../../../hooks/useTaskByKey.tsx';
+import {
+  useConceptsForReview,
+  useFeedbackUnread,
+} from '../../../../hooks/api/task/useConceptsForReview.js';
+import useTaskByKey from '../../../../hooks/useTaskByKey.tsx';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 
 import { Box, Paper, Typography } from '@mui/material';
@@ -11,15 +14,22 @@ import { useApproveReviewMutation } from '../../../../hooks/api/task/useApproveR
 import { Task } from '../../../../types/task.ts';
 import { Button } from '@mui/material';
 import { useConceptsThatHaveBeenReviewed } from '../../../../hooks/api/task/useConceptsThatHaveBeenReviewed.tsx';
+import { truncate } from 'lodash';
 
 function ConceptReviewList() {
-  const task = useTaskById();
+  const task = useTaskByKey();
   const projectKey = task?.projectKey;
   const taskKey = task?.key;
-  const { conceptsReviewed } = useConceptsThatHaveBeenReviewed(projectKey, taskKey, true);
+  const { conceptsReviewed } = useConceptsThatHaveBeenReviewed(
+    projectKey,
+    taskKey,
+    true,
+  );
   const { conceptReviews } = useConceptsForReview(task?.branchPath);
   const showReviewControls = useShowReviewControls({ task });
   const approveReviewMutation = useApproveReviewMutation();
+
+  const { unreadConceptIds } = useFeedbackUnread(projectKey, taskKey, true);
 
   if (!showReviewControls) {
     return <></>;
@@ -30,8 +40,31 @@ function ConceptReviewList() {
       approveReviewMutation.mutate({
         projectKey: task.projectKey,
         taskKey: task.key,
-        reviewedList: {conceptIds: [], approvalDate: new Date().toISOString()},
+        reviewedList: {
+          conceptIds: [],
+          approvalDate: new Date().toISOString(),
+        },
       });
+    }
+  };
+
+  // Helper function to get status value for sorting
+  const getStatusSortValue = params => {
+    if (params.row.approved) {
+      return 1; // Approved - highest priority
+    }
+
+    const hasUnread = unreadConceptIds?.includes(
+      params?.row?.conceptId as string,
+    );
+    const hasRead = params?.row?.reviews?.messages?.length > 0;
+
+    if (hasUnread) {
+      return 2; // Pending / Unread
+    } else if (hasRead) {
+      return 3; // Pending / Read
+    } else {
+      return 4; // Pending (no messages)
     }
   };
 
@@ -66,7 +99,7 @@ function ConceptReviewList() {
             }}
           >
             <Link to={`review/${params.row.concept?.conceptId}`}>
-              {params.value}
+              {truncate(params.value, { length: 100 })}
             </Link>
           </Typography>
         </Box>
@@ -78,7 +111,24 @@ function ConceptReviewList() {
       width: 140,
       align: 'center',
       headerAlign: 'center',
+      sortable: true,
+      valueGetter: getStatusSortValue,
+      sortComparator: (v1, v2) => {
+        return v1 - v2; // Lower numbers (approved) come first in ascending order
+      },
       renderCell: params => {
+        const hasUnread = unreadConceptIds?.includes(
+          params?.row?.conceptId as string,
+        );
+
+        const hasRead = params?.row?.reviews?.messages?.length > 0;
+
+        let readOrUnreadMessage = undefined;
+        if (hasUnread) {
+          readOrUnreadMessage = 'Unread';
+        } else if (hasRead) {
+          readOrUnreadMessage = 'Read';
+        }
         return params.row.approved ? (
           <Box
             sx={{
@@ -101,7 +151,7 @@ function ConceptReviewList() {
               fontStyle: 'italic',
             }}
           >
-            Pending
+            Pending {readOrUnreadMessage && ` / ${readOrUnreadMessage}`}
           </Typography>
         );
       },
@@ -138,11 +188,14 @@ function ConceptReviewList() {
             </Typography>
           </Box>
           <Button
-            disabled={conceptsReviewed === undefined || conceptsReviewed?.conceptIds.length === 0}
-            size='small'
+            disabled={
+              conceptsReviewed === undefined ||
+              conceptsReviewed?.conceptIds.length === 0 ||
+              approveReviewMutation.isPending
+            }
+            size="small"
             variant="outlined"
             onClick={handleDisapproveAll}
-            disabled={approveReviewMutation.isPending}
             sx={{
               color: 'error.main',
               borderColor: 'error.main',
@@ -152,7 +205,9 @@ function ConceptReviewList() {
               },
             }}
           >
-            {approveReviewMutation.isPending ? 'Processing...' : 'Disapprove All'}
+            {approveReviewMutation.isPending
+              ? 'Processing...'
+              : 'Disapprove All'}
           </Button>
         </Box>
 
@@ -199,7 +254,7 @@ function ConceptReviewList() {
               backgroundColor: 'grey.50',
             },
           }}
-          getRowHeight={() => 'auto'}
+          getRowHeight={() => 100}
           disableRowSelectionOnClick
         />
       </Paper>
@@ -208,4 +263,3 @@ function ConceptReviewList() {
 }
 
 export default ConceptReviewList;
-
