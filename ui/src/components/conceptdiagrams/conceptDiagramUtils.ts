@@ -19,11 +19,11 @@ import Konva from 'konva';
 import {
   AxiomRelationshipNewConcept,
   Concept,
-  NewConceptDetails,
-  SnowstormRelationship,
-  SnowstormRelationshipNewOrRemoved,
   newConceptBorderColor,
+  NewConceptDetails,
   removedConceptBorderColor,
+  SnowstormRelationship,
+  SnowstormRelationshipNewOrRemoved
 } from '../../types/concept';
 import { Layer } from 'konva/lib/Layer';
 import { RefObject } from 'react';
@@ -657,9 +657,6 @@ export function drawNewConceptDiagram(
   const axioms = [] as AxiomArrayThingy[];
   args.numberOfGroups = 0;
   if (args.view === 'stated') {
-    if (!concept.axioms) {
-      // debugger;
-    }
     concept.axioms?.forEach(function (axiom) {
       if (axiom.active) {
         const axiomToPush = {
@@ -715,7 +712,6 @@ export function drawNewConceptDiagram(
   let y = 10;
   let maxX = 10;
   let sctClass = '';
-  // debugger;
   if (concept.axioms[0].definitionStatus === 'PRIMITIVE') {
     sctClass = 'sct-primitive-concept';
   } else {
