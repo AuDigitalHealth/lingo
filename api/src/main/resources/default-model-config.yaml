@@ -126,9 +126,9 @@ models:
       - name: Virtual Therapeutic Moiety
         displayLabel: MP
         modelLevelType: MEDICINAL_PRODUCT_ONLY
-        medicineSemanticTag: medicinal product only
+        medicineSemanticTag: medicinal product
         deviceSemanticTag: physical object
-        drugDeviceSemanticTag: medicinal product only
+        drugDeviceSemanticTag: medicinal product
         referenceSetIdentifier: 660351000220100
         productModelEcl: "((> <id>) and ^ 660351000220100) minus >((> <id>) and ^ 660351000220100)"
       - name: Virtual Medicinal Product
