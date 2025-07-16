@@ -476,7 +476,7 @@ models:
         mandatory: false
         multiValued: false
         showDefaultOptions: true
-        order: 99
+        order: 98
       - name: lastDateOfMan
         title: Last Date of Manufacture
         identifier: 680191000220105
