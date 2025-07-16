@@ -300,19 +300,6 @@ export function resetDiscriminators(
         );
 
       if (activeSchema) {
-        // Clean irrelevant fields in dataNode
-        if (dataNode) {
-          Object.keys(dataNode).forEach(key => {
-            if (
-              key !== discriminator &&
-              key !== 'oneOf_select' &&
-              !activeSchema.properties?.[key]
-            ) {
-              set(updatedData, [...path, key], undefined);
-            }
-          });
-        }
-
         // Explicitly set 'type' to root 'variant' value in productDetails
         if (
           path[0] === 'containedProducts' &&
