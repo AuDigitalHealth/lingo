@@ -19,17 +19,35 @@ import au.gov.digitalhealth.tickets.controllers.ProductDto;
 import au.gov.digitalhealth.tickets.models.Product;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
+import org.mapstruct.Named;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
 @Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, componentModel = "spring")
 public interface ProductMapper {
 
+  @Mapping(
+      target = "originalConceptId",
+      source = "originalConceptId",
+      qualifiedByName = "stringToLong")
   Product toEntity(ProductDto productDto);
 
   ProductDto toDto(Product product);
 
   @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+  @Mapping(
+      target = "originalConceptId",
+      source = "originalConceptId",
+      qualifiedByName = "stringToLong")
   Product partialUpdate(ProductDto productDto, @MappingTarget Product product);
+
+  @Named("stringToLong")
+  default Long stringToLong(String value) {
+    if (value == null || value.trim().isEmpty()) {
+      return null;
+    }
+    return Long.parseLong(value.trim());
+  }
 }
