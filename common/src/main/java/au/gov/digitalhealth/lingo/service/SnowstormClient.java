@@ -15,7 +15,6 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
-import static au.gov.digitalhealth.lingo.util.AmtConstants.ARTGID_REFSET;
 
 import au.csiro.snowstorm_client.api.BranchingApi;
 import au.csiro.snowstorm_client.api.ConceptsApi;
@@ -53,8 +52,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -68,8 +65,8 @@ import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
-import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -164,12 +161,9 @@ public class SnowstormClient {
     if (concepts.size() != 1) {
       // todo this is a workaround for non-migrated NMPC date
       concepts = self.getConceptsFromEcl(branch, ecl, 0, 2, false);
-      if(concepts.size() == 2) {
-        return concepts.iterator().next();
+      if (concepts.size() != 1) {
+        throw new SingleConceptExpectedProblem(branch, ecl, concepts);
       }
-//      if (concepts.size() != 1) {
-//        throw new SingleConceptExpectedProblem(branch, ecl, concepts);
-//      }
     }
     return concepts.iterator().next();
   }
