@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Autocomplete,
   Box,
   Checkbox,
@@ -8,15 +11,13 @@ import {
   Grid,
   IconButton,
   Stack,
-  TextField,
+  TextField
 } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { FieldProps } from '@rjsf/utils';
 import ValueSetAutocomplete from '../../components/ValueSetAutocomplete';
 import EclAutocomplete from '../../components/EclAutocomplete';
-import {
-  NonDefiningProperty,
-  NonDefiningPropertyType,
-} from '../../../../../types/product.ts';
+import { NonDefiningProperty, NonDefiningPropertyType } from '../../../../../types/product.ts';
 import useTaskByKey from '../../../../../hooks/useTaskByKey.tsx';
 import { ConceptMini } from '../../../../../types/concept.ts';
 import { MultiValueValueSetAutocomplete } from '../../components/MultiValueSetAutocomplete.tsx';
@@ -75,42 +76,49 @@ const ExternalIdentifiers: React.FC<
   const task = useTaskByKey();
   return (
     <>
-      <Grid container spacing={2}>
-        {schemas
-          .sort((a, b) => {
-            const aScheme = a.properties?.identifierScheme?.const || '';
-            const bScheme = b.properties?.identifierScheme?.const || '';
-            const aIdx = propertyOrder.indexOf(aScheme);
-            const bIdx = propertyOrder.indexOf(bScheme);
-            if (aIdx !== -1 && bIdx !== -1) {
-              return aIdx - bIdx; // Sort by propertyOrder index
-            }
-            return aScheme.localeCompare(bScheme);
-          })
-          .filter(
-            schema =>
-              !uiSchema['ui:options']?.readOnlyProperties?.includes(
-                schema.properties.identifierScheme.const,
-              ),
-          )
-          .map((schema, index) => {
-            return (
-              <Grid item xs={12} md={6} key={index}>
-                <ExternalIdentifierRender
-                  sx={{ margin: 1 }}
-                  formData={formData}
-                  onChange={updated => {
-                    onChange(updated);
-                  }}
-                  schema={schema}
-                  uiSchema={uiSchema}
-                  registry={registry}
-                  branch={task?.branchPath}
-                />
-              </Grid>
-            );
-          })}
-      </Grid>
+      <Accordion defaultExpanded sx={{ backgroundColor: '#fdfcfc', borderRadius: 2, border: '1px solid #e0e0e0', boxShadow: 'none', mt: 2 }}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ fontWeight: 'bold' }}>
+          Non-defining properties
+        </AccordionSummary>
+        <AccordionDetails>
+          <Grid container spacing={2}>
+            {schemas
+              .sort((a, b) => {
+                const aScheme = a.properties?.identifierScheme?.const || '';
+                const bScheme = b.properties?.identifierScheme?.const || '';
+                const aIdx = propertyOrder.indexOf(aScheme);
+                const bIdx = propertyOrder.indexOf(bScheme);
+                if (aIdx !== -1 && bIdx !== -1) {
+                  return aIdx - bIdx; // Sort by propertyOrder index
+                }
+                return aScheme.localeCompare(bScheme);
+              })
+              .filter(
+                schema =>
+                  !uiSchema['ui:options']?.readOnlyProperties?.includes(
+                    schema.properties.identifierScheme.const,
+                  ),
+              )
+              .map((schema, index) => {
+                return (
+                  <Grid item xs={12} md={6} key={index}>
+                    <ExternalIdentifierRender
+                      sx={{ margin: 1 }}
+                      formData={formData}
+                      onChange={updated => {
+                        onChange(updated);
+                      }}
+                      schema={schema}
+                      uiSchema={uiSchema}
+                      registry={registry}
+                      branch={task?.branchPath}
+                    />
+                  </Grid>
+                );
+              })}
+          </Grid>
+        </AccordionDetails>
+      </Accordion>
     </>
   );
 };
@@ -536,7 +544,7 @@ const ExternalIdentifierRender: React.FC<
                     relationshipType:
                       schema.properties.relationshipType?.const ?? null,
                     type: schema.properties.type?.const ?? null,
-                    value: val,
+                    value: isNumber ? Number(val) : val,
                   };
 
                   const others = (formData ?? []).filter(
@@ -544,6 +552,11 @@ const ExternalIdentifierRender: React.FC<
                   );
 
                   onChange([...others, updatedEntry]);
+                }
+              }}
+              InputProps={{
+                inputProps: {
+                  step: isNumber ? "0.01" : undefined
                 }
               }}
               error={!!tooltip}
