@@ -81,68 +81,69 @@ function ProductPreviewBody({
         id={'product-view'}
         data-testid={'product-view'}
       >
-        {isRefsetLoading ||
-          (fieldBindingIsLoading && (
-            <ProductLoader
-              message={`Loading box model for [${getProductDisplayName(productModel)}]`}
-            />
-          ))}
-        <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 3 }}>
-          <Grid xs={6} key={'left'} item={true}>
-            {lableTypesLeft.map((label, index) => (
-              <ProductTypeGroupPreview
-                key={`left-${label}-${index}`}
-                productLabelItems={filterByLabel(productModel?.nodes, label)}
-                label={label}
-                control={control}
-                productModel={productModel}
-                activeConcept={activeConcept}
-                setActiveConcept={setActiveConcept}
-                expandedConcepts={expandedConcepts}
-                setExpandedConcepts={setExpandedConcepts}
-                getValues={getValues}
-                register={register}
-                watch={watch}
-                idsWithInvalidName={idsWithInvalidName}
-                setIdsWithInvalidName={setIdsWithInvalidName}
-                fieldBindings={fieldBindings}
-                branch={branch}
-                refsetData={refsetData}
-                isSimpleEdit={isSimpleEdit}
-                setValue={setValue}
-                ticket={ticket}
+        <>
+          {isRefsetLoading ||
+            (fieldBindingIsLoading && (
+              <ProductLoader
+                message={`Loading box model for [${getProductDisplayName(productModel)}]`}
               />
             ))}
-          </Grid>
-          <Grid xs={6} key={'right'} item={true}>
-            {lableTypesRight.map((label, index) => (
-              <ProductTypeGroupPreview
-                key={`left-${label}-${index}`}
-                productLabelItems={filterByLabel(productModel?.nodes, label)}
-                label={label}
-                control={control}
-                productModel={productModel}
-                activeConcept={activeConcept}
-                setActiveConcept={setActiveConcept}
-                expandedConcepts={expandedConcepts}
-                setExpandedConcepts={setExpandedConcepts}
-                register={register}
-                watch={watch}
-                getValues={getValues}
-                idsWithInvalidName={idsWithInvalidName}
-                setIdsWithInvalidName={setIdsWithInvalidName}
-                fieldBindings={fieldBindings}
-                branch={branch}
-                refsetData={refsetData}
-                isSimpleEdit={isSimpleEdit}
-                setValue={setValue}
-                ticket={ticket}
-              />
-            ))}
-          </Grid>
-          <Grid xs={12} key={'bottom'} item={true}>
-            {lableTypesCentre.map((label, index) => {
-              const filteredItems = filterByLabel(productModel?.nodes, label);
+          <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 3 }}>
+            <Grid xs={6} key={'left'} item={true}>
+              {lableTypesLeft.map((label, index) => (
+                <ProductTypeGroupPreview
+                  key={`left-${label}-${index}`}
+                  productLabelItems={filterByLabel(productModel?.nodes, label)}
+                  label={label}
+                  control={control}
+                  productModel={productModel}
+                  activeConcept={activeConcept}
+                  setActiveConcept={setActiveConcept}
+                  expandedConcepts={expandedConcepts}
+                  setExpandedConcepts={setExpandedConcepts}
+                  getValues={getValues}
+                  register={register}
+                  watch={watch}
+                  idsWithInvalidName={idsWithInvalidName}
+                  setIdsWithInvalidName={setIdsWithInvalidName}
+                  fieldBindings={fieldBindings}
+                  branch={branch}
+                  refsetData={refsetData}
+                  isSimpleEdit={isSimpleEdit}
+                  setValue={setValue}
+                  ticket={ticket}
+                />
+              ))}
+            </Grid>
+            <Grid xs={6} key={'right'} item={true}>
+              {lableTypesRight.map((label, index) => (
+                <ProductTypeGroupPreview
+                  key={`left-${label}-${index}`}
+                  productLabelItems={filterByLabel(productModel?.nodes, label)}
+                  label={label}
+                  control={control}
+                  productModel={productModel}
+                  activeConcept={activeConcept}
+                  setActiveConcept={setActiveConcept}
+                  expandedConcepts={expandedConcepts}
+                  setExpandedConcepts={setExpandedConcepts}
+                  register={register}
+                  watch={watch}
+                  getValues={getValues}
+                  idsWithInvalidName={idsWithInvalidName}
+                  setIdsWithInvalidName={setIdsWithInvalidName}
+                  fieldBindings={fieldBindings}
+                  branch={branch}
+                  refsetData={refsetData}
+                  isSimpleEdit={isSimpleEdit}
+                  setValue={setValue}
+                  ticket={ticket}
+                />
+              ))}
+            </Grid>
+            <Grid xs={12} key={'bottom'} item={true}>
+              {lableTypesCentre.map((label, index) => {
+                const filteredItems = filterByLabel(productModel?.nodes, label);
 
               // Only render the component if there are items to display
               return filteredItems && filteredItems.length > 0 ? (
