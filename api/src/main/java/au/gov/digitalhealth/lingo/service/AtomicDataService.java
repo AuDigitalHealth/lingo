@@ -354,22 +354,24 @@ public abstract class AtomicDataService<T extends ProductDetails> {
             .block();
 
     //     todo revisit this after NMPC migration
-    if (getModelConfiguration(branch).getModelType().equals(ModelType.NMPC)
-        && (!maps.browserMap.values().stream()
-                .allMatch(
-                    c ->
-                        c.getRelationships().stream()
-                            .anyMatch(
-                                r ->
-                                    r.getTypeId()
-                                        .equals(NmpcConstants.HAS_NMPC_PRODUCT_TYPE.getValue())))
-            || !maps.browserMap.keySet().stream().allMatch(id -> maps.typeMap.get(id) != null))) {
-      throw new AtomicDataExtractionProblem(
-          "Unable to load product - migration has not been run", productId);
-    } else if (maps == null || !maps.typeMap.keySet().equals(maps.browserMap.keySet())) {
-      throw new AtomicDataExtractionProblem(
-          "Mismatch between browser and refset members", productId);
-    }
+    //    if (getModelConfiguration(branch).getModelType().equals(ModelType.NMPC)
+    //        && (!maps.browserMap.values().stream()
+    //                .allMatch(
+    //                    c ->
+    //                        c.getRelationships().stream()
+    //                            .anyMatch(
+    //                                r ->
+    //                                    r.getTypeId()
+    //
+    // .equals(NmpcConstants.HAS_NMPC_PRODUCT_TYPE.getValue())))
+    //            || !maps.browserMap.keySet().stream().allMatch(id -> maps.typeMap.get(id) !=
+    // null))) {
+    //      throw new AtomicDataExtractionProblem(
+    //          "Unable to load product - migration has not been run", productId);
+    //    } else if (maps == null || !maps.typeMap.keySet().equals(maps.browserMap.keySet())) {
+    //      throw new AtomicDataExtractionProblem(
+    //          "Mismatch between browser and refset members", productId);
+    //    }
     return maps;
   }
 

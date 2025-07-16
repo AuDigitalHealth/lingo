@@ -198,7 +198,7 @@
                       "unitOfPresentation": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Unit of Presentation" },
                       "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PRODUCT_NonDefiningProperty" }, "title": "Non Defining Properties" }
                     },
-                    "required": ["productName", "genericForm", "productType", "activeIngredients", "unitOfPresentation"],
+                    "required": ["productName", "existingMedicinalProduct", "genericForm", "productType", "activeIngredients", "unitOfPresentation"],
                     "additionalProperties": false
                   }
                 ],
@@ -330,6 +330,9 @@
                       "productName": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Brand Name" },
                       "genericForm": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Generic Dose Form" },
                       "specificForm": { "type": ["object", "null"], "nullable": true, "$ref": "#/$defs/SnowstormConceptMini", "title": "Specific Dose Form" },
+                      "existingMedicinalProduct": { "type": ["object", "null"], "$ref": "#/$defs/SnowstormConceptMini", "title": "Existing VTM Level Concept"},
+                      "existingClinicalDrug": { "type": ["object", "null"], "$ref": "#/$defs/SnowstormConceptMini", "title": "Existing VMP Level Concept", "description": "If an existing VMP is available, select it here."},
+                      "newGenericProductName": { "type": "string", "title": "New Generic Product Name", "description": "If an existing VMP is not available, you can create a new generic product concept with this name."},
                       "type": { "type": "string", "const": "nutritional" },
                       "activeIngredients": {
                         "type": "array",
