@@ -48,7 +48,6 @@ import {
   resetDiscriminators,
 } from './helpers/validationHelper.ts';
 import { ErrorDisplay } from './components/ErrorDisplay.tsx';
-import CustomFieldTemplate from './templates/CustomFieldTemplate.tsx';
 
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -251,6 +250,7 @@ function MedicationAuthoring({
             noHtml5Validate={true}
             noValidate={false}
             showErrorList={false}
+            omitExtraData={true}
           >
             <Box
               sx={{
