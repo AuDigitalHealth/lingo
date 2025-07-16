@@ -48,6 +48,8 @@ import {
   deDuplicateErrors,
 } from './helpers/validationHelper.ts';
 import { ErrorDisplay } from './components/ErrorDisplay.tsx';
+import CustomSchemaField from "./templates/CustomSchemaField.tsx";
+import {WidgetProps} from "@rjsf/core";
 
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -56,6 +58,18 @@ export interface MedicationAuthoringV2Props {
   ticketProductId?: string;
   schemaType: string;
 }
+const HiddenOneOfWidget: React.FC<WidgetProps> = (props) => {
+  console.log('HiddenOneOfWidget called with props:', {
+    id: props.id,
+    schema: props.schema,
+    uiSchema: props.uiSchema,
+    value: props.value,
+  });
+  return null;
+};
+const CustomOneOfField = () => {
+  return null; // suppress the dropdown entirely
+};
 function MedicationAuthoring({
   task,
   selectedProduct,
@@ -220,17 +234,19 @@ function MedicationAuthoring({
             formData={formData}
             formContext={formContext}
             fields={{
+              CustomOneOfField,
               AutoCompleteField,
               ConditionalArrayField,
               ExternalIdentifiers,
               UnitValueUnWrappedField,
               UnitValueField,
-              CompactQuantityField,
+              CompactQuantityField
             }}
             widgets={{
               TextFieldWidget,
               OneOfArrayWidget,
               NumberWidget,
+              oneOfSelect: HiddenOneOfWidget
             }}
             templates={{
               ArrayFieldTemplate: CustomArrayFieldTemplate,
