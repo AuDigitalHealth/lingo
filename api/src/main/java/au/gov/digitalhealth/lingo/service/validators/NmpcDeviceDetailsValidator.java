@@ -84,7 +84,7 @@ public class NmpcDeviceDetailsValidator extends DetailsValidator implements Devi
 
     validateNonDefiningProperties(
         deviceProductDetails.getNonDefiningProperties(),
-        ProductPackageType.PACKAGE,
+        ProductPackageType.PRODUCT,
         models.getModelConfiguration(branch));
   }
 }

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore';
-import { Product } from '../../../types/concept';
+import { Product, newConceptBorderColor } from '../../../types/concept';
 import { RefsetMember } from '../../../types/RefsetMember';
 import { Tooltip } from '@mui/material';
 import { Box } from '@mui/material';
@@ -122,7 +122,7 @@ export default function HistoricalAssociationsDisplay({
     );
 
     const getBorderColor = () => {
-      if (isNew) return '#4caf50';
+      if (isNew) return newConceptBorderColor;
       return '#e0e0e0';
     };
 

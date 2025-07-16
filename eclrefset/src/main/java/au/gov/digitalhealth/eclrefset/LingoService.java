@@ -19,13 +19,16 @@ import static io.restassured.RestAssured.given;
 
 import au.gov.digitalhealth.tickets.ExternalProcessDto;
 import au.gov.digitalhealth.tickets.JobResultDto;
+import au.gov.digitalhealth.tickets.JobResultDto.ResultDto;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.http.Cookie;
 import io.restassured.parsing.Parser;
 import io.restassured.response.Response;
+import java.util.Comparator;
 import java.util.List;
 import org.apache.http.HttpStatus;
+import java.util.Comparator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
@@ -42,6 +45,24 @@ public class LingoService {
   public int postJobResult(JobResultDto jobResultDto, Cookie cookie) {
 
     RestAssured.defaultParser = Parser.JSON;
+
+    jobResultDto.getResults().sort(Comparator.comparing(
+        ResultDto::getName,
+        Comparator.nullsLast((a, b) -> {
+          if (a == null || a.trim().isEmpty()) return 1;
+          if (b == null || b.trim().isEmpty()) return -1;
+
+          String aText = a.contains("|") ? a.split("\\|")[1].trim() : a;
+          String bText = b.contains("|") ? b.split("\\|")[1].trim() : b;
+
+          if (aText.isEmpty()) return 1;
+          if (bText.isEmpty()) return -1;
+
+          // Compare entire strings after pipe instead of just first char
+          return aText.toLowerCase().compareTo(bText.toLowerCase());
+        })
+    ));
+
 
     Response response =
         given()

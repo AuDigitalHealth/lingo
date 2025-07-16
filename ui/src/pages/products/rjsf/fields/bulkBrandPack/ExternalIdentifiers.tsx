@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Autocomplete,
   Box,
   Checkbox,
@@ -8,21 +11,20 @@ import {
   Grid,
   IconButton,
   Stack,
-  TextField,
+  TextField
 } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { FieldProps } from '@rjsf/utils';
 import ValueSetAutocomplete from '../../components/ValueSetAutocomplete';
 import EclAutocomplete from '../../components/EclAutocomplete';
-import {
-  NonDefiningProperty,
-  NonDefiningPropertyType,
-} from '../../../../../types/product.ts';
-import useTaskById from '../../../../../hooks/useTaskById.tsx';
+import { NonDefiningProperty, NonDefiningPropertyType } from '../../../../../types/product.ts';
+import useTaskByKey from '../../../../../hooks/useTaskByKey.tsx';
 import { ConceptMini } from '../../../../../types/concept.ts';
 import { MultiValueValueSetAutocomplete } from '../../components/MultiValueSetAutocomplete.tsx';
 import MultiValueEclAutocomplete from '../../components/MultiValueEclAutocomplete.tsx';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import DesktopDatePickerField from '../../components/DesktopDatePickerField.tsx';
+import { Tooltip } from 'antd';
 
 const SCHEME_COLORS = ['primary', 'secondary', 'success', 'error', 'warning'];
 
@@ -71,45 +73,52 @@ const ExternalIdentifiers: React.FC<
   const formData = props.formData;
 
   const schemas = schema?.items?.anyOf as NonDefiningPropertyDefinition[];
-  const task = useTaskById();
+  const task = useTaskByKey();
   return (
     <>
-      <Grid container spacing={2}>
-        {schemas
-          .sort((a, b) => {
-            const aScheme = a.properties?.identifierScheme?.const || '';
-            const bScheme = b.properties?.identifierScheme?.const || '';
-            const aIdx = propertyOrder.indexOf(aScheme);
-            const bIdx = propertyOrder.indexOf(bScheme);
-            if (aIdx !== -1 && bIdx !== -1) {
-              return aIdx - bIdx; // Sort by propertyOrder index
-            }
-            return aScheme.localeCompare(bScheme);
-          })
-          .filter(
-            schema =>
-              !uiSchema['ui:options']?.readOnlyProperties?.includes(
-                schema.properties.identifierScheme.const,
-              ),
-          )
-          .map((schema, index) => {
-            return (
-              <Grid item xs={12} md={6} key={index}>
-                <ExternalIdentifierRender
-                  sx={{ margin: 1 }}
-                  formData={formData}
-                  onChange={updated => {
-                    onChange(updated);
-                  }}
-                  schema={schema}
-                  uiSchema={uiSchema}
-                  registry={registry}
-                  branch={task?.branchPath}
-                />
-              </Grid>
-            );
-          })}
-      </Grid>
+      <Accordion defaultExpanded sx={{ backgroundColor: '#fdfcfc', borderRadius: 2, border: '1px solid #e0e0e0', boxShadow: 'none', mt: 2 }}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ fontWeight: 'bold' }}>
+          Non-defining properties
+        </AccordionSummary>
+        <AccordionDetails>
+          <Grid container spacing={2}>
+            {schemas
+              .sort((a, b) => {
+                const aScheme = a.properties?.identifierScheme?.const || '';
+                const bScheme = b.properties?.identifierScheme?.const || '';
+                const aIdx = propertyOrder.indexOf(aScheme);
+                const bIdx = propertyOrder.indexOf(bScheme);
+                if (aIdx !== -1 && bIdx !== -1) {
+                  return aIdx - bIdx; // Sort by propertyOrder index
+                }
+                return aScheme.localeCompare(bScheme);
+              })
+              .filter(
+                schema =>
+                  !uiSchema['ui:options']?.readOnlyProperties?.includes(
+                    schema.properties.identifierScheme.const,
+                  ),
+              )
+              .map((schema, index) => {
+                return (
+                  <Grid item xs={12} md={6} key={index}>
+                    <ExternalIdentifierRender
+                      sx={{ margin: 1 }}
+                      formData={formData}
+                      onChange={updated => {
+                        onChange(updated);
+                      }}
+                      schema={schema}
+                      uiSchema={uiSchema}
+                      registry={registry}
+                      branch={task?.branchPath}
+                    />
+                  </Grid>
+                );
+              })}
+          </Grid>
+        </AccordionDetails>
+      </Accordion>
     </>
   );
 };
@@ -150,6 +159,7 @@ const ExternalIdentifierRender: React.FC<
   const isMultiValued = multiValuedSchemes.includes(schemeName);
   const showDefaultOptions = showDefaultOptionSchemes.includes(schemeName);
   const isCheckBox = schema?.properties?.type?.const === 'REFERENCE_SET';
+  const isNumber = schema?.properties?.value?.type === 'number';
 
   const bindingConfig: BindingConfig = uiSchema['ui:options']?.binding || {};
 
@@ -297,16 +307,24 @@ const ExternalIdentifierRender: React.FC<
   };
 
   const renderChip = (item: NonDefiningProperty) => (
-    <Chip
-      variant="filled"
-      key={`${item.identifierScheme}-${item.value}`}
-      label={`${item.value}`}
-      onDelete={
-        !readOnly
-          ? () => handleDelete(item.value, item.identifierScheme)
-          : undefined
-      }
-    />
+    <Tooltip title={item.value} placement="top">
+      <Chip
+        variant="filled"
+        key={`${item.identifierScheme}-${item.value}`}
+        label={item.value}
+        onDelete={
+          !readOnly
+            ? () => handleDelete(item.value, item.identifierScheme)
+            : undefined
+        }
+        sx={{
+          maxWidth: '200px', // Constrain chip width
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      />
+    </Tooltip>
   );
 
   if (readOnly && (!schemeEntries || schemeEntries.length === 0)) {
@@ -505,6 +523,7 @@ const ExternalIdentifierRender: React.FC<
           !isMultiValued && (
             <TextField
               fullWidth
+              type={isNumber ? 'number' : 'text'}
               disabled={readOnly}
               label={schema.title}
               value={schemeEntries?.[0]?.value || ''}
@@ -525,7 +544,7 @@ const ExternalIdentifierRender: React.FC<
                     relationshipType:
                       schema.properties.relationshipType?.const ?? null,
                     type: schema.properties.type?.const ?? null,
-                    value: val,
+                    value: isNumber ? Number(val) : val,
                   };
 
                   const others = (formData ?? []).filter(
@@ -533,6 +552,11 @@ const ExternalIdentifierRender: React.FC<
                   );
 
                   onChange([...others, updatedEntry]);
+                }
+              }}
+              InputProps={{
+                inputProps: {
+                  step: isNumber ? "0.01" : undefined
                 }
               }}
               error={!!tooltip}

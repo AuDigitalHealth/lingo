@@ -602,7 +602,7 @@ export function TicketsBacklogView({
       {fieldsContains('taskAssociation') && (
         <Column
           field="taskAssociation"
-          header="Task"
+          header="Task ID"
           sortable={!minimal}
           filter={!minimal}
           filterPlaceholder="Search by Task"

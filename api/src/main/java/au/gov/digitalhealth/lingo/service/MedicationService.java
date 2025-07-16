@@ -42,6 +42,8 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_QUALITATIVE_ST
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_SUPPLIER;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_TARGET_POPULATION;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_UNIT_OF_PRESENTATION;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_UNIT_OF_PRESENTATION_SIZE_QUANTITY;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_UNIT_OF_PRESENTATION_SIZE_UNIT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.IS_A;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.PLAYS_ROLE;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.filterActiveInferredRelationshipByType;
@@ -224,6 +226,16 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
               getSingleOptionalActiveBigDecimal(
                   productRelationships, HAS_PACK_SIZE_VALUE.getValue()),
               getSingleActiveTarget(productRelationships, HAS_PACK_SIZE_UNIT.getValue())));
+    }
+
+    if (relationshipOfTypeExists(
+        productRelationships, HAS_UNIT_OF_PRESENTATION_SIZE_QUANTITY.getValue())) {
+      productDetails.setQuantity(
+          new Quantity(
+              getSingleOptionalActiveBigDecimal(
+                  productRelationships, HAS_UNIT_OF_PRESENTATION_SIZE_QUANTITY.getValue()),
+              getSingleActiveTarget(
+                  productRelationships, HAS_UNIT_OF_PRESENTATION_SIZE_UNIT.getValue())));
     }
   }
 

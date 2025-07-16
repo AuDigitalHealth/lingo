@@ -103,7 +103,7 @@ export default function TicketFieldsEdit({
             fontWeight="bold"
             sx={{ display: 'block', width: '150px' }}
           >
-            Iteration:
+            Release:
           </Typography>
 
           <UnableToEditTicketTooltip canEdit={canEdit}>
@@ -124,7 +124,7 @@ export default function TicketFieldsEdit({
             fontWeight="bold"
             sx={{ display: 'block', width: '150px' }}
           >
-            State:
+            Status:
           </Typography>
           <CustomStateSelection
             border={true}

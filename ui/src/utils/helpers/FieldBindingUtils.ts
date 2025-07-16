@@ -32,15 +32,23 @@ export function getAllKeyValueMapForTheKey(
   fieldBinding: FieldBindings,
   key: string,
 ) {
-  const keyValuePairs = getValueFromFieldBindings(fieldBinding, key).split(',');
+  const value = getValueFromFieldBindings(fieldBinding, key);
+
+  if (!value) {
+    throw new Error(
+      `Application misconfiguration: No value found for key '${key}' in field bindings. The application cannot continue.`,
+    );
+  }
+
+  const keyValuePairs = value.split(',');
 
   const keyValueMap = new Map();
 
   keyValuePairs.forEach(pair => {
     // Check if the pair contains a colon to detect wrong props
     if (!pair.includes(':')) {
-      console.error(
-        `Invalid config values for'${key}' , pair: '${pair}'. Expected format is 'key:value'.`,
+      throw new Error(
+        `Application misconfiguration: Invalid config value for '${key}', pair: '${pair}'. Expected format is 'key:value'. The application cannot continue.`,
       );
     } else {
       const [key, value] = pair.split(':');

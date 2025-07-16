@@ -21,7 +21,8 @@ import java.io.Serializable;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
-  @JsonSubTypes.Type(value = BrandPackSizeCreationDetails.class, name = "brand-pack-size")
+  @JsonSubTypes.Type(value = BrandPackSizeCreationDetails.class, name = "brand-pack-size"),
+  @JsonSubTypes.Type(value = ProductUpdateCreationDetails.class, name = "product-update")
 })
 public interface BulkProductActionDetails extends Serializable {
 

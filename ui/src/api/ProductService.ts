@@ -31,7 +31,9 @@ import {
   ProductDescriptionUpdateRequest,
   ProductNonDefiningPropertyUpdateRequest,
   ProductPackSizes,
+  ProductUpdateRequest,
 } from '../types/product.ts';
+import { TicketBulkProductActionDto } from '../types/tickets/ticket.ts';
 
 import { api } from './api.ts';
 
@@ -313,10 +315,10 @@ const ProductService = {
     return productModel;
   },
   async editProductDescriptions(
-    productUpdateRequest: ProductDescriptionUpdateRequest,
+    productUpdateRequest: ProductUpdateRequest,
     productId: string,
     branch: string,
-  ): Promise<Concept> {
+  ): Promise<TicketBulkProductActionDto> {
     const response = await api.put(
       `/api/${branch}/product-model/${productId}/descriptions`,
       productUpdateRequest,
@@ -324,9 +326,22 @@ const ProductService = {
     if (response.status != 200 && response.status != 422) {
       this.handleErrors();
     }
-    const concept = response.data as Concept;
-    return concept;
+    const res = response.data as TicketBulkProductActionDto;
+    return res;
   },
+  // async getExternalIdentifiers(
+  //   productId: string | undefined,
+  //   branch: string,
+  // ): Promise<NonDefiningProperty[]> {
+  //   const response = await api.get(
+  //     `/api${branch}/product-model/${productId}/externalIdentifiers`,
+  //   );
+  //   if (response.status != 200 && response.status != 422) {
+  //     this.handleErrors();
+  //   }
+  //   const res = response.data as NonDefiningProperty[];
+  //   return res;
+  // },
   async editProductNonDefiningProperties(
     externalRequesterUpdate: ProductNonDefiningPropertyUpdateRequest,
     productId: string,

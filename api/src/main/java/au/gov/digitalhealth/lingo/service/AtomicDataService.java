@@ -57,6 +57,7 @@ import au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils;
 import au.gov.digitalhealth.lingo.util.NonDefiningPropertyUtils;
 import au.gov.digitalhealth.lingo.util.ReferenceSetUtils;
 import au.gov.digitalhealth.lingo.util.SnomedConstants;
+import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import au.gov.digitalhealth.lingo.util.ValidationUtil;
 import java.math.BigDecimal;
 import java.util.Collection;
@@ -243,8 +244,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
     log.fine("getAncestors " + product.getConceptId());
     Set<String> ancestors = new HashSet<>();
 
-    product.getClassAxioms().stream()
-        .flatMap(a -> a.getRelationships().stream())
+    SnowstormDtoUtil.getRelationshipsFromAxioms(product).stream()
         .filter(r -> r.getTypeId().equals(IS_A.getValue()))
         .map(SnowstormRelationship::getDestinationId)
         .distinct()
@@ -354,11 +354,24 @@ public abstract class AtomicDataService<T extends ProductDetails> {
             .block();
 
     //     todo revisit this after NMPC migration
-    if (maps == null) {
-      // || !maps.typeMap.keySet().equals(maps.browserMap.keySet())) {
-      throw new AtomicDataExtractionProblem(
-          "Mismatch between browser and refset members", productId);
-    }
+    //    if (getModelConfiguration(branch).getModelType().equals(ModelType.NMPC)
+    //        && (!maps.browserMap.values().stream()
+    //                .allMatch(
+    //                    c ->
+    //                        c.getRelationships().stream()
+    //                            .anyMatch(
+    //                                r ->
+    //                                    r.getTypeId()
+    //
+    // .equals(NmpcConstants.HAS_NMPC_PRODUCT_TYPE.getValue())))
+    //            || !maps.browserMap.keySet().stream().allMatch(id -> maps.typeMap.get(id) !=
+    // null))) {
+    //      throw new AtomicDataExtractionProblem(
+    //          "Unable to load product - migration has not been run", productId);
+    //    } else if (maps == null || !maps.typeMap.keySet().equals(maps.browserMap.keySet())) {
+    //      throw new AtomicDataExtractionProblem(
+    //          "Mismatch between browser and refset members", productId);
+    //    }
     return maps;
   }
 
@@ -416,7 +429,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
 
     for (SnowstormConcept packVariant : packVariantResult) {
       PackSizeWithIdentifiers packSizeWithIdentifier = new PackSizeWithIdentifiers();
-      packVariant.getClassAxioms().iterator().next().getRelationships().stream()
+      SnowstormDtoUtil.getRelationshipsFromAxioms(packVariant).stream()
           .filter(r -> r.getTypeId().equals(HAS_PACK_SIZE_VALUE.getValue()))
           .map(
               r ->
@@ -683,7 +696,12 @@ public abstract class AtomicDataService<T extends ProductDetails> {
 
     if (concepts.isEmpty()) {
       throw new ResourceNotFoundProblem(
-          "No matching concepts for " + productId + " of type " + getType());
+          "No matching product concepts for "
+              + productId
+              + " of type "
+              + getType()
+              + ", may be missing reference sets (is it fully migrated?). ECL: "
+              + ecl.replaceAll("\\<id\\>", productId));
     }
     return concepts;
   }
