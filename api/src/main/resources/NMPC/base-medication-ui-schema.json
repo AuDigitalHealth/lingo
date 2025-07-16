@@ -1,9 +1,6 @@
 {
   "ui:grid": [
     {
-      "packType": 24
-    },
-    {
       "containedProducts": 24
     },
     {
@@ -13,9 +10,32 @@
   "ui:options": {
     "skipTitle": true
   },
+  "ui:field": "OneOfField",
+  "ui:fieldReplacesAnyOrOneOf": true,
+  "ui:options": {
+    "skipTitle": true,
+
+    "dynamicDiscriminatorOptions": {
+      "path": "",
+      "options": {
+        "medication": [
+          { "label": "Medication", "value": "medication" }
+        ],
+        "vaccine": [
+          { "label": "Vaccine", "value": "vaccine" }
+        ],
+        "nutritional": [
+          { "label": "Nutritional", "value": "nutritional" }
+        ]
+      }
+    }
+  },
+
+  "oneOf_select": { "ui:widget": "hidden" },
   "packType": {
-    "ui:widget": "hidden",
+    "ui:widget": "select",
     "ui:options": {
+      "showOneOfLabel": false,
       "updateSchemaOnChange": true
     }
   },
@@ -63,12 +83,31 @@
         }
       },
       "productDetails": {
+        "ui:field": "OneOfField",
+        "ui:fieldReplacesAnyOrOneOf": true,
         "ui:options": {
           "skipTitle": true,
           "validateHiddenFields": false,
           "showOneOfLabel": false,
           "hideUnsupportedOptions": true,
-          "updateSchemaOnChange": true
+          "updateSchemaOnChange": true,
+          "dynamicDiscriminatorOptions": {
+            "path": "packType",
+            "options": {
+              "medication": [
+                { "label": "Presentation Strength", "value": "presentationStrength" },
+                { "label": "Concentration Strength", "value": "concentrationStrength" },
+                { "label": "No Strength", "value": "noStrength" }
+              ],
+              "vaccine": [
+                { "label": "Vaccine Presentation", "value": "vaccinePresentation" },
+                { "label": "Vaccine Qualitative", "value": "vaccineQualitative" }
+              ],
+              "nutritional": [
+                { "label": "Nutritional No Strength", "value": "nutritionalNoStrength" }
+              ]
+            }
+          }
         },
 
         "type": {
@@ -76,8 +115,7 @@
         },
         "ui:grid": [
           {
-            "productType": 12,
-            "productName": 12
+            "productName": 24
           },
           {
             "genericForm": 12,
@@ -111,23 +149,6 @@
           "ui:widget": "select",
           "ui:options": {
             "showOneOfLabel": false,
-            "dynamicOptions": {
-              "path": "../../packType",
-              "options": {
-                "medication": [
-                  { "label": "Presentation Strength", "value": "presentationStrength" },
-                  { "label": "Concentration Strength", "value": "concentrationStrength" },
-                  { "label": "No Strength", "value": "noStrength" }
-                ],
-                "vaccine": [
-                  { "label": "Vaccine Presentation", "value": "vaccinePresentation" },
-                  { "label": "Vaccine Qualitative", "value": "vaccineQualitative" }
-                ],
-                "nutritional": [
-                  { "label": "Nutritional No Strength", "value": "nutritionalNoStrength" }
-                ]
-              }
-            },
             "updateSchemaOnChange": true
           }
         },
