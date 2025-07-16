@@ -14,7 +14,10 @@
     "skipTitle": true
   },
   "packType": {
-    "ui:widget": "hidden"
+    "ui:widget": "hidden",
+    "ui:options": {
+      "updateSchemaOnChange": true
+    }
   },
   "containedProducts": {
     "ui:options": {
@@ -62,28 +65,30 @@
       "productDetails": {
         "ui:options": {
           "skipTitle": true,
-          "validateHiddenFields": false
+          "validateHiddenFields": false,
+          "showOneOfLabel": false,
+          "hideUnsupportedOptions": true,
+          "updateSchemaOnChange": true
         },
+
         "type": {
           "ui:widget": "hidden"
         },
         "ui:grid": [
           {
-            "discriminator": 12,
-            "productType": 12
+            "productType": 12,
+            "productName": 12
           },
           {
-            "existingMedicinalProduct": 12
+            "genericForm": 12,
+            "specificForm": 12
           },
           {
+            "existingMedicinalProduct": 12,
             "existingClinicalDrug": 12
           },
           {
             "newGenericProductName": 24
-          },
-          {
-            "productName": 12,
-            "genericForm": 12
           },
           {
             "activeIngredients": 12,
@@ -92,9 +97,6 @@
         ],
         "_columnB": {
           "ui:grid": [
-            {
-              "specificForm": 24
-            },
             {
               "unitOfPresentation": 24
             },
@@ -113,7 +115,28 @@
           ]
         },
         "productType": {
-          "ui:widget": "hidden"
+          "ui:widget": "select",
+          "ui:options": {
+            "showOneOfLabel": false,
+            "dynamicOptions": {
+              "path": "../../packType",
+              "options": {
+                "medication": [
+                  { "label": "Presentation Strength", "value": "presentationStrength" },
+                  { "label": "Concentration Strength", "value": "concentrationStrength" },
+                  { "label": "No Strength", "value": "noStrength" }
+                ],
+                "vaccine": [
+                  { "label": "Vaccine Presentation", "value": "vaccinePresentation" },
+                  { "label": "Vaccine Qualitative", "value": "vaccineQualitative" }
+                ],
+                "nutritional": [
+                  { "label": "Nutritional No Strength", "value": "nutritionalNoStrength" }
+                ]
+              }
+            },
+            "updateSchemaOnChange": true
+          }
         },
         "productName": {
           "ui:field": "AutoCompleteField",
