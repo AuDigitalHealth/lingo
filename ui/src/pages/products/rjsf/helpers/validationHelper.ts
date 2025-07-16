@@ -438,13 +438,13 @@ export function resetDiscriminators(
   walk(schema, updatedData, [], schema, uiSchema);
 
   // Explicitly reset nested productType discriminators. We need to revisit this logic later
-  const packType = get(updatedData, 'packType');
-  if (packType) {
+  const variant = get(updatedData, 'variant');
+  if (variant) {
     const containedProducts = get(updatedData, 'containedProducts') || [];
     containedProducts.forEach((_: any, idx: number) => {
       const productDetailsSchema = schema.oneOf?.find(
         (branch: any) =>
-          get(branch, ['properties', 'packType', 'const']) === packType,
+          get(branch, ['properties', 'variant', 'const']) === variant,
       )?.properties?.containedProducts?.items?.properties?.productDetails;
       if (productDetailsSchema) {
         const productDetailsPath = [

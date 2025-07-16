@@ -45,20 +45,18 @@ import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 import { validator } from './helpers/validator.ts';
 import {
   buildErrorSchema,
-  deDuplicateErrors,
   resetDiscriminators,
 } from './helpers/validationHelper.ts';
 import { ErrorDisplay } from './components/ErrorDisplay.tsx';
 
-import { WidgetProps } from '@rjsf/core';
-import CustomOneOfField from './fields/CustomOneOfField.tsx';
+
 
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
   task: Task;
   ticket: Ticket;
   ticketProductId?: string;
-  schemaType: string;
+
 }
 
 function MedicationAuthoring({
@@ -66,7 +64,7 @@ function MedicationAuthoring({
   selectedProduct,
   ticketProductId,
   ticket,
-  schemaType,
+
 }: MedicationAuthoringV2Props) {
   const [formKey, setFormKey] = useState(0);
   const [formData, setFormData] = useState<any>({});
@@ -80,12 +78,10 @@ function MedicationAuthoring({
   const [formErrors, setFormErrors] = useState<any[]>([]);
 
   const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
-    task.branchPath,
-    schemaType,
+    task.branchPath
   );
   const { data: uiSchema, isLoading: isUiSchemaLoading } = useUiSchemaQuery(
-    task.branchPath,
-    schemaType,
+    task.branchPath
   );
   const {
     originalConceptId,
@@ -172,7 +168,7 @@ function MedicationAuthoring({
   // Clear form data when schemaType changes
   useEffect(() => {
     handleClear();
-  }, [schemaType, handleClear]);
+  }, [ handleClear]);
 
   if (
     isLoading ||
@@ -410,20 +406,20 @@ function useCalculateProduct() {
   return mutation;
 }
 
-const useSchemaQuery = (branchPath: string, schemaType: string) => {
+const useSchemaQuery = (branchPath: string) => {
   return useQuery({
-    queryKey: [schemaType + '-Schema', branchPath],
+    queryKey: [ 'Schema', branchPath],
     queryFn: () =>
-      ConfigService.fetchMedicationSchemaData(branchPath, schemaType),
+      ConfigService.fetchMedicationSchemaData(branchPath, "medication"),
     enabled: !!branchPath,
   });
 };
 
-const useUiSchemaQuery = (branchPath: string, schemaType: string) => {
+const useUiSchemaQuery = (branchPath: string) => {
   return useQuery({
-    queryKey: [schemaType + '-uiSchema', branchPath],
+    queryKey: ['uiSchema', branchPath],
     queryFn: () =>
-      ConfigService.fetchMedicationUiSchemaData(branchPath, schemaType),
+      ConfigService.fetchMedicationUiSchemaData(branchPath, "medication"),
     enabled: !!branchPath,
   });
 };
