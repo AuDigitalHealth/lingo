@@ -48,15 +48,13 @@ import {
   resetDiscriminators,
 } from './helpers/validationHelper.ts';
 import { ErrorDisplay } from './components/ErrorDisplay.tsx';
-
-
+import CustomFieldTemplate from './templates/CustomFieldTemplate.tsx';
 
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
   task: Task;
   ticket: Ticket;
   ticketProductId?: string;
-
 }
 
 function MedicationAuthoring({
@@ -64,7 +62,6 @@ function MedicationAuthoring({
   selectedProduct,
   ticketProductId,
   ticket,
-
 }: MedicationAuthoringV2Props) {
   const [formKey, setFormKey] = useState(0);
   const [formData, setFormData] = useState<any>({});
@@ -78,10 +75,10 @@ function MedicationAuthoring({
   const [formErrors, setFormErrors] = useState<any[]>([]);
 
   const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
-    task.branchPath
+    task.branchPath,
   );
   const { data: uiSchema, isLoading: isUiSchemaLoading } = useUiSchemaQuery(
-    task.branchPath
+    task.branchPath,
   );
   const {
     originalConceptId,
@@ -168,7 +165,7 @@ function MedicationAuthoring({
   // Clear form data when schemaType changes
   useEffect(() => {
     handleClear();
-  }, [ handleClear]);
+  }, [handleClear]);
 
   if (
     isLoading ||
@@ -244,6 +241,7 @@ function MedicationAuthoring({
             templates={{
               ArrayFieldTemplate: CustomArrayFieldTemplate,
               ObjectFieldTemplate: MuiGridTemplate,
+              // FieldTemplate:CustomFieldTemplate
             }}
             onChange={handleChange}
             onSubmit={handleFormSubmit}
@@ -408,9 +406,9 @@ function useCalculateProduct() {
 
 const useSchemaQuery = (branchPath: string) => {
   return useQuery({
-    queryKey: [ 'Schema', branchPath],
+    queryKey: ['Schema', branchPath],
     queryFn: () =>
-      ConfigService.fetchMedicationSchemaData(branchPath, "medication"),
+      ConfigService.fetchMedicationSchemaData(branchPath, 'medication'),
     enabled: !!branchPath,
   });
 };
@@ -419,7 +417,7 @@ const useUiSchemaQuery = (branchPath: string) => {
   return useQuery({
     queryKey: ['uiSchema', branchPath],
     queryFn: () =>
-      ConfigService.fetchMedicationUiSchemaData(branchPath, "medication"),
+      ConfigService.fetchMedicationUiSchemaData(branchPath, 'medication'),
     enabled: !!branchPath,
   });
 };

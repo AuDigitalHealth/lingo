@@ -172,6 +172,9 @@
               "semanticTags": "(product name)"
             },
             "placeholder": "Enter brand name"
+          },
+          "ui:style": {
+            "marginTop": "15px"
           }
         },
         "genericForm": {
