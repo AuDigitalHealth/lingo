@@ -14,96 +14,92 @@ export const isEmptyObject = (obj: any): boolean => {
   return !!obj && typeof obj === 'object' && Object.keys(obj).length === 0;
 };
 
-// Get discriminator property from oneOf/anyOf schema
-export const getDiscriminatorProperty = (
-  schema: Record<string, any>,
-): string | null => {
-  if (!schema || typeof schema !== 'object') return null;
-
-  // Explicit discriminator
-  if (schema.discriminator?.propertyName) {
-    return schema.discriminator.propertyName;
+export const findDiscriminatorSchema = (
+  schema: any,
+  rootSchema: any,
+): { schema: any; path: string[] } | null => {
+  if (schema.discriminator) {
+    return { schema, path: [] };
   }
 
-  // Implicit discriminator in oneOf/anyOf
-  const branches = schema.oneOf || schema.anyOf;
-  if (branches?.length) {
-    const firstBranchProps = branches[0]?.properties || {};
-    for (const prop in firstBranchProps) {
-      if (
-        firstBranchProps[prop].const &&
-        branches.every(
-          (branch: any) => branch.properties?.[prop]?.const !== undefined,
-        )
-      ) {
-        return prop;
+  const searchSchema = (
+    currentSchema: any,
+    currentPath: string[] = [],
+  ): { schema: any; path: string[] } | null => {
+    // Check properties
+    if (currentSchema.properties) {
+      for (const [propName, propSchema] of Object.entries(
+        currentSchema.properties,
+      )) {
+        if (propSchema.discriminator) {
+          return { schema: propSchema, path: [...currentPath, propName] };
+        }
+        if (
+          propSchema.properties ||
+          propSchema.items ||
+          propSchema.oneOf ||
+          propSchema.anyOf
+        ) {
+          const result = searchSchema(propSchema, [...currentPath, propName]);
+          if (result) return result;
+        }
       }
     }
-  }
-  return null;
-};
 
-// Find schema with discriminator and its path
-export const findDiscriminatorSchema = (
-  schema: Record<string, any>,
-  rootSchema: Record<string, any>,
-  path: string[] = [],
-): { schema: Record<string, any>; path: string[] } | null => {
-  if (!schema || typeof schema !== 'object') return null;
+    // Check arrays
+    if (currentSchema.items) {
+      if (currentSchema.items.discriminator) {
+        return { schema: currentSchema.items, path: [...currentPath, 'items'] };
+      }
+      const result = searchSchema(currentSchema.items, [
+        ...currentPath,
+        'items',
+      ]);
+      if (result) return result;
+    }
 
-  if (getDiscriminatorProperty(schema)) {
-    return { schema, path };
-  }
-
-  if (schema.$ref) {
-    const resolvedSchema = resolveRef(rootSchema, schema.$ref);
-    const result = findDiscriminatorSchema(resolvedSchema, rootSchema, path);
-    if (result) return result;
-  }
-
-  if (schema.properties) {
-    for (const [key, value] of Object.entries(schema.properties)) {
-      if (value && typeof value === 'object') {
-        const result = findDiscriminatorSchema(value, rootSchema, [
-          ...path,
-          `properties.${key}`,
+    // Check oneOf/anyOf
+    if (currentSchema.oneOf || currentSchema.anyOf) {
+      const branches = currentSchema.oneOf || currentSchema.anyOf || [];
+      for (let i = 0; i < branches.length; i++) {
+        if (branches[i].discriminator) {
+          return {
+            schema: branches[i],
+            path: [
+              ...currentPath,
+              currentSchema.oneOf ? 'oneOf' : 'anyOf',
+              i.toString(),
+            ],
+          };
+        }
+        const result = searchSchema(branches[i], [
+          ...currentPath,
+          currentSchema.oneOf ? 'oneOf' : 'anyOf',
+          i.toString(),
         ]);
         if (result) return result;
       }
     }
-  }
 
-  if (schema.items && typeof schema.items === 'object') {
-    const result = findDiscriminatorSchema(schema.items, rootSchema, [
-      ...path,
-      'items',
-    ]);
-    if (result) return result;
-  }
+    return null;
+  };
 
-  return null;
+  return searchSchema(schema);
 };
 
-// Get discriminator value from formData
+// Get the discriminator property name
+export const getDiscriminatorProperty = (schema: any): string | undefined => {
+  return schema.discriminator?.propertyName;
+};
+
+// Get the discriminator value from form data
 export const getDiscriminatorValue = (
   formData: any,
   schemaPath: string[],
-  discriminatorProp: string,
-): any => {
-  let current = formData;
-  for (const part of schemaPath) {
-    if (!current) return undefined;
-    if (part === 'items') {
-      current = Array.isArray(current) ? current[0] : undefined;
-    } else if (part.startsWith('properties.')) {
-      current = current?.[part.replace('properties.', '')];
-    } else {
-      current = current?.[part];
-    }
-  }
-  return current?.[discriminatorProp];
+  discriminatorProperty: string,
+): string | undefined => {
+  return _.get(formData, schemaPath.concat(discriminatorProperty));
 };
-
 // Build errorSchema from AJV errors
 export const buildErrorSchema = (errors: any[]) => {
   const problematicErrors = errors.filter(e => !e.property && !e.instancePath);
