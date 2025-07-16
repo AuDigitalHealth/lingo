@@ -73,6 +73,15 @@
             "productType": 12
           },
           {
+            "existingMedicinalProduct": 12
+          },
+          {
+            "existingClinicalDrug": 12
+          },
+          {
+            "newGenericProductName": 24
+          },
+          {
             "productName": 12,
             "genericForm": 12
           },
@@ -201,6 +210,36 @@
             "showDefaultOptions": true,
             "placeholder": "Select qualitative strength (optional)"
           }
+        },
+        "existingMedicinalProduct": {
+          "ui:field": "AutoCompleteField",
+          "ui:title": "Existing VTM Level Concept",
+          "ui:options": {
+            "skipTitle": true,
+            "ecl": "<<327838005 OR <<373783004",
+            "showDefaultOptions": true,
+            "dependants": [
+              {
+                "path": "../existingClinicalDrug",
+                "ui:options": {
+                  "skipTitle": true,
+                  "getEcl": "<@parent",
+                  "showDefaultOptions": true
+                }
+              }
+            ]
+          }
+        },
+        "existingClinicalDrug": {
+          "ui:field": "AutoCompleteField",
+          "ui:title": "Existing VMP Level Concept",
+          "ui:options": {
+            "skipTitle": true,
+            "showDefaultOptions": true
+          }
+        },
+        "newGenericProductName": {
+          "ui:widget": "text"
         },
         "activeIngredients": {
           "ui:options": {
