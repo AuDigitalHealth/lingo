@@ -39,7 +39,7 @@ public abstract class ProductDetails extends PackageProductDetailsBase {
   @NotNull SnowstormConceptMini productName;
   SnowstormConceptMini deviceType;
   String otherIdentifyingInformation;
-
+  public abstract String getProductType();
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
     Map<String, String> idMap = new HashMap<>();

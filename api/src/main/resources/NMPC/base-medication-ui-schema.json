@@ -33,7 +33,7 @@
   },
 
   "oneOf_select": { "ui:widget": "hidden" },
-  "packType": {
+  "variant": {
     "ui:widget": "select",
     "ui:options": {
       "showOneOfLabel": false,
@@ -94,7 +94,7 @@
           "hideUnsupportedOptions": true,
           "updateSchemaOnChange": true,
           "dynamicDiscriminatorOptions": {
-            "path": "packType",
+            "path": "variant",
             "options": {
               "medication": [
                 { "label": "Presentation Strength", "value": "presentationStrength" },
