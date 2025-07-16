@@ -141,16 +141,26 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
     }
 
     final boolean unitOfPresentationExists = productDetails.getUnitOfPresentation() != null;
+    final boolean unitOfPresentationQuantityExists =
+        productDetails.getQuantity() != null
+            && productDetails.getQuantity().getValue() != null
+            && productDetails.getQuantity().getUnit() != null;
+
+    if (unitOfPresentationQuantityExists) {
+      validateQuantityPopulated(productDetails.getQuantity(), "unit of presentation quantity");
+    }
+
     for (Ingredient ingredient : productDetails.getActiveIngredients()) {
 
       final boolean vaccine = productDetails instanceof VaccineProductDetails;
-      if (unitOfPresentationExists && vaccine) {
-        validateQuantityNotZero(
-            productDetails.getQuantity(),
-            "Vaccine unit of presentation quantity must be set if the unit of presentation is set");
-      }
 
-      validateIngredient(branch, ingredient, unitOfPresentationExists, nutritionalProduct, vaccine);
+      validateIngredient(
+          branch,
+          ingredient,
+          unitOfPresentationExists,
+          unitOfPresentationQuantityExists,
+          nutritionalProduct,
+          vaccine);
     }
   }
 
@@ -158,6 +168,7 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
       String branch,
       Ingredient ingredient,
       boolean unitOfPresentationExists,
+      boolean unitOfPresentationQuantityExists,
       boolean nutritionalProduct,
       boolean vaccine) {
 
@@ -215,7 +226,7 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
     }
 
     if (vaccine) {
-      if (unitOfPresentationExists) {
+      if (unitOfPresentationExists && unitOfPresentationQuantityExists) {
         // vaccines there is either presentation strength numerator and denominator value or a unit
         // of presentation and size
         validateStrengthNotPopulated(
@@ -232,7 +243,8 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
             "concentration",
             "Vaccine",
             "when unit of presentation exists");
-      } else {
+
+      } else if (unitOfPresentationExists) {
         // if unit of presentation exists, presentation strength numerator and denominator value and
         // unit must be set and value must be non-zero.
         validateNumeratorDenominatorSet(
@@ -248,6 +260,9 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
             "concentration",
             "Vaccine",
             "when unit of presentation does not exists");
+      } else {
+        throw new ProductAtomicDataValidationProblem(
+            "Vaccine must have either a unit of presentation set");
       }
     } else if (nutritionalProduct) {
       validateStrengthNotPopulated(
