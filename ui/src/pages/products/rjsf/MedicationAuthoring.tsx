@@ -1,13 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Form } from '@rjsf/mui';
-import {
-  Box,
-  Button,
-  Container,
-  Paper,
-  ToggleButton,
-  ToggleButtonGroup,
-} from '@mui/material';
+import { Box, Button, Container, FormControlLabel, Paper, Switch } from '@mui/material';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import _ from 'lodash';
 import ajvErrors from 'ajv-errors';
@@ -27,7 +20,9 @@ import TextFieldWidget from './widgets/TextFieldWidget.tsx';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 import productService from '../../../api/ProductService.ts';
 import { ConfigService } from '../../../api/ConfigService.ts';
-import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
+import {
+  isValueSetExpansionContains
+} from '../../../types/predicates/isValueSetExpansionContains.ts';
 import { customizeValidator } from '@rjsf/validator-ajv8';
 import { Concept } from '../../../types/concept.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
@@ -37,13 +32,14 @@ import {
   MedicationPackageDetails,
   ProductActionType,
   ProductSaveDetails,
-  ProductType,
+  ProductType
 } from '../../../types/product.ts';
 import { useTicketProductQuery } from './hooks/useTicketProductQuery.ts';
 import { DraftSubmitPanel } from './components/DarftSubmitPanel.tsx';
 import ProductPartialSaveModal from './components/ProductPartialSaveModal.tsx';
 import MuiGridTemplate from './templates/MuiGridTemplate.tsx';
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
+import WarningIcon from '@mui/icons-material/Warning';
 
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -259,33 +255,25 @@ function MedicationAuthoring({
               </Button>
               <DraftSubmitPanel isDirty={isDirty} saveDraft={saveDraft} />
               <Box>
-                <ToggleButtonGroup
-                  value={mode}
-                  exclusive
-                  onChange={(_, value) => value && setMode(value)}
-                  aria-label="product action mode"
-                  color="standard"
-                  size="small"
-                  sx={{ borderRadius: 4, overflow: 'hidden' }} // Rounded group
-                >
-                  <ToggleButton value="create" aria-label="create">
-                    Create
-                  </ToggleButton>
-                  <ToggleButton
-                    value="update"
-                    aria-label="update"
-                    disabled={!selectedProduct && !originalConceptId}
-                  >
-                    Update
-                  </ToggleButton>
-                </ToggleButtonGroup>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={mode === 'update'}
+                      onChange={(_, checked) => setMode(checked ? 'update' : 'create')}
+                      color="primary"
+                      disabled={!selectedProduct && !originalConceptId}
+                    />
+                  }
+                  label="Update Mode"
+                />
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                 <Button
                   data-testid={mode === 'create' ? 'create-btn' : 'update-btn'}
                   type="submit"
                   variant="contained"
-                  color={mode === 'create' ? 'primary' : 'secondary'}
+                  color={mode === 'create' ? 'primary' : 'warning'}
+                  sx={mode === 'update' ? { color: '#000' } : {}}
                   disabled={isPending}
                   onClick={() => {
                     setIsProductUpdate(mode === 'update');
@@ -293,10 +281,22 @@ function MedicationAuthoring({
                 >
                   {isPending
                     ? 'Submitting...'
-                    : mode.charAt(0).toUpperCase() + mode.slice(1)}
+                    : mode === 'create' ? 'Create New Product' : 'Update Existing Product'}
                 </Button>
               </Box>
             </Box>
+            {mode === 'update' && (
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, mb: 2 }}>
+                <span style={{ display: 'flex', alignItems: 'center', color: '#000', fontWeight: 500 }}>
+                  <WarningIcon sx={{ color: '#ed6c02', mr: 1 }} />
+                  Updating existing product &nbsp;
+                  <strong style={{ color: '#ed6c02' }}>
+                    {selectedProduct?.pt.term}
+                  </strong>
+                  .
+                </span>
+              </Box>
+            )}
           </Form>
           <ProductPartialSaveModal
             packageDetails={formData}
