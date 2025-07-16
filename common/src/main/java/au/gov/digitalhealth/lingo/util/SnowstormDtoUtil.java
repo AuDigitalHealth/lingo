@@ -20,7 +20,6 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.ADDITIONAL_RELATIO
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.ADDITIONAL_RELATIONSHIP_CHARACTERISTIC_TYPE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.DEFINED;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.ENTIRE_TERM_CASE_SENSITIVE;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.FSN;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.INFERRED_RELATIONSHIP;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.MAP_TARGET;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.MAP_TYPE;
@@ -116,12 +115,7 @@ public class SnowstormDtoUtil {
   }
 
   public static Set<SnowstormRelationship> getRelationshipsFromAxioms(SnowstormConcept concept) {
-    if (concept.getClassAxioms().size() != 1) {
-      throw new AtomicDataExtractionProblem(
-          "Expected 1 class axiom but found " + concept.getClassAxioms().size(),
-          concept.getConceptId());
-    }
-    return concept.getClassAxioms().iterator().next().getRelationships();
+    return getSingleAxiom(concept).getRelationships();
   }
 
   public static boolean inferredRelationshipOfTypeExists(
@@ -548,7 +542,6 @@ public class SnowstormDtoUtil {
         ENTIRE_TERM_CASE_SENSITIVE.getValue());
     SnowstormDtoUtil.addSynoynms(concept, node.getNewConceptDetails().getDescriptions());
 
-
     concept.setActive(true);
     concept.setDefinitionStatusId(
         newConceptDetails.getAxioms().stream()
@@ -750,13 +743,34 @@ public class SnowstormDtoUtil {
         .pt(new SnowstormTermLangPojo().lang("en").term(term.substring(0, term.indexOf("(") - 1)));
   }
 
-  public static SnowstormAxiom getSingleAxiom(SnowstormConcept concept) {
-    SnowstormAxiom axiom = concept.getClassAxioms().iterator().next();
-    if (concept.getClassAxioms().size() > 1) {
+  public static SnowstormAxiom getSingleAxiom(SnowstormConceptView concept) {
+    if (getActiveClassAxioms(concept).size() != 1) {
       throw new AtomicDataExtractionProblem(
-          "Cannot handle more than one axiom determining brands", concept.getConceptId());
+          "Expected 1 class axiom but found " + getActiveClassAxioms(concept).size(),
+          concept.getConceptId());
     }
-    return axiom;
+    return getActiveClassAxioms(concept).iterator().next();
+  }
+
+  public static SnowstormAxiom getSingleAxiom(SnowstormConcept concept) {
+    if (getActiveClassAxioms(concept).size() != 1) {
+      throw new AtomicDataExtractionProblem(
+          "Expected 1 class axiom but found " + getActiveClassAxioms(concept).size(),
+          concept.getConceptId());
+    }
+    return getActiveClassAxioms(concept).iterator().next();
+  }
+
+  public static Set<SnowstormAxiom> getActiveClassAxioms(SnowstormConcept concept) {
+    return concept.getClassAxioms().stream()
+        .filter(a -> a.getActive() == null || a.getActive())
+        .collect(Collectors.toSet());
+  }
+
+  public static Set<SnowstormAxiom> getActiveClassAxioms(SnowstormConceptView concept) {
+    return concept.getClassAxioms().stream()
+        .filter(a -> a.getActive() == null || a.getActive())
+        .collect(Collectors.toSet());
   }
 
   public static SnowstormAxiom getSingleAxiom(NewConceptDetails concept) {
