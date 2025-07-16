@@ -10,16 +10,85 @@ import {
 } from './validationHelper';
 import { isEmptyObject } from './helpers';
 
-// Enhanced transformErrors to preserve instancePath and ensure rawErrors compatibility
+// Interface to hold discriminator context for recursive processing
+interface DiscriminatorContext {
+  schema: any;
+  path: string[];
+  discriminatorProperty: string | undefined; // Allow undefined
+  discriminatorValue: string | undefined;
+  matchingBranch: any;
+}
+
+// Recursively collect required properties from a schema, including nested arrays and objects
+const collectRequiredProperties = (
+  schema: any,
+  path: string[] = [],
+): string[] => {
+  let requiredProps: string[] = [];
+
+  // Add top-level required properties
+  if (schema.required) {
+    requiredProps.push(
+      ...schema.required.map((prop: string) =>
+        path.length > 0 ? `${path.join('.')}.${prop}` : prop,
+      ),
+    );
+  }
+
+  // Traverse properties
+  if (schema.properties) {
+    Object.entries(schema.properties).forEach(
+      ([propName, propSchema]: [string, any]) => {
+        const newPath = [...path, propName];
+        // Handle nested objects
+        if (propSchema.properties) {
+          requiredProps.push(...collectRequiredProperties(propSchema, newPath));
+        }
+        // Handle arrays with items that have properties
+        if (propSchema.items?.properties) {
+          const arrayPath = [...path, propName, '[*]'];
+          requiredProps.push(
+            ...collectRequiredProperties(propSchema.items, arrayPath),
+          );
+        }
+        // Handle oneOf/anyOf in properties
+        if (propSchema.oneOf || propSchema.anyOf) {
+          if (propSchema.required) {
+            requiredProps.push(
+              ...propSchema.required.map(
+                (prop: string) => `${newPath.join('.')}.${prop}`,
+              ),
+            );
+          }
+        }
+      },
+    );
+  }
+
+  // Handle oneOf/anyOf schemas
+  if (schema.oneOf || schema.anyOf) {
+    const branches = schema.oneOf || schema.anyOf || [];
+    branches.forEach((branch: any) => {
+      requiredProps.push(...collectRequiredProperties(branch, path));
+    });
+  }
+
+  return [...new Set(requiredProps)];
+};
+
+// Enhanced transformErrors to handle nested oneOf/anyOf and discriminators
 export const customTransformErrors = (
   errors: ErrorObject[],
   formData: any,
   schema: any,
 ): ErrorObject[] => {
-  console.log('transformErrors was called', JSON.stringify(errors, null, 2));
-  // Log errors with empty instancePath for debugging
+  console.log('transformErrors called:', JSON.stringify(errors, null, 2));
+
   const emptyPathErrors = errors.filter(
-    e => !e.instancePath && e.keyword !== 'discriminator',
+    e =>
+      !e.instancePath &&
+      e.keyword !== 'discriminator' &&
+      e.keyword !== 'additionalProperties',
   );
   if (emptyPathErrors.length > 0) {
     console.log(
@@ -30,140 +99,184 @@ export const customTransformErrors = (
 
   if (!schema || typeof schema !== 'object') {
     return errors
-      .filter(error => error.instancePath)
-      .map(error => ({
-        ...error,
-        property: `.${error.instancePath.replace(/\//g, '.')}`,
-        stack: error.message || 'Validation error',
-      }));
-  }
-
-  const discriminatorInfo = findDiscriminatorSchema(schema, schema);
-  if (!discriminatorInfo) {
-    return errors
-      .filter(error => error.instancePath)
-      .map(error => ({
-        ...error,
-        property: `.${error.instancePath.replace(/\//g, '.')}`,
-        stack: error.message || 'Validation error',
-      }));
-  }
-
-  const { schema: discriminatorSchema, path: schemaPath } = discriminatorInfo;
-  const discriminatorProperty = getDiscriminatorProperty(discriminatorSchema);
-  if (!discriminatorProperty) {
-    return errors
-      .filter(error => error.instancePath)
-      .map(error => ({
-        ...error,
-        property: `.${error.instancePath.replace(/\//g, '.')}`,
-        stack: error.message || 'Validation error',
-      }));
-  }
-
-  const discriminatorValue = getDiscriminatorValue(
-    formData,
-    schemaPath,
-    discriminatorProperty,
-  );
-  const discriminatorPath =
-    schemaPath.join('.') +
-    (schemaPath.length ? '.' : '') +
-    discriminatorProperty;
-
-  if (!discriminatorValue) {
-    console.debug(
-      `No discriminator value for ${discriminatorProperty} at ${discriminatorPath}`,
-    );
-    return errors
-      .filter(
-        error =>
-          error.keyword !== 'oneOf' &&
-          error.keyword !== 'additionalProperties' &&
-          error.instancePath,
-      )
-      .map(error => ({
-        ...error,
-        property: `.${error.instancePath.replace(/\//g, '.')}`,
-        stack: error.message || 'Validation error',
-      }));
-  }
-
-  const branches = discriminatorSchema.oneOf || discriminatorSchema.anyOf || [];
-  const matchingBranch = branches.find(
-    (branch: any) =>
-      branch.properties?.[discriminatorProperty]?.const === discriminatorValue,
-  );
-
-  if (!matchingBranch) {
-    console.debug(
-      `No matching branch for ${discriminatorProperty}=${discriminatorValue}`,
-    );
-    return errors
       .filter(error => error.instancePath || error.keyword === 'discriminator')
       .map(error => ({
         ...error,
         property: error.instancePath
           ? `.${error.instancePath.replace(/\//g, '.')}`
           : '',
-        message:
-          error.keyword === 'discriminator'
-            ? `Invalid ${discriminatorProperty}: ${discriminatorValue || 'undefined'}`
-            : error.message || 'Validation error',
+        message: error.message || 'Validation error',
         stack: error.message || 'Validation error',
       }));
   }
 
-  const validProperties = Object.keys(matchingBranch.properties || {});
-  const validRequiredProperties = matchingBranch.required || [];
+  // Build discriminator contexts recursively
+  const discriminatorContexts: DiscriminatorContext[] = [];
+  const buildDiscriminatorContexts = (
+    currentSchema: any,
+    currentFormData: any,
+    path: string[] = [],
+  ) => {
+    const discriminatorInfo = findDiscriminatorSchema(currentSchema, schema);
+    if (discriminatorInfo) {
+      const { schema: discriminatorSchema, path: schemaPath } =
+        discriminatorInfo;
+      const discriminatorProperty =
+        getDiscriminatorProperty(discriminatorSchema);
+      if (discriminatorProperty) {
+        const discriminatorValue = getDiscriminatorValue(
+          currentFormData,
+          schemaPath,
+          discriminatorProperty,
+        );
+        const branches =
+          discriminatorSchema.oneOf || discriminatorSchema.anyOf || [];
+        const matchingBranch = branches.find(
+          (branch: any) =>
+            branch.properties?.[discriminatorProperty]?.const ===
+            discriminatorValue,
+        );
+        discriminatorContexts.push({
+          schema: discriminatorSchema,
+          path: schemaPath,
+          discriminatorProperty,
+          discriminatorValue,
+          matchingBranch,
+        });
+
+        // Recursively check for nested discriminators
+        if (matchingBranch && currentFormData) {
+          Object.entries(matchingBranch.properties || {}).forEach(
+            ([propName, propSchema]: [string, any]) => {
+              if (propSchema.items?.properties) {
+                const arrayData = _.get(currentFormData, propName);
+                if (Array.isArray(arrayData)) {
+                  arrayData.forEach((item: any, index: number) => {
+                    Object.entries(propSchema.items.properties).forEach(
+                      ([subPropName, subPropSchema]) => {
+                        if (subPropSchema.discriminator) {
+                          buildDiscriminatorContexts(
+                            subPropSchema,
+                            _.get(item, subPropName),
+                            [...path, propName, index.toString(), subPropName],
+                          );
+                        }
+                      },
+                    );
+                    buildDiscriminatorContexts(propSchema.items, item, [
+                      ...path,
+                      propName,
+                      index.toString(),
+                    ]);
+                  });
+                }
+              } else if (propSchema.discriminator) {
+                buildDiscriminatorContexts(
+                  propSchema,
+                  _.get(currentFormData, propName),
+                  [...path, propName],
+                );
+              }
+            },
+          );
+        }
+      }
+    }
+  };
+
+  buildDiscriminatorContexts(schema, formData);
+  console.log(
+    'Discriminator contexts:',
+    JSON.stringify(discriminatorContexts, null, 2),
+  );
+
+  // Find the relevant context for each error
+  const getContextForError = (
+    error: ErrorObject,
+  ): DiscriminatorContext | undefined => {
+    return discriminatorContexts.find(context => {
+      const contextPath =
+        context.path.length > 0 ? `/${context.path.join('/')}` : '';
+      return (
+        error.instancePath === contextPath ||
+        error.instancePath.startsWith(`${contextPath}/`) ||
+        (error.keyword === 'discriminator' &&
+          error.schemaPath.includes(contextPath)) ||
+        (error.keyword === 'additionalProperties' &&
+          error.instancePath === contextPath)
+      );
+    });
+  };
 
   return deDuplicateErrors(
     errors
       .filter(error => {
         if (error.keyword === 'discriminator') return true;
         if (error.keyword === 'const') return false;
-        if (error.keyword === 'additionalProperties') {
+        if (error.keyword === 'oneOf' && error.schemaPath.includes('oneOf'))
           return false;
-        }
-        return error.instancePath;
+        if (error.keyword === 'additionalProperties') return false;
+        return true;
       })
       .map(error => {
-        const isRelatedToDiscriminator =
-          error.instancePath &&
-          error.instancePath.includes(
-            discriminatorPath.replace(/\.\d+\./g, '/'),
-          );
+        const context = getContextForError(error);
+        const discriminatorPath =
+          context && context.discriminatorProperty
+            ? context.path.length > 0
+              ? `${context.path.join('.')}.${context.discriminatorProperty}`
+              : context.discriminatorProperty
+            : '';
+
         const newError: ErrorObject = {
           ...error,
           property: error.instancePath
-            ? '.' + error.instancePath.replace(/^\//, '').replace(/\//g, '.')
-            : '',
+            ? `.${error.instancePath.replace(/^\//, '').replace(/\//g, '.')}`
+            : discriminatorPath && error.keyword === 'discriminator'
+              ? `.${discriminatorPath}`
+              : '',
+          message: error.message || 'Validation error',
           stack: '',
         };
 
         if (error.keyword === 'required') {
-          newError.property = `${newError.property}.${newError.params?.missingProperty}`;
-          newError.instancePath = `${newError.instancePath}/${newError.params?.missingProperty}`;
+          const missingProperty = error.params?.missingProperty;
+          newError.property = newError.property
+            ? `${newError.property}.${missingProperty}`
+            : `.${missingProperty}`;
+          newError.instancePath = newError.instancePath
+            ? `${newError.instancePath}/${missingProperty}`
+            : `/${missingProperty}`;
           newError.message = 'Field must be populated';
-          newError.stack = `${newError.message} "${newError.params?.missingProperty}" ( at ${newError.property})`;
+          newError.stack = `${newError.message} "${missingProperty}" (at ${newError.property})`;
         } else if (
           (error.keyword === 'type' && error.data === null) ||
           (error.keyword === 'minProperties' && isEmptyObject(error.data))
         ) {
-          newError.message = `Field must be populated`;
+          newError.message = 'Field must be populated';
           newError.stack = `${newError.message} (at ${newError.property})`;
-        } else if (
-          error.keyword === 'additionalProperties' &&
-          isRelatedToDiscriminator
-        ) {
-          newError.message = `Invalid field ${error.params.additionalProperty} for ${discriminatorValue}`;
+        } else if (error.keyword === 'additionalProperties') {
+          const invalidProperty = error.params?.additionalProperty;
+          newError.property = newError.property
+            ? `${newError.property}.${invalidProperty}`
+            : `.${invalidProperty}`;
+          newError.message = `Invalid field ${invalidProperty}${context ? ` for ${context.discriminatorProperty || 'discriminator'}=${context.discriminatorValue || 'undefined'}` : ''}`;
+          newError.stack = `${newError.message} (at ${newError.property})`;
         } else if (error.keyword === 'enum') {
           newError.message = 'Please select a valid option';
+          newError.stack = `${newError.message} (at ${newError.property})`;
         } else if (error.keyword === 'discriminator') {
-          newError.message = `Invalid ${discriminatorProperty}: ${discriminatorValue || 'undefined'}`;
-        }
-        if (!newError.stack) {
-          newError.stack = `${newError.message}: (at ${newError.property})`;
+          newError.property = `.${discriminatorPath}`;
+          newError.message = `Invalid ${context?.discriminatorProperty || 'discriminator'}: ${context?.discriminatorValue || 'undefined'}`;
+          newError.stack = newError.message;
+        } else if (error.keyword === 'pattern') {
+          newError.message =
+            error.schema?.errorMessage?.pattern || 'Invalid format';
+          newError.stack = `${newError.message} (at ${newError.property})`;
+        } else if (error.keyword === 'minItems') {
+          newError.message = 'At least one item is required';
+          newError.stack = `${newError.message} (at ${newError.property})`;
+        } else {
+          newError.stack = `${newError.message} (at ${newError.property})`;
         }
 
         return newError;
@@ -191,20 +304,39 @@ export const validator = (() => {
 
   return {
     validateFormData: (formData: any, schema: any) => {
-      // Transform formData to remove null fields
       const cleanedFormData = removeNullFields(formData);
+      console.log(
+        'validateFormData formData:',
+        JSON.stringify(cleanedFormData, null, 2),
+      );
       const validate = ajvMain.compile(schema);
       const valid = validate(cleanedFormData);
+      console.log('Raw AJV errors:', JSON.stringify(validate.errors, null, 2));
       const errors = customTransformErrors(
         validate.errors || [],
         cleanedFormData,
         schema,
       );
       console.log('validateFormData errors:', JSON.stringify(errors, null, 2));
-      const errorSchema = errors.reduce((acc: any, error: any) => {
-        const path = error.instancePath
-          ? error.instancePath.replace(/^\//, '').replace(/\//g, '.')
-          : null;
+
+      const errorSchema = errors.reduce((acc: any, error: ErrorObject) => {
+        let path = error.property ? error.property.replace(/^\./, '') : '';
+        if (error.keyword === 'discriminator') {
+          const context = findDiscriminatorSchema(schema, schema);
+          if (
+            context &&
+            context.schema.discriminator &&
+            context.schema.discriminator.propertyName
+          ) {
+            path =
+              context.path.length > 0
+                ? `${context.path.join('.')}.${context.schema.discriminator.propertyName}`
+                : context.schema.discriminator.propertyName;
+          } else {
+            console.warn('Discriminator context missing or invalid:', context);
+            path = ''; // Fallback to root-level error
+          }
+        }
         if (path) {
           _.set(acc, path, { __errors: [error.message || 'Validation error'] });
         } else {
@@ -213,6 +345,7 @@ export const validator = (() => {
         }
         return acc;
       }, {});
+
       console.log(
         'validateFormData errorSchema:',
         JSON.stringify(errorSchema, null, 2),
