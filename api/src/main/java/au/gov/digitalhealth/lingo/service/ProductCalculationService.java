@@ -15,13 +15,26 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
+import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
+import au.gov.digitalhealth.lingo.configuration.model.NonDefiningPropertyDefinition;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.ProductDetails;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
+import au.gov.digitalhealth.lingo.util.NmpcType;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
+import lombok.extern.java.Log;
 
-public interface ProductCalculationService<T extends ProductDetails> {
+@Log
+public abstract class ProductCalculationService<T extends ProductDetails> {
+
   /**
    * Calculates the existing and new products required to create a product based on the product
    * details.
@@ -31,7 +44,8 @@ public interface ProductCalculationService<T extends ProductDetails> {
    * @return ProductSummary representing the existing and new concepts required to create this
    *     product
    */
-  ProductSummary calculateProductFromAtomicData(String branch, PackageDetails<T> packageDetails)
+  public abstract ProductSummary calculateProductFromAtomicData(
+      String branch, PackageDetails<T> packageDetails)
       throws ExecutionException, InterruptedException;
 
   /**
@@ -41,7 +55,58 @@ public interface ProductCalculationService<T extends ProductDetails> {
    * @param packageDetails details of the product to create
    * @return CompletableFuture containing the ProductSummary
    */
-  CompletableFuture<ProductSummary> calculateProductFromAtomicDataAsync(
+  public abstract CompletableFuture<ProductSummary> calculateProductFromAtomicDataAsync(
       String branch, PackageDetails<T> packageDetails)
       throws ExecutionException, InterruptedException;
+
+  protected abstract SnowstormClient getSnowstormClient();
+
+  protected void optionallyAddNmpcType(
+      String branch, ModelConfiguration modelConfiguration, PackageDetails<T> packageDetails) {
+    if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
+      NonDefiningPropertyDefinition nmpcDefinition =
+          modelConfiguration.getNonDefiningPropertiesByName().get("nmpcType");
+      if (nmpcDefinition != null && requiredNmpcTypeConceptsExist(branch, nmpcDefinition)) {
+        NonDefiningProperty nmpcType = new NonDefiningProperty();
+        nmpcType.setIdentifierScheme(nmpcDefinition.getName());
+        nmpcType.setIdentifier(nmpcDefinition.getIdentifier());
+        nmpcType.setTitle(nmpcDefinition.getTitle());
+        nmpcType.setDescription(nmpcDefinition.getDescription());
+
+        nmpcType.setValueObject(packageDetails.getNmpcType().snowstormConceptMini());
+
+        packageDetails
+            .getContainedPackages()
+            .forEach(
+                innerPackage ->
+                    innerPackage
+                        .getPackageDetails()
+                        .getContainedProducts()
+                        .forEach(
+                            innerProduct ->
+                                innerProduct
+                                    .getProductDetails()
+                                    .getNonDefiningProperties()
+                                    .add(nmpcType)));
+        packageDetails
+            .getContainedProducts()
+            .forEach(
+                innerProduct ->
+                    innerProduct.getProductDetails().getNonDefiningProperties().add(nmpcType));
+
+        packageDetails.getNonDefiningProperties().add(nmpcType);
+      } else {
+        log.severe("NMPC model type is configured but the required concepts do not exist.");
+      }
+    }
+  }
+
+  private boolean requiredNmpcTypeConceptsExist(
+      String branch, NonDefiningPropertyDefinition nmpcDefinition) {
+    Set<String> nmpcConcepts =
+        new HashSet<>(Collections.singletonList(nmpcDefinition.getIdentifier()));
+    nmpcConcepts.addAll(
+        Arrays.stream(NmpcType.values()).map(t -> t.getValue()).collect(Collectors.toSet()));
+    return getSnowstormClient().conceptIdsThatExist(branch, nmpcConcepts).containsAll(nmpcConcepts);
+  }
 }
