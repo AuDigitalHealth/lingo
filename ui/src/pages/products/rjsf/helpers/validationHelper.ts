@@ -216,7 +216,6 @@ export function resetDiscriminators(
     // Resolve $ref
     if (schemaNode.$ref) {
       const resolved = resolveRef(rootSchema, schemaNode.$ref);
-
       walk(resolved, dataNode, path, rootSchema, rootUiSchema);
       return;
     }
@@ -337,6 +336,31 @@ export function resetDiscriminators(
         );
 
       if (activeSchema) {
+        if (
+          path[0] === 'containedProducts' &&
+          path[2] === 'productDetails' &&
+          activeSchema.properties?.type
+        ) {
+          const variantValue = get(updatedData, ['variant']);
+          if (variantValue) {
+            set(updatedData, [...path, 'type'], variantValue);
+          }
+        }
+
+        // Set other constant fields
+        Object.entries(activeSchema.properties || {}).forEach(
+          ([key, subschema]) => {
+            if (subschema.const && !get(dataNode, key) && key !== 'type') {
+              console.log('walk: Setting constant field', {
+                path: [...path, key],
+                value: subschema.const,
+              });
+              set(updatedData, [...path, key], subschema.const);
+            }
+          },
+        );
+
+        // Process nested properties
         Object.entries(activeSchema.properties || {}).forEach(
           ([key, subschema]) => {
             if (key !== discriminator) {
@@ -437,7 +461,7 @@ export function resetDiscriminators(
   // Process top-level discriminator
   walk(schema, updatedData, [], schema, uiSchema);
 
-  // Explicitly reset nested productType discriminators. We need to revisit this logic later
+  // Explicitly reset nested productType discriminators
   const variant = get(updatedData, 'variant');
   if (variant) {
     const containedProducts = get(updatedData, 'containedProducts') || [];
@@ -466,5 +490,6 @@ export function resetDiscriminators(
       }
     });
   }
+
   return updatedData;
 }
