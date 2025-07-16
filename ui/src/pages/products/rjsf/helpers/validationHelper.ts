@@ -265,23 +265,6 @@ export function resetDiscriminators(
             if (schemaNode.properties?.oneOf_select) {
               set(updatedData, [...path, 'oneOf_select'], defaultValue);
             }
-            // Reset other properties to align with the new schema
-            const activeSchema = variants.find(
-              (variant: any) =>
-                get(variant, ['properties', discriminator, 'const']) ===
-                defaultValue,
-            );
-            if (activeSchema && dataNode) {
-              Object.keys(dataNode).forEach(key => {
-                if (
-                  key !== discriminator &&
-                  key !== 'oneOf_select' &&
-                  !activeSchema.properties?.[key]
-                ) {
-                  set(updatedData, [...path, key], undefined);
-                }
-              });
-            }
           }
         }
         match = variants.find(
@@ -289,41 +272,22 @@ export function resetDiscriminators(
             get(variant, ['properties', discriminator, 'const']) ===
             (defaultValue || discriminatorValue),
         );
-      } else {
+      } else if (!match) {
         // Fallback to schema-based reset
-        if (!match) {
-          const defaultVariant = variants.find(
-            (variant: any) =>
-              'default' in (get(variant, ['properties', discriminator]) || {}),
-          );
-          defaultValue =
-            get(defaultVariant, ['properties', discriminator, 'default']) ??
-            variants.find((v: any) =>
-              get(v, ['properties', discriminator, 'const']),
-            )?.properties?.[discriminator]?.const;
+        const defaultVariant = variants.find(
+          (variant: any) =>
+            'default' in (get(variant, ['properties', discriminator]) || {}),
+        );
+        defaultValue =
+          get(defaultVariant, ['properties', discriminator, 'default']) ??
+          variants.find((v: any) =>
+            get(v, ['properties', discriminator, 'const']),
+          )?.properties?.[discriminator]?.const;
 
-          if (defaultValue !== undefined) {
-            set(updatedData, [...path, discriminator], defaultValue);
-            if (schemaNode.properties?.oneOf_select) {
-              set(updatedData, [...path, 'oneOf_select'], defaultValue);
-            }
-            // Reset other properties
-            const activeSchema = variants.find(
-              (variant: any) =>
-                get(variant, ['properties', discriminator, 'const']) ===
-                defaultValue,
-            );
-            if (activeSchema && dataNode) {
-              Object.keys(dataNode).forEach(key => {
-                if (
-                  key !== discriminator &&
-                  key !== 'oneOf_select' &&
-                  !activeSchema.properties?.[key]
-                ) {
-                  set(updatedData, [...path, key], undefined);
-                }
-              });
-            }
+        if (defaultValue !== undefined) {
+          set(updatedData, [...path, discriminator], defaultValue);
+          if (schemaNode.properties?.oneOf_select) {
+            set(updatedData, [...path, 'oneOf_select'], defaultValue);
           }
         }
       }
@@ -336,6 +300,20 @@ export function resetDiscriminators(
         );
 
       if (activeSchema) {
+        // Clean irrelevant fields in dataNode
+        if (dataNode) {
+          Object.keys(dataNode).forEach(key => {
+            if (
+              key !== discriminator &&
+              key !== 'oneOf_select' &&
+              !activeSchema.properties?.[key]
+            ) {
+              set(updatedData, [...path, key], undefined);
+            }
+          });
+        }
+
+        // Explicitly set 'type' to root 'variant' value in productDetails
         if (
           path[0] === 'containedProducts' &&
           path[2] === 'productDetails' &&
@@ -351,10 +329,6 @@ export function resetDiscriminators(
         Object.entries(activeSchema.properties || {}).forEach(
           ([key, subschema]) => {
             if (subschema.const && !get(dataNode, key) && key !== 'type') {
-              console.log('walk: Setting constant field', {
-                path: [...path, key],
-                value: subschema.const,
-              });
               set(updatedData, [...path, key], subschema.const);
             }
           },

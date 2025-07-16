@@ -82,8 +82,6 @@ export const customTransformErrors = (
   formData: any,
   schema: any,
 ): ErrorObject[] => {
-  console.log('transformErrors called:', JSON.stringify(errors, null, 2));
-
   const emptyPathErrors = errors.filter(
     e =>
       !e.instancePath &&
@@ -185,10 +183,6 @@ export const customTransformErrors = (
   };
 
   buildDiscriminatorContexts(schema, formData);
-  console.log(
-    'Discriminator contexts:',
-    JSON.stringify(discriminatorContexts, null, 2),
-  );
 
   // Find the relevant context for each error
   const getContextForError = (
@@ -305,19 +299,15 @@ export const validator = (() => {
   return {
     validateFormData: (formData: any, schema: any) => {
       const cleanedFormData = removeNullFields(formData);
-      console.log(
-        'validateFormData formData:',
-        JSON.stringify(cleanedFormData, null, 2),
-      );
+
       const validate = ajvMain.compile(schema);
       const valid = validate(cleanedFormData);
-      console.log('Raw AJV errors:', JSON.stringify(validate.errors, null, 2));
+
       const errors = customTransformErrors(
         validate.errors || [],
         cleanedFormData,
         schema,
       );
-      console.log('validateFormData errors:', JSON.stringify(errors, null, 2));
 
       const errorSchema = errors.reduce((acc: any, error: ErrorObject) => {
         let path = error.property ? error.property.replace(/^\./, '') : '';
@@ -346,10 +336,6 @@ export const validator = (() => {
         return acc;
       }, {});
 
-      console.log(
-        'validateFormData errorSchema:',
-        JSON.stringify(errorSchema, null, 2),
-      );
       return { errors, formData: cleanedFormData, errorSchema };
     },
     isValid: (schema: any, formData: any, rootSchema: any) => {
@@ -385,7 +371,6 @@ export const validator = (() => {
         }
       };
       extractErrors(errorSchema);
-      console.log('toErrorList errors:', JSON.stringify(errors, null, 2));
       return errors;
     },
     transformErrors: (errors: ErrorObject[], formData: any, schema: any) =>
