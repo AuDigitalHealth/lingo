@@ -342,7 +342,7 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
                   navigate('product');
                 }}
               >
-                <Tooltip title={'Create new product'}>
+                <Tooltip title={'Create and manage product'}>
                   <AddCircle fontSize="medium" />
                 </Tooltip>
               </IconButton>
