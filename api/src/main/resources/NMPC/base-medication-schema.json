@@ -29,7 +29,10 @@
           "type": "string"
         }
       },
-      "required": ["lang", "term"]
+      "required": [
+        "lang",
+        "term"
+      ]
     },
     "UnitValueConstraint": {
       "dependencies": {
@@ -49,7 +52,9 @@
                   "minimum": 1
                 }
               },
-              "required": ["value"]
+              "required": [
+                "value"
+              ]
             },
             {
               "properties": {
@@ -67,7 +72,9 @@
                   "minimum": 0
                 }
               },
-              "required": ["value"]
+              "required": [
+                "value"
+              ]
             }
           ],
           "errorMessage": {
@@ -82,7 +89,10 @@
       "minProperties": 2,
       "properties": {
         "unit": {
-          "type": ["object", "null"],
+          "type": [
+            "object",
+            "null"
+          ],
           "$ref": "#/$defs/SnowstormConceptMini"
         },
         "value": {
@@ -184,7 +194,9 @@
           "title": "VTM Active Ingredient"
         }
       },
-      "required": ["activeIngredient"]
+      "required": [
+        "activeIngredient"
+      ]
     },
     "ProductDetails": {
       "type": "object",
@@ -202,7 +214,9 @@
           "title": "Product Type"
         }
       },
-      "required": ["productType"],
+      "required": [
+        "productType"
+      ],
       "discriminator": {
         "propertyName": "productType"
       },
@@ -219,7 +233,10 @@
               "title": "Generic Dose Form"
             },
             "specificForm": {
-              "type": ["object", "null"],
+              "type": [
+                "object",
+                "null"
+              ],
               "nullable": true,
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Specific Dose Form"
@@ -273,7 +290,10 @@
               "title": "Generic Dose Form"
             },
             "specificForm": {
-              "type": ["object", "null"],
+              "type": [
+                "object",
+                "null"
+              ],
               "nullable": true,
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Specific Dose Form"
@@ -321,7 +341,10 @@
               "title": "Generic Dose Form"
             },
             "specificForm": {
-              "type": ["object", "null"],
+              "type": [
+                "object",
+                "null"
+              ],
               "nullable": true,
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Specific Dose Form"
@@ -374,7 +397,10 @@
               "title": "Generic Dose Form"
             },
             "specificForm": {
-              "type": ["object", "null"],
+              "type": [
+                "object",
+                "null"
+              ],
               "nullable": true,
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Specific Dose Form"
@@ -395,12 +421,18 @@
               "minItems": 1
             },
             "targetPopulation": {
-              "type": ["object", "null"],
+              "type": [
+                "object",
+                "null"
+              ],
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Target Population"
             },
             "ingredientQualitativeStrength": {
-              "type": ["object", "null"],
+              "type": [
+                "object",
+                "null"
+              ],
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Qualitative Strength"
             },
@@ -432,7 +464,10 @@
               "title": "Generic Dose Form"
             },
             "specificForm": {
-              "type": ["object", "null"],
+              "type": [
+                "object",
+                "null"
+              ],
               "nullable": true,
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Specific Dose Form"
@@ -453,17 +488,26 @@
               "minItems": 1
             },
             "targetPopulation": {
-              "type": ["object", "null"],
+              "type": [
+                "object",
+                "null"
+              ],
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Target Population"
             },
             "ingredientQualitativeStrength": {
-              "type": ["object", "null"],
+              "type": [
+                "object",
+                "null"
+              ],
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Qualitative Strength"
             },
             "quantity": {
-              "type": ["object", "null"],
+              "type": [
+                "object",
+                "null"
+              ],
               "$ref": "#/$defs/Quantity",
               "title": "Unit of Presentation Quantity"
             },
@@ -497,12 +541,37 @@
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Brand Name"
             },
+            "existingMedicinalProduct": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "$ref": "#/$defs/SnowstormConceptMini",
+              "title": "Existing VTM Level Concept"
+            },
+            "existingClinicalDrug": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "$ref": "#/$defs/SnowstormConceptMini",
+              "title": "Existing VMP Level Concept",
+              "description": "If an existing VMP is available, select it here."
+            },
+            "newGenericProductName": {
+              "type": "string",
+              "title": "New Generic Product Name",
+              "description": "If an existing VMP is not available, you can create a new generic product concept with this name."
+            },
             "genericForm": {
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Generic Dose Form"
             },
             "specificForm": {
-              "type": ["object", "null"],
+              "type": [
+                "object",
+                "null"
+              ],
               "nullable": true,
               "$ref": "#/$defs/SnowstormConceptMini",
               "title": "Specific Dose Form"
@@ -550,7 +619,11 @@
           "$ref": "#/$defs/ProductDetails"
         }
       },
-      "required": ["unit", "value", "productDetails"]
+      "required": [
+        "unit",
+        "value",
+        "productDetails"
+      ]
     }
   },
   "discriminator": {
@@ -559,12 +632,19 @@
   "properties": {
     "packType": {
       "type": "string",
-      "enum": ["medication", "vaccine", "nutritional"],
+      "enum": [
+        "medication",
+        "vaccine",
+        "nutritional"
+      ],
       "default": "medication",
       "title": "Pack Type"
     }
   },
-  "required": ["packType", "containedProducts"],
+  "required": [
+    "packType",
+    "containedProducts"
+  ],
   "oneOf": [
     {
       "title": "Medication",
@@ -589,9 +669,10 @@
                 "title": "Value"
               },
               "productDetails": {
-
                 "title": "Product Details",
-                "discriminator": { "propertyName": "productType" },
+                "discriminator": {
+                  "propertyName": "productType"
+                },
                 "oneOf": [
                   {
                     "$ref": "#/$defs/ProductDetails/oneOf/0"
@@ -605,7 +686,11 @@
                 ]
               }
             },
-            "required": ["unit", "value", "productDetails"],
+            "required": [
+              "unit",
+              "value",
+              "productDetails"
+            ],
             "additionalProperties": false
           }
         },
@@ -617,7 +702,10 @@
           }
         }
       },
-      "required": ["packType", "containedProducts"],
+      "required": [
+        "packType",
+        "containedProducts"
+      ],
       "additionalProperties": false
     },
     {
@@ -643,9 +731,10 @@
                 "title": "Value"
               },
               "productDetails": {
-
                 "title": "Product Details",
-                "discriminator": { "propertyName": "productType" },
+                "discriminator": {
+                  "propertyName": "productType"
+                },
                 "oneOf": [
                   {
                     "$ref": "#/$defs/ProductDetails/oneOf/3"
@@ -656,7 +745,11 @@
                 ]
               }
             },
-            "required": ["unit", "value", "productDetails"],
+            "required": [
+              "unit",
+              "value",
+              "productDetails"
+            ],
             "additionalProperties": false
           }
         },
@@ -668,7 +761,10 @@
           }
         }
       },
-      "required": ["packType", "containedProducts"],
+      "required": [
+        "packType",
+        "containedProducts"
+      ],
       "additionalProperties": false
     },
     {
@@ -694,9 +790,10 @@
                 "title": "Value"
               },
               "productDetails": {
-
                 "title": "Product Details",
-                "discriminator": { "propertyName": "productType" },
+                "discriminator": {
+                  "propertyName": "productType"
+                },
                 "oneOf": [
                   {
                     "$ref": "#/$defs/ProductDetails/oneOf/5"
@@ -704,7 +801,11 @@
                 ]
               }
             },
-            "required": ["unit", "value", "productDetails"],
+            "required": [
+              "unit",
+              "value",
+              "productDetails"
+            ],
             "additionalProperties": false
           }
         },
@@ -716,7 +817,10 @@
           }
         }
       },
-      "required": ["packType", "containedProducts"],
+      "required": [
+        "packType",
+        "containedProducts"
+      ],
       "additionalProperties": false
     }
   ],
