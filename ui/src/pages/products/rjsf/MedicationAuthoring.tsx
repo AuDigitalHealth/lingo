@@ -46,11 +46,12 @@ import { validator } from './helpers/validator.ts';
 import {
   buildErrorSchema,
   deDuplicateErrors,
+  resetDiscriminators,
 } from './helpers/validationHelper.ts';
 import { ErrorDisplay } from './components/ErrorDisplay.tsx';
 
 import { WidgetProps } from '@rjsf/core';
-import OneOfField from './fields/OneOfField.tsx';
+import CustomOneOfField from './fields/CustomOneOfField.tsx';
 
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -59,18 +60,7 @@ export interface MedicationAuthoringV2Props {
   ticketProductId?: string;
   schemaType: string;
 }
-const HiddenOneOfWidget: React.FC<WidgetProps> = props => {
-  console.log('HiddenOneOfWidget called with props:', {
-    id: props.id,
-    schema: props.schema,
-    uiSchema: props.uiSchema,
-    value: props.value,
-  });
-  return null;
-};
-const CustomOneOfField = () => {
-  return null; // suppress the dropdown entirely
-};
+
 function MedicationAuthoring({
   task,
   selectedProduct,
@@ -137,8 +127,14 @@ function MedicationAuthoring({
   }, [createModalOpen]);
 
   const handleChange = ({ formData }: any) => {
-    setFormData(formData);
-    if (!_.isEmpty(formData.productName || formData.containedProducts)) {
+    const updatedFormData = resetDiscriminators(schema, formData, uiSchema);
+    setFormData(updatedFormData);
+
+    if (
+      !_.isEmpty(
+        updatedFormData.productName || updatedFormData.containedProducts,
+      )
+    ) {
       setIsDirty(true);
     }
   };
@@ -208,7 +204,9 @@ function MedicationAuthoring({
     },
     formData,
     uiSchema,
+    schema,
     errorSchema,
+    autoFillDefaults: true,
   };
 
   const saveDraft = () => {
@@ -235,7 +233,6 @@ function MedicationAuthoring({
             formData={formData}
             formContext={formContext}
             fields={{
-              OneOfField,
               AutoCompleteField,
               ConditionalArrayField,
               ExternalIdentifiers,

@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import _, { cloneDeep, get, set } from 'lodash';
 
 // Resolve a $ref in the schema
 export const resolveRef = (
@@ -26,7 +26,6 @@ export const findDiscriminatorSchema = (
     currentSchema: any,
     currentPath: string[] = [],
   ): { schema: any; path: string[] } | null => {
-    // Check properties
     if (currentSchema.properties) {
       for (const [propName, propSchema] of Object.entries(
         currentSchema.properties,
@@ -46,7 +45,6 @@ export const findDiscriminatorSchema = (
       }
     }
 
-    // Check arrays
     if (currentSchema.items) {
       if (currentSchema.items.discriminator) {
         return { schema: currentSchema.items, path: [...currentPath, 'items'] };
@@ -58,7 +56,6 @@ export const findDiscriminatorSchema = (
       if (result) return result;
     }
 
-    // Check oneOf/anyOf
     if (currentSchema.oneOf || currentSchema.anyOf) {
       const branches = currentSchema.oneOf || currentSchema.anyOf || [];
       for (let i = 0; i < branches.length; i++) {
@@ -100,6 +97,7 @@ export const getDiscriminatorValue = (
 ): string | undefined => {
   return _.get(formData, schemaPath.concat(discriminatorProperty));
 };
+
 // Build errorSchema from AJV errors
 export const buildErrorSchema = (errors: any[]) => {
   const problematicErrors = errors.filter(e => !e.property && !e.instancePath);
@@ -180,3 +178,293 @@ export const removeNullFields = (obj: any, path: string = ''): any => {
   }
   return obj;
 };
+
+export function resetDiscriminators(
+  schema: any,
+  formData: any,
+  uiSchema: any = {},
+) {
+  const updatedData = cloneDeep(formData);
+
+  function getUiSchemaPath(rootUiSchema: any, path: string[]): any {
+    let current = rootUiSchema;
+
+    for (const key of path) {
+      if (!current) {
+        return undefined;
+      }
+      if (!isNaN(Number(key))) {
+        current = current.items || current;
+      } else {
+        current = current[key] || current.items?.[key] || current;
+      }
+    }
+    return current;
+  }
+
+  function walk(
+    schemaNode: any,
+    dataNode: any,
+    path: string[] = [],
+    rootSchema: any = schema,
+    rootUiSchema: any = uiSchema,
+  ) {
+    if (!schemaNode || typeof schemaNode !== 'object') {
+      return;
+    }
+
+    // Resolve $ref
+    if (schemaNode.$ref) {
+      const resolved = resolveRef(rootSchema, schemaNode.$ref);
+
+      walk(resolved, dataNode, path, rootSchema, rootUiSchema);
+      return;
+    }
+
+    const discriminator = schemaNode.discriminator?.propertyName;
+    const variants = schemaNode.oneOf || schemaNode.anyOf;
+
+    if (discriminator && variants) {
+      const discriminatorValue = get(dataNode, discriminator);
+
+      // Get uiSchema for current path
+      const uiSchemaPath = getUiSchemaPath(rootUiSchema, path);
+      const dynamicOptions =
+        uiSchemaPath?.[discriminator]?.['ui:options']
+          ?.dynamicDiscriminatorOptions;
+
+      // Find matching variant
+      let match = variants.find(
+        (variant: any) =>
+          get(variant, ['properties', discriminator, 'const']) ===
+          discriminatorValue,
+      );
+
+      // Validate against dynamicDiscriminatorOptions
+      let defaultValue: string | undefined;
+      if (
+        dynamicOptions &&
+        dynamicOptions.path !== undefined &&
+        dynamicOptions.options
+      ) {
+        const parentPath =
+          dynamicOptions.path.replace(/^\//, '').replace(/\//g, '.') ||
+          discriminator;
+        const parentValue =
+          parentPath === discriminator
+            ? discriminatorValue
+            : get(updatedData, parentPath);
+        const validOptions = dynamicOptions.options[parentValue] || [];
+        const validValues = validOptions.map((opt: any) => opt.value);
+
+        if (!validValues.includes(discriminatorValue)) {
+          defaultValue =
+            validOptions[0]?.value ||
+            schemaNode.properties?.[discriminator]?.default;
+          if (defaultValue !== undefined) {
+            set(updatedData, [...path, discriminator], defaultValue);
+            if (schemaNode.properties?.oneOf_select) {
+              set(updatedData, [...path, 'oneOf_select'], defaultValue);
+            }
+            // Reset other properties to align with the new schema
+            const activeSchema = variants.find(
+              (variant: any) =>
+                get(variant, ['properties', discriminator, 'const']) ===
+                defaultValue,
+            );
+            if (activeSchema && dataNode) {
+              Object.keys(dataNode).forEach(key => {
+                if (
+                  key !== discriminator &&
+                  key !== 'oneOf_select' &&
+                  !activeSchema.properties?.[key]
+                ) {
+                  set(updatedData, [...path, key], undefined);
+                }
+              });
+            }
+          }
+        }
+        match = variants.find(
+          (variant: any) =>
+            get(variant, ['properties', discriminator, 'const']) ===
+            (defaultValue || discriminatorValue),
+        );
+      } else {
+        // Fallback to schema-based reset
+        if (!match) {
+          const defaultVariant = variants.find(
+            (variant: any) =>
+              'default' in (get(variant, ['properties', discriminator]) || {}),
+          );
+          defaultValue =
+            get(defaultVariant, ['properties', discriminator, 'default']) ??
+            variants.find((v: any) =>
+              get(v, ['properties', discriminator, 'const']),
+            )?.properties?.[discriminator]?.const;
+
+          if (defaultValue !== undefined) {
+            set(updatedData, [...path, discriminator], defaultValue);
+            if (schemaNode.properties?.oneOf_select) {
+              set(updatedData, [...path, 'oneOf_select'], defaultValue);
+            }
+            // Reset other properties
+            const activeSchema = variants.find(
+              (variant: any) =>
+                get(variant, ['properties', discriminator, 'const']) ===
+                defaultValue,
+            );
+            if (activeSchema && dataNode) {
+              Object.keys(dataNode).forEach(key => {
+                if (
+                  key !== discriminator &&
+                  key !== 'oneOf_select' &&
+                  !activeSchema.properties?.[key]
+                ) {
+                  set(updatedData, [...path, key], undefined);
+                }
+              });
+            }
+          }
+        }
+      }
+
+      // Use the active schema
+      const activeSchema =
+        match ||
+        variants.find(
+          (v: any) => 'default' in (v.properties?.[discriminator] || {}),
+        );
+
+      if (activeSchema) {
+        Object.entries(activeSchema.properties || {}).forEach(
+          ([key, subschema]) => {
+            if (key !== discriminator) {
+              const resolvedSubschema = subschema.$ref
+                ? resolveRef(rootSchema, subschema.$ref)
+                : subschema;
+
+              walk(
+                resolvedSubschema,
+                get(dataNode, key),
+                [...path, key],
+                rootSchema,
+                rootUiSchema,
+              );
+            }
+          },
+        );
+
+        if (activeSchema.oneOf || activeSchema.anyOf) {
+          const branches = activeSchema.oneOf || activeSchema.anyOf;
+
+          branches.forEach((branch: any, index: number) => {
+            const branchData = dataNode;
+            const resolvedBranch = branch.$ref
+              ? resolveRef(rootSchema, branch.$ref)
+              : branch;
+            walk(
+              resolvedBranch,
+              branchData,
+              [
+                ...path,
+                activeSchema.oneOf ? 'oneOf' : 'anyOf',
+                index.toString(),
+              ],
+              rootSchema,
+              rootUiSchema,
+            );
+          });
+        }
+      }
+    }
+
+    // Handle objects
+    if (schemaNode.type === 'object' && schemaNode.properties) {
+      for (const [key, subschema] of Object.entries(schemaNode.properties)) {
+        const resolvedSubschema = subschema.$ref
+          ? resolveRef(rootSchema, subschema.$ref)
+          : subschema;
+
+        walk(
+          resolvedSubschema,
+          get(dataNode, key),
+          [...path, key],
+          rootSchema,
+          rootUiSchema,
+        );
+      }
+    }
+
+    // Handle arrays
+    if (schemaNode.type === 'array' && schemaNode.items) {
+      const items = get(dataNode, path) || [];
+      const resolvedItems = schemaNode.items.$ref
+        ? resolveRef(rootSchema, schemaNode.items.$ref)
+        : schemaNode.items;
+      const uiSchemaItems = getUiSchemaPath(rootUiSchema, path)?.items;
+
+      items.forEach((item: any, idx: number) => {
+        walk(
+          resolvedItems,
+          item,
+          [...path, idx.toString()],
+          rootSchema,
+          uiSchemaItems || rootUiSchema,
+        );
+      });
+    }
+
+    // Handle oneOf/anyOf (outside discriminator context)
+    if (schemaNode.oneOf || schemaNode.anyOf) {
+      const branches = schemaNode.oneOf || schemaNode.anyOf;
+
+      branches.forEach((branch: any, index: number) => {
+        const resolvedBranch = branch.$ref
+          ? resolveRef(rootSchema, branch.$ref)
+          : branch;
+        walk(
+          resolvedBranch,
+          dataNode,
+          [...path, schemaNode.oneOf ? 'oneOf' : 'anyOf', index.toString()],
+          rootSchema,
+          rootUiSchema,
+        );
+      });
+    }
+  }
+
+  // Process top-level discriminator
+  walk(schema, updatedData, [], schema, uiSchema);
+
+  // Explicitly reset nested productType discriminators. We need to revisit this logic later
+  const packType = get(updatedData, 'packType');
+  if (packType) {
+    const containedProducts = get(updatedData, 'containedProducts') || [];
+    containedProducts.forEach((_: any, idx: number) => {
+      const productDetailsSchema = schema.oneOf?.find(
+        (branch: any) =>
+          get(branch, ['properties', 'packType', 'const']) === packType,
+      )?.properties?.containedProducts?.items?.properties?.productDetails;
+      if (productDetailsSchema) {
+        const productDetailsPath = [
+          'containedProducts',
+          idx.toString(),
+          'productDetails',
+        ];
+        walk(
+          productDetailsSchema,
+          get(updatedData, productDetailsPath),
+          productDetailsPath,
+          schema,
+          getUiSchemaPath(uiSchema, [
+            'containedProducts',
+            'items',
+            'productDetails',
+          ]),
+        );
+      }
+    });
+  }
+  return updatedData;
+}

@@ -10,10 +10,11 @@
   "ui:options": {
     "skipTitle": true
   },
-  "ui:field": "OneOfField",
+
   "ui:fieldReplacesAnyOrOneOf": true,
   "ui:options": {
     "skipTitle": true,
+    "hideOneOfSelector": true,
 
     "dynamicDiscriminatorOptions": {
       "path": "",
@@ -83,9 +84,10 @@
         }
       },
       "productDetails": {
-        "ui:field": "OneOfField",
+
         "ui:fieldReplacesAnyOrOneOf": true,
         "ui:options": {
+          "hideOneOfSelector": true,
           "skipTitle": true,
           "validateHiddenFields": false,
           "showOneOfLabel": false,
