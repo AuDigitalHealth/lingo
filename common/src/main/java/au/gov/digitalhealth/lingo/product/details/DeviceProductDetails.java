@@ -16,7 +16,9 @@
 package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.gov.digitalhealth.lingo.util.NmpcType;
 import au.gov.digitalhealth.lingo.validation.OnlyOneNotEmpty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.util.Map;
 import java.util.Set;
@@ -53,5 +55,11 @@ public class DeviceProductDetails extends ProductDetails {
   @Override
   public boolean hasDeviceType() {
     return true;
+  }
+
+  @JsonIgnore
+  @Override
+  public NmpcType getNmpcType() {
+    return NmpcType.NMPC_DEVICE;
   }
 }
