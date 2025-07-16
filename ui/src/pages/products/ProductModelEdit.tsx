@@ -76,7 +76,7 @@ import {
   getTicketProductsByTicketIdOptions,
   useTicketByTicketNumber,
 } from '../../hooks/api/tickets/useTicketById.tsx';
-import useTaskById from '../../hooks/useTaskById.tsx';
+import useTaskByKey from '../../hooks/useTaskByKey.tsx';
 import useAuthoringStore from '../../stores/AuthoringStore.ts';
 import {
   uniqueFsnValidator,
@@ -102,6 +102,10 @@ import { FieldBindings } from '../../types/FieldBindings.ts';
 import { useRefsetMembersByComponentIds } from '../../hooks/api/refset/useRefsetMembersByComponentIds.tsx';
 import { RefsetMember } from '../../types/RefsetMember.ts';
 import productService from '../../api/ProductService.ts';
+import {
+  extractSemanticTag,
+  removeSemanticTagFromTerm,
+} from '../../utils/helpers/ProductPreviewUtils.ts';
 import ExistingConceptDropdown from './components/ExistingConceptDropdown.tsx';
 import NewConceptDropdown from './components/NewConceptDropdown.tsx';
 import { ProductStatusIndicators } from './components/ProductStatusIndicators.tsx';
@@ -116,6 +120,9 @@ interface ProductModelEditProps {
   branch: string;
   ticket?: Ticket;
 }
+
+// What appears to be unusused code.
+// TODO: Investigate what this is about?
 
 function ProductModelEdit({
   productCreationDetails,
@@ -539,9 +546,82 @@ function ProductModelEdit({
   }
 }
 
+interface NewConceptDropdownProps {
+  product: Product;
+  index: number;
+  register: UseFormRegister<ProductSummary>;
+  getValues: UseFormGetValues<ProductSummary>;
+  control: Control<ProductSummary>;
+}
+
+function NewConceptDropdown({
+  product,
+  index,
+  register,
+  getValues,
+  control,
+}: NewConceptDropdownProps) {
+  return (
+    <div key={'div-' + product.conceptId}>
+      <Grid item xs={12}>
+        <Grid item xs={12}>
+          <NewConceptDropdownField
+            fieldName={`nodes[${index}].newConceptDetails.fullySpecifiedName`}
+            register={register}
+            legend={'FSN'}
+            getValues={getValues}
+            dataTestId={`fsn-input`}
+            control={control}
+          />
+        </Grid>
+        <NewConceptDropdownField
+          fieldName={`nodes[${index}].newConceptDetails.preferredTerm`}
+          register={register}
+          legend={'Preferred Term'}
+          getValues={getValues}
+          dataTestId={`pt-input`}
+          control={control}
+        />
+        <InnerBoxSmall component="fieldset">
+          <legend>Specified Concept Id</legend>
+          <TextField
+            {...register(
+              `nodes[${index}].newConceptDetails.specifiedConceptId` as 'nodes.0.newConceptDetails.specifiedConceptId',
+              { required: false, setValueAs: setEmptyToNull },
+            )}
+            fullWidth
+            variant="outlined"
+            margin="dense"
+            InputLabelProps={{ shrink: true }}
+            onKeyDown={filterKeypress}
+          />
+        </InnerBoxSmall>
+        {product.label === 'CTPP' && (
+          <InnerBoxSmall component="fieldset">
+            <legend>Artg Ids</legend>
+            <TextField
+              fullWidth
+              value={product.newConceptDetails?.referenceSetMembers
+                .flatMap(r => r.additionalFields?.mapTarget)
+                .sort((a, b) => {
+                  if (a !== undefined && b !== undefined) {
+                    return +a - +b;
+                  }
+                  return 0;
+                })}
+              InputProps={{
+                readOnly: true,
+              }}
+            />
+          </InnerBoxSmall>
+        )}
+      </Grid>
+    </div>
+  );
+}
+
 interface NewConceptDropdownFieldProps {
   register: UseFormRegister<ProductSummary>;
-  originalValue: string;
   fieldName: string;
   legend: string;
   getValues: UseFormGetValues<ProductSummary>;
@@ -572,7 +652,7 @@ function ConceptOptionsDropdown({
   const { ticketNumber } = useParams();
   const { data: ticket } = useTicketByTicketNumber(ticketNumber, true);
 
-  const task = useTaskById();
+  const task = useTaskByKey();
   const { serviceStatus } = useServiceStatus();
 
   const {
@@ -720,6 +800,54 @@ function ConceptOptionsDropdown({
         )}
       </CustomTabPanel>
     </>
+  );
+}
+
+interface ExistingConceptDropdownProps {
+  product: Product;
+  artgIds: string[];
+}
+
+// TODO: FIX ME! Why is there another one of these in ExistingConceptDropdown.tsx
+function ExistingConceptDropdown({
+  product,
+  artgIds,
+}: ExistingConceptDropdownProps) {
+  const semanticTag = extractSemanticTag(product.concept?.fsn?.term)
+    ?.trim()
+    .toLocaleLowerCase();
+
+  const termWithoutTag = removeSemanticTagFromTerm(product.concept?.fsn?.term);
+  return (
+    <div key={`${product.conceptId}-div`}>
+      <Stack direction="row" spacing={2}>
+        <span style={{ color: '#184E6B' }}>Concept Id:</span>
+        <Link>{product.conceptId}</Link>
+      </Stack>
+      <Stack direction="row" spacing={2}>
+        <Typography style={{ color: '#184E6B' }}>FSN:</Typography>
+        <Typography>
+          {termWithoutTag ? termWithoutTag : product.concept?.fsn?.term}
+        </Typography>
+      </Stack>
+      {semanticTag && (
+        <Stack direction="row" spacing={2}>
+          <Typography style={{ color: '#184E6B' }}>Semantic Tag:</Typography>
+          <Typography>{semanticTag}</Typography>
+        </Stack>
+      )}
+      <Stack direction="row" spacing={2}>
+        <Typography style={{ color: '#184E6B' }}>Preferred Term:</Typography>
+        <Typography>{product.concept?.pt?.term}</Typography>
+      </Stack>
+      {((artgIds && artgIds.length > 0) || product.label === 'CTPP') && (
+        <Stack direction="row" spacing={2}>
+          <Typography style={{ color: '#184E6B' }}>Artg Ids:</Typography>
+
+          <Typography>{artgIds.join(',')}</Typography>
+        </Stack>
+      )}
+    </div>
   );
 }
 

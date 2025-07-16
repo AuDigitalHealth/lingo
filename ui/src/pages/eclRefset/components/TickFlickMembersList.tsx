@@ -32,7 +32,7 @@ import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
 import SwapHorizontalCircleOutlinedIcon from '@mui/icons-material/SwapHorizontalCircleOutlined';
 import SwapHorizontalCircleIcon from '@mui/icons-material/SwapHorizontalCircle';
 import ConceptDetailsModal from './ConceptDetailsModal.tsx';
-import { useConceptsByEcl } from '../../../hooks/eclRefset/useConceptsByEcl.tsx';
+import { useConceptsByEclAllPages } from '../../../hooks/eclRefset/useConceptsByEcl.tsx';
 import {
   useReplaceMembersBulk,
   useRetireMembersBulk,
@@ -67,7 +67,7 @@ function TickFlickMembersList({
     items: [],
     quickFilterValues: [],
   });
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm] = useState('');
   const [inactiveOnly, setInactiveOnly] = useState(false);
 
   const getEcl = () => {
@@ -78,9 +78,9 @@ function TickFlickMembersList({
     return ecl;
   };
 
-  const { data, isFetching } = useConceptsByEcl(branch, getEcl(), {
-    limit: paginationModel.pageSize,
-    offset: paginationModel.page * paginationModel.pageSize,
+  const { data, isFetching } = useConceptsByEclAllPages(branch, getEcl(), {
+    limit: 10000,
+    offset: 0,
     term: searchTerm,
     termActive: true,
   });
@@ -106,12 +106,6 @@ function TickFlickMembersList({
       setFilteredTotal(data?.total);
     }
   }, [data, isFetching]);
-
-  useEffect(() => {
-    if (filterModel.quickFilterValues) {
-      setSearchTerm((filterModel.quickFilterValues[0] as string) ?? '');
-    }
-  }, [filterModel]);
 
   const retireMemberMutation = useRetireMembersBulk(branch, referenceSet);
   const {
@@ -183,13 +177,15 @@ function TickFlickMembersList({
       field: 'conceptId',
       headerName: 'Concept ID',
       width: 180,
-      sortable: false,
+      sortable: true,
+      filterable: true,
     },
     {
       field: 'active',
       headerName: 'Active',
       type: 'boolean',
-      sortable: false,
+      sortable: true,
+      filterable: true,
     },
     {
       field: 'fsn',
@@ -197,7 +193,8 @@ function TickFlickMembersList({
       flex: 1,
       valueGetter: (params: GridValueGetterParams<GridValidRowModel, Term>) =>
         params.value?.term,
-      sortable: false,
+      sortable: true,
+      filterable: true,
     },
     {
       field: 'actions',
@@ -307,7 +304,7 @@ function TickFlickMembersList({
           disableDensitySelector
           disableColumnMenu
           density="compact"
-          filterMode="server"
+          filterMode="client"
           filterModel={filterModel}
           onFilterModelChange={setFilterModel}
           slots={{ toolbar: RefsetMembersTableHeader }}
@@ -332,7 +329,7 @@ function TickFlickMembersList({
             },
           }}
           pageSizeOptions={[10, 25, 50, 100]}
-          paginationMode="server"
+          paginationMode="client"
           rowCount={filteredTotal ?? 0}
           paginationModel={paginationModel}
           onPaginationModelChange={newModel => {

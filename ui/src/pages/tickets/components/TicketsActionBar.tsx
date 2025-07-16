@@ -5,6 +5,10 @@ import { useState } from 'react';
 import ExportModal from './ExportModal';
 import CreateTicketModal from './CreateTicketModal';
 import TasksCreateModal from '../../tasks/components/TasksCreateModal';
+import { useApplicationConfig } from '../../../hooks/api/useInitializeConfig';
+import useAvailableProjects, {
+  getProjectFromKey,
+} from '../../../hooks/api/useInitializeProjects';
 
 interface TicketsActionBarProps {
   externalRequestorsEnabled?: boolean;
@@ -20,6 +24,10 @@ export default function TicketsActionBar({
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [ticketModalOpen, setTicketModalOpen] = useState(false);
   const [tasksModalOpen, setTasksModalOpen] = useState(false);
+
+  const { applicationConfig } = useApplicationConfig();
+  const { data: projects } = useAvailableProjects();
+  const project = getProjectFromKey(applicationConfig?.apProjectKey, projects);
   return (
     <>
       <TasksCreateModal
@@ -27,6 +35,8 @@ export default function TicketsActionBar({
         open={tasksModalOpen}
         handleClose={() => setTasksModalOpen(false)}
         redirectEnabled={false}
+        projectsOptions={project ? [project] : []}
+        redirectUrl=""
       />
       <CreateTicketModal
         open={ticketModalOpen}

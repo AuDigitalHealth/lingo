@@ -220,7 +220,7 @@ const getTitle = (
   actionType: ActionType | undefined,
 ) => {
   if (actionType === ActionType.editProduct) {
-    return 'Edit Product';
+    return 'Edit Terms';
   }
 
   return productName

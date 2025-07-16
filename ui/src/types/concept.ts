@@ -49,11 +49,35 @@ export interface ConceptMini {
   fsn?: Term;
 }
 
+export interface RefsetConceptCreate {
+  active?: boolean;
+  definitionStatus?: DefinitionStatus | null;
+  moduleId?: string;
+  fsn?: Term;
+  pt?: Term;
+  refsetDescriptor: string;
+  type: RefsetConceptCreateType;
+}
+
+export enum RefsetConceptCreateType {
+  QueryBased = 'Query-Based',
+  TickFlick = 'Tick-Flick',
+}
+
+export interface TickFlickRefsetConcept extends Concept {
+  isQuerySpec?: boolean;
+  hasInactives?: boolean | 'loading';
+}
+
 export interface BrowserConcept extends Concept {
   descriptions: Description[];
 }
 
-export type Acceptability = 'PREFERRED' | 'ACCEPTABLE' | 'SYNONYM';
+export type Acceptability =
+  | 'PREFERRED'
+  | 'ACCEPTABLE'
+  | 'SYNONYM'
+  | 'NOT ACCEPTABLE';
 
 export type Description = {
   active: boolean;
@@ -61,16 +85,30 @@ export type Description = {
   released: boolean;
   descriptionId?: string;
   term: string;
-  conceptId: string;
+  conceptId?: string;
   typeId: string;
   // where the string is the conceptId of the dialect
   acceptabilityMap?: Record<string, Acceptability>;
-  type: 'FSN' | 'SYNONYM' | 'TEXT_DEFINITION';
+  type: DefinitionType;
   lang: string;
-  caseSignificance:
-    | 'ENTIRE_TERM_CASE_SENSITIVE'
-    | 'CASE_INSENSITIVE'
-    | 'INITIAL_CHARACTER_CASE_INSENSITIVE';
+  caseSignificance: CaseSignificance;
+};
+
+export enum DefinitionType {
+  FSN = 'FSN',
+  SYNONYM = 'SYNONYM',
+}
+
+export enum CaseSignificance {
+  ENTIRE_TERM_CASE_SENSITIVE = 'ENTIRE_TERM_CASE_SENSITIVE',
+  CASE_INSENSITIVE = 'CASE_INSENSITIVE',
+  INITIAL_CHARACTER_CASE_INSENSITIVE = 'INITIAL_CHARACTER_CASE_INSENSITIVE',
+}
+
+export const caseSignificanceDisplay: Record<CaseSignificance, string> = {
+  [CaseSignificance.ENTIRE_TERM_CASE_SENSITIVE]: 'CS',
+  [CaseSignificance.CASE_INSENSITIVE]: 'ci',
+  [CaseSignificance.INITIAL_CHARACTER_CASE_INSENSITIVE]: 'cI',
 };
 
 export interface SnowstormAxiom {
@@ -85,6 +123,10 @@ export interface SnowstormAxiom {
   effectiveTime: number;
 }
 
+export enum SnowstormRelationshipNewOrRemoved {
+  NEW = 'NEW',
+  REMOVED = 'REMOVED',
+}
 export interface SnowstormRelationship {
   internalId: string;
   path: string;
@@ -119,6 +161,7 @@ export interface SnowstormRelationship {
   concrete: boolean;
   effectiveTime: string;
   id: string;
+  newOrRemoved?: SnowstormRelationshipNewOrRemoved;
 }
 
 export interface ConcreteValue {
@@ -166,7 +209,7 @@ export interface Axiom {
 }
 
 export interface NewConceptAxioms {
-  axiomId: string | null;
+  axiomId: string;
   moduleId: string;
   active: boolean;
   released: boolean | null;
@@ -227,7 +270,7 @@ export interface AxiomRelationshipNewConcept {
   released: boolean | null;
   releaseHash: string | null;
   releasedEffectiveTime: number | null;
-  relationshipId: string | null;
+  relationshipId: string;
   sourceId: string | null;
   destinationId: string;
   value: string | null;
@@ -249,10 +292,12 @@ export interface AxiomRelationshipNewConcept {
   concrete: boolean;
   effectiveTime: string | null;
   id: string | null;
+  newOrRemoved?: SnowstormRelationshipNewOrRemoved;
 }
 
 export interface Term {
   term: string;
+  semanticTag?: string;
   lang?: string;
 }
 
@@ -281,12 +326,15 @@ class InactivationReason {
 }
 
 class OriginalNode {
+  conceptId: string;
   node: Product | null;
   inactivationReason: InactivationReason | null;
   referencedByOtherProducts: boolean;
 }
 
 export interface Product {
+  axioms?: SnowstormAxiom[];
+  relationShips?: SnowstormRelationship[];
   displayName: string;
   concept: Concept | null;
   label: string;
@@ -296,6 +344,7 @@ export interface Product {
   conceptId: string;
   preferredTerm?: string;
   fullySpecifiedName?: string;
+  semanticTag?: string;
   generatedPreferredTerm?: string;
   generatedFullySpecifiedName?: string;
   newInTask: boolean;
@@ -329,6 +378,7 @@ export function hasHistoricalAssociationsChanged(product: Product): boolean {
 export interface NewConceptDetails {
   conceptId: number;
   specifiedConceptId: string | null;
+
   fullySpecifiedName: string;
   preferredTerm: string;
   semanticTag: string;
@@ -336,6 +386,7 @@ export interface NewConceptDetails {
   referenceSetMembers: RefsetMember[];
   fsn?: Term;
   pt?: Term;
+  descriptions?: Description[];
 }
 
 export enum Product7BoxBGColour {
@@ -346,3 +397,7 @@ export enum Product7BoxBGColour {
   INCOMPLETE = '#FFA500',
   PROPERTY_CHANGE = '#FFD700',
 }
+
+export const newConceptBorderColor = '#008040';
+
+export const removedConceptBorderColor = '#F04134';

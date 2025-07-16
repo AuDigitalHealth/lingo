@@ -119,21 +119,48 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
       validateQuantityPopulated(productDetails.getQuantity(), "Product quantity");
     }
 
+    final boolean nutritionalProduct = productDetails instanceof NutritionalProductDetails;
+
+    if (productDetails instanceof NutritionalProductDetails nutritionalProductDetails) {
+      validatePopulatedConcept(
+          productDetails.getExistingMedicinalProduct(),
+          "Nutritional product must have an existing medicinal product defined");
+      if (nutritionalProductDetails.getNewGenericProductName() == null
+          || nutritionalProductDetails.getNewGenericProductName().isBlank()) {
+        validatePopulatedConcept(
+            productDetails.getExistingClinicalDrug(),
+            "Either existing clinical drug or new generic product name must be set for nutritional products");
+      }
+    } else {
+      validateConceptNotSet(
+          productDetails.getExistingMedicinalProduct(),
+          "Only nutritional products can have an existing medicinal product defined");
+      validateConceptNotSet(
+          productDetails.getExistingClinicalDrug(),
+          "Only nutritional products can have an existing clinical drug defined");
+    }
+
     final boolean unitOfPresentationExists = productDetails.getUnitOfPresentation() != null;
+    final boolean unitOfPresentationQuantityExists =
+        productDetails.getQuantity() != null
+            && productDetails.getQuantity().getValue() != null
+            && productDetails.getQuantity().getUnit() != null;
+
+    if (unitOfPresentationQuantityExists) {
+      validateQuantityPopulated(productDetails.getQuantity(), "unit of presentation quantity");
+    }
+
     for (Ingredient ingredient : productDetails.getActiveIngredients()) {
 
-      if (unitOfPresentationExists && productDetails instanceof VaccineProductDetails) {
-        validateQuantityNotZero(
-            productDetails.getQuantity(),
-            "Vaccine unit of presentation quantity must be set if the unit of presentation is set");
-      }
+      final boolean vaccine = productDetails instanceof VaccineProductDetails;
 
       validateIngredient(
           branch,
           ingredient,
           unitOfPresentationExists,
-          productDetails instanceof NutritionalProductDetails,
-          productDetails instanceof VaccineProductDetails);
+          unitOfPresentationQuantityExists,
+          nutritionalProduct,
+          vaccine);
     }
   }
 
@@ -141,6 +168,7 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
       String branch,
       Ingredient ingredient,
       boolean unitOfPresentationExists,
+      boolean unitOfPresentationQuantityExists,
       boolean nutritionalProduct,
       boolean vaccine) {
 
@@ -161,29 +189,44 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
       // active ingredient must not be null.
       validatePopulatedConcept(
           ingredient.getActiveIngredient(), "Product must have an active ingredient defined");
-      // refined active ingredient must be set.
-      validatePopulatedConcept(
-          ingredient.getRefinedActiveIngredient(),
-          "Product must have an refined ingredient defined");
-      // precise ingredient must be set
-      validatePopulatedConcept(
-          ingredient.getPreciseIngredient(), "Product must have an precise ingredient defined");
 
       // if one of the concentration strength numerator or presentation strength numerator is set
-      // BoSS
-      // must be set.
-      if (((ingredient.getConcentrationStrengthNumerator() != null
-                  && ingredient.getConcentrationStrengthNumerator().getValue() != null)
-              || (ingredient.getPresentationStrengthNumerator() != null
-                  && ingredient.getPresentationStrengthNumerator().getValue() != null))
-          && ingredient.getBasisOfStrengthSubstance() == null) {
-        throw new ProductAtomicDataValidationProblem(
+      // BoSS must be set.
+      if ((ingredient.getConcentrationStrengthNumerator() != null
+              && ingredient.getConcentrationStrengthNumerator().getValue() != null)
+          || (ingredient.getPresentationStrengthNumerator() != null
+              && ingredient.getPresentationStrengthNumerator().getValue() != null)) {
+
+        // refined active ingredient must be set.
+        validatePopulatedConcept(
+            ingredient.getRefinedActiveIngredient(),
+            "Product must have an refined ingredient defined when concentration strength or presentation strength is set");
+        // precise ingredient must be set
+        validatePopulatedConcept(
+            ingredient.getPreciseIngredient(),
+            "Product must have an precise ingredient defined when concentration strength or presentation strength is set");
+        // boss ingredient must be set
+        validatePopulatedConcept(
+            ingredient.getBasisOfStrengthSubstance(),
             "Product must have a basis of strength substance defined when concentration strength or presentation strength is set");
+      } else {
+        // if concentration strength numerator and denominator is not set, then BoSS must not be set
+        validateConceptNotSet(
+            ingredient.getBasisOfStrengthSubstance(),
+            "Product must not have a basis of strength substance defined when concentration strength and presentation strength is not set");
+        // refined active ingredient must not be set.
+        validateConceptNotSet(
+            ingredient.getRefinedActiveIngredient(),
+            "Product must not have a refined ingredient defined when concentration strength and presentation strength is not set");
+        // precise ingredient must not be set
+        validateConceptNotSet(
+            ingredient.getPreciseIngredient(),
+            "Product must not have a precise ingredient defined when concentration strength and presentation strength is not set");
       }
     }
 
     if (vaccine) {
-      if (unitOfPresentationExists) {
+      if (unitOfPresentationExists && unitOfPresentationQuantityExists) {
         // vaccines there is either presentation strength numerator and denominator value or a unit
         // of presentation and size
         validateStrengthNotPopulated(
@@ -200,7 +243,8 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
             "concentration",
             "Vaccine",
             "when unit of presentation exists");
-      } else {
+
+      } else if (unitOfPresentationExists) {
         // if unit of presentation exists, presentation strength numerator and denominator value and
         // unit must be set and value must be non-zero.
         validateNumeratorDenominatorSet(
@@ -216,6 +260,9 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
             "concentration",
             "Vaccine",
             "when unit of presentation does not exists");
+      } else {
+        throw new ProductAtomicDataValidationProblem(
+            "Vaccine must have either a unit of presentation set");
       }
     } else if (nutritionalProduct) {
       validateStrengthNotPopulated(

@@ -25,12 +25,19 @@ export function usePostReviewMessageMutation() {
     },
     onSuccess: (data, variables) => {
       // Invalidate and refetch the concept reviews query
-      const queryKey = [
+      const queryKeyReviews = [
         'concept-reviews',
         variables.projectKey,
         variables.taskKey,
       ];
-      void queryClient.invalidateQueries({ queryKey });
+      void queryClient.invalidateQueries({ queryKey: queryKeyReviews });
+
+      const queryKeyUnread = [
+        'feedback-unread',
+        variables.projectKey,
+        variables.taskKey,
+      ];
+      void queryClient.invalidateQueries({ queryKey: queryKeyUnread });
     },
     onError: error => {
       console.error('Failed to post review message:', error);

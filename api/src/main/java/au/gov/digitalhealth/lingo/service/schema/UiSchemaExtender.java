@@ -21,6 +21,7 @@ import au.gov.digitalhealth.lingo.configuration.model.BasePropertyDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.BasePropertyWithValueDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
+import au.gov.digitalhealth.lingo.configuration.model.ProductType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -50,20 +51,28 @@ public class UiSchemaExtender {
     this.objectMapper = objectMapper;
   }
 
-  public void updateUiSchema(ModelConfiguration modelConfiguration, JsonNode uiSchemaNode) {
+  public void updateUiSchema(
+      ModelConfiguration modelConfiguration, JsonNode uiSchemaNode, ProductType productType) {
     Set<BasePropertyDefinition> properties = new HashSet<>(modelConfiguration.getMappings());
     properties.addAll(modelConfiguration.getNonDefiningProperties());
     properties.addAll(modelConfiguration.getReferenceSets());
+
+    properties.removeIf(p -> p.getSuppressOnProductTypes().contains(productType));
 
     updateUiSchemaForType(uiSchemaNode, NON_DEFINING_PROPERTIES, properties);
   }
 
   public void updateEditUiSchema(
-      ModelConfiguration modelConfiguration, JsonNode uiSchemaNode, ModelLevel level) {
+      ModelConfiguration modelConfiguration,
+      JsonNode uiSchemaNode,
+      ModelLevel level,
+      ProductType productType) {
     Set<BasePropertyDefinition> properties = new HashSet<>(modelConfiguration.getMappings());
     properties.addAll(modelConfiguration.getNonDefiningPropertiesByLevel(level));
     properties.addAll(modelConfiguration.getReferenceSetsByLevel(level));
     properties.addAll(modelConfiguration.getMappingsByLevel(level));
+
+    properties.removeIf(p -> p.getSuppressOnProductTypes().contains(productType));
 
     updateUiSchemaForLevel(uiSchemaNode, NON_DEFINING_PROPERTIES, properties, level);
   }

@@ -17,7 +17,7 @@
 import {
   DevicePackageDetails,
   MedicationPackageDetails,
-  ProductType
+  ProductType,
 } from '../../types/product.ts';
 import {
   AutocompleteGroupOption,
@@ -25,13 +25,16 @@ import {
   ProductAction,
   Ticket,
   TicketBulkProductActionDto,
-  TicketProductDto
+  TicketProductDto,
 } from '../../types/tickets/ticket.ts';
 import { ProductStatus, ProductTableRow } from '../../types/TicketProduct.ts';
 
 export function mapToTicketProductDto(
   packageDetails: MedicationPackageDetails | DevicePackageDetails,
-  originalPackageDetails: MedicationPackageDetails | DevicePackageDetails | null,
+  originalPackageDetails:
+    | MedicationPackageDetails
+    | DevicePackageDetails
+    | null,
   originalConceptId: string | null,
   ticket: Ticket,
   login: string,
@@ -204,7 +207,9 @@ export function mapToProductDetailsArrayFromBulkActions(
   bulkProductActions: TicketBulkProductActionDto[],
   indexStarts: number,
 ): ProductTableRow[] {
-  const productDetailsArray = bulkProductActions.map(function (item) {
+  // this may also be a product update, so that must be considered
+  const productDetailsArray = bulkProductActions.map(item => {
+    item.details.type;
     const id = indexStarts++;
     const productDto: ProductTableRow = {
       id: id,
@@ -223,7 +228,7 @@ export function mapToProductDetailsArrayFromBulkActions(
         item.details.packSizes &&
         item.details.packSizes.packSizes
           ? ProductType.bulkPackSize
-          : ProductType.bulkBrand,
+          : item.details.type,
       created: item.created,
       action: 'CREATE', // Default action for bulk actions is CREATE
     };

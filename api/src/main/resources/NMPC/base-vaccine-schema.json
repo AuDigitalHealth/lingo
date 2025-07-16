@@ -102,10 +102,18 @@
           }
         },
         "refinedActiveIngredient": {
+          "type": [
+            "object",
+            "null"
+          ],
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "VMP Active Ingredient"
         },
         "preciseIngredient": {
+          "type": [
+            "object",
+            "null"
+          ],
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "AMP Active Ingredient"
         },
@@ -134,9 +142,7 @@
         }
       },
       "required": [
-        "activeIngredient",
-        "refinedActiveIngredient",
-        "preciseIngredient"
+        "activeIngredient"
       ]
     },
     "ProductDetails": {
@@ -218,7 +224,8 @@
       "required": [
         "productName",
         "genericForm",
-        "activeIngredients"
+        "activeIngredients",
+        "unitOfPresentation"
       ],
       "errorMessage": {
         "required": "Product Details must be populated."

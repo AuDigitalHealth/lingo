@@ -15,6 +15,7 @@
  */
 package au.gov.digitalhealth.lingo.product.details;
 
+import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.gov.digitalhealth.lingo.validation.OnlyOnePopulated;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import lombok.Data;
@@ -27,4 +28,6 @@ import lombok.EqualsAndHashCode;
     fields = {"containerType", "deviceType"},
     message = "Only container type or device type can be populated, not both")
 public class NutritionalProductDetails extends MedicationProductDetails {
+  String newGenericProductName;
+  SnowstormConceptMini targetPopulation;
 }

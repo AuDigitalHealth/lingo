@@ -34,6 +34,9 @@ import lombok.EqualsAndHashCode;
     fields = {"containerType", "deviceType"},
     message = "Only container type or device type can be populated, not both")
 public class MedicationProductDetails extends ProductDetails {
+  SnowstormConceptMini existingMedicinalProduct;
+  SnowstormConceptMini existingClinicalDrug;
+
   SnowstormConceptMini genericForm;
   SnowstormConceptMini specificForm;
 

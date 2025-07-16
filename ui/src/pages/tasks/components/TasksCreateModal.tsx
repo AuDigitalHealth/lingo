@@ -10,7 +10,6 @@ import { useSnackbar } from 'notistack';
 import { Stack } from '@mui/system';
 
 import { useForm } from 'react-hook-form';
-import useApplicationConfigStore from '../../../stores/ApplicationConfigStore';
 import TasksServices from '../../../api/TasksService';
 import { Project } from '../../../types/Project';
 import { TaskDto } from '../../../types/task';
@@ -18,17 +17,20 @@ import { useNavigate } from 'react-router-dom';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import { unavailableErrorHandler } from '../../../types/ErrorHandler.ts';
 import { useQueryClient } from '@tanstack/react-query';
-import { useAllTasksOptions } from '../../../hooks/api/task/useAllTasks';
-import useAvailableProjects, {
+import { useAllTasksOptions } from '../../../hooks/api/task/useAllTasks.tsx';
+import {
   getProjectByTitle,
   getProjectFromKey,
 } from '../../../hooks/api/useInitializeProjects.tsx';
+import { useApplicationConfig } from '../../../hooks/api/useInitializeConfig.tsx';
 
 interface TasksCreateModalProps {
   open: boolean;
   handleClose: () => void;
   title: string;
   redirectEnabled?: boolean;
+  redirectUrl: string;
+  projectsOptions: Project[];
 }
 
 type TaskFormValues = {
@@ -42,11 +44,15 @@ export default function TasksCreateModal({
   handleClose,
   title,
   redirectEnabled = true,
+  redirectUrl,
+  projectsOptions,
 }: TasksCreateModalProps) {
   const [loading, setLoading] = useState(false);
-  const { applicationConfig } = useApplicationConfigStore();
-  const { data: projects } = useAvailableProjects();
-  const project = getProjectFromKey(applicationConfig?.apProjectKey, projects);
+  const { applicationConfig } = useApplicationConfig();
+  const project = getProjectFromKey(
+    applicationConfig?.apProjectKey,
+    projectsOptions,
+  );
   const navigate = useNavigate();
 
   const { register, handleSubmit, formState } = useForm<TaskFormValues>({
@@ -74,8 +80,8 @@ export default function TasksCreateModal({
       return;
     }
     setLoading(true);
-    const project = getProjectByTitle(data.project, projects);
-    if (project === undefined) {
+    const tempProject = getProjectByTitle(data.project, projectsOptions);
+    if (tempProject === undefined) {
       enqueueSnackbar('Unable to find project', {
         variant: 'error',
       });
@@ -83,11 +89,11 @@ export default function TasksCreateModal({
     }
     if (data.count === '1') {
       void createTask(
-        project,
+        tempProject,
         {
           summary: data.title,
           description: data.description,
-          projectKey: project.key,
+          projectKey: tempProject.key,
         },
         true,
       );
@@ -98,11 +104,11 @@ export default function TasksCreateModal({
       for (n; n > 0; n--) {
         promises.push(
           createTask(
-            project,
+            tempProject,
             {
               summary: data.title + ` #${n}`,
               description: data.description,
-              projectKey: project.key,
+              projectKey: tempProject.key,
             },
             n == 1 ? true : false,
           ),
@@ -116,8 +122,12 @@ export default function TasksCreateModal({
     }
   };
 
-  const createTask = (project: Project, task: TaskDto, redirect: boolean) => {
-    return TasksServices.createTask(project.key, task)
+  const createTask = (
+    tempProject: Project,
+    task: TaskDto,
+    redirect: boolean,
+  ) => {
+    return TasksServices.createTask(tempProject.key, task)
       .then(res => {
         enqueueSnackbar(`Created Task ${res.key}`, {
           variant: 'success',
@@ -127,8 +137,13 @@ export default function TasksCreateModal({
           void queryClient.invalidateQueries({
             queryKey: queryKey,
           });
+          void queryClient.refetchQueries({ queryKey: ['user-tasks'] });
+          void queryClient.refetchQueries({ queryKey: ['user-review-tasks'] });
           if (redirectEnabled) {
-            navigate(`/dashboard/tasks/edit/${res.key}`);
+            if (redirectUrl.includes(':projectKey')) {
+              redirectUrl = redirectUrl.replace(':projectKey', res.projectKey);
+            }
+            navigate(`${redirectUrl}/${res.key}`);
           }
         }
       })
@@ -199,14 +214,19 @@ export default function TasksCreateModal({
                   error={!!errors.project && touchedFields.project}
                   sx={{ minWidth: '150px' }}
                 >
-                  {project?.title && (
-                    <MenuItem
-                      value={project?.title}
-                      data-testid={`project-option-${project.key}`}
-                    >
-                      {project?.title}
-                    </MenuItem>
-                  )}
+                  {projectsOptions?.map(project => {
+                    if (project.title) {
+                      return (
+                        <MenuItem
+                          value={project?.title}
+                          data-testid={`project-option-${project.key}`}
+                        >
+                          {project?.title}
+                        </MenuItem>
+                      );
+                    }
+                  })}
+                  {/* {} */}
                 </Select>
               </Stack>
             </Stack>

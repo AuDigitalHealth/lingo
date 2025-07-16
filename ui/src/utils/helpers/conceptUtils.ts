@@ -16,9 +16,12 @@
 
 import { ConceptSearchResult } from '../../pages/products/components/SearchProduct.tsx';
 import {
+  CaseSignificance,
   Concept,
   ConceptResponse,
   ConceptSearchItem,
+  DefinitionType,
+  Description,
   Edge,
   Product,
   ProductSummary,
@@ -37,6 +40,11 @@ import {
 } from '../../types/product.ts';
 import { createFilterOptions } from '@mui/material';
 import Verhoeff from './Verhoeff.ts';
+import {
+  extractSemanticTag,
+  removeSemanticTagFromTerm,
+} from './ProductPreviewUtils.ts';
+import { LanguageRefset } from '../../types/Project.ts';
 
 function isNumeric(value: string) {
   return /^\d+$/.test(value);
@@ -168,7 +176,12 @@ export function isNewConcept(product: Product) {
   return (product.newConcept || product.newConceptDetails) && !product.concept;
 }
 export function isReplacedWithNewConcept(product: Product) {
-  return product.originalNode !== null && product.newConceptDetails !== null;
+  return (
+    product.originalNode !== null &&
+    product.newConceptDetails !== null &&
+    (product.concept == null ||
+      product.concept.id != product.originalNode?.node?.concept?.id)
+  );
 }
 
 export function isReplacedWithExistingConcept(product: Product) {
@@ -176,6 +189,7 @@ export function isReplacedWithExistingConcept(product: Product) {
     product.concept &&
     !product.newConceptDetails &&
     product.originalNode &&
+    product.concept.id !== product.originalNode.node?.concept?.id &&
     !product.originalNode.referencedByOtherProducts &&
     product.originalNode?.inactivationReason
   );
@@ -370,7 +384,98 @@ export function cleanProductSummary(productSummary: ProductSummary) {
     }
   });
 
+  // re-attach semantic tags if they have not been edited
+  reattachSemanticTags(productSummary);
+
   return productSummary;
+}
+
+export function removeSemanticTagsFromTerms(
+  productModelResponse: ProductSummary,
+) {
+  return productModelResponse.nodes.map(node => {
+    if (node.newConceptDetails?.fullySpecifiedName) {
+      const semanticTag = extractSemanticTag(
+        node.newConceptDetails?.fullySpecifiedName,
+      );
+      if (semanticTag) {
+        node.newConceptDetails.semanticTag = semanticTag;
+        const termWithoutTag = removeSemanticTagFromTerm(
+          node.newConceptDetails.fullySpecifiedName,
+        );
+        node.newConceptDetails.fullySpecifiedName = termWithoutTag
+          ? termWithoutTag
+          : '';
+      }
+    }
+    return node;
+  });
+}
+
+export function reattachSemanticTags(productSummary: ProductSummary) {
+  productSummary.nodes.forEach(node => {
+    if (node.newConceptDetails) {
+      const newSemanticTag = extractSemanticTag(
+        node.newConceptDetails.fullySpecifiedName,
+      );
+      // there's a new semantic tag, so update the semanticTag
+      if (node.newConceptDetails.semanticTag && newSemanticTag) {
+        node.newConceptDetails.semanticTag = newSemanticTag;
+        return;
+      }
+      // re-add old one
+      if (node.newConceptDetails && node.newConceptDetails.semanticTag) {
+        node.newConceptDetails.fullySpecifiedName = `${node.newConceptDetails.fullySpecifiedName?.trim()} ${node.newConceptDetails.semanticTag}`;
+      }
+    }
+  });
+}
+
+export const createDefaultDescription = (
+  conceptId: string,
+  typeId: string,
+  moduleId: string | undefined,
+): Description => {
+  return {
+    active: true,
+    moduleId: moduleId ? moduleId : '',
+    released: false,
+    descriptionId: undefined,
+    term: '',
+    conceptId: conceptId,
+    typeId: typeId,
+    acceptabilityMap: undefined,
+    type: DefinitionType.SYNONYM,
+    lang: 'en',
+    caseSignificance: CaseSignificance.ENTIRE_TERM_CASE_SENSITIVE,
+  };
+};
+
+export function getSemanticTagChanges(
+  productSummary: ProductSummary | undefined,
+) {
+  if (!productSummary) return { hasChanged: false, changeMessages: [''] };
+  let hasChanged = false;
+  const changeMessages = [''];
+  productSummary.nodes.forEach(node => {
+    if (node.newConceptDetails) {
+      const newSemanticTag = extractSemanticTag(
+        node.newConceptDetails.fullySpecifiedName,
+      );
+      // there's a new semantic tag, so set hasChanged = true
+      if (
+        node.newConceptDetails.semanticTag &&
+        newSemanticTag &&
+        newSemanticTag !== node.newConceptDetails.semanticTag
+      ) {
+        hasChanged = true;
+        changeMessages.push(
+          `Semantic tag changed from: ${node.newConceptDetails.semanticTag} to: ${newSemanticTag}. \n\n`,
+        );
+      }
+    }
+  });
+  return { hasChanged: hasChanged, changeMessages: changeMessages };
 }
 
 export function cleanBrandPackSizeDetails(
@@ -460,4 +565,48 @@ export const generateArtgObj = (artgValue: string): ExternalIdentifier => {
     identifierScheme: 'https://www.tga.gov.au/artg',
     identifierValue: artgValue,
   };
+};
+
+export const isPreferredTerm = (
+  description: Description,
+  defaultLangRefset: LanguageRefset | undefined,
+) => {
+  if (!description) {
+    return false;
+  }
+  return (
+    description.type === 'SYNONYM' &&
+    defaultLangRefset !== undefined &&
+    description.acceptabilityMap?.[defaultLangRefset.en] === 'PREFERRED'
+  );
+};
+
+export const sortDescriptions = (
+  descs: Description[] | undefined,
+  defaultLangRefset: LanguageRefset | undefined,
+): Description[] => {
+  if (!descs) return [];
+  const fsn = descs.filter(d => {
+    return d.type === 'FSN';
+  });
+
+  const preferredSynonym = descs.find(desc => {
+    return isPreferredTerm(desc, defaultLangRefset);
+  });
+  const otherSynonyms = descs.filter(
+    d => d.type === 'SYNONYM' && d !== preferredSynonym,
+  );
+
+  const tempDescriptions = [
+    ...fsn,
+    ...(preferredSynonym ? [preferredSynonym] : []),
+    ...otherSynonyms,
+  ];
+  return tempDescriptions;
+};
+
+export const findDefaultLangRefset = (langRefsets: LanguageRefset[]) => {
+  return langRefsets.find(langRefsets => {
+    return langRefsets.default === 'true';
+  });
 };

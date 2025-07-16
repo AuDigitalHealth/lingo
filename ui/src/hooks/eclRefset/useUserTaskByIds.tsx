@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import useTaskStore from '../../stores/TaskStore';
 import { Task } from '../../types/task';
 
-function useTaskById() {
+function useUserTaskByIds() {
   const [task, setTask] = useState<Task | null>();
   const taskStore = useTaskStore();
   const { taskKey, projectKey } = useParams();
@@ -19,4 +19,4 @@ function useTaskById() {
   return task;
 }
 
-export default useTaskById;
+export default useUserTaskByIds;

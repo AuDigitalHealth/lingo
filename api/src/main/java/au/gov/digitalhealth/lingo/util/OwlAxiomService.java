@@ -128,7 +128,7 @@ public class OwlAxiomService {
 
     long relid = 0;
 
-    for (SnowstormAxiom axiom : concept.getClassAxioms()) {
+    for (SnowstormAxiom axiom : SnowstormDtoUtil.getActiveClassAxioms(concept)) {
       for (SnowstormRelationship relationship : axiom.getRelationships()) {
         if ((relationship.getActive() == null || relationship.getActive())
             && !relationship
@@ -140,7 +140,7 @@ public class OwlAxiomService {
               relationship.getModifierId() != null
                   && relationship.getModifierId().equals(Concepts.UNIVERSAL_RESTRICTION_MODIFIER);
           int unionGroup = 0;
-          if (!Boolean.TRUE.equals(relationship.getConcrete())) {
+          if (relationship.getConcreteValue() == null) {
             taxonomy.addOrModifyRelationship(
                 relationship.getInferred() == null || !relationship.getInferred(),
                 conceptId,

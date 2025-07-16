@@ -9,7 +9,7 @@ import {
   MenuItem,
   TextField,
   ToggleButton,
-  ToggleButtonGroup
+  ToggleButtonGroup,
 } from '@mui/material';
 import TuneIcon from '@mui/icons-material/Tune';
 import { Concept } from '../../../types/concept.ts';
@@ -23,7 +23,7 @@ import { isFsnToggleOn } from '../../../utils/helpers/conceptUtils.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import {
   useSearchConcept,
-  useSearchConceptOntoserver
+  useSearchConceptOntoserver,
 } from '../../../hooks/api/products/useSearchConcept.tsx';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 
@@ -34,13 +34,12 @@ import { ConceptSearchSidebar } from '../../../components/ConceptSearchSidebar.t
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 
 import type { ValueSetExpansionContains } from 'fhir/r4';
+import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
+import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../utils/helpers/getValueSetExpansionContainsPt.ts';
 import {
-  isValueSetExpansionContains
-} from '../../../types/predicates/isValueSetExpansionContains.ts';
-import {
-  convertFromValueSetExpansionContainsListToSnowstormConceptMiniList
-} from '../../../utils/helpers/getValueSetExpansionContainsPt.ts';
-import { PUBLISHED_CONCEPTS, UNPUBLISHED_CONCEPTS } from '../../../utils/statics/responses.ts';
+  PUBLISHED_CONCEPTS,
+  UNPUBLISHED_CONCEPTS,
+} from '../../../utils/statics/responses.ts';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 
 export interface ConceptSearchResult extends Concept {
@@ -238,6 +237,7 @@ export default function SearchProduct({
     // if the user starts typing again
     if (inputValue === '' || !inputValue) {
       setResults([]);
+      setOntoResults([]);
     }
   }, [inputValue]);
 
@@ -286,6 +286,9 @@ export default function SearchProduct({
       }
       setAllData(tempAllData);
     }
+    if (!ontoResults && !results) {
+      setAllData([]);
+    }
   }, [ontoResults, results]);
 
   useEffect(() => {
@@ -298,15 +301,16 @@ export default function SearchProduct({
             )
           : ([] as Concept[]),
       );
+      return;
     }
+    setOntoResults([]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ontoData]);
 
   useEffect(() => {
-    if (data !== undefined) {
+    if (data) {
       localStorage.setItem('fsn_toggle', fsnToggle.toString());
       setResults(data.items);
-      setOpen(true);
     }
   }, [data, fsnToggle]);
 
@@ -427,7 +431,7 @@ export default function SearchProduct({
                   handleChange(
                     v ?? undefined,
                     productType,
-                    selectedActionType || ActionType.newMedication
+                    selectedActionType || ActionType.newMedication,
                   );
                 }
               }
