@@ -42,6 +42,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public abstract class ProductCalculationService<T extends ProductDetails> {
+  private static String getMinusClause(Set<String> existingNodeIds) {
+    return existingNodeIds.isEmpty() ? "" : "MINUS (" + String.join(" OR ", existingNodeIds) + ")";
+  }
+
   /**
    * Calculates the existing and new products required to create a product based on the product
    * details.
@@ -171,7 +175,10 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
               Stream.concat(propertiesToAdd.keySet().stream(), propertiesToRemove.keySet().stream())
                   .collect(Collectors.toSet()));
       Set<String> existingNodeIds =
-          productSummary.getNodes().stream().map(n -> n.getConceptId()).collect(Collectors.toSet());
+          productSummary.getNodes().stream()
+              .filter(node -> !node.isNewConcept())
+              .map(n -> n.getConceptId())
+              .collect(Collectors.toSet());
       Node rootNode =
           levelFutureMap
               .get(
@@ -189,16 +196,14 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
                     + rootNode.getConceptId()
                     + " AND ^"
                     + modelLevel.getReferenceSetIdentifier()
-                    + ") MINUS ("
-                    + String.join(" OR ", existingNodeIds)
-                    + ")"
+                    + ") "
+                    + getMinusClause(existingNodeIds)
                 : "(<<(<(781405001 or 999000071000168104):(774160008 or 999000081000168101)="
                     + unbrandedProductNode.getConceptId()
                     + ") AND ^"
                     + modelLevel.getReferenceSetIdentifier()
-                    + ") MINUS ("
-                    + String.join(" OR ", existingNodeIds)
-                    + ")";
+                    + ") "
+                    + getMinusClause(existingNodeIds);
         Collection<SnowstormConceptMini> concepts =
             getSnowstormClient()
                 .getConceptsFromEcl(branch, ecl, 100, modelConfiguration.isExecuteEclAsStated());
@@ -224,12 +229,28 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
                           node.getNonDefiningProperties()
                               .removeAll(propertiesToRemove.get(levelType));
                         }
-                        productSummary.getNodes().add(node);
                         return node;
                       }));
         }
       }
       CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()])).join();
+      for (CompletableFuture<Node> future : futures) {
+        Node node = future.join();
+        if (node.getConceptId() == null) {
+          throw new LingoProblem(
+              "Node with null concept id found for level type: " + node.getModelLevel());
+        }
+        // if the node is already in the product summary, skip it
+        if (productSummary.getNodes().stream()
+            .noneMatch(
+                existingNode ->
+                    existingNode.getConceptId() == node.getConceptId()
+                        || (existingNode.getOriginalNode() != null
+                            && existingNode.getOriginalNode().getConceptId()
+                                == node.getConceptId()))) {
+          productSummary.addNode(node);
+        }
+      }
     }
   }
 
