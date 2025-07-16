@@ -160,7 +160,7 @@ function ConceptReviews({ conceptReview }: ConceptReviewsProps) {
             {messageCount ? (
               <Badge
                 badgeContent={messageCount}
-                color="error"
+                color="primary"
                 sx={{
                   '& .MuiBadge-badge': {
                     fontSize: '0.75rem',
