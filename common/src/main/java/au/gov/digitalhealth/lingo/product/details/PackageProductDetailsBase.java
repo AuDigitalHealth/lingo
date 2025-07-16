@@ -16,6 +16,8 @@
 package au.gov.digitalhealth.lingo.product.details;
 
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
+import au.gov.digitalhealth.lingo.util.NmpcType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,4 +28,7 @@ import lombok.EqualsAndHashCode;
 @Data
 public abstract class PackageProductDetailsBase extends ProductBaseDto {
   List<@Valid NonDefiningBase> nonDefiningProperties = new ArrayList<>();
+
+  @JsonIgnore
+  public abstract NmpcType getNmpcType();
 }

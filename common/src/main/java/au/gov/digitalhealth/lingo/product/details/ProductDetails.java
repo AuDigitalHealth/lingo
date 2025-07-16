@@ -16,6 +16,7 @@
 package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.gov.digitalhealth.lingo.util.NmpcConstants;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -67,4 +68,5 @@ public abstract class ProductDetails extends PackageProductDetailsBase {
   protected abstract Map<String, String> getSpecialisedIdFsnMap();
 
   public abstract boolean hasDeviceType();
+
 }
