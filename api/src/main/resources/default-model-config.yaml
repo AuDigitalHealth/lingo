@@ -126,9 +126,9 @@ models:
       - name: Virtual Therapeutic Moiety
         displayLabel: MP
         modelLevelType: MEDICINAL_PRODUCT_ONLY
-        medicineSemanticTag: medicinal product only
+        medicineSemanticTag: medicinal product
         deviceSemanticTag: physical object
-        drugDeviceSemanticTag: medicinal product only
+        drugDeviceSemanticTag: medicinal product
         referenceSetIdentifier: 660351000220100
         productModelEcl: "((> <id>) and ^ 660351000220100) minus >((> <id>) and ^ 660351000220100)"
       - name: Virtual Medicinal Product
@@ -232,7 +232,7 @@ models:
         order: 100
         suppressOnProductTypes: DEVICE
       - name: pcrs
-        title: GMS Reimbursable
+        title: PCRS Identifier and Name
         identifier: 680461000220105
         level: PACKAGE
         dataType: CODED,
@@ -348,7 +348,7 @@ models:
         order: 20
         suppressOnProductTypes: DEVICE
       - name: pil
-        title: Leaflet URL
+        title: PIL Information
         identifier: 680181000220107
         level: PACKAGE
         dataType: URI
@@ -360,7 +360,7 @@ models:
         order: 51
         suppressOnProductTypes: DEVICE
       - name: smpc
-        title: SmPC
+        title: SmPC Information
         identifier: 680171000220109
         level: PACKAGE
         dataType: URI
@@ -476,7 +476,7 @@ models:
         mandatory: false
         multiValued: false
         showDefaultOptions: true
-        order: 99
+        order: 98
       - name: lastDateOfMan
         title: Last Date of Manufacture
         identifier: 680191000220105
