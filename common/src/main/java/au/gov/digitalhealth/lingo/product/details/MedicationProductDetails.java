@@ -16,7 +16,9 @@
 package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.gov.digitalhealth.lingo.util.NmpcType;
 import au.gov.digitalhealth.lingo.validation.OnlyOnePopulated;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import jakarta.validation.Valid;
 import java.util.ArrayList;
@@ -99,5 +101,11 @@ public class MedicationProductDetails extends ProductDetails {
 
   public boolean hasDeviceType() {
     return deviceType != null;
+  }
+
+  @JsonIgnore
+  @Override
+  public NmpcType getNmpcType() {
+    return NmpcType.NMPC_MEDICATION;
   }
 }
