@@ -3,14 +3,14 @@ import {
   UseFormGetValues,
   UseFormRegister,
   UseFormSetValue,
-  useWatch
+  useWatch,
 } from 'react-hook-form';
 import {
   Concept,
   Edge,
   hasDescriptionChange,
   Product,
-  ProductSummary
+  ProductSummary,
 } from '../../../types/concept.ts';
 import React, { useState } from 'react';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
@@ -19,7 +19,7 @@ import { useTheme } from '@mui/material/styles';
 import {
   findProductUsingId,
   findRelations,
-  isNewConcept
+  isNewConcept,
 } from '../../../utils/helpers/conceptUtils.ts';
 import ConceptDiagramModal from '../../../components/conceptdiagrams/ConceptDiagramModal.tsx';
 import {
@@ -34,7 +34,7 @@ import {
   Tab,
   Tabs,
   Tooltip,
-  Typography
+  Typography,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Stack } from '@mui/system';
@@ -57,7 +57,7 @@ import ClearIcon from '@mui/icons-material/Clear';
 import { ProductPreviewAccordion } from './ProductPreviewAccordion.tsx';
 import {
   getColorByDefinitionStatus,
-  isNameContainsKeywords
+  isNameContainsKeywords,
 } from '../../../utils/helpers/ProductPreviewUtils.ts';
 import ProductEditModal from '../../../components/editProduct/ProductEditModal.tsx';
 import { ProductStatusIndicators } from './ProductStatusIndicators.tsx';
@@ -146,7 +146,9 @@ function ProductPreviewPanel({
     : [];
 
   const [optionsIgnored, setOptionsIgnored] = useState(false);
-  const isSubject = productModel.subjects.some(s => s.conceptId === product.conceptId);
+  const isSubject = productModel.subjects.some(
+    s => s.conceptId === product.conceptId,
+  );
   const productTitle = fsnToggle
     ? (product.concept?.fsn?.term as string)
     : product.concept?.pt?.term;
@@ -313,9 +315,11 @@ function ProductPreviewPanel({
                         }}
                       >
                         <Typography>
-                          <span style={{
-                            fontWeight: isSubject ? 'bold' : 'normal'
-                          }}>
+                          <span
+                            style={{
+                              fontWeight: isSubject ? 'bold' : 'normal',
+                            }}
+                          >
                             {productTitle}
                           </span>
                         </Typography>
@@ -381,9 +385,11 @@ function ProductPreviewPanel({
                       />
                     ) : (
                       <Typography>
-                        <span style={{
-                          fontWeight: isSubject ? 'bold' : 'normal'
-                        }}>
+                        <span
+                          style={{
+                            fontWeight: isSubject ? 'bold' : 'normal',
+                          }}
+                        >
                           {productTitle}
                         </span>
                       </Typography>
@@ -679,7 +685,7 @@ function ProductHeaderWatch({
   nameGeneratorErrorKeywords,
   optionsIgnored,
   isEditMode,
-                              isSubject
+  isSubject,
 }: {
   control?: Control<ProductSummary>;
   index: number;
@@ -792,9 +798,11 @@ function ProductHeaderWatch({
         }}
       >
         <Typography>
-          <span style={{
-            fontWeight: isSubject ? 'bold' : 'normal'
-          }}>
+          <span
+            style={{
+              fontWeight: isSubject ? 'bold' : 'normal',
+            }}
+          >
             {fsnToggle ? fsn : pt}
           </span>
         </Typography>
@@ -804,9 +812,11 @@ function ProductHeaderWatch({
 
   return (
     <Typography>
-      <span style={{
-        fontWeight: isSubject ? 'bold' : 'normal'
-      }}>
+      <span
+        style={{
+          fontWeight: isSubject ? 'bold' : 'normal',
+        }}
+      >
         {fsnToggle ? fsn : pt}
       </span>
     </Typography>
