@@ -234,20 +234,14 @@ function EditConceptBody({
     } as ProductUpdateRequest;
   }, [product, ticket, descriptions]);
 
-  const {
-    handleSubmit,
-    control,
-    setError,
-    reset,
-    getValues,
-    setValue
-  } = useForm<ProductUpdateRequest>({
-    mode: 'all',
-    reValidateMode: 'onSubmit',
-    criteriaMode: 'all',
-    defaultValues,
-    resolver: yupResolver(productUpdateValidationSchema),
-  });
+  const { handleSubmit, control, setError, reset, getValues, setValue } =
+    useForm<ProductUpdateRequest>({
+      mode: 'all',
+      reValidateMode: 'onSubmit',
+      criteriaMode: 'all',
+      defaultValues,
+      resolver: yupResolver(productUpdateValidationSchema),
+    });
 
   const { fields, append } = useFieldArray({
     control,

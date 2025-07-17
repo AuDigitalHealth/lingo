@@ -11,13 +11,21 @@ interface PostReviewMessageMutationVariables {
   message?: ReviewMessagePost;
 }
 
-interface PostReviewMessageMutationVariablesPost extends PostReviewMessageMutationVariables {
+interface PostReviewMessageMutationVariablesPost
+  extends PostReviewMessageMutationVariables {
   message: ReviewMessagePost;
   conceptId: string;
 }
 
-export function usePostReviewMessageMutation({projectKey, taskKey} : PostReviewMessageMutationVariables) {
-  const { data: unreadConceptIds } = useFeedbackUnread(projectKey, taskKey, true);
+export function usePostReviewMessageMutation({
+  projectKey,
+  taskKey,
+}: PostReviewMessageMutationVariables) {
+  const { data: unreadConceptIds } = useFeedbackUnread(
+    projectKey,
+    taskKey,
+    true,
+  );
   const queryClient = useQueryClient();
   const mutation = useFeedbackUnreadMutation();
   return useMutation({
@@ -25,7 +33,7 @@ export function usePostReviewMessageMutation({projectKey, taskKey} : PostReviewM
       projectKey,
       taskKey,
       message,
-      conceptId
+      conceptId,
     }: PostReviewMessageMutationVariablesPost) => {
       return TasksServices.postConceptReviewsMessageForTask(
         projectKey,
@@ -41,8 +49,14 @@ export function usePostReviewMessageMutation({projectKey, taskKey} : PostReviewM
         variables.taskKey,
       ];
       void queryClient.invalidateQueries({ queryKey: queryKeyReviews });
-      const updatedUnreadConceptIds = unreadConceptIds ? [...unreadConceptIds, variables.conceptId] : [variables.conceptId];
-      mutation.mutate({projectKey: projectKey, taskKey: taskKey, conceptIds: updatedUnreadConceptIds})
+      const updatedUnreadConceptIds = unreadConceptIds
+        ? [...unreadConceptIds, variables.conceptId]
+        : [variables.conceptId];
+      mutation.mutate({
+        projectKey: projectKey,
+        taskKey: taskKey,
+        conceptIds: updatedUnreadConceptIds,
+      });
       // const queryKeyUnread = [
       //   'feedback-unread',
       //   variables.projectKey,
