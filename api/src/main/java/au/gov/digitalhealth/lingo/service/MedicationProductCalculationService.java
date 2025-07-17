@@ -241,7 +241,7 @@ public class MedicationProductCalculationService
                               i == null || i.getBasisOfStrengthSubstance() == null
                                   ? null
                                   : i.getBasisOfStrengthSubstance().getConceptId())
-                      .map(Objects::nonNull)
+                      .filter(Objects::nonNull)
                       .collect(Collectors.toSet())
                       .size()),
               DataTypeEnum.INTEGER,
