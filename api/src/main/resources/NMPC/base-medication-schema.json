@@ -232,8 +232,8 @@
                 "properties": {
                   "productType": {
                     "type": "string",
-                    "enum": ["vaccinePresentation", "vaccineQualitative"],
-                    "default": "vaccinePresentation",
+                    "enum": ["presentationStrength", "noStrength"],
+                    "default": "presentationStrength",
                     "title": "Product Type"
                   }
                 },
@@ -243,7 +243,7 @@
                   {
                     "title": "Vaccine Presentation Strength",
                     "properties": {
-                      "productType": { "const": "vaccinePresentation" },
+                      "productType": { "const": "presentationStrength" },
                       "productName": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Brand Name" },
                       "genericForm": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Generic Dose Form" },
                       "specificForm": { "type": ["object", "null"], "nullable": true, "$ref": "#/$defs/SnowstormConceptMini", "title": "Specific Dose Form" },
@@ -264,7 +264,7 @@
                   {
                     "title": "Vaccine Qualitative Strength",
                     "properties": {
-                      "productType": { "const": "vaccineQualitative" },
+                      "productType": { "const": "noStrength" },
                       "productName": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Brand Name" },
                       "genericForm": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Generic Dose Form" },
                       "specificForm": { "type": ["object", "null"], "nullable": true, "$ref": "#/$defs/SnowstormConceptMini", "title": "Specific Dose Form" },
@@ -315,8 +315,8 @@
                 "properties": {
                   "productType": {
                     "type": "string",
-                    "enum": ["nutritionalNoStrength"],
-                    "default": "nutritionalNoStrength",
+                    "enum": ["noIngredients"],
+                    "default": "noIngredients",
                     "title": "Product Type"
                   }
                 },
@@ -326,7 +326,7 @@
                   {
                     "title": "Nutritional No Strength",
                     "properties": {
-                      "productType": { "const": "nutritionalNoStrength" },
+                      "productType": { "const": "noIngredients" },
                       "productName": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Brand Name" },
                       "genericForm": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Generic Dose Form" },
                       "specificForm": { "type": ["object", "null"], "nullable": true, "$ref": "#/$defs/SnowstormConceptMini", "title": "Specific Dose Form" },

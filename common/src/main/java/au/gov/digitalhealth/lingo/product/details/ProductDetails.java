@@ -16,7 +16,6 @@
 package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.gov.digitalhealth.lingo.util.NmpcConstants;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -40,7 +39,19 @@ public abstract class ProductDetails extends PackageProductDetailsBase {
   @NotNull SnowstormConceptMini productName;
   SnowstormConceptMini deviceType;
   String otherIdentifyingInformation;
-  public abstract String getProductType();
+
+  /**
+   * This is the particular style of product, presentation strength, concentration strength, no
+   * strength etc.
+   */
+  ProductTemplate productType;
+
+  /**
+   * The type of product, e.g. "medication", "device", "vaccine", "nutritional". This is used to in
+   * Jackson serialization to determine the concrete class type.
+   */
+  String type;
+
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
     Map<String, String> idMap = new HashMap<>();
@@ -69,4 +80,5 @@ public abstract class ProductDetails extends PackageProductDetailsBase {
 
   public abstract boolean hasDeviceType();
 
+  public abstract ProductTemplate getProductType();
 }

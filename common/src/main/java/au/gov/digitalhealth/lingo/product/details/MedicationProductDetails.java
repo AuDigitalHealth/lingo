@@ -50,16 +50,33 @@ public class MedicationProductDetails extends ProductDetails {
   Set<SnowstormConceptMini> playsRole = new HashSet<>();
 
   List<@Valid Ingredient> activeIngredients = new ArrayList<>();
+
+  public MedicationProductDetails() {
+    this.type = "medication";
+  }
+
   @Override
-  public String getProductType() {
+  public ProductTemplate getProductType() {
+    if (productType == null) {
+      productType = determineProductType(activeIngredients);
+    }
+    return productType;
+  }
+
+  private ProductTemplate determineProductType(List<Ingredient> activeIngredients) {
+    if (activeIngredients.isEmpty()) {
+      return ProductTemplate.noIngredient;
+    }
+
     for (Ingredient ingredient : activeIngredients) {
-      if (ingredient != null && (ingredient.getConcentrationStrength() != null ||ingredient.getConcentrationStrengthNumerator()!=null || ingredient.getPresentationStrengthDenominator() !=null)) {
-        return "concentrationStrength";
-      }else if(ingredient != null && (ingredient.getPresentationStrengthNumerator() != null || ingredient.getPresentationStrengthDenominator() != null)){
-        return "presentationStrength";
+      if (ingredient.isConcentrationStrength()) {
+        return ProductTemplate.concentrationStrength;
+      } else if (ingredient.isPresentationStrength()) {
+        return ProductTemplate.presentationStrength;
       }
     }
-    return "noStrength";
+
+    return ProductTemplate.noStrength;
   }
 
   @Override

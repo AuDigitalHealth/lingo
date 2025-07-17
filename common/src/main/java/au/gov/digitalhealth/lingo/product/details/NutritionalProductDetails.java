@@ -33,6 +33,10 @@ public class NutritionalProductDetails extends MedicationProductDetails {
   String newGenericProductName;
   SnowstormConceptMini targetPopulation;
 
+  public NutritionalProductDetails() {
+    this.type = "nutritional";
+  }
+
   @JsonIgnore
   @Override
   public NmpcType getNmpcType() {
