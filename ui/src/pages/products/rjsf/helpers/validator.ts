@@ -206,6 +206,7 @@ export const customTransformErrors = (
     errors
       .filter(error => {
         if (error.keyword === 'discriminator') return true;
+        if (error.keyword === 'enum') return false; //already handled by discriminator
         if (error.keyword === 'const') return false;
         if (error.keyword === 'oneOf' && error.schemaPath.includes('oneOf'))
           return false;

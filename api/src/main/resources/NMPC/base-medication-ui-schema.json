@@ -1,21 +1,19 @@
 {
   "ui:grid": [
     {
+      "variant": 12
+    },
+    {
       "containedProducts": 24
     },
     {
       "nonDefiningProperties": 24
     }
   ],
-  "ui:options": {
-    "skipTitle": true
-  },
 
-  "ui:fieldReplacesAnyOrOneOf": true,
+
   "ui:options": {
     "skipTitle": true,
-    "hideOneOfSelector": true,
-
     "dynamicDiscriminatorOptions": {
       "path": "",
       "options": {
@@ -30,16 +28,19 @@
         ]
       }
     }
-  },
 
-  "oneOf_select": { "ui:widget": "hidden" },
+  },
   "variant": {
     "ui:widget": "select",
+    "ui:title": "Variant",
     "ui:options": {
-      "showOneOfLabel": false,
-      "updateSchemaOnChange": true
+      "updateSchemaOnChange": true,
+      "hideDropdown": {
+        "$eval": "formData.containedProducts?.[0]?.productDetails?.productName?.pt?.term?.length > 0"
+      }
     }
   },
+
   "containedProducts": {
     "ui:options": {
       "arrayTemplate": "accordion",
@@ -84,14 +85,8 @@
         }
       },
       "productDetails": {
-
-        "ui:fieldReplacesAnyOrOneOf": true,
         "ui:options": {
-          "hideOneOfSelector": true,
           "skipTitle": true,
-          "validateHiddenFields": false,
-          "showOneOfLabel": false,
-          "hideUnsupportedOptions": true,
           "updateSchemaOnChange": true,
           "dynamicDiscriminatorOptions": {
             "path": "variant",
@@ -111,11 +106,13 @@
             }
           }
         },
-
         "type": {
           "ui:widget": "hidden"
         },
         "ui:grid": [
+          {
+            "productType": 24
+          },
           {
             "productName": 24
           },
@@ -172,9 +169,6 @@
               "semanticTags": "(product name)"
             },
             "placeholder": "Enter brand name"
-          },
-          "ui:style": {
-            "marginTop": "15px"
           }
         },
         "genericForm": {
