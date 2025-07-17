@@ -335,12 +335,6 @@
                       "existingClinicalDrug": { "type": ["object", "null"], "$ref": "#/$defs/SnowstormConceptMini", "title": "Existing VMP Level Concept", "description": "If an existing VMP is available, select it here."},
                       "newGenericProductName": { "type": "string", "title": "New Generic Product Name", "description": "If an existing VMP is not available, you can create a new generic product concept with this name."},
                       "type": { "type": "string", "const": "nutritional" },
-                      "activeIngredients": {
-                        "type": "array",
-                        "minItems": 0,
-                        "title": "Ingredients",
-                        "items": { "$ref": "#/$defs/NoStrengthIngredient" }
-                      },
                       "unitOfPresentation": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Unit of Presentation" },
                       "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/NUTRITIONAL_PRODUCT_NonDefiningProperty" }, "title": "Non Defining Properties" }
                     },
