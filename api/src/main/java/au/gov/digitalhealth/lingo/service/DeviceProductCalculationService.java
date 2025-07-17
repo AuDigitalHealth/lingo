@@ -42,7 +42,6 @@ import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
-import au.gov.digitalhealth.lingo.configuration.model.NonDefiningPropertyDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.product.Edge;
@@ -52,11 +51,13 @@ import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.details.DeviceProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.ProductQuantity;
-import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
+import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import au.gov.digitalhealth.lingo.service.validators.DeviceDetailsValidator;
 import au.gov.digitalhealth.lingo.util.AmtConstants;
 import au.gov.digitalhealth.lingo.util.BigDecimalFormatter;
-import au.gov.digitalhealth.lingo.util.NmpcConstants;
+import au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils;
+import au.gov.digitalhealth.lingo.util.NonDefiningPropertyUtils;
 import au.gov.digitalhealth.lingo.util.ReferenceSetUtils;
 import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import jakarta.validation.Valid;
@@ -83,13 +84,14 @@ import reactor.core.publisher.Mono;
 @Service
 @Log
 public class DeviceProductCalculationService
-    implements ProductCalculationService<DeviceProductDetails> {
+    extends ProductCalculationService<DeviceProductDetails> {
 
   private final Models models;
   private final Map<String, DeviceDetailsValidator> deviceDetailsValidatorByQualifier;
   private final DeviceProductCalculationService self;
   SnowstormClient snowstormClient;
   NodeGeneratorService nodeGeneratorService;
+  FhirClient fhirClient;
 
   @Value("${snomio.decimal-scale}")
   int decimalScale;
@@ -99,12 +101,14 @@ public class DeviceProductCalculationService
       NodeGeneratorService nodeGeneratorService,
       Models models,
       Map<String, DeviceDetailsValidator> deviceDetailsValidatorByQualifier,
-      @Lazy DeviceProductCalculationService self) {
+      @Lazy DeviceProductCalculationService self,
+      @Lazy FhirClient fhirClient) {
     this.snowstormClient = snowstormClient;
     this.nodeGeneratorService = nodeGeneratorService;
     this.models = models;
     this.deviceDetailsValidatorByQualifier = deviceDetailsValidatorByQualifier;
     this.self = self;
+    this.fhirClient = fhirClient;
   }
 
   private static Set<SnowstormRelationship> getLeafBrandedProductRelationships(
@@ -183,35 +187,17 @@ public class DeviceProductCalculationService
         self.calculateProductFromAtomicData(branch, packageDetails));
   }
 
+  @Override
+  protected SnowstormClient getSnowstormClient() {
+    return snowstormClient;
+  }
+
   public ProductSummary calculateProductFromAtomicData(
       String branch, @Valid PackageDetails<@Valid DeviceProductDetails> packageDetails) {
 
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
-    NonDefiningPropertyDefinition nmpcDefinition =
-        modelConfiguration.getNonDefiningPropertiesByName().get("nmpcType");
-    if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
-      if (nmpcDefinition != null
-          && snowstormClient
-              .conceptIdsThatExist(
-                  branch,
-                  Set.of(NmpcConstants.NMPC_DEVICE.getValue(), nmpcDefinition.getIdentifier()))
-              .containsAll(
-                  Set.of(NmpcConstants.NMPC_DEVICE.getValue(), nmpcDefinition.getIdentifier()))) {
-        NonDefiningProperty nmpcType = new NonDefiningProperty();
-        nmpcType.setIdentifierScheme(nmpcDefinition.getName());
-        nmpcType.setIdentifier(nmpcDefinition.getIdentifier());
-        nmpcType.setTitle(nmpcDefinition.getTitle());
-        nmpcType.setDescription(nmpcDefinition.getDescription());
-
-        SnowstormConceptMini valueObject = NmpcConstants.NMPC_DEVICE.snowstormConceptMini();
-
-        nmpcType.setValueObject(valueObject);
-        packageDetails.getNonDefiningProperties().add(nmpcType);
-      } else {
-        log.severe("NMPC model type is configured but the required concepts do not exist.");
-      }
-    }
+    optionallyAddNmpcType(branch, modelConfiguration, packageDetails);
 
     Mono<List<String>> taskChangedConceptIds = snowstormClient.getConceptIdsChangedOnTask(branch);
 
@@ -602,12 +588,13 @@ public class DeviceProductCalculationService
 
     ModelLevel rootUnbrandedProductLevel = modelConfiguration.getRootUnbrandedProductModelLevel();
     Node rootUnbrandedProductNode =
-        Node.builder()
-            .concept(productQuantity.getProductDetails().getDeviceType())
-            .displayName(rootUnbrandedProductLevel.getName())
-            .modelLevel(rootUnbrandedProductLevel.getModelLevelType())
-            .label(rootUnbrandedProductLevel.getDisplayLabel())
-            .build();
+        nodeGeneratorService
+            .lookUpNode(
+                branch,
+                productQuantity.getProductDetails().getDeviceType(),
+                rootUnbrandedProductLevel,
+                productQuantity.getProductDetails().getNonDefiningProperties())
+            .join();
     innerProductSummary.addNode(rootUnbrandedProductNode);
 
     ModelLevel leafUnbrandedProductModelLevel =
@@ -615,12 +602,13 @@ public class DeviceProductCalculationService
     Node leafUnbrandedProductNode;
     if (productQuantity.getProductDetails().getSpecificDeviceType() != null) {
       leafUnbrandedProductNode =
-          Node.builder()
-              .concept(productQuantity.getProductDetails().getSpecificDeviceType())
-              .displayName(leafUnbrandedProductModelLevel.getName())
-              .modelLevel(leafUnbrandedProductModelLevel.getModelLevelType())
-              .label(leafUnbrandedProductModelLevel.getDisplayLabel())
-              .build();
+          nodeGeneratorService
+              .lookUpNode(
+                  branch,
+                  productQuantity.getProductDetails().getSpecificDeviceType(),
+                  leafUnbrandedProductModelLevel,
+                  productQuantity.getProductDetails().getNonDefiningProperties())
+              .join();
     } else {
       leafUnbrandedProductNode =
           Node.builder()
@@ -635,6 +623,29 @@ public class DeviceProductCalculationService
               .modelLevel(leafUnbrandedProductModelLevel.getModelLevelType())
               .label(leafUnbrandedProductModelLevel.getDisplayLabel())
               .build();
+
+      Set<NonDefiningBase> properties =
+          new HashSet<>(
+              NonDefiningPropertyUtils.getNonDefiningProperties(
+                  leafUnbrandedProductNode.getNewConceptDetails().getNonDefiningProperties(),
+                  modelConfiguration.getNonDefiningPropertiesByIdentifierForModelLevel(
+                      leafUnbrandedProductModelLevel)));
+      properties.addAll(
+          ReferenceSetUtils.getReferenceSetsFromNewRefsetComponentViewMembers(
+              leafUnbrandedProductNode.getNewConceptDetails().getReferenceSetMembers(),
+              modelConfiguration.getReferenceSetsByIdentifierForModelLevel(
+                  leafUnbrandedProductModelLevel),
+              leafUnbrandedProductModelLevel));
+      properties.addAll(
+          ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMemberViewComponents(
+              leafUnbrandedProductNode.getNewConceptDetails().getReferenceSetMembers(),
+              null,
+              new HashSet<>(
+                  modelConfiguration
+                      .getMappingsByIdentifierForModelLevel(leafUnbrandedProductModelLevel)
+                      .values()),
+              fhirClient));
+      leafUnbrandedProductNode.setNonDefiningProperties(properties);
     }
     innerProductSummary.addNode(leafUnbrandedProductNode);
     innerProductSummary.addEdge(

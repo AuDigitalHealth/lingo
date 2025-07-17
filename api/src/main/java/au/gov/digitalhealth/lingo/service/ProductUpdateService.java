@@ -15,6 +15,7 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.MAP_TARGET;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.*;
 import static java.lang.Boolean.TRUE;
 
@@ -30,18 +31,18 @@ import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.OriginalNode;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
+import au.gov.digitalhealth.lingo.product.bulk.ProductUpdateCreationDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.ProductDetails;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
-import au.gov.digitalhealth.lingo.product.bulk.ProductUpdateCreationDetails;
 import au.gov.digitalhealth.lingo.product.update.ProductDescriptionUpdateRequest;
 import au.gov.digitalhealth.lingo.product.update.ProductPropertiesUpdateRequest;
-import au.gov.digitalhealth.lingo.util.InactivationReason;
-import au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter;
 import au.gov.digitalhealth.lingo.product.update.ProductUpdateRequest;
 import au.gov.digitalhealth.lingo.product.update.ProductUpdateState;
+import au.gov.digitalhealth.lingo.util.InactivationReason;
+import au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import au.gov.digitalhealth.tickets.models.BulkProductAction;
 import au.gov.digitalhealth.tickets.models.Ticket;
@@ -64,7 +65,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.MAP_TARGET;
 
 @Log
 @Service
@@ -614,8 +614,7 @@ public class ProductUpdateService {
 
       browserConcept.getRelationships().removeAll(idsToBeRemoved);
       browserConcept.getRelationships().addAll(idsToBeAdded);
-      snowstormClient.updateConcept(
-          branch, conceptId, browserConcept, false);
+      snowstormClient.updateConcept(branch, conceptId, browserConcept, false);
     }
 
     return requestedProperties.values();
@@ -768,6 +767,8 @@ public class ProductUpdateService {
             });
 
     List<CompletableFuture<Void>> referencedByOtherProductsFutures = new ArrayList<>();
+    Set<String> referenceSets = modelConfiguration.getAllLevelReferenceSetIds();
+
     newSummary.getNodes().stream()
         .filter(node -> node.getOriginalNode() != null)
         .forEach(
@@ -779,7 +780,15 @@ public class ProductUpdateService {
                   snowstormClient
                       .getConceptIdsFromEclAsync(
                           branch,
-                          "(<" + originalConceptId + ") or (*:*=" + originalConceptId + ")",
+                          "((<"
+                              + originalConceptId
+                              + ") or (*:*="
+                              + originalConceptId
+                              + ")) AND ("
+                              + referenceSets.stream()
+                                  .map(s -> "^" + s)
+                                  .collect(Collectors.joining(" OR "))
+                              + ")",
                           0,
                           100,
                           modelConfiguration.isExecuteEclAsStated())
