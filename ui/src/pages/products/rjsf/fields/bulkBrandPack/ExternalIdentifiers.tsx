@@ -11,13 +11,16 @@ import {
   Grid,
   IconButton,
   Stack,
-  TextField
+  TextField,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { FieldProps } from '@rjsf/utils';
 import ValueSetAutocomplete from '../../components/ValueSetAutocomplete';
 import EclAutocomplete from '../../components/EclAutocomplete';
-import { NonDefiningProperty, NonDefiningPropertyType } from '../../../../../types/product.ts';
+import {
+  NonDefiningProperty,
+  NonDefiningPropertyType,
+} from '../../../../../types/product.ts';
 import useTaskByKey from '../../../../../hooks/useTaskByKey.tsx';
 import { ConceptMini } from '../../../../../types/concept.ts';
 import { MultiValueValueSetAutocomplete } from '../../components/MultiValueSetAutocomplete.tsx';
@@ -571,8 +574,8 @@ const ExternalIdentifierRender: React.FC<
               }}
               InputProps={{
                 inputProps: {
-                  step: isNumber ? "0.01" : undefined
-                }
+                  step: isNumber ? '0.01' : undefined,
+                },
               }}
               error={!!tooltip}
               helperText={tooltip || ' '}
