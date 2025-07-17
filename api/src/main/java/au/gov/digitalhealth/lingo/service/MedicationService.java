@@ -72,6 +72,7 @@ import au.gov.digitalhealth.lingo.product.details.VaccineProductDetails;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
 import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import au.gov.digitalhealth.lingo.util.NmpcConstants;
+import au.gov.digitalhealth.lingo.util.NmpcType;
 import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import java.util.HashMap;
 import java.util.Map;
@@ -517,7 +518,7 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
                         .anyMatch(
                             r ->
                                 NmpcConstants.HAS_NMPC_PRODUCT_TYPE.getValue().equals(r.getTypeId())
-                                    && NmpcConstants.NMPC_NUTRITIONAL_SUPPLEMENT
+                                    && NmpcType.NMPC_NUTRITIONAL_SUPPLEMENT
                                         .getValue()
                                         .equals(r.getDestinationId())))) {
       // active ingredients aren't on the branded product, need to look at the clinical drug and MP

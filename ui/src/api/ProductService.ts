@@ -160,17 +160,32 @@ const ProductService = {
     const productModel = response.data as ProductSummary;
     return productModel;
   },
-  async createDeviceProduct(
+  async saveDeviceProduct(
     productCreationDetails: ProductSaveDetails,
     branch: string,
   ): Promise<ProductSummary> {
-    const response = await api.post(
-      `/api/${branch}/devices/product`,
-      productCreationDetails,
-    );
-    if (response.status != 201 && response.status != 422) {
-      this.handleErrors();
+    let response;
+
+    if (productCreationDetails.type === ProductActionType.update) {
+      // Update existing product
+      response = await api.put(
+        `/api/${branch}/devices/product/${productCreationDetails.originalConceptId}`,
+        productCreationDetails,
+      );
+      if (response.status !== 200 && response.status !== 422) {
+        this.handleErrors();
+      }
+    } else {
+      // Create new product
+      response = await api.post(
+        `/api/${branch}/devices/product`,
+        productCreationDetails,
+      );
+      if (response.status !== 201 && response.status !== 422) {
+        this.handleErrors();
+      }
     }
+
     const productModel = response.data as ProductSummary;
     return productModel;
   },
@@ -180,6 +195,21 @@ const ProductService = {
   ): Promise<ProductSummary> {
     const response = await api.post(
       `/api/${branch}/devices/product/$calculate`,
+      devicePackageDetails,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const productModel = response.data as ProductSummary;
+    return productModel;
+  },
+  async previewUpdateDeviceProduct(
+    devicePackageDetails: DevicePackageDetails,
+    productId: string | undefined,
+    branch: string,
+  ): Promise<ProductSummary> {
+    const response = await api.post(
+      `/api/${branch}/devices/product/${productId}/$calculateUpdate`,
       devicePackageDetails,
     );
     if (response.status != 200) {
