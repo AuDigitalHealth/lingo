@@ -1,6 +1,7 @@
 import React from 'react';
 import { WidgetProps } from '@rjsf/utils';
 import { Box, TextField, MenuItem, Typography } from '@mui/material';
+import { FormLabel } from '@mui/material';
 
 const CustomSelectWidget: React.FC<WidgetProps> = props => {
   const {
@@ -91,22 +92,36 @@ const CustomSelectWidget: React.FC<WidgetProps> = props => {
 
   if (shouldHideDropdown) {
     return (
-      <Typography
-        sx={{
-          padding: '12px 14px',
-          fontSize: 'medium',
-          color: '#424242',
-          fontWeight: 500,
-          backgroundColor: '#fff',
-          border: '1px solid rgba(0, 0, 0, 0.23)',
-          borderRadius: '1px',
-          minHeight: '56px', // Match TextField height
-          display: 'flex',
-          alignItems: 'center',
-        }}
-      >
-        {displayValue || 'No variant selected'}
-      </Typography>
+      <Box sx={{ width: '100%' }}>
+        <FormLabel
+          sx={{
+            color: 'rgba(0, 0, 0, 0.3)', // Lighter grey for disabled label
+            fontWeight: 500,
+            fontSize: '0.75rem',
+            lineHeight: '1.4375em',
+            marginBottom: '8px',
+          }}
+        >
+          {uiSchema?.['ui:title'] || schema.title || 'Select'}
+        </FormLabel>
+        <Typography
+          sx={{
+            padding: '12px 14px',
+            fontSize: 'medium',
+            color: 'rgba(0, 0, 0, 0.3)', // Lighter grey for disabled text
+            fontWeight: 500,
+            backgroundColor: 'rgba(0, 0, 0, 0.08)', // Lighter grey background
+            border: '1px solid rgba(0, 0, 0, 0.08)', // Lighter grey border
+            borderRadius: '1px',
+            minHeight: '56px',
+            display: 'flex',
+            alignItems: 'center',
+            cursor: 'not-allowed',
+          }}
+        >
+          {displayValue || 'No variant selected'}
+        </Typography>
+      </Box>
     );
   }
 
@@ -148,7 +163,7 @@ const CustomSelectWidget: React.FC<WidgetProps> = props => {
             },
             '& .MuiSelect-select': {
               padding: '12px 14px',
-              fontSize: 'medium',
+              fontSize: 'normal',
             },
             '& .MuiFormHelperText-root': {
               m: 0,
