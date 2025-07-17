@@ -54,6 +54,7 @@ public class SchemaFactory {
       ReferenceProperty property = new ReferenceProperty();
       setTitleAndDescription(mapping, property);
       property.setReference("#/$defs/SnowstormConceptMini");
+      identifierSchema.addProperty("valueObject", property);
     } else if (mapping.getDataType().equals(NonDefiningPropertyDataType.UNSIGNED_INTEGER)
         || mapping.getDataType().equals(NonDefiningPropertyDataType.INTEGER)
         || mapping.getDataType().equals(NonDefiningPropertyDataType.DECIMAL)) {
