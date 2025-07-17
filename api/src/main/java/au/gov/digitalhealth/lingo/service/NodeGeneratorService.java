@@ -487,7 +487,8 @@ public class NodeGeneratorService {
                 + " branch "
                 + branch);
       } else if (matchingConcepts.size() == 1
-          && matchingConcepts.iterator().next().getDefinitionStatus().equals("FULLY_DEFINED")) {
+          && matchingConcepts.iterator().next().getDefinitionStatus().equals("FULLY_DEFINED")
+          && definedIfNoMatch) {
         node.setConcept(matchingConcepts.iterator().next());
         atomicCache.addFsnAndPt(
             node.getConceptId(), node.getFullySpecifiedName(), node.getPreferredTerm());

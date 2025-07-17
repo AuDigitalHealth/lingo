@@ -64,4 +64,14 @@ public class Ingredient extends ProductBaseDto {
     }
     return idMap;
   }
+
+  @JsonIgnore
+  public boolean isPresentationStrength() {
+    return presentationStrengthNumerator != null && presentationStrengthDenominator != null;
+  }
+
+  @JsonIgnore
+  public boolean isConcentrationStrength() {
+    return concentrationStrengthNumerator != null && concentrationStrengthDenominator != null;
+  }
 }

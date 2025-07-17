@@ -26,7 +26,7 @@ import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
-import au.gov.digitalhealth.lingo.util.NmpcConstants;
+import au.gov.digitalhealth.lingo.util.NmpcType;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -424,7 +424,7 @@ public class ProductSummaryService {
                     p ->
                         p.getIdentifierScheme().equals("nmpcType")
                             && p instanceof NonDefiningProperty ndp
-                            && NmpcConstants.NMPC_NUTRITIONAL_SUPPLEMENT
+                            && NmpcType.NMPC_NUTRITIONAL_SUPPLEMENT
                                 .getValue()
                                 .equals(ndp.getValueObject().getConceptId()))
             && (parentModelLevel.getModelLevelType().equals(ModelLevelType.MEDICINAL_PRODUCT_ONLY)

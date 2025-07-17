@@ -16,6 +16,8 @@
 package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.gov.digitalhealth.lingo.exception.LingoProblem;
+import au.gov.digitalhealth.lingo.util.NmpcType;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import au.gov.digitalhealth.lingo.validation.OnlyOneNotEmpty;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -38,6 +40,8 @@ public class PackageDetails<T extends ProductDetails> extends PackageProductDeta
   List<@Valid ProductQuantity<T>> containedProducts = new ArrayList<>();
   List<@Valid PackageQuantity<T>> containedPackages = new ArrayList<>();
   List<String> selectedConceptIdentifiers = new ArrayList<>();
+
+  String variant;
 
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
@@ -91,5 +95,35 @@ public class PackageDetails<T extends ProductDetails> extends PackageProductDeta
             .anyMatch(productQuantity -> productQuantity.getProductDetails().hasDeviceType())
         || containedPackages.stream()
             .anyMatch(packageQuantity -> packageQuantity.getPackageDetails().hasDeviceType());
+  }
+
+  @JsonIgnore
+  @Override
+  public NmpcType getNmpcType() {
+    return !getContainedPackages().isEmpty()
+        ? getContainedPackages().stream()
+            .findAny()
+            .orElseThrow(() -> new LingoProblem("No contained package found looking for nmpc type"))
+            .getPackageDetails()
+            .getNmpcType()
+        : getContainedProducts().stream()
+            .findAny()
+            .orElseThrow(() -> new LingoProblem("No contained product found looking for nmpc type"))
+            .getProductDetails()
+            .getNmpcType();
+  }
+
+  public String getVariant() {
+    if (variant == null) {
+      if (!containedProducts.isEmpty() && containedProducts.get(0).getProductDetails() != null) {
+        variant = containedProducts.get(0).getProductDetails().getType();
+      } else if (!containedPackages.isEmpty()
+          && containedPackages.get(0).getPackageDetails() != null) {
+        variant = containedPackages.get(0).getPackageDetails().getVariant();
+      } else {
+        throw new LingoProblem("No contained package or product found looking for variant");
+      }
+    }
+    return variant;
   }
 }

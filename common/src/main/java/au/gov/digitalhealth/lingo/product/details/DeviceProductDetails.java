@@ -16,7 +16,9 @@
 package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.gov.digitalhealth.lingo.util.NmpcType;
 import au.gov.digitalhealth.lingo.validation.OnlyOneNotEmpty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.util.Map;
 import java.util.Set;
@@ -31,10 +33,12 @@ import lombok.EqualsAndHashCode;
     message = "Either newSpecificDeviceName or specificDeviceType must be populated, but not both")
 public class DeviceProductDetails extends ProductDetails {
   String newSpecificDeviceName;
-
   SnowstormConceptMini specificDeviceType;
-
   Set<SnowstormConceptMini> otherParentConcepts;
+
+  public DeviceProductDetails() {
+    this.type = "device";
+  }
 
   @Override
   protected Map<String, String> getSpecialisedIdFsnMap() {
@@ -44,8 +48,8 @@ public class DeviceProductDetails extends ProductDetails {
   }
 
   @Override
-  public String getProductType() {
-    return "";
+  public ProductTemplate getProductType() {
+    return productType;
   }
 
   @Override
@@ -58,5 +62,11 @@ public class DeviceProductDetails extends ProductDetails {
   @Override
   public boolean hasDeviceType() {
     return true;
+  }
+
+  @JsonIgnore
+  @Override
+  public NmpcType getNmpcType() {
+    return NmpcType.NMPC_DEVICE;
   }
 }
