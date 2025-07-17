@@ -183,11 +183,11 @@ export default function AdditionalFieldInput({
 
         {type.type === AdditionalFieldTypeEnum.STRING && (
           <AdditionalFieldStringInput
-          id={`ticket-af-input-${type.name}`}
-          value={updatedValue}
-          type={type}
-          setUpdatedValue={setUpdatedValue}
-          disabled={disabled || !canEdit}
+            id={`ticket-af-input-${type.name}`}
+            value={updatedValue}
+            type={type}
+            setUpdatedValue={setUpdatedValue}
+            disabled={disabled || !canEdit}
           />
         )}
 
