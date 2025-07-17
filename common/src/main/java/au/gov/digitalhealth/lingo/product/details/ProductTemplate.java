@@ -4,5 +4,5 @@ public enum ProductTemplate {
   concentrationStrength,
   presentationStrength,
   noStrength,
-  noIngredient
+  noIngredients
 }
