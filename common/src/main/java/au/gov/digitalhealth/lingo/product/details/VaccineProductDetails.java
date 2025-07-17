@@ -34,6 +34,10 @@ public class VaccineProductDetails extends MedicationProductDetails {
   SnowstormConceptMini targetPopulation;
   SnowstormConceptMini qualitiativeStrength;
 
+  public VaccineProductDetails() {
+    this.type = "vaccine";
+  }
+
   @Override
   protected Map<String, String> getSpecialisedIdFsnMap() {
     Map<String, String> idMap = super.getSpecialisedIdFsnMap();
