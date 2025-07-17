@@ -16,11 +16,11 @@
 package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.gov.digitalhealth.lingo.exception.LingoProblem;
-import au.gov.digitalhealth.lingo.util.NmpcType;
 import au.gov.digitalhealth.lingo.configuration.model.BasePropertyDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
+import au.gov.digitalhealth.lingo.exception.LingoProblem;
+import au.gov.digitalhealth.lingo.util.NmpcType;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import au.gov.digitalhealth.lingo.validation.OnlyOneNotEmpty;
 import com.fasterxml.jackson.annotation.JsonIgnore;
