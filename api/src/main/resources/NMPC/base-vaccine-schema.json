@@ -224,7 +224,8 @@
       "required": [
         "productName",
         "genericForm",
-        "activeIngredients"
+        "activeIngredients",
+        "unitOfPresentation"
       ],
       "errorMessage": {
         "required": "Product Details must be populated."

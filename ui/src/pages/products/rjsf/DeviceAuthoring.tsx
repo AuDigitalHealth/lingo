@@ -1,6 +1,13 @@
-import React, { useCallback, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Form } from '@rjsf/mui';
-import { Container, Button, Box, Paper, Autocomplete } from '@mui/material';
+import {
+  Box,
+  Button,
+  Container,
+  FormControlLabel,
+  Paper,
+  Switch,
+} from '@mui/material';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import _ from 'lodash';
 import ajvErrors from 'ajv-errors';
@@ -10,7 +17,6 @@ import ProductLoader from '../components/ProductLoader.tsx';
 import ProductPreviewManageModal from '../components/ProductPreviewManageModal.tsx';
 import CustomFieldTemplate from './templates/CustomFieldTemplate.tsx';
 import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
-import CustomObjectFieldTemplate from './templates/CustomObjectFieldTemplate.tsx';
 import NumberWidget from './widgets/NumberWidget.tsx';
 import TextFieldWidget from './widgets/TextFieldWidget.tsx';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
@@ -24,6 +30,7 @@ import { Task } from '../../../types/task.ts';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import {
   DevicePackageDetails,
+  ProductActionType,
   ProductSaveDetails,
   ProductType,
 } from '../../../types/product.ts';
@@ -33,6 +40,9 @@ import ProductPartialSaveModal from './components/ProductPartialSaveModal.tsx';
 import { DraftSubmitPanel } from './components/DarftSubmitPanel.tsx';
 import MuiGridTemplate from './templates/MuiGridTemplate.tsx';
 import ExternalIdentifiers from './fields/bulkBrandPack/ExternalIdentifiers.tsx';
+import useAuthoringStore from '../../../stores/AuthoringStore.ts';
+import WarningIcon from '@mui/icons-material/Warning';
+
 export interface DeviceAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
   task: Task;
@@ -50,10 +60,12 @@ function DeviceAuthoring({
   ticketProductId,
 }: DeviceAuthoringV2Props) {
   const [formData, setFormData] = useState({});
+  const [initialFormData, setInitialFormData] = useState({});
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [errorSchema, setErrorSchema] = useState({});
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [mode, setMode] = useState<'create' | 'update'>('create');
   const formRef = useRef<any>(null); // Ref to access the RJSF Form instance
   const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
     task.branchPath,
@@ -61,10 +73,24 @@ function DeviceAuthoring({
   const { data: uiSchema, isLoading: isUiSchemaLoading } = useUiSchemaQuery(
     task.branchPath,
   );
+  const {
+    originalConceptId,
+    setOriginalConceptId,
+    setProductPreviewDetails,
+    setProductSaveDetails,
+    productSaveDetails,
+    loadingPreview,
+    isProductUpdate,
+    setIsProductUpdate,
+  } = useAuthoringStore();
+
   const { isLoading, isFetching } = useProductQuery({
     selectedProduct,
     task,
-    setFunction: setFormData,
+    setFunction: (data: any) => {
+      setFormData(data);
+      setInitialFormData(data);
+    },
   });
   const {
     isLoading: isTicketProductLoading,
@@ -73,7 +99,10 @@ function DeviceAuthoring({
     ticketProductId,
     ticket,
     setFunction: (data: any) => {
+      setMode(data.action === 'UPDATE' ? 'update' : 'create');
       setFormData(data.packageDetails);
+      setInitialFormData(data.packageDetails);
+      setOriginalConceptId(data.originalConceptId);
     },
   });
   const mutation = useCalculateProduct();
@@ -96,9 +125,15 @@ function DeviceAuthoring({
   const handleFormSubmit = ({ formData }: any) => {
     mutation.mutate({
       formData,
+      initialFormData,
       ticket,
       toggleModalOpen: handleToggleCreateModal,
       task,
+      isProductUpdate,
+      selectedProduct,
+      setProductPreviewDetails,
+      setProductSaveDetails,
+      originalConceptId,
     });
   };
   const saveDraft = () => {
@@ -107,23 +142,39 @@ function DeviceAuthoring({
 
   const handleClear = useCallback(() => {
     setFormData({});
+    setInitialFormData({});
+    setErrorSchema({});
+    setIsDirty(false);
     if (formRef.current) {
       formRef.current.reset();
     }
-    setIsDirty(false);
   }, []);
+
+  // Clear form data when task changes
+  useEffect(() => {
+    handleClear();
+  }, [task, handleClear]);
 
   if (
     isLoading ||
     isFetching ||
     isTicketProductLoading ||
-    isTicketProductFetching
+    isTicketProductFetching ||
+    loadingPreview
   ) {
     return <ProductLoader message="Loading Product details" />;
   }
 
   if (isPending) {
-    return <ProductLoader message="Previewing product" />;
+    return (
+      <ProductLoader
+        message={
+          isProductUpdate
+            ? 'Previewing update product'
+            : 'Previewing new product'
+        }
+      />
+    );
   }
 
   if (isSchemaLoading || isUiSchemaLoading) {
@@ -196,30 +247,86 @@ function DeviceAuthoring({
                 Clear
               </Button>
               <DraftSubmitPanel isDirty={isDirty} saveDraft={saveDraft} />
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                disabled={isPending}
-              >
-                {isPending ? 'Submitting...' : 'Preview'}
-              </Button>
+              <Box>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={mode === 'update'}
+                      onChange={(_, checked) =>
+                        setMode(checked ? 'update' : 'create')
+                      }
+                      color="primary"
+                      disabled={!selectedProduct && !originalConceptId}
+                    />
+                  }
+                  label="Update Mode"
+                />
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                <Button
+                  data-testid={mode === 'create' ? 'create-btn' : 'update-btn'}
+                  type="submit"
+                  variant="contained"
+                  color={mode === 'create' ? 'primary' : 'warning'}
+                  sx={mode === 'update' ? { color: '#000' } : {}}
+                  disabled={isPending}
+                  onClick={() => {
+                    setIsProductUpdate(mode === 'update');
+                  }}
+                >
+                  {isPending
+                    ? 'Submitting...'
+                    : mode === 'create'
+                      ? 'Create New Product'
+                      : 'Update Existing Product'}
+                </Button>
+              </Box>
             </Box>
+            {mode === 'update' && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  mt: 2,
+                  mb: 2,
+                }}
+              >
+                <span
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    color: '#000',
+                    fontWeight: 500,
+                  }}
+                >
+                  <WarningIcon sx={{ color: '#ed6c02', mr: 1 }} />
+                  Updating existing product &nbsp;
+                  <strong style={{ color: '#ed6c02' }}>
+                    {selectedProduct?.pt.term}
+                  </strong>
+                  .
+                </span>
+              </Box>
+            )}
           </Form>
           <ProductPartialSaveModal
             packageDetails={formData}
+            originalPackageDetails={initialFormData}
+            originalConceptId={selectedProduct?.id ?? originalConceptId}
             handleClose={handleSaveToggleModal}
             open={saveModalOpen}
             ticket={ticket}
             existingProductId={ticketProductId}
+            actionType={mode}
           />
           <ProductPreviewManageModal
             open={createModalOpen}
             handleClose={handleToggleCreateModal}
-            productCreationDetails={data}
+            productCreationDetails={productSaveDetails}
             branch={task.branchPath}
             ticket={ticket}
             productType={ProductType.device}
+            isProductUpdate={isProductUpdate}
           />
         </Container>
       </Box>
@@ -229,31 +336,65 @@ function DeviceAuthoring({
 
 interface UseCalculateProductArguments {
   formData: any;
+  initialFormData: any;
   ticket: Ticket;
   toggleModalOpen: () => void;
   task: Task;
+  isProductUpdate: boolean;
+  selectedProduct: Concept | ValueSetExpansionContains | null;
+  setProductPreviewDetails: (details: DevicePackageDetails | undefined) => void;
+  setProductSaveDetails: (details: ProductSaveDetails | undefined) => void;
+  originalConceptId: string | undefined;
 }
 
 export function useCalculateProduct() {
   const mutation = useMutation({
     mutationFn: async ({
       formData,
+      initialFormData,
       ticket,
       task,
+      isProductUpdate,
+      selectedProduct,
+      setProductPreviewDetails,
+      setProductSaveDetails,
+      originalConceptId,
     }: UseCalculateProductArguments) => {
-      const productSummary = await productService.previewNewDeviceProduct(
-        formData,
-        task.branchPath,
-      );
-      const productCreationObj: ProductSaveDetails = {
+      let productSummary;
+      const originalConcept = selectedProduct
+        ? selectedProduct.id
+        : originalConceptId;
+
+      if (isProductUpdate) {
+        productSummary = await productService.previewUpdateDeviceProduct(
+          formData,
+          originalConcept,
+          task.branchPath,
+        );
+      } else {
+        productSummary = await productService.previewNewDeviceProduct(
+          formData,
+          task.branchPath,
+        );
+      }
+
+      const productSaveDetails: ProductSaveDetails = {
+        type: isProductUpdate
+          ? ProductActionType.update
+          : ProductActionType.create,
         productSummary,
         packageDetails: formData as DevicePackageDetails,
         ticketId: ticket.id,
         partialSaveName: null,
-        saveName: '',
         nameOverride: null,
+        originalConceptId: originalConcept,
+        originalPackageDetails: initialFormData as DevicePackageDetails,
       };
-      return productCreationObj;
+
+      setProductPreviewDetails(formData);
+      setProductSaveDetails(productSaveDetails);
+
+      return productSaveDetails;
     },
     onSuccess: (_, variables) => {
       variables.toggleModalOpen();
@@ -293,8 +434,7 @@ const fetchProductDataFn = async ({
     ? selectedProduct.code
     : selectedProduct.conceptId;
 
-  const mp = await productService.fetchDevice(productId || '', task.branchPath);
-  return mp.productName ? mp : null;
+  return await productService.fetchDevice(productId || '', task.branchPath);
 };
 
 export const useProductQuery = ({

@@ -10,7 +10,6 @@ import {
   Edge,
   hasDescriptionChange,
   Product,
-  Product7BoxBGColour,
   ProductSummary,
 } from '../../../types/concept.ts';
 import React, { useState } from 'react';
@@ -76,6 +75,7 @@ import ConceptReviews from './reviews/ConceptReviews.tsx';
 import ProductLoader from './ProductLoader.tsx';
 import { useShowReviewControls } from '../../../hooks/api/task/useReviews.tsx';
 import DescriptionModal from '../../../components/editProduct/DescriptionModal.tsx';
+import { Product7BoxBGColour } from './style/colors.ts';
 
 interface ProductPreviewPanelProps {
   control: Control<ProductSummary>;
