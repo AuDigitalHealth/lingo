@@ -110,7 +110,7 @@
       "type": "string",
       "enum": ["medication", "vaccine", "nutritional"],
       "default": "medication",
-      "title": "Pack Type"
+      "title": "Variant"
     }
   },
   "required": ["variant", "containedProducts"],

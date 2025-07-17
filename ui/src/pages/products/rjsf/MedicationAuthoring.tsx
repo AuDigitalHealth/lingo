@@ -48,6 +48,8 @@ import {
   resetDiscriminators,
 } from './helpers/validationHelper.ts';
 import { ErrorDisplay } from './components/ErrorDisplay.tsx';
+import CustomSelectWidget from './widgets/CustomSelectWidget.tsx';
+import { evaluateExpression } from './helpers/rjsfUtils.ts';
 
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -199,6 +201,7 @@ function MedicationAuthoring({
     schema,
     errorSchema,
     autoFillDefaults: true,
+    evaluateExpression,
   };
 
   const saveDraft = () => {
@@ -236,6 +239,7 @@ function MedicationAuthoring({
               TextFieldWidget,
               OneOfArrayWidget,
               NumberWidget,
+              SelectWidget: CustomSelectWidget,
             }}
             templates={{
               ArrayFieldTemplate: CustomArrayFieldTemplate,

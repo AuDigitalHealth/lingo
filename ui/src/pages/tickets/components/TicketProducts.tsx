@@ -99,9 +99,8 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
 
   // Create a memoized version of data that includes the active status
   const enrichedData = useMemo(() => {
-    debugger;
     if (!activeConceptIds) return data;
-    debugger;
+
     return data.map(row => ({
       ...row,
       isActive: row.conceptId
