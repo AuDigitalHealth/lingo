@@ -19,37 +19,34 @@ import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.gov.digitalhealth.lingo.configuration.model.BasePropertyDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
+import au.gov.digitalhealth.lingo.configuration.model.NonDefiningPropertyDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.OriginalNode;
-import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
-import au.gov.digitalhealth.lingo.configuration.model.NonDefiningPropertyDefinition;
-import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.ProductDetails;
 import au.gov.digitalhealth.lingo.product.details.ProductQuantity;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
+import au.gov.digitalhealth.lingo.util.NmpcType;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
-import au.gov.digitalhealth.lingo.util.NmpcType;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 
 @Log
@@ -85,6 +82,11 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
   protected abstract SnowstormClient getSnowstormClient();
 
   protected abstract NodeGeneratorService getNodeGeneratorService();
+
+  private static boolean areNodesSameProductPackageLevel(Node node, Node existingNode) {
+    return (node.getModelLevel().isProductLevel() && existingNode.getModelLevel().isProductLevel())
+        || (node.getModelLevel().isPackageLevel() && existingNode.getModelLevel().isPackageLevel());
+  }
 
   protected void addPropertyChanges(
       String branch,
@@ -183,29 +185,27 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
 
     if (!propertiesToAdd.isEmpty() || !propertiesToRemove.isEmpty()) {
       Set<ModelLevelType> levelsToUpdate =
-          new HashSet<>(
-              Stream.concat(propertiesToAdd.keySet().stream(), propertiesToRemove.keySet().stream())
-                  .collect(Collectors.toSet()));
+          Stream.concat(propertiesToAdd.keySet().stream(), propertiesToRemove.keySet().stream())
+              .collect(Collectors.toSet());
       Set<String> existingNodeIds =
           productSummary.getNodes().stream()
               .filter(node -> !node.isNewConcept())
-              .map(n -> n.getConceptId())
+              .map(Node::getConceptId)
               .collect(Collectors.toSet());
-      Node rootNode =
-          levelFutureMap
-              .get(
-                  isPackage
-                      ? modelConfiguration.getRootUnbrandedPackageModelLevel()
-                      : modelConfiguration.getRootUnbrandedProductModelLevel())
-              .join();
       Set<CompletableFuture<Node>> futures = new HashSet<>();
+      Map<Node, Node> addedToExistingNodeMap = new HashMap<>();
       for (ModelLevelType levelType : levelsToUpdate) {
         // get concept
         final ModelLevel modelLevel = modelConfiguration.getLevelOfType(levelType);
+        final Node existingNode = levelFutureMap.get(modelLevel).join();
+        if (existingNode.isNewConcept()) {
+          continue;
+        }
+
         final String ecl =
             unbrandedProductNode == null
                 ? "(<"
-                    + rootNode.getConceptId()
+                    + existingNode.getConceptId()
                     + " AND ^"
                     + modelLevel.getReferenceSetIdentifier()
                     + ") "
@@ -241,6 +241,7 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
                           node.getNonDefiningProperties()
                               .removeAll(propertiesToRemove.get(levelType));
                         }
+                        addedToExistingNodeMap.put(node, existingNode);
                         return node;
                       }));
         }
@@ -261,6 +262,13 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
                             && existingNode.getOriginalNode().getConceptId()
                                 == node.getConceptId()))) {
           productSummary.addNode(node);
+          final Node existingNode = addedToExistingNodeMap.get(node);
+          productSummary.addEdge(
+              node.getConceptId(),
+              existingNode.getConceptId(),
+              areNodesSameProductPackageLevel(node, existingNode)
+                  ? ProductSummaryService.IS_A_LABEL
+                  : ProductSummaryService.CONTAINS_LABEL);
         }
       }
     }
