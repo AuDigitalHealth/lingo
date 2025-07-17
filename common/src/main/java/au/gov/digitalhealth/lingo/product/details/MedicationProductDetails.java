@@ -65,7 +65,7 @@ public class MedicationProductDetails extends ProductDetails {
 
   private ProductTemplate determineProductType(List<Ingredient> activeIngredients) {
     if (activeIngredients.isEmpty()) {
-      return ProductTemplate.noIngredient;
+      return ProductTemplate.noIngredients;
     }
 
     for (Ingredient ingredient : activeIngredients) {
