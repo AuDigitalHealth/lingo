@@ -62,11 +62,11 @@ export function useConceptsForReview(branchPath: string | undefined) {
   });
 
   // Fetch unread concept IDs
-  const { data: unreadConceptIds, isLoading: unreadIsLoading, isError: unreadError } = useFeedbackUnread(
-    projectKey,
-    taskKey,
-    showReviewControls,
-  );
+  const {
+    data: unreadConceptIds,
+    isLoading: unreadIsLoading,
+    isError: unreadError,
+  } = useFeedbackUnread(projectKey, taskKey, showReviewControls);
 
   // Compose full ConceptReview array
   const conceptReviews: ConceptReview[] = useMemo(() => {
