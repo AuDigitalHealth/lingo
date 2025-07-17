@@ -37,7 +37,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -48,6 +47,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.java.Log;
+import org.springframework.data.util.Pair;
 
 @Log
 public abstract class ProductCalculationService<T extends ProductDetails> {
@@ -97,10 +97,12 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
       boolean isPackage,
       Node unbrandedProductNode) {
     // add other product nodes for updated properties
-    Map<ModelLevelType, Set<NonDefiningBase>> propertiesToAdd = new EnumMap<>(ModelLevelType.class);
-    Map<ModelLevelType, Set<NonDefiningBase>> propertiesToRemove =
-        new EnumMap<>(ModelLevelType.class);
+    Map<Pair<ModelLevelType, ModelLevelType>, Set<NonDefiningBase>> propertiesToAdd =
+        new HashMap<>();
+    Map<Pair<ModelLevelType, ModelLevelType>, Set<NonDefiningBase>> propertiesToRemove =
+        new HashMap<>();
 
+    // if we're updating package concepts linked to this node
     if (unbrandedProductNode != null && unbrandedProductNode.isPropertyUpdate()) {
       // get the added properties
       Set<NonDefiningBase> addedProperties =
@@ -122,7 +124,11 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
                     l -> orderedLevels.stream().anyMatch(ml -> ml.getModelLevelType().equals(l)))
                 .forEach(
                     l -> {
-                      propertiesToAdd.computeIfAbsent(l, k -> new HashSet<>()).add(newProperty);
+                      propertiesToAdd
+                          .computeIfAbsent(
+                              Pair.of(unbrandedProductNode.getModelLevel(), l),
+                              k -> new HashSet<>())
+                          .add(newProperty);
                     });
           });
       removedProperties.forEach(
@@ -135,7 +141,9 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
                 .forEach(
                     l ->
                         propertiesToRemove
-                            .computeIfAbsent(l, k -> new HashSet<>())
+                            .computeIfAbsent(
+                                Pair.of(unbrandedProductNode.getModelLevel(), l),
+                                k -> new HashSet<>())
                             .add(newProperty));
           });
     }
@@ -164,9 +172,11 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
               descendantLevels.stream()
                   .filter(dl -> propertyDefinition.getModelLevels().contains(dl))
                   .forEach(
-                      dl -> {
-                        propertiesToAdd.computeIfAbsent(dl, k -> new HashSet<>()).add(newProperty);
-                      });
+                      dl ->
+                          propertiesToAdd
+                              .computeIfAbsent(
+                                  Pair.of(level.getModelLevelType(), dl), k -> new HashSet<>())
+                              .add(newProperty));
             });
         removedProperties.forEach(
             newProperty -> {
@@ -177,14 +187,15 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
                   .forEach(
                       dl ->
                           propertiesToRemove
-                              .computeIfAbsent(dl, k -> new HashSet<>())
+                              .computeIfAbsent(
+                                  Pair.of(level.getModelLevelType(), dl), k -> new HashSet<>())
                               .add(newProperty));
             });
       }
     }
 
     if (!propertiesToAdd.isEmpty() || !propertiesToRemove.isEmpty()) {
-      Set<ModelLevelType> levelsToUpdate =
+      Set<Pair<ModelLevelType, ModelLevelType>> levelsToUpdate =
           Stream.concat(propertiesToAdd.keySet().stream(), propertiesToRemove.keySet().stream())
               .collect(Collectors.toSet());
       Set<String> existingNodeIds =
@@ -194,26 +205,34 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
               .collect(Collectors.toSet());
       Set<CompletableFuture<Node>> futures = new HashSet<>();
       Map<Node, Node> addedToExistingNodeMap = new HashMap<>();
-      for (ModelLevelType levelType : levelsToUpdate) {
+      for (Pair<ModelLevelType, ModelLevelType> levelTypes : levelsToUpdate) {
         // get concept
-        final ModelLevel modelLevel = modelConfiguration.getLevelOfType(levelType);
-        final Node existingNode = levelFutureMap.get(modelLevel).join();
+        final ModelLevelType descendantModelLevelType = levelTypes.getSecond();
+        final ModelLevel descendantModelLevel =
+            modelConfiguration.getLevelOfType(descendantModelLevelType);
+        final ModelLevelType ancestorModelLevelType = levelTypes.getFirst();
+        final Node existingNode =
+            levelFutureMap.get(modelConfiguration.getLevelOfType(ancestorModelLevelType)) == null
+                ? unbrandedProductNode
+                : levelFutureMap
+                    .get(modelConfiguration.getLevelOfType(ancestorModelLevelType))
+                    .join();
         if (existingNode.isNewConcept()) {
           continue;
         }
 
         final String ecl =
-            unbrandedProductNode == null
+            descendantModelLevelType.getAncestors().contains(ancestorModelLevelType)
                 ? "(<"
                     + existingNode.getConceptId()
                     + " AND ^"
-                    + modelLevel.getReferenceSetIdentifier()
+                    + descendantModelLevel.getReferenceSetIdentifier()
                     + ") "
                     + getMinusClause(existingNodeIds)
-                : "(<<(<(781405001 or 999000071000168104):(774160008 or 999000081000168101)="
-                    + unbrandedProductNode.getConceptId()
+                : "(<<(<(781405001 or 999000071000168104):(774160008 or 999000081000168101)=<<"
+                    + existingNode.getConceptId()
                     + ") AND ^"
-                    + modelLevel.getReferenceSetIdentifier()
+                    + descendantModelLevel.getReferenceSetIdentifier()
                     + ") "
                     + getMinusClause(existingNodeIds);
         Collection<SnowstormConceptMini> concepts =
@@ -225,21 +244,21 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
           // add and remove the properties
           futures.add(
               getNodeGeneratorService()
-                  .lookUpNode(branch, concept, modelLevel)
+                  .lookUpNode(branch, concept, descendantModelLevel)
                   .thenApply(
                       node -> {
                         node.setOriginalNode(new OriginalNode(node.cloneNode(), null, true));
-                        if (!propertiesToAdd.containsKey(levelType)
-                            && !propertiesToRemove.containsKey(levelType)) {
+                        if (!propertiesToAdd.containsKey(levelTypes)
+                            && !propertiesToRemove.containsKey(levelTypes)) {
                           throw new LingoProblem(
-                              "No properties to add or remove for level type: " + levelType);
+                              "No properties to add or remove for level type: " + levelTypes);
                         }
-                        if (propertiesToAdd.containsKey(levelType)) {
-                          node.getNonDefiningProperties().addAll(propertiesToAdd.get(levelType));
+                        if (propertiesToAdd.containsKey(levelTypes)) {
+                          node.getNonDefiningProperties().addAll(propertiesToAdd.get(levelTypes));
                         }
-                        if (propertiesToRemove.containsKey(levelType)) {
+                        if (propertiesToRemove.containsKey(levelTypes)) {
                           node.getNonDefiningProperties()
-                              .removeAll(propertiesToRemove.get(levelType));
+                              .removeAll(propertiesToRemove.get(levelTypes));
                         }
                         addedToExistingNodeMap.put(node, existingNode);
                         return node;
