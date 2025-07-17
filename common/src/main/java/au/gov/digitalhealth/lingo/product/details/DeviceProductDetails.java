@@ -33,10 +33,12 @@ import lombok.EqualsAndHashCode;
     message = "Either newSpecificDeviceName or specificDeviceType must be populated, but not both")
 public class DeviceProductDetails extends ProductDetails {
   String newSpecificDeviceName;
-
   SnowstormConceptMini specificDeviceType;
-
   Set<SnowstormConceptMini> otherParentConcepts;
+
+  public DeviceProductDetails() {
+    this.type = "device";
+  }
 
   @Override
   protected Map<String, String> getSpecialisedIdFsnMap() {
@@ -46,8 +48,8 @@ public class DeviceProductDetails extends ProductDetails {
   }
 
   @Override
-  public String getProductType() {
-    return "";
+  public ProductTemplate getProductType() {
+    return productType;
   }
 
   @Override

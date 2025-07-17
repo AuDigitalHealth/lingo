@@ -41,6 +41,8 @@ public class PackageDetails<T extends ProductDetails> extends PackageProductDeta
   List<@Valid PackageQuantity<T>> containedPackages = new ArrayList<>();
   List<String> selectedConceptIdentifiers = new ArrayList<>();
 
+  String variant;
+
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
     Map<String, String> idMap = new HashMap<>();
@@ -109,5 +111,19 @@ public class PackageDetails<T extends ProductDetails> extends PackageProductDeta
             .orElseThrow(() -> new LingoProblem("No contained product found looking for nmpc type"))
             .getProductDetails()
             .getNmpcType();
+  }
+
+  public String getVariant() {
+    if (variant == null) {
+      if (!containedProducts.isEmpty() && containedProducts.get(0).getProductDetails() != null) {
+        variant = containedProducts.get(0).getProductDetails().getType();
+      } else if (!containedPackages.isEmpty()
+          && containedPackages.get(0).getPackageDetails() != null) {
+        variant = containedPackages.get(0).getPackageDetails().getVariant();
+      } else {
+        throw new LingoProblem("No contained package or product found looking for variant");
+      }
+    }
+    return variant;
   }
 }
