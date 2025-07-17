@@ -281,11 +281,6 @@ public class MedicationProductCalculationService
         calculateProductFromAtomicData(branch, packageDetails));
   }
 
-  @Override
-  protected SnowstormClient getSnowstormClient() {
-    return snowstormClient;
-  }
-
   /**
    * Calculates the existing and new products required to create a product based on the product
    * details.
