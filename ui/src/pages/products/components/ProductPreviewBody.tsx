@@ -22,6 +22,7 @@ import UnableToEditTooltip from '../../tasks/components/UnableToEditTooltip.tsx'
 
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import ProductLoader from './ProductLoader.tsx';
+import ColorLegend from './ColorLegend.tsx';
 
 interface ProductPreviewBodyProps {
   productModel: ProductSummary;
@@ -88,7 +89,11 @@ function ProductPreviewBody({
                 message={`Loading box model for [${getProductDisplayName(productModel)}]`}
               />
             ))}
-          <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 3 }}>
+          <Grid
+            container
+            rowSpacing={1}
+            columnSpacing={{ xs: 1, sm: 2, md: 3 }}
+          >
             <Grid xs={6} key={'left'} item={true}>
               {lableTypesLeft.map((label, index) => (
                 <ProductTypeGroupPreview
@@ -224,6 +229,9 @@ function SubmitPanel({
     isProductUpdate && canEdit && (hasUpdatedProperties || newConceptFound);
   return (
     <Box m={1} p={1}>
+      <Stack justifyContent="start">
+        <ColorLegend showLegend={true} />
+      </Stack>
       <Stack spacing={2} direction="row" justifyContent="end">
         <Button
           data-testid={'preview-cancel'}
