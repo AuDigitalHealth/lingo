@@ -109,8 +109,9 @@
     "variant": {
       "type": "string",
       "enum": ["medication", "vaccine", "nutritional"],
+      "enumNames": ["Medication", "Vaccine", "Nutritional"],
       "default": "medication",
-      "title": "Variant"
+      "title": "Target Model"
     }
   },
   "required": ["variant", "containedProducts"],
@@ -135,6 +136,7 @@
                   "productType": {
                     "type": "string",
                     "enum": ["presentationStrength", "concentrationStrength", "noStrength"],
+                    "enumNames": ["Presentation Strength", "Concentration Strength", "No Strength"],
                     "default": "presentationStrength",
                     "title": "Product Type"
                   }
@@ -233,8 +235,9 @@
                   "productType": {
                     "type": "string",
                     "enum": ["presentationStrength", "noStrength"],
+                    "enumNames": ["Presentation Strength", "No Strength"],
                     "default": "presentationStrength",
-                    "title": "Product Type"
+                    "title": "Product Template"
                   }
                 },
                 "required": ["productType"],
@@ -317,8 +320,9 @@
                   "productType": {
                     "type": "string",
                     "enum": ["noIngredients"],
+                    "enumNames": ["No Ingredients"],
                     "default": "noIngredients",
-                    "title": "Product Type"
+                    "title": "Product Template"
                   }
                 },
                 "required": ["productType"],

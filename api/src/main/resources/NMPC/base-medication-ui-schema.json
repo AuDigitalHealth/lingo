@@ -32,7 +32,7 @@
   },
   "variant": {
     "ui:widget": "select",
-    "ui:title": "Variant",
+    "ui:title": "Target Model",
     "ui:options": {
       "updateSchemaOnChange": true,
       "hideDropdown": {
@@ -153,6 +153,7 @@
         },
         "productType": {
           "ui:widget": "select",
+          "ui:title": "Product Template",
           "ui:options": {
             "showOneOfLabel": false,
             "updateSchemaOnChange": true
