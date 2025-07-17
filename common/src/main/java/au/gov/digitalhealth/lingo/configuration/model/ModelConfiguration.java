@@ -495,4 +495,8 @@ public class ModelConfiguration {
     }
     return getReferenceSetsByName().get(identifierScheme);
   }
+
+  public Set<String> getAllLevelReferenceSetIds() {
+    return levels.stream().map(ModelLevel::getReferenceSetIdentifier).collect(Collectors.toSet());
+  }
 }

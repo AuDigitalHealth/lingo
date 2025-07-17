@@ -42,6 +42,7 @@ import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts
 import { PlusCircleOutlined } from '@ant-design/icons';
 import { IconButton } from '@mui/material';
 import { Button } from '@mui/material';
+import useProjectLangRefsets from '../../../hooks/api/products/useProjectLangRefsets.tsx';
 
 interface NewConceptDropdownProps {
   product: Product;
@@ -198,13 +199,7 @@ function AdditionalSynonymField({
 
   const project = getProjectFromKey(applicationConfig?.apProjectKey, projects);
 
-  const langRefsets = useMemo(() => {
-    if (project === undefined || project.metadata === undefined) {
-      return [];
-    }
-    const fromApi = [...project.metadata.requiredLanguageRefsets];
-    return fromApi;
-  }, [project]);
+  const langRefsets = useProjectLangRefsets({ project: project });
 
   const defaultLangRefset = findDefaultLangRefset(langRefsets);
 
