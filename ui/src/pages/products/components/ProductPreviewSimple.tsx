@@ -10,7 +10,6 @@ import {
   Edge,
   hasDescriptionChange,
   Product,
-  Product7BoxBGColour,
   ProductSummary,
 } from '../../../types/concept.ts';
 import React, { useState } from 'react';
@@ -235,26 +234,9 @@ export default function ProductPreviewSimple({
               <Grid xs={40} item={true}>
                 <Stack direction="row" spacing={2} alignItems="center">
                   <Grid item xs={10}>
-                    {/* {isNewConcept(product) ? (
-                        <ProductHeaderWatch
-                          control={control}
-                          index={index}
-                          fsnToggle={fsnToggle}
-                          showHighLite={showHighlite()}
-                          links={links}
-                          product={product}
-                          productModel={productModel}
-                          activeConcept={activeConcept}
-                          handleChangeColor={handleChangeColor}
-                          partialNameCheckKeywords={partialNameCheckKeywords}
-                          nameGeneratorErrorKeywords={nameGeneratorErrorKeywords}
-                          optionsIgnored={optionsIgnored}
-                        />
-                      ) : ( */}
                     <Typography>
                       <span>{productTitle}</span>
                     </Typography>
-                    {/* )} */}
                   </Grid>
                   <Grid container justifyContent="flex-end" alignItems="center">
                     {showReviewControls && (
@@ -273,11 +255,6 @@ export default function ProductPreviewSimple({
                       <></>
                     )}
                     <ProductStatusIndicators product={product} />
-                    {/* <ProductRetireView
-                        product={product}
-                        index={index}
-                        control={control}
-                      /> */}
 
                     <IconButton
                       size="small"

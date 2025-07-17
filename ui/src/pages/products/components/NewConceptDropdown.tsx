@@ -42,6 +42,7 @@ import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts
 import { PlusCircleOutlined } from '@ant-design/icons';
 import { IconButton } from '@mui/material';
 import { Button } from '@mui/material';
+import useProjectLangRefsets from '../../../hooks/api/products/useProjectLangRefsets.tsx';
 
 interface NewConceptDropdownProps {
   product: Product;

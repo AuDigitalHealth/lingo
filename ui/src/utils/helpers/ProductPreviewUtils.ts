@@ -14,12 +14,7 @@
 /// limitations under the License.
 ///
 
-import {
-  DefinitionStatus,
-  Description,
-  Product,
-  Product7BoxBGColour,
-} from '../../types/concept.ts';
+import { DefinitionStatus, Description, Product } from '../../types/concept.ts';
 import {
   getBulkAuthorBrandOptions,
   getBulkAuthorPackSizeOptions,
@@ -31,6 +26,7 @@ import {
 } from '../../types/queryKeys.ts';
 import { cloneDeep } from 'lodash';
 import { isNewConcept, isReplacedWithExistingConcept } from './conceptUtils.ts';
+import { Product7BoxBGColour } from '../../pages/products/components/style/colors.ts';
 
 export function isNameContainsKeywords(name: string, keywords: string[]) {
   return keywords.some(substring =>
