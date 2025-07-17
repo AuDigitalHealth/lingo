@@ -15,7 +15,6 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
-
 import au.csiro.snowstorm_client.api.BranchingApi;
 import au.csiro.snowstorm_client.api.ConceptsApi;
 import au.csiro.snowstorm_client.api.RefsetMembersApi;
@@ -464,13 +463,15 @@ public class SnowstormClient {
   }
 
   public Mono<SnowstormConcept> getBrowserConcept(String branch, String conceptId) {
-    return snowStormApiClient.get()
-        .uri(uriBuilder -> uriBuilder
-            .path("/browser/{branch}/concepts/{conceptId}")
-            .build(branch, conceptId))
+    return snowStormApiClient
+        .get()
+        .uri(
+            uriBuilder ->
+                uriBuilder.path("/browser/{branch}/concepts/{conceptId}").build(branch, conceptId))
         .retrieve()
         .bodyToMono(SnowstormConcept.class);
   }
+
   @Cacheable(
       value = CacheConstants.SNOWSTORM_RELATIONSHIPS,
       keyGenerator = "branchAwareKeyGenerator")
@@ -501,24 +502,25 @@ public class SnowstormClient {
         .block();
   }
 
-  public SnowstormConcept updateConcept(String branch, String conceptId, SnowstormConcept concept, boolean validate) {
-    ObjectMapper customMapper = new ObjectMapper()
-        .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+  public SnowstormConcept updateConcept(
+      String branch, String conceptId, SnowstormConcept concept, boolean validate) {
+    ObjectMapper customMapper =
+        new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
     // Create a custom encoder with this mapper
     Jackson2JsonEncoder encoder = new Jackson2JsonEncoder(customMapper, MediaType.APPLICATION_JSON);
 
     return snowStormApiClient
         .mutate()
-        .codecs(configurer ->
-            configurer.defaultCodecs().jackson2JsonEncoder(encoder)
-        )
+        .codecs(configurer -> configurer.defaultCodecs().jackson2JsonEncoder(encoder))
         .build()
         .put()
-        .uri(uriBuilder -> uriBuilder
-            .path("/browser/{branch}/concepts/{conceptId}")
-            .queryParam("validate", validate)
-            .build(branch, conceptId))
+        .uri(
+            uriBuilder ->
+                uriBuilder
+                    .path("/browser/{branch}/concepts/{conceptId}")
+                    .queryParam("validate", validate)
+                    .build(branch, conceptId))
         .bodyValue(concept)
         .retrieve()
         .bodyToMono(SnowstormConcept.class)
@@ -772,7 +774,6 @@ public class SnowstormClient {
       log.fine("Deleted refset members: " + memberIdsToDelete.size() + " on branch: " + branch);
     }
 
-
     if (!memberToDeactivate.isEmpty()) {
       List<SnowstormReferenceSetMemberViewComponent> deactivatedMembersWithActiveFalse =
           memberToDeactivate.stream()
@@ -788,8 +789,7 @@ public class SnowstormClient {
                   })
               .toList();
 
-        createRefsetMembers(branch, deactivatedMembersWithActiveFalse);
-
+      createRefsetMembers(branch, deactivatedMembersWithActiveFalse);
 
       log.fine(
           "Deleted refset members: "
