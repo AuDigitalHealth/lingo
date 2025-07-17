@@ -1,22 +1,32 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import TasksServices from '../../../api/TasksService';
 import { ReviewMessagePost } from '../../../types/ConceptReview';
+import { useFeedbackUnreadMutation } from './useFeedbackUnreadMutation';
+import { useFeedbackUnread } from './useConceptsForReview';
+import useTaskByKey from '../../useTaskByKey';
 
 interface PostReviewMessageMutationVariables {
   projectKey: string;
   taskKey: string;
-  message: ReviewMessagePost;
+  message?: ReviewMessagePost;
 }
 
-export function usePostReviewMessageMutation() {
-  const queryClient = useQueryClient();
+interface PostReviewMessageMutationVariablesPost extends PostReviewMessageMutationVariables {
+  message: ReviewMessagePost;
+  conceptId: string;
+}
 
+export function usePostReviewMessageMutation({projectKey, taskKey} : PostReviewMessageMutationVariables) {
+  const { data: unreadConceptIds } = useFeedbackUnread(projectKey, taskKey, true);
+  const queryClient = useQueryClient();
+  const mutation = useFeedbackUnreadMutation();
   return useMutation({
     mutationFn: async ({
       projectKey,
       taskKey,
       message,
-    }: PostReviewMessageMutationVariables) => {
+      conceptId
+    }: PostReviewMessageMutationVariablesPost) => {
       return TasksServices.postConceptReviewsMessageForTask(
         projectKey,
         taskKey,
@@ -31,13 +41,14 @@ export function usePostReviewMessageMutation() {
         variables.taskKey,
       ];
       void queryClient.invalidateQueries({ queryKey: queryKeyReviews });
-
-      const queryKeyUnread = [
-        'feedback-unread',
-        variables.projectKey,
-        variables.taskKey,
-      ];
-      void queryClient.invalidateQueries({ queryKey: queryKeyUnread });
+      const updatedUnreadConceptIds = unreadConceptIds ? [...unreadConceptIds, variables.conceptId] : [variables.conceptId];
+      mutation.mutate({projectKey: projectKey, taskKey: taskKey, conceptIds: updatedUnreadConceptIds})
+      // const queryKeyUnread = [
+      //   'feedback-unread',
+      //   variables.projectKey,
+      //   variables.taskKey,
+      // ];
+      // void queryClient.invalidateQueries({ queryKey: queryKeyUnread });
     },
     onError: error => {
       console.error('Failed to post review message:', error);
