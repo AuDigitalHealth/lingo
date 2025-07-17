@@ -34,13 +34,6 @@ const CustomSelectWidget: React.FC<WidgetProps> = props => {
           opt.label?.includes('oneOf'),
       ));
 
-  // Determine if dropdown should be hidden
-
-  const variantValue = value || formContext?.formData?.variant || '';
-  const displayValue =
-    options.enumOptions?.find((opt: any) => opt.value === variantValue)
-      ?.label || variantValue;
-
   if (
     isOneOfSelector === undefined ||
     isOneOfSelector ||
@@ -48,81 +41,46 @@ const CustomSelectWidget: React.FC<WidgetProps> = props => {
   ) {
     return <Box sx={{ display: 'none' }} />;
   }
-  const hideDropdownOption = uiSchema?.['ui:options']?.hideDropdown;
-  let shouldHideDropdown: boolean;
+  const disableDropdownOption = uiSchema?.['ui:options']?.disableDropdown;
+  let shouldDisableDropdown: boolean;
 
   if (
-    hideDropdownOption &&
-    typeof hideDropdownOption === 'object' &&
-    '$eval' in hideDropdownOption
+    disableDropdownOption &&
+    typeof disableDropdownOption === 'object' &&
+    '$eval' in disableDropdownOption
   ) {
     if (formContext?.evaluateExpression) {
       try {
-        shouldHideDropdown = formContext.evaluateExpression(
-          hideDropdownOption.$eval,
+        shouldDisableDropdown = formContext.evaluateExpression(
+          disableDropdownOption.$eval,
           { formData: formContext?.formData },
         );
       } catch (error) {
         console.error('CustomSelectWidget - evaluateExpression failed:', {
           error,
-          evalExpression: hideDropdownOption.$eval,
+          evalExpression: disableDropdownOption.$eval,
         });
-        shouldHideDropdown = false;
+        shouldDisableDropdown = false;
       }
     } else {
       console.warn(
         'CustomSelectWidget - evaluateExpression not found in formContext',
       );
-      shouldHideDropdown = false;
+      shouldDisableDropdown = false;
     }
   } else if (
-    typeof hideDropdownOption === 'string' &&
-    formContext?.[hideDropdownOption]
+    typeof disableDropdownOption === 'string' &&
+    formContext?.[disableDropdownOption]
   ) {
-    shouldHideDropdown = formContext[hideDropdownOption]({
+    shouldDisableDropdown = formContext[disableDropdownOption]({
       formData: formContext?.formData,
     });
-  } else if (typeof hideDropdownOption === 'function') {
-    shouldHideDropdown = hideDropdownOption({
+  } else if (typeof disableDropdownOption === 'function') {
+    shouldDisableDropdown = disableDropdownOption({
       formData: formContext?.formData,
     });
   } else {
-    shouldHideDropdown = !!hideDropdownOption;
-  }
-
-  if (shouldHideDropdown) {
-    return (
-      <Box sx={{ width: '100%' }}>
-        <FormLabel
-          sx={{
-            color: 'rgba(0, 0, 0, 0.3)', // Lighter grey for disabled label
-            fontWeight: 500,
-            fontSize: '0.75rem',
-            lineHeight: '1.4375em',
-            marginBottom: '8px',
-          }}
-        >
-          {uiSchema?.['ui:title'] || schema.title || 'Select'}
-        </FormLabel>
-        <Typography
-          sx={{
-            padding: '12px 14px',
-            fontSize: 'medium',
-            color: 'rgba(0, 0, 0, 0.3)', // Lighter grey for disabled text
-            fontWeight: 500,
-            backgroundColor: 'rgba(0, 0, 0, 0.08)', // Lighter grey background
-            border: '1px solid rgba(0, 0, 0, 0.08)', // Lighter grey border
-            borderRadius: '1px',
-            minHeight: '56px',
-            display: 'flex',
-            alignItems: 'center',
-            cursor: 'not-allowed',
-          }}
-        >
-          {displayValue || 'No variant selected'}
-        </Typography>
-      </Box>
-    );
+    shouldDisableDropdown = !!disableDropdownOption;
   }
 
   const errorMessage = errorSchema?.__errors?.[0] || '';
@@ -136,7 +94,7 @@ const CustomSelectWidget: React.FC<WidgetProps> = props => {
           id={id}
           value={value || ''}
           label={uiSchema?.['ui:title'] || schema.title || 'Select'}
-          disabled={disabled}
+          disabled={shouldDisableDropdown}
           required={required}
           onChange={e => onChange(e.target.value || undefined)}
           error={needsAttention}
@@ -145,25 +103,38 @@ const CustomSelectWidget: React.FC<WidgetProps> = props => {
             width: '100%',
             '& .MuiOutlinedInput-root': {
               borderRadius: '1px',
-              backgroundColor: '#fff',
+              backgroundColor: shouldDisableDropdown
+                ? 'rgba(0, 0, 0, 0.08)'
+                : '#fff',
               '&:hover fieldset': {
-                borderColor: '#1976d2',
+                borderColor: shouldDisableDropdown
+                  ? 'rgba(0, 0, 0, 0.08)'
+                  : '#1976d2',
               },
               '&.Mui-focused fieldset': {
-                borderColor: '#1976d2',
-                borderWidth: '2px',
+                borderColor: shouldDisableDropdown
+                  ? 'rgba(0, 0, 0, 0.08)'
+                  : '#1976d2',
+                borderWidth: shouldDisableDropdown ? '1px' : '2px',
+              },
+              '&.Mui-disabled fieldset': {
+                borderColor: 'rgba(0, 0, 0, 0.08)',
               },
             },
             '& .MuiInputLabel-root': {
-              color: '#424242',
+              color: shouldDisableDropdown ? 'rgba(0, 0, 0, 0.3)' : '#424242',
               fontWeight: 500,
               '&.Mui-focused': {
-                color: '#1976d2',
+                color: shouldDisableDropdown ? 'rgba(0, 0, 0, 0.3)' : '#1976d2',
+              },
+              '&.Mui-disabled': {
+                color: 'rgba(0, 0, 0, 0.3)',
               },
             },
             '& .MuiSelect-select': {
               padding: '12px 14px',
               fontSize: 'normal',
+              color: shouldDisableDropdown ? 'rgba(0, 0, 0, 0.3)' : 'inherit',
             },
             '& .MuiFormHelperText-root': {
               m: 0,
