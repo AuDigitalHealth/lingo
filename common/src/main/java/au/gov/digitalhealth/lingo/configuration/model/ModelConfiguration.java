@@ -478,4 +478,8 @@ public class ModelConfiguration {
             Collectors.toMap(
                 ModelLevel::getReferenceSetIdentifier, Function.identity(), (a, b) -> a));
   }
+
+  public Set<String> getAllLevelReferenceSetIds() {
+    return levels.stream().map(ModelLevel::getReferenceSetIdentifier).collect(Collectors.toSet());
+  }
 }

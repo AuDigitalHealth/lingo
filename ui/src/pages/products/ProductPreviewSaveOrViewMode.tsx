@@ -312,7 +312,7 @@ function ProductPreviewSaveOrViewMode({
           productSaveDetails.productSummary,
         );
         productService
-          .createDeviceProduct(productSaveDetails, branch)
+          .saveDeviceProduct(productSaveDetails, branch)
           .then(v => {
             if (handleClose) handleClose({}, 'escapeKeyDown');
             setLoading(false);
