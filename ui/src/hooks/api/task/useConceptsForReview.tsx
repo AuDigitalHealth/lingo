@@ -62,11 +62,11 @@ export function useConceptsForReview(branchPath: string | undefined) {
   });
 
   // Fetch unread concept IDs
-  const { unreadConceptIds, unreadIsLoading, unreadError } = useFeedbackUnread(
-    projectKey,
-    taskKey,
-    showReviewControls,
-  );
+  const {
+    data: unreadConceptIds,
+    isLoading: unreadIsLoading,
+    isError: unreadError,
+  } = useFeedbackUnread(projectKey, taskKey, showReviewControls);
 
   // Compose full ConceptReview array
   const conceptReviews: ConceptReview[] = useMemo(() => {
@@ -110,17 +110,13 @@ export function useFeedbackUnread(
   taskKey: string | undefined,
   enabled: boolean,
 ) {
-  const {
-    data: unreadConceptIds,
-    isLoading: unreadIsLoading,
-    error: unreadError,
-  } = useQuery({
+  return useQuery({
     queryKey: ['feedback-unread', projectKey, taskKey],
     queryFn: () => TasksServices.getFeedbackUnread(projectKey, taskKey),
     enabled: !!projectKey && !!taskKey && enabled,
   });
 
-  return { unreadConceptIds, unreadIsLoading, unreadError };
+  // return { unreadConceptIds, unreadIsLoading, unreadError };
 }
 
 export function useCanCompleteReview({ task, branch }: UseReviewProps) {

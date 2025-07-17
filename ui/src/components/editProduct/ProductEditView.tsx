@@ -20,6 +20,7 @@ import { useExternalIdentifiers } from '../../hooks/api/products/useExternalIden
 import { useSearchConceptByIdNoCache } from '../../hooks/api/products/useSearchConcept';
 import { BrowserConcept } from '../../types/concept';
 import { ExistingDescriptionsSection } from './ExistingDescriptionsSection';
+import useProjectLangRefsets from '../../hooks/api/products/useProjectLangRefsets';
 
 const USLangRefset: LanguageRefset = {
   default: 'false',
@@ -38,14 +39,7 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
   const { applicationConfig } = useApplicationConfig();
   const { data: projects } = useAvailableProjects();
   const project = getProjectFromKey(applicationConfig?.apProjectKey, projects);
-  const langRefsets = useMemo(() => {
-    if (project === undefined || project.metadata === undefined) {
-      return [];
-    }
-    const fromApi = [...project.metadata.requiredLanguageRefsets];
-    fromApi.push(USLangRefset);
-    return fromApi;
-  }, [project]);
+  const langRefsets = useProjectLangRefsets({ project: project });
 
   const defaultLangrefset = findDefaultLangRefset(langRefsets);
 

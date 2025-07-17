@@ -234,34 +234,14 @@ function EditConceptBody({
     } as ProductUpdateRequest;
   }, [product, ticket, descriptions]);
 
-  const {
-    handleSubmit,
-    control,
-    setError,
-    reset,
-    getValues,
-    setValue,
-    watch,
-    trigger,
-  } = useForm<ProductUpdateRequest>({
-    mode: 'all',
-    reValidateMode: 'onChange',
-    criteriaMode: 'all',
-    defaultValues,
-    resolver: yupResolver(productUpdateValidationSchema),
-  });
-  console.log('defaultValues');
-  console.log(defaultValues);
-
-  // useEffect(() => {
-  //   ;
-  //   const subscription = watch((value, { name }) => {
-  //     if (name?.includes('term')) return;
-  //     void trigger();
-  //   });
-
-  //   return () => subscription.unsubscribe();
-  // }, [watch, trigger]);
+  const { handleSubmit, control, setError, reset, getValues, setValue } =
+    useForm<ProductUpdateRequest>({
+      mode: 'all',
+      reValidateMode: 'onSubmit',
+      criteriaMode: 'all',
+      defaultValues,
+      resolver: yupResolver(productUpdateValidationSchema),
+    });
 
   const { fields, append } = useFieldArray({
     control,
@@ -801,7 +781,7 @@ function ActionButton({
   const hasErrors = Object.keys(errors).length > 0;
   const isDirty = Object.keys(dirtyFields).length > 0;
 
-  const isButtonDisabled = () => isSubmitting || !isDirty || hasErrors;
+  const isButtonDisabled = () => isSubmitting || !isDirty;
   return (
     <Grid
       item

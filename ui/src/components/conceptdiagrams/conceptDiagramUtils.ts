@@ -19,14 +19,16 @@ import Konva from 'konva';
 import {
   AxiomRelationshipNewConcept,
   Concept,
-  newConceptBorderColor,
   NewConceptDetails,
-  removedConceptBorderColor,
   SnowstormRelationship,
   SnowstormRelationshipNewOrRemoved,
 } from '../../types/concept';
 import { Layer } from 'konva/lib/Layer';
 import { RefObject } from 'react';
+import {
+  newConceptBorderColor,
+  removedConceptBorderColor,
+} from '../../pages/products/components/style/colors';
 
 export function drawSctBox(
   layer: Layer,
