@@ -74,6 +74,7 @@ import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import au.gov.digitalhealth.lingo.util.NmpcConstants;
 import au.gov.digitalhealth.lingo.util.NmpcType;
 import au.gov.digitalhealth.lingo.util.SnomedConstants;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -170,7 +171,8 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
     return ingredient;
   }
 
-  private static void populateDoseForm(
+  private void populateDoseForm(
+      String branch,
       String productId,
       Map<String, SnowstormConcept> browserMap,
       Map<String, String> typeMap,
@@ -178,11 +180,11 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
       SnowstormConcept product,
       MedicationProductDetails productDetails) {
 
-    Set<SnowstormConcept> mpuu;
+    Set<SnowstormConcept> mpuuCandiates;
 
     Set<SnowstormRelationship> productRelationships = getRelationshipsFromAxioms(product);
 
-    mpuu =
+    mpuuCandiates =
         filterActiveStatedRelationshipByType(productRelationships, IS_A.getValue()).stream()
             .filter(
                 r ->
@@ -196,15 +198,47 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
             .map(r -> browserMap.get(r.getTarget().getConceptId()))
             .collect(Collectors.toSet());
 
-    if (mpuu.size() != 1) {
-      throw new AtomicDataExtractionProblem(
-          "Expected 1 Clinical Drug level concept but found " + mpuu.size(), productId);
+    SnowstormConcept mpuu;
+
+    if (mpuuCandiates.size() == 1) {
+      mpuu = mpuuCandiates.iterator().next();
+    } else {
+      // try to look it up using ECL
+      Collection<String> ids =
+          snowStormApiClient.getConceptsIdsFromEcl(
+              branch,
+              modelConfiguration.getLeafUnbrandedProductModelLevel().getProductModelEcl(),
+              Long.parseLong(product.getConceptId()),
+              0,
+              100,
+              modelConfiguration.isExecuteEclAsStated());
+
+      if (ids.size() == 1) {
+        mpuu = browserMap.get(ids.iterator().next());
+      } else {
+        ids =
+            snowStormApiClient.getConceptsIdsFromEcl(
+                branch,
+                modelConfiguration.getLeafUnbrandedProductModelLevel().getProductModelEcl(),
+                Long.parseLong(product.getConceptId()),
+                0,
+                100,
+                false);
+        if (ids.size() == 1) {
+          mpuu = browserMap.get(ids.iterator().next());
+        } else if (ids.isEmpty()) {
+          throw new AtomicDataExtractionProblem(
+              "No Clinical Drug level concept found for product", productId);
+        } else {
+          throw new AtomicDataExtractionProblem(
+              "Expected 1 Clinical Drug level concept but found " + ids.size(), productId);
+        }
+      }
     }
 
     SnowstormConceptMini genericDoseForm =
         getSingleActiveTarget(
-            getRelationshipsFromAxioms(mpuu.stream().findFirst().orElseThrow()),
-            HAS_MANUFACTURED_DOSE_FORM.getValue());
+            getRelationshipsFromAxioms(mpuu), HAS_MANUFACTURED_DOSE_FORM.getValue());
 
     productDetails.setGenericForm(genericDoseForm);
     SnowstormConceptMini specificDoseForm =
@@ -402,7 +436,8 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
     boolean hasDoseForm =
         relationshipOfTypeExists(productRelationships, HAS_MANUFACTURED_DOSE_FORM.getValue());
     if (hasDoseForm) {
-      populateDoseForm(productId, browserMap, typeMap, modelConfiguration, product, productDetails);
+      populateDoseForm(
+          branch, productId, browserMap, typeMap, modelConfiguration, product, productDetails);
     }
 
     if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
