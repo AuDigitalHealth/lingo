@@ -35,7 +35,7 @@
     "ui:title": "Target Model",
     "ui:options": {
       "updateSchemaOnChange": true,
-      "hideDropdown": {
+      "disableDropdown": {
         "$eval": "formData.containedProducts?.[0]?.productDetails?.productName?.pt?.term?.length > 0"
       }
     }
