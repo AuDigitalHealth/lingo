@@ -29,7 +29,10 @@ import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.exception.AtomicDataExtractionProblem;
 import au.gov.digitalhealth.lingo.product.details.DeviceProductDetails;
 import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
+import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
@@ -74,12 +77,31 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
     return mpuu.iterator().next();
   }
 
-  private static SnowstormConceptMini getRootUnbrandedProduct(
+  private SnowstormConceptMini getRootUnbrandedProduct(
+      String branch,
       String productId,
       Map<String, SnowstormConcept> browserMap,
       Map<String, String> typeMap,
       SnowstormConceptMini mpuu,
       ModelConfiguration modelConfiguration) {
+
+    // if there is only one MP then it is the root type
+    String rootRefsetId =
+        modelConfiguration.getRootUnbrandedProductModelLevel().getReferenceSetIdentifier();
+
+    Optional<Entry<String, String>> rootTypeEntry =
+        typeMap.entrySet().stream().filter(e -> rootRefsetId.equals(e.getValue())).findFirst();
+
+    if (typeMap.entrySet().stream().filter(e -> rootRefsetId.equals(e.getValue())).count() == 1) {
+      return SnowstormDtoUtil.toSnowstormConceptMini(
+          browserMap.get(
+              rootTypeEntry
+                  .map(Map.Entry::getKey)
+                  .orElseThrow(
+                      () -> new AtomicDataExtractionProblem("Root type not found", productId))));
+    }
+
+    // otherwise we need to find the MP that is the root type first try the stated relationships
     Set<SnowstormConceptMini> mp =
         filterActiveStatedRelationshipByType(
                 getRelationshipsFromAxioms(browserMap.get(mpuu.getConceptId())), IS_A.getValue())
@@ -97,10 +119,15 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
             .map(SnowstormRelationship::getTarget)
             .collect(Collectors.toSet());
 
-    if (mp.size() != 1) {
-      throw new AtomicDataExtractionProblem("Expected 1 MP but found " + mp.size(), productId);
+    if (mp.size() == 1) {
+      return mp.iterator().next();
     }
-    return mp.iterator().next();
+
+    return snowStormApiClient.getConceptFromEcl(
+        branch,
+        modelConfiguration.getRootUnbrandedProductModelLevel().getProductModelEcl(),
+        Long.parseLong(mpuu.getConceptId()),
+        modelConfiguration.isExecuteEclAsStated());
   }
 
   @Override
@@ -139,6 +166,7 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
 
     productDetails.setDeviceType(
         getRootUnbrandedProduct(
+            branch,
             productId,
             browserMap,
             typeMap,

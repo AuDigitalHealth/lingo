@@ -16,7 +16,9 @@
 package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.gov.digitalhealth.lingo.util.NmpcType;
 import au.gov.digitalhealth.lingo.validation.OnlyOnePopulated;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -30,4 +32,14 @@ import lombok.EqualsAndHashCode;
 public class NutritionalProductDetails extends MedicationProductDetails {
   String newGenericProductName;
   SnowstormConceptMini targetPopulation;
+
+  public NutritionalProductDetails() {
+    this.type = "nutritional";
+  }
+
+  @JsonIgnore
+  @Override
+  public NmpcType getNmpcType() {
+    return NmpcType.NMPC_NUTRITIONAL_SUPPLEMENT;
+  }
 }

@@ -1,5 +1,5 @@
 import useUserStore from '../../../stores/UserStore';
-import { TaskStatus, Task } from '../../../types/task';
+import { Task, TaskStatus } from '../../../types/task';
 
 export interface UseReviewProps {
   task: Task | null | undefined;
@@ -15,7 +15,7 @@ export function useIsReviewEnabled({ task }: UseReviewProps) {
   });
   const isUserReviewer =
     userInReviewList !== undefined && userInReviewList.length > 0;
-  debugger;
+
   const isReviewDisabled = !inReview || !isUserReviewer;
 
   return !isReviewDisabled;

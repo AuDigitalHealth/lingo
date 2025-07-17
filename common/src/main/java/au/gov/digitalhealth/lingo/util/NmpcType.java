@@ -20,32 +20,25 @@ import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
 import lombok.Getter;
 
 /**
- * Enum representing constants specific to NMPC (National Medicines and Poisons Code) and their
- * associated metadata properties, such as relationship types and product classifications.
- *
- * <p>The constants encapsulate a value and a label, where the value is typically a unique
- * identifier and the label provides a descriptive name. These constants also include methods for
- * integration with Snowstorm, providing metadata like concept ID, preferred term, and fully
- * specified name.
- *
- * <p>Each constant implements the LingoConstants interface, ensuring consistency in methods for
- * retrieving values and labels, as well as checking the presence of a label.
+ * Enum representing the types of NMPC (National Medicines Product Classification) concepts. Each
+ * enum constant corresponds to a specific NMPC type with its value and label.
  */
 @Getter
-public enum NmpcConstants implements LingoConstants {
-  HAS_NMPC_PRODUCT_TYPE("680011000220100", "Has NMPC Product Type (attribute)"),
-  VIRTUAL_MEDICINAL_PRODUCT("660341000220102", "Virtual medicinal product (product)"),
-  ACTIVE_IMMUNITY_STIMULANT("318331000221102", "Active immunity stimulant role (role)");
+public enum NmpcType implements LingoConstants {
+  NMPC_DEVICE("680581000220102", "NMPC Device (qualifier value)"),
+  NMPC_MEDICATION("680591000220104", "NMPC Medication (qualifier value)"),
+  NMPC_VACCINE("680601000220106", "NMPC Vaccine (qualifier value))"),
+  NMPC_NUTRITIONAL_SUPPLEMENT("680611000220109", "NMPC Nutritional Supplement (qualifier value)");
 
   private final String value;
   private final String label;
 
-  NmpcConstants(String value) {
+  NmpcType(String value) {
     this.value = value;
     this.label = null;
   }
 
-  NmpcConstants(String value, String label) {
+  NmpcType(String value, String label) {
     this.value = value;
     this.label = label;
   }

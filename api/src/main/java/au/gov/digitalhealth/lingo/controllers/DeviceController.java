@@ -20,14 +20,12 @@ import au.gov.digitalhealth.lingo.product.ProductCreationDetails;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.ProductUpdateDetails;
 import au.gov.digitalhealth.lingo.product.details.DeviceProductDetails;
-import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.service.DeviceService;
 import au.gov.digitalhealth.lingo.service.ProductCalculationServiceFactory;
 import au.gov.digitalhealth.lingo.service.ProductCreationService;
 import au.gov.digitalhealth.lingo.service.ProductUpdateService;
 import au.gov.digitalhealth.lingo.service.TaskManagerService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.util.concurrent.ExecutionException;
@@ -130,8 +128,8 @@ public class DeviceController {
   public ProductSummary updateMedicationProductFromAtomicData(
       @PathVariable String branch,
       @PathVariable Long productId,
-      @RequestBody @Valid PackageDetails<@Valid MedicationProductDetails> productDetails)
-      throws ExecutionException, InterruptedException, JsonProcessingException {
+      @RequestBody @Valid PackageDetails<@Valid DeviceProductDetails> productDetails)
+      throws ExecutionException, InterruptedException {
     taskManagerService.validateTaskState(branch);
     return productUpdateService.calculateUpdateProductFromAtomicData(
         branch, productId, productDetails);
