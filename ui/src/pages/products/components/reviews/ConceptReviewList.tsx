@@ -29,7 +29,7 @@ function ConceptReviewList() {
   const showReviewControls = useShowReviewControls({ task });
   const approveReviewMutation = useApproveReviewMutation();
 
-  const { unreadConceptIds } = useFeedbackUnread(projectKey, taskKey, true);
+  const { data: unreadConceptIds } = useFeedbackUnread(projectKey, taskKey, true);
 
   if (!showReviewControls) {
     return <></>;

@@ -14,8 +14,8 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import React, { useRef, useState } from 'react';
-
+import React, { useEffect, useRef, useState } from 'react';
+import {Task} from '../../../../types/task.ts';
 import { Ticket } from '../../../../types/tickets/ticket.ts';
 import {
   ConceptReview,
@@ -130,13 +130,21 @@ function ConceptReviews({ conceptReview }: ConceptReviewsProps) {
       reviewedList: updatedReviewedList,
     });
   };
+
+  // useEffect(() => {
+  //   console.log(conceptReview);
+  //   debugger;
+  // }, [conceptReview]);
+  console.log(conceptReview);
   return (
     <>
-      <ReviewMessageModal
+    {task && messageModalOpen && <ReviewMessageModal
         open={messageModalOpen}
         handleClose={handleToggleMessageModalOpen}
         conceptReview={conceptReview}
-      />
+        task={task}
+      />}
+      
       <Grid container justifyContent="flex-end" alignItems="center">
         {conceptReview.unread ? (
           <Tooltip title="Unread">
@@ -220,17 +228,18 @@ interface ReviewMessageModalProps {
   conceptReview: ConceptReview;
   open: boolean;
   handleClose: (e: React.MouseEvent) => void;
+  task: Task;
 }
 function ReviewMessageModal({
   conceptReview,
   open,
   handleClose,
+  task
 }: ReviewMessageModalProps) {
   const messages = conceptReview?.reviews?.messages;
-  const task = useTaskByKey();
   const projectKey = task?.projectKey;
   const taskKey = task?.key;
-  const { unreadConceptIds } = useFeedbackUnread(projectKey, taskKey, true);
+  const { data: unreadConceptIds, isPending: isFeedUnreadPending } = useFeedbackUnread(projectKey, taskKey, true);
   const hasUnread = unreadConceptIds?.includes(
     conceptReview.conceptId as string,
   );
@@ -249,6 +258,26 @@ function ReviewMessageModal({
       conceptIds: updatedConceptIds,
     });
   };
+
+  useEffect(() => {
+    if(hasUnread){
+      const tempConceptIds = unreadConceptIds || [];
+      const thisConceptId = conceptReview?.conceptId as string;
+
+      const updatedConceptIds = tempConceptIds.includes(thisConceptId)
+      ? tempConceptIds.filter(id => id !== thisConceptId)
+      : [...tempConceptIds, thisConceptId];
+
+      mutation.mutate({
+        projectKey: projectKey as string,
+        taskKey: taskKey as string,
+        conceptIds: updatedConceptIds,
+      });
+    }
+    // it is meant to only run once on render
+    // eslint-disable-next-line
+  }, []);
+
   return (
     <>
       <BaseModal open={open} handleClose={handleClose}>
@@ -277,7 +306,7 @@ function ReviewMessageModal({
               sx={{ color: '#fff' }}
               onClick={handleToggleFeedbackRead}
               variant="contained"
-              loading={mutation.isPending}
+              loading={mutation.isPending || isFeedUnreadPending}
             >
               {hasUnread ? 'Mark Feedback Read' : 'Mark Feedback Unread'}
             </LoadingButton>
@@ -378,7 +407,8 @@ function ReviewMessageEditor({ conceptId }: ReviewMessageEditorProps) {
   const task = useTaskByKey();
   const projectKey = task?.projectKey;
   const taskKey = task?.key;
-  const mutation = usePostReviewMessageMutation();
+  const mutation = usePostReviewMessageMutation({projectKey: projectKey as string, taskKey: taskKey as string});
+  const {isPending: isFeedUnreadPending} = useFeedbackUnread(projectKey, taskKey, true);
   const extensions = useExtensions({
     placeholder: 'Add your comment here...',
   });
@@ -403,6 +433,7 @@ function ReviewMessageEditor({ conceptId }: ReviewMessageEditorProps) {
         projectKey: projectKey as string,
         taskKey: taskKey as string,
         message,
+        conceptId
       },
       {
         onSuccess: () => {
@@ -476,7 +507,7 @@ function ReviewMessageEditor({ conceptId }: ReviewMessageEditorProps) {
                     control={
                       <Checkbox
                         checked={requestFollowUp}
-                        disabled={mutation.isPending}
+                        disabled={mutation.isPending || isFeedUnreadPending}
                         onClick={() => {
                           setRequestFollowUp(!requestFollowUp);
                         }}
@@ -489,8 +520,8 @@ function ReviewMessageEditor({ conceptId }: ReviewMessageEditorProps) {
                     variant="contained"
                     size="small"
                     onClick={handleSubmitEditor}
-                    loading={mutation.isPending}
-                    disabled={mutation.isPending}
+                    loading={mutation.isPending || isFeedUnreadPending}
+                    disabled={mutation.isPending || isFeedUnreadPending}
                     sx={{ color: 'white' }}
                   >
                     Save
