@@ -10,7 +10,7 @@ schedules:
   always: true
 
 pool:
-  name: medium-spot-agent-pool
+  name: ncts-k8s-dedicated-pool
 
 variables:
   mavenCache: $(Pipeline.Workspace)/.m2/repository
