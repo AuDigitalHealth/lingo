@@ -1,13 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Form } from '@rjsf/mui';
-import {
-  Box,
-  Button,
-  Container,
-  FormControlLabel,
-  Paper,
-  Switch,
-} from '@mui/material';
+import { Box, Button, Container, FormControlLabel, Paper, Switch } from '@mui/material';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import _ from 'lodash';
 import ajvErrors from 'ajv-errors';
@@ -22,7 +15,9 @@ import TextFieldWidget from './widgets/TextFieldWidget.tsx';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 import productService from '../../../api/ProductService.ts';
 import { ConfigService } from '../../../api/ConfigService.ts';
-import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
+import {
+  isValueSetExpansionContains
+} from '../../../types/predicates/isValueSetExpansionContains.ts';
 import { customizeValidator } from '@rjsf/validator-ajv8';
 import { Concept } from '../../../types/concept.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
@@ -32,7 +27,7 @@ import {
   DevicePackageDetails,
   ProductActionType,
   ProductSaveDetails,
-  ProductType,
+  ProductType
 } from '../../../types/product.ts';
 
 import { useTicketProductQuery } from './hooks/useTicketProductQuery.ts';
@@ -82,6 +77,7 @@ function DeviceAuthoring({
     loadingPreview,
     isProductUpdate,
     setIsProductUpdate,
+    handleClearForm
   } = useAuthoringStore();
 
   const { isLoading, isFetching } = useProductQuery({
@@ -148,6 +144,8 @@ function DeviceAuthoring({
     if (formRef.current) {
       formRef.current.reset();
     }
+    setMode(prevState => 'create');
+    handleClearForm();
   }, []);
 
   // Clear form data when task changes
