@@ -15,7 +15,7 @@ import {
   useTheme,
 } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
-import {Task} from '../../../../types/task.ts';
+import { Task } from '../../../../types/task.ts';
 import { Ticket } from '../../../../types/tickets/ticket.ts';
 import {
   ConceptReview,
@@ -138,13 +138,15 @@ function ConceptReviews({ conceptReview }: ConceptReviewsProps) {
   console.log(conceptReview);
   return (
     <>
-    {task && messageModalOpen && <ReviewMessageModal
-        open={messageModalOpen}
-        handleClose={handleToggleMessageModalOpen}
-        conceptReview={conceptReview}
-        task={task}
-      />}
-      
+      {task && messageModalOpen && (
+        <ReviewMessageModal
+          open={messageModalOpen}
+          handleClose={handleToggleMessageModalOpen}
+          conceptReview={conceptReview}
+          task={task}
+        />
+      )}
+
       <Grid container justifyContent="flex-end" alignItems="center">
         {conceptReview.unread ? (
           <Tooltip title="Unread">
@@ -234,12 +236,13 @@ function ReviewMessageModal({
   conceptReview,
   open,
   handleClose,
-  task
+  task,
 }: ReviewMessageModalProps) {
   const messages = conceptReview?.reviews?.messages;
   const projectKey = task?.projectKey;
   const taskKey = task?.key;
-  const { data: unreadConceptIds, isPending: isFeedUnreadPending } = useFeedbackUnread(projectKey, taskKey, true);
+  const { data: unreadConceptIds, isPending: isFeedUnreadPending } =
+    useFeedbackUnread(projectKey, taskKey, true);
   const hasUnread = unreadConceptIds?.includes(
     conceptReview.conceptId as string,
   );
@@ -260,13 +263,13 @@ function ReviewMessageModal({
   };
 
   useEffect(() => {
-    if(hasUnread){
+    if (hasUnread) {
       const tempConceptIds = unreadConceptIds || [];
       const thisConceptId = conceptReview?.conceptId as string;
 
       const updatedConceptIds = tempConceptIds.includes(thisConceptId)
-      ? tempConceptIds.filter(id => id !== thisConceptId)
-      : [...tempConceptIds, thisConceptId];
+        ? tempConceptIds.filter(id => id !== thisConceptId)
+        : [...tempConceptIds, thisConceptId];
 
       mutation.mutate({
         projectKey: projectKey as string,
@@ -407,8 +410,15 @@ function ReviewMessageEditor({ conceptId }: ReviewMessageEditorProps) {
   const task = useTaskByKey();
   const projectKey = task?.projectKey;
   const taskKey = task?.key;
-  const mutation = usePostReviewMessageMutation({projectKey: projectKey as string, taskKey: taskKey as string});
-  const {isPending: isFeedUnreadPending} = useFeedbackUnread(projectKey, taskKey, true);
+  const mutation = usePostReviewMessageMutation({
+    projectKey: projectKey as string,
+    taskKey: taskKey as string,
+  });
+  const { isPending: isFeedUnreadPending } = useFeedbackUnread(
+    projectKey,
+    taskKey,
+    true,
+  );
   const extensions = useExtensions({
     placeholder: 'Add your comment here...',
   });
@@ -433,7 +443,7 @@ function ReviewMessageEditor({ conceptId }: ReviewMessageEditorProps) {
         projectKey: projectKey as string,
         taskKey: taskKey as string,
         message,
-        conceptId
+        conceptId,
       },
       {
         onSuccess: () => {

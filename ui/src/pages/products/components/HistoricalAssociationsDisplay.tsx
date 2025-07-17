@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore';
-import { Product, newConceptBorderColor } from '../../../types/concept';
+import { Product } from '../../../types/concept';
 import { RefsetMember } from '../../../types/RefsetMember';
 import { Tooltip } from '@mui/material';
 import { Box } from '@mui/material';
@@ -8,6 +8,7 @@ import { OpenInNew, Warning } from '@mui/icons-material';
 import { Typography } from '@mui/material';
 import { Stack } from '@mui/material';
 import { Paper } from '@mui/material';
+import { newConceptBorderColor } from './style/colors';
 
 interface HistoricalAssociationsDisplayProps {
   product: Product;
