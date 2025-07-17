@@ -39,7 +39,19 @@ public abstract class ProductDetails extends PackageProductDetailsBase {
   @NotNull SnowstormConceptMini productName;
   SnowstormConceptMini deviceType;
   String otherIdentifyingInformation;
-  public abstract String getProductType();
+
+  /**
+   * This is the particular style of product, presentation strength, concentration strength, no
+   * strength etc.
+   */
+  ProductTemplate productType;
+
+  /**
+   * The type of product, e.g. "medication", "device", "vaccine", "nutritional". This is used to in
+   * Jackson serialization to determine the concrete class type.
+   */
+  String type;
+
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
     Map<String, String> idMap = new HashMap<>();
@@ -67,4 +79,6 @@ public abstract class ProductDetails extends PackageProductDetailsBase {
   protected abstract Map<String, String> getSpecialisedIdFsnMap();
 
   public abstract boolean hasDeviceType();
+
+  public abstract ProductTemplate getProductType();
 }

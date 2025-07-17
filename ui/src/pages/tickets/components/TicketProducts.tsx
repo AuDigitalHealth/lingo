@@ -2,19 +2,10 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { DataTable } from 'primereact/datatable';
 
 import { Column } from 'primereact/column';
-import {
-  ProductStatus,
-  ProductTableRow,
-} from '../../../types/TicketProduct.ts';
+import { ProductStatus, ProductTableRow } from '../../../types/TicketProduct.ts';
 import { Link, useNavigate } from 'react-router-dom';
 import { ActionType, ProductType } from '../../../types/product.ts';
-import {
-  Grid,
-  IconButton,
-  InputLabel,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { Grid, IconButton, InputLabel, Tooltip, Typography } from '@mui/material';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import { AddCircle, Delete } from '@mui/icons-material';
 import UnableToEditTooltip from '../../tasks/components/UnableToEditTooltip.tsx';
@@ -23,7 +14,7 @@ import { useCanEditTicket } from '../../../hooks/api/tickets/useCanEditTicket.ts
 import {
   filterProductRowById,
   mapToProductDetailsArray,
-  mapToProductDetailsArrayFromBulkActions,
+  mapToProductDetailsArrayFromBulkActions
 } from '../../../utils/helpers/ticketProductsUtils.ts';
 import useCanEditTask from '../../../hooks/useCanEditTask.tsx';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
@@ -100,7 +91,6 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
   // Create a memoized version of data that includes the active status
   const enrichedData = useMemo(() => {
     if (!activeConceptIds) return data;
-
     return data.map(row => ({
       ...row,
       isActive: row.conceptId
@@ -236,7 +226,6 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
     (rowData: ProductTableRow) => {
       const activeIds = activeConceptIds ? activeConceptIds.items : [];
 
-      debugger;
       if (isProductUpdate(rowData)) {
         return (
           <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
@@ -353,7 +342,7 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
                   navigate('product');
                 }}
               >
-                <Tooltip title={'Create new product'}>
+                <Tooltip title={'Create and manage product'}>
                   <AddCircle fontSize="medium" />
                 </Tooltip>
               </IconButton>

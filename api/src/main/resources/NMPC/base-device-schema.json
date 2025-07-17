@@ -90,7 +90,7 @@
       "properties": {
         "type": {
           "type": "string",
-          "default": "device"
+          "const": "device"
         },
         "productName": {
           "$ref": "#/$defs/SnowstormConceptMini",

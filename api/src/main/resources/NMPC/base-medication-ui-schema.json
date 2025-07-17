@@ -97,11 +97,11 @@
                 { "label": "No Strength", "value": "noStrength" }
               ],
               "vaccine": [
-                { "label": "Vaccine Presentation", "value": "vaccinePresentation" },
-                { "label": "Vaccine Qualitative", "value": "vaccineQualitative" }
+                { "label": "Vaccine Presentation", "value": "presentationStrength" },
+                { "label": "Vaccine Qualitative", "value": "noStrength" }
               ],
               "nutritional": [
-                { "label": "Nutritional No Strength", "value": "nutritionalNoStrength" }
+                { "label": "Nutritional No Strength", "value": "noIngredients" }
               ]
             }
           }
