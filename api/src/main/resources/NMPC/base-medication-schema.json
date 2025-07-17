@@ -255,10 +255,11 @@
                         "items": { "$ref": "#/$defs/PresentationStrengthIngredient" }
                       },
                       "targetPopulation": { "type": ["object", "null"], "$ref": "#/$defs/SnowstormConceptMini", "title": "Target Population" },
+                      "unitOfPresentation": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Unit of Presentation" },
                       "ingredientQualitativeStrength": { "type": ["object", "null"], "$ref": "#/$defs/SnowstormConceptMini", "title": "Qualitative Strength" },
                       "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/VACCINE_PRODUCT_NonDefiningProperty" }, "title": "Non Defining Properties" }
                     },
-                    "required": ["productName", "genericForm", "productType", "activeIngredients"],
+                    "required": ["productName", "genericForm", "productType", "activeIngredients", "unitOfPresentation"],
                     "additionalProperties": false
                   },
                   {

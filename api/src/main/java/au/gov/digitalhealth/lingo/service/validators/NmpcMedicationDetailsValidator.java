@@ -262,7 +262,7 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
             "when unit of presentation does not exists");
       } else {
         throw new ProductAtomicDataValidationProblem(
-            "Vaccine must have either a unit of presentation set");
+            "Vaccine must have a unit of presentation set");
       }
     } else if (nutritionalProduct) {
       validateStrengthNotPopulated(
