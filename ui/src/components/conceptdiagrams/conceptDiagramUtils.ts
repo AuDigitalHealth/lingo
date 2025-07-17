@@ -23,7 +23,7 @@ import {
   NewConceptDetails,
   removedConceptBorderColor,
   SnowstormRelationship,
-  SnowstormRelationshipNewOrRemoved
+  SnowstormRelationshipNewOrRemoved,
 } from '../../types/concept';
 import { Layer } from 'konva/lib/Layer';
 import { RefObject } from 'react';

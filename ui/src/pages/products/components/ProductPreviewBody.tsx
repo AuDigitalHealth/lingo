@@ -88,7 +88,11 @@ function ProductPreviewBody({
                 message={`Loading box model for [${getProductDisplayName(productModel)}]`}
               />
             ))}
-          <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 3 }}>
+          <Grid
+            container
+            rowSpacing={1}
+            columnSpacing={{ xs: 1, sm: 2, md: 3 }}
+          >
             <Grid xs={6} key={'left'} item={true}>
               {lableTypesLeft.map((label, index) => (
                 <ProductTypeGroupPreview
