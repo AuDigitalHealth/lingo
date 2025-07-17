@@ -167,7 +167,7 @@ function ProductPreviewSaveOrViewMode({
     reattachSemanticTags(clonedProductSummary);
     const newConcepts = clonedProductSummary?.nodes
       ?.filter(node => {
-        return node.newConceptDetails !== null;
+        return node.newConceptDetails !== null && !node.originalNode;
       })
       .map(node => {
         return node.newConceptDetails;
