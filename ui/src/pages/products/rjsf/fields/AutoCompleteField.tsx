@@ -149,6 +149,7 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
                     top: '0',
                   }}
                   disabled={disabled || false}
+                  tabIndex={-1}
                 >
                   <AddCircleOutlineIcon color="primary" />
                 </IconButton>
