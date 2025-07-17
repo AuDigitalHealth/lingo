@@ -1,30 +1,47 @@
 {
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://example.com/product-schema.json",
   "type": "object",
   "$defs": {
     "SnowstormConceptMini": {
       "type": "object",
       "properties": {
-        "conceptId": {
-          "type": "string"
-        },
-        "pt": {
-          "$ref": "#/$defs/SnowstormTermLangPojo"
-        }
+        "conceptId": { "type": "string" },
+        "pt": { "$ref": "#/$defs/SnowstormTermLangPojo" },
+        "fsn": { "$ref": "#/$defs/SnowstormTermLangPojo" }
       },
       "minProperties": 1,
-      "errorMessage": {
-        "minProperties": "Field must be populated."
-      }
+      "title": "Concept"
     },
     "SnowstormTermLangPojo": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "lang": {
-          "type": "string"
-        },
-        "term": {
-          "type": "string"
+        "lang": { "type": "string" },
+        "term": { "type": "string" }
+      },
+      "required": ["lang", "term"]
+    },
+    "UnitValueConstraint": {
+      "dependencies": {
+        "unit": {
+          "oneOf": [
+            {
+              "properties": {
+                "unit": { "properties": { "conceptId": { "const": "732935002" } } },
+                "value": { "type": "integer", "minimum": 1 }
+              },
+              "required": ["value"]
+            },
+            {
+              "properties": {
+                "unit": { "properties": { "conceptId": { "not": { "const": "732935002" } } } },
+                "value": { "type": "number", "minimum": 0 }
+              },
+              "required": ["value"]
+            }
+          ],
+          "errorMessage": { "oneOf": "Both 'unit' and 'value' must be provided" }
         }
       }
     },
@@ -33,298 +50,314 @@
       "nullable": true,
       "minProperties": 2,
       "properties": {
-        "unit": {
-          "type": [
-            "object",
-            "null"
-          ],
-          "$ref": "#/$defs/SnowstormConceptMini"
-        },
-        "value": {
-          "type": "number",
-          "minimum": 0
-        }
+        "unit": { "type": ["object", "null"], "$ref": "#/$defs/SnowstormConceptMini" },
+        "value": { "type": "number", "minimum": 0 }
       },
-      "errorMessage": {
-        "minProperties": "Both 'unit' and 'value' must be provided when specified."
-      },
-      "dependencies": {
-        "unit": {
-          "oneOf": [
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": {
-                      "const": "732935002"
-                    }
-                  }
-                },
-                "value": {
-                  "type": "integer",
-                  "minimum": 1
-                }
-              },
-              "required": [
-                "value"
-              ]
-            },
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": {
-                      "not": {
-                        "const": "732935002"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          ],
-          "errorMessage": {
-            "oneOf": "Must be an integer >= 1 when 'unit' is 'Each'"
-          }
-        }
-      }
+      "errorMessage": { "minProperties": "Both 'unit' and 'value' must be provided" },
+      "allOf": [{ "$ref": "#/$defs/UnitValueConstraint" }]
     },
-    "Ingredient": {
+    "PresentationStrengthIngredient": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "activeIngredient": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "VTM Active Ingredient",
-          "errorMessage": {
-            "minProperties": "Active Ingredient must be populated.",
-            "type": "Active Ingredient must be populated."
-          }
-        },
-        "refinedActiveIngredient": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "VMP Active Ingredient"
-        },
-        "preciseIngredient": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "AMP Active Ingredient"
-        },
-        "basisOfStrengthSubstance": {
-          "type": [
-            "object",
-            "null"
-          ],
-          "$ref": "#/$defs/SnowstormConceptMini"
-        },
-        "concentrationStrengthNumerator": {
-          "type": [
-            "object",
-            "null"
-          ],
-          "$ref": "#/$defs/Quantity",
-          "title": "Concentration Strength Numerator"
-        },
-        "concentrationStrengthDenominator": {
-          "type": [
-            "object",
-            "null"
-          ],
-          "$ref": "#/$defs/Quantity",
-          "title": "Concentration Strength Denominator"
-        },
-        "presentationStrengthNumerator": {
-          "type": [
-            "object",
-            "null"
-          ],
-          "$ref": "#/$defs/Quantity",
-          "title": "Presentation Strength Numerator"
-        },
-        "presentationStrengthDenominator": {
-          "type": [
-            "object",
-            "null"
-          ],
-          "$ref": "#/$defs/Quantity",
-          "title": "Presentation Strength Denominator"
-        }
+        "activeIngredient": { "$ref": "#/$defs/SnowstormConceptMini", "title": "VTM Active Ingredient" },
+        "refinedActiveIngredient": { "$ref": "#/$defs/SnowstormConceptMini", "title": "VMP Active Ingredient" },
+        "preciseIngredient": { "$ref": "#/$defs/SnowstormConceptMini", "title": "AMP Active Ingredient" },
+        "basisOfStrengthSubstance": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Basis of Strength Substance" },
+        "presentationStrengthNumerator": { "$ref": "#/$defs/Quantity", "title": "Presentation Strength Numerator" },
+        "presentationStrengthDenominator": { "$ref": "#/$defs/Quantity", "title": "Presentation Strength Denominator" }
       },
       "required": [
         "activeIngredient",
         "refinedActiveIngredient",
-        "preciseIngredient"
+        "preciseIngredient",
+        "basisOfStrengthSubstance",
+        "presentationStrengthNumerator",
+        "presentationStrengthDenominator"
       ]
     },
-    "ProductDetails": {
+    "ConcentrationStrengthIngredient": {
       "type": "object",
-      "title": "Product Details",
+      "additionalProperties": false,
       "properties": {
-        "type": {
-          "type": "string",
-          "const": "medication"
-        },
-        "productName": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "Brand Name",
-          "minProperties": 1,
-          "errorMessage": {
-            "minProperties": "Brand Name must be populated."
-          }
-        },
-        "activeIngredients": {
-          "type": "array",
-          "title": "Active Ingredients",
-          "items": {
-            "$ref": "#/$defs/Ingredient"
-          },
-          "minItems": 1,
-          "errorMessage": {
-            "minItems": "At least one active ingredient must be present."
-          }
-        },
-        "genericForm": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "Generic Dose Form",
-          "minProperties": 2,
-          "errorMessage": {
-            "minProperties": "Generic Dose Form must be populated."
-          }
-        },
-        "specificForm": {
-          "type": [
-            "object",
-            "null"
-          ],
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "Specific Dose Form"
-        },
-        "unitOfPresentation": {
-          "type": [
-            "object",
-            "null"
-          ],
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "title": "Unit of Presentation"
-        }
+        "activeIngredient": { "$ref": "#/$defs/SnowstormConceptMini", "title": "VTM Active Ingredient" },
+        "refinedActiveIngredient": { "$ref": "#/$defs/SnowstormConceptMini", "title": "VMP Active Ingredient" },
+        "preciseIngredient": { "$ref": "#/$defs/SnowstormConceptMini", "title": "AMP Active Ingredient" },
+        "basisOfStrengthSubstance": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Basis of Strength Substance" },
+        "concentrationStrengthNumerator": { "$ref": "#/$defs/Quantity", "title": "Concentration Strength Numerator" },
+        "concentrationStrengthDenominator": { "$ref": "#/$defs/Quantity", "title": "Concentration Strength Denominator" }
       },
       "required": [
-        "productName",
-        "genericForm",
-        "activeIngredients"
-      ],
-      "errorMessage": {
-        "required": "Product Details must be populated."
-      }
+        "activeIngredient",
+        "refinedActiveIngredient",
+        "preciseIngredient",
+        "basisOfStrengthSubstance",
+        "concentrationStrengthNumerator",
+        "concentrationStrengthDenominator"
+      ]
     },
-    "ContainedProduct": {
+    "NoStrengthIngredient": {
       "type": "object",
-      "title": "Contained Product",
+      "additionalProperties": false,
       "properties": {
-        "unit": {
-          "$ref": "#/$defs/SnowstormConceptMini",
-          "errorMessage": {
-            "type": "Invalid Pack Size Unit",
-            "minProperties": "Field must be populated."
-          }
-        },
-        "value": {
-          "type": "number",
-          "minimum": 0,
-          "errorMessage": {
-            "type": "Value must be a number",
-            "minimum": "Value must be at least 0"
-          }
-        },
-        "productDetails": {
-          "$ref": "#/$defs/ProductDetails"
-        }
+        "activeIngredient": { "$ref": "#/$defs/SnowstormConceptMini", "title": "VTM Active Ingredient" }
       },
-      "required": [
-        "unit",
-        "value",
-        "productDetails"
-      ],
-      "errorMessage": {
-        "required": "Contained product must be populated."
-      },
-      "dependencies": {
-        "unit": {
-          "oneOf": [
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": {
-                      "const": "732935002",
-                      "errorMessage": {
-                        "const": "Invalid Unit and Value"
-                      }
-                    }
-                  },
-                  "required": [
-                    "conceptId"
-                  ]
-                },
-                "value": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "errorMessage": {
-                    "type": "Value must be an integer when Unit is 'Each'",
-                    "const": "Unit must be 'Each' for this value constraint"
-                  }
-                }
-              },
-              "errorMessage": {
-                "oneOf": "Unit must be 'Each' with an integer value >= 1"
-              }
-            },
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": {
-                      "not": {
-                        "const": "732935002"
-                      }
-                    }
-                  }
-                },
-                "value": {
-                  "type": "number",
-                  "minimum": 0,
-                  "errorMessage": {
-                    "type": "Value must be a number ",
-                    "minimum": "Value must be at least 0"
-                  }
-                }
-              },
-              "errorMessage": {
-                "oneOf": "Unit must not be 'Each' and value must be a number >= 0"
-              }
-            }
-          ]
-        }
-      }
+      "required": ["activeIngredient"]
     }
   },
   "properties": {
-    "containedProducts": {
-      "type": "array",
-      "title": "Contained Products",
-      "items": {
-        "$ref": "#/$defs/ContainedProduct"
-      },
-      "minItems": 1,
-      "errorMessage": {
-        "minItems": "At least one Contained Products."
-      }
+    "variant": {
+      "type": "string",
+      "enum": ["medication", "vaccine", "nutritional"],
+      "enumNames": ["Medication", "Vaccine", "Nutritional"],
+      "default": "medication",
+      "title": "Target Model"
     }
   },
-  "required": [
-    "containedProducts"
+  "required": ["variant", "containedProducts"],
+  "discriminator": { "propertyName": "variant" },
+  "oneOf": [
+    {
+      "title": "Medication",
+      "properties": {
+        "variant": { "const": "medication" },
+        "containedProducts": {
+          "type": "array",
+          "minItems": 1,
+          "title": "Contained Products",
+          "items": {
+            "type": "object",
+            "properties": {
+              "unit": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Unit" },
+              "value": { "type": "number", "minimum": 0, "title": "Value" },
+              "productDetails": {
+                "type": "object",
+                "properties": {
+                  "productType": {
+                    "type": "string",
+                    "enum": ["presentationStrength", "concentrationStrength", "noStrength"],
+                    "enumNames": ["Presentation Strength", "Concentration Strength", "No Strength"],
+                    "default": "presentationStrength",
+                    "title": "Product Type"
+                  }
+                },
+                "required": ["productType"],
+                "discriminator": { "propertyName": "productType" },
+                "oneOf": [
+                  {
+                    "title": "Presentation Strength",
+                    "properties": {
+                      "productType": { "const": "presentationStrength" },
+                      "productName": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Brand Name" },
+                      "genericForm": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Generic Dose Form" },
+                      "specificForm": { "type": ["object", "null"], "nullable": true, "$ref": "#/$defs/SnowstormConceptMini", "title": "Specific Dose Form" },
+                      "type": { "type": "string", "const": "medication" },
+                      "activeIngredients": {
+                        "type": "array",
+                        "minItems": 1,
+                        "title": "Ingredients",
+                        "items": { "$ref": "#/$defs/PresentationStrengthIngredient" }
+                      },
+                      "unitOfPresentation": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Unit of Presentation" },
+                      "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PRODUCT_NonDefiningProperty" }, "title": "Non Defining Properties" }
+                    },
+                    "required": ["productName", "genericForm", "productType", "activeIngredients", "unitOfPresentation"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "title": "Concentration Strength",
+                    "properties": {
+                      "productType": { "const": "concentrationStrength" },
+                      "productName": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Brand Name" },
+                      "genericForm": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Generic Dose Form" },
+                      "specificForm": { "type": ["object", "null"], "nullable": true, "$ref": "#/$defs/SnowstormConceptMini", "title": "Specific Dose Form" },
+                      "type": { "type": "string", "const": "medication" },
+                      "activeIngredients": {
+                        "type": "array",
+                        "minItems": 1,
+                        "title": "Ingredients",
+                        "items": { "$ref": "#/$defs/ConcentrationStrengthIngredient" }
+                      },
+                      "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PRODUCT_NonDefiningProperty" }, "title": "Non Defining Properties" }
+                    },
+                    "required": ["productName", "genericForm", "productType", "activeIngredients"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "title": "No Strength",
+                    "properties": {
+                      "productType": { "const": "noStrength" },
+                      "productName": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Brand Name" },
+                      "genericForm": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Generic Dose Form" },
+                      "specificForm": { "type": ["object", "null"], "nullable": true, "$ref": "#/$defs/SnowstormConceptMini", "title": "Specific Dose Form" },
+                      "type": { "type": "string", "const": "medication" },
+                      "activeIngredients": {
+                        "type": "array",
+                        "minItems": 1,
+                        "title": "Ingredients",
+                        "items": { "$ref": "#/$defs/NoStrengthIngredient" }
+                      },
+                      "unitOfPresentation": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Unit of Presentation" },
+                      "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PRODUCT_NonDefiningProperty" }, "title": "Non Defining Properties" }
+                    },
+                    "required": ["productName", "existingMedicinalProduct", "genericForm", "productType", "activeIngredients", "unitOfPresentation"],
+                    "additionalProperties": false
+                  }
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": ["unit", "value", "productDetails"],
+            "additionalProperties": false
+          }
+        },
+        "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PACKAGE_NonDefiningProperty" }, "title": "Non Defining Properties" }
+      },
+      "required": ["variant", "containedProducts"],
+      "additionalProperties": false
+    },
+    {
+      "title": "Vaccine",
+      "properties": {
+        "variant": { "const": "vaccine" },
+        "containedProducts": {
+          "type": "array",
+          "minItems": 1,
+          "title": "Contained Products",
+          "items": {
+            "type": "object",
+            "properties": {
+              "unit": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Unit" },
+              "value": { "type": "number", "minimum": 0, "title": "Value" },
+              "productDetails": {
+                "type": "object",
+                "properties": {
+                  "productType": {
+                    "type": "string",
+                    "enum": ["presentationStrength", "noStrength"],
+                    "enumNames": ["Presentation Strength", "No Strength"],
+                    "default": "presentationStrength",
+                    "title": "Product Template"
+                  }
+                },
+                "required": ["productType"],
+                "discriminator": { "propertyName": "productType" },
+                "oneOf": [
+                  {
+                    "title": "Vaccine Presentation Strength",
+                    "properties": {
+                      "productType": { "const": "presentationStrength" },
+                      "productName": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Brand Name" },
+                      "genericForm": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Generic Dose Form" },
+                      "specificForm": { "type": ["object", "null"], "nullable": true, "$ref": "#/$defs/SnowstormConceptMini", "title": "Specific Dose Form" },
+                      "type": { "type": "string", "const": "vaccine" },
+                      "activeIngredients": {
+                        "type": "array",
+                        "minItems": 1,
+                        "title": "Ingredients",
+                        "items": { "$ref": "#/$defs/PresentationStrengthIngredient" }
+                      },
+                      "targetPopulation": { "type": ["object", "null"], "$ref": "#/$defs/SnowstormConceptMini", "title": "Target Population" },
+                      "unitOfPresentation": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Unit of Presentation" },
+                      "ingredientQualitativeStrength": { "type": ["object", "null"], "$ref": "#/$defs/SnowstormConceptMini", "title": "Qualitative Strength" },
+                      "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/VACCINE_PRODUCT_NonDefiningProperty" }, "title": "Non Defining Properties" }
+                    },
+                    "required": ["productName", "genericForm", "productType", "activeIngredients", "unitOfPresentation"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "title": "Vaccine Qualitative Strength",
+                    "properties": {
+                      "productType": { "const": "noStrength" },
+                      "productName": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Brand Name" },
+                      "genericForm": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Generic Dose Form" },
+                      "specificForm": { "type": ["object", "null"], "nullable": true, "$ref": "#/$defs/SnowstormConceptMini", "title": "Specific Dose Form" },
+                      "type": { "type": "string", "const": "vaccine" },
+                      "activeIngredients": {
+                        "type": "array",
+                        "minItems": 1,
+                        "title": "Ingredients",
+                        "items": { "$ref": "#/$defs/NoStrengthIngredient" }
+                      },
+                      "targetPopulation": { "type": ["object", "null"], "$ref": "#/$defs/SnowstormConceptMini", "title": "Target Population" },
+                      "ingredientQualitativeStrength": { "type": ["object", "null"], "$ref": "#/$defs/SnowstormConceptMini", "title": "Qualitative Strength" },
+                      "quantity": { "type": ["object", "null"], "$ref": "#/$defs/Quantity", "title": "Unit of Presentation Quantity" },
+                      "unitOfPresentation": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Unit of Presentation" },
+                      "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/VACCINE_PRODUCT_NonDefiningProperty" }, "title": "Non Defining Properties" }
+                    },
+                    "required": ["productName", "genericForm", "productType", "activeIngredients", "unitOfPresentation", "quantity"],
+                    "additionalProperties": false
+                  }
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": ["unit", "value", "productDetails"],
+            "additionalProperties": false
+          }
+        },
+        "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/VACCINE_PACKAGE_NonDefiningProperty" }, "title": "Non Defining Properties" }
+      },
+      "required": ["variant", "containedProducts"],
+      "additionalProperties": false
+    },
+    {
+      "title": "Nutritional Product",
+      "properties": {
+        "variant": { "const": "nutritional" },
+        "containedProducts": {
+          "type": "array",
+          "minItems": 1,
+          "title": "Contained Products",
+          "items": {
+            "type": "object",
+            "properties": {
+              "unit": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Unit" },
+              "value": { "type": "number", "minimum": 0, "title": "Value" },
+              "productDetails": {
+                "type": "object",
+                "properties": {
+                  "productType": {
+                    "type": "string",
+                    "enum": ["noIngredients"],
+                    "enumNames": ["No Ingredients"],
+                    "default": "noIngredients",
+                    "title": "Product Template"
+                  }
+                },
+                "required": ["productType"],
+                "discriminator": { "propertyName": "productType" },
+                "oneOf": [
+                  {
+                    "title": "Nutritional No Strength",
+                    "properties": {
+                      "productType": { "const": "noIngredients" },
+                      "productName": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Brand Name" },
+                      "genericForm": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Generic Dose Form" },
+                      "specificForm": { "type": ["object", "null"], "nullable": true, "$ref": "#/$defs/SnowstormConceptMini", "title": "Specific Dose Form" },
+                      "existingMedicinalProduct": { "type": ["object", "null"], "$ref": "#/$defs/SnowstormConceptMini", "title": "Existing VTM Level Concept"},
+                      "existingClinicalDrug": { "type": ["object", "null"], "$ref": "#/$defs/SnowstormConceptMini", "title": "Existing VMP Level Concept", "description": "If an existing VMP is available, select it here."},
+                      "newGenericProductName": { "type": "string", "title": "New Generic Product Name", "description": "If an existing VMP is not available, you can create a new generic product concept with this name."},
+                      "type": { "type": "string", "const": "nutritional" },
+                      "unitOfPresentation": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Unit of Presentation" },
+                      "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/NUTRITIONAL_PRODUCT_NonDefiningProperty" }, "title": "Non Defining Properties" }
+                    },
+                    "required": ["productName", "genericForm", "productType", "unitOfPresentation"],
+                    "additionalProperties": false
+                  }
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": ["unit", "value", "productDetails"],
+            "additionalProperties": false
+          }
+        },
+        "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/NUTRITIONAL_PACKAGE_NonDefiningProperty" }, "title": "Non Defining Properties" }
+      },
+      "required": ["variant", "containedProducts"],
+      "additionalProperties": false
+    }
   ],
-  "errorMessage": {
-    "required": "Fields must be populated."
-  },
   "additionalProperties": false
 }

@@ -1,12 +1,46 @@
 {
   "ui:grid": [
     {
+      "variant": 12
+    },
+    {
       "containedProducts": 24
     },
     {
       "nonDefiningProperties": 24
     }
   ],
+
+
+  "ui:options": {
+    "skipTitle": true,
+    "dynamicDiscriminatorOptions": {
+      "path": "",
+      "options": {
+        "medication": [
+          { "label": "Medication", "value": "medication" }
+        ],
+        "vaccine": [
+          { "label": "Vaccine", "value": "vaccine" }
+        ],
+        "nutritional": [
+          { "label": "Nutritional", "value": "nutritional" }
+        ]
+      }
+    }
+
+  },
+  "variant": {
+    "ui:widget": "select",
+    "ui:title": "Target Model",
+    "ui:options": {
+      "updateSchemaOnChange": true,
+      "disableDropdown": {
+        "$eval": "formData.containedProducts?.[0]?.productDetails?.productName?.pt?.term?.length > 0"
+      }
+    }
+  },
+
   "containedProducts": {
     "ui:options": {
       "arrayTemplate": "accordion",
@@ -24,20 +58,21 @@
         },
         {
           "value": 6,
-          "unit": 6,
-          "_empty": 12
+          "unit": 6
         }
       ],
       "ui:options": {
         "titleSource": "productDetails.productName.pt.term",
         "defaultTitle": "Product",
-        "skipTitle": true
+        "skipTitle": true,
+        "validateHiddenFields": false
       },
       "value": {
         "ui:widget": "text",
         "ui:options": {
           "inputType": "number",
-          "title": "Pack Size"
+          "title": "Pack Size",
+          "placeholder": "Enter pack size"
         }
       },
       "unit": {
@@ -45,17 +80,52 @@
         "ui:title": "Unit",
         "ui:options": {
           "ecl": "((<781405001 minus >(<781405001)) : (774160008 /* OR 999000081000168101 */) = *).774163005",
-          "showDefaultOptions": true
+          "showDefaultOptions": true,
+          "placeholder": "Select unit (e.g., Each)"
         }
       },
       "productDetails": {
         "ui:options": {
-          "skipTitle": true
+          "skipTitle": true,
+          "updateSchemaOnChange": true,
+          "dynamicDiscriminatorOptions": {
+            "path": "variant",
+            "options": {
+              "medication": [
+                { "label": "Presentation Strength", "value": "presentationStrength" },
+                { "label": "Concentration Strength", "value": "concentrationStrength" },
+                { "label": "No Strength", "value": "noStrength" }
+              ],
+              "vaccine": [
+                { "label": "Vaccine Presentation", "value": "presentationStrength" },
+                { "label": "Vaccine Qualitative", "value": "noStrength" }
+              ],
+              "nutritional": [
+                { "label": "Nutritional No Strength", "value": "noIngredients" }
+              ]
+            }
+          }
+        },
+        "type": {
+          "ui:widget": "hidden"
         },
         "ui:grid": [
           {
-            "productName": 12,
-            "genericForm": 12
+            "productType": 24
+          },
+          {
+            "productName": 24
+          },
+          {
+            "genericForm": 12,
+            "specificForm": 12
+          },
+          {
+            "existingMedicinalProduct": 12,
+            "existingClinicalDrug": 12
+          },
+          {
+            "newGenericProductName": 24
           },
           {
             "activeIngredients": 12,
@@ -65,238 +135,41 @@
         "_columnB": {
           "ui:grid": [
             {
-              "specificForm": 24
+              "unitOfPresentation": 24
             },
             {
-              "unitOfPresentation": 24
+              "quantity": 24
+            },
+            {
+              "targetPopulation": 24
+            },
+            {
+              "ingredientQualitativeStrength": 24
             },
             {
               "nonDefiningProperties": 24
             }
           ]
         },
-        "type": {
-          "ui:widget": "hidden",
+        "productType": {
+          "ui:widget": "select",
+          "ui:title": "Product Template",
           "ui:options": {
-            "skipTitle": true
+            "showOneOfLabel": false,
+            "updateSchemaOnChange": true
           }
         },
         "productName": {
           "ui:field": "AutoCompleteField",
+          "ui:title": "Brand Name",
           "ui:options": {
             "ecl": "<774167006",
-            "showDefaultOptions": true,
+            "showDefaultOptions": false,
             "createBrand": {
               "ecl": "<774167006",
               "semanticTags": "(product name)"
-            }
-          }
-        },
-        "activeIngredients": {
-          "ui:options": {
-            "skipTitle": true,
-            "arrayTemplate": "accordion"
-          },
-          "items": {
-            "ui:grid": [
-              {
-                "activeIngredient": 24
-              },
-              {
-                "refinedActiveIngredient": 24
-              },
-              {
-                "preciseIngredient": 24
-              },
-              {
-                "basisOfStrengthSubstance": 24
-              },
-              {
-                "concentrationStrengthNumerator": 24
-              },
-              {
-                "concentrationStrengthDenominator": 24
-              },
-              {
-                "presentationStrengthNumerator": 24
-              },
-              {
-                "presentationStrengthDenominator": 24
-              }
-            ],
-            "ui:options": {
-              "titleSource": "activeIngredient.pt.term",
-              "defaultTitle": "Ingredient",
-              "skipTitle": true
             },
-            "activeIngredient": {
-              "ui:field": "AutoCompleteField",
-              "ui:title": "VTM Active Ingredient",
-              "ui:options": {
-                "skipTitle": true,
-                "dependants": [
-                  {
-                    "path": "../refinedActiveIngredient",
-                    "ui:options": {
-                      "getEcl": "<<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent)) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))))",
-                      "showDefaultOptions": true
-                    }
-                  },
-                  {
-                    "path": "../basisOfStrengthSubstance",
-                    "ui:options": {
-                      "getEcl": "<<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent)) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))))",
-                      "getExtendedEcl": "<105590001",
-                      "showDefaultOptions": true
-                    }
-                  }
-                ],
-                "ecl": "(<763158003 {{ D term=\"medicinal product\" }}).127489000",
-                "extendedEcl": "<105590001",
-                "showDefaultOptions": false
-              }
-            },
-            "refinedActiveIngredient": {
-              "ui:field": "AutoCompleteField",
-              "ui:title": "VMP Active Ingredient",
-              "ui:options": {
-                "skipTitle": true,
-                "dependants": [
-                  {
-                    "path": "../preciseIngredient",
-                    "ui:options": {
-                      "getEcl": "<<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent)) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))) OR (<410942007:738774007=(<410942007:738774007=(<410942007:738774007=(<410942007:738774007=@parent))))",
-                      "showDefaultOptions": true
-                    }
-                  }
-                ]
-              }
-            },
-            "preciseIngredient": {
-              "ui:title": "AMP Ingredient",
-              "ui:field": "AutoCompleteField",
-              "ui:options": {
-                "skipTitle": true,
-                "showDefaultOptions": true
-              }
-            },
-            "basisOfStrengthSubstance": {
-              "ui:field": "AutoCompleteField",
-              "ui:title": "BoSS",
-              "ui:options": {
-                "showDefaultOptions": false,
-                "placeholder": "Basis of Strength Substance (Optional)",
-                "description": "Only enabled if Active Ingredient is set."
-              }
-            },
-            "concentrationStrengthNumerator": {
-              "ui:options": {
-                "skipTitle": true
-              },
-              "ui:grid": [
-                {
-                  "value": 12,
-                  "unit": 12
-                }
-              ],
-              "value": {
-                "ui:widget": "text",
-                "ui:title": "Concentration Strength Numerator",
-                "ui:options": {
-                  "inputType": "number"
-                }
-              },
-              "unit": {
-                "ui:field": "AutoCompleteField",
-                "ui:title": "Unit",
-                "ui:options": {
-                  "ecl": "(<763158003 minus >(<763158003)).733725009",
-                  "extendedEcl": "<767524001",
-                  "showDefaultOptions": true
-                }
-              }
-            },
-            "concentrationStrengthDenominator": {
-              "ui:options": {
-                "skipTitle": true
-              },
-              "ui:grid": [
-                {
-                  "value": 12,
-                  "unit": 12
-                }
-              ],
-              "value": {
-                "ui:widget": "text",
-                "ui:title": "Concentration Strength Denominator",
-                "ui:options": {
-                  "inputType": "number"
-                }
-              },
-              "unit": {
-                "ui:field": "AutoCompleteField",
-                "ui:title": "Unit",
-                "ui:options": {
-                  "ecl": "(<763158003 minus >(<763158003)).733722007",
-                  "extendedEcl": "<767524001",
-                  "showDefaultOptions": true
-                }
-              }
-            },
-            "presentationStrengthNumerator": {
-              "ui:options": {
-                "skipTitle": true
-              },
-              "ui:grid": [
-                {
-                  "value": 12,
-                  "unit": 12
-                }
-              ],
-              "value": {
-                "ui:widget": "text",
-                "ui:title": "Presentation Strength Numerator",
-                "ui:options": {
-                  "inputType": "number"
-                }
-              },
-              "unit": {
-                "ui:field": "AutoCompleteField",
-                "ui:title": "Unit",
-                "ui:options": {
-                  "ecl": "((<763158003 minus >(<763158003))).732945000",
-                  "extendedEcl": "<767524001",
-                  "showDefaultOptions": true
-                }
-              }
-            },
-            "presentationStrengthDenominator": {
-              "ui:options": {
-                "skipTitle": true
-              },
-              "ui:grid": [
-                {
-                  "value": 12,
-                  "unit": 12
-                }
-              ],
-              "value": {
-                "ui:widget": "text",
-                "ui:title": "Presentation Strength Denominator",
-                "ui:options": {
-                  "inputType": "number"
-                }
-              },
-              "unit": {
-                "ui:field": "AutoCompleteField",
-                "ui:title": "Unit",
-                "ui:options": {
-                  "ecl": "((<763158003 minus >(<763158003))).732947008",
-                  "extendedEcl": "<767524001",
-                  "showDefaultOptions": true
-                }
-              }
-            }
+            "placeholder": "Enter brand name"
           }
         },
         "genericForm": {
@@ -314,14 +187,16 @@
             ],
             "ecl": "(>>((<763158003 minus >(<763158003)))).411116001",
             "extendedEcl": "<736542009",
-            "showDefaultOptions": true
+            "showDefaultOptions": false,
+            "placeholder": "Select generic dose form"
           }
         },
         "specificForm": {
-          "ui:title": "Specific Dose Form",
           "ui:field": "AutoCompleteField",
+          "ui:title": "Specific Dose Form",
           "ui:options": {
-            "showDefaultOptions": true
+            "showDefaultOptions": true,
+            "placeholder": "Select specific dose form (optional)"
           }
         },
         "unitOfPresentation": {
@@ -330,7 +205,299 @@
           "ui:options": {
             "ecl": "((<763158003 minus >(<763158003))).763032000",
             "extendedEcl": "<105590001",
+            "showDefaultOptions": false,
+            "placeholder": "Select unit of presentation"
+          }
+        },
+        "quantity": {
+          "ui:options": {
+            "skipTitle": true
+          },
+          "ui:grid": [
+            {
+              "value": 12,
+              "unit": 12
+            }
+          ],
+          "value": {
+            "ui:widget": "text",
+            "ui:options": {
+              "inputType": "number",
+              "title": "Unit of presentation size quantity"
+            }
+          },
+          "unit": {
+            "ui:field": "AutoCompleteField",
+            "ui:title": "Unit of presentation size unit",
+            "ui:options": {
+              "ecl": "<763158003.320091000221107",
+              "extendedEcl": "<767524001",
+              "showDefaultOptions": true,
+              "placeholder": "Select unit"
+            }
+          }
+        },
+        "targetPopulation": {
+          "ui:field": "AutoCompleteField",
+          "ui:title": "Target Population",
+          "ui:options": {
+            "ecl": "<27821000087106",
+            "showDefaultOptions": true,
+            "placeholder": "Select target population (optional)"
+          }
+        },
+        "ingredientQualitativeStrength": {
+          "ui:field": "AutoCompleteField",
+          "ui:title": "Qualitative Strength",
+          "ui:options": {
+            "ecl": "<1149484003",
+            "showDefaultOptions": true,
+            "placeholder": "Select qualitative strength (optional)"
+          }
+        },
+        "existingMedicinalProduct": {
+          "ui:field": "AutoCompleteField",
+          "ui:title": "Existing VTM Level Concept",
+          "ui:options": {
+            "skipTitle": true,
+            "ecl": "<<327838005 OR <<373783004",
+            "showDefaultOptions": true,
+            "dependants": [
+              {
+                "path": "../existingClinicalDrug",
+                "ui:options": {
+                  "skipTitle": true,
+                  "getEcl": "<@parent",
+                  "showDefaultOptions": true
+                }
+              }
+            ]
+          }
+        },
+        "existingClinicalDrug": {
+          "ui:field": "AutoCompleteField",
+          "ui:title": "Existing VMP Level Concept",
+          "ui:options": {
+            "skipTitle": true,
             "showDefaultOptions": true
+          }
+        },
+        "newGenericProductName": {
+          "ui:widget": "text"
+        },
+        "activeIngredients": {
+          "ui:options": {
+            "skipTitle": true,
+            "arrayTemplate": "accordion"
+          },
+          "items": {
+            "ui:options": {
+              "titleSource": "activeIngredient.pt.term",
+              "defaultTitle": "Ingredient",
+              "skipTitle": true
+            },
+            "ui:grid": [
+              {
+                "activeIngredient": 24
+              },
+              {
+                "refinedActiveIngredient": 24
+              },
+              {
+                "preciseIngredient": 24
+              },
+              {
+                "basisOfStrengthSubstance": 24
+              },
+              {
+                "presentationStrengthNumerator": 24
+              },
+              {
+                "presentationStrengthDenominator": 24
+              },
+              {
+                "concentrationStrengthNumerator": 24
+              },
+              {
+                "concentrationStrengthDenominator": 24
+              }
+            ],
+            "activeIngredient": {
+              "ui:field": "AutoCompleteField",
+              "ui:title": "VTM Active Ingredient",
+              "ui:options": {
+                "dependants": [
+                  {
+                    "path": "../refinedActiveIngredient",
+                    "ui:options": {
+                      "getEcl": "<<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent))",
+                      "showDefaultOptions": true
+                    }
+                  },
+                  {
+                    "path": "../basisOfStrengthSubstance",
+                    "ui:options": {
+                      "getEcl": "<<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent))",
+                      "getExtendedEcl": "<105590001",
+                      "showDefaultOptions": true
+                    }
+                  }
+                ],
+                "ecl": "(<763158003 {{ D term=\"medicinal product\" }}).127489000",
+                "extendedEcl": "<105590001",
+                "showDefaultOptions": false,
+                "placeholder": "Select VTM active ingredient"
+              }
+            },
+            "refinedActiveIngredient": {
+              "ui:field": "AutoCompleteField",
+              "ui:title": "VMP Active Ingredient",
+              "ui:options": {
+                "dependants": [
+                  {
+                    "path": "../preciseIngredient",
+                    "ui:options": {
+                      "getEcl": "<<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent))",
+                      "showDefaultOptions": true
+                    }
+                  }
+                ],
+                "placeholder": "Select VMP active ingredient"
+              }
+            },
+            "preciseIngredient": {
+              "ui:field": "AutoCompleteField",
+              "ui:title": "AMP Active Ingredient",
+              "ui:options": {
+                "showDefaultOptions": true,
+                "placeholder": "Select AMP active ingredient"
+              }
+            },
+            "basisOfStrengthSubstance": {
+              "ui:field": "AutoCompleteField",
+              "ui:title": "Basis of Strength Substance",
+              "ui:options": {
+                "showDefaultOptions": false,
+                "placeholder": "Select basis of strength",
+                "description": "Only enabled if Active Ingredient is set."
+              }
+            },
+            "presentationStrengthNumerator": {
+              "ui:options": {
+                "skipTitle": true
+              },
+              "ui:grid": [
+                {
+                  "value": 12,
+                  "unit": 12
+                }
+              ],
+              "value": {
+                "ui:widget": "text",
+                "ui:title": "Presentation Strength Numerator",
+                "ui:options": {
+                  "inputType": "number",
+                  "placeholder": "Enter value"
+                }
+              },
+              "unit": {
+                "ui:field": "AutoCompleteField",
+                "ui:title": "Unit",
+                "ui:options": {
+                  "ecl": "((<763158003 minus >(<763158003))).732945000",
+                  "extendedEcl": "<767524001",
+                  "showDefaultOptions": true,
+                  "placeholder": "Select unit"
+                }
+              }
+            },
+            "presentationStrengthDenominator": {
+              "ui:options": {
+                "skipTitle": true
+              },
+              "ui:grid": [
+                {
+                  "value": 12,
+                  "unit": 12
+                }
+              ],
+              "value": {
+                "ui:widget": "text",
+                "ui:title": "Presentation Strength Denominator",
+                "ui:options": {
+                  "inputType": "number",
+                  "placeholder": "Enter value"
+                }
+              },
+              "unit": {
+                "ui:field": "AutoCompleteField",
+                "ui:title": "Unit",
+                "ui:options": {
+                  "ecl": "((<763158003 minus >(<763158003))).732947008",
+                  "extendedEcl": "<767524001",
+                  "showDefaultOptions": true,
+                  "placeholder": "Select unit"
+                }
+              }
+            },
+            "concentrationStrengthNumerator": {
+              "ui:options": {
+                "skipTitle": true
+              },
+              "ui:grid": [
+                {
+                  "value": 12,
+                  "unit": 12
+                }
+              ],
+              "value": {
+                "ui:widget": "text",
+                "ui:title": "Concentration Strength Numerator",
+                "ui:options": {
+                  "inputType": "number",
+                  "placeholder": "Enter value"
+                }
+              },
+              "unit": {
+                "ui:field": "AutoCompleteField",
+                "ui:title": "Unit",
+                "ui:options": {
+                  "ecl": "((<763158003 minus >(<763158003))).733725009",
+                  "extendedEcl": "<767524001",
+                  "showDefaultOptions": true,
+                  "placeholder": "Select unit"
+                }
+              }
+            },
+            "concentrationStrengthDenominator": {
+              "ui:options": {
+                "skipTitle": true
+              },
+              "ui:grid": [
+                {
+                  "value": 12,
+                  "unit": 12
+                }
+              ],
+              "value": {
+                "ui:widget": "text",
+                "ui:title": "Concentration Strength Denominator",
+                "ui:options": {
+                  "inputType": "number",
+                  "placeholder": "Enter value"
+                }
+              },
+              "unit": {
+                "ui:field": "AutoCompleteField",
+                "ui:title": "Unit",
+                "ui:options": {
+                  "ecl": "((<763158003 minus >(<763158003))).733722007",
+                  "extendedEcl": "<767524001",
+                  "showDefaultOptions": true,
+                  "placeholder": "Select unit"
+                }
+              }
+            }
           }
         }
       }

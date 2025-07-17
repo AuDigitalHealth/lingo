@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import _ from 'lodash';
+import _, { get } from 'lodash';
 
 /**
  * Utility class for converting between RJSF IDs and Lodash paths
@@ -209,3 +209,28 @@ export class RjsfUtils {
     _.set(rootUiSchema, lodashPath, value);
   }
 }
+export const evaluateExpression = (
+  expression: string,
+  context: { formData: any },
+): boolean => {
+  try {
+    if (expression.endsWith('?.length > 0')) {
+      let path = expression
+        .replace(/^formData\./, '')
+        .replace(/\?.length > 0$/, '');
+      path = path.replace(/\?\.\[/g, '[').replace(/\?\./g, '.');
+      const value = get(context.formData, path);
+      const result = typeof value === 'string' && value.length > 0;
+      return result;
+    }
+
+    return false;
+  } catch (error) {
+    console.error('evaluateExpression - error:', {
+      expression,
+      error,
+      formData: context.formData,
+    });
+    return false;
+  }
+};
