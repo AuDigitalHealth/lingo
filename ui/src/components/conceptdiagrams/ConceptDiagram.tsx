@@ -63,9 +63,9 @@ export default function ConceptDiagram({
     if (containerRef.current) {
       const parentHeight =
         containerRef.current.parentElement?.clientHeight || 400;
-      setContainerHeight(parentHeight - 150); // Subtract some padding
+      setContainerHeight(parentHeight - 100); // Subtract some padding
       const tempContainerWidth = containerRef.current.clientWidth || 400;
-      setContainerWidth(tempContainerWidth - 150);
+      setContainerWidth(tempContainerWidth - 100);
     }
   }, []);
 
@@ -92,10 +92,6 @@ export default function ConceptDiagram({
     }
   }, [newConcept, element]);
 
-  // useEffect(() => {
-  //   setContainerWidth(isSideBySide ? 1800 / 2 - 20 : screenSize.width);
-  // }, [screenSize.width, isSideBySide]);
-
   // set initial zoom for the image
   const handleImageLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
     const img = event.target as HTMLImageElement;
@@ -105,19 +101,36 @@ export default function ConceptDiagram({
 
     // Calculate the ratios to fit the image in the container
     const widthRatio = availableWidth / img.naturalWidth;
-    // const heightRatio = containerHeight / img.naturalHeight;
+    const heightRatio = containerHeight / img.naturalHeight;
 
     // Use the smaller ratio to maintain aspect ratio while fitting in container
-    const fitRatio = widthRatio;
+    const fitRatio = Math.min(widthRatio, heightRatio);
 
-    // Ensure the image takes up at least 80% of the available space
-    const minScale = 0.8;
-    const targetWidthRatio = (availableWidth * minScale) / img.naturalWidth;
-    // const targetHeightRatio = (containerHeight * minScale) / img.naturalHeight;
-    const targetRatio = targetWidthRatio;
+    // Ensure the image takes up at least 90% of the available width
+    const minWidthScale = 0.9;
+    const targetWidthRatio =
+      (availableWidth * minWidthScale) / img.naturalWidth;
 
-    // Use the larger of fitRatio and targetRatio to ensure at least 80% coverage
-    const initialZoom = Math.max(fitRatio, targetRatio);
+    // Ensure the image takes up at least 50% of the available height
+    const minHeightScale = 0.5;
+    const targetHeightRatio =
+      (containerHeight * minHeightScale) / img.naturalHeight;
+
+    // Check if image is naturally small (less than 50% of container in either dimension)
+    const isNaturallySmall =
+      img.naturalWidth < availableWidth * 0.5 ||
+      img.naturalHeight < containerHeight * 0.5;
+
+    let initialZoom;
+
+    if (isNaturallySmall) {
+      // If naturally small, just use fit ratio to avoid over-enlarging
+      initialZoom = fitRatio;
+    } else {
+      // Use the largest of: fitRatio, targetWidthRatio, or targetHeightRatio
+      // This ensures we meet both the 90% width and 50% height requirements
+      initialZoom = Math.max(fitRatio, targetWidthRatio, targetHeightRatio);
+    }
 
     img.style.width = `${img.naturalWidth * initialZoom}px`;
     img.style.height = `${img.naturalHeight * initialZoom}px`;
