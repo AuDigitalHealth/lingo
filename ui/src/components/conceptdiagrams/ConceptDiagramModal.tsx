@@ -98,8 +98,8 @@ export default function ConceptDiagramModal({
       keepMounted={keepMounted}
       sx={
         leftTransformed && rightTransformed
-          ? { width: '80%', height: '80%' }
-          : { width: '80%', height: '80%' }
+          ? { width: '80%', height: '90%' }
+          : { width: '60%', height: '90%' }
       }
     >
       <Grid container direction="column" sx={{ height: '100%' }}>
@@ -132,7 +132,7 @@ export default function ConceptDiagramModal({
                   flex: 1,
                   overflow: 'auto',
                   minHeight: 0,
-                  width: leftTransformed && rightTransformed ? '100%' : 'auto',
+                  width: '100%',
                 }}
               >
                 <DiffConceptDiagram
@@ -141,7 +141,9 @@ export default function ConceptDiagramModal({
                 />
               </Box>
             ) : (
-              <Box sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+              <Box
+                sx={{ flex: 1, overflow: 'auto', minHeight: 0, width: '100%' }}
+              >
                 <ConceptDiagram
                   concept={product.concept}
                   newConcept={newConcept}
