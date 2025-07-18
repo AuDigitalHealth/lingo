@@ -32,11 +32,16 @@ api.interceptors.response.use(
       error.data?.error ||
       'Unknown error';
 
-    if (error.response?.status === 403 &&
-      error.response.data?.detail === 'The task is not owned by the user.') {
-      enqueueSnackbar('You don’t currently have ownership of this task, so this action isn’t allowed.', {
-        variant: 'error'
-      });
+    if (
+      error.response?.status === 403 &&
+      error.response.data?.detail === 'The task is not owned by the user.'
+    ) {
+      enqueueSnackbar(
+        'You don’t currently have ownership of this task, so this action isn’t allowed.',
+        {
+          variant: 'error',
+        },
+      );
     } else if (
       error.response?.status === 403 &&
       window.location.href.includes('/dashboard')
