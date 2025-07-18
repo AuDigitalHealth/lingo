@@ -124,6 +124,13 @@
           },
           "title": "New VMP Level Concept Additional Parent Concepts",
           "description": "If creating a new VMP level device concept, add any parent concepts additional to the VTM device type."
+        },
+        "nonDefiningProperties": {
+          "title": "Non Defining Properties",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DEVICE_PRODUCT_NonDefiningProperty"
+          }
         }
       },
       "required": ["productName", "deviceType"],
@@ -241,6 +248,13 @@
         "$ref": "#/$defs/ContainedProduct"
       },
       "minItems": 1
+    },
+    "nonDefiningProperties": {
+      "title": "Non Defining Properties",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/DEVICE_PACKAGE_NonDefiningProperty"
+      }
     }
   },
   "required": ["containedProducts"],

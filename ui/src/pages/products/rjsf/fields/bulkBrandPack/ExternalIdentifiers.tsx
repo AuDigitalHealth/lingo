@@ -76,6 +76,9 @@ const ExternalIdentifiers: React.FC<
   const formData = props.formData;
 
   const schemas = schema?.items?.anyOf as NonDefiningPropertyDefinition[];
+  if (!schemas) {
+    return null;
+  }
   const task = useTaskByKey();
   return (
     <>
