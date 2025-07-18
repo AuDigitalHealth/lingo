@@ -13,26 +13,46 @@ import { useParams } from 'react-router-dom';
 import { Ticket } from '../../../../types/tickets/ticket.ts';
 import { useDependantUpdates } from './../hooks/useDependantUpdates.ts';
 import { useExclusionUpdates } from './../hooks/useExclusionUpdates.ts';
+import { RjsfUtils } from '../helpers/rjsfUtils';
 
 const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
   const { onChange, idSchema } = props;
-  const uiSchema = props.uiSchema;
-  const isMultivalued = uiSchema?.['ui:options']?.multiValued === true;
-  const isShowDefaultOptions =
-    uiSchema?.['ui:options']?.showDefaultOptions === true;
 
-  const [formContext, setFormContext] = useState(props.formContext || {});
+
+  const [rootUiSchema, setRootUiSchema] = useState(
+    props?.formContext?.uiSchema || {},
+  );
+
+  /** Always read the latest ui:options from the per-item path */
+  const getUiOptions = () => {
+    const optionsFromPath = RjsfUtils.getUiSchemaItemByIndex(
+      rootUiSchema,
+      idSchema.$id,
+    );
+    if (optionsFromPath && Object.keys(optionsFromPath).length > 0) {
+      return optionsFromPath?.['ui:options'] || {};
+    }
+    // Fallback to default ui:options from props.uiSchema
+    return props.uiSchema?.['ui:options'] || {};
+  };
+
+
+  const uiOptions = getUiOptions();
+
+  const isMultivalued = uiOptions?.multiValued === true;
+  const isShowDefaultOptions = uiOptions?.showDefaultOptions === true;
+  const { ecl, extendedEcl, createBrand, disabled, defaultValue } =
+    uiOptions || {};
+
+
   const [formData, setFormData] = useState(
     props.formData ?? (isMultivalued ? [] : null),
   );
   const [rootFormData, setRootFormData] = useState(
     props.formData ?? (isMultivalued ? [] : null),
   );
-  const [rootUiSchema, setRootUiSchema] = useState(
-    props?.formContext?.uiSchema || {},
-  );
+  const [formContext, setFormContext] = useState(props.formContext || {});
 
-  // Sync local state with props changes (important for Safari)
   useEffect(() => {
     const data = props.formData ?? (isMultivalued ? [] : null);
     setFormData(data);
@@ -44,8 +64,6 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
     setRootUiSchema(props?.formContext?.uiSchema || {});
   }, [props.formContext]);
 
-  const { ecl, extendedEcl, createBrand, disabled } =
-    (uiSchema && uiSchema['ui:options']) || {};
   const [openCreateBrandModal, setOpenCreateBrandModal] = useState(false);
   const [localExtendedEcl, setLocalExtendedEcl] = useState<boolean>(false);
   const currentEcl = localExtendedEcl ? extendedEcl : ecl;
@@ -55,7 +73,7 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
   const useTicketQuery = useTicketByTicketNumber(ticketNumber, false);
 
   useDependantUpdates(
-    uiSchema,
+    props.uiSchema,
     idSchema,
     formContext,
     rootFormData,
@@ -63,7 +81,7 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
     formData,
   );
   useExclusionUpdates(
-    uiSchema,
+    props.uiSchema,
     idSchema,
     formContext,
     rootFormData,
@@ -72,12 +90,10 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
   );
 
   const handleSelect = (conceptMini: ConceptMini | null) => {
-    if (!conceptMini && uiSchema.defaultValue) {
-      conceptMini = uiSchema.defaultValue;
+    if (!conceptMini && defaultValue) {
+      conceptMini = defaultValue;
     }
-
     const newValue = conceptMini ? { ...conceptMini } : null;
-
     setFormData(newValue);
     onChange(newValue);
   };
@@ -102,15 +118,13 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
   };
 
   const paddingRight = createBrand ? 5 : 0;
+  const isDisabled = disabled || props.disabled || false;
 
   return (
     <span data-component-name="AutoCompleteField">
       <Box>
         <Box display="flex" alignItems="center" gap={1}>
-          <Box
-            flex={50}
-            sx={{ position: 'relative', paddingRight: paddingRight }}
-          >
+          <Box flex={50} sx={{ position: 'relative', paddingRight }}>
             {task?.branchPath &&
               (isMultivalued ? (
                 <MultiValueEclAutocomplete
@@ -118,7 +132,7 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
                   ecl={currentEcl}
                   showDefaultOptions={isShowDefaultOptions}
                   value={formData}
-                  isDisabled={disabled || props.disabled || false}
+                  isDisabled={isDisabled}
                   branch={task?.branchPath}
                   onChange={(val: ConceptMini[]) => {
                     setFormData(val);
@@ -132,7 +146,7 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
                   ecl={currentEcl}
                   showDefaultOptions={isShowDefaultOptions}
                   value={formData}
-                  isDisabled={disabled || props.disabled || false}
+                  isDisabled={isDisabled}
                   branch={task?.branchPath}
                   onChange={handleSelect}
                   errorMessage=""
@@ -148,7 +162,7 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
                     right: '0px',
                     top: '0',
                   }}
-                  disabled={disabled || false}
+                  disabled={isDisabled}
                   tabIndex={-1}
                 >
                   <AddCircleOutlineIcon color="primary" />
@@ -161,7 +175,7 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
               <SetExtendedEclButton
                 setExtendedEcl={setLocalExtendedEcl}
                 extendedEcl={localExtendedEcl}
-                disabled={disabled || false}
+                disabled={isDisabled}
               />
             </Box>
           )}
@@ -171,7 +185,7 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
             open={openCreateBrandModal}
             onClose={() => setOpenCreateBrandModal(false)}
             onAddBrand={handleAddBrand}
-            uiSchema={uiSchema}
+            uiSchema={props.uiSchema}
             branch={task?.branchPath as string}
             ticket={useTicketQuery.data as Ticket}
           />
