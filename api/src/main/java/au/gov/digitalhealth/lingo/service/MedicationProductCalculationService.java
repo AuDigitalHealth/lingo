@@ -188,17 +188,29 @@ public class MedicationProductCalculationService
     for (ProductSummary summary : innnerProductSummaries.values()) {
       productSummary.addSummary(summary);
 
-      for (Node packageNode : packageNodeMap.values()) {
-        productSummary.addEdge(
-            packageNode.getConceptId(),
-            summary
-                .getSingleConceptWithLabel(
-                    modelConfiguration
-                        .getContainedLevelForType(packageNode.getModelLevel())
-                        .getDisplayLabel())
-                .getConceptId(),
-            ProductSummaryService.CONTAINS_LABEL);
-      }
+      final String brandedProductId = summary.getSingleSubject().getConceptId();
+      final String unbrandedProductId =
+          productSummary.getSingleTargetOfTypeWithLabel(
+              brandedProductId,
+              modelConfiguration.getLeafUnbrandedProductModelLevel().getDisplayLabel(),
+              ProductSummaryService.IS_A_LABEL);
+      packageNodeMap.values().stream()
+          .filter(node -> node.getModelLevel().isBranded())
+          .forEach(
+              brandedPackageNode ->
+                  productSummary.addEdge(
+                      brandedPackageNode.getConceptId(),
+                      brandedProductId,
+                      ProductSummaryService.CONTAINS_LABEL));
+      // connect the unbranded package node to the parent unbranded product nodes
+      packageNodeMap.values().stream()
+          .filter(node -> !node.getModelLevel().isBranded())
+          .forEach(
+              unbrandedPackageNode ->
+                  productSummary.addEdge(
+                      unbrandedPackageNode.getConceptId(),
+                      unbrandedProductId,
+                      ProductSummaryService.CONTAINS_LABEL));
     }
   }
 
@@ -251,17 +263,22 @@ public class MedicationProductCalculationService
     }
   }
 
+  @Override
+  protected SnowstormClient getSnowstormClient() {
+    return snowstormClient;
+  }
+
+  @Override
+  protected NodeGeneratorService getNodeGeneratorService() {
+    return nodeGeneratorService;
+  }
+
   @Async
   public CompletableFuture<ProductSummary> calculateProductFromAtomicDataAsync(
       String branch, PackageDetails<MedicationProductDetails> packageDetails)
       throws ExecutionException, InterruptedException {
     return CompletableFuture.completedFuture(
         calculateProductFromAtomicData(branch, packageDetails));
-  }
-
-  @Override
-  protected SnowstormClient getSnowstormClient() {
-    return snowstormClient;
   }
 
   /**
@@ -276,13 +293,11 @@ public class MedicationProductCalculationService
   public ProductSummary calculateProductFromAtomicData(
       String branch, PackageDetails<MedicationProductDetails> packageDetails)
       throws ExecutionException, InterruptedException {
-
     // todo - this is a work around because the UI doesn't know which package to put the selected
     // identifiers in, so it puts them at the top level. They need to be cascaded down to the lower
     // level packages. It is possible this isn't enough if there are different packages with
     // intersecting conceptOptions, but this will do for the moment.
-    packageDetails.cascadeSelectedIdentifiers();
-
+    packageDetails.cascadeProperties(models.getModelConfiguration(branch));
     return calculateCreatePackage(
         branch,
         packageDetails,
@@ -385,6 +400,8 @@ public class MedicationProductCalculationService
         innnerProductSummaries,
         productSummary,
         packageNodeMap);
+
+    addPropertyChangeNodes(branch, modelConfiguration, productSummary);
   }
 
   /**
@@ -410,9 +427,10 @@ public class MedicationProductCalculationService
       ProductSummary productSummary) {
     Set<ModelLevel> packageLevels = modelConfiguration.getPackageLevels();
 
-    Set<CompletableFuture<Node>> packageLevelFutures = new HashSet<>();
+    Map<ModelLevel, CompletableFuture<Node>> packageLevelFutures = new HashMap<>();
     for (ModelLevel packageLevel : packageLevels) {
-      packageLevelFutures.add(
+      packageLevelFutures.put(
+          packageLevel,
           getOrCreatePackagedClinicalDrug(
                   branch,
                   packageDetails,
@@ -434,7 +452,7 @@ public class MedicationProductCalculationService
     }
 
     Map<ModelLevelType, Node> packageNodeMap =
-        packageLevelFutures.stream()
+        packageLevelFutures.values().stream()
             .map(CompletableFuture::join)
             .collect(Collectors.toMap(Node::getModelLevel, n -> n));
 
@@ -449,6 +467,7 @@ public class MedicationProductCalculationService
         }
       }
     }
+
     return packageNodeMap;
   }
 
@@ -1073,7 +1092,14 @@ public class MedicationProductCalculationService
           branch,
           productDetails.getExistingClinicalDrug(),
           level,
-          productDetails.getNonDefiningProperties());
+          productDetails.getNonDefiningProperties().stream()
+              .filter(
+                  p ->
+                      modelConfiguration
+                          .getProperty(p.getIdentifierScheme())
+                          .getModelLevels()
+                          .contains(level.getModelLevelType()))
+              .collect(Collectors.toSet()));
     }
 
     ModelLevelType modelLevelType = level.getModelLevelType();
@@ -1136,7 +1162,14 @@ public class MedicationProductCalculationService
           branch,
           details.getExistingMedicinalProduct(),
           mpLevel,
-          details.getNonDefiningProperties());
+          details.getNonDefiningProperties().stream()
+              .filter(
+                  p ->
+                      modelConfiguration
+                          .getProperty(p.getIdentifierScheme())
+                          .getModelLevels()
+                          .contains(mpLevel.getModelLevelType()))
+              .collect(Collectors.toSet()));
     }
 
     Set<SnowstormRelationship> relationships =

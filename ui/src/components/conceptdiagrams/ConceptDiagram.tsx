@@ -56,10 +56,18 @@ export default function ConceptDiagram({
   );
 
   const [formType, setFormType] = useState<FormType>('stated');
-  const [containerHeight, setContainerHeight] = useState(screenSize.height);
-  const [containerWidth, setContainerWidth] = useState(
-    isSideBySide ? 1800 / 2 - 20 : screenSize.width,
-  );
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerHeight, setContainerHeight] = useState(400); // Default fallback
+  const [containerWidth, setContainerWidth] = useState(400);
+  useEffect(() => {
+    if (containerRef.current) {
+      const parentHeight =
+        containerRef.current.parentElement?.clientHeight || 400;
+      setContainerHeight(parentHeight - 100); // Subtract some padding
+      const tempContainerWidth = containerRef.current.clientWidth || 400;
+      setContainerWidth(tempContainerWidth - 100);
+    }
+  }, []);
 
   useEffect(() => {
     if (data !== undefined && element.current !== undefined) {
@@ -84,26 +92,45 @@ export default function ConceptDiagram({
     }
   }, [newConcept, element]);
 
-  useEffect(() => {
-    setContainerWidth(isSideBySide ? 1800 / 2 - 20 : screenSize.width);
-  }, [screenSize.width, isSideBySide]);
-
   // set initial zoom for the image
   const handleImageLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
     const img = event.target as HTMLImageElement;
 
     // Calculate available width based on whether side by side
-    const availableWidth = isSideBySide ? 1800 / 2 - 20 : screenSize.width;
+    const availableWidth = containerWidth;
 
-    const minHeight = Math.min(containerHeight, img.naturalHeight);
-    const minWidth = Math.min(availableWidth, img.naturalWidth);
+    // Calculate the ratios to fit the image in the container
+    const widthRatio = availableWidth / img.naturalWidth;
+    const heightRatio = containerHeight / img.naturalHeight;
 
-    setContainerHeight(minHeight);
-    setContainerWidth(minWidth);
+    // Use the smaller ratio to maintain aspect ratio while fitting in container
+    const fitRatio = Math.min(widthRatio, heightRatio);
 
-    const widthRatio = minWidth / img.naturalWidth;
-    const heightRatio = minHeight / img.naturalHeight;
-    const initialZoom = Math.min(widthRatio, heightRatio); // Use the smaller ratio to maintain aspect ratio
+    // Ensure the image takes up at least 90% of the available width
+    const minWidthScale = 0.9;
+    const targetWidthRatio =
+      (availableWidth * minWidthScale) / img.naturalWidth;
+
+    // Ensure the image takes up at least 50% of the available height
+    const minHeightScale = 0.5;
+    const targetHeightRatio =
+      (containerHeight * minHeightScale) / img.naturalHeight;
+
+    // Check if image is naturally small (less than 50% of container in either dimension)
+    const isNaturallySmall =
+      img.naturalWidth < availableWidth * 0.5 ||
+      img.naturalHeight < containerHeight * 0.5;
+
+    let initialZoom;
+
+    if (isNaturallySmall) {
+      // If naturally small, just use fit ratio to avoid over-enlarging
+      initialZoom = fitRatio;
+    } else {
+      // Use the largest of: fitRatio, targetWidthRatio, or targetHeightRatio
+      // This ensures we meet both the 90% width and 50% height requirements
+      initialZoom = Math.max(fitRatio, targetWidthRatio, targetHeightRatio);
+    }
 
     img.style.width = `${img.naturalWidth * initialZoom}px`;
     img.style.height = `${img.naturalHeight * initialZoom}px`;
@@ -119,13 +146,53 @@ export default function ConceptDiagram({
     }
   };
 
+  useEffect(() => {
+    let lastZoomTime = 0;
+    const throttleDelay = 50; // Milliseconds between zoom events
+
+    const handleWheel = (event: WheelEvent) => {
+      // Check if Cmd (Mac) or Ctrl (Windows/Linux) is pressed
+      if (event.metaKey || event.ctrlKey) {
+        event.preventDefault();
+
+        const now = Date.now();
+        if (now - lastZoomTime < throttleDelay) {
+          return; // Skip if too soon after last zoom
+        }
+        lastZoomTime = now;
+
+        // Determine zoom direction with reduced sensitivity
+        // Reduced from 0.9/1.1 to 0.95/1.05 for less sensitivity
+        const scaleFactor = event.deltaY > 0 ? 0.95 : 1.05;
+        zoomImage(scaleFactor);
+      }
+    };
+
+    const currentContainer = containerRef.current;
+    if (currentContainer) {
+      currentContainer.addEventListener('wheel', handleWheel, {
+        passive: false,
+      });
+    }
+
+    return () => {
+      if (currentContainer) {
+        currentContainer.removeEventListener('wheel', handleWheel);
+      }
+    };
+  }, []);
+
   const handleFormChange = (value: FormType) => {
     setFormType(value);
   };
 
   return (
     <>
-      <Stack flexDirection="column">
+      <Stack
+        ref={containerRef}
+        flexDirection="column"
+        sx={{ minWidth: '50%', height: '100%' }}
+      >
         <Stack sx={{ marginLeft: 'auto' }}>
           <FormToggle
             onChange={handleFormChange}
@@ -183,13 +250,6 @@ export default function ConceptDiagram({
                   alt="Image"
                   onLoad={handleImageLoad}
                   style={{ cursor: 'move', transformOrigin: '0 0' }}
-                  onClick={() => {
-                    console.log(imgRef.current?.naturalWidth);
-                    console.log(imgRef.current?.width);
-                    console.log(containerWidth);
-                    console.log(isSideBySide);
-                    console.log(screenSize.width);
-                  }}
                 />
               </Stack>
             </>

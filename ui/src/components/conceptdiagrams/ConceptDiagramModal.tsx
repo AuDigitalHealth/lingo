@@ -28,6 +28,8 @@ import { useParams } from 'react-router-dom';
 import useApplicationConfigStore from '../../stores/ApplicationConfigStore.ts';
 import { useSearchConceptById } from '../../hooks/api/products/useSearchConcept.tsx';
 import DiffConceptDiagram from './DiffConceptDiagram.tsx';
+import { Grid } from '@mui/material';
+import { Box } from '@mui/material';
 
 type ConceptOrDetails = Product | null | undefined;
 
@@ -90,65 +92,113 @@ export default function ConceptDiagramModal({
   if (!left || !right) return <></>;
 
   return (
-    <BaseModal open={open} handleClose={handleClose} keepMounted={keepMounted}>
-      <BaseModalHeader title={'Concept Diagram Preview'} />
-      <BaseModalBody sx={{ overflow: 'auto' }}>
-        {leftTransformed && rightTransformed ? (
-          <DiffConceptDiagram
-            leftConcept={leftTransformed}
-            rightConcept={rightTransformed}
-          />
-        ) : (
-          <ConceptDiagram concept={product.concept} newConcept={newConcept} />
-        )}
-
-        <Accordion
+    <BaseModal
+      open={open}
+      handleClose={handleClose}
+      keepMounted={keepMounted}
+      sx={
+        leftTransformed && rightTransformed
+          ? { width: '80%', height: '90%' }
+          : { width: '60%', height: '90%' }
+      }
+    >
+      <Grid container direction="column" sx={{ height: '100%' }}>
+        <Grid item>
+          <BaseModalHeader title={'Concept Diagram Preview'} />
+        </Grid>
+        <Grid
+          item
+          xs
           sx={{
-            maxHeight: '25%', // Maximum height when expanded
-            '&.Mui-expanded': {
-              margin: 0, // Override default margin
-            },
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
+            width: '100%',
           }}
-          defaultExpanded={false} // Start collapsed by default
         >
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls="additional-properties-content"
-            id="additional-properties-header"
+          <BaseModalBody
             sx={{
-              backgroundColor: '#f5f5f5',
-              borderTop: '1px solid #e0e0e0',
-              minHeight: '48px',
-              '&.Mui-expanded': {
-                minHeight: '48px', // Override default expanded height
-              },
+              overflow: 'hidden',
+              height: '100%',
+              padding: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              flex: 1,
             }}
           >
-            <Typography>Additional Properties</Typography>
-          </AccordionSummary>
-          <AccordionDetails
-            sx={{
-              padding: 2,
-              overflowY: 'auto', // Enable scrolling for content
-              maxHeight: 'calc(25vh - 48px)', // Maximum height minus header
-            }}
-          >
-            <AdditionalPropertiesDisplay
-              product={product}
-              branch={branch}
-              showWrapper={false}
-            />
-          </AccordionDetails>
-        </Accordion>
-      </BaseModalBody>
-      <BaseModalFooter
-        startChildren={<></>}
-        endChildren={
-          <Button variant="contained" onClick={() => handleClose()}>
-            Close
-          </Button>
-        }
-      />
+            {leftTransformed && rightTransformed ? (
+              <Box
+                sx={{
+                  flex: 1,
+                  overflow: 'auto',
+                  minHeight: 0,
+                  width: '100%',
+                }}
+              >
+                <DiffConceptDiagram
+                  leftConcept={leftTransformed}
+                  rightConcept={rightTransformed}
+                />
+              </Box>
+            ) : (
+              <Box
+                sx={{ flex: 1, overflow: 'auto', minHeight: 0, width: '100%' }}
+              >
+                <ConceptDiagram
+                  concept={product.concept}
+                  newConcept={newConcept}
+                />
+              </Box>
+            )}
+
+            <Accordion
+              sx={{
+                flexShrink: 0,
+                maxHeight: '25%',
+                '&.Mui-expanded': {
+                  margin: 0,
+                },
+              }}
+              defaultExpanded={false}
+            >
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                aria-controls="additional-properties-content"
+                id="additional-properties-header"
+                sx={{
+                  backgroundColor: '#f5f5f5',
+                  borderTop: '1px solid #e0e0e0',
+                }}
+              >
+                <Typography>Additional Properties</Typography>
+              </AccordionSummary>
+              <AccordionDetails
+                sx={{
+                  padding: 2,
+                  overflowY: 'auto',
+                  maxHeight: 'calc(25vh - 48px)',
+                }}
+              >
+                <AdditionalPropertiesDisplay
+                  product={product}
+                  branch={branch}
+                  showWrapper={false}
+                />
+              </AccordionDetails>
+            </Accordion>
+          </BaseModalBody>
+        </Grid>
+        <Grid item>
+          <BaseModalFooter
+            startChildren={<></>}
+            endChildren={
+              <Button variant="contained" onClick={() => handleClose()}>
+                Close
+              </Button>
+            }
+          />
+        </Grid>
+      </Grid>
     </BaseModal>
   );
 }
