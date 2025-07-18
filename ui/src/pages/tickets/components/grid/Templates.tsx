@@ -52,14 +52,7 @@ export const TitleTemplate = (rowData: TicketDto) => {
 };
 
 export const TicketNumberTemplate = (rowData: TicketDto) => {
-  const navigate = useNavigate();
-  return (
-    <StyledFakeLink
-      onClick={() => navigate(`individual/${rowData.ticketNumber}`)}
-    >
-      {rowData?.ticketNumber}
-    </StyledFakeLink>
-  );
+  return <>{rowData?.ticketNumber}</>;
 };
 
 export const PriorityBucketTemplate = (rowData: TicketDto) => {
