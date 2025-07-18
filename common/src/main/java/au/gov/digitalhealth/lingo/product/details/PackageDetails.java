@@ -162,4 +162,12 @@ public class PackageDetails<T extends ProductDetails> extends PackageProductDeta
     }
     return variant;
   }
+
+  @JsonIgnore
+  public boolean isUnpopulated() {
+    return (productName == null || productName.getConceptId() == null)
+        && (containerType == null || containerType.getConceptId() == null)
+        && containedProducts.isEmpty()
+        && containedPackages.isEmpty();
+  }
 }

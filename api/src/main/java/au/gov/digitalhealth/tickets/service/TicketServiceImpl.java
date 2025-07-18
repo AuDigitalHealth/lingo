@@ -1182,6 +1182,10 @@ public class TicketServiceImpl implements TicketService {
       product.setTicket(ticketToUpdate);
     }
 
+    if (product.getOriginalPackageDetails().isUnpopulated()) {
+      product.setOriginalPackageDetails(null);
+    }
+
     productRepository.save(product);
   }
 
