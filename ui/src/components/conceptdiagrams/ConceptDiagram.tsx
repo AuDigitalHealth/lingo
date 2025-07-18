@@ -63,9 +63,9 @@ export default function ConceptDiagram({
     if (containerRef.current) {
       const parentHeight =
         containerRef.current.parentElement?.clientHeight || 400;
-      setContainerHeight(parentHeight - 100); // Subtract some padding
+      setContainerHeight(parentHeight - 150); // Subtract some padding
       const tempContainerWidth = containerRef.current.clientWidth || 400;
-      setContainerWidth(tempContainerWidth - 100);
+      setContainerWidth(tempContainerWidth - 150);
     }
   }, []);
 
