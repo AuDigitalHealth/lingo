@@ -144,7 +144,7 @@ export interface ExternalRequestor extends VersionedEntity {
 }
 
 export interface BulkAddExternalRequestorRequest {
-  additionalFieldTypeName: string;
+  additionalFieldTypeName?: string;
   fieldValues: string[];
   externalRequestors: string[];
 }
