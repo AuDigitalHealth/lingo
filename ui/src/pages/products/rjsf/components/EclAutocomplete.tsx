@@ -11,12 +11,14 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
     branch,
     value,
     isDisabled,
+    rawErrors,
     errorMessage,
     sx,
     onChange,
     schema,
     showDefaultOptions,
     uiSchema,
+    required,
   } = props;
 
   const [inputValue, setInputValue] = useState<string>(value?.pt?.term || '');
@@ -45,6 +47,7 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
   );
 
   const title = props?.title || schema?.title || uiSchema?.['ui:title'] || '';
+  const label = required ? `${title} *` : title;
 
   useEffect(() => {
     if (disabled) return;
@@ -116,8 +119,8 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
           <TextField
             {...params}
             data-test-id={id}
-            label={title}
-            error={!!errorMessage || needsAttention}
+            label={label}
+            // error={hasError}
             helperText={
               needsAttention
                 ? 'Please search for and select a valid option'
