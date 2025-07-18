@@ -65,119 +65,62 @@ export const useDependantUpdates = (
   rootUiSchema: UiSchema,
   formData: FormData,
 ) => {
-  const [dependants] = useState<Dependant[]>(
-    uiSchema?.['ui:options']?.dependants || [],
-  );
-
-  const configureDependantUiSchema = (
-    dependantDefinition: Dependant,
-    dependantInstance: UiSchema,
-    parentConceptId?: string,
-  ): UiSchema => {
-    const uiOptions = {
-      ...dependantInstance['ui:options'],
-      ...dependantDefinition['ui:options'],
-    };
-
-    const dependantUiSchema: UiSchema = {
-      ...dependantInstance,
-      ..._.omit(dependantDefinition, ['path', 'anyOf']),
-      'ui:options': uiOptions,
-    };
-
-    if (parentConceptId) {
-      // Handle ECL configuration
-      if (uiOptions?.getEcl) {
-        if (uiOptions.ecl && !uiOptions.origEcl) {
-          uiOptions.origEcl = dependantInstance['ui:options']?.ecl;
-        }
-        uiOptions.ecl = uiOptions.getEcl.replace(/@parent/gi, parentConceptId);
-      }
-
-      // Handle Extended ECL configuration
-      if (uiOptions?.getExtendedEcl) {
-        if (uiOptions.extendedEcl && !uiOptions.origExtendedEcl) {
-          uiOptions.origExtendedEcl =
-            dependantInstance['ui:options']?.extendedEcl;
-        }
-        uiOptions.extendedEcl = uiOptions.getExtendedEcl.replace(
-          /@parent/gi,
-          parentConceptId,
-        );
-      }
-
-      uiOptions.disabled = false;
-    } else {
-      // Reset ECL when no parentConceptId
-      if (uiOptions?.getEcl) {
-        uiOptions.ecl = uiOptions.origEcl ?? '';
-      }
-
-      // Reset Extended ECL when no parentConceptId
-      if (uiOptions?.getExtendedEcl && !uiOptions?.extendedEcl) {
-        uiOptions.extendedEcl =
-          uiOptions.origExtendedEcl ?? uiOptions.getExtendedEcl ?? '';
-      }
-
-      uiOptions.disabled = true;
-    }
-
-    return dependantUiSchema;
-  };
+  const dependants: Dependant[] = uiSchema?.['ui:options']?.dependants || [];
 
   const updateDependants = () => {
     if (!dependants?.length) return;
 
-    const parentValueSelected =
-      !!formData?.conceptId && !formData.conceptId.match(/^$/);
+    const parentValueSelected = !!formData?.conceptId;
 
     for (const dependant of dependants) {
-      const dependantId = RjsfUtils.resolveRelativeIdOrPath?.(
+      const dependantId = RjsfUtils.resolveRelativeIdOrPath(
         idSchema.$id,
         dependant.path,
       );
       if (!dependantId) continue;
 
-      const dependantInstance = RjsfUtils.getUiSchemaById?.(
-        formContext.uiSchema,
-        dependantId,
-      );
-      if (!dependantInstance) continue;
-
-      const newUiSchema = configureDependantUiSchema(
-        dependant,
-        dependantInstance,
-        parentValueSelected ? formData?.conceptId : undefined,
+      const dependantInstance = _.cloneDeep(
+        RjsfUtils.getUiSchemaItemByIndex(formContext.uiSchema, dependantId) ||
+          {},
       );
 
-      // Preserve sub-dependants
-      if (dependantInstance['ui:options']?.dependants) {
-        newUiSchema['ui:options'].dependants =
-          dependantInstance['ui:options'].dependants;
-      }
-      if (dependantInstance['ui:options']?.showDefaultOptions) {
-        newUiSchema['ui:options'].showDefaultOptions =
-          dependantInstance['ui:options'].showDefaultOptions;
+      const newUiOptions = _.cloneDeep(dependantInstance['ui:options'] || {});
+      const dependantOptions = _.cloneDeep(dependant['ui:options'] || {});
+      const mergedOptions = { ...newUiOptions, ...dependantOptions };
+
+      if (parentValueSelected) {
+        if (mergedOptions?.getEcl) {
+          mergedOptions.origEcl =
+            mergedOptions.origEcl || newUiOptions.ecl || '';
+          mergedOptions.ecl = mergedOptions.getEcl.replace(
+            /@parent/gi,
+            formData.conceptId!,
+          );
+        }
+        if (mergedOptions?.getExtendedEcl) {
+          mergedOptions.origExtendedEcl =
+            mergedOptions.origExtendedEcl || newUiOptions.extendedEcl || '';
+          mergedOptions.extendedEcl = mergedOptions.getExtendedEcl.replace(
+            /@parent/gi,
+            formData.conceptId!,
+          );
+        }
+        mergedOptions.disabled = false;
+      } else {
+        mergedOptions.ecl = mergedOptions.origEcl || '';
+        mergedOptions.extendedEcl = mergedOptions.origExtendedEcl || '';
+        mergedOptions.disabled = true;
       }
 
-      // Handle anyOf sub-schemas
-      if (newUiSchema.anyOf) {
-        newUiSchema.anyOf = newUiSchema.anyOf.map(subSchema =>
-          configureDependantUiSchema(
-            dependant,
-            subSchema,
-            parentValueSelected ? formData?.conceptId : undefined,
-          ),
-        );
-      }
+      const finalUiOptions = {
+        ...dependantInstance['ui:options'],
+        ...mergedOptions,
+      };
 
-      // Update form data and UI schema
-      RjsfUtils.setFormDataById?.(
-        rootFormData,
-        dependantId,
-        newUiSchema.defaultValue ?? null,
-      );
-      RjsfUtils.setUiSchemaById?.(rootUiSchema, dependantId, newUiSchema);
+      const newUiSchema = {
+        'ui:options': finalUiOptions,
+      };
+      RjsfUtils.setUiSchemaItemByIndex(rootUiSchema, dependantId, newUiSchema);
     }
   };
 
