@@ -22,7 +22,6 @@ import {
   isNewConcept,
 } from '../../../utils/helpers/conceptUtils.ts';
 import ConceptDiagramModal from '../../../components/conceptdiagrams/ConceptDiagramModal.tsx';
-import ProductRefsetModal from '../../../components/refset/ProductRefsetModal.tsx';
 import {
   AccordionDetails,
   AccordionSummary,
@@ -40,14 +39,7 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Stack } from '@mui/system';
 import LinkViews from './LinkViews.tsx';
-import { FormattedMessage } from 'react-intl';
-import {
-  AccountTreeOutlined,
-  Edit,
-  NewReleases,
-  NewReleasesOutlined,
-  NotesOutlined,
-} from '@mui/icons-material';
+import { AccountTreeOutlined, Edit, NotesOutlined } from '@mui/icons-material';
 import CircleIcon from '@mui/icons-material/Circle';
 import ExistingConceptDropdown from './ExistingConceptDropdown.tsx';
 import NewConceptDropdown from './NewConceptDropdown.tsx';
@@ -154,6 +146,9 @@ function ProductPreviewPanel({
     : [];
 
   const [optionsIgnored, setOptionsIgnored] = useState(false);
+  const isSubject = productModel.subjects.some(
+    s => s.conceptId === product.conceptId,
+  );
   const productTitle = fsnToggle
     ? (product.concept?.fsn?.term as string)
     : product.concept?.pt?.term;
@@ -288,6 +283,7 @@ function ProductPreviewPanel({
                         partialNameCheckKeywords={partialNameCheckKeywords}
                         nameGeneratorErrorKeywords={nameGeneratorErrorKeywords}
                         optionsIgnored={optionsIgnored}
+                        isSubject={isSubject}
                       />
                     ) : (
                       <Tooltip
@@ -319,7 +315,13 @@ function ProductPreviewPanel({
                         }}
                       >
                         <Typography>
-                          <span>{productTitle}</span>
+                          <span
+                            style={{
+                              fontWeight: isSubject ? 'bold' : 'normal',
+                            }}
+                          >
+                            {productTitle}
+                          </span>
                         </Typography>
                       </Tooltip>
                     )}
@@ -379,10 +381,17 @@ function ProductPreviewPanel({
                         partialNameCheckKeywords={partialNameCheckKeywords}
                         nameGeneratorErrorKeywords={nameGeneratorErrorKeywords}
                         optionsIgnored={optionsIgnored}
+                        isSubject={isSubject}
                       />
                     ) : (
                       <Typography>
-                        <span>{productTitle}</span>
+                        <span
+                          style={{
+                            fontWeight: isSubject ? 'bold' : 'normal',
+                          }}
+                        >
+                          {productTitle}
+                        </span>
                       </Typography>
                     )}
                   </Grid>
@@ -676,6 +685,7 @@ function ProductHeaderWatch({
   nameGeneratorErrorKeywords,
   optionsIgnored,
   isEditMode,
+  isSubject,
 }: {
   control?: Control<ProductSummary>;
   index: number;
@@ -690,6 +700,7 @@ function ProductHeaderWatch({
   nameGeneratorErrorKeywords?: string[];
   optionsIgnored: boolean;
   isEditMode: boolean;
+  isSubject?: boolean;
 }) {
   let pt = useWatch({
     control,
@@ -787,7 +798,13 @@ function ProductHeaderWatch({
         }}
       >
         <Typography>
-          <span>{fsnToggle ? fsn : pt} </span>
+          <span
+            style={{
+              fontWeight: isSubject ? 'bold' : 'normal',
+            }}
+          >
+            {fsnToggle ? fsn : pt}
+          </span>
         </Typography>
       </Tooltip>
     );
@@ -795,7 +812,13 @@ function ProductHeaderWatch({
 
   return (
     <Typography>
-      <span>{fsnToggle ? fsn : pt}</span>
+      <span
+        style={{
+          fontWeight: isSubject ? 'bold' : 'normal',
+        }}
+      >
+        {fsnToggle ? fsn : pt}
+      </span>
     </Typography>
   );
   // end of ProductHeaderWatch

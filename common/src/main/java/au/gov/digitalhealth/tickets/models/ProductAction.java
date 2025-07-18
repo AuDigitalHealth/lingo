@@ -15,9 +15,7 @@
  */
 package au.gov.digitalhealth.tickets.models;
 
-/**
- * Enum representing the action type for a product.
- */
+/** Enum representing the action type for a product. */
 public enum ProductAction {
   CREATE,
   UPDATE
