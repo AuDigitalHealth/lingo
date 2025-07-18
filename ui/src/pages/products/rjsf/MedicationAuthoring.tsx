@@ -1,6 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Form } from '@rjsf/mui';
-import { Box, Button, Container, FormControlLabel, Paper, Switch } from '@mui/material';
+import {
+  Box,
+  Button,
+  Container,
+  FormControlLabel,
+  Paper,
+  Switch,
+} from '@mui/material';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import _ from 'lodash';
 
@@ -19,9 +26,7 @@ import TextFieldWidget from './widgets/TextFieldWidget.tsx';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 import productService from '../../../api/ProductService.ts';
 import { ConfigService } from '../../../api/ConfigService.ts';
-import {
-  isValueSetExpansionContains
-} from '../../../types/predicates/isValueSetExpansionContains.ts';
+import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
 import { Concept } from '../../../types/concept.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
 import { Task } from '../../../types/task.ts';
@@ -30,7 +35,7 @@ import {
   MedicationPackageDetails,
   ProductActionType,
   ProductSaveDetails,
-  ProductType
+  ProductType,
 } from '../../../types/product.ts';
 import { useTicketProductQuery } from './hooks/useTicketProductQuery.ts';
 import { DraftSubmitPanel } from './components/DarftSubmitPanel.tsx';
@@ -38,7 +43,10 @@ import ProductPartialSaveModal from './components/ProductPartialSaveModal.tsx';
 import MuiGridTemplate from './templates/MuiGridTemplate.tsx';
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 import { validator } from './helpers/validator.ts';
-import { buildErrorSchema, resetDiscriminators } from './helpers/validationHelper.ts';
+import {
+  buildErrorSchema,
+  resetDiscriminators,
+} from './helpers/validationHelper.ts';
 import { ErrorDisplay } from './components/ErrorDisplay.tsx';
 import CustomSelectWidget from './widgets/CustomSelectWidget.tsx';
 import { evaluateExpression } from './helpers/rjsfUtils.ts';
@@ -83,7 +91,7 @@ function MedicationAuthoring({
     loadingPreview,
     isProductUpdate,
     setIsProductUpdate,
-    handleClearForm
+    handleClearForm,
   } = useAuthoringStore();
 
   const { isLoading, isFetching } = useProductQuery({
