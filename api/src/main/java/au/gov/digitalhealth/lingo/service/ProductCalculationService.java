@@ -248,16 +248,18 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
         packageDetails
             .getContainedPackages()
             .forEach(
-                innerPackage ->
-                    innerPackage
-                        .getPackageDetails()
-                        .getContainedProducts()
-                        .forEach(
-                            innerProduct ->
-                                innerProduct
-                                    .getProductDetails()
-                                    .getNonDefiningProperties()
-                                    .add(nmpcType)));
+                innerPackage -> {
+                  innerPackage
+                      .getPackageDetails()
+                      .getContainedProducts()
+                      .forEach(
+                          innerProduct ->
+                              innerProduct
+                                  .getProductDetails()
+                                  .getNonDefiningProperties()
+                                  .add(nmpcType));
+                  innerPackage.getPackageDetails().getNonDefiningProperties().add(nmpcType);
+                });
         packageDetails
             .getContainedProducts()
             .forEach(

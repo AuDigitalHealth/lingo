@@ -336,7 +336,7 @@ public class ProductCreationService {
             .filter(Node::isNewConcept)
             .collect(Collectors.toSet());
 
-    BidiMap<String, String> idMap = createAndUpdate(branch, productSummary, false, true);
+    BidiMap<String, String> idMap = createAndUpdate(branch, productSummary, true);
 
     if (productSummaryClone != null) {
       modifiedGeneratedNameService.createAndSaveModifiedGeneratedNames(
@@ -421,7 +421,7 @@ public class ProductCreationService {
       throw new EmptyProductCreationProblem();
     }
 
-    BidiMap<String, String> idMap = createAndUpdate(branch, productSummary, true, createOnly);
+    BidiMap<String, String> idMap = createAndUpdate(branch, productSummary, createOnly);
 
     if (productSummaryClone != null) {
       modifiedGeneratedNameService.createAndSaveModifiedGeneratedNames(
@@ -551,7 +551,7 @@ public class ProductCreationService {
   }
 
   private BidiMap<String, String> createAndUpdate(
-      String branch, ProductSummary productSummary, boolean singleSubject, boolean createOnly)
+      String branch, ProductSummary productSummary, boolean createOnly)
       throws InterruptedException {
 
     if (createOnly) {
@@ -581,7 +581,6 @@ public class ProductCreationService {
             });
 
     final ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
-    Set<Node> subjects = productSummary.calculateSubject(singleSubject, modelConfiguration);
 
     updateConceptsWithPropertyOnlyChanges(branch, modelConfiguration, productSummary);
 
@@ -627,9 +626,6 @@ public class ProductCreationService {
         edge.setTarget(idMap.get(edge.getTarget()));
       }
     }
-
-    productSummary.getSubjects().clear();
-    productSummary.getSubjects().addAll(subjects);
 
     productSummary.updateNodeChangeStatus(
         taskChangedConceptIds.block(), projectChangedConceptIds.block());
