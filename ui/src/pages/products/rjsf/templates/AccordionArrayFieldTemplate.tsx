@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrayFieldTemplateProps } from '@rjsf/utils';
 import {
-  Box,
-  Typography,
   Accordion,
-  AccordionSummary,
   AccordionDetails,
+  AccordionSummary,
+  Box,
   IconButton,
-  Tooltip,
   Toolbar,
+  Tooltip,
+  Typography
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
@@ -29,13 +29,43 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
   canAdd,
   onAddClick,
   title,
-
   uiSchema,
   formData,
   formContext,
   idSchema,
 }) => {
-  const [expandedPanels, setExpandedPanels] = useState<string[]>([]);
+  // Get expansion options from uiSchema
+  const uiOptions = uiSchema?.['ui:options'] || {};
+  const defaultExpanded = uiOptions.defaultExpanded === true;
+  const initiallyExpanded = uiOptions.initiallyExpanded === true;
+  const shouldExpandByDefault = defaultExpanded || initiallyExpanded;
+
+  // Initialize expandedPanels state based on options
+  const [expandedPanels, setExpandedPanels] = useState<string[]>(() => {
+    if (shouldExpandByDefault) {
+      // Expand all panels by default
+      return items.map((_, index) => `panel${index}`);
+    }
+    return [];
+  });
+
+  // Update expandedPanels when items length changes and default expansion is enabled
+  useEffect(() => {
+    // Only auto-expand new items if we're set to expand by default
+    if (shouldExpandByDefault && items.length > 0) {
+      const currentPanelIds = expandedPanels;
+      const allPanelIds = items.map((_, index) => `panel${index}`);
+
+      // Find panels that are new (not in the current expanded list)
+      const newPanelIds = allPanelIds.filter(id => !currentPanelIds.includes(id));
+
+      // Only update if there are new panels to expand
+      if (newPanelIds.length > 0) {
+        setExpandedPanels(prev => [...prev, ...newPanelIds]);
+      }
+    }
+  }, [items.length, shouldExpandByDefault]);
+
   const {
     openSearchModal,
     handleOpenSearchModal,
@@ -43,12 +73,15 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
     handleAddProduct,
   } = useSearchAndAddProduct(formContext, idSchema);
 
-  const handleChange =
-    (panel: string) => (_: React.SyntheticEvent, isExpanded: boolean) => {
-      setExpandedPanels(prev =>
-        isExpanded ? [...prev, panel] : prev.filter(p => p !== panel),
-      );
-    };
+  const handleChange = (panel: string) => (_: React.SyntheticEvent, isExpanded: boolean) => {
+    if (isExpanded) {
+      // Add this panel to the expanded list
+      setExpandedPanels(prev => [...prev, panel]);
+    } else {
+      // Remove this panel from the expanded list
+      setExpandedPanels(prev => prev.filter(p => p !== panel));
+    }
+  };
 
   return (
     <div data-testid={idSchema.$id + '_container'}>
@@ -100,6 +133,7 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
 
       {items.map(element => {
         const itemTitle = getItemTitle(uiSchema, formData, element.index);
+        const panelId = `panel${element.index}`;
 
         return (
           <Box
@@ -107,8 +141,8 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
             data-testid={`${idSchema.$id}_${element.index}_container`}
           >
             <Accordion
-              expanded={expandedPanels.includes(`panel${element.index}`)}
-              onChange={handleChange(`panel${element.index}`)}
+              expanded={expandedPanels.includes(panelId)}
+              onChange={handleChange(panelId)}
               sx={containerStyle}
             >
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -116,7 +150,12 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
                   {itemTitle}
                 </Typography>
                 {element.hasRemove && (
-                  <IconButton onClick={element.onDropIndexClick(element.index)}>
+                  <IconButton
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent accordion toggle
+                      element.onDropIndexClick(element.index)(e);
+                    }}
+                  >
                     <RemoveCircleOutlineIcon color="error" />
                   </IconButton>
                 )}
