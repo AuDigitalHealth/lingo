@@ -50,7 +50,14 @@
       "nullable": true,
       "minProperties": 2,
       "properties": {
-        "unit": { "type": ["object", "null"], "$ref": "#/$defs/SnowstormConceptMini" },
+        "unit": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Unit"
+        },
         "value": { "type": "number", "minimum": 0 }
       },
       "errorMessage": { "minProperties": "Both 'unit' and 'value' must be provided" },
