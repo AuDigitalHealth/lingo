@@ -43,6 +43,8 @@ public class PackageDetails<T extends ProductDetails> extends PackageProductDeta
   List<@Valid ProductQuantity<T>> containedProducts = new ArrayList<>();
   List<@Valid PackageQuantity<T>> containedPackages = new ArrayList<>();
   List<String> selectedConceptIdentifiers = new ArrayList<>();
+  String otherIdentifyingInformation;
+  String genericOtherIdentifyingInformation;
 
   String variant;
 
