@@ -29,6 +29,7 @@ import useApplicationConfigStore from '../../stores/ApplicationConfigStore.ts';
 import { useSearchConceptById } from '../../hooks/api/products/useSearchConcept.tsx';
 import DiffConceptDiagram from './DiffConceptDiagram.tsx';
 import { Grid } from '@mui/material';
+import { Box } from '@mui/material';
 
 type ConceptOrDetails = Product | null | undefined;
 
@@ -95,34 +96,68 @@ export default function ConceptDiagramModal({
       open={open}
       handleClose={handleClose}
       keepMounted={keepMounted}
-      sx={{ width: '80%', height: '80%' }}
+      sx={
+        leftTransformed && rightTransformed
+          ? { width: '80%', height: '80%' }
+          : { width: '80%', height: '80%' }
+      }
     >
       <Grid container direction="column" sx={{ height: '100%' }}>
-        <Grid item xs={1.2}>
+        <Grid item>
           <BaseModalHeader title={'Concept Diagram Preview'} />
         </Grid>
-        <Grid item xs={9.6}>
-          <BaseModalBody sx={{ overflow: 'auto', height: '100%' }}>
+        <Grid
+          item
+          xs
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
+            width: '100%',
+          }}
+        >
+          <BaseModalBody
+            sx={{
+              overflow: 'hidden',
+              height: '100%',
+              padding: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              flex: 1,
+            }}
+          >
             {leftTransformed && rightTransformed ? (
-              <DiffConceptDiagram
-                leftConcept={leftTransformed}
-                rightConcept={rightTransformed}
-              />
+              <Box
+                sx={{
+                  flex: 1,
+                  overflow: 'auto',
+                  minHeight: 0,
+                  width: leftTransformed && rightTransformed ? '100%' : 'auto',
+                }}
+              >
+                <DiffConceptDiagram
+                  leftConcept={leftTransformed}
+                  rightConcept={rightTransformed}
+                />
+              </Box>
             ) : (
-              <ConceptDiagram
-                concept={product.concept}
-                newConcept={newConcept}
-              />
+              <Box sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+                <ConceptDiagram
+                  concept={product.concept}
+                  newConcept={newConcept}
+                />
+              </Box>
             )}
 
             <Accordion
               sx={{
-                maxHeight: '25%', // Maximum height when expanded
+                flexShrink: 0,
+                maxHeight: '25%',
                 '&.Mui-expanded': {
-                  margin: 0, // Override default margin
+                  margin: 0,
                 },
               }}
-              defaultExpanded={false} // Start collapsed by default
+              defaultExpanded={false}
             >
               <AccordionSummary
                 expandIcon={<ExpandMoreIcon />}
@@ -131,10 +166,6 @@ export default function ConceptDiagramModal({
                 sx={{
                   backgroundColor: '#f5f5f5',
                   borderTop: '1px solid #e0e0e0',
-                  minHeight: '48px',
-                  '&.Mui-expanded': {
-                    minHeight: '48px', // Override default expanded height
-                  },
                 }}
               >
                 <Typography>Additional Properties</Typography>
@@ -142,8 +173,8 @@ export default function ConceptDiagramModal({
               <AccordionDetails
                 sx={{
                   padding: 2,
-                  overflowY: 'auto', // Enable scrolling for content
-                  maxHeight: 'calc(25vh - 48px)', // Maximum height minus header
+                  overflowY: 'auto',
+                  maxHeight: 'calc(25vh - 48px)',
                 }}
               >
                 <AdditionalPropertiesDisplay
@@ -155,7 +186,7 @@ export default function ConceptDiagramModal({
             </Accordion>
           </BaseModalBody>
         </Grid>
-        <Grid item xs={1}>
+        <Grid item>
           <BaseModalFooter
             startChildren={<></>}
             endChildren={
