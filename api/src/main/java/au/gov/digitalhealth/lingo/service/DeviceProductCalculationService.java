@@ -122,16 +122,19 @@ public class DeviceProductCalculationService
             STATED_RELATIONSHIP,
             modelConfiguration.getModuleId()));
 
-    relationships.add(
-        getSnowstormDatatypeComponent(
-            HAS_OTHER_IDENTIFYING_INFORMATION,
-            !StringUtils.hasLength(productDetails.getOtherIdentifyingInformation())
-                ? NO_OII_VALUE.getValue()
-                : productDetails.getOtherIdentifyingInformation(),
-            DataTypeEnum.STRING,
-            0,
-            STATED_RELATIONSHIP,
-            modelConfiguration.getModuleId()));
+    if (modelConfiguration.getModelType().equals(ModelType.AMT)
+        || productDetails.getOtherIdentifyingInformation() != null) {
+      relationships.add(
+          getSnowstormDatatypeComponent(
+              HAS_OTHER_IDENTIFYING_INFORMATION,
+              !StringUtils.hasLength(productDetails.getOtherIdentifyingInformation())
+                  ? NO_OII_VALUE.getValue()
+                  : productDetails.getOtherIdentifyingInformation(),
+              DataTypeEnum.STRING,
+              0,
+              STATED_RELATIONSHIP,
+              modelConfiguration.getModuleId()));
+    }
     return relationships;
   }
 
@@ -167,7 +170,8 @@ public class DeviceProductCalculationService
                           modelConfiguration.getModuleId())));
     }
 
-    if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
+    if (modelConfiguration.getModelType().equals(ModelType.NMPC)
+        && productDetails.getGenericOtherIdentifyingInformation() != null) {
       relationships.add(
           getSnowstormDatatypeComponent(
               HAS_OTHER_IDENTIFYING_INFORMATION,
@@ -588,20 +592,18 @@ public class DeviceProductCalculationService
     }
 
     if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
-      if (modelLevel.isBranded()) {
-        if (modelLevel.isBranded()) {
-          relationships.add(
-              getSnowstormDatatypeComponent(
-                  HAS_OTHER_IDENTIFYING_INFORMATION,
-                  !StringUtils.hasLength(packageDetails.getOtherIdentifyingInformation())
-                      ? NO_OII_VALUE.getValue()
-                      : packageDetails.getOtherIdentifyingInformation(),
-                  DataTypeEnum.STRING,
-                  0,
-                  STATED_RELATIONSHIP,
-                  modelConfiguration.getModuleId()));
-        }
-      } else {
+      if (modelLevel.isBranded() && packageDetails.getOtherIdentifyingInformation() != null) {
+        relationships.add(
+            getSnowstormDatatypeComponent(
+                HAS_OTHER_IDENTIFYING_INFORMATION,
+                !StringUtils.hasLength(packageDetails.getOtherIdentifyingInformation())
+                    ? NO_OII_VALUE.getValue()
+                    : packageDetails.getOtherIdentifyingInformation(),
+                DataTypeEnum.STRING,
+                0,
+                STATED_RELATIONSHIP,
+                modelConfiguration.getModuleId()));
+      } else if (packageDetails.getGenericOtherIdentifyingInformation() != null) {
         relationships.add(
             getSnowstormDatatypeComponent(
                 HAS_OTHER_IDENTIFYING_INFORMATION,
