@@ -632,17 +632,21 @@ public class MedicationProductCalculationService
           0,
           modelConfiguration.getModuleId());
 
-      relationships.add(
-          getSnowstormDatatypeComponent(
-              HAS_OTHER_IDENTIFYING_INFORMATION,
-              !StringUtils.hasLength(packageDetails.getOtherIdentifyingInformation())
-                  ? NO_OII_VALUE.getValue()
-                  : packageDetails.getOtherIdentifyingInformation(),
-              DataTypeEnum.STRING,
-              0,
-              STATED_RELATIONSHIP,
-              modelConfiguration.getModuleId()));
-    } else if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
+      if (modelConfiguration.getModelType().equals(ModelType.AMT)
+          || packageDetails.getOtherIdentifyingInformation() != null) {
+        relationships.add(
+            getSnowstormDatatypeComponent(
+                HAS_OTHER_IDENTIFYING_INFORMATION,
+                !StringUtils.hasLength(packageDetails.getOtherIdentifyingInformation())
+                    ? NO_OII_VALUE.getValue()
+                    : packageDetails.getOtherIdentifyingInformation(),
+                DataTypeEnum.STRING,
+                0,
+                STATED_RELATIONSHIP,
+                modelConfiguration.getModuleId()));
+      }
+    } else if (modelConfiguration.getModelType().equals(ModelType.NMPC)
+        && packageDetails.getGenericOtherIdentifyingInformation() != null) {
       relationships.add(
           getSnowstormDatatypeComponent(
               HAS_OTHER_IDENTIFYING_INFORMATION,
@@ -1280,17 +1284,21 @@ public class MedicationProductCalculationService
               STATED_RELATIONSHIP,
               modelConfiguration.getModuleId()));
 
-      relationships.add(
-          getSnowstormDatatypeComponent(
-              HAS_OTHER_IDENTIFYING_INFORMATION,
-              !StringUtils.hasLength(productDetails.getOtherIdentifyingInformation())
-                  ? NO_OII_VALUE.getValue()
-                  : productDetails.getOtherIdentifyingInformation(),
-              DataTypeEnum.STRING,
-              0,
-              STATED_RELATIONSHIP,
-              modelConfiguration.getModuleId()));
-    } else if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
+      if (modelConfiguration.getModelType().equals(ModelType.AMT)
+          || productDetails.getOtherIdentifyingInformation() != null) {
+        relationships.add(
+            getSnowstormDatatypeComponent(
+                HAS_OTHER_IDENTIFYING_INFORMATION,
+                !StringUtils.hasLength(productDetails.getOtherIdentifyingInformation())
+                    ? NO_OII_VALUE.getValue()
+                    : productDetails.getOtherIdentifyingInformation(),
+                DataTypeEnum.STRING,
+                0,
+                STATED_RELATIONSHIP,
+                modelConfiguration.getModuleId()));
+      }
+    } else if (modelConfiguration.getModelType().equals(ModelType.NMPC)
+        && productDetails.getGenericOtherIdentifyingInformation() != null) {
       relationships.add(
           getSnowstormDatatypeComponent(
               HAS_OTHER_IDENTIFYING_INFORMATION,
