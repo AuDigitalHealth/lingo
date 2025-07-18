@@ -97,6 +97,10 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
                   addedProperties.stream()
                       .filter(
                           p ->
+                              !p.getIdentifierScheme().equals("levelMarker")
+                                  && !p.getIdentifierScheme().equals("nmpcType"))
+                      .filter(
+                          p ->
                               modelConfiguration
                                   .getProperty(p.getIdentifierScheme())
                                   .getModelLevels()
@@ -110,6 +114,10 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
                   .getNonDefiningProperties()
                   .removeAll(
                       removedProperties.stream()
+                          .filter(
+                              p ->
+                                  !p.getIdentifierScheme().equals("levelMarker")
+                                      && !p.getIdentifierScheme().equals("nmpcType"))
                           .filter(
                               p ->
                                   modelConfiguration
@@ -131,13 +139,29 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
     for (Node node : productSummary.getNodes().stream().filter(Node::isPropertyUpdate).toList()) {
       // find the property changes for the node
       Set<NonDefiningBase> addedProperties = new HashSet<>(node.getNonDefiningProperties());
-      addedProperties.removeAll(node.getOriginalNode().getNode().getNonDefiningProperties());
+      addedProperties.removeAll(
+          node.getOriginalNode().getNode().getNonDefiningProperties().stream()
+              .filter(
+                  p ->
+                      !p.getIdentifierScheme().equals("levelMarker")
+                          && !p.getIdentifierScheme().equals("nmpcType"))
+              .toList());
       Set<NonDefiningBase> removedProperties =
-          new HashSet<>(node.getOriginalNode().getNode().getNonDefiningProperties());
+          new HashSet<>(
+              node.getOriginalNode().getNode().getNonDefiningProperties().stream()
+                  .filter(
+                      p ->
+                          !p.getIdentifierScheme().equals("levelMarker")
+                              && !p.getIdentifierScheme().equals("nmpcType"))
+                  .toList());
       removedProperties.removeAll(node.getNonDefiningProperties());
 
       Set<ModelLevel> levels =
           Stream.concat(addedProperties.stream(), removedProperties.stream())
+              .filter(
+                  p ->
+                      !p.getIdentifierScheme().equals("levelMarker")
+                          && !p.getIdentifierScheme().equals("nmpcType"))
               .map(modelConfiguration::getApplicablePropertyLevels)
               .flatMap(Collection::stream)
               .collect(Collectors.toSet());
