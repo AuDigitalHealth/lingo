@@ -368,9 +368,9 @@ function TicketTableHeader({
         <BulkAddExternalRequestersModal
           open={bulkAddExternalRequestersOpen}
           defaultAdditionalFieldType={
-            additionalFieldTypes.find(
-              at => at.name === 'ARTGID',
-            ) as AdditionalFieldType
+            additionalFieldTypes.find(at => at.name === 'ARTGID') ||
+            additionalFieldTypes[0] ||
+            undefined
           }
           handleClose={() =>
             setBulkAddExternalRequestersOpen(!bulkAddExternalRequestersOpen)

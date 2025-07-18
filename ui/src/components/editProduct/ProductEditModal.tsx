@@ -890,11 +890,12 @@ const FieldDescriptions = ({
     defaultValue: description?.active ?? true,
   });
 
-  const containsSemanticTag = extractSemanticTag(
-    descriptionWithSemanticTag?.term,
-  )
-    ?.trim()
-    .toLocaleLowerCase();
+  const containsSemanticTag =
+    descriptionWithSemanticTag?.type === DefinitionType.FSN
+      ? extractSemanticTag(descriptionWithSemanticTag?.term)
+          ?.trim()
+          .toLocaleLowerCase()
+      : undefined;
 
   const defaultLangRefset = findDefaultLangRefset(langRefsets);
   const descriptionType = sortedDescriptionsWithoutSemanticTag[index]?.type;
