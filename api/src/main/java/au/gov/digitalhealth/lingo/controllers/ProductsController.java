@@ -20,15 +20,12 @@ import au.gov.digitalhealth.lingo.aspect.LogExecutionTime;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
-import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
-import au.gov.digitalhealth.lingo.product.update.ProductPropertiesUpdateRequest;
 import au.gov.digitalhealth.lingo.product.update.ProductUpdateRequest;
 import au.gov.digitalhealth.lingo.service.ProductSummaryService;
 import au.gov.digitalhealth.lingo.service.ProductUpdateService;
 import au.gov.digitalhealth.lingo.service.TaskManagerService;
 import au.gov.digitalhealth.tickets.models.BulkProductAction;
 import jakarta.validation.Valid;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -81,7 +78,8 @@ public class ProductsController {
       throws InterruptedException {
     taskManagerService.validateTaskState(branch);
     BulkProductAction response =
-        productUpdateService.updateProductDescriptions(branch, String.valueOf(productId), productUpdateRequest);
+        productUpdateService.updateProductDescriptions(
+            branch, String.valueOf(productId), productUpdateRequest);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
