@@ -122,18 +122,16 @@ public class DeviceProductCalculationService
             STATED_RELATIONSHIP,
             modelConfiguration.getModuleId()));
 
-    if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
-      relationships.add(
-          getSnowstormDatatypeComponent(
-              HAS_OTHER_IDENTIFYING_INFORMATION,
-              !StringUtils.hasLength(productDetails.getOtherIdentifyingInformation())
-                  ? NO_OII_VALUE.getValue()
-                  : productDetails.getOtherIdentifyingInformation(),
-              DataTypeEnum.STRING,
-              0,
-              STATED_RELATIONSHIP,
-              modelConfiguration.getModuleId()));
-    }
+    relationships.add(
+        getSnowstormDatatypeComponent(
+            HAS_OTHER_IDENTIFYING_INFORMATION,
+            !StringUtils.hasLength(productDetails.getOtherIdentifyingInformation())
+                ? NO_OII_VALUE.getValue()
+                : productDetails.getOtherIdentifyingInformation(),
+            DataTypeEnum.STRING,
+            0,
+            STATED_RELATIONSHIP,
+            modelConfiguration.getModuleId()));
     return relationships;
   }
 
@@ -149,15 +147,37 @@ public class DeviceProductCalculationService
   }
 
   private static Set<SnowstormRelationship> getLeafUnbrandedRelationships(
-      Node rootUnbrandedNode, Set<SnowstormConceptMini> otherParentConcepts, String moduleId) {
+      Node rootUnbrandedNode,
+      DeviceProductDetails productDetails,
+      ModelConfiguration modelConfiguration) {
     Set<SnowstormRelationship> relationships = new HashSet<>();
-    relationships.add(getSnowstormRelationship(IS_A, rootUnbrandedNode, 0, moduleId));
-    if (otherParentConcepts != null) {
-      otherParentConcepts.forEach(
-          otherParentConcept ->
-              relationships.add(
-                  getSnowstormRelationship(
-                      IS_A, otherParentConcept, 0, STATED_RELATIONSHIP, moduleId)));
+    relationships.add(
+        getSnowstormRelationship(IS_A, rootUnbrandedNode, 0, modelConfiguration.getModuleId()));
+    if (productDetails.getOtherParentConcepts() != null) {
+      productDetails
+          .getOtherParentConcepts()
+          .forEach(
+              otherParentConcept ->
+                  relationships.add(
+                      getSnowstormRelationship(
+                          IS_A,
+                          otherParentConcept,
+                          0,
+                          STATED_RELATIONSHIP,
+                          modelConfiguration.getModuleId())));
+    }
+
+    if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
+      relationships.add(
+          getSnowstormDatatypeComponent(
+              HAS_OTHER_IDENTIFYING_INFORMATION,
+              !StringUtils.hasLength(productDetails.getGenericOtherIdentifyingInformation())
+                  ? NO_OII_VALUE.getValue()
+                  : productDetails.getGenericOtherIdentifyingInformation(),
+              DataTypeEnum.STRING,
+              0,
+              STATED_RELATIONSHIP,
+              modelConfiguration.getModuleId()));
     }
     return relationships;
   }
@@ -567,6 +587,34 @@ public class DeviceProductCalculationService
               modelConfiguration.getModuleId()));
     }
 
+    if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
+      if (modelLevel.isBranded()) {
+        if (modelLevel.isBranded()) {
+          relationships.add(
+              getSnowstormDatatypeComponent(
+                  HAS_OTHER_IDENTIFYING_INFORMATION,
+                  !StringUtils.hasLength(packageDetails.getOtherIdentifyingInformation())
+                      ? NO_OII_VALUE.getValue()
+                      : packageDetails.getOtherIdentifyingInformation(),
+                  DataTypeEnum.STRING,
+                  0,
+                  STATED_RELATIONSHIP,
+                  modelConfiguration.getModuleId()));
+        }
+      } else {
+        relationships.add(
+            getSnowstormDatatypeComponent(
+                HAS_OTHER_IDENTIFYING_INFORMATION,
+                !StringUtils.hasLength(packageDetails.getGenericOtherIdentifyingInformation())
+                    ? NO_OII_VALUE.getValue()
+                    : packageDetails.getGenericOtherIdentifyingInformation(),
+                DataTypeEnum.STRING,
+                0,
+                STATED_RELATIONSHIP,
+                modelConfiguration.getModuleId()));
+      }
+    }
+
     if (modelLevel.isContainerized()) {
       relationships.add(
           getSnowstormRelationship(
@@ -835,10 +883,7 @@ public class DeviceProductCalculationService
     axiom.setDefinitionStatusId(PRIMITIVE.getValue());
     axiom.setDefinitionStatus("PRIMITIVE");
     Set<SnowstormRelationship> relationships =
-        getLeafUnbrandedRelationships(
-            rootUnbrandedNode,
-            productDetails.getOtherParentConcepts(),
-            modelConfiguration.getModuleId());
+        getLeafUnbrandedRelationships(rootUnbrandedNode, productDetails, modelConfiguration);
     axiom.setRelationships(relationships);
     axiom.setModuleId(modelConfiguration.getModuleId());
     axiom.setReleased(false);

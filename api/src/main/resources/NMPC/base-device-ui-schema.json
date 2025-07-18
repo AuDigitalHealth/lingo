@@ -4,14 +4,33 @@
       "containedProducts": 24
     },
     {
+      "genericOtherIdentifyingInformation": 12,
+      "otherIdentifyingInformation": 12
+    },
+    {
       "nonDefiningProperties": 24
     }
   ],
+  "genericOtherIdentifyingInformation": {
+    "ui:widget": "text",
+    "ui:title": "VMPP other Identifying Information",
+    "ui:options": {
+      "placeholder": "Enter any additional identifying information"
+    }
+  },
+  "otherIdentifyingInformation": {
+    "ui:widget": "text",
+    "ui:title": "AMPP other Identifying Information",
+    "ui:options": {
+      "placeholder": "Enter any additional identifying information"
+    }
+  },
   "containedProducts": {
     "ui:field": "ConditionalArrayField",
     "ui:options": {
       "skipTitle": true,
       "arrayTemplate": "accordion",
+      "initiallyExpanded": true,
       "searchAndAddProduct": {
         "ecl": "^660381000220107 AND <63653004",
         "type": "device",
@@ -66,6 +85,10 @@
           {
             "newSpecificDeviceName": 12,
             "otherParentConcepts": 12
+          },
+          {
+            "genericOtherIdentifyingInformation": 12,
+            "otherIdentifyingInformation": 12
           },
           {
             "nonDefiningProperties": 24
@@ -137,6 +160,20 @@
             "skipTitle": true,
             "showDefaultOptions": false,
             "multiValued": true
+          }
+        },
+        "genericOtherIdentifyingInformation": {
+          "ui:widget": "text",
+          "ui:title": "VMP other Identifying Information",
+          "ui:options": {
+            "placeholder": "Enter any additional identifying information"
+          }
+        },
+        "otherIdentifyingInformation": {
+          "ui:widget": "text",
+          "ui:title": "AMP other Identifying Information",
+          "ui:options": {
+            "placeholder": "Enter any additional identifying information"
           }
         }
       }

@@ -39,6 +39,7 @@ public abstract class ProductDetails extends PackageProductDetailsBase {
   @NotNull SnowstormConceptMini productName;
   SnowstormConceptMini deviceType;
   String otherIdentifyingInformation;
+  String genericOtherIdentifyingInformation;
 
   /**
    * This is the particular style of product, presentation strength, concentration strength, no

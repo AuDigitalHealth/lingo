@@ -166,6 +166,8 @@
                         "title": "Ingredients",
                         "items": { "$ref": "#/$defs/PresentationStrengthIngredient" }
                       },
+                      "genericOtherIdentifyingInformation": { "type": "string", "title": "VMP other Identifying Information" },
+                      "otherIdentifyingInformation": { "type": "string", "title": "AMP other Identifying Information" },
                       "unitOfPresentation": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Unit of Presentation" },
                       "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PRODUCT_NonDefiningProperty" }, "title": "Non Defining Properties" }
                     },
@@ -186,6 +188,8 @@
                         "title": "Ingredients",
                         "items": { "$ref": "#/$defs/ConcentrationStrengthIngredient" }
                       },
+                      "genericOtherIdentifyingInformation": { "type": "string", "title": "VMP other Identifying Information" },
+                      "otherIdentifyingInformation": { "type": "string", "title": "AMP other Identifying Information" },
                       "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PRODUCT_NonDefiningProperty" }, "title": "Non Defining Properties" }
                     },
                     "required": ["productName", "genericForm", "productType", "activeIngredients"],
@@ -206,6 +210,8 @@
                         "items": { "$ref": "#/$defs/NoStrengthIngredient" }
                       },
                       "unitOfPresentation": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Unit of Presentation" },
+                      "genericOtherIdentifyingInformation": { "type": "string", "title": "VMP other Identifying Information" },
+                      "otherIdentifyingInformation": { "type": "string", "title": "AMP other Identifying Information" },
                       "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PRODUCT_NonDefiningProperty" }, "title": "Non Defining Properties" }
                     },
                     "required": ["productName", "existingMedicinalProduct", "genericForm", "productType", "activeIngredients", "unitOfPresentation"],
@@ -219,6 +225,8 @@
             "additionalProperties": false
           }
         },
+        "genericOtherIdentifyingInformation": { "type": "string", "title": "VMPP other Identifying Information" },
+        "otherIdentifyingInformation": { "type": "string", "title": "AMPP other Identifying Information" },
         "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PACKAGE_NonDefiningProperty" }, "title": "Non Defining Properties" }
       },
       "required": ["variant", "containedProducts"],
@@ -268,6 +276,8 @@
                       "targetPopulation": { "type": ["object", "null"], "$ref": "#/$defs/SnowstormConceptMini", "title": "Target Population" },
                       "unitOfPresentation": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Unit of Presentation" },
                       "ingredientQualitativeStrength": { "type": ["object", "null"], "$ref": "#/$defs/SnowstormConceptMini", "title": "Qualitative Strength" },
+                      "genericOtherIdentifyingInformation": { "type": "string", "title": "VMP other Identifying Information" },
+                      "otherIdentifyingInformation": { "type": "string", "title": "AMP other Identifying Information" },
                       "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/VACCINE_PRODUCT_NonDefiningProperty" }, "title": "Non Defining Properties" }
                     },
                     "required": ["productName", "genericForm", "productType", "activeIngredients", "unitOfPresentation"],
@@ -291,6 +301,8 @@
                       "ingredientQualitativeStrength": { "type": ["object", "null"], "$ref": "#/$defs/SnowstormConceptMini", "title": "Qualitative Strength" },
                       "quantity": { "type": ["object", "null"], "$ref": "#/$defs/Quantity", "title": "Unit of Presentation Quantity" },
                       "unitOfPresentation": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Unit of Presentation" },
+                      "genericOtherIdentifyingInformation": { "type": "string", "title": "VMP other Identifying Information" },
+                      "otherIdentifyingInformation": { "type": "string", "title": "AMP other Identifying Information" },
                       "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/VACCINE_PRODUCT_NonDefiningProperty" }, "title": "Non Defining Properties" }
                     },
                     "required": ["productName", "genericForm", "productType", "activeIngredients", "unitOfPresentation", "quantity"],
@@ -304,6 +316,8 @@
             "additionalProperties": false
           }
         },
+        "genericOtherIdentifyingInformation": { "type": "string", "title": "VMPP other Identifying Information" },
+        "otherIdentifyingInformation": { "type": "string", "title": "AMPP other Identifying Information" },
         "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/VACCINE_PACKAGE_NonDefiningProperty" }, "title": "Non Defining Properties" }
       },
       "required": ["variant", "containedProducts"],
@@ -348,6 +362,8 @@
                       "newGenericProductName": { "type": "string", "title": "New Generic Product Name", "description": "If an existing VMP is not available, you can create a new generic product concept with this name."},
                       "type": { "type": "string", "const": "nutritional" },
                       "unitOfPresentation": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Unit of Presentation" },
+                      "genericOtherIdentifyingInformation": { "type": "string", "title": "VMP other Identifying Information" },
+                      "otherIdentifyingInformation": { "type": "string", "title": "AMP other Identifying Information" },
                       "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/NUTRITIONAL_PRODUCT_NonDefiningProperty" }, "title": "Non Defining Properties" }
                     },
                     "required": ["productName", "genericForm", "productType", "unitOfPresentation"],
@@ -361,6 +377,8 @@
             "additionalProperties": false
           }
         },
+        "genericOtherIdentifyingInformation": { "type": "string", "title": "VMPP other Identifying Information" },
+        "otherIdentifyingInformation": { "type": "string", "title": "AMPP other Identifying Information" },
         "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/NUTRITIONAL_PACKAGE_NonDefiningProperty" }, "title": "Non Defining Properties" }
       },
       "required": ["variant", "containedProducts"],
