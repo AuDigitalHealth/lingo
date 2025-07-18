@@ -61,7 +61,8 @@
         "value": { "type": "number", "minimum": 0 }
       },
       "errorMessage": { "minProperties": "Both 'unit' and 'value' must be provided" },
-      "allOf": [{ "$ref": "#/$defs/UnitValueConstraint" }]
+      "allOf": [{ "$ref": "#/$defs/UnitValueConstraint" }],
+      "required": ["unit","value"]
     },
     "PresentationStrengthIngredient": {
       "type": "object",

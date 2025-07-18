@@ -18,7 +18,6 @@ import { RjsfUtils } from '../helpers/rjsfUtils';
 const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
   const { onChange, idSchema } = props;
 
-
   const [rootUiSchema, setRootUiSchema] = useState(
     props?.formContext?.uiSchema || {},
   );
@@ -36,14 +35,12 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
     return props.uiSchema?.['ui:options'] || {};
   };
 
-
   const uiOptions = getUiOptions();
 
   const isMultivalued = uiOptions?.multiValued === true;
   const isShowDefaultOptions = uiOptions?.showDefaultOptions === true;
   const { ecl, extendedEcl, createBrand, disabled, defaultValue } =
     uiOptions || {};
-
 
   const [formData, setFormData] = useState(
     props.formData ?? (isMultivalued ? [] : null),
@@ -149,7 +146,6 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
                   isDisabled={isDisabled}
                   branch={task?.branchPath}
                   onChange={handleSelect}
-                  errorMessage=""
                 />
               ))}
             {createBrand && (
