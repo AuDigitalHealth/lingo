@@ -7,6 +7,10 @@
       "containedProducts": 24
     },
     {
+      "genericOtherIdentifyingInformation": 12,
+      "otherIdentifyingInformation": 12
+    },
+    {
       "nonDefiningProperties": 24
     }
   ],
@@ -45,6 +49,7 @@
     "ui:options": {
       "arrayTemplate": "accordion",
       "skipTitle": true,
+      "initiallyExpanded": true,
       "searchAndAddProduct": {
         "ecl": "(<763158003 minus >(<763158003))",
         "type": "medication",
@@ -82,6 +87,20 @@
           "ecl": "((<781405001 minus >(<781405001)) : (774160008 /* OR 999000081000168101 */) = *).774163005",
           "showDefaultOptions": true,
           "placeholder": "Select unit (e.g., Each)"
+        }
+      },
+      "genericOtherIdentifyingInformation": {
+        "ui:widget": "text",
+        "ui:title": "VMPP other Identifying Information",
+        "ui:options": {
+          "placeholder": "Enter any additional identifying information"
+        }
+      },
+      "otherIdentifyingInformation": {
+        "ui:widget": "text",
+        "ui:title": "AMPP other Identifying Information",
+        "ui:options": {
+          "placeholder": "Enter any additional identifying information"
         }
       },
       "productDetails": {
@@ -145,6 +164,12 @@
             },
             {
               "ingredientQualitativeStrength": 24
+            },
+            {
+              "genericOtherIdentifyingInformation": 24
+            },
+            {
+              "otherIdentifyingInformation": 24
             },
             {
               "nonDefiningProperties": 24
@@ -260,7 +285,7 @@
           "ui:title": "Existing VTM Level Concept",
           "ui:options": {
             "skipTitle": true,
-            "ecl": "<<327838005 OR <<373783004",
+            "ecl": "<681001000220109",
             "showDefaultOptions": true,
             "dependants": [
               {
@@ -285,10 +310,25 @@
         "newGenericProductName": {
           "ui:widget": "text"
         },
+        "genericOtherIdentifyingInformation": {
+          "ui:widget": "text",
+          "ui:title": "VMP other Identifying Information",
+          "ui:options": {
+            "placeholder": "Enter any additional identifying information"
+          }
+        },
+        "otherIdentifyingInformation": {
+          "ui:widget": "text",
+          "ui:title": "AMP other Identifying Information",
+          "ui:options": {
+            "placeholder": "Enter any additional identifying information"
+          }
+        },
         "activeIngredients": {
           "ui:options": {
             "skipTitle": true,
-            "arrayTemplate": "accordion"
+            "arrayTemplate": "accordion",
+            "initiallyExpanded": true
           },
           "items": {
             "ui:options": {
