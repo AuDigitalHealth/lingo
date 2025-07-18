@@ -21,6 +21,7 @@ import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.NonDefiningPropertyDataType;
 import au.gov.digitalhealth.lingo.exception.ConfigurationProblem;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
 import jakarta.validation.constraints.NotEmpty;
@@ -376,6 +377,11 @@ public class ModelConfiguration {
         getProductLevels().stream().filter(l -> !l.isBranded()).collect(Collectors.toSet()));
   }
 
+  public ModelLevel getRootUnbrandedPackageModelLevel() {
+    return ModelLevel.getRootLevel(
+        getPackageLevels().stream().filter(l -> !l.isBranded()).collect(Collectors.toSet()));
+  }
+
   public ModelLevel getRootUnbrandedProductModelLevel() {
     return ModelLevel.getRootLevel(
         getProductLevels().stream().filter(l -> !l.isBranded()).collect(Collectors.toSet()));
@@ -475,7 +481,29 @@ public class ModelConfiguration {
                 ModelLevel::getReferenceSetIdentifier, Function.identity(), (a, b) -> a));
   }
 
+  public BasePropertyDefinition getProperty(@NotNull @NotEmpty String identifierScheme) {
+    BasePropertyDefinition property = getMappingsByName().get(identifierScheme);
+    if (property != null) {
+      return property;
+    }
+    property = getNonDefiningPropertiesByName().get(identifierScheme);
+    if (property != null) {
+      return property;
+    }
+    return getReferenceSetsByName().get(identifierScheme);
+  }
+
   public Set<String> getAllLevelReferenceSetIds() {
     return levels.stream().map(ModelLevel::getReferenceSetIdentifier).collect(Collectors.toSet());
+  }
+
+  public Set<ModelLevel> getApplicablePropertyLevels(NonDefiningBase property) {
+    return levels.stream()
+        .filter(
+            level ->
+                getProperty(property.getIdentifierScheme())
+                    .getModelLevels()
+                    .contains(level.getModelLevelType()))
+        .collect(Collectors.toSet());
   }
 }

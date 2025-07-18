@@ -15,25 +15,38 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
+import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
+import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.NonDefiningPropertyDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
+import au.gov.digitalhealth.lingo.product.Edge;
+import au.gov.digitalhealth.lingo.product.Node;
+import au.gov.digitalhealth.lingo.product.OriginalNode;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.ProductDetails;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
 import au.gov.digitalhealth.lingo.util.NmpcType;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.extern.java.Log;
 
 @Log
 public abstract class ProductCalculationService<T extends ProductDetails> {
+  private static String getMinusClause(Set<String> existingNodeIds) {
+    return existingNodeIds.isEmpty() ? "" : "MINUS (" + String.join(" OR ", existingNodeIds) + ")";
+  }
 
   /**
    * Calculates the existing and new products required to create a product based on the product
@@ -60,6 +73,139 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
       throws ExecutionException, InterruptedException;
 
   protected abstract SnowstormClient getSnowstormClient();
+
+  protected abstract NodeGeneratorService getNodeGeneratorService();
+
+  private static boolean areNodesSameProductPackageLevel(Node node, Node existingNode) {
+    return (node.getModelLevel().isProductLevel() && existingNode.getModelLevel().isProductLevel())
+        || (node.getModelLevel().isPackageLevel() && existingNode.getModelLevel().isPackageLevel());
+  }
+
+  private static boolean updateProperties(
+      ModelConfiguration modelConfiguration,
+      ModelLevel level,
+      Node subordinateNode,
+      Set<NonDefiningBase> addedProperties,
+      Set<NonDefiningBase> removedProperties) {
+    boolean updated = false;
+    // add the properties to the node
+    if (!addedProperties.isEmpty()) {
+      updated =
+          subordinateNode
+              .getNonDefiningProperties()
+              .addAll(
+                  addedProperties.stream()
+                      .filter(
+                          p ->
+                              modelConfiguration
+                                  .getProperty(p.getIdentifierScheme())
+                                  .getModelLevels()
+                                  .contains(level.getModelLevelType()))
+                      .collect(Collectors.toSet()));
+    }
+    if (!removedProperties.isEmpty()) {
+      updated =
+          updated
+              || subordinateNode
+                  .getNonDefiningProperties()
+                  .removeAll(
+                      removedProperties.stream()
+                          .filter(
+                              p ->
+                                  modelConfiguration
+                                      .getProperty(p.getIdentifierScheme())
+                                      .getModelLevels()
+                                      .contains(level.getModelLevelType()))
+                          .collect(Collectors.toSet()));
+    }
+    return updated;
+  }
+
+  protected void addPropertyChangeNodes(
+      String branch, ModelConfiguration modelConfiguration, ProductSummary productSummary) {
+    Map<String, Node> nodeCache = new HashMap<>();
+    Set<Node> nodesToAdd = new HashSet<>();
+    Set<Edge> edgesToAdd = new HashSet<>();
+
+    // for each node in the product summary that is a property update
+    for (Node node : productSummary.getNodes().stream().filter(Node::isPropertyUpdate).toList()) {
+      // find the property changes for the node
+      Set<NonDefiningBase> addedProperties = new HashSet<>(node.getNonDefiningProperties());
+      addedProperties.removeAll(node.getOriginalNode().getNode().getNonDefiningProperties());
+      Set<NonDefiningBase> removedProperties =
+          new HashSet<>(node.getOriginalNode().getNode().getNonDefiningProperties());
+      removedProperties.removeAll(node.getNonDefiningProperties());
+
+      Set<ModelLevel> levels =
+          Stream.concat(addedProperties.stream(), removedProperties.stream())
+              .map(modelConfiguration::getApplicablePropertyLevels)
+              .flatMap(Collection::stream)
+              .collect(Collectors.toSet());
+
+      for (ModelLevel level : levels) {
+        final Collection<SnowstormConceptMini> subordinateLinkedConcepts =
+            findSubordinateLinkedConcepts(branch, modelConfiguration, productSummary, node, level);
+
+        for (SnowstormConceptMini linkedConcept : subordinateLinkedConcepts) {
+          Node subordinateNode = nodeCache.get(linkedConcept.getConceptId());
+          if (subordinateNode == null) {
+            // if the node is not in the cache, create a new node
+            subordinateNode =
+                getNodeGeneratorService().lookUpNode(branch, linkedConcept, level, null).join();
+            subordinateNode.setOriginalNode(
+                new OriginalNode(subordinateNode.cloneNode(), null, true));
+            nodeCache.put(linkedConcept.getConceptId(), subordinateNode);
+          }
+
+          final boolean updated =
+              updateProperties(
+                  modelConfiguration, level, subordinateNode, addedProperties, removedProperties);
+
+          if (updated) {
+            nodesToAdd.add(subordinateNode);
+            Edge edge = new Edge();
+            edge.setSource(subordinateNode.getConceptId());
+            edge.setTarget(node.getConceptId());
+            edge.setLabel(
+                areNodesSameProductPackageLevel(node, subordinateNode)
+                    ? ProductSummaryService.IS_A_LABEL
+                    : ProductSummaryService.CONTAINS_LABEL);
+            edgesToAdd.add(edge);
+          }
+        }
+      }
+    }
+    // add the nodes and edges to the product summary
+    productSummary.getNodes().addAll(nodesToAdd);
+    productSummary.getEdges().addAll(edgesToAdd);
+  }
+
+  private Collection<SnowstormConceptMini> findSubordinateLinkedConcepts(
+      String branch,
+      ModelConfiguration modelConfiguration,
+      ProductSummary productSummary,
+      Node node,
+      ModelLevel level) {
+    return getSnowstormClient()
+        .getConceptsFromEcl(
+            branch,
+            "(((<"
+                + node.getConceptId()
+                + " AND ^"
+                + level.getReferenceSetIdentifier()
+                + ") OR (<<(<(781405001 or 999000071000168104):(774160008 or 999000081000168101)=<<"
+                + node.getConceptId()
+                + "))) AND ^"
+                + level.getReferenceSetIdentifier()
+                + ") "
+                + getMinusClause(
+                    productSummary.getNodes().stream()
+                        .filter(n -> !n.isNewConcept())
+                        .map(Node::getConceptId)
+                        .collect(Collectors.toSet())),
+            100,
+            modelConfiguration.isExecuteEclAsStated());
+  }
 
   protected void optionallyAddNmpcType(
       String branch, ModelConfiguration modelConfiguration, PackageDetails<T> packageDetails) {
