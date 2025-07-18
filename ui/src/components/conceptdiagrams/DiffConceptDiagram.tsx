@@ -34,7 +34,10 @@ export default function DiffConceptDiagram({
 }: DiffConceptDiagramProps) {
   return (
     <>
-      <Stack flexDirection="row">
+      <Stack
+        flexDirection="row"
+        sx={{ width: '100%', height: '100%', maxHeight: '100%' }}
+      >
         <ConceptDiagram
           concept={leftConcept.isNewConcept ? undefined : leftConcept.concept}
           newConcept={

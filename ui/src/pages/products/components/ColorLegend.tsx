@@ -38,7 +38,7 @@ const LEGEND_CONFIG: LegendConfig = {
       key: 'invalid',
       backgroundColor: Product7BoxBGColour.INVALID,
       borderColor: Product7BoxBGColour.INVALID,
-      description: 'Invalid',
+      description: 'Invalid Name/Concept',
     },
     {
       key: 'incomplete',
