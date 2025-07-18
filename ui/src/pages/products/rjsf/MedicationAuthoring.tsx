@@ -1,16 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Form } from '@rjsf/mui';
-import {
-  Box,
-  Button,
-  Container,
-  FormControlLabel,
-  Paper,
-  Switch,
-} from '@mui/material';
+import { Box, Button, Container, FormControlLabel, Paper, Switch } from '@mui/material';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import _ from 'lodash';
-import ajvErrors from 'ajv-errors';
 
 import UnitValueField from './fields/UnitValueField.tsx';
 import AutoCompleteField from './fields/AutoCompleteField.tsx';
@@ -27,8 +19,9 @@ import TextFieldWidget from './widgets/TextFieldWidget.tsx';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 import productService from '../../../api/ProductService.ts';
 import { ConfigService } from '../../../api/ConfigService.ts';
-import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
-import { customizeValidator } from '@rjsf/validator-ajv8';
+import {
+  isValueSetExpansionContains
+} from '../../../types/predicates/isValueSetExpansionContains.ts';
 import { Concept } from '../../../types/concept.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
 import { Task } from '../../../types/task.ts';
@@ -37,13 +30,18 @@ import {
   MedicationPackageDetails,
   ProductActionType,
   ProductSaveDetails,
-  ProductType,
+  ProductType
 } from '../../../types/product.ts';
 import { useTicketProductQuery } from './hooks/useTicketProductQuery.ts';
 import { DraftSubmitPanel } from './components/DarftSubmitPanel.tsx';
 import ProductPartialSaveModal from './components/ProductPartialSaveModal.tsx';
 import MuiGridTemplate from './templates/MuiGridTemplate.tsx';
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
+import { validator } from './helpers/validator.ts';
+import { buildErrorSchema, resetDiscriminators } from './helpers/validationHelper.ts';
+import { ErrorDisplay } from './components/ErrorDisplay.tsx';
+import CustomSelectWidget from './widgets/CustomSelectWidget.tsx';
+import { evaluateExpression } from './helpers/rjsfUtils.ts';
 import WarningIcon from '@mui/icons-material/Warning';
 
 export interface MedicationAuthoringV2Props {
@@ -51,36 +49,30 @@ export interface MedicationAuthoringV2Props {
   task: Task;
   ticket: Ticket;
   ticketProductId?: string;
-  schemaType: string;
 }
-
-const validator = customizeValidator();
-ajvErrors(validator.ajv);
 
 function MedicationAuthoring({
   task,
   selectedProduct,
   ticketProductId,
   ticket,
-  schemaType,
 }: MedicationAuthoringV2Props) {
   const [formKey, setFormKey] = useState(0);
-  const [formData, setFormData] = useState({});
-  const [initialformData, setInitialFormData] = useState({});
-  const [errorSchema, setErrorSchema] = useState({});
+  const [formData, setFormData] = useState<any>({});
+  const [initialFormData, setInitialFormData] = useState<any>({});
+  const [errorSchema, setErrorSchema] = useState<any>({});
   const [saveModalOpen, setSaveModalOpen] = useState(false);
-  const [isDirty, setIsDirty] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const formRef = useRef<any>(null);
   const [mode, setMode] = useState<'create' | 'update'>('create');
+  const [isDirty, setIsDirty] = useState(false);
+  const [formErrors, setFormErrors] = useState<any[]>([]);
 
   const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
     task.branchPath,
-    schemaType,
   );
   const { data: uiSchema, isLoading: isUiSchemaLoading } = useUiSchemaQuery(
     task.branchPath,
-    schemaType,
   );
   const {
     originalConceptId,
@@ -91,6 +83,7 @@ function MedicationAuthoring({
     loadingPreview,
     isProductUpdate,
     setIsProductUpdate,
+    handleClearForm
   } = useAuthoringStore();
 
   const { isLoading, isFetching } = useProductQuery({
@@ -99,6 +92,7 @@ function MedicationAuthoring({
     setFunction: (data: any) => {
       setFormData(data);
       setInitialFormData(data);
+      setFormErrors([]);
     },
   });
   const {
@@ -115,33 +109,42 @@ function MedicationAuthoring({
     },
   });
   const mutation = useCalculateProduct();
-  const { isPending, data } = mutation;
 
   const handleToggleCreateModal = useCallback(() => {
     setCreateModalOpen(!createModalOpen);
   }, [createModalOpen]);
 
   const handleChange = ({ formData }: any) => {
-    setFormData(formData);
-    if (!_.isEmpty(formData.productName || formData.containedProducts)) {
-      setIsDirty(true); //TODO better way to handle check form is dirty
+    const updatedFormData = resetDiscriminators(schema, formData, uiSchema);
+    setFormData(updatedFormData);
+
+    if (
+      !_.isEmpty(
+        updatedFormData.productName || updatedFormData.containedProducts,
+      )
+    ) {
+      setIsDirty(true);
     }
   };
+
   const handleSaveToggleModal = () => {
     setSaveModalOpen(!saveModalOpen);
   };
 
-  const handleFormSubmit = ({ formData }: any) => {
+  const handleFormSubmit = async ({ formData }: { formData: any }) => {
+    const validation = validator.validateFormData(formData, schema);
+    setFormErrors(validation.errors);
+    setFormData(formData);
     mutation.mutate({
-      formData,
-      initialformData,
-      ticket: ticket,
+      formData: formData,
+      initialformData: initialFormData,
+      ticket,
       toggleModalOpen: handleToggleCreateModal,
       task,
       isProductUpdate,
       selectedProduct,
       setProductPreviewDetails,
-      setProductSaveDetails: setProductSaveDetails,
+      setProductSaveDetails,
       originalConceptId,
     });
   };
@@ -149,26 +152,31 @@ function MedicationAuthoring({
   const handleClear = useCallback(() => {
     setFormData({});
     setErrorSchema({});
+    setFormErrors([]);
     setIsDirty(false);
-    setFormKey(prev => prev + 1); // force re-render
+    setFormKey(prev => prev + 1);
+    setMode(prevState => 'create');
+    handleClearForm();
   }, []);
 
   // Clear form data when schemaType changes
   useEffect(() => {
     handleClear();
-  }, [schemaType, handleClear]);
+  }, [handleClear]);
 
   if (
     isLoading ||
     isFetching ||
     isTicketProductLoading ||
     loadingPreview ||
-    isTicketProductFetching
+    isTicketProductFetching ||
+    isSchemaLoading ||
+    isUiSchemaLoading
   ) {
-    return <ProductLoader message="Loading Product details" />;
+    return <ProductLoader message="Loading Product details or Schema" />;
   }
 
-  if (isPending) {
+  if (mutation.isPending) {
     return (
       <ProductLoader
         message={
@@ -180,17 +188,16 @@ function MedicationAuthoring({
     );
   }
 
-  if (isSchemaLoading || isUiSchemaLoading) {
-    return <ProductLoader message="Loading Schema" />;
-  }
-
   const formContext = {
     onChange: (newFormData: any) => {
       setFormData(newFormData);
     },
     formData,
     uiSchema,
+    schema,
     errorSchema,
+    autoFillDefaults: true,
+    evaluateExpression,
   };
 
   const saveDraft = () => {
@@ -198,17 +205,17 @@ function MedicationAuthoring({
   };
 
   const onError = (errors: any) => {
-    const newErrorSchema = errors.reduce((acc: any, error: any) => {
-      _.set(acc, error.property.slice(1), { __errors: [error.message] });
-      return acc;
-    }, {});
+    const newErrorSchema = buildErrorSchema(errors);
     setErrorSchema(newErrorSchema);
+    setFormErrors(errors);
   };
 
   return (
     <Paper sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1 }}>
       <Box m={2} p={2}>
         <Container data-testid="product-creation-grid">
+          {/* Custom Error Modal */}
+          <ErrorDisplay errors={formErrors} />
           <Form
             key={formKey}
             ref={formRef}
@@ -228,18 +235,22 @@ function MedicationAuthoring({
               TextFieldWidget,
               OneOfArrayWidget,
               NumberWidget,
+              SelectWidget: CustomSelectWidget,
             }}
             templates={{
               ArrayFieldTemplate: CustomArrayFieldTemplate,
               ObjectFieldTemplate: MuiGridTemplate,
+              // FieldTemplate:CustomFieldTemplate
             }}
             onChange={handleChange}
             onSubmit={handleFormSubmit}
             onError={onError}
             validator={validator}
-            disabled={isPending}
+            disabled={mutation.isPending}
             noHtml5Validate={true}
             noValidate={false}
+            showErrorList={false}
+            omitExtraData={true}
           >
             <Box
               sx={{
@@ -254,7 +265,7 @@ function MedicationAuthoring({
                 variant="outlined"
                 color="secondary"
                 onClick={handleClear}
-                disabled={isPending}
+                disabled={mutation.isPending}
               >
                 Clear
               </Button>
@@ -281,12 +292,12 @@ function MedicationAuthoring({
                   variant="contained"
                   color={mode === 'create' ? 'primary' : 'warning'}
                   sx={mode === 'update' ? { color: '#000' } : {}}
-                  disabled={isPending}
+                  disabled={mutation.isPending}
                   onClick={() => {
                     setIsProductUpdate(mode === 'update');
                   }}
                 >
-                  {isPending
+                  {mutation.isPending
                     ? 'Submitting...'
                     : mode === 'create'
                       ? 'Create New Product'
@@ -323,7 +334,7 @@ function MedicationAuthoring({
           </Form>
           <ProductPartialSaveModal
             packageDetails={formData}
-            originalPackageDetails={initialformData}
+            originalPackageDetails={initialFormData}
             originalConceptId={selectedProduct?.id ?? originalConceptId}
             handleClose={handleSaveToggleModal}
             open={saveModalOpen}
@@ -354,7 +365,9 @@ interface UseCalculateProductArguments {
   task: Task;
   isProductUpdate: boolean;
   selectedProduct: Concept | ValueSetExpansionContains | null;
-  setProductPreviewDetails: MedicationPackageDetails | undefined;
+  setProductPreviewDetails: (
+    details: MedicationPackageDetails | undefined,
+  ) => void;
   setProductSaveDetails: (details: ProductSaveDetails | undefined) => void;
   originalConceptId: string | undefined;
 }
@@ -413,20 +426,20 @@ function useCalculateProduct() {
   return mutation;
 }
 
-const useSchemaQuery = (branchPath: string, schemaType: string) => {
+const useSchemaQuery = (branchPath: string) => {
   return useQuery({
-    queryKey: [schemaType + '-Schema', branchPath],
+    queryKey: ['Schema', branchPath],
     queryFn: () =>
-      ConfigService.fetchMedicationSchemaData(branchPath, schemaType),
+      ConfigService.fetchMedicationSchemaData(branchPath, 'medication'),
     enabled: !!branchPath,
   });
 };
 
-const useUiSchemaQuery = (branchPath: string, schemaType: string) => {
+const useUiSchemaQuery = (branchPath: string) => {
   return useQuery({
-    queryKey: [schemaType + '-uiSchema', branchPath],
+    queryKey: ['uiSchema', branchPath],
     queryFn: () =>
-      ConfigService.fetchMedicationUiSchemaData(branchPath, schemaType),
+      ConfigService.fetchMedicationUiSchemaData(branchPath, 'medication'),
     enabled: !!branchPath,
   });
 };
@@ -434,7 +447,7 @@ const useUiSchemaQuery = (branchPath: string, schemaType: string) => {
 interface ProductQueryProps {
   selectedProduct: Concept | ValueSetExpansionContains | null;
   task: Task;
-  setFunction?: ({}) => void;
+  setFunction?: (data: any) => void;
 }
 
 const fetchProductDataFn = async ({

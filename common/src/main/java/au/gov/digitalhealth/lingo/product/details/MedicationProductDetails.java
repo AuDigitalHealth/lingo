@@ -51,6 +51,34 @@ public class MedicationProductDetails extends ProductDetails {
 
   List<@Valid Ingredient> activeIngredients = new ArrayList<>();
 
+  public MedicationProductDetails() {
+    this.type = "medication";
+  }
+
+  @Override
+  public ProductTemplate getProductType() {
+    if (productType == null) {
+      productType = determineProductType(activeIngredients);
+    }
+    return productType;
+  }
+
+  private ProductTemplate determineProductType(List<Ingredient> activeIngredients) {
+    if (activeIngredients.isEmpty()) {
+      return ProductTemplate.noIngredients;
+    }
+
+    for (Ingredient ingredient : activeIngredients) {
+      if (ingredient.isConcentrationStrength()) {
+        return ProductTemplate.concentrationStrength;
+      } else if (ingredient.isPresentationStrength()) {
+        return ProductTemplate.presentationStrength;
+      }
+    }
+
+    return ProductTemplate.noStrength;
+  }
+
   @Override
   protected Map<String, String> getSpecialisedIdFsnMap() {
     Map<String, String> idMap = addToIdFsnMap(null, quantity);
