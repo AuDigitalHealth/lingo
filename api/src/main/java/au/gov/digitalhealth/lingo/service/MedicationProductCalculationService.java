@@ -400,6 +400,8 @@ public class MedicationProductCalculationService
         innnerProductSummaries,
         productSummary,
         packageNodeMap);
+
+    addPropertyChangeNodes(branch, modelConfiguration, productSummary);
   }
 
   /**
@@ -465,14 +467,6 @@ public class MedicationProductCalculationService
         }
       }
     }
-
-    addPropertyChangeNodes(
-        branch,
-        modelConfiguration,
-        innnerProductSummaries,
-        productSummary,
-        packageLevels,
-        packageLevelFutures);
 
     return packageNodeMap;
   }
@@ -882,9 +876,6 @@ public class MedicationProductCalculationService
             }
           });
     }
-
-    addPropertyChanges(
-        branch, productLevels, levelFutureMap, modelConfiguration, productSummary, false, null);
 
     productSummary.setSingleSubject(
         levelFutureMap.get(modelConfiguration.getLeafProductModelLevel()).get());

@@ -327,13 +327,7 @@ public class DeviceProductCalculationService
         ProductSummaryService.getTransitiveEdges(productSummary, new HashSet<>());
     productSummary.getEdges().addAll(transitiveContainsEdges);
 
-    addPropertyChangeNodes(
-        branch,
-        modelConfiguration,
-        innerProductSummaries,
-        productSummary,
-        modelConfiguration.getPackageLevels(),
-        packageLevelNodes);
+    addPropertyChangeNodes(branch, modelConfiguration, productSummary);
 
     productSummary.updateNodeChangeStatus(
         taskChangedConceptIds.block(), projectChangedConceptIds.block());
@@ -784,15 +778,6 @@ public class DeviceProductCalculationService
       levelFutureMap.put(
           rootBrandedProductLevel, CompletableFuture.completedFuture(rootBrandedProductNode));
     }
-
-    addPropertyChanges(
-        branch,
-        modelConfiguration.getProductLevels().stream().toList(),
-        levelFutureMap,
-        modelConfiguration,
-        innerProductSummary,
-        false,
-        null);
 
     innerProductSummary.setSingleSubject(leafBrandedProductNode);
     return innerProductSummary;

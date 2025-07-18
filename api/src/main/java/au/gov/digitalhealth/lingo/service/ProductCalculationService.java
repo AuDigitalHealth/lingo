@@ -16,30 +16,24 @@
 package au.gov.digitalhealth.lingo.service;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.gov.digitalhealth.lingo.configuration.model.BasePropertyDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.NonDefiningPropertyDefinition;
-import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
-import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.OriginalNode;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.ProductDetails;
-import au.gov.digitalhealth.lingo.product.details.ProductQuantity;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
 import au.gov.digitalhealth.lingo.util.NmpcType;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -47,7 +41,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.java.Log;
-import org.springframework.data.util.Pair;
 
 @Log
 public abstract class ProductCalculationService<T extends ProductDetails> {
@@ -88,257 +81,130 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
         || (node.getModelLevel().isPackageLevel() && existingNode.getModelLevel().isPackageLevel());
   }
 
-  protected void addPropertyChanges(
-      String branch,
-      List<ModelLevel> orderedLevels,
-      Map<ModelLevel, CompletableFuture<Node>> levelFutureMap,
+  private static boolean updateProperties(
       ModelConfiguration modelConfiguration,
-      ProductSummary productSummary,
-      boolean isPackage,
-      Node unbrandedProductNode) {
-    // add other product nodes for updated properties
-    Map<Pair<ModelLevelType, ModelLevelType>, Set<NonDefiningBase>> propertiesToAdd =
-        new HashMap<>();
-    Map<Pair<ModelLevelType, ModelLevelType>, Set<NonDefiningBase>> propertiesToRemove =
-        new HashMap<>();
-
-    // if we're updating package concepts linked to this node
-    if (unbrandedProductNode != null && unbrandedProductNode.isPropertyUpdate()) {
-      // get the added properties
-      Set<NonDefiningBase> addedProperties =
-          new HashSet<>(unbrandedProductNode.getNonDefiningProperties());
-      addedProperties.removeAll(
-          unbrandedProductNode.getOriginalNode().getNode().getNonDefiningProperties());
-      // get the removed properties
-      Set<NonDefiningBase> removedProperties =
-          new HashSet<>(
-              unbrandedProductNode.getOriginalNode().getNode().getNonDefiningProperties());
-      removedProperties.removeAll(unbrandedProductNode.getNonDefiningProperties());
-
-      addedProperties.forEach(
-          newProperty -> {
-            BasePropertyDefinition propertyDefinition =
-                modelConfiguration.getProperty(newProperty.getIdentifierScheme());
-            propertyDefinition.getModelLevels().stream()
-                .filter(
-                    l -> orderedLevels.stream().anyMatch(ml -> ml.getModelLevelType().equals(l)))
-                .forEach(
-                    l -> {
-                      propertiesToAdd
-                          .computeIfAbsent(
-                              Pair.of(unbrandedProductNode.getModelLevel(), l),
-                              k -> new HashSet<>())
-                          .add(newProperty);
-                    });
-          });
-      removedProperties.forEach(
-          newProperty -> {
-            BasePropertyDefinition propertyDefinition =
-                modelConfiguration.getProperty(newProperty.getIdentifierScheme());
-            propertyDefinition.getModelLevels().stream()
-                .filter(
-                    l -> orderedLevels.stream().anyMatch(ml -> ml.getModelLevelType().equals(l)))
-                .forEach(
-                    l ->
-                        propertiesToRemove
-                            .computeIfAbsent(
-                                Pair.of(unbrandedProductNode.getModelLevel(), l),
-                                k -> new HashSet<>())
-                            .add(newProperty));
-          });
+      ModelLevel level,
+      Node subordinateNode,
+      Set<NonDefiningBase> addedProperties,
+      Set<NonDefiningBase> removedProperties) {
+    boolean updated = false;
+    // add the properties to the node
+    if (!addedProperties.isEmpty()) {
+      updated =
+          subordinateNode
+              .getNonDefiningProperties()
+              .addAll(
+                  addedProperties.stream()
+                      .filter(
+                          p ->
+                              modelConfiguration
+                                  .getProperty(p.getIdentifierScheme())
+                                  .getModelLevels()
+                                  .contains(level.getModelLevelType()))
+                      .collect(Collectors.toSet()));
     }
-
-    for (ModelLevel level : orderedLevels) {
-      CompletableFuture<Node> levelFuture = levelFutureMap.get(level);
-      Node node = levelFuture.join();
-      if (node.isPropertyUpdate()) {
-        Set<ModelLevelType> descendantLevels =
-            level.getModelLevelType().getDescendants().stream()
-                .filter(
-                    l -> orderedLevels.stream().anyMatch(ml -> ml.getModelLevelType().equals(l)))
-                .collect(Collectors.toSet());
-        // get the added properties
-        Set<NonDefiningBase> addedProperties = new HashSet<>(node.getNonDefiningProperties());
-        addedProperties.removeAll(node.getOriginalNode().getNode().getNonDefiningProperties());
-        // get the removed properties
-        Set<NonDefiningBase> removedProperties =
-            new HashSet<>(node.getOriginalNode().getNode().getNonDefiningProperties());
-        removedProperties.removeAll(node.getNonDefiningProperties());
-
-        addedProperties.forEach(
-            newProperty -> {
-              BasePropertyDefinition propertyDefinition =
-                  modelConfiguration.getProperty(newProperty.getIdentifierScheme());
-              descendantLevels.stream()
-                  .filter(dl -> propertyDefinition.getModelLevels().contains(dl))
-                  .forEach(
-                      dl ->
-                          propertiesToAdd
-                              .computeIfAbsent(
-                                  Pair.of(level.getModelLevelType(), dl), k -> new HashSet<>())
-                              .add(newProperty));
-            });
-        removedProperties.forEach(
-            newProperty -> {
-              BasePropertyDefinition propertyDefinition =
-                  modelConfiguration.getProperty(newProperty.getIdentifierScheme());
-              descendantLevels.stream()
-                  .filter(dl -> propertyDefinition.getModelLevels().contains(dl))
-                  .forEach(
-                      dl ->
-                          propertiesToRemove
-                              .computeIfAbsent(
-                                  Pair.of(level.getModelLevelType(), dl), k -> new HashSet<>())
-                              .add(newProperty));
-            });
-      }
+    if (!removedProperties.isEmpty()) {
+      updated =
+          updated
+              || subordinateNode
+                  .getNonDefiningProperties()
+                  .removeAll(
+                      removedProperties.stream()
+                          .filter(
+                              p ->
+                                  modelConfiguration
+                                      .getProperty(p.getIdentifierScheme())
+                                      .getModelLevels()
+                                      .contains(level.getModelLevelType()))
+                          .collect(Collectors.toSet()));
     }
-
-    if (!propertiesToAdd.isEmpty() || !propertiesToRemove.isEmpty()) {
-      Set<Pair<ModelLevelType, ModelLevelType>> levelsToUpdate =
-          Stream.concat(propertiesToAdd.keySet().stream(), propertiesToRemove.keySet().stream())
-              .collect(Collectors.toSet());
-      Set<String> existingNodeIds =
-          productSummary.getNodes().stream()
-              .filter(node -> !node.isNewConcept())
-              .map(Node::getConceptId)
-              .collect(Collectors.toSet());
-      Set<CompletableFuture<Node>> futures = new HashSet<>();
-      Map<Node, Node> addedToExistingNodeMap = new HashMap<>();
-      for (Pair<ModelLevelType, ModelLevelType> levelTypes : levelsToUpdate) {
-        // get concept
-        final ModelLevelType descendantModelLevelType = levelTypes.getSecond();
-        final ModelLevel descendantModelLevel =
-            modelConfiguration.getLevelOfType(descendantModelLevelType);
-        final ModelLevelType ancestorModelLevelType = levelTypes.getFirst();
-        final Node existingNode =
-            levelFutureMap.get(modelConfiguration.getLevelOfType(ancestorModelLevelType)) == null
-                ? unbrandedProductNode
-                : levelFutureMap
-                    .get(modelConfiguration.getLevelOfType(ancestorModelLevelType))
-                    .join();
-        if (existingNode.isNewConcept()) {
-          continue;
-        }
-
-        final String ecl =
-            descendantModelLevelType.getAncestors().contains(ancestorModelLevelType)
-                ? "(<"
-                    + existingNode.getConceptId()
-                    + " AND ^"
-                    + descendantModelLevel.getReferenceSetIdentifier()
-                    + ") "
-                    + getMinusClause(existingNodeIds)
-                : "(<<(<(781405001 or 999000071000168104):(774160008 or 999000081000168101)=<<"
-                    + existingNode.getConceptId()
-                    + ") AND ^"
-                    + descendantModelLevel.getReferenceSetIdentifier()
-                    + ") "
-                    + getMinusClause(existingNodeIds);
-        Collection<SnowstormConceptMini> concepts =
-            getSnowstormClient()
-                .getConceptsFromEcl(branch, ecl, 100, modelConfiguration.isExecuteEclAsStated());
-
-        for (SnowstormConceptMini concept : concepts) {
-          // get the node for the level type
-          // add and remove the properties
-          futures.add(
-              getNodeGeneratorService()
-                  .lookUpNode(branch, concept, descendantModelLevel)
-                  .thenApply(
-                      node -> {
-                        node.setOriginalNode(new OriginalNode(node.cloneNode(), null, true));
-                        if (!propertiesToAdd.containsKey(levelTypes)
-                            && !propertiesToRemove.containsKey(levelTypes)) {
-                          throw new LingoProblem(
-                              "No properties to add or remove for level type: " + levelTypes);
-                        }
-                        if (propertiesToAdd.containsKey(levelTypes)) {
-                          node.getNonDefiningProperties().addAll(propertiesToAdd.get(levelTypes));
-                        }
-                        if (propertiesToRemove.containsKey(levelTypes)) {
-                          node.getNonDefiningProperties()
-                              .removeAll(propertiesToRemove.get(levelTypes));
-                        }
-                        addedToExistingNodeMap.put(node, existingNode);
-                        return node;
-                      }));
-        }
-      }
-      CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()])).join();
-      for (CompletableFuture<Node> future : futures) {
-        Node node = future.join();
-        if (node.getConceptId() == null) {
-          throw new LingoProblem(
-              "Node with null concept id found for level type: " + node.getModelLevel());
-        }
-        // if the node is already in the product summary, skip it
-        if (productSummary.getNodes().stream()
-            .noneMatch(
-                existingNode ->
-                    existingNode.getConceptId() == node.getConceptId()
-                        || (existingNode.getOriginalNode() != null
-                            && existingNode.getOriginalNode().getConceptId()
-                                == node.getConceptId()))) {
-          productSummary.addNode(node);
-          final Node existingNode = addedToExistingNodeMap.get(node);
-          productSummary.addEdge(
-              node.getConceptId(),
-              existingNode.getConceptId(),
-              areNodesSameProductPackageLevel(node, existingNode)
-                  ? ProductSummaryService.IS_A_LABEL
-                  : ProductSummaryService.CONTAINS_LABEL);
-        }
-      }
-    }
+    return updated;
   }
 
   protected void addPropertyChangeNodes(
+      String branch, ModelConfiguration modelConfiguration, ProductSummary productSummary) {
+    Map<String, Node> nodeCache = new HashMap<>();
+    Set<Node> nodesToAdd = new HashSet<>();
+    Set<Edge> edgesToAdd = new HashSet<>();
+
+    // for each node in the product summary that is a property update
+    for (Node node : productSummary.getNodes().stream().filter(Node::isPropertyUpdate).toList()) {
+      // find the property changes for the node
+      Set<NonDefiningBase> addedProperties = new HashSet<>(node.getNonDefiningProperties());
+      addedProperties.removeAll(node.getOriginalNode().getNode().getNonDefiningProperties());
+      Set<NonDefiningBase> removedProperties =
+          new HashSet<>(node.getOriginalNode().getNode().getNonDefiningProperties());
+      removedProperties.removeAll(node.getNonDefiningProperties());
+
+      Set<ModelLevel> levels =
+          Stream.concat(addedProperties.stream(), removedProperties.stream())
+              .map(modelConfiguration::getApplicablePropertyLevels)
+              .flatMap(Collection::stream)
+              .collect(Collectors.toSet());
+
+      for (ModelLevel level : levels) {
+        final Collection<SnowstormConceptMini> subordinateLinkedConcepts =
+            findSubordinateLinkedConcepts(branch, modelConfiguration, productSummary, node, level);
+
+        for (SnowstormConceptMini linkedConcept : subordinateLinkedConcepts) {
+          Node subordinateNode = nodeCache.get(linkedConcept.getConceptId());
+          if (subordinateNode == null) {
+            // if the node is not in the cache, create a new node
+            subordinateNode =
+                getNodeGeneratorService().lookUpNode(branch, linkedConcept, level, null).join();
+            subordinateNode.setOriginalNode(
+                new OriginalNode(subordinateNode.cloneNode(), null, true));
+            nodeCache.put(linkedConcept.getConceptId(), subordinateNode);
+          }
+
+          final boolean updated =
+              updateProperties(
+                  modelConfiguration, level, subordinateNode, addedProperties, removedProperties);
+
+          if (updated) {
+            nodesToAdd.add(subordinateNode);
+            Edge edge = new Edge();
+            edge.setSource(subordinateNode.getConceptId());
+            edge.setTarget(node.getConceptId());
+            edge.setLabel(
+                areNodesSameProductPackageLevel(node, subordinateNode)
+                    ? ProductSummaryService.IS_A_LABEL
+                    : ProductSummaryService.CONTAINS_LABEL);
+            edgesToAdd.add(edge);
+          }
+        }
+      }
+    }
+    // add the nodes and edges to the product summary
+    productSummary.getNodes().addAll(nodesToAdd);
+    productSummary.getEdges().addAll(edgesToAdd);
+  }
+
+  private Collection<SnowstormConceptMini> findSubordinateLinkedConcepts(
       String branch,
       ModelConfiguration modelConfiguration,
-      Map<ProductQuantity<T>, ProductSummary> innnerProductSummaries,
       ProductSummary productSummary,
-      Set<ModelLevel> packageLevels,
-      Map<ModelLevel, CompletableFuture<Node>> packageLevelFutures) {
-    for (ProductSummary innerProductSummary : innnerProductSummaries.values()) {
-      Node subject = innerProductSummary.getSingleSubject();
-
-      Set<Edge> transitiveContainsEdges =
-          ProductSummaryService.getTransitiveEdges(innerProductSummary, new HashSet<>());
-      innerProductSummary.getEdges().addAll(transitiveContainsEdges);
-      Set<Node> containedUnbrandedProduct =
-          innerProductSummary.getNodes().stream()
-              .filter(
-                  n ->
-                      n.getModelLevel()
-                              .equals(
-                                  modelConfiguration
-                                      .getLeafUnbrandedProductModelLevel()
-                                      .getModelLevelType())
-                          && innerProductSummary.getEdges().stream()
-                              .anyMatch(
-                                  e ->
-                                      e.getSource().equals(subject.getConceptId())
-                                          && e.getTarget().equals(n.getConceptId())))
-              .collect(Collectors.toSet());
-      if (containedUnbrandedProduct.isEmpty()) {
-        throw new LingoProblem("No unbranded product found for inner product summary");
-      }
-      if (containedUnbrandedProduct.size() > 1) {
-        throw new LingoProblem(
-            "More than one unbranded product found for inner product summary: "
-                + containedUnbrandedProduct);
-      }
-
-      addPropertyChanges(
-          branch,
-          new ArrayList<>(packageLevels),
-          packageLevelFutures,
-          modelConfiguration,
-          productSummary,
-          true,
-          containedUnbrandedProduct.iterator().next());
-    }
+      Node node,
+      ModelLevel level) {
+    return getSnowstormClient()
+        .getConceptsFromEcl(
+            branch,
+            "(((<"
+                + node.getConceptId()
+                + " AND ^"
+                + level.getReferenceSetIdentifier()
+                + ") OR (<<(<(781405001 or 999000071000168104):(774160008 or 999000081000168101)=<<"
+                + node.getConceptId()
+                + "))) AND ^"
+                + level.getReferenceSetIdentifier()
+                + ") "
+                + getMinusClause(
+                    productSummary.getNodes().stream()
+                        .filter(n -> !n.isNewConcept())
+                        .map(Node::getConceptId)
+                        .collect(Collectors.toSet())),
+            100,
+            modelConfiguration.isExecuteEclAsStated());
   }
 
   protected void optionallyAddNmpcType(

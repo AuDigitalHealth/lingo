@@ -21,6 +21,7 @@ import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.NonDefiningPropertyDataType;
 import au.gov.digitalhealth.lingo.exception.ConfigurationProblem;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
 import jakarta.validation.constraints.NotEmpty;
@@ -494,5 +495,15 @@ public class ModelConfiguration {
 
   public Set<String> getAllLevelReferenceSetIds() {
     return levels.stream().map(ModelLevel::getReferenceSetIdentifier).collect(Collectors.toSet());
+  }
+
+  public Set<ModelLevel> getApplicablePropertyLevels(NonDefiningBase property) {
+    return levels.stream()
+        .filter(
+            level ->
+                getProperty(property.getIdentifierScheme())
+                    .getModelLevels()
+                    .contains(level.getModelLevelType()))
+        .collect(Collectors.toSet());
   }
 }
