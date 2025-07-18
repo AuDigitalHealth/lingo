@@ -298,6 +298,8 @@ public class MedicationProductCalculationService
     // level packages. It is possible this isn't enough if there are different packages with
     // intersecting conceptOptions, but this will do for the moment.
     packageDetails.cascadeProperties(models.getModelConfiguration(branch));
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+    optionallyAddNmpcType(branch, modelConfiguration, packageDetails);
     return calculateCreatePackage(
         branch,
         packageDetails,
@@ -607,11 +609,6 @@ public class MedicationProductCalculationService
       boolean branded,
       boolean container,
       ModelConfiguration modelConfiguration) {
-
-    if (packageDetails.getContainedProducts() != null
-        && !packageDetails.getContainedProducts().isEmpty()) {
-      optionallyAddNmpcType(branch, modelConfiguration, packageDetails);
-    }
 
     Set<SnowstormRelationship> relationships = new HashSet<>();
     relationships.add(
