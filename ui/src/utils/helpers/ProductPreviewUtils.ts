@@ -14,7 +14,12 @@
 /// limitations under the License.
 ///
 
-import { DefinitionStatus, Description, Product } from '../../types/concept.ts';
+import {
+  DefinitionStatus,
+  DefinitionType,
+  Description,
+  Product,
+} from '../../types/concept.ts';
 import {
   getBulkAuthorBrandOptions,
   getBulkAuthorPackSizeOptions,
@@ -143,6 +148,8 @@ export function extractSemanticTag(
 
 export const removeDescriptionSemanticTag = (desc: Description) => {
   const description = cloneDeep(desc);
+
+  if (description.type !== DefinitionType.FSN) return description;
   const containsSemanticTag = extractSemanticTag(description?.term)
     ?.trim()
     .toLocaleLowerCase();
