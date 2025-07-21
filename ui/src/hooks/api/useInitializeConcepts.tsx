@@ -32,8 +32,7 @@ export default function useInitializeConcepts(branch: string | undefined) {
 export function useDefaultUnit(branch: string) {
   const { isLoading, data } = useQuery({
     queryKey: ['defaultUnit'],
-    queryFn: () =>
-      ConceptService.searchUnpublishedConceptByIds([UnitEachId], branch),
+    queryFn: () => ConceptService.searchConceptByIds([UnitEachId], branch),
     staleTime: Infinity,
   });
 
@@ -46,8 +45,7 @@ export function useDefaultUnit(branch: string) {
 export function useUnitPack(branch: string) {
   const { isLoading, data } = useQuery({
     queryKey: ['unitPack'],
-    queryFn: () =>
-      ConceptService.searchUnpublishedConceptByIds([UnitPackId], branch),
+    queryFn: () => ConceptService.searchConceptByIds([UnitPackId], branch),
     staleTime: Infinity,
   });
 
@@ -74,10 +72,7 @@ export const getSearchConceptsByEclOptions = (
     queryKey,
     queryFn: () => {
       if (concept && concept.conceptId) {
-        return ConceptService.searchUnpublishedConceptByIds(
-          [concept.conceptId],
-          branch,
-        );
+        return ConceptService.searchConceptByIds([concept.conceptId], branch);
       }
       if (showDefaultOptions) {
         return ConceptService.searchConceptByEcl(
@@ -123,14 +118,16 @@ export const useSearchConceptsByEcl = (
     ),
   });
 
-  const { data: ontoResults, isFetching: isOntoFetching } =
-    useSearchConceptOntoserver(
-      encodeURIComponent(ecl as string),
-      searchString,
-      undefined,
-      undefined,
-      showDefaultOptions,
-    );
+  // Conditionally call Ontoserver
+  const { data: ontoResults, isFetching: isOntoFetching } = turnOffPublishParam
+    ? { data: undefined, isFetching: false } // Skip Ontoserver
+    : useSearchConceptOntoserver(
+        encodeURIComponent(ecl as string),
+        searchString,
+        undefined,
+        undefined,
+        showDefaultOptions,
+      );
 
   const [ontoData, setOntoData] = useState<Concept[]>([]);
   const [allData, setAllData] = useState<ConceptSearchResult[]>([]);

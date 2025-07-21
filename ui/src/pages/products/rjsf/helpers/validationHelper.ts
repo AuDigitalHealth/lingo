@@ -316,7 +316,7 @@ export function resetDiscriminators(
         );
 
       if (activeSchema) {
-        // Explicitly set 'type' to root 'variant' value in productDetails
+        // Explicitly set 'type' to root 'variant' value in productDetails due to a bug in rjsf handling multi level oneOf
         if (
           path[0] === 'containedProducts' &&
           path[2] === 'productDetails' &&
@@ -438,7 +438,7 @@ export function resetDiscriminators(
   // Process top-level discriminator
   walk(schema, updatedData, [], schema, uiSchema);
 
-  // Explicitly reset nested productType discriminators
+  // Explicitly reset nested productType discriminators, Due to a bug in rjsf handling multi level oneOf
   const variant = get(updatedData, 'variant');
   if (variant) {
     const containedProducts = get(updatedData, 'containedProducts') || [];

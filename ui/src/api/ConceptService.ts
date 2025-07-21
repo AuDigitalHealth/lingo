@@ -47,11 +47,11 @@ const ConceptService = {
     str: string,
     branch: string,
     providedEcl: string,
-    useOldConcepts?: boolean,
+    turnOffPublishParam?: boolean,
   ): Promise<ConceptResponse> {
     let concepts: Concept[] = [];
 
-    const url = `/snowstorm/${encodeURIComponent(branch)}/concepts?term=${str}&statedEcl=${providedEcl}&termActive=true${useOldConcepts ? '' : '&isPublished=false'}`;
+    const url = `/snowstorm/${encodeURIComponent(branch)}/concepts?term=${str}&statedEcl=${providedEcl}&termActive=true${turnOffPublishParam ? '' : '&isPublished=false'}`;
     const response = await api.get(url, {
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
@@ -67,14 +67,14 @@ const ConceptService = {
     return conceptResponse;
   },
   async searchConceptNoEcl(
-    str: string,
-    branch: string,
-    useOldConcepts?: boolean,
+      str: string,
+      branch: string,
+      turnOffPublishParam?: boolean,
   ): Promise<ConceptResponse> {
     let concepts: Concept[] = [];
 
     const encodedString = encodeURIComponent(str);
-    const url = `/snowstorm/${branch}/concepts?term=${encodedString}&termActive=true${useOldConcepts ? '' : '&isPublished=false'}`;
+    const url = `/snowstorm/${branch}/concepts?term=${encodedString}&termActive=true${turnOffPublishParam ? '' : '&isPublished=false'}`;
     const response = await api.get(url, {
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
@@ -94,13 +94,13 @@ const ConceptService = {
     branch: string,
     limit?: number,
     term?: string,
-    useOldConcepts?: boolean,
+    turnOffPublishParam?: boolean,
   ): Promise<ConceptResponse> {
     let concepts: Concept[] = [];
     if (!limit) {
       limit = 50;
     }
-    let url = `/snowstorm/${encodeURIComponent(branch)}/concepts?statedEcl=${ecl}&termActive=true&limit=${limit}${useOldConcepts ? '' : '&isPublished=false'}`;
+    let url = `/snowstorm/${encodeURIComponent(branch)}/concepts?statedEcl=${ecl}&termActive=true&limit=${limit}${turnOffPublishParam ? '' : '&isPublished=false'}`;
     if (term && term.length > 2) {
       url += `&term=${term}`;
     }
@@ -123,16 +123,17 @@ const ConceptService = {
     return conceptResponse;
   },
 
-  async searchUnpublishedConceptByIds(
+  async searchConceptByIds(
     id: string[],
     branch: string,
     providedEcl?: string,
+    turnOffPublishParam?: boolean,
   ): Promise<ConceptResponse> {
     if (providedEcl) {
       providedEcl = appendIdsToEcl(providedEcl, id);
     }
     const url = providedEcl
-      ? `/snowstorm/${encodeURIComponent(branch)}/concepts?statedEcl=${providedEcl}&termActive=true&isPublished=false`
+      ? `/snowstorm/${encodeURIComponent(branch)}/concepts?statedEcl=${providedEcl}&termActive=true${turnOffPublishParam ? '' : '&isPublished=false'}`
       : `/snowstorm/${encodeURIComponent(branch)}/concepts/${id[0]}`;
     const response = await api.get(url, {
       headers: {
@@ -271,9 +272,10 @@ const ConceptService = {
     return conceptResponse;
   },
   async searchConceptByArtgId(
-    id: string,
-    branch: string,
-    providedEcl: string,
+      id: string,
+      branch: string,
+      providedEcl: string,
+      turnOffPublishParam?: boolean,
   ): Promise<ConceptResponse> {
     const searchBody = {
       additionalFields: {
@@ -295,10 +297,11 @@ const ConceptService = {
     const conceptSearchResponse = response.data as ConceptSearchResponse;
     const conceptIds = mapToConceptIds(conceptSearchResponse.items);
     if (conceptIds && conceptIds.length > 0) {
-      return this.searchUnpublishedConceptByIds(
+      return this.searchConceptByIds(
         conceptIds,
         branch,
         providedEcl,
+        turnOffPublishParam,
       );
     }
     return emptySnowstormResponse;
