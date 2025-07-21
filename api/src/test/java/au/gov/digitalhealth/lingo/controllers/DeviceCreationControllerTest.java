@@ -109,7 +109,6 @@ class DeviceCreationControllerTest extends LingoTestBase {
         getLingoTestClient().createTicket("createSimpleProductFromExistingWithPackSizeChange");
 
     // create
-    productSummary.getSubjects().clear();
     ProductSummary createdProduct =
         getLingoTestClient()
             .createDeviceProduct(
