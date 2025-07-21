@@ -66,12 +66,12 @@ public class Ingredient extends ProductBaseDto {
   }
 
   @JsonIgnore
-  public boolean isPresentationStrength() {
+  public boolean isIngredientPresentationStrength() {
     return presentationStrengthNumerator != null && presentationStrengthDenominator != null;
   }
 
   @JsonIgnore
-  public boolean isConcentrationStrength() {
+  public boolean isIngredientConcentrationStrength() {
     return concentrationStrengthNumerator != null && concentrationStrengthDenominator != null;
   }
 }
