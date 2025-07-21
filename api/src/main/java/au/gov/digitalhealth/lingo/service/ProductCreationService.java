@@ -627,10 +627,45 @@ public class ProductCreationService {
       }
     }
 
+    updateSubjects(productSummary, idMap);
+
     productSummary.updateNodeChangeStatus(
         taskChangedConceptIds.block(), projectChangedConceptIds.block());
 
     return idMap;
+  }
+
+  private static void updateSubjects(ProductSummary productSummary, BidiMap<String, String> idMap) {
+    Set<Node> subjects = new HashSet<>(productSummary.getSubjects());
+
+    productSummary.getSubjects().clear();
+
+    productSummary
+        .getSubjects()
+        .addAll(
+            subjects.stream()
+                .map(
+                    s -> {
+                      if (!s.getConceptId().startsWith("-")) {
+                        return s;
+                      } else if (idMap.containsKey(s.getConceptId())) {
+                        return productSummary.getNodes().stream()
+                            .filter(n -> n.getConceptId().equals(idMap.get(s.getConceptId())))
+                            .findFirst()
+                            .orElseThrow(
+                                () ->
+                                    new LingoProblem(
+                                        "New subject concept with id "
+                                            + s.getConceptId()
+                                            + " not found in identifier map of newly created concepts"));
+                      } else {
+                        throw new LingoProblem(
+                            "New subject concept with id "
+                                + s.getConceptId()
+                                + " not found identifier map of newly created concepts");
+                      }
+                    })
+                .collect(Collectors.toSet()));
   }
 
   private void updateConceptsWithPropertyOnlyChanges(
