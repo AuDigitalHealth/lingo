@@ -80,7 +80,7 @@ const CreateBrand: React.FC<CreateBrandProps> = ({
               void queryClient.invalidateQueries({ queryKey: newQueryKey });
             }
             void queryClient.invalidateQueries({ queryKey });
-            void ConceptService.searchUnpublishedConceptByIds(
+            void ConceptService.searchConceptByIds(
               [concept?.conceptId as string],
               branch,
             ).then(c => {

@@ -19,6 +19,7 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
     showDefaultOptions,
     uiSchema,
     required,
+    turnOffPublishParam,
   } = props;
 
   const [inputValue, setInputValue] = useState<string>(value?.pt?.term || '');
@@ -44,6 +45,8 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
     ecl && ecl.length > 0 && !disabled ? ecl : undefined,
     branch,
     (showDefaultOptions as boolean) && !disabled,
+    undefined,
+    turnOffPublishParam,
   );
 
   const title = props?.title || schema?.title || uiSchema?.['ui:title'] || '';
