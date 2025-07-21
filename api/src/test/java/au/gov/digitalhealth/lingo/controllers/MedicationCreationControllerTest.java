@@ -700,6 +700,7 @@ class MedicationCreationControllerTest extends LingoTestBase {
     confirmAmtModelLinks(productSummary, false, true, true);
 
     packageDetails.getSelectedConceptIdentifiers().add("50915011000036102");
+    packageDetails.getSelectedConceptIdentifiers().add("48583011000036104");
 
     productSummary = getLingoTestClient().calculateMedicationProductSummary(packageDetails);
 
