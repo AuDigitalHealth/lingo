@@ -632,8 +632,8 @@ public class MedicationProductCalculationService
           0,
           modelConfiguration.getModuleId());
 
-      if (modelConfiguration.getModelType().equals(ModelType.AMT)
-          || packageDetails.getOtherIdentifyingInformation() != null) {
+      if (modelConfiguration.getModelType().equals(ModelType.NMPC)
+          && packageDetails.getOtherIdentifyingInformation() != null) {
         relationships.add(
             getSnowstormDatatypeComponent(
                 HAS_OTHER_IDENTIFYING_INFORMATION,

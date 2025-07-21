@@ -508,6 +508,8 @@ public class NodeGeneratorService {
           }
           node.setConcept(selectedConcepts.iterator().next());
           selectedConcept = true;
+          atomicCache.addFsnAndPt(
+              node.getConceptId(), node.getFullySpecifiedName(), node.getPreferredTerm());
         }
       }
     }
