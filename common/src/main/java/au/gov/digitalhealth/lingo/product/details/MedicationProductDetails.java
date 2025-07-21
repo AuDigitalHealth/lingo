@@ -69,9 +69,9 @@ public class MedicationProductDetails extends ProductDetails {
     }
 
     for (Ingredient ingredient : activeIngredients) {
-      if (ingredient.isConcentrationStrength()) {
+      if (ingredient.isIngredientConcentrationStrength()) {
         return ProductTemplate.concentrationStrength;
-      } else if (ingredient.isPresentationStrength()) {
+      } else if (ingredient.isIngredientPresentationStrength()) {
         return ProductTemplate.presentationStrength;
       }
     }
