@@ -67,9 +67,9 @@ const ConceptService = {
     return conceptResponse;
   },
   async searchConceptNoEcl(
-      str: string,
-      branch: string,
-      turnOffPublishParam?: boolean,
+    str: string,
+    branch: string,
+    turnOffPublishParam?: boolean,
   ): Promise<ConceptResponse> {
     let concepts: Concept[] = [];
 
@@ -272,10 +272,10 @@ const ConceptService = {
     return conceptResponse;
   },
   async searchConceptByArtgId(
-      id: string,
-      branch: string,
-      providedEcl: string,
-      turnOffPublishParam?: boolean,
+    id: string,
+    branch: string,
+    providedEcl: string,
+    turnOffPublishParam?: boolean,
   ): Promise<ConceptResponse> {
     const searchBody = {
       additionalFields: {
