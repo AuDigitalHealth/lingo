@@ -114,6 +114,7 @@ export function useSearchConcept(
   branch: string,
   providedEcl: string,
   allData?: ConceptSearchResult[],
+  turnOffPublishParam?: boolean,
 ) {
   const { serviceStatus } = useServiceStatus();
 
@@ -141,22 +142,25 @@ export function useSearchConcept(
           encodeURIComponent(searchTerm),
           branch,
           providedEcl,
+          turnOffPublishParam,
         );
       } else if (
         searchFilter === 'Sct Id' &&
         isSctIds(parseSearchTermsSctId(searchTerm))
       ) {
         const terms = parseSearchTermsSctId(searchTerm);
-        return ConceptService.searchUnpublishedConceptByIds(
+        return ConceptService.searchConceptByIds(
           terms,
           branch,
           providedEcl,
+          turnOffPublishParam,
         );
       } else if (searchFilter === 'Artg Id') {
         return ConceptService.searchConceptByArtgId(
           searchTerm,
           branch,
           providedEcl,
+          turnOffPublishParam,
         );
       } else {
         return emptySnowstormResponse;

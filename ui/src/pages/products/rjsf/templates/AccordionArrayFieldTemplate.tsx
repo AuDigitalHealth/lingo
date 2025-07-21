@@ -8,7 +8,7 @@ import {
   IconButton,
   Toolbar,
   Tooltip,
-  Typography
+  Typography,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
@@ -57,7 +57,9 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
       const allPanelIds = items.map((_, index) => `panel${index}`);
 
       // Find panels that are new (not in the current expanded list)
-      const newPanelIds = allPanelIds.filter(id => !currentPanelIds.includes(id));
+      const newPanelIds = allPanelIds.filter(
+        id => !currentPanelIds.includes(id),
+      );
 
       // Only update if there are new panels to expand
       if (newPanelIds.length > 0) {
@@ -73,15 +75,16 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
     handleAddProduct,
   } = useSearchAndAddProduct(formContext, idSchema);
 
-  const handleChange = (panel: string) => (_: React.SyntheticEvent, isExpanded: boolean) => {
-    if (isExpanded) {
-      // Add this panel to the expanded list
-      setExpandedPanels(prev => [...prev, panel]);
-    } else {
-      // Remove this panel from the expanded list
-      setExpandedPanels(prev => prev.filter(p => p !== panel));
-    }
-  };
+  const handleChange =
+    (panel: string) => (_: React.SyntheticEvent, isExpanded: boolean) => {
+      if (isExpanded) {
+        // Add this panel to the expanded list
+        setExpandedPanels(prev => [...prev, panel]);
+      } else {
+        // Remove this panel from the expanded list
+        setExpandedPanels(prev => prev.filter(p => p !== panel));
+      }
+    };
 
   return (
     <div data-testid={idSchema.$id + '_container'}>
@@ -151,7 +154,7 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
                 </Typography>
                 {element.hasRemove && (
                   <IconButton
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation(); // Prevent accordion toggle
                       element.onDropIndexClick(element.index)(e);
                     }}

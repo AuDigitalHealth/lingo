@@ -146,6 +146,7 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
                   isDisabled={isDisabled}
                   branch={task?.branchPath}
                   onChange={handleSelect}
+                  turnOffPublishParam={createBrand ? true : false}
                 />
               ))}
             {createBrand && (
