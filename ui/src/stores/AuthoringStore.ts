@@ -15,7 +15,7 @@
 ///
 
 import { create } from 'zustand';
-import { Concept } from '../types/concept.ts';
+import { Concept, ProductSummary } from '../types/concept.ts';
 import {
   ActionType,
   BrandPackSizeCreationDetails,
@@ -270,7 +270,7 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
       ? get().selectedProduct?.id
       : get().originalConceptId;
 
-    const handleSuccess = (mp: any) => {
+    const handleSuccess = (mp: ProductSummary) => {
       const productSaveObj: ProductSaveDetails = {
         type: get().isProductUpdate
           ? ProductActionType.update
@@ -287,7 +287,7 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
       get().setPreviewModalOpen(true);
       get().setLoadingPreview(false);
     };
-
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleError = (err: any) => {
       const snackBarKey = snowstormErrorHandler(
         err,

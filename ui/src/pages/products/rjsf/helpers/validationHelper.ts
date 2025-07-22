@@ -125,7 +125,7 @@ export const buildErrorSchema = (errors: any[]) => {
   }
 
   const newErrorSchema = errors.reduce((acc: any, error: any) => {
-    let path = error.property
+    const path = error.property
       ? error.property.replace(/^\./, '')
       : error.instancePath
         ? error.instancePath.replace(/^\//, '').replace(/\//g, '.')
@@ -160,7 +160,7 @@ export const deDuplicateErrors = (errors: any[]): any[] => {
   // Deduplicate errors by path
   const errorsByPath: { [path: string]: any } = errors.reduce(
     (acc: any, error: any) => {
-      let path = error.property
+      const path = error.property
         ? error.property.replace(/^\./, '')
         : error.instancePath
           ? error.instancePath.replace(/^\//, '').replace(/\//g, '.')

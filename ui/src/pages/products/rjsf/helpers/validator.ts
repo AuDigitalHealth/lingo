@@ -40,7 +40,7 @@ const collectRequiredProperties = (
   schema: any,
   path: string[] = [],
 ): string[] => {
-  let requiredProps: string[] = [];
+  const requiredProps: string[] = [];
 
   // Add top-level required properties
   if (schema.required) {
