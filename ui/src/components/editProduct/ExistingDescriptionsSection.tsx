@@ -45,12 +45,6 @@ export function DescriptionDisplay({
         ? 'Preferred Term'
         : 'Synonym';
 
-  const handleFieldChange = (field: string, value: any) => {
-    if (onDescriptionChange) {
-      onDescriptionChange(index, field, value);
-    }
-  };
-
   return (
     <Grid
       container
@@ -191,6 +185,7 @@ interface DescriptionListProps {
   displayMode: 'input' | 'text';
   displayRetiredDescriptions: boolean;
   isFetching: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onDescriptionChange?: (index: number, field: string, value: any) => void;
 }
 

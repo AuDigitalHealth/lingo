@@ -66,9 +66,20 @@ export const ProductRetireUpdate: React.FC<ProductRetireUpdateProps> = ({
 }) => {
   const isReplacedWithExisting = isReplacedWithExistingConcept(product);
   const isReplacedWithNew = isReplacedWithNewConcept(product);
+  const theme = useTheme();
+  const { applicationConfig } = useApplicationConfigStore();
+  const [retireAndReplace, setRetireAndReplace] = React.useState(
+    getIsRetireAndReplace(product),
+  );
+  const [conceptEdit, setConceptEdit] = React.useState(
+    getIsConceptEdit(product),
+  );
+  React.useEffect(() => {
+    setRetireAndReplace(getIsRetireAndReplace(product));
+    setConceptEdit(getIsConceptEdit(product));
+  }, [product]);
   if (!isReplacedWithNew && !isReplacedWithExisting) return null;
 
-  const theme = useTheme();
   const id = product.originalNode?.node.concept.conceptId;
   const term = product.originalNode?.node.concept.pt.term;
   const reason = product.originalNode?.inactivationReason ?? null;
@@ -78,7 +89,6 @@ export const ProductRetireUpdate: React.FC<ProductRetireUpdateProps> = ({
   const referencedByOtherProducts =
     product.originalNode?.referencedByOtherProducts ?? false;
 
-  const { applicationConfig } = useApplicationConfigStore();
   const snowstormBaseUrl = applicationConfig.apApiBaseUrl;
 
   const branchParts = branch.split('/');
@@ -86,18 +96,6 @@ export const ProductRetireUpdate: React.FC<ProductRetireUpdateProps> = ({
   const release = branchParts[3] || '';
 
   const conceptBrowserUrl = `${snowstormBaseUrl}/browser/?perspective=full&conceptId1=${id}&edition=${edition}&release=${release}&languages=en`;
-
-  const [retireAndReplace, setRetireAndReplace] = React.useState(
-    getIsRetireAndReplace(product),
-  );
-  const [conceptEdit, setConceptEdit] = React.useState(
-    getIsConceptEdit(product),
-  );
-
-  React.useEffect(() => {
-    setRetireAndReplace(getIsRetireAndReplace(product));
-    setConceptEdit(getIsConceptEdit(product));
-  }, [product]);
 
   return (
     <Paper

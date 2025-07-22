@@ -139,7 +139,7 @@ function MedicationAuthoring({
     setSaveModalOpen(!saveModalOpen);
   };
 
-  const handleFormSubmit = async ({ formData }: { formData: any }) => {
+  const handleFormSubmit = ({ formData }: { formData: any }) => {
     const validation = validator.validateFormData(formData, schema);
     setFormErrors(validation.errors);
     setFormData(formData);

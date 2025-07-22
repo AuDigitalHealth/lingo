@@ -118,16 +118,19 @@ export const useSearchConceptsByEcl = (
     ),
   });
 
-  // Conditionally call Ontoserver
-  const { data: ontoResults, isFetching: isOntoFetching } = turnOffPublishParam
-    ? { data: undefined, isFetching: false } // Skip Ontoserver
-    : useSearchConceptOntoserver(
-        encodeURIComponent(ecl as string),
-        searchString,
-        undefined,
-        undefined,
-        showDefaultOptions,
-      );
+  // Call Ontoserver unconditionally
+  const { data: ontoResultsRaw, isFetching: isOntoFetchingRaw } =
+    useSearchConceptOntoserver(
+      encodeURIComponent(ecl as string),
+      searchString,
+      undefined,
+      undefined,
+      showDefaultOptions,
+    );
+
+  // Apply conditional logic to results
+  const ontoResults = turnOffPublishParam ? undefined : ontoResultsRaw;
+  const isOntoFetching = turnOffPublishParam ? false : isOntoFetchingRaw;
 
   const [ontoData, setOntoData] = useState<Concept[]>([]);
   const [allData, setAllData] = useState<ConceptSearchResult[]>([]);
