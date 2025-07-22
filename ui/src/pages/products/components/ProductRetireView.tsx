@@ -21,6 +21,10 @@ export const ProductRetireView: React.FC<ProductRetireViewProps> = ({
   control,
   index,
 }) => {
+  const reason = useWatch({
+    control,
+    name: `nodes[${index}].originalNode.inactivationReason` as 'nodes.0.originalNode.inactivationReason',
+  });
   if (
     !isReplacedWithNewConcept(product) &&
     !isReplacedWithExistingConcept(product)
@@ -29,10 +33,6 @@ export const ProductRetireView: React.FC<ProductRetireViewProps> = ({
 
   const term = product.originalNode?.node.concept.pt.term;
 
-  const reason = useWatch({
-    control,
-    name: `nodes[${index}].originalNode.inactivationReason` as 'nodes.0.originalNode.inactivationReason',
-  });
   if (!term) return null;
 
   return (
