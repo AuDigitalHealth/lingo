@@ -113,7 +113,7 @@ function MedicationAuthoring({
       setMode(data.action === 'UPDATE' ? 'update' : 'create');
       setFormData(data.packageDetails);
       setInitialFormData(data.packageDetails);
-      setOriginalConceptId(data.originalConceptId);
+      setOriginalConceptId(data.originalConceptId || data.conceptId); //fallback to data.conceptId to support created
     },
   });
   const mutation = useCalculateProduct();
