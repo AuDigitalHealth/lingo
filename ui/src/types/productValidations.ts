@@ -184,13 +184,9 @@ export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateReques
                 .test(
                   'Only One Preferred Synonym Per Language',
                   (value, context) => {
-                    const formattedPath = context.path.replace(
-                      /\[(\d+)\]/g,
-                      '.$1',
-                    );
-                    const thisDescription = context.from?.[1]
-                      .value as Description;
+                    const formattedPath = context.path;
 
+                    const thisDescription = context.parent as Description;
                     const productDescriptionUpdateRequest = context.from?.[2]
                       .value as ProductDescriptionUpdateRequest;
 
@@ -246,6 +242,7 @@ export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateReques
                         message:
                           "At least one term must not be 'NOT ACCEPTABLE'",
                         path: errPath,
+                        params: {language: firstLanguage}
                       });
                     }
 
@@ -280,35 +277,24 @@ export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateReques
                         }
                       });
 
-                      let onlyOneFail = false;
-                      let exactlyOneFail = false;
-                      let errPath = '';
-
-                      Object.entries(preferredCounter).forEach(
-                        ([language, count]) => {
-                          if (count > 1) {
-                            onlyOneFail = true;
-                            errPath = `${formattedPath}.${language}`;
-                          }
-                          if (count === 0) {
-                            exactlyOneFail = true;
-                            errPath = `${formattedPath}.${language}`;
-                          }
-                        },
-                      );
-
-                      if (onlyOneFail) {
-                        return context.createError({
-                          message: `Only one FSN can be preferred per language.`,
-                          path: errPath,
-                        });
-                      }
-
-                      if (exactlyOneFail) {
-                        return context.createError({
-                          message: `One FSN must be preferred for each language.`,
-                          path: errPath,
-                        });
+                      // Check each language for FSN violations
+                      for (const [language, count] of Object.entries(
+                        preferredCounter,
+                      )) {
+                        if (count > 1) {
+                          const errPath = `${formattedPath}.${language}`;
+                          return context.createError({
+                            message: `Only one FSN can be preferred per language.`,
+                            path: errPath,
+                          });
+                        }
+                        if (count === 0) {
+                          const errPath = `${formattedPath}.${language}`;
+                          return context.createError({
+                            message: `One FSN must be preferred for each language.`,
+                            path: errPath,
+                          });
+                        }
                       }
                     }
 
@@ -337,35 +323,30 @@ export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateReques
                       }
                     });
 
-                    let onlyOneFail = false;
-                    let exactlyOneFail = false;
-                    let errPath = '';
-
-                    Object.entries(preferredCounter).forEach(
-                      ([language, count]) => {
-                        if (count > 1) {
-                          onlyOneFail = true;
-                          errPath = `${context.path}.${language}`;
-                        }
-                        if (count === 0) {
-                          exactlyOneFail = true;
-                          errPath = `${context.path}.${language}`;
-                        }
-                      },
-                    );
-
-                    if (onlyOneFail) {
-                      return context.createError({
-                        message: `Only one synonym can be preferred per language.`,
-                        path: errPath,
-                      });
+                    // Check each language for SYNONYM violations
+                    for (const [language, count] of Object.entries(
+                      preferredCounter,
+                    )) {
+                      if (count > 1) {
+                        const errPath = `${formattedPath}.${language}`;
+                        return context.createError({
+                          message: `Only one synonym can be preferred per language.`,
+                          path: errPath,
+                        });
+                      }
+                      if (count === 0) {
+                        const errPath = `${formattedPath}.${language}`;
+                        return context.createError({
+                          message: `One synonym must be preferred for each language.`,
+                          path: errPath,
+                        });
+                      }
                     }
 
-                    if (exactlyOneFail) {
-                      return context.createError({
-                        message: `One synonym must be preferred for each language.`,
-                        path: errPath,
-                      });
+                    if (thisDescription.term === 'lol') {
+                      console.log('All validations passed - returning true');
+                      console.log('formattedPath:', formattedPath);
+                      console.log('context.path:', context.path);
                     }
 
                     return true;
