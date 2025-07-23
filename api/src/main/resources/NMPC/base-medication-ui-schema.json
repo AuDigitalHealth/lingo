@@ -163,7 +163,7 @@
               "targetPopulation": 24
             },
             {
-              "ingredientQualitativeStrength": 24
+              "qualitiativeStrength": 24
             },
             {
               "genericOtherIdentifyingInformation": 24
@@ -271,7 +271,7 @@
             "placeholder": "Select target population (optional)"
           }
         },
-        "ingredientQualitativeStrength": {
+        "qualitiativeStrength": {
           "ui:field": "AutoCompleteField",
           "ui:title": "Qualitative Strength",
           "ui:options": {
