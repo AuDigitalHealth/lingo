@@ -275,7 +275,7 @@
                       },
                       "targetPopulation": { "type": ["object", "null"], "$ref": "#/$defs/SnowstormConceptMini", "title": "Target Population" },
                       "unitOfPresentation": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Unit of Presentation" },
-                      "ingredientQualitativeStrength": { "type": ["object", "null"], "$ref": "#/$defs/SnowstormConceptMini", "title": "Qualitative Strength" },
+                      "qualitiativeStrength": { "type": ["object", "null"], "$ref": "#/$defs/SnowstormConceptMini", "title": "Qualitative Strength" },
                       "genericOtherIdentifyingInformation": { "type": "string", "title": "VMP other Identifying Information" },
                       "otherIdentifyingInformation": { "type": "string", "title": "AMP other Identifying Information" },
                       "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/VACCINE_PRODUCT_NonDefiningProperty" }, "title": "Non Defining Properties" }
@@ -298,7 +298,7 @@
                         "items": { "$ref": "#/$defs/NoStrengthIngredient" }
                       },
                       "targetPopulation": { "type": ["object", "null"], "$ref": "#/$defs/SnowstormConceptMini", "title": "Target Population" },
-                      "ingredientQualitativeStrength": { "type": ["object", "null"], "$ref": "#/$defs/SnowstormConceptMini", "title": "Qualitative Strength" },
+                      "qualitiativeStrength": { "type": ["object", "null"], "$ref": "#/$defs/SnowstormConceptMini", "title": "Qualitative Strength" },
                       "quantity": { "type": ["object", "null"], "$ref": "#/$defs/Quantity", "title": "Unit of Presentation Quantity" },
                       "unitOfPresentation": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Unit of Presentation" },
                       "genericOtherIdentifyingInformation": { "type": "string", "title": "VMP other Identifying Information" },
