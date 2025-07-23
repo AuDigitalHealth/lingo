@@ -45,6 +45,7 @@ import {
   FieldArrayWithId,
   FieldError,
   UseFormSetValue,
+  get,
   useController,
   useFieldArray,
   useForm,
@@ -234,14 +235,30 @@ function EditConceptBody({
     } as ProductUpdateRequest;
   }, [product, ticket, descriptions]);
 
-  const { handleSubmit, control, setError, reset, getValues, setValue } =
-    useForm<ProductUpdateRequest>({
-      mode: 'all',
-      reValidateMode: 'onChange',
-      criteriaMode: 'all',
-      defaultValues,
-      resolver: yupResolver(productUpdateValidationSchema),
+  const {
+    handleSubmit,
+    control,
+    setError,
+    reset,
+    getValues,
+    setValue,
+    trigger,
+    watch,
+  } = useForm<ProductUpdateRequest>({
+    mode: 'all',
+    reValidateMode: 'onChange',
+    criteriaMode: 'all',
+    defaultValues,
+    resolver: yupResolver(productUpdateValidationSchema),
+  });
+
+  useEffect(() => {
+    const subscription = watch((value, { name }) => {
+      if (name?.includes('term')) return;
+      void trigger();
     });
+    return () => subscription.unsubscribe();
+  }, [trigger]);
 
   const { fields, append } = useFieldArray({
     control,
@@ -781,7 +798,7 @@ function ActionButton({
   const hasErrors = Object.keys(errors).length > 0;
   const isDirty = Object.keys(dirtyFields).length > 0;
 
-  const isButtonDisabled = () => isSubmitting || !isDirty;
+  const isButtonDisabled = () => isSubmitting || !isDirty || hasErrors;
   return (
     <Grid
       item
@@ -919,8 +936,6 @@ const FieldDescriptions = ({
   const isDisabled = disabled || !isActive;
 
   const isReleased = description?.released;
-  const { errors } = useFormState({ control });
-  console.log(errors);
   return (
     <Grid container spacing={1} key={field.id} alignItems="center">
       <Grid item xs={12} md={2}>
@@ -1012,7 +1027,6 @@ const FieldDescriptions = ({
       <Grid item xs={12} md={3}>
         <Grid container direction="column" spacing={1}>
           {langRefsets.map(dialect => {
-            debugger;
             return (
               <Grid item key={dialect.dialectName}>
                 <Controller
@@ -1024,7 +1038,6 @@ const FieldDescriptions = ({
                     ('NOT ACCEPTABLE' as Acceptability)
                   }
                   render={({ field: controllerField, fieldState }) => {
-                    debugger;
                     return (
                       <>
                         <FormControl
