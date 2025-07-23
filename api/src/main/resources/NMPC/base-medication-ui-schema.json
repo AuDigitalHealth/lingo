@@ -381,6 +381,13 @@
                       "getExtendedEcl": "<105590001",
                       "showDefaultOptions": true
                     }
+                  },
+                  {
+                    "path": "../preciseIngredient",
+                    "ui:options": {
+                      "getEcl": "<<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent))",
+                      "showDefaultOptions": true
+                    }
                   }
                 ],
                 "ecl": "(<763158003 {{ D term=\"medicinal product\" }}).127489000",
@@ -393,15 +400,6 @@
               "ui:field": "AutoCompleteField",
               "ui:title": "VMP Active Ingredient",
               "ui:options": {
-                "dependants": [
-                  {
-                    "path": "../preciseIngredient",
-                    "ui:options": {
-                      "getEcl": "<<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent))",
-                      "showDefaultOptions": true
-                    }
-                  }
-                ],
                 "placeholder": "Select VMP active ingredient"
               }
             },
