@@ -131,11 +131,6 @@ function ConceptReviews({ conceptReview }: ConceptReviewsProps) {
     });
   };
 
-  // useEffect(() => {
-  //   console.log(conceptReview);
-  //   debugger;
-  // }, [conceptReview]);
-  console.log(conceptReview);
   return (
     <>
       {task && messageModalOpen && (
