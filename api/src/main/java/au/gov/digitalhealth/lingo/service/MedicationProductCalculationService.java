@@ -1003,6 +1003,12 @@ public class MedicationProductCalculationService
     }
 
     if (productDetails instanceof VaccineProductDetails vaccineProductDetails) {
+      if (modelConfiguration.getModelType().equals(ModelType.NMPC) && productDetails.getPlaysRole().isEmpty()
+      ) {
+        relationships.add(
+                getSnowstormRelationship(
+                        PLAYS_ROLE, ACTIVE_IMMUNITY_STIMULANT, 0, modelConfiguration.getModuleId()));
+      }
       addRelationshipIfNotNull(
           relationships,
           vaccineProductDetails.getTargetPopulation(),
@@ -1338,6 +1344,13 @@ public class MedicationProductCalculationService
     }
 
     if (productDetails instanceof VaccineProductDetails vaccineProductDetails) {
+
+      if (modelConfiguration.getModelType().equals(ModelType.NMPC) && productDetails.getPlaysRole().isEmpty()
+             ) {
+        relationships.add(
+                getSnowstormRelationship(
+                        PLAYS_ROLE, ACTIVE_IMMUNITY_STIMULANT, 0, modelConfiguration.getModuleId()));
+      }
       addRelationshipIfNotNull(
           relationships,
           vaccineProductDetails.getTargetPopulation(),
