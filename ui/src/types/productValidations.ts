@@ -242,7 +242,7 @@ export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateReques
                         message:
                           "At least one term must not be 'NOT ACCEPTABLE'",
                         path: errPath,
-                        params: {language: firstLanguage}
+                        params: { language: firstLanguage },
                       });
                     }
 
