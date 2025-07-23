@@ -237,7 +237,7 @@ function EditConceptBody({
   const { handleSubmit, control, setError, reset, getValues, setValue } =
     useForm<ProductUpdateRequest>({
       mode: 'all',
-      reValidateMode: 'onSubmit',
+      reValidateMode: 'onChange',
       criteriaMode: 'all',
       defaultValues,
       resolver: yupResolver(productUpdateValidationSchema),
@@ -919,6 +919,8 @@ const FieldDescriptions = ({
   const isDisabled = disabled || !isActive;
 
   const isReleased = description?.released;
+  const { errors } = useFormState({ control });
+  console.log(errors);
   return (
     <Grid container spacing={1} key={field.id} alignItems="center">
       <Grid item xs={12} md={2}>
@@ -1010,6 +1012,7 @@ const FieldDescriptions = ({
       <Grid item xs={12} md={3}>
         <Grid container direction="column" spacing={1}>
           {langRefsets.map(dialect => {
+            debugger;
             return (
               <Grid item key={dialect.dialectName}>
                 <Controller
@@ -1021,6 +1024,7 @@ const FieldDescriptions = ({
                     ('NOT ACCEPTABLE' as Acceptability)
                   }
                   render={({ field: controllerField, fieldState }) => {
+                    debugger;
                     return (
                       <>
                         <FormControl
