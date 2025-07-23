@@ -154,6 +154,7 @@ export default function ConceptDiagramModal({
             <Accordion
               sx={{
                 margin: 1,
+                marginBottom: '2em',
                 flexShrink: 0,
               }}
               defaultExpanded={false}
