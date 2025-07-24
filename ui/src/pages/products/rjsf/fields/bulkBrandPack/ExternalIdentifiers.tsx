@@ -605,8 +605,19 @@ const ExternalIdentifierRender: React.FC<
               disabled={readOnly}
               label={schema.title}
               value={inputValue ? inputValue : schemeEntries?.[0]?.value || ''}
-              onChange={e => setInputValue(e.target.value)} // Update local state only
-              onBlur={handleTextFieldInputChange} // Validate and update formData on blur
+              onChange={e => {
+                const val = e.target.value;
+                if (val === '') {
+                  // Remove the entry if value is cleared
+                  onChange(
+                    (formData ?? []).filter(
+                      item => item.identifierScheme !== schemeName,
+                    ),
+                  );
+                }
+                setInputValue(e.target.value);
+              }}
+              onBlur={handleTextFieldInputChange}
               InputProps={{
                 inputProps: {
                   step: isNumber ? '0.01' : undefined,
