@@ -64,6 +64,7 @@ import au.gov.digitalhealth.lingo.util.RelationshipSorter;
 import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import au.gov.digitalhealth.tickets.service.TicketServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -75,11 +76,13 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.util.Pair;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -210,32 +213,86 @@ public class MedicationProductCalculationService
     }
   }
 
-  private static void addCountOfBaseActiveIngredient(
+  private void addCountOfBaseAndActiveIngredient(
+      String branch,
       MedicationProductDetails productDetails,
       ModelConfiguration modelConfiguration,
       Set<SnowstormRelationship> relationships) {
     if (productDetails.getActiveIngredients() != null
         && !productDetails.getActiveIngredients().isEmpty()
         && productDetails.getActiveIngredients().stream()
-            .anyMatch(i -> i != null && i.getBasisOfStrengthSubstance() != null)) {
+            .anyMatch(i -> i != null && i.getActiveIngredient() != null)) {
+
+      final Set<String> activeSubstanceIds =
+          productDetails.getActiveIngredients().stream()
+              .map(i -> i.getActiveIngredient().getConceptId())
+              .filter(Objects::nonNull)
+              .collect(Collectors.toSet());
+
+      final Collection<String> baseIds =
+          getBaseActiveIngredients(branch, productDetails, modelConfiguration, activeSubstanceIds);
+
       relationships.add(
           getSnowstormDatatypeComponent(
               SnomedConstants.COUNT_OF_BASE_ACTIVE_INGREDIENT,
-              Integer.toString(
-                  productDetails.getActiveIngredients().stream()
-                      .map(
-                          i ->
-                              i == null || i.getBasisOfStrengthSubstance() == null
-                                  ? null
-                                  : i.getBasisOfStrengthSubstance().getConceptId())
-                      .filter(Objects::nonNull)
-                      .collect(Collectors.toSet())
-                      .size()),
+              Integer.toString(baseIds.size()),
               DataTypeEnum.INTEGER,
               0,
               SnomedConstants.STATED_RELATIONSHIP,
               modelConfiguration.getModuleId()));
+
+      if (baseIds.size() != activeSubstanceIds.size()) {
+        relationships.add(
+            getSnowstormDatatypeComponent(
+                COUNT_OF_ACTIVE_INGREDIENT,
+                Integer.toString(activeSubstanceIds.size()),
+                DataTypeEnum.INTEGER,
+                0,
+                SnomedConstants.STATED_RELATIONSHIP,
+                modelConfiguration.getModuleId()));
+      }
     }
+  }
+
+  private Collection<String> getBaseActiveIngredients(
+      String branch,
+      MedicationProductDetails productDetails,
+      ModelConfiguration modelConfiguration,
+      Set<String> activeSubstanceIds) {
+    final String activeSubstanceOrClause = String.join(" OR ", activeSubstanceIds);
+
+    if (log.isLoggable(Level.FINE)) {
+      log.fine(
+          "Calculating count of base active ingredients for branch: "
+              + branch
+              + ", substanceIds: "
+              + activeSubstanceOrClause);
+    }
+
+    // find the base substances for the set of active ingredients
+    Collection<String> baseIds =
+        snowstormClient.getConceptIdsFromEcl(
+            branch,
+            "((<ids>) or ((<ids>).738774007) or (((<ids>).738774007).738774007) or ((((<ids>).738774007).738774007).738774007)) and ((< 105590001 or (<ids>)):[0..0] 738774007=*)",
+            0,
+            (int)
+                productDetails.getActiveIngredients().stream()
+                    .map(i -> i.getActiveIngredient().getConceptId())
+                    .filter(Objects::nonNull)
+                    .count(),
+            modelConfiguration.isExecuteEclAsStated(),
+            Set.of(Pair.of("<ids>", activeSubstanceOrClause)));
+
+    if (log.isLoggable(Level.FINE)) {
+      log.fine(
+          "Found "
+              + baseIds.size()
+              + " base active ingredients for branch: "
+              + branch
+              + ", substanceIds: "
+              + activeSubstanceOrClause);
+    }
+    return baseIds;
   }
 
   @Override
@@ -986,6 +1043,7 @@ public class MedicationProductCalculationService
   }
 
   private Set<SnowstormRelationship> createMpRelationships(
+      String branch,
       MedicationProductDetails productDetails,
       ModelLevel level,
       ModelConfiguration modelConfiguration) {
@@ -1069,7 +1127,7 @@ public class MedicationProductCalculationService
 
     if (EnumSet.of(MEDICINAL_PRODUCT_ONLY, REAL_MEDICINAL_PRODUCT)
         .contains(level.getModelLevelType())) {
-      addCountOfBaseActiveIngredient(productDetails, modelConfiguration, relationships);
+      addCountOfBaseAndActiveIngredient(branch, productDetails, modelConfiguration, relationships);
     }
 
     return relationships;
@@ -1111,7 +1169,7 @@ public class MedicationProductCalculationService
 
     Set<SnowstormRelationship> relationships =
         createClinicalDrugRelationships(
-            productDetails, parents, branded, modelConfiguration, level);
+            branch, productDetails, parents, branded, modelConfiguration, level);
 
     boolean enforceRefsets = modelConfiguration.getModelType().equals(ModelType.AMT);
 
@@ -1177,7 +1235,7 @@ public class MedicationProductCalculationService
     }
 
     Set<SnowstormRelationship> relationships =
-        createMpRelationships(details, mpLevel, modelConfiguration);
+        createMpRelationships(branch, details, mpLevel, modelConfiguration);
 
     // if the product has ingredients it can be defined, otherwise we'll guess primitive - user can
     // always override the decision
@@ -1207,6 +1265,7 @@ public class MedicationProductCalculationService
   }
 
   private Set<SnowstormRelationship> createClinicalDrugRelationships(
+      String branch,
       MedicationProductDetails productDetails,
       Set<Node> parents,
       boolean branded,
@@ -1519,7 +1578,7 @@ public class MedicationProductCalculationService
               STATED_RELATIONSHIP,
               modelConfiguration.getModuleId()));
     } else if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
-      addCountOfBaseActiveIngredient(productDetails, modelConfiguration, relationships);
+      addCountOfBaseAndActiveIngredient(branch, productDetails, modelConfiguration, relationships);
     }
 
     return relationships;
