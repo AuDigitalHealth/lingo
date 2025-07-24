@@ -197,7 +197,7 @@ const ExternalIdentifierRender: React.FC<
     formData?.filter(
       f => f.identifierScheme === schema.properties.identifierScheme.const,
     ) || [];
-  if (!isMultiValued && isNumber) {
+  if (isNumber) {
     schemeEntries.forEach(entry => {
       if (entry?.value !== undefined && entry?.value !== null) {
         const num = Number(entry.value);
