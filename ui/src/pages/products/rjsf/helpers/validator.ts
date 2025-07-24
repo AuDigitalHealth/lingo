@@ -316,7 +316,9 @@ export const validator = (() => {
   return {
     validateFormData: (formData: any, schema: any) => {
       const cleanedFormData = removeNullFields(formData);
-
+      debugger;
+      const now = new Date().toISOString();
+      schema.$id = `${formData.variant}-${now}`
       const validate = ajvMain.compile(schema);
       const valid = validate(cleanedFormData);
 
