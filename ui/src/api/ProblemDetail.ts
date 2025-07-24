@@ -22,6 +22,12 @@ export interface ProblemDetail {
   instance: string;
 }
 
+export interface InternalServerError {
+  error: string;
+  path: string;
+  status: number;
+  timestamp: string;
+}
 // eslint-disable-next-line
 export const isProblemDetail = (data: any): data is ProblemDetail => {
   return (
@@ -32,6 +38,18 @@ export const isProblemDetail = (data: any): data is ProblemDetail => {
     typeof data.status === 'number' &&
     typeof data.detail === 'string' &&
     typeof data.instance === 'string'
+  );
+};
+
+export const isInternalServerError = (data: any): data is InternalServerError => {
+  return (
+    data &&
+    typeof data === 'object' &&
+    typeof data.timestamp === 'string' &&
+    typeof data.path === 'string' &&
+    typeof data.status === 'number' &&
+    typeof data.error === 'string' &&
+    data?.error === "Internal Server Error"
   );
 };
 

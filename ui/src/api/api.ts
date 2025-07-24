@@ -17,7 +17,7 @@
 import axios from 'axios';
 import useUserStore from '../stores/UserStore';
 import { enqueueSnackbar } from 'notistack';
-import { isUserReportableProblem } from './ProblemDetail';
+import { isInternalServerError, isUserReportableProblem } from './ProblemDetail';
 
 export const api = axios.create({});
 
@@ -31,7 +31,7 @@ api.interceptors.response.use(
       error.message ||
       error.data?.error ||
       'Unknown error';
-
+    
     if (
       error.response?.status === 403 &&
       error.response.data?.detail === 'The task is not owned by the user.'
@@ -51,12 +51,17 @@ api.interceptors.response.use(
 
     const potentialProblemDetail = error?.response?.data;
 
+    const potentialInternalServerError = error?.response?.data;
     if (isUserReportableProblem(potentialProblemDetail)) {
       enqueueSnackbar(potentialProblemDetail.detail, {
         variant: 'error',
       });
     }
-
+    if(isInternalServerError(potentialInternalServerError)){
+      enqueueSnackbar(`Oops something went wrong! Please raise an issue describing what led to this and include the timestamp: ${potentialInternalServerError.timestamp}`, {
+        variant: 'error',
+      });
+    }
     return Promise.reject(error);
   },
 );
