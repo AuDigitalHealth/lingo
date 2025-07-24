@@ -214,7 +214,13 @@
                       "otherIdentifyingInformation": { "type": "string", "title": "AMP other Identifying Information" },
                       "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PRODUCT_NonDefiningProperty" }, "title": "Non Defining Properties" }
                     },
-                    "required": ["productName", "existingMedicinalProduct", "genericForm", "productType", "activeIngredients", "unitOfPresentation"],
+                    "required": [
+                      "productName",
+                      "genericForm",
+                      "productType",
+                      "activeIngredients",
+                      "unitOfPresentation"
+                    ],
                     "additionalProperties": false
                   }
                 ],
