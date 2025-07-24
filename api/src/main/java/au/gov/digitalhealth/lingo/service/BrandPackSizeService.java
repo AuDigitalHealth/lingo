@@ -721,6 +721,8 @@ public class BrandPackSizeService {
                 n.getNewConceptDetails()
                     .getAxioms()
                     .forEach(RelationshipSorter::sortRelationships));
+
+    productSummary.deduplicateNewNodes();
     // return the product summary
     return productSummary;
   }
