@@ -119,7 +119,7 @@ models:
         displayLabel: MP
         modelLevelType: MEDICINAL_PRODUCT_ONLY
         medicineSemanticTag: medicinal product
-        deviceSemanticTag: physical object
+        deviceSemanticTag: device
         drugDeviceSemanticTag: medicinal product
         referenceSetIdentifier: 660351000220100
         productModelEcl: "((> <id>) and ^ 660351000220100) minus >((> <id>) and ^ 660351000220100)"
@@ -127,7 +127,7 @@ models:
         displayLabel: MPUU
         modelLevelType: CLINICAL_DRUG
         medicineSemanticTag: clinical drug
-        deviceSemanticTag: physical object
+        deviceSemanticTag: clinical device
         drugDeviceSemanticTag: clinical drug
         referenceSetIdentifier: 660371000220109
         productModelEcl: "((> <id>) and ^ 660371000220109) minus >((> <id>) and ^ 660371000220109)"
@@ -135,7 +135,7 @@ models:
         displayLabel: TPUU
         modelLevelType: REAL_CLINICAL_DRUG
         medicineSemanticTag: real clinical drug
-        deviceSemanticTag: branded physical object
+        deviceSemanticTag: real clinical device
         drugDeviceSemanticTag: real clinical drug
         referenceSetIdentifier: 660381000220107
         productModelEcl: "(>> ((<id>.774160008) OR (<id>.999000081000168101))) and (^ 660381000220107)"
@@ -143,7 +143,7 @@ models:
         displayLabel: MPP
         modelLevelType: PACKAGED_CLINICAL_DRUG
         medicineSemanticTag: packaged clinical drug
-        deviceSemanticTag: packaged physical object
+        deviceSemanticTag: packaged clinical device
         drugDeviceSemanticTag: packaged clinical drug
         referenceSetIdentifier: 660391000220105
         productModelEcl: "((> <id>) and ^ 660391000220105) minus >((> <id>) and ^ 660391000220105)"
@@ -151,14 +151,14 @@ models:
         displayLabel: TPP
         modelLevelType: REAL_PACKAGED_CLINICAL_DRUG
         medicineSemanticTag: real packaged clinical drug
-        deviceSemanticTag: real packaged physical object
+        deviceSemanticTag: real packaged clinical device
         drugDeviceSemanticTag: real packaged clinical drug
         referenceSetIdentifier: 660401000220107
       - name: Actual Therapeutic Moiety
         displayLabel: TP
         modelLevelType: REAL_MEDICINAL_PRODUCT
         medicineSemanticTag: real medicinal product
-        deviceSemanticTag: real physical object
+        deviceSemanticTag: real device
         drugDeviceSemanticTag: real medicinal product
         referenceSetIdentifier: 660361000220103
         productModelEcl: "> <id> and ^ 660361000220103"
@@ -226,8 +226,8 @@ models:
         title: Indicative Price
         identifier: 680351000220102
         level: PRODUCT
-        dataType: DECIMAL
-        valueRegexValidation: \d+(\.\d{2})?
+        dataType: STRING
+        valueRegexValidation: ^\d+(\.\d{0,2})?$
         valueValidationErrorMessage: "Must be a valid decimal number with two decimal places"
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false

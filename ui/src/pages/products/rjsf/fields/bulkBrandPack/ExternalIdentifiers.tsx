@@ -198,6 +198,24 @@ const ExternalIdentifierRender: React.FC<
       f => f.identifierScheme === schema.properties.identifierScheme.const,
     ) || [];
 
+  const validTextFieldInput = (value: string) => {
+    const pattern = schema.properties.value?.pattern;
+
+    if (value && pattern && !new RegExp(`^${pattern}$`).test(value)) {
+      const patternErrorMessage =
+        schema.properties.value?.errorMessage?.pattern;
+      if (patternErrorMessage) {
+        setTooltip(patternErrorMessage);
+      } else {
+        setTooltip(
+          `"${value}" does not match the required pattern "${pattern}".`,
+        );
+      }
+      return false;
+    }
+    setTooltip('');
+    return true;
+  };
   const handleAdd = (value: string | string[]) => {
     // Convert single string to array for uniform processing
     const values = Array.isArray(value) ? value : [value];
@@ -558,19 +576,27 @@ const ExternalIdentifierRender: React.FC<
                   );
                 } else {
                   // Replace or add the value
-                  const updatedEntry: NonDefiningProperty = {
-                    identifierScheme: schemeName,
-                    relationshipType:
-                      schema.properties.relationshipType?.const ?? null,
-                    type: schema.properties.type?.const ?? null,
-                    value: isNumber ? Number(val) : val,
-                  };
+                  if (validTextFieldInput(val)) {
+                    const updatedEntry: NonDefiningProperty = {
+                      identifierScheme: schemeName,
+                      relationshipType:
+                        schema.properties.relationshipType?.const ?? null,
+                      type: schema.properties.type?.const ?? null,
+                      value: isNumber ? Number(val) : val,
+                    };
 
-                  const others = (formData ?? []).filter(
-                    item => item.identifierScheme !== schemeName,
-                  );
+                    const others = (formData ?? []).filter(
+                      item => item.identifierScheme !== schemeName,
+                    );
 
-                  onChange([...others, updatedEntry]);
+                    onChange([...others, updatedEntry]);
+                  } else {
+                    onChange(
+                      (formData ?? []).filter(
+                        item => item.identifierScheme !== schemeName,
+                      ),
+                    );
+                  }
                 }
               }}
               InputProps={{
