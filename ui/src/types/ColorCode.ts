@@ -24,12 +24,13 @@ export enum ColorCode {
   Purple = '#ce93d8',
 }
 
-export function getColorCodeKey(value: ColorCode) {
+export function getColorCodeKey(value: ColorCode | null) {
+  if (value === null) return '';
   value = handleDbColors(value);
   return Object.keys(ColorCode)[Object.values(ColorCode).indexOf(value)];
 }
-export function handleDbColors(color: ColorCode) {
-  if (color === undefined) {
+export function handleDbColors(color: ColorCode | null | undefined) {
+  if (!color) {
     color = ColorCode.default;
   } else if (color.toLowerCase() === 'success') {
     color = ColorCode.Green;
