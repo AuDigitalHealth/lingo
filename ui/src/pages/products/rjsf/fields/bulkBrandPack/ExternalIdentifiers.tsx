@@ -370,10 +370,10 @@ const ExternalIdentifierRender: React.FC<
       );
       onChange([...others, updatedEntry]);
     } else {
-      setInputValue('');
       onChange(
         (formData ?? []).filter(item => item.identifierScheme !== schemeName),
       );
+      setInputValue('');
     }
   }, [
     inputValue,
