@@ -165,6 +165,7 @@ function MedicationAuthoring({
     setFormKey(prev => prev + 1);
     setMode(prevState => 'create');
     handleClearForm();
+    setOriginalConceptId(undefined);
   }, []);
 
   // Clear form data when schemaType changes

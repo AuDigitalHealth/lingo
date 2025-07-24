@@ -167,7 +167,7 @@ models:
         title: GTIN
         identifier: 680431000220102
         level: PACKAGE
-        dataType: UNSIGNED_INTEGER
+        dataType: STRING
         valueRegexValidation: \d{8,14}
         valueValidationErrorMessage: "Must be a valid number beteween 8 and 14 digits"
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG

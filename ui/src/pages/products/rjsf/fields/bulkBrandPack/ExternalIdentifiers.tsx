@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Accordion,
   AccordionDetails,
@@ -197,7 +197,7 @@ const ExternalIdentifierRender: React.FC<
     formData?.filter(
       f => f.identifierScheme === schema.properties.identifierScheme.const,
     ) || [];
-  if (!isMultiValued && isNumber) {
+  if (isNumber) {
     schemeEntries.forEach(entry => {
       if (entry?.value !== undefined && entry?.value !== null) {
         const num = Number(entry.value);
@@ -351,6 +351,39 @@ const ExternalIdentifierRender: React.FC<
     onChange([...others, ...newEntries]);
   };
 
+  const handleTextFieldInputChange = useCallback(() => {
+    const val = inputValue.trim();
+
+    if (val === '') {
+      onChange(
+        (formData ?? []).filter(item => item.identifierScheme !== schemeName),
+      );
+    } else if (validTextFieldInput(val)) {
+      const updatedEntry: NonDefiningProperty = {
+        identifierScheme: schemeName,
+        relationshipType: schema.properties.relationshipType?.const ?? null,
+        type: schema.properties.type?.const ?? null,
+        value: isNumber ? Number(val) : val,
+      };
+      const others = (formData ?? []).filter(
+        item => item.identifierScheme !== schemeName,
+      );
+      onChange([...others, updatedEntry]);
+    } else {
+      onChange(
+        (formData ?? []).filter(item => item.identifierScheme !== schemeName),
+      );
+      setInputValue('');
+    }
+  }, [
+    inputValue,
+    formData,
+    schema,
+    schemeName,
+    isNumber,
+    onChange,
+    validTextFieldInput,
+  ]);
   const renderChip = (item: NonDefiningProperty) => (
     <Tooltip title={item.value} placement="top">
       <Chip
@@ -571,9 +604,9 @@ const ExternalIdentifierRender: React.FC<
               type={isNumber ? 'number' : 'text'}
               disabled={readOnly}
               label={schema.title}
-              value={schemeEntries?.[0]?.value || ''}
+              value={inputValue ? inputValue : schemeEntries?.[0]?.value || ''}
               onChange={e => {
-                const val = e.target.value.trim();
+                const val = e.target.value;
                 if (val === '') {
                   // Remove the entry if value is cleared
                   onChange(
@@ -581,31 +614,10 @@ const ExternalIdentifierRender: React.FC<
                       item => item.identifierScheme !== schemeName,
                     ),
                   );
-                } else {
-                  // Replace or add the value
-                  if (validTextFieldInput(val)) {
-                    const updatedEntry: NonDefiningProperty = {
-                      identifierScheme: schemeName,
-                      relationshipType:
-                        schema.properties.relationshipType?.const ?? null,
-                      type: schema.properties.type?.const ?? null,
-                      value: isNumber ? Number(val) : val,
-                    };
-
-                    const others = (formData ?? []).filter(
-                      item => item.identifierScheme !== schemeName,
-                    );
-
-                    onChange([...others, updatedEntry]);
-                  } else {
-                    onChange(
-                      (formData ?? []).filter(
-                        item => item.identifierScheme !== schemeName,
-                      ),
-                    );
-                  }
                 }
+                setInputValue(e.target.value);
               }}
+              onBlur={handleTextFieldInputChange}
               InputProps={{
                 inputProps: {
                   step: isNumber ? '0.01' : undefined,
