@@ -196,7 +196,7 @@ models:
         title: ATC code
         identifier: 84676004
         level: PRODUCT
-        dataType: CODED,
+        dataType: CODED
         valueRegexValidation: ^.+$
         valueSetReference: http://nmpc.hse.ie/ValueSet/atcselectable
         codeSystem: http://www.whocc.no/atc
@@ -212,7 +212,7 @@ models:
         title: PCRS Identifier and Name
         identifier: 680461000220105
         level: PACKAGE
-        dataType: CODED,
+        dataType: CODED
         valueRegexValidation: ^.+$
         valueSetReference: https://nmpc.hse.ie/PCRS/vs
         codeSystem: https://nmpc.hse.ie/PCRS
