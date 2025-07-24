@@ -361,6 +361,18 @@ models:
         multiValued: true
         order: 50
         suppressOnProductTypes: DEVICE
+      - name: ulmCountryOrigin
+        title: ULM Country of Origin
+        identifier: 680881000220104
+        level: PACKAGE
+        dataType: CONCEPT
+        eclBinding: < 223369002 MINUS >(< 223369002)
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        showDefaultOptions: true
+        order: 80
+        suppressOnProductTypes: DEVICE
       - name: licensingStatus
         title: Licensing Status
         identifier: 680341000220104
