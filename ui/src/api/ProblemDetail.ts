@@ -42,6 +42,7 @@ export const isProblemDetail = (data: any): data is ProblemDetail => {
 };
 
 export const isInternalServerError = (
+  // eslint-disable-next-line
   data: any,
 ): data is InternalServerError => {
   return (
