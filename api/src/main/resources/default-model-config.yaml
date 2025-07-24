@@ -229,7 +229,7 @@ models:
         dataType: DECIMAL
         valueRegexValidation: \d+(\.\d{2})?
         valueValidationErrorMessage: "Must be a valid decimal number with two decimal places"
-        modelLevels: REAL_CLINICAL_DRUG
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: false
         mappingTypes:
@@ -243,7 +243,7 @@ models:
         level: PRODUCT
         modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
         order: 60
-        suppressOnProductTypes: DEVICE,NUTRITIONAL
+        suppressOnProductTypes: DEVICE
       - name: combinationOnly
         title: Multi component indicator
         identifier: 679981000220105
@@ -331,7 +331,7 @@ models:
         level: PRODUCT
         dataType: CONCEPT
         eclBinding: <284009009
-        modelLevels: REAL_CLINICAL_DRUG
+        modelLevels: REAL_CLINICAL_DRUG,CLINICAL_DRUG
         mandatory: false
         multiValued: true
         showDefaultOptions: true
@@ -379,7 +379,7 @@ models:
         level: PRODUCT
         dataType: CONCEPT
         eclBinding: <679951000220103
-        modelLevels: REAL_CLINICAL_DRUG
+        modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: false
         showDefaultOptions: true
@@ -438,7 +438,7 @@ models:
         level: PRODUCT
         dataType: CONCEPT
         eclBinding: <680711000220102
-        modelLevels: REAL_CLINICAL_DRUG
+        modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
         mandatory: true
         multiValued: false
         showDefaultOptions: true
@@ -455,7 +455,7 @@ models:
         multiValued: false
         showDefaultOptions: true
         order: 97
-        suppressOnProductTypes: DEVICE,VACCINE,NUTRITIONAL
+        suppressOnProductTypes: DEVICE
       - name: packageType
         title: Package Type
         identifier: 680161000220103
@@ -468,7 +468,7 @@ models:
         showDefaultOptions: true
         order: 98
       - name: lastDateOfMan
-        title: Last Date of Manufacture
+        title: Discontinuation Notification - Expiry Date of Last Manufactured Batch
         identifier: 680191000220105
         level: PACKAGE
         dataType: DATE
@@ -480,7 +480,7 @@ models:
         multiValued: false
         order: 100
       - name: discontinuationUrl
-        title: Discontinuation Notification Letter URL
+        title: Discontinuation Notification - Letter to HCPs
         description: URL to the discontinuation notification letter
         identifier: 680201000220108
         level: PACKAGE
