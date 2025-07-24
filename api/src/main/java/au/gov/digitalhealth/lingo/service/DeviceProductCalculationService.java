@@ -356,6 +356,8 @@ public class DeviceProductCalculationService
     productSummary.updateNodeChangeStatus(
         taskChangedConceptIds.block(), projectChangedConceptIds.block());
 
+    productSummary.deduplicateNewNodes();
+
     return productSummary;
   }
 

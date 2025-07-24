@@ -16,6 +16,7 @@
 package au.gov.digitalhealth.lingo.product;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
@@ -24,13 +25,17 @@ import au.gov.digitalhealth.lingo.exception.MoreThanOneSubjectProblem;
 import au.gov.digitalhealth.lingo.exception.SingleConceptExpectedProblem;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.Sets;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -267,5 +272,115 @@ public class ProductSummary implements Serializable {
         return filteredNodes.iterator().next();
       }
     }
+  }
+
+  private static Predicate<SnowstormRelationship> isDuplicateReference(Node duplicate) {
+    return relationship ->
+        (relationship.getDestinationId() != null
+                && relationship.getDestinationId().equals(duplicate.getConceptId()))
+            || (relationship.getSourceId() != null
+                && relationship.getSourceId().equals(duplicate.getConceptId()));
+  }
+
+  @JsonIgnore
+  public void deduplicateNewNodes() {
+    synchronized (nodes) {
+      Map<Node, Set<Node>> deduplicatedNodes = new HashMap<>();
+
+      nodes.stream()
+          .filter(Node::isNewConcept)
+          .forEach(
+              node -> {
+                Node key =
+                    deduplicatedNodes.keySet().stream()
+                        .filter(
+                            n ->
+                                n.isNewConcept()
+                                    && n.getNewConceptDetails()
+                                        .getAxioms()
+                                        .equals(node.getNewConceptDetails().getAxioms()))
+                        .findFirst()
+                        .orElse(null);
+                if (key != null) {
+                  deduplicatedNodes.get(key).add(node);
+                  key.getNonDefiningProperties().addAll(node.getNonDefiningProperties());
+                  key.getNewConceptDetails()
+                      .getNonDefiningProperties()
+                      .addAll(node.getNewConceptDetails().getNonDefiningProperties());
+                  key.getNewConceptDetails()
+                      .getReferenceSetMembers()
+                      .addAll(node.getNewConceptDetails().getReferenceSetMembers());
+                } else {
+                  deduplicatedNodes.put(node, new HashSet<>());
+                }
+              });
+
+      deduplicatedNodes
+          .forEach((key, duplicates) -> {
+            duplicates.forEach(
+                duplicate -> {
+                  nodes.remove(duplicate);
+                  replaceEdges(duplicate, key);
+                  updateRelationships(duplicate, key);
+                });
+            if (!Sets.intersection(duplicates, subjects).isEmpty()) {
+              subjects.removeAll(duplicates);
+              subjects.add(key);
+            }
+          });
+    }
+  }
+
+  private void updateRelationships(Node duplicate, Node key) {
+    nodes.forEach(
+        node -> {
+          if (node.getNewConceptDetails() != null) {
+            node.getNewConceptDetails()
+                .getAxioms()
+                .forEach(
+                    axiom -> {
+                      Set<SnowstormRelationship> relationshipsToReplace =
+                          axiom.getRelationships().stream()
+                              .filter(isDuplicateReference(duplicate))
+                              .collect(Collectors.toSet());
+                      axiom.getRelationships().removeAll(relationshipsToReplace);
+                      relationshipsToReplace.forEach(
+                          relationship -> {
+                            if (relationship.getDestinationId() != null
+                                && relationship
+                                    .getDestinationId()
+                                    .equals(duplicate.getConceptId())) {
+                              relationship.setDestinationId(key.getConceptId());
+                            }
+                            if (relationship.getSourceId() != null
+                                && relationship.getSourceId().equals(duplicate.getConceptId())) {
+                              relationship.setSourceId(key.getConceptId());
+                            }
+                            axiom.getRelationships().add(relationship);
+                          });
+                    });
+          }
+        });
+  }
+
+  private void replaceEdges(Node duplicate, Node key) {
+    Set<Edge> edgestoRemove =
+        edges.stream()
+            .filter(
+                e ->
+                    e.getSource().equals(duplicate.getConceptId())
+                        || e.getTarget().equals(duplicate.getConceptId()))
+            .collect(Collectors.toSet());
+    edges.removeAll(edgestoRemove);
+    edgestoRemove.forEach(
+        edge -> {
+          if (edge.getSource().equals(duplicate.getConceptId())) {
+            edge.setSource(key.getConceptId());
+          }
+          if (edge.getTarget().equals(duplicate.getConceptId())) {
+            edge.setTarget(key.getConceptId());
+          }
+          edges.add(edge);
+        });
   }
 }
