@@ -841,9 +841,9 @@ public class MedicationProductCalculationService
 
                   // If same number of ancestors, check if one is ancestor of the other
                   if (ancestorsOfA.contains(b)) {
-                    return 1; // B is an ancestor of A, so A is more dependent
+                    return -1; // B is an ancestor of A, so A is more dependent
                   } else if (ancestorsOfB.contains(a)) {
-                    return -1; // A is an ancestor of B, so B is more dependent
+                    return 1; // A is an ancestor of B, so B is more dependent
                   }
 
                   // Arbitrary ordering
@@ -1100,15 +1100,21 @@ public class MedicationProductCalculationService
     }
 
     int group = 1;
+    Set<SnowstormConceptMini> ingredients = new HashSet<>();
     for (Ingredient ingredient : productDetails.getActiveIngredients()) {
+      if (modelConfiguration.getModelType().equals(ModelType.NMPC)
+          && level.isBranded()
+          && ingredient.getRefinedActiveIngredient() != null) {
+        ingredients.add(ingredient.getRefinedActiveIngredient());
+      } else {
+        ingredients.add(ingredient.getActiveIngredient());
+      }
+    }
+    for (SnowstormConceptMini ingredient : ingredients) {
       relationships.add(
           getSnowstormRelationship(
               HAS_ACTIVE_INGREDIENT,
-              modelConfiguration.getModelType().equals(ModelType.NMPC)
-                      && level.isBranded()
-                      && ingredient.getRefinedActiveIngredient() != null
-                  ? ingredient.getRefinedActiveIngredient()
-                  : ingredient.getActiveIngredient(),
+              ingredient,
               group,
               STATED_RELATIONSHIP,
               modelConfiguration.getModuleId()));
