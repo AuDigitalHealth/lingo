@@ -59,7 +59,13 @@ export interface NonDefiningProperty {
   valueObject: SnowstormConceptMini | null;
   type: NonDefiningPropertyType;
   codeSystem?: string;
-  additionalProperties?: { [key: string]: string };
+  additionalProperties?: AdditionalProperty[];
+}
+
+export interface AdditionalProperty {
+  code: string;
+  codeSystem: string | null;
+  value: string;
 }
 
 export interface Quantity {
