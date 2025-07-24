@@ -41,7 +41,9 @@ export const isProblemDetail = (data: any): data is ProblemDetail => {
   );
 };
 
-export const isInternalServerError = (data: any): data is InternalServerError => {
+export const isInternalServerError = (
+  data: any,
+): data is InternalServerError => {
   return (
     data &&
     typeof data === 'object' &&
@@ -49,7 +51,7 @@ export const isInternalServerError = (data: any): data is InternalServerError =>
     typeof data.path === 'string' &&
     typeof data.status === 'number' &&
     typeof data.error === 'string' &&
-    data?.error === "Internal Server Error"
+    data?.error === 'Internal Server Error'
   );
 };
 
