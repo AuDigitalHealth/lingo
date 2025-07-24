@@ -135,6 +135,9 @@ export function LabelsSettings({
         }
         return (params: GridCellParams): boolean => {
           const color = getColorCodeKey(params.value as ColorCode);
+          if (!color) {
+            return false;
+          }
           return color.toLowerCase().startsWith(value.toLowerCase());
         };
       },
