@@ -258,6 +258,7 @@ function EditConceptBody({
       void trigger();
     });
     return () => subscription.unsubscribe();
+    // eslint-disable-next-line
   }, [trigger]);
 
   const { fields, append } = useFieldArray({
