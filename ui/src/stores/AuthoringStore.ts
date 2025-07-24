@@ -64,7 +64,7 @@ interface AuthoringStoreConfig {
   previewErrorKeys: string[];
   setPreviewErrorKeys: (errorKeys: string[]) => void;
   originalConceptId: string;
-  setOriginalConceptId: (conceptId: string) => void;
+  setOriginalConceptId: (conceptId: string | undefined) => void;
   productSaveDetails: ProductSaveDetails | undefined;
   setProductSaveDetails: (details: ProductSaveDetails | undefined) => void;
   productPreviewDetails: MedicationPackageDetails | undefined;
