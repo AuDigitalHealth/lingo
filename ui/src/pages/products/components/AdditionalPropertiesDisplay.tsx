@@ -309,21 +309,23 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
               Removed property
             </div>
           )}
-          {item.additionalProperties &&
-          Object.keys(item.additionalProperties).length > 0 ? (
-            <>
-              {Object.entries(item.additionalProperties).map(
-                ([key, value], index) => (
+          {item.additionalProperties && item.additionalProperties.length > 0
+            ? [...item.additionalProperties]
+                .sort((a, b) => {
+                  // First sort by code
+                  if (a.code !== b.code) {
+                    return a.code.localeCompare(b.code);
+                  }
+                  // If codes are the same, sort by value
+                  return a.value.localeCompare(b.value);
+                })
+                .map((prop, index) => (
                   <React.Fragment key={index}>
                     {index > 0 && <br />}
-                    {key}: {value}
+                    {prop.code}: {prop.value}
                   </React.Fragment>
-                ),
-              )}
-            </>
-          ) : (
-            'No properties'
-          )}
+                ))
+            : 'No properties'}
         </>
       );
 

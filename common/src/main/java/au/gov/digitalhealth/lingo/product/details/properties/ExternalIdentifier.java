@@ -32,6 +32,7 @@ import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 import lombok.Data;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.java.Log;
@@ -53,7 +54,7 @@ public class ExternalIdentifier extends NonDefiningBase implements Serializable 
   String codeSystem;
 
   /** Additional properties from the target concept, purely for display purposes. */
-  Map<String, String> additionalProperties;
+  Set<AdditionalProperty> additionalProperties;
 
   public ExternalIdentifier() {
     this.setType(PropertyType.EXTERNAL_IDENTIFIER);
