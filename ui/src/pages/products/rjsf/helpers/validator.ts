@@ -316,10 +316,10 @@ export const validator = (() => {
   return {
     validateFormData: (formData: any, schema: any) => {
       const cleanedFormData = removeNullFields(formData);
-      
+
       const now = new Date().toISOString();
-      if(schema){
-        schema.$id = `${formData.variant}-${now}`
+      if (schema) {
+        schema.$id = `${formData.variant}-${now}`;
       }
       const validate = ajvMain.compile(schema);
       const valid = validate(cleanedFormData);
