@@ -197,6 +197,14 @@ const ExternalIdentifierRender: React.FC<
     formData?.filter(
       f => f.identifierScheme === schema.properties.identifierScheme.const,
     ) || [];
+  if (!isMultiValued && isNumber) {
+    schemeEntries.forEach(entry => {
+      if (entry?.value !== undefined && entry?.value !== null) {
+        const num = Number(entry.value);
+        entry.value = isNaN(num) ? entry.value : num;
+      }
+    });
+  }
 
   const validTextFieldInput = (value: string) => {
     const pattern = schema.properties.value?.pattern;
@@ -566,7 +574,6 @@ const ExternalIdentifierRender: React.FC<
               value={schemeEntries?.[0]?.value || ''}
               onChange={e => {
                 const val = e.target.value.trim();
-
                 if (val === '') {
                   // Remove the entry if value is cleared
                   onChange(
