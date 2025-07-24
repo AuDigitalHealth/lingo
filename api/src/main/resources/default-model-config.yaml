@@ -226,7 +226,7 @@ models:
         title: Indicative Price
         identifier: 680351000220102
         level: PACKAGE
-        dataType: STRING
+        dataType: DECIMAL
         valueRegexValidation: ^\d+(\.\d{0,2})?$
         valueValidationErrorMessage: "Must be a valid decimal number with two decimal places"
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG

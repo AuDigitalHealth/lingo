@@ -54,7 +54,7 @@ export interface NonDefiningProperty {
   title: string;
   identifierScheme: string;
   identifier: string;
-  value: string | null;
+  value: string | number | null;
   relationshipType: string | null;
   valueObject: SnowstormConceptMini | null;
   type: NonDefiningPropertyType;
