@@ -225,7 +225,7 @@ models:
       - name: indicativePrice
         title: Indicative Price
         identifier: 680351000220102
-        level: PRODUCT
+        level: PACKAGE
         dataType: STRING
         valueRegexValidation: ^\d+(\.\d{0,2})?$
         valueValidationErrorMessage: "Must be a valid decimal number with two decimal places"
