@@ -25,7 +25,7 @@ export enum ColorCode {
 }
 
 export function getColorCodeKey(value: ColorCode | null) {
-  if (value === null) return '';
+  if (!value) return undefined;
   value = handleDbColors(value);
   return Object.keys(ColorCode)[Object.values(ColorCode).indexOf(value)];
 }
