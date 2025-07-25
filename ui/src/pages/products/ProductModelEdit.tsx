@@ -1089,6 +1089,7 @@ function ProductPanel({
         product={product}
         keepMounted={true}
         branch={branch}
+        optionsIgnored={optionsIgnored}
       />
 
       <Grid>
