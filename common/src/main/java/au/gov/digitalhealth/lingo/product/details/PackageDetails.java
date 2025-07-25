@@ -159,7 +159,17 @@ public class PackageDetails<T extends ProductDetails> extends PackageProductDeta
           && containedPackages.get(0).getPackageDetails() != null) {
         variant = containedPackages.get(0).getPackageDetails().getVariant();
       } else {
-        throw new LingoProblem("No contained package or product found looking for variant");
+        String value = null;
+        try {
+          value = new ObjectMapper().writeValueAsString(this);
+          log.severe(
+              "No contained package or product found looking for variant in PackageDetails: "
+                  + value);
+        } catch (JsonProcessingException e) {
+          log.log(Level.SEVERE, "Error serialising PackageDetails: " + e.getMessage(), e);
+        }
+        throw new LingoProblem(
+            "No contained package or product found looking for variant: " + value);
       }
     }
     return variant;
