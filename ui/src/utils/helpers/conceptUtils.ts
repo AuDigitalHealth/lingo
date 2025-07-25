@@ -610,3 +610,14 @@ export const findDefaultLangRefset = (langRefsets: LanguageRefset[]) => {
     return langRefsets.default === 'true';
   });
 };
+export const isConceptOptionSelected = (
+  selectedConceptIdentifiers: string[] | null,
+  product: Product,
+): boolean =>
+  !!(
+    selectedConceptIdentifiers?.length &&
+    product.concept &&
+    product.conceptOptions?.some(c =>
+      selectedConceptIdentifiers.includes(c?.conceptId),
+    )
+  );
