@@ -30,6 +30,8 @@ import { useSearchConceptById } from '../../hooks/api/products/useSearchConcept.
 import DiffConceptDiagram from './DiffConceptDiagram.tsx';
 import { Grid } from '@mui/material';
 import { Box } from '@mui/material';
+import useAuthoringStore from '../../stores/AuthoringStore.ts';
+import { isConceptOptionSelected } from '../../utils/helpers/conceptUtils.ts';
 
 type ConceptOrDetails = Product | null | undefined;
 
@@ -56,6 +58,7 @@ export default function ConceptDiagramModal({
 }: ConceptDiagramModalProps) {
   let left: ConceptDiagramProp = { concept: undefined, isNewConcept: false };
   let right: ConceptDiagramProp = { concept: undefined, isNewConcept: false };
+  const { selectedConceptIdentifiers } = useAuthoringStore();
 
   if (
     product.concept === null &&
@@ -146,7 +149,14 @@ export default function ConceptDiagramModal({
               >
                 <ConceptDiagram
                   concept={product.concept}
-                  newConcept={newConcept}
+                  newConcept={
+                    !isConceptOptionSelected(
+                      selectedConceptIdentifiers,
+                      product,
+                    )
+                      ? newConcept
+                      : null
+                  }
                 />
               </Box>
             )}
