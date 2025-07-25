@@ -1062,6 +1062,7 @@ public class MedicationProductCalculationService
                       relationships, playsRole, PLAYS_ROLE, 0, modelConfiguration.getModuleId()));
     }
 
+    int group = 1;
     if (productDetails instanceof VaccineProductDetails vaccineProductDetails) {
       if (modelConfiguration.getModelType().equals(ModelType.NMPC) && productDetails.getPlaysRole().isEmpty()
       ) {
@@ -1079,7 +1080,7 @@ public class MedicationProductCalculationService
           relationships,
           vaccineProductDetails.getQualitiativeStrength(),
           HAS_QUALITATIVE_STRENGTH,
-          0,
+          group++,
           modelConfiguration.getModuleId());
     }
 
@@ -1101,7 +1102,6 @@ public class MedicationProductCalculationService
           modelConfiguration.getModuleId());
     }
 
-    int group = 1;
     Set<SnowstormConceptMini> ingredients = new HashSet<>();
     for (Ingredient ingredient : productDetails.getActiveIngredients()) {
       if (modelConfiguration.getModelType().equals(ModelType.NMPC)
@@ -1410,6 +1410,8 @@ public class MedicationProductCalculationService
                       relationships, playsRole, PLAYS_ROLE, 0, modelConfiguration.getModuleId()));
     }
 
+    int group = 1;
+
     if (productDetails instanceof VaccineProductDetails vaccineProductDetails) {
 
       if (modelConfiguration.getModelType().equals(ModelType.NMPC) && productDetails.getPlaysRole().isEmpty()
@@ -1428,11 +1430,9 @@ public class MedicationProductCalculationService
           relationships,
           vaccineProductDetails.getQualitiativeStrength(),
           HAS_QUALITATIVE_STRENGTH,
-          0,
+          group++,
           modelConfiguration.getModuleId());
     }
-
-    int group = 1;
 
     if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
       if (addQuantityIfNotNull(
@@ -1455,11 +1455,8 @@ public class MedicationProductCalculationService
           HAS_UNIT_OF_PRESENTATION_SIZE_QUANTITY,
           HAS_UNIT_OF_PRESENTATION_SIZE_UNIT,
           DataTypeEnum.DECIMAL,
-          group,
-          modelConfiguration)) {
-
-        group++;
-      }
+          0,
+          modelConfiguration)) {}
     }
 
     for (Ingredient ingredient : productDetails.getActiveIngredients()) {
