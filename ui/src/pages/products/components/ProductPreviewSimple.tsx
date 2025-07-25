@@ -156,6 +156,7 @@ export default function ProductPreviewSimple({
         product={product}
         keepMounted={true}
         branch={branch}
+        optionsIgnored={optionsIgnored}
       />
 
       <DescriptionModal
