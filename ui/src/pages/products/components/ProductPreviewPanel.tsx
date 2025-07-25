@@ -528,6 +528,8 @@ function ConceptOptionsDropdown({
     previewMedicationProduct,
     previewDeviceProduct,
     selectedProductType,
+    selectedConceptIdentifiers,
+    setSelectedConceptIdentifiers,
   } = useAuthoringStore();
 
   const [tabValue, setTabValue] = React.useState(0);
@@ -557,9 +559,13 @@ function ConceptOptionsDropdown({
       selectedConcept?.conceptId === undefined
     )
       return;
-    tempProductPreviewDetails.selectedConceptIdentifiers = [
+
+    const updatedConcepts = [
+      ...(selectedConceptIdentifiers ?? []),
       selectedConcept?.conceptId,
     ];
+    tempProductPreviewDetails.selectedConceptIdentifiers = updatedConcepts;
+    setSelectedConceptIdentifiers(updatedConcepts);
 
     previewMedicationProduct(
       tempProductPreviewDetails,
@@ -575,9 +581,12 @@ function ConceptOptionsDropdown({
       selectedConcept?.conceptId === undefined
     )
       return;
-    tempProductPreviewDetails.selectedConceptIdentifiers = [
+    const updatedConcepts = [
+      ...(selectedConceptIdentifiers ?? []),
       selectedConcept?.conceptId,
     ];
+    tempProductPreviewDetails.selectedConceptIdentifiers = updatedConcepts;
+    setSelectedConceptIdentifiers(updatedConcepts);
 
     previewDeviceProduct(
       tempProductPreviewDetails,
