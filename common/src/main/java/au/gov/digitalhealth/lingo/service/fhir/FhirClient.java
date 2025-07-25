@@ -18,6 +18,7 @@ package au.gov.digitalhealth.lingo.service.fhir;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
 import au.gov.digitalhealth.lingo.product.details.properties.AdditionalProperty;
+import au.gov.digitalhealth.lingo.product.details.properties.SubAdditionalProperty;
 import au.gov.digitalhealth.lingo.service.fhir.FhirParameters.Parameter;
 import au.gov.digitalhealth.lingo.service.fhir.FhirParameters.Parameter.Part;
 import au.gov.digitalhealth.lingo.util.CacheConstants;
@@ -72,6 +73,48 @@ public class FhirClient {
         .orElseThrow(() -> new IllegalStateException("No display name found in FHIR parameters"));
   }
 
+  private static SnowstormConceptMini createSnowstormConcept(
+      String code, FhirParameters parameters) {
+    SnowstormConceptMini snowstormConceptMini = new SnowstormConceptMini();
+    snowstormConceptMini.setConceptId(code);
+    snowstormConceptMini.setId(code);
+    snowstormConceptMini.setActive(!isInActive(parameters));
+    SnowstormTermLangPojo pt =
+        new SnowstormTermLangPojo().lang("en").term(getDisplayName(parameters));
+    snowstormConceptMini.setPt(pt);
+    SnowstormTermLangPojo fsn =
+        new SnowstormTermLangPojo().lang("en").term(getDisplayName(parameters));
+    snowstormConceptMini.setFsn(fsn);
+    return snowstormConceptMini;
+  }
+
+  private static Mono<AdditionalProperty> processSubProperties(
+      Parameter propertyParam, Optional<Part> codePart) {
+    // Handle case where property has subproperties instead of a direct value
+    String propertyCode = codePart.get().getValueAsString();
+
+    List<SubAdditionalProperty> subAdditionalProperties = new ArrayList<>();
+
+    propertyParam.getPart().stream()
+        .filter(p -> p.getName().equals("subproperty"))
+        .map(Part::getPart)
+        .forEach(
+            propertyList -> {
+              String code = null;
+              String value = null;
+              for (Part property : propertyList) {
+                if (property.getName().equals("code")) {
+                  code = property.getValueAsString();
+                } else if (property.getName().equals("value")) {
+                  value = property.getValueAsString();
+                }
+              }
+              subAdditionalProperties.add(new SubAdditionalProperty(code, value));
+            });
+
+    return Mono.just(new AdditionalProperty(propertyCode, null, null, subAdditionalProperties));
+  }
+
   @Cacheable(
       value = CacheConstants.FHIR_CONCEPTS,
       key = "#code + '_' + #system+ '_display'",
@@ -118,90 +161,87 @@ public class FhirClient {
                     .build())
         .retrieve()
         .bodyToMono(FhirParameters.class)
-        .flatMap(
-            parameters -> {
-              SnowstormConceptMini snowstormConceptMini = new SnowstormConceptMini();
-              snowstormConceptMini.setConceptId(code);
-              snowstormConceptMini.setId(code);
-              snowstormConceptMini.setActive(!isInActive(parameters));
-              SnowstormTermLangPojo pt =
-                  new SnowstormTermLangPojo().lang("en").term(getDisplayName(parameters));
-              snowstormConceptMini.setPt(pt);
-              SnowstormTermLangPojo fsn =
-                  new SnowstormTermLangPojo().lang("en").term(getDisplayName(parameters));
-              snowstormConceptMini.setFsn(fsn);
+        .flatMap(parameters -> processFhirParameters(code, parameters));
+  }
 
-              // Create the set of properties
-              Set<AdditionalProperty> propertySet = new HashSet<>();
+  private Mono<Pair<SnowstormConceptMini, Set<AdditionalProperty>>> processFhirParameters(
+      String code, FhirParameters parameters) {
+    final SnowstormConceptMini snowstormConceptMini = createSnowstormConcept(code, parameters);
 
-              // Process each property, creating a Mono for each one that needs a display lookup
-              List<Mono<AdditionalProperty>> propertyMonos = new ArrayList<>();
+    // Create the set of properties
+    Set<AdditionalProperty> propertySet = new HashSet<>();
 
-              // Process property parts
-              parameters.getParameter().stream()
-                  .filter(param -> "property".equals(param.getName()) && param.getPart() != null)
-                  .forEach(
-                      propertyParam -> {
-                        // Find code part
-                        Optional<Part> codePart =
-                            propertyParam.getPart().stream()
-                                .filter(part -> "code".equals(part.getName()))
-                                .findFirst();
+    // Process each property, creating a Mono for each one that needs a display lookup
+    List<Mono<AdditionalProperty>> propertyMonos = new ArrayList<>();
 
-                        // Find value part
-                        Optional<Part> valuePart =
-                            propertyParam.getPart().stream()
-                                .filter(part -> "value".equals(part.getName()))
-                                .findFirst();
+    // Process property parts
+    parameters.getParameter().stream()
+        .filter(param -> "property".equals(param.getName()) && param.getPart() != null)
+        .forEach(propertyParam -> processProperty(propertyParam, propertyMonos));
 
-                        if (codePart.isPresent() && valuePart.isPresent()) {
-                          String propertyCode = codePart.get().getValueAsString();
-                          String propertyValue = valuePart.get().getValueAsString();
+    // If we have properties that need reactive processing
+    if (!propertyMonos.isEmpty()) {
+      // Use Flux.concat to process all property Monos sequentially
+      return Flux.concat(propertyMonos)
+          .collectList()
+          .map(
+              additionalProperties -> {
+                // Add all the asynchronously-processed properties to our set
+                propertySet.addAll(additionalProperties);
+                return Pair.of(snowstormConceptMini, propertySet);
+              });
+    } else {
+      // If no reactive properties, just return immediately
+      return Mono.just(Pair.of(snowstormConceptMini, propertySet));
+    }
+  }
 
-                          if (valuePart.get().hasValueCoding()) {
-                            String propertySystem = valuePart.get().getValueCoding().getSystem();
-                            // Create a Mono that will resolve to the AdditionalProperty
-                            Mono<AdditionalProperty> propertyMono =
-                                self.getDisplay(propertyValue, propertySystem)
-                                    .onErrorResume(
-                                        e -> {
-                                          // Log the error
-                                          log.warning(
-                                              "Error getting display for "
-                                                  + propertyCode
-                                                  + ": "
-                                                  + e.getMessage());
-                                          // Return a default value
-                                          return Mono.just("Display not available");
-                                        })
-                                    .map(
-                                        displayValue ->
-                                            new AdditionalProperty(
-                                                propertyCode, propertySystem, displayValue));
-                            propertyMonos.add(propertyMono);
-                          } else if (propertyCode != null && propertyValue != null) {
-                            // Add directly for properties that don't need additional processing
-                            propertySet.add(
-                                new AdditionalProperty(propertyCode, null, propertyValue));
-                          }
-                        }
-                      });
+  private void processProperty(
+      Parameter propertyParam, List<Mono<AdditionalProperty>> propertyMonos) {
+    // Find code part
+    Optional<Part> codePart =
+        propertyParam.getPart().stream().filter(part -> "code".equals(part.getName())).findFirst();
 
-              // If we have properties that need reactive processing
-              if (!propertyMonos.isEmpty()) {
-                // Use Flux.concat to process all property Monos sequentially
-                return Flux.concat(propertyMonos)
-                    .collectList()
-                    .map(
-                        additionalProperties -> {
-                          // Add all the asynchronously-processed properties to our set
-                          propertySet.addAll(additionalProperties);
-                          return Pair.of(snowstormConceptMini, propertySet);
-                        });
-              } else {
-                // If no reactive properties, just return immediately
-                return Mono.just(Pair.of(snowstormConceptMini, propertySet));
-              }
-            });
+    // Find value part
+    Optional<Part> valuePart =
+        propertyParam.getPart().stream().filter(part -> "value".equals(part.getName())).findFirst();
+
+    if (codePart.isPresent() && valuePart.isPresent()) {
+      String propertyCode = codePart.get().getValueAsString();
+      String propertyValue = valuePart.get().getValueAsString();
+
+      if (valuePart.get().hasValueCoding()) {
+        final Mono<AdditionalProperty> propertyMono =
+            getAdditionalPropertyForCoding(valuePart, propertyValue, propertyCode);
+        propertyMonos.add(propertyMono);
+      } else if (propertyCode != null && propertyValue != null) {
+        // Add directly for properties that don't need additional processing
+        propertyMonos.add(
+            Mono.just(new AdditionalProperty(propertyCode, null, propertyValue, null)));
+      }
+    } else if (codePart.isPresent()
+        && propertyParam.getPart().stream()
+            .anyMatch(part -> "subproperty".equals(part.getName()))) {
+      propertyMonos.add(processSubProperties(propertyParam, codePart));
+    }
+  }
+
+  private Mono<AdditionalProperty> getAdditionalPropertyForCoding(
+      Optional<Part> valuePart, String propertyValue, String propertyCode) {
+    String propertySystem = valuePart.get().getValueCoding().getSystem();
+    // Create a Mono that will resolve to the AdditionalProperty
+    // Log the error
+    // Return a default value
+    return self.getDisplay(propertyValue, propertySystem)
+        .onErrorResume(
+            e -> {
+              // Log the error
+              log.warning("Error getting display for " + propertyCode + ": " + e.getMessage());
+              // Return a default value
+              return Mono.just("Display not available");
+            })
+        .map(
+            displayValue ->
+                new AdditionalProperty(propertyCode, propertySystem, displayValue, null));
   }
 }

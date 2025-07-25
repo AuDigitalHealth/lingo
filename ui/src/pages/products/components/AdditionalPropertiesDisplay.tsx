@@ -317,12 +317,21 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
                     return a.code.localeCompare(b.code);
                   }
                   // If codes are the same, sort by value
-                  return a.value.localeCompare(b.value);
+                  return a.value ? a.value.localeCompare(b.value) : 0;
                 })
                 .map((prop, index) => (
                   <React.Fragment key={index}>
                     {index > 0 && <br />}
                     {prop.code}: {prop.value}
+                    {prop.subProperties && (
+                      <div style={{ marginLeft: '1em' }}>
+                        {prop.subProperties.map((subProp, index) => (
+                          <div key={index}>
+                            {subProp.code}: {subProp.value}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </React.Fragment>
                 ))
             : 'No properties'}

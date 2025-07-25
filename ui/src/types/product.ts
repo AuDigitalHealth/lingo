@@ -66,6 +66,12 @@ export interface AdditionalProperty {
   code: string;
   codeSystem: string | null;
   value: string;
+  subProperties?: SubAdditionalProperty[];
+}
+
+export interface SubAdditionalProperty {
+  code: string;
+  value: string;
 }
 
 export interface Quantity {
