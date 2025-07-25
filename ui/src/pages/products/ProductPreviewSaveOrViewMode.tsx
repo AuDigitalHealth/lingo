@@ -117,7 +117,6 @@ function ProductPreviewSaveOrViewMode({
   const [errorKey, setErrorKey] = useState<string | undefined>();
 
   const [duplicateNameModalOpen, setDuplicateNameModalOpen] = useState(false);
-  const [overrideDuplicateName, setOverrideDuplicateName] = useState(false);
   useConceptsForReview(branch);
   const [overrideDuplicateProductName, setOverrideDuplicateProductName] =
     useState(false);
@@ -235,16 +234,23 @@ function ProductPreviewSaveOrViewMode({
     useAuthoringStore();
   const queryClient = useQueryClient();
 
-  const onSubmit = async (data: ProductSummary) => {
+  const onSubmit = async (
+    data: ProductSummary,
+    overrideDuplicateName?: boolean,
+  ) => {
     if (errorKey) {
       closeSnackbar(errorKey);
       setErrorKey(undefined);
     }
     setLastValidatedData(data);
 
+    const skipDuplicateNameWarning =
+      overrideDuplicateProductName ||
+      (typeof overrideDuplicateName === 'boolean' && overrideDuplicateName);
+
     if (
       productWithNameAlreadyExists(ticket, data, productSaveDetails) &&
-      !overrideDuplicateName
+      !skipDuplicateNameWarning
     ) {
       setDuplicateNameModalOpen(true);
       return;
@@ -299,7 +305,24 @@ function ProductPreviewSaveOrViewMode({
       return;
     }
     reattachSemanticTags(usedData as ProductSummary);
-    if (!readOnlyMode && newConceptFound && productSaveDetails && usedData) {
+
+    const hasUpdatedProperties =
+      productModel?.nodes?.filter(subject => {
+        return (
+          subject.propertyUpdate ||
+          subject.statedFormChanged ||
+          subject.inferredFormChanged ||
+          subject.isModified
+        );
+      }).length > 0;
+    const canSubmitProductUpdate = hasUpdatedProperties || newConceptFound;
+
+    if (
+      !readOnlyMode &&
+      canSubmitProductUpdate &&
+      productSaveDetails &&
+      usedData
+    ) {
       setForceNavigation(true);
       productSaveDetails.productSummary = usedData;
       setLoading(true);
@@ -481,7 +504,7 @@ function ProductPreviewSaveOrViewMode({
             setOverrideDuplicateProductName(true);
             setDuplicateNameModalOpen(false);
             if (lastValidatedData) {
-              void onSubmit(lastValidatedData);
+              void onSubmit(lastValidatedData, true);
             }
           }}
           handleClose={() => {
