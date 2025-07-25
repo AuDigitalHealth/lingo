@@ -143,6 +143,9 @@ public class FhirParameters {
       @JsonProperty("valueUri")
       private String valueUri;
 
+      @JsonProperty("part")
+      private List<Part> part;
+
       public boolean hasValueString() {
         return valueString != null;
       }
