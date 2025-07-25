@@ -63,6 +63,8 @@ interface AuthoringStoreConfig {
   setForceNavigation: (bool: boolean) => void;
   previewErrorKeys: string[];
   setPreviewErrorKeys: (errorKeys: string[]) => void;
+  selectedConceptIdentifiers: string[];
+  setSelectedConceptIdentifiers: (conceptIds: string[]) => void;
   originalConceptId: string;
   setOriginalConceptId: (conceptId: string | undefined) => void;
   productSaveDetails: ProductSaveDetails | undefined;
@@ -120,6 +122,7 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
   selectedProduct: null,
   forceNavigation: false,
   previewErrorKeys: [],
+  selectedConceptIdentifiers: [],
   setForceNavigation: (bool: boolean) => {
     set({ forceNavigation: bool });
   },
@@ -148,6 +151,9 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
   },
   setPreviewErrorKeys: errorKeys => {
     set({ previewErrorKeys: errorKeys });
+  },
+  setSelectedConceptIdentifiers: conceptIds => {
+    set({ selectedConceptIdentifiers: conceptIds });
   },
   handleSelectedProductChange: (concept, productType, actionType) => {
     get().setSelectedProduct(concept);
