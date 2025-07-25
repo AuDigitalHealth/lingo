@@ -170,7 +170,7 @@ public class PackageDetails<T extends ProductDetails> extends PackageProductDeta
           log.severe(
               "No contained package or product found looking for variant in PackageDetails: "
                   + value);
-        } catch (JsonProcessingException e) {
+        } catch (Exception e) {
           log.log(Level.SEVERE, "Error serialising PackageDetails: " + e.getMessage(), e);
         }
         throw new LingoProblem(
