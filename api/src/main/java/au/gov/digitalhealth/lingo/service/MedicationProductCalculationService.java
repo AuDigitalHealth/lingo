@@ -1106,8 +1106,8 @@ public class MedicationProductCalculationService
     for (Ingredient ingredient : productDetails.getActiveIngredients()) {
       if (modelConfiguration.getModelType().equals(ModelType.NMPC)
           && level.isBranded()
-          && ingredient.getRefinedActiveIngredient() != null) {
-        ingredients.add(ingredient.getRefinedActiveIngredient());
+          && ingredient.getBasisOfStrengthSubstance() != null) {
+        ingredients.add(ingredient.getBasisOfStrengthSubstance());
       } else {
         ingredients.add(ingredient.getActiveIngredient());
       }
