@@ -219,7 +219,6 @@ function ProductPreviewPanel({
         product={product}
         keepMounted={true}
         branch={branch}
-        optionsIgnored={optionsIgnored}
       />
       <DescriptionModal
         handleClose={() => setDescriptionModalOpen(false)}
