@@ -92,6 +92,7 @@ function MedicationAuthoring({
     isProductUpdate,
     setIsProductUpdate,
     handleClearForm,
+    setSelectedConceptIdentifiers,
   } = useAuthoringStore();
 
   const { isLoading, isFetching } = useProductQuery({
@@ -140,6 +141,7 @@ function MedicationAuthoring({
   };
 
   const handleFormSubmit = ({ formData }: { formData: any }) => {
+    setSelectedConceptIdentifiers([]);
     const validation = validator.validateFormData(formData, schema);
     setFormErrors(validation.errors);
     setFormData(formData);
@@ -166,6 +168,7 @@ function MedicationAuthoring({
     setMode(prevState => 'create');
     handleClearForm();
     setOriginalConceptId(undefined);
+    setSelectedConceptIdentifiers([]);
   }, []);
 
   // Clear form data when schemaType changes
