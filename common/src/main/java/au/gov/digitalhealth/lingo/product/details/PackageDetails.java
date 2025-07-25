@@ -24,14 +24,11 @@ import au.gov.digitalhealth.lingo.util.NmpcType;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import au.gov.digitalhealth.lingo.validation.OnlyOneNotEmpty;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.java.Log;
@@ -164,17 +161,8 @@ public class PackageDetails<T extends ProductDetails> extends PackageProductDeta
           && containedPackages.get(0).getPackageDetails() != null) {
         variant = containedPackages.get(0).getPackageDetails().getVariant();
       } else {
-        String value = null;
-        try {
-          value = new ObjectMapper().writeValueAsString(this);
-          log.severe(
-              "No contained package or product found looking for variant in PackageDetails: "
-                  + value);
-        } catch (Exception e) {
-          log.log(Level.SEVERE, "Error serialising PackageDetails: " + e.getMessage(), e);
-        }
         throw new LingoProblem(
-            "No contained package or product found looking for variant: " + value);
+            "No contained package or product found looking for variant");
       }
     }
     return variant;
