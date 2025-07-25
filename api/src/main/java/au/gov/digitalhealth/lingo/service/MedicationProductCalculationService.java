@@ -1064,11 +1064,11 @@ public class MedicationProductCalculationService
 
     int group = 1;
     if (productDetails instanceof VaccineProductDetails vaccineProductDetails) {
-      if (modelConfiguration.getModelType().equals(ModelType.NMPC) && productDetails.getPlaysRole().isEmpty()
-      ) {
+      if (modelConfiguration.getModelType().equals(ModelType.NMPC)
+          && productDetails.getPlaysRole().isEmpty()) {
         relationships.add(
-                getSnowstormRelationship(
-                        PLAYS_ROLE, ACTIVE_IMMUNITY_STIMULANT, 0, modelConfiguration.getModuleId()));
+            getSnowstormRelationship(
+                PLAYS_ROLE, ACTIVE_IMMUNITY_STIMULANT, 0, modelConfiguration.getModuleId()));
       }
       addRelationshipIfNotNull(
           relationships,
@@ -1414,11 +1414,11 @@ public class MedicationProductCalculationService
 
     if (productDetails instanceof VaccineProductDetails vaccineProductDetails) {
 
-      if (modelConfiguration.getModelType().equals(ModelType.NMPC) && productDetails.getPlaysRole().isEmpty()
-             ) {
+      if (modelConfiguration.getModelType().equals(ModelType.NMPC)
+          && productDetails.getPlaysRole().isEmpty()) {
         relationships.add(
-                getSnowstormRelationship(
-                        PLAYS_ROLE, ACTIVE_IMMUNITY_STIMULANT, 0, modelConfiguration.getModuleId()));
+            getSnowstormRelationship(
+                PLAYS_ROLE, ACTIVE_IMMUNITY_STIMULANT, 0, modelConfiguration.getModuleId()));
       }
       addRelationshipIfNotNull(
           relationships,
