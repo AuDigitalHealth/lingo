@@ -31,6 +31,7 @@ import DiffConceptDiagram from './DiffConceptDiagram.tsx';
 import { Grid } from '@mui/material';
 import { Box } from '@mui/material';
 import useAuthoringStore from '../../stores/AuthoringStore.ts';
+import { isConceptOptionSelected } from '../../utils/helpers/conceptUtils.ts';
 
 type ConceptOrDetails = Product | null | undefined;
 
@@ -45,7 +46,6 @@ interface ConceptDiagramModalProps {
   product: Product;
   keepMounted: boolean;
   branch: string;
-  optionsIgnored: boolean;
 }
 
 export default function ConceptDiagramModal({
@@ -55,7 +55,6 @@ export default function ConceptDiagramModal({
   product,
   keepMounted,
   branch,
-  optionsIgnored,
 }: ConceptDiagramModalProps) {
   let left: ConceptDiagramProp = { concept: undefined, isNewConcept: false };
   let right: ConceptDiagramProp = { concept: undefined, isNewConcept: false };
@@ -150,7 +149,14 @@ export default function ConceptDiagramModal({
               >
                 <ConceptDiagram
                   concept={product.concept}
-                  newConcept={optionsIgnored ? newConcept : null}
+                  newConcept={
+                    !isConceptOptionSelected(
+                      selectedConceptIdentifiers,
+                      product,
+                    )
+                      ? newConcept
+                      : null
+                  }
                 />
               </Box>
             )}
