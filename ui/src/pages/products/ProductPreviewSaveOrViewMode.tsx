@@ -81,6 +81,7 @@ function ProductPreviewSaveOrViewMode({
   productModelResponse,
   ticket,
 }: ProductPreviewSaveOrViewModeProps) {
+  const { setSelectedConceptIdentifiers } = useAuthoringStore();
   const productModel = useMemo(() => {
     const nodes = productModelResponse.nodes.map(node => {
       if (node.newConceptDetails?.fullySpecifiedName) {
@@ -339,6 +340,7 @@ function ProductPreviewSaveOrViewMode({
           .then(v => {
             if (handleClose) handleClose({}, 'escapeKeyDown');
             setLoading(false);
+            setSelectedConceptIdentifiers([]);
             if (ticket) {
               void queryClient.invalidateQueries({
                 queryKey: getTicketProductsByTicketIdOptions(
@@ -382,6 +384,7 @@ function ProductPreviewSaveOrViewMode({
           .then(v => {
             if (handleClose) handleClose({}, 'escapeKeyDown');
             setLoading(false);
+            setSelectedConceptIdentifiers([]);
             if (ticket) {
               void queryClient.invalidateQueries({
                 queryKey: getTicketProductsByTicketIdOptions(
