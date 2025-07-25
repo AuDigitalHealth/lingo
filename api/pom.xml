@@ -535,12 +535,32 @@
       <build>
         <plugins>
           <plugin>
+            <artifactId>git-commit-id-maven-plugin</artifactId>
+            <configuration>
+              <generateGitPropertiesFile>true</generateGitPropertiesFile>
+              <includeOnlyProperties>
+                <includeOnlyProperty>git.commit.id.abbrev</includeOnlyProperty>
+              </includeOnlyProperties>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>revision</goal>
+                </goals>
+                <id>get-the-git-infos</id>
+                <phase>initialize</phase>
+              </execution>
+            </executions>
+            <groupId>io.github.git-commit-id</groupId>
+            <version>5.0.0</version>
+          </plugin>
+          <plugin>
             <artifactId>maven-antrun-plugin</artifactId>
             <executions>
               <execution>
                 <configuration>
                   <target>
-                    <echo file="${staticdir}/buildnumber.txt">${buildnumber}</echo>
+                    <echo file="${staticdir}/buildnumber.txt">${buildnumber}-${git.commit.id.abbrev}</echo>
                   </target>
                 </configuration>
                 <goals>
