@@ -31,7 +31,9 @@ import java.util.List;
 import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.extern.java.Log;
 
+@Log
 @Data
 @EqualsAndHashCode(callSuper = false)
 @OnlyOneNotEmpty(
@@ -159,17 +161,8 @@ public class PackageDetails<T extends ProductDetails> extends PackageProductDeta
           && containedPackages.get(0).getPackageDetails() != null) {
         variant = containedPackages.get(0).getPackageDetails().getVariant();
       } else {
-        String value = null;
-        try {
-          value = new ObjectMapper().writeValueAsString(this);
-          log.severe(
-              "No contained package or product found looking for variant in PackageDetails: "
-                  + value);
-        } catch (JsonProcessingException e) {
-          log.log(Level.SEVERE, "Error serialising PackageDetails: " + e.getMessage(), e);
-        }
         throw new LingoProblem(
-            "No contained package or product found looking for variant: " + value);
+            "No contained package or product found looking for variant");
       }
     }
     return variant;

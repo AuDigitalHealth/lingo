@@ -194,7 +194,7 @@ models:
         suppressOnProductTypes: MEDICATION,NUTRITIONAL,VACCINE
       - name: atc
         title: ATC code
-        identifier: 84676004
+        identifier: 680441000220106
         level: PRODUCT
         dataType: CODED
         valueRegexValidation: ^.+$
@@ -327,7 +327,7 @@ models:
         order: 20
       - name: licencedRoute
         title: Licenced Route
-        identifier: 243637007
+        identifier: 680321000220105
         level: PRODUCT
         dataType: CONCEPT
         eclBinding: <284009009
