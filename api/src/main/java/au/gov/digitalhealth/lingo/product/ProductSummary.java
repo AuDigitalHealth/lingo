@@ -315,8 +315,8 @@ public class ProductSummary implements Serializable {
                 }
               });
 
-      deduplicatedNodes
-          .forEach((key, duplicates) -> {
+      deduplicatedNodes.forEach(
+          (key, duplicates) -> {
             duplicates.forEach(
                 duplicate -> {
                   nodes.remove(duplicate);

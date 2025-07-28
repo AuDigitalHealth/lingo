@@ -528,19 +528,37 @@
   <profiles>
     <profile>
       <activation>
-        <property>
-          <name>buildnumber</name>
-        </property>
+        <activeByDefault>true</activeByDefault>
       </activation>
       <build>
         <plugins>
+          <plugin>
+            <artifactId>git-commit-id-maven-plugin</artifactId>
+            <configuration>
+              <generateGitPropertiesFile>true</generateGitPropertiesFile>
+              <includeOnlyProperties>
+                <includeOnlyProperty>git.commit.id.abbrev</includeOnlyProperty>
+              </includeOnlyProperties>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>revision</goal>
+                </goals>
+                <id>get-the-git-infos</id>
+                <phase>initialize</phase>
+              </execution>
+            </executions>
+            <groupId>io.github.git-commit-id</groupId>
+            <version>5.0.0</version>
+          </plugin>
           <plugin>
             <artifactId>maven-antrun-plugin</artifactId>
             <executions>
               <execution>
                 <configuration>
                   <target>
-                    <echo file="${staticdir}/buildnumber.txt">${buildnumber}</echo>
+                    <echo file="${staticdir}/buildnumber.txt">${buildnumber}-${git.commit.id.abbrev}</echo>
                   </target>
                 </configuration>
                 <goals>
@@ -553,7 +571,7 @@
           </plugin>
         </plugins>
       </build>
-      <id>azuredevops</id>
+      <id>buildnumber</id>
       <properties>
         <staticdir>${project.build.directory}/classes/static</staticdir>
       </properties>
@@ -618,5 +636,6 @@
     <querydsl.version>5.1.0</querydsl.version>
     <sentry.version>7.18.0</sentry.version>
     <snomed-owl-toolkit.version>5.4.0</snomed-owl-toolkit.version>
+    <buildnumber>${project.version}</buildnumber>
   </properties>
 </project>

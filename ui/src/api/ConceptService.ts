@@ -259,7 +259,7 @@ const ConceptService = {
     branch: string,
   ): Promise<ConceptResponseForIds> {
     const idList = ids.join(',');
-    const url = `/snowstorm/${encodeURIComponent(branch)}/concepts?conceptIds=${idList}&returnIdOnly=true&termActive=true`;
+    const url = `/snowstorm/${encodeURIComponent(branch)}/concepts?conceptIds=${idList}&returnIdOnly=true&activeFilter=true`;
     const response = await api.get(url, {
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,

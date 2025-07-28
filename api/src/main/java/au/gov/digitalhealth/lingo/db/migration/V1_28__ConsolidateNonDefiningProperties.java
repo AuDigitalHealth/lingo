@@ -15,30 +15,21 @@
  */
 package au.gov.digitalhealth.lingo.db.migration;
 
-import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.product.details.properties.PropertyType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import org.flywaydb.core.api.migration.BaseJavaMigration;
-import org.flywaydb.core.api.migration.Context;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.java.Log;
 
 /**
  * Migration to update Product.packageDetails JSON structure. This migration consolidates three
  * lists (externalIdentifiers, referenceSets, nonDefiningProperties) into one list
  * (nonDefiningProperties) of type NonDefiningBase.
  */
+@Log
 @SuppressWarnings("squid:S00101") // Class name matches Flyway migration naming convention
-public class V1_28__ConsolidateNonDefiningProperties extends BaseJavaMigration {
+public class V1_28__ConsolidateNonDefiningProperties extends BaseProductMigration {
 
   public static final String CONTAINED_PRODUCTS = "containedProducts";
   public static final String PRODUCT_DETAILS = "productDetails";
@@ -53,8 +44,6 @@ public class V1_28__ConsolidateNonDefiningProperties extends BaseJavaMigration {
   public static final String IDENTIFIER_SCHEME = "identifierScheme";
   public static final String VALUE = "value";
   public static final String TYPE = "type";
-  private static final Logger logger =
-      LoggerFactory.getLogger(V1_28__ConsolidateNonDefiningProperties.class);
   private static final ObjectMapper objectMapper = new ObjectMapper();
 
   private static void processExternalIdentifiers(
@@ -160,135 +149,7 @@ public class V1_28__ConsolidateNonDefiningProperties extends BaseJavaMigration {
     }
   }
 
-  @Override
-  public void migrate(Context context) throws Exception {
-    Connection connection = context.getConnection();
-
-    // Get all products
-    List<ProductRecord> products = getAllProducts(connection);
-    logger.info("Found {} products to migrate", products.size());
-
-    // Process each product
-    for (ProductRecord product : products) {
-      try {
-        // Parse the JSON
-        JsonNode packageDetails = objectMapper.readTree(product.packageDetails);
-        JsonNode originalPackageDetails =
-            product.originalPackageDetails != null
-                ? objectMapper.readTree(product.originalPackageDetails)
-                : null;
-
-        // Update the JSON structure
-        JsonNode updatedPackageDetails = updatePackageDetails(packageDetails);
-        JsonNode updatedOriginalPackageDetails =
-            originalPackageDetails != null ? updatePackageDetails(originalPackageDetails) : null;
-
-        // Save the updated JSON back to the database
-        updateProduct(
-            connection,
-            product.id,
-            objectMapper.writeValueAsString(updatedPackageDetails),
-            updatedOriginalPackageDetails != null
-                ? objectMapper.writeValueAsString(updatedOriginalPackageDetails)
-                : null);
-
-        logger.info("Successfully migrated product with ID: {}", product.id);
-      } catch (Exception e) {
-        throw new LingoProblem("Error migrating product with ID:" + product.id, e);
-      }
-    }
-  }
-
-  private List<ProductRecord> getAllProducts(Connection connection) throws SQLException {
-    List<ProductRecord> products = new ArrayList<>();
-
-    try (PreparedStatement stmt =
-        connection.prepareStatement(
-            "SELECT id, package_details, original_package_details FROM product")) {
-      try (ResultSet rs = stmt.executeQuery()) {
-        while (rs.next()) {
-          ProductRecord product = new ProductRecord();
-          product.id = rs.getLong("id");
-          product.packageDetails = rs.getString("package_details");
-          product.originalPackageDetails = rs.getString("original_package_details");
-          products.add(product);
-        }
-      }
-    }
-
-    return products;
-  }
-
-  private void updateProduct(
-      Connection connection, long id, String packageDetails, String originalPackageDetails)
-      throws SQLException {
-    boolean isPostgres = connection.getMetaData().getDatabaseProductName().contains("PostgreSQL");
-
-    // SQL for PostgreSQL vs H2
-    String sql;
-    if (isPostgres) {
-      sql = "UPDATE product SET package_details = CAST(? AS json)";
-      if (originalPackageDetails != null) {
-        sql += ", original_package_details = CAST(? AS json)";
-      }
-    } else {
-      // For H2, just use normal parameters
-      sql = "UPDATE product SET package_details = ?";
-      if (originalPackageDetails != null) {
-        sql += ", original_package_details = ?";
-      }
-    }
-    sql += " WHERE id = ?";
-
-    try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-      stmt.setString(1, packageDetails);
-      if (originalPackageDetails != null) {
-        stmt.setString(2, originalPackageDetails);
-        stmt.setLong(3, id);
-      } else {
-        stmt.setLong(2, id);
-      }
-      stmt.executeUpdate();
-    }
-  }
-
-  private JsonNode updatePackageDetails(JsonNode packageDetails) {
-    // Create a deep copy of the packageDetails to avoid modifying the original
-    ObjectNode updatedPackageDetails = packageDetails.deepCopy();
-
-    // Process the packageDetails directly
-    processPackageDetailsNode(updatedPackageDetails);
-
-    // Process any ProductDetails within containedProducts
-    if (updatedPackageDetails.has(CONTAINED_PRODUCTS)
-        && updatedPackageDetails.get(CONTAINED_PRODUCTS).isArray()) {
-      ArrayNode containedProducts = (ArrayNode) updatedPackageDetails.get(CONTAINED_PRODUCTS);
-      for (int i = 0; i < containedProducts.size(); i++) {
-        JsonNode productQuantity = containedProducts.get(i);
-        if (productQuantity.has(PRODUCT_DETAILS)) {
-          ObjectNode productDetails = (ObjectNode) productQuantity.get(PRODUCT_DETAILS);
-          processPackageDetailsNode(productDetails);
-        }
-      }
-    }
-
-    // Process any PackageDetails within containedPackages
-    if (updatedPackageDetails.has(CONTAINED_PACKAGES)
-        && updatedPackageDetails.get(CONTAINED_PACKAGES).isArray()) {
-      ArrayNode containedPackages = (ArrayNode) updatedPackageDetails.get(CONTAINED_PACKAGES);
-      for (int i = 0; i < containedPackages.size(); i++) {
-        JsonNode packageQuantity = containedPackages.get(i);
-        if (packageQuantity.has(PACKAGE_DETAILS)) {
-          ObjectNode nestedPackageDetails = (ObjectNode) packageQuantity.get(PACKAGE_DETAILS);
-          processPackageDetailsNode(nestedPackageDetails);
-        }
-      }
-    }
-
-    return updatedPackageDetails;
-  }
-
-  private void processPackageDetailsNode(ObjectNode node) {
+  protected void processNode(ObjectNode node) {
     // Create a new consolidated array for nonDefiningProperties
     ArrayNode consolidatedProperties = objectMapper.createArrayNode();
 
@@ -300,11 +161,5 @@ public class V1_28__ConsolidateNonDefiningProperties extends BaseJavaMigration {
 
     // Add the consolidated properties back to the node
     node.set(NON_DEFINING_PROPERTIES, consolidatedProperties);
-  }
-
-  private static class ProductRecord {
-    long id;
-    String packageDetails;
-    String originalPackageDetails;
   }
 }
