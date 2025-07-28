@@ -48,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -480,6 +481,80 @@ public class SnowstormClient {
 
     return api.findRelationships(
         branch, true, null, null, conceptId, null, null, null, null, null, null, languageHeader);
+  }
+
+  public Collection<SnowstormReferenceSetMember> getAllRefsetMembers(
+      String branch, Collection<String> concepts, String referenceSetId, String module, int limit) {
+    SnowstormMemberSearchRequestComponent searchRequestComponent =
+        new SnowstormMemberSearchRequestComponent();
+    searchRequestComponent.active(true);
+    if (concepts != null) {
+      searchRequestComponent.referencedComponentIds(List.copyOf(concepts));
+    }
+    if (referenceSetId != null) {
+      searchRequestComponent.referenceSet(referenceSetId);
+    }
+
+    List<SnowstormReferenceSetMember> allMembers = new ArrayList<>();
+    String searchAfter = ""; // Start with empty search after
+
+    while (true) {
+      // Fetch the current page of refset members
+      SnowstormItemsPageReferenceSetMember page =
+          getRefsetMembersApi()
+              .findRefsetMembers1(
+                  branch,
+                  referenceSetId,
+                  module,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null, // Use searchAfter here
+                  0,
+                  limit,
+                  searchAfter,
+                  languageHeader)
+              .block();
+
+      // Add current page items to the complete list
+      List<SnowstormReferenceSetMember> currentItems = page.getItems();
+      if (currentItems == null || currentItems.isEmpty()) {
+        // No more items to retrieve
+        break;
+      }
+
+      allMembers.addAll(currentItems);
+
+      // Update searchAfter for the next iteration
+      searchAfter = page.getSearchAfter();
+
+      // Optional: Break if no more search after value (depending on API behavior)
+      if (searchAfter == null || searchAfter.isEmpty()) {
+        break;
+      }
+    }
+
+    return allMembers;
+  }
+  public Mono<SnowstormItemsPageReferenceSetMember> getRefsetMembersByAdditionalFieldSets(
+      String branch,
+      Map<String, Set<String>> additionalFieldSets,
+      String referenceSetId,
+      int offset,
+      int limit) {
+
+    SnowstormMemberSearchRequestComponent searchRequestComponent =
+        new SnowstormMemberSearchRequestComponent();
+    searchRequestComponent
+        .active(true)
+        .referenceSet(referenceSetId)
+        .additionalFieldSets(additionalFieldSets);
+    return getRefsetMembersApi()
+        .findRefsetMembers(
+            branch, searchRequestComponent, offset, Math.min(limit, 10000), languageHeader);
   }
 
   public SnowstormConceptView createConcept(
