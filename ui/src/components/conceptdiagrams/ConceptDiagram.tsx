@@ -49,7 +49,7 @@ export default function ConceptDiagram({
   const imgRef = useRef<HTMLImageElement>(null);
   const [imageUri, setImageUri] = useState<string | undefined>(undefined);
   const { applicationConfig } = useApplicationConfigStore();
-  const fullBranch = `/${applicationConfig.apDefaultBranch}${branchKey ? `/${branchKey}` : ''}`;
+  const fullBranch = `${applicationConfig.apDefaultBranch}${branchKey ? `/${branchKey}` : ''}`;
   const { data, isLoading } = useSearchConceptById(
     concept?.conceptId,
     fullBranch,
