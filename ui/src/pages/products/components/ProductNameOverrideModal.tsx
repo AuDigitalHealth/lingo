@@ -50,7 +50,9 @@ export function ProductNameOverrideModal({
       <BaseModalBody data-testid={'override-modal'}>
         <>
           'Choose whether to overwrite the existing saved product data, create a
-          saved product name, or go back'
+          saved product name, or go back. This will not change the name of the
+          product in snowstorm - this changes the name that this saved product
+          data is saved against this ticket, as duplicate names cannot be saved.'
           <TextField
             fullWidth
             label="Updated Name"
