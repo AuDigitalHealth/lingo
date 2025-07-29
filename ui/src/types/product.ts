@@ -294,8 +294,11 @@ export interface SnowstormTermLangPojo {
   term?: string;
   lang?: string;
 }
-export interface BrandCreationDetails {
-  brandName: string;
+export interface PrimitiveConceptCreationDetails {
+  conceptName: string;
+  parentConceptId: string;
+  parentConceptName: string;
+  semanticTag: string;
   ticketId: number;
 }
 export type BigDecimal = number;

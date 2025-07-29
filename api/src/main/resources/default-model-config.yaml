@@ -417,6 +417,11 @@ models:
         eclBinding: <774164004
         modelLevels: REAL_MEDICINAL_PRODUCT,REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
         mandatory: true
+        createConcept: true
+        createConceptEcl: <774164004
+        createConceptParentId: 774164004
+        createConceptParentName: Supplier (supplier)
+        createConceptSemanticTag: (supplier)
         multiValued: false
         showDefaultOptions: true
         order: 93
