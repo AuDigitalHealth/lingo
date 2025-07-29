@@ -51,9 +51,11 @@
       "multiValuedSchemes": ["artgid"],
       "mandatorySchemes": [],
       "ecl": "<774167006",
-      "createBrand": {
+      "createPrimitiveConcept": {
         "ecl": "<774167006",
-        "semanticTags": "(product name)"
+        "semanticTags": "(product name)",
+        "parentConceptId": "774167006",
+        "parentConceptName": "Product name (product name)"
       }
     }
   },
