@@ -6,7 +6,7 @@ import { Concept, ConceptMini } from '../../../../types/concept.ts';
 import { SetExtendedEclButton } from '../../components/SetExtendedEclButton.tsx';
 import EclAutocomplete from '../components/EclAutocomplete.tsx';
 import MultiValueEclAutocomplete from '../components/MultiValueEclAutocomplete.tsx';
-import CreateBrand from '../components/CreateBrand.tsx';
+import CreatePrimitiveConcept from '../components/CreatePrimitiveConcept.tsx';
 import useTaskByKey from '../../../../hooks/useTaskByKey.tsx';
 import { useTicketByTicketNumber } from '../../../../hooks/api/tickets/useTicketById.tsx';
 import { useParams } from 'react-router-dom';
@@ -14,6 +14,7 @@ import { Ticket } from '../../../../types/tickets/ticket.ts';
 import { useDependantUpdates } from './../hooks/useDependantUpdates.ts';
 import { useExclusionUpdates } from './../hooks/useExclusionUpdates.ts';
 import { RjsfUtils } from '../helpers/rjsfUtils';
+import { CreateConceptConfig } from './bulkBrandPack/ExternalIdentifiers.tsx';
 
 const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
   const { onChange, idSchema } = props;
@@ -39,8 +40,7 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
 
   const isMultivalued = uiOptions?.multiValued === true;
   const isShowDefaultOptions = uiOptions?.showDefaultOptions === true;
-  const { ecl, extendedEcl, createBrand, disabled, defaultValue } =
-    uiOptions || {};
+  const { ecl, extendedEcl, disabled, defaultValue } = uiOptions || {};
 
   const [formData, setFormData] = useState(
     props.formData ?? (isMultivalued ? [] : null),
@@ -113,8 +113,16 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
 
     setOpenCreateBrandModal(false);
   };
+  const createPrimitiveConcept =
+    (props.uiSchema?.['ui:options']
+      ?.createPrimitiveConcept as CreateConceptConfig) || undefined;
+  const createPrimitiveEcl = createPrimitiveConcept?.ecl;
+  const createPrimitiveSemanticTag = createPrimitiveConcept?.semanticTags || '';
+  const createParentConceptId = createPrimitiveConcept?.parentConceptId || '';
+  const createParentConceptName =
+    createPrimitiveConcept?.parentConceptName || '';
 
-  const paddingRight = createBrand ? 5 : 0;
+  const paddingRight = createPrimitiveConcept ? 5 : 0;
   const isDisabled = disabled || props.disabled || false;
 
   return (
@@ -146,10 +154,10 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
                   isDisabled={isDisabled}
                   branch={task?.branchPath}
                   onChange={handleSelect}
-                  turnOffPublishParam={createBrand ? true : false}
+                  turnOffPublishParam={createPrimitiveConcept ? true : false}
                 />
               ))}
-            {createBrand && (
+            {createPrimitiveConcept && (
               <Tooltip title="Create Brand">
                 <IconButton
                   data-testid="create-brand-btn"
@@ -177,14 +185,18 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
             </Box>
           )}
         </Box>
-        {createBrand && (
-          <CreateBrand
+        {createPrimitiveConcept && (
+          <CreatePrimitiveConcept
             open={openCreateBrandModal}
             onClose={() => setOpenCreateBrandModal(false)}
             onAddBrand={handleAddBrand}
             uiSchema={props.uiSchema}
             branch={task?.branchPath as string}
             ticket={useTicketQuery.data as Ticket}
+            ecl={createPrimitiveEcl as string}
+            semanticTag={createPrimitiveSemanticTag as string}
+            parentConceptId={createParentConceptId as string}
+            parentConceptName={createParentConceptName as string}
           />
         )}
       </Box>

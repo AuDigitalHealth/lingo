@@ -18,7 +18,7 @@ package au.gov.digitalhealth.lingo.controllers;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.gov.digitalhealth.lingo.LingoTestBase;
 import au.gov.digitalhealth.lingo.configuration.FieldBindingConfiguration;
-import au.gov.digitalhealth.lingo.product.BrandCreationRequest;
+import au.gov.digitalhealth.lingo.product.PrimitiveConceptCreationRequest;
 import au.gov.digitalhealth.tickets.models.Ticket;
 import java.util.UUID;
 import lombok.extern.java.Log;
@@ -47,9 +47,9 @@ class QualifierControllerTest extends LingoTestBase {
   void createBrandTest() {
     Ticket ticketResponse = getLingoTestClient().createTicket("Create Brand Test");
     String randomBrandName = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
-    BrandCreationRequest brandCreationRequest =
-        new BrandCreationRequest(randomBrandName, ticketResponse.getId());
-    SnowstormConceptMini createdBrand = getLingoTestClient().createBrand(brandCreationRequest);
+    PrimitiveConceptCreationRequest brandCreationRequest =
+        new PrimitiveConceptCreationRequest(randomBrandName, "774167006", "Product name (product name)", "(product name)",ticketResponse.getId());
+    SnowstormConceptMini createdBrand = getLingoTestClient().createPrimitive(brandCreationRequest);
     Assertions.assertThat(Long.parseLong(createdBrand.getConceptId())).isPositive();
     Assertions.assertThat(createdBrand.getPt().getTerm()).isEqualTo(randomBrandName);
     String expectedFsn =

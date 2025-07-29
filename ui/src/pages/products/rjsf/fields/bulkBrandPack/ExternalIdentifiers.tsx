@@ -22,12 +22,16 @@ import {
   NonDefiningPropertyType,
 } from '../../../../../types/product.ts';
 import useTaskByKey from '../../../../../hooks/useTaskByKey.tsx';
-import { ConceptMini } from '../../../../../types/concept.ts';
+import { Concept, ConceptMini } from '../../../../../types/concept.ts';
 import { MultiValueValueSetAutocomplete } from '../../components/MultiValueSetAutocomplete.tsx';
 import MultiValueEclAutocomplete from '../../components/MultiValueEclAutocomplete.tsx';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import DesktopDatePickerField from '../../components/DesktopDatePickerField.tsx';
 import { Tooltip } from 'antd';
+import CreatePrimitiveConcept from '../../components/CreatePrimitiveConcept.tsx';
+import { useTicketByTicketNumber } from '../../../../../hooks/api/tickets/useTicketById.tsx';
+import { useParams } from 'react-router-dom';
+import { Ticket } from '../../../../../types/tickets/ticket.ts';
 
 const SCHEME_COLORS = ['primary', 'secondary', 'success', 'error', 'warning'];
 
@@ -37,12 +41,6 @@ const getColorByScheme = (scheme: string) => {
     SCHEME_COLORS.length;
   return SCHEME_COLORS[index];
 };
-//
-// interface ExternalIdentifier {
-//   identifierScheme: string;
-//   relationshipType: string;
-//   identifierValue: string;
-// }
 
 interface NonDefiningPropertyDefinition {
   identifierScheme: string;
@@ -57,7 +55,16 @@ interface BindingConfig {
     valueSet?: string;
     ecl?: string;
     showDefaultOptions?: boolean;
+    createConcept?: CreateConceptConfig;
+    placeholder?: string;
   };
+}
+
+export interface CreateConceptConfig {
+  ecl: string;
+  semanticTags: string;
+  parentConceptId: string;
+  parentConceptName: string;
 }
 
 const ExternalIdentifiers: React.FC<
@@ -161,9 +168,13 @@ const ExternalIdentifierRender: React.FC<
   const dateFormat = schema?.properties?.value?.dateFormat;
   const pattern = schema?.properties?.value?.pattern;
 
+  const task = useTaskByKey();
+  const { ticketNumber } = useParams();
+  const useTicketQuery = useTicketByTicketNumber(ticketNumber, false);
   const [availableOptions, setAvailableOptions] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [tooltip, setTooltip] = useState<string>('');
+  const [createConceptModalOpen, setCreateConceptModalOpen] = useState(false);
 
   const [maxItems, setMaxItems] = useState<number>(9999);
   const [freeSolo, setFreeSolo] = useState<boolean>(true);
@@ -188,8 +199,12 @@ const ExternalIdentifierRender: React.FC<
   const hasEclBinding = (scheme: string): boolean =>
     !!bindingConfig[scheme]?.ecl;
 
+  const hasCreateConcept = (scheme: string): boolean =>
+    !!bindingConfig[scheme]?.createConcept;
+
   const useValueSetAutocomplete = hasValueSetBinding(schemeName);
   const useEclAutocomplete = hasEclBinding(schemeName);
+  const useCreateConcept = hasCreateConcept(schemeName);
 
   const binding = bindingConfig[schemeName] || {};
 
@@ -284,6 +299,7 @@ const ExternalIdentifierRender: React.FC<
       onChange(newFormData);
     }
   };
+
   const handleDateChange = (newDate: string | null) => {
     const updatedEntry: NonDefiningProperty = {
       identifierScheme: schemeName,
@@ -309,7 +325,7 @@ const ExternalIdentifierRender: React.FC<
     onChange(returnFormData);
   };
   const handleChangeConcepts = (
-    concepts: ConceptMini | ConceptMini[] | null,
+    concepts: ConceptMini | ConceptMini[] | Concept | null,
   ) => {
     const scheme = schema.properties.identifierScheme.const;
 
@@ -384,6 +400,11 @@ const ExternalIdentifierRender: React.FC<
     onChange,
     validTextFieldInput,
   ]);
+
+  const handleAddCreatedConcept = (createdConcept: Concept) => {
+    handleChangeConcepts(createdConcept);
+  };
+
   const renderChip = (item: NonDefiningProperty) => (
     <Tooltip title={item.value} placement="top">
       <Chip
@@ -412,7 +433,7 @@ const ExternalIdentifierRender: React.FC<
     <Box>
       <Stack
         direction="row"
-        spacing={2}
+        // spacing={2}
         alignItems="center"
         sx={{ width: '100%' }}
       >
@@ -465,6 +486,33 @@ const ExternalIdentifierRender: React.FC<
             // errorMessage={errorMessage}
             title={schema.title}
           />
+        )}
+        {useCreateConcept && (
+          <>
+            <Tooltip title="Create Primitive Concept">
+              <IconButton
+                data-testid="create-brand-btn"
+                onClick={() => setCreateConceptModalOpen(true)}
+                disabled={false}
+                tabIndex={-1}
+              >
+                <AddCircleOutlineIcon color="primary" />
+              </IconButton>
+            </Tooltip>
+            <CreatePrimitiveConcept
+              open={createConceptModalOpen}
+              title={schema.title}
+              onClose={() => setCreateConceptModalOpen(false)}
+              onAddBrand={handleAddCreatedConcept}
+              uiSchema={props.uiSchema}
+              branch={task?.branchPath as string}
+              ticket={useTicketQuery.data as Ticket}
+              ecl={binding.createConcept?.ecl}
+              semanticTag={binding.createConcept?.semanticTags}
+              parentConceptId={binding.createConcept?.parentConceptId}
+              parentConceptName={binding.createConcept?.parentConceptName}
+            />
+          </>
         )}
         {isCheckBox && ( // Checkbox implementation
           <FormControlLabel
