@@ -494,7 +494,7 @@ models:
         multiValued: false
         showDefaultOptions: true
         order: 98
-      - name: lastDateOfMan
+      - name: discEffDate
         title: Discontinuation Notification - Effective Date
         identifier: 689851000220102
         level: PACKAGE
