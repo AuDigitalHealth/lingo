@@ -528,9 +528,7 @@
   <profiles>
     <profile>
       <activation>
-        <property>
-          <name>buildnumber</name>
-        </property>
+        <activeByDefault>true</activeByDefault>
       </activation>
       <build>
         <plugins>
@@ -573,7 +571,7 @@
           </plugin>
         </plugins>
       </build>
-      <id>azuredevops</id>
+      <id>buildnumber</id>
       <properties>
         <staticdir>${project.build.directory}/classes/static</staticdir>
       </properties>
@@ -638,5 +636,6 @@
     <querydsl.version>5.1.0</querydsl.version>
     <sentry.version>7.18.0</sentry.version>
     <snomed-owl-toolkit.version>5.4.0</snomed-owl-toolkit.version>
+    <buildnumber>${project.version}</buildnumber>
   </properties>
 </project>
