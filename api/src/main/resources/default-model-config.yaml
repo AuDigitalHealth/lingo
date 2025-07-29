@@ -194,7 +194,7 @@ models:
         suppressOnProductTypes: MEDICATION,NUTRITIONAL,VACCINE
       - name: atc
         title: ATC code
-        identifier: 84676004
+        identifier: 680441000220106
         level: PRODUCT
         dataType: CODED
         valueRegexValidation: ^.+$
@@ -222,6 +222,21 @@ models:
         defaultMappingType: RELATED
         mappingTypes:
           - RELATED
+      - name: hpra
+        title: HPRA Product Link
+        identifier: 689901000220106
+        level: PRODUCT
+        dataType: CODED
+        valueRegexValidation: ^.+$
+        valueSetReference: https://nmpc.hse.ie/HPRA/vs
+        codeSystem: https://nmpc.hse.ie/HPRA
+        modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+        defaultMappingType: RELATED
+        mappingTypes:
+          - RELATED
+        readOnly: true
       - name: indicativePrice
         title: Indicative Price
         identifier: 680351000220102
@@ -327,7 +342,7 @@ models:
         order: 20
       - name: licencedRoute
         title: Licenced Route
-        identifier: 243637007
+        identifier: 680321000220105
         level: PRODUCT
         dataType: CONCEPT
         eclBinding: <284009009
@@ -484,6 +499,18 @@ models:
         multiValued: false
         showDefaultOptions: true
         order: 98
+      - name: discEffDate
+        title: Discontinuation Notification - Effective Date
+        identifier: 689851000220102
+        level: PACKAGE
+        dataType: DATE
+        format: YYYY-MM-DD
+        valueRegexValidation: \d{4}-\d{2}-\d{2}
+        valueValidationErrorMessage: "Must be a valid date in the format YYYY-MM-DD"
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        order: 99
       - name: lastDateOfMan
         title: Discontinuation Notification - Expiry Date of Last Manufactured Batch
         identifier: 680191000220105

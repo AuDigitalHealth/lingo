@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.java.Log;
@@ -161,8 +162,10 @@ public class PackageDetails<T extends ProductDetails> extends PackageProductDeta
           && containedPackages.get(0).getPackageDetails() != null) {
         variant = containedPackages.get(0).getPackageDetails().getVariant();
       } else {
-        throw new LingoProblem(
-            "No contained package or product found looking for variant");
+        final LingoProblem lingoProblem =
+            new LingoProblem("No contained package or product found looking for variant");
+        log.log(Level.SEVERE, "Variant not found in package details ", lingoProblem);
+        throw lingoProblem;
       }
     }
     return variant;
