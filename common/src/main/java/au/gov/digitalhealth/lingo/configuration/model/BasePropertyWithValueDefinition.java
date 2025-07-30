@@ -49,6 +49,15 @@ public abstract class BasePropertyWithValueDefinition extends BasePropertyDefini
   /** ECL binding for concept values. Only valid if datatype = CONCEPT */
   private String eclBinding;
 
+  private String createConceptEcl;
+
+  private String createConceptSemanticTag;
+
+  private String createConceptParentId;
+
+  private String createConceptParentName;
+
+  private String createConceptPlaceholderText;
   /** External reference to a value set. */
   private String valueSetReference;
 

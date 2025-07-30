@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 import { Box, Button, CircularProgress, TextField } from '@mui/material';
 import { Concept } from '../../../../types/concept.ts';
-import { BrandCreationDetails } from '../../../../types/product.ts';
+import { PrimitiveConceptCreationDetails } from '../../../../types/product.ts';
 import { Ticket } from '../../../../types/tickets/ticket.ts';
 import useDebounce from '../../../../hooks/useDebounce.tsx';
 import {
@@ -10,7 +10,7 @@ import {
   useSearchConceptsByEcl,
 } from '../../../../hooks/api/useInitializeConcepts.tsx';
 import { useQueryClient } from '@tanstack/react-query';
-import { useCreateBrand } from '../../../../hooks/api/products/useCreateBrand.tsx';
+import { useCreatePrimitiveConcept } from '../../../../hooks/api/products/useCreatePrimitiveConcept.tsx';
 import ConceptService from '../../../../api/ConceptService.ts';
 import BaseModal from '../../../../components/modal/BaseModal.tsx';
 import BaseModalBody from '../../../../components/modal/BaseModalBody.tsx';
@@ -18,32 +18,36 @@ import BaseModalFooter from '../../../../components/modal/BaseModalFooter.tsx';
 import BaseModalHeader from '../../../../components/modal/BaseModalHeader.tsx';
 import { FieldProps } from '@rjsf/utils';
 
-interface CreateBrandProps extends FieldProps {
+interface CreatePrimitiveProps extends FieldProps {
   open: boolean;
   onClose: () => void;
-  onAddBrand: (brand: Concept) => void;
-  uiSchema: any;
+  onAddPrimitive: (primitive: Concept) => void;
   branch: string;
   ticket?: Ticket;
+  title?: string;
+  ecl: string;
+  semanticTag: string;
+  parentConceptId: string;
+  parentConceptName: string;
 }
 
-const CreateBrand: React.FC<CreateBrandProps> = ({
+const CreatePrimitiveConcept: React.FC<CreatePrimitiveProps> = ({
   open,
   onClose,
-  onAddBrand,
-  uiSchema,
+  onAddPrimitive,
   branch,
   ticket,
+  title,
+  ecl,
+  semanticTag,
+  parentConceptId,
+  parentConceptName,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [nameExists, setNameExists] = useState(false);
   const [error, setError] = useState('');
   const queryClient = useQueryClient();
   const debouncedSearch = useDebounce(inputValue, 700);
-
-  const createBrandOptions = uiSchema?.['ui:options']?.createBrand || {};
-  const ecl = createBrandOptions.ecl;
-  const semanticTag = createBrandOptions.semanticTags || '';
 
   const { allData, isLoading } = useSearchConceptsByEcl(
     debouncedSearch,
@@ -52,17 +56,20 @@ const CreateBrand: React.FC<CreateBrandProps> = ({
     false,
   );
 
-  const createBrandMutation = useCreateBrand();
+  const createPrimitiveMutation = useCreatePrimitiveConcept();
 
-  const handleCreateBrand = () => {
+  const handleCreatePrimitive = () => {
     if (!nameExists && ticket && inputValue) {
       setError('');
-      const brandCreationDetails: BrandCreationDetails = {
-        brandName: inputValue.trim(),
+      const primitiveCreationDetails: PrimitiveConceptCreationDetails = {
+        conceptName: inputValue.trim(),
+        semanticTag: semanticTag,
+        parentConceptId: parentConceptId,
+        parentConceptName: parentConceptName,
         ticketId: ticket.id,
       };
-      createBrandMutation.mutate(
-        { brandCreationDetails, branch },
+      createPrimitiveMutation.mutate(
+        { primitiveCreationDetails: primitiveCreationDetails, branch },
         {
           onSuccess: concept => {
             const queryKey = getSearchConceptsByEclOptions(
@@ -85,22 +92,22 @@ const CreateBrand: React.FC<CreateBrandProps> = ({
               branch,
             ).then(c => {
               if (c.items.length > 0) {
-                onAddBrand(c.items[0]);
+                onAddPrimitive(c.items[0]);
               }
             });
             handleCloseModal();
           },
           onError: () => {
-            setError('Failed to create brand');
+            setError('Failed to create primitive');
           },
         },
       );
     } else if (!inputValue) {
-      setError('Brand name is required');
+      setError(`${localTitle} is required`);
     } else if (!ticket) {
       setError('Ticket information is missing');
     } else if (nameExists) {
-      setError('This brand name already exists!');
+      setError(`This ${localTitle} already exists!`);
     }
   };
 
@@ -113,7 +120,7 @@ const CreateBrand: React.FC<CreateBrandProps> = ({
       )
     ) {
       setNameExists(true);
-      setError('This brand name already exists!');
+      setError(`This ${localTitle} name already exists!`);
     } else {
       setNameExists(false);
       if (inputValue) setError('');
@@ -121,7 +128,7 @@ const CreateBrand: React.FC<CreateBrandProps> = ({
   }, [allData, inputValue]);
 
   const handleCloseModal = () => {
-    if (!createBrandMutation.isPending) {
+    if (!createPrimitiveMutation.isPending) {
       setInputValue('');
       setNameExists(false);
       setError('');
@@ -130,18 +137,19 @@ const CreateBrand: React.FC<CreateBrandProps> = ({
   };
 
   const isButtonDisabled = () =>
-    createBrandMutation.isPending ||
+    createPrimitiveMutation.isPending ||
     nameExists ||
     !inputValue ||
     inputValue.length < 3 ||
     isLoading;
 
+  const localTitle = title ? title : 'Primitive';
   return (
     <BaseModal open={open} handleClose={handleCloseModal}>
-      <BaseModalHeader title="Create Brand Name" />
+      <BaseModalHeader title={`Create ${localTitle}`} />
       <BaseModalBody>
         <TextField
-          label="Enter Brand Name"
+          label={`Enter ${localTitle}`}
           fullWidth
           margin="normal"
           value={inputValue}
@@ -150,8 +158,8 @@ const CreateBrand: React.FC<CreateBrandProps> = ({
           helperText={error}
           sx={{ minWidth: '300px' }}
           autoFocus
-          disabled={createBrandMutation.isPending}
-          data-testid="create-brand-input"
+          disabled={createPrimitiveMutation.isPending}
+          data-testid="create-primitive-input"
         />
         {isLoading && <CircularProgress size={24} sx={{ mt: 2 }} />}
       </BaseModalBody>
@@ -160,11 +168,11 @@ const CreateBrand: React.FC<CreateBrandProps> = ({
         endChildren={
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button
-              data-testid="create-brand-btn"
+              data-testid="create-primitive-btn"
               color="primary"
               size="small"
               variant="contained"
-              onClick={handleCreateBrand}
+              onClick={handleCreatePrimitive}
               disabled={isButtonDisabled()}
               sx={{
                 '&.Mui-disabled': {
@@ -174,15 +182,15 @@ const CreateBrand: React.FC<CreateBrandProps> = ({
             >
               {isLoading
                 ? 'Checking...'
-                : createBrandMutation.isPending
+                : createPrimitiveMutation.isPending
                   ? 'Creating...'
-                  : 'Create Brand'}
+                  : `Create ${localTitle}`}
             </Button>
             <Button
               variant="contained"
               color="error"
               onClick={handleCloseModal}
-              disabled={createBrandMutation.isPending}
+              disabled={createPrimitiveMutation.isPending}
             >
               Cancel
             </Button>
@@ -204,4 +212,4 @@ function removeSemanticTag(originalString: string, semanticTag: string) {
   return originalString.trim();
 }
 
-export default CreateBrand;
+export default CreatePrimitiveConcept;
