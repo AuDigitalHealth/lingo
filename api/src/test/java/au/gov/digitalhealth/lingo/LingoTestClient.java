@@ -18,7 +18,7 @@ package au.gov.digitalhealth.lingo;
 import static io.restassured.RestAssured.given;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.gov.digitalhealth.lingo.product.BrandCreationRequest;
+import au.gov.digitalhealth.lingo.product.PrimitiveConceptCreationRequest;
 import au.gov.digitalhealth.lingo.product.ProductBrands;
 import au.gov.digitalhealth.lingo.product.ProductCreationDetails;
 import au.gov.digitalhealth.lingo.product.ProductPackSizes;
@@ -161,7 +161,7 @@ public class LingoTestClient {
         ProductSummary.class);
   }
 
-  public SnowstormConceptMini createBrand(BrandCreationRequest brandCreationRequest) {
+  public SnowstormConceptMini createPrimitive(PrimitiveConceptCreationRequest brandCreationRequest) {
     return postRequest(
         "/api/MAIN/SNOMEDCT-AU/AUAMT/qualifier/product-name",
         brandCreationRequest,

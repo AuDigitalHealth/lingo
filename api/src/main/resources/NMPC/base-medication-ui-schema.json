@@ -190,11 +190,12 @@
           "ui:options": {
             "ecl": "<774167006",
             "showDefaultOptions": false,
-            "createBrand": {
+            "createPrimitiveConcept": {
               "ecl": "<774167006",
-              "semanticTags": "(product name)"
-            },
-            "placeholder": "Enter brand name"
+              "semanticTags": "(product name)",
+              "parentConceptId": "774167006",
+              "parentConceptName": "Product name (product name)"
+            }
           }
         },
         "genericForm": {
