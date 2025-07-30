@@ -51,7 +51,7 @@
       "skipTitle": true,
       "initiallyExpanded": true,
       "searchAndAddProduct": {
-        "ecl": "(<763158003 minus >(<763158003))",
+        "ecl": "^660381000220107",
         "type": "medication",
         "package": false
       }
@@ -84,7 +84,7 @@
         "ui:field": "AutoCompleteField",
         "ui:title": "Unit",
         "ui:options": {
-          "ecl": "((<781405001 minus >(<781405001)) : (774160008 /* OR 999000081000168101 */) = *).774163005",
+          "ecl": "((<781405001 minus >(<781405001)) : 774160008 = *).774163005",
           "showDefaultOptions": true,
           "placeholder": "Select unit (e.g., Each)"
         }
