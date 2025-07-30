@@ -25,8 +25,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class BrandCreationRequest implements Serializable {
-  @NotNull @Valid String brandName;
+public class PrimitiveConceptCreationRequest implements Serializable {
+  @NotNull @Valid String conceptName;
+
+  @NotNull @Valid String parentConceptId;
+
+  @NotNull @Valid String parentConceptName;
+
+  @NotNull @Valid String semanticTag;
 
   @NotNull Long ticketId;
 }
