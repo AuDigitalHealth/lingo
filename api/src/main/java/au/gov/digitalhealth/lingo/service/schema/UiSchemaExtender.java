@@ -191,6 +191,7 @@ public class UiSchemaExtender {
       uiOptions.set("mandatorySchemes", mandatoryFields);
     }
 
+    // TODO: add here the createConceptSchemes
     if (!multiValuedFields.isEmpty()) {
       uiOptions.set("multiValuedSchemes", multiValuedFields);
     }
@@ -227,15 +228,61 @@ public class UiSchemaExtender {
         showDefaultOptionsFields.add(nonDefiningPropertyBase.getName());
       }
 
+      ObjectNode binding = (ObjectNode) bindingNode.get(m.getName());
+      if (binding == null) {
+        binding = objectMapper.createObjectNode();
+        bindingNode.set(m.getName(), binding);
+      }
+
+      // Top-level properties
       if (nonDefiningPropertyBase.getValueSetReference() != null) {
-        ObjectNode binding = objectMapper.createObjectNode();
         binding.set(
             "valueSet", objectMapper.valueToTree(nonDefiningPropertyBase.getValueSetReference()));
-        bindingNode.set(m.getName(), binding);
-      } else if (nonDefiningPropertyBase.getEclBinding() != null) {
-        ObjectNode binding = objectMapper.createObjectNode();
+      }
+      if (nonDefiningPropertyBase.getEclBinding() != null) {
         binding.set("ecl", objectMapper.valueToTree(nonDefiningPropertyBase.getEclBinding()));
-        bindingNode.set(m.getName(), binding);
+      }
+      if (nonDefiningPropertyBase.getCreateConceptPlaceholderText() != null) {
+        binding.set(
+            "placeholder",
+            objectMapper.valueToTree(nonDefiningPropertyBase.getCreateConceptPlaceholderText()));
+      }
+
+      // Create concept nested object
+      ObjectNode createConcept = null;
+      if (nonDefiningPropertyBase.getCreateConceptEcl() != null) {
+        if (createConcept == null) {
+          createConcept = objectMapper.createObjectNode();
+        }
+        createConcept.set(
+            "ecl", objectMapper.valueToTree(nonDefiningPropertyBase.getCreateConceptEcl()));
+      }
+      if (nonDefiningPropertyBase.getCreateConceptSemanticTag() != null) {
+        if (createConcept == null) {
+          createConcept = objectMapper.createObjectNode();
+        }
+        createConcept.set(
+            "semanticTags",
+            objectMapper.valueToTree(nonDefiningPropertyBase.getCreateConceptSemanticTag()));
+      }
+      if (nonDefiningPropertyBase.getCreateConceptParentId() != null) {
+        if (createConcept == null) {
+          createConcept = objectMapper.createObjectNode();
+        }
+        createConcept.set(
+            "parentConceptId",
+            objectMapper.valueToTree(nonDefiningPropertyBase.getCreateConceptParentId()));
+      }
+      if (nonDefiningPropertyBase.getCreateConceptParentName() != null) {
+        if (createConcept == null) {
+          createConcept = objectMapper.createObjectNode();
+        }
+        createConcept.set(
+            "parentConceptName",
+            objectMapper.valueToTree(nonDefiningPropertyBase.getCreateConceptParentName()));
+      }
+      if (createConcept != null) {
+        binding.set("createConcept", createConcept);
       }
     }
 
