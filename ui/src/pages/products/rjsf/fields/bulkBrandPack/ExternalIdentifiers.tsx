@@ -34,22 +34,6 @@ import { useParams } from 'react-router-dom';
 import { Ticket } from '../../../../../types/tickets/ticket.ts';
 import { ErrorObject } from 'ajv';
 import { PREFIX_MISSING_NONDEFINING_PROPERTIES } from '../../helpers/validationHelper.ts';
-
-const SCHEME_COLORS = ['primary', 'secondary', 'success', 'error', 'warning'];
-
-const getColorByScheme = (scheme: string) => {
-  const index =
-    scheme?.split('').reduce((a, b) => a + b.charCodeAt(0), 0) %
-    SCHEME_COLORS.length;
-  return SCHEME_COLORS[index];
-};
-//
-// interface ExternalIdentifier {
-//   identifierScheme: string;
-//   relationshipType: string;
-//   identifierValue: string;
-// }
-
 interface NonDefiningPropertyDefinition {
   identifierScheme: string;
   relationshipType: string;
