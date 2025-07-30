@@ -461,50 +461,63 @@ public class MedicationProductCalculationService
       Map<PackageQuantity<MedicationProductDetails>, ProductSummary> innerPackageSummaries,
       Map<ProductQuantity<MedicationProductDetails>, ProductSummary> innnerProductSummaries,
       ProductSummary productSummary) {
-    Set<ModelLevel> packageLevels = modelConfiguration.getPackageLevels();
+    List<ModelLevel> packageLevels =
+        modelConfiguration.getPackageLevels().stream()
+            .sorted(ModelLevel.getModelLevelHierarchyComparator(modelConfiguration))
+            .toList();
 
     Map<ModelLevel, CompletableFuture<Node>> packageLevelFutures = new HashMap<>();
     for (ModelLevel packageLevel : packageLevels) {
+      Set<CompletableFuture<Node>> parents = new HashSet<>();
+
+      for (ModelLevel parent :
+          modelConfiguration.getParentModelLevels(packageLevel.getModelLevelType())) {
+        CompletableFuture<Node> parentFuture = packageLevelFutures.get(parent);
+        if (parentFuture != null) {
+          parents.add(parentFuture);
+        }
+      }
+
       packageLevelFutures.put(
           packageLevel,
-          getOrCreatePackagedClinicalDrug(
-                  branch,
-                  packageDetails,
-                  innerPackageSummaries,
-                  innnerProductSummaries,
-                  packageLevel,
-                  atomicCache)
-              .thenApply(
-                  n -> {
-                    generateName(
-                        atomicCache,
-                        packageDetails.hasDeviceType(),
-                        packageLevel,
-                        n,
-                        modelConfiguration);
-                    productSummary.addNode(n);
-                    return n;
+          CompletableFuture.allOf(parents.toArray(new CompletableFuture[parents.size()]))
+              .thenCompose(
+                  p -> {
+                    Set<Node> parentNodes =
+                        parents.stream().map(CompletableFuture::join).collect(Collectors.toSet());
+
+                    return getOrCreatePackagedClinicalDrug(
+                            branch,
+                            packageDetails,
+                            parentNodes,
+                            innerPackageSummaries,
+                            innnerProductSummaries,
+                            packageLevel,
+                            atomicCache)
+                        .thenApply(
+                            node -> {
+                              generateName(
+                                  atomicCache,
+                                  packageDetails.hasDeviceType(),
+                                  packageLevel,
+                                  node,
+                                  modelConfiguration);
+                              productSummary.addNode(node);
+                              parentNodes.forEach(
+                                  parentNode -> {
+                                    productSummary.addEdge(
+                                        node.getConceptId(),
+                                        parentNode.getConceptId(),
+                                        ProductSummaryService.IS_A_LABEL);
+                                  });
+                              return node;
+                            });
                   }));
     }
 
-    Map<ModelLevelType, Node> packageNodeMap =
-        packageLevelFutures.values().stream()
-            .map(CompletableFuture::join)
-            .collect(Collectors.toMap(Node::getModelLevel, n -> n));
-
-    for (Node node : packageNodeMap.values()) {
-      for (ModelLevel modelLevelType :
-          modelConfiguration.getParentModelLevels(node.getModelLevel())) {
-        Node parentNode = packageNodeMap.get(modelLevelType.getModelLevelType());
-        if (parentNode != null) {
-          addParent(node, parentNode, modelConfiguration.getModuleId());
-          productSummary.addEdge(
-              node.getConceptId(), parentNode.getConceptId(), ProductSummaryService.IS_A_LABEL);
-        }
-      }
-    }
-
-    return packageNodeMap;
+    return packageLevelFutures.values().stream()
+        .map(CompletableFuture::join)
+        .collect(Collectors.toMap(Node::getModelLevel, n -> n));
   }
 
   /**
@@ -586,6 +599,7 @@ public class MedicationProductCalculationService
   private CompletableFuture<Node> getOrCreatePackagedClinicalDrug(
       String branch,
       PackageDetails<MedicationProductDetails> packageDetails,
+      Set<Node> parentNodes,
       Map<PackageQuantity<MedicationProductDetails>, ProductSummary> innerPackageSummaries,
       Map<ProductQuantity<MedicationProductDetails>, ProductSummary> innnerProductSummaries,
       ModelLevel packageLevel,
@@ -603,6 +617,7 @@ public class MedicationProductCalculationService
         createPackagedClinicalDrugRelationships(
             branch,
             packageDetails,
+            parentNodes,
             innerPackageSummaries,
             innnerProductSummaries,
             packageLevel.isBranded(),
@@ -638,6 +653,7 @@ public class MedicationProductCalculationService
   private Set<SnowstormRelationship> createPackagedClinicalDrugRelationships(
       String branch,
       PackageDetails<MedicationProductDetails> packageDetails,
+      Set<Node> parentNodes,
       Map<PackageQuantity<MedicationProductDetails>, ProductSummary> innerPackageSummaries,
       Map<ProductQuantity<MedicationProductDetails>, ProductSummary> innnerProductSummaries,
       boolean branded,
@@ -645,9 +661,16 @@ public class MedicationProductCalculationService
       ModelConfiguration modelConfiguration) {
 
     Set<SnowstormRelationship> relationships = new HashSet<>();
-    relationships.add(
-        getSnowstormRelationship(
-            IS_A, MEDICINAL_PRODUCT_PACKAGE, 0, modelConfiguration.getModuleId()));
+    if (parentNodes != null && !parentNodes.isEmpty()) {
+      for (Node parent : parentNodes) {
+        relationships.add(
+            getSnowstormRelationship(IS_A, parent, 0, modelConfiguration.getModuleId()));
+      }
+    } else {
+      relationships.add(
+          getSnowstormRelationship(
+              IS_A, MEDICINAL_PRODUCT_PACKAGE, 0, modelConfiguration.getModuleId()));
+    }
 
     if (modelConfiguration.getModelType().equals(ModelType.AMT) && branded && container) {
       addRelationshipIfNotNull(
@@ -828,29 +851,7 @@ public class MedicationProductCalculationService
     // sort the levels by their dependencies
     List<ModelLevel> productLevels =
         modelConfiguration.getProductLevels().stream()
-            .sorted(
-                (ModelLevel a, ModelLevel b) -> {
-                  Set<ModelLevel> ancestorsOfA =
-                      modelConfiguration.getAncestorModelLevels(a.getModelLevelType());
-                  Set<ModelLevel> ancestorsOfB =
-                      modelConfiguration.getAncestorModelLevels(b.getModelLevelType());
-
-                  // Compare by number of ancestors first
-                  int comparison = Integer.compare(ancestorsOfA.size(), ancestorsOfB.size());
-                  if (comparison != 0) {
-                    return comparison;
-                  }
-
-                  // If same number of ancestors, check if one is ancestor of the other
-                  if (ancestorsOfA.contains(b)) {
-                    return -1; // B is an ancestor of A, so A is more dependent
-                  } else if (ancestorsOfB.contains(a)) {
-                    return 1; // A is an ancestor of B, so B is more dependent
-                  }
-
-                  // Arbitrary ordering
-                  return a.getModelLevelType().compareTo(b.getModelLevelType());
-                })
+            .sorted(ModelLevel.getModelLevelHierarchyComparator(modelConfiguration))
             .toList();
 
     Map<ModelLevel, CompletableFuture<Node>> levelFutureMap = new HashMap<>();

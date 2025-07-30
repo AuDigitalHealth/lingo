@@ -17,7 +17,7 @@ package au.gov.digitalhealth.lingo.controllers;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.gov.digitalhealth.lingo.aspect.LogExecutionTime;
-import au.gov.digitalhealth.lingo.product.BrandCreationRequest;
+import au.gov.digitalhealth.lingo.product.PrimitiveConceptCreationRequest;
 import au.gov.digitalhealth.lingo.service.ProductCreationService;
 import au.gov.digitalhealth.lingo.service.TaskManagerService;
 import jakarta.validation.Valid;
@@ -43,11 +43,13 @@ public class QualifierController {
 
   @LogExecutionTime
   @PostMapping("/{branch}/qualifier/product-name")
-  public ResponseEntity<SnowstormConceptMini> createBrand(
-      @PathVariable String branch, @RequestBody @Valid BrandCreationRequest brandCreationRequest)
+  public ResponseEntity<SnowstormConceptMini> createPrimitive(
+      @PathVariable String branch,
+      @RequestBody @Valid PrimitiveConceptCreationRequest brandCreationRequest)
       throws InterruptedException {
     taskManagerService.validateTaskState(branch);
     return new ResponseEntity<>(
-        productCreationService.createBrand(branch, brandCreationRequest), HttpStatus.CREATED);
+        productCreationService.createPrimitiveConcept(branch, brandCreationRequest),
+        HttpStatus.CREATED);
   }
 }
