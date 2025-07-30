@@ -51,7 +51,7 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
     ? productUpdate?.details.updatedState.concept
     : undefined;
 
-  const branch = `/${applicationConfig?.apDefaultBranch}${branchKey ? `/${branchKey}` : ''}`;
+  const branch = `${applicationConfig?.apDefaultBranch}${branchKey ? `/${branchKey}` : ''}`;
 
   const { data: currentConcept, isFetching } = useSearchConceptByIdNoCache(
     updatedConcept?.conceptId,
