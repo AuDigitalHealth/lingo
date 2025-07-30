@@ -93,6 +93,11 @@ public class Node {
     this.label = level.getDisplayLabel();
     this.displayName = level.getName();
     this.modelLevel = level.getModelLevelType();
+    this.nonDefiningProperties = new HashSet<>();
+    this.relationships = new HashSet<>();
+    this.axioms = new HashSet<>();
+    this.historicalAssociations = new HashSet<>();
+    this.conceptOptions = Collections.emptyList();
   }
 
   public static Comparator<@Valid Node> getNewNodeComparator(Set<Node> nodeSet) {
