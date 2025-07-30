@@ -22,9 +22,14 @@ import {
   findDiscriminatorSchema,
   getDiscriminatorProperty,
   getDiscriminatorValue,
+  PREFIX_MISSING_NONDEFINING_PROPERTIES,
   removeNullFields,
 } from './validationHelper';
 import { isEmptyObject } from './helpers';
+import {
+  getNonDefiningSchemaFromPath,
+  getUiSchemaNodeAtPath,
+} from './rjsfUtils.ts';
 
 // Interface to hold discriminator context for recursive processing
 interface DiscriminatorContext {
@@ -249,16 +254,27 @@ export const customTransformErrors = (
           stack: '',
         };
 
+        // CORRECTED: Handle required errors differently for non-defining properties
         if (error.keyword === 'required') {
           const missingProperty = error.params?.missingProperty;
-          newError.property = newError.property
-            ? `${newError.property}.${missingProperty}`
-            : `.${missingProperty}`;
-          newError.instancePath = newError.instancePath
-            ? `${newError.instancePath}/${missingProperty}`
-            : `/${missingProperty}`;
-          newError.message = 'Field must be populated';
-          newError.stack = `${newError.message} "${missingProperty}" (at ${newError.property})`;
+
+          // Check if this is a non-defining property error with special handling
+          if (error.data && error.data.identifierScheme) {
+            // For non-defining property errors, keep the original instancePath
+            // Don't modify it - RJSF needs the exact path to the array/field
+            newError.message = error.message;
+            newError.stack = `${error.stack} (at ${newError.property})`;
+          } else {
+            // Standard required field handling
+            newError.property = newError.property
+              ? `${newError.property}.${missingProperty}`
+              : `.${missingProperty}`;
+            newError.instancePath = newError.instancePath
+              ? `${newError.instancePath}/${missingProperty}`
+              : `/${missingProperty}`;
+            newError.message = 'Field must be populated';
+            newError.stack = `${newError.message} "${missingProperty}" (at ${newError.property})`;
+          }
         } else if (
           (error.keyword === 'type' && error.data === null) ||
           (error.keyword === 'minProperties' && isEmptyObject(error.data))
@@ -270,7 +286,11 @@ export const customTransformErrors = (
           newError.property = newError.property
             ? `${newError.property}.${invalidProperty}`
             : `.${invalidProperty}`;
-          newError.message = `Invalid field ${invalidProperty}${context ? ` for ${context.discriminatorProperty || 'discriminator'}=${context.discriminatorValue || 'undefined'}` : ''}`;
+          newError.message = `Invalid field ${invalidProperty}${
+            context
+              ? ` for ${context.discriminatorProperty || 'discriminator'}=${context.discriminatorValue || 'undefined'}`
+              : ''
+          }`;
           newError.stack = `${newError.message} (at ${newError.property})`;
         } else if (error.keyword === 'enum') {
           newError.message = 'Please select a valid option';
@@ -314,7 +334,7 @@ export const validator = (() => {
   });
 
   return {
-    validateFormData: (formData: any, schema: any) => {
+    validateFormData: (formData: any, schema: any, uiSchema: any) => {
       const cleanedFormData = removeNullFields(formData);
 
       const now = new Date().toISOString();
@@ -324,12 +344,97 @@ export const validator = (() => {
       const validate = ajvMain.compile(schema);
       const valid = validate(cleanedFormData);
 
-      const errors = customTransformErrors(
-        validate.errors || [],
-        cleanedFormData,
-        schema,
-      );
+      // Collect AJV errors first
+      const ajvErrors = validate.errors || [];
 
+      //Collect nondefining property errors
+      const nonDefiningErrors: ErrorObject[] = [];
+
+      const validateNonDefining = (
+        node: any,
+        uiSchema: any,
+        currentPath: string[] = [],
+      ) => {
+        if (node && typeof node === 'object') {
+          if (Array.isArray(node.nonDefiningProperties)) {
+            const arrPath = [...currentPath, 'nonDefiningProperties'];
+            const nonDefProps = node.nonDefiningProperties;
+            const uiSchemaNode = getUiSchemaNodeAtPath(uiSchema, arrPath);
+            const mandatorySchemes: string[] =
+              uiSchemaNode?.['ui:options']?.mandatorySchemes || [];
+            const nonDefSchema = getNonDefiningSchemaFromPath(
+              schema,
+              currentPath,
+            );
+            const missingSchemes: string[] = [];
+
+            mandatorySchemes.forEach((scheme: string) => {
+              const existingItemIndex = nonDefProps.findIndex(
+                (item: any) => item.identifierScheme === scheme,
+              );
+
+              const matchingSchema = (nonDefSchema?.anyOf || []).find(
+                (branch: any) =>
+                  branch?.properties?.identifierScheme?.const === scheme,
+              );
+
+              if (!matchingSchema) {
+                console.warn(`No schema found for scheme: ${scheme}`);
+                return;
+              }
+
+              if (existingItemIndex === -1) {
+                missingSchemes.push(scheme);
+              }
+            });
+
+            if (missingSchemes.length > 0) {
+              const missingTitles = missingSchemes.map(scheme => {
+                const matchingSchema = (nonDefSchema?.anyOf || []).find(
+                  (branch: any) =>
+                    branch?.properties?.identifierScheme?.const === scheme,
+                );
+                return matchingSchema?.title || scheme;
+              });
+
+              nonDefiningErrors.push({
+                instancePath: `/${arrPath.join('/')}`,
+                schemaPath: `#/properties/${arrPath.join('/properties/')}/items`,
+                keyword: 'required',
+                params: {
+                  missingProperty: 'multiple',
+                  missingSchemes: missingSchemes,
+                },
+                message: `${PREFIX_MISSING_NONDEFINING_PROPERTIES}${missingSchemes.join(',')}`,
+                stack: `Required fields missing: ${missingTitles.join(', ')}`,
+                data: {
+                  identifierScheme: 'SUMMARY',
+                  title: 'Missing Required Fields',
+                  fieldType: 'summary',
+                  missingSchemes: missingSchemes,
+                  missingTitles: missingTitles,
+                },
+              } as ErrorObject);
+            }
+          }
+
+          Object.entries(node).forEach(([key, value]) => {
+            if (typeof value === 'object' && value !== null) {
+              validateNonDefining(value, uiSchema, [...currentPath, key]);
+            }
+          });
+        }
+      };
+
+      validateNonDefining(cleanedFormData, uiSchema);
+
+      // Merge AJV errors with nonDefining errors
+      const allErrors = [...ajvErrors, ...nonDefiningErrors];
+
+      // Transform all errors
+      const errors = customTransformErrors(allErrors, cleanedFormData, schema);
+
+      // Convert errors to errorSchema
       const errorSchema = errors.reduce((acc: any, error: ErrorObject) => {
         let path = error.property ? error.property.replace(/^\./, '') : '';
         if (error.keyword === 'discriminator') {
@@ -359,6 +464,7 @@ export const validator = (() => {
 
       return { errors, formData: cleanedFormData, errorSchema };
     },
+
     isValid: (schema: any, formData: any, rootSchema: any) => {
       const schemaCopy = { ...schema };
       delete schemaCopy.$id;
@@ -371,6 +477,7 @@ export const validator = (() => {
         return false;
       }
     },
+
     toErrorList: (errorSchema: any, fieldName: string = 'root') => {
       const errors: any[] = [];
       const extractErrors = (obj: any, path: string = '') => {
@@ -394,6 +501,7 @@ export const validator = (() => {
       extractErrors(errorSchema);
       return errors;
     },
+
     transformErrors: (errors: ErrorObject[], formData: any, schema: any) =>
       customTransformErrors(errors, formData, schema),
   };

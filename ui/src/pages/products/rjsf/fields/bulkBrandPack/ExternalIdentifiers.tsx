@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Accordion,
   AccordionDetails,
@@ -28,6 +28,8 @@ import MultiValueEclAutocomplete from '../../components/MultiValueEclAutocomplet
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import DesktopDatePickerField from '../../components/DesktopDatePickerField.tsx';
 import { Tooltip } from 'antd';
+import { ErrorObject } from 'ajv';
+import { PREFIX_MISSING_NONDEFINING_PROPERTIES } from '../../helpers/validationHelper.ts';
 
 const SCHEME_COLORS = ['primary', 'secondary', 'success', 'error', 'warning'];
 
@@ -60,10 +62,30 @@ interface BindingConfig {
   };
 }
 
+// Helper function to extract errors for a specific scheme
+
+const isMissingMandatoryField = (
+  rawErrors: ErrorObject[] | undefined,
+  schemeName: string,
+): boolean => {
+  if (!rawErrors || !rawErrors.length) return false;
+
+  const errorMessage = rawErrors[0];
+
+  if (errorMessage.startsWith(PREFIX_MISSING_NONDEFINING_PROPERTIES)) {
+    const fieldsStr = errorMessage
+      .slice(PREFIX_MISSING_NONDEFINING_PROPERTIES.length)
+      .trim();
+    const fields = fieldsStr.split(',').map(s => s.trim());
+    return fields.includes(schemeName);
+  }
+
+  return false;
+};
 const ExternalIdentifiers: React.FC<
   FieldProps<NonDefiningProperty[]>
 > = props => {
-  const { onChange, schema, uiSchema, registry } = props;
+  const { onChange, schema, uiSchema, registry, rawErrors } = props;
   const {
     optionsByScheme = {},
     schemeLimits = {},
@@ -131,6 +153,7 @@ const ExternalIdentifiers: React.FC<
                       uiSchema={uiSchema}
                       registry={registry}
                       branch={task?.branchPath}
+                      rawErrors={rawErrors}
                     />
                   </Grid>
                 );
@@ -148,7 +171,7 @@ interface ExternalIdentifierRenderProps
 const ExternalIdentifierRender: React.FC<
   ExternalIdentifierRenderProps
 > = props => {
-  const { onChange, schema, uiSchema, registry, branch } = props;
+  const { onChange, schema, uiSchema, registry, branch, rawErrors } = props;
   const {
     optionsByScheme = {},
     schemeLimits = {},
@@ -175,6 +198,10 @@ const ExternalIdentifierRender: React.FC<
   const showDefaultOptionSchemes: string[] =
     uiSchema['ui:options']?.showDefaultOptionSchemes || [];
 
+  const mandatorySchemes: string[] =
+    uiSchema['ui:options']?.mandatorySchemes || [];
+  const isRequired = mandatorySchemes.includes(schemeName);
+
   const isMultiValued = multiValuedSchemes.includes(schemeName);
   const showDefaultOptions = showDefaultOptionSchemes.includes(schemeName);
   const isCheckBox = schema?.properties?.type?.const === 'REFERENCE_SET';
@@ -187,6 +214,11 @@ const ExternalIdentifierRender: React.FC<
 
   const hasEclBinding = (scheme: string): boolean =>
     !!bindingConfig[scheme]?.ecl;
+
+  const missingRequiredFieldError = isMissingMandatoryField(
+    rawErrors,
+    schemeName,
+  );
 
   const useValueSetAutocomplete = hasValueSetBinding(schemeName);
   const useEclAutocomplete = hasEclBinding(schemeName);
@@ -437,7 +469,10 @@ const ExternalIdentifierRender: React.FC<
             }
             onChange={handleChangeConcepts}
             disabled={readOnly ? true : false}
-            //   error={!!errorMessage}
+            required={isRequired}
+            errorMessage={
+              missingRequiredFieldError ? 'Field must be populated' : ''
+            }
           />
         )}
         {useEclAutocomplete && isMultiValued && (
@@ -448,8 +483,11 @@ const ExternalIdentifierRender: React.FC<
             onChange={handleChangeConcepts}
             showDefaultOptions={showDefaultOptions || false}
             isDisabled={readOnly ? true : false}
-            // errorMessage={errorMessage}
+            errorMessage={
+              missingRequiredFieldError ? 'Field must be populated' : ''
+            }
             title={schema.title}
+            required={isRequired}
           />
         )}
         {useEclAutocomplete && !isMultiValued && (
@@ -462,7 +500,10 @@ const ExternalIdentifierRender: React.FC<
             onChange={handleChangeConcepts}
             showDefaultOptions={showDefaultOptions || false}
             isDisabled={readOnly ? true : false}
-            // errorMessage={errorMessage}
+            errorMessage={
+              missingRequiredFieldError ? 'Field must be populated' : ''
+            }
+            required={isRequired}
             title={schema.title}
           />
         )}
@@ -506,8 +547,11 @@ const ExternalIdentifierRender: React.FC<
             value={schemeEntries?.[0]?.value ? schemeEntries[0].value : null}
             onChange={handleDateChange}
             disabled={readOnly ? true : false}
-            error={!!tooltip}
-            helperText={tooltip || ' '}
+            error={tooltip || missingRequiredFieldError}
+            helperText={
+              tooltip ||
+              (missingRequiredFieldError ? 'Field must be populated' : '')
+            }
           />
         )}
 
@@ -562,8 +606,11 @@ const ExternalIdentifierRender: React.FC<
                     }
                   }}
                   label={schema.title}
-                  error={!!tooltip}
-                  helperText={tooltip || ' '}
+                  error={tooltip || missingRequiredFieldError}
+                  helperText={
+                    tooltip ||
+                    (missingRequiredFieldError ? 'Field must be populated' : '')
+                  }
                   InputProps={{
                     ...params.InputProps,
                     endAdornment: (
@@ -623,8 +670,11 @@ const ExternalIdentifierRender: React.FC<
                   step: isNumber ? '0.01' : undefined,
                 },
               }}
-              error={!!tooltip}
-              helperText={tooltip || ' '}
+              error={tooltip || missingRequiredFieldError}
+              helperText={
+                tooltip ||
+                (missingRequiredFieldError ? 'Field must be populated' : '')
+              }
             />
           )}
       </Stack>
