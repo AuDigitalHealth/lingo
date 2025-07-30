@@ -32,9 +32,9 @@ import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.exception.NamespaceNotConfiguredProblem;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.exception.ResourceNotFoundProblem;
-import au.gov.digitalhealth.lingo.product.PrimitiveConceptCreationRequest;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
+import au.gov.digitalhealth.lingo.product.PrimitiveConceptCreationRequest;
 import au.gov.digitalhealth.lingo.product.ProductCreateUpdateDetails;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.bulk.BrandPackSizeCreationDetails;
@@ -437,7 +437,7 @@ public class ProductCreationService {
   }
 
   public SnowstormConceptMini createPrimitiveConcept(
-      String branch, @Valid PrimitiveConceptCreationRequest brandCreationRequest) throws InterruptedException {
+      String branch, @Valid PrimitiveConceptCreationRequest brandCreationRequest) {
 
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
@@ -456,7 +456,12 @@ public class ProductCreationService {
             generatedFsn,
             generatePT,
             Set.of(
-                getSnowstormRelationship(IS_A, brandCreationRequest.getParentConceptId(), brandCreationRequest.getParentConceptName(), 0, modelConfiguration.getModuleId())));
+                getSnowstormRelationship(
+                    IS_A,
+                    brandCreationRequest.getParentConceptId(),
+                    brandCreationRequest.getParentConceptName(),
+                    0,
+                    modelConfiguration.getModuleId())));
 
     return toSnowstormConceptMini(createdConcept);
   }

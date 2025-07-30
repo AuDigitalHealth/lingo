@@ -161,7 +161,8 @@ public class LingoTestClient {
         ProductSummary.class);
   }
 
-  public SnowstormConceptMini createPrimitive(PrimitiveConceptCreationRequest brandCreationRequest) {
+  public SnowstormConceptMini createPrimitive(
+      PrimitiveConceptCreationRequest brandCreationRequest) {
     return postRequest(
         "/api/MAIN/SNOMEDCT-AU/AUAMT/qualifier/product-name",
         brandCreationRequest,
