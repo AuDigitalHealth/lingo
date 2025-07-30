@@ -68,7 +68,7 @@ public class SchemaService {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     JsonNode uiSchemaNode = readFileContentAsJson(modelConfiguration.getBaseMedicationUiSchema());
 
-    uiSchemaExtender.updateUiSchema(modelConfiguration, uiSchemaNode);
+    uiSchemaExtender.updateUiSchema(modelConfiguration, uiSchemaNode,ProductType.MEDICATION);
 
     return uiSchemaNode.toString();
   }
@@ -86,7 +86,7 @@ public class SchemaService {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     JsonNode uiSchemaNode = readFileContentAsJson(modelConfiguration.getBaseDeviceUiSchema());
 
-    uiSchemaExtender.updateUiSchema(modelConfiguration, uiSchemaNode);
+    uiSchemaExtender.updateUiSchema(modelConfiguration, uiSchemaNode, ProductType.DEVICE);
 
     return uiSchemaNode.toString();
   }
@@ -104,7 +104,7 @@ public class SchemaService {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     JsonNode uiSchemaNode = readFileContentAsJson(modelConfiguration.getBaseBulkBrandUiSchema());
 
-    uiSchemaExtender.updateUiSchema(modelConfiguration, uiSchemaNode);
+    uiSchemaExtender.updateUiSchema(modelConfiguration, uiSchemaNode,ProductType.MEDICATION);
 
     return uiSchemaNode.toString();
   }
@@ -122,7 +122,7 @@ public class SchemaService {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     JsonNode uiSchemaNode = readFileContentAsJson(modelConfiguration.getBaseBulkPackUiSchema());
 
-    uiSchemaExtender.updateUiSchema(modelConfiguration, uiSchemaNode);
+    uiSchemaExtender.updateUiSchema(modelConfiguration, uiSchemaNode,ProductType.MEDICATION);
 
     return uiSchemaNode.toString();
   }
