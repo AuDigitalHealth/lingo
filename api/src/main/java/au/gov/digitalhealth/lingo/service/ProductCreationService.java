@@ -27,7 +27,6 @@ import au.gov.digitalhealth.lingo.configuration.NamespaceConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
-import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.exception.EmptyProductCreationProblem;
 import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.exception.NamespaceNotConfiguredProblem;
@@ -458,16 +457,7 @@ public class ProductCreationService {
             generatePT,
             Set.of(
                 getSnowstormRelationship(IS_A, PRODUCT_NAME, 0, modelConfiguration.getModuleId())));
-
-    if (!modelConfiguration
-        .getReferenceSetIdsForModelLevelTypes(ModelLevelType.PRODUCT_NAME)
-        .isEmpty()) {
-      // Add the brand to the reference set
-      addToRefset(
-          branch,
-          createdConcept.getConceptId(),
-          modelConfiguration.getReferenceSetIdForModelLevelType(ModelLevelType.PRODUCT_NAME));
-    }
+    
     return toSnowstormConceptMini(createdConcept);
   }
 
