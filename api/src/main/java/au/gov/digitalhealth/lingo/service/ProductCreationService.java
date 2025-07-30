@@ -27,15 +27,14 @@ import au.gov.digitalhealth.lingo.configuration.NamespaceConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
-import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.exception.EmptyProductCreationProblem;
 import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.exception.NamespaceNotConfiguredProblem;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.exception.ResourceNotFoundProblem;
-import au.gov.digitalhealth.lingo.product.BrandCreationRequest;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
+import au.gov.digitalhealth.lingo.product.PrimitiveConceptCreationRequest;
 import au.gov.digitalhealth.lingo.product.ProductCreateUpdateDetails;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.bulk.BrandPackSizeCreationDetails;
@@ -437,8 +436,8 @@ public class ProductCreationService {
     return productSummary;
   }
 
-  public SnowstormConceptMini createBrand(
-      String branch, @Valid BrandCreationRequest brandCreationRequest) throws InterruptedException {
+  public SnowstormConceptMini createPrimitiveConcept(
+      String branch, @Valid PrimitiveConceptCreationRequest brandCreationRequest) {
 
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
@@ -446,9 +445,9 @@ public class ProductCreationService {
     ticketService.findTicket(brandCreationRequest.getTicketId());
 
     // Generate the fully specified name (FSN) for the brand
-    String semanticTag = fieldBindingConfiguration.getBrandSemanticTag();
+    String semanticTag = brandCreationRequest.getSemanticTag();
 
-    String generatePT = generatePT(brandCreationRequest.getBrandName().trim(), semanticTag);
+    String generatePT = generatePT(brandCreationRequest.getConceptName().trim(), semanticTag);
     String generatedFsn = String.format("%s %s", generatePT, semanticTag);
 
     SnowstormConceptView createdConcept =
@@ -457,17 +456,13 @@ public class ProductCreationService {
             generatedFsn,
             generatePT,
             Set.of(
-                getSnowstormRelationship(IS_A, PRODUCT_NAME, 0, modelConfiguration.getModuleId())));
+                getSnowstormRelationship(
+                    IS_A,
+                    brandCreationRequest.getParentConceptId(),
+                    brandCreationRequest.getParentConceptName(),
+                    0,
+                    modelConfiguration.getModuleId())));
 
-    if (!modelConfiguration
-        .getReferenceSetIdsForModelLevelTypes(ModelLevelType.PRODUCT_NAME)
-        .isEmpty()) {
-      // Add the brand to the reference set
-      addToRefset(
-          branch,
-          createdConcept.getConceptId(),
-          modelConfiguration.getReferenceSetIdForModelLevelType(ModelLevelType.PRODUCT_NAME));
-    }
     return toSnowstormConceptMini(createdConcept);
   }
 

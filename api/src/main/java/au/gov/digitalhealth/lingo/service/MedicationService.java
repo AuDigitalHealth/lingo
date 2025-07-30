@@ -171,6 +171,75 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
     return ingredient;
   }
 
+  private static Map<String, SnowstormConceptMini> getClinicalDrugRelationships(
+      String productId,
+      Map<String, SnowstormConcept> browserMap,
+      Map<String, String> typeMap,
+      ModelConfiguration modelConfiguration,
+      ModelLevelType modelLevelType) {
+    String referenceSetIdentifier =
+        modelConfiguration.getLevelOfType(modelLevelType).getReferenceSetIdentifier();
+
+    String typeKey =
+        typeMap.entrySet().stream()
+            .filter(entry -> referenceSetIdentifier.equals(entry.getValue()))
+            .map(Map.Entry::getKey)
+            .findFirst()
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "No type found for reference set identifier: " + referenceSetIdentifier));
+
+    SnowstormConcept concept = browserMap.get(typeKey);
+
+    if (concept == null) {
+      throw new AtomicDataExtractionProblem("No " + modelLevelType + " found", productId);
+    }
+
+    // get the set of target active ingredients
+    final Set<SnowstormRelationship> relationshipsFromAxioms = getRelationshipsFromAxioms(concept);
+    Map<String, SnowstormConceptMini> activeIngredients =
+        filterActiveStatedRelationshipByType(
+                relationshipsFromAxioms, HAS_ACTIVE_INGREDIENT.getValue())
+            .stream()
+            .collect(Collectors.toMap(r -> r.getTarget().getConceptId(), r -> r.getTarget()));
+
+    Set<SnowstormRelationship> clinicalDrugPreciseIngredients =
+        filterActiveStatedRelationshipByType(
+            relationshipsFromAxioms, HAS_PRECISE_ACTIVE_INGREDIENT.getValue());
+
+    if (!clinicalDrugPreciseIngredients.isEmpty()) {
+      throw new AtomicDataExtractionProblem(
+          "Expected no precise ingredients on "
+              + modelLevelType
+              + " but found "
+              + clinicalDrugPreciseIngredients.size(),
+          productId);
+    }
+    return activeIngredients;
+  }
+
+  private static void populatePackSize(
+      Set<SnowstormRelationship> productRelationships, MedicationProductDetails productDetails) {
+    if (relationshipOfTypeExists(productRelationships, HAS_PACK_SIZE_UNIT.getValue())) {
+      productDetails.setQuantity(
+          new Quantity(
+              getSingleOptionalActiveBigDecimal(
+                  productRelationships, HAS_PACK_SIZE_VALUE.getValue()),
+              getSingleActiveTarget(productRelationships, HAS_PACK_SIZE_UNIT.getValue())));
+    }
+
+    if (relationshipOfTypeExists(
+        productRelationships, HAS_UNIT_OF_PRESENTATION_SIZE_QUANTITY.getValue())) {
+      productDetails.setQuantity(
+          new Quantity(
+              getSingleOptionalActiveBigDecimal(
+                  productRelationships, HAS_UNIT_OF_PRESENTATION_SIZE_QUANTITY.getValue()),
+              getSingleActiveTarget(
+                  productRelationships, HAS_UNIT_OF_PRESENTATION_SIZE_UNIT.getValue())));
+    }
+  }
+
   private void populateDoseForm(
       String branch,
       String productId,
@@ -227,8 +296,7 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
         if (ids.size() == 1) {
           mpuu = browserMap.get(ids.iterator().next());
         } else if (ids.isEmpty()) {
-          throw new AtomicDataExtractionProblem(
-              "No Clinical Drug level concept found for product", productId);
+          throw new AtomicDataExtractionProblem("No Clinical Drug level concept found", productId);
         } else {
           throw new AtomicDataExtractionProblem(
               "Expected 1 Clinical Drug level concept but found " + ids.size(), productId);
@@ -251,78 +319,6 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
       throw new AtomicDataExtractionProblem(
           "Expected manufactured dose form or device type, product has both", productId);
     }
-  }
-
-  private static void populatePackSize(
-      Set<SnowstormRelationship> productRelationships, MedicationProductDetails productDetails) {
-    if (relationshipOfTypeExists(productRelationships, HAS_PACK_SIZE_UNIT.getValue())) {
-      productDetails.setQuantity(
-          new Quantity(
-              getSingleOptionalActiveBigDecimal(
-                  productRelationships, HAS_PACK_SIZE_VALUE.getValue()),
-              getSingleActiveTarget(productRelationships, HAS_PACK_SIZE_UNIT.getValue())));
-    }
-
-    if (relationshipOfTypeExists(
-        productRelationships, HAS_UNIT_OF_PRESENTATION_SIZE_QUANTITY.getValue())) {
-      productDetails.setQuantity(
-          new Quantity(
-              getSingleOptionalActiveBigDecimal(
-                  productRelationships, HAS_UNIT_OF_PRESENTATION_SIZE_QUANTITY.getValue()),
-              getSingleActiveTarget(
-                  productRelationships, HAS_UNIT_OF_PRESENTATION_SIZE_UNIT.getValue())));
-    }
-  }
-
-  private static Map<String, SnowstormConceptMini> getClinicalDrugRelationships(
-      String productId,
-      Map<String, SnowstormConcept> browserMap,
-      Map<String, String> typeMap,
-      ModelConfiguration modelConfiguration,
-      ModelLevelType modelLevelType) {
-    String referenceSetIdentifier =
-        modelConfiguration.getLevelOfType(modelLevelType).getReferenceSetIdentifier();
-
-    String typeKey =
-        typeMap.entrySet().stream()
-            .filter(entry -> referenceSetIdentifier.equals(entry.getValue()))
-            .map(Map.Entry::getKey)
-            .findFirst()
-            .orElseThrow(
-                () ->
-                    new IllegalStateException(
-                        "No type found for reference set identifier: " + referenceSetIdentifier));
-
-    SnowstormConcept concept = browserMap.get(typeKey);
-
-    if (concept == null) {
-      throw new AtomicDataExtractionProblem(
-          "No " + modelLevelType + " found for product", productId);
-    }
-
-    // get the set of target active ingredients
-    final Set<SnowstormRelationship> relationshipsFromAxioms = getRelationshipsFromAxioms(concept);
-    Map<String, SnowstormConceptMini> activeIngredients =
-        filterActiveStatedRelationshipByType(
-                relationshipsFromAxioms, HAS_ACTIVE_INGREDIENT.getValue())
-            .stream()
-            .collect(Collectors.toMap(r -> r.getTarget().getConceptId(), r -> r.getTarget()));
-
-    Set<SnowstormRelationship> clinicalDrugPreciseIngredients =
-        filterActiveStatedRelationshipByType(
-            relationshipsFromAxioms, HAS_PRECISE_ACTIVE_INGREDIENT.getValue());
-
-    if (!clinicalDrugPreciseIngredients.isEmpty()) {
-      throw new AtomicDataExtractionProblem(
-          "Expected no precise ingredients on "
-              + modelLevelType
-              + " but found "
-              + clinicalDrugPreciseIngredients.size()
-              + " for product "
-              + productId,
-          productId);
-    }
-    return activeIngredients;
   }
 
   @Override

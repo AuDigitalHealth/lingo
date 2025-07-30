@@ -228,6 +228,15 @@ public class SnowstormDtoUtil {
   }
 
   public static SnowstormRelationship getSnowstormRelationship(
+      LingoConstants type, String destinationId, String destinationName, int group, String moduleId) {
+    SnowstormRelationship relationship =
+        createBaseSnowstormRelationship(type, group, STATED_RELATIONSHIP, moduleId);
+    relationship.setConcrete(false);
+    relationship.setDestinationId(destinationId);
+    relationship.setTarget(toSnowstormConceptMini(destinationId, destinationName));
+    return relationship;
+  }
+  public static SnowstormRelationship getSnowstormRelationship(
       LingoConstants type, Node destination, int group, String moduleId) {
     SnowstormRelationship relationship =
         createBaseSnowstormRelationship(type, group, STATED_RELATIONSHIP, moduleId);
