@@ -142,7 +142,7 @@ function MedicationAuthoring({
 
   const handleFormSubmit = ({ formData }: { formData: any }) => {
     setSelectedConceptIdentifiers([]);
-    const validation = validator.validateFormData(formData, schema);
+    const validation = validator.validateFormData(formData, schema, uiSchema);
     setFormErrors(validation.errors);
     setFormData(formData);
     mutation.mutate({
@@ -257,7 +257,11 @@ function MedicationAuthoring({
             onChange={handleChange}
             onSubmit={handleFormSubmit}
             onError={onError}
-            validator={validator}
+            validator={{
+              ...validator,
+              validateFormData: (formData, schema) =>
+                validator.validateFormData(formData, schema, uiSchema),
+            }}
             disabled={mutation.isPending}
             noHtml5Validate={true}
             noValidate={false}
