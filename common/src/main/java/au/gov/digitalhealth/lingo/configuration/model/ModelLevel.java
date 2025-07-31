@@ -24,6 +24,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.util.Comparator;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Data;
@@ -118,6 +119,32 @@ public class ModelLevel {
     } else {
       return rootLevel.iterator().next();
     }
+  }
+
+  public static Comparator<ModelLevel> getModelLevelHierarchyComparator(
+      ModelConfiguration modelConfiguration) {
+    return (ModelLevel a, ModelLevel b) -> {
+      Set<ModelLevel> ancestorsOfA =
+          modelConfiguration.getAncestorModelLevels(a.getModelLevelType());
+      Set<ModelLevel> ancestorsOfB =
+          modelConfiguration.getAncestorModelLevels(b.getModelLevelType());
+
+      // Compare by number of ancestors first
+      int comparison = Integer.compare(ancestorsOfA.size(), ancestorsOfB.size());
+      if (comparison != 0) {
+        return comparison;
+      }
+
+      // If same number of ancestors, check if one is ancestor of the other
+      if (ancestorsOfA.contains(b)) {
+        return -1; // B is an ancestor of A, so A is more dependent
+      } else if (ancestorsOfB.contains(a)) {
+        return 1; // A is an ancestor of B, so B is more dependent
+      }
+
+      // Arbitrary ordering
+      return a.getModelLevelType().compareTo(b.getModelLevelType());
+    };
   }
 
   public boolean isLeafLevel(Set<ModelLevel> levels) {

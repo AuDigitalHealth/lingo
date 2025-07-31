@@ -91,6 +91,7 @@ public class ProductSummary implements Serializable {
       Node node = new Node(conceptSummary, modelLevel);
       node.setModelLevel(modelLevel.getModelLevelType());
       node.setDisplayName(modelLevel.getName());
+      node.getNonDefiningProperties().add(modelLevel.createMarkerRefset());
       addNode(node);
       return node;
     }

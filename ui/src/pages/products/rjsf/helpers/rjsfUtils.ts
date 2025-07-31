@@ -15,6 +15,7 @@
 ///
 
 import _, { get } from 'lodash';
+import { resolveRef } from './validationHelper.ts';
 
 /**
  * Utility class for converting between RJSF IDs and Lodash paths
@@ -186,6 +187,84 @@ export class RjsfUtils {
     _.set(rootUiSchema, lodashPath, value);
   }
 }
+export const getUiSchemaNodeAtPath = (uiSchema: any, path: string[]): any => {
+  return path.reduce((node, segment) => {
+    if (!node) return undefined;
+
+    if (/^\d+$/.test(segment)) {
+      return node.items || node[segment];
+    }
+    return node[segment];
+  }, uiSchema);
+};
+const getSchemaNodeAtPath = (schema: any, path: string[]): any => {
+  let currentSchema = schema;
+
+  for (const segment of path) {
+    if (!currentSchema) return null;
+
+    if (currentSchema.$ref) {
+      currentSchema = resolveRef(schema, currentSchema.$ref);
+      if (!currentSchema) return null;
+    }
+    if (/^\d+$/.test(segment)) {
+      if (currentSchema.type === 'array' || currentSchema.items) {
+        currentSchema = currentSchema.items;
+        continue;
+      } else return null;
+    }
+
+    if (segment === '[*]') {
+      currentSchema = currentSchema.items || null;
+      continue;
+    }
+    if (currentSchema.anyOf || currentSchema.oneOf) {
+      const branches = currentSchema.anyOf || currentSchema.oneOf;
+      let foundSchema = null;
+      for (const branch of branches) {
+        if (branch.properties && segment in branch.properties) {
+          foundSchema = branch.properties[segment];
+          break;
+        }
+      }
+      if (foundSchema) {
+        currentSchema = foundSchema;
+        continue;
+      } else return null;
+    }
+
+    if (currentSchema.properties && segment in currentSchema.properties) {
+      currentSchema = currentSchema.properties[segment];
+    } else return null;
+  }
+
+  if (currentSchema?.$ref) {
+    currentSchema = resolveRef(schema, currentSchema.$ref);
+  }
+
+  return currentSchema;
+};
+
+export const getNonDefiningSchemaFromPath = (
+  schema: any,
+  currentPath: string[],
+): any => {
+  const nonDefSchemaNode = getSchemaNodeAtPath(schema, [
+    ...currentPath,
+    'nonDefiningProperties',
+  ]);
+  if (!nonDefSchemaNode) return null;
+
+  if (nonDefSchemaNode?.anyOf) {
+    return nonDefSchemaNode;
+  }
+
+  if (nonDefSchemaNode.type === 'array' && nonDefSchemaNode.items?.$ref) {
+    return resolveRef(schema, nonDefSchemaNode.items?.$ref);
+  }
+
+  return null;
+};
 
 export const evaluateExpression = (
   expression: string,
