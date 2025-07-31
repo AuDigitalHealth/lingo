@@ -270,79 +270,79 @@ public class DeviceProductCalculationService
     }
 
     Map<ModelLevel, CompletableFuture<Node>> packageLevelNodes = new HashMap<>();
-    modelConfiguration
-        .getPackageLevels()
+    modelConfiguration.getPackageLevels().stream()
+        .sorted(ModelLevel.getModelLevelHierarchyComparator(modelConfiguration))
         .forEach(
-            level ->
-                packageLevelNodes.put(
-                    level,
-                    getPackageNode(
-                        branch,
-                        packageDetails,
-                        cache,
-                        innerProductSummaries,
-                        productSummary,
-                        level)));
+            level -> {
+              Set<CompletableFuture<Node>> parents = new HashSet<>();
+
+              for (ModelLevel parent :
+                  modelConfiguration.getParentModelLevels(level.getModelLevelType())) {
+                CompletableFuture<Node> parentFuture = packageLevelNodes.get(parent);
+                if (parentFuture != null) {
+                  parents.add(parentFuture);
+                }
+              }
+              packageLevelNodes.put(
+                  level,
+                  CompletableFuture.allOf(parents.toArray(new CompletableFuture[0]))
+                      .thenCompose(
+                          ignoredVoid -> {
+                            Set<Node> parentNodes =
+                                parents.stream()
+                                    .map(CompletableFuture::join)
+                                    .collect(Collectors.toSet());
+
+                            return getPackageNode(
+                                    branch,
+                                    packageDetails,
+                                    parentNodes,
+                                    cache,
+                                    innerProductSummaries,
+                                    productSummary,
+                                    level)
+                                .thenApply(
+                                    node -> {
+                                      parentNodes.forEach(
+                                          parentNode -> {
+                                            productSummary.addEdge(
+                                                node.getConceptId(),
+                                                parentNode.getConceptId(),
+                                                ProductSummaryService.IS_A_LABEL);
+                                          });
+                                      if (node.isNewConcept()) {
+                                        String mppPreferredTerm =
+                                            calculatePreferredTerm(
+                                                innerProductSummaries,
+                                                level.getModelLevelType(),
+                                                packageDetails.getContainerType());
+                                        node.getNewConceptDetails()
+                                            .setPreferredTerm(mppPreferredTerm);
+                                        node.getNewConceptDetails()
+                                            .setFullySpecifiedName(
+                                                mppPreferredTerm
+                                                    + " ("
+                                                    + level.getDeviceSemanticTag()
+                                                    + ")");
+                                      }
+                                      if (modelConfiguration.getModelType().equals(ModelType.AMT)
+                                          && level.isBranded()) {
+                                        ModelLevel tpLevel =
+                                            modelConfiguration.getLevelOfType(
+                                                ModelLevelType.PRODUCT_NAME);
+                                        productSummary.addNode(
+                                            packageDetails.getProductName(), tpLevel);
+                                        productSummary.addEdge(
+                                            node.getConceptId(),
+                                            packageDetails.getProductName().getConceptId(),
+                                            ProductSummaryService.HAS_PRODUCT_NAME_LABEL);
+                                      }
+                                      return node;
+                                    });
+                          }));
+            });
 
     CompletableFuture.allOf(packageLevelNodes.values().toArray(CompletableFuture[]::new)).join();
-
-    packageLevelNodes.forEach(
-        (type, nodeFuture) -> {
-          Node node = nodeFuture.join();
-          if (node.isNewConcept()) {
-            String mppPreferredTerm =
-                calculatePreferredTerm(
-                    innerProductSummaries,
-                    type.getModelLevelType(),
-                    packageDetails.getContainerType());
-            node.getNewConceptDetails().setPreferredTerm(mppPreferredTerm);
-            node.getNewConceptDetails()
-                .setFullySpecifiedName(mppPreferredTerm + " (" + type.getDeviceSemanticTag() + ")");
-          }
-
-          if (modelConfiguration.getModelType().equals(ModelType.AMT) && type.isBranded()) {
-            ModelLevel tpLevel = modelConfiguration.getLevelOfType(ModelLevelType.PRODUCT_NAME);
-            productSummary.addNode(packageDetails.getProductName(), tpLevel);
-            productSummary.addEdge(
-                node.getConceptId(),
-                packageDetails.getProductName().getConceptId(),
-                ProductSummaryService.HAS_PRODUCT_NAME_LABEL);
-          }
-        });
-
-    // once the names are set, we can add the isa relationships - names for new concepts are set
-    // in these isa relationships and used in the diagram display
-    packageLevelNodes.forEach(
-        (type, nodeFuture) -> {
-          Node node = nodeFuture.join();
-          Set<ModelLevel> ancestorLevels =
-              modelConfiguration.getAncestorModelLevels(type.getModelLevelType());
-          if (!ancestorLevels.isEmpty()) {
-            Set<ModelLevel> parentLevels = ModelLevel.getLeafLevels(ancestorLevels);
-            ancestorLevels.forEach(
-                ancestorLevel -> {
-                  Node ancestorNode = packageLevelNodes.get(ancestorLevel).join();
-                  productSummary.addEdge(
-                      node.getConceptId(),
-                      ancestorNode.getConceptId(),
-                      ProductSummaryService.IS_A_LABEL);
-                  if (node.isNewConcept() && parentLevels.contains(ancestorLevel)) {
-                    node.getNewConceptDetails()
-                        .getAxioms()
-                        .forEach(
-                            axiom ->
-                                axiom
-                                    .getRelationships()
-                                    .add(
-                                        getSnowstormRelationship(
-                                            IS_A,
-                                            ancestorNode,
-                                            0,
-                                            modelConfiguration.getModuleId())));
-                  }
-                });
-          }
-        });
 
     productSummary.setSingleSubject(
         packageLevelNodes.get(modelConfiguration.getLeafPackageModelLevel()).join());
@@ -475,6 +475,7 @@ public class DeviceProductCalculationService
   private CompletableFuture<Node> getPackageNode(
       String branch,
       PackageDetails<DeviceProductDetails> packageDetails,
+      Set<Node> parents,
       AtomicCache cache,
       Map<ProductQuantity<DeviceProductDetails>, ProductSummary> innerProductSummaries,
       ProductSummary productSummary,
@@ -500,6 +501,7 @@ public class DeviceProductCalculationService
             getPackageRelationships(
                 modelLevel,
                 packageDetails,
+                parents,
                 innerProductSummaries,
                 containedLevel,
                 modelConfiguration),
@@ -535,11 +537,20 @@ public class DeviceProductCalculationService
   private Set<SnowstormRelationship> getPackageRelationships(
       ModelLevel modelLevel,
       PackageDetails<DeviceProductDetails> packageDetails,
+      Set<Node> parents,
       Map<ProductQuantity<DeviceProductDetails>, ProductSummary> innerProductSummaries,
       ModelLevel containedType,
       ModelConfiguration modelConfiguration) {
     Set<SnowstormRelationship> relationships = new HashSet<>();
-    relationships.add(getSnowstormRelationship(IS_A, PACKAGE, 0, modelConfiguration.getModuleId()));
+    if (parents != null && !parents.isEmpty()) {
+      for (Node parent : parents) {
+        relationships.add(
+            getSnowstormRelationship(IS_A, parent, 0, modelConfiguration.getModuleId()));
+      }
+    } else {
+      relationships.add(
+          getSnowstormRelationship(IS_A, PACKAGE, 0, modelConfiguration.getModuleId()));
+    }
     int group = 1;
     for (Entry<ProductQuantity<DeviceProductDetails>, ProductSummary> innerProductSummaryEntry :
         innerProductSummaries.entrySet()) {

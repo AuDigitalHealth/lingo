@@ -51,10 +51,11 @@ public class UiSchemaExtender {
     this.objectMapper = objectMapper;
   }
 
-  public void updateUiSchema(ModelConfiguration modelConfiguration, JsonNode uiSchemaNode) {
+  public void updateUiSchema(ModelConfiguration modelConfiguration, JsonNode uiSchemaNode,ProductType productType) {
     Set<BasePropertyDefinition> properties = new HashSet<>(modelConfiguration.getMappings());
     properties.addAll(modelConfiguration.getNonDefiningProperties());
     properties.addAll(modelConfiguration.getReferenceSets());
+    properties.removeIf(p -> p.getSuppressOnProductTypes().contains(productType));
 
     updateUiSchemaForType(uiSchemaNode, NON_DEFINING_PROPERTIES, properties);
   }
@@ -236,45 +237,54 @@ public class UiSchemaExtender {
 
       // Top-level properties
       if (nonDefiningPropertyBase.getValueSetReference() != null) {
-        binding.set("valueSet", objectMapper.valueToTree(nonDefiningPropertyBase.getValueSetReference()));
+        binding.set(
+            "valueSet", objectMapper.valueToTree(nonDefiningPropertyBase.getValueSetReference()));
       }
       if (nonDefiningPropertyBase.getEclBinding() != null) {
         binding.set("ecl", objectMapper.valueToTree(nonDefiningPropertyBase.getEclBinding()));
       }
-      if(nonDefiningPropertyBase.getCreateConceptPlaceholderText() != null){
-        binding.set("placeholder", objectMapper.valueToTree(nonDefiningPropertyBase.getCreateConceptPlaceholderText()));
+      if (nonDefiningPropertyBase.getCreateConceptPlaceholderText() != null) {
+        binding.set(
+            "placeholder",
+            objectMapper.valueToTree(nonDefiningPropertyBase.getCreateConceptPlaceholderText()));
       }
 
-// Create concept nested object
+      // Create concept nested object
       ObjectNode createConcept = null;
-      if(nonDefiningPropertyBase.getCreateConceptEcl() != null){
+      if (nonDefiningPropertyBase.getCreateConceptEcl() != null) {
         if (createConcept == null) {
           createConcept = objectMapper.createObjectNode();
         }
-        createConcept.set("ecl", objectMapper.valueToTree(nonDefiningPropertyBase.getCreateConceptEcl()));
+        createConcept.set(
+            "ecl", objectMapper.valueToTree(nonDefiningPropertyBase.getCreateConceptEcl()));
       }
-      if(nonDefiningPropertyBase.getCreateConceptSemanticTag() != null){
+      if (nonDefiningPropertyBase.getCreateConceptSemanticTag() != null) {
         if (createConcept == null) {
           createConcept = objectMapper.createObjectNode();
         }
-        createConcept.set("semanticTags", objectMapper.valueToTree(nonDefiningPropertyBase.getCreateConceptSemanticTag()));
+        createConcept.set(
+            "semanticTags",
+            objectMapper.valueToTree(nonDefiningPropertyBase.getCreateConceptSemanticTag()));
       }
-      if(nonDefiningPropertyBase.getCreateConceptParentId() != null){
+      if (nonDefiningPropertyBase.getCreateConceptParentId() != null) {
         if (createConcept == null) {
           createConcept = objectMapper.createObjectNode();
         }
-        createConcept.set("parentConceptId", objectMapper.valueToTree(nonDefiningPropertyBase.getCreateConceptParentId()));
+        createConcept.set(
+            "parentConceptId",
+            objectMapper.valueToTree(nonDefiningPropertyBase.getCreateConceptParentId()));
       }
-      if(nonDefiningPropertyBase.getCreateConceptParentName() != null){
+      if (nonDefiningPropertyBase.getCreateConceptParentName() != null) {
         if (createConcept == null) {
           createConcept = objectMapper.createObjectNode();
         }
-        createConcept.set("parentConceptName", objectMapper.valueToTree(nonDefiningPropertyBase.getCreateConceptParentName()));
+        createConcept.set(
+            "parentConceptName",
+            objectMapper.valueToTree(nonDefiningPropertyBase.getCreateConceptParentName()));
       }
       if (createConcept != null) {
         binding.set("createConcept", createConcept);
       }
-
     }
 
     if (m.isReadOnly()) {

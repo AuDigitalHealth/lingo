@@ -48,7 +48,12 @@ class QualifierControllerTest extends LingoTestBase {
     Ticket ticketResponse = getLingoTestClient().createTicket("Create Brand Test");
     String randomBrandName = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
     PrimitiveConceptCreationRequest brandCreationRequest =
-        new PrimitiveConceptCreationRequest(randomBrandName, "774167006", "Product name (product name)", "(product name)",ticketResponse.getId());
+        new PrimitiveConceptCreationRequest(
+            randomBrandName,
+            "774167006",
+            "Product name (product name)",
+            "(product name)",
+            ticketResponse.getId());
     SnowstormConceptMini createdBrand = getLingoTestClient().createPrimitive(brandCreationRequest);
     Assertions.assertThat(Long.parseLong(createdBrand.getConceptId())).isPositive();
     Assertions.assertThat(createdBrand.getPt().getTerm()).isEqualTo(randomBrandName);
