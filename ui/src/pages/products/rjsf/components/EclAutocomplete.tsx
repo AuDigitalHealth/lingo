@@ -3,6 +3,7 @@ import { Autocomplete, CircularProgress, TextField } from '@mui/material';
 import { Concept, ConceptMini } from '../../../../types/concept.ts';
 import { useSearchConceptsByEcl } from '../../../../hooks/api/useInitializeConcepts.tsx';
 import { FieldProps } from '@rjsf/utils';
+import useApplicationConfigStore from '../../../../stores/ApplicationConfigStore.ts';
 
 const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
   const {
@@ -22,7 +23,9 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
     turnOffPublishParam,
   } = props;
 
-  const [inputValue, setInputValue] = useState<string>(value?.pt?.term || '');
+  const apLanguageHeader = useApplicationConfigStore.getState().applicationConfig
+                ?.apLanguageHeader;
+  const [inputValue, setInputValue] = useState<Concept>(value || createEmptyConcept(apLanguageHeader));
   const [options, setOptions] = useState<Concept[]>(
     value ? [value as Concept] : [],
   );
@@ -32,7 +35,7 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
   // Clear state when disabled
   useEffect(() => {
     if (disabled) {
-      setInputValue('');
+      setInputValue(createEmptyConcept(apLanguageHeader));
       setOptions([]);
       if (value) {
         onChange(null);
@@ -41,7 +44,7 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
   }, [disabled, onChange, value]);
 
   const { isLoading, allData } = useSearchConceptsByEcl(
-    inputValue,
+    inputValue?.pt?.term,
     ecl && ecl.length > 0 && !disabled ? ecl : undefined,
     branch,
     (showDefaultOptions as boolean) && !disabled,
@@ -76,6 +79,7 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
   }, [value?.conceptId, disabled]);
 
   const handleProductChange = (selectedProduct: Concept | null) => {
+    debugger;
     if (disabled) return;
     if (selectedProduct) {
       const conceptMini: ConceptMini = {
@@ -84,10 +88,10 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
         fsn: selectedProduct.fsn,
       };
       onChange(conceptMini);
-      setInputValue(selectedProduct.pt?.term || '');
+      setInputValue(selectedProduct);
     } else {
       onChange(null);
-      setInputValue('');
+      setInputValue(createEmptyConcept(apLanguageHeader));
     }
   };
 
@@ -101,11 +105,13 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
         options={disabled ? [] : options}
         getOptionLabel={(option: Concept) => option?.pt?.term || ''}
         value={
-          options.find(option => option.conceptId === value?.conceptId) || null
+          value
+          // options.find(option => option.conceptId === value?.conceptId) || value
         }
-        inputValue={inputValue}
-        onInputChange={(event, newInputValue) =>
-          !disabled && setInputValue(newInputValue)
+        inputValue={inputValue?.pt?.term}
+        onInputChange={(event, newInputValue) =>{
+          // debugger;
+          !disabled && handleProductChange(createEmptyConcept(apLanguageHeader, newInputValue))}
         }
         onChange={(event, selectedValue) =>
           handleProductChange(selectedValue as Concept)
@@ -156,5 +162,24 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
     </span>
   );
 };
+
+function createEmptyConcept(preferredLanguageCode: string, term?: string ): Concept {
+  return {
+    conceptId: undefined,
+    active: undefined,
+    definitionStatus: null,
+    moduleId: null,
+    effectiveTime: null,
+    pt: { lang: preferredLanguageCode, term: term || '', semanticTag: undefined },
+    fsn: { lang: preferredLanguageCode, term: term || '', semanticTag: undefined },
+    descendantCount: null,
+    isLeafInferred: null,
+    relationships: [],
+    classAxioms: [],
+    gciAxioms: [],
+    id: null,
+    idAndFsnTerm: null
+  };
+}
 
 export default EclAutocomplete;
