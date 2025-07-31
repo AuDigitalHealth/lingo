@@ -27,15 +27,14 @@ import au.gov.digitalhealth.lingo.configuration.NamespaceConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
-import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.exception.EmptyProductCreationProblem;
 import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.exception.NamespaceNotConfiguredProblem;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.exception.ResourceNotFoundProblem;
-import au.gov.digitalhealth.lingo.product.PrimitiveConceptCreationRequest;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
+import au.gov.digitalhealth.lingo.product.PrimitiveConceptCreationRequest;
 import au.gov.digitalhealth.lingo.product.ProductCreateUpdateDetails;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.bulk.BrandPackSizeCreationDetails;
@@ -438,7 +437,7 @@ public class ProductCreationService {
   }
 
   public SnowstormConceptMini createPrimitiveConcept(
-      String branch, @Valid PrimitiveConceptCreationRequest brandCreationRequest) throws InterruptedException {
+      String branch, @Valid PrimitiveConceptCreationRequest brandCreationRequest) {
 
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
@@ -457,17 +456,13 @@ public class ProductCreationService {
             generatedFsn,
             generatePT,
             Set.of(
-                getSnowstormRelationship(IS_A, brandCreationRequest.getParentConceptId(), brandCreationRequest.getParentConceptName(), 0, modelConfiguration.getModuleId())));
+                getSnowstormRelationship(
+                    IS_A,
+                    brandCreationRequest.getParentConceptId(),
+                    brandCreationRequest.getParentConceptName(),
+                    0,
+                    modelConfiguration.getModuleId())));
 
-    if (!modelConfiguration
-        .getReferenceSetIdsForModelLevelTypes(ModelLevelType.PRODUCT_NAME)
-        .isEmpty()) {
-      // Add the brand to the reference set
-      addToRefset(
-          branch,
-          createdConcept.getConceptId(),
-          modelConfiguration.getReferenceSetIdForModelLevelType(ModelLevelType.PRODUCT_NAME));
-    }
     return toSnowstormConceptMini(createdConcept);
   }
 

@@ -15,7 +15,8 @@
 ///
 
 import _, { cloneDeep, get, set } from 'lodash';
-
+export const PREFIX_MISSING_NONDEFINING_PROPERTIES =
+  'Non-defining property missing required fields:';
 // Resolve a $ref in the schema
 export const resolveRef = (
   schema: Record<string, any>,

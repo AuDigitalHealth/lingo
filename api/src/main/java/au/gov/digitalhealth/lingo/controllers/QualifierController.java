@@ -44,10 +44,12 @@ public class QualifierController {
   @LogExecutionTime
   @PostMapping("/{branch}/qualifier/product-name")
   public ResponseEntity<SnowstormConceptMini> createPrimitive(
-      @PathVariable String branch, @RequestBody @Valid PrimitiveConceptCreationRequest brandCreationRequest)
+      @PathVariable String branch,
+      @RequestBody @Valid PrimitiveConceptCreationRequest brandCreationRequest)
       throws InterruptedException {
     taskManagerService.validateTaskState(branch);
     return new ResponseEntity<>(
-        productCreationService.createPrimitiveConcept(branch, brandCreationRequest), HttpStatus.CREATED);
+        productCreationService.createPrimitiveConcept(branch, brandCreationRequest),
+        HttpStatus.CREATED);
   }
 }
