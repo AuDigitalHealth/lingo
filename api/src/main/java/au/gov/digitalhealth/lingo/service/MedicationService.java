@@ -20,6 +20,7 @@ import static au.gov.digitalhealth.lingo.util.AmtConstants.CONCENTRATION_STRENGT
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONTAINS_PACKAGED_CD;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_CONTAINER_TYPE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_DEVICE_TYPE;
+import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_TOTAL_QUANTITY_UNIT;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_TOTAL_QUANTITY_VALUE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.ADDITIONAL_RELATIONSHIP;
@@ -51,6 +52,7 @@ import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.filterActiveState
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getActiveRelationshipsInRoleGroup;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getRelationshipsFromAxioms;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getSingleActiveBigDecimal;
+import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getSingleActiveConcreteValue;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getSingleActiveTarget;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getSingleOptionalActiveBigDecimal;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getSingleOptionalActiveTarget;
@@ -76,6 +78,7 @@ import au.gov.digitalhealth.lingo.util.NmpcType;
 import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -241,18 +244,39 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
   }
 
   private void populateDoseForm(
+      String productId,
+      SnowstormConcept product,
+      MedicationProductDetails productDetails,
+      SnowstormConcept mpuu) {
+
+    Set<SnowstormRelationship> productRelationships = getRelationshipsFromAxioms(product);
+
+    SnowstormConceptMini genericDoseForm =
+        getSingleActiveTarget(
+            getRelationshipsFromAxioms(mpuu), HAS_MANUFACTURED_DOSE_FORM.getValue());
+
+    productDetails.setGenericForm(genericDoseForm);
+    SnowstormConceptMini specificDoseForm =
+        getSingleActiveTarget(productRelationships, HAS_MANUFACTURED_DOSE_FORM.getValue());
+    if (specificDoseForm.getConceptId() != null
+        && !specificDoseForm.getConceptId().equals(genericDoseForm.getConceptId())) {
+      productDetails.setSpecificForm(specificDoseForm);
+    }
+    if (relationshipOfTypeExists(productRelationships, HAS_DEVICE_TYPE.getValue())) {
+      throw new AtomicDataExtractionProblem(
+          "Expected manufactured dose form or device type, product has both", productId);
+    }
+  }
+
+  private SnowstormConcept getUnbrandedProduct(
       String branch,
       String productId,
       Map<String, SnowstormConcept> browserMap,
       Map<String, String> typeMap,
       ModelConfiguration modelConfiguration,
       SnowstormConcept product,
-      MedicationProductDetails productDetails) {
-
+      Set<SnowstormRelationship> productRelationships) {
     Set<SnowstormConcept> mpuuCandiates;
-
-    Set<SnowstormRelationship> productRelationships = getRelationshipsFromAxioms(product);
-
     mpuuCandiates =
         filterActiveStatedRelationshipByType(productRelationships, IS_A.getValue()).stream()
             .filter(
@@ -303,22 +327,7 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
         }
       }
     }
-
-    SnowstormConceptMini genericDoseForm =
-        getSingleActiveTarget(
-            getRelationshipsFromAxioms(mpuu), HAS_MANUFACTURED_DOSE_FORM.getValue());
-
-    productDetails.setGenericForm(genericDoseForm);
-    SnowstormConceptMini specificDoseForm =
-        getSingleActiveTarget(productRelationships, HAS_MANUFACTURED_DOSE_FORM.getValue());
-    if (specificDoseForm.getConceptId() != null
-        && !specificDoseForm.getConceptId().equals(genericDoseForm.getConceptId())) {
-      productDetails.setSpecificForm(specificDoseForm);
-    }
-    if (relationshipOfTypeExists(productRelationships, HAS_DEVICE_TYPE.getValue())) {
-      throw new AtomicDataExtractionProblem(
-          "Expected manufactured dose form or device type, product has both", productId);
-    }
+    return mpuu;
   }
 
   @Override
@@ -428,12 +437,74 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
       productDetails = new MedicationProductDetails();
     }
 
+    final SnowstormConcept unbrandedProduct =
+        getUnbrandedProduct(
+            branch,
+            productId,
+            browserMap,
+            typeMap,
+            modelConfiguration,
+            product,
+            productRelationships);
+
+    if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
+      Set<SnowstormRelationship> relationships =
+          filterActiveStatedRelationshipByType(
+              getRelationshipsFromAxioms(unbrandedProduct),
+              HAS_OTHER_IDENTIFYING_INFORMATION.getValue());
+
+      if (relationships.size() == 1) {
+        productDetails.setGenericOtherIdentifyingInformation(
+            relationships.iterator().next().getConcreteValue().getValue());
+      } else {
+        log.severe("There are more than one relationship found for unbranded product");
+      }
+
+      Set<SnowstormRelationship> brandedRelationships =
+          filterActiveStatedRelationshipByType(
+              productRelationships, HAS_OTHER_IDENTIFYING_INFORMATION.getValue());
+
+      if (brandedRelationships.size() == 1) {
+        productDetails.setOtherIdentifyingInformation(
+            brandedRelationships.iterator().next().getConcreteValue().getValue());
+      } else if (brandedRelationships.size() == 2
+          && productDetails.getGenericOtherIdentifyingInformation() != null) {
+        // if there are two relationships, one for branded and one for unbranded, use the branded
+        // one
+        // but only if the unbranded one is set
+        List<SnowstormRelationship> filteredRelationships =
+            relationships.stream()
+                .filter(
+                    r ->
+                        !r.getConcreteValue()
+                            .getValue()
+                            .equals(productDetails.getGenericOtherIdentifyingInformation()))
+                .toList();
+        if (filteredRelationships.size() == 1) {
+          productDetails.setOtherIdentifyingInformation(
+              filteredRelationships.get(0).getConcreteValue().getValue());
+        } else {
+          log.severe(
+              "There are more than one Has Other Identifying Information relationship found for branded product, expected 1 but found "
+                  + filteredRelationships.size());
+        }
+      } else {
+        log.severe(
+            "Single Has Other Identifying Information relationships cannot be found for branded product, found "
+                + brandedRelationships.size());
+      }
+
+    } else if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
+      productDetails.setOtherIdentifyingInformation(
+          getSingleActiveConcreteValue(
+              productRelationships, HAS_OTHER_IDENTIFYING_INFORMATION.getValue()));
+    }
+
     // manufactured dose form - need to detect generic and specific forms if present
     boolean hasDoseForm =
         relationshipOfTypeExists(productRelationships, HAS_MANUFACTURED_DOSE_FORM.getValue());
     if (hasDoseForm) {
-      populateDoseForm(
-          branch, productId, browserMap, typeMap, modelConfiguration, product, productDetails);
+      populateDoseForm(productId, product, productDetails, unbrandedProduct);
     }
 
     if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
