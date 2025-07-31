@@ -23,7 +23,7 @@ import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 import productService from '../../../api/ProductService.ts';
 import { ConfigService } from '../../../api/ConfigService.ts';
 import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
-import { customizeValidator } from '@rjsf/validator-ajv8';
+import { validator } from './helpers/validator.ts';
 import { Concept } from '../../../types/concept.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
 import { Task } from '../../../types/task.ts';
@@ -49,9 +49,6 @@ export interface DeviceAuthoringV2Props {
   ticket: Ticket;
   ticketProductId?: string;
 }
-
-const validator = customizeValidator();
-ajvErrors(validator.ajv);
 
 function DeviceAuthoring({
   task,
@@ -103,7 +100,7 @@ function DeviceAuthoring({
       setMode(data.action === 'UPDATE' ? 'update' : 'create');
       setFormData(data.packageDetails);
       setInitialFormData(data.packageDetails);
-      setOriginalConceptId(data.originalConceptId);
+      setOriginalConceptId(data.conceptId);
     },
   });
   const mutation = useCalculateProduct();
@@ -151,6 +148,7 @@ function DeviceAuthoring({
     }
     setMode(prevState => 'create');
     handleClearForm();
+    setOriginalConceptId(undefined);
   }, []);
 
   // Clear form data when task changes
@@ -225,7 +223,11 @@ function DeviceAuthoring({
               ArrayFieldTemplate: CustomArrayFieldTemplate,
               ObjectFieldTemplate: MuiGridTemplate,
             }}
-            validator={validator}
+            validator={{
+              ...validator,
+              validateFormData: (formData, schema) =>
+                validator.validateFormData(formData, schema, uiSchema),
+            }}
             widgets={{
               NumberWidget,
               TextFieldWidget,
