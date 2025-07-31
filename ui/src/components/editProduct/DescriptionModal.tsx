@@ -34,8 +34,8 @@ export default function DescriptionModal({
   const { branchKey } = useParams();
   const { applicationConfig } = useApplicationConfigStore();
   const fullBranch = branchKey
-    ? `/${applicationConfig.apDefaultBranch}/${branchKey}`
-    : `/${applicationConfig.apDefaultBranch}`;
+    ? `${applicationConfig.apDefaultBranch}/${branchKey}`
+    : `${applicationConfig.apDefaultBranch}`;
   const [displayRetiredDescriptions, setDisplayRetiredDescriptions] =
     useState(false);
   const conceptId = product.newConceptDetails ? undefined : product.conceptId;
