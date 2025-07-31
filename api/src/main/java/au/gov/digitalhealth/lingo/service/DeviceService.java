@@ -17,6 +17,7 @@ package au.gov.digitalhealth.lingo.service;
 
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONTAINS_DEVICE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONTAINS_PACKAGED_DEVICE;
+import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.IS_A;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.filterActiveStatedRelationshipByType;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getRelationshipsFromAxioms;
@@ -35,9 +36,11 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.extern.java.Log;
 import org.springframework.stereotype.Service;
 
 /** Service for product-centric operations */
+@Log
 @Service
 public class DeviceService extends AtomicDataService<DeviceProductDetails> {
   private final SnowstormClient snowStormApiClient;
@@ -172,6 +175,33 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
             typeMap,
             productDetails.getSpecificDeviceType(),
             modelConfiguration));
+
+    Set<SnowstormRelationship> relationships =
+        filterActiveStatedRelationshipByType(
+            getRelationshipsFromAxioms(product), HAS_OTHER_IDENTIFYING_INFORMATION.getValue());
+
+    if (relationships.size() == 1) {
+      productDetails.setOtherIdentifyingInformation(
+          relationships.iterator().next().getConcreteValue().getValue());
+    } else {
+      log.severe("There are more than one relationship found for branded product");
+    }
+
+    relationships =
+        filterActiveStatedRelationshipByType(
+            getRelationshipsFromAxioms(
+                snowStormApiClient
+                    .getBrowserConcepts(
+                        branch, Set.of(productDetails.getSpecificDeviceType().getConceptId()))
+                    .blockFirst()),
+            HAS_OTHER_IDENTIFYING_INFORMATION.getValue());
+
+    if (relationships.size() == 1) {
+      productDetails.setGenericOtherIdentifyingInformation(
+          relationships.iterator().next().getConcreteValue().getValue());
+    } else {
+      log.severe("There are more than one relationship found for unbranded product");
+    }
 
     return productDetails;
   }
