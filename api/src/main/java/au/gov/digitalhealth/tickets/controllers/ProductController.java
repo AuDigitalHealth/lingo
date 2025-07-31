@@ -16,6 +16,7 @@
 package au.gov.digitalhealth.tickets.controllers;
 
 import au.gov.digitalhealth.tickets.service.TicketServiceImpl;
+import java.util.List;
 import java.util.Set;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -40,6 +41,14 @@ public class ProductController {
       consumes = MediaType.APPLICATION_JSON_VALUE)
   public void putProduct(@PathVariable Long ticketId, @RequestBody ProductDto product) {
     ticketService.putProductOnTicket(ticketId, product);
+  }
+
+  @PutMapping(
+      value = "/api/tickets/{ticketId}/products/batch",
+      consumes = MediaType.APPLICATION_JSON_VALUE
+  )
+  public void putProducts(@PathVariable Long ticketId, @RequestBody List<ProductDto> products) {
+    ticketService.putProductsOnTicket(ticketId, products);
   }
 
   @GetMapping(value = "/api/tickets/{ticketId}/products")
