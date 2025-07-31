@@ -1190,6 +1190,45 @@ public class TicketServiceImpl implements TicketService {
     productRepository.save(product);
   }
 
+  public void putProductsOnTicket(Long ticketId, List<ProductDto> productDtos) {
+    Ticket ticketToUpdate = ticketRepository
+        .findById(ticketId)
+        .orElseThrow(
+            () -> new ResourceNotFoundProblem(
+                String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
+
+    List<Product> productsToSave = new ArrayList<>();
+
+    for (ProductDto productDto : productDtos) {
+      Optional<Product> productOptional = productRepository.findByNameAndTicketId(productDto.getName(), ticketId);
+      Product product;
+
+      if (productOptional.isPresent()) {
+        product = productOptional.get();
+        if (productDto.getConceptId() != null) {
+          product.setConceptId(Long.valueOf(productDto.getConceptId()));
+        }
+        product.setPackageDetails(productDto.getPackageDetails());
+        product.setOriginalPackageDetails(productDto.getOriginalPackageDetails());
+        if (productDto.getOriginalConceptId() != null) {
+          // If the original concept ID is provided, we set it
+          // Otherwise, we leave it as null
+          product.setOriginalConceptId(Long.parseLong(productDto.getOriginalConceptId()));
+        }
+      } else {
+        product = productMapper.toEntity(productDto);
+        product.setTicket(ticketToUpdate);
+      }
+
+      if (product.getOriginalPackageDetails() != null && product.getOriginalPackageDetails().isUnpopulated()) {
+        product.setOriginalPackageDetails(null);
+      }
+
+      productsToSave.add(product);
+    }
+
+    productRepository.saveAll(productsToSave);
+  }
   public Set<ProductDto> getProductsForTicket(Long ticketId) {
     return productRepository.findByTicketId(ticketId).stream()
         .map(productMapper::toDto)

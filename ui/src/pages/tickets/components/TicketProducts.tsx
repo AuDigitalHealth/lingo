@@ -16,7 +16,7 @@ import {
   Typography,
 } from '@mui/material';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
-import { AddCircle, Delete } from '@mui/icons-material';
+import { AddCircle, DataObject, Delete } from '@mui/icons-material';
 import UnableToEditTooltip from '../../tasks/components/UnableToEditTooltip.tsx';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import { useCanEditTicket } from '../../../hooks/api/tickets/useCanEditTicket.tsx';
@@ -37,6 +37,7 @@ import { getTicketProductsByTicketIdOptions } from '../../../hooks/api/tickets/u
 import { useQueryClient } from '@tanstack/react-query';
 import { useActiveConceptIdsByIds } from '../../../hooks/eclRefset/useConceptsById.tsx';
 import WarningIcon from '@mui/icons-material/Warning';
+import JsonToProductModal from './JsonToProductModal.tsx';
 
 interface TicketProductsProps {
   ticket: Ticket;
@@ -336,6 +337,7 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
             <InputLabel sx={{ mt: 0.5 }}>Products:</InputLabel>
           </Grid>
           <Grid container justifyContent="flex-end">
+            <JsonToProductModal ticket={ticket} />
             <UnableToEditTooltip
               canEdit={canEditTicket && canEdit}
               lockDescription={
