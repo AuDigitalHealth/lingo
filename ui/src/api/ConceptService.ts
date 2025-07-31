@@ -74,7 +74,7 @@ const ConceptService = {
     let concepts: Concept[] = [];
 
     const encodedString = encodeURIComponent(str);
-    const url = `/snowstorm/${branch}/concepts?term=${encodedString}&termActive=true${turnOffPublishParam ? '' : '&isPublished=false'}`;
+    const url = `/snowstorm/${encodeURIComponent(branch)}/concepts?term=${encodedString}&termActive=true${turnOffPublishParam ? '' : '&isPublished=false'}`;
     const response = await api.get(url, {
       headers: {
         'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
