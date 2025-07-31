@@ -24,6 +24,7 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_VALU
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRODUCT_NAME;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.IS_A;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.MEDICINAL_PRODUCT_PACKAGE;
+import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.filterActiveStatedRelationshipByType;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getActiveRelationshipsInRoleGroup;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getActiveRelationshipsOfType;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getRelationshipsFromAxioms;
@@ -40,6 +41,7 @@ import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.aspect.LogExecutionTime;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
 import au.gov.digitalhealth.lingo.exception.AtomicDataExtractionProblem;
@@ -706,6 +708,76 @@ public abstract class AtomicDataService<T extends ProductDetails> {
     return concepts;
   }
 
+  private static <T extends ProductDetails> void setOtherIdentifyingInformation(
+      String productId,
+      Maps maps,
+      ModelConfiguration modelConfiguration,
+      Set<SnowstormRelationship> basePackageRelationships,
+      PackageDetails<T> details) {
+    if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
+      basePackageRelationships.stream()
+          .filter(
+              r ->
+                  r.getTypeId().equals(IS_A.getValue())
+                      && maps.typeMap.get(r.getDestinationId()) != null
+                      && maps.typeMap
+                          .get(r.getDestinationId())
+                          .equals(
+                              modelConfiguration
+                                  .getLevelOfType(ModelLevelType.PACKAGED_CLINICAL_DRUG)
+                                  .getReferenceSetIdentifier()))
+          .findFirst()
+          .ifPresent(
+              r -> {
+                Set<SnowstormRelationship> relationships =
+                    filterActiveStatedRelationshipByType(
+                        getRelationshipsFromAxioms(maps.browserMap.get(r.getDestinationId())),
+                        HAS_OTHER_IDENTIFYING_INFORMATION.getValue());
+
+                if (relationships.size() == 1) {
+                  details.setGenericOtherIdentifyingInformation(
+                      relationships.iterator().next().getConcreteValue().getValue());
+                }
+              });
+
+      Set<SnowstormRelationship> relationships =
+          filterActiveStatedRelationshipByType(
+              basePackageRelationships, HAS_OTHER_IDENTIFYING_INFORMATION.getValue());
+      if (relationships.size() == 1) {
+        details.setOtherIdentifyingInformation(
+            relationships.iterator().next().getConcreteValue().getValue());
+      } else if (relationships.size() == 2
+          && details.getGenericOtherIdentifyingInformation() != null) {
+        // NMPC has two HAS_OTHER_IDENTIFYING_INFORMATION relationships, one for the generic
+        // and one for the specific
+        List<SnowstormRelationship> filteredRelationships =
+            relationships.stream()
+                .filter(
+                    r ->
+                        !r.getConcreteValue()
+                            .getValue()
+                            .equals(details.getGenericOtherIdentifyingInformation()))
+                .toList();
+
+        if (filteredRelationships.size() == 1) {
+          // if there is only one other identifying information relationship, use it
+          details.setOtherIdentifyingInformation(
+              filteredRelationships.get(0).getConcreteValue().getValue());
+        } else {
+          log.severe(
+              "Multiple relationships found for Has Other Identifying Information for product "
+                  + productId);
+        }
+      } else {
+        log.severe(
+            "Expected 1 or 2 relationships for Has Other Identifying Information for product "
+                + productId
+                + ", found: "
+                + relationships.size());
+      }
+    }
+  }
+
   @SuppressWarnings("null")
   private PackageDetails<T> populatePackageDetails(
       String branch, String productId, Maps maps, ModelConfiguration modelConfiguration) {
@@ -724,6 +796,9 @@ public abstract class AtomicDataService<T extends ProductDetails> {
       details.setProductName(
           getSingleActiveTarget(basePackageRelationships, HAS_PRODUCT_NAME.getValue()));
     }
+
+    setOtherIdentifyingInformation(
+        productId, maps, modelConfiguration, basePackageRelationships, details);
 
     addNonDefiningData(
         details, maps, modelConfiguration, Set.of(ProductPackageType.PACKAGE), basePackage);
@@ -815,12 +890,6 @@ public abstract class AtomicDataService<T extends ProductDetails> {
     Set<SnowstormRelationship> productRelationships = getRelationshipsFromAxioms(product);
     productDetails.setProductName(
         getSingleActiveTarget(productRelationships, HAS_PRODUCT_NAME.getValue()));
-
-    if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
-      productDetails.setOtherIdentifyingInformation(
-          getSingleActiveConcreteValue(
-              productRelationships, HAS_OTHER_IDENTIFYING_INFORMATION.getValue()));
-    }
 
     addNonDefiningData(
         productDetails, maps, modelConfiguration, Set.of(ProductPackageType.PRODUCT), product);
