@@ -973,6 +973,48 @@ public class MedicationProductCalculationService
     };
   }
 
+  private static String generateNutritionalProductName(
+      ModelLevel level, NutritionalProductDetails nutritionalProductDetails) {
+    String genericName = nutritionalProductDetails.getNewGenericProductName();
+    String form = nutritionalProductDetails.getGenericForm().getPt().getTerm().toLowerCase().trim();
+    String unit =
+        nutritionalProductDetails.getUnitOfPresentation().getPt().getTerm().toLowerCase().trim();
+    String productName = nutritionalProductDetails.getProductName().getPt().getTerm();
+
+    boolean isRealClinicalDrug = level.getModelLevelType().equals(REAL_CLINICAL_DRUG);
+    String prefix = isRealClinicalDrug ? (productName + " ") : "";
+
+    return (prefix + genericName + " " + form + " " + unit).trim();
+  }
+
+  private static void handleNutritionalProductName(AtomicCache atomicCache, ModelLevel level, Node node,
+      NutritionalProductDetails nutritionalProductDetails) {
+    boolean isExistingClinicalDrug =
+        level.getModelLevelType().equals(CLINICAL_DRUG)
+            && nutritionalProductDetails.getExistingClinicalDrug() != null
+            && nutritionalProductDetails.getExistingClinicalDrug().getConceptId() != null;
+
+    if (level.getModelLevelType().equals(REAL_MEDICINAL_PRODUCT)) {
+      if (node.isNewConcept()) {
+        // If this is a new concept, we need to generate the FSN and PT
+        final String productName = nutritionalProductDetails.getProductName().getPt().getTerm();
+        node.getNewConceptDetails()
+            .setFullySpecifiedName(
+                productName + " nutritional product (" + level.getDrugDeviceSemanticTag() + ")");
+        node.getNewConceptDetails().setPreferredTerm(productName);
+        atomicCache.addFsnAndPt(node.getConceptId(), productName, productName);
+      }
+    } else if (!isExistingClinicalDrug
+        && !level.getModelLevelType().equals(MEDICINAL_PRODUCT_ONLY)) {
+      final String baseName = generateNutritionalProductName(level, nutritionalProductDetails);
+      String fsn = baseName + " (" + level.getDrugDeviceSemanticTag() + ")";
+
+      node.getNewConceptDetails().setFullySpecifiedName(fsn);
+      node.getNewConceptDetails().setPreferredTerm(baseName);
+      atomicCache.addFsnAndPt(node.getConceptId(), fsn, baseName);
+    }
+  }
+
   private void generateName(
       AtomicCache atomicCache,
       MedicationProductDetails productDetails,
@@ -981,54 +1023,16 @@ public class MedicationProductCalculationService
       ModelConfiguration modelConfiguration) {
 
     if (productDetails instanceof NutritionalProductDetails nutritionalProductDetails) {
-      boolean isMedicinalProductOnly = level.getModelLevelType().equals(MEDICINAL_PRODUCT_ONLY);
-      boolean isExistingClinicalDrug =
-          level.getModelLevelType().equals(CLINICAL_DRUG)
-              && nutritionalProductDetails.getExistingClinicalDrug() != null
-              && nutritionalProductDetails.getExistingClinicalDrug().getConceptId() != null;
-
-      if (isMedicinalProductOnly || isExistingClinicalDrug) {
-        // Existing concept, no need to generate a new name
-        return;
-      }
-
-      boolean isClinicalOrRealClinicalDrug =
-          level.getModelLevelType().equals(CLINICAL_DRUG)
-              || level.getModelLevelType().equals(REAL_CLINICAL_DRUG);
-
-      if (isClinicalOrRealClinicalDrug) {
-        String genericName = nutritionalProductDetails.getNewGenericProductName();
-        String form =
-            nutritionalProductDetails.getGenericForm().getPt().getTerm().toLowerCase().trim();
-        String unit =
-            nutritionalProductDetails
-                .getUnitOfPresentation()
-                .getPt()
-                .getTerm()
-                .toLowerCase()
-                .trim();
-
-        String fsn =
-            ("Product containing only " + genericName + " " + form + " " + unit).trim()
-                + " ("
-                + level.getDrugDeviceSemanticTag()
-                + ")";
-        String pt = (genericName + " " + form + " " + unit).trim();
-
-        node.getNewConceptDetails().setFullySpecifiedName(fsn);
-        node.getNewConceptDetails().setPreferredTerm(pt);
-        atomicCache.addFsnAndPt(node.getConceptId(), fsn, pt);
-        return;
-      }
+      handleNutritionalProductName(atomicCache, level, node, nutritionalProductDetails);
+    } else {
+      nameGenerationService.addGeneratedFsnAndPt(
+          atomicCache,
+          productDetails.hasDeviceType()
+              ? level.getDrugDeviceSemanticTag()
+              : level.getMedicineSemanticTag(),
+          node,
+          modelConfiguration);
     }
-
-    nameGenerationService.addGeneratedFsnAndPt(
-        atomicCache,
-        productDetails.hasDeviceType()
-            ? level.getDrugDeviceSemanticTag()
-            : level.getMedicineSemanticTag(),
-        node,
-        modelConfiguration);
   }
 
   private void generateName(
