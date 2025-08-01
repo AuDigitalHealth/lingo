@@ -1182,18 +1182,31 @@ public class ProductCreationService {
   }
 
   private int getNamespace(String branch) {
+    List<String> branchAttempts = new ArrayList<>();
+
     do {
+      log.fine("Retrieving namespace for branch " + branch);
+      branchAttempts.add(branch);
       Integer namespace = namespaceConfiguration.getNamespace(branch.replace("|", "_"));
       if (namespace != null) {
+        log.fine("Namespace found for branch " + branch + ": " + namespace);
         return namespace;
       }
+      log.fine("Namespace not found for branch " + branch + ", trying parent branch");
       branch = branch.substring(0, branch.lastIndexOf("|"));
     } while (branch.contains("|"));
 
+    log.fine("Retrieving namespace for branch " + branch);
+    branchAttempts.add(branch);
     Integer namespace = namespaceConfiguration.getNamespace(branch);
 
     if (namespace == null) {
-      throw new NamespaceNotConfiguredProblem(branch);
+      log.severe(
+          "No namespace found for branch "
+              + branch
+              + " after all attempts: "
+              + String.join(", ", branchAttempts));
+      throw new NamespaceNotConfiguredProblem(branchAttempts);
     }
 
     return namespace;
