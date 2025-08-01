@@ -21,6 +21,10 @@ import {
   isInternalServerError,
   isUserReportableProblem,
 } from './ProblemDetail';
+import {
+  isSentryAvailable,
+  showSentryFeedbackDialog,
+} from '../sentry/SentryConfig';
 
 export const api = axios.create({});
 
@@ -29,12 +33,6 @@ api.interceptors.response.use(
     return response;
   },
   error => {
-    const errorMessage =
-      error.response?.data?.detail ||
-      error.message ||
-      error.data?.error ||
-      'Unknown error';
-
     if (
       error.response?.status === 403 &&
       error.response.data?.detail === 'The task is not owned by the user.'
@@ -50,23 +48,32 @@ api.interceptors.response.use(
       window.location.href.includes('/dashboard')
     ) {
       useUserStore.setState({ loginRefreshRequired: true });
-    }
+    } else {
+      const potentialProblemDetail = error?.response?.data;
 
-    const potentialProblemDetail = error?.response?.data;
-
-    const potentialInternalServerError = error?.response?.data;
-    if (isUserReportableProblem(potentialProblemDetail)) {
-      enqueueSnackbar(potentialProblemDetail.detail, {
-        variant: 'error',
-      });
-    }
-    if (isInternalServerError(potentialInternalServerError)) {
-      enqueueSnackbar(
-        `Oops something went wrong! Please raise an issue describing what led to this and include the timestamp: ${potentialInternalServerError.timestamp}`,
-        {
+      if (isUserReportableProblem(potentialProblemDetail)) {
+        enqueueSnackbar(potentialProblemDetail.detail, {
           variant: 'error',
-        },
-      );
+        });
+      } else {
+        const potentialInternalServerError = error?.response?.data;
+        if (isInternalServerError(potentialInternalServerError)) {
+          if (isSentryAvailable()) {
+            // Use Sentry feedback dialog
+            showSentryFeedbackDialog(
+              error,
+              potentialInternalServerError.timestamp,
+            );
+          } else {
+            enqueueSnackbar(
+              `Oops, something went wrong! Please copy the error details below and report it to support: \n\n` + JSON.stringify(potentialInternalServerError, null, 2),
+              {
+                variant: 'error'
+              },
+            );
+          }
+        }
+      }
     }
     return Promise.reject(error);
   },
