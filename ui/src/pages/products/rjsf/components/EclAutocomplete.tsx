@@ -95,6 +95,31 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
     }
   };
 
+  const handleBlur = () => {
+    if (disabled) return;
+    
+    // Check if there's an inputValue with a term but no matching option selected
+    if (inputValue?.pt?.term && !value?.conceptId) {
+      // Try to find a matching option from the available options
+      const matchingOption = options.find(option => 
+        option.pt?.term?.toLowerCase() === inputValue?.pt?.term.toLowerCase()
+      );
+      
+      if (matchingOption) {
+        // If we found a matching option, select it
+        // setInputValue(matchingOption)
+        handleProductChange(matchingOption);
+      } else {
+        // debugger;
+        // setInputValue(inputValue);
+        // If no matching option found, you might want to clear the input
+        // or keep it as is depending on your requirements
+        // For this example, we'll call handleProductChange with the current inputValue
+        handleProductChange(inputValue);
+      }
+    }
+  };
+
   const needsAttention = value && value.pt?.term && !value.conceptId;
 
   return (
@@ -105,13 +130,13 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
         options={disabled ? [] : options}
         getOptionLabel={(option: Concept) => option?.pt?.term || ''}
         value={
-          value
-          // options.find(option => option.conceptId === value?.conceptId) || value
+          // inputValue
+          options.find(option => option.conceptId === value?.conceptId) || value
         }
-        inputValue={inputValue?.pt?.term}
+        // inputValue={inputValue?.pt?.term}
         onInputChange={(event, newInputValue) =>{
           // debugger;
-          !disabled && handleProductChange(createEmptyConcept(apLanguageHeader, newInputValue))}
+          !disabled && setInputValue(createEmptyConcept(apLanguageHeader, newInputValue))}
         }
         onChange={(event, selectedValue) =>
           handleProductChange(selectedValue as Concept)
@@ -130,6 +155,7 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
             data-test-id={id}
             label={label}
             // error={hasError}
+            onBlur={handleBlur}
             helperText={
               needsAttention
                 ? 'Please search for and select a valid option'
