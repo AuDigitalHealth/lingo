@@ -15,13 +15,14 @@
  */
 package au.gov.digitalhealth.lingo.exception;
 
+import java.util.List;
 import org.springframework.http.HttpStatus;
 
 public class NamespaceNotConfiguredProblem extends LingoProblem {
-  public NamespaceNotConfiguredProblem(String key) {
+  public NamespaceNotConfiguredProblem(List<String> keys) {
     super(
         "namespace-not-configured",
-        "Namespace not configured: " + key,
+        "Namespace not configured, attempted " + String.join(", ", keys),
         HttpStatus.INTERNAL_SERVER_ERROR);
   }
 }
