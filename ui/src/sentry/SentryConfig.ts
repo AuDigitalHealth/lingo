@@ -1,28 +1,21 @@
-///
-/// Copyright 2024 Australian Digital Health Agency ABN 84 425 496 912.
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///   http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SentryConfig.ts
 import * as Sentry from '@sentry/react';
 import { SecureAppConfig } from '../types/applicationConfig.ts';
 
+// Track initialization state
 let sentryInitialized = false;
+let currentConfig: SecureAppConfig | null = null;
 
+/**
+ * Configure Sentry with the provided application config
+ */
 export const configureSentry = (
   applicationConfig: SecureAppConfig,
   releaseVersion: string | undefined,
 ) => {
+  // Store the current configuration for later reference
+  currentConfig = applicationConfig;
+
   if (!sentryInitialized && applicationConfig.sentryDsn) {
     Sentry.init({
       dsn: applicationConfig.sentryDsn,
@@ -53,3 +46,42 @@ export const configureSentry = (
     sentryInitialized = true;
   }
 };
+
+/**
+ * Check if Sentry is available and enabled
+ */
+export const isSentryAvailable = (): boolean => {
+  return (
+    !!currentConfig?.sentryEnabled &&
+    sentryInitialized &&
+    Sentry.isInitialized()
+  );
+};
+
+/**
+ * Show Sentry feedback dialog for reporting issues
+ */
+export const showSentryFeedbackDialog = (error: any, timestamp?: string): string => {
+  if (!isSentryAvailable()) {
+    throw new Error('Sentry is not available. Check configuration.');
+  }
+
+  const eventId = Sentry.captureException(error);
+
+  let subtitle2 = 'Your feedback helps us improve.';
+  if (timestamp) {
+    subtitle2 = `Please include what led to this error and the timestamp: ${timestamp}`;
+  }
+
+  Sentry.showReportDialog({
+    eventId: eventId,
+    title: 'Something went wrong',
+    subtitle: 'Our team has been notified',
+    subtitle2: subtitle2
+  });
+
+  return eventId;
+};
+
+// Export Sentry for direct use if needed
+export { Sentry };

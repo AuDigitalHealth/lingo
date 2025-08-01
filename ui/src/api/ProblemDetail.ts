@@ -47,12 +47,13 @@ export const isInternalServerError = (
 ): data is InternalServerError => {
   return (
     data &&
-    typeof data === 'object' &&
-    typeof data.timestamp === 'string' &&
-    typeof data.path === 'string' &&
-    typeof data.status === 'number' &&
-    typeof data.error === 'string' &&
-    data?.error === 'Internal Server Error'
+    ((typeof data === 'object' &&
+      typeof data.timestamp === 'string' &&
+      typeof data.path === 'string' &&
+      typeof data.status === 'number' &&
+      typeof data.error === 'string' &&
+      data?.error === 'Internal Server Error') ||
+      data.status === 500)
   );
 };
 
@@ -67,8 +68,6 @@ export const isUserReportableProblem = (
       'http://lingo.csiro.au/problem/atomic-data-validation-problem' ||
       data.type === 'http://lingo.csiro.au/problem/resource-not-found' ||
       data.type === 'http://lingo.csiro.au/problem/single-concept-ecl' ||
-      data.type === 'http://lingo.csiro.au/problem/batch-failed' ||
-      data.type === 'http://lingo.csiro.au/problem/model-configuration' ||
       data.type === 'http://lingo.csiro.au/problem/model-configuration' ||
       data.type ===
         'http://lingo.csiro.au/problem/atomic-data-extraction-problem')
