@@ -174,37 +174,38 @@ function TasksList({
     minWidth: 90,
     flex: 1,
     maxWidth: 90,
-    valueGetter: (params: GridRenderCellParams<any, string>): Task => {
-      return params.row;
+    valueGetter: (params: GridRenderCellParams<any, string>): string => {
+      return params.row?.key || '';
     },
     type: 'string',
-    sortComparator: (v1: any, v2: any, param1: any, param2: any) => {
-      // Sort by the task's key property
-      const key1 = param1.value?.key || '';
-      const key2 = param2.value?.key || '';
+    sortComparator: (v1: string, v2: string, param1: any, param2: any) => {
+      const key1 = v1 || '';
+      const key2 = v2 || '';
 
-      // Fallback to string comparison
       return key1.localeCompare(key2);
     },
-    renderCell: (params: GridRenderCellParams<any, Task>): ReactNode => {
+    renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
+      // Access the full row object for rendering
+      const task = params.row as Task;
+
       if (isSnodineList) {
         return naked ? (
-          <>{params.value?.key.toString()}</>
+          <>{task?.key?.toString()}</>
         ) : (
           <Link
-            to={`task/${params.value?.projectKey}/${params.value?.key}`}
+            to={`task/${task?.projectKey}/${task?.key}`}
             className={'task-details-link'}
           >
-            {params.value?.key.toString()}
+            {task?.key?.toString()}
           </Link>
         );
       }
       return (
         <AuthoringPlatformLink
-          to={`/dashboard/tasks/edit/${params.value?.key}`}
+          to={`/dashboard/tasks/edit/${task?.key}`}
           className={'task-details-link'}
         >
-          {params.value!.key?.toString()}
+          {task?.key?.toString()}
         </AuthoringPlatformLink>
       );
     },

@@ -15,9 +15,8 @@
         }
       },
       "minProperties": 1,
-      "errorMessage": {
-        "minProperties": "Field must be populated."
-      }
+      "required": ["conceptId"],
+      "errorMessage": { "required": "Invalid concept found, you might need to select a concept from the dropdown." }
     },
     "SnowstormTermLangPojo": {
       "type": "object",
