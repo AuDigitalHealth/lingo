@@ -25,7 +25,7 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
 
   const apLanguageHeader = useApplicationConfigStore.getState().applicationConfig
                 ?.apLanguageHeader;
-  // const [inputValue, setInputValue] = useState<Concept>(value || createEmptyConcept(apLanguageHeader));
+  const [inputValue, setInputValue] = useState<Concept>(value || createEmptyConcept(apLanguageHeader));
   const [options, setOptions] = useState<Concept[]>(
     value ? [value as Concept] : [],
   );
@@ -34,10 +34,8 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
 
   // Clear state when disabled
   useEffect(() => {
-    debugger;
     if (disabled) {
-      onChange(null);
-      // setInputValue(createEmptyConcept(apLanguageHeader));
+      setInputValue(createEmptyConcept(apLanguageHeader));
       setOptions([]);
       if (value) {
         onChange(null);
@@ -46,7 +44,7 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
   }, [disabled, onChange, value]);
 
   const { isLoading, allData } = useSearchConceptsByEcl(
-    value?.pt?.term,
+    inputValue?.pt?.term,
     ecl && ecl.length > 0 && !disabled ? ecl : undefined,
     branch,
     (showDefaultOptions as boolean) && !disabled,
@@ -77,7 +75,7 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
   useEffect(() => {
     if (disabled || !value) return;
     const newTerm = value?.pt?.term || '';
-    // setInputValue(prev => (prev !== newTerm ? newTerm : prev));
+    setInputValue(prev => (prev !== newTerm ? newTerm : prev));
   }, [value?.conceptId, disabled]);
 
   const handleProductChange = (selectedProduct: Concept | null) => {
@@ -90,10 +88,35 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
         fsn: selectedProduct.fsn,
       };
       onChange(conceptMini);
-      // setInputValue(selectedProduct);
+      setInputValue(selectedProduct);
     } else {
       onChange(null);
-      // setInputValue(createEmptyConcept(apLanguageHeader));
+      setInputValue(createEmptyConcept(apLanguageHeader));
+    }
+  };
+
+  const handleBlur = () => {
+    if (disabled) return;
+    
+    // Check if there's an inputValue with a term but no matching option selected
+    if (inputValue?.pt?.term && !value?.conceptId) {
+      // Try to find a matching option from the available options
+      const matchingOption = options.find(option => 
+        option.pt?.term?.toLowerCase() === inputValue?.pt?.term.toLowerCase()
+      );
+      
+      if (matchingOption) {
+        // If we found a matching option, select it
+        // setInputValue(matchingOption)
+        handleProductChange(matchingOption);
+      } else {
+        // debugger;
+        // setInputValue(inputValue);
+        // If no matching option found, you might want to clear the input
+        // or keep it as is depending on your requirements
+        // For this example, we'll call handleProductChange with the current inputValue
+        handleProductChange(inputValue);
+      }
     }
   };
 
@@ -107,22 +130,19 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
         options={disabled ? [] : options}
         getOptionLabel={(option: Concept) => option?.pt?.term || ''}
         value={
-          value
-          // options.find(option => option.conceptId === value?.conceptId) || value
+          // inputValue
+          options.find(option => option.conceptId === value?.conceptId) || value
         }
-        // inputValue={value?.pt?.term}
+        // inputValue={inputValue?.pt?.term}
         onInputChange={(event, newInputValue) =>{
           // debugger;
-          !disabled && handleProductChange(createEmptyConcept(apLanguageHeader, newInputValue))}
+          !disabled && setInputValue(createEmptyConcept(apLanguageHeader, newInputValue))}
         }
         onChange={(event, selectedValue) =>
           handleProductChange(selectedValue as Concept)
         }
         isOptionEqualToValue={(option, selectedValue) =>
-          {
-            if(!selectedValue?.conceptId) return false;
-            return option?.conceptId === selectedValue?.conceptId}
-          
+          option?.conceptId === selectedValue?.conceptId
         }
         renderOption={(props, option) => (
           <li {...props} key={option.conceptId}>
@@ -135,6 +155,7 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
             data-test-id={id}
             label={label}
             // error={hasError}
+            onBlur={handleBlur}
             helperText={
               needsAttention
                 ? 'Please search for and select a valid option'
