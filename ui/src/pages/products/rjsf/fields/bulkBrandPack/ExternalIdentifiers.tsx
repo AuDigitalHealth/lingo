@@ -179,18 +179,18 @@ const ExternalIdentifierRender: React.FC<
 
   const schemeName = schema?.properties?.identifierScheme?.const;
   const dateFormat = schema?.properties?.value?.dateFormat;
-  const pattern = schema?.properties?.value?.pattern;
 
   const task = useTaskByKey();
   const { ticketNumber } = useParams();
   const useTicketQuery = useTicketByTicketNumber(ticketNumber, false);
   const [availableOptions, setAvailableOptions] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState('');
-  const [tooltip, setTooltip] = useState<string>('');
+  const [errorTooltip, setErrorTooltip] = useState<string>('');
   const [createConceptModalOpen, setCreateConceptModalOpen] = useState(false);
 
   const [maxItems, setMaxItems] = useState<number>(9999);
-  const [freeSolo, setFreeSolo] = useState<boolean>(true);
+
+  const info = schema.description;
 
   const formData = props.formData;
   const multiValuedSchemes: string[] =
@@ -250,15 +250,15 @@ const ExternalIdentifierRender: React.FC<
       const patternErrorMessage =
         schema.properties.value?.errorMessage?.pattern;
       if (patternErrorMessage) {
-        setTooltip(patternErrorMessage);
+        setErrorTooltip(patternErrorMessage);
       } else {
-        setTooltip(
+        setErrorTooltip(
           `"${value}" does not match the required pattern "${pattern}".`,
         );
       }
       return false;
     }
-    setTooltip('');
+    setErrorTooltip('');
     return true;
   };
   const handleAdd = (value: string | string[]) => {
@@ -277,9 +277,9 @@ const ExternalIdentifierRender: React.FC<
         const patternErrorMessage =
           schema.properties.value?.errorMessage?.pattern;
         if (patternErrorMessage) {
-          setTooltip(patternErrorMessage);
+          setErrorTooltip(patternErrorMessage);
         } else {
-          setTooltip(
+          setErrorTooltip(
             `"${trimmed}" does not match the required pattern "${pattern}".`,
           );
         }
@@ -294,14 +294,14 @@ const ExternalIdentifierRender: React.FC<
             item.identifierScheme === schema.properties.identifierScheme.const,
         )
       ) {
-        setTooltip(`Identifier "${trimmed}" is already added.`);
+        setErrorTooltip(`Identifier "${trimmed}" is already added.`);
         continue;
       }
 
       // Check if adding this item would exceed maxItems
       const currentCount = (formData?.length ?? 0) + newItems.length;
       if (maxItems && schemeEntries && currentCount >= maxItems) {
-        setTooltip(`Only ${maxItems} items allowed for ${schema.title}`);
+        setErrorTooltip(`Only ${maxItems} items allowed for ${schema.title}`);
         break;
       }
 
@@ -467,6 +467,7 @@ const ExternalIdentifierRender: React.FC<
             onChange={handleChangeConcepts}
             disabled={readOnly ? true : false}
             //   error={!!errorMessage}
+            info={info}
           />
         )}
         {useValueSetAutocomplete && !isMultiValued && (
@@ -483,6 +484,7 @@ const ExternalIdentifierRender: React.FC<
             errorMessage={
               missingRequiredFieldError ? 'Field must be populated' : ''
             }
+            info={info}
           />
         )}
         {useEclAutocomplete && isMultiValued && (
@@ -498,6 +500,7 @@ const ExternalIdentifierRender: React.FC<
             }
             title={schema.title}
             required={isRequired}
+            info={info}
           />
         )}
         {useEclAutocomplete && !isMultiValued && (
@@ -515,6 +518,7 @@ const ExternalIdentifierRender: React.FC<
             }
             required={isRequired}
             title={schema.title}
+            info={info}
           />
         )}
         {useCreateConcept && (
@@ -584,10 +588,10 @@ const ExternalIdentifierRender: React.FC<
             value={schemeEntries?.[0]?.value ? schemeEntries[0].value : null}
             onChange={handleDateChange}
             disabled={readOnly ? true : false}
-            error={tooltip || missingRequiredFieldError}
+            error={errorTooltip || missingRequiredFieldError}
             helperText={
-              tooltip ||
-              (missingRequiredFieldError ? 'Field must be populated' : '')
+              errorTooltip ||
+              (missingRequiredFieldError ? 'Field must be populated' : info)
             }
           />
         )}
@@ -609,7 +613,7 @@ const ExternalIdentifierRender: React.FC<
               inputValue={inputValue}
               onInputChange={(_, newVal) => {
                 setInputValue(newVal);
-                setTooltip('');
+                setErrorTooltip('');
               }}
               onChange={(_, values, reason, details) => {
                 if (reason === 'selectOption' && details?.option) {
@@ -643,11 +647,23 @@ const ExternalIdentifierRender: React.FC<
                     }
                   }}
                   label={schema.title}
-                  error={tooltip || missingRequiredFieldError}
+                  error={errorTooltip || missingRequiredFieldError}
                   helperText={
-                    tooltip ||
-                    (missingRequiredFieldError ? 'Field must be populated' : '')
+                    errorTooltip ||
+                    (missingRequiredFieldError
+                      ? 'Field must be populated'
+                      : info)
                   }
+                  sx={{
+                    '& .MuiFormHelperText-root': {
+                      m: 0,
+                      minHeight: '1em',
+                      color:
+                        errorTooltip || missingRequiredFieldError
+                          ? 'error.main'
+                          : 'text.secondary',
+                    },
+                  }}
                   InputProps={{
                     ...params.InputProps,
                     endAdornment: (
@@ -707,11 +723,21 @@ const ExternalIdentifierRender: React.FC<
                   step: isNumber ? '0.01' : undefined,
                 },
               }}
-              error={tooltip || missingRequiredFieldError}
+              error={errorTooltip || missingRequiredFieldError}
               helperText={
-                tooltip ||
-                (missingRequiredFieldError ? 'Field must be populated' : '')
+                errorTooltip ||
+                (missingRequiredFieldError ? 'Field must be populated' : info)
               }
+              sx={{
+                '& .MuiFormHelperText-root': {
+                  m: 0,
+                  minHeight: '1em',
+                  color:
+                    errorTooltip || missingRequiredFieldError
+                      ? 'error.main'
+                      : 'text.secondary',
+                },
+              }}
             />
           )}
       </Stack>
