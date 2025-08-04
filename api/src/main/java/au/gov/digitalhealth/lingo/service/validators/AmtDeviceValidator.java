@@ -21,7 +21,9 @@ import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.details.DeviceProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.ProductQuantity;
+import au.gov.digitalhealth.lingo.product.details.ProductTemplate;
 import au.gov.digitalhealth.lingo.util.ValidationUtil;
+import java.util.Set;
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Service;
 
@@ -40,6 +42,8 @@ public class AmtDeviceValidator extends DetailsValidator implements DeviceDetail
       PackageDetails<DeviceProductDetails> packageDetails, String branch) {
 
     ValidationResult result = new ValidationResult();
+
+    validateTypeParameters(packageDetails, result);
 
     validateNonDefiningProperties(
         packageDetails.getNonDefiningProperties(),
@@ -93,5 +97,15 @@ public class AmtDeviceValidator extends DetailsValidator implements DeviceDetail
         ProductPackageType.PACKAGE,
         models.getModelConfiguration(branch),
         result);
+  }
+
+  @Override
+  protected String getVariantName() {
+    return "device";
+  }
+
+  @Override
+  protected Set<ProductTemplate> getSupportedProductTypes() {
+    return Set.of();
   }
 }

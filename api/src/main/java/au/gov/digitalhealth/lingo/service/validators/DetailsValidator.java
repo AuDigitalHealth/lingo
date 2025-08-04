@@ -22,6 +22,9 @@ import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.NonDefiningPropertyDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.ReferenceSetDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
+import au.gov.digitalhealth.lingo.product.details.PackageDetails;
+import au.gov.digitalhealth.lingo.product.details.ProductDetails;
+import au.gov.digitalhealth.lingo.product.details.ProductTemplate;
 import au.gov.digitalhealth.lingo.product.details.Quantity;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
@@ -32,8 +35,13 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-public class DetailsValidator {
+public abstract class DetailsValidator {
+
+  protected abstract String getVariantName();
+
+  protected abstract Set<ProductTemplate> getSupportedProductTypes();
 
   protected static void validateNumeratorDenominatorSet(
       @Valid Quantity strengthNumerator,
@@ -233,5 +241,55 @@ public class DetailsValidator {
         }
       }
     }
+  }
+
+  protected <T extends ProductDetails> void validateTypeParameters(
+      PackageDetails<T> packageDetails, ValidationResult result) {
+    if (packageDetails.getVariant() == null || packageDetails.getVariant().isBlank()) {
+      result.addProblem("Package variant must be populated");
+    } else if (!packageDetails.getVariant().equals(getVariantName())) {
+      result.addProblem(
+          "Package variant '"
+              + packageDetails.getVariant()
+              + "' does not match expected variant '"
+              + getVariantName()
+              + "'");
+    }
+    Set<ProductTemplate> supportedProductTypes = getSupportedProductTypes();
+    packageDetails
+        .getContainedPackages()
+        .forEach(
+            p -> {
+              validateTypeParameters(p.getPackageDetails(), result);
+            });
+    packageDetails
+        .getContainedProducts()
+        .forEach(
+            p -> {
+              if (supportedProductTypes.isEmpty()
+                  && p.getProductDetails().getProductType() != null) {
+                result.addProblem(
+                    "Product type unexpected for package variant '"
+                        + getVariantName()
+                        + "': "
+                        + p.getProductDetails().getProductType());
+              } else if (p.getProductDetails().getProductType() == null
+                  && !supportedProductTypes.isEmpty()) {
+                result.addProblem(
+                    "Product type must be populated for package variant '"
+                        + getVariantName()
+                        + "', supported types are: "
+                        + supportedProductTypes);
+              } else if (p.getProductDetails().getProductType() != null
+                  && !supportedProductTypes.contains(p.getProductDetails().getProductType())) {
+                result.addProblem(
+                    "Product type '"
+                        + p.getProductDetails().getProductType()
+                        + "' not supported for package variant '"
+                        + getVariantName()
+                        + "', supported types are: "
+                        + supportedProductTypes);
+              }
+            });
   }
 }

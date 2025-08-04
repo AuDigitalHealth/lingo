@@ -32,6 +32,7 @@ import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageQuantity;
 import au.gov.digitalhealth.lingo.product.details.ProductQuantity;
+import au.gov.digitalhealth.lingo.product.details.ProductTemplate;
 import au.gov.digitalhealth.lingo.product.details.Quantity;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.service.SnowstormClient;
@@ -338,6 +339,8 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
 
     ValidationResult result = new ValidationResult();
 
+    validateTypeParameters(packageDetails, result);
+
     validateNonDefiningProperties(
         packageDetails.getNonDefiningProperties(),
         ProductPackageType.PACKAGE,
@@ -468,14 +471,18 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
 
         if (!isUnitML && !isUnitMG) {
           // Log a warning if the product quantity unit is not mg or mL
-          log.warning(
+          final String msg =
               "Handling anomalous products, Product quantity unit is not mg or mL: "
-                  + getIdAndFsnTerm(productDetailsQuantity.getUnit()));
+                  + getIdAndFsnTerm(productDetailsQuantity.getUnit());
+          log.warning(msg);
+          result.addWarning(msg);
         } else if (isStrengthUnitMismatch) {
           // Log a warning if the product quantity unit does not match the strength unit denominator
-          log.warning(
+          final String msg =
               "Handling anomalous products, Product quantity unit does not match the strength unit denominator for ingredient: "
-                  + getIdAndFsnTerm(ingredient.getActiveIngredient()));
+                  + getIdAndFsnTerm(ingredient.getActiveIngredient());
+          log.warning(msg);
+          result.addWarning(msg);
         } else if (!fieldBindingConfiguration
             .getExcludedSubstances()
             .contains(ingredient.getActiveIngredient().getConceptId())) {
@@ -518,14 +525,16 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
                 .getUnit()
                 .getConceptId()
                 .equals(numeratorAndDenominator.getSecond().getConceptId())) {
-          log.warning(
+          final String msg =
               "Product quantity unit "
                   + getIdAndFsnTerm(productDetailsQuantity.getUnit())
                   + " does not match ingredient "
                   + getIdAndFsnTerm(ingredient.getActiveIngredient())
                   + " concetration strength denominator "
                   + getIdAndFsnTerm(numeratorAndDenominator.getSecond())
-                  + " as expected");
+                  + " as expected";
+          log.warning(msg);
+          result.addWarning(msg);
         }
 
         // if the total quantity is also populated
@@ -538,14 +547,16 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
                   .getUnit()
                   .getConceptId()
                   .equals(numeratorAndDenominator.getFirst().getConceptId())) {
-            log.warning(
+            final String msg =
                 "Ingredient "
                     + getIdAndFsnTerm(ingredient.getActiveIngredient())
                     + " total quantity unit "
                     + getIdAndFsnTerm(ingredient.getTotalQuantity().getUnit())
                     + " does not match the concetration strength numerator "
                     + getIdAndFsnTerm(numeratorAndDenominator.getFirst())
-                    + " as expected");
+                    + " as expected";
+            log.warning(msg);
+            result.addWarning(msg);
           }
 
           // validate that the values calculate out correctly
@@ -583,5 +594,16 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
             .getUnit()
             .getConceptId()
             .equals(numeratorAndDenominator.getSecond().getConceptId());
+  }
+
+  @Override
+  protected String getVariantName() {
+    return "medication";
+  }
+
+  @Override
+  protected Set<ProductTemplate> getSupportedProductTypes() {
+    // todo this is a temporary fix, address when adding AMT schema
+    return Set.of(ProductTemplate.noStrength);
   }
 }
