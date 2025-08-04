@@ -204,14 +204,17 @@ public class MedicationController {
 
   @LogExecutionTime
   @PostMapping("/{branch}/medications/product/$validate")
-  public ValidationResult validateMedicationProductAtomicData(
+  public ResponseEntity<ValidationResult> validateMedicationProductAtomicData(
       @PathVariable String branch,
-      @RequestBody @Valid PackageDetails<@Valid MedicationProductDetails> productDetails)
-      throws ExecutionException, InterruptedException {
+      @RequestBody @Valid PackageDetails<@Valid MedicationProductDetails> productDetails) {
     taskManagerService.validateTaskState(branch);
-    return productCalculationServiceFactory
-        .getCalculationService(MedicationProductDetails.class)
-        .validateProductAtomicData(branch, productDetails);
+    final ValidationResult validationResult =
+        productCalculationServiceFactory
+            .getCalculationService(MedicationProductDetails.class)
+            .validateProductAtomicData(branch, productDetails);
+    return validationResult.isValid()
+        ? ResponseEntity.ok().body(validationResult)
+        : ResponseEntity.badRequest().body(validationResult);
   }
 
   @LogExecutionTime
@@ -228,14 +231,17 @@ public class MedicationController {
 
   @LogExecutionTime
   @PostMapping("/{branch}/medications/product/{productId}/$validateUpdate")
-  public ValidationResult validateUpdateMedicationProductAtomicData(
+  public ResponseEntity<ValidationResult> validateUpdateMedicationProductAtomicData(
       @PathVariable String branch,
       @PathVariable Long productId,
-      @RequestBody @Valid PackageDetails<@Valid MedicationProductDetails> productDetails)
-      throws ExecutionException, InterruptedException {
+      @RequestBody @Valid PackageDetails<@Valid MedicationProductDetails> productDetails) {
     taskManagerService.validateTaskState(branch);
-    return productUpdateService.validateUpdateProductFromAtomicData(
-        branch, productId, productDetails);
+    final ValidationResult validationResult =
+        productUpdateService.validateUpdateProductFromAtomicData(branch, productId, productDetails);
+
+    return validationResult.isValid()
+        ? ResponseEntity.ok().body(validationResult)
+        : ResponseEntity.badRequest().body(validationResult);
   }
 
   @LogExecutionTime

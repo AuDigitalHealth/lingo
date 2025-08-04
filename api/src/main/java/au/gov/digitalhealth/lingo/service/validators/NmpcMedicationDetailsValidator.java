@@ -25,12 +25,14 @@ import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
 import au.gov.digitalhealth.lingo.product.details.NutritionalProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.ProductQuantity;
+import au.gov.digitalhealth.lingo.product.details.ProductTemplate;
 import au.gov.digitalhealth.lingo.product.details.Quantity;
 import au.gov.digitalhealth.lingo.product.details.VaccineProductDetails;
 import au.gov.digitalhealth.lingo.service.SnowstormClient;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.util.Set;
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Service;
 
@@ -63,6 +65,8 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
   public ValidationResult validatePackageDetails(
       PackageDetails<MedicationProductDetails> packageDetails, String branch) {
     ValidationResult result = new ValidationResult();
+
+    validateTypeParameters(packageDetails, result);
 
     validateNonDefiningProperties(
         packageDetails.getNonDefiningProperties(),
@@ -386,5 +390,19 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
       result.addProblem(
           "Product must not have a concentration strength ratio defined for an ingredient, use numerator and denominator instead");
     }
+  }
+
+  @Override
+  protected String getVariantName() {
+    return "medication";
+  }
+
+  @Override
+  protected Set<ProductTemplate> getSupportedProductTypes() {
+    return Set.of(
+        ProductTemplate.noStrength,
+        ProductTemplate.concentrationStrength,
+        ProductTemplate.presentationStrength,
+        ProductTemplate.noIngredients);
   }
 }
