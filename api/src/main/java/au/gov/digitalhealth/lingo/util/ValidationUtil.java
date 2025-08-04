@@ -25,8 +25,8 @@ import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getSingleAxiom;
 import au.csiro.snowstorm_client.model.SnowstormAxiom;
 import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
-import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.details.Quantity;
+import au.gov.digitalhealth.lingo.service.validators.ValidationResult;
 import java.math.BigDecimal;
 import java.util.Objects;
 import java.util.Set;
@@ -42,24 +42,26 @@ public class ValidationUtil {
     return bd.stripTrailingZeros().scale() <= 0;
   }
 
-  public static void validateQuantityValueIsOneIfUnitIsEach(Quantity quantity) {
+  public static void validateQuantityValueIsOneIfUnitIsEach(
+      Quantity quantity, ValidationResult result) {
     if (Objects.requireNonNull(quantity.getUnit().getConceptId())
             .equals(UNIT_OF_PRESENTATION.getValue())
         && !isIntegerValue(quantity.getValue())) {
-      throw new ProductAtomicDataValidationProblem(
+      result.addProblem(
           "Quantity must be an integer if the unit is 'each', unit was "
               + SnowstormDtoUtil.getIdAndFsnTerm(quantity.getUnit()));
     }
   }
 
-  public static void assertSingleComponentSinglePackProduct(SnowstormConcept concept) {
+  public static ValidationResult assertSingleComponentSinglePackProduct(
+      SnowstormConcept concept, ValidationResult result) {
     SnowstormAxiom axiom = getSingleAxiom(concept);
     if (axiom.getRelationships().stream()
         .anyMatch(
             r ->
                 r.getTypeId().equals(CONTAINS_PACKAGED_CD.getValue())
                     || r.getTypeId().equals(CONTAINS_PACKAGED_DEVICE.getValue()))) {
-      throw new ProductAtomicDataValidationProblem(
+      result.addProblem(
           "Cannot get brands/pack size for multi pack product "
               + concept.getConceptId()
               + " - bulk brand or pack size features are limited to single component products");
@@ -75,10 +77,11 @@ public class ValidationUtil {
             .collect(Collectors.toSet());
 
     if (containsProductRelationships.size() != 1) {
-      throw new ProductAtomicDataValidationProblem(
+      result.addProblem(
           "Cannot get brands/pack size for multi component product "
               + concept.getConceptId()
               + " - bulk brand or pack size features are limited to single component products");
     }
+    return result;
   }
 }

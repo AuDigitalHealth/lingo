@@ -17,7 +17,6 @@ package au.gov.digitalhealth.lingo.service.validators;
 
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
-import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.details.DeviceProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.ProductQuantity;
@@ -35,17 +34,20 @@ public class NmpcDeviceDetailsValidator extends DetailsValidator implements Devi
   }
 
   @Override
-  public void validatePackageDetails(
+  public ValidationResult validatePackageDetails(
       PackageDetails<DeviceProductDetails> packageDetails, String branch) {
+
+    ValidationResult result = new ValidationResult();
 
     validateNonDefiningProperties(
         packageDetails.getNonDefiningProperties(),
         ProductPackageType.PACKAGE,
-        models.getModelConfiguration(branch));
+        models.getModelConfiguration(branch),
+        result);
 
     // device packages should not contain other packages
     if (!packageDetails.getContainedPackages().isEmpty()) {
-      throw new ProductAtomicDataValidationProblem("Device packages cannot contain other packages");
+      result.addProblem("Device packages cannot contain other packages");
     }
 
     // if specific device type is not null, other parent concepts must be null or empty
@@ -58,33 +60,34 @@ public class NmpcDeviceDetailsValidator extends DetailsValidator implements Devi
                             .getProductDetails()
                             .getOtherParentConcepts()
                             .isEmpty()))) {
-      throw new ProductAtomicDataValidationProblem(
-          "Specific device type and other parent concepts cannot both be populated");
+      result.addProblem("Specific device type and other parent concepts cannot both be populated");
     }
 
     // device packages must contain at least one device
     if (packageDetails.getContainedProducts().isEmpty()) {
-      throw new ProductAtomicDataValidationProblem(
-          "Device packages must contain at least one device");
+      result.addProblem("Device packages must contain at least one device");
     }
 
     for (ProductQuantity<DeviceProductDetails> productQuantity :
         packageDetails.getContainedProducts()) {
       // validate quantity is one if unit is each
-      ValidationUtil.validateQuantityValueIsOneIfUnitIsEach(productQuantity);
-      validateDeviceType(productQuantity.getProductDetails(), branch);
+      ValidationUtil.validateQuantityValueIsOneIfUnitIsEach(productQuantity, result);
+      validateDeviceType(productQuantity.getProductDetails(), branch, result);
     }
+    return result;
   }
 
-  private void validateDeviceType(DeviceProductDetails deviceProductDetails, String branch) {
+  private void validateDeviceType(
+      DeviceProductDetails deviceProductDetails, String branch, ValidationResult result) {
     // validate device type is not null
     if (deviceProductDetails.getDeviceType() == null) {
-      throw new ProductAtomicDataValidationProblem("Device type is required");
+      result.addProblem("Device type is required");
     }
 
     validateNonDefiningProperties(
         deviceProductDetails.getNonDefiningProperties(),
         ProductPackageType.PRODUCT,
-        models.getModelConfiguration(branch));
+        models.getModelConfiguration(branch),
+        result);
   }
 }

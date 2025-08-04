@@ -20,6 +20,6 @@ import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 
 public interface MedicationDetailsValidator {
 
-  void validatePackageDetails(
+  ValidationResult validatePackageDetails(
       PackageDetails<MedicationProductDetails> packageDetails, String branch);
 }

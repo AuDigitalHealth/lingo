@@ -20,6 +20,7 @@ import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.NonDefiningPropertyDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
+import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.OriginalNode;
@@ -28,7 +29,9 @@ import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.ProductDetails;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
+import au.gov.digitalhealth.lingo.service.validators.ValidationResult;
 import au.gov.digitalhealth.lingo.util.NmpcType;
+import jakarta.validation.Valid;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -60,6 +63,18 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
   public abstract ProductSummary calculateProductFromAtomicData(
       String branch, PackageDetails<T> packageDetails)
       throws ExecutionException, InterruptedException;
+
+  /**
+   * Validates the atomic data of a product, ensuring that all required fields are present and
+   * correctly formatted. This method does not perform any calculations or modifications to the
+   * product data. It is intended to be used for validation purposes only.
+   *
+   * @param branch branch to lookup concepts in
+   * @param productDetails details of the product to validate
+   */
+  public abstract ValidationResult validateProductAtomicData(
+      String branch, @Valid PackageDetails<T> productDetails)
+      throws ProductAtomicDataValidationProblem;
 
   /**
    * Asynchronously calculates the product from atomic data.
@@ -281,4 +296,5 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
         Arrays.stream(NmpcType.values()).map(t -> t.getValue()).collect(Collectors.toSet()));
     return getSnowstormClient().conceptIdsThatExist(branch, nmpcConcepts).containsAll(nmpcConcepts);
   }
+
 }
