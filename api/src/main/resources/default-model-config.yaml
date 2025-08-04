@@ -210,6 +210,7 @@ models:
         suppressOnProductTypes: DEVICE
       - name: pcrs
         title: PCRS Identifier and Name
+        description: PCRS Identifier and Name
         identifier: 680461000220105
         level: PACKAGE
         dataType: CODED
@@ -378,6 +379,7 @@ models:
         suppressOnProductTypes: DEVICE
       - name: ulmCountryOrigin
         title: ULM Country of Origin
+        description: ULM Country of Origin
         identifier: 680881000220104
         level: PACKAGE
         dataType: CONCEPT

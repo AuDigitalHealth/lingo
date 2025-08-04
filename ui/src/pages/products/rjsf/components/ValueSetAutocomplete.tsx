@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Autocomplete, CircularProgress, TextField } from '@mui/material';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { Concept } from '../../../../types/concept.ts';
 import { useSearchConceptOntoServerByUrl } from '../../../../hooks/api/products/useSearchConcept.tsx';
 import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../../utils/helpers/getValueSetExpansionContainsPt.ts';
@@ -15,6 +14,7 @@ interface ValueSetAutocompleteProps extends FieldProps {
   onChange: (value: Concept | null) => void;
   disabled?: boolean;
   error?: string;
+  info?: string;
 }
 
 const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
@@ -27,6 +27,7 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
   onChange,
   disabled = false,
   error,
+  info,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [options, setOptions] = useState<Concept[]>([]);
@@ -118,6 +119,8 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
             needsAttention
               ? 'Please select a valid option (conceptId required)'
               : error
+                ? error
+                : info
           }
           InputProps={{
             ...params.InputProps,

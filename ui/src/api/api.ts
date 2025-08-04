@@ -66,9 +66,10 @@ api.interceptors.response.use(
             );
           } else {
             enqueueSnackbar(
-              `Oops, something went wrong! Please copy the error details below and report it to support: \n\n` + JSON.stringify(potentialInternalServerError, null, 2),
+              `Oops, something went wrong! Please copy the error details below and report it to support: \n\n` +
+                JSON.stringify(potentialInternalServerError, null, 2),
               {
-                variant: 'error'
+                variant: 'error',
               },
             );
           }

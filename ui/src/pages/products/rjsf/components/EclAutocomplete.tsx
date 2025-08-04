@@ -12,7 +12,6 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
     branch,
     value,
     isDisabled,
-    rawErrors,
     errorMessage,
     sx,
     onChange,
@@ -21,6 +20,7 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
     uiSchema,
     required,
     turnOffPublishParam,
+    info,
   } = props;
 
   const apLanguageHeader =
@@ -116,7 +116,7 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
 
   const needsAttention = value && value.pt?.term && !value.conceptId;
 
-  const helperText =
+  const needsAttentionMessage =
     needsAttention && !errorMessage
       ? 'Please search for and select a valid option'
       : undefined;
@@ -153,7 +153,13 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
             label={label}
             // error={hasError}
             onBlur={handleBlur}
-            helperText={helperText}
+            helperText={
+              errorMessage
+                ? errorMessage
+                : needsAttentionMessage
+                  ? needsAttentionMessage
+                  : info
+            }
             InputProps={{
               ...params.InputProps,
               endAdornment: (

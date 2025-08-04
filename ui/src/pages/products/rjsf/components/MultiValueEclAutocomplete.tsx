@@ -23,6 +23,7 @@ const MultiValueEclAutocomplete: React.FC<FieldProps<any, any>> = props => {
     schema,
     uiSchema,
     showDefaultOptions,
+    info,
   } = props;
 
   const [inputValue, setInputValue] = useState('');
@@ -135,7 +136,7 @@ const MultiValueEclAutocomplete: React.FC<FieldProps<any, any>> = props => {
             data-test-id={id}
             label={title}
             error={!!errorMessage}
-            helperText={errorMessage}
+            helperText={errorMessage ? errorMessage : info}
             disabled={isThisDisabled}
             InputProps={{
               ...params.InputProps,

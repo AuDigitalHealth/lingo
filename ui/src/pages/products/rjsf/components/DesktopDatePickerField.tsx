@@ -45,6 +45,13 @@ const DesktopDatePickerField: React.FC<DesktopDatePickerFieldProps> = ({
             fullWidth: true,
             error,
             helperText,
+            sx: {
+              '& .MuiFormHelperText-root': {
+                m: 0,
+                minHeight: '1em',
+                color: error ? 'error.main' : 'text.secondary',
+              },
+            },
           },
         }}
       />
