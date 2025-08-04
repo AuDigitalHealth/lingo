@@ -51,11 +51,13 @@ import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
+import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.details.*;
 import au.gov.digitalhealth.lingo.service.validators.MedicationDetailsValidator;
+import au.gov.digitalhealth.lingo.service.validators.ValidationResult;
 import au.gov.digitalhealth.lingo.util.AmtConstants;
 import au.gov.digitalhealth.lingo.util.BigDecimalFormatter;
 import au.gov.digitalhealth.lingo.util.OwlAxiomService;
@@ -342,6 +344,13 @@ public class MedicationProductCalculationService
             SnomedConstants.values()));
   }
 
+  @Override
+  public ValidationResult validateProductAtomicData(
+      String branch, PackageDetails<MedicationProductDetails> packageDetails)
+      throws ProductAtomicDataValidationProblem {
+    return validateInputData(branch, packageDetails, models.getModelConfiguration(branch));
+  }
+
   /**
    * Calculates the existing and new concepts required to create a product based on the data
    * supplied
@@ -369,7 +378,7 @@ public class MedicationProductCalculationService
     Mono<List<String>> projectChangedConceptIds =
         snowstormClient.getConceptIdsChangedOnProject(branch);
 
-    validateInputData(branch, packageDetails, modelConfiguration);
+    validateInputData(branch, packageDetails, modelConfiguration).throwIfInvalid();
 
     final Map<PackageQuantity<MedicationProductDetails>, ProductSummary> innerPackageSummaries =
         calculateContainedPackages(branch, packageDetails, atomicCache);
@@ -578,7 +587,7 @@ public class MedicationProductCalculationService
     return innerPackageSummaries;
   }
 
-  private void validateInputData(
+  private ValidationResult validateInputData(
       String branch,
       PackageDetails<MedicationProductDetails> packageDetails,
       ModelConfiguration modelConfiguration) {
@@ -593,7 +602,7 @@ public class MedicationProductCalculationService
           "No medication details validator found for model type: "
               + modelConfiguration.getModelType());
     }
-    medicationDetailsValidator.validatePackageDetails(packageDetails, branch);
+    return medicationDetailsValidator.validatePackageDetails(packageDetails, branch);
   }
 
   private CompletableFuture<Node> getOrCreatePackagedClinicalDrug(

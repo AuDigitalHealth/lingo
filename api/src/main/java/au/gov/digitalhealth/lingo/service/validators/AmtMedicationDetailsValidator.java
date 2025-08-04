@@ -27,7 +27,6 @@ import au.gov.digitalhealth.lingo.configuration.FieldBindingConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ExternalIdentifierDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
-import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.details.Ingredient;
 import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
@@ -70,10 +69,11 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
 
   static void validateExternalIdentifier(
       ExternalIdentifier externalIdentifier,
-      Map<String, ExternalIdentifierDefinition> mappingRefsets) {
+      Map<String, ExternalIdentifierDefinition> mappingRefsets,
+      ValidationResult result) {
 
     if (!mappingRefsets.containsKey(externalIdentifier.getIdentifierScheme())) {
-      throw new ProductAtomicDataValidationProblem(
+      result.addProblem(
           "External identifier scheme "
               + externalIdentifier.getIdentifierScheme()
               + " is not valid for this product");
@@ -83,7 +83,7 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
     if (!externalIdentifierDefinition
         .getMappingTypes()
         .contains(externalIdentifier.getRelationshipType())) {
-      throw new ProductAtomicDataValidationProblem(
+      result.addProblem(
           "External identifier relationship type "
               + externalIdentifier.getRelationshipType()
               + " is not valid for scheme "
@@ -92,7 +92,7 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
     if (!externalIdentifierDefinition
         .getDataType()
         .isValidValue(externalIdentifier.getValue(), externalIdentifier.getValueObject())) {
-      throw new ProductAtomicDataValidationProblem(
+      result.addProblem(
           "External identifier value "
               + externalIdentifier.getValue()
               + " is not valid for scheme "
@@ -102,7 +102,7 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
         && !externalIdentifier
             .getValue()
             .matches(externalIdentifierDefinition.getValueRegexValidation())) {
-      throw new ProductAtomicDataValidationProblem(
+      result.addProblem(
           "External identifier value "
               + externalIdentifier.getValue()
               + " does not match the regex validation for scheme "
@@ -111,26 +111,26 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
   }
 
   public static BigDecimal calculateConcentrationStrength(
-      BigDecimal totalQty, BigDecimal productSize) {
-    BigDecimal result =
+      BigDecimal totalQty, BigDecimal productSize, ValidationResult result) {
+    BigDecimal bigDecimalResult =
         totalQty
             .divide(productSize, new MathContext(10, RoundingMode.HALF_UP))
             .stripTrailingZeros();
 
     // Check if the decimal part is greater than 0.999
-    if ((result.remainder(BigDecimal.ONE).compareTo(new BigDecimal("0.999")) >= 0
-            && isWithinRoundingPercentage(result, 0, "0.01"))
-        || result.remainder(BigDecimal.ONE).compareTo(BigDecimal.ZERO) == 0) {
+    if ((bigDecimalResult.remainder(BigDecimal.ONE).compareTo(new BigDecimal("0.999")) >= 0
+            && isWithinRoundingPercentage(bigDecimalResult, 0, "0.01"))
+        || bigDecimalResult.remainder(BigDecimal.ONE).compareTo(BigDecimal.ZERO) == 0) {
 
       // Round to a whole number
-      result = result.setScale(0, RoundingMode.HALF_UP).stripTrailingZeros();
+      bigDecimalResult = bigDecimalResult.setScale(0, RoundingMode.HALF_UP).stripTrailingZeros();
     } else {
-      BigDecimal rounded = result.setScale(6, RoundingMode.HALF_UP).stripTrailingZeros();
+      BigDecimal rounded = bigDecimalResult.setScale(6, RoundingMode.HALF_UP).stripTrailingZeros();
 
-      if (isWithinRoundingPercentage(result, 6, "0.01")) {
-        result = rounded;
+      if (isWithinRoundingPercentage(bigDecimalResult, 6, "0.01")) {
+        bigDecimalResult = rounded;
       } else {
-        throw new ProductAtomicDataValidationProblem(
+        result.addProblem(
             "Result of "
                 + totalQty
                 + "/"
@@ -141,7 +141,7 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
       }
     }
 
-    return result;
+    return bigDecimalResult;
   }
 
   private static boolean isWithinRoundingPercentage(
@@ -153,37 +153,40 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
     return changePercentage.compareTo(new BigDecimal(percentage)) <= 0;
   }
 
-  private void validatePackageQuantity(PackageQuantity<MedicationProductDetails> packageQuantity) {
+  private void validatePackageQuantity(
+      PackageQuantity<MedicationProductDetails> packageQuantity, ValidationResult result) {
     // Leave the MRCM validation to the MRCM - the UI should already enforce this and the validation
     // in the MS will catch it. Validating here will just slow things down.
 
     // -- package quantity unit must be each and the quantitiy must be an integer
-    ValidationUtil.validateQuantityValueIsOneIfUnitIsEach(packageQuantity);
+    ValidationUtil.validateQuantityValueIsOneIfUnitIsEach(packageQuantity, result);
 
     // validate that the package is only nested one deep
     if (packageQuantity.getPackageDetails().getContainedPackages() != null
         && !packageQuantity.getPackageDetails().getContainedPackages().isEmpty()) {
-      throw new ProductAtomicDataValidationProblem(
+      result.addProblem(
           "A contained package must not contain further packages - nesting is only one level deep");
     }
   }
 
-  private void validateProductDetails(MedicationProductDetails productDetails, String branch) {
+  private void validateProductDetails(
+      MedicationProductDetails productDetails, String branch, ValidationResult result) {
 
     validateNonDefiningProperties(
         productDetails.getNonDefiningProperties(),
         ProductPackageType.PACKAGE,
-        models.getModelConfiguration(branch));
+        models.getModelConfiguration(branch),
+        result);
 
     if (productDetails.getExistingMedicinalProduct() != null
         && productDetails.getExistingMedicinalProduct().getConceptId() != null) {
-      throw new ProductAtomicDataValidationProblem(
+      result.addProblem(
           "Existing medicinal product is not supported in AMT medication details validation");
     }
 
     if (productDetails.getExistingClinicalDrug() != null
         && productDetails.getExistingClinicalDrug().getConceptId() != null) {
-      throw new ProductAtomicDataValidationProblem(
+      result.addProblem(
           "Existing clinical drug is not supported in AMT medication details validation");
     }
 
@@ -194,45 +197,47 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
 
     // one of form, container or device must be populated
     if (!genericFormPopulated && !containerTypePopulated && !deviceTypePopulated) {
-      throw new ProductAtomicDataValidationProblem(
-          "One of form, container type or device type must be populated");
+      result.addProblem("One of form, container type or device type must be populated");
     }
 
     // specific dose form can only be populated if generic dose form is populated
     if (specificFormPopulated && !genericFormPopulated) {
-      throw new ProductAtomicDataValidationProblem(
-          "Specific form can only be populated if generic form is populated");
+      result.addProblem("Specific form can only be populated if generic form is populated");
     }
 
     // If Container is populated, Form must be populated
     if (containerTypePopulated && !genericFormPopulated) {
-      throw new ProductAtomicDataValidationProblem(
-          "If container type is populated, form must be populated");
+      result.addProblem("If container type is populated, form must be populated");
     }
 
     // If Form is populated, Device must not be populated
     if (genericFormPopulated && deviceTypePopulated) {
-      throw new ProductAtomicDataValidationProblem(
-          "If form is populated, device type must not be populated");
+      result.addProblem("If form is populated, device type must not be populated");
     }
 
     // If Device is populated, Form and Container must not be populated - already tested above
 
     // product name must be populated
     if (productDetails.getProductName() == null) {
-      throw new ProductAtomicDataValidationProblem("Product name must be populated");
+      result.addProblem("Product name must be populated");
     }
 
     validateExternalIdentifiers(
-        branch, PRODUCT, ExternalIdentifier.filter(productDetails.getNonDefiningProperties()));
+        branch,
+        PRODUCT,
+        ExternalIdentifier.filter(productDetails.getNonDefiningProperties()),
+        result);
 
-    productDetails.getActiveIngredients().forEach(this::validateIngredient);
+    productDetails
+        .getActiveIngredients()
+        .forEach(ingredient -> validateIngredient(ingredient, result));
   }
 
   private void validateExternalIdentifiers(
       String branch,
       ProductPackageType product,
-      Collection<@Valid ExternalIdentifier> externalIdentifiers) {
+      Collection<@Valid ExternalIdentifier> externalIdentifiers,
+      ValidationResult result) {
     Set<ExternalIdentifierDefinition> mandatoryExternalIdentifierDefinitions =
         models.getModelConfiguration(branch).getMappings().stream()
             .filter(ExternalIdentifierDefinition::isMandatory)
@@ -262,7 +267,7 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
           mandatoryExternalIdentifierDefinitions.stream()
               .map(ExternalIdentifierDefinition::getName)
               .collect(Collectors.toSet()))) {
-        throw new ProductAtomicDataValidationProblem(
+        result.addProblem(
             "External identifiers for schemes "
                 + mandatoryExternalIdentifierDefinitions.stream()
                     .map(ExternalIdentifierDefinition::getName)
@@ -277,19 +282,18 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
                 ExternalIdentifierDefinition refset = mappingRefsets.get(key);
 
                 if (refset == null) {
-                  throw new ProductAtomicDataValidationProblem(
+                  result.addProblem(
                       "External identifier scheme " + key + " is not valid for this product");
                 } else if (!refset.isMultiValued() && value > 1) {
-                  throw new ProductAtomicDataValidationProblem(
-                      "External identifier scheme " + key + " is not multi-valued");
+                  result.addProblem("External identifier scheme " + key + " is not multi-valued");
                 }
               });
 
       for (ExternalIdentifier externalIdentifier : externalIdentifiers) {
-        validateExternalIdentifier(externalIdentifier, mappingRefsets);
+        validateExternalIdentifier(externalIdentifier, mappingRefsets, result);
       }
     } else if (!mandatoryExternalIdentifierDefinitions.isEmpty()) {
-      throw new ProductAtomicDataValidationProblem(
+      result.addProblem(
           "External identifiers for schemes "
               + mandatoryExternalIdentifierDefinitions.stream()
                   .map(ExternalIdentifierDefinition::getTitle)
@@ -298,20 +302,20 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
     }
   }
 
-  private void validateIngredient(Ingredient ingredient) {
+  private void validateIngredient(Ingredient ingredient, ValidationResult result) {
     boolean activeIngredientPopulated = ingredient.getActiveIngredient() != null;
     boolean preciseIngredientPopulated = ingredient.getPreciseIngredient() != null;
     boolean bossPopulated = ingredient.getBasisOfStrengthSubstance() != null;
 
     // BoSS is only populated if the active ingredient is populated
     if (!activeIngredientPopulated && bossPopulated) {
-      throw new ProductAtomicDataValidationProblem(
+      result.addProblem(
           "Basis of strength substance can only be populated if active ingredient is populated");
     }
 
     // precise ingredient is only populated if active ingredient is populated
     if (!activeIngredientPopulated && preciseIngredientPopulated) {
-      throw new ProductAtomicDataValidationProblem(
+      result.addProblem(
           "Precise ingredient can only be populated if active ingredient is populated");
     }
 
@@ -319,74 +323,88 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
     boolean totalQuantityPopulated = ingredient.getTotalQuantity() != null;
     boolean concentrationStrengthPopulated = ingredient.getConcentrationStrength() != null;
     if (bossPopulated && !totalQuantityPopulated && !concentrationStrengthPopulated) {
-      throw new ProductAtomicDataValidationProblem(
+      result.addProblem(
           "Basis of strength substance is populated but neither total quantity or concentration strength are populated");
     }
 
     // active ingredient is mandatory
     if (!activeIngredientPopulated) {
-      throw new ProductAtomicDataValidationProblem("Active ingredient must be populated");
+      result.addProblem("Active ingredient must be populated");
     }
   }
 
-  public void validatePackageDetails(
+  public ValidationResult validatePackageDetails(
       PackageDetails<MedicationProductDetails> packageDetails, String branch) {
+
+    ValidationResult result = new ValidationResult();
 
     validateNonDefiningProperties(
         packageDetails.getNonDefiningProperties(),
         ProductPackageType.PACKAGE,
-        models.getModelConfiguration(branch));
+        models.getModelConfiguration(branch),
+        result);
 
     // product name must be populated
     if (packageDetails.getProductName() == null) {
-      throw new ProductAtomicDataValidationProblem("Product name must be populated");
+      result.addProblem("Product name must be populated");
     }
 
     // container type is mandatory
     if (packageDetails.getContainerType() == null) {
-      throw new ProductAtomicDataValidationProblem("Container type must be populated");
+      result.addProblem("Container type must be populated");
     }
 
     // if the package contains other packages it must use a unit of each for the contained packages
     if (packageDetails.getContainedPackages() != null
         && !packageDetails.getContainedPackages().isEmpty()
         && !packageDetails.getContainedPackages().stream()
-            .allMatch(p -> p.getUnit().getConceptId().equals(UNIT_OF_PRESENTATION.getValue()))) {
-      throw new ProductAtomicDataValidationProblem(
+            .allMatch(
+                p ->
+                    p.getUnit().getConceptId() == null
+                        || p.getUnit().getConceptId().equals(UNIT_OF_PRESENTATION.getValue()))) {
+      result.addProblem(
           "If the package contains other packages it must use a unit of 'each' for the contained packages");
     }
 
     // if the package contains other packages it must have a container type of "Pack"
     if (packageDetails.getContainedPackages() != null
         && !packageDetails.getContainedPackages().isEmpty()
-        && !packageDetails
-            .getContainerType()
-            .getConceptId()
-            .equals(SnomedConstants.PACK.getValue())) {
-      throw new ProductAtomicDataValidationProblem(
+        && (packageDetails.getContainerType().getConceptId() == null
+            || !packageDetails
+                .getContainerType()
+                .getConceptId()
+                .equals(SnomedConstants.PACK.getValue()))) {
+      result.addProblem(
           "If the package contains other packages it must have a container type of 'Pack'");
     }
 
     validateExternalIdentifiers(
-        branch, PACKAGE, ExternalIdentifier.filter(packageDetails.getNonDefiningProperties()));
+        branch,
+        PACKAGE,
+        ExternalIdentifier.filter(packageDetails.getNonDefiningProperties()),
+        result);
 
     for (ProductQuantity<MedicationProductDetails> productQuantity :
         packageDetails.getContainedProducts()) {
-      validateProductQuantity(branch, productQuantity);
+      validateProductQuantity(branch, productQuantity, result);
     }
 
     for (@Valid
     PackageQuantity<MedicationProductDetails> packageQuantity :
         packageDetails.getContainedPackages()) {
-      validatePackageQuantity(packageQuantity);
+      validatePackageQuantity(packageQuantity, result);
     }
+
+    return result;
   }
 
   private void validateProductQuantity(
-      String branch, ProductQuantity<MedicationProductDetails> productQuantity) {
+      String branch,
+      ProductQuantity<MedicationProductDetails> productQuantity,
+      ValidationResult result) {
     // Leave the MRCM validation to the MRCM - the UI should already enforce this and the validation
     // in the MS will catch it. Validating here will just slow things down.
-    ValidationUtil.validateQuantityValueIsOneIfUnitIsEach(productQuantity);
+    ValidationUtil.validateQuantityValueIsOneIfUnitIsEach(productQuantity, result);
 
     // if the contained product has a container/device type or a quantity then the unit must be
     // each and the quantity must be an integer
@@ -395,13 +413,14 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
     if ((productDetails.getContainerType() != null
             || productDetails.getDeviceType() != null
             || productDetailsQuantity != null)
-        && (!productQuantity.getUnit().getConceptId().equals(UNIT_OF_PRESENTATION.getValue())
+        && (productQuantity.getUnit().getConceptId() == null
+            || !productQuantity.getUnit().getConceptId().equals(UNIT_OF_PRESENTATION.getValue())
             || !ValidationUtil.isIntegerValue(productQuantity.getValue()))) {
-      throw new ProductAtomicDataValidationProblem(
+      result.addProblem(
           "Product quantity must be a positive whole number and unit each if a container type or device type are specified");
     }
 
-    validateProductDetails(productDetails, branch);
+    validateProductDetails(productDetails, branch, result);
 
     // -- for each ingredient
     // --- total quantity unit if present must not be composite
@@ -414,7 +433,7 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
       boolean hasConcentrationStrength = ingredient.getConcentrationStrength() != null;
       if (hasTotalQuantity
           && snowstormClient.isCompositeUnit(branch, ingredient.getTotalQuantity().getUnit())) {
-        throw new ProductAtomicDataValidationProblem(
+        result.addProblem(
             "Total quantity unit must not be composite. Ingredient was "
                 + getIdAndFsnTerm(ingredient.getActiveIngredient())
                 + " with unit "
@@ -424,7 +443,7 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
       if (hasConcentrationStrength
           && !snowstormClient.isCompositeUnit(
               branch, ingredient.getConcentrationStrength().getUnit())) {
-        throw new ProductAtomicDataValidationProblem(
+        result.addProblem(
             "Concentration strength unit must be composite. Ingredient was "
                 + getIdAndFsnTerm(ingredient.getActiveIngredient())
                 + " with unit "
@@ -470,7 +489,7 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
             missingFieldsMessage = "concentration strength is not specified";
           }
 
-          throw new ProductAtomicDataValidationProblem(
+          result.addProblem(
               String.format(
                   "Total quantity and concentration strength must be present if the product quantity exists for ingredient %s but %s",
                   getIdAndFsnTerm(ingredient.getActiveIngredient()), missingFieldsMessage));
@@ -479,7 +498,7 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
       } else if ((!hasProductQuantity || !hasProductQuantityWithUnit)
           && hasTotalQuantity
           && hasConcentrationStrength) {
-        throw new ProductAtomicDataValidationProblem(
+        result.addProblem(
             "Total ingredient quantity and concentration strength specified for ingredient "
                 + getIdAndFsnTerm(ingredient.getActiveIngredient())
                 + " but product quantity not specified. "
@@ -494,10 +513,11 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
                 branch, ingredient.getConcentrationStrength().getUnit().getConceptId());
 
         // validate the product quantity unit matches the denominator of the concentration strength
-        if (!productDetailsQuantity
-            .getUnit()
-            .getConceptId()
-            .equals(numeratorAndDenominator.getSecond().getConceptId())) {
+        if (productDetailsQuantity.getUnit().getConceptId() == null
+            || !productDetailsQuantity
+                .getUnit()
+                .getConceptId()
+                .equals(numeratorAndDenominator.getSecond().getConceptId())) {
           log.warning(
               "Product quantity unit "
                   + getIdAndFsnTerm(productDetailsQuantity.getUnit())
@@ -512,11 +532,12 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
         if (hasTotalQuantity) {
           // validate that the total quantity unit matches the numerator of the concentration
           // strength
-          if (!ingredient
-              .getTotalQuantity()
-              .getUnit()
-              .getConceptId()
-              .equals(numeratorAndDenominator.getFirst().getConceptId())) {
+          if (ingredient.getTotalQuantity().getUnit().getConceptId() == null
+              || !ingredient
+                  .getTotalQuantity()
+                  .getUnit()
+                  .getConceptId()
+                  .equals(numeratorAndDenominator.getFirst().getConceptId())) {
             log.warning(
                 "Ingredient "
                     + getIdAndFsnTerm(ingredient.getActiveIngredient())
@@ -533,10 +554,10 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
           BigDecimal quantity = productDetailsQuantity.getValue();
 
           BigDecimal calculatedConcentrationStrength =
-              calculateConcentrationStrength(totalQuantity, quantity);
+              calculateConcentrationStrength(totalQuantity, quantity, result);
 
           if (!concentration.stripTrailingZeros().equals(calculatedConcentrationStrength)) {
-            throw new ProductAtomicDataValidationProblem(
+            result.addProblem(
                 "Concentration strength "
                     + concentration
                     + " for ingredient "
@@ -557,9 +578,10 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
             branch, ingredient.getConcentrationStrength().getUnit().getConceptId());
 
     // validate the product quantity unit matches the denominator of the concentration strength
-    return productDetailsQuantity
-        .getUnit()
-        .getConceptId()
-        .equals(numeratorAndDenominator.getSecond().getConceptId());
+    return productDetailsQuantity.getUnit().getConceptId() != null
+        && productDetailsQuantity
+            .getUnit()
+            .getConceptId()
+            .equals(numeratorAndDenominator.getSecond().getConceptId());
   }
 }

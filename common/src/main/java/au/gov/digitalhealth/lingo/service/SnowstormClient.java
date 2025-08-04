@@ -194,6 +194,13 @@ public class SnowstormClient {
         self.getConceptIdsFromEcl(branch, ecl, offset, limit, executeEclAsStated, Set.of()));
   }
 
+  public boolean conceptExistsInReferenceSet(String branch, String conceptId, String referenceSet) {
+    return self
+        .getConceptIdsFromEcl(branch, conceptId + " and ^" + referenceSet, 0, 1, true)
+        .stream()
+        .anyMatch(id -> id.equals(conceptId));
+  }
+
   public Collection<String> getConceptIdsFromEcl(
       String branch, String ecl, int offset, int limit, boolean executeEclAsStated) {
     return self.getConceptIdsFromEcl(branch, ecl, offset, limit, executeEclAsStated, Set.of());

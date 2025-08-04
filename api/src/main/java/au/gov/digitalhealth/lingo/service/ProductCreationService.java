@@ -410,16 +410,6 @@ public class ProductCreationService {
       log.severe("Could not clone product summary - potentially missed ModifiedGeneratedNames");
     }
 
-    if ((createOnly && productSummary.getNodes().stream().noneMatch(Node::isNewConcept))
-        || (!createOnly
-            && productSummary.getNodes().stream().noneMatch(Node::isNewConcept)
-            && productSummary.getNodes().stream().noneMatch(Node::isConceptEdit)
-            && productSummary.getNodes().stream().noneMatch(Node::isRetireAndReplace)
-            && productSummary.getNodes().stream().noneMatch(Node::isRetireAndReplaceWithExisting)
-            && productSummary.getNodes().stream().noneMatch(Node::isPropertyUpdate))) {
-      throw new EmptyProductCreationProblem();
-    }
-
     BidiMap<String, String> idMap = createAndUpdate(branch, productSummary, createOnly);
 
     if (productSummaryClone != null) {
@@ -550,8 +540,18 @@ public class ProductCreationService {
       throws InterruptedException {
 
     if (createOnly) {
+      if (productSummary.getNodes().stream().noneMatch(Node::isNewConcept)) {
+        throw new EmptyProductCreationProblem();
+      }
       validateCreateOperation(productSummary);
     } else {
+      if (productSummary.getNodes().stream().noneMatch(Node::isNewConcept)
+          && productSummary.getNodes().stream().noneMatch(Node::isConceptEdit)
+          && productSummary.getNodes().stream().noneMatch(Node::isRetireAndReplace)
+          && productSummary.getNodes().stream().noneMatch(Node::isRetireAndReplaceWithExisting)
+          && productSummary.getNodes().stream().noneMatch(Node::isPropertyUpdate)) {
+        throw new EmptyProductCreationProblem();
+      }
       validateUpdateOperation(productSummary);
     }
 

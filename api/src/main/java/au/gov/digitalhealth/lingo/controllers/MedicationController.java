@@ -34,6 +34,7 @@ import au.gov.digitalhealth.lingo.service.ProductCalculationServiceFactory;
 import au.gov.digitalhealth.lingo.service.ProductCreationService;
 import au.gov.digitalhealth.lingo.service.ProductUpdateService;
 import au.gov.digitalhealth.lingo.service.TaskManagerService;
+import au.gov.digitalhealth.lingo.service.validators.ValidationResult;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.util.Map;
@@ -202,6 +203,18 @@ public class MedicationController {
   }
 
   @LogExecutionTime
+  @PostMapping("/{branch}/medications/product/$validate")
+  public ValidationResult validateMedicationProductAtomicData(
+      @PathVariable String branch,
+      @RequestBody @Valid PackageDetails<@Valid MedicationProductDetails> productDetails)
+      throws ExecutionException, InterruptedException {
+    taskManagerService.validateTaskState(branch);
+    return productCalculationServiceFactory
+        .getCalculationService(MedicationProductDetails.class)
+        .validateProductAtomicData(branch, productDetails);
+  }
+
+  @LogExecutionTime
   @PostMapping("/{branch}/medications/product/{productId}/$calculateUpdate")
   public ProductSummary updateMedicationProductFromAtomicData(
       @PathVariable String branch,
@@ -210,6 +223,18 @@ public class MedicationController {
       throws ExecutionException, InterruptedException {
     taskManagerService.validateTaskState(branch);
     return productUpdateService.calculateUpdateProductFromAtomicData(
+        branch, productId, productDetails);
+  }
+
+  @LogExecutionTime
+  @PostMapping("/{branch}/medications/product/{productId}/$validateUpdate")
+  public ValidationResult validateUpdateMedicationProductAtomicData(
+      @PathVariable String branch,
+      @PathVariable Long productId,
+      @RequestBody @Valid PackageDetails<@Valid MedicationProductDetails> productDetails)
+      throws ExecutionException, InterruptedException {
+    taskManagerService.validateTaskState(branch);
+    return productUpdateService.validateUpdateProductFromAtomicData(
         branch, productId, productDetails);
   }
 
