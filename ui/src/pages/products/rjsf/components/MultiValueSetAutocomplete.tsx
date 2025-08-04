@@ -16,6 +16,7 @@ interface MultiValueValueSetAutocompleteProps extends FieldProps {
   onChange: (value: Concept[]) => void;
   disabled?: boolean;
   error?: string;
+  info?: string;
 }
 
 export const MultiValueValueSetAutocomplete: React.FC<
@@ -30,6 +31,7 @@ export const MultiValueValueSetAutocomplete: React.FC<
   onChange,
   disabled = false,
   error,
+  info,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [options, setOptions] = useState<Concept[]>([]);
@@ -155,7 +157,7 @@ export const MultiValueValueSetAutocomplete: React.FC<
           {...params}
           label={label}
           error={!!error}
-          helperText={error}
+          helperText={error ? error : info}
           InputProps={{
             ...params.InputProps,
             endAdornment: (
