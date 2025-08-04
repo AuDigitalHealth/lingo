@@ -36,13 +36,16 @@ public class AmtDeviceValidator extends DetailsValidator implements DeviceDetail
   }
 
   @Override
-  public void validatePackageDetails(
+  public ValidationResult validatePackageDetails(
       PackageDetails<DeviceProductDetails> packageDetails, String branch) {
+
+    ValidationResult result = new ValidationResult();
 
     validateNonDefiningProperties(
         packageDetails.getNonDefiningProperties(),
         ProductPackageType.PACKAGE,
-        models.getModelConfiguration(branch));
+        models.getModelConfiguration(branch),
+        result);
 
     // device packages should not contain other packages
     if (!packageDetails.getContainedPackages().isEmpty()) {
@@ -72,12 +75,14 @@ public class AmtDeviceValidator extends DetailsValidator implements DeviceDetail
     for (ProductQuantity<DeviceProductDetails> productQuantity :
         packageDetails.getContainedProducts()) {
       // validate quantity is one if unit is each
-      ValidationUtil.validateQuantityValueIsOneIfUnitIsEach(productQuantity);
-      validateDeviceType(productQuantity.getProductDetails(), branch);
+      ValidationUtil.validateQuantityValueIsOneIfUnitIsEach(productQuantity, result);
+      validateDeviceType(productQuantity.getProductDetails(), branch, result);
     }
+    return result;
   }
 
-  private void validateDeviceType(DeviceProductDetails deviceProductDetails, String branch) {
+  private void validateDeviceType(
+      DeviceProductDetails deviceProductDetails, String branch, ValidationResult result) {
     // validate device type is not null
     if (deviceProductDetails.getDeviceType() == null) {
       throw new ProductAtomicDataValidationProblem("Device type is required");
@@ -86,6 +91,7 @@ public class AmtDeviceValidator extends DetailsValidator implements DeviceDetail
     validateNonDefiningProperties(
         deviceProductDetails.getNonDefiningProperties(),
         ProductPackageType.PACKAGE,
-        models.getModelConfiguration(branch));
+        models.getModelConfiguration(branch),
+        result);
   }
 }

@@ -22,7 +22,6 @@ import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.NonDefiningPropertyDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.ReferenceSetDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
-import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.details.Quantity;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
@@ -41,11 +40,12 @@ public class DetailsValidator {
       @Valid Quantity strengthDenominator,
       String typeName,
       String objectName,
-      String message) {
+      String message,
+      ValidationResult result) {
     if (strengthNumerator == null
         || strengthNumerator.getValue() == null
         || BigDecimal.ZERO.equals(strengthNumerator.getValue())) {
-      throw new ProductAtomicDataValidationProblem(
+      result.addProblem(
           objectName
               + " must have a "
               + typeName
@@ -53,7 +53,7 @@ public class DetailsValidator {
               + message);
     }
     if (strengthNumerator.getUnit() == null) {
-      throw new ProductAtomicDataValidationProblem(
+      result.addProblem(
           objectName
               + " must have a "
               + typeName
@@ -63,15 +63,15 @@ public class DetailsValidator {
     if (strengthDenominator == null
         || strengthDenominator.getValue() == null
         || BigDecimal.ZERO.equals(strengthDenominator.getValue())) {
-      throw new ProductAtomicDataValidationProblem(
+      result.addProblem(
           objectName
               + " must have a "
               + typeName
               + " strength denominator value greater than zero when "
               + message);
     }
-    if (strengthDenominator.getUnit() == null) {
-      throw new ProductAtomicDataValidationProblem(
+    if (strengthDenominator == null || strengthDenominator.getUnit() == null) {
+      result.addProblem(
           objectName
               + " must have a "
               + typeName
@@ -85,10 +85,11 @@ public class DetailsValidator {
       @Valid Quantity strengthDenominator,
       String strengthType,
       String objectName,
-      String message) {
+      String message,
+      ValidationResult result) {
     if (strengthNumerator != null
         && (strengthNumerator.getValue() != null || strengthNumerator.getUnit() != null)) {
-      throw new ProductAtomicDataValidationProblem(
+      result.addProblem(
           objectName
               + " must not have a "
               + strengthType
@@ -97,7 +98,7 @@ public class DetailsValidator {
     }
     if (strengthDenominator != null
         && (strengthDenominator.getValue() != null || strengthDenominator.getUnit() != null)) {
-      throw new ProductAtomicDataValidationProblem(
+      result.addProblem(
           objectName
               + " must not have a "
               + strengthType
@@ -106,15 +107,17 @@ public class DetailsValidator {
     }
   }
 
-  protected static void validatePopulatedConcept(SnowstormConceptMini conceptMini, String message) {
+  protected static void validatePopulatedConcept(
+      SnowstormConceptMini conceptMini, String message, ValidationResult result) {
     if (DetailsValidator.isUnpopulated(conceptMini)) {
-      throw new ProductAtomicDataValidationProblem(message);
+      result.addProblem(message);
     }
   }
 
-  protected static void validateConceptNotSet(SnowstormConceptMini conceptMini, String message) {
+  protected static void validateConceptNotSet(
+      SnowstormConceptMini conceptMini, String message, ValidationResult result) {
     if (DetailsValidator.isPopulated(conceptMini)) {
-      throw new ProductAtomicDataValidationProblem(message);
+      result.addProblem(message);
     }
   }
 
@@ -134,18 +137,20 @@ public class DetailsValidator {
         || conceptMini.getFsn().getTerm().isEmpty();
   }
 
-  protected static void validateQuantityNotZero(Quantity productQuantity, String message) {
+  protected static void validateQuantityNotZero(
+      Quantity productQuantity, String message, ValidationResult result) {
     if (productQuantity == null
         || productQuantity.getValue() == null
         || BigDecimal.ZERO.equals(productQuantity.getValue())) {
-      throw new ProductAtomicDataValidationProblem(message);
+      result.addProblem(message);
     }
   }
 
   protected void validateNonDefiningProperties(
       List<@Valid NonDefiningBase> nonDefiningProperties,
       ProductPackageType type,
-      ModelConfiguration modelConfiguration) {
+      ModelConfiguration modelConfiguration,
+      ValidationResult result) {
     Collection<ModelLevel> levels =
         type == ProductPackageType.PACKAGE
             ? modelConfiguration.getPackageLevels()
@@ -170,30 +175,31 @@ public class DetailsValidator {
           ExternalIdentifierDefinition externalIdentifierDefinition =
               externalIdentifiers.get(nonDefiningProperty.getIdentifierScheme());
           if (externalIdentifierDefinition == null) {
-            throw new ProductAtomicDataValidationProblem(
+            result.addProblem(
                 "External identifier scheme '"
                     + nonDefiningProperty.getIdentifierScheme()
                     + "' is not defined for "
                     + type
                     + " in model configuration");
-          }
-          ExternalIdentifier externalIdentifier = (ExternalIdentifier) nonDefiningProperty;
-          if (!externalIdentifierDefinition
-              .getDataType()
-              .isValidValue(externalIdentifier.getValue(), externalIdentifier.getValueObject())) {
-            throw new ProductAtomicDataValidationProblem(
-                "External identifier value '"
-                    + externalIdentifier.getValue()
-                    + "' is not valid for scheme '"
-                    + nonDefiningProperty.getIdentifierScheme()
-                    + "'");
+          } else {
+            ExternalIdentifier externalIdentifier = (ExternalIdentifier) nonDefiningProperty;
+            if (!externalIdentifierDefinition
+                .getDataType()
+                .isValidValue(externalIdentifier.getValue(), externalIdentifier.getValueObject())) {
+              result.addProblem(
+                  "External identifier value '"
+                      + externalIdentifier.getValue()
+                      + "' is not valid for scheme '"
+                      + nonDefiningProperty.getIdentifierScheme()
+                      + "'");
+            }
           }
         }
         case REFERENCE_SET -> {
           ReferenceSetDefinition referenceSetDefinition =
               referenceSets.get(nonDefiningProperty.getIdentifierScheme());
           if (referenceSetDefinition == null) {
-            throw new ProductAtomicDataValidationProblem(
+            result.addProblem(
                 "Reference set scheme '"
                     + nonDefiningProperty.getIdentifierScheme()
                     + "' is not defined for "
@@ -205,23 +211,24 @@ public class DetailsValidator {
           NonDefiningPropertyDefinition nonDefiningPropertyDefinition =
               nonDefiningPropertiesMap.get(nonDefiningProperty.getIdentifierScheme());
           if (nonDefiningPropertyDefinition == null) {
-            throw new ProductAtomicDataValidationProblem(
+            result.addProblem(
                 "Non-defining property scheme '"
                     + nonDefiningProperty.getIdentifierScheme()
                     + "' is not defined for "
                     + type
                     + " in model configuration");
-          }
-          NonDefiningProperty property = (NonDefiningProperty) nonDefiningProperty;
-          if (!nonDefiningPropertyDefinition
-              .getDataType()
-              .isValidValue(property.getValue(), property.getValueObject())) {
-            throw new ProductAtomicDataValidationProblem(
-                "Non-defining property value '"
-                    + property.getValue()
-                    + "' is not valid for scheme '"
-                    + nonDefiningProperty.getIdentifierScheme()
-                    + "'");
+          } else {
+            NonDefiningProperty property = (NonDefiningProperty) nonDefiningProperty;
+            if (!nonDefiningPropertyDefinition
+                .getDataType()
+                .isValidValue(property.getValue(), property.getValueObject())) {
+              result.addProblem(
+                  "Non-defining property value '"
+                      + property.getValue()
+                      + "' is not valid for scheme '"
+                      + nonDefiningProperty.getIdentifierScheme()
+                      + "'");
+            }
           }
         }
       }

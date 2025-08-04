@@ -54,6 +54,7 @@ import au.gov.digitalhealth.lingo.product.details.*;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
 import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
+import au.gov.digitalhealth.lingo.service.validators.ValidationResult;
 import au.gov.digitalhealth.lingo.util.EclBuilder;
 import au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils;
 import au.gov.digitalhealth.lingo.util.NonDefiningPropertyUtils;
@@ -392,7 +393,8 @@ public abstract class AtomicDataService<T extends ProductDetails> {
             .block();
 
     assert concept != null;
-    ValidationUtil.assertSingleComponentSinglePackProduct(concept);
+    ValidationUtil.assertSingleComponentSinglePackProduct(concept, new ValidationResult())
+        .throwIfInvalid();
 
     SnowstormAxiom axiom = getSingleAxiom(concept);
 
@@ -497,7 +499,8 @@ public abstract class AtomicDataService<T extends ProductDetails> {
             .block();
 
     assert productConcept != null;
-    ValidationUtil.assertSingleComponentSinglePackProduct(productConcept);
+    ValidationUtil.assertSingleComponentSinglePackProduct(productConcept, new ValidationResult())
+        .throwIfInvalid();
 
     boolean medication =
         getRelationshipsFromAxioms(productConcept).stream()

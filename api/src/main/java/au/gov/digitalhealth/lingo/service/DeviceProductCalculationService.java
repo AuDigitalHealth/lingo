@@ -44,6 +44,7 @@ import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
+import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.NewConceptDetails;
 import au.gov.digitalhealth.lingo.product.Node;
@@ -54,6 +55,7 @@ import au.gov.digitalhealth.lingo.product.details.ProductQuantity;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import au.gov.digitalhealth.lingo.service.validators.DeviceDetailsValidator;
+import au.gov.digitalhealth.lingo.service.validators.ValidationResult;
 import au.gov.digitalhealth.lingo.util.AmtConstants;
 import au.gov.digitalhealth.lingo.util.BigDecimalFormatter;
 import au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils;
@@ -241,17 +243,7 @@ public class DeviceProductCalculationService
             AmtConstants.values(),
             SnomedConstants.values());
 
-    final DeviceDetailsValidator deviceDetailsValidator =
-        deviceDetailsValidatorByQualifier.get(
-            modelConfiguration.getModelType().name()
-                + "-"
-                + DeviceDetailsValidator.class.getSimpleName());
-
-    if (deviceDetailsValidator == null) {
-      throw new IllegalStateException(
-          "No device details validator found for model type: " + modelConfiguration.getModelType());
-    }
-    deviceDetailsValidator.validatePackageDetails(packageDetails, branch);
+    validateInputData(branch, packageDetails, modelConfiguration).throwIfInvalid();
 
     ProductSummary productSummary = new ProductSummary();
 
@@ -359,6 +351,30 @@ public class DeviceProductCalculationService
     productSummary.deduplicateNewNodes();
 
     return productSummary;
+  }
+
+  private ValidationResult validateInputData(
+      String branch,
+      PackageDetails<@Valid DeviceProductDetails> packageDetails,
+      ModelConfiguration modelConfiguration) {
+    final DeviceDetailsValidator deviceDetailsValidator =
+        deviceDetailsValidatorByQualifier.get(
+            modelConfiguration.getModelType().name()
+                + "-"
+                + DeviceDetailsValidator.class.getSimpleName());
+
+    if (deviceDetailsValidator == null) {
+      throw new IllegalStateException(
+          "No device details validator found for model type: " + modelConfiguration.getModelType());
+    }
+    return deviceDetailsValidator.validatePackageDetails(packageDetails, branch);
+  }
+
+  @Override
+  public ValidationResult validateProductAtomicData(
+      String branch, PackageDetails<DeviceProductDetails> productDetails)
+      throws ProductAtomicDataValidationProblem {
+    return validateInputData(branch, productDetails, models.getModelConfiguration(branch));
   }
 
   private void updateConceptReferences(

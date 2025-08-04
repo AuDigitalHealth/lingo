@@ -56,6 +56,7 @@ import au.gov.digitalhealth.lingo.product.ProductPackSizes;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.bulk.BrandPackSizeCreationDetails;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
+import au.gov.digitalhealth.lingo.service.validators.ValidationResult;
 import au.gov.digitalhealth.lingo.util.AmtConstants;
 import au.gov.digitalhealth.lingo.util.BigDecimalFormatter;
 import au.gov.digitalhealth.lingo.util.RelationshipSorter;
@@ -443,7 +444,8 @@ public class BrandPackSizeService {
     final SnowstormConcept leafPackageConcept = concepts.get(leafBrandedPackageNode.getConceptId());
     final SnowstormConcept leafProductConcept = concepts.get(leafBrandedProductNode.getConceptId());
 
-    assertSingleComponentSinglePackProduct(leafPackageConcept);
+    assertSingleComponentSinglePackProduct(leafPackageConcept, new ValidationResult())
+        .throwIfInvalid();
 
     SnowstormConceptMini selectedProductBrand =
         validateSingleBrand(leafPackageConcept, leafProductConcept, modelConfiguration);

@@ -21,6 +21,7 @@ import static java.lang.Boolean.TRUE;
 
 import au.csiro.snowstorm_client.model.*;
 import au.gov.digitalhealth.lingo.configuration.FieldBindingConfiguration;
+import au.gov.digitalhealth.lingo.configuration.ModellingConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ExternalIdentifierDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
@@ -41,6 +42,7 @@ import au.gov.digitalhealth.lingo.product.update.ProductDescriptionUpdateRequest
 import au.gov.digitalhealth.lingo.product.update.ProductPropertiesUpdateRequest;
 import au.gov.digitalhealth.lingo.product.update.ProductUpdateRequest;
 import au.gov.digitalhealth.lingo.product.update.ProductUpdateState;
+import au.gov.digitalhealth.lingo.service.validators.ValidationResult;
 import au.gov.digitalhealth.lingo.util.InactivationReason;
 import au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
@@ -70,6 +72,7 @@ import reactor.core.publisher.Mono;
 @Service
 public class ProductUpdateService {
 
+  private final ModellingConfiguration modellingConfiguration;
   SnowstormClient snowstormClient;
   TicketServiceImpl ticketService;
 
@@ -89,7 +92,8 @@ public class ProductUpdateService {
       ProductSummaryService productSummaryService,
       ProductCalculationServiceFactory productCalculationServiceFactory,
       TicketRepository ticketRepository,
-      BulkProductActionRepository bulkProductActionRepository) {
+      BulkProductActionRepository bulkProductActionRepository,
+      ModellingConfiguration modellingConfiguration) {
     this.snowstormClient = snowstormClient;
 
     this.ticketService = ticketService;
@@ -99,6 +103,7 @@ public class ProductUpdateService {
     this.models = models;
     this.productSummaryService = productSummaryService;
     this.productCalculationServiceFactory = productCalculationServiceFactory;
+    this.modellingConfiguration = modellingConfiguration;
   }
 
   private static String getIdentifierKey(ExternalIdentifierDefinition m, ExternalIdentifier id) {
@@ -620,19 +625,8 @@ public class ProductUpdateService {
     return requestedProperties.values();
   }
 
-  public <T extends ProductDetails> ProductSummary calculateUpdateProductFromAtomicData(
-      String branch, Long productId, @Valid PackageDetails<T> productDetails)
-      throws ExecutionException, InterruptedException {
-
-    Mono<List<String>> taskChangedConceptIds = snowstormClient.getConceptIdsChangedOnTask(branch);
-
-    Mono<List<String>> projectChangedConceptIds =
-        snowstormClient.getConceptIdsChangedOnProject(branch);
-
-    // async call to get product summary by productId
-    CompletableFuture<ProductSummary> existingProductSummary =
-        productSummaryService.getProductSummaryAsync(branch, productId.toString());
-
+  private static <T extends ProductDetails> Class<T> getProductDetailsClass(
+      PackageDetails<T> productDetails) {
     // Get the actual class of T using reflection on a concrete instance
     Class<T> productDetailsClass = null;
     if (!productDetails.getContainedProducts().isEmpty()) {
@@ -658,12 +652,58 @@ public class ProductUpdateService {
     if (productDetailsClass == null) {
       throw new IllegalArgumentException("Cannot determine product details class");
     }
+    return productDetailsClass;
+  }
+
+  public <T extends ProductDetails> ValidationResult validateUpdateProductFromAtomicData(
+      String branch, Long productId, @Valid PackageDetails<@Valid T> productDetails) {
+
+    final Class<T> productDetailsClass = getProductDetailsClass(productDetails);
 
     // async call to calculate the product from atomic data
+    final ProductCalculationService<T> calculationService =
+        productCalculationServiceFactory.getCalculationService(productDetailsClass);
+
+    ValidationResult result = calculationService.validateProductAtomicData(branch, productDetails);
+    if (!snowstormClient.conceptExistsInReferenceSet(
+        branch,
+        productId.toString(),
+        models
+            .getModelConfiguration(branch)
+            .getLeafBrandedPackageModelLevel()
+            .getReferenceSetIdentifier())) {
+      result.addProblem(
+          "Product with ID "
+              + productId
+              + " does not exist in branch "
+              + branch
+              + ". Please create a new product instead of updating an existing one.");
+    }
+
+    return result;
+  }
+
+  public <T extends ProductDetails> ProductSummary calculateUpdateProductFromAtomicData(
+      String branch, Long productId, @Valid PackageDetails<T> productDetails)
+      throws ExecutionException, InterruptedException {
+
+    Mono<List<String>> taskChangedConceptIds = snowstormClient.getConceptIdsChangedOnTask(branch);
+
+    Mono<List<String>> projectChangedConceptIds =
+        snowstormClient.getConceptIdsChangedOnProject(branch);
+
+    // async call to get product summary by productId
+    CompletableFuture<ProductSummary> existingProductSummary =
+        productSummaryService.getProductSummaryAsync(branch, productId.toString());
+
+    final Class<T> productDetailsClass = getProductDetailsClass(productDetails);
+
+    // async call to calculate the product from atomic data
+    final ProductCalculationService<T> calculationService =
+        productCalculationServiceFactory.getCalculationService(productDetailsClass);
+
     CompletableFuture<ProductSummary> newProductSummary =
-        productCalculationServiceFactory
-            .getCalculationService(productDetailsClass)
-            .calculateProductFromAtomicDataAsync(branch, productDetails);
+        calculationService.calculateProductFromAtomicDataAsync(branch, productDetails);
 
     CompletableFuture.allOf(existingProductSummary, newProductSummary).join();
 
