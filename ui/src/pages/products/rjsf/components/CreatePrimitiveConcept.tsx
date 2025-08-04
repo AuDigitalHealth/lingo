@@ -143,11 +143,23 @@ const CreatePrimitiveConcept: React.FC<CreatePrimitiveProps> = ({
     inputValue.length < 3 ||
     isLoading;
 
-  const localTitle = title ? title : 'Primitive';
+  const localTitle =
+    title || parentConceptName.replace(/ \(.*\)$/, '').trim() || 'Primitive';
   return (
     <BaseModal open={open} handleClose={handleCloseModal}>
       <BaseModalHeader title={`Create ${localTitle}`} />
       <BaseModalBody>
+        <Box sx={{ mb: 2 }}>
+          <p>
+            This will create a new primitive subtype of the{' '}
+            <strong>
+              {parentConceptId} | {parentConceptName} |
+            </strong>{' '}
+            concept. The name you enter below will be used as the preferred term
+            and will also become the fully specified name with the semantic tag{' '}
+            <strong>{semanticTag}</strong> appended.
+          </p>
+        </Box>
         <TextField
           label={`Enter ${localTitle}`}
           fullWidth
@@ -184,7 +196,7 @@ const CreatePrimitiveConcept: React.FC<CreatePrimitiveProps> = ({
                 ? 'Checking...'
                 : createPrimitiveMutation.isPending
                   ? 'Creating...'
-                  : `Create ${localTitle}`}
+                  : `Create`}
             </Button>
             <Button
               variant="contained"

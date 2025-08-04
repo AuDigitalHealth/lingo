@@ -533,7 +533,7 @@ const ExternalIdentifierRender: React.FC<
               open={createConceptModalOpen}
               title={schema.title}
               onClose={() => setCreateConceptModalOpen(false)}
-              onAddBrand={handleAddCreatedConcept}
+              onAddPrimitive={handleAddCreatedConcept}
               uiSchema={props.uiSchema}
               branch={task?.branchPath as string}
               ticket={useTicketQuery.data as Ticket}

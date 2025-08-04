@@ -95,7 +95,7 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
     onChange(newValue);
   };
 
-  const handleAddBrand = (brand: Concept) => {
+  const addPrimitive = (brand: Concept) => {
     const newValue = {
       conceptId: brand.conceptId,
       pt: brand.pt || { term: brand.fsn?.term || 'Unnamed Brand' },
@@ -189,7 +189,7 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
           <CreatePrimitiveConcept
             open={openCreateBrandModal}
             onClose={() => setOpenCreateBrandModal(false)}
-            onAddBrand={handleAddBrand}
+            onAddPrimitive={addPrimitive}
             uiSchema={props.uiSchema}
             branch={task?.branchPath as string}
             ticket={useTicketQuery.data as Ticket}
