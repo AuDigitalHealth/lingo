@@ -100,8 +100,8 @@ public class AmtDeviceValidator extends DetailsValidator implements DeviceDetail
   }
 
   @Override
-  protected String getVariantName() {
-    return "device";
+  protected Set<String> getSupportedVariantNames() {
+    return Set.of("device");
   }
 
   @Override

@@ -39,7 +39,7 @@ import java.util.Set;
 
 public abstract class DetailsValidator {
 
-  protected abstract String getVariantName();
+  protected abstract Set<String> getSupportedVariantNames();
 
   protected abstract Set<ProductTemplate> getSupportedProductTypes();
 
@@ -247,13 +247,12 @@ public abstract class DetailsValidator {
       PackageDetails<T> packageDetails, ValidationResult result) {
     if (packageDetails.getVariant() == null || packageDetails.getVariant().isBlank()) {
       result.addProblem("Package variant must be populated");
-    } else if (!packageDetails.getVariant().equals(getVariantName())) {
+    } else if (!getSupportedVariantNames().contains(packageDetails.getVariant())) {
       result.addProblem(
           "Package variant '"
               + packageDetails.getVariant()
-              + "' does not match expected variant '"
-              + getVariantName()
-              + "'");
+              + "' does not match supported variants: "
+              + String.join(", ", getSupportedVariantNames()));
     }
     Set<ProductTemplate> supportedProductTypes = getSupportedProductTypes();
     packageDetails
@@ -269,15 +268,17 @@ public abstract class DetailsValidator {
               if (supportedProductTypes.isEmpty()
                   && p.getProductDetails().getProductType() != null) {
                 result.addProblem(
-                    "Product type unexpected for package variant '"
-                        + getVariantName()
-                        + "': "
-                        + p.getProductDetails().getProductType());
+                    "Product type '"
+                        + p.getProductDetails().getProductType()
+                        + "' not supported for package variant '"
+                        + String.join(", ", getSupportedVariantNames())
+                        + "', supported types are: "
+                        + supportedProductTypes);
               } else if (p.getProductDetails().getProductType() == null
                   && !supportedProductTypes.isEmpty()) {
                 result.addProblem(
                     "Product type must be populated for package variant '"
-                        + getVariantName()
+                        + String.join(", ", getSupportedVariantNames())
                         + "', supported types are: "
                         + supportedProductTypes);
               } else if (p.getProductDetails().getProductType() != null
@@ -286,7 +287,7 @@ public abstract class DetailsValidator {
                     "Product type '"
                         + p.getProductDetails().getProductType()
                         + "' not supported for package variant '"
-                        + getVariantName()
+                        + String.join(", ", getSupportedVariantNames())
                         + "', supported types are: "
                         + supportedProductTypes);
               }
