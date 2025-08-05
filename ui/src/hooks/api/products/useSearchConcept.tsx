@@ -141,22 +141,25 @@ export function useSearchConcept(
           encodeURIComponent(searchTerm),
           branch,
           providedEcl,
+          true,
         );
       } else if (
         searchFilter === 'Sct Id' &&
         isSctIds(parseSearchTermsSctId(searchTerm))
       ) {
         const terms = parseSearchTermsSctId(searchTerm);
-        return ConceptService.searchUnpublishedConceptByIds(
+        return ConceptService.searchConceptByIds(
           terms,
           branch,
           providedEcl,
+          true,
         );
       } else if (searchFilter === 'Artg Id') {
         return ConceptService.searchConceptByArtgId(
           searchTerm,
           branch,
           providedEcl,
+          true,
         );
       } else {
         return emptySnowstormResponse;
