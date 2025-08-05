@@ -26,6 +26,7 @@ import java.util.Set;
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Service;
 
+@SuppressWarnings("java:S6830")
 @Service("NMPC-DeviceDetailsValidator")
 @Log
 public class NmpcDeviceDetailsValidator extends DetailsValidator implements DeviceDetailsValidator {
