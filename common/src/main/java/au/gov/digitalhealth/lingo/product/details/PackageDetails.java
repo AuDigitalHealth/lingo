@@ -69,17 +69,6 @@ public class PackageDetails<T extends ProductDetails> extends PackageProductDeta
     return idMap;
   }
 
-  public void cascadeSelectedIdentifiers() {
-    containedPackages.forEach(
-        containedPackage -> {
-          containedPackage
-              .getPackageDetails()
-              .getSelectedConceptIdentifiers()
-              .addAll(selectedConceptIdentifiers);
-          containedPackage.getPackageDetails().cascadeSelectedIdentifiers();
-        });
-  }
-
   @JsonIgnore
   public Map<String, String> getIdPtMap() {
     Map<String, String> idMap = new HashMap<>();

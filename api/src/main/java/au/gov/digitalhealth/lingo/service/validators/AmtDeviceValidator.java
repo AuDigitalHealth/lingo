@@ -27,6 +27,7 @@ import java.util.Set;
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Service;
 
+@SuppressWarnings("java:S6830")
 @Service("AMT-DeviceDetailsValidator")
 @Log
 public class AmtDeviceValidator extends DetailsValidator implements DeviceDetailsValidator {
@@ -56,7 +57,7 @@ public class AmtDeviceValidator extends DetailsValidator implements DeviceDetail
       throw new ProductAtomicDataValidationProblem("Device packages cannot contain other packages");
     }
 
-    // if specific device type is not null, other parent concepts must be null or empty
+    // if the specific device type is not null, other parent concepts must be null or empty
     if (packageDetails.getContainedProducts().stream()
         .anyMatch(
             productQuantity ->
@@ -78,7 +79,7 @@ public class AmtDeviceValidator extends DetailsValidator implements DeviceDetail
 
     for (ProductQuantity<DeviceProductDetails> productQuantity :
         packageDetails.getContainedProducts()) {
-      // validate quantity is one if unit is each
+      // validate quantity has a value of one if the unit is each
       ValidationUtil.validateQuantityValueIsOneIfUnitIsEach(productQuantity, result);
       validateDeviceType(productQuantity.getProductDetails(), branch, result);
     }
@@ -100,8 +101,8 @@ public class AmtDeviceValidator extends DetailsValidator implements DeviceDetail
   }
 
   @Override
-  protected String getVariantName() {
-    return "device";
+  protected Set<String> getSupportedVariantNames() {
+    return Set.of("device");
   }
 
   @Override

@@ -51,6 +51,7 @@ import lombok.extern.java.Log;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
+@SuppressWarnings("java:S6830")
 @Service("AMT-MedicationDetailsValidator")
 @Log
 public class AmtMedicationDetailsValidator extends DetailsValidator
@@ -597,8 +598,8 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
   }
 
   @Override
-  protected String getVariantName() {
-    return "medication";
+  protected Set<String> getSupportedVariantNames() {
+    return Set.of("medication");
   }
 
   @Override

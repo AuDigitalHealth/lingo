@@ -36,6 +36,7 @@ import java.util.Set;
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Service;
 
+@SuppressWarnings("java:S6830")
 @Service("NMPC-MedicationDetailsValidator")
 @Log
 public class NmpcMedicationDetailsValidator extends DetailsValidator
@@ -173,7 +174,6 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
       final boolean vaccine = productDetails instanceof VaccineProductDetails;
 
       validateIngredient(
-          branch,
           ingredient,
           unitOfPresentationExists,
           unitOfPresentationQuantityExists,
@@ -184,7 +184,6 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
   }
 
   private void validateIngredient(
-      String branch,
       Ingredient ingredient,
       boolean unitOfPresentationExists,
       boolean unitOfPresentationQuantityExists,
@@ -393,8 +392,8 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
   }
 
   @Override
-  protected String getVariantName() {
-    return "medication";
+  protected Set<String> getSupportedVariantNames() {
+    return Set.of("medication", "nutritional", "vaccine");
   }
 
   @Override
