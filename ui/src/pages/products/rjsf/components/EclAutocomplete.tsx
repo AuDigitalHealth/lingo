@@ -83,7 +83,6 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
   const handleProductChange = (selectedProduct: Concept | null) => {
     if (disabled) return;
     if (selectedProduct) {
-      // debugger;
       const conceptMini: ConceptMini = {
         conceptId: selectedProduct.conceptId || undefined,
         pt: selectedProduct.pt,
@@ -99,7 +98,6 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
 
   const handleBlur = () => {
     if (disabled) return;
-    // debugger;
     if (inputValue?.pt?.term && !value?.conceptId) {
       const matchingOption = options.find(
         option =>

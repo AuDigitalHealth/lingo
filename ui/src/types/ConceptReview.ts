@@ -59,6 +59,7 @@ export interface Activity {
   branchDepth: number;
   activityType: string;
   conceptChanges: ConceptChange[];
+  commitDate: string;
 }
 export interface ConceptChange {
   conceptId: string;
