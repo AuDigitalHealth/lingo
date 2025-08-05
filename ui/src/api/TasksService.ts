@@ -149,6 +149,23 @@ const TasksServices = {
     const returnTask = await this.getTask(projectKey, taskKey);
     return returnTask;
   },
+  async autoPromote(
+    projectKey: string | undefined,
+    taskKey: string | undefined,
+  ): Promise<Task> {
+    if (projectKey === undefined || taskKey === undefined) {
+      this.handleErrors();
+    }
+    // returns a status object {status: string}
+    const response = await api.post(
+      `/authoring-services/projects/${projectKey}/tasks/${taskKey}/auto-promote`,
+    );
+    if (response.status !== 200) {
+      this.handleErrors();
+    }
+    const returnTask = await this.getTask(projectKey, taskKey);
+    return returnTask;
+  },
   async submitForReview(
     projectKey: string | undefined,
     taskKey: string | undefined,

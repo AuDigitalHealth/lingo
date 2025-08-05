@@ -35,10 +35,15 @@ import { useTaskActivities } from '../../../hooks/api/task/useTaskActivities';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import ConceptReviewList from '../../products/components/reviews/ConceptReviewList.tsx';
-import { Done } from '@mui/icons-material';
+import { CallMerge, Done } from '@mui/icons-material';
 import { useShowReviewControls } from '../../../hooks/api/task/useReviews.tsx';
 import { useCompleteReviewMutation } from '../../../hooks/api/task/useCompleteReviewMutation.tsx';
-import { useCanCompleteReview } from '../../../hooks/api/task/useConceptsForReview.tsx';
+import {
+  useCanCompleteReview,
+  useConceptsForReview,
+} from '../../../hooks/api/task/useConceptsForReview.tsx';
+import { useCanPromoteTask } from '../../../hooks/api/task/useCanPromoteTask.tsx';
+import PromoteTaskModal from './PromoteTaskModal.tsx';
 
 const customSx: SxProps = {
   justifyContent: 'flex-start',
@@ -49,6 +54,12 @@ function TaskDetailsActions() {
   const canCompleteReview = useCanCompleteReview({
     task: task,
     branch: task?.branchPath,
+  });
+  const { conceptReviews } = useConceptsForReview(task?.branchPath);
+
+  const canPromoteTask = useCanPromoteTask({
+    task: task,
+    conceptReviews: conceptReviews,
   });
   const showReviewControls = useShowReviewControls({ task });
   const [classifying, setClassifying] = useState(false);
@@ -255,6 +266,13 @@ function TaskDetailsActions() {
             {'Mark Review Completed'}
           </Button>
         )}
+        <PromoteTaskModal
+          task={task}
+          conceptReviews={conceptReviews}
+          hasUnsavedConcepts={false}
+          deletedCrsConceptFound={false}
+          customSx={customSx}
+        />
       </div>
     </>
   );
