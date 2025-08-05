@@ -597,8 +597,8 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
   }
 
   @Override
-  protected String getVariantName() {
-    return "medication";
+  protected Set<String> getSupportedVariantNames() {
+    return Set.of("medication");
   }
 
   @Override
