@@ -393,8 +393,8 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
   }
 
   @Override
-  protected String getVariantName() {
-    return "medication";
+  protected Set<String> getSupportedVariantNames() {
+    return Set.of("medication", "nutritional", "vaccine");
   }
 
   @Override
