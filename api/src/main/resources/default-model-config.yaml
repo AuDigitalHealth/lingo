@@ -292,7 +292,7 @@ models:
         order: 70
       - name: discontNotification
         title: Discontinuation Notification
-        identifier: 680291000220102 # todo this is not the correct identifier, it is a placeholder
+        identifier: 681101000220108
         level: PACKAGE
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
