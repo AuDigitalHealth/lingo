@@ -96,10 +96,7 @@ export function TaskStatusIcon({ status }: TaskStatusIconProps) {
           TaskStatus.Unknown,
         );
       default:
-        return withTooltip(
-          <PlaylistRemoveRounded fontSize="small" />,
-          TaskStatus.Deleted,
-        );
+        return withTooltip(<HelpCenterRounded fontSize="small" />, status);
     }
   };
 
