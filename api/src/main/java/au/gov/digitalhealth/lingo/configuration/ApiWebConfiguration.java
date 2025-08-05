@@ -30,6 +30,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
@@ -78,7 +79,12 @@ public class ApiWebConfiguration {
     return webClientBuilder
         .baseUrl(authoringServiceUrl)
         .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-        .filter(authHelper.addImsAuthCookie) // Cookies are injected through filter
+        .filter(authHelper.addImsAuthCookie)
+        .exchangeStrategies(ExchangeStrategies.builder()
+            .codecs(configurer -> configurer
+                .defaultCodecs()
+                .maxInMemorySize(10 * 1024 * 1024))
+            .build())
         .build();
   }
 
@@ -108,6 +114,11 @@ public class ApiWebConfiguration {
         .baseUrl(authoringServiceUrl)
         .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
         .filter(authHelper.addDefaultAuthCookie) // Cookies are injected through filter
+        .exchangeStrategies(ExchangeStrategies.builder()
+            .codecs(configurer -> configurer
+                .defaultCodecs()
+                .maxInMemorySize(10 * 1024 * 1024))
+            .build())
         .build();
   }
 
