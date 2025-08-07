@@ -1,6 +1,9 @@
 {
   "ui:grid": [
     {
+      "packType": 12
+    },
+    {
       "productName": 12
     },
     {
@@ -17,6 +20,36 @@
       "containedPackages": 24
     }
   ],
+  "ui:options": {
+    "skipTitle": true,
+    "dynamicDiscriminatorOptions": {
+      "path": "",
+      "options": {
+        "normal": [
+          {
+            "label": "Normal",
+            "value": "normal"
+          }
+        ],
+        "multipack": [
+          {
+            "label": "Multipack",
+            "value": "multipack"
+          }
+        ]
+      }
+    }
+  },
+  "packType": {
+    "ui:widget": "select",
+    "ui:title": "Pack Type",
+    "ui:options": {
+      "updateSchemaOnChange": true,
+      "disableDropdown": {
+        "$eval": "formData.containedProducts?.[0]?.productDetails?.productName?.pt?.term?.length > 0 || formData.containedPackages?.[0]?.packageDetails?.productName?.pt?.term?.length > 0"
+      }
+    }
+  },
   "productName": {
     "ui:field": "AutoCompleteField",
     "ui:options": {
