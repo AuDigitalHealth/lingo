@@ -39,6 +39,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
@@ -152,9 +153,13 @@ public class MedicationController {
           ProductCreationDetails<@Valid MedicationProductDetails> productCreationDetails)
       throws InterruptedException {
     taskManagerService.validateTaskState(branch);
-    return new ResponseEntity<>(
-        productCreationService.createUpdateProductFromAtomicData(branch, productCreationDetails),
-        HttpStatus.CREATED);
+    try {
+      return new ResponseEntity<>(
+          productCreationService.createUpdateProductFromAtomicData(branch, productCreationDetails),
+          HttpStatus.CREATED);
+    } catch (CompletionException ex) {
+      throw (ex.getCause() instanceof RuntimeException runtimeEx) ? runtimeEx : ex;
+    }
   }
 
   @LogExecutionTime
@@ -172,9 +177,13 @@ public class MedicationController {
               productId, productUpdateDetails.getOriginalConceptId()));
     }
     taskManagerService.validateTaskState(branch);
-    return new ResponseEntity<>(
-        productCreationService.updateProductFromAtomicData(branch, productUpdateDetails),
-        HttpStatus.OK);
+    try {
+      return new ResponseEntity<>(
+          productCreationService.updateProductFromAtomicData(branch, productUpdateDetails),
+          HttpStatus.OK);
+    } catch (CompletionException ex) {
+      throw (ex.getCause() instanceof RuntimeException runtimeEx) ? runtimeEx : ex;
+    }
   }
 
   @LogExecutionTime
@@ -184,10 +193,14 @@ public class MedicationController {
       @RequestBody @Valid BulkProductAction<BrandPackSizeCreationDetails> creationDetails)
       throws InterruptedException {
     taskManagerService.validateTaskState(branch);
-    return new ResponseEntity<>(
-        productCreationService.createProductFromBrandPackSizeCreationDetails(
-            branch, creationDetails),
-        HttpStatus.CREATED);
+    try {
+      return new ResponseEntity<>(
+          productCreationService.createProductFromBrandPackSizeCreationDetails(
+              branch, creationDetails),
+          HttpStatus.CREATED);
+    } catch (CompletionException ex) {
+      throw (ex.getCause() instanceof RuntimeException runtimeEx) ? runtimeEx : ex;
+    }
   }
 
   @LogExecutionTime
@@ -197,9 +210,13 @@ public class MedicationController {
       @RequestBody @Valid PackageDetails<@Valid MedicationProductDetails> productDetails)
       throws ExecutionException, InterruptedException {
     taskManagerService.validateTaskState(branch);
+    try {
     return productCalculationServiceFactory
         .getCalculationService(MedicationProductDetails.class)
         .calculateProductFromAtomicData(branch, productDetails);
+    } catch (CompletionException ex) {
+      throw (ex.getCause() instanceof RuntimeException runtimeEx) ? runtimeEx : ex;
+    }
   }
 
   @LogExecutionTime
@@ -225,8 +242,12 @@ public class MedicationController {
       @RequestBody @Valid PackageDetails<@Valid MedicationProductDetails> productDetails)
       throws ExecutionException, InterruptedException {
     taskManagerService.validateTaskState(branch);
+    try {
     return productUpdateService.calculateUpdateProductFromAtomicData(
         branch, productId, productDetails);
+    } catch (CompletionException ex) {
+      throw (ex.getCause() instanceof RuntimeException runtimeEx) ? runtimeEx : ex;
+    }
   }
 
   @LogExecutionTime

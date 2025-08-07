@@ -28,6 +28,7 @@ import au.gov.digitalhealth.lingo.service.ProductUpdateService;
 import au.gov.digitalhealth.lingo.service.TaskManagerService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -86,9 +87,13 @@ public class DeviceController {
       @RequestBody @Valid ProductCreationDetails<@Valid DeviceProductDetails> creationDetails)
       throws InterruptedException {
     taskManagerService.validateTaskState(branch);
+    try {
     return new ResponseEntity<>(
         productCreationService.createUpdateProductFromAtomicData(branch, creationDetails),
         HttpStatus.CREATED);
+    } catch (CompletionException ex) {
+      throw (ex.getCause() instanceof RuntimeException runtimeEx) ? runtimeEx : ex;
+    }
   }
 
   @LogExecutionTime
@@ -106,9 +111,13 @@ public class DeviceController {
               productId, productUpdateDetails.getOriginalConceptId()));
     }
     taskManagerService.validateTaskState(branch);
+    try {
     return new ResponseEntity<>(
         productCreationService.updateProductFromAtomicData(branch, productUpdateDetails),
         HttpStatus.OK);
+    } catch (CompletionException ex) {
+      throw (ex.getCause() instanceof RuntimeException runtimeEx) ? runtimeEx : ex;
+    }
   }
 
   @LogExecutionTime
@@ -131,7 +140,11 @@ public class DeviceController {
       @RequestBody @Valid PackageDetails<@Valid DeviceProductDetails> productDetails)
       throws ExecutionException, InterruptedException {
     taskManagerService.validateTaskState(branch);
+    try {
     return productUpdateService.calculateUpdateProductFromAtomicData(
         branch, productId, productDetails);
+    } catch (CompletionException ex) {
+      throw (ex.getCause() instanceof RuntimeException runtimeEx) ? runtimeEx : ex;
+    }
   }
 }
