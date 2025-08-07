@@ -15,11 +15,11 @@
  */
 package au.gov.digitalhealth.lingo.service.schema;
 
-import au.gov.digitalhealth.lingo.configuration.model.BasePropertyDefinition;
-import au.gov.digitalhealth.lingo.configuration.model.ExternalIdentifierDefinition;
-import au.gov.digitalhealth.lingo.configuration.model.NonDefiningPropertyDefinition;
-import au.gov.digitalhealth.lingo.configuration.model.ReferenceSetDefinition;
+import au.gov.digitalhealth.lingo.configuration.model.*;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.NonDefiningPropertyDataType;
+
+import java.util.List;
+import java.util.Map;
 
 public class SchemaFactory {
 
@@ -112,6 +112,48 @@ public class SchemaFactory {
       property.setTitle("Relationship type");
       property.getEnumValues().addAll(mapping.getMappingTypes().stream().map(Enum::name).toList());
       identifierSchema.addProperty("relationshipType", property);
+    }
+
+    // Additional Fields
+    if (!mapping.getAdditionalFields().isEmpty()) {
+      ObjectProperty additionalFields = new ObjectProperty();
+      for (Map.Entry<String, AdditionalFieldDefinition> entry : mapping.getAdditionalFields().entrySet()) {
+        String key = entry.getKey();
+        AdditionalFieldDefinition fieldDefinition = entry.getValue();
+        ObjectProperty innerField = new ObjectProperty();
+        innerField.setTitle(fieldDefinition.getTitle());
+
+        if (fieldDefinition.getDataType().equals(NonDefiningPropertyDataType.CONCEPT)
+                || fieldDefinition.getDataType().equals(NonDefiningPropertyDataType.CODED)) {
+          ReferenceProperty ref = new ReferenceProperty();
+          ref.setReference("#/$defs/SnowstormConceptMini");
+          innerField.addProperty("valueObject", ref);
+        } else {
+          StringProperty valueProp = new StringProperty();
+
+          if (fieldDefinition.getAllowedValues() != null && !fieldDefinition.getAllowedValues().isEmpty()) {
+            EnumProperty enumValue = new EnumProperty();
+            enumValue.getEnumValues().addAll(fieldDefinition.getAllowedValues());
+            enumValue.setDefaultEnumValue(fieldDefinition.getAllowedValues().get(0));
+            innerField.addProperty("value", enumValue);
+          } else {
+            valueProp.setPattern(fieldDefinition.getValueRegexValidation());
+            valueProp.getErrorMessage().put(
+                    "pattern",
+                    fieldDefinition.getValueValidationErrorMessage() != null
+                            ? fieldDefinition.getValueValidationErrorMessage()
+                            : "Invalid value for " + fieldDefinition.getTitle()
+            );
+            innerField.addProperty("value", valueProp);
+          }
+        }
+
+        innerField.setRequired(List.of("value"));
+        additionalFields.addProperty(key, innerField);
+      }
+
+
+      identifierSchema.addProperty("additionalFields", additionalFields);
     }
 
     return identifierSchema;
