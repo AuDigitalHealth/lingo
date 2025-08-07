@@ -325,7 +325,12 @@ public class NodeGeneratorService {
                                 member, refsetMap.get(member.getRefsetId()))));
               } else if (mappingMap.containsKey(member.getRefsetId())) {
                 return au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier
-                    .create(member, mappingMap.get(member.getRefsetId()), fhirClient)
+                    .create(
+                        branch,
+                        member,
+                        mappingMap.get(member.getRefsetId()),
+                        fhirClient,
+                        snowstormClient)
                     .doOnNext(p -> node.getNonDefiningProperties().add(p))
                     .then(Mono.empty());
               } else if (member.getRefsetId().equals(modelLevel.getReferenceSetIdentifier())) {
@@ -554,11 +559,13 @@ public class NodeGeneratorService {
               modelLevel));
       properties.addAll(
           ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMemberViewComponents(
+              branch,
               referenceSetMembers,
               null,
               new HashSet<>(
                   modelConfiguration.getMappingsByIdentifierForModelLevel(modelLevel).values()),
-              fhirClient));
+              fhirClient,
+              snowstormClient));
       node.setNonDefiningProperties(properties);
 
       if (selectedConcept) {

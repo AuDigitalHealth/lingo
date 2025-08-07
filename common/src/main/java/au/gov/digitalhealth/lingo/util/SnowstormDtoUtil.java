@@ -614,6 +614,17 @@ public class SnowstormDtoUtil {
             "Unknown identifier scheme " + identifier.getIdentifierScheme());
       }
 
+      if (identifier.isAdditionalFieldMismatch(externalIdentifierDefinition)) {
+        throw new ProductAtomicDataValidationProblem(
+            "ExternalIdentifierDefinition additional fields do not match the reference set member additional fields. "
+                + "Expected: "
+                + String.join(", ", externalIdentifierDefinition.getAdditionalFields().keySet())
+                + ", but got: "
+                + String.join(", ", identifier.getAdditionalFields().keySet())
+                + " for identifier: "
+                + identifier.getTitle());
+      }
+
       if (externalIdentifierDefinition.getModelLevels().contains(modelLevelType)) {
 
         Map<String, String> additionalFields = new HashMap<>();
@@ -626,6 +637,18 @@ public class SnowstormDtoUtil {
 
         if (!MappingType.RELATED.equals(identifier.getRelationshipType())) {
           additionalFields.put("mapType", identifier.getRelationshipType().getSctid());
+        }
+
+        if (identifier.getAdditionalFields() != null) {
+          identifier
+              .getAdditionalFields()
+              .forEach(
+                  (key, value) ->
+                      additionalFields.put(
+                          key,
+                          value.getValue() == null
+                              ? value.getValueObject().getConceptId()
+                              : value.getValue()));
         }
 
         SnowstormReferenceSetMemberViewComponent refsetMember =
