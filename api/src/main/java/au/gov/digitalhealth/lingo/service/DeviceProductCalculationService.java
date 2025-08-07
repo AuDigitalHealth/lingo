@@ -724,13 +724,15 @@ public class DeviceProductCalculationService
               leafUnbrandedProductModelLevel));
       properties.addAll(
           ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMemberViewComponents(
+              branch,
               leafUnbrandedProductNode.getNewConceptDetails().getReferenceSetMembers(),
               null,
               new HashSet<>(
                   modelConfiguration
                       .getMappingsByIdentifierForModelLevel(leafUnbrandedProductModelLevel)
                       .values()),
-              fhirClient));
+              fhirClient,
+              snowstormClient));
       leafUnbrandedProductNode.setNonDefiningProperties(properties);
     }
     innerProductSummary.addNode(leafUnbrandedProductNode);
