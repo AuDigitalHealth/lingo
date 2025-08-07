@@ -165,17 +165,25 @@ models:
     mappings:
       - name: gtin
         title: GTIN
+        description: Global Trade Item Number including European Article Number (EAN)
         identifier: 680431000220102
         level: PACKAGE
         dataType: STRING
         valueRegexValidation: \d{8,14}
-        valueValidationErrorMessage: "Must be a valid number beteween 8 and 14 digits"
+        valueValidationErrorMessage: "Must be a valid number between 8 and 14 digits"
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
         defaultMappingType: RELATED
         mappingTypes:
           - RELATED
+        additionalFields:
+          status:
+            title: GTIN Status
+            dataType: STRING
+            allowedValues:
+              - "Current"
+              - "Historical"
         order: 90
       - name: ceNumber
         title: CE number

@@ -336,7 +336,11 @@ public abstract class AtomicDataService<T extends ProductDetails> {
 
     Mono<Map<String, List<ExternalIdentifier>>> mappingsMap =
         ExternalIdentifierUtils.getExternalIdentifiersMapFromRefsetMembers(
-            refsetMembers, getModelConfiguration(branch).getMappings(), getFhirClient());
+            branch,
+            refsetMembers,
+            getModelConfiguration(branch).getMappings(),
+            getFhirClient(),
+            snowStormApiClient);
 
     Mono<Map<String, List<au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet>>>
         referenceSets =
@@ -452,12 +456,14 @@ public abstract class AtomicDataService<T extends ProductDetails> {
           .getNonDefiningProperties()
           .addAll(
               ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMembers(
+                  branch,
                   packVariantRefsetMemebersResult,
                   packVariant.getConceptId(),
                   getModelConfiguration(branch).getMappings().stream()
                       .filter(m -> m.getLevel().equals(ProductPackageType.PACKAGE))
                       .collect(Collectors.toSet()),
-                  getFhirClient()));
+                  getFhirClient(),
+                  getSnowStormApiClient()));
       packSizeWithIdentifier
           .getNonDefiningProperties()
           .addAll(
@@ -597,12 +603,14 @@ public abstract class AtomicDataService<T extends ProductDetails> {
           .getNonDefiningProperties()
           .addAll(
               ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMembers(
+                  branch,
                   packVariantRefsetMemebersResult,
                   packVariantId,
                   getModelConfiguration(branch).getMappings().stream()
                       .filter(m -> m.getLevel().equals(ProductPackageType.PACKAGE))
                       .collect(Collectors.toSet()),
-                  getFhirClient()));
+                  getFhirClient(),
+                  getSnowStormApiClient()));
       brandWithIdentifiers
           .getNonDefiningProperties()
           .addAll(
