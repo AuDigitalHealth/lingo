@@ -1,8 +1,10 @@
 {
   "ui:grid": [
     {
-      "packType": 12
+      "packType":24,
+      "variant": 24
     },
+
     {
       "productName": 12
     },
@@ -48,6 +50,14 @@
       "disableDropdown": {
         "$eval": "formData.containedProducts?.[0]?.productDetails?.productName?.pt?.term?.length > 0 || formData.containedPackages?.[0]?.packageDetails?.productName?.pt?.term?.length > 0"
       }
+    }
+  },
+  "variant": {
+    "ui:widget": "select",
+    "ui:title": "Target Model",
+    "ui:options": {
+      "updateSchemaOnChange": true
+
     }
   },
   "productName": {
@@ -124,6 +134,7 @@
           "skipTitle": true
         },
         "ui:grid": [
+          {"productType": 24},
           {
             "productName": 12,
             "genericForm": 12
@@ -149,6 +160,14 @@
               "otherIdentifyingInformation": 24
             }
           ]
+        },
+        "productType": {
+          "ui:widget": "select",
+          "ui:title": "Product Template",
+          "ui:options": {
+            "updateSchemaOnChange": true
+
+          }
         },
         "type": {
           "ui:widget": "hidden",
@@ -502,6 +521,7 @@
                 "skipTitle": true
               },
               "ui:grid": [
+                {"productType": 24},
                 {
                   "productName": 12,
                   "genericForm": 12
@@ -532,6 +552,14 @@
                 "ui:widget": "hidden",
                 "ui:options": {
                   "skipTitle": true
+                }
+              },
+              "productType": {
+                "ui:widget": "select",
+                "ui:title": "Product Template",
+                "ui:options": {
+                  "updateSchemaOnChange": true
+
                 }
               },
               "productName": {
