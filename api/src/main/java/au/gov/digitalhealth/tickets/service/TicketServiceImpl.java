@@ -1869,21 +1869,28 @@ public class TicketServiceImpl implements TicketService {
     }
 
     // labels
-    if (ticketDto.getLabels() != null && !ticketDto.getLabels().isEmpty()) {
-      Set<Label> newLabels =
-          ticketDto.getLabels().stream()
-              .map(
-                  labelDto ->
-                      labelRepository
-                          .findById(labelDto.getId())
-                          .orElseThrow(
-                              () ->
-                                  new ResourceNotFoundProblem(
-                                      "Label not found with id: " + labelDto.getId())))
-              .collect(Collectors.toSet());
-      existingTicket.getLabels().addAll(newLabels);
-    }
+    if (ticketDto.getLabels() != null) {
+      if (ticketDto.getLabels().isEmpty()) {
+        // If empty list is provided, clear all labels
+        existingTicket.getLabels().clear();
+      } else {
+        // Replace all labels with the new ones
+        Set<Label> newLabels =
+            ticketDto.getLabels().stream()
+                .map(
+                    labelDto ->
+                        labelRepository
+                            .findById(labelDto.getId())
+                            .orElseThrow(
+                                () ->
+                                    new ResourceNotFoundProblem(
+                                        "Label not found with id: " + labelDto.getId())))
+                .collect(Collectors.toSet());
 
+        existingTicket.getLabels().clear();
+        existingTicket.getLabels().addAll(newLabels);
+      }
+    }
     // External Requestors
     if (ticketDto.getExternalRequestors() != null && !ticketDto.getExternalRequestors().isEmpty()) {
       Set<ExternalRequestor> newRequestors =
