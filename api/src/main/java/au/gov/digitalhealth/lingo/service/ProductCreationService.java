@@ -316,6 +316,8 @@ public class ProductCreationService {
       String branch, @Valid BulkProductAction<BrandPackSizeCreationDetails> creationDetails)
       throws InterruptedException {
 
+    snowstormClient.checkForBranchLock(branch);
+
     // validate the ticket exists
     TicketDtoExtended ticket = ticketService.findTicket(creationDetails.getTicketId());
 
@@ -400,6 +402,8 @@ public class ProductCreationService {
       boolean createOnly)
       throws InterruptedException {
 
+    snowstormClient.checkForBranchLock(branch);
+
     // validate the ticket exists
     TicketDtoExtended ticket = ticketService.findTicket(productCreationDetails.getTicketId());
 
@@ -431,6 +435,8 @@ public class ProductCreationService {
 
   public SnowstormConceptMini createPrimitiveConcept(
       String branch, @Valid PrimitiveConceptCreationRequest brandCreationRequest) {
+
+    snowstormClient.checkForBranchLock(branch);
 
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
@@ -1004,7 +1010,7 @@ public class ProductCreationService {
     return preallocatedIdentifiers;
   }
 
-  public void createandUpdateRefsetMemberships(String branch, List<Node> nodeCreateOrder)
+  private void createandUpdateRefsetMemberships(String branch, List<Node> nodeCreateOrder)
       throws InterruptedException {
     log.fine("Creating refset members");
 
