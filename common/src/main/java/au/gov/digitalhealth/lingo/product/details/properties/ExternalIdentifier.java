@@ -16,7 +16,6 @@
 package au.gov.digitalhealth.lingo.product.details.properties;
 
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.MAP_TARGET;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.MAP_TYPE;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
@@ -24,6 +23,8 @@ import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.gov.digitalhealth.lingo.configuration.model.ExternalIdentifierDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.MappingType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.NonDefiningPropertyDataType;
+import au.gov.digitalhealth.lingo.exception.AtomicDataExtractionProblem;
+import au.gov.digitalhealth.lingo.service.SnowstormClient;
 import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import au.gov.digitalhealth.lingo.validation.OnlyOneNotEmpty;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -31,13 +32,17 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.java.Log;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Data
@@ -53,6 +58,8 @@ public class ExternalIdentifier extends NonDefiningBase implements Serializable 
 
   String codeSystem;
 
+  Map<String, FieldValue> additionalFields = new HashMap<>();
+
   /** Additional properties from the target concept, purely for display purposes. */
   Set<AdditionalProperty> additionalProperties;
 
@@ -61,67 +68,159 @@ public class ExternalIdentifier extends NonDefiningBase implements Serializable 
   }
 
   public static Mono<ExternalIdentifier> create(
+      String branch,
       SnowstormReferenceSetMember referenceSetMember,
       ExternalIdentifierDefinition externalIdentifierDefinition,
-      FhirClient fhirClient) {
+      FhirClient fhirClient,
+      SnowstormClient snowstormClient) {
 
-    ExternalIdentifier identifier = new ExternalIdentifier();
-
-    identifier.setIdentifierScheme(externalIdentifierDefinition.getName());
-    identifier.setTitle(externalIdentifierDefinition.getTitle());
-    identifier.setDescription(externalIdentifierDefinition.getDescription());
-    identifier.setIdentifier(referenceSetMember.getRefsetId());
-
-    final String mapTargetId = referenceSetMember.getAdditionalFields().get(MAP_TARGET.getValue());
-    if (externalIdentifierDefinition.getMappingTypes().size() == 1) {
-      identifier.setRelationshipType(
-          externalIdentifierDefinition.getMappingTypes().iterator().next());
-    } else {
-      identifier.setRelationshipType(
-          MappingType.fromSctid(referenceSetMember.getAdditionalFields().get(MAP_TYPE.getValue())));
-    }
-
-    if (externalIdentifierDefinition.getDataType().equals(NonDefiningPropertyDataType.CODED)) {
-      return fhirClient
-          .getConcept(mapTargetId, externalIdentifierDefinition.getCodeSystem())
-          .map(
-              c -> {
-                identifier.setValueObject(c.getFirst());
-                identifier.setAdditionalProperties(c.getSecond());
-                identifier.setCodeSystem(externalIdentifierDefinition.getCodeSystem());
-                return identifier;
-              });
-    } else {
-      identifier.setValue(mapTargetId);
-      return Mono.just(identifier);
-    }
+    return create(
+        branch,
+        referenceSetMember.getAdditionalFields(),
+        referenceSetMember.getRefsetId(),
+        referenceSetMember.getReferencedComponentId(),
+        externalIdentifierDefinition,
+        fhirClient,
+        snowstormClient);
   }
 
   public static Mono<ExternalIdentifier> create(
+      String branch,
       SnowstormReferenceSetMemberViewComponent referenceSetMember,
       ExternalIdentifierDefinition externalIdentifierDefinition,
-      FhirClient fhirClient) {
+      FhirClient fhirClient,
+      SnowstormClient snowstormClient) {
+
+    return create(
+        branch,
+        referenceSetMember.getAdditionalFields(),
+        referenceSetMember.getRefsetId(),
+        referenceSetMember.getReferencedComponentId(),
+        externalIdentifierDefinition,
+        fhirClient,
+        snowstormClient);
+  }
+
+  public static Mono<ExternalIdentifier> create(
+      String branch,
+      Map<String, String> additionalFields,
+      String refsetId,
+      String referencedComponentId,
+      ExternalIdentifierDefinition externalIdentifierDefinition,
+      FhirClient fhirClient,
+      SnowstormClient snowstormClient) {
+
+    checkAdditionalFieldDefinitions(
+        externalIdentifierDefinition, additionalFields, refsetId, referencedComponentId);
+
+    final String mapTargetId = additionalFields.get(MAP_TARGET.getValue());
+
     ExternalIdentifier identifier = new ExternalIdentifier();
 
     identifier.setIdentifierScheme(externalIdentifierDefinition.getName());
     identifier.setTitle(externalIdentifierDefinition.getTitle());
     identifier.setDescription(externalIdentifierDefinition.getDescription());
-    identifier.setIdentifier(referenceSetMember.getRefsetId());
+    identifier.setIdentifier(refsetId);
 
-    final String mapTargetId = referenceSetMember.getAdditionalFields().get(MAP_TARGET.getValue());
     if (externalIdentifierDefinition.getMappingTypes().size() == 1) {
       identifier.setRelationshipType(
           externalIdentifierDefinition.getMappingTypes().iterator().next());
     } else {
-      identifier.setRelationshipType(
-          MappingType.fromSctid(referenceSetMember.getAdditionalFields().get(MAP_TYPE.getValue())));
+      identifier.setRelationshipType(MappingType.fromSctid(mapTargetId));
     }
 
+    Mono<ExternalIdentifier> response;
     if (externalIdentifierDefinition.getDataType().equals(NonDefiningPropertyDataType.CODED)) {
-      return updateCodedValue(externalIdentifierDefinition, fhirClient, mapTargetId, identifier);
+      response =
+          fhirClient
+              .getConcept(mapTargetId, externalIdentifierDefinition.getCodeSystem())
+              .map(
+                  c -> {
+                    identifier.setValueObject(c.getFirst());
+                    identifier.setAdditionalProperties(c.getSecond());
+                    identifier.setCodeSystem(externalIdentifierDefinition.getCodeSystem());
+                    return identifier;
+                  });
     } else {
       identifier.setValue(mapTargetId);
-      return Mono.just(identifier);
+      response = Mono.just(identifier);
+    }
+
+    if (externalIdentifierDefinition.getAdditionalFields().isEmpty()) {
+      return response;
+    }
+
+    Set<Mono<ExternalIdentifier>> additionalFieldsMonos =
+        externalIdentifierDefinition.getAdditionalFields().entrySet().stream()
+            .map(
+                entry -> {
+                  if (entry.getValue().getDataType().equals(NonDefiningPropertyDataType.CODED)) {
+                    return fhirClient
+                        .getConcept(
+                            additionalFields.get(entry.getKey()),
+                            externalIdentifierDefinition.getCodeSystem())
+                        .map(
+                            concept -> {
+                              identifier
+                                  .getAdditionalFields()
+                                  .put(
+                                      entry.getKey(),
+                                      FieldValue.builder()
+                                          .valueObject(concept.getFirst())
+                                          .codeSystem(externalIdentifierDefinition.getCodeSystem())
+                                          .additionalProperties(concept.getSecond())
+                                          .build());
+                              return identifier;
+                            });
+                  } else if (entry
+                      .getValue()
+                      .getDataType()
+                      .equals(NonDefiningPropertyDataType.CONCEPT)) {
+                    return snowstormClient
+                        .getConceptMono(branch, additionalFields.get(entry.getKey()))
+                        .map(
+                            concept -> {
+                              identifier
+                                  .getAdditionalFields()
+                                  .put(
+                                      entry.getKey(),
+                                      FieldValue.builder().valueObject(concept).build());
+                              return identifier;
+                            });
+                  } else {
+                    identifier
+                        .getAdditionalFields()
+                        .put(
+                            entry.getKey(),
+                            FieldValue.builder()
+                                .value(additionalFields.get(entry.getKey()))
+                                .build());
+                    return Mono.just(identifier);
+                  }
+                })
+            .collect(Collectors.toSet());
+
+    return Flux.fromIterable(additionalFieldsMonos).flatMap(mono -> mono).then(response);
+  }
+
+  private static void checkAdditionalFieldDefinitions(
+      ExternalIdentifierDefinition externalIdentifierDefinition,
+      Map<String, String> additionalFields,
+      String refsetId,
+      String referencedComponentId) {
+    final Set<String> fieldNames =
+        new HashSet<>(externalIdentifierDefinition.getAdditionalFields().keySet());
+    fieldNames.add(MAP_TARGET.getValue());
+    if (additionalFields == null || !fieldNames.equals(additionalFields.keySet())) {
+      throw new AtomicDataExtractionProblem(
+          "ExternalIdentifierDefinition additional fields do not match the reference set member additional fields. "
+              + "Expected: "
+              + String.join(", ", fieldNames)
+              + ", but got: "
+              + String.join(", ", additionalFields.keySet())
+              + " for reference set: "
+              + refsetId,
+          referencedComponentId);
     }
   }
 
@@ -225,6 +324,17 @@ public class ExternalIdentifier extends NonDefiningBase implements Serializable 
       updateCodedValue(
               externalIdentifierDefinition, fhirClient, this.valueObject.getConceptId(), this)
           .block();
+    }
+  }
+
+  public boolean isAdditionalFieldMismatch(
+      ExternalIdentifierDefinition externalIdentifierDefinition) {
+    Set<String> fieldNames =
+        new HashSet<>(externalIdentifierDefinition.getAdditionalFields().keySet());
+    if (additionalFields == null) {
+      return !fieldNames.isEmpty();
+    } else {
+      return !fieldNames.equals(additionalFields.keySet());
     }
   }
 }

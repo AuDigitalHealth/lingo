@@ -20,6 +20,8 @@ import static au.gov.digitalhealth.lingo.product.details.properties.PropertyType
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.MappingType;
 import au.gov.digitalhealth.lingo.product.details.properties.PropertyType;
 import au.gov.digitalhealth.lingo.validation.ValidDefaultMappingType;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -38,6 +40,13 @@ public class ExternalIdentifierDefinition extends BasePropertyWithValueDefinitio
 
   /** CodeSystem URI for the value */
   private String codeSystem;
+
+  /**
+   * Additional fields that can be used to store extra information about the external identifier.
+   * These fields are added on to the reference set member as additional fields and must match the
+   * reference set descriptor.
+   */
+  private Map<String, AdditionalFieldDefinition> additionalFields = new HashMap<>();
 
   public PropertyType getPropertyType() {
     return EXTERNAL_IDENTIFIER;

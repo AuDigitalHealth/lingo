@@ -687,6 +687,13 @@ public class ProductUpdateService {
       String branch, Long productId, @Valid PackageDetails<T> productDetails)
       throws ExecutionException, InterruptedException {
 
+    final Class<T> productDetailsClass = getProductDetailsClass(productDetails);
+
+    final ProductCalculationService<T> calculationService =
+        productCalculationServiceFactory.getCalculationService(productDetailsClass);
+
+    calculationService.validateProductAtomicData(branch, productDetails).throwIfInvalid();
+
     Mono<List<String>> taskChangedConceptIds = snowstormClient.getConceptIdsChangedOnTask(branch);
 
     Mono<List<String>> projectChangedConceptIds =
@@ -695,12 +702,6 @@ public class ProductUpdateService {
     // async call to get product summary by productId
     CompletableFuture<ProductSummary> existingProductSummary =
         productSummaryService.getProductSummaryAsync(branch, productId.toString());
-
-    final Class<T> productDetailsClass = getProductDetailsClass(productDetails);
-
-    // async call to calculate the product from atomic data
-    final ProductCalculationService<T> calculationService =
-        productCalculationServiceFactory.getCalculationService(productDetailsClass);
 
     CompletableFuture<ProductSummary> newProductSummary =
         calculationService.calculateProductFromAtomicDataAsync(branch, productDetails);
