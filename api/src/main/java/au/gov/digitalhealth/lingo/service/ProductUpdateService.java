@@ -154,6 +154,8 @@ public class ProductUpdateService {
       String branch, String productId, @Valid ProductUpdateRequest productUpdateRequest)
       throws InterruptedException {
 
+    snowstormClient.checkForBranchLock(branch);
+
     String conceptId = productUpdateRequest.getConceptId();
     log.info(String.format("Product update for %s commencing", conceptId));
     ProductDescriptionUpdateRequest productDescriptionUpdateRequest =
@@ -178,8 +180,7 @@ public class ProductUpdateService {
 
     if (productExternalIdentifierUpdateRequest != null) {
       log.info(String.format("Product update for %s contains ARTGIDS.", conceptId));
-      updateProductProperties(
-          branch, conceptId, productExternalIdentifierUpdateRequest, productUpdateCreationDetails);
+      updateProductProperties(branch, conceptId, productExternalIdentifierUpdateRequest);
     }
 
     productUpdate.setDetails(productUpdateCreationDetails);
@@ -196,7 +197,7 @@ public class ProductUpdateService {
     return bulkProductActionRepository.save(productUpdate);
   }
 
-  public ProductUpdateCreationDetails updateProductDescriptions(
+  private ProductUpdateCreationDetails updateProductDescriptions(
       String branch,
       String conceptId,
       @Valid ProductDescriptionUpdateRequest productDescriptionUpdateRequest,
@@ -469,11 +470,10 @@ public class ProductUpdateService {
     return snowstormClient.getBrowserConcept(branch, conceptId).block();
   }
 
-  public Set<NonDefiningBase> updateProductProperties(
+  private void updateProductProperties(
       String branch,
       String conceptId,
-      @Valid ProductPropertiesUpdateRequest productPropertiesUpdateRequest,
-      ProductUpdateCreationDetails productUpdateCreationDetails)
+      @Valid ProductPropertiesUpdateRequest productPropertiesUpdateRequest)
       throws InterruptedException {
 
     HashSet<NonDefiningBase> nonDefiningBaseSet = new HashSet<>();
@@ -485,7 +485,6 @@ public class ProductUpdateService {
     // Handle non-defining properties
     nonDefiningBaseSet.addAll(
         handleNonDefiningProperties(branch, conceptId, productPropertiesUpdateRequest));
-    return nonDefiningBaseSet;
   }
 
   private Collection<NonDefiningBase> handleExternalIdentifiersAndReferenceSets(

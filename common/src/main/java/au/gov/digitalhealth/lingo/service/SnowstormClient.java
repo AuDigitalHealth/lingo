@@ -23,6 +23,7 @@ import au.csiro.snowstorm_client.invoker.ApiClient;
 import au.csiro.snowstorm_client.model.*;
 import au.csiro.snowstorm_client.model.SnowstormAsyncConceptChangeBatch.StatusEnum;
 import au.gov.digitalhealth.lingo.exception.BatchSnowstormRequestFailedProblem;
+import au.gov.digitalhealth.lingo.exception.BranchLockedProblem;
 import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.exception.ResourceNotFoundProblem;
@@ -1295,5 +1296,18 @@ public class SnowstormClient {
             null,
             languageHeader)
         .mapNotNull(SnowstormItemsPageReferenceSetMember::getItems);
+  }
+
+  public void checkForBranchLock(String branch) {
+    final SnowstormBranchPojo branchMetadata =
+        Objects.requireNonNull(
+            getBranchMetadata(branch).block(), "Branch medata response should not be null");
+    if (Boolean.TRUE.equals(branchMetadata.getLocked())) {
+      final String lockMessage =
+          branchMetadata.getMetadata() != null
+              ? (String) branchMetadata.getMetadata().get("lock")
+              : null;
+      throw new BranchLockedProblem(branch, lockMessage);
+    }
   }
 }
