@@ -21,6 +21,7 @@ import {
   ProductSummary,
 } from './concept.ts';
 import { VersionedEntity } from './tickets/ticket.ts';
+import { CreateConceptConfig } from '../pages/products/rjsf/fields/bulkBrandPack/ExternalIdentifiers.tsx';
 
 export enum ProductType {
   medication = 'medication',
@@ -54,13 +55,18 @@ export interface NonDefiningProperty {
   title: string;
   identifierScheme: string;
   identifier: string;
-  value: string | number | null;
+  value?: string | number | null;
   relationshipType: string | null;
-  valueObject: SnowstormConceptMini | null;
-  type: NonDefiningPropertyType;
+  valueObject?: SnowstormConceptMini | null;
+  type?: NonDefiningPropertyType;
   codeSystem?: string;
   additionalProperties?: AdditionalProperty[];
+  additionalFields?: AdditionalFields;
 }
+
+export type AdditionalFields = {
+  [key: string]: { value?: string; valueObject?: SnowstormConceptMini };
+};
 
 export interface AdditionalProperty {
   code: string;
@@ -72,6 +78,16 @@ export interface AdditionalProperty {
 export interface SubAdditionalProperty {
   code: string;
   value: string;
+}
+
+export interface BindingConfig {
+  [key: string]: {
+    valueSet?: string;
+    ecl?: string;
+    showDefaultOptions?: boolean;
+    createConcept?: CreateConceptConfig;
+    placeholder?: string;
+  };
 }
 
 export interface Quantity {

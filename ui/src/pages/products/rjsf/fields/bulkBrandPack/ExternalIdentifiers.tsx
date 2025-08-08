@@ -1,8 +1,8 @@
 import React, { useCallback, useState } from 'react';
 import {
   Accordion,
-  AccordionDetails,
   AccordionSummary,
+  AccordionDetails,
   Autocomplete,
   Box,
   Checkbox,
@@ -12,14 +12,19 @@ import {
   IconButton,
   Stack,
   TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  FormHelperText,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { FieldProps } from '@rjsf/utils';
 import ValueSetAutocomplete from '../../components/ValueSetAutocomplete';
 import EclAutocomplete from '../../components/EclAutocomplete';
 import {
+  BindingConfig,
   NonDefiningProperty,
-  NonDefiningPropertyType,
 } from '../../../../../types/product.ts';
 import useTaskByKey from '../../../../../hooks/useTaskByKey.tsx';
 import { Concept, ConceptMini } from '../../../../../types/concept.ts';
@@ -34,23 +39,10 @@ import { useParams } from 'react-router-dom';
 import { Ticket } from '../../../../../types/tickets/ticket.ts';
 import { ErrorObject } from 'ajv';
 import { PREFIX_MISSING_NONDEFINING_PROPERTIES } from '../../helpers/validationHelper.ts';
-interface NonDefiningPropertyDefinition {
-  identifierScheme: string;
-  relationshipType: string;
-  valueObject: string;
-  value: string;
-  type: NonDefiningPropertyType;
-}
 
-interface BindingConfig {
-  [key: string]: {
-    valueSet?: string;
-    ecl?: string;
-    showDefaultOptions?: boolean;
-    createConcept?: CreateConceptConfig;
-    placeholder?: string;
-  };
-}
+import { ExternalIdentifierTextField } from '../../components/ExternalIdentifierTextField.tsx';
+
+import { AdditionalFieldsEditor } from '../../components/AdditionalFieldsEditor.tsx';
 
 export interface CreateConceptConfig {
   ecl: string;
@@ -94,7 +86,7 @@ const ExternalIdentifiers: React.FC<
 
   const formData = props.formData;
 
-  const schemas = schema?.items?.anyOf as NonDefiningPropertyDefinition[];
+  const schemas = schema?.items?.anyOf as NonDefiningProperty[];
   const task = useTaskByKey();
   if (!schemas) {
     return null;
@@ -450,297 +442,328 @@ const ExternalIdentifierRender: React.FC<
   if (readOnly && (!schemeEntries || schemeEntries.length === 0)) {
     return <></>;
   }
+  // Extract additionalFields schema to identify fields with enum
+  const additionalFieldsSchema =
+    schema?.properties?.additionalFields?.properties;
+
+  const renderNonDefiningProperty = (
+    <Stack
+      direction="row"
+      // spacing={2}
+      alignItems="center"
+      sx={{ width: '100%' }}
+    >
+      {useValueSetAutocomplete && isMultiValued && (
+        <MultiValueValueSetAutocomplete
+          label={schema.title}
+          url={binding.valueSet || ''}
+          showDefaultOptions={showDefaultOptions || false}
+          value={schemeEntries.map(entry => entry.valueObject)}
+          onChange={handleChangeConcepts}
+          disabled={readOnly ? true : false}
+          //   error={!!errorMessage}
+          info={info}
+        />
+      )}
+      {useValueSetAutocomplete && !isMultiValued && (
+        <ValueSetAutocomplete
+          label={schema.title}
+          url={binding.valueSet || ''}
+          showDefaultOptions={showDefaultOptions || false}
+          value={
+            schemeEntries[0] ? schemeEntries[0].valueObject : schemeEntries
+          }
+          onChange={handleChangeConcepts}
+          disabled={readOnly ? true : false}
+          required={isRequired}
+          errorMessage={
+            missingRequiredFieldError ? 'Field must be populated' : ''
+          }
+          info={info}
+        />
+      )}
+      {useEclAutocomplete && isMultiValued && (
+        <MultiValueEclAutocomplete
+          value={schemeEntries.map(entry => entry.valueObject)}
+          ecl={binding.ecl || ''}
+          branch={branch}
+          onChange={handleChangeConcepts}
+          showDefaultOptions={showDefaultOptions || false}
+          isDisabled={readOnly ? true : false}
+          errorMessage={
+            missingRequiredFieldError ? 'Field must be populated' : ''
+          }
+          title={schema.title}
+          required={isRequired}
+          info={info}
+        />
+      )}
+      {useEclAutocomplete && !isMultiValued && (
+        <EclAutocomplete
+          value={
+            schemeEntries[0] ? schemeEntries[0].valueObject : schemeEntries
+          }
+          ecl={binding.ecl || ''}
+          branch={branch}
+          onChange={handleChangeConcepts}
+          showDefaultOptions={showDefaultOptions || false}
+          isDisabled={readOnly ? true : false}
+          errorMessage={
+            missingRequiredFieldError ? 'Field must be populated' : ''
+          }
+          required={isRequired}
+          title={schema.title}
+          info={info}
+        />
+      )}
+      {useCreateConcept && (
+        <>
+          <Tooltip title="Create Primitive Concept">
+            <IconButton
+              data-testid="create-brand-btn"
+              onClick={() => setCreateConceptModalOpen(true)}
+              disabled={false}
+              tabIndex={-1}
+            >
+              <AddCircleOutlineIcon color="primary" />
+            </IconButton>
+          </Tooltip>
+          <CreatePrimitiveConcept
+            open={createConceptModalOpen}
+            title={schema.title}
+            onClose={() => setCreateConceptModalOpen(false)}
+            onAddPrimitive={handleAddCreatedConcept}
+            uiSchema={props.uiSchema}
+            branch={task?.branchPath as string}
+            ticket={useTicketQuery.data as Ticket}
+            ecl={binding.createConcept?.ecl}
+            semanticTag={binding.createConcept?.semanticTags}
+            parentConceptId={binding.createConcept?.parentConceptId}
+            parentConceptName={binding.createConcept?.parentConceptName}
+          />
+        </>
+      )}
+      {isCheckBox && ( // Checkbox implementation
+        <FormControlLabel
+          label={schema.title}
+          labelPlacement="start"
+          control={
+            <Checkbox
+              checked={formData?.some(
+                item =>
+                  item.type === 'REFERENCE_SET' &&
+                  item.identifierScheme ===
+                    schema.properties.identifierScheme.const,
+              )}
+              onChange={e => {
+                const scheme = schema.properties.identifierScheme.const;
+                const updated = e.target.checked
+                  ? [
+                      ...(formData || []),
+                      { type: 'REFERENCE_SET', identifierScheme: scheme },
+                    ]
+                  : formData?.filter(
+                      item =>
+                        !(
+                          item.type === 'REFERENCE_SET' &&
+                          item.identifierScheme === scheme
+                        ),
+                    ) || [];
+                onChange(updated);
+              }}
+              disabled={readOnly}
+            />
+          }
+        />
+      )}
+      {dateFormat && (
+        <DesktopDatePickerField
+          label={schema.title}
+          format={dateFormat}
+          value={schemeEntries?.[0]?.value ? schemeEntries[0].value : null}
+          onChange={handleDateChange}
+          disabled={readOnly ? true : false}
+          error={errorTooltip || missingRequiredFieldError}
+          helperText={
+            errorTooltip ||
+            (missingRequiredFieldError ? 'Field must be populated' : info)
+          }
+        />
+      )}
+
+      {!dateFormat &&
+        !useEclAutocomplete &&
+        !useValueSetAutocomplete &&
+        !isCheckBox &&
+        isMultiValued && (
+          <Autocomplete
+            multiple
+            freeSolo
+            disableClearable
+            filterSelectedOptions
+            disabled={readOnly}
+            options={availableOptions}
+            getOptionLabel={option => option}
+            value={schemeEntries?.map(e => e.value)}
+            inputValue={inputValue}
+            onInputChange={(_, newVal) => {
+              setInputValue(newVal);
+              setErrorTooltip('');
+            }}
+            onChange={(_, values, reason, details) => {
+              if (reason === 'selectOption' && details?.option) {
+                handleAdd(details.option);
+              } else if (reason === 'createOption') {
+                handleAdd(values[values.length - 1]);
+              }
+            }}
+            renderTags={(values, getTagProps) => (
+              <Stack direction="row" gap={1} flexWrap="wrap">
+                {values.map((val, index) => (
+                  <React.Fragment key={`${schemeName}-${val}-${index}`}>
+                    {renderChip({
+                      value: val,
+                      identifierScheme: schemeName,
+                      relationshipType:
+                        schema.properties.relationshipType?.const,
+                    })}
+                  </React.Fragment>
+                ))}
+              </Stack>
+            )}
+            renderInput={params => (
+              <TextField
+                {...params}
+                onBlur={() => {
+                  const trimmed = inputValue.trim();
+                  if (trimmed && !readOnly) {
+                    handleAdd(trimmed);
+                    setInputValue('');
+                  }
+                }}
+                label={schema.title}
+                error={errorTooltip || missingRequiredFieldError}
+                helperText={
+                  errorTooltip ||
+                  (missingRequiredFieldError ? 'Field must be populated' : info)
+                }
+                sx={{
+                  '& .MuiFormHelperText-root': {
+                    m: 0,
+                    minHeight: '1em',
+                    color:
+                      errorTooltip || missingRequiredFieldError
+                        ? 'error.main'
+                        : 'text.secondary',
+                  },
+                }}
+                InputProps={{
+                  ...params.InputProps,
+                  endAdornment: (
+                    <>
+                      {params.InputProps.endAdornment}
+                      {!readOnly && inputValue?.trim() && (
+                        <IconButton
+                          edge="end"
+                          size="small"
+                          onClick={() => {
+                            handleAdd(inputValue.trim());
+                            setInputValue('');
+                          }}
+                          disabled={schemeEntries.some(
+                            entry => entry.value === inputValue.trim(),
+                          )}
+                          sx={{ ml: 1 }}
+                          title="Add value"
+                        >
+                          <AddCircleOutlineIcon color="primary" />
+                        </IconButton>
+                      )}
+                    </>
+                  ),
+                }}
+              />
+            )}
+            sx={{ width: '100%' }}
+          />
+        )}
+      {!dateFormat &&
+        !useEclAutocomplete &&
+        !useValueSetAutocomplete &&
+        !isCheckBox &&
+        !isMultiValued && (
+          <ExternalIdentifierTextField
+            schema={schema}
+            schemeName={schemeName}
+            formData={formData}
+            schemeEntries={schemeEntries}
+            readOnly={readOnly}
+            errorTooltip={errorTooltip}
+            missingRequiredFieldError={missingRequiredFieldError}
+            info={info}
+            onChange={onChange}
+            inputValue={inputValue}
+            setInputValue={setInputValue}
+            handleTextFieldInputChange={handleTextFieldInputChange}
+          />
+        )}
+    </Stack>
+  );
+
   return (
     <Box>
-      <Stack
-        direction="row"
-        // spacing={2}
-        alignItems="center"
-        sx={{ width: '100%' }}
-      >
-        {useValueSetAutocomplete && isMultiValued && (
-          <MultiValueValueSetAutocomplete
-            label={schema.title}
-            url={binding.valueSet || ''}
-            showDefaultOptions={showDefaultOptions || false}
-            value={schemeEntries.map(entry => entry.valueObject)}
-            onChange={handleChangeConcepts}
-            disabled={readOnly ? true : false}
-            //   error={!!errorMessage}
-            info={info}
-          />
-        )}
-        {useValueSetAutocomplete && !isMultiValued && (
-          <ValueSetAutocomplete
-            label={schema.title}
-            url={binding.valueSet || ''}
-            showDefaultOptions={showDefaultOptions || false}
-            value={
-              schemeEntries[0] ? schemeEntries[0].valueObject : schemeEntries
-            }
-            onChange={handleChangeConcepts}
-            disabled={readOnly ? true : false}
-            required={isRequired}
-            errorMessage={
-              missingRequiredFieldError ? 'Field must be populated' : ''
-            }
-            info={info}
-          />
-        )}
-        {useEclAutocomplete && isMultiValued && (
-          <MultiValueEclAutocomplete
-            value={schemeEntries.map(entry => entry.valueObject)}
-            ecl={binding.ecl || ''}
-            branch={branch}
-            onChange={handleChangeConcepts}
-            showDefaultOptions={showDefaultOptions || false}
-            isDisabled={readOnly ? true : false}
-            errorMessage={
-              missingRequiredFieldError ? 'Field must be populated' : ''
-            }
-            title={schema.title}
-            required={isRequired}
-            info={info}
-          />
-        )}
-        {useEclAutocomplete && !isMultiValued && (
-          <EclAutocomplete
-            value={
-              schemeEntries[0] ? schemeEntries[0].valueObject : schemeEntries
-            }
-            ecl={binding.ecl || ''}
-            branch={branch}
-            onChange={handleChangeConcepts}
-            showDefaultOptions={showDefaultOptions || false}
-            isDisabled={readOnly ? true : false}
-            errorMessage={
-              missingRequiredFieldError ? 'Field must be populated' : ''
-            }
-            required={isRequired}
-            title={schema.title}
-            info={info}
-          />
-        )}
-        {useCreateConcept && (
-          <>
-            <Tooltip title="Create Primitive Concept">
-              <IconButton
-                data-testid="create-brand-btn"
-                onClick={() => setCreateConceptModalOpen(true)}
-                disabled={false}
-                tabIndex={-1}
-              >
-                <AddCircleOutlineIcon color="primary" />
-              </IconButton>
-            </Tooltip>
-            <CreatePrimitiveConcept
-              open={createConceptModalOpen}
-              title={schema.title}
-              onClose={() => setCreateConceptModalOpen(false)}
-              onAddPrimitive={handleAddCreatedConcept}
-              uiSchema={props.uiSchema}
-              branch={task?.branchPath as string}
-              ticket={useTicketQuery.data as Ticket}
-              ecl={binding.createConcept?.ecl}
-              semanticTag={binding.createConcept?.semanticTags}
-              parentConceptId={binding.createConcept?.parentConceptId}
-              parentConceptName={binding.createConcept?.parentConceptName}
-            />
-          </>
-        )}
-        {isCheckBox && ( // Checkbox implementation
-          <FormControlLabel
-            label={schema.title}
-            labelPlacement="start"
-            control={
-              <Checkbox
-                checked={formData?.some(
-                  item =>
-                    item.type === 'REFERENCE_SET' &&
-                    item.identifierScheme ===
-                      schema.properties.identifierScheme.const,
-                )}
-                onChange={e => {
-                  const scheme = schema.properties.identifierScheme.const;
-                  const updated = e.target.checked
-                    ? [
-                        ...(formData || []),
-                        { type: 'REFERENCE_SET', identifierScheme: scheme },
-                      ]
-                    : formData?.filter(
-                        item =>
-                          !(
-                            item.type === 'REFERENCE_SET' &&
-                            item.identifierScheme === scheme
-                          ),
-                      ) || [];
-                  onChange(updated);
-                }}
-                disabled={readOnly}
-              />
-            }
-          />
-        )}
-        {dateFormat && (
-          <DesktopDatePickerField
-            label={schema.title}
-            format={dateFormat}
-            value={schemeEntries?.[0]?.value ? schemeEntries[0].value : null}
-            onChange={handleDateChange}
-            disabled={readOnly ? true : false}
-            error={errorTooltip || missingRequiredFieldError}
-            helperText={
-              errorTooltip ||
-              (missingRequiredFieldError ? 'Field must be populated' : info)
-            }
-          />
-        )}
+      {additionalFieldsSchema ? (
+        <Accordion
+          defaultExpanded
+          sx={{
+            backgroundColor: '#fdfcfc',
+            borderRadius: 2,
+            border: '1px solid #e0e0e0',
+            boxShadow: 'none',
+            mt: 2,
+          }}
+        >
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon sx={{ fontSize: 18 }} />}
+            sx={{
+              minHeight: 32,
+              paddingY: 0.5,
+              paddingX: 1.25,
+              '&.Mui-expanded': {
+                minHeight: 32,
+              },
+              '& .MuiAccordionSummary-content': {
+                marginY: 0.25,
+              },
+              '& .MuiAccordionSummary-expandIconWrapper': {
+                marginTop: '0 !important',
+                marginBottom: '0 !important',
+              },
+            }}
+          >
+            {schema.title}
+          </AccordionSummary>
 
-        {!dateFormat &&
-          !useEclAutocomplete &&
-          !useValueSetAutocomplete &&
-          !isCheckBox &&
-          isMultiValued && (
-            <Autocomplete
-              multiple
-              freeSolo
-              disableClearable
-              filterSelectedOptions
-              disabled={readOnly}
-              options={availableOptions}
-              getOptionLabel={option => option}
-              value={schemeEntries?.map(e => e.value)}
-              inputValue={inputValue}
-              onInputChange={(_, newVal) => {
-                setInputValue(newVal);
-                setErrorTooltip('');
-              }}
-              onChange={(_, values, reason, details) => {
-                if (reason === 'selectOption' && details?.option) {
-                  handleAdd(details.option);
-                } else if (reason === 'createOption') {
-                  handleAdd(values[values.length - 1]);
-                }
-              }}
-              renderTags={(values, getTagProps) => (
-                <Stack direction="row" gap={1} flexWrap="wrap">
-                  {values.map((val, index) => (
-                    <React.Fragment key={`${schemeName}-${val}-${index}`}>
-                      {renderChip({
-                        value: val,
-                        identifierScheme: schemeName,
-                        relationshipType:
-                          schema.properties.relationshipType?.const,
-                      })}
-                    </React.Fragment>
-                  ))}
-                </Stack>
-              )}
-              renderInput={params => (
-                <TextField
-                  {...params}
-                  onBlur={() => {
-                    const trimmed = inputValue.trim();
-                    if (trimmed && !readOnly) {
-                      handleAdd(trimmed);
-                      setInputValue('');
-                    }
-                  }}
-                  label={schema.title}
-                  error={errorTooltip || missingRequiredFieldError}
-                  helperText={
-                    errorTooltip ||
-                    (missingRequiredFieldError
-                      ? 'Field must be populated'
-                      : info)
-                  }
-                  sx={{
-                    '& .MuiFormHelperText-root': {
-                      m: 0,
-                      minHeight: '1em',
-                      color:
-                        errorTooltip || missingRequiredFieldError
-                          ? 'error.main'
-                          : 'text.secondary',
-                    },
-                  }}
-                  InputProps={{
-                    ...params.InputProps,
-                    endAdornment: (
-                      <>
-                        {params.InputProps.endAdornment}
-                        {!readOnly && inputValue?.trim() && (
-                          <IconButton
-                            edge="end"
-                            size="small"
-                            onClick={() => {
-                              handleAdd(inputValue.trim());
-                              setInputValue('');
-                            }}
-                            disabled={schemeEntries.some(
-                              entry => entry.value === inputValue.trim(),
-                            )}
-                            sx={{ ml: 1 }}
-                            title="Add value"
-                          >
-                            <AddCircleOutlineIcon color="primary" />
-                          </IconButton>
-                        )}
-                      </>
-                    ),
-                  }}
-                />
-              )}
-              sx={{ width: '100%' }}
-            />
-          )}
-        {!dateFormat &&
-          !useEclAutocomplete &&
-          !useValueSetAutocomplete &&
-          !isCheckBox &&
-          !isMultiValued && (
-            <TextField
-              fullWidth
-              type={isNumber ? 'number' : 'text'}
-              disabled={readOnly}
-              label={schema.title}
-              value={inputValue ? inputValue : schemeEntries?.[0]?.value || ''}
-              onChange={e => {
-                const val = e.target.value;
-                if (val === '') {
-                  // Remove the entry if value is cleared
-                  onChange(
-                    (formData ?? []).filter(
-                      item => item.identifierScheme !== schemeName,
-                    ),
-                  );
-                }
-                setInputValue(e.target.value);
-              }}
-              onBlur={handleTextFieldInputChange}
-              InputProps={{
-                inputProps: {
-                  step: isNumber ? '0.01' : undefined,
-                },
-              }}
-              error={errorTooltip || missingRequiredFieldError}
-              helperText={
-                errorTooltip ||
-                (missingRequiredFieldError ? 'Field must be populated' : info)
-              }
-              sx={{
-                '& .MuiFormHelperText-root': {
-                  m: 0,
-                  minHeight: '1em',
-                  color:
-                    errorTooltip || missingRequiredFieldError
-                      ? 'error.main'
-                      : 'text.secondary',
-                },
-              }}
-            />
-          )}
-      </Stack>
+          <AccordionDetails>
+            <AdditionalFieldsEditor
+              formData={formData}
+              schemeEntries={schemeEntries}
+              readOnly={readOnly}
+              info={info}
+              schema={schema}
+              errorTooltip={errorTooltip}
+              setErrorTooltip={setErrorTooltip}
+              missingRequiredFieldError={missingRequiredFieldError}
+              schemeName={schemeName}
+              onChange={onChange}
+              maxItems={100}
+              isMultivalued={isMultiValued}
+            ></AdditionalFieldsEditor>
+          </AccordionDetails>
+        </Accordion>
+      ) : (
+        renderNonDefiningProperty
+      )}
     </Box>
   );
 };

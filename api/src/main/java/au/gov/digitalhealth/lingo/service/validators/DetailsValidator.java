@@ -16,6 +16,7 @@
 package au.gov.digitalhealth.lingo.service.validators;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.gov.digitalhealth.lingo.configuration.model.AdditionalFieldDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.ExternalIdentifierDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
@@ -27,6 +28,7 @@ import au.gov.digitalhealth.lingo.product.details.ProductDetails;
 import au.gov.digitalhealth.lingo.product.details.ProductTemplate;
 import au.gov.digitalhealth.lingo.product.details.Quantity;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
+import au.gov.digitalhealth.lingo.product.details.properties.FieldValue;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
 import jakarta.validation.Valid;
@@ -201,7 +203,74 @@ public abstract class DetailsValidator {
                       + nonDefiningProperty.getIdentifierScheme()
                       + "'");
             }
+
+            if (externalIdentifier.isAdditionalFieldMismatch(externalIdentifierDefinition)) {
+              result.addProblem(
+                  "External identifier '"
+                      + (externalIdentifier.getValue() != null
+                          ? externalIdentifier.getValue()
+                          : externalIdentifier.getValueObject().getIdAndFsnTerm())
+                      + "' additional fields do not match the definition for scheme '"
+                      + nonDefiningProperty.getIdentifierScheme()
+                      + "'. Expected: "
+                      + String.join(
+                          ", ", externalIdentifierDefinition.getAdditionalFields().keySet())
+                      + " but found: "
+                      + String.join(
+                          ", ",
+                          externalIdentifier.getAdditionalFields() == null
+                              ? Set.of()
+                              : externalIdentifier.getAdditionalFields().keySet()));
+            } else if (!externalIdentifierDefinition.getAdditionalFields().isEmpty()
+                && externalIdentifier.getAdditionalFields() != null
+                && !externalIdentifier.getAdditionalFields().isEmpty()) {
+              for (String additionalField :
+                  externalIdentifierDefinition.getAdditionalFields().keySet()) {
+                if (externalIdentifier.getAdditionalFields() == null
+                    || !externalIdentifier.getAdditionalFields().containsKey(additionalField)) {
+                  result.addProblem(
+                      "Required external identifier additional field '"
+                          + additionalField
+                          + "' is not defined for scheme '"
+                          + nonDefiningProperty.getIdentifierScheme()
+                          + "'");
+                }
+                AdditionalFieldDefinition additionalFieldDefinition =
+                    externalIdentifierDefinition.getAdditionalFields().get(additionalField);
+                final FieldValue fieldValue =
+                    externalIdentifier.getAdditionalFields().get(additionalField);
+                if (!additionalFieldDefinition
+                    .getDataType()
+                    .isValidValue(fieldValue.getValue(), fieldValue.getValueObject())) {
+                  result.addProblem(
+                      "External identifier additional field '"
+                          + additionalField
+                          + "' value '"
+                          + fieldValue.getValue()
+                          + "' is not valid for the datatype for the scheme '"
+                          + nonDefiningProperty.getIdentifierScheme()
+                          + "'");
+                }
+
+                if (!additionalFieldDefinition.getAllowedValues().isEmpty()
+                    && !additionalFieldDefinition
+                        .getAllowedValues()
+                        .contains(fieldValue.getValue())) {
+                  result.addProblem(
+                      "External identifier additional field '"
+                          + additionalField
+                          + "' value '"
+                          + fieldValue.getValue()
+                          + "' is not valid for the allowed values "
+                          + String.join(", ", additionalFieldDefinition.getAllowedValues())
+                          + " for scheme '"
+                          + nonDefiningProperty.getIdentifierScheme()
+                          + "'");
+                }
+              }
+            }
           }
+
         }
         case REFERENCE_SET -> {
           ReferenceSetDefinition referenceSetDefinition =
