@@ -316,7 +316,7 @@ public class ProductCreationService {
       String branch, @Valid BulkProductAction<BrandPackSizeCreationDetails> creationDetails)
       throws InterruptedException {
 
-    snowstormClient.checkForBranchLock(branch);
+    snowstormClient.throwIfBranchLocked(branch);
 
     // validate the ticket exists
     TicketDtoExtended ticket = ticketService.findTicket(creationDetails.getTicketId());
@@ -402,7 +402,7 @@ public class ProductCreationService {
       boolean createOnly)
       throws InterruptedException {
 
-    snowstormClient.checkForBranchLock(branch);
+    snowstormClient.throwIfBranchLocked(branch);
 
     // validate the ticket exists
     TicketDtoExtended ticket = ticketService.findTicket(productCreationDetails.getTicketId());
@@ -436,7 +436,7 @@ public class ProductCreationService {
   public SnowstormConceptMini createPrimitiveConcept(
       String branch, @Valid PrimitiveConceptCreationRequest brandCreationRequest) {
 
-    snowstormClient.checkForBranchLock(branch);
+    snowstormClient.throwIfBranchLocked(branch);
 
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
