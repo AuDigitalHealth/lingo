@@ -154,7 +154,7 @@ public class ProductUpdateService {
       String branch, String productId, @Valid ProductUpdateRequest productUpdateRequest)
       throws InterruptedException {
 
-    snowstormClient.checkForBranchLock(branch);
+    snowstormClient.throwIfBranchLocked(branch);
 
     String conceptId = productUpdateRequest.getConceptId();
     log.info(String.format("Product update for %s commencing", conceptId));
