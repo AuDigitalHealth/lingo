@@ -443,11 +443,6 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <artifactId>rabbitmq</artifactId>
-      <groupId>org.testcontainers</groupId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <artifactId>jgrapht-core</artifactId>
       <groupId>org.jgrapht</groupId>
       <version>${jgrapht-core.version}</version>
@@ -478,10 +473,6 @@
     </dependency>
     <dependency>
       <artifactId>lingo-auth</artifactId>
-      <groupId>au.gov.digitalhealth</groupId>
-    </dependency>
-    <dependency>
-      <artifactId>sergio-extension</artifactId>
       <groupId>au.gov.digitalhealth</groupId>
     </dependency>
     <dependency>
@@ -519,7 +510,7 @@
   <parent>
     <artifactId>lingo</artifactId>
     <groupId>au.gov.digitalhealth</groupId>
-    <version>1.2.10.7-SNAPSHOT</version>
+    <version>1.2.10.8-SNAPSHOT</version>
   </parent>
   <profiles>
     <profile>
