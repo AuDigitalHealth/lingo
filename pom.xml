@@ -97,11 +97,6 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <artifactId>sergio-extension</artifactId>
-        <groupId>au.gov.digitalhealth</groupId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
         <artifactId>lingo-common</artifactId>
         <groupId>au.gov.digitalhealth</groupId>
         <version>${project.version}</version>
@@ -155,7 +150,6 @@
     <module>ui</module>
     <module>auth</module>
     <module>common</module>
-    <module>sergio-extension</module>
     <module>api</module>
     <module>eclrefset</module>
   </modules>
@@ -196,7 +190,6 @@
       <modules>
         <module>auth</module>
         <module>common</module>
-        <module>sergio-extension</module>
         <module>api</module>
       </modules>
     </profile>
@@ -253,6 +246,6 @@
   </repositories>
 
 
-  <version>1.2.10.7-SNAPSHOT</version>
+  <version>1.2.10.8-SNAPSHOT</version>
 
 </project>
