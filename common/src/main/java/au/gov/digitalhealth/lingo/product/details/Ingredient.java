@@ -67,11 +67,13 @@ public class Ingredient extends ProductBaseDto {
 
   @JsonIgnore
   public boolean isIngredientPresentationStrength() {
-    return presentationStrengthNumerator != null && presentationStrengthDenominator != null;
+    return (presentationStrengthNumerator != null && presentationStrengthDenominator != null)
+        || totalQuantity != null;
   }
 
   @JsonIgnore
   public boolean isIngredientConcentrationStrength() {
-    return concentrationStrengthNumerator != null && concentrationStrengthDenominator != null;
+    return (concentrationStrengthNumerator != null && concentrationStrengthDenominator != null)
+        || concentrationStrength != null;
   }
 }

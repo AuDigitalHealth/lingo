@@ -75,7 +75,6 @@ import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty
 import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import au.gov.digitalhealth.lingo.util.NmpcConstants;
 import au.gov.digitalhealth.lingo.util.NmpcType;
-import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -353,11 +352,11 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
             r.getGroupId().toString());
       }
     } else {
-      if (SnomedConstants.valueOf(r.getTypeId()) == HAS_ACTIVE_INGREDIENT && isVmp) {
+      if (r.getTypeId().equals(HAS_ACTIVE_INGREDIENT.getValue()) && isVmp) {
         activePreciseIngredient.setRefinedActiveIngredient(r.getTarget());
-      } else if (SnomedConstants.valueOf(r.getTypeId()) == HAS_ACTIVE_INGREDIENT && !isVmp) {
+      } else if (r.getTypeId().equals(HAS_ACTIVE_INGREDIENT.getValue()) && !isVmp) {
         activePreciseIngredient.setActiveIngredient(r.getTarget());
-      } else if (SnomedConstants.valueOf(r.getTypeId()) == HAS_PRECISE_ACTIVE_INGREDIENT) {
+      } else if (r.getTypeId().equals(HAS_PRECISE_ACTIVE_INGREDIENT.getValue())) {
         activePreciseIngredient.setPreciseIngredient(r.getTarget());
       }
     }

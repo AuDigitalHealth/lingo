@@ -280,9 +280,9 @@
         "productType": {
           "type": "string",
           "enum": [
-            "totalQuantityOnly",
-            "concentrationStrengthOnly",
-            "totalQuantityConcentrationAndSize",
+            "presentationStrength",
+            "concentrationStrength",
+            "concentrationAndPresentationStrength",
             "noStrength"
           ],
           "enumNames": [
@@ -306,7 +306,7 @@
           "title": "Total Quantity Only",
           "properties": {
             "productType": {
-              "const": "totalQuantityOnly"
+              "const": "presentationStrength"
             },
             "type": {
               "type": "string",
@@ -363,7 +363,7 @@
           "title": "Concentration Strength Only",
           "properties": {
             "productType": {
-              "const": "concentrationStrengthOnly"
+              "const": "concentrationStrength"
             },
             "type": {
               "type": "string",
@@ -544,8 +544,8 @@
         "productType": {
           "type": "string",
           "enum": [
-            "totalQuantityOnly",
-            "concentrationStrengthOnly",
+            "presentationStrength",
+            "concentrationStrength",
             "noStrength"
           ],
           "enumNames": [
@@ -568,7 +568,7 @@
           "title": "Total Quantity Only",
           "properties": {
             "productType": {
-              "const": "totalQuantityOnly"
+              "const": "presentationStrength"
             },
             "type": {
               "type": "string",
@@ -613,7 +613,7 @@
           "title": "Concentration Strength Only",
           "properties": {
             "productType": {
-              "const": "concentrationStrengthOnly"
+              "const": "concentrationStrength"
             },
             "type": {
               "type": "string",
