@@ -33,6 +33,7 @@ import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageQuantity;
 import au.gov.digitalhealth.lingo.product.details.ProductQuantity;
 import au.gov.digitalhealth.lingo.product.details.ProductTemplate;
+import au.gov.digitalhealth.lingo.product.details.ProductType;
 import au.gov.digitalhealth.lingo.product.details.Quantity;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.service.SnowstormClient;
@@ -598,13 +599,16 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
   }
 
   @Override
-  protected Set<String> getSupportedVariantNames() {
-    return Set.of("medication");
+  protected Set<ProductType> getSupportedProductTypes() {
+    return Set.of(ProductType.MEDICATION, ProductType.DRUG_DEVICE);
   }
 
   @Override
-  protected Set<ProductTemplate> getSupportedProductTypes() {
-    // todo this is a temporary fix, address when adding AMT schema
-    return Set.of(ProductTemplate.noStrength);
+  protected Set<ProductTemplate> getSupportedProductTemplates() {
+    return Set.of(
+        ProductTemplate.NO_STRENGTH,
+        ProductTemplate.CONCENTRATION_STRENGTH,
+        ProductTemplate.PRESENTATION_STRENGTH,
+        ProductTemplate.CONCENTRATION_AND_PRESENTATION_STRENGTH);
   }
 }

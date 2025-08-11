@@ -26,6 +26,7 @@ import au.gov.digitalhealth.lingo.product.details.NutritionalProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.ProductQuantity;
 import au.gov.digitalhealth.lingo.product.details.ProductTemplate;
+import au.gov.digitalhealth.lingo.product.details.ProductType;
 import au.gov.digitalhealth.lingo.product.details.Quantity;
 import au.gov.digitalhealth.lingo.product.details.VaccineProductDetails;
 import au.gov.digitalhealth.lingo.service.SnowstormClient;
@@ -392,16 +393,16 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
   }
 
   @Override
-  protected Set<String> getSupportedVariantNames() {
-    return Set.of("medication", "nutritional", "vaccine");
+  protected Set<ProductType> getSupportedProductTypes() {
+    return Set.of(ProductType.MEDICATION, ProductType.NUTRITIONAL, ProductType.VACCINE);
   }
 
   @Override
-  protected Set<ProductTemplate> getSupportedProductTypes() {
+  protected Set<ProductTemplate> getSupportedProductTemplates() {
     return Set.of(
-        ProductTemplate.noStrength,
-        ProductTemplate.concentrationStrength,
-        ProductTemplate.presentationStrength,
-        ProductTemplate.noIngredients);
+        ProductTemplate.NO_STRENGTH,
+        ProductTemplate.CONCENTRATION_STRENGTH,
+        ProductTemplate.PRESENTATION_STRENGTH,
+        ProductTemplate.NO_INGREDIENTS);
   }
 }

@@ -26,6 +26,7 @@ import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackage
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.ProductDetails;
 import au.gov.digitalhealth.lingo.product.details.ProductTemplate;
+import au.gov.digitalhealth.lingo.product.details.ProductType;
 import au.gov.digitalhealth.lingo.product.details.Quantity;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.details.properties.FieldValue;
@@ -38,12 +39,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public abstract class DetailsValidator {
 
-  protected abstract Set<String> getSupportedVariantNames();
+  protected abstract Set<ProductType> getSupportedProductTypes();
 
-  protected abstract Set<ProductTemplate> getSupportedProductTypes();
+  protected abstract Set<ProductTemplate> getSupportedProductTemplates();
 
   protected static void validateNumeratorDenominatorSet(
       @Valid Quantity strengthNumerator,
@@ -314,16 +316,27 @@ public abstract class DetailsValidator {
 
   protected <T extends ProductDetails> void validateTypeParameters(
       PackageDetails<T> packageDetails, ValidationResult result) {
-    if (packageDetails.getVariant() == null || packageDetails.getVariant().isBlank()) {
-      result.addProblem("Package variant must be populated");
-    } else if (!getSupportedVariantNames().contains(packageDetails.getVariant())) {
+
+    Set<ProductType> supportedProductTypes = getSupportedProductTypes();
+    final String supportedProductTypeDisplayList =
+        String.join(
+            ", ",
+            supportedProductTypes.stream().map(ProductType::toString).collect(Collectors.toSet()));
+    if (!supportedProductTypes.isEmpty()
+        && !supportedProductTypes.contains(packageDetails.getVariant())) {
       result.addProblem(
           "Package variant '"
               + packageDetails.getVariant()
               + "' does not match supported variants: "
-              + String.join(", ", getSupportedVariantNames()));
+              + supportedProductTypeDisplayList);
     }
-    Set<ProductTemplate> supportedProductTypes = getSupportedProductTypes();
+    Set<ProductTemplate> supportedProductTemplates = getSupportedProductTemplates();
+    final String supportedProductTemplateDisplayList =
+        String.join(
+            ", ",
+            supportedProductTemplates.stream()
+                .map(ProductTemplate::toString)
+                .collect(Collectors.toSet()));
     packageDetails
         .getContainedPackages()
         .forEach(
@@ -334,31 +347,31 @@ public abstract class DetailsValidator {
         .getContainedProducts()
         .forEach(
             p -> {
-              if (supportedProductTypes.isEmpty()
+              if (supportedProductTemplates.isEmpty()
                   && p.getProductDetails().getProductType() != null) {
                 result.addProblem(
                     "Product type '"
                         + p.getProductDetails().getProductType()
                         + "' not supported for package variant '"
-                        + String.join(", ", getSupportedVariantNames())
+                        + supportedProductTypeDisplayList
                         + "', supported types are: "
-                        + supportedProductTypes);
+                        + supportedProductTemplateDisplayList);
               } else if (p.getProductDetails().getProductType() == null
-                  && !supportedProductTypes.isEmpty()) {
+                  && !supportedProductTemplates.isEmpty()) {
                 result.addProblem(
                     "Product type must be populated for package variant '"
-                        + String.join(", ", getSupportedVariantNames())
+                        + supportedProductTypeDisplayList
                         + "', supported types are: "
-                        + supportedProductTypes);
+                        + supportedProductTemplateDisplayList);
               } else if (p.getProductDetails().getProductType() != null
-                  && !supportedProductTypes.contains(p.getProductDetails().getProductType())) {
+                  && !supportedProductTemplates.contains(p.getProductDetails().getProductType())) {
                 result.addProblem(
                     "Product type '"
                         + p.getProductDetails().getProductType()
                         + "' not supported for package variant '"
-                        + String.join(", ", getSupportedVariantNames())
+                        + supportedProductTypeDisplayList
                         + "', supported types are: "
-                        + supportedProductTypes);
+                        + supportedProductTemplateDisplayList);
               }
             });
   }
