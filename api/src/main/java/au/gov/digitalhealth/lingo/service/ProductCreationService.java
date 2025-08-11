@@ -24,6 +24,7 @@ import static java.lang.Boolean.TRUE;
 import au.csiro.snowstorm_client.model.*;
 import au.gov.digitalhealth.lingo.configuration.FieldBindingConfiguration;
 import au.gov.digitalhealth.lingo.configuration.NamespaceConfiguration;
+import au.gov.digitalhealth.lingo.configuration.model.BasePropertyDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
@@ -189,6 +190,7 @@ public class ProductCreationService {
                 node.getConcept() != null
                     && node.getNewConceptDetails() == null
                     && node.getOriginalNode() != null
+                    && node.getConcept().getConceptId() != null
                     && !node.getConcept()
                         .getConceptId()
                         .equals(node.getOriginalNode().getConceptId())
@@ -201,6 +203,7 @@ public class ProductCreationService {
                       node.getConcept() != null
                           && node.getNewConceptDetails() == null
                           && node.getOriginalNode() != null
+                          && node.getConcept().getConceptId() != null
                           && !node.getConcept()
                               .getConceptId()
                               .equals(node.getOriginalNode().getConceptId())
@@ -250,9 +253,9 @@ public class ProductCreationService {
     boolean relationshipsRemoved =
         existingRelationships.removeIf(
             existingRelationship ->
-                existingRelationship
-                        .getCharacteristicType()
-                        .equals(ADDITIONAL_RELATIONSHIP.getValue())
+                ADDITIONAL_RELATIONSHIP
+                        .getValue()
+                        .equals(existingRelationship.getCharacteristicType())
                     && newRelationships.stream()
                         .noneMatch(
                             newRelationship ->
@@ -295,7 +298,8 @@ public class ProductCreationService {
         (newMember.getAdditionalFields() == null || newMember.getAdditionalFields().isEmpty())
             && (existingMember.getAdditionalFields() == null
                 || existingMember.getAdditionalFields().isEmpty());
-    return newMember.getRefsetId().equals(existingMember.getRefsetId())
+    return newMember.getRefsetId() != null
+        && newMember.getRefsetId().equals(existingMember.getRefsetId())
         && (bothNullOrEmpty
             || Objects.equals(
                 newMember.getAdditionalFields(), existingMember.getAdditionalFields()));
@@ -304,14 +308,15 @@ public class ProductCreationService {
   /**
    * Creates a product from the provided BrandPackSizeCreationDetails
    *
-   * @param branch
-   * @param creationDetails
-   * @return
-   * @throws InterruptedException
+   * @param branch to write the changes to
+   * @param creationDetails the details for creating the product
+   * @throws InterruptedException if the operation is interrupted
    */
   public ProductSummary createProductFromBrandPackSizeCreationDetails(
       String branch, @Valid BulkProductAction<BrandPackSizeCreationDetails> creationDetails)
       throws InterruptedException {
+
+    snowstormClient.throwIfBranchLocked(branch);
 
     // validate the ticket exists
     TicketDtoExtended ticket = ticketService.findTicket(creationDetails.getTicketId());
@@ -397,6 +402,8 @@ public class ProductCreationService {
       boolean createOnly)
       throws InterruptedException {
 
+    snowstormClient.throwIfBranchLocked(branch);
+
     // validate the ticket exists
     TicketDtoExtended ticket = ticketService.findTicket(productCreationDetails.getTicketId());
 
@@ -428,6 +435,8 @@ public class ProductCreationService {
 
   public SnowstormConceptMini createPrimitiveConcept(
       String branch, @Valid PrimitiveConceptCreationRequest brandCreationRequest) {
+
+    snowstormClient.throwIfBranchLocked(branch);
 
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
@@ -520,19 +529,6 @@ public class ProductCreationService {
     axiom.setRelationships(relationships);
     axiom.setReleased(false);
     return axiom;
-  }
-
-  private void addToRefset(String branch, String conceptId, String refsetId)
-      throws InterruptedException {
-    List<SnowstormReferenceSetMemberViewComponent> refsetMembers = new ArrayList<>();
-    refsetMembers.add(
-        new SnowstormReferenceSetMemberViewComponent()
-            .active(true)
-            .refsetId(refsetId)
-            .referencedComponentId(conceptId)
-            .moduleId(models.getModelConfiguration(branch).getModuleId()));
-
-    snowstormClient.createRefsetMembers(branch, refsetMembers);
   }
 
   private BidiMap<String, String> createAndUpdate(
@@ -688,8 +684,9 @@ public class ProductCreationService {
 
     Set<SnowstormConceptView> conceptsToUpdate = new HashSet<>();
 
-    browserConcepts
-        .block()
+    Objects.requireNonNull(
+            browserConcepts.block(),
+            "Browser response should not be null, even if there are no concepts")
         .forEach(
             concept -> {
               Node node = nodesWithPropertyUpdates.get(concept.getConceptId());
@@ -708,7 +705,10 @@ public class ProductCreationService {
 
     Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembershipToAdd = new HashSet<>();
     Set<SnowstormReferenceSetMember> referenceSetMembershipToDelete = new HashSet<>();
-    List<SnowstormReferenceSetMember> referenceSetMemberList = referenceSetMembers.block();
+    List<SnowstormReferenceSetMember> referenceSetMemberList =
+        Objects.requireNonNull(
+            referenceSetMembers.block(),
+            "Reference set members search response should not be null even if there are no members");
 
     for (Node node : nodesWithPropertyUpdates.values()) {
       Set<SnowstormReferenceSetMemberViewComponent> newReferenceSetMembers =
@@ -719,11 +719,11 @@ public class ProductCreationService {
       final ModelLevel modelLevel = modelConfiguration.getLevelOfType(node.getModelLevel());
       inScopeReferenceSetIds.addAll(
           modelConfiguration.getReferenceSetsByLevel(modelLevel).stream()
-              .map(m -> m.getIdentifier())
+              .map(BasePropertyDefinition::getIdentifier)
               .toList());
       inScopeReferenceSetIds.addAll(
           modelConfiguration.getMappingsByLevel(modelLevel).stream()
-              .map(m -> m.getIdentifier())
+              .map(BasePropertyDefinition::getIdentifier)
               .toList());
       inScopeReferenceSetIds.add(modelLevel.getReferenceSetIdentifier());
 
@@ -1010,7 +1010,7 @@ public class ProductCreationService {
     return preallocatedIdentifiers;
   }
 
-  public void createandUpdateRefsetMemberships(String branch, List<Node> nodeCreateOrder)
+  private void createandUpdateRefsetMemberships(String branch, List<Node> nodeCreateOrder)
       throws InterruptedException {
     log.fine("Creating refset members");
 
@@ -1024,7 +1024,7 @@ public class ProductCreationService {
         snowstormClient
             .getRefsetMembers(
                 branch,
-                nodesToEdit.stream().map(n -> n.getConceptId()).toList(),
+                nodesToEdit.stream().map(Node::getConceptId).toList(),
                 modelConfiguration.getInScopeReferenceSetIds(
                     nodesToEdit.stream().map(Node::getModelLevel).collect(Collectors.toSet())))
             .stream()
@@ -1163,13 +1163,16 @@ public class ProductCreationService {
                           && requiredNewRefsetMembers.stream()
                               .noneMatch(
                                   newRefset ->
-                                      newRefset.getRefsetId().equals(existingRefset.getRefsetId())
+                                      newRefset.getRefsetId() != null
                                           && newRefset
-                                              .getReferencedComponentId()
-                                              .equals(existingRefset.getReferencedComponentId())
-                                          && newRefset
-                                              .getAdditionalFields()
-                                              .equals(existingRefset.getAdditionalFields())))
+                                              .getRefsetId()
+                                              .equals(existingRefset.getRefsetId())
+                                          && Objects.equals(
+                                              newRefset.getReferencedComponentId(),
+                                              existingRefset.getReferencedComponentId())
+                                          && Objects.equals(
+                                              newRefset.getAdditionalFields(),
+                                              existingRefset.getAdditionalFields())))
               .toList());
     }
 

@@ -37,7 +37,7 @@ export function drawSctBox(
   label: string,
   sctid: string | number,
   cssClass: string,
-  relationship: AxiomRelationshipNewConcept,
+  relationship?: AxiomRelationshipNewConcept,
 ) {
   let border = undefined;
   let newOrRemoved = undefined;
@@ -159,6 +159,17 @@ export function drawSctBox(
       height: textHeight + heightpadding,
       cornerRadius: 18,
       fill: '#ffffcc',
+      stroke: border !== undefined ? border : '#333',
+      strokeWidth: customStroke || 2,
+    });
+  } else if (cssClass === 'sct-additional-attribute') {
+    rect = new Konva.Rect({
+      x: -2,
+      y: -2,
+      cornerRadius: 18,
+      width: textWidth + widthPadding + 4,
+      height: textHeight + heightpadding + 4,
+      fill: '#cccc99',
       stroke: border !== undefined ? border : '#333',
       strokeWidth: customStroke || 2,
     });
@@ -831,7 +842,9 @@ export function drawNewConceptDiagram(
             y,
             relationship.type?.fsn?.term as string,
             relationship.type?.conceptId as string,
-            'sct-attribute',
+            relationship.characteristicType === 'ADDITIONAL_RELATIONSHIP'
+              ? 'sct-additional-attribute'
+              : 'sct-attribute',
             relationship,
           );
           connectElements(layer, internalCircle2, rectAttr, 'center', 'left');
@@ -896,7 +909,9 @@ export function drawNewConceptDiagram(
             y,
             relationship.type.fsn?.term as string,
             relationship.type?.conceptId as string,
-            'sct-attribute',
+            relationship.characteristicType === 'ADDITIONAL_RELATIONSHIP'
+              ? 'sct-additional-attribute'
+              : 'sct-attribute',
             relationship,
           );
           connectElements(layer, conjunctionNode, rectRole, 'center', 'left');
@@ -997,8 +1012,9 @@ export function drawConceptDiagram(
     if (concept.relationships) {
       concept?.relationships.forEach(field => {
         if (
-          field.active === true &&
-          field.characteristicType === 'INFERRED_RELATIONSHIP'
+          field.active &&
+          (field.characteristicType === 'INFERRED_RELATIONSHIP' ||
+            field.characteristicType === 'ADDITIONAL_RELATIONSHIP')
         ) {
           if (!field.target) {
             field.target = {};
@@ -1157,7 +1173,9 @@ export function drawConceptDiagram(
             y,
             relationship.type.fsn?.term as string,
             relationship.type.conceptId as string,
-            'sct-attribute',
+            relationship.characteristicType === 'ADDITIONAL_RELATIONSHIP'
+              ? 'sct-additional-attribute'
+              : 'sct-attribute',
             relationship,
           );
           connectElements(layer, circle2, rectAttr, 'center', 'left');
@@ -1210,7 +1228,9 @@ export function drawConceptDiagram(
             y,
             relationship.type.fsn?.term as string,
             relationship.type.conceptId as string,
-            'sct-attribute',
+            relationship.characteristicType === 'ADDITIONAL_RELATIONSHIP'
+              ? 'sct-additional-attribute'
+              : 'sct-attribute',
             relationship,
           );
           connectElements(layer, circle2, rectAttr, 'center', 'left');
@@ -1271,7 +1291,9 @@ export function drawConceptDiagram(
             y,
             relationship.type.fsn?.term as string,
             relationship.type.conceptId as string,
-            'sct-attribute',
+            relationship.characteristicType === 'ADDITIONAL_RELATIONSHIP'
+              ? 'sct-additional-attribute'
+              : 'sct-attribute',
             relationship,
           );
           connectElements(layer, conjunctionNode, rectRole, 'center', 'left');
@@ -1406,7 +1428,9 @@ export function drawConceptDiagram(
             y,
             relationship.type.fsn?.term as string,
             relationship.type?.conceptId as string,
-            'sct-attribute',
+            relationship.characteristicType === 'ADDITIONAL_RELATIONSHIP'
+              ? 'sct-additional-attribute'
+              : 'sct-attribute',
             relationship,
           );
           connectElements(layer, internalCircle2, rectAttr, 'center', 'left');
@@ -1471,7 +1495,9 @@ export function drawConceptDiagram(
             y,
             relationship.type.fsn?.term as string,
             relationship.type?.conceptId as string,
-            'sct-attribute',
+            relationship.characteristicType === 'ADDITIONAL_RELATIONSHIP'
+              ? 'sct-additional-attribute'
+              : 'sct-attribute',
             relationship,
           );
           connectElements(layer, conjunctionNode, rectRole, 'center', 'left');
