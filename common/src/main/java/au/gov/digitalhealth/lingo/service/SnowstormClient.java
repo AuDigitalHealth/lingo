@@ -23,6 +23,7 @@ import au.csiro.snowstorm_client.invoker.ApiClient;
 import au.csiro.snowstorm_client.model.*;
 import au.csiro.snowstorm_client.model.SnowstormAsyncConceptChangeBatch.StatusEnum;
 import au.gov.digitalhealth.lingo.exception.BatchSnowstormRequestFailedProblem;
+import au.gov.digitalhealth.lingo.exception.BranchLockedProblem;
 import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.exception.ResourceNotFoundProblem;
@@ -98,6 +99,12 @@ public class SnowstormClient {
 
   @Value("${ihtsdo.ap.languageHeader}")
   private String languageHeader;
+
+  @Value("${ihtsdo.snowstorm.maxBranchLockChecks:20}")
+  private int maxBranchLockChecks;
+
+  @Value("${ihtsdo.snowstorm.delayBetweenBranchLockChecks:500}")
+  private long delayBetweenBranchLockChecks;
 
   @Autowired
   public SnowstormClient(
@@ -650,11 +657,13 @@ public class SnowstormClient {
 
   public SnowstormConceptView createConcept(
       String branch, SnowstormConceptView concept, boolean validate) {
+    waitForBranchLock(branch);
     return getConceptsApi().createConcept(branch, concept, validate, languageHeader).block();
   }
 
   public SnowstormConceptView updateConceptView(
       String branch, String conceptId, SnowstormConceptView concept, boolean validate) {
+    waitForBranchLock(branch);
     try {
       // Serialize the concept to JSON string to see what's being sent
       objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
@@ -670,6 +679,7 @@ public class SnowstormClient {
 
   public SnowstormConcept updateConcept(
       String branch, String conceptId, SnowstormConcept concept, boolean validate) {
+    waitForBranchLock(branch);
     ObjectMapper customMapper =
         new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
@@ -696,6 +706,7 @@ public class SnowstormClient {
   @SuppressWarnings("java:S1192")
   public List<SnowstormConceptMini> createUpdateBulkConcepts(
       String branch, Collection<SnowstormConceptView> concepts) throws InterruptedException {
+    waitForBranchLock(branch);
 
     if (log.isLoggable(Level.FINE)) {
       log.fine("Bulk creating/updating concepts: " + concepts.size() + " on branch: " + branch);
@@ -804,6 +815,7 @@ public class SnowstormClient {
       String branch,
       List<SnowstormReferenceSetMemberViewComponent> referenceSetMemberViewComponents)
       throws InterruptedException {
+    waitForBranchLock(branch);
 
     log.fine(
         "Bulk creating refset members: "
@@ -889,6 +901,7 @@ public class SnowstormClient {
 
   public void removeRefsetMembers(String branch, Set<SnowstormReferenceSetMember> members)
       throws InterruptedException {
+    waitForBranchLock(branch);
 
     Set<SnowstormReferenceSetMember> memberToDeactivate =
         members.stream()
@@ -1295,5 +1308,64 @@ public class SnowstormClient {
             null,
             languageHeader)
         .mapNotNull(SnowstormItemsPageReferenceSetMember::getItems);
+  }
+
+  public void waitForBranchLock(String branch) {
+    // check if the branch is locked
+    // if it is, wait until it is unlocked
+    // try only the configured number of times
+    // pause for a configured amount of time between checks
+    int attempts = 0;
+    String lockMessage = null;
+    while (attempts < maxBranchLockChecks) {
+      try {
+        final SnowstormBranchPojo branchMetadata = getBranchMetadata(branch).block();
+        if (branchMetadata == null) {
+          throw new LingoProblem(
+              "branch-not-found",
+              "Branch metadata not found",
+              HttpStatus.NOT_FOUND,
+              "Branch metadata not found for branch '" + branch + "'");
+        }
+        if (Boolean.TRUE.equals(branchMetadata.getLocked())) {
+          lockMessage =
+              branchMetadata.getMetadata() != null
+                  ? (String) branchMetadata.getMetadata().get("lock")
+                  : null;
+          log.warning(
+              "Branch "
+                  + branch
+                  + " is locked, waiting for it to be unlocked."
+                  + (lockMessage != null ? " Lock message: " + lockMessage : ""));
+          Thread.sleep(delayBetweenBranchLockChecks);
+          attempts++;
+        } else {
+          log.info("Branch " + branch + " is now unlocked. " + attempts + " attempts made.");
+          return;
+        }
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new LingoProblem("Interrupted while waiting for branch lock", e);
+      }
+    }
+
+    throw new BranchLockedProblem(branch, lockMessage);
+  }
+
+  public void throwIfBranchLocked(String branch) {
+    final SnowstormBranchPojo branchMetadata = getBranchMetadata(branch).block();
+    if (branchMetadata == null) {
+      throw new LingoProblem(
+          "branch-not-found",
+          "Branch metadata not found",
+          HttpStatus.NOT_FOUND,
+          "Branch metadata not found for branch '" + branch + "'");
+    } else if (Boolean.TRUE.equals(branchMetadata.getLocked())) {
+      final String lockMessage =
+          branchMetadata.getMetadata() != null
+              ? (String) branchMetadata.getMetadata().get("lock")
+              : null;
+      throw new BranchLockedProblem(branch, lockMessage);
+    }
   }
 }
