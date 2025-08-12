@@ -869,9 +869,6 @@
         }
       },
       "required": ["unit", "value", "packageDetails"],
-      "errorMessage": {
-        "required": "Contained Package must be populated."
-      },
       "dependencies": {
         "unit": {
           "oneOf": [
