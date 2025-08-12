@@ -51,8 +51,7 @@ import { ErrorDisplay } from './components/ErrorDisplay.tsx';
 import CustomSelectWidget from './widgets/CustomSelectWidget.tsx';
 import { evaluateExpression } from './helpers/rjsfUtils.ts';
 import WarningIcon from '@mui/icons-material/Warning';
-import schema from './base-medication-schema.json';
-import uiSchema from './base-medication-ui-schema.json';
+
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
   task: Task;
@@ -77,10 +76,10 @@ function MedicationAuthoring({
   const [isDirty, setIsDirty] = useState(false);
   const [formErrors, setFormErrors] = useState<any[]>([]);
 
-  const { data: schemaTest, isLoading: isSchemaLoading } = useSchemaQuery(
+  const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
     task.branchPath,
   );
-  const { data: uiSchemaTest, isLoading: isUiSchemaLoading } = useUiSchemaQuery(
+  const { data: uiSchema, isLoading: isUiSchemaLoading } = useUiSchemaQuery(
     task.branchPath,
   );
   const {
