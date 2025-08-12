@@ -1,7 +1,7 @@
 {
   "ui:grid": [
     {
-      "packType":24,
+      "packType": 24,
       "variant": 24
     },
 
@@ -138,7 +138,7 @@
           "skipTitle": true
         },
         "ui:grid": [
-          {"productType": 24},
+          { "productType": 24 },
           {
             "productName": 12,
             "genericForm": 12
@@ -170,7 +170,6 @@
           "ui:title": "Product Template",
           "ui:options": {
             "updateSchemaOnChange": true
-
           }
         },
         "type": {
@@ -525,7 +524,7 @@
                 "skipTitle": true
               },
               "ui:grid": [
-                {"productType": 24},
+                { "productType": 24 },
                 {
                   "productName": 12,
                   "genericForm": 12
@@ -563,7 +562,6 @@
                 "ui:title": "Product Template",
                 "ui:options": {
                   "updateSchemaOnChange": true
-
                 }
               },
               "productName": {
