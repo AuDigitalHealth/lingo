@@ -455,7 +455,7 @@
               "title": "Specific Dose Form"
             },
             "quantity": {
-              "$ref": "#/$defs/QuantityOptional",
+              "$ref": "#/$defs/Quantity",
               "title": "Unit Size"
             },
             "containerType": {
