@@ -421,7 +421,7 @@
           "title": "Total Quantity, Concentration Strength, and Size",
           "properties": {
             "productType": {
-              "const": "totalQuantityConcentrationAndSize"
+              "const": "concentrationAndPresentationStrength"
             },
             "type": {
               "type": "string",
