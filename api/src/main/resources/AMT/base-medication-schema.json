@@ -412,10 +412,8 @@
               "title": "Other Identifying Information"
             }
           },
-          "required": ["productName", "activeIngredients", "genericForm"],
-          "errorMessage": {
-            "required": "Product Details must be populated."
-          }
+          "required": ["productName", "activeIngredients", "genericForm"]
+
         },
         {
           "title": "Total Quantity, Concentration Strength, and Size",
@@ -467,10 +465,8 @@
               "title": "Other Identifying Information"
             }
           },
-          "required": ["productName", "activeIngredients", "genericForm"],
-          "errorMessage": {
-            "required": "Product Details must be populated."
-          }
+          "required": ["productName", "activeIngredients", "genericForm","quantity"]
+
         },
         {
           "title": "No Strength",
@@ -522,10 +518,8 @@
               "title": "Other Identifying Information"
             }
           },
-          "required": ["productName", "activeIngredients", "genericForm"],
-          "errorMessage": {
-            "required": "Product Details must be populated."
-          }
+          "required": ["productName", "activeIngredients", "genericForm"]
+
         }
       ]
     },
