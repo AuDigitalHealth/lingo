@@ -1047,7 +1047,8 @@
           "errorMessage": {
             "minItems": "At least one Contained Products."
           }
-        }
+        },
+        "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PACKAGE_NonDefiningProperty" }, "title": "Non Defining Properties" }
       },
       "required": ["productName", "containerType", "containedProducts"]
 
@@ -1157,7 +1158,8 @@
               "items": {
                 "$ref": "#/$defs/MedicationContainedProduct"
               }
-            }
+            },
+            "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PACKAGE_NonDefiningProperty" }, "title": "Non Defining Properties" }
           },
           "required": ["productName", "containerType", "containedProducts"],
 
@@ -1190,7 +1192,8 @@
               "items": {
                 "$ref": "#/$defs/DrugDeviceContainedProduct"
               }
-            }
+            },
+            "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PACKAGE_NonDefiningProperty" }, "title": "Non Defining Properties" }
           },
           "required": ["productName", "containerType", "containedProducts"],
           "additionalProperties": false
@@ -1242,7 +1245,8 @@
               "items": {
                 "$ref": "#/$defs/ContainedMedicationPackage"
               }
-            }
+            },
+            "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PACKAGE_NonDefiningProperty" }, "title": "Non Defining Properties" }
           },
           "required": ["productName", "containerType"],
           "additionalProperties": false
@@ -1274,7 +1278,8 @@
               "items": {
                 "$ref": "#/$defs/ContainedDrugDevicePackage"
               }
-            }
+            },
+            "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PACKAGE_NonDefiningProperty" }, "title": "Non Defining Properties" }
           },
           "required": ["productName", "containerType"],
           "additionalProperties": false
