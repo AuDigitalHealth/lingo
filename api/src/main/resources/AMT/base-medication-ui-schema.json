@@ -412,6 +412,7 @@
   "containedPackages": {
     "ui:field": "ConditionalArrayField",
     "ui:options": {
+      "arrayTemplate": "accordion",
       "skipTitle": true,
       "searchAndAddProduct": {
         "ecl": "^929360051000036108:774160008=*",
@@ -491,6 +492,7 @@
         "containedProducts": {
           "ui:options": {
             "skipTitle": true,
+            "arrayTemplate": "accordion",
             "searchAndAddProduct": {
               "ecl": "^929360031000036100 AND <763158003",
               "type": "medication",
