@@ -18,7 +18,7 @@ package au.gov.digitalhealth.lingo.product.details;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum ProductTemplate {
-  CONCENTRATION_AND_PRESENTATION_STRENGTH("conceptrationAndPresentationStrength"),
+  CONCENTRATION_AND_PRESENTATION_STRENGTH("concentrationAndPresentationStrength"),
   CONCENTRATION_STRENGTH("concentrationStrength"),
   PRESENTATION_STRENGTH("presentationStrength"),
   NO_STRENGTH("noStrength"),
