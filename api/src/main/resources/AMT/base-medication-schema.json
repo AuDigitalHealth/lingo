@@ -703,9 +703,7 @@
         }
       },
       "required": ["unit", "value", "productDetails"],
-      "errorMessage": {
-        "required": "Contained product must be populated."
-      },
+
       "dependencies": {
         "unit": {
           "oneOf": [
@@ -788,9 +786,7 @@
         }
       },
       "required": ["unit", "value", "productDetails"],
-      "errorMessage": {
-        "required": "Contained product must be populated."
-      },
+
       "dependencies": {
         "unit": {
           "oneOf": [
