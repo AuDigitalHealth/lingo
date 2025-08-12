@@ -17,9 +17,7 @@
         }
       },
       "minProperties": 1,
-      "required": [
-        "conceptId"
-      ],
+      "required": ["conceptId"],
       "errorMessage": {
         "required": "Invalid concept found, you might need to select a concept from the dropdown."
       },
@@ -36,10 +34,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "lang",
-        "term"
-      ],
+      "required": ["lang", "term"],
       "errorMessage": {
         "required": "Both language and term must be provided",
         "type": "Must be a valid term object"
@@ -70,9 +65,7 @@
                   }
                 }
               },
-              "required": [
-                "value"
-              ],
+              "required": ["value"],
               "errorMessage": {
                 "required": "Value must be provided when unit is specified"
               }
@@ -100,9 +93,7 @@
                   }
                 }
               },
-              "required": [
-                "value"
-              ],
+              "required": ["value"],
               "errorMessage": {
                 "required": "Value must be provided when unit is specified"
               }
@@ -143,10 +134,7 @@
           "$ref": "#/$defs/UnitValueConstraint"
         }
       ],
-      "required": [
-        "unit",
-        "value"
-      ]
+      "required": ["unit", "value"]
     },
     "QuantityOptional": {
       "type": "object",
@@ -177,7 +165,6 @@
           "$ref": "#/$defs/UnitValueConstraint"
         }
       ]
-
     },
     "TotalQuantityIngredient": {
       "type": "object",
@@ -206,7 +193,6 @@
         "totalQuantity"
       ],
       "errorMessage": {
-        "required": "Active ingredient, basis of strength substance, and total quantity must all be provided",
         "type": "Ingredient must be a valid object",
         "additionalProperties": "Unknown property found in ingredient definition"
       }
@@ -238,7 +224,6 @@
         "concentrationStrength"
       ],
       "errorMessage": {
-        "required": "Active ingredient, basis of strength substance, and concentration strength must all be provided",
         "type": "Ingredient must be a valid object",
         "additionalProperties": "Unknown property found in ingredient definition"
       }
@@ -275,7 +260,6 @@
         "totalQuantity"
       ],
       "errorMessage": {
-        "required": "Active ingredient, basis of strength substance, concentration strength, and total quantity must all be provided",
         "type": "Ingredient must be a valid object",
         "additionalProperties": "Unknown property found in ingredient definition"
       }
@@ -293,11 +277,8 @@
           "title": "Has Precise Active Ingredient"
         }
       },
-      "required": [
-        "activeIngredient"
-      ],
+      "required": ["activeIngredient"],
       "errorMessage": {
-        "required": "Active ingredient must be provided",
         "type": "Ingredient must be a valid object",
         "additionalProperties": "Unknown property found in ingredient definition"
       }
@@ -323,9 +304,7 @@
           "title": "Product Type"
         }
       },
-      "required": [
-        "productType"
-      ],
+      "required": ["productType"],
       "discriminator": {
         "propertyName": "productType"
       },
@@ -380,11 +359,7 @@
               "title": "Other Identifying Information"
             }
           },
-          "required": [
-            "productName",
-            "activeIngredients",
-            "genericForm"
-          ],
+          "required": ["productName", "activeIngredients", "genericForm"],
           "additionalProperties": false
         },
         {
@@ -437,11 +412,7 @@
               "title": "Other Identifying Information"
             }
           },
-          "required": [
-            "productName",
-            "activeIngredients",
-            "genericForm"
-          ],
+          "required": ["productName", "activeIngredients", "genericForm"],
           "errorMessage": {
             "required": "Product Details must be populated."
           }
@@ -496,11 +467,7 @@
               "title": "Other Identifying Information"
             }
           },
-          "required": [
-            "productName",
-            "activeIngredients",
-            "genericForm"
-          ],
+          "required": ["productName", "activeIngredients", "genericForm"],
           "errorMessage": {
             "required": "Product Details must be populated."
           }
@@ -555,11 +522,7 @@
               "title": "Other Identifying Information"
             }
           },
-          "required": [
-            "productName",
-            "activeIngredients",
-            "genericForm"
-          ],
+          "required": ["productName", "activeIngredients", "genericForm"],
           "errorMessage": {
             "required": "Product Details must be populated."
           }
@@ -585,9 +548,7 @@
           "title": "Product Type"
         }
       },
-      "required": [
-        "productType"
-      ],
+      "required": ["productType"],
       "discriminator": {
         "propertyName": "productType"
       },
@@ -630,11 +591,7 @@
               "title": "Other Identifying Information"
             }
           },
-          "required": [
-            "productName",
-            "activeIngredients",
-            "deviceType"
-          ],
+          "required": ["productName", "activeIngredients", "deviceType"],
           "additionalProperties": false
         },
         {
@@ -675,11 +632,7 @@
               "title": "Other Identifying Information"
             }
           },
-          "required": [
-            "productName",
-            "activeIngredients",
-            "deviceType"
-          ],
+          "required": ["productName", "activeIngredients", "deviceType"],
           "additionalProperties": false
         },
         {
@@ -720,11 +673,7 @@
               "title": "Other Identifying Information"
             }
           },
-          "required": [
-            "productName",
-            "activeIngredients",
-            "deviceType"
-          ],
+          "required": ["productName", "activeIngredients", "deviceType"],
           "additionalProperties": false
         }
       ]
@@ -753,11 +702,7 @@
           "$ref": "#/$defs/MedicationProductDetails"
         }
       },
-      "required": [
-        "unit",
-        "value",
-        "productDetails"
-      ],
+      "required": ["unit", "value", "productDetails"],
       "errorMessage": {
         "required": "Contained product must be populated."
       },
@@ -775,9 +720,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "conceptId"
-                  ]
+                  "required": ["conceptId"]
                 },
                 "value": {
                   "type": "integer",
@@ -844,11 +787,7 @@
           "$ref": "#/$defs/DrugDeviceProductDetails"
         }
       },
-      "required": [
-        "unit",
-        "value",
-        "productDetails"
-      ],
+      "required": ["unit", "value", "productDetails"],
       "errorMessage": {
         "required": "Contained product must be populated."
       },
@@ -866,9 +805,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "conceptId"
-                  ]
+                  "required": ["conceptId"]
                 },
                 "value": {
                   "type": "integer",
@@ -935,11 +872,7 @@
           "$ref": "#/$defs/MedicationPackageDetails"
         }
       },
-      "required": [
-        "unit",
-        "value",
-        "packageDetails"
-      ],
+      "required": ["unit", "value", "packageDetails"],
       "errorMessage": {
         "required": "Contained Package must be populated."
       },
@@ -957,9 +890,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "conceptId"
-                  ]
+                  "required": ["conceptId"]
                 },
                 "value": {
                   "type": "integer",
@@ -1026,11 +957,7 @@
           "$ref": "#/$defs/DrugDevicePackageDetails"
         }
       },
-      "required": [
-        "unit",
-        "value",
-        "packageDetails"
-      ],
+      "required": ["unit", "value", "packageDetails"],
       "errorMessage": {
         "required": "Contained Package must be populated."
       },
@@ -1048,9 +975,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "conceptId"
-                  ]
+                  "required": ["conceptId"]
                 },
                 "value": {
                   "type": "integer",
@@ -1128,14 +1053,8 @@
           }
         }
       },
-      "required": [
-        "productName",
-        "containerType",
-        "containedProducts"
-      ],
-      "errorMessage": {
-        "required": "Fields must be populated."
-      }
+      "required": ["productName", "containerType", "containedProducts"]
+
     },
     "DrugDevicePackageDetails": {
       "type": "object",
@@ -1172,27 +1091,14 @@
           }
         }
       },
-      "required": [
-        "productName",
-        "containerType",
-        "containedProducts"
-      ],
-      "errorMessage": {
-        "required": "Fields must be populated."
-      }
+      "required": ["productName", "containerType", "containedProducts"]
     }
   },
   "properties": {
     "packType": {
       "type": "string",
-      "enum": [
-        "normal",
-        "multipack"
-      ],
-      "enumNames": [
-        "Normal pack",
-        "Multipack"
-      ],
+      "enum": ["normal", "multipack"],
+      "enumNames": ["Normal pack", "Multipack"],
       "default": "normal",
       "title": "Package Type",
       "errorMessage": {
@@ -1201,9 +1107,7 @@
       }
     }
   },
-  "required": [
-    "packType"
-  ],
+  "required": ["packType"],
   "errorMessage": {
     "required": "Package type must be specified",
     "type": "Root schema must be a valid object"
@@ -1219,22 +1123,13 @@
         },
         "variant": {
           "type": "string",
-          "enum": [
-            "medication",
-            "drugDevice"
-          ],
-          "enumNames": [
-            "Medication",
-            "Drug Device Combination"
-          ],
+          "enum": ["medication", "drugDevice"],
+          "enumNames": ["Medication", "Drug Device Combination"],
           "default": "medication",
           "title": "Target Model"
         }
       },
-      "required": [
-        "variant",
-        "containedProducts"
-      ],
+      "required": ["variant", "containedProducts"],
       "discriminator": {
         "propertyName": "variant"
       },
@@ -1268,14 +1163,8 @@
               }
             }
           },
-          "required": [
-            "productName",
-            "containerType",
-            "containedProducts"
-          ],
-          "errorMessage": {
-            "required": "Fields must be populated."
-          },
+          "required": ["productName", "containerType", "containedProducts"],
+
           "additionalProperties": false
         },
         {
@@ -1307,14 +1196,7 @@
               }
             }
           },
-          "required": [
-            "productName",
-            "containerType",
-            "containedProducts"
-          ],
-          "errorMessage": {
-            "required": "Fields must be populated."
-          },
+          "required": ["productName", "containerType", "containedProducts"],
           "additionalProperties": false
         }
       ]
@@ -1326,22 +1208,13 @@
         },
         "variant": {
           "type": "string",
-          "enum": [
-            "medication",
-            "drugDevice"
-          ],
-          "enumNames": [
-            "Medication",
-            "Drug Device Combination"
-          ],
+          "enum": ["medication", "drugDevice"],
+          "enumNames": ["Medication", "Drug Device Combination"],
           "default": "medication",
           "title": "Target Model"
         }
       },
-      "required": [
-        "variant",
-        "containedPackages"
-      ],
+      "required": ["variant", "containedPackages"],
       "discriminator": {
         "propertyName": "variant"
       },
@@ -1375,13 +1248,7 @@
               }
             }
           },
-          "required": [
-            "productName",
-            "containerType"
-          ],
-          "errorMessage": {
-            "required": "Fields must be populated."
-          },
+          "required": ["productName", "containerType"],
           "additionalProperties": false
         },
         {
@@ -1413,13 +1280,7 @@
               }
             }
           },
-          "required": [
-            "productName",
-            "containerType"
-          ],
-          "errorMessage": {
-            "required": "Fields must be populated."
-          },
+          "required": ["productName", "containerType"],
           "additionalProperties": false
         }
       ]
