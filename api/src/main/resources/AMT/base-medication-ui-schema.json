@@ -56,18 +56,22 @@
     "ui:widget": "select",
     "ui:title": "Target Model",
     "ui:options": {
-      "updateSchemaOnChange": true
-
+      "updateSchemaOnChange": true,
+      "disableDropdown": {
+        "$eval": "formData.containedProducts?.[0]?.productDetails?.productName?.pt?.term?.length > 0 || formData.containedPackages?.[0]?.packageDetails?.productName?.pt?.term?.length > 0"
+      }
     }
   },
   "productName": {
     "ui:field": "AutoCompleteField",
     "ui:options": {
       "ecl": "<774167006",
-      "showDefaultOptions": true,
-      "createBrand": {
+      "showDefaultOptions": false,
+      "createPrimitiveConcept": {
         "ecl": "<774167006",
-        "semanticTags": "(product name)"
+        "semanticTags": "(product name)",
+        "parentConceptId": "774167006",
+        "parentConceptName": "Product name (product name)"
       }
     }
   },
@@ -179,7 +183,7 @@
           "ui:field": "AutoCompleteField",
           "ui:options": {
             "ecl": "<774167006",
-            "showDefaultOptions": true
+            "showDefaultOptions": false
           }
         },
         "activeIngredients": {

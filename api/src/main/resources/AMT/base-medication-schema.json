@@ -120,11 +120,8 @@
       "minProperties": 2,
       "properties": {
         "unit": {
-          "type": [
-            "object",
-            "null"
-          ],
           "$ref": "#/$defs/SnowstormConceptMini",
+          "default": null,
           "title": "Unit"
         },
         "value": {
@@ -150,6 +147,37 @@
         "unit",
         "value"
       ]
+    },
+    "QuantityOptional": {
+      "type": "object",
+      "nullable": true,
+      "minProperties": 2,
+      "properties": {
+        "unit": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "default": null,
+          "title": "Unit"
+        },
+        "value": {
+          "type": "number",
+          "minimum": 0,
+          "errorMessage": {
+            "type": "Value must be a number",
+            "minimum": "Value must be at least 0"
+          }
+        }
+      },
+      "errorMessage": {
+        "minProperties": "Both 'unit' and 'value' must be provided",
+        "type": "Quantity must be a valid object",
+        "required": "Both 'unit' and 'value' must be provided"
+      },
+      "allOf": [
+        {
+          "$ref": "#/$defs/UnitValueConstraint"
+        }
+      ]
+
     },
     "TotalQuantityIngredient": {
       "type": "object",
@@ -340,7 +368,7 @@
               "title": "Specific Dose Form"
             },
             "quantity": {
-              "$ref": "#/$defs/Quantity",
+              "$ref": "#/$defs/QuantityOptional",
               "title": "Unit Size"
             },
             "containerType": {
@@ -397,7 +425,7 @@
               "title": "Specific Dose Form"
             },
             "quantity": {
-              "$ref": "#/$defs/Quantity",
+              "$ref": "#/$defs/QuantityOptional",
               "title": "Unit Size"
             },
             "containerType": {
@@ -456,7 +484,7 @@
               "title": "Specific Dose Form"
             },
             "quantity": {
-              "$ref": "#/$defs/Quantity",
+              "$ref": "#/$defs/QuantityOptional",
               "title": "Unit Size"
             },
             "containerType": {
@@ -515,7 +543,7 @@
               "title": "Specific Dose Form"
             },
             "quantity": {
-              "$ref": "#/$defs/Quantity",
+              "$ref": "#/$defs/QuantityOptional",
               "title": "Unit Size"
             },
             "containerType": {
@@ -706,6 +734,7 @@
       "title": "Contained Product",
       "properties": {
         "unit": {
+          "title": "Unit",
           "$ref": "#/$defs/SnowstormConceptMini",
           "errorMessage": {
             "type": "Invalid Pack Size Unit",
@@ -796,6 +825,7 @@
       "title": "Contained Product",
       "properties": {
         "unit": {
+          "title": "Unit",
           "$ref": "#/$defs/SnowstormConceptMini",
           "errorMessage": {
             "type": "Invalid Pack Size Unit",
@@ -886,6 +916,7 @@
       "title": "Contained Medication Product",
       "properties": {
         "unit": {
+          "title": "Unit",
           "$ref": "#/$defs/SnowstormConceptMini",
           "errorMessage": {
             "type": "Invalid Pack Size Unit",
@@ -976,6 +1007,7 @@
       "title": "Contained Medication Product",
       "properties": {
         "unit": {
+          "title": "Unit",
           "$ref": "#/$defs/SnowstormConceptMini",
           "errorMessage": {
             "type": "Invalid Pack Size Unit",
