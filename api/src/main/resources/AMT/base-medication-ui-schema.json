@@ -12,6 +12,9 @@
       "containerType": 12
     },
     {
+      "nonDefiningProperties": 24
+    },
+    {
       "externalIdentifiers": 12,
       "_empty": 12
     },
@@ -21,6 +24,7 @@
     {
       "containedPackages": 24
     }
+
   ],
   "ui:options": {
     "skipTitle": true,
@@ -461,6 +465,9 @@
           {
             "productName": 12,
             "containerType": 12
+          },
+          {
+            "nonDefiningProperties": 24
           },
           {
             "containedProducts": 24
