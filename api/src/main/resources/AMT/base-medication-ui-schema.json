@@ -228,6 +228,8 @@
                   {
                     "path": "../basisOfStrengthSubstance",
                     "ui:options": {
+                      "getEcl": "<<@parent OR (<105590001:738774007=@parent) OR (<105590001:738774007=(<105590001:738774007=@parent))",
+                      "getExtendedEcl": "<105590001",
                       "showDefaultOptions": true
                     }
                   }
