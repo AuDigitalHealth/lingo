@@ -44,6 +44,14 @@ const MultiValueEclAutocomplete: React.FC<FieldProps<any, any>> = props => {
 
   const title = props?.title || schema?.title || uiSchema?.['ui:title'] || '';
 
+  // Helper function to check if a concept needs attention
+  const conceptNeedsAttention = (concept: ConceptMini) => {
+    return concept && concept.pt?.term && !concept.conceptId;
+  };
+
+  // Check if any concept needs attention for overall component error state
+  const anyConceptNeedsAttention = selectedConcepts.some(conceptNeedsAttention);
+
   useEffect(() => {
     if (allData) {
       const uniqueOptions = Array.from(
@@ -114,13 +122,34 @@ const MultiValueEclAutocomplete: React.FC<FieldProps<any, any>> = props => {
         }
         renderTags={(value, getTagProps) =>
           value.map((option, index) => {
+            const needsAttention = conceptNeedsAttention(option);
             const { key, ...chipProps } = getTagProps({ index });
+
             return (
               <Tooltip
                 key={option.conceptId}
-                title={`${option.conceptId} - ${option.pt?.term}`}
+                title={`${option.conceptId} - ${option.pt?.term}${needsAttention ? ' (Please search for and select a valid option)' : ''}`}
               >
-                <Chip label={option.pt?.term || ''} {...chipProps} />
+                <Chip
+                  label={option.pt?.term || ''}
+                  {...chipProps}
+                  color={needsAttention ? 'error' : 'default'}
+                  sx={{
+                    ...(needsAttention && {
+                      backgroundColor: 'error.light',
+                      color: 'error.contrastText',
+                      '&:hover': {
+                        backgroundColor: 'error.main',
+                      },
+                      '& .MuiChip-deleteIcon': {
+                        color: 'error.contrastText',
+                        '&:hover': {
+                          color: 'error.contrastText',
+                        },
+                      },
+                    }),
+                  }}
+                />
               </Tooltip>
             );
           })
@@ -135,8 +164,14 @@ const MultiValueEclAutocomplete: React.FC<FieldProps<any, any>> = props => {
             {...params}
             data-test-id={id}
             label={title}
-            error={!!errorMessage}
-            helperText={errorMessage ? errorMessage : info}
+            error={!!errorMessage || anyConceptNeedsAttention}
+            helperText={
+              errorMessage
+                ? errorMessage
+                : anyConceptNeedsAttention
+                  ? 'One or more selections need attention - please search for and select valid options'
+                  : info
+            }
             disabled={isThisDisabled}
             InputProps={{
               ...params.InputProps,
@@ -151,7 +186,10 @@ const MultiValueEclAutocomplete: React.FC<FieldProps<any, any>> = props => {
               '& .MuiFormHelperText-root': {
                 m: 0,
                 minHeight: '1em',
-                color: errorMessage ? 'error.main' : 'text.secondary',
+                color:
+                  errorMessage || anyConceptNeedsAttention
+                    ? 'error.main'
+                    : 'text.secondary',
               },
             }}
           />
