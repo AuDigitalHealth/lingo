@@ -17,7 +17,6 @@ package au.gov.digitalhealth.lingo.service.schema;
 
 import au.gov.digitalhealth.lingo.configuration.model.*;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.NonDefiningPropertyDataType;
-
 import java.util.List;
 import java.util.Map;
 
@@ -117,33 +116,36 @@ public class SchemaFactory {
     // Additional Fields
     if (!mapping.getAdditionalFields().isEmpty()) {
       ObjectProperty additionalFields = new ObjectProperty();
-      for (Map.Entry<String, AdditionalFieldDefinition> entry : mapping.getAdditionalFields().entrySet()) {
+      for (Map.Entry<String, AdditionalFieldDefinition> entry :
+          mapping.getAdditionalFields().entrySet()) {
         String key = entry.getKey();
         AdditionalFieldDefinition fieldDefinition = entry.getValue();
         ObjectProperty innerField = new ObjectProperty();
         innerField.setTitle(fieldDefinition.getTitle());
 
         if (fieldDefinition.getDataType().equals(NonDefiningPropertyDataType.CONCEPT)
-                || fieldDefinition.getDataType().equals(NonDefiningPropertyDataType.CODED)) {
+            || fieldDefinition.getDataType().equals(NonDefiningPropertyDataType.CODED)) {
           ReferenceProperty ref = new ReferenceProperty();
           ref.setReference("#/$defs/SnowstormConceptMini");
           innerField.addProperty("valueObject", ref);
         } else {
           StringProperty valueProp = new StringProperty();
 
-          if (fieldDefinition.getAllowedValues() != null && !fieldDefinition.getAllowedValues().isEmpty()) {
+          if (fieldDefinition.getAllowedValues() != null
+              && !fieldDefinition.getAllowedValues().isEmpty()) {
             EnumProperty enumValue = new EnumProperty();
             enumValue.getEnumValues().addAll(fieldDefinition.getAllowedValues());
             enumValue.setDefaultEnumValue(fieldDefinition.getAllowedValues().get(0));
             innerField.addProperty("value", enumValue);
           } else {
             valueProp.setPattern(fieldDefinition.getValueRegexValidation());
-            valueProp.getErrorMessage().put(
+            valueProp
+                .getErrorMessage()
+                .put(
                     "pattern",
                     fieldDefinition.getValueValidationErrorMessage() != null
-                            ? fieldDefinition.getValueValidationErrorMessage()
-                            : "Invalid value for " + fieldDefinition.getTitle()
-            );
+                        ? fieldDefinition.getValueValidationErrorMessage()
+                        : "Invalid value for " + fieldDefinition.getTitle());
             innerField.addProperty("value", valueProp);
           }
         }
@@ -151,7 +153,6 @@ public class SchemaFactory {
         innerField.setRequired(List.of("value"));
         additionalFields.addProperty(key, innerField);
       }
-
 
       identifierSchema.addProperty("additionalFields", additionalFields);
     }

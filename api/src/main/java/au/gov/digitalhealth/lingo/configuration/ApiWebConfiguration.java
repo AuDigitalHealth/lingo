@@ -80,11 +80,10 @@ public class ApiWebConfiguration {
         .baseUrl(authoringServiceUrl)
         .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
         .filter(authHelper.addImsAuthCookie)
-        .exchangeStrategies(ExchangeStrategies.builder()
-            .codecs(configurer -> configurer
-                .defaultCodecs()
-                .maxInMemorySize(10 * 1024 * 1024))
-            .build())
+        .exchangeStrategies(
+            ExchangeStrategies.builder()
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024))
+                .build())
         .build();
   }
 
@@ -114,11 +113,10 @@ public class ApiWebConfiguration {
         .baseUrl(authoringServiceUrl)
         .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
         .filter(authHelper.addDefaultAuthCookie) // Cookies are injected through filter
-        .exchangeStrategies(ExchangeStrategies.builder()
-            .codecs(configurer -> configurer
-                .defaultCodecs()
-                .maxInMemorySize(10 * 1024 * 1024))
-            .build())
+        .exchangeStrategies(
+            ExchangeStrategies.builder()
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024))
+                .build())
         .build();
   }
 

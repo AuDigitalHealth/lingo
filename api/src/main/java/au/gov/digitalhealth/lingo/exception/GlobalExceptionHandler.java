@@ -58,12 +58,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   ResponseEntity<ProblemDetail> handleWebClientResponseException(WebClientResponseException ex) {
     String upstreamService = extractServiceName(ex.getRequest());
 
-    UpstreamServiceProblem problem = new UpstreamServiceProblem(
-        "Upstream service error: " + ex.getMessage(),
-        upstreamService,
-        HttpStatus.resolve(ex.getStatusCode().value()),
-        ex
-    );
+    UpstreamServiceProblem problem =
+        new UpstreamServiceProblem(
+            "Upstream service error: " + ex.getMessage(),
+            upstreamService,
+            HttpStatus.resolve(ex.getStatusCode().value()),
+            ex);
 
     return new ResponseEntity<>(problem.getBody(), ex.getStatusCode());
   }
