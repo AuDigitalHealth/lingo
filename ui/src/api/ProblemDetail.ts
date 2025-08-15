@@ -22,6 +22,14 @@ export interface ProblemDetail {
   instance: string;
 }
 
+export interface UpstreamServerProblem {
+  type: string;
+  title: string;
+  status: number;
+  detail: string;
+  instance: string;
+}
+
 export interface InternalServerError {
   error: string;
   path: string;
@@ -54,6 +62,21 @@ export const isInternalServerError = (
       typeof data.error === 'string' &&
       data?.error === 'Internal Server Error') ||
       data.status === 500)
+  );
+};
+
+export const isUpstreamServerProblem = (
+  data: ProblemDetail,
+): data is UpstreamServerProblem => {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    typeof data.type === 'string' &&
+    typeof data.title === 'string' &&
+    typeof data.status === 'number' &&
+    typeof data.detail === 'string' &&
+    typeof data.instance === 'string' &&
+    data.title === 'Upstream Service Error'
   );
 };
 
