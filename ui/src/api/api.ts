@@ -19,6 +19,8 @@ import useUserStore from '../stores/UserStore';
 import { enqueueSnackbar } from 'notistack';
 import {
   isInternalServerError,
+  isProblemDetail,
+  isUpstreamServerProblem,
   isUserReportableProblem,
 } from './ProblemDetail';
 import {
@@ -105,7 +107,14 @@ api.interceptors.response.use(
         });
       } else {
         const potentialInternalServerError = error?.response?.data;
-        if (isInternalServerError(potentialInternalServerError)) {
+        if (
+          isProblemDetail(potentialInternalServerError) &&
+          isUpstreamServerProblem(potentialInternalServerError)
+        ) {
+          enqueueSnackbar(`${potentialInternalServerError?.detail}`, {
+            variant: 'error',
+          });
+        } else if (isInternalServerError(potentialInternalServerError)) {
           if (isSentryAvailable()) {
             // Use Sentry feedback dialog
             showSentryFeedbackDialog(
