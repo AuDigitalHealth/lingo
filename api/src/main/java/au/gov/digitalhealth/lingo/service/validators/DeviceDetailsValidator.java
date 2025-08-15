@@ -20,5 +20,6 @@ import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 
 public interface DeviceDetailsValidator {
 
-  ValidationResult validatePackageDetails(PackageDetails<DeviceProductDetails> packageDetails, String branch);
+  ValidationResult validatePackageDetails(
+      PackageDetails<DeviceProductDetails> packageDetails, String branch);
 }
