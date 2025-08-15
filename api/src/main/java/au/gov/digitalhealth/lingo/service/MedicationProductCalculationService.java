@@ -996,7 +996,10 @@ public class MedicationProductCalculationService
     return (prefix + genericName + " " + form + " " + unit).trim();
   }
 
-  private static void handleNutritionalProductName(AtomicCache atomicCache, ModelLevel level, Node node,
+  private static void handleNutritionalProductName(
+      AtomicCache atomicCache,
+      ModelLevel level,
+      Node node,
       NutritionalProductDetails nutritionalProductDetails) {
     boolean isExistingClinicalDrug =
         level.getModelLevelType().equals(CLINICAL_DRUG)

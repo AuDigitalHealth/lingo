@@ -296,5 +296,4 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
         Arrays.stream(NmpcType.values()).map(t -> t.getValue()).collect(Collectors.toSet()));
     return getSnowstormClient().conceptIdsThatExist(branch, nmpcConcepts).containsAll(nmpcConcepts);
   }
-
 }
