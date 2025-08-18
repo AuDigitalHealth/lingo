@@ -628,3 +628,11 @@ export function trimIfTooLong(text: string, maxLength: number): string {
   }
   return text;
 }
+export const filterOptionsByTermAndCode = createFilterOptions<Concept>({
+  stringify: (option: Concept) =>
+    [
+      option.pt?.term ?? '', // Preferred term
+      option.fsn?.term ?? '', // FSN term
+      option.conceptId ?? '', // Code
+    ].join(' '),
+});

@@ -35,6 +35,7 @@
 
   },
   "variant": {
+    "ui:enumNames": ["Medication", "Vaccine", "Nutritional"],
     "ui:widget": "select",
     "ui:title": "Target Model",
     "ui:options": {
@@ -177,6 +178,7 @@
           ]
         },
         "productType": {
+          "enumNames": ["Presentation Strength", "Concentration Strength", "No Strength"],
           "ui:widget": "select",
           "ui:title": "Product Template",
           "ui:options": {
