@@ -22,7 +22,6 @@ import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
 
 import NumberWidget from './widgets/NumberWidget.tsx';
 import ExternalIdentifiers from './fields/bulkBrandPack/ExternalIdentifiers.tsx';
-import TextFieldWidget from './widgets/TextFieldWidget.tsx';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 import productService from '../../../api/ProductService.ts';
 import { ConfigService } from '../../../api/ConfigService.ts';
@@ -51,6 +50,7 @@ import { ErrorDisplay } from './components/ErrorDisplay.tsx';
 import CustomSelectWidget from './widgets/CustomSelectWidget.tsx';
 import { evaluateExpression } from './helpers/rjsfUtils.ts';
 import WarningIcon from '@mui/icons-material/Warning';
+import CustomTextFieldWidget from './widgets/CustomTextFieldWidget.tsx';
 
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -244,7 +244,7 @@ function MedicationAuthoring({
               CompactQuantityField,
             }}
             widgets={{
-              TextFieldWidget,
+              TextWidget: CustomTextFieldWidget,
               OneOfArrayWidget,
               NumberWidget,
               SelectWidget: CustomSelectWidget,

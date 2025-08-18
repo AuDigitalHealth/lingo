@@ -35,6 +35,7 @@
 
   },
   "variant": {
+    "ui:enumNames": ["Medication", "Vaccine", "Nutritional"],
     "ui:widget": "select",
     "ui:title": "Target Model",
     "ui:options": {
@@ -177,6 +178,7 @@
           ]
         },
         "productType": {
+          "enumNames": ["Presentation Strength", "Concentration Strength", "No Strength"],
           "ui:widget": "select",
           "ui:title": "Product Template",
           "ui:options": {
@@ -371,14 +373,14 @@
                   {
                     "path": "../refinedActiveIngredient",
                     "ui:options": {
-                      "getEcl": "<<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent))",
+                      "getEcl": "<<@parent OR (<105590001:738774007=@parent) OR (<105590001:738774007=(<105590001:738774007=@parent))",
                       "showDefaultOptions": true
                     }
                   },
                   {
                     "path": "../basisOfStrengthSubstance",
                     "ui:options": {
-                      "getEcl": "<<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent))",
+                      "getEcl": "<<@parent OR (<105590001:738774007=@parent) OR (<105590001:738774007=(<105590001:738774007=@parent))",
                       "getExtendedEcl": "<105590001",
                       "showDefaultOptions": true
                     }
@@ -386,7 +388,7 @@
                   {
                     "path": "../preciseIngredient",
                     "ui:options": {
-                      "getEcl": "<<@parent OR (<410942007:738774007=@parent) OR (<410942007:738774007=(<410942007:738774007=@parent))",
+                      "getEcl": "<<@parent OR (<105590001:738774007=@parent) OR (<105590001:738774007=(<105590001:738774007=@parent))",
                       "showDefaultOptions": true
                     }
                   }

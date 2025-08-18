@@ -17,9 +17,7 @@
         }
       },
       "minProperties": 1,
-      "required": [
-        "conceptId"
-      ],
+      "required": ["conceptId"],
       "errorMessage": {
         "required": "Invalid concept found, you might need to select a concept from the dropdown."
       },
@@ -36,82 +34,10 @@
           "type": "string"
         }
       },
-      "required": [
-        "lang",
-        "term"
-      ],
+      "required": ["lang", "term"],
       "errorMessage": {
         "required": "Both language and term must be provided",
         "type": "Must be a valid term object"
-      }
-    },
-    "UnitValueConstraint": {
-      "dependencies": {
-        "unit": {
-          "oneOf": [
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": {
-                      "const": "732935002",
-                      "errorMessage": {
-                        "const": "When unit is 'Each', value must be an integer greater than or equal to 1"
-                      }
-                    }
-                  }
-                },
-                "value": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "errorMessage": {
-                    "type": "Value must be an integer when unit is 'Each'",
-                    "minimum": "Value must be at least 1 when unit is 'Each'"
-                  }
-                }
-              },
-              "required": [
-                "value"
-              ],
-              "errorMessage": {
-                "required": "Value must be provided when unit is specified"
-              }
-            },
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": {
-                      "not": {
-                        "const": "732935002"
-                      },
-                      "errorMessage": {
-                        "not": "When unit is not 'Each', value must be a number greater than or equal to 0"
-                      }
-                    }
-                  }
-                },
-                "value": {
-                  "type": "number",
-                  "minimum": 0,
-                  "errorMessage": {
-                    "type": "Value must be a number",
-                    "minimum": "Value must be at least 0"
-                  }
-                }
-              },
-              "required": [
-                "value"
-              ],
-              "errorMessage": {
-                "required": "Value must be provided when unit is specified"
-              }
-            }
-          ],
-          "errorMessage": {
-            "oneOf": "Invalid combination of unit and value. Check unit type and corresponding value constraints."
-          }
-        }
       }
     },
     "Quantity": {
@@ -120,36 +46,110 @@
       "minProperties": 2,
       "properties": {
         "unit": {
-          "type": [
-            "object",
-            "null"
-          ],
+          "type": ["object", "null"],
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Unit"
         },
         "value": {
-          "type": "number",
-          "minimum": 0,
+          "title": "Value"
+        }
+      },
+      "required": ["unit", "value"],
+      "dependencies": {
+        "unit": {
+          "if": {
+            "properties": {
+              "unit": {
+                "properties": {
+                  "conceptId": { "const": "732935002" }
+                },
+                "required": ["conceptId"]
+              }
+            },
+            "required": ["unit"]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": ["value"]
+          },
+          "else": {
+            "properties": {
+              "value": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": ["value"]
+          },
           "errorMessage": {
-            "type": "Value must be a number",
-            "minimum": "Value must be at least 0"
+            "if": "Value must be a non-negative number",
+            "else": "Value must be a non-negative number"
           }
         }
       },
       "errorMessage": {
-        "minProperties": "Both 'unit' and 'value' must be provided",
-        "type": "Quantity must be a valid object",
-        "required": "Both 'unit' and 'value' must be provided"
-      },
-      "allOf": [
-        {
-          "$ref": "#/$defs/UnitValueConstraint"
+        "minProperties": "Both 'unit' and 'value' must be provided"
+      }
+    },
+    "QuantityOptional": {
+      "type": "object",
+      "nullable": true,
+      "minProperties": 2,
+      "properties": {
+        "unit": {
+          "type": ["object", "null"],
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Unit"
+        },
+        "value": {
+          "title": "Value"
         }
-      ],
-      "required": [
-        "unit",
-        "value"
-      ]
+      },
+      "dependencies": {
+        "unit": {
+          "if": {
+            "properties": {
+              "unit": {
+                "properties": {
+                  "conceptId": { "const": "732935002" }
+                },
+                "required": ["conceptId"]
+              }
+            },
+            "required": ["unit"]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": ["value"]
+          },
+          "else": {
+            "properties": {
+              "value": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": ["value"]
+          },
+          "errorMessage": {
+            "if": "Value must be a non-negative number",
+            "else": "Value must be a non-negative number"
+          }
+        }
+      },
+      "errorMessage": {
+        "minProperties": "Both 'unit' and 'value' must be provided"
+      }
     },
     "TotalQuantityIngredient": {
       "type": "object",
@@ -178,7 +178,6 @@
         "totalQuantity"
       ],
       "errorMessage": {
-        "required": "Active ingredient, basis of strength substance, and total quantity must all be provided",
         "type": "Ingredient must be a valid object",
         "additionalProperties": "Unknown property found in ingredient definition"
       }
@@ -210,7 +209,6 @@
         "concentrationStrength"
       ],
       "errorMessage": {
-        "required": "Active ingredient, basis of strength substance, and concentration strength must all be provided",
         "type": "Ingredient must be a valid object",
         "additionalProperties": "Unknown property found in ingredient definition"
       }
@@ -247,7 +245,6 @@
         "totalQuantity"
       ],
       "errorMessage": {
-        "required": "Active ingredient, basis of strength substance, concentration strength, and total quantity must all be provided",
         "type": "Ingredient must be a valid object",
         "additionalProperties": "Unknown property found in ingredient definition"
       }
@@ -265,11 +262,8 @@
           "title": "Has Precise Active Ingredient"
         }
       },
-      "required": [
-        "activeIngredient"
-      ],
+      "required": ["activeIngredient"],
       "errorMessage": {
-        "required": "Active ingredient must be provided",
         "type": "Ingredient must be a valid object",
         "additionalProperties": "Unknown property found in ingredient definition"
       }
@@ -285,19 +279,12 @@
             "concentrationAndPresentationStrength",
             "noStrength"
           ],
-          "enumNames": [
-            "Total Quantity Only",
-            "Concentration Strength Only",
-            "Total Quantity, Concentration Strength, and Size",
-            "No Strength"
-          ],
+
           "default": "presentationStrength",
           "title": "Product Type"
         }
       },
-      "required": [
-        "productType"
-      ],
+      "required": ["productType"],
       "discriminator": {
         "propertyName": "productType"
       },
@@ -340,7 +327,7 @@
               "title": "Specific Dose Form"
             },
             "quantity": {
-              "$ref": "#/$defs/Quantity",
+              "$ref": "#/$defs/QuantityOptional",
               "title": "Unit Size"
             },
             "containerType": {
@@ -352,11 +339,7 @@
               "title": "Other Identifying Information"
             }
           },
-          "required": [
-            "productName",
-            "activeIngredients",
-            "genericForm"
-          ],
+          "required": ["productName", "activeIngredients", "genericForm"],
           "additionalProperties": false
         },
         {
@@ -397,7 +380,7 @@
               "title": "Specific Dose Form"
             },
             "quantity": {
-              "$ref": "#/$defs/Quantity",
+              "$ref": "#/$defs/QuantityOptional",
               "title": "Unit Size"
             },
             "containerType": {
@@ -409,20 +392,14 @@
               "title": "Other Identifying Information"
             }
           },
-          "required": [
-            "productName",
-            "activeIngredients",
-            "genericForm"
-          ],
-          "errorMessage": {
-            "required": "Product Details must be populated."
-          }
+          "required": ["productName", "activeIngredients", "genericForm"]
+
         },
         {
           "title": "Total Quantity, Concentration Strength, and Size",
           "properties": {
             "productType": {
-              "const": "totalQuantityConcentrationAndSize"
+              "const": "concentrationAndPresentationStrength"
             },
             "type": {
               "type": "string",
@@ -468,14 +445,8 @@
               "title": "Other Identifying Information"
             }
           },
-          "required": [
-            "productName",
-            "activeIngredients",
-            "genericForm"
-          ],
-          "errorMessage": {
-            "required": "Product Details must be populated."
-          }
+          "required": ["productName", "activeIngredients", "genericForm","quantity"]
+
         },
         {
           "title": "No Strength",
@@ -515,7 +486,7 @@
               "title": "Specific Dose Form"
             },
             "quantity": {
-              "$ref": "#/$defs/Quantity",
+              "$ref": "#/$defs/QuantityOptional",
               "title": "Unit Size"
             },
             "containerType": {
@@ -527,14 +498,8 @@
               "title": "Other Identifying Information"
             }
           },
-          "required": [
-            "productName",
-            "activeIngredients",
-            "genericForm"
-          ],
-          "errorMessage": {
-            "required": "Product Details must be populated."
-          }
+          "required": ["productName", "activeIngredients", "genericForm"]
+
         }
       ]
     },
@@ -557,9 +522,7 @@
           "title": "Product Type"
         }
       },
-      "required": [
-        "productType"
-      ],
+      "required": ["productType"],
       "discriminator": {
         "propertyName": "productType"
       },
@@ -602,11 +565,7 @@
               "title": "Other Identifying Information"
             }
           },
-          "required": [
-            "productName",
-            "activeIngredients",
-            "deviceType"
-          ],
+          "required": ["productName", "activeIngredients", "deviceType"],
           "additionalProperties": false
         },
         {
@@ -647,11 +606,7 @@
               "title": "Other Identifying Information"
             }
           },
-          "required": [
-            "productName",
-            "activeIngredients",
-            "deviceType"
-          ],
+          "required": ["productName", "activeIngredients", "deviceType"],
           "additionalProperties": false
         },
         {
@@ -692,11 +647,7 @@
               "title": "Other Identifying Information"
             }
           },
-          "required": [
-            "productName",
-            "activeIngredients",
-            "deviceType"
-          ],
+          "required": ["productName", "activeIngredients", "deviceType"],
           "additionalProperties": false
         }
       ]
@@ -706,6 +657,7 @@
       "title": "Contained Product",
       "properties": {
         "unit": {
+          "title": "Unit",
           "$ref": "#/$defs/SnowstormConceptMini",
           "errorMessage": {
             "type": "Invalid Pack Size Unit",
@@ -724,70 +676,51 @@
           "$ref": "#/$defs/MedicationProductDetails"
         }
       },
-      "required": [
-        "unit",
-        "value",
-        "productDetails"
-      ],
-      "errorMessage": {
-        "required": "Contained product must be populated."
-      },
+      "required": ["unit", "value", "productDetails"],
+
       "dependencies": {
         "unit": {
-          "oneOf": [
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": {
-                      "const": "732935002",
-                      "errorMessage": {
-                        "const": "Invalid Unit and Value"
-                      }
-                    }
-                  },
-                  "required": [
-                    "conceptId"
-                  ]
+          "if": {
+            "properties": {
+              "unit": {
+                "properties": {
+                  "conceptId": { "const": "732935002" }
                 },
-                "value": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "errorMessage": {
-                    "type": "Value must be an integer when Unit is 'Each'",
-                    "const": "Unit must be 'Each' for this value constraint"
-                  }
-                }
-              },
-              "errorMessage": {
-                "oneOf": "Unit must be 'Each' with an integer value >= 1"
+                "required": ["conceptId"]
               }
             },
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": {
-                      "not": {
-                        "const": "732935002"
-                      }
-                    }
-                  }
-                },
-                "value": {
-                  "type": "number",
-                  "minimum": 0,
-                  "errorMessage": {
-                    "type": "Value must be a number ",
-                    "minimum": "Value must be at least 0"
-                  }
+            "required": ["unit"]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "integer",
+                "minimum": 1,
+                "errorMessage": {
+                  "type": "Value must be an integer when Unit is 'Each'",
+                  "minimum": "Value must be at least 1"
                 }
-              },
-              "errorMessage": {
-                "oneOf": "Unit must not be 'Each' and value must be a number >= 0"
               }
-            }
-          ]
+            },
+            "required": ["value"]
+          },
+          "else": {
+            "properties": {
+              "value": {
+                "type": "number",
+                "minimum": 0,
+                "errorMessage": {
+                  "type": "Value must be a number",
+                  "minimum": "Value must be at least 0"
+                }
+              }
+            },
+            "required": ["value"]
+          },
+          "errorMessage": {
+            "if": "Value must be an integer ≥ 1 when unit is 'Each'",
+            "else": "Units must have a numeric value ≥ 0"
+          }
         }
       }
     },
@@ -796,6 +729,7 @@
       "title": "Contained Product",
       "properties": {
         "unit": {
+          "title": "Unit",
           "$ref": "#/$defs/SnowstormConceptMini",
           "errorMessage": {
             "type": "Invalid Pack Size Unit",
@@ -814,70 +748,51 @@
           "$ref": "#/$defs/DrugDeviceProductDetails"
         }
       },
-      "required": [
-        "unit",
-        "value",
-        "productDetails"
-      ],
-      "errorMessage": {
-        "required": "Contained product must be populated."
-      },
+      "required": ["unit", "value", "productDetails"],
+
       "dependencies": {
         "unit": {
-          "oneOf": [
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": {
-                      "const": "732935002",
-                      "errorMessage": {
-                        "const": "Invalid Unit and Value"
-                      }
-                    }
-                  },
-                  "required": [
-                    "conceptId"
-                  ]
+          "if": {
+            "properties": {
+              "unit": {
+                "properties": {
+                  "conceptId": { "const": "732935002" }
                 },
-                "value": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "errorMessage": {
-                    "type": "Value must be an integer when Unit is 'Each'",
-                    "const": "Unit must be 'Each' for this value constraint"
-                  }
-                }
-              },
-              "errorMessage": {
-                "oneOf": "Unit must be 'Each' with an integer value >= 1"
+                "required": ["conceptId"]
               }
             },
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": {
-                      "not": {
-                        "const": "732935002"
-                      }
-                    }
-                  }
-                },
-                "value": {
-                  "type": "number",
-                  "minimum": 0,
-                  "errorMessage": {
-                    "type": "Value must be a number ",
-                    "minimum": "Value must be at least 0"
-                  }
+            "required": ["unit"]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "integer",
+                "minimum": 1,
+                "errorMessage": {
+                  "type": "Value must be an integer when Unit is 'Each'",
+                  "minimum": "Value must be at least 1"
                 }
-              },
-              "errorMessage": {
-                "oneOf": "Unit must not be 'Each' and value must be a number >= 0"
               }
-            }
-          ]
+            },
+            "required": ["value"]
+          },
+          "else": {
+            "properties": {
+              "value": {
+                "type": "number",
+                "minimum": 0,
+                "errorMessage": {
+                  "type": "Value must be a number",
+                  "minimum": "Value must be at least 0"
+                }
+              }
+            },
+            "required": ["value"]
+          },
+          "errorMessage": {
+            "if": "Value must be an integer ≥ 1 when unit is 'Each'",
+            "else": "Units must have a numeric value ≥ 0"
+          }
         }
       }
     },
@@ -886,6 +801,7 @@
       "title": "Contained Medication Product",
       "properties": {
         "unit": {
+          "title": "Unit",
           "$ref": "#/$defs/SnowstormConceptMini",
           "errorMessage": {
             "type": "Invalid Pack Size Unit",
@@ -904,70 +820,50 @@
           "$ref": "#/$defs/MedicationPackageDetails"
         }
       },
-      "required": [
-        "unit",
-        "value",
-        "packageDetails"
-      ],
-      "errorMessage": {
-        "required": "Contained Package must be populated."
-      },
+      "required": ["unit", "value", "packageDetails"],
       "dependencies": {
         "unit": {
-          "oneOf": [
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": {
-                      "const": "732935002",
-                      "errorMessage": {
-                        "const": "Invalid Unit and Value"
-                      }
-                    }
-                  },
-                  "required": [
-                    "conceptId"
-                  ]
+          "if": {
+            "properties": {
+              "unit": {
+                "properties": {
+                  "conceptId": { "const": "732935002" }
                 },
-                "value": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "errorMessage": {
-                    "type": "Value must be an integer when Unit is 'Each'",
-                    "const": "Unit must be 'Each' for this value constraint"
-                  }
-                }
-              },
-              "errorMessage": {
-                "oneOf": "Unit must be 'Each' with an integer value >= 1"
+                "required": ["conceptId"]
               }
             },
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": {
-                      "not": {
-                        "const": "732935002"
-                      }
-                    }
-                  }
-                },
-                "value": {
-                  "type": "number",
-                  "minimum": 0,
-                  "errorMessage": {
-                    "type": "Value must be a number ",
-                    "minimum": "Value must be at least 0"
-                  }
+            "required": ["unit"]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "integer",
+                "minimum": 1,
+                "errorMessage": {
+                  "type": "Value must be an integer when Unit is 'Each'",
+                  "minimum": "Value must be at least 1"
                 }
-              },
-              "errorMessage": {
-                "oneOf": "Unit must not be 'Each' and value must be a number >= 0"
               }
-            }
-          ]
+            },
+            "required": ["value"]
+          },
+          "else": {
+            "properties": {
+              "value": {
+                "type": "number",
+                "minimum": 0,
+                "errorMessage": {
+                  "type": "Value must be a number",
+                  "minimum": "Value must be at least 0"
+                }
+              }
+            },
+            "required": ["value"]
+          },
+          "errorMessage": {
+            "if": "Value must be an integer ≥ 1 when unit is 'Each'",
+            "else": "Units must have a numeric value ≥ 0"
+          }
         }
       }
     },
@@ -976,6 +872,7 @@
       "title": "Contained Medication Product",
       "properties": {
         "unit": {
+          "title": "Unit",
           "$ref": "#/$defs/SnowstormConceptMini",
           "errorMessage": {
             "type": "Invalid Pack Size Unit",
@@ -994,70 +891,53 @@
           "$ref": "#/$defs/DrugDevicePackageDetails"
         }
       },
-      "required": [
-        "unit",
-        "value",
-        "packageDetails"
-      ],
+      "required": ["unit", "value", "packageDetails"],
       "errorMessage": {
         "required": "Contained Package must be populated."
       },
       "dependencies": {
         "unit": {
-          "oneOf": [
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": {
-                      "const": "732935002",
-                      "errorMessage": {
-                        "const": "Invalid Unit and Value"
-                      }
-                    }
-                  },
-                  "required": [
-                    "conceptId"
-                  ]
+          "if": {
+            "properties": {
+              "unit": {
+                "properties": {
+                  "conceptId": { "const": "732935002" }
                 },
-                "value": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "errorMessage": {
-                    "type": "Value must be an integer when Unit is 'Each'",
-                    "const": "Unit must be 'Each' for this value constraint"
-                  }
-                }
-              },
-              "errorMessage": {
-                "oneOf": "Unit must be 'Each' with an integer value >= 1"
+                "required": ["conceptId"]
               }
             },
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": {
-                      "not": {
-                        "const": "732935002"
-                      }
-                    }
-                  }
-                },
-                "value": {
-                  "type": "number",
-                  "minimum": 0,
-                  "errorMessage": {
-                    "type": "Value must be a number ",
-                    "minimum": "Value must be at least 0"
-                  }
+            "required": ["unit"]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "integer",
+                "minimum": 1,
+                "errorMessage": {
+                  "type": "Value must be an integer when Unit is 'Each'",
+                  "minimum": "Value must be at least 1"
                 }
-              },
-              "errorMessage": {
-                "oneOf": "Unit must not be 'Each' and value must be a number >= 0"
               }
-            }
-          ]
+            },
+            "required": ["value"]
+          },
+          "else": {
+            "properties": {
+              "value": {
+                "type": "number",
+                "minimum": 0,
+                "errorMessage": {
+                  "type": "Value must be a number",
+                  "minimum": "Value must be at least 0"
+                }
+              }
+            },
+            "required": ["value"]
+          },
+          "errorMessage": {
+            "if": "Value must be an integer ≥ 1 when unit is 'Each'",
+            "else": "Units must have a numeric value ≥ 0"
+          }
         }
       }
     },
@@ -1094,16 +974,11 @@
           "errorMessage": {
             "minItems": "At least one Contained Products."
           }
-        }
+        },
+        "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PACKAGE_NonDefiningProperty" }, "title": "Non Defining Properties" }
       },
-      "required": [
-        "productName",
-        "containerType",
-        "containedProducts"
-      ],
-      "errorMessage": {
-        "required": "Fields must be populated."
-      }
+      "required": ["productName", "containerType", "containedProducts"]
+
     },
     "DrugDevicePackageDetails": {
       "type": "object",
@@ -1140,27 +1015,13 @@
           }
         }
       },
-      "required": [
-        "productName",
-        "containerType",
-        "containedProducts"
-      ],
-      "errorMessage": {
-        "required": "Fields must be populated."
-      }
+      "required": ["productName", "containerType", "containedProducts"]
     }
   },
   "properties": {
     "packType": {
       "type": "string",
-      "enum": [
-        "normal",
-        "multipack"
-      ],
-      "enumNames": [
-        "Normal pack",
-        "Multipack"
-      ],
+      "enum": ["normal", "multipack"],
       "default": "normal",
       "title": "Package Type",
       "errorMessage": {
@@ -1169,9 +1030,7 @@
       }
     }
   },
-  "required": [
-    "packType"
-  ],
+  "required": ["packType"],
   "errorMessage": {
     "required": "Package type must be specified",
     "type": "Root schema must be a valid object"
@@ -1187,22 +1046,12 @@
         },
         "variant": {
           "type": "string",
-          "enum": [
-            "medication",
-            "drugDevice"
-          ],
-          "enumNames": [
-            "Medication",
-            "Drug Device Combination"
-          ],
+          "enum": ["medication", "drugDevice"],
           "default": "medication",
           "title": "Target Model"
         }
       },
-      "required": [
-        "variant",
-        "containedProducts"
-      ],
+      "required": ["variant", "containedProducts"],
       "discriminator": {
         "propertyName": "variant"
       },
@@ -1234,16 +1083,11 @@
               "items": {
                 "$ref": "#/$defs/MedicationContainedProduct"
               }
-            }
+            },
+            "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PACKAGE_NonDefiningProperty" }, "title": "Non Defining Properties" }
           },
-          "required": [
-            "productName",
-            "containerType",
-            "containedProducts"
-          ],
-          "errorMessage": {
-            "required": "Fields must be populated."
-          },
+          "required": ["productName", "containerType", "containedProducts"],
+
           "additionalProperties": false
         },
         {
@@ -1273,16 +1117,10 @@
               "items": {
                 "$ref": "#/$defs/DrugDeviceContainedProduct"
               }
-            }
+            },
+            "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PACKAGE_NonDefiningProperty" }, "title": "Non Defining Properties" }
           },
-          "required": [
-            "productName",
-            "containerType",
-            "containedProducts"
-          ],
-          "errorMessage": {
-            "required": "Fields must be populated."
-          },
+          "required": ["productName", "containerType", "containedProducts"],
           "additionalProperties": false
         }
       ]
@@ -1294,22 +1132,12 @@
         },
         "variant": {
           "type": "string",
-          "enum": [
-            "medication",
-            "drugDevice"
-          ],
-          "enumNames": [
-            "Medication",
-            "Drug Device Combination"
-          ],
+          "enum": ["medication", "drugDevice"],
           "default": "medication",
           "title": "Target Model"
         }
       },
-      "required": [
-        "variant",
-        "containedPackages"
-      ],
+      "required": ["variant", "containedPackages"],
       "discriminator": {
         "propertyName": "variant"
       },
@@ -1341,15 +1169,10 @@
               "items": {
                 "$ref": "#/$defs/ContainedMedicationPackage"
               }
-            }
+            },
+            "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PACKAGE_NonDefiningProperty" }, "title": "Non Defining Properties" }
           },
-          "required": [
-            "productName",
-            "containerType"
-          ],
-          "errorMessage": {
-            "required": "Fields must be populated."
-          },
+          "required": ["productName", "containerType"],
           "additionalProperties": false
         },
         {
@@ -1379,15 +1202,10 @@
               "items": {
                 "$ref": "#/$defs/ContainedDrugDevicePackage"
               }
-            }
+            },
+            "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PACKAGE_NonDefiningProperty" }, "title": "Non Defining Properties" }
           },
-          "required": [
-            "productName",
-            "containerType"
-          ],
-          "errorMessage": {
-            "required": "Fields must be populated."
-          },
+          "required": ["productName", "containerType"],
           "additionalProperties": false
         }
       ]

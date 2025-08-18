@@ -59,12 +59,12 @@ export default ({ mode }) => {
             path.replace(/^\/authoring-services/, '/authoring-services'),
           ws: true,
         },
-        '/traceability-service': {
+        '/authoring-traceability-service': {
           target: apUrl,
           changeOrigin: true,
           secure: true,
           rewrite: path =>
-            path.replace(/^\/traceability-service/, '/traceability-service'),
+            path.replace(/^\/authoring-traceability-service/, '/authoring-traceability-service'),
           ws: true,
         },
         '/snowstorm': {
