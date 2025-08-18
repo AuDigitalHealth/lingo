@@ -66,6 +66,7 @@ import au.gov.digitalhealth.lingo.util.RelationshipSorter;
 import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import au.gov.digitalhealth.tickets.service.TicketServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -74,6 +75,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -954,6 +956,31 @@ public class MedicationProductCalculationService
         levelFutureMap.get(modelConfiguration.getLeafProductModelLevel()).get());
 
     return productSummary;
+  }
+
+  private List<String> getOrder(
+      ModelLevel level,
+      Set<Node> parentNodes,
+      MedicationProductDetails productDetails,
+      ModelConfiguration modelConfiguration) {
+    ModelLevelType rootType =
+        modelConfiguration.getRootUnbrandedProductModelLevel().getModelLevelType();
+    if (parentNodes.isEmpty() || level.getModelLevelType().equals(rootType)) {
+      // must be the root node
+      return productDetails.getActiveIngredients().stream()
+          .map(i -> i.getActiveIngredient().getPt().getTerm())
+          .toList();
+    } else {
+      Optional<Node> parent =
+          parentNodes.stream().filter(n -> n.getModelLevel().equals(rootType)).findFirst();
+      if (parent.isPresent()) {
+        return Arrays.stream(parent.get().getPreferredTerm().split("\\+"))
+            .map(String::trim)
+            .toList();
+      } else {
+        return List.of();
+      }
+    }
   }
 
   private Function<Node, Node> postProductNodeCreationFunction(
