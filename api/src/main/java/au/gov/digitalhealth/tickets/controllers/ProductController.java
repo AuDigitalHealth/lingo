@@ -45,8 +45,7 @@ public class ProductController {
 
   @PutMapping(
       value = "/api/tickets/{ticketId}/products/batch",
-      consumes = MediaType.APPLICATION_JSON_VALUE
-  )
+      consumes = MediaType.APPLICATION_JSON_VALUE)
   public void putProducts(@PathVariable Long ticketId, @RequestBody List<ProductDto> products) {
     ticketService.putProductsOnTicket(ticketId, products);
   }

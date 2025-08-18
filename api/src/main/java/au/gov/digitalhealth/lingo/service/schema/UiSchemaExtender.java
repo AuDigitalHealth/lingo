@@ -51,7 +51,8 @@ public class UiSchemaExtender {
     this.objectMapper = objectMapper;
   }
 
-  public void updateUiSchema(ModelConfiguration modelConfiguration, JsonNode uiSchemaNode,ProductType productType) {
+  public void updateUiSchema(
+      ModelConfiguration modelConfiguration, JsonNode uiSchemaNode, ProductType productType) {
     Set<BasePropertyDefinition> properties = new HashSet<>(modelConfiguration.getMappings());
     properties.addAll(modelConfiguration.getNonDefiningProperties());
     properties.addAll(modelConfiguration.getReferenceSets());
@@ -118,7 +119,16 @@ public class UiSchemaExtender {
         uiSchemaNode.withObjectProperty("containedPackages").withObjectProperty(ITEMS),
         properties,
         nodeName,
-        ProductPackageType.CONTAINED_PACKAGE);
+        ProductPackageType.PACKAGE);
+
+    addUiNodeForPropertySet(
+            uiSchemaNode
+                    .withObjectProperty("containedPackages")
+                    .withObjectProperty(ITEMS)
+                    .withObjectProperty(PACKAGE_DETAILS),
+            properties,
+            nodeName,
+            ProductPackageType.PACKAGE);
     addUiNodeForPropertySet(
         uiSchemaNode
             .withObjectProperty("containedPackages")
