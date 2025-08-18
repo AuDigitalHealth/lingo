@@ -1191,16 +1191,19 @@ public class TicketServiceImpl implements TicketService {
   }
 
   public void putProductsOnTicket(Long ticketId, List<ProductDto> productDtos) {
-    Ticket ticketToUpdate = ticketRepository
-        .findById(ticketId)
-        .orElseThrow(
-            () -> new ResourceNotFoundProblem(
-                String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
+    Ticket ticketToUpdate =
+        ticketRepository
+            .findById(ticketId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
 
     List<Product> productsToSave = new ArrayList<>();
 
     for (ProductDto productDto : productDtos) {
-      Optional<Product> productOptional = productRepository.findByNameAndTicketId(productDto.getName(), ticketId);
+      Optional<Product> productOptional =
+          productRepository.findByNameAndTicketId(productDto.getName(), ticketId);
       Product product;
 
       if (productOptional.isPresent()) {
@@ -1220,7 +1223,8 @@ public class TicketServiceImpl implements TicketService {
         product.setTicket(ticketToUpdate);
       }
 
-      if (product.getOriginalPackageDetails() != null && product.getOriginalPackageDetails().isUnpopulated()) {
+      if (product.getOriginalPackageDetails() != null
+          && product.getOriginalPackageDetails().isUnpopulated()) {
         product.setOriginalPackageDetails(null);
       }
 
@@ -1229,6 +1233,7 @@ public class TicketServiceImpl implements TicketService {
 
     productRepository.saveAll(productsToSave);
   }
+
   public Set<ProductDto> getProductsForTicket(Long ticketId) {
     return productRepository.findByTicketId(ticketId).stream()
         .map(productMapper::toDto)

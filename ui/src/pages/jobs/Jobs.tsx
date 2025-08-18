@@ -28,6 +28,7 @@ import { Button, Card, Tooltip, Typography } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { Dropdown } from 'primereact/dropdown';
 import { CheckCircle, Error, Warning } from '@mui/icons-material';
+import { Calendar } from 'primereact/calendar';
 
 interface ResultArrayColumnSortEvent extends Omit<ColumnSortEvent, 'data'> {
   data: Result[]; // Override data to be Result[]
@@ -167,6 +168,26 @@ export default function Jobs() {
     );
   };
 
+  const dateFilterTemplateRange = (
+    options: ColumnFilterElementTemplateOptions,
+  ) => {
+    return (
+      <Calendar
+        data-testid="date-range-filter-input"
+        value={options.value}
+        onChange={e => {
+          options.filterCallback(e.value, options.index);
+        }}
+        selectionMode="range"
+        readOnlyInput
+        dateFormat="dd/mm/yy"
+        placeholder="dd/mm/yyyy - dd/mm/yyyy"
+        mask="99/99/9999"
+        showIcon
+      />
+    );
+  };
+
   const nestedRowExpansionTemplate = (result: Result) => {
     if (result.results) {
       return rowExpansionTemplate(result);
@@ -299,10 +320,36 @@ export default function Jobs() {
           field="finishedTime"
           header="Finished Time"
           sortable
+          filterMatchMode="custom"
           dataType="date"
           filter
-          filterField="finishedTime"
           body={FinishedTimeTemplate}
+          showFilterMatchModes={false} // 🔹 Hides "date is", "before", etc.
+          filterElement={dateFilterTemplateRange}
+          filterFunction={(value, filter) => {
+            if (!filter || !value) return true;
+
+            const rowDate = new Date(value);
+
+            // Handle range filter
+            if (Array.isArray(filter)) {
+              const [startDate, endDate] = filter;
+              if (startDate && endDate) {
+                return rowDate >= startDate && rowDate <= endDate;
+              } else if (startDate) {
+                return rowDate >= startDate;
+              } else if (endDate) {
+                return rowDate <= endDate;
+              }
+            }
+
+            // Handle single date filter
+            if (filter instanceof Date) {
+              return rowDate.toDateString() === filter.toDateString();
+            }
+
+            return true;
+          }}
         ></Column>
         <Column
           sortable

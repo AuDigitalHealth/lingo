@@ -283,14 +283,8 @@ export function useSearchTicketByTitleAndNumberPost() {
       }
       return TicketsService.searchPaginatedTicketsByPost(conditions, 0, 100);
     },
-    onSuccess: data => {
-      // Handle successful response
-      console.log('Search success:', data);
-    },
-    onError: error => {
-      // Handle error
-      console.error('Search error:', error);
-    },
+    onSuccess: data => {},
+    onError: error => {},
   });
 
   return {

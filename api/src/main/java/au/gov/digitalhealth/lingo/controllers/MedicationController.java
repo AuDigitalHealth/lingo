@@ -211,9 +211,9 @@ public class MedicationController {
       throws ExecutionException, InterruptedException {
     taskManagerService.validateTaskState(branch);
     try {
-    return productCalculationServiceFactory
-        .getCalculationService(MedicationProductDetails.class)
-        .calculateProductFromAtomicData(branch, productDetails);
+      return productCalculationServiceFactory
+          .getCalculationService(MedicationProductDetails.class)
+          .calculateProductFromAtomicData(branch, productDetails);
     } catch (CompletionException ex) {
       throw (ex.getCause() instanceof RuntimeException runtimeEx) ? runtimeEx : ex;
     }
@@ -243,8 +243,8 @@ public class MedicationController {
       throws ExecutionException, InterruptedException {
     taskManagerService.validateTaskState(branch);
     try {
-    return productUpdateService.calculateUpdateProductFromAtomicData(
-        branch, productId, productDetails);
+      return productUpdateService.calculateUpdateProductFromAtomicData(
+          branch, productId, productDetails);
     } catch (CompletionException ex) {
       throw (ex.getCause() instanceof RuntimeException runtimeEx) ? runtimeEx : ex;
     }
