@@ -1,10 +1,18 @@
 {
   "ui:grid": [
     {
+      "packType": 24,
+      "variant": 24
+    },
+
+    {
       "productName": 12
     },
     {
       "containerType": 12
+    },
+    {
+      "nonDefiningProperties": 24
     },
     {
       "externalIdentifiers": 12,
@@ -16,15 +24,60 @@
     {
       "containedPackages": 24
     }
+
   ],
+  "ui:options": {
+    "skipTitle": true,
+    "dynamicDiscriminatorOptions": {
+      "path": "",
+      "options": {
+        "normal": [
+          {
+            "label": "Normal",
+            "value": "normal"
+          }
+        ],
+        "multipack": [
+          {
+            "label": "Multipack",
+            "value": "multipack"
+          }
+        ]
+      }
+    }
+  },
+  "packType": {
+    "ui:enumNames": ["Normal pack", "Multipack"],
+    "ui:widget": "select",
+    "ui:title": "Pack Type",
+    "ui:options": {
+      "updateSchemaOnChange": true,
+      "disableDropdown": {
+        "$eval": "formData.containedProducts?.[0]?.productDetails?.productName?.pt?.term?.length > 0 || formData.containedPackages?.[0]?.packageDetails?.productName?.pt?.term?.length > 0"
+      }
+    }
+  },
+  "variant": {
+    "ui:enumNames": ["Medication", "Drug Device Combination"],
+    "ui:widget": "select",
+    "ui:title": "Target Model",
+    "ui:options": {
+      "updateSchemaOnChange": true,
+      "disableDropdown": {
+        "$eval": "formData.containedProducts?.[0]?.productDetails?.productName?.pt?.term?.length > 0 || formData.containedPackages?.[0]?.packageDetails?.productName?.pt?.term?.length > 0"
+      }
+    }
+  },
   "productName": {
     "ui:field": "AutoCompleteField",
     "ui:options": {
       "ecl": "<774167006",
-      "showDefaultOptions": true,
-      "createBrand": {
+      "showDefaultOptions": false,
+      "createPrimitiveConcept": {
         "ecl": "<774167006",
-        "semanticTags": "(product name)"
+        "semanticTags": "(product name)",
+        "parentConceptId": "774167006",
+        "parentConceptName": "Product name (product name)"
       }
     }
   },
@@ -91,6 +144,7 @@
           "skipTitle": true
         },
         "ui:grid": [
+          { "productType": 24 },
           {
             "productName": 12,
             "genericForm": 12
@@ -117,6 +171,19 @@
             }
           ]
         },
+        "productType": {
+          "ui:enumNames": [
+            "Total Quantity Only",
+            "Concentration Strength Only",
+            "Total Quantity, Concentration Strength, and Size",
+            "No Strength"
+          ],
+          "ui:widget": "select",
+          "ui:title": "Product Template",
+          "ui:options": {
+            "updateSchemaOnChange": true
+          }
+        },
         "type": {
           "ui:widget": "hidden",
           "ui:options": {
@@ -127,7 +194,7 @@
           "ui:field": "AutoCompleteField",
           "ui:options": {
             "ecl": "<774167006",
-            "showDefaultOptions": true
+            "showDefaultOptions": false
           }
         },
         "activeIngredients": {
@@ -173,6 +240,8 @@
                   {
                     "path": "../basisOfStrengthSubstance",
                     "ui:options": {
+                      "getEcl": "<<@parent OR (<105590001:738774007=@parent) OR (<105590001:738774007=(<105590001:738774007=@parent))",
+                      "getExtendedEcl": "<105590001",
                       "showDefaultOptions": true
                     }
                   }
@@ -351,6 +420,7 @@
   "containedPackages": {
     "ui:field": "ConditionalArrayField",
     "ui:options": {
+      "arrayTemplate": "accordion",
       "skipTitle": true,
       "searchAndAddProduct": {
         "ecl": "^929360051000036108:774160008=*",
@@ -406,6 +476,9 @@
             "containerType": 12
           },
           {
+            "nonDefiningProperties": 24
+          },
+          {
             "containedProducts": 24
           }
         ],
@@ -427,6 +500,7 @@
         "containedProducts": {
           "ui:options": {
             "skipTitle": true,
+            "arrayTemplate": "accordion",
             "searchAndAddProduct": {
               "ecl": "^929360031000036100 AND <763158003",
               "type": "medication",
@@ -469,6 +543,7 @@
                 "skipTitle": true
               },
               "ui:grid": [
+                { "productType": 24 },
                 {
                   "productName": 12,
                   "genericForm": 12
@@ -499,6 +574,13 @@
                 "ui:widget": "hidden",
                 "ui:options": {
                   "skipTitle": true
+                }
+              },
+              "productType": {
+                "ui:widget": "select",
+                "ui:title": "Product Template",
+                "ui:options": {
+                  "updateSchemaOnChange": true
                 }
               },
               "productName": {

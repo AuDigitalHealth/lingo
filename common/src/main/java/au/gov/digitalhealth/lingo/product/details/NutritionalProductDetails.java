@@ -34,7 +34,7 @@ public class NutritionalProductDetails extends MedicationProductDetails {
   SnowstormConceptMini targetPopulation;
 
   public NutritionalProductDetails() {
-    this.type = "nutritional";
+    this.type = ProductType.NUTRITIONAL;
   }
 
   @JsonIgnore

@@ -31,6 +31,7 @@ import lombok.EqualsAndHashCode;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
   @JsonSubTypes.Type(value = MedicationProductDetails.class, name = "medication"),
+  @JsonSubTypes.Type(value = MedicationProductDetails.class, name = "drugDevice"),
   @JsonSubTypes.Type(value = DeviceProductDetails.class, name = "device"),
   @JsonSubTypes.Type(value = VaccineProductDetails.class, name = "vaccine"),
   @JsonSubTypes.Type(value = NutritionalProductDetails.class, name = "nutritional")
@@ -51,7 +52,7 @@ public abstract class ProductDetails extends PackageProductDetailsBase {
    * The type of product, e.g. "medication", "device", "vaccine", "nutritional". This is used to in
    * Jackson serialization to determine the concrete class type.
    */
-  String type;
+  ProductType type;
 
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
