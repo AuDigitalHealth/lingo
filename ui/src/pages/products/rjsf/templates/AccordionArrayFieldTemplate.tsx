@@ -13,6 +13,23 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import {
+  closestCenter,
+  DndContext,
+  DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import SearchAndAddIcon from '../../../../components/icons/SearchAndAddIcon';
 import SearchAndAddProduct from '../components/SearchAndAddProduct.tsx';
 import useSearchAndAddProduct from '../hooks/useSearchAndAddProduct.ts';
@@ -22,6 +39,111 @@ const containerStyle = {
   marginBottom: '10px',
   border: '1px solid #ccc',
   borderRadius: '4px',
+};
+
+// Sortable item component
+interface SortableItemProps {
+  id: string;
+  element: any;
+  itemTitle: string;
+  expandedPanels: string[];
+  handleChange: (
+    panel: string,
+  ) => (event: React.SyntheticEvent, isExpanded: boolean) => void;
+  idSchema: any;
+  orderable: boolean;
+}
+
+const SortableItem: React.FC<SortableItemProps> = ({
+  id,
+  element,
+  itemTitle,
+  expandedPanels,
+  handleChange,
+  idSchema,
+  orderable,
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1000 : 'auto',
+  };
+
+  const panelId = `panel${element.index}`;
+
+  return (
+    <Box
+      ref={setNodeRef}
+      style={style}
+      data-testid={`${idSchema.$id}_${element.index}_container`}
+    >
+      <Accordion
+        expanded={expandedPanels.includes(panelId)}
+        onChange={handleChange(panelId)}
+        sx={containerStyle}
+      >
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          sx={{
+            '& .MuiAccordionSummary-content': {
+              alignItems: 'center',
+              gap: 1,
+            },
+          }}
+        >
+          {/* Drag handle */}
+          {orderable && (
+            <Box
+              {...attributes}
+              {...listeners}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                cursor: 'grab',
+                '&:active': {
+                  cursor: 'grabbing',
+                },
+                color: 'text.secondary',
+                mr: 1,
+              }}
+            >
+              <DragIndicatorIcon />
+            </Box>
+          )}
+
+          <Typography sx={{ flexGrow: 1, marginTop: '8px;' }}>
+            {itemTitle}
+          </Typography>
+
+          {element.hasRemove && (
+            <IconButton
+              onClick={e => {
+                e.stopPropagation(); // Prevent accordion toggle
+                element.onDropIndexClick(element.index)(e);
+              }}
+            >
+              <RemoveCircleOutlineIcon color="error" />
+            </IconButton>
+          )}
+        </AccordionSummary>
+        <AccordionDetails>
+          <Box>
+            {React.cloneElement(element.children, { title: itemTitle })}
+          </Box>
+        </AccordionDetails>
+      </Accordion>
+    </Box>
+  );
 };
 
 const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
@@ -39,6 +161,7 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
   const defaultExpanded = uiOptions.defaultExpanded === true;
   const initiallyExpanded = uiOptions.initiallyExpanded === true;
   const shouldExpandByDefault = defaultExpanded || initiallyExpanded;
+  const orderable = uiOptions.orderable === true;
 
   // Initialize expandedPanels state based on options
   const [expandedPanels, setExpandedPanels] = useState<string[]>(() => {
@@ -85,6 +208,41 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
         setExpandedPanels(prev => prev.filter(p => p !== panel));
       }
     };
+
+  // Drag and drop setup
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      const oldIndex = items.findIndex(
+        item => `item-${item.index}` === active.id,
+      );
+      const newIndex = items.findIndex(
+        item => `item-${item.index}` === over?.id,
+      );
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        // Use the existing RJSF reorder functionality
+        const item = items[oldIndex];
+        if (item.onReorderClick) {
+          item.onReorderClick(oldIndex, newIndex)();
+        }
+      }
+    }
+  };
+
+  const sortableItems = items.map(item => `item-${item.index}`);
 
   return (
     <div data-testid={idSchema.$id + '_container'}>
@@ -134,44 +292,76 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
         )}
       </Toolbar>
 
-      {items.map(element => {
-        const itemTitle = getItemTitle(uiSchema, formData, element.index);
-        const panelId = `panel${element.index}`;
-
-        return (
-          <Box
-            key={element.index}
-            data-testid={`${idSchema.$id}_${element.index}_container`}
+      {orderable ? (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={sortableItems}
+            strategy={verticalListSortingStrategy}
           >
-            <Accordion
-              expanded={expandedPanels.includes(panelId)}
-              onChange={handleChange(panelId)}
-              sx={containerStyle}
+            {items.map(element => {
+              const itemTitle = getItemTitle(uiSchema, formData, element.index);
+              const id = `item-${element.index}`;
+
+              return (
+                <SortableItem
+                  key={id}
+                  id={id}
+                  element={element}
+                  itemTitle={itemTitle}
+                  expandedPanels={expandedPanels}
+                  handleChange={handleChange}
+                  idSchema={idSchema}
+                  orderable={orderable}
+                />
+              );
+            })}
+          </SortableContext>
+        </DndContext>
+      ) : (
+        // Non-sortable version (original implementation)
+        items.map(element => {
+          const itemTitle = getItemTitle(uiSchema, formData, element.index);
+          const panelId = `panel${element.index}`;
+
+          return (
+            <Box
+              key={element.index}
+              data-testid={`${idSchema.$id}_${element.index}_container`}
             >
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography sx={{ flexGrow: 1, marginTop: '8px;' }}>
-                  {itemTitle}
-                </Typography>
-                {element.hasRemove && (
-                  <IconButton
-                    onClick={e => {
-                      e.stopPropagation(); // Prevent accordion toggle
-                      element.onDropIndexClick(element.index)(e);
-                    }}
-                  >
-                    <RemoveCircleOutlineIcon color="error" />
-                  </IconButton>
-                )}
-              </AccordionSummary>
-              <AccordionDetails>
-                <Box>
-                  {React.cloneElement(element.children, { title: itemTitle })}
-                </Box>
-              </AccordionDetails>
-            </Accordion>
-          </Box>
-        );
-      })}
+              <Accordion
+                expanded={expandedPanels.includes(panelId)}
+                onChange={handleChange(panelId)}
+                sx={containerStyle}
+              >
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography sx={{ flexGrow: 1, marginTop: '8px;' }}>
+                    {itemTitle}
+                  </Typography>
+                  {element.hasRemove && (
+                    <IconButton
+                      onClick={e => {
+                        e.stopPropagation(); // Prevent accordion toggle
+                        element.onDropIndexClick(element.index)(e);
+                      }}
+                    >
+                      <RemoveCircleOutlineIcon color="error" />
+                    </IconButton>
+                  )}
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Box>
+                    {React.cloneElement(element.children, { title: itemTitle })}
+                  </Box>
+                </AccordionDetails>
+              </Accordion>
+            </Box>
+          );
+        })
+      )}
     </div>
   );
 };
