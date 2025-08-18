@@ -41,67 +41,25 @@
       }
     },
     "UnitValueConstraint": {
-      "dependencies": {
-        "unit": {
-          "oneOf": [
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": {
-                      "const": "732935002",
-                      "errorMessage": {
-                        "const": "When unit is 'Each', value must be an integer greater than or equal to 1"
-                      }
-                    }
-                  }
-                },
-                "value": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "errorMessage": {
-                    "type": "Value must be an integer when unit is 'Each'",
-                    "minimum": "Value must be at least 1 when unit is 'Each'"
-                  }
-                }
-              },
-              "required": ["value"],
-              "errorMessage": {
-                "required": "Value must be provided when unit is specified"
-              }
+      "if": {
+        "properties": {
+          "unit": {
+            "properties": {
+              "conceptId": { "const": "732935002" }
             },
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": {
-                      "not": {
-                        "const": "732935002"
-                      },
-                      "errorMessage": {
-                        "not": "When unit is not 'Each', value must be a number greater than or equal to 0"
-                      }
-                    }
-                  }
-                },
-                "value": {
-                  "type": "number",
-                  "minimum": 0,
-                  "errorMessage": {
-                    "type": "Value must be a number",
-                    "minimum": "Value must be at least 0"
-                  }
-                }
-              },
-              "required": ["value"],
-              "errorMessage": {
-                "required": "Value must be provided when unit is specified"
-              }
-            }
-          ],
-          "errorMessage": {
-            "oneOf": "Invalid combination of unit and value. Check unit type and corresponding value constraints."
+            "required": ["conceptId"]
           }
+        },
+        "required": ["unit"]
+      },
+      "then": {
+        "properties": {
+          "value": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "else": {
+        "properties": {
+          "value": { "type": "number", "minimum": 0 }
         }
       }
     },
@@ -111,30 +69,23 @@
       "minProperties": 2,
       "properties": {
         "unit": {
+          "type": ["object", "null"],
           "$ref": "#/$defs/SnowstormConceptMini",
-          "default": null,
           "title": "Unit"
         },
         "value": {
-          "type": "number",
-          "minimum": 0,
-          "errorMessage": {
-            "type": "Value must be a number",
-            "minimum": "Value must be at least 0"
-          }
+          "title": "Value"
         }
       },
+      "required": ["unit", "value"],
+      "allOf": [
+        { "$ref": "#/$defs/UnitValueConstraint" }
+      ],
       "errorMessage": {
         "minProperties": "Both 'unit' and 'value' must be provided",
-        "type": "Quantity must be a valid object",
-        "required": "Both 'unit' and 'value' must be provided"
-      },
-      "allOf": [
-        {
-          "$ref": "#/$defs/UnitValueConstraint"
-        }
-      ],
-      "required": ["unit", "value"]
+        "if": "Value must be an integer ≥ 1 when unit is 'Each'",
+        "else": "Units must have a numeric value ≥ 0"
+      }
     },
     "QuantityOptional": {
       "type": "object",
@@ -142,29 +93,22 @@
       "minProperties": 2,
       "properties": {
         "unit": {
+          "type": ["object", "null"],
           "$ref": "#/$defs/SnowstormConceptMini",
-          "default": null,
           "title": "Unit"
         },
         "value": {
-          "type": "number",
-          "minimum": 0,
-          "errorMessage": {
-            "type": "Value must be a number",
-            "minimum": "Value must be at least 0"
-          }
+          "title": "Value"
         }
-      },
-      "errorMessage": {
-        "minProperties": "Both 'unit' and 'value' must be provided",
-        "type": "Quantity must be a valid object",
-        "required": "Both 'unit' and 'value' must be provided"
       },
       "allOf": [
-        {
-          "$ref": "#/$defs/UnitValueConstraint"
-        }
-      ]
+        { "$ref": "#/$defs/UnitValueConstraint" }
+      ],
+      "errorMessage": {
+        "minProperties": "Both 'unit' and 'value' must be provided",
+        "if": "Value must be an integer ≥ 1 when unit is 'Each'",
+        "else": "Units must have a numeric value ≥ 0"
+      }
     },
     "TotalQuantityIngredient": {
       "type": "object",
@@ -294,12 +238,7 @@
             "concentrationAndPresentationStrength",
             "noStrength"
           ],
-          "enumNames": [
-            "Total Quantity Only",
-            "Concentration Strength Only",
-            "Total Quantity, Concentration Strength, and Size",
-            "No Strength"
-          ],
+
           "default": "presentationStrength",
           "title": "Product Type"
         }
@@ -700,58 +639,47 @@
 
       "dependencies": {
         "unit": {
-          "oneOf": [
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": {
-                      "const": "732935002",
-                      "errorMessage": {
-                        "const": "Invalid Unit and Value"
-                      }
-                    }
-                  },
-                  "required": ["conceptId"]
+          "if": {
+            "properties": {
+              "unit": {
+                "properties": {
+                  "conceptId": { "const": "732935002" }
                 },
-                "value": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "errorMessage": {
-                    "type": "Value must be an integer when Unit is 'Each'",
-                    "const": "Unit must be 'Each' for this value constraint"
-                  }
-                }
-              },
-              "errorMessage": {
-                "oneOf": "Unit must be 'Each' with an integer value >= 1"
+                "required": ["conceptId"]
               }
             },
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": {
-                      "not": {
-                        "const": "732935002"
-                      }
-                    }
-                  }
-                },
-                "value": {
-                  "type": "number",
-                  "minimum": 0,
-                  "errorMessage": {
-                    "type": "Value must be a number ",
-                    "minimum": "Value must be at least 0"
-                  }
+            "required": ["unit"]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "integer",
+                "minimum": 1,
+                "errorMessage": {
+                  "type": "Value must be an integer when Unit is 'Each'",
+                  "minimum": "Value must be at least 1"
                 }
-              },
-              "errorMessage": {
-                "oneOf": "Unit must not be 'Each' and value must be a number >= 0"
               }
-            }
-          ]
+            },
+            "required": ["value"]
+          },
+          "else": {
+            "properties": {
+              "value": {
+                "type": "number",
+                "minimum": 0,
+                "errorMessage": {
+                  "type": "Value must be a number",
+                  "minimum": "Value must be at least 0"
+                }
+              }
+            },
+            "required": ["value"]
+          },
+          "errorMessage": {
+            "if": "Value must be an integer ≥ 1 when unit is 'Each'",
+            "else": "Units must have a numeric value ≥ 0"
+          }
         }
       }
     },
@@ -783,58 +711,47 @@
 
       "dependencies": {
         "unit": {
-          "oneOf": [
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": {
-                      "const": "732935002",
-                      "errorMessage": {
-                        "const": "Invalid Unit and Value"
-                      }
-                    }
-                  },
-                  "required": ["conceptId"]
+          "if": {
+            "properties": {
+              "unit": {
+                "properties": {
+                  "conceptId": { "const": "732935002" }
                 },
-                "value": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "errorMessage": {
-                    "type": "Value must be an integer when Unit is 'Each'",
-                    "const": "Unit must be 'Each' for this value constraint"
-                  }
-                }
-              },
-              "errorMessage": {
-                "oneOf": "Unit must be 'Each' with an integer value >= 1"
+                "required": ["conceptId"]
               }
             },
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": {
-                      "not": {
-                        "const": "732935002"
-                      }
-                    }
-                  }
-                },
-                "value": {
-                  "type": "number",
-                  "minimum": 0,
-                  "errorMessage": {
-                    "type": "Value must be a number ",
-                    "minimum": "Value must be at least 0"
-                  }
+            "required": ["unit"]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "integer",
+                "minimum": 1,
+                "errorMessage": {
+                  "type": "Value must be an integer when Unit is 'Each'",
+                  "minimum": "Value must be at least 1"
                 }
-              },
-              "errorMessage": {
-                "oneOf": "Unit must not be 'Each' and value must be a number >= 0"
               }
-            }
-          ]
+            },
+            "required": ["value"]
+          },
+          "else": {
+            "properties": {
+              "value": {
+                "type": "number",
+                "minimum": 0,
+                "errorMessage": {
+                  "type": "Value must be a number",
+                  "minimum": "Value must be at least 0"
+                }
+              }
+            },
+            "required": ["value"]
+          },
+          "errorMessage": {
+            "if": "Value must be an integer ≥ 1 when unit is 'Each'",
+            "else": "Units must have a numeric value ≥ 0"
+          }
         }
       }
     },
@@ -865,58 +782,47 @@
       "required": ["unit", "value", "packageDetails"],
       "dependencies": {
         "unit": {
-          "oneOf": [
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": {
-                      "const": "732935002",
-                      "errorMessage": {
-                        "const": "Invalid Unit and Value"
-                      }
-                    }
-                  },
-                  "required": ["conceptId"]
+          "if": {
+            "properties": {
+              "unit": {
+                "properties": {
+                  "conceptId": { "const": "732935002" }
                 },
-                "value": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "errorMessage": {
-                    "type": "Value must be an integer when Unit is 'Each'",
-                    "const": "Unit must be 'Each' for this value constraint"
-                  }
-                }
-              },
-              "errorMessage": {
-                "oneOf": "Unit must be 'Each' with an integer value >= 1"
+                "required": ["conceptId"]
               }
             },
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": {
-                      "not": {
-                        "const": "732935002"
-                      }
-                    }
-                  }
-                },
-                "value": {
-                  "type": "number",
-                  "minimum": 0,
-                  "errorMessage": {
-                    "type": "Value must be a number ",
-                    "minimum": "Value must be at least 0"
-                  }
+            "required": ["unit"]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "integer",
+                "minimum": 1,
+                "errorMessage": {
+                  "type": "Value must be an integer when Unit is 'Each'",
+                  "minimum": "Value must be at least 1"
                 }
-              },
-              "errorMessage": {
-                "oneOf": "Unit must not be 'Each' and value must be a number >= 0"
               }
-            }
-          ]
+            },
+            "required": ["value"]
+          },
+          "else": {
+            "properties": {
+              "value": {
+                "type": "number",
+                "minimum": 0,
+                "errorMessage": {
+                  "type": "Value must be a number",
+                  "minimum": "Value must be at least 0"
+                }
+              }
+            },
+            "required": ["value"]
+          },
+          "errorMessage": {
+            "if": "Value must be an integer ≥ 1 when unit is 'Each'",
+            "else": "Units must have a numeric value ≥ 0"
+          }
         }
       }
     },
@@ -950,58 +856,47 @@
       },
       "dependencies": {
         "unit": {
-          "oneOf": [
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": {
-                      "const": "732935002",
-                      "errorMessage": {
-                        "const": "Invalid Unit and Value"
-                      }
-                    }
-                  },
-                  "required": ["conceptId"]
+          "if": {
+            "properties": {
+              "unit": {
+                "properties": {
+                  "conceptId": { "const": "732935002" }
                 },
-                "value": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "errorMessage": {
-                    "type": "Value must be an integer when Unit is 'Each'",
-                    "const": "Unit must be 'Each' for this value constraint"
-                  }
-                }
-              },
-              "errorMessage": {
-                "oneOf": "Unit must be 'Each' with an integer value >= 1"
+                "required": ["conceptId"]
               }
             },
-            {
-              "properties": {
-                "unit": {
-                  "properties": {
-                    "conceptId": {
-                      "not": {
-                        "const": "732935002"
-                      }
-                    }
-                  }
-                },
-                "value": {
-                  "type": "number",
-                  "minimum": 0,
-                  "errorMessage": {
-                    "type": "Value must be a number ",
-                    "minimum": "Value must be at least 0"
-                  }
+            "required": ["unit"]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "integer",
+                "minimum": 1,
+                "errorMessage": {
+                  "type": "Value must be an integer when Unit is 'Each'",
+                  "minimum": "Value must be at least 1"
                 }
-              },
-              "errorMessage": {
-                "oneOf": "Unit must not be 'Each' and value must be a number >= 0"
               }
-            }
-          ]
+            },
+            "required": ["value"]
+          },
+          "else": {
+            "properties": {
+              "value": {
+                "type": "number",
+                "minimum": 0,
+                "errorMessage": {
+                  "type": "Value must be a number",
+                  "minimum": "Value must be at least 0"
+                }
+              }
+            },
+            "required": ["value"]
+          },
+          "errorMessage": {
+            "if": "Value must be an integer ≥ 1 when unit is 'Each'",
+            "else": "Units must have a numeric value ≥ 0"
+          }
         }
       }
     },
@@ -1086,7 +981,6 @@
     "packType": {
       "type": "string",
       "enum": ["normal", "multipack"],
-      "enumNames": ["Normal pack", "Multipack"],
       "default": "normal",
       "title": "Package Type",
       "errorMessage": {
@@ -1112,7 +1006,6 @@
         "variant": {
           "type": "string",
           "enum": ["medication", "drugDevice"],
-          "enumNames": ["Medication", "Drug Device Combination"],
           "default": "medication",
           "title": "Target Model"
         }
@@ -1199,7 +1092,6 @@
         "variant": {
           "type": "string",
           "enum": ["medication", "drugDevice"],
-          "enumNames": ["Medication", "Drug Device Combination"],
           "default": "medication",
           "title": "Target Model"
         }
