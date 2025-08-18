@@ -9,8 +9,6 @@ import AutoCompleteField from './fields/AutoCompleteField.tsx';
 import ConditionalArrayField from './fields/ConditionalArrayField.tsx';
 import CompactQuantityField from './fields/CompactQuantityField.tsx';
 import UnitValueUnWrappedField from './fields/UnitValueUnWrappedField.tsx';
-import ProductLoader from '../components/ProductLoader.tsx';
-import ProductPreviewManageModal from '../components/ProductPreviewManageModal.tsx';
 import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
 import CustomSelectWidget from './widgets/CustomSelectWidget.tsx';
 import MuiGridTemplate from './templates/MuiGridTemplate.tsx';
@@ -20,12 +18,11 @@ import ExternalIdentifiers from './fields/bulkBrandPack/ExternalIdentifiers.tsx'
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 import {
   NonDefiningProperty,
-  NonDefiningPropertyType,
 } from '../../../types/product.ts';
 import { IChangeEvent } from '@rjsf/core';
 import { RJSFSchema, UiSchema } from '@rjsf/utils';
 import { validator } from './helpers/validator.ts';
-import CustomTextFieldWidget from "./widgets/CustomTextFieldWidget.tsx";
+import CustomTextFieldWidget from './widgets/CustomTextFieldWidget.tsx';
 interface AdditionalPropertiesEditProps {
   label: string;
   branch: string;
