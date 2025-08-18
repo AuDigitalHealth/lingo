@@ -510,7 +510,8 @@ public class MedicationProductCalculationService
                                   packageDetails.hasDeviceType(),
                                   packageLevel,
                                   node,
-                                  modelConfiguration);
+                                  modelConfiguration,
+                                  List.of());
                               productSummary.addNode(node);
                               parentNodes.forEach(
                                   parentNode -> {
@@ -882,6 +883,9 @@ public class MedicationProductCalculationService
                     Set<Node> parentNodes =
                         parents.stream().map(CompletableFuture::join).collect(Collectors.toSet());
 
+                    List<String> order =
+                        getOrder(level, parentNodes, productDetails, modelConfiguration);
+
                     return switch (level.getModelLevelType()) {
                       case MEDICINAL_PRODUCT, MEDICINAL_PRODUCT_ONLY, REAL_MEDICINAL_PRODUCT ->
                           findOrCreateMp(
@@ -898,7 +902,8 @@ public class MedicationProductCalculationService
                                       modelConfiguration,
                                       productSummary,
                                       parentNodes,
-                                      modelConfiguration));
+                                      modelConfiguration,
+                                      order));
                       case CLINICAL_DRUG, REAL_CLINICAL_DRUG ->
                           findOrCreateUnit(
                                   branch,
@@ -917,7 +922,8 @@ public class MedicationProductCalculationService
                                       modelConfiguration,
                                       productSummary,
                                       parentNodes,
-                                      modelConfiguration));
+                                      modelConfiguration,
+                                      order));
                       default ->
                           throw new IllegalArgumentException(
                               "Unsupported model level type: " + level.getModelLevelType());
@@ -957,9 +963,10 @@ public class MedicationProductCalculationService
       ModelConfiguration modelConfiguration,
       ProductSummary productSummary,
       Set<Node> parentNodes,
-      ModelConfiguration branchModelConfiguration) {
+      ModelConfiguration branchModelConfiguration,
+      List<String> order) {
     return n -> {
-      generateName(atomicCache, productDetails, level, n, modelConfiguration);
+      generateName(atomicCache, productDetails, level, n, modelConfiguration, order);
       productSummary.addNode(n);
       for (Node parent : parentNodes) {
         productSummary.addEdge(
@@ -1032,7 +1039,8 @@ public class MedicationProductCalculationService
       MedicationProductDetails productDetails,
       ModelLevel level,
       Node node,
-      ModelConfiguration modelConfiguration) {
+      ModelConfiguration modelConfiguration,
+      List<String> order) {
 
     if (productDetails instanceof NutritionalProductDetails nutritionalProductDetails) {
       handleNutritionalProductName(atomicCache, level, node, nutritionalProductDetails);
@@ -1043,7 +1051,8 @@ public class MedicationProductCalculationService
               ? level.getDrugDeviceSemanticTag()
               : level.getMedicineSemanticTag(),
           node,
-          modelConfiguration);
+          modelConfiguration,
+          order);
     }
   }
 
@@ -1052,13 +1061,15 @@ public class MedicationProductCalculationService
       boolean hasDeviceType,
       ModelLevel level,
       Node node,
-      ModelConfiguration modelConfiguration) {
+      ModelConfiguration modelConfiguration,
+      List<String> order) {
 
     nameGenerationService.addGeneratedFsnAndPt(
         atomicCache,
         hasDeviceType ? level.getDrugDeviceSemanticTag() : level.getMedicineSemanticTag(),
         node,
-        modelConfiguration);
+        modelConfiguration,
+        order);
   }
 
   private Set<SnowstormRelationship> createMpRelationships(

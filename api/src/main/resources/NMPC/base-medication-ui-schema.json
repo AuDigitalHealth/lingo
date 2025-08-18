@@ -329,7 +329,9 @@
           "ui:options": {
             "skipTitle": true,
             "arrayTemplate": "accordion",
-            "initiallyExpanded": true
+            "initiallyExpanded": true,
+            "orderable": true,
+            "dragAndDrop": true
           },
           "items": {
             "ui:options": {
