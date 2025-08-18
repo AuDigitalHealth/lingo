@@ -15,6 +15,7 @@ interface ValueSetAutocompleteProps extends FieldProps {
   disabled?: boolean;
   error?: string;
   info?: string;
+  errorMessage?: string;
 }
 
 const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
@@ -28,6 +29,7 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
   disabled = false,
   error,
   info,
+  errorMessage,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [options, setOptions] = useState<Concept[]>([]);
@@ -86,6 +88,11 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
   const needsAttention =
     selectedConcept && selectedConcept.pt?.term && !selectedConcept.conceptId;
 
+  const needsAttentionMessage =
+    needsAttention && !errorMessage
+      ? 'Please search for and select a valid option'
+      : undefined;
+
   return (
     <Autocomplete
       sx={{ width: '100%' }}
@@ -116,10 +123,10 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
           label={label}
           error={!!error || needsAttention}
           helperText={
-            needsAttention
-              ? 'Please select a valid option (conceptId required)'
-              : error
-                ? error
+            errorMessage
+              ? errorMessage
+              : needsAttentionMessage
+                ? needsAttentionMessage
                 : info
           }
           InputProps={{
@@ -136,7 +143,10 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
             '& .MuiFormHelperText-root': {
               m: 0,
               minHeight: '1em',
-              color: error || needsAttention ? 'error.main' : 'text.secondary',
+              color:
+                errorMessage || needsAttention
+                  ? 'error.main'
+                  : 'text.secondary',
             },
           }}
         />

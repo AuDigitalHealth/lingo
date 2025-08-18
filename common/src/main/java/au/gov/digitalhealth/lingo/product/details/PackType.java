@@ -19,7 +19,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum PackType {
   NORMAL("normal"),
-  MULTI_PACK("multiPack");
+  MULTI_PACK("multipack");
+
 
   private final String value;
 
@@ -38,6 +39,6 @@ public enum PackType {
         return packType;
       }
     }
-    throw new IllegalArgumentException("Unknown pack type: " + value);
+    throw new IllegalArgumentException("Unknown product type: " + value);
   }
 }

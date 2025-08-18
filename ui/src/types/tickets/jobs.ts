@@ -14,6 +14,7 @@
 /// limitations under the License.
 ///
 
+import { JobsWithDateObjects } from '../../pages/jobs/Jobs';
 import { BaseEntity } from './ticket';
 
 export interface JobResult extends BaseEntity {
@@ -65,7 +66,9 @@ export const getSeverityRank = (type: ResultNotificationType): number => {
   }
 };
 
-export function isJobResult(result: JobResult | Result): result is JobResult {
+export function isJobResult(
+  result: JobResult | Result | JobsWithDateObjects,
+): result is JobResult {
   return 'jobName' in result;
 }
 

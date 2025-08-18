@@ -38,6 +38,7 @@ import au.gov.digitalhealth.lingo.util.ClientHelper;
 import au.gov.digitalhealth.lingo.util.HistoricalAssociationReferenceSet;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PreDestroy;
 import jakarta.validation.constraints.NotNull;
@@ -1328,10 +1329,7 @@ public class SnowstormClient {
               "Branch metadata not found for branch '" + branch + "'");
         }
         if (Boolean.TRUE.equals(branchMetadata.getLocked())) {
-          lockMessage =
-              branchMetadata.getMetadata() != null
-                  ? (String) branchMetadata.getMetadata().get("lock")
-                  : null;
+          lockMessage = getLockMessage(branchMetadata);
           log.warning(
               "Branch "
                   + branch
@@ -1350,6 +1348,19 @@ public class SnowstormClient {
     }
 
     throw new BranchLockedProblem(branch, lockMessage);
+  }
+
+  private String getLockMessage(SnowstormBranchPojo branchMetadata) {
+    String lockMessage = null;
+    try {
+      lockMessage =
+          branchMetadata.getMetadata() != null && branchMetadata.getMetadata().containsKey("lock")
+              ? objectMapper.writeValueAsString(branchMetadata.getMetadata().get("lock"))
+              : null;
+    } catch (JsonProcessingException e) {
+      log.warning("Failed to parse lock message: " + e.getMessage());
+    }
+    return lockMessage;
   }
 
   public void throwIfBranchLocked(String branch) {
