@@ -301,17 +301,15 @@ function NewConceptDropdownField({
       fieldName as 'nodes.0.newConceptDetails.preferredTerm',
     );
 
-    if (extractSemanticTag(currentVal)) {
-      setCopyVal(currentVal);
-    } else {
-      setCopyVal(`${currentVal} ${semanticTag}`);
-    }
+    setCopyVal(`${currentVal} ${semanticTag}`);
 
     const generatedVal: string = getValues(
       preferredFieldName as 'nodes.0.newConceptDetails.preferredTerm',
     );
-    const generatedValWithoutSemanticTag =
-      removeSemanticTagFromTerm(generatedVal);
+    const generatedValWithoutSemanticTag = removeSemanticTagFromTerm(
+      generatedVal,
+      semanticTag,
+    );
     setFieldChange(!(currentVal === generatedValWithoutSemanticTag));
   };
 
