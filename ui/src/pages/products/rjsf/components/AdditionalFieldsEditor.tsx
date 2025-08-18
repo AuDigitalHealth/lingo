@@ -114,6 +114,9 @@ export const AdditionalFieldsEditor: React.FC<AdditionalFieldsEditorProps> = ({
     onChange(updated);
   };
 
+  const thisSchemasValues = formData?.filter(fd => {
+    return fd.identifierScheme === schema?.properties?.identifierScheme?.const;
+  });
   return (
     <Box>
       <Box sx={{ mb: 3, p: 2, border: '1px solid #ccc', borderRadius: 2 }}>
@@ -222,13 +225,15 @@ export const AdditionalFieldsEditor: React.FC<AdditionalFieldsEditorProps> = ({
         </Box>
       </Box>
 
-      {(isMultivalued ? formData : formData.slice(0, 1)).map((entry, index) => (
-        <AdditionalFieldDisplay
-          key={index}
-          entry={entry}
-          onDelete={() => handleDeleteEntry(index)}
-        />
-      ))}
+      {(isMultivalued ? thisSchemasValues : thisSchemasValues.slice(0, 1)).map(
+        (entry, index) => (
+          <AdditionalFieldDisplay
+            key={index}
+            entry={entry}
+            onDelete={() => handleDeleteEntry(index)}
+          />
+        ),
+      )}
     </Box>
   );
 };

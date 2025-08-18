@@ -272,7 +272,6 @@ public abstract class DetailsValidator {
               }
             }
           }
-
         }
         case REFERENCE_SET -> {
           ReferenceSetDefinition referenceSetDefinition =

@@ -90,8 +90,9 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
     for (ProductQuantity<MedicationProductDetails> productQuantity :
         packageDetails.getContainedProducts()) {
       validateQuantityPopulated(productQuantity, "Product quantity", result);
-      if (UNIT_OF_PRESENTATION.getValue().equals(productQuantity.getUnit().getConceptId())
-          && !productQuantity.getValue().equals(BigDecimal.ONE)) {
+      if (productQuantity.getUnit() == null
+          || UNIT_OF_PRESENTATION.getValue().equals(productQuantity.getUnit().getConceptId())
+              && !productQuantity.getValue().equals(BigDecimal.ONE)) {
         result.addProblem("Product quantity must be one if unit is 'unit of presentation'");
       }
       validateProductDetails(productQuantity.getProductDetails(), branch, result);

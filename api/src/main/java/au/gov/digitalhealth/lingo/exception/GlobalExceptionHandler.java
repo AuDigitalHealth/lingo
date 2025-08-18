@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 @RestControllerAdvice
@@ -45,9 +46,43 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   public static final String PATH = "path";
   public static final String CAUSE = "cause";
 
+  public static final String UPSTREAM_SERVICE = "upstream_service";
+  public static final String UPSTREAM_STATUS = "upstream_status";
+
   @ExceptionHandler(AuthenticationProblem.class)
   ProblemDetail handleAuthenticationProblem(AuthenticationProblem e) {
     return e.getBody();
+  }
+
+  @ExceptionHandler(WebClientResponseException.class)
+  ResponseEntity<ProblemDetail> handleWebClientResponseException(WebClientResponseException ex) {
+    String upstreamService = extractServiceName(ex.getRequest());
+
+    UpstreamServiceProblem problem =
+        new UpstreamServiceProblem(
+            "Upstream service error: " + ex.getMessage(),
+            upstreamService,
+            HttpStatus.resolve(ex.getStatusCode().value()),
+            ex);
+
+    return new ResponseEntity<>(problem.getBody(), ex.getStatusCode());
+  }
+
+  private String extractServiceName(org.springframework.http.HttpRequest request) {
+    if (request != null && request.getURI() != null) {
+      String host = request.getURI().getHost();
+      if (host != null) {
+        // Extract service name from hostname (customize based on your naming conventions)
+        if (host.contains("authoring-services")) {
+          return "Authoring Platform API";
+        } else if (host.contains("snowstorm")) {
+          return "Snowstorm";
+        }
+        // Add more service mappings as needed
+        return host;
+      }
+    }
+    return "Unknown Upstream Service";
   }
 
   @Override

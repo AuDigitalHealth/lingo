@@ -189,8 +189,10 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
             .findFirst()
             .orElseThrow(
                 () ->
-                    new IllegalStateException(
-                        "No type found for reference set identifier: " + referenceSetIdentifier));
+                    new AtomicDataExtractionProblem(
+                        "Incorrectly modelled content - no type found for reference set identifier: "
+                            + referenceSetIdentifier,
+                        productId));
 
     SnowstormConcept concept = browserMap.get(typeKey);
 
@@ -317,7 +319,17 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
                 100,
                 false);
         if (ids.size() == 1) {
-          mpuu = browserMap.get(ids.iterator().next());
+          final String conceptId = ids.iterator().next();
+          if (browserMap.containsKey(conceptId)) {
+            mpuu = browserMap.get(conceptId);
+          } else {
+            log.warning(
+                "No concept found in browser map for conceptId: "
+                    + conceptId
+                    + " in branch: "
+                    + branch);
+            mpuu = snowStormApiClient.getBrowserConcepts(branch, Set.of(conceptId)).blockFirst();
+          }
         } else if (ids.isEmpty()) {
           throw new AtomicDataExtractionProblem("No Clinical Drug level concept found", productId);
         } else {

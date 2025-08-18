@@ -46,6 +46,14 @@ export const MultiValueValueSetAutocomplete: React.FC<
     showDefaultOptions,
   );
 
+  // Helper function to check if a concept needs attention
+  const conceptNeedsAttention = (concept: Concept) => {
+    return concept && concept.pt?.term && !concept.conceptId;
+  };
+
+  // Check if any concept needs attention for overall component error state
+  const anyConceptNeedsAttention = selectedConcept.some(conceptNeedsAttention);
+
   // Update options when search data changes
   useEffect(() => {
     if (data?.expansion?.contains) {
@@ -134,14 +142,38 @@ export const MultiValueValueSetAutocomplete: React.FC<
         (option?.pt?.term && val?.pt?.term && option.pt.term === val.pt.term)
       }
       renderTags={(value, getTagProps) =>
-        value.map((option, index) => (
-          <Tooltip
-            key={option.conceptId}
-            title={`${option.conceptId} - ${option.pt?.term}`}
-          >
-            <Chip label={option.pt?.term || ''} {...getTagProps({ index })} />
-          </Tooltip>
-        ))
+        value.map((option, index) => {
+          const needsAttention = conceptNeedsAttention(option);
+          const tagProps = getTagProps({ index });
+
+          return (
+            <Tooltip
+              key={option.conceptId}
+              title={`${option.conceptId} - ${option.pt?.term}${needsAttention ? ' (Please search for and select a valid option)' : ''}`}
+            >
+              <Chip
+                label={option.pt?.term || ''}
+                {...tagProps}
+                color={needsAttention ? 'error' : 'default'}
+                sx={{
+                  ...(needsAttention && {
+                    backgroundColor: 'error.light',
+                    color: 'error.contrastText',
+                    '&:hover': {
+                      backgroundColor: 'error.main',
+                    },
+                    '& .MuiChip-deleteIcon': {
+                      color: 'error.contrastText',
+                      '&:hover': {
+                        color: 'error.contrastText',
+                      },
+                    },
+                  }),
+                }}
+              />
+            </Tooltip>
+          );
+        })
       }
       renderOption={(props, option) => {
         const { key, ...otherProps } = props;
@@ -156,8 +188,14 @@ export const MultiValueValueSetAutocomplete: React.FC<
         <TextField
           {...params}
           label={label}
-          error={!!error}
-          helperText={error ? error : info}
+          error={!!error || anyConceptNeedsAttention}
+          helperText={
+            error
+              ? error
+              : anyConceptNeedsAttention
+                ? 'One or more selections need attention - please search for and select valid options'
+                : info
+          }
           InputProps={{
             ...params.InputProps,
             endAdornment: (
@@ -168,6 +206,16 @@ export const MultiValueValueSetAutocomplete: React.FC<
             ),
           }}
           disabled={disabled}
+          sx={{
+            '& .MuiFormHelperText-root': {
+              m: 0,
+              minHeight: '1em',
+              color:
+                error || anyConceptNeedsAttention
+                  ? 'error.main'
+                  : 'text.secondary',
+            },
+          }}
         />
       )}
     />
