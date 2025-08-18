@@ -24,47 +24,61 @@
       },
       "required": ["lang", "term"]
     },
-    "UnitValueConstraint": {
-      "dependencies": {
-        "unit": {
-          "oneOf": [
-            {
-              "properties": {
-                "unit": { "properties": { "conceptId": { "const": "732935002" } } },
-                "value": { "type": "integer", "minimum": 1 }
-              },
-              "required": ["value"]
-            },
-            {
-              "properties": {
-                "unit": { "properties": { "conceptId": { "not": { "const": "732935002" } } } },
-                "value": { "type": "number", "minimum": 0 }
-              },
-              "required": ["value"]
-            }
-          ],
-          "errorMessage": { "oneOf": "Both 'unit' and 'value' must be provided" }
-        }
-      }
-    },
     "Quantity": {
       "type": "object",
       "nullable": true,
       "minProperties": 2,
       "properties": {
         "unit": {
-          "type": [
-            "object",
-            "null"
-          ],
+          "type": ["object", "null"],
           "$ref": "#/$defs/SnowstormConceptMini",
           "title": "Unit"
         },
-        "value": { "type": "number", "minimum": 0 }
+        "value": {
+          "title": "Value"
+        }
       },
-      "errorMessage": { "minProperties": "Both 'unit' and 'value' must be provided" },
-      "allOf": [{ "$ref": "#/$defs/UnitValueConstraint" }],
-      "required": ["unit","value"]
+      "required": ["unit", "value"],
+      "dependencies": {
+        "unit": {
+          "if": {
+            "properties": {
+              "unit": {
+                "properties": {
+                  "conceptId": { "const": "732935002" }
+                },
+                "required": ["conceptId"]
+              }
+            },
+            "required": ["unit"]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": ["value"]
+          },
+          "else": {
+            "properties": {
+              "value": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": ["value"]
+          },
+          "errorMessage": {
+            "if": "Value must be a non-negative number",
+            "else": "Value must be a non-negative number"
+          }
+        }
+      },
+      "errorMessage": {
+        "minProperties": "Both 'unit' and 'value' must be provided"
+      }
     },
     "PresentationStrengthIngredient": {
       "type": "object",
@@ -119,7 +133,6 @@
     "variant": {
       "type": "string",
       "enum": ["medication", "vaccine", "nutritional"],
-      "enumNames": ["Medication", "Vaccine", "Nutritional"],
       "default": "medication",
       "title": "Target Model"
     }
@@ -146,7 +159,6 @@
                   "productType": {
                     "type": "string",
                     "enum": ["presentationStrength", "concentrationStrength", "noStrength"],
-                    "enumNames": ["Presentation Strength", "Concentration Strength", "No Strength"],
                     "default": "presentationStrength",
                     "title": "Product Type"
                   }

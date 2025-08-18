@@ -21,6 +21,7 @@ import au.gov.digitalhealth.lingo.product.details.DeviceProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.ProductQuantity;
 import au.gov.digitalhealth.lingo.product.details.ProductTemplate;
+import au.gov.digitalhealth.lingo.product.details.ProductType;
 import au.gov.digitalhealth.lingo.util.ValidationUtil;
 import java.util.Set;
 import lombok.extern.java.Log;
@@ -97,12 +98,12 @@ public class NmpcDeviceDetailsValidator extends DetailsValidator implements Devi
   }
 
   @Override
-  protected Set<String> getSupportedVariantNames() {
-    return Set.of("device");
+  protected Set<ProductType> getSupportedProductTypes() {
+    return Set.of(ProductType.DEVICE);
   }
 
   @Override
-  protected Set<ProductTemplate> getSupportedProductTypes() {
+  protected Set<ProductTemplate> getSupportedProductTemplates() {
     return Set.of();
   }
 }
