@@ -113,9 +113,7 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
   };
 
   const normalizedValue =
-    value && options.length > 0
-      ? options.find(option => option.conceptId === value.conceptId) || null
-      : value;
+    options.find(option => option.conceptId === value?.conceptId) || value;
   const needsAttention = value && value.pt?.term && !value.conceptId;
 
   const needsAttentionMessage =
