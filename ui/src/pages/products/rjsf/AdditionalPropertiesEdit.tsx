@@ -16,7 +16,7 @@ import CustomSelectWidget from './widgets/CustomSelectWidget.tsx';
 import MuiGridTemplate from './templates/MuiGridTemplate.tsx';
 import NumberWidget from './widgets/NumberWidget.tsx';
 import ExternalIdentifiers from './fields/bulkBrandPack/ExternalIdentifiers.tsx';
-import TextFieldWidget from './widgets/TextFieldWidget.tsx';
+
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 import {
   NonDefiningProperty,
@@ -25,6 +25,7 @@ import {
 import { IChangeEvent } from '@rjsf/core';
 import { RJSFSchema, UiSchema } from '@rjsf/utils';
 import { validator } from './helpers/validator.ts';
+import CustomTextFieldWidget from "./widgets/CustomTextFieldWidget.tsx";
 interface AdditionalPropertiesEditProps {
   label: string;
   branch: string;
@@ -112,7 +113,7 @@ export default function AdditionalPropertiesEdit({
             CompactQuantityField,
           }}
           widgets={{
-            TextFieldWidget,
+            TextWidget: CustomTextFieldWidget,
             OneOfArrayWidget,
             NumberWidget,
             SelectWidget: CustomSelectWidget,
