@@ -107,7 +107,8 @@
           "title": "Unit"
         },
         "value": {
-          "title": "Value"
+          "title": "Value",
+          "type": "number"
         }
       },
       "dependencies": {
@@ -120,8 +121,7 @@
                 },
                 "required": ["conceptId"]
               }
-            },
-            "required": ["unit"]
+            }
           },
           "then": {
             "properties": {
@@ -129,8 +129,7 @@
                 "type": "integer",
                 "minimum": 1
               }
-            },
-            "required": ["value"]
+            }
           },
           "else": {
             "properties": {
@@ -138,8 +137,7 @@
                 "type": "number",
                 "minimum": 0
               }
-            },
-            "required": ["value"]
+            }
           },
           "errorMessage": {
             "if": "Value must be a non-negative number",
