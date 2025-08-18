@@ -402,10 +402,11 @@ export function removeSemanticTagsFromTerms(
         node.newConceptDetails.semanticTag = semanticTag;
         const termWithoutTag = removeSemanticTagFromTerm(
           node.newConceptDetails.fullySpecifiedName,
+          node.semanticTag,
         );
         node.newConceptDetails.fullySpecifiedName = termWithoutTag
           ? termWithoutTag
-          : '';
+          : node.newConceptDetails.fullySpecifiedName;
       }
     }
     return node;
