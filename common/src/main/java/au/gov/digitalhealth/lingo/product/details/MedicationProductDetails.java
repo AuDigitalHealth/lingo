@@ -51,8 +51,14 @@ public class MedicationProductDetails extends ProductDetails {
 
   List<@Valid Ingredient> activeIngredients = new ArrayList<>();
 
-  public MedicationProductDetails() {
-    this.type = "medication";
+  @Override
+  public ProductType getType() {
+    if (deviceType != null) {
+      this.type = ProductType.DRUG_DEVICE;
+    } else {
+      this.type = ProductType.MEDICATION;
+    }
+    return type;
   }
 
   @Override
@@ -65,18 +71,21 @@ public class MedicationProductDetails extends ProductDetails {
 
   private ProductTemplate determineProductType(List<Ingredient> activeIngredients) {
     if (activeIngredients.isEmpty()) {
-      return ProductTemplate.noIngredients;
+      return ProductTemplate.NO_INGREDIENTS;
     }
 
     for (Ingredient ingredient : activeIngredients) {
-      if (ingredient.isIngredientConcentrationStrength()) {
-        return ProductTemplate.concentrationStrength;
+      if (ingredient.isIngredientConcentrationStrength()
+          && ingredient.isIngredientPresentationStrength()) {
+        return ProductTemplate.CONCENTRATION_AND_PRESENTATION_STRENGTH;
+      } else if (ingredient.isIngredientConcentrationStrength()) {
+        return ProductTemplate.CONCENTRATION_STRENGTH;
       } else if (ingredient.isIngredientPresentationStrength()) {
-        return ProductTemplate.presentationStrength;
+        return ProductTemplate.PRESENTATION_STRENGTH;
       }
     }
 
-    return ProductTemplate.noStrength;
+    return ProductTemplate.NO_STRENGTH;
   }
 
   @Override

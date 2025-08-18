@@ -4,9 +4,15 @@ import { Concept } from '../../../../types/concept.ts';
 import useApplicationConfigStore from '../../../../stores/ApplicationConfigStore.ts';
 import { useSearchConceptOntoServerByUrl } from '../../../../hooks/api/products/useSearchConcept.tsx';
 import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../../utils/helpers/getValueSetExpansionContainsPt.ts';
-import { Autocomplete, CircularProgress, TextField } from '@mui/material';
+import {
+  Autocomplete,
+  CircularProgress,
+  createFilterOptions,
+  TextField,
+} from '@mui/material';
 import { Tooltip } from '@mui/material';
 import { Chip } from '@mui/material';
+import { filterOptionsByTermAndCode } from '../../../../utils/helpers/conceptUtils.ts';
 
 interface MultiValueValueSetAutocompleteProps extends FieldProps {
   label?: string;
@@ -121,6 +127,7 @@ export const MultiValueValueSetAutocomplete: React.FC<
   return (
     <Autocomplete
       multiple
+      filterOptions={filterOptionsByTermAndCode}
       disabled={disabled}
       sx={{ width: '100%' }}
       data-testid={idSchema?.$id || name}
