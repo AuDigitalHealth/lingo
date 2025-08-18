@@ -41,7 +41,7 @@ import MuiGridTemplate from './templates/MuiGridTemplate.tsx';
 import ExternalIdentifiers from './fields/bulkBrandPack/ExternalIdentifiers.tsx';
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 import WarningIcon from '@mui/icons-material/Warning';
-import CustomTextFieldWidget from "./widgets/CustomTextFieldWidget.tsx";
+import CustomTextFieldWidget from './widgets/CustomTextFieldWidget.tsx';
 
 export interface DeviceAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;

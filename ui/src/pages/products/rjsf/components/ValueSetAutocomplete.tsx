@@ -5,6 +5,7 @@ import { useSearchConceptOntoServerByUrl } from '../../../../hooks/api/products/
 import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../../utils/helpers/getValueSetExpansionContainsPt.ts';
 import useApplicationConfigStore from '../../../../stores/ApplicationConfigStore.ts';
 import { FieldProps } from '@rjsf/utils';
+import { filterOptionsByTermAndCode } from '../../../../utils/helpers/conceptUtils.ts';
 
 interface ValueSetAutocompleteProps extends FieldProps {
   label?: string;
@@ -98,6 +99,7 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
       sx={{ width: '100%' }}
       data-testid={idSchema?.$id || name}
       loading={isLoading}
+      filterOptions={filterOptionsByTermAndCode}
       options={disabled ? [] : options}
       getOptionLabel={option =>
         option?.conceptId ? option.conceptId + ' - ' + option?.pt?.term : ''
