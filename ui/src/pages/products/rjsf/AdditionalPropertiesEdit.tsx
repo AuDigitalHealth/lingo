@@ -70,20 +70,12 @@ export default function AdditionalPropertiesEdit({
   const handleChange = (
     changeEvent: IChangeEvent<AdditionalPropertiesEditForm>,
   ) => {
-    debugger;
     if (changeEvent.formData) {
       setFormData(changeEvent.formData);
       onChange(changeEvent.formData);
     }
   };
 
-  const handleFormSubmit = (
-    submitEvent: IChangeEvent<AdditionalPropertiesEditForm>,
-  ) => {
-    debugger;
-    console.log(submitEvent.formData);
-    // Handle form submission logic here
-  };
   const noValidateValidator = {
     validateFormData: () => ({ errors: [], errorSchema: {} }),
     isValid: () => true,
@@ -126,7 +118,6 @@ export default function AdditionalPropertiesEdit({
             // FieldTemplate:CustomFieldTemplate
           }}
           onChange={handleChange}
-          onSubmit={handleFormSubmit}
           // onError={onError}
           validator={{
             ...validator,

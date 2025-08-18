@@ -233,7 +233,6 @@ function EditConceptBody({
     });
 
   const additionalPropertiesChanged = useMemo(() => {
-    debugger;
     if (
       product?.nonDefiningProperties?.length !==
       updatedAdditionalProperties.nonDefiningProperties.length
