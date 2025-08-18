@@ -344,8 +344,6 @@ public class ProductCreationService {
 
     if (productSummaryClone != null) {
       modifiedGeneratedNameService.createAndSaveModifiedGeneratedNames(
-          creationDetails.getDetails().getIdFsnMap(),
-          creationDetails.getDetails().getIdPtMap(),
           productSummaryClone,
           branch,
           idMap);
@@ -421,8 +419,6 @@ public class ProductCreationService {
 
     if (productSummaryClone != null) {
       modifiedGeneratedNameService.createAndSaveModifiedGeneratedNames(
-          productCreationDetails.getPackageDetails().getIdFsnMap(),
-          productCreationDetails.getPackageDetails().getIdPtMap(),
           productSummaryClone,
           branch,
           idMap);

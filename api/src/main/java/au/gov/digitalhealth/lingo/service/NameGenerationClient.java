@@ -19,6 +19,7 @@ import au.gov.digitalhealth.lingo.product.FsnAndPt;
 import au.gov.digitalhealth.lingo.product.NameGeneratorSpec;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.logging.Level;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -44,6 +45,9 @@ public class NameGenerationClient {
 
   @Cacheable(value = "nameGenerator", key = "#spec.toString()")
   public FsnAndPt generateNames(NameGeneratorSpec spec) {
+    if (log.isLoggable(Level.FINE)) {
+      log.fine("Generating names for spec: " + spec);
+    }
     return this.client
         .post()
         .contentType(MediaType.APPLICATION_JSON)
