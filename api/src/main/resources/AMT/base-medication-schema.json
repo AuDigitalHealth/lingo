@@ -40,29 +40,6 @@
         "type": "Must be a valid term object"
       }
     },
-    "UnitValueConstraint": {
-      "if": {
-        "properties": {
-          "unit": {
-            "properties": {
-              "conceptId": { "const": "732935002" }
-            },
-            "required": ["conceptId"]
-          }
-        },
-        "required": ["unit"]
-      },
-      "then": {
-        "properties": {
-          "value": { "type": "integer", "minimum": 1 }
-        }
-      },
-      "else": {
-        "properties": {
-          "value": { "type": "number", "minimum": 0 }
-        }
-      }
-    },
     "Quantity": {
       "type": "object",
       "nullable": true,
@@ -78,13 +55,45 @@
         }
       },
       "required": ["unit", "value"],
-      "allOf": [
-        { "$ref": "#/$defs/UnitValueConstraint" }
-      ],
+      "dependencies": {
+        "unit": {
+          "if": {
+            "properties": {
+              "unit": {
+                "properties": {
+                  "conceptId": { "const": "732935002" }
+                },
+                "required": ["conceptId"]
+              }
+            },
+            "required": ["unit"]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": ["value"]
+          },
+          "else": {
+            "properties": {
+              "value": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": ["value"]
+          },
+          "errorMessage": {
+            "if": "Value must be a non-negative number",
+            "else": "Value must be a non-negative number"
+          }
+        }
+      },
       "errorMessage": {
-        "minProperties": "Both 'unit' and 'value' must be provided",
-        "if": "Value must be an integer ≥ 1 when unit is 'Each'",
-        "else": "Units must have a numeric value ≥ 0"
+        "minProperties": "Both 'unit' and 'value' must be provided"
       }
     },
     "QuantityOptional": {
@@ -101,13 +110,45 @@
           "title": "Value"
         }
       },
-      "allOf": [
-        { "$ref": "#/$defs/UnitValueConstraint" }
-      ],
+      "dependencies": {
+        "unit": {
+          "if": {
+            "properties": {
+              "unit": {
+                "properties": {
+                  "conceptId": { "const": "732935002" }
+                },
+                "required": ["conceptId"]
+              }
+            },
+            "required": ["unit"]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": ["value"]
+          },
+          "else": {
+            "properties": {
+              "value": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": ["value"]
+          },
+          "errorMessage": {
+            "if": "Value must be a non-negative number",
+            "else": "Value must be a non-negative number"
+          }
+        }
+      },
       "errorMessage": {
-        "minProperties": "Both 'unit' and 'value' must be provided",
-        "if": "Value must be an integer ≥ 1 when unit is 'Each'",
-        "else": "Units must have a numeric value ≥ 0"
+        "minProperties": "Both 'unit' and 'value' must be provided"
       }
     },
     "TotalQuantityIngredient": {
