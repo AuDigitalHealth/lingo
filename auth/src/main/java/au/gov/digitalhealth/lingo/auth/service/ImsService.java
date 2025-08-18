@@ -53,6 +53,7 @@ public class ImsService {
             .body(usernameAndPassword.toString())
             .post(imsUrl + "/api/authenticate")
             .then()
+            .onFailMessage("Failed to authenticate with IMS API " + imsUrl + "/api/authenticate")
             .statusCode(200)
             .extract()
             .response()
