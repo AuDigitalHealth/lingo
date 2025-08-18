@@ -141,4 +141,22 @@ export const ConfigService = {
     }
     return (await schemaResponse.json()) as string;
   },
+  async fetchEditUiSchemaData(label: string, branchPath: string) {
+    const schemaResponse = await fetch(
+      `/config/edit/${branchPath}/${label}/ui-schema`,
+    );
+    if (!schemaResponse.ok) {
+      throw new Error(`HTTP error! status: ${schemaResponse.status}`);
+    }
+    return (await schemaResponse.json()) as string;
+  },
+  async fetchEditSchemaData(label: string, branchPath: string) {
+    const schemaResponse = await fetch(
+      `/config/edit/${branchPath}/${label}/schema`,
+    );
+    if (!schemaResponse.ok) {
+      throw new Error(`HTTP error! status: ${schemaResponse.status}`);
+    }
+    return (await schemaResponse.json()) as string;
+  },
 };

@@ -55,6 +55,7 @@ import {
 import {
   ExternalIdentifier,
   NonDefiningProperty,
+  ProductPropertiesUpdateRequest,
   ProductUpdateRequest,
 } from '../../types/product.ts';
 import ArtgAutoComplete from '../../pages/products/components/ArtgAutoComplete.tsx';
@@ -96,6 +97,9 @@ import { deepClone } from '@mui/x-data-grid/utils/utils';
 import AdditionalPropertiesDisplay from '../../pages/products/components/AdditionalPropertiesDisplay.tsx';
 import { ExistingDescriptionsSection } from './ExistingDescriptionsSection.tsx';
 import useProjectLangRefsets from '../../hooks/api/products/useProjectLangRefsets.tsx';
+import AdditionalPropertiesEdit, {
+  AdditionalPropertiesEditForm,
+} from '../../pages/products/rjsf/AdditionalPropertiesEdit.tsx';
 
 const typeMap: Record<DefinitionType, string> = {
   [DefinitionType.FSN]: '900000000000003001',
@@ -221,6 +225,24 @@ function EditConceptBody({
 
   const ctppSearchEcl = generateEclFromBinding(fieldBindings, 'product.search');
 
+  const [updatedAdditionalProperties, setUpdatedAdditionalProperties] =
+    useState<ProductPropertiesUpdateRequest>({
+      nonDefiningProperties: product.nonDefiningProperties
+        ? sortNonDefiningProperties(product.nonDefiningProperties)
+        : [],
+    });
+
+  const additionalPropertiesChanged = useMemo(() => {
+    debugger;
+    if (
+      product?.nonDefiningProperties?.length !==
+      updatedAdditionalProperties.nonDefiningProperties.length
+    ) {
+      return true;
+    }
+    return false;
+  }, [product?.nonDefiningProperties, updatedAdditionalProperties]);
+
   const defaultValues = useMemo(() => {
     return {
       ticketId: ticket.id,
@@ -322,6 +344,10 @@ function EditConceptBody({
 
   const formSubmissionData = useRef<ProductUpdateRequest | null>(null);
 
+  const onPropertiesChange = (val: AdditionalPropertiesEditForm) => {
+    setUpdatedAdditionalProperties(val);
+  };
+
   const onSubmit = (data: ProductUpdateRequest) => {
     let shouldReturn = false;
     if (!isCtpp) {
@@ -404,6 +430,7 @@ function EditConceptBody({
    * @param data
    */
   const updateProduct = (data: ProductUpdateRequest) => {
+    data.propertiesUpdateRequest = updatedAdditionalProperties;
     const newFsnIndex = data.descriptionUpdate?.descriptions?.findIndex(
       description => {
         return description.type === 'FSN' && description.active === true;
@@ -647,6 +674,8 @@ function EditConceptBody({
                         }
                       />
                       <RightSection
+                        branch={branch}
+                        product={product}
                         isFetching={isFetching}
                         fields={fields}
                         displayRetiredDescriptions={displayRetiredDescriptions}
@@ -660,35 +689,8 @@ function EditConceptBody({
                         control={control}
                         handleAddDescription={handleAddDescription}
                         setValue={setValue}
+                        onPropertiesChange={onPropertiesChange}
                       />
-                      {isCtpp && (
-                        <Grid>
-                          <InnerBoxSmall component="fieldset">
-                            <legend>Artg Ids</legend>
-                            <Grid paddingTop={1}></Grid>
-                            <ArtgAutoCompleteWrapper
-                              isUpdating={isUpdating}
-                              control={control}
-                              setArtgOptVals={setArtgOptVals}
-                            />
-                            {artgOptVals.length === 0 &&
-                              product.nonDefiningProperties &&
-                              product.nonDefiningProperties?.length > 0 && (
-                                <Box style={{ marginBottom: '-2' }}>
-                                  <span
-                                    style={{
-                                      color: `${theme.palette.warning.darker}`,
-                                    }}
-                                  >
-                                    Warning!: This will remove all the artg
-                                    ids{' '}
-                                  </span>
-                                </Box>
-                              )}
-                          </InnerBoxSmall>
-                        </Grid>
-                      )}
-
                       <ActionButton
                         control={control}
                         resetAndClose={resetAndClose}
@@ -697,6 +699,9 @@ function EditConceptBody({
                           toggleDisplayRetiredDescriptions
                         }
                         displayRetiredDescriptions={displayRetiredDescriptions}
+                        additionalPropertiesChanged={
+                          additionalPropertiesChanged
+                        }
                       />
                     </form>
                   </Box>
@@ -713,6 +718,8 @@ function EditConceptBody({
 }
 
 interface RightSectionProps {
+  branch: string;
+  product: Product;
   isFetching: boolean;
   fields: FieldArrayWithId<
     ProductUpdateRequest,
@@ -728,9 +735,12 @@ interface RightSectionProps {
   control: Control<ProductUpdateRequest>;
   handleAddDescription: React.MouseEventHandler<HTMLButtonElement> | undefined;
   setValue: UseFormSetValue<ProductUpdateRequest>;
+  onPropertiesChange: (val: AdditionalPropertiesEditForm) => void;
 }
 
 function RightSection({
+  branch,
+  product,
   isFetching,
   fields,
   displayRetiredDescriptions,
@@ -742,6 +752,7 @@ function RightSection({
   control,
   handleAddDescription,
   setValue,
+  onPropertiesChange,
 }: RightSectionProps) {
   return (
     <>
@@ -777,6 +788,12 @@ function RightSection({
       >
         <Add />
       </IconButton>
+      <AdditionalPropertiesEdit
+        branch={branch}
+        label={product?.label}
+        nonDefiningProperties={product?.nonDefiningProperties}
+        onChange={onPropertiesChange}
+      />
     </>
   );
 }
@@ -787,19 +804,23 @@ interface ActionButtonProps {
   isSubmitting: boolean;
   toggleDisplayRetiredDescriptions: () => void;
   displayRetiredDescriptions: boolean;
+  additionalPropertiesChanged: boolean;
 }
+
 function ActionButton({
   control,
   resetAndClose,
   isSubmitting,
   toggleDisplayRetiredDescriptions,
   displayRetiredDescriptions,
+  additionalPropertiesChanged,
 }: ActionButtonProps) {
   const { dirtyFields, errors } = useFormState({ control });
   const hasErrors = Object.keys(errors).length > 0;
   const isDirty = Object.keys(dirtyFields).length > 0;
 
-  const isButtonDisabled = () => isSubmitting || !isDirty || hasErrors;
+  const isButtonDisabled = () =>
+    isSubmitting || (!isDirty && !additionalPropertiesChanged) || hasErrors;
   return (
     <Grid
       item

@@ -88,9 +88,9 @@ public class DeviceController {
       throws InterruptedException {
     taskManagerService.validateTaskState(branch);
     try {
-    return new ResponseEntity<>(
-        productCreationService.createUpdateProductFromAtomicData(branch, creationDetails),
-        HttpStatus.CREATED);
+      return new ResponseEntity<>(
+          productCreationService.createUpdateProductFromAtomicData(branch, creationDetails),
+          HttpStatus.CREATED);
     } catch (CompletionException ex) {
       throw (ex.getCause() instanceof RuntimeException runtimeEx) ? runtimeEx : ex;
     }
@@ -112,9 +112,9 @@ public class DeviceController {
     }
     taskManagerService.validateTaskState(branch);
     try {
-    return new ResponseEntity<>(
-        productCreationService.updateProductFromAtomicData(branch, productUpdateDetails),
-        HttpStatus.OK);
+      return new ResponseEntity<>(
+          productCreationService.updateProductFromAtomicData(branch, productUpdateDetails),
+          HttpStatus.OK);
     } catch (CompletionException ex) {
       throw (ex.getCause() instanceof RuntimeException runtimeEx) ? runtimeEx : ex;
     }
@@ -141,8 +141,8 @@ public class DeviceController {
       throws ExecutionException, InterruptedException {
     taskManagerService.validateTaskState(branch);
     try {
-    return productUpdateService.calculateUpdateProductFromAtomicData(
-        branch, productId, productDetails);
+      return productUpdateService.calculateUpdateProductFromAtomicData(
+          branch, productId, productDetails);
     } catch (CompletionException ex) {
       throw (ex.getCause() instanceof RuntimeException runtimeEx) ? runtimeEx : ex;
     }
