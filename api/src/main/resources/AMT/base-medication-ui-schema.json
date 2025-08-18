@@ -47,6 +47,7 @@
     }
   },
   "packType": {
+    "ui:enumNames": ["Normal pack", "Multipack"],
     "ui:widget": "select",
     "ui:title": "Pack Type",
     "ui:options": {
@@ -57,6 +58,7 @@
     }
   },
   "variant": {
+    "ui:enumNames": ["Medication", "Drug Device Combination"],
     "ui:widget": "select",
     "ui:title": "Target Model",
     "ui:options": {
@@ -170,6 +172,12 @@
           ]
         },
         "productType": {
+          "ui:enumNames": [
+            "Total Quantity Only",
+            "Concentration Strength Only",
+            "Total Quantity, Concentration Strength, and Size",
+            "No Strength"
+          ],
           "ui:widget": "select",
           "ui:title": "Product Template",
           "ui:options": {
