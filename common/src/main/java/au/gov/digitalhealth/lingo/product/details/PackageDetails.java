@@ -49,7 +49,8 @@ public class PackageDetails<T extends ProductDetails> extends PackageProductDeta
   String otherIdentifyingInformation;
   String genericOtherIdentifyingInformation;
 
-  String variant;
+  ProductType variant;
+  PackType packType;
 
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
@@ -143,7 +144,7 @@ public class PackageDetails<T extends ProductDetails> extends PackageProductDeta
             .getNmpcType();
   }
 
-  public String getVariant() {
+  public ProductType getVariant() {
     if (variant == null) {
       if (!containedProducts.isEmpty() && containedProducts.get(0).getProductDetails() != null) {
         variant = containedProducts.get(0).getProductDetails().getType();
@@ -158,6 +159,29 @@ public class PackageDetails<T extends ProductDetails> extends PackageProductDeta
       }
     }
     return variant;
+  }
+
+  public PackType getPackType() {
+    if (packType == null) {
+      if (!containedProducts.isEmpty() && !containedPackages.isEmpty()) {
+        final LingoProblem lingoProblem =
+            new LingoProblem("Both contained products and packages are populated");
+        log.log(Level.SEVERE, "Pack type not found in package details ", lingoProblem);
+        throw lingoProblem;
+      } else if (!containedProducts.isEmpty()
+          && containedProducts.get(0).getProductDetails() != null) {
+        packType = PackType.NORMAL;
+      } else if (!containedPackages.isEmpty()
+          && containedPackages.get(0).getPackageDetails() != null) {
+        packType = PackType.MULTI_PACK;
+      } else {
+        final LingoProblem lingoProblem =
+            new LingoProblem("No contained package or product found looking for pack type");
+        log.log(Level.SEVERE, "Pack type not found in package details ", lingoProblem);
+        throw lingoProblem;
+      }
+    }
+    return packType;
   }
 
   @JsonIgnore

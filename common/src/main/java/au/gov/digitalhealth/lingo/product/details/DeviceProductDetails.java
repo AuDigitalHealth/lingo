@@ -37,12 +37,15 @@ public class DeviceProductDetails extends ProductDetails {
   Set<SnowstormConceptMini> otherParentConcepts;
 
   public DeviceProductDetails() {
-    this.type = "device";
+    this.type = ProductType.DEVICE;
   }
 
   @Override
   protected Map<String, String> getSpecialisedIdFsnMap() {
     return specificDeviceType == null
+            || specificDeviceType.getFsn() == null
+            || specificDeviceType.getFsn().getTerm() == null
+            || specificDeviceType.getConceptId() == null
         ? Map.of()
         : Map.of(specificDeviceType.getConceptId(), specificDeviceType.getFsn().getTerm());
   }
@@ -55,6 +58,9 @@ public class DeviceProductDetails extends ProductDetails {
   @Override
   protected Map<String, String> getSpecialisedIdPtMap() {
     return specificDeviceType == null
+            || specificDeviceType.getPt() == null
+            || specificDeviceType.getPt().getTerm() == null
+            || specificDeviceType.getConceptId() == null
         ? Map.of()
         : Map.of(specificDeviceType.getConceptId(), specificDeviceType.getPt().getTerm());
   }
