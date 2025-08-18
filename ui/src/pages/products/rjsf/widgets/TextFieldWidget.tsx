@@ -1,38 +1,63 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { WidgetProps } from '@rjsf/utils';
 import { TextField, Box } from '@mui/material';
+import debounce from 'lodash/debounce';
 
-const TextFieldWidget = ({
+const NumberTextFieldWidget = ({
   id,
   value,
   required,
   onChange,
   onBlur,
   onFocus,
-  rawErrors = [], // Receive rawErrors
+  rawErrors = [],
   label,
   options,
+  schema,
 }: WidgetProps) => {
-  const placeholder = options?.placeholder || 'Enter text';
+  const placeholder = options?.placeholder || 'Enter value';
+  const isNumber = schema?.type === 'number' || schema?.type === 'integer';
 
-  const _onChange = ({
-    target: { value },
-  }: React.ChangeEvent<HTMLInputElement>) => {
-    onChange(value === '' ? options.emptyValue : value);
+  const [inputValue, setInputValue] = useState<string>(
+    value !== undefined && value !== null ? String(value) : '',
+  );
+
+  useEffect(() => {
+    setInputValue(value !== undefined && value !== null ? String(value) : '');
+  }, [value]);
+
+  const debouncedOnChange = useCallback(
+    debounce((val: string) => {
+      if (val === '') {
+        onChange(options?.emptyValue);
+      } else {
+        onChange(isNumber ? Number(val) : val);
+      }
+    }, 200),
+    [onChange, options, isNumber],
+  );
+
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const val = event.target.value;
+    setInputValue(val); // instant typing
+    debouncedOnChange(val); // delayed RJSF update
   };
-  const _onBlur = ({ target: { value } }: React.FocusEvent<HTMLInputElement>) =>
-    onBlur(id, value);
-  const _onFocus = ({
-    target: { value },
-  }: React.FocusEvent<HTMLInputElement>) => onFocus(id, value);
+
+  const handleBlur = useCallback(
+    (event: React.FocusEvent<HTMLInputElement>) =>
+      onBlur(id, event.target.value),
+    [id, onBlur],
+  );
+
+  const handleFocus = useCallback(
+    (event: React.FocusEvent<HTMLInputElement>) =>
+      onFocus(id, event.target.value),
+    [id, onFocus],
+  );
 
   const hasError = rawErrors && rawErrors.length > 0;
   const errorMessages = hasError
-    ? rawErrors
-        .map((err: any) => {
-          return err?.message;
-        })
-        .join(', ')
+    ? rawErrors.map((err: any) => err?.message).join(', ')
     : '';
 
   return (
@@ -42,17 +67,18 @@ const TextFieldWidget = ({
         fullWidth
         variant="outlined"
         placeholder={placeholder}
-        value={(value as string) || ''}
-        onChange={_onChange}
-        onBlur={_onBlur}
-        onFocus={_onFocus}
+        value={inputValue}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        onFocus={handleFocus}
         error={hasError}
         helperText={hasError ? errorMessages : null}
         label={label}
         required={required}
+        type={isNumber ? 'number' : 'text'}
       />
     </Box>
   );
 };
 
-export default TextFieldWidget;
+export default NumberTextFieldWidget;

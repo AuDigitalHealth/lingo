@@ -244,7 +244,7 @@ function MedicationAuthoring({
               CompactQuantityField,
             }}
             widgets={{
-              TextFieldWidget,
+              TextWidget: TextFieldWidget,
               OneOfArrayWidget,
               NumberWidget,
               SelectWidget: CustomSelectWidget,
