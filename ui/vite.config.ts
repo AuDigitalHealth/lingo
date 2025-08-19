@@ -64,7 +64,10 @@ export default ({ mode }) => {
           changeOrigin: true,
           secure: true,
           rewrite: path =>
-            path.replace(/^\/authoring-traceability-service/, '/authoring-traceability-service'),
+            path.replace(
+              /^\/authoring-traceability-service/,
+              '/authoring-traceability-service',
+            ),
           ws: true,
         },
         '/snowstorm': {

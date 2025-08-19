@@ -140,13 +140,7 @@
           }
         }
       },
-      "required": ["productName", "deviceType"],
-      "errorMessage": {
-        "required": {
-          "productName": "Product Name is required",
-          "deviceType": "Device Type is required"
-        }
-      }
+      "required": ["productName", "deviceType"]
     },
     "ContainedProduct": {
       "type": "object",
@@ -182,13 +176,6 @@
         }
       },
       "required": ["unit", "value", "productDetails"],
-      "errorMessage": {
-        "required": {
-          "unit": "Unit is required",
-          "value": "Value is required",
-          "productDetails": "Product Details are required"
-        }
-      },
       "dependencies": {
         "unit": {
           "oneOf": [
@@ -273,10 +260,5 @@
     }
   },
   "required": ["containedProducts"],
-  "errorMessage": {
-    "required": {
-      "containedProducts": "At least one Contained Product is required"
-    }
-  },
   "additionalProperties": false
 }
