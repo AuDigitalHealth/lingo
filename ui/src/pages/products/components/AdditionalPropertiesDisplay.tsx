@@ -10,6 +10,7 @@ import { AdditionalReferenceSetDisplay } from './AdditionalReferenceSetDisplay.t
 import WarningIcon from '@mui/icons-material/Warning';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import { arePropertiesEqual } from '../../../utils/helpers/commonUtils.ts';
 
 interface ItemDetailsDisplayProps {
   nonDefiningProperties?: NonDefiningProperty[];
@@ -638,38 +639,6 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
   ) : (
     <Box sx={{ mt: 2 }}>{getPropertyContent()}</Box>
   );
-};
-
-// More accurate comparison function for properties
-export const arePropertiesEqual = (propA, propB) => {
-  // Compare identifierScheme
-  if (propA.identifierScheme !== propB.identifierScheme) return false;
-
-  // Compare value (handle null values)
-  if (
-    propA.value !== propB.value &&
-    !(propA.value === null && propB.value === null)
-  )
-    return false;
-
-  // Compare valueObject (only compare conceptId)
-  if (propA.valueObject && propB.valueObject) {
-    if (propA.valueObject.conceptId !== propB.valueObject.conceptId)
-      return false;
-  } else if (propA.valueObject || propB.valueObject) {
-    // One is null but not both
-    return false;
-  }
-
-  // Compare relationshipType for ExternalIdentifier
-  if (
-    propA.type === 'externalIdentifier' &&
-    propB.type === 'externalIdentifier'
-  ) {
-    if (propA.relationshipType !== propB.relationshipType) return false;
-  }
-
-  return true;
 };
 
 export default AdditionalPropertiesDisplay;
