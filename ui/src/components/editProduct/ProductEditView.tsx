@@ -77,9 +77,10 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
   const historicExternalIdentifiers = isProductUpdateDetails(
     productUpdate?.details,
   )
-    ? productUpdate?.details.historicState.externalIdentifiers
+    ? productUpdate?.details.historicState.nonDefiningProperties
     : undefined;
 
+  debugger;
   const updatedDescriptions = sortDescriptions(
     updatedConcept?.descriptions,
     defaultLangrefset,
@@ -88,7 +89,7 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
   const updatedExternalIdentifiers = isProductUpdateDetails(
     productUpdate?.details,
   )
-    ? productUpdate?.details.updatedState.externalIdentifiers
+    ? productUpdate?.details.updatedState.nonDefiningProperties
     : undefined;
 
   const containsExternalIdentifiers =
@@ -134,8 +135,7 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
                   ? containsExternalIdentifiers
                   : false
               }
-              //   product={undefined}
-              externalIdentifiers={historicExternalIdentifiers}
+              nonDefiningProperties={historicExternalIdentifiers}
               title={'Old'}
               dialects={langRefsets}
               displayMode="input"
@@ -161,7 +161,7 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
                   : false
               }
               title={'Updated'}
-              externalIdentifiers={updatedExternalIdentifiers}
+              nonDefiningProperties={updatedExternalIdentifiers}
               dialects={langRefsets}
               displayMode="input"
               showBorder
@@ -179,7 +179,7 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
               externalIdentifiers ? externalIdentifiers.length > 0 : false
             }
             title={'Current state'}
-            externalIdentifiers={externalIdentifiers}
+            nonDefiningProperties={externalIdentifiers}
             dialects={langRefsets}
             displayMode="input"
             showBorder

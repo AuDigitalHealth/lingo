@@ -246,19 +246,6 @@ models:
         mappingTypes:
           - RELATED
         readOnly: true
-      - name: indicativePrice
-        title: Indicative Price
-        identifier: 680351000220102
-        level: PACKAGE
-        dataType: DECIMAL
-        valueRegexValidation: ^\d+(\.\d{0,2})?$
-        valueValidationErrorMessage: "Must be a valid decimal number with two decimal places"
-        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
-        mandatory: false
-        multiValued: false
-        mappingTypes:
-          - RELATED
-        order: 98
     referenceSets:
       - name: blackTriangle
         title: Black Triangle
@@ -325,6 +312,17 @@ models:
         readOnly: true
         order: 101
     nonDefiningProperties:
+      - name: indicativePrice
+        title: Indicative Price
+        identifier: 680891000220101
+        level: PACKAGE
+        dataType: DECIMAL
+        valueRegexValidation: ^\d+(\.\d{0,2})?$
+        valueValidationErrorMessage: "Must be a valid decimal number with two decimal places"
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        order: 98
       - name: pan
         title: PAN
         description: HPRA or EMA product authorisation number
