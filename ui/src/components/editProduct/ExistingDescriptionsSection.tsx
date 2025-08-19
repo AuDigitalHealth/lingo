@@ -21,6 +21,7 @@ import { LanguageRefset } from '../../types/Project';
 import { InnerBoxSmall } from '../../pages/products/components/style/ProductBoxes';
 import AdditionalPropertiesDisplay from '../../pages/products/components/AdditionalPropertiesDisplay';
 import { Divider } from '@mui/material';
+import SimplePropertiesDisplay from '../../pages/products/components/SimplePropertiesDisplay';
 
 interface DescriptionDisplayProps {
   description: Description;
@@ -270,6 +271,7 @@ export function ExistingDescriptionsSection({
   displayMode = 'input',
   showBorder,
 }: ExistingDescriptionsSectionProps & { displayMode?: 'input' | 'text' }) {
+  debugger;
   return (
     <Grid
       item
@@ -302,12 +304,21 @@ export function ExistingDescriptionsSection({
             isFetching={isFetching}
           />
         </InnerBoxSmall>
-
-        <AdditionalPropertiesDisplay
-          product={product}
-          branch={branch}
-          showWrapper={false}
-        />
+        {product && (
+          <AdditionalPropertiesDisplay
+            nonDefiningProperties={nonDefiningProperties}
+            product={product}
+            branch={branch}
+            showWrapper={false}
+          />
+        )}{' '}
+        {!product && nonDefiningProperties && (
+          <SimplePropertiesDisplay
+            nonDefiningProperties={nonDefiningProperties}
+            branch={branch}
+            showWrapper={false}
+          />
+        )}
       </Box>
     </Grid>
   );

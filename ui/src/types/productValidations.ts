@@ -131,7 +131,7 @@ export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateReques
     .object({
       propertiesUpdateRequest: yup
         .object<ProductUpdateRequest>({
-          nonDefiningProperties: yup
+          newNonDefiningProperties: yup
             .array<NonDefiningProperty>()
             .of(
               yup.object({

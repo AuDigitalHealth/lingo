@@ -177,13 +177,14 @@ public class ProductUpdateService {
 
     updateProductDescriptions(
         branch, conceptId, productDescriptionUpdateRequest, productUpdateCreationDetails);
+    productUpdate.setDetails(productUpdateCreationDetails);
 
     if (productExternalIdentifierUpdateRequest != null) {
       log.info(String.format("Product update for %s contains ARTGIDS.", conceptId));
-      updateProductProperties(branch, conceptId, productExternalIdentifierUpdateRequest);
+      updateProductProperties(branch, conceptId, productExternalIdentifierUpdateRequest, productUpdateCreationDetails);
     }
 
-    productUpdate.setDetails(productUpdateCreationDetails);
+
 
     Optional<BulkProductAction> existingBulkProductAction =
         bulkProductActionRepository.findByNameAndTicketId(
@@ -473,24 +474,28 @@ public class ProductUpdateService {
   private void updateProductProperties(
       String branch,
       String conceptId,
-      @Valid ProductPropertiesUpdateRequest productPropertiesUpdateRequest)
+      @Valid ProductPropertiesUpdateRequest productPropertiesUpdateRequest,
+      ProductUpdateCreationDetails productUpdateCreationDetails)
       throws InterruptedException {
 
+    productUpdateCreationDetails.getUpdatedState().setNonDefiningProperties(productPropertiesUpdateRequest.getNewNonDefiningProperties());
+    productUpdateCreationDetails.getHistoricState().setNonDefiningProperties(productPropertiesUpdateRequest.getExistingNonDefiningProperties());
     HashSet<NonDefiningBase> nonDefiningBaseSet = new HashSet<>();
 
     // Handle external identifiers and reference sets
     nonDefiningBaseSet.addAll(
         handleExternalIdentifiersAndReferenceSets(
-            branch, conceptId, productPropertiesUpdateRequest));
+            branch, conceptId, productPropertiesUpdateRequest, productUpdateCreationDetails));
     // Handle non-defining properties
     nonDefiningBaseSet.addAll(
-        handleNonDefiningProperties(branch, conceptId, productPropertiesUpdateRequest));
+        handleNonDefiningProperties(branch, conceptId, productPropertiesUpdateRequest, productUpdateCreationDetails));
   }
 
   private Collection<NonDefiningBase> handleExternalIdentifiersAndReferenceSets(
       String branch,
       String conceptId,
-      ProductPropertiesUpdateRequest productPropertiesUpdateRequest)
+      ProductPropertiesUpdateRequest productPropertiesUpdateRequest,
+      ProductUpdateCreationDetails productUpdate)
       throws InterruptedException {
     Map<String, ExternalIdentifierDefinition> mappingRefsets =
         models.getModelConfiguration(branch).getMappingsByName();
@@ -498,7 +503,7 @@ public class ProductUpdateService {
         models.getModelConfiguration(branch).getReferenceSetsByName();
 
     Map<String, NonDefiningBase> requestedExternalIdentifiers =
-        productPropertiesUpdateRequest.getNonDefiningProperties().stream()
+        productPropertiesUpdateRequest.getNewNonDefiningProperties().stream()
             .filter(
                 id ->
                     mappingRefsets.containsKey(id.getIdentifierScheme())
@@ -556,13 +561,14 @@ public class ProductUpdateService {
   }
 
   public Collection<NonDefiningProperty> handleNonDefiningProperties(
-      String branch, String conceptId, @Valid ProductPropertiesUpdateRequest updateRequest) {
+      String branch, String conceptId, @Valid ProductPropertiesUpdateRequest updateRequest,
+      ProductUpdateCreationDetails productUpdate) {
 
     Map<String, NonDefiningPropertyDefinition> nonDefiningPropertiesByName =
         models.getModelConfiguration(branch).getNonDefiningPropertiesByName();
 
     Map<String, NonDefiningProperty> requestedProperties =
-        updateRequest.getNonDefiningProperties().stream()
+        updateRequest.getNewNonDefiningProperties().stream()
             .filter(prop -> nonDefiningPropertiesByName.containsKey(prop.getIdentifierScheme()))
             .map(p -> (NonDefiningProperty) p)
             .collect(
