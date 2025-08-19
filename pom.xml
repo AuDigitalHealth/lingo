@@ -155,7 +155,6 @@
     <module>ui</module>
     <module>auth</module>
     <module>common</module>
-    <module>sergio-extension</module>
     <module>api</module>
     <module>eclrefset</module>
   </modules>
@@ -196,7 +195,6 @@
       <modules>
         <module>auth</module>
         <module>common</module>
-        <module>sergio-extension</module>
         <module>api</module>
       </modules>
     </profile>

@@ -267,8 +267,8 @@
       <version>2.6.0</version>
     </dependency>
     <dependency>
-      <artifactId>sentry-spring-boot-starter-jakarta</artifactId>
       <groupId>io.sentry</groupId>
+      <artifactId>sentry-spring-boot-starter-jakarta</artifactId>
     <version>${sentry.version}</version>
   </dependency>
     <dependency>

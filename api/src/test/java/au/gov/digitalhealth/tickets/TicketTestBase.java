@@ -17,7 +17,6 @@ package au.gov.digitalhealth.tickets;
 
 import static io.restassured.RestAssured.given;
 
-import au.gov.digitalhealth.lingo.RabbitTestBase;
 import au.gov.digitalhealth.lingo.configuration.Configuration;
 import com.google.gson.JsonObject;
 import io.restassured.RestAssured;
@@ -46,7 +45,7 @@ import org.springframework.test.context.ActiveProfiles;
 @TestInstance(Lifecycle.PER_METHOD)
 @DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
 @ActiveProfiles("test")
-public class TicketTestBase extends RabbitTestBase {
+public class TicketTestBase {
 
   @LocalServerPort int randomServerPort;
 
