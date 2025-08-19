@@ -80,7 +80,6 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
     ? productUpdate?.details.historicState.nonDefiningProperties
     : undefined;
 
-  debugger;
   const updatedDescriptions = sortDescriptions(
     updatedConcept?.descriptions,
     defaultLangrefset,
