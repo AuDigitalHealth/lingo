@@ -94,14 +94,13 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { productUpdateValidationSchema } from '../../types/productValidations.ts';
 import WarningModal from '../../themes/overrides/WarningModal.tsx';
 import { deepClone } from '@mui/x-data-grid/utils/utils';
-import AdditionalPropertiesDisplay, {
-  arePropertiesEqual,
-} from '../../pages/products/components/AdditionalPropertiesDisplay.tsx';
+import AdditionalPropertiesDisplay from '../../pages/products/components/AdditionalPropertiesDisplay.tsx';
 import { ExistingDescriptionsSection } from './ExistingDescriptionsSection.tsx';
 import useProjectLangRefsets from '../../hooks/api/products/useProjectLangRefsets.tsx';
 import AdditionalPropertiesEdit, {
   AdditionalPropertiesEditForm,
 } from '../../pages/products/rjsf/AdditionalPropertiesEdit.tsx';
+import { arePropertiesEqual } from '../../utils/helpers/commonUtils.ts';
 
 const typeMap: Record<DefinitionType, string> = {
   [DefinitionType.FSN]: '900000000000003001',
@@ -855,10 +854,7 @@ function ActionButton({
 
   const isButtonDisabled = () =>
     isSubmitting || (!isDirty && !additionalPropertiesChanged) || hasErrors;
-  console.log('additionalPropertiesChanged:', additionalPropertiesChanged);
-  if (additionalPropertiesChanged) {
-    debugger;
-  }
+
   return (
     <Grid
       item
