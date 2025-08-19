@@ -27,7 +27,7 @@ import { FontFamily } from '@tiptap/extension-font-family';
 import { Gapcursor } from '@tiptap/extension-gapcursor';
 import { HardBreak } from '@tiptap/extension-hard-break';
 import { Highlight } from '@tiptap/extension-highlight';
-import { History } from '@tiptap/extension-history';
+// import { History } from '@tiptap/extension-history';
 import { HorizontalRule } from '@tiptap/extension-horizontal-rule';
 import { Italic } from '@tiptap/extension-italic';
 import { Link } from '@tiptap/extension-link';
@@ -198,7 +198,7 @@ export default function useExtensions({
 
       // We use the regular `History` (undo/redo) extension when not using
       // collaborative editing
-      History,
+      // History,
     ];
   }, [placeholder]);
 }
