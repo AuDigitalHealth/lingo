@@ -481,10 +481,6 @@
       <groupId>au.gov.digitalhealth</groupId>
     </dependency>
     <dependency>
-      <artifactId>sergio-extension</artifactId>
-      <groupId>au.gov.digitalhealth</groupId>
-    </dependency>
-    <dependency>
       <artifactId>awaitility</artifactId>
       <groupId>org.awaitility</groupId>
       <version>4.2.2</version>
