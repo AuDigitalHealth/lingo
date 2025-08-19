@@ -94,7 +94,9 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { productUpdateValidationSchema } from '../../types/productValidations.ts';
 import WarningModal from '../../themes/overrides/WarningModal.tsx';
 import { deepClone } from '@mui/x-data-grid/utils/utils';
-import AdditionalPropertiesDisplay from '../../pages/products/components/AdditionalPropertiesDisplay.tsx';
+import AdditionalPropertiesDisplay, {
+  arePropertiesEqual,
+} from '../../pages/products/components/AdditionalPropertiesDisplay.tsx';
 import { ExistingDescriptionsSection } from './ExistingDescriptionsSection.tsx';
 import useProjectLangRefsets from '../../hooks/api/products/useProjectLangRefsets.tsx';
 import AdditionalPropertiesEdit, {
@@ -227,26 +229,52 @@ function EditConceptBody({
 
   const [updatedAdditionalProperties, setUpdatedAdditionalProperties] =
     useState<ProductPropertiesUpdateRequest>({
-      nonDefiningProperties: product.nonDefiningProperties
+      newNonDefiningProperties: product.nonDefiningProperties
+        ? sortNonDefiningProperties(product.nonDefiningProperties)
+        : [],
+      existingNonDefiningProperties: product.nonDefiningProperties
         ? sortNonDefiningProperties(product.nonDefiningProperties)
         : [],
     });
 
   const additionalPropertiesChanged = useMemo(() => {
-    if (
-      product?.nonDefiningProperties?.length !==
-      updatedAdditionalProperties.nonDefiningProperties.length
-    ) {
+    const originalProperties = product?.nonDefiningProperties || [];
+    const updatedProperties =
+      updatedAdditionalProperties.newNonDefiningProperties || [];
+
+    // Quick length check first
+    if (originalProperties.length !== updatedProperties.length) {
       return true;
     }
-    return false;
+
+    // Check if any property in original is missing or different in updated
+    const hasChanges = originalProperties.some(
+      originalProp =>
+        !updatedProperties.some(updatedProp =>
+          arePropertiesEqual(originalProp, updatedProp),
+        ),
+    );
+
+    if (hasChanges) {
+      return true;
+    }
+
+    // Check if any property in updated is missing in original (shouldn't be needed due to length check, but for completeness)
+    const hasNewProperties = updatedProperties.some(
+      updatedProp =>
+        !originalProperties.some(originalProp =>
+          arePropertiesEqual(updatedProp, originalProp),
+        ),
+    );
+
+    return hasNewProperties;
   }, [product?.nonDefiningProperties, updatedAdditionalProperties]);
 
   const defaultValues = useMemo(() => {
     return {
       ticketId: ticket.id,
       propertiesUpdateRequest: {
-        nonDefiningProperties: product.nonDefiningProperties
+        newNonDefiningProperties: product.nonDefiningProperties
           ? sortNonDefiningProperties(product.nonDefiningProperties)
           : [],
       },
@@ -344,7 +372,12 @@ function EditConceptBody({
   const formSubmissionData = useRef<ProductUpdateRequest | null>(null);
 
   const onPropertiesChange = (val: AdditionalPropertiesEditForm) => {
-    setUpdatedAdditionalProperties(val);
+    // const tempUpdatedAdditionalProperties : = {updateExternalIdentifierData:}
+    setUpdatedAdditionalProperties({
+      existingNonDefiningProperties:
+        updatedAdditionalProperties.existingNonDefiningProperties,
+      newNonDefiningProperties: val.nonDefiningProperties,
+    });
   };
 
   const onSubmit = (data: ProductUpdateRequest) => {
@@ -389,6 +422,8 @@ function EditConceptBody({
   const sendUpdateProductRequest = (request: ProductUpdateRequest) => {
     const productId = product.conceptId;
     request.conceptId = productId;
+    request.propertiesUpdateRequest.existingNonDefiningProperties =
+      product.nonDefiningProperties;
     updateProductMutation.mutate(
       {
         productUpdateRequest: cloneDeep(request),
@@ -483,7 +518,7 @@ function EditConceptBody({
     );
 
     const artgModified = !areTwoNonDefiningPropertiesArraysEqual(
-      data.propertiesUpdateRequest.nonDefiningProperties,
+      data.propertiesUpdateRequest.newNonDefiningProperties,
       product.nonDefiningProperties ? product.nonDefiningProperties : [],
     );
 
@@ -820,6 +855,10 @@ function ActionButton({
 
   const isButtonDisabled = () =>
     isSubmitting || (!isDirty && !additionalPropertiesChanged) || hasErrors;
+  console.log('additionalPropertiesChanged:', additionalPropertiesChanged);
+  if (additionalPropertiesChanged) {
+    debugger;
+  }
   return (
     <Grid
       item

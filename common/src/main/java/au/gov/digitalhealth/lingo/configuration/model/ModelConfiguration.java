@@ -21,6 +21,7 @@ import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.NonDefiningPropertyDataType;
 import au.gov.digitalhealth.lingo.exception.ConfigurationProblem;
+import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
@@ -36,6 +37,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -333,6 +335,12 @@ public class ModelConfiguration {
         .filter(r -> r.getModelLevels().contains(modelLevel.getModelLevelType()))
         .collect(
             Collectors.toMap(NonDefiningPropertyDefinition::getIdentifier, Function.identity()));
+  }
+
+  public NonDefiningPropertyDefinition
+  getNonDefiningPropertiesByIdentifier(String identifier) {
+    return getNonDefiningProperties().stream()
+        .filter(r -> r.getIdentifier().equals(identifier)).findFirst().orElseThrow(() -> new LingoProblem(String.format("Could not find non defining property with identifier %s", identifier)));
   }
 
   public Map<String, NonDefiningPropertyDefinition> getNonDefiningPropertiesBySchemeForModelLevel(
