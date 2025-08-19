@@ -15,6 +15,7 @@
  */
 package au.gov.digitalhealth.lingo.product.details.properties;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -43,6 +44,7 @@ public abstract class NonDefiningBase {
   String identifier;
   String title;
   String description;
+  @JsonIgnore
   PropertyType type;
 
   @Override
