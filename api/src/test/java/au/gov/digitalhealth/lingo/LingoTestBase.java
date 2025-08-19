@@ -69,7 +69,7 @@ import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = Configuration.class)
 @ActiveProfiles("test")
 @ExtendWith(AmtV4SnowstormExtension.class)
-public class LingoTestBase extends RabbitTestBase {
+public class LingoTestBase {
 
   private static final String NAMESPACE = "1000168";
   private static final VerhoeffCheckDigit verhoeffCheckDigit = new VerhoeffCheckDigit();
