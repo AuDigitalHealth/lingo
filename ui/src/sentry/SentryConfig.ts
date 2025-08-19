@@ -78,7 +78,7 @@ export const isSentryAvailable = (): boolean => {
  * Show Sentry feedback dialog for reporting issues
  */
 export const showSentryFeedbackDialog = (
-  error: any,
+  error: unknown,
   timestamp?: string,
 ): string => {
   if (!isSentryAvailable()) {
