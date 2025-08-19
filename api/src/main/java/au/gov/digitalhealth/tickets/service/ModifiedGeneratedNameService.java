@@ -15,20 +15,15 @@
  */
 package au.gov.digitalhealth.tickets.service;
 
-import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.product.NameGeneratorSpec;
 import au.gov.digitalhealth.lingo.product.NewConceptDetails;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
-import au.gov.digitalhealth.lingo.service.AtomicCache;
 import au.gov.digitalhealth.lingo.service.NameGenerationService;
-import au.gov.digitalhealth.lingo.util.AmtConstants;
-import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import au.gov.digitalhealth.tickets.models.ModifiedGeneratedName;
 import au.gov.digitalhealth.tickets.repository.ModifiedGeneratedNameRepository;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 import org.apache.commons.collections4.BidiMap;
@@ -55,13 +50,9 @@ public class ModifiedGeneratedNameService {
   }
 
   public void createAndSaveModifiedGeneratedNames(
-      Map<String, String> idFsnMap,
-      Map<String, String> idPtMap,
       ProductSummary productSummaryClone,
       String branch,
       BidiMap<String, String> idMap) {
-
-    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
     List<ModifiedGeneratedName> modifiedGeneratedNames =
         productSummaryClone.getNodes().stream()
@@ -72,12 +63,9 @@ public class ModifiedGeneratedNameService {
 
                   if (newConceptDetails.isFsnOrPtModified()) {
                     Optional<NameGeneratorSpec> nameGeneratorSpec =
-                        nameGenerationService.generateNameGeneratorSpec(
-                            new AtomicCache(
-                                idFsnMap, idPtMap, AmtConstants.values(), SnomedConstants.values()),
-                            newConceptDetails.getSemanticTag(),
-                            node,
-                            modelConfiguration);
+                        newConceptDetails.getNameGeneratorSpec() == null
+                            ? Optional.empty()
+                            : Optional.of(newConceptDetails.getNameGeneratorSpec());
                     if (nameGeneratorSpec.isEmpty()) return Stream.empty();
                     ModifiedGeneratedName.ModifiedGeneratedNameBuilder mgnb =
                         ModifiedGeneratedName.builder()

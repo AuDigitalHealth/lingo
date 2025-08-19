@@ -87,6 +87,8 @@ public class NewConceptDetails {
 
   Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers = new HashSet<>();
 
+  NameGeneratorSpec nameGeneratorSpec;
+
   public NewConceptDetails(int conceptId) {
     this.conceptId = conceptId;
   }
