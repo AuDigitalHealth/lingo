@@ -169,7 +169,39 @@ export const removeDescriptionSemanticTag = (desc: Description) => {
   return description;
 };
 
-export const removeSemanticTagFromTerm = (term: string | undefined) => {
+export const removeSemanticTagFromTerm = (
+  term: string | undefined,
+  semanticTag: string | undefined,
+) => {
+  if (!term || !semanticTag) {
+    return term || '';
+  }
+
+  // Escape special regex characters in the semantic tag
+  const escapedSemanticTag = semanticTag.replace(
+    /[-/\\^$*+?.()|[\]{}]/g,
+    '\\$&',
+  );
+
+  // Remove the semantic tag from the term, handling both with and without parentheses
+  // First try to remove with parentheses, then without
+  let termWithoutTag = term
+    .replace(new RegExp(`\\s*\\(${escapedSemanticTag}\\)\\s*`, 'gi'), '')
+    .trim();
+
+  // If nothing was removed, try removing without parentheses
+  if (termWithoutTag === term.trim()) {
+    termWithoutTag = term
+      .replace(new RegExp(`\\s*${escapedSemanticTag}\\s*`, 'gi'), '')
+      .trim();
+  }
+
+  return termWithoutTag !== '' ? termWithoutTag : undefined;
+};
+
+export const removeSemanticTagFromTermSemTagUndefined = (
+  term: string | undefined,
+) => {
   const containsSemanticTag = extractSemanticTag(term)
     ?.trim()
     .toLocaleLowerCase();

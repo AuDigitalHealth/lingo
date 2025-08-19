@@ -518,7 +518,7 @@ const ExternalIdentifierRender: React.FC<
       )}
       {useCreateConcept && (
         <>
-          <Tooltip title="Create Primitive Concept">
+          <Tooltip title={`Create ${schema.title}`}>
             <IconButton
               data-testid="create-brand-btn"
               onClick={() => setCreateConceptModalOpen(true)}

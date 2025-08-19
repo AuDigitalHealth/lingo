@@ -105,6 +105,7 @@ import productService from '../../api/ProductService.ts';
 import {
   extractSemanticTag,
   removeSemanticTagFromTerm,
+  removeSemanticTagFromTermSemTagUndefined,
 } from '../../utils/helpers/ProductPreviewUtils.ts';
 import ExistingConceptDropdown from './components/ExistingConceptDropdown.tsx';
 import NewConceptDropdown from './components/NewConceptDropdown.tsx';
@@ -825,7 +826,9 @@ function ExistingConceptDropdown({
     ?.trim()
     .toLocaleLowerCase();
 
-  const termWithoutTag = removeSemanticTagFromTerm(product.concept?.fsn?.term);
+  const termWithoutTag = removeSemanticTagFromTermSemTagUndefined(
+    product.concept?.fsn?.term,
+  );
   return (
     <div key={`${product.conceptId}-div`}>
       <Stack direction="row" spacing={2}>
