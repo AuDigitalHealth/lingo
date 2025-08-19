@@ -864,10 +864,8 @@ public class ProductCreationService {
       } else {
         log.warning("Creating concept sequentially - this will be slow");
         // if it isn't a replacement with an existing concept, we need to create it
-        if (node.isConceptEdit()) {
-          concept =
-              snowstormClient.updateConceptView(branch, concept.getConceptId(), concept, false);
-        } else if (node.isRetireAndReplaceWithExisting()) {
+        if (node.isConceptEdit() || node.isRetireAndReplaceWithExisting()) {
+          concept.setConceptId(node.getOriginalNode().getConceptId());
           concept =
               snowstormClient.updateConceptView(branch, concept.getConceptId(), concept, false);
         } else {
