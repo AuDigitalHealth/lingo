@@ -9,22 +9,20 @@ import AutoCompleteField from './fields/AutoCompleteField.tsx';
 import ConditionalArrayField from './fields/ConditionalArrayField.tsx';
 import CompactQuantityField from './fields/CompactQuantityField.tsx';
 import UnitValueUnWrappedField from './fields/UnitValueUnWrappedField.tsx';
-import ProductLoader from '../components/ProductLoader.tsx';
-import ProductPreviewManageModal from '../components/ProductPreviewManageModal.tsx';
 import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
 import CustomSelectWidget from './widgets/CustomSelectWidget.tsx';
 import MuiGridTemplate from './templates/MuiGridTemplate.tsx';
 import NumberWidget from './widgets/NumberWidget.tsx';
 import ExternalIdentifiers from './fields/bulkBrandPack/ExternalIdentifiers.tsx';
-import TextFieldWidget from './widgets/TextFieldWidget.tsx';
+
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 import {
   NonDefiningProperty,
-  NonDefiningPropertyType,
 } from '../../../types/product.ts';
 import { IChangeEvent } from '@rjsf/core';
 import { RJSFSchema, UiSchema } from '@rjsf/utils';
 import { validator } from './helpers/validator.ts';
+import CustomTextFieldWidget from './widgets/CustomTextFieldWidget.tsx';
 interface AdditionalPropertiesEditProps {
   label: string;
   branch: string;
@@ -70,20 +68,12 @@ export default function AdditionalPropertiesEdit({
   const handleChange = (
     changeEvent: IChangeEvent<AdditionalPropertiesEditForm>,
   ) => {
-    debugger;
     if (changeEvent.formData) {
       setFormData(changeEvent.formData);
       onChange(changeEvent.formData);
     }
   };
 
-  const handleFormSubmit = (
-    submitEvent: IChangeEvent<AdditionalPropertiesEditForm>,
-  ) => {
-    debugger;
-    console.log(submitEvent.formData);
-    // Handle form submission logic here
-  };
   const noValidateValidator = {
     validateFormData: () => ({ errors: [], errorSchema: {} }),
     isValid: () => true,
@@ -112,7 +102,7 @@ export default function AdditionalPropertiesEdit({
             CompactQuantityField,
           }}
           widgets={{
-            TextFieldWidget,
+            TextWidget: CustomTextFieldWidget,
             OneOfArrayWidget,
             NumberWidget,
             SelectWidget: CustomSelectWidget,
@@ -126,7 +116,6 @@ export default function AdditionalPropertiesEdit({
             // FieldTemplate:CustomFieldTemplate
           }}
           onChange={handleChange}
-          onSubmit={handleFormSubmit}
           // onError={onError}
           validator={{
             ...validator,

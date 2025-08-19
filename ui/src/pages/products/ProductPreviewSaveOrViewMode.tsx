@@ -85,14 +85,15 @@ function ProductPreviewSaveOrViewMode({
   const { setSelectedConceptIdentifiers } = useAuthoringStore();
   const productModel = useMemo(() => {
     const nodes = productModelResponse.nodes.map(node => {
-      if (node.newConceptDetails?.fullySpecifiedName) {
+      if (node.newConceptDetails?.semanticTag) {
         const semanticTag = extractSemanticTag(
           node.newConceptDetails?.fullySpecifiedName,
         );
         if (semanticTag) {
           node.newConceptDetails.semanticTag = semanticTag;
           const termWithoutTag = removeSemanticTagFromTerm(
-            node.fullySpecifiedName,
+            node.newConceptDetails?.fullySpecifiedName,
+            node.newConceptDetails?.semanticTag,
           );
           node.newConceptDetails.fullySpecifiedName = termWithoutTag
             ? termWithoutTag

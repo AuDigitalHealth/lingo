@@ -35,7 +35,7 @@ public class VaccineProductDetails extends MedicationProductDetails {
   SnowstormConceptMini qualitiativeStrength;
 
   public VaccineProductDetails() {
-    this.type = "vaccine";
+    this.type = ProductType.VACCINE;
   }
 
   @Override

@@ -10,7 +10,6 @@ import {
 } from '@mui/material';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import _ from 'lodash';
-import ajvErrors from 'ajv-errors';
 import AutoCompleteField from './fields/AutoCompleteField.tsx';
 import UnitValueUnWrappedField from './fields/UnitValueUnWrappedField.tsx';
 import ProductLoader from '../components/ProductLoader.tsx';
@@ -18,7 +17,7 @@ import ProductPreviewManageModal from '../components/ProductPreviewManageModal.t
 import CustomFieldTemplate from './templates/CustomFieldTemplate.tsx';
 import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
 import NumberWidget from './widgets/NumberWidget.tsx';
-import TextFieldWidget from './widgets/TextFieldWidget.tsx';
+
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 import productService from '../../../api/ProductService.ts';
 import { ConfigService } from '../../../api/ConfigService.ts';
@@ -42,6 +41,7 @@ import MuiGridTemplate from './templates/MuiGridTemplate.tsx';
 import ExternalIdentifiers from './fields/bulkBrandPack/ExternalIdentifiers.tsx';
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 import WarningIcon from '@mui/icons-material/Warning';
+import CustomTextFieldWidget from './widgets/CustomTextFieldWidget.tsx';
 
 export interface DeviceAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -230,8 +230,8 @@ function DeviceAuthoring({
             }}
             widgets={{
               NumberWidget,
-              TextFieldWidget,
               OneOfArrayWidget,
+              TextWidget: CustomTextFieldWidget,
             }}
             disabled={isPending}
           >
