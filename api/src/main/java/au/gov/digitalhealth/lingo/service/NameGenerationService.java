@@ -59,11 +59,13 @@ public class NameGenerationService {
       AtomicCache atomicCache,
       String semanticTag,
       Node node,
-      ModelConfiguration modelConfiguration) {
+      ModelConfiguration modelConfiguration,
+      List<String> order) {
     Instant start = Instant.now();
     Optional<NameGeneratorSpec> nameGeneratorSpec =
-        generateNameGeneratorSpec(atomicCache, semanticTag, node, modelConfiguration);
+        generateNameGeneratorSpec(atomicCache, semanticTag, node, modelConfiguration, order);
     if (nameGeneratorSpec.isEmpty()) return;
+    node.getNewConceptDetails().setNameGeneratorSpec(nameGeneratorSpec.get());
     FsnAndPt fsnAndPt = createFsnAndPreferredTerm(nameGeneratorSpec.get());
     node.getNewConceptDetails().setFullySpecifiedName(fsnAndPt.getFSN());
     node.getNewConceptDetails().setPreferredTerm(fsnAndPt.getPT());
@@ -86,7 +88,8 @@ public class NameGenerationService {
       AtomicCache atomicCache,
       String semanticTag,
       Node node,
-      ModelConfiguration modelConfiguration) {
+      ModelConfiguration modelConfiguration,
+      List<String> order) {
     if (node.isNewConcept()) {
       SnowstormConceptView scon = SnowstormDtoUtil.toSnowstormConceptView(node, modelConfiguration);
       Set<String> axioms = owlAxiomService.translate(scon);
@@ -109,7 +112,7 @@ public class NameGenerationService {
               : atomicCache.substituteIdsForPtInAxiom(
                   axiomN, node.getNewConceptDetails().getConceptId());
 
-      return Optional.of(new NameGeneratorSpec(semanticTag, axiomFsn, axiomPt, List.of()));
+      return Optional.of(new NameGeneratorSpec(semanticTag, axiomFsn, axiomPt, order));
     }
 
     return Optional.empty();

@@ -59,6 +59,7 @@ import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import au.gov.digitalhealth.lingo.service.validators.ValidationResult;
 import au.gov.digitalhealth.lingo.util.AmtConstants;
 import au.gov.digitalhealth.lingo.util.BigDecimalFormatter;
+import au.gov.digitalhealth.lingo.util.NmpcConstants;
 import au.gov.digitalhealth.lingo.util.RelationshipSorter;
 import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
@@ -774,7 +775,7 @@ public class BrandPackSizeService {
         .thenApply(
             n -> {
               nameGenerationService.addGeneratedFsnAndPt(
-                  atomicCache, semanticTag, n, modelConfiguration);
+                  atomicCache, semanticTag, n, modelConfiguration, List.of());
               return n;
             });
   }
@@ -851,7 +852,7 @@ public class BrandPackSizeService {
         .thenApply(
             n -> {
               nameGenerationService.addGeneratedFsnAndPt(
-                  atomicCache, semanticTag, n, modelConfiguration);
+                  atomicCache, semanticTag, n, modelConfiguration, List.of());
               return n;
             });
   }
@@ -877,9 +878,18 @@ public class BrandPackSizeService {
             .collect(Collectors.toSet());
 
     if (modelLevelType.getAncestors().stream().noneMatch(ModelLevelType::isBranded)) {
-      relationships.add(
-          SnowstormDtoUtil.getSnowstormRelationship(
-              IS_A, MEDICINAL_PRODUCT, 0, modelConfiguration.getModuleId()));
+      if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
+        relationships.add(
+            SnowstormDtoUtil.getSnowstormRelationship(
+                IS_A,
+                NmpcConstants.VIRTUAL_MEDICINAL_PRODUCT,
+                0,
+                modelConfiguration.getModuleId()));
+      } else {
+        relationships.add(
+            SnowstormDtoUtil.getSnowstormRelationship(
+                IS_A, MEDICINAL_PRODUCT, 0, modelConfiguration.getModuleId()));
+      }
     }
 
     relationships.forEach(
@@ -929,7 +939,7 @@ public class BrandPackSizeService {
         .thenApply(
             n -> {
               nameGenerationService.addGeneratedFsnAndPt(
-                  atomicCache, semanticTag, n, modelConfiguration);
+                  atomicCache, semanticTag, n, modelConfiguration, List.of());
               return n;
             });
   }
