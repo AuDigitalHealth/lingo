@@ -42,6 +42,11 @@ import ExternalIdentifiers from './fields/bulkBrandPack/ExternalIdentifiers.tsx'
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 import WarningIcon from '@mui/icons-material/Warning';
 import CustomTextFieldWidget from './widgets/CustomTextFieldWidget.tsx';
+import {
+  buildErrorSchema,
+  resetDiscriminators,
+} from './helpers/validationHelper.ts';
+import { ErrorDisplay } from './components/ErrorDisplay.tsx';
 
 export interface DeviceAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -64,6 +69,7 @@ function DeviceAuthoring({
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [mode, setMode] = useState<'create' | 'update'>('create');
   const formRef = useRef<any>(null); // Ref to access the RJSF Form instance
+  const [formErrors, setFormErrors] = useState<any[]>([]);
   const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
     task.branchPath,
   );
@@ -114,7 +120,8 @@ function DeviceAuthoring({
   }, [createModalOpen]);
 
   const handleChange = ({ formData }: any) => {
-    setFormData(formData);
+    const updatedFormData = resetDiscriminators(schema, formData, uiSchema);
+    setFormData(updatedFormData);
     if (!_.isEmpty(formData.productName)) {
       setIsDirty(true); //TODO better way to handle check form is dirty
     }
@@ -192,18 +199,16 @@ function DeviceAuthoring({
   };
 
   const onError = (errors: any) => {
-    console.log('Form errors:', errors);
-    const newErrorSchema = errors.reduce((acc: any, error: any) => {
-      _.set(acc, error.property.slice(1), { __errors: [error.message] });
-      return acc;
-    }, {});
+    const newErrorSchema = buildErrorSchema(errors);
     setErrorSchema(newErrorSchema);
+    setFormErrors(errors);
   };
 
   return (
     <Paper sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1 }}>
       <Box m={2} p={2}>
         <Container>
+          <ErrorDisplay errors={formErrors} />
           <Form
             ref={formRef}
             schema={schema}
@@ -219,7 +224,6 @@ function DeviceAuthoring({
               ExternalIdentifiers,
             }}
             templates={{
-              FieldTemplate: CustomFieldTemplate,
               ArrayFieldTemplate: CustomArrayFieldTemplate,
               ObjectFieldTemplate: MuiGridTemplate,
             }}
@@ -234,6 +238,9 @@ function DeviceAuthoring({
               TextWidget: CustomTextFieldWidget,
             }}
             disabled={isPending}
+            noHtml5Validate={true}
+            showErrorList={false}
+            omitExtraData={true}
           >
             <Box
               sx={{

@@ -126,10 +126,7 @@
       "required": [
         "productName",
         "deviceType"
-      ],
-      "errorMessage": {
-        "required": "Product Details must be populated."
-      }
+      ]
     },
     "ContainedProduct": {
       "type": "object",
@@ -169,9 +166,6 @@
         "value",
         "productDetails"
       ],
-      "errorMessage": {
-        "required": "Contained product must be populated."
-      },
       "dependencies": {
         "unit": {
           "oneOf": [
@@ -263,8 +257,5 @@
     "containerType",
     "containedProducts"
   ],
-  "errorMessage": {
-    "required": "Fields must be populated."
-  },
   "additionalProperties": false
 }
