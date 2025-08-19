@@ -209,14 +209,25 @@ export function DescriptionList({
       description.acceptabilityMap?.[defaultDialectKey.en] === 'PREFERRED'
     );
   };
+  // Order: FSN → Preferred Term → Synonym → rest
+  const sortByType = (a: Description, b: Description): number => {
+    const getRank = (d: Description): number => {
+      if (d.type === 'FSN') return 0;
+      if (isPreferredTerm(d)) return 1;
+      if (d.type === 'SYNONYM') return 2;
+      return 3;
+    };
+    return getRank(a) - getRank(b);
+  };
 
   if (isFetching) {
     return <Loading />;
   }
+  const sortedDescriptions = [...(descriptions ?? [])].sort(sortByType);
 
   return (
     <Box>
-      {descriptions?.map((description, index) => {
+      {sortedDescriptions?.map((description, index) => {
         if (!displayRetiredDescriptions && !description.active) {
           return null;
         }
@@ -233,7 +244,7 @@ export function DescriptionList({
               isPreferredTerm={isPreferred}
               onDescriptionChange={onDescriptionChange}
             />
-            {index < descriptions.length - 1 && (
+            {index < sortedDescriptions.length - 1 && (
               <Divider sx={{ width: '100%', my: 1 }} />
             )}
           </Box>
@@ -271,7 +282,6 @@ export function ExistingDescriptionsSection({
   displayMode = 'input',
   showBorder,
 }: ExistingDescriptionsSectionProps & { displayMode?: 'input' | 'text' }) {
-  debugger;
   return (
     <Grid
       item
