@@ -43,7 +43,8 @@
     },
     "items": {
       "ui:options": {
-        "skipTitle": true
+        "skipTitle": true,
+        "titleSource": "productDetails.productName.pt.term"
       },
       "ui:grid": [
         { "productDetails": 24 },

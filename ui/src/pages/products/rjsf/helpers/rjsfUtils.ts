@@ -262,6 +262,9 @@ export const getNonDefiningSchemaFromPath = (
   if (nonDefSchemaNode.type === 'array' && nonDefSchemaNode.items?.$ref) {
     return resolveRef(schema, nonDefSchemaNode.items?.$ref);
   }
+  if (nonDefSchemaNode.type === 'array' && nonDefSchemaNode.items?.anyOf) {
+    return nonDefSchemaNode.items;
+  }
 
   return null;
 };
