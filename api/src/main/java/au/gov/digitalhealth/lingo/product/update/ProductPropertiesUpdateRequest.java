@@ -30,5 +30,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductPropertiesUpdateRequest implements Serializable {
-  @Valid Set<@Valid NonDefiningBase> nonDefiningProperties;
+  @Valid Set<@Valid NonDefiningBase> newNonDefiningProperties;
+  @Valid Set<@Valid NonDefiningBase> existingNonDefiningProperties;
 }

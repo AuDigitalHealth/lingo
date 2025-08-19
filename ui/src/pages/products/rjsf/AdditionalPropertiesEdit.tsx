@@ -16,9 +16,7 @@ import NumberWidget from './widgets/NumberWidget.tsx';
 import ExternalIdentifiers from './fields/bulkBrandPack/ExternalIdentifiers.tsx';
 
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
-import {
-  NonDefiningProperty,
-} from '../../../types/product.ts';
+import { NonDefiningProperty } from '../../../types/product.ts';
 import { IChangeEvent } from '@rjsf/core';
 import { RJSFSchema, UiSchema } from '@rjsf/utils';
 import { validator } from './helpers/validator.ts';

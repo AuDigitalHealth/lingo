@@ -256,7 +256,8 @@ export interface ProductDescriptionUpdateRequest {
 }
 
 export interface ProductPropertiesUpdateRequest {
-  nonDefiningProperties: NonDefiningProperty[];
+  newNonDefiningProperties: NonDefiningProperty[];
+  existingNonDefiningProperties: NonDefiningProperty[] | undefined;
 }
 
 export interface BulkProductCreationDetails {
