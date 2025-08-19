@@ -16,7 +16,6 @@
 package au.gov.digitalhealth.lingo.controllers;
 
 import au.gov.digitalhealth.lingo.LingoTestClient;
-import au.gov.digitalhealth.lingo.RabbitTestBase;
 import au.gov.digitalhealth.lingo.configuration.Configuration;
 import com.google.gson.JsonObject;
 import io.restassured.RestAssured;
@@ -41,7 +40,7 @@ import org.springframework.test.context.ActiveProfiles;
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = Configuration.class)
 @ActiveProfiles("test")
 @Log
-class FieldBindingConfigurationTest extends RabbitTestBase {
+class FieldBindingConfigurationTest {
 
   @Value("${ihtsdo.ims.api.cookie.name}")
   String imsCookieName;
