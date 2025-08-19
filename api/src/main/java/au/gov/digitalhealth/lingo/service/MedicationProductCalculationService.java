@@ -66,6 +66,7 @@ import au.gov.digitalhealth.lingo.util.RelationshipSorter;
 import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import au.gov.digitalhealth.tickets.service.TicketServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -74,6 +75,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -510,7 +512,8 @@ public class MedicationProductCalculationService
                                   packageDetails.hasDeviceType(),
                                   packageLevel,
                                   node,
-                                  modelConfiguration);
+                                  modelConfiguration,
+                                  List.of());
                               productSummary.addNode(node);
                               parentNodes.forEach(
                                   parentNode -> {
@@ -882,6 +885,9 @@ public class MedicationProductCalculationService
                     Set<Node> parentNodes =
                         parents.stream().map(CompletableFuture::join).collect(Collectors.toSet());
 
+                    List<String> order =
+                        getOrder(level, parentNodes, productDetails, modelConfiguration);
+
                     return switch (level.getModelLevelType()) {
                       case MEDICINAL_PRODUCT, MEDICINAL_PRODUCT_ONLY, REAL_MEDICINAL_PRODUCT ->
                           findOrCreateMp(
@@ -898,7 +904,8 @@ public class MedicationProductCalculationService
                                       modelConfiguration,
                                       productSummary,
                                       parentNodes,
-                                      modelConfiguration));
+                                      modelConfiguration,
+                                      order));
                       case CLINICAL_DRUG, REAL_CLINICAL_DRUG ->
                           findOrCreateUnit(
                                   branch,
@@ -917,7 +924,8 @@ public class MedicationProductCalculationService
                                       modelConfiguration,
                                       productSummary,
                                       parentNodes,
-                                      modelConfiguration));
+                                      modelConfiguration,
+                                      order));
                       default ->
                           throw new IllegalArgumentException(
                               "Unsupported model level type: " + level.getModelLevelType());
@@ -950,6 +958,31 @@ public class MedicationProductCalculationService
     return productSummary;
   }
 
+  private List<String> getOrder(
+      ModelLevel level,
+      Set<Node> parentNodes,
+      MedicationProductDetails productDetails,
+      ModelConfiguration modelConfiguration) {
+    ModelLevelType rootType =
+        modelConfiguration.getRootUnbrandedProductModelLevel().getModelLevelType();
+    if (parentNodes.isEmpty() || level.getModelLevelType().equals(rootType)) {
+      // must be the root node
+      return productDetails.getActiveIngredients().stream()
+          .map(i -> i.getActiveIngredient().getPt().getTerm())
+          .toList();
+    } else {
+      Optional<Node> parent =
+          parentNodes.stream().filter(n -> n.getModelLevel().equals(rootType)).findFirst();
+      if (parent.isPresent()) {
+        return Arrays.stream(parent.get().getPreferredTerm().split("\\+"))
+            .map(String::trim)
+            .toList();
+      } else {
+        return List.of();
+      }
+    }
+  }
+
   private Function<Node, Node> postProductNodeCreationFunction(
       MedicationProductDetails productDetails,
       AtomicCache atomicCache,
@@ -957,9 +990,10 @@ public class MedicationProductCalculationService
       ModelConfiguration modelConfiguration,
       ProductSummary productSummary,
       Set<Node> parentNodes,
-      ModelConfiguration branchModelConfiguration) {
+      ModelConfiguration branchModelConfiguration,
+      List<String> order) {
     return n -> {
-      generateName(atomicCache, productDetails, level, n, modelConfiguration);
+      generateName(atomicCache, productDetails, level, n, modelConfiguration, order);
       productSummary.addNode(n);
       for (Node parent : parentNodes) {
         productSummary.addEdge(
@@ -1032,7 +1066,8 @@ public class MedicationProductCalculationService
       MedicationProductDetails productDetails,
       ModelLevel level,
       Node node,
-      ModelConfiguration modelConfiguration) {
+      ModelConfiguration modelConfiguration,
+      List<String> order) {
 
     if (productDetails instanceof NutritionalProductDetails nutritionalProductDetails) {
       handleNutritionalProductName(atomicCache, level, node, nutritionalProductDetails);
@@ -1043,7 +1078,8 @@ public class MedicationProductCalculationService
               ? level.getDrugDeviceSemanticTag()
               : level.getMedicineSemanticTag(),
           node,
-          modelConfiguration);
+          modelConfiguration,
+          order);
     }
   }
 
@@ -1052,13 +1088,15 @@ public class MedicationProductCalculationService
       boolean hasDeviceType,
       ModelLevel level,
       Node node,
-      ModelConfiguration modelConfiguration) {
+      ModelConfiguration modelConfiguration,
+      List<String> order) {
 
     nameGenerationService.addGeneratedFsnAndPt(
         atomicCache,
         hasDeviceType ? level.getDrugDeviceSemanticTag() : level.getMedicineSemanticTag(),
         node,
-        modelConfiguration);
+        modelConfiguration,
+        order);
   }
 
   private Set<SnowstormRelationship> createMpRelationships(

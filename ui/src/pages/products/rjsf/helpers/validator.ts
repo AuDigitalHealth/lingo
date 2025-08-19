@@ -109,12 +109,12 @@ export const customTransformErrors = (
       e.keyword !== 'discriminator' &&
       e.keyword !== 'additionalProperties',
   );
-  if (emptyPathErrors.length > 0) {
-    console.log(
-      'Errors with empty instancePath:',
-      JSON.stringify(emptyPathErrors, null, 2),
-    );
-  }
+  // if (emptyPathErrors.length > 0) {
+  //   console.log(
+  //     'Errors with empty instancePath:',
+  //     JSON.stringify(emptyPathErrors, null, 2),
+  //   );
+  // }
 
   if (!schema || typeof schema !== 'object') {
     return errors
@@ -339,7 +339,8 @@ export const validator = (() => {
 
       const now = new Date().toISOString();
       if (schema) {
-        schema.$id = `${formData.variant}-${now}`;
+        const variant = formData?.variant ?? 'default'; // fallback
+        schema.$id = `${variant}-${now}`;
       }
       const validate = ajvMain.compile(schema);
       const valid = validate(cleanedFormData);
