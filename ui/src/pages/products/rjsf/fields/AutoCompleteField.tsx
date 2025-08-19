@@ -30,7 +30,14 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
       idSchema.$id,
     );
     if (optionsFromPath && Object.keys(optionsFromPath).length > 0) {
-      return optionsFromPath?.['ui:options'] || {};
+      if (
+        optionsFromPath?.['ui:options'] &&
+        Object.keys(optionsFromPath?.['ui:options']).length > 0
+      ) {
+        return optionsFromPath?.['ui:options'] || {};
+      } else {
+        return optionsFromPath;
+      }
     }
     // Fallback to default ui:options from props.uiSchema
     return props.uiSchema?.['ui:options'] || {};
@@ -114,8 +121,7 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
     setOpenCreateBrandModal(false);
   };
   const createPrimitiveConcept =
-    (props.uiSchema?.['ui:options']
-      ?.createPrimitiveConcept as CreateConceptConfig) || undefined;
+    (uiOptions?.createPrimitiveConcept as CreateConceptConfig) || undefined;
   const createPrimitiveEcl = createPrimitiveConcept?.ecl;
   const createPrimitiveSemanticTag = createPrimitiveConcept?.semanticTags || '';
   const createParentConceptId = createPrimitiveConcept?.parentConceptId || '';

@@ -17,21 +17,28 @@ package au.gov.digitalhealth.lingo.product.details;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public enum ProductTemplate {
-  CONCENTRATION_AND_PRESENTATION_STRENGTH("concentrationAndPresentationStrength"),
-  CONCENTRATION_STRENGTH("concentrationStrength"),
-  PRESENTATION_STRENGTH("presentationStrength"),
-  NO_STRENGTH("noStrength"),
-  NO_INGREDIENTS("noIngredients");
+public enum PackType {
+  NORMAL("normal"),
+  MULTI_PACK("multipack");
+
 
   private final String value;
 
-  ProductTemplate(String value) {
+  PackType(String value) {
     this.value = value;
   }
 
   @JsonValue
   public String getValue() {
     return value;
+  }
+
+  public static PackType fromString(String value) {
+    for (PackType packType : PackType.values()) {
+      if (packType.value.equals(value)) {
+        return packType;
+      }
+    }
+    throw new IllegalArgumentException("Unknown product type: " + value);
   }
 }

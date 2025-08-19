@@ -271,16 +271,24 @@ export const evaluateExpression = (
   context: { formData: any },
 ): boolean => {
   try {
-    if (expression.endsWith('?.length > 0')) {
-      let path = expression
-        .replace(/^formData\./, '')
-        .replace(/\?.length > 0$/, '');
-      path = path.replace(/\?\.\[/g, '[').replace(/\?\./g, '.');
-      const value = get(context.formData, path);
-      const result = typeof value === 'string' && value.length > 0;
-      return result;
+    // Handle logical OR (`||`)
+    if (expression.includes('||')) {
+      return expression
+        .split('||')
+        .map(part => part.trim())
+        .some(expr => evaluateSingleExpression(expr, context));
     }
-    return false;
+
+    // Handle logical AND (`&&`)
+    if (expression.includes('&&')) {
+      return expression
+        .split('&&')
+        .map(part => part.trim())
+        .every(expr => evaluateSingleExpression(expr, context));
+    }
+
+    // Single expression case
+    return evaluateSingleExpression(expression.trim(), context);
   } catch (error) {
     console.error('evaluateExpression - error:', {
       expression,
@@ -290,3 +298,18 @@ export const evaluateExpression = (
     return false;
   }
 };
+
+function evaluateSingleExpression(
+  expression: string,
+  context: { formData: any },
+) {
+  if (expression.endsWith('?.length > 0')) {
+    let path = expression
+      .replace(/^formData\./, '')
+      .replace(/\?.length > 0$/, '');
+    path = path.replace(/\?\.\[/g, '[').replace(/\?\./g, '.');
+    const value = get(context.formData, path);
+    return typeof value === 'string' && value.length > 0;
+  }
+  return false;
+}

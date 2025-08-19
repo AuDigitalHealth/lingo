@@ -830,7 +830,7 @@ public class ProductUpdateService {
                                   .collect(Collectors.joining(" OR "))
                               + ")",
                           0,
-                          100,
+                          1000,
                           modelConfiguration.isExecuteEclAsStated())
                       .thenAccept(
                           c -> {

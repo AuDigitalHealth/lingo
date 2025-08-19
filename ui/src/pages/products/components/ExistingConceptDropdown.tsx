@@ -7,6 +7,7 @@ import { sortNonDefiningProperties } from '../../../utils/helpers/tickets/additi
 import {
   extractSemanticTag,
   removeSemanticTagFromTerm,
+  removeSemanticTagFromTermSemTagUndefined,
 } from '../../../utils/helpers/ProductPreviewUtils.ts';
 import { ContentCopy } from '@mui/icons-material';
 import { enqueueSnackbar } from 'notistack';
@@ -44,7 +45,9 @@ function ExistingConceptDropdown({
     ?.trim()
     .toLocaleLowerCase();
 
-  const termWithoutTag = removeSemanticTagFromTerm(product.concept?.fsn?.term);
+  const termWithoutTag = removeSemanticTagFromTermSemTagUndefined(
+    product.concept?.fsn?.term,
+  );
 
   const handleCopy = () => {
     if (product.concept?.fsn?.term) {
