@@ -344,9 +344,7 @@ public class ProductCreationService {
 
     if (productSummaryClone != null) {
       modifiedGeneratedNameService.createAndSaveModifiedGeneratedNames(
-          productSummaryClone,
-          branch,
-          idMap);
+          productSummaryClone, branch, idMap);
     }
 
     BulkProductActionDto dto =
@@ -419,9 +417,7 @@ public class ProductCreationService {
 
     if (productSummaryClone != null) {
       modifiedGeneratedNameService.createAndSaveModifiedGeneratedNames(
-          productSummaryClone,
-          branch,
-          idMap);
+          productSummaryClone, branch, idMap);
     }
 
     updateTicket(
