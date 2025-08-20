@@ -122,13 +122,13 @@ public class UiSchemaExtender {
         ProductPackageType.PACKAGE);
 
     addUiNodeForPropertySet(
-            uiSchemaNode
-                    .withObjectProperty("containedPackages")
-                    .withObjectProperty(ITEMS)
-                    .withObjectProperty(PACKAGE_DETAILS),
-            properties,
-            nodeName,
-            ProductPackageType.PACKAGE);
+        uiSchemaNode
+            .withObjectProperty("containedPackages")
+            .withObjectProperty(ITEMS)
+            .withObjectProperty(PACKAGE_DETAILS),
+        properties,
+        nodeName,
+        ProductPackageType.PACKAGE);
     addUiNodeForPropertySet(
         uiSchemaNode
             .withObjectProperty("containedPackages")
