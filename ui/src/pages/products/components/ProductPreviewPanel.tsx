@@ -224,7 +224,7 @@ function ProductPreviewPanel({
         handleClose={() => setDescriptionModalOpen(false)}
         open={descriptionModalOpen}
         product={product}
-        keepMounted={true}
+        keepMounted={false}
         branch={branch}
       />
       {isSimpleEdit && ticket && (

@@ -1,7 +1,10 @@
 import { useParams } from 'react-router-dom';
 import { Product } from '../../types/concept';
 import useApplicationConfigStore from '../../stores/ApplicationConfigStore';
-import { useSearchConceptById } from '../../hooks/api/products/useSearchConcept';
+import {
+  useSearchConceptById,
+  useSearchConceptByIdNoCache,
+} from '../../hooks/api/products/useSearchConcept';
 import BaseModal from '../modal/BaseModal';
 import BaseModalHeader from '../modal/BaseModalHeader';
 import BaseModalBody from '../modal/BaseModalBody';
@@ -39,7 +42,10 @@ export default function DescriptionModal({
   const [displayRetiredDescriptions, setDisplayRetiredDescriptions] =
     useState(false);
   const conceptId = product.newConceptDetails ? undefined : product.conceptId;
-  const { data, isLoading } = useSearchConceptById(conceptId, fullBranch);
+  const { data, isLoading } = useSearchConceptByIdNoCache(
+    conceptId,
+    fullBranch,
+  );
   const { data: projects } = useAvailableProjects();
   const project = getProjectFromKey(applicationConfig?.apProjectKey, projects);
   const langRefsets = useProjectLangRefsets({ project: project });
