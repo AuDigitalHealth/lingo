@@ -181,10 +181,9 @@ public class ProductUpdateService {
 
     if (productExternalIdentifierUpdateRequest != null) {
       log.info(String.format("Product update for %s contains ARTGIDS.", conceptId));
-      updateProductProperties(branch, conceptId, productExternalIdentifierUpdateRequest, productUpdateCreationDetails);
+      updateProductProperties(
+          branch, conceptId, productExternalIdentifierUpdateRequest, productUpdateCreationDetails);
     }
-
-
 
     Optional<BulkProductAction> existingBulkProductAction =
         bulkProductActionRepository.findByNameAndTicketId(
@@ -478,8 +477,13 @@ public class ProductUpdateService {
       ProductUpdateCreationDetails productUpdateCreationDetails)
       throws InterruptedException {
 
-    productUpdateCreationDetails.getUpdatedState().setNonDefiningProperties(productPropertiesUpdateRequest.getNewNonDefiningProperties());
-    productUpdateCreationDetails.getHistoricState().setNonDefiningProperties(productPropertiesUpdateRequest.getExistingNonDefiningProperties());
+    productUpdateCreationDetails
+        .getUpdatedState()
+        .setNonDefiningProperties(productPropertiesUpdateRequest.getNewNonDefiningProperties());
+    productUpdateCreationDetails
+        .getHistoricState()
+        .setNonDefiningProperties(
+            productPropertiesUpdateRequest.getExistingNonDefiningProperties());
     HashSet<NonDefiningBase> nonDefiningBaseSet = new HashSet<>();
 
     // Handle external identifiers and reference sets
@@ -488,7 +492,8 @@ public class ProductUpdateService {
             branch, conceptId, productPropertiesUpdateRequest, productUpdateCreationDetails));
     // Handle non-defining properties
     nonDefiningBaseSet.addAll(
-        handleNonDefiningProperties(branch, conceptId, productPropertiesUpdateRequest, productUpdateCreationDetails));
+        handleNonDefiningProperties(
+            branch, conceptId, productPropertiesUpdateRequest, productUpdateCreationDetails));
   }
 
   private Collection<NonDefiningBase> handleExternalIdentifiersAndReferenceSets(
@@ -561,7 +566,9 @@ public class ProductUpdateService {
   }
 
   public Collection<NonDefiningProperty> handleNonDefiningProperties(
-      String branch, String conceptId, @Valid ProductPropertiesUpdateRequest updateRequest,
+      String branch,
+      String conceptId,
+      @Valid ProductPropertiesUpdateRequest updateRequest,
       ProductUpdateCreationDetails productUpdate) {
 
     Map<String, NonDefiningPropertyDefinition> nonDefiningPropertiesByName =

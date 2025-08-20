@@ -12,7 +12,6 @@ import {
   MenuButtonIndent,
   MenuButtonItalic,
   MenuButtonOrderedList,
-  MenuButtonRedo,
   MenuButtonRemoveFormatting,
   MenuButtonStrikethrough,
   MenuButtonSubscript,
@@ -20,7 +19,6 @@ import {
   MenuButtonTaskList,
   MenuButtonTextColor,
   MenuButtonUnderline,
-  MenuButtonUndo,
   MenuButtonUnindent,
   MenuControlsContainer,
   MenuDivider,
@@ -145,9 +143,6 @@ export default function EditorMenuControls() {
       <MenuButtonRemoveFormatting />
 
       <MenuDivider />
-
-      <MenuButtonUndo />
-      <MenuButtonRedo />
     </MenuControlsContainer>
   );
 }
