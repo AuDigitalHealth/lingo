@@ -2,7 +2,7 @@ import {
   ProductExternalRequesterUpdateRequest,
   ProductUpdateRequest,
 } from '../../../types/product.ts';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { enqueueSnackbar } from 'notistack';
 import { AxiosError } from 'axios';
 import productService from '../../../api/ProductService.ts';
@@ -14,6 +14,7 @@ interface useUpdateProductDescriptionArguments {
 }
 
 export function useUpdateProduct() {
+  const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: ({
       productUpdateRequest,
