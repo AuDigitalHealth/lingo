@@ -159,10 +159,9 @@ function DeviceAuthoring({
     setOriginalConceptId(undefined);
   }, []);
 
-  // Clear form data when task changes
   useEffect(() => {
     handleClear();
-  }, [task, handleClear]);
+  }, [handleClear]);
 
   if (
     isLoading ||
