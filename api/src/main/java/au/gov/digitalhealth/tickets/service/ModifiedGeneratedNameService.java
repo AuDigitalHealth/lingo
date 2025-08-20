@@ -50,9 +50,7 @@ public class ModifiedGeneratedNameService {
   }
 
   public void createAndSaveModifiedGeneratedNames(
-      ProductSummary productSummaryClone,
-      String branch,
-      BidiMap<String, String> idMap) {
+      ProductSummary productSummaryClone, String branch, BidiMap<String, String> idMap) {
 
     List<ModifiedGeneratedName> modifiedGeneratedNames =
         productSummaryClone.getNodes().stream()
