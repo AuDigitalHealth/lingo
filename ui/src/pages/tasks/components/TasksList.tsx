@@ -172,7 +172,7 @@ function TasksList({
     field: 'key',
     headerName: 'Task ID',
     minWidth: 90,
-    flex: 1,
+    // flex: 1,
     maxWidth: 90,
     valueGetter: (params: GridRenderCellParams<any, string>): string => {
       return params.row?.key || '';
@@ -216,14 +216,26 @@ function TasksList({
     {
       field: 'summary',
       headerName: 'Name',
-      width: 150,
+      minWidth: 150,
+      flex: 1,
+      maxWidth: 300,
+      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
+        <div style={{ 
+          whiteSpace: 'normal', 
+          wordWrap: 'break-word',
+          lineHeight: '1.2',
+          padding: '8px 0'
+        }}>
+          {params.value}
+        </div>
+      ),
     },
     taskIdColumn,
     {
       field: 'updated',
       headerName: 'Modified',
       minWidth: 100,
-      flex: 1,
+      // flex: 1,
       maxWidth: 100,
       valueFormatter: ({ value }: GridValueFormatterParams<string>) => {
         const date = new Date(value);
@@ -357,7 +369,7 @@ function TasksList({
     {
       field: 'reviewers',
       headerName: 'Reviewers',
-      width: 350,
+      width: 200,
       type: 'singleSelect',
       filterable: false,
       sortable: true,
@@ -458,6 +470,11 @@ function TasksList({
                   maxHeight: 'none !important',
                   paddingLeft: '24px',
                   paddingRight: '24px',
+                },
+                '& .MuiDataGrid-cell': {
+                  whiteSpace: 'normal !important',
+                  wordWrap: 'break-word',
+                  lineHeight: '1.2',
                 },
                 '& .MuiDataGrid-columnHeaders': {
                   border: 0,
