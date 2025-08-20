@@ -220,12 +220,14 @@ function TasksList({
       flex: 1,
       maxWidth: 300,
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <div style={{ 
-          whiteSpace: 'normal', 
-          wordWrap: 'break-word',
-          lineHeight: '1.2',
-          padding: '8px 0'
-        }}>
+        <div
+          style={{
+            whiteSpace: 'normal',
+            wordWrap: 'break-word',
+            lineHeight: '1.2',
+            padding: '8px 0',
+          }}
+        >
           {params.value}
         </div>
       ),
