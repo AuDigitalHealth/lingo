@@ -54,15 +54,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     return e.getBody();
   }
 
-  @ExceptionHandler({WebClientResponseException.InternalServerError.class,
-      WebClientResponseException.BadGateway.class})
+  @ExceptionHandler({
+    WebClientResponseException.InternalServerError.class,
+    WebClientResponseException.BadGateway.class
+  })
   ResponseEntity<ProblemDetail> handleUpstreamServiceError(WebClientResponseException ex) {
     String upstreamService = extractServiceName(ex.getRequest());
-    UpstreamServiceProblem problem = new UpstreamServiceProblem(
-        "Upstream service error: " + ex.getMessage(),
-        upstreamService,
-        HttpStatus.resolve(ex.getStatusCode().value()),
-        ex);
+    UpstreamServiceProblem problem =
+        new UpstreamServiceProblem(
+            "Upstream service error: " + ex.getMessage(),
+            upstreamService,
+            HttpStatus.resolve(ex.getStatusCode().value()),
+            ex);
     return new ResponseEntity<>(problem.getBody(), ex.getStatusCode());
   }
 
