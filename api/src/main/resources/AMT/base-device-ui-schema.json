@@ -14,9 +14,11 @@
       "ecl": "<774167006",
       "branch": "MAIN",
       "showDefaultOptions": false,
-      "createBrand": {
+      "createPrimitiveConcept": {
         "ecl": "<774167006",
-        "semanticTags": "(product name)"
+        "semanticTags": "(product name)",
+        "parentConceptId": "774167006",
+        "parentConceptName": "Product name (product name)"
       }
     }
   },
