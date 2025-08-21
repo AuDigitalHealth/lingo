@@ -95,7 +95,7 @@ export default function HistoricalAssociationsDisplay({
           </div>
         )}
         <div>
-          <strong>Target:</strong> {targetComponentId}
+          <strong>Target:</strong> {referencedComponent?.conceptId}
         </div>
         {referencedComponent?.pt?.term && (
           <div>
@@ -112,12 +112,13 @@ export default function HistoricalAssociationsDisplay({
         </div>
         {referencedComponent && (
           <div>
-            <strong>Component Active:</strong>{' '}
+            <strong>Referenced Component Active:</strong>{' '}
             {referencedComponent.active ? 'Yes' : 'No'}
           </div>
         )}
         <div>
-          <strong>Released:</strong> {association.released ? 'Yes' : 'No'}
+          <strong>Association Released:</strong>{' '}
+          {association.released ? 'Yes' : 'No'}
         </div>
       </>
     );
@@ -160,7 +161,7 @@ export default function HistoricalAssociationsDisplay({
               },
             }}
           >
-            {targetComponentId}
+            {referencedComponent?.conceptId}
           </Box>
           <Box
             sx={{
