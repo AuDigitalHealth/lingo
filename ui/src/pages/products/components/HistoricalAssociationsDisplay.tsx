@@ -95,7 +95,7 @@ export default function HistoricalAssociationsDisplay({
           </div>
         )}
         <div>
-          <strong>Target:</strong> {referencedComponent?.conceptId}
+          <strong>Target Component Id:</strong> {targetComponentId}
         </div>
         {referencedComponent?.pt?.term && (
           <div>
