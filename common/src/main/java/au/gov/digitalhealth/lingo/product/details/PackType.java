@@ -21,7 +21,6 @@ public enum PackType {
   NORMAL("normal"),
   MULTI_PACK("multipack");
 
-
   private final String value;
 
   PackType(String value) {
