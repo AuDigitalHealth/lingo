@@ -6,7 +6,6 @@ import java.util.concurrent.CompletableFuture;
 import lombok.extern.java.Log;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.interceptor.SimpleKey;
 import org.springframework.scheduling.annotation.Async;
 
@@ -26,9 +25,10 @@ public abstract class GenericRefreshCacheService<T> {
   protected abstract T fetchFromSource() throws Exception;
 
   @Async
-  @CachePut(cacheNames = "#{@this.getCacheName()}")
   public CompletableFuture<T> refreshCache() {
     Instant start = Instant.now();
+    Cache cache = cacheManager.getCache(getCacheName());
+
     try {
       T data = fetchFromSource();
       Instant end = Instant.now();
@@ -39,22 +39,24 @@ public abstract class GenericRefreshCacheService<T> {
                   "[%s] refreshed in %d ms",
                   getCacheName(), Duration.between(start, end).toMillis()));
 
-      // Store the last successful refresh timestamp in the cache for managing multiple caches
-      Cache cache = cacheManager.getCache(getCacheName());
       if (cache != null) {
+        cache.put(SimpleKey.EMPTY, data);
         cache.put("lastSuccessfulRefresh", end);
       }
 
       return CompletableFuture.completedFuture(data);
+
     } catch (Exception ex) {
-      Cache cache = cacheManager.getCache(getCacheName());
-      Instant last =
-          (cache != null && cache.get("lastSuccessfulRefresh") != null)
-              ? cache.get("lastSuccessfulRefresh", Instant.class)
-              : null;
+      Instant last = null;
+      if (cache != null && cache.get("lastSuccessfulRefresh") != null) {
+        last = cache.get("lastSuccessfulRefresh", Instant.class);
+      }
+
       String lastStr = (last != null) ? last.toString() : "never";
       String timeAgo =
-          (last != null) ? formatDuration(Duration.between(last, Instant.now())) : "N/A";
+          (last != null)
+              ? String.format("%d seconds", Duration.between(last, Instant.now()).getSeconds())
+              : "N/A";
 
       log.severe(
           () ->
@@ -65,10 +67,5 @@ public abstract class GenericRefreshCacheService<T> {
       T cached = (cache != null) ? cache.get(SimpleKey.EMPTY, valueType()) : null;
       return CompletableFuture.completedFuture(cached);
     }
-  }
-
-  private String formatDuration(Duration duration) {
-    long seconds = duration.getSeconds();
-    return String.format("%d seconds", seconds);
   }
 }
