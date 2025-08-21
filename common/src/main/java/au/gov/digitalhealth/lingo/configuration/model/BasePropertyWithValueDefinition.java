@@ -58,6 +58,7 @@ public abstract class BasePropertyWithValueDefinition extends BasePropertyDefini
   private String createConceptParentName;
 
   private String createConceptPlaceholderText;
+
   /** External reference to a value set. */
   private String valueSetReference;
 
