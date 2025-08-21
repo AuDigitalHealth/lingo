@@ -15,7 +15,6 @@
  */
 package au.gov.digitalhealth.lingo.configuration;
 
-import static au.gov.digitalhealth.lingo.util.CacheConstants.ALL_TASKS_CACHE;
 import static au.gov.digitalhealth.lingo.util.CacheConstants.AP_STATUS_CACHE;
 import static au.gov.digitalhealth.lingo.util.CacheConstants.COMPOSITE_UNIT_CACHE;
 import static au.gov.digitalhealth.lingo.util.CacheConstants.JIRA_USERS_CACHE;
@@ -23,6 +22,7 @@ import static au.gov.digitalhealth.lingo.util.CacheConstants.SNOWSTORM_STATUS_CA
 import static au.gov.digitalhealth.lingo.util.CacheConstants.UNIT_NUMERATOR_DENOMINATOR_CACHE;
 import static au.gov.digitalhealth.lingo.util.CacheConstants.USERS_CACHE;
 
+import au.gov.digitalhealth.lingo.service.AllTasksService;
 import au.gov.digitalhealth.lingo.service.JiraUserManagerService;
 import au.gov.digitalhealth.lingo.service.SnowstormClient;
 import java.util.concurrent.TimeUnit;
@@ -42,6 +42,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 public class CachingConfig implements CachingConfigurer {
 
   SnowstormClient snowstormClient;
+  AllTasksService allTasksService;
 
   JiraUserManagerService jiraUserManagerService;
 
@@ -51,9 +52,13 @@ public class CachingConfig implements CachingConfigurer {
   @Value("${caching.spring.jiraUser.enabled}")
   private boolean jiraUserCacheEnabled;
 
-  CachingConfig(SnowstormClient snowstormClient, JiraUserManagerService jiraUserManagerService) {
+  CachingConfig(
+      SnowstormClient snowstormClient,
+      JiraUserManagerService jiraUserManagerService,
+      AllTasksService allTasksService) {
     this.snowstormClient = snowstormClient;
     this.jiraUserManagerService = jiraUserManagerService;
+    this.allTasksService = allTasksService;
   }
 
   @CacheEvict(value = USERS_CACHE, allEntries = true)
@@ -92,10 +97,10 @@ public class CachingConfig implements CachingConfigurer {
     log.finer("Refreshing ap status cache");
   }
 
-  @CacheEvict(value = ALL_TASKS_CACHE, allEntries = true)
   @Scheduled(fixedRateString = "60000")
   public void refreshAllTasksCache() {
-    log.finer("Refresh all Tasks cache");
+    log.info("Triggering async refresh of All Tasks cache...");
+    allTasksService.refreshAllTasksCache();
   }
 
   @CacheEvict(value = COMPOSITE_UNIT_CACHE)

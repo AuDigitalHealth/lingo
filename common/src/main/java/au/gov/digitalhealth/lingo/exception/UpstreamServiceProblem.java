@@ -1,8 +1,6 @@
 package au.gov.digitalhealth.lingo.exception;
 
-import lombok.Getter;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ProblemDetail;
 
 public class UpstreamServiceProblem extends LingoProblem {
 
@@ -14,7 +12,8 @@ public class UpstreamServiceProblem extends LingoProblem {
         message + " from " + upstreamService);
   }
 
-  public UpstreamServiceProblem(String message, String upstreamService, HttpStatus upstreamStatus, Throwable cause) {
+  public UpstreamServiceProblem(
+      String message, String upstreamService, HttpStatus upstreamStatus, Throwable cause) {
     super(
         "upstream-service-error",
         "Upstream Service Error",

@@ -44,8 +44,7 @@ public abstract class NonDefiningBase {
   String identifier;
   String title;
   String description;
-  @JsonIgnore
-  PropertyType type;
+  @JsonIgnore PropertyType type;
 
   @Override
   public boolean equals(Object o) {
