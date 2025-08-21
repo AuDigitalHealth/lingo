@@ -66,7 +66,7 @@ public class TaskManagerClient {
   /** Get all tasks from cache if present, else fetch from remote. */
   @Cacheable(cacheNames = CacheConstants.ALL_TASKS_CACHE)
   public List<Task> getAllTasks() throws AccessDeniedException {
-    return allTasksService.fetchTasksFromRemote();
+    return allTasksService.fetchFromSource();
   }
 
   public List<Task> getAllTasksOverProject() throws AccessDeniedException {
@@ -113,7 +113,7 @@ public class TaskManagerClient {
             .bodyToMono(Task.class)
             .block();
     if (createdTask != null) {
-      allTasksService.refreshAllTasksCache(); // async call
+      allTasksService.refreshCache(); // async call
     }
     return createdTask;
   }
