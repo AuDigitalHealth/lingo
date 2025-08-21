@@ -71,12 +71,8 @@ public class CachingConfig implements CachingConfigurer {
   @Scheduled(fixedRateString = "${caching.spring.usersTTL}")
   public void emptyJiraUsersCache() {
     if (jiraUserCacheEnabled) {
-      log.finer("refreshing jira user cache");
-      try {
-        jiraUserManagerService.getAllJiraUsers();
-      } catch (Exception e) {
-        log.warning("Error refreshing jira user cache: " + e.getMessage());
-      }
+      log.info("Triggering async refresh of cache [" + jiraUserManagerService.getCacheName() + "]");
+      jiraUserManagerService.refreshCache();
     }
   }
 
@@ -97,10 +93,10 @@ public class CachingConfig implements CachingConfigurer {
     log.finer("Refreshing ap status cache");
   }
 
-  @Scheduled(fixedRateString = "60000")
+  @Scheduled(fixedRateString = "${caching.spring.allTaskTTL}")
   public void refreshAllTasksCache() {
-    log.info("Triggering async refresh of All Tasks cache...");
-    allTasksService.refreshAllTasksCache();
+    log.info("Triggering async refresh of cache [" + allTasksService.getCacheName() + "]");
+    allTasksService.refreshCache();
   }
 
   @CacheEvict(value = COMPOSITE_UNIT_CACHE)

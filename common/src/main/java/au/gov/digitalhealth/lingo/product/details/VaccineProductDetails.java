@@ -39,6 +39,11 @@ public class VaccineProductDetails extends MedicationProductDetails {
   }
 
   @Override
+  public ProductType getType() {
+    return type;
+  }
+
+  @Override
   protected Map<String, String> getSpecialisedIdFsnMap() {
     Map<String, String> idMap = super.getSpecialisedIdFsnMap();
     if (targetPopulation != null) {
