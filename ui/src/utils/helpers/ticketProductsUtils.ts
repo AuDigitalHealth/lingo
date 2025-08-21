@@ -230,7 +230,7 @@ export function mapToProductDetailsArrayFromBulkActions(
           ? ProductType.bulkPackSize
           : item.details.type,
       created: item.created,
-      action: 'CREATE', // Default action for bulk actions is CREATE
+      // action: 'CREATE', // Default action for bulk actions is CREATE
     };
     return productDto;
   });
