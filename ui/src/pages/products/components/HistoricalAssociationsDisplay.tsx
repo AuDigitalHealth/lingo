@@ -328,11 +328,11 @@ const HistoricalAssociationDescriptions = {
   [HistoricalAssociationReferenceSet.POSSIBLY_EQUIVALENT_TO]:
     'POSSIBLY EQUIVALENT TO association reference set',
   [HistoricalAssociationReferenceSet.POSSIBLY_REPLACED_BY]:
-    'POSSIBLY REPLACED BY association reference set',
+    'POSSIBLY REPLACEMENT FOR association reference set',
   [HistoricalAssociationReferenceSet.REFERS_TO]:
     'REFERS TO concept association reference set',
   [HistoricalAssociationReferenceSet.REPLACED_BY]:
-    'REPLACED BY association reference set',
+    'REPLACEMENT FOR association reference set',
   [HistoricalAssociationReferenceSet.SAME_AS]:
     'SAME AS association reference set',
   [HistoricalAssociationReferenceSet.SIMILAR_TO]:
