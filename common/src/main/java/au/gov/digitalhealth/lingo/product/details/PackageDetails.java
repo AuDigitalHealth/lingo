@@ -152,10 +152,7 @@ public class PackageDetails<T extends ProductDetails> extends PackageProductDeta
           && containedPackages.get(0).getPackageDetails() != null) {
         variant = containedPackages.get(0).getPackageDetails().getVariant();
       } else {
-        final LingoProblem lingoProblem =
-            new LingoProblem("No contained package or product found looking for variant");
-        log.log(Level.SEVERE, "Variant not found in package details ", lingoProblem);
-        throw lingoProblem;
+        variant = ProductType.MEDICATION;
       }
     }
     return variant;
