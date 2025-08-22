@@ -22,6 +22,7 @@ import { RJSFSchema, UiSchema } from '@rjsf/utils';
 import { validator } from './helpers/validator.ts';
 import CustomTextFieldWidget from './widgets/CustomTextFieldWidget.tsx';
 interface AdditionalPropertiesEditProps {
+  isUpdating: boolean;
   label: string;
   branch: string;
   nonDefiningProperties?: NonDefiningProperty[];
@@ -34,15 +35,13 @@ export interface AdditionalPropertiesEditForm {
 }
 
 export default function AdditionalPropertiesEdit({
+  isUpdating,
   label,
   branch,
   nonDefiningProperties,
   onChange,
 }: AdditionalPropertiesEditProps) {
   const [formKey, setFormKey] = useState(0);
-  // const [formData, setFormData] = useState<AdditionalPropertiesEditForm>({nonDefiningProperties: nonDefiningProperties ? nonDefiningProperties.filter(ndp => {
-  //   return ndp.type !== NonDefiningPropertyType.REFERENCE_SET;
-  // }) : []});
   const [formData, setFormData] = useState<AdditionalPropertiesEditForm>({
     nonDefiningProperties: nonDefiningProperties ? nonDefiningProperties : [],
   });
@@ -70,13 +69,6 @@ export default function AdditionalPropertiesEdit({
       setFormData(changeEvent.formData);
       onChange(changeEvent.formData);
     }
-  };
-
-  const noValidateValidator = {
-    validateFormData: () => ({ errors: [], errorSchema: {} }),
-    isValid: () => true,
-    toErrorList: () => [],
-    rawValidation: () => ({ errors: [], validationError: false }),
   };
 
   return (
@@ -120,7 +112,7 @@ export default function AdditionalPropertiesEdit({
             validateFormData: (formData, schema) =>
               validator.validateFormData(formData, schema, uiSchema),
           }}
-          disabled={false}
+          disabled={isUpdating}
           noHtml5Validate={true}
           noValidate={true}
           showErrorList={false}
