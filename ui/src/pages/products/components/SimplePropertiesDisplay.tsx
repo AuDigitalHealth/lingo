@@ -62,10 +62,15 @@ export const SimplePropertiesDisplay: React.FC<
 
       return items.reduce(
         (acc, item) => {
+          // Add null/undefined check before using 'in' operator
           const itemTitle =
-            item.title ||
-            ('identifierScheme' in item ? item.identifierScheme : '') ||
-            ('name' in item ? item.name : '') ||
+            item?.title ||
+            (item && typeof item === 'object' && 'identifierScheme' in item
+              ? item.identifierScheme
+              : '') ||
+            (item && typeof item === 'object' && 'name' in item
+              ? item.name
+              : '') ||
             'Unknown';
 
           if (!acc[itemTitle]) {
