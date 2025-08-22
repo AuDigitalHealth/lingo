@@ -329,26 +329,27 @@ const ProductService = {
     const res = response.data as TicketBulkProductActionDto;
     return res;
   },
-  // async getExternalIdentifiers(
-  //   productId: string | undefined,
-  //   branch: string,
-  // ): Promise<NonDefiningProperty[]> {
-  //   const response = await api.get(
-  //     `/api${branch}/product-model/${productId}/externalIdentifiers`,
-  //   );
-  //   if (response.status != 200 && response.status != 422) {
-  //     this.handleErrors();
-  //   }
-  //   const res = response.data as NonDefiningProperty[];
-  //   return res;
-  // },
+  async getExternalIdentifiers(
+    productId: string | undefined,
+    branch: string,
+  ): Promise<NonDefiningProperty[]> {
+    const response = await api.get(
+      `/api/${branch}/product-model/${productId}/externalIdentifiers`,
+    );
+    if (response.status != 200 && response.status != 422) {
+      this.handleErrors();
+    }
+    const res = response.data as NonDefiningProperty[];
+    return res;
+  },
   async editProductNonDefiningProperties(
     externalRequesterUpdate: ProductNonDefiningPropertyUpdateRequest,
     productId: string,
     branch: string,
   ): Promise<NonDefiningProperty[]> {
+    const encodedBranch = encodeURIComponent(branch);
     const response = await api.put(
-      `/api/${branch}/product-model/${productId}/properties`,
+      `/api/${encodedBranch}/product-model/${productId}/properties`,
       externalRequesterUpdate,
     );
     if (response.status != 200 && response.status != 422) {

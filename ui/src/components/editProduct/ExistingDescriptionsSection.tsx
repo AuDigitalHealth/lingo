@@ -259,7 +259,6 @@ interface ExistingDescriptionsSectionProps {
   isFetching: boolean;
   nonDefiningProperties?: NonDefiningProperty[];
   descriptions?: Description[];
-  isCtpp: boolean;
   dialects: LanguageRefset[];
   title: string;
   product: Product;
@@ -273,7 +272,6 @@ export function ExistingDescriptionsSection({
   displayRetiredDescriptions,
   isFetching,
   descriptions,
-  isCtpp,
   dialects,
   title,
   nonDefiningProperties,
@@ -282,6 +280,9 @@ export function ExistingDescriptionsSection({
   displayMode = 'input',
   showBorder,
 }: ExistingDescriptionsSectionProps & { displayMode?: 'input' | 'text' }) {
+  if (title === 'Current state' && isFetching === false) {
+    debugger;
+  }
   return (
     <Grid
       item
