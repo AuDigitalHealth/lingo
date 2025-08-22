@@ -280,9 +280,6 @@ export function ExistingDescriptionsSection({
   displayMode = 'input',
   showBorder,
 }: ExistingDescriptionsSectionProps & { displayMode?: 'input' | 'text' }) {
-  if (title === 'Current state' && isFetching === false) {
-    debugger;
-  }
   return (
     <Grid
       item
