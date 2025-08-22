@@ -415,18 +415,21 @@ export function removeSemanticTagsFromTerms(
 
 export function reattachSemanticTags(productSummary: ProductSummary) {
   productSummary.nodes.forEach(node => {
-    if (node.newConceptDetails) {
-      const newSemanticTag = extractSemanticTag(
-        node.newConceptDetails.fullySpecifiedName,
-      );
-      // there's a new semantic tag, so update the semanticTag
-      if (node.newConceptDetails.semanticTag && newSemanticTag) {
-        node.newConceptDetails.semanticTag = newSemanticTag;
-        return;
-      }
-      // re-add old one
-      if (node.newConceptDetails && node.newConceptDetails.semanticTag) {
-        node.newConceptDetails.fullySpecifiedName = `${node.newConceptDetails.fullySpecifiedName?.trim()} ${node.newConceptDetails.semanticTag}`;
+    if (node.newConceptDetails && node.newConceptDetails.semanticTag) {
+      const fullySpecifiedName =
+        node.newConceptDetails.fullySpecifiedName?.trim() || '';
+      const semanticTag = node.newConceptDetails.semanticTag;
+
+      // Check if the semantic tag is already at the end (with or without brackets)
+      const tagWithBrackets = `(${semanticTag})`;
+      const tagWithoutBrackets = semanticTag;
+
+      const alreadyHasTag =
+        fullySpecifiedName.endsWith(tagWithBrackets) ||
+        fullySpecifiedName.endsWith(tagWithoutBrackets);
+
+      if (!alreadyHasTag) {
+        node.newConceptDetails.fullySpecifiedName = `${fullySpecifiedName} (${semanticTag})`;
       }
     }
   });

@@ -86,14 +86,12 @@ function ProductPreviewSaveOrViewMode({
   const productModel = useMemo(() => {
     const nodes = productModelResponse.nodes.map(node => {
       if (node.newConceptDetails?.semanticTag) {
-        const semanticTag = extractSemanticTag(
-          node.newConceptDetails?.fullySpecifiedName,
-        );
+        const semanticTag = node.newConceptDetails.semanticTag;
         if (semanticTag) {
           node.newConceptDetails.semanticTag = semanticTag;
           const termWithoutTag = removeSemanticTagFromTerm(
             node.newConceptDetails?.fullySpecifiedName,
-            node.newConceptDetails?.semanticTag,
+            semanticTag,
           );
           node.newConceptDetails.fullySpecifiedName = termWithoutTag
             ? termWithoutTag
@@ -130,11 +128,6 @@ function ProductPreviewSaveOrViewMode({
     duplicateConceptNameErrorMessages,
     setDuplicateConceptNameErrorMessages,
   ] = useState<Concept[] | undefined>(undefined);
-  const [semanticChangeWarning, setSemanticChangeWarning] = useState(false);
-  const [semanticChangeWarningMessages, setSemanticChangeWarningMessage] =
-    useState<string[] | undefined>(undefined);
-  const [overrideSemanticChangeWarning, setOverrideSemanticChangeWarning] =
-    useState(false);
 
   const productWithNameAlreadyExists = (
     ticket: Ticket | undefined,
@@ -258,12 +251,6 @@ function ProductPreviewSaveOrViewMode({
       setDuplicateNameModalOpen(true);
       return;
     }
-    // check if any of the concept semantic tags have been changed from the recieved semantic tag
-    const semanticTagChanges = getSemanticTagChanges(data);
-    if (semanticTagChanges.hasChanged && !overrideSemanticChangeWarning) {
-      setSemanticChangeWarning(true);
-      setSemanticChangeWarningMessage(semanticTagChanges.changeMessages);
-    }
 
     const errKey = await validateProductSummaryNodes(
       data.nodes,
@@ -284,10 +271,7 @@ function ProductPreviewSaveOrViewMode({
       setIgnoreErrorsModalOpen(true);
       ignoreErrorsOpen = true;
     }
-    if (
-      ignoreErrorsOpen ||
-      (semanticTagChanges.hasChanged && !overrideSemanticChangeWarning)
-    ) {
+    if (ignoreErrorsOpen) {
       return;
     }
 
@@ -304,7 +288,6 @@ function ProductPreviewSaveOrViewMode({
       setDuplicateConceptNameError(true);
       setDuplicateConceptNameErrorMessages(duplicateFsn.matchingConcepts);
       setIgnoreErrors(false);
-      setOverrideSemanticChangeWarning(false);
       return;
     }
     reattachSemanticTags(usedData as ProductSummary);
@@ -516,38 +499,18 @@ function ProductPreviewSaveOrViewMode({
             setDuplicateNameModalOpen(false);
           }}
         />
-        <SemanticTagOverrideModal
-          messages={semanticChangeWarningMessages}
-          open={semanticChangeWarning}
-          ignore={() => {
-            setOverrideSemanticChangeWarning(true);
-            setSemanticChangeWarning(false);
-            if (!ignoreErrorsModalOpen) {
-              void submitData();
-            }
-          }}
-          handleClose={() => {
-            setSemanticChangeWarning(false);
-            setIgnoreErrors(false);
-            setIgnoreErrorsModalOpen(false);
-          }}
-        />
         <WarningModal
-          open={ignoreErrorsModalOpen && !semanticChangeWarning}
+          open={ignoreErrorsModalOpen}
           content={`At least one FSN or PT is the same as another FSN or PT. Is this correct?`}
           handleClose={() => {
             setIgnoreErrorsModalOpen(false);
-            setSemanticChangeWarning(false);
-            setOverrideSemanticChangeWarning(false);
           }}
           disabled={false}
           action={'Ignore Duplicates'}
           handleAction={() => {
             setIgnoreErrors(true);
             setIgnoreErrorsModalOpen(false);
-            if (!semanticChangeWarning) {
-              void submitData();
-            }
+            void submitData();
           }}
         />
         <Box width={'100%'}>
