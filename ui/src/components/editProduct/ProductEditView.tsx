@@ -21,6 +21,7 @@ import { useSearchConceptByIdNoCache } from '../../hooks/api/products/useSearchC
 import { BrowserConcept } from '../../types/concept';
 import { ExistingDescriptionsSection } from './ExistingDescriptionsSection';
 import useProjectLangRefsets from '../../hooks/api/products/useProjectLangRefsets';
+import { useNodeModel } from '../../hooks/api/products/useNodeModel';
 
 const USLangRefset: LanguageRefset = {
   default: 'false',
@@ -62,10 +63,7 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
     currentConcept?.descriptions,
     defaultLangrefset,
   );
-  const { data: externalIdentifiers } = useExternalIdentifiers(
-    updatedConcept?.conceptId,
-    branch,
-  );
+  const { data: nodeModel } = useNodeModel(updatedConcept?.conceptId, branch);
 
   const historicDescriptions = isProductUpdateDetails(productUpdate?.details)
     ? sortDescriptions(
@@ -99,7 +97,7 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
     updatedConcept,
     currentConcept,
     updatedExternalIdentifiers,
-    externalIdentifiers,
+    nodeModel?.nonDefiningProperties,
     defaultLangrefset,
   );
   return (
@@ -129,11 +127,6 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
               displayRetiredDescriptions={displayRetiredDescriptions}
               descriptions={historicDescriptions}
               isFetching={false}
-              isCtpp={
-                containsExternalIdentifiers
-                  ? containsExternalIdentifiers
-                  : false
-              }
               nonDefiningProperties={historicExternalIdentifiers}
               title={'Old'}
               dialects={langRefsets}
@@ -154,11 +147,6 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
               displayRetiredDescriptions={displayRetiredDescriptions}
               descriptions={updatedDescriptions}
               isFetching={false}
-              isCtpp={
-                containsExternalIdentifiers
-                  ? containsExternalIdentifiers
-                  : false
-              }
               title={'Updated'}
               nonDefiningProperties={updatedExternalIdentifiers}
               dialects={langRefsets}
@@ -174,11 +162,8 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
             displayRetiredDescriptions={displayRetiredDescriptions}
             descriptions={currentDescriptions}
             isFetching={isFetching}
-            isCtpp={
-              externalIdentifiers ? externalIdentifiers.length > 0 : false
-            }
             title={'Current state'}
-            nonDefiningProperties={externalIdentifiers}
+            nonDefiningProperties={nodeModel?.nonDefiningProperties}
             dialects={langRefsets}
             displayMode="input"
             showBorder
