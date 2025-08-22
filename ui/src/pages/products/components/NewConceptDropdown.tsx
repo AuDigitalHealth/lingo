@@ -365,7 +365,7 @@ function NewConceptDropdownField({
             </Stack>
 
             {semanticTag && (
-              <FormHelperText>{`Semantic Tag: ${semanticTag}`}</FormHelperText>
+              <FormHelperText>{`Semantic Tag: (${semanticTag})`}</FormHelperText>
             )}
           </Stack>
         )}
