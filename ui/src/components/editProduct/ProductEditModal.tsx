@@ -339,39 +339,22 @@ function EditConceptBody({
 
   const theme = useTheme();
   const updateProductMutation = useUpdateProduct();
-  const updateProductExternalIdentifierMutation =
-    useUpdateProductExternalIdentifiers();
 
   const { isPending, data: updateProductDescriptionData } =
     updateProductMutation;
-  const {
-    isPending: isExternalIdentifiersPending,
-    data: updateExternalIdentifierData,
-  } = updateProductExternalIdentifierMutation;
 
-  const isUpdating = isPending || isExternalIdentifiersPending;
+  const isUpdating = isPending;
 
   useEffect(() => {
-    if (
-      !isUpdating &&
-      (updateProductDescriptionData || updateExternalIdentifierData)
-    ) {
+    if (!isUpdating && updateProductDescriptionData) {
       reset();
       handleClose();
     }
-  }, [
-    reset,
-    handleClose,
-    isUpdating,
-    updateProductDescriptionData,
-    isExternalIdentifiersPending,
-    updateExternalIdentifierData,
-  ]);
+  }, [reset, handleClose, isUpdating, updateProductDescriptionData]);
 
   const formSubmissionData = useRef<ProductUpdateRequest | null>(null);
 
   const onPropertiesChange = (val: AdditionalPropertiesEditForm) => {
-    // const tempUpdatedAdditionalProperties : = {updateExternalIdentifierData:}
     setUpdatedAdditionalProperties({
       existingNonDefiningProperties:
         updatedAdditionalProperties.existingNonDefiningProperties,
@@ -822,6 +805,7 @@ function RightSection({
         <Add />
       </IconButton>
       <AdditionalPropertiesEdit
+        isUpdating={isUpdating}
         branch={branch}
         label={product?.label}
         nonDefiningProperties={product?.nonDefiningProperties}
@@ -1294,32 +1278,3 @@ const DescriptionTextInput = ({
     </>
   );
 };
-
-interface ArtgAutoCompleteWrapperProps {
-  isUpdating: boolean;
-  control: Control<ProductUpdateRequest>;
-  setArtgOptVals: (externalIdentifiers: ExternalIdentifier[]) => void;
-}
-function ArtgAutoCompleteWrapper({
-  isUpdating,
-  control,
-  setArtgOptVals,
-}: ArtgAutoCompleteWrapperProps) {
-  const { errors } = useFormState({ control });
-
-  return (
-    <ArtgAutoComplete
-      disabled={isUpdating}
-      name="propertiesUpdateRequest.nonDefiningProperties"
-      control={control}
-      error={
-        errors?.propertiesUpdateRequest?.nonDefiningProperties as FieldError
-      }
-      dataTestId="package-brand"
-      optionValues={[]}
-      handleChange={(artgs: NonDefiningProperty[] | null) => {
-        setArtgOptVals(artgs ? artgs : []);
-      }}
-    />
-  );
-}
