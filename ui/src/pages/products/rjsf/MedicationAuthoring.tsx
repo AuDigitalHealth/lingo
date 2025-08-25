@@ -11,16 +11,13 @@ import {
 import { useMutation, useQuery } from '@tanstack/react-query';
 import _ from 'lodash';
 
-import UnitValueField from './fields/UnitValueField.tsx';
 import AutoCompleteField from './fields/AutoCompleteField.tsx';
 import ConditionalArrayField from './fields/ConditionalArrayField.tsx';
-import CompactQuantityField from './fields/CompactQuantityField.tsx';
-import UnitValueUnWrappedField from './fields/UnitValueUnWrappedField.tsx';
+
 import ProductLoader from '../components/ProductLoader.tsx';
 import ProductPreviewManageModal from '../components/ProductPreviewManageModal.tsx';
 import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
 
-import NumberWidget from './widgets/NumberWidget.tsx';
 import ExternalIdentifiers from './fields/bulkBrandPack/ExternalIdentifiers.tsx';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 import productService from '../../../api/ProductService.ts';
@@ -240,20 +237,15 @@ function MedicationAuthoring({
               AutoCompleteField,
               ConditionalArrayField,
               ExternalIdentifiers,
-              UnitValueUnWrappedField,
-              UnitValueField,
-              CompactQuantityField,
             }}
             widgets={{
               TextWidget: CustomTextFieldWidget,
               OneOfArrayWidget,
-              NumberWidget,
               SelectWidget: CustomSelectWidget,
             }}
             templates={{
               ArrayFieldTemplate: CustomArrayFieldTemplate,
               ObjectFieldTemplate: MuiGridTemplate,
-              // FieldTemplate:CustomFieldTemplate
             }}
             onChange={handleChange}
             onSubmit={handleFormSubmit}
