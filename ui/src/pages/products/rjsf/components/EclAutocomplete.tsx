@@ -25,9 +25,11 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
 
   const apLanguageHeader =
     useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader;
-  const [inputValue, setInputValue] = useState<Concept>(
+
+  const [selectedValue, setSelectedValue] = useState<Concept | null>(
     value || createEmptyConcept(apLanguageHeader),
   );
+  const [searchText, setSearchText] = useState(value?.pt?.term || '');
   const [options, setOptions] = useState<Concept[]>(
     value ? [value as Concept] : [],
   );
@@ -37,7 +39,8 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
   // Clear state when disabled
   useEffect(() => {
     if (disabled) {
-      setInputValue(createEmptyConcept(apLanguageHeader));
+      setSelectedValue(createEmptyConcept(apLanguageHeader));
+      setSearchText('');
       setOptions([]);
       if (value) {
         onChange(null);
@@ -46,7 +49,7 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
   }, [disabled, onChange, value]);
 
   const { isLoading, allData } = useSearchConceptsByEcl(
-    inputValue?.pt?.term,
+    searchText,
     ecl && ecl.length > 0 && !disabled ? ecl : undefined,
     branch,
     (showDefaultOptions as boolean) && !disabled,
@@ -75,9 +78,14 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
   }, [allData, disabled, value]);
 
   useEffect(() => {
-    if (disabled || !value) return;
-    const newTerm = value?.pt?.term || '';
-    setInputValue(prev => (prev?.pt?.term !== newTerm ? value : prev));
+    if (disabled) return;
+    if (value) {
+      setSelectedValue(value as Concept);
+      setSearchText(value.pt?.term || '');
+    } else {
+      setSelectedValue(null);
+      setSearchText('');
+    }
   }, [value?.conceptId, disabled]);
 
   const handleProductChange = (selectedProduct: Concept | null) => {
@@ -89,33 +97,30 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
         fsn: selectedProduct.fsn,
       };
       onChange(conceptMini);
-      setInputValue(selectedProduct);
+      setSelectedValue(selectedProduct);
+      setSearchText(selectedProduct.pt?.term || '');
     } else {
       onChange(null);
-      setInputValue(createEmptyConcept(apLanguageHeader));
+      setSelectedValue(createEmptyConcept(apLanguageHeader));
+      setSearchText('');
     }
   };
 
   const handleBlur = () => {
     if (disabled) return;
-    if (inputValue?.pt?.term && !value?.conceptId) {
+    if (searchText && !value?.conceptId) {
       const matchingOption = options.find(
-        option =>
-          option.pt?.term?.toLowerCase() === inputValue?.pt?.term.toLowerCase(),
+        option => option.pt?.term?.toLowerCase() === searchText.toLowerCase(),
       );
-
       if (matchingOption) {
         handleProductChange(matchingOption);
       } else {
-        handleProductChange(inputValue);
+        handleProductChange(createEmptyConcept(apLanguageHeader, searchText));
       }
     }
   };
 
-  const normalizedValue =
-    options.find(option => option.conceptId === value?.conceptId) || value;
   const needsAttention = value && value.pt?.term && !value.conceptId;
-
   const needsAttentionMessage =
     needsAttention && !errorMessage
       ? 'Please search for and select a valid option'
@@ -128,10 +133,12 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
         disabled={disabled}
         options={disabled ? [] : options}
         getOptionLabel={(option: Concept) => option?.pt?.term || ''}
-        value={normalizedValue}
+        value={selectedValue}
+        inputValue={searchText}
         onInputChange={(event, newInputValue) => {
-          !disabled &&
-            setInputValue(createEmptyConcept(apLanguageHeader, newInputValue));
+          if (!disabled) {
+            setSearchText(newInputValue);
+          }
         }}
         onChange={(event, selectedValue) =>
           handleProductChange(selectedValue as Concept)
@@ -149,7 +156,6 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
             {...params}
             data-test-id={id}
             label={label}
-            // error={hasError}
             onBlur={handleBlur}
             helperText={
               errorMessage
