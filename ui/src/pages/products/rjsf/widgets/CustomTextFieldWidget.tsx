@@ -15,7 +15,10 @@ const CustomTextFieldWidget: React.FC<WidgetProps> = ({
   schema,
 }) => {
   const placeholder = options?.placeholder || 'Enter value';
-  const isNumber = schema?.type === 'number' || schema?.type === 'integer';
+  let isNumber = schema?.type === 'number' || schema?.type === 'integer';
+  if (options.inputType && options.inputType === 'text') {
+    isNumber = false;
+  }
 
   // Local state for fast typing
   const [inputValue, setInputValue] = useState<string>(
