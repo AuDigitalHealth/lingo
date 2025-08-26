@@ -25,21 +25,19 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
 
   const apLanguageHeader =
     useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader;
-
-  const [selectedValue, setSelectedValue] = useState<Concept | null>(
+  const [inputValue, setInputValue] = useState<Concept>(
     value || createEmptyConcept(apLanguageHeader),
   );
-  const [searchText, setSearchText] = useState(value?.pt?.term || '');
   const [options, setOptions] = useState<Concept[]>(
     value ? [value as Concept] : [],
   );
 
   const disabled = isDisabled || props.disabled || false;
 
+  // Clear state when disabled
   useEffect(() => {
     if (disabled) {
-      setSelectedValue(createEmptyConcept(apLanguageHeader));
-      setSearchText('');
+      setInputValue(createEmptyConcept(apLanguageHeader));
       setOptions([]);
       if (value) {
         onChange(null);
@@ -48,7 +46,7 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
   }, [disabled, onChange, value]);
 
   const { isLoading, allData } = useSearchConceptsByEcl(
-    searchText,
+    inputValue?.pt?.term,
     ecl && ecl.length > 0 && !disabled ? ecl : undefined,
     branch,
     (showDefaultOptions as boolean) && !disabled,
@@ -77,49 +75,47 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
   }, [allData, disabled, value]);
 
   useEffect(() => {
-    if (disabled) return;
-    if (value) {
-      setSelectedValue(value as Concept);
-      setSearchText(value.pt?.term || '');
-    } else {
-      setSelectedValue(null);
-      setSearchText('');
-    }
+    if (disabled || !value) return;
+    const newTerm = value?.pt?.term || '';
+    setInputValue(prev => (prev?.pt?.term !== newTerm ? value : prev));
   }, [value?.conceptId, disabled]);
 
   const handleProductChange = (selectedProduct: Concept | null) => {
     if (disabled) return;
     if (selectedProduct) {
+      // debugger;
       const conceptMini: ConceptMini = {
         conceptId: selectedProduct.conceptId || undefined,
         pt: selectedProduct.pt,
         fsn: selectedProduct.fsn,
       };
       onChange(conceptMini);
-      setSelectedValue(selectedProduct);
-      setSearchText(selectedProduct.pt?.term || '');
+      setInputValue(selectedProduct);
     } else {
       onChange(null);
-      setSelectedValue(createEmptyConcept(apLanguageHeader));
-      setSearchText('');
+      setInputValue(createEmptyConcept(apLanguageHeader));
     }
   };
 
   const handleBlur = () => {
     if (disabled) return;
-    if (searchText && !value?.conceptId) {
+    // debugger;
+    if (inputValue?.pt?.term && !value?.conceptId) {
       const matchingOption = options.find(
-        option => option.pt?.term?.toLowerCase() === searchText.toLowerCase(),
+        option =>
+          option.pt?.term?.toLowerCase() === inputValue?.pt?.term.toLowerCase(),
       );
+
       if (matchingOption) {
         handleProductChange(matchingOption);
       } else {
-        handleProductChange(createEmptyConcept(apLanguageHeader, searchText));
+        handleProductChange(inputValue);
       }
     }
   };
 
   const needsAttention = value && value.pt?.term && !value.conceptId;
+
   const needsAttentionMessage =
     needsAttention && !errorMessage
       ? 'Please search for and select a valid option'
@@ -132,12 +128,12 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
         disabled={disabled}
         options={disabled ? [] : options}
         getOptionLabel={(option: Concept) => option?.pt?.term || ''}
-        value={selectedValue}
-        inputValue={searchText}
+        value={
+          options.find(option => option.conceptId === value?.conceptId) || value
+        }
         onInputChange={(event, newInputValue) => {
-          if (!disabled) {
-            setSearchText(newInputValue);
-          }
+          !disabled &&
+            setInputValue(createEmptyConcept(apLanguageHeader, newInputValue));
         }}
         onChange={(event, selectedValue) =>
           handleProductChange(selectedValue as Concept)
@@ -155,6 +151,7 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
             {...params}
             data-test-id={id}
             label={label}
+            // error={hasError}
             onBlur={handleBlur}
             helperText={
               errorMessage
