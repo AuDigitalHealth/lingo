@@ -83,7 +83,6 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
   const handleProductChange = (selectedProduct: Concept | null) => {
     if (disabled) return;
     if (selectedProduct) {
-      // debugger;
       const conceptMini: ConceptMini = {
         conceptId: selectedProduct.conceptId || undefined,
         pt: selectedProduct.pt,
@@ -99,7 +98,6 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
 
   const handleBlur = () => {
     if (disabled) return;
-    // debugger;
     if (inputValue?.pt?.term && !value?.conceptId) {
       const matchingOption = options.find(
         option =>
@@ -114,6 +112,8 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
     }
   };
 
+  const normalizedValue =
+    options.find(option => option.conceptId === value?.conceptId) || value;
   const needsAttention = value && value.pt?.term && !value.conceptId;
 
   const needsAttentionMessage =
@@ -128,9 +128,7 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
         disabled={disabled}
         options={disabled ? [] : options}
         getOptionLabel={(option: Concept) => option?.pt?.term || ''}
-        value={
-          options.find(option => option.conceptId === value?.conceptId) || value
-        }
+        value={normalizedValue}
         onInputChange={(event, newInputValue) => {
           !disabled &&
             setInputValue(createEmptyConcept(apLanguageHeader, newInputValue));
