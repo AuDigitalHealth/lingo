@@ -36,7 +36,6 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
 
   const disabled = isDisabled || props.disabled || false;
 
-  // Clear state when disabled
   useEffect(() => {
     if (disabled) {
       setSelectedValue(createEmptyConcept(apLanguageHeader));
