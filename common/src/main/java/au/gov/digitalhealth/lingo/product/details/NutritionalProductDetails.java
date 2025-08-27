@@ -37,6 +37,11 @@ public class NutritionalProductDetails extends MedicationProductDetails {
     this.type = ProductType.NUTRITIONAL;
   }
 
+  @Override
+  public ProductType getType() {
+    return type;
+  }
+
   @JsonIgnore
   @Override
   public NmpcType getNmpcType() {
