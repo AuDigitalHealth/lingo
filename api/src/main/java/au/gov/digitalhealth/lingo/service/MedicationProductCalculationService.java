@@ -1035,13 +1035,14 @@ public class MedicationProductCalculationService
       ModelLevel level,
       Node node,
       NutritionalProductDetails nutritionalProductDetails) {
-    boolean isExistingClinicalDrug =
-        level.getModelLevelType().equals(CLINICAL_DRUG)
-            && nutritionalProductDetails.getExistingClinicalDrug() != null
-            && nutritionalProductDetails.getExistingClinicalDrug().getConceptId() != null;
 
-    if (level.getModelLevelType().equals(REAL_MEDICINAL_PRODUCT)) {
-      if (node.isNewConcept()) {
+    if (node.isNewConcept()) {
+      boolean isExistingClinicalDrug =
+          level.getModelLevelType().equals(CLINICAL_DRUG)
+              && nutritionalProductDetails.getExistingClinicalDrug() != null
+              && nutritionalProductDetails.getExistingClinicalDrug().getConceptId() != null;
+
+      if (level.getModelLevelType().equals(REAL_MEDICINAL_PRODUCT)) {
         // If this is a new concept, we need to generate the FSN and PT
         final String productName = nutritionalProductDetails.getProductName().getPt().getTerm();
         node.getNewConceptDetails()
@@ -1049,15 +1050,15 @@ public class MedicationProductCalculationService
                 productName + " nutritional product (" + level.getDrugDeviceSemanticTag() + ")");
         node.getNewConceptDetails().setPreferredTerm(productName);
         atomicCache.addFsnAndPt(node.getConceptId(), productName, productName);
-      }
-    } else if (!isExistingClinicalDrug
-        && !level.getModelLevelType().equals(MEDICINAL_PRODUCT_ONLY)) {
-      final String baseName = generateNutritionalProductName(level, nutritionalProductDetails);
-      String fsn = baseName + " (" + level.getDrugDeviceSemanticTag() + ")";
+      } else if (!isExistingClinicalDrug
+          && !level.getModelLevelType().equals(MEDICINAL_PRODUCT_ONLY)) {
+        final String baseName = generateNutritionalProductName(level, nutritionalProductDetails);
+        String fsn = baseName + " (" + level.getDrugDeviceSemanticTag() + ")";
 
-      node.getNewConceptDetails().setFullySpecifiedName(fsn);
-      node.getNewConceptDetails().setPreferredTerm(baseName);
-      atomicCache.addFsnAndPt(node.getConceptId(), fsn, baseName);
+        node.getNewConceptDetails().setFullySpecifiedName(fsn);
+        node.getNewConceptDetails().setPreferredTerm(baseName);
+        atomicCache.addFsnAndPt(node.getConceptId(), fsn, baseName);
+      }
     }
   }
 
