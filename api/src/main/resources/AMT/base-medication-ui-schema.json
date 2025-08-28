@@ -385,7 +385,7 @@
           "ui:field": "AutoCompleteField",
           "ui:title": "Container Type",
           "ui:options": {
-            "ecl": "^929360051000036108.30465011000036106",
+            "ecl": "^929360031000036100.30465011000036106",
             "extendedEcl": "<49062001",
             "showDefaultOptions": true,
             "exclusions": [
