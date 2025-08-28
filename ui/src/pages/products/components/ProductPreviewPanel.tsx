@@ -775,6 +775,13 @@ function ProductHeaderWatch({
   ) {
     handleChangeColor(Product7BoxBGColour.INVALID);
   } else if (
+    product.conceptOptions &&
+    product.conceptOptions.length > 0 &&
+    product.concept === null &&
+    optionsIgnored
+  ) {
+    handleChangeColor(Product7BoxBGColour.INCOMPLETE);
+  } else if (
     product.propertyUpdate ||
     product.statedFormChanged ||
     product.inferredFormChanged ||

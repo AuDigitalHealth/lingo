@@ -87,6 +87,7 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
         conceptId: selectedProduct.conceptId || undefined,
         pt: selectedProduct.pt,
         fsn: selectedProduct.fsn,
+        definitionStatus: selectedProduct.definitionStatus,
       };
       onChange(conceptMini);
       setInputValue(selectedProduct);
