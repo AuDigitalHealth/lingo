@@ -433,7 +433,6 @@ export function useSearchConceptById(
   id: string | null | undefined,
   branch: string,
 ) {
-  console.log(`id: ${id}, branch: ${branch}`);
   const { serviceStatus } = useServiceStatus();
   const { isLoading, data, error } = useQuery({
     queryKey: [`concept-${id}-${branch}`],
