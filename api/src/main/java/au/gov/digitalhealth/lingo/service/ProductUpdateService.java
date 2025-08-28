@@ -491,9 +491,7 @@ public class ProductUpdateService {
     nonDefiningBaseSet.addAll(
         handleNonDefiningProperties(
             branch, conceptId, productPropertiesUpdateRequest, productUpdateCreationDetails));
-    productUpdateCreationDetails
-        .getUpdatedState()
-        .setNonDefiningProperties(nonDefiningBaseSet);
+    productUpdateCreationDetails.getUpdatedState().setNonDefiningProperties(nonDefiningBaseSet);
   }
 
   private Collection<NonDefiningBase> handleExternalIdentifiersAndReferenceSets(
@@ -512,14 +510,16 @@ public class ProductUpdateService {
             .filter(
                 id ->
                     mappingRefsets.containsKey(id.getIdentifierScheme())
-                        || referenceSetDefinitionMap.containsKey(id.getIdentifierScheme())).map(item -> {
-              ExternalIdentifierDefinition def = mappingRefsets.get(item.getIdentifierScheme());
-              item.setTitle(def.getTitle());
-              item.setDescription(def.getDescription());
-              item.setType(def.getPropertyType());
-              item.setIdentifier(def.getIdentifier());
-              return item;
-            })
+                        || referenceSetDefinitionMap.containsKey(id.getIdentifierScheme()))
+            .map(
+                item -> {
+                  ExternalIdentifierDefinition def = mappingRefsets.get(item.getIdentifierScheme());
+                  item.setTitle(def.getTitle());
+                  item.setDescription(def.getDescription());
+                  item.setType(def.getPropertyType());
+                  item.setIdentifier(def.getIdentifier());
+                  return item;
+                })
             .collect(
                 Collectors.toMap(
                     id ->
@@ -584,14 +584,17 @@ public class ProductUpdateService {
     Map<String, NonDefiningProperty> requestedProperties =
         updateRequest.getNewNonDefiningProperties().stream()
             .filter(prop -> nonDefiningPropertiesByName.containsKey(prop.getIdentifierScheme()))
-            .map(p -> (NonDefiningProperty) p).map(nonDefiningProperty -> {
-                NonDefiningPropertyDefinition def = nonDefiningPropertiesByName.get(nonDefiningProperty.getIdentifierScheme());
-              nonDefiningProperty.setTitle(def.getTitle());
-              nonDefiningProperty.setDescription(def.getDescription());
-              nonDefiningProperty.setType(def.getPropertyType());
-              nonDefiningProperty.setIdentifier(def.getIdentifier());
-              return nonDefiningProperty;
-            })
+            .map(p -> (NonDefiningProperty) p)
+            .map(
+                nonDefiningProperty -> {
+                  NonDefiningPropertyDefinition def =
+                      nonDefiningPropertiesByName.get(nonDefiningProperty.getIdentifierScheme());
+                  nonDefiningProperty.setTitle(def.getTitle());
+                  nonDefiningProperty.setDescription(def.getDescription());
+                  nonDefiningProperty.setType(def.getPropertyType());
+                  nonDefiningProperty.setIdentifier(def.getIdentifier());
+                  return nonDefiningProperty;
+                })
             .collect(
                 Collectors.toMap(
                     prop ->
