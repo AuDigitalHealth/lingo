@@ -16,7 +16,7 @@ import {
   Paper,
   Popper,
   Typography,
-  useMediaQuery,
+  useMediaQuery
 } from '@mui/material';
 
 // project import
@@ -26,15 +26,13 @@ import Transitions from '../../../../components/@extended/Transitions';
 
 // types
 import { ThemeMode } from '../../../../types/config';
-import {
-  useOntoserverStatus,
-  useServiceStatus,
-} from '../../../../hooks/api/useServiceStatus';
+import { useOntoserverStatus, useServiceStatus } from '../../../../hooks/api/useServiceStatus';
 import OntoserverIcon from '../../../../components/logo/OntoserverIcon';
 import { CellTowerOutlined } from '@mui/icons-material';
 import SnowstormIcon from '../../../../components/logo/SnowstormIcon';
 import SnomedIcon from '../../../../components/logo/SnomedIcon';
 import { styled } from '@mui/system';
+import { DatabaseTwoTone } from '@ant-design/icons';
 
 const StyledBadge = styled(Badge)(({ theme }) => ({
   '& .MuiBadge-badge': {
@@ -83,11 +81,52 @@ const ServiceStatus = () => {
   const allRunning =
     serviceStatus?.snowstorm.running &&
     serviceStatus?.authoringPlatform.running &&
-    ontoserverStatus?.running;
+    ontoserverStatus?.running &&
+    serviceStatus?.database.running;
 
   const codeSystemVersionsMatch =
     ontoserverStatus?.effectiveDate === serviceStatus?.snowstorm.effectiveDate;
   const warning = !serviceStatus?.cis.running;
+
+  // Helper functions to generate failure messages
+  const getFailureMessage = (
+    serviceName: string,
+    running?: boolean,
+    effectiveDate?: string,
+  ) => {
+    if (!running) {
+      switch (serviceName) {
+        case 'Ontoserver':
+          return 'Unable to connect to Ontoserver, authoring features are unavailable but ticket features will still function.';
+        case 'Snowstorm':
+          return 'Unable to connect to Snowstorm, authoring features are unavailable but ticket features will still function.';
+        case 'Authoring Platform':
+          return 'Unable to connect to the Authoring Platform. Authoring is not available but ticket features will still function.';
+        case 'Component Identifier Service':
+          return 'CIS is offline. Create and update operations will be slower but will function.';
+        case 'Database':
+          return 'Database connection failed, system will be unavailable until the database connection is restored.';
+        default:
+          return 'Service is currently unavailable. Please contact your system administrator.';
+      }
+    }
+    return null;
+  };
+
+  const getVersionMismatchMessage = (
+    ontoEffectiveDate?: string,
+    snowstormEffectiveDate?: string,
+  ) => {
+    if (
+      ontoEffectiveDate &&
+      snowstormEffectiveDate &&
+      ontoEffectiveDate !== snowstormEffectiveDate
+    ) {
+      return `Content mismatch may cause inconsistencies - Ontoserver (${ontoEffectiveDate}), Snowstorm (${snowstormEffectiveDate}).`;
+    }
+    return null;
+  };
+
   const theme = useTheme();
   const matchesXs = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -126,9 +165,9 @@ const ServiceStatus = () => {
       >
         <StyledBadge
           color={
-            !(allRunning && codeSystemVersionsMatch)
+            !allRunning
               ? 'error'
-              : warning
+              : warning || !codeSystemVersionsMatch
                 ? 'warning'
                 : 'primary'
           }
@@ -209,12 +248,30 @@ const ServiceStatus = () => {
                             ontoserverStatus.effectiveDate ===
                               serviceStatus?.snowstorm.effectiveDate)
                         }
+                        warning={
+                          ontoserverStatus?.running &&
+                          !(
+                            !serviceStatus?.snowstorm.running ||
+                            ontoserverStatus.effectiveDate ===
+                              serviceStatus?.snowstorm.effectiveDate
+                          )
+                        }
                       />
                       <ServiceStatusListText
                         title="Ontoserver"
                         version={ontoserverStatus?.version}
                         running={ontoserverStatus?.running}
                         effectiveDate={ontoserverStatus?.effectiveDate}
+                        failureMessage={
+                          getFailureMessage(
+                            'Ontoserver',
+                            ontoserverStatus?.running,
+                          ) ||
+                          getVersionMismatchMessage(
+                            ontoserverStatus?.effectiveDate,
+                            serviceStatus?.snowstorm.effectiveDate,
+                          )
+                        }
                       />
                     </ListItem>
                     <Divider />
@@ -227,12 +284,30 @@ const ServiceStatus = () => {
                             ontoserverStatus.effectiveDate ===
                               serviceStatus.snowstorm.effectiveDate)
                         }
+                        warning={
+                          serviceStatus?.snowstorm.running &&
+                          !(
+                            !ontoserverStatus?.running ||
+                            ontoserverStatus.effectiveDate ===
+                              serviceStatus.snowstorm.effectiveDate
+                          )
+                        }
                       />
                       <ServiceStatusListText
                         title="Snowstorm"
                         version={serviceStatus?.snowstorm.version}
                         running={serviceStatus?.snowstorm.running}
                         effectiveDate={serviceStatus?.snowstorm.effectiveDate}
+                        failureMessage={
+                          getFailureMessage(
+                            'Snowstorm',
+                            serviceStatus?.snowstorm.running,
+                          ) ||
+                          getVersionMismatchMessage(
+                            ontoserverStatus?.effectiveDate,
+                            serviceStatus?.snowstorm.effectiveDate,
+                          )
+                        }
                       />
                     </ListItem>
                     <Divider />
@@ -245,6 +320,10 @@ const ServiceStatus = () => {
                         title="Authoring Platform"
                         version={serviceStatus?.authoringPlatform.version}
                         running={serviceStatus?.authoringPlatform.running}
+                        failureMessage={getFailureMessage(
+                          'Authoring Platform',
+                          serviceStatus?.authoringPlatform.running,
+                        )}
                       />
                     </ListItem>
                     <Divider />
@@ -258,6 +337,26 @@ const ServiceStatus = () => {
                         title="Component Identifier Service"
                         version={serviceStatus?.cis.version}
                         running={serviceStatus?.cis.running}
+                        failureMessage={getFailureMessage(
+                          'Component Identifier Service',
+                          serviceStatus?.cis.running,
+                        )}
+                      />
+                    </ListItem>
+                    <Divider />
+                    <ListItem>
+                      <BadgeAvatarWithStatus
+                        icon={<DatabaseTwoTone width={'30px'} />}
+                        running={serviceStatus?.database.running}
+                      />
+                      <ServiceStatusListText
+                        title="Database"
+                        version={serviceStatus?.database.version}
+                        running={serviceStatus?.database.running}
+                        failureMessage={getFailureMessage(
+                          'Database',
+                          serviceStatus?.database.running,
+                        )}
                       />
                     </ListItem>
                     <Divider />
@@ -309,6 +408,7 @@ interface ServiceStatusListTextProps {
   running?: boolean;
   version?: string;
   effectiveDate?: string;
+  failureMessage?: string;
 }
 
 const ServiceStatusListText = ({
@@ -316,6 +416,7 @@ const ServiceStatusListText = ({
   running,
   version,
   effectiveDate,
+  failureMessage,
 }: ServiceStatusListTextProps) => {
   return (
     <ListItemText
@@ -335,6 +436,20 @@ const ServiceStatusListText = ({
           {effectiveDate && (
             <Typography component="span" display="block">
               Release: {effectiveDate}
+            </Typography>
+          )}
+          {failureMessage && (
+            <Typography
+              component="span"
+              display="block"
+              sx={{
+                mt: 0.5,
+                color: 'error.main',
+                fontStyle: 'italic',
+                fontSize: '0.875rem',
+              }}
+            >
+              {failureMessage}
             </Typography>
           )}
         </>
