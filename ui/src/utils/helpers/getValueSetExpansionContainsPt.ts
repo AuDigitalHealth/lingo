@@ -77,17 +77,20 @@ export function generatePtFromValueSetExpansionContains(
 function generateDefinitionStatusFromValueSetExpansionContains(
   valueSet: ValueSetExpansionContains,
 ): DefinitionStatus | undefined {
-  let definitionStatus = undefined;
-  for (const ext of valueSet?.extension) {
-    const codeExt = ext.extension?.find(e => e.url === 'code');
-    const valueExt = ext.extension?.find(e => e.url === 'value');
+  const sufficientlyDefinedExt = valueSet?.extension?.find(ext =>
+    ext.extension?.some(
+      e => e.url === 'code' && e.valueCode === 'sufficientlyDefined',
+    ),
+  );
 
-    if (codeExt?.valueCode === 'sufficientlyDefined') {
-      definitionStatus = valueExt?.valueBoolean
-        ? DefinitionStatus.FullyDefined
-        : DefinitionStatus.Primitive;
-      break;
-    }
+  if (!sufficientlyDefinedExt) {
+    return undefined;
   }
-  return definitionStatus;
+
+  const valueExt = sufficientlyDefinedExt.extension?.find(
+    e => e.url === 'value',
+  );
+  return valueExt?.valueBoolean
+    ? DefinitionStatus.FullyDefined
+    : DefinitionStatus.Primitive;
 }
