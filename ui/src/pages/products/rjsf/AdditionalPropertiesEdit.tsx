@@ -4,15 +4,13 @@ import { Form } from '@rjsf/mui';
 import { useRef, useState } from 'react';
 import { evaluateExpression } from './helpers/rjsfUtils';
 
-import UnitValueField from './fields/UnitValueField.tsx';
 import AutoCompleteField from './fields/AutoCompleteField.tsx';
 import ConditionalArrayField from './fields/ConditionalArrayField.tsx';
-import CompactQuantityField from './fields/CompactQuantityField.tsx';
-import UnitValueUnWrappedField from './fields/UnitValueUnWrappedField.tsx';
+
 import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
 import CustomSelectWidget from './widgets/CustomSelectWidget.tsx';
 import MuiGridTemplate from './templates/MuiGridTemplate.tsx';
-import NumberWidget from './widgets/NumberWidget.tsx';
+
 import ExternalIdentifiers from './fields/bulkBrandPack/ExternalIdentifiers.tsx';
 
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
@@ -87,14 +85,10 @@ export default function AdditionalPropertiesEdit({
             AutoCompleteField,
             ConditionalArrayField,
             ExternalIdentifiers,
-            UnitValueUnWrappedField,
-            UnitValueField,
-            CompactQuantityField,
           }}
           widgets={{
             TextWidget: CustomTextFieldWidget,
             OneOfArrayWidget,
-            NumberWidget,
             SelectWidget: CustomSelectWidget,
           }}
           templates={{

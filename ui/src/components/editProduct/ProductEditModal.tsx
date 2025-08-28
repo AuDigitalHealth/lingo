@@ -58,11 +58,8 @@ import {
   ProductPropertiesUpdateRequest,
   ProductUpdateRequest,
 } from '../../types/product.ts';
-import ArtgAutoComplete from '../../pages/products/components/ArtgAutoComplete.tsx';
-import {
-  useUpdateProduct,
-  useUpdateProductExternalIdentifiers,
-} from '../../hooks/api/products/useUpdateProduct.tsx';
+
+import { useUpdateProduct } from '../../hooks/api/products/useUpdateProduct.tsx';
 import { Ticket } from '../../types/tickets/ticket.ts';
 import { useTheme } from '@mui/material/styles';
 import {

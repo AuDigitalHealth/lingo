@@ -426,7 +426,6 @@ public class NodeGeneratorService {
 
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
-    boolean selectedConcept = false; // indicates if a selected concept has been detected
     Node node = new Node();
     node.setLabel(modelLevel.getDisplayLabel());
     node.setDisplayName(modelLevel.getName());
@@ -512,7 +511,6 @@ public class NodeGeneratorService {
                     + String.join(", ", selectedConceptIdentifiers));
           }
           node.setConcept(selectedConcepts.iterator().next());
-          selectedConcept = true;
           atomicCache.addFsnAndPt(
               node.getConceptId(), node.getFullySpecifiedName(), node.getPreferredTerm());
         }
@@ -521,7 +519,7 @@ public class NodeGeneratorService {
 
     // if there is no single matching concept found, or the user has selected a single concept
     // provide the modelling for a new concept so they can select a new concept as an option.
-    if (node.getConcept() == null || selectedConcept) {
+    if (node.getConcept() == null) {
       node.setLabel(label);
       NewConceptDetails newConceptDetails = new NewConceptDetails(atomicCache.getNextId());
       SnowstormAxiom axiom = new SnowstormAxiom();
@@ -568,9 +566,6 @@ public class NodeGeneratorService {
               snowstormClient));
       node.setNonDefiningProperties(properties);
 
-      if (selectedConcept) {
-        populateNodeProperties(branch, modelLevel, node, null);
-      }
       log.fine("New concept for " + label + " " + newConceptDetails.getConceptId());
     } else {
       log.fine("Concept found for " + label + " " + node.getConceptId());

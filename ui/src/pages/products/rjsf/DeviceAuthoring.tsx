@@ -11,12 +11,10 @@ import {
 import { useMutation, useQuery } from '@tanstack/react-query';
 import _ from 'lodash';
 import AutoCompleteField from './fields/AutoCompleteField.tsx';
-import UnitValueUnWrappedField from './fields/UnitValueUnWrappedField.tsx';
+
 import ProductLoader from '../components/ProductLoader.tsx';
 import ProductPreviewManageModal from '../components/ProductPreviewManageModal.tsx';
-import CustomFieldTemplate from './templates/CustomFieldTemplate.tsx';
 import CustomArrayFieldTemplate from './templates/CustomArrayFieldTemplate.tsx';
-import NumberWidget from './widgets/NumberWidget.tsx';
 
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 import productService from '../../../api/ProductService.ts';
@@ -219,7 +217,6 @@ function DeviceAuthoring({
             onSubmit={handleFormSubmit}
             onError={onError}
             fields={{
-              UnitValueUnWrappedField: UnitValueUnWrappedField,
               AutoCompleteField,
               ExternalIdentifiers,
             }}
@@ -233,7 +230,6 @@ function DeviceAuthoring({
                 validator.validateFormData(formData, schema, uiSchema),
             }}
             widgets={{
-              NumberWidget,
               OneOfArrayWidget,
               TextWidget: CustomTextFieldWidget,
             }}

@@ -127,7 +127,7 @@
       "value": {
         "ui:widget": "text",
         "ui:options": {
-          "inputType": "number",
+          "inputType": "text",
           "title": "Pack Size"
         }
       },
@@ -287,7 +287,7 @@
                 "ui:widget": "text",
                 "ui:title": "Unit Strength",
                 "ui:options": {
-                  "inputType": "number"
+                  "inputType": "text"
                 }
               },
               "unit": {
@@ -314,7 +314,7 @@
                 "ui:widget": "text",
                 "ui:title": "Concentration Strength",
                 "ui:options": {
-                  "inputType": "number"
+                  "inputType": "text"
                 }
               },
               "unit": {
@@ -368,7 +368,7 @@
             "ui:widget": "text",
             "ui:title": "Unit Size",
             "ui:options": {
-              "inputType": "number"
+              "inputType": "text"
             }
           },
           "unit": {
@@ -385,7 +385,7 @@
           "ui:field": "AutoCompleteField",
           "ui:title": "Container Type",
           "ui:options": {
-            "ecl": "^929360051000036108.30465011000036106",
+            "ecl": "^929360031000036100.30465011000036106",
             "extendedEcl": "<49062001",
             "showDefaultOptions": true,
             "exclusions": [
@@ -457,7 +457,7 @@
       "value": {
         "ui:widget": "text",
         "ui:options": {
-          "inputType": "number",
+          "inputType": "text",
           "title": "Quantity"
         }
       },
@@ -528,7 +528,7 @@
             "value": {
               "ui:widget": "text",
               "ui:options": {
-                "inputType": "number",
+                "inputType": "text",
                 "title": "Pack Size"
               }
             },
@@ -678,7 +678,7 @@
                       "ui:widget": "text",
                       "ui:title": "Unit Strength",
                       "ui:options": {
-                        "inputType": "number"
+                        "inputType": "text"
                       }
                     },
                     "unit": {
@@ -705,7 +705,7 @@
                       "ui:widget": "text",
                       "ui:title": "Concentration Strength",
                       "ui:options": {
-                        "inputType": "number"
+                        "inputType": "text"
                       }
                     },
                     "unit": {
@@ -759,7 +759,7 @@
                   "ui:widget": "text",
                   "ui:title": "Unit Size",
                   "ui:options": {
-                    "inputType": "number"
+                    "inputType": "text"
                   }
                 },
                 "unit": {
