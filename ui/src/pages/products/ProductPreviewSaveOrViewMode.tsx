@@ -452,11 +452,7 @@ function ProductPreviewSaveOrViewMode({
   }, [reset, productModel]);
 
   if (isLoading) {
-    return (
-      <Loading
-        message={`Loading Product [${getProductDisplayName(productModel)}]`}
-      />
-    );
+    return <Loading message={`Loading Product Changes...`} />;
   } else {
     return (
       <>
