@@ -26,6 +26,7 @@ public class ServiceStatus {
   private Status authoringPlatform;
   private SnowstormStatus snowstorm;
   private Status cis;
+  private Status database;
 
   @Data
   @SuperBuilder
