@@ -26,7 +26,7 @@ import { FieldBindings } from '../../../types/FieldBindings.ts';
 import { replaceAllWithWhiteSpace } from '../../../types/productValidationUtils.ts';
 import { convertStringToRegex } from '../../../utils/helpers/stringUtils.ts';
 import { getValueFromFieldBindings } from '../../../utils/helpers/FieldBindingUtils.ts';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import AdditionalPropertiesDisplay from './AdditionalPropertiesDisplay.tsx';
 import { ProductRetireUpdate } from './ProductRetireUpdate.tsx';
 import {
@@ -71,6 +71,7 @@ function NewConceptDropdown({
     product.newConceptDetails?.axioms[0].definitionStatus ?? 'PRIMITIVE',
   );
   const [currentStatus, setCurrentStatus] = useState(initialStatusRef.current);
+  const [specificConceptIdError, setSpecificConceptIdError] = useState('');
   return (
     <div key={'div-' + product.conceptId}>
       <Grid item xs={12}>
@@ -157,6 +158,21 @@ function NewConceptDropdown({
             margin="dense"
             InputLabelProps={{ shrink: true }}
             onKeyDown={filterKeypress}
+            onBlur={e => {
+              const val = e.target.value.trim();
+              if (val !== '' && !/^\d+$/.test(val)) {
+                e.target.value = '';
+                setSpecificConceptIdError('Invalid Concept Id');
+                setValue(
+                  `nodes[${index}].newConceptDetails.specifiedConceptId` as 'nodes.0.newConceptDetails.specifiedConceptId',
+                  null,
+                );
+              } else {
+                setSpecificConceptIdError('');
+              }
+            }}
+            error={!!specificConceptIdError}
+            helperText={specificConceptIdError}
           />
         </InnerBoxSmall>
         {setValue && (
