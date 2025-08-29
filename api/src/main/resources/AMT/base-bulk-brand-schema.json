@@ -12,6 +12,13 @@
         },
         "fsn": {
           "$ref": "#/$defs/SnowstormTermLangPojo"
+        },
+        "definitionStatus": {
+          "type": "string",
+          "enum": [
+            "PRIMITIVE",
+            "FULLY_DEFINED"
+          ]
         }
       },
       "minProperties": 1,

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { withTheme } from '@rjsf/core';
 import { Theme } from '@rjsf/mui';
-import { Box, Button, Grid, Paper, Alert } from '@mui/material';
+import { Alert, Box, Button, Grid, Paper } from '@mui/material';
 import WarningModal from '../../../themes/overrides/WarningModal';
 import useAuthoringStore from '../../../stores/AuthoringStore';
 import { useFetchBulkAuthorBrands } from '../../../hooks/api/tickets/useTicketProduct';
@@ -204,7 +204,8 @@ function BrandAuthoring({
   if (!selectedProduct || !data) {
     return (
       <Alert severity="info">
-        Search and select a product to create new brand(s).
+        Search and select a product to create new brand(s). Results are limited
+        to single-component products, as only these are eligible.
       </Alert>
     );
   }

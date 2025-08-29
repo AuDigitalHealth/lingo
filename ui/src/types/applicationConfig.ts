@@ -36,6 +36,7 @@ export interface ServiceStatus {
   authoringPlatform: Status;
   snowstorm: StatusWithEffectiveDate;
   cis: Status;
+  database: Status;
 }
 
 export interface Status {

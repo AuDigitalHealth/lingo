@@ -21,6 +21,8 @@ import au.gov.digitalhealth.lingo.service.ServiceStatus.Status;
 import au.gov.digitalhealth.lingo.service.SnowstormClient;
 import au.gov.digitalhealth.lingo.service.TaskManagerClient;
 import au.gov.digitalhealth.lingo.service.identifier.IdentifierSource;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,6 +40,8 @@ public class StatusController {
   TaskManagerClient taskManagerClient;
   SnowstormClient snowstormClient;
   IdentifierSource identifierSource;
+  EntityManager entityManager;
+  String schemaVersion;
 
   @Value("${ihtsdo.ap.codeSystem}")
   String codeSystem;
@@ -45,10 +49,12 @@ public class StatusController {
   StatusController(
       TaskManagerClient taskManagerClient,
       SnowstormClient snowstormClient,
-      IdentifierSource identifierSource) {
+      IdentifierSource identifierSource,
+      EntityManager entityManager) {
     this.taskManagerClient = taskManagerClient;
     this.snowstormClient = snowstormClient;
     this.identifierSource = identifierSource;
+    this.entityManager = entityManager;
   }
 
   @GetMapping(value = "")
@@ -56,11 +62,26 @@ public class StatusController {
     Status apStatus = taskManagerClient.getStatus();
     SnowstormStatus snowstormStatus = snowstormClient.getStatus(codeSystem);
     Status cisStatus = identifierSource.getStatus();
+    Status databaseStatus = getDatabaseStatus();
 
     return ServiceStatus.builder()
         .authoringPlatform(apStatus)
         .snowstorm(snowstormStatus)
         .cis(cisStatus)
+        .database(databaseStatus)
         .build();
+  }
+
+  private Status getDatabaseStatus() {
+    try {
+      Query query =
+          entityManager.createNativeQuery(
+              "SELECT version FROM flyway_schema_history WHERE success = true ORDER BY installed_rank DESC LIMIT 1");
+      Object result = query.getSingleResult();
+      schemaVersion = result != null ? result.toString() : "unknown";
+      return Status.builder().running(true).version(schemaVersion).build();
+    } catch (Exception e) {
+      return Status.builder().running(false).version(schemaVersion).build();
+    }
   }
 }
