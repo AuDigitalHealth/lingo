@@ -26,7 +26,7 @@ import { isValueSetExpansionContains } from '../../../types/predicates/isValueSe
 import { Concept } from '../../../types/concept.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
 import { Task } from '../../../types/task.ts';
-import { Ticket } from '../../../types/tickets/ticket.ts';
+import { ProductAction, Ticket } from '../../../types/tickets/ticket.ts';
 import {
   MedicationPackageDetails,
   ProductActionType,
@@ -349,7 +349,7 @@ function MedicationAuthoring({
             open={saveModalOpen}
             ticket={ticket}
             existingProductId={ticketProductId}
-            actionType={mode}
+            actionType={ProductAction.CREATE} //disable update for partial save
           />
           <ProductPreviewManageModal
             open={createModalOpen}
