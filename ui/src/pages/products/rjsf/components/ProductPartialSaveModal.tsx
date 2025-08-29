@@ -8,7 +8,7 @@ import {
 } from '../../../../types/product.ts';
 import Loading from '../../../../components/Loading.tsx';
 import React, { useState } from 'react';
-import { Ticket } from '../../../../types/tickets/ticket.ts';
+import { ProductAction, Ticket } from '../../../../types/tickets/ticket.ts';
 
 import ProductPartialSave from './ProductPartialSave.tsx';
 import { FieldProps } from '@rjsf/utils';
@@ -19,6 +19,7 @@ interface ProductPartialSaveModalProps extends FieldProps {
   packageDetails: MedicationPackageDetails | DevicePackageDetails | undefined;
   existingProductId?: string;
   ticket: Ticket;
+  actionType: ProductAction;
   productStatus?: string | undefined;
 }
 export default function ProductPartialSaveModal({
