@@ -651,8 +651,8 @@ public class MedicationProductCalculationService
             packageDetails, models.getModelConfiguration(branch), packageLevel.getModelLevelType()),
         calculateNonDefiningRelationships(
             models.getModelConfiguration(branch),
-            packageLevel.getModelLevelType(),
-            packageDetails.getNonDefiningProperties()),
+            packageDetails.getNonDefiningProperties(),
+            packageLevel.getModelLevelType()),
         packageDetails.getSelectedConceptIdentifiers(),
         packageDetails.getNonDefiningProperties(),
         true,
@@ -1262,8 +1262,8 @@ public class MedicationProductCalculationService
             productDetails, models.getModelConfiguration(branch), modelLevelType),
         calculateNonDefiningRelationships(
             models.getModelConfiguration(branch),
-            modelLevelType,
-            productDetails.getNonDefiningProperties()),
+            productDetails.getNonDefiningProperties(),
+            modelLevelType),
         selectedConceptIdentifiers,
         productDetails.getNonDefiningProperties(),
         !branded,
@@ -1318,8 +1318,8 @@ public class MedicationProductCalculationService
             details, models.getModelConfiguration(branch), mpLevel.getModelLevelType()),
         calculateNonDefiningRelationships(
             models.getModelConfiguration(branch),
-            mpLevel.getModelLevelType(),
-            details.getNonDefiningProperties()),
+            details.getNonDefiningProperties(),
+            mpLevel.getModelLevelType()),
         selectedConceptIdentifiers,
         details.getNonDefiningProperties(),
         false,
