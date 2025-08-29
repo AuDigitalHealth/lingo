@@ -17,7 +17,6 @@ package au.gov.digitalhealth.lingo.service;
 
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.MAP_TARGET;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.*;
-import static java.lang.Boolean.TRUE;
 
 import au.csiro.snowstorm_client.model.*;
 import au.gov.digitalhealth.lingo.configuration.FieldBindingConfiguration;
@@ -124,11 +123,7 @@ public class ProductUpdateService {
   private static String getNonDefiningPropertyKeyForRelationship(
       SnowstormRelationship relationship) {
     String value;
-    if (TRUE.equals(relationship.getConcrete())) {
-      if (relationship.getConcreteValue() == null) {
-        throw new ProductAtomicDataValidationProblem(
-            "Concrete value is null for relationship: " + relationship);
-      }
+    if (relationship.getConcreteValue() != null) {
       value = relationship.getConcreteValue().getValue();
     } else {
       if (relationship.getDestinationId() == null) {
