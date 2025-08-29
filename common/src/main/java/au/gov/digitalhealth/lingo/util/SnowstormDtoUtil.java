@@ -453,10 +453,16 @@ public class SnowstormDtoUtil {
   }
 
   public static void addSynoynms(
-      SnowstormConceptView concept, Set<SnowstormDescription> descriptions) {
+      SnowstormConceptView concept, Set<SnowstormDescription> descriptions, ModelConfiguration modelConfiguration) {
+
     if (descriptions == null) {
       return;
     }
+
+    String moduleId = modelConfiguration.getModuleId();
+    Set<String> languages = modelConfiguration.getPreferredLanguageRefsets();
+    Map<String, String> acceptabilityMap = new HashMap<>();
+    languages.forEach(language -> acceptabilityMap.put(language, SnomedConstants.ACCEPTABLE.getValue()));
 
     descriptions.forEach(
         snowstormDescription -> {
@@ -467,10 +473,8 @@ public class SnowstormDtoUtil {
                   .term(snowstormDescription.getTerm())
                   .type(SnomedConstants.SYNONYM.toString())
                   .caseSignificance(ENTIRE_TERM_CASE_SENSITIVE.getValue())
-                  .moduleId(SCT_AU_MODULE.getValue())
-                  .acceptabilityMap(
-                      // TODO: this needs to be set up for ireland.
-                      Map.of(AmtConstants.ADRS.getValue(), SnomedConstants.ACCEPTABLE.getValue()));
+                  .moduleId(moduleId)
+                  .acceptabilityMap(acceptabilityMap);
           concept.getDescriptions().add(desc);
         });
   }
@@ -554,7 +558,8 @@ public class SnowstormDtoUtil {
         SnomedConstants.FSN.getValue(),
         modelConfiguration,
         ENTIRE_TERM_CASE_SENSITIVE.getValue());
-    SnowstormDtoUtil.addSynoynms(concept, node.getNewConceptDetails().getDescriptions());
+
+    SnowstormDtoUtil.addSynoynms(concept, node.getNewConceptDetails().getDescriptions(), modelConfiguration);
 
     concept.setActive(true);
     concept.setDefinitionStatusId(

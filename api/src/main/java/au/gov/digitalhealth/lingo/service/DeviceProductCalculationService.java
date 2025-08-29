@@ -527,8 +527,8 @@ public class DeviceProductCalculationService
             referenceSetMembers,
             calculateNonDefiningRelationships(
                 models.getModelConfiguration(branch),
-                modelLevel.getModelLevelType(),
-                packageDetails.getNonDefiningProperties()),
+                packageDetails.getNonDefiningProperties(),
+                modelLevel.getModelLevelType()),
             packageDetails.getSelectedConceptIdentifiers(),
             packageDetails.getNonDefiningProperties(),
             true,
@@ -761,8 +761,8 @@ public class DeviceProductCalculationService
                 leafBrandedProductModelLevel.getModelLevelType()),
             calculateNonDefiningRelationships(
                 models.getModelConfiguration(branch),
-                leafBrandedProductModelLevel.getModelLevelType(),
-                packageDetails.getNonDefiningProperties()),
+                packageDetails.getNonDefiningProperties(),
+                leafBrandedProductModelLevel.getModelLevelType()),
             packageDetails.getSelectedConceptIdentifiers(),
             productQuantity.getProductDetails().getNonDefiningProperties(),
             false,
@@ -818,8 +818,8 @@ public class DeviceProductCalculationService
                   packageDetails, modelConfiguration, rootBrandedProductLevel.getModelLevelType()),
               calculateNonDefiningRelationships(
                   models.getModelConfiguration(branch),
-                  rootBrandedProductLevel.getModelLevelType(),
-                  packageDetails.getNonDefiningProperties()),
+                  packageDetails.getNonDefiningProperties(),
+                  rootBrandedProductLevel.getModelLevelType()),
               packageDetails.getSelectedConceptIdentifiers(),
               productQuantity.getProductDetails().getNonDefiningProperties(),
               false,
@@ -924,8 +924,8 @@ public class DeviceProductCalculationService
     leafUnbrandedDetails.setNonDefiningProperties(
         calculateNonDefiningRelationships(
             modelConfiguration,
-            leafUnbrandedProductModelLevel.getModelLevelType(),
-            productDetails.getNonDefiningProperties()));
+            productDetails.getNonDefiningProperties(),
+            leafUnbrandedProductModelLevel.getModelLevelType()));
     leafUnbrandedDetails
         .getReferenceSetMembers()
         .addAll(

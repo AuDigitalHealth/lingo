@@ -684,7 +684,7 @@ public class ProductCreationService {
               Node node = nodesWithPropertyUpdates.get(concept.getConceptId());
               Set<SnowstormRelationship> newRelationships =
                   calculateNonDefiningRelationships(
-                      modelConfiguration, node.getModelLevel(), node.getNonDefiningProperties());
+                      modelConfiguration, node.getNonDefiningProperties(), node.getModelLevel());
 
               final boolean conceptUpdated =
                   updateConceptNonDefiningRelationships(
@@ -822,7 +822,7 @@ public class ProductCreationService {
           node.getNewConceptDetails() != null
               ? node.getNewConceptDetails().getNonDefiningProperties()
               : NonDefiningPropertiesConverter.calculateNonDefiningRelationships(
-                  modelConfiguration, node.getModelLevel(), node.getNonDefiningProperties()));
+                  modelConfiguration, node.getNonDefiningProperties(), node.getModelLevel()));
 
       String conceptId =
           node.isRetireAndReplaceWithExisting()
