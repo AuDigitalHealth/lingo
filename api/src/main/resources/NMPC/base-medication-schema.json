@@ -8,7 +8,14 @@
       "properties": {
         "conceptId": { "type": "string" },
         "pt": { "$ref": "#/$defs/SnowstormTermLangPojo" },
-        "fsn": { "$ref": "#/$defs/SnowstormTermLangPojo" }
+        "fsn": { "$ref": "#/$defs/SnowstormTermLangPojo" },
+        "definitionStatus": {
+          "type": "string",
+          "enum": [
+            "PRIMITIVE",
+            "FULLY_DEFINED"
+          ]
+        }
       },
       "minProperties": 1,
       "required": ["conceptId"],

@@ -15,7 +15,9 @@
  */
 package au.gov.digitalhealth.lingo.product.details.properties;
 
+import java.io.Serializable;
 import java.util.List;
 
 public record AdditionalProperty(
-    String code, String codeSystem, String value, List<SubAdditionalProperty> subProperties) {}
+    String code, String codeSystem, String value, List<SubAdditionalProperty> subProperties)
+    implements Serializable {}
