@@ -16,7 +16,7 @@ import {
   Paper,
   Popper,
   Typography,
-  useMediaQuery
+  useMediaQuery,
 } from '@mui/material';
 
 // project import
@@ -26,7 +26,10 @@ import Transitions from '../../../../components/@extended/Transitions';
 
 // types
 import { ThemeMode } from '../../../../types/config';
-import { useOntoserverStatus, useServiceStatus } from '../../../../hooks/api/useServiceStatus';
+import {
+  useOntoserverStatus,
+  useServiceStatus,
+} from '../../../../hooks/api/useServiceStatus';
 import OntoserverIcon from '../../../../components/logo/OntoserverIcon';
 import { CellTowerOutlined } from '@mui/icons-material';
 import SnowstormIcon from '../../../../components/logo/SnowstormIcon';
