@@ -24,7 +24,7 @@ import { validator } from './helpers/validator.ts';
 import { Concept } from '../../../types/concept.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
 import { Task } from '../../../types/task.ts';
-import { Ticket } from '../../../types/tickets/ticket.ts';
+import { ProductAction, Ticket } from '../../../types/tickets/ticket.ts';
 import {
   DevicePackageDetails,
   ProductActionType,
@@ -325,7 +325,7 @@ function DeviceAuthoring({
             open={saveModalOpen}
             ticket={ticket}
             existingProductId={ticketProductId}
-            actionType={mode}
+            actionType={ProductAction.CREATE} //default to create for partial save
           />
           <ProductPreviewManageModal
             open={createModalOpen}
