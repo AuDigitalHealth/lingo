@@ -546,7 +546,9 @@ function TasksList({
                       },
                     }
               }
-              pageSizeOptions={!naked ? [10, 15, 20, 25, 100, { value: -1, label: 'All' }] : []}
+              pageSizeOptions={
+                !naked ? [10, 15, 20, 25, 100, { value: -1, label: 'All' }] : []
+              }
               disableColumnFilter={naked}
               disableColumnMenu={naked}
               disableRowSelectionOnClick={naked}
