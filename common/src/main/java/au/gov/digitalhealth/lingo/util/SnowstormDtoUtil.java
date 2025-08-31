@@ -453,7 +453,9 @@ public class SnowstormDtoUtil {
   }
 
   public static void addSynoynms(
-      SnowstormConceptView concept, Set<SnowstormDescription> descriptions, ModelConfiguration modelConfiguration) {
+      SnowstormConceptView concept,
+      Set<SnowstormDescription> descriptions,
+      ModelConfiguration modelConfiguration) {
 
     if (descriptions == null) {
       return;
@@ -462,7 +464,8 @@ public class SnowstormDtoUtil {
     String moduleId = modelConfiguration.getModuleId();
     Set<String> languages = modelConfiguration.getPreferredLanguageRefsets();
     Map<String, String> acceptabilityMap = new HashMap<>();
-    languages.forEach(language -> acceptabilityMap.put(language, SnomedConstants.ACCEPTABLE.getValue()));
+    languages.forEach(
+        language -> acceptabilityMap.put(language, SnomedConstants.ACCEPTABLE.getValue()));
 
     descriptions.forEach(
         snowstormDescription -> {
@@ -559,7 +562,8 @@ public class SnowstormDtoUtil {
         modelConfiguration,
         ENTIRE_TERM_CASE_SENSITIVE.getValue());
 
-    SnowstormDtoUtil.addSynoynms(concept, node.getNewConceptDetails().getDescriptions(), modelConfiguration);
+    SnowstormDtoUtil.addSynoynms(
+        concept, node.getNewConceptDetails().getDescriptions(), modelConfiguration);
 
     concept.setActive(true);
     concept.setDefinitionStatusId(
