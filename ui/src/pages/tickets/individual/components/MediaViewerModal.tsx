@@ -1,7 +1,9 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
-import { Modal, IconButton, Card, Stack } from '@mui/material';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Card, IconButton, Modal, Stack } from '@mui/material';
 import { Close, ZoomIn, ZoomOut } from '@mui/icons-material';
 import AttachmentService from '../../../../api/AttachmentService';
+import { Box } from '@mui/system';
+import { Typography } from 'antd';
 
 interface MediaViewerModalProps {
   open: boolean;
@@ -46,14 +48,16 @@ const MediaViewerModal = ({
   }, [naturalDimensions]);
 
   const calculateInitialScale = () => {
-    if (containerRef.current && imageRef.current) {
+    if (
+      containerRef.current &&
+      naturalDimensions.width &&
+      naturalDimensions.height
+    ) {
       const containerWidth = containerRef.current.clientWidth;
-      const containerHeight = containerRef.current.clientHeight;
-      const maxWidth = Math.min(containerWidth, window.innerWidth * 0.8);
-      const maxHeight = Math.min(containerHeight, window.innerHeight * 0.8);
+      const containerHeight = containerRef.current.clientHeight - 100; // Account for header
 
-      const widthRatio = maxWidth / imageRef.current.naturalWidth;
-      const heightRatio = maxHeight / imageRef.current.naturalHeight;
+      const widthRatio = containerWidth / naturalDimensions.width;
+      const heightRatio = containerHeight / naturalDimensions.height;
 
       // Use the smaller ratio to ensure image fits both dimensions
       const initialScale = Math.min(widthRatio, heightRatio, 1);
@@ -68,7 +72,7 @@ const MediaViewerModal = ({
       isPdf: extension === 'pdf',
       isImage:
         extension !== undefined &&
-        ['jpg', 'jpeg', 'png', 'gif'].includes(extension),
+        ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(extension),
     };
   }, [fileName]);
 
@@ -119,7 +123,7 @@ const MediaViewerModal = ({
     return {
       width: `${scaledWidth}px`,
       height: `${scaledHeight}px`,
-      transition: 'transform 1s ease-in-out',
+      transition: 'width 0.3s ease, height 0.3s ease',
     };
   };
 
@@ -128,34 +132,51 @@ const MediaViewerModal = ({
       open={open}
       onClose={handleClose}
       aria-labelledby="media-viewer-modal"
-      className="flex items-center justify-center"
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
       disableEnforceFocus
     >
       <Card
         sx={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          minWidth: '350px',
-          overflow: 'auto',
-          maxHeight: '95%',
+          position: 'relative',
+          width: '90vw',
+          height: '90vh',
+          maxWidth: '1200px',
+          maxHeight: '800px',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
         }}
       >
-        <Stack sx={{ margin: '1rem', flexDirection: 'row' }}>
+        {/* Fixed Header */}
+        <Stack
+          direction="row"
+          sx={{
+            padding: '1rem',
+            backgroundColor: 'background.paper',
+            borderBottom: 1,
+            borderColor: 'divider',
+            position: 'sticky',
+            top: 0,
+            zIndex: 2,
+          }}
+        >
           {fileType.isImage && (
             <>
               <IconButton
                 onClick={zoomOut}
                 disabled={scale <= 0.1}
-                className="text-gray-600 hover:text-gray-800"
+                sx={{ color: 'text.secondary' }}
               >
                 <ZoomOut />
               </IconButton>
               <IconButton
                 onClick={zoomIn}
                 disabled={scale >= 3}
-                className="text-gray-600 hover:text-gray-800"
+                sx={{ color: 'text.secondary' }}
               >
                 <ZoomIn />
               </IconButton>
@@ -166,38 +187,58 @@ const MediaViewerModal = ({
           </IconButton>
         </Stack>
 
-        <div
+        {/* Scrollable Content Area */}
+        <Box
           ref={containerRef}
-          className="overflow-auto h-[calc(90vh-100px)] flex items-center justify-center"
+          sx={{
+            flex: 1,
+            overflow: 'auto',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+          }}
         >
           {isLoading ? (
-            <div className="flex items-center justify-center h-full">
-              Loading...
-            </div>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Typography>Loading...</Typography>
+            </Box>
           ) : fileType.isPdf && fileUrl ? (
-            <Stack sx={{ width: '80vw', height: '80vh' }}>
-              <iframe
-                src={`${fileUrl}`}
-                title="PDF Viewer"
-                className="w-full h-full border-none"
-                style={{ width: '100%', height: '100%' }}
-              />
-            </Stack>
+            <iframe
+              src={`${fileUrl}`}
+              title="PDF Viewer"
+              style={{
+                width: '100%',
+                height: '100%',
+                border: 'none',
+                minHeight: '500px',
+              }}
+            />
           ) : fileType.isImage && fileUrl ? (
             <img
               ref={imageRef}
               src={fileUrl}
               alt={fileName}
               onLoad={handleImageLoad}
-              style={getImageStyle()}
-              className="object-contain"
+              style={{
+                ...getImageStyle(),
+                objectFit: 'contain',
+                cursor: scale < 3 ? 'zoom-in' : 'zoom-out',
+              }}
+              onClick={scale < 3 ? zoomIn : zoomOut}
             />
           ) : (
-            <div className="flex items-center justify-center h-full text-gray-500">
-              Unsupported file type
-            </div>
+            <Box sx={{ textAlign: 'center', color: 'text.secondary' }}>
+              <Typography>Unsupported file type: {fileName}</Typography>
+            </Box>
           )}
-        </div>
+        </Box>
       </Card>
     </Modal>
   );

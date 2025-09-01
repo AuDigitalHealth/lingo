@@ -510,6 +510,12 @@
       <groupId>org.springframework</groupId>
       <artifactId>spring-web</artifactId>
     </dependency>
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>s3</artifactId>
+      <version>2.33.0</version>
+      <scope>compile</scope>
+    </dependency>
   </dependencies>
   <description>Api for Lingo</description>
   <modelVersion>4.0.0</modelVersion>
