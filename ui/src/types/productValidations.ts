@@ -16,49 +16,19 @@
 
 import * as yup from 'yup';
 import {
-  BrandPackSizeCreationDetails,
-  BrandWithIdentifiers,
-  ProductBrands,
-  ProductPackSizes,
-  BigDecimal,
-  SnowstormConceptMini,
   ProductUpdateRequest,
-  ProductExternalRequesterUpdateRequest,
   ProductDescriptionUpdateRequest,
   NonDefiningProperty,
 } from './product.ts';
 import { CaseSignificance, Product } from './concept.ts';
 import {
   Acceptability,
-  Concept,
   DefinitionType,
   Description,
   Product,
-  Term,
 } from './concept.ts';
-import {
-  isEmptyObjectByValue,
-  isUnitEach,
-  isValidConcept,
-} from '../utils/helpers/conceptUtils.ts';
-import {
-  calculateConcentrationStrength,
-  validateConceptExistence,
-  validComoOfProductIngredient,
-} from './productValidationUtils.ts';
+
 import { BulkAddExternalRequestorRequest } from './tickets/ticket.ts';
-
-export const WARNING_INVALID_COMBO_STRENGTH_SIZE_AND_TOTALQTY =
-  'Invalid combination for Unit size, Concentration strength and Unit Strength';
-
-export const WARNING_PRODUCTSIZE_UNIT_NOT_ALIGNED =
-  'The Unit Size Unit should match the Concentration Strength Unit denominator unit';
-
-export const WARNING_TOTALQTY_UNIT_NOT_ALIGNED =
-  'The Total Quantity Unit should match the Concentration Strength Unit numerator unit';
-
-export const WARNING_BOSS_VALUE_NOT_ALIGNED =
-  'Has active ingredient and the BoSS are not related to each other';
 
 /**
  * Rule 1: One of Form, Container, or Device must be populated
@@ -89,24 +59,6 @@ export const WARNING_BOSS_VALUE_NOT_ALIGNED =
  * Rule 22: If BoSS is populated, total quantity or concentration strength must be populated
  * Rule 23: Product name must be populated on both products and containing packages
  */
-
-export const brandPackSizeCreationDetailsObjectSchema: yup.ObjectSchema<BrandPackSizeCreationDetails> =
-  yup.object({
-    productId: yup.string().required(),
-    brands: yup
-      .object<ProductBrands>({
-        productId: yup.string().required(),
-        brands: yup.object<Set<BrandWithIdentifiers>>().optional(),
-      })
-      .optional(),
-    packSizes: yup
-      .object<ProductPackSizes>({
-        productId: yup.string().required(),
-        unitOfMeasure: yup.object<SnowstormConceptMini>().optional(),
-        packSizes: yup.object<Set<BigDecimal>>().optional(),
-      })
-      .optional(),
-  });
 
 export const bulkAddExternalRequestorSchema: yup.ObjectSchema<BulkAddExternalRequestorRequest> =
   yup.object({
