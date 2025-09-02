@@ -2,8 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card, IconButton, Modal, Stack } from '@mui/material';
 import { Close, ZoomIn, ZoomOut } from '@mui/icons-material';
 import AttachmentService from '../../../../api/AttachmentService';
-import { Box } from '@mui/system';
-import { Typography } from 'antd';
+import { Typography } from '@mui/material';
 
 interface MediaViewerModalProps {
   open: boolean;
