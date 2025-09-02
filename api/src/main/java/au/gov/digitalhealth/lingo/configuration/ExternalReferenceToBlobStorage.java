@@ -26,6 +26,10 @@ import org.hibernate.validator.constraints.URL;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
+/**
+ * Configuration for mapping external URL references to blobs in S3 (or possibly other storage
+ * providers later).
+ */
 @ConfigurationProperties(prefix = "external-reference-to-blob-storage")
 @Getter
 @Setter
@@ -77,6 +81,7 @@ public class ExternalReferenceToBlobStorage {
     @NotBlank(message = "AWS secret key is required")
     private String secretKey;
 
+    @NotBlank(message = "Base URL for S3 is required")
     private String httpBaseUrl;
 
     // Optional prefix inside the bucket. For sanity, forbid leading slash.
