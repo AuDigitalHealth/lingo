@@ -47,6 +47,7 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.EnumSet;
 import java.util.Map;
@@ -95,6 +96,39 @@ public class BlobStorageService {
     this.authHelper = authHelper;
     this.externalReferenceToBlobStorage = externalReferenceToBlobStorage;
     this.attachmentRepository = attachmentRepository;
+  }
+
+  @SuppressWarnings({"java:S5443"})
+  private static Path getTempFile() {
+    try {
+      // Create temp file with secure permissions
+      Path tempFile = Files.createTempFile("blob-storage-", ".tmp");
+      updatePermissions(tempFile);
+
+      return tempFile;
+    } catch (IOException e) {
+      throw new LingoProblem("Failed creating secure temporary file for S3 operations", e);
+    }
+  }
+
+  private static void updatePermissions(Path tempFile) throws IOException {
+    // Set restrictive permissions (owner read/write only)
+    try {
+      Set<PosixFilePermission> permissions =
+          EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE);
+      Files.setPosixFilePermissions(tempFile, permissions);
+    } catch (UnsupportedOperationException e) {
+      // On Windows, POSIX permissions are not supported
+      // Try to set file as readable/writable by owner only
+      File file = tempFile.toFile();
+      boolean readableSuccess = file.setReadable(false, false) && file.setReadable(true, true);
+      boolean writableSuccess = file.setWritable(false, false) && file.setWritable(true, true);
+      boolean executableSuccess = file.setExecutable(false, false);
+
+      if (!readableSuccess || !writableSuccess || !executableSuccess) {
+        log.warning("Could not set restrictive file permissions on Windows for: " + tempFile);
+      }
+    }
   }
 
   private static URL validateUrl(String value) {
@@ -181,32 +215,52 @@ public class BlobStorageService {
         : filename;
   }
 
-  private static Path getTempFile() {
-    try {
-      // Create temp file with secure permissions
-      Path tempFile = Files.createTempFile("blob-storage-", ".tmp");
+  public void updateNonDefiningUrlProperties(
+      ModelConfiguration modelConfiguration, ProductPropertiesUpdateRequest updateRequest) {
+    Map<String, NonDefiningPropertyDefinition> nonDefiningPropertyDefinitionMap =
+        modelConfiguration.getNonDefiningProperties().stream()
+            .filter(p -> NonDefiningPropertyDataType.URI.equals(p.getDataType()))
+            .collect(Collectors.toMap(NonDefiningPropertyDefinition::getName, Function.identity()));
+    Map<String, ExternalIdentifierDefinition> externalIdentifierDefinitionMap =
+        modelConfiguration.getMappings().stream()
+            .filter(p -> NonDefiningPropertyDataType.URI.equals(p.getDataType()))
+            .collect(Collectors.toMap(ExternalIdentifierDefinition::getName, Function.identity()));
 
-      // Set restrictive permissions (owner read/write only)
-      try {
-        Set<PosixFilePermission> permissions =
-            EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE);
-        Files.setPosixFilePermissions(tempFile, permissions);
-      } catch (UnsupportedOperationException e) {
-        // On Windows, POSIX permissions are not supported
-        // Try to set file as readable/writable by owner only
-        File file = tempFile.toFile();
-        boolean readableSuccess = file.setReadable(false, false) && file.setReadable(true, true);
-        boolean writableSuccess = file.setWritable(false, false) && file.setWritable(true, true);
-        boolean executableSuccess = file.setExecutable(false, false);
-
-        if (!readableSuccess || !writableSuccess || !executableSuccess) {
-          log.warning("Could not set restrictive file permissions on Windows for: " + tempFile);
-        }
+    if (updateRequest.getNewNonDefiningProperties() != null) {
+      for (NonDefiningBase property : updateRequest.getNewNonDefiningProperties()) {
+        handlePropertyUpdate(
+            property, nonDefiningPropertyDefinitionMap, externalIdentifierDefinitionMap);
       }
+    }
+  }
 
-      return tempFile;
-    } catch (IOException e) {
-      throw new LingoProblem("Failed creating secure temporary file for S3 operations", e);
+  public void updateNonDefiningUrlProperties(
+      ModelConfiguration modelConfiguration, ProductSummary productSummary) {
+    Map<String, NonDefiningPropertyDefinition> nonDefiningPropertyDefinitionMap =
+        modelConfiguration.getNonDefiningProperties().stream()
+            .filter(p -> NonDefiningPropertyDataType.URI.equals(p.getDataType()))
+            .collect(Collectors.toMap(NonDefiningPropertyDefinition::getName, Function.identity()));
+    Map<String, ExternalIdentifierDefinition> externalIdentifierDefinitionMap =
+        modelConfiguration.getMappings().stream()
+            .filter(p -> NonDefiningPropertyDataType.URI.equals(p.getDataType()))
+            .collect(Collectors.toMap(ExternalIdentifierDefinition::getName, Function.identity()));
+
+    if (externalReferenceToBlobStorage != null
+        && externalReferenceToBlobStorage.isConfigured()
+        && (!nonDefiningPropertyDefinitionMap.isEmpty()
+            || !externalIdentifierDefinitionMap.isEmpty())) {
+
+      productSummary
+          .getNodes()
+          .forEach(
+              node ->
+                  node.getNonDefiningProperties()
+                      .forEach(
+                          property ->
+                              handlePropertyUpdate(
+                                  property,
+                                  nonDefiningPropertyDefinitionMap,
+                                  externalIdentifierDefinitionMap)));
     }
   }
 
@@ -311,6 +365,7 @@ public class BlobStorageService {
     return mimeType;
   }
 
+  @SuppressWarnings({"java:S5527", "java:S4423", "java:S4830"})
   private void configureSSLForDevelopment(HttpsURLConnection httpsConnection) {
     try {
       // Create trust manager that accepts all certificates (development only)
@@ -318,17 +373,21 @@ public class BlobStorageService {
           new TrustManager[] {
             new X509TrustManager() {
               public X509Certificate[] getAcceptedIssuers() {
-                return null;
+                return new X509Certificate[0];
               }
 
-              public void checkClientTrusted(X509Certificate[] certs, String authType) {}
+              public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                /* noop for ignoring certificate errors during development */
+              }
 
-              public void checkServerTrusted(X509Certificate[] certs, String authType) {}
+              public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                /* noop for ignoring certificate errors during development */
+              }
             }
           };
 
       SSLContext sc = SSLContext.getInstance("SSL");
-      sc.init(null, trustAllCerts, new java.security.SecureRandom());
+      sc.init(null, trustAllCerts, new SecureRandom());
 
       httpsConnection.setSSLSocketFactory(sc.getSocketFactory());
       httpsConnection.setHostnameVerifier((hostname, session) -> true);
@@ -403,54 +462,6 @@ public class BlobStorageService {
     final String mimeType = getData(urlToCopy, tempFile);
     final String sha256Hash = calculateSha256(tempFile);
     return putDataToS3(s3, sha256Hash, mimeType, tempFile, extractFileExtension(urlToCopy));
-  }
-
-  public void updateNonDefiningUrlProperties(
-      ModelConfiguration modelConfiguration, ProductPropertiesUpdateRequest productSummary) {
-    Map<String, NonDefiningPropertyDefinition> nonDefiningPropertyDefinitionMap =
-        modelConfiguration.getNonDefiningProperties().stream()
-            .filter(p -> NonDefiningPropertyDataType.URI.equals(p.getDataType()))
-            .collect(Collectors.toMap(NonDefiningPropertyDefinition::getName, Function.identity()));
-    Map<String, ExternalIdentifierDefinition> externalIdentifierDefinitionMap =
-        modelConfiguration.getMappings().stream()
-            .collect(Collectors.toMap(ExternalIdentifierDefinition::getName, Function.identity()));
-
-    if (productSummary.getNewNonDefiningProperties() != null) {
-      for (NonDefiningBase property : productSummary.getNewNonDefiningProperties()) {
-        handlePropertyUpdate(
-            property, nonDefiningPropertyDefinitionMap, externalIdentifierDefinitionMap);
-      }
-    }
-  }
-
-  public void updateNonDefiningUrlProperties(
-      ModelConfiguration modelConfiguration, ProductSummary productSummary) {
-    Map<String, NonDefiningPropertyDefinition> nonDefiningPropertyDefinitionMap =
-        modelConfiguration.getNonDefiningProperties().stream()
-            .filter(p -> NonDefiningPropertyDataType.URI.equals(p.getDataType()))
-            .collect(Collectors.toMap(NonDefiningPropertyDefinition::getName, Function.identity()));
-    Map<String, ExternalIdentifierDefinition> externalIdentifierDefinitionMap =
-        modelConfiguration.getMappings().stream()
-            .filter(p -> NonDefiningPropertyDataType.URI.equals(p.getDataType()))
-            .collect(Collectors.toMap(ExternalIdentifierDefinition::getName, Function.identity()));
-
-    if (externalReferenceToBlobStorage != null
-        && externalReferenceToBlobStorage.isConfigured()
-        && (!nonDefiningPropertyDefinitionMap.isEmpty()
-            || !externalIdentifierDefinitionMap.isEmpty())) {
-
-      productSummary
-          .getNodes()
-          .forEach(
-              node ->
-                  node.getNonDefiningProperties()
-                      .forEach(
-                          property ->
-                              handlePropertyUpdate(
-                                  property,
-                                  nonDefiningPropertyDefinitionMap,
-                                  externalIdentifierDefinitionMap)));
-    }
   }
 
   private void handlePropertyUpdate(

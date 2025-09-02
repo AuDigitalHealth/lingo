@@ -514,7 +514,6 @@
       <groupId>software.amazon.awssdk</groupId>
       <artifactId>s3</artifactId>
       <version>2.33.0</version>
-      <scope>compile</scope>
     </dependency>
   </dependencies>
   <description>Api for Lingo</description>
