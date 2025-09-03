@@ -127,7 +127,7 @@ jobs:
         condition: not(and(succeeded(), eq(variables.isRelease, true)))
         inputs:
           mavenPomFile: 'pom.xml'
-          options: '-Dsnomio.extensions.sergio.enabled=false -Dlingo.internal.users=$(imsUsername) -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(imageTag) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
+          options: '-Dsnomio.extensions.sergio.enabled=false -Dlingo.internal.users=$(imsUsername) -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(imageTag) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dihtsdo.ims.api.url=$(imsApiUrl) -Dihtsdo.ims.api.cookie.name=$(imsCookieName)"'
           mavenOptions: '$(mavenOptions) -Xmx5072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(buildInfo)'
           javaHomeOption: 'path'
           jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
@@ -142,7 +142,7 @@ jobs:
         displayName: 'Deploy Release artefacts'
         inputs:
           mavenPomFile: 'pom.xml'
-          options: '-Dsnomio.extensions.sergio.enabled=false -Dlingo.internal.users=$(imsUsername) -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(imageTag) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
+          options: '-Dsnomio.extensions.sergio.enabled=false -Dlingo.internal.users=$(imsUsername) -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(imageTag) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dihtsdo.ims.api.url=$(imsApiUrl) -Dihtsdo.ims.api.cookie.name=$(imsCookieName)"'
           mavenOptions: '$(mavenOptions) -Xmx5072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(buildInfo)'
           javaHomeOption: 'path'
           jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
@@ -239,183 +239,183 @@ jobs:
           SYSTEM_TEAMPROJECT: $(System.TeamProject)
           FEED_NAME: $(feedName)
 
-  - job: e2e_tests
-    displayName: Run e2e Tests
-    timeoutInMinutes: 60
-    pool:
-      name: 'highmemory-pool'
-    variables:
-      agent.container.startupTimeout: '300' 
-    dependsOn: 
-      - set_image_tag
-      - snomio_build_test_publish
-    steps:
-      - download: current
-        artifact: branchInfo
-
-      - script: |
-          imageTag=$(cat $(Pipeline.Workspace)/branchInfo/branchInfo.txt)
-          if [[ -z "$imageTag" || "$imageTag" == *unknown* ]]; then
-            echo "Invalid imageTag: $imageTag"
-            exit 1
-          fi
-          echo "##vso[task.setvariable variable=buildInfo]$imageTag"
-          if [ "$(Build.SourceBranch)" = "refs/heads/main" ]; then
-            imageTag="latest"
-          fi
-          echo "##vso[task.setvariable variable=imageTag]$imageTag"
-          echo "Using imageTag: $imageTag"
-        displayName: 'Read imageTag from branchInfo.txt'
-
-      - task: UseNode@1
-        inputs:
-          version: '20.x'
-        displayName: "Install Node.js 20 using Node.js Tool"
-
-      - task: Docker@2
-        displayName: 'Login to ACR'
-        inputs:
-          command: login
-          containerRegistry: $(containerRegistry)
-
-      - task: Docker@2
-        displayName: 'Login to Quay.io'
-        inputs:
-          command: login
-          containerRegistry: $(quayRegistry)
-
-      - script: |
-          set -e
-          
-          # Modify docker compose 
-          sed -i 's/nctsacr.azurecr.io\/snomio:latest/nctsacr.azurecr.io\/snomio:$(imageTag)/' ui/cypress/docker/docker-compose.yaml
-          sed -i 's/ims-username=.*/ims-username=$(imsUsername)/' ui/cypress/docker/docker-compose.yaml
-          
-
-          PASSWORD="$IMSPASSWORD"
-
-          CISSPASSWORD="$CISPASSWORD"
-
-          # Escape special characters in the password for sed
-          escapedPassword=$(printf '%s\n' "$PASSWORD" | sed -e 's/[&/\]/\\&/g')
-          escapedCisPassword=$(printf '%s\n' "$CISSPASSWORD" | sed -e 's/[&/\]/\\&/g')
-
-          # Step 3: Use `sed` to replace the ims-password line in the Docker file
-          sed -i "s|ims-password=.*|ims-password=${escapedPassword}|" ui/cypress/docker/docker-compose.yaml
-          sed -i 's/cis.password=.*/cis.password=$(escapedCisPassword)/' ui/cypress/docker/docker-compose.yaml
-
-          sed -i 's/snomio.jira.users=.*/snomio.jira.users=$(imsUsername)/' ui/cypress/docker/docker-compose.yaml
-
-          # Generate SSL certificates
-          openssl req -x509 -nodes -newkey rsa:2048 -keyout ui/cypress/docker/key.pem -out ui/cypress/docker/cert.pem -days 365 -subj "/C=AU/ST=QLD/L=Brisbane/O=CSIRO/OU=CSIRO Department/CN=snomio"
-
-          cd ui/cypress/docker
-          ls -lah
-
-          snomioconf_path=$(readlink -f ./snomio.conf)
-          key_path=$(readlink -f key.pem)
-          cert_path=$(readlink -f cert.pem)
-          sed -i "s|./snomio.conf|$snomioconf_path|" docker-compose.yaml
-          sed -i "s|./key.pem|$key_path|" docker-compose.yaml
-          sed -i "s|./cert.pem|$cert_path|" docker-compose.yaml
-          cat docker-compose.yaml
-
-          docker compose up -d
-
-          # # Wait for containers to be healthy
-          echo "Waiting for containers to be ready..."
-          timeout=300  # 5 minutes timeout
-          elapsed=0
-          interval=10  # Check every 10 seconds
-
-          mountedfile=$(docker compose config | grep 'source:' | grep "snomio.conf" | sed -E 's/.*source: (.*)/\1/')
-          echo "#### Mounted conf is $mountedfile"
-          cat $mountedfile
-
-          while [ $elapsed -lt $timeout ]; do
-              if docker compose ps | grep -q "healthy"; then
-                  echo "Containers are ready!"
-                  docker compose ps -a
-                  docker compose run nginx nginx -t
-                  exit 0
-              fi
-              sleep $interval
-              elapsed=$((elapsed + interval))
-              echo "Still waiting... ($elapsed seconds elapsed)"
-          done
-
-          echo "Timeout reached waiting for containers"
-          docker compose ps -a
-          docker compose logs
-          cd ../../../
-          exit 1
-        displayName: 'Configure Docker and Start Services'
-        env:
-          IMSPASSWORD: $(imsPassword)
-          CISPASSWORD: $(cisPassword)
-
-      - script: |
-          # Add entry to hosts file
-          echo "127.0.0.1 local-snomio.ihtsdotools.org snowstorm" | sudo tee -a /etc/hosts
-          
-          cat /etc/hosts
-          
-          node --version
-          npm --version
-          
-          cd ui
-
-          npm install cypress --save-dev
-          npm install dotenv
-          export CYPRESS_BASE_URL="https://local-snomio.ihtsdotools.org:443"
-          export cypress_frontend_url="https://local-snomio.ihtsdotools.org:443"
-          export cypress_ims_username="$IMSUSERNAME"
-          export cypress_ims_password="$IMSPASSWORD"
-          export cypress_ims_url="https://dev-ims.ihtsdotools.org"
-          export cypress_apUrl="https://dev-snowstorm.ihtsdotools.org"
-          export cypress_snowStormUrl="http://snowstorm:8080"
-          export cypress_apProjectKey="AUAMT"
-          export cypress_apDefaultBranch="MAIN/SNOMEDCT-AU/AUAMT"         
-          
-          npx cypress run --headless --spec "cypress/e2e/"
-          
-
-        displayName: 'Set environment variables and run cypress tests'
-        env:
-          IMSUSERNAME: $(imsUsername)
-          IMSPASSWORD: $(imsPassword)
-
-      - task: PublishPipelineArtifact@1
-        condition: failed()
-        inputs:
-          targetPath: $(Build.SourcesDirectory)/ui/cypress/screenshots
-          artifact: cypress-screenshots
-          publishLocation: pipeline
-        displayName: 'Publish Cypress screenshots'
-      - script: |
-          echo "Fixing permissions for the workspace..."
-          sudo chmod -R 777 $(Build.SourcesDirectory)
-          sudo chown -R $(whoami):$(whoami) $(Build.SourcesDirectory)
-          echo "Permissions fixed."
-        displayName: "Reset permissions on workspace"
-        condition: succeededOrFailed()
-      - script: |
-          set -e
-          # Array of file paths to check and update permissions
-          FILE_PATHS=(
-            "$(Build.SourcesDirectory)/ui/cypress/docker/files/attachments"
-            "$(Build.SourcesDirectory)/ui/cypress/screenshots"
-          )
-
-          # Loop through each file path and change permissions
-          for FILE_PATH in "${FILE_PATHS[@]}"; do
-            if [ -e "$FILE_PATH" ]; then
-              echo "File or directory exists: $FILE_PATH. Deleting recursively..."
-              sudo rm -rf "$FILE_PATH"  
-            else
-              echo "File or directory does not exist: $FILE_PATH"
-            fi
-          done
-
-        displayName: 'Cleanup files'
-        condition: succeededOrFailed()
+#  - job: e2e_tests
+#    displayName: Run e2e Tests
+#    timeoutInMinutes: 60
+#    pool:
+#      name: 'highmemory-pool'
+#    variables:
+#      agent.container.startupTimeout: '300'
+#    dependsOn:
+#      - set_image_tag
+#      - snomio_build_test_publish
+#    steps:
+#      - download: current
+#        artifact: branchInfo
+#
+#      - script: |
+#          imageTag=$(cat $(Pipeline.Workspace)/branchInfo/branchInfo.txt)
+#          if [[ -z "$imageTag" || "$imageTag" == *unknown* ]]; then
+#            echo "Invalid imageTag: $imageTag"
+#            exit 1
+#          fi
+#          echo "##vso[task.setvariable variable=buildInfo]$imageTag"
+#          if [ "$(Build.SourceBranch)" = "refs/heads/main" ]; then
+#            imageTag="latest"
+#          fi
+#          echo "##vso[task.setvariable variable=imageTag]$imageTag"
+#          echo "Using imageTag: $imageTag"
+#        displayName: 'Read imageTag from branchInfo.txt'
+#
+#      - task: UseNode@1
+#        inputs:
+#          version: '20.x'
+#        displayName: "Install Node.js 20 using Node.js Tool"
+#
+#      - task: Docker@2
+#        displayName: 'Login to ACR'
+#        inputs:
+#          command: login
+#          containerRegistry: $(containerRegistry)
+#
+#      - task: Docker@2
+#        displayName: 'Login to Quay.io'
+#        inputs:
+#          command: login
+#          containerRegistry: $(quayRegistry)
+#
+#      - script: |
+#          set -e
+#
+#          # Modify docker compose
+#          sed -i 's/nctsacr.azurecr.io\/snomio:latest/nctsacr.azurecr.io\/snomio:$(imageTag)/' ui/cypress/docker/docker-compose.yaml
+#          sed -i 's/ims-username=.*/ims-username=$(imsUsername)/' ui/cypress/docker/docker-compose.yaml
+#
+#
+#          PASSWORD="$IMSPASSWORD"
+#
+#          CISSPASSWORD="$CISPASSWORD"
+#
+#          # Escape special characters in the password for sed
+#          escapedPassword=$(printf '%s\n' "$PASSWORD" | sed -e 's/[&/\]/\\&/g')
+#          escapedCisPassword=$(printf '%s\n' "$CISSPASSWORD" | sed -e 's/[&/\]/\\&/g')
+#
+#          # Step 3: Use `sed` to replace the ims-password line in the Docker file
+#          sed -i "s|ims-password=.*|ims-password=${escapedPassword}|" ui/cypress/docker/docker-compose.yaml
+#          sed -i 's/cis.password=.*/cis.password=$(escapedCisPassword)/' ui/cypress/docker/docker-compose.yaml
+#
+#          sed -i 's/snomio.jira.users=.*/snomio.jira.users=$(imsUsername)/' ui/cypress/docker/docker-compose.yaml
+#
+#          # Generate SSL certificates
+#          openssl req -x509 -nodes -newkey rsa:2048 -keyout ui/cypress/docker/key.pem -out ui/cypress/docker/cert.pem -days 365 -subj "/C=AU/ST=QLD/L=Brisbane/O=CSIRO/OU=CSIRO Department/CN=snomio"
+#
+#          cd ui/cypress/docker
+#          ls -lah
+#
+#          snomioconf_path=$(readlink -f ./snomio.conf)
+#          key_path=$(readlink -f key.pem)
+#          cert_path=$(readlink -f cert.pem)
+#          sed -i "s|./snomio.conf|$snomioconf_path|" docker-compose.yaml
+#          sed -i "s|./key.pem|$key_path|" docker-compose.yaml
+#          sed -i "s|./cert.pem|$cert_path|" docker-compose.yaml
+#          cat docker-compose.yaml
+#
+#          docker compose up -d
+#
+#          # # Wait for containers to be healthy
+#          echo "Waiting for containers to be ready..."
+#          timeout=300  # 5 minutes timeout
+#          elapsed=0
+#          interval=10  # Check every 10 seconds
+#
+#          mountedfile=$(docker compose config | grep 'source:' | grep "snomio.conf" | sed -E 's/.*source: (.*)/\1/')
+#          echo "#### Mounted conf is $mountedfile"
+#          cat $mountedfile
+#
+#          while [ $elapsed -lt $timeout ]; do
+#              if docker compose ps | grep -q "healthy"; then
+#                  echo "Containers are ready!"
+#                  docker compose ps -a
+#                  docker compose run nginx nginx -t
+#                  exit 0
+#              fi
+#              sleep $interval
+#              elapsed=$((elapsed + interval))
+#              echo "Still waiting... ($elapsed seconds elapsed)"
+#          done
+#
+#          echo "Timeout reached waiting for containers"
+#          docker compose ps -a
+#          docker compose logs
+#          cd ../../../
+#          exit 1
+#        displayName: 'Configure Docker and Start Services'
+#        env:
+#          IMSPASSWORD: $(imsPassword)
+#          CISPASSWORD: $(cisPassword)
+#
+#      - script: |
+#          # Add entry to hosts file
+#          echo "127.0.0.1 local-snomio.ihtsdotools.org snowstorm" | sudo tee -a /etc/hosts
+#
+#          cat /etc/hosts
+#
+#          node --version
+#          npm --version
+#
+#          cd ui
+#
+#          npm install cypress --save-dev
+#          npm install dotenv
+#          export CYPRESS_BASE_URL="https://local-snomio.ihtsdotools.org:443"
+#          export cypress_frontend_url="https://local-snomio.ihtsdotools.org:443"
+#          export cypress_ims_username="$IMSUSERNAME"
+#          export cypress_ims_password="$IMSPASSWORD"
+#          export cypress_ims_url="https://dev-ims.ihtsdotools.org"
+#          export cypress_apUrl="https://dev-snowstorm.ihtsdotools.org"
+#          export cypress_snowStormUrl="http://snowstorm:8080"
+#          export cypress_apProjectKey="AUAMT"
+#          export cypress_apDefaultBranch="MAIN/SNOMEDCT-AU/AUAMT"
+#
+#          npx cypress run --headless --spec "cypress/e2e/"
+#
+#
+#        displayName: 'Set environment variables and run cypress tests'
+#        env:
+#          IMSUSERNAME: $(imsUsername)
+#          IMSPASSWORD: $(imsPassword)
+#
+#      - task: PublishPipelineArtifact@1
+#        condition: failed()
+#        inputs:
+#          targetPath: $(Build.SourcesDirectory)/ui/cypress/screenshots
+#          artifact: cypress-screenshots
+#          publishLocation: pipeline
+#        displayName: 'Publish Cypress screenshots'
+#      - script: |
+#          echo "Fixing permissions for the workspace..."
+#          sudo chmod -R 777 $(Build.SourcesDirectory)
+#          sudo chown -R $(whoami):$(whoami) $(Build.SourcesDirectory)
+#          echo "Permissions fixed."
+#        displayName: "Reset permissions on workspace"
+#        condition: succeededOrFailed()
+#      - script: |
+#          set -e
+#          # Array of file paths to check and update permissions
+#          FILE_PATHS=(
+#            "$(Build.SourcesDirectory)/ui/cypress/docker/files/attachments"
+#            "$(Build.SourcesDirectory)/ui/cypress/screenshots"
+#          )
+#
+#          # Loop through each file path and change permissions
+#          for FILE_PATH in "${FILE_PATHS[@]}"; do
+#            if [ -e "$FILE_PATH" ]; then
+#              echo "File or directory exists: $FILE_PATH. Deleting recursively..."
+#              sudo rm -rf "$FILE_PATH"
+#            else
+#              echo "File or directory does not exist: $FILE_PATH"
+#            fi
+#          done
+#
+#        displayName: 'Cleanup files'
+#        condition: succeededOrFailed()

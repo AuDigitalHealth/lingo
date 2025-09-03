@@ -10,6 +10,7 @@ import {
   getProductDisplayName,
   getSemanticTagChanges,
   isDeviceType,
+  trimIfTooLong,
 } from '../../utils/helpers/conceptUtils.ts';
 import Loading from '../../components/Loading.tsx';
 
@@ -178,7 +179,7 @@ function ProductPreviewCreateOrViewMode({
           return {
             searchedName: concept.fullySpecifiedName,
             response: await ConceptService.searchConceptNoEcl(
-              concept.fullySpecifiedName,
+              trimIfTooLong(concept.fullySpecifiedName, 250),
               branch,
               true,
             ),
