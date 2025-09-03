@@ -487,6 +487,7 @@ public class ProductCreationService {
     SnowstormConceptView newConcept = new SnowstormConceptView();
     newConcept.setActive(true);
     newConcept.setDefinitionStatusId(PRIMITIVE.getValue());
+    newConcept.setModuleId(modelConfiguration.getModuleId());
 
     // Add descriptions to the concept (synonym and fully specified name)
     SnowstormDtoUtil.addDescription(
