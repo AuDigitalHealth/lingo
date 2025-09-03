@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
-import { Modal, IconButton, Card, Stack } from '@mui/material';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Box, Card, IconButton, Modal, Stack, Typography } from '@mui/material';
 import { Close, ZoomIn, ZoomOut } from '@mui/icons-material';
 import AttachmentService from '../../../../api/AttachmentService';
 
@@ -18,6 +18,7 @@ const MediaViewerModal = ({
   const [fileName, setFileName] = useState<string>('');
 
   const [isLoading, setIsLoading] = useState(true);
+  const [isFullscreen] = useState(false);
 
   const [naturalDimensions, setNaturalDimensions] = useState({
     width: 0,
@@ -36,6 +37,24 @@ const MediaViewerModal = ({
     }
   };
 
+  const calculateInitialScale = useCallback(() => {
+    if (
+      containerRef.current &&
+      naturalDimensions.width &&
+      naturalDimensions.height
+    ) {
+      const containerWidth = containerRef.current.clientWidth;
+      const containerHeight = containerRef.current.clientHeight - 100; // Account for header
+
+      const widthRatio = containerWidth / naturalDimensions.width;
+      const heightRatio = containerHeight / naturalDimensions.height;
+
+      // Use the smaller ratio to ensure image fits both dimensions
+      const initialScale = Math.min(widthRatio, heightRatio, 1);
+      setScale(initialScale);
+    }
+  }, [naturalDimensions.width, naturalDimensions.height]);
+
   useEffect(() => {
     const handleResize = () => {
       calculateInitialScale();
@@ -43,23 +62,7 @@ const MediaViewerModal = ({
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [naturalDimensions]);
-
-  const calculateInitialScale = () => {
-    if (containerRef.current && imageRef.current) {
-      const containerWidth = containerRef.current.clientWidth;
-      const containerHeight = containerRef.current.clientHeight;
-      const maxWidth = Math.min(containerWidth, window.innerWidth * 0.8);
-      const maxHeight = Math.min(containerHeight, window.innerHeight * 0.8);
-
-      const widthRatio = maxWidth / imageRef.current.naturalWidth;
-      const heightRatio = maxHeight / imageRef.current.naturalHeight;
-
-      // Use the smaller ratio to ensure image fits both dimensions
-      const initialScale = Math.min(widthRatio, heightRatio, 1);
-      setScale(initialScale);
-    }
-  };
+  }, [calculateInitialScale, naturalDimensions]);
 
   // Determine file type from URL
   const fileType = useMemo(() => {
@@ -68,7 +71,7 @@ const MediaViewerModal = ({
       isPdf: extension === 'pdf',
       isImage:
         extension !== undefined &&
-        ['jpg', 'jpeg', 'png', 'gif'].includes(extension),
+        ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(extension),
     };
   }, [fileName]);
 
@@ -119,43 +122,64 @@ const MediaViewerModal = ({
     return {
       width: `${scaledWidth}px`,
       height: `${scaledHeight}px`,
-      transition: 'transform 1s ease-in-out',
+      transition: 'width 0.3s ease, height 0.3s ease',
     };
   };
+
+  const modalSize = isFullscreen
+    ? { width: '100vw', height: '100vh', maxWidth: 'none', maxHeight: 'none' }
+    : { width: '90vw', height: '90vh', maxWidth: '1200px', maxHeight: '800px' };
 
   return (
     <Modal
       open={open}
       onClose={handleClose}
       aria-labelledby="media-viewer-modal"
-      className="flex items-center justify-center"
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
       disableEnforceFocus
     >
       <Card
         sx={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          minWidth: '350px',
-          overflow: 'auto',
-          maxHeight: '95%',
+          position: 'relative',
+          width: modalSize.width,
+          height: modalSize.height,
+          maxWidth: modalSize.maxWidth,
+          maxHeight: modalSize.maxHeight,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
         }}
       >
-        <Stack sx={{ margin: '1rem', flexDirection: 'row' }}>
+        {/* Fixed Header */}
+        <Stack
+          direction="row"
+          sx={{
+            padding: '1rem',
+            backgroundColor: 'background.paper',
+            borderBottom: 1,
+            borderColor: 'divider',
+            position: 'sticky',
+            top: 0,
+            zIndex: 2,
+          }}
+        >
           {fileType.isImage && (
             <>
               <IconButton
                 onClick={zoomOut}
                 disabled={scale <= 0.1}
-                className="text-gray-600 hover:text-gray-800"
+                sx={{ color: 'text.secondary' }}
               >
                 <ZoomOut />
               </IconButton>
               <IconButton
                 onClick={zoomIn}
                 disabled={scale >= 3}
-                className="text-gray-600 hover:text-gray-800"
+                sx={{ color: 'text.secondary' }}
               >
                 <ZoomIn />
               </IconButton>
@@ -166,38 +190,87 @@ const MediaViewerModal = ({
           </IconButton>
         </Stack>
 
-        <div
+        {/* Scrollable Content Area */}
+        <Box
           ref={containerRef}
-          className="overflow-auto h-[calc(90vh-100px)] flex items-center justify-center"
+          sx={{
+            flex: 1,
+            overflow: 'auto',
+            display: 'flex',
+            alignItems: fileType.isImage ? 'center' : 'stretch',
+            justifyContent: fileType.isImage ? 'center' : 'stretch',
+            padding: fileType.isPdf ? 0 : '1rem',
+          }}
         >
           {isLoading ? (
-            <div className="flex items-center justify-center h-full">
-              Loading...
-            </div>
-          ) : fileType.isPdf && fileUrl ? (
-            <Stack sx={{ width: '80vw', height: '80vh' }}>
-              <iframe
-                src={`${fileUrl}`}
-                title="PDF Viewer"
-                className="w-full h-full border-none"
-                style={{ width: '100%', height: '100%' }}
-              />
-            </Stack>
-          ) : fileType.isImage && fileUrl ? (
-            <img
-              ref={imageRef}
-              src={fileUrl}
-              alt={fileName}
-              onLoad={handleImageLoad}
-              style={getImageStyle()}
-              className="object-contain"
-            />
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+              }}
+            >
+              <Typography>Loading...</Typography>
+            </Box>
           ) : (
-            <div className="flex items-center justify-center h-full text-gray-500">
-              Unsupported file type
-            </div>
+            (() => {
+              let content: React.ReactNode;
+
+              if (fileType.isPdf && fileUrl) {
+                content = (
+                  <iframe
+                    src={`${fileUrl}`}
+                    title="PDF Viewer"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      border: 'none',
+                      minHeight: '500px',
+                    }}
+                  />
+                );
+              } else if (fileType.isImage && fileUrl) {
+                return (
+                  <button
+                    type="button"
+                    onClick={scale < 3 ? zoomIn : zoomOut}
+                    aria-label={`Preview image ${fileName}. ${scale < 3 ? 'Press to zoom in' : 'Press to zoom out'}`}
+                    style={{
+                      // reset button styles to make it look like plain content
+                      padding: 0,
+                      margin: 0,
+                      border: 'none',
+                      background: 'transparent',
+                      lineHeight: 0,
+                      cursor: scale < 3 ? 'zoom-in' : 'zoom-out',
+                    }}
+                  >
+                    <img
+                      ref={imageRef}
+                      src={fileUrl}
+                      alt={fileName}
+                      onLoad={handleImageLoad}
+                      style={{
+                        ...getImageStyle(),
+                        objectFit: 'contain',
+                        // cursor handled on the button for accessibility
+                      }}
+                    />
+                  </button>
+                );
+              } else {
+                content = (
+                  <Box sx={{ textAlign: 'center', color: 'text.secondary' }}>
+                    <Typography>Unsupported file type: {fileName}</Typography>
+                  </Box>
+                );
+              }
+
+              return content;
+            })()
           )}
-        </div>
+        </Box>
       </Card>
     </Modal>
   );
