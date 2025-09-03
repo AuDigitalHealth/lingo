@@ -22,6 +22,7 @@ import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.*;
 import static java.lang.Boolean.TRUE;
 
 import au.csiro.snowstorm_client.model.*;
+import au.gov.digitalhealth.lingo.configuration.ExternalReferenceToBlobStorage;
 import au.gov.digitalhealth.lingo.configuration.FieldBindingConfiguration;
 import au.gov.digitalhealth.lingo.configuration.NamespaceConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.BasePropertyDefinition;
@@ -71,6 +72,8 @@ import reactor.core.publisher.Mono;
 @Log
 @Service
 public class ProductCreationService {
+
+  private final BlobStorageService blobStorageService;
   SnowstormClient snowstormClient;
   NameGenerationService nameGenerationService;
   TicketServiceImpl ticketService;
@@ -83,6 +86,8 @@ public class ProductCreationService {
   FieldBindingConfiguration fieldBindingConfiguration;
   Models models;
 
+  ExternalReferenceToBlobStorage externalReferenceToBlobStorage;
+
   public ProductCreationService(
       SnowstormClient snowstormClient,
       NameGenerationService nameGenerationService,
@@ -93,7 +98,9 @@ public class ProductCreationService {
       NamespaceConfiguration namespaceConfiguration,
       ModifiedGeneratedNameService modifiedGeneratedNameService,
       FieldBindingConfiguration fieldBindingConfiguration,
-      Models models) {
+      Models models,
+      ExternalReferenceToBlobStorage externalReferenceToBlobStorage,
+      BlobStorageService blobStorageService) {
     this.snowstormClient = snowstormClient;
     this.nameGenerationService = nameGenerationService;
     this.ticketService = ticketService;
@@ -104,6 +111,8 @@ public class ProductCreationService {
     this.modifiedGeneratedNameService = modifiedGeneratedNameService;
     this.fieldBindingConfiguration = fieldBindingConfiguration;
     this.models = models;
+    this.externalReferenceToBlobStorage = externalReferenceToBlobStorage;
+    this.blobStorageService = blobStorageService;
   }
 
   private static void updateAxiomIdentifierReferences(
@@ -544,6 +553,11 @@ public class ProductCreationService {
       validateUpdateOperation(productSummary);
     }
 
+    final ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+
+    // validation done - update URL based non-defining properties
+    blobStorageService.updateNonDefiningUrlProperties(modelConfiguration, productSummary);
+
     Mono<List<String>> taskChangedConceptIds = snowstormClient.getConceptIdsChangedOnTask(branch);
 
     Mono<List<String>> projectChangedConceptIds =
@@ -563,8 +577,6 @@ public class ProductCreationService {
                 node.setNewConceptDetails(null);
               }
             });
-
-    final ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
     updateConceptsWithPropertyOnlyChanges(branch, modelConfiguration, productSummary);
 

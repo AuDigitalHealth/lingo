@@ -83,6 +83,8 @@ public class ProductUpdateService {
 
   BulkProductActionRepository bulkProductActionRepository;
 
+  BlobStorageService blobStorageService;
+
   public ProductUpdateService(
       SnowstormClient snowstormClient,
       TicketServiceImpl ticketService,
@@ -92,7 +94,8 @@ public class ProductUpdateService {
       ProductCalculationServiceFactory productCalculationServiceFactory,
       TicketRepository ticketRepository,
       BulkProductActionRepository bulkProductActionRepository,
-      ModellingConfiguration modellingConfiguration) {
+      ModellingConfiguration modellingConfiguration,
+      BlobStorageService blobStorageService) {
     this.snowstormClient = snowstormClient;
 
     this.ticketService = ticketService;
@@ -103,6 +106,7 @@ public class ProductUpdateService {
     this.productSummaryService = productSummaryService;
     this.productCalculationServiceFactory = productCalculationServiceFactory;
     this.modellingConfiguration = modellingConfiguration;
+    this.blobStorageService = blobStorageService;
   }
 
   private static String getIdentifierKey(ExternalIdentifierDefinition m, ExternalIdentifier id) {
@@ -472,6 +476,10 @@ public class ProductUpdateService {
       ProductUpdateCreationDetails productUpdateCreationDetails)
       throws InterruptedException {
 
+    // validation done - update URL based non-defining properties
+    blobStorageService.updateNonDefiningUrlProperties(
+        models.getModelConfiguration(branch), productPropertiesUpdateRequest);
+
     productUpdateCreationDetails
         .getHistoricState()
         .setNonDefiningProperties(
@@ -481,19 +489,17 @@ public class ProductUpdateService {
     // Handle external identifiers and reference sets
     nonDefiningBaseSet.addAll(
         handleExternalIdentifiersAndReferenceSets(
-            branch, conceptId, productPropertiesUpdateRequest, productUpdateCreationDetails));
+            branch, conceptId, productPropertiesUpdateRequest));
     // Handle non-defining properties
     nonDefiningBaseSet.addAll(
-        handleNonDefiningProperties(
-            branch, conceptId, productPropertiesUpdateRequest, productUpdateCreationDetails));
+        handleNonDefiningProperties(branch, conceptId, productPropertiesUpdateRequest));
     productUpdateCreationDetails.getUpdatedState().setNonDefiningProperties(nonDefiningBaseSet);
   }
 
   private Collection<NonDefiningBase> handleExternalIdentifiersAndReferenceSets(
       String branch,
       String conceptId,
-      ProductPropertiesUpdateRequest productPropertiesUpdateRequest,
-      ProductUpdateCreationDetails productUpdate)
+      ProductPropertiesUpdateRequest productPropertiesUpdateRequest)
       throws InterruptedException {
     Map<String, ExternalIdentifierDefinition> mappingRefsets =
         models.getModelConfiguration(branch).getMappingsByName();
@@ -568,10 +574,7 @@ public class ProductUpdateService {
   }
 
   public Collection<NonDefiningProperty> handleNonDefiningProperties(
-      String branch,
-      String conceptId,
-      @Valid ProductPropertiesUpdateRequest updateRequest,
-      ProductUpdateCreationDetails productUpdate) {
+      String branch, String conceptId, @Valid ProductPropertiesUpdateRequest updateRequest) {
 
     Map<String, NonDefiningPropertyDefinition> nonDefiningPropertiesByName =
         models.getModelConfiguration(branch).getNonDefiningPropertiesByName();
