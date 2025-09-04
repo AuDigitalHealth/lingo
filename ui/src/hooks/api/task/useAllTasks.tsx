@@ -28,7 +28,7 @@ export const useAllTasksOptions = (
   return queryOptions({
     queryKey,
     queryFn: () => TasksServices.getAllTasks(applicationConfig?.apProjectKey),
-    staleTime: 1 * (60 * 1000),
+    staleTime: 1000,
     refetchInterval: 1 * (60 * 1000),
   });
 };
@@ -105,7 +105,7 @@ export function useAllTasks() {
   const { applicationConfig } = useApplicationConfigStore();
   const { isLoading, data, isError } = useQuery({
     ...useAllTasksOptions(applicationConfig),
-    staleTime: 1 * (60 * 1000),
+    staleTime: 1000,
     refetchInterval: 1 * (60 * 1000),
   });
 
