@@ -43,10 +43,7 @@ import au.gov.digitalhealth.lingo.product.bulk.BrandPackSizeCreationDetails;
 import au.gov.digitalhealth.lingo.product.bulk.BulkProductAction;
 import au.gov.digitalhealth.lingo.product.details.ProductDetails;
 import au.gov.digitalhealth.lingo.service.identifier.IdentifierSource;
-import au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter;
 import au.gov.digitalhealth.lingo.util.OwlAxiomService;
-import au.gov.digitalhealth.lingo.util.ReferenceSetUtils;
-import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import au.gov.digitalhealth.tickets.TicketDto;
 import au.gov.digitalhealth.tickets.TicketDtoExtended;
@@ -65,6 +62,7 @@ import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -87,6 +85,9 @@ public class ProductCreationService {
   Models models;
 
   ExternalReferenceToBlobStorage externalReferenceToBlobStorage;
+
+  @Value("${product-creation.delete-partial-save-on-create:true}")
+  private boolean deletePartialSaveOnCreate;
 
   public ProductCreationService(
       SnowstormClient snowstormClient,
@@ -499,17 +500,17 @@ public class ProductCreationService {
     newConcept.setModuleId(modelConfiguration.getModuleId());
 
     // Add descriptions to the concept (synonym and fully specified name)
-    SnowstormDtoUtil.addDescription(
+    addDescription(
         newConcept,
         pt,
-        SnomedConstants.SYNONYM.getValue(),
+        SYNONYM.getValue(),
         modelConfiguration,
         // todo need to revise hard coding case sensitivity
         ENTIRE_TERM_CASE_SENSITIVE.getValue());
-    SnowstormDtoUtil.addDescription(
+    addDescription(
         newConcept,
         fsn,
-        SnomedConstants.FSN.getValue(),
+        FSN.getValue(),
         modelConfiguration,
         ENTIRE_TERM_CASE_SENSITIVE.getValue());
 
@@ -816,16 +817,16 @@ public class ProductCreationService {
       // if it is an edit, look up the existing concept
       if (node.isConceptEdit()) {
         concept =
-            SnowstormDtoUtil.toSnowstormConceptView(
+            toSnowstormConceptView(
                 node,
                 modelConfiguration,
                 editAndRetireConceptMap.get(node.getOriginalNode().getConceptId()));
       } else if (node.isRetireAndReplaceWithExisting()) {
         concept =
-            SnowstormDtoUtil.toSnowstormConceptView(
+            toSnowstormConceptView(
                 editAndRetireConceptMap.get(node.getConceptId()));
       } else {
-        concept = SnowstormDtoUtil.toSnowstormConceptView(node, modelConfiguration);
+        concept = toSnowstormConceptView(node, modelConfiguration);
       }
 
       updateAxiomIdentifierReferences(idMap, concept);
@@ -834,7 +835,7 @@ public class ProductCreationService {
           concept.getRelationships(),
           node.getNewConceptDetails() != null
               ? node.getNewConceptDetails().getNonDefiningProperties()
-              : NonDefiningPropertiesConverter.calculateNonDefiningRelationships(
+              : calculateNonDefiningRelationships(
                   modelConfiguration, node.getNonDefiningProperties(), node.getModelLevel()));
 
       String conceptId =
@@ -864,7 +865,7 @@ public class ProductCreationService {
           SnowstormConcept conceptToRetire =
               editAndRetireConceptMap.get(node.getOriginalNode().getConceptId());
           conceptToRetire.setActive(false);
-          concepts.add(SnowstormDtoUtil.toSnowstormConceptView(conceptToRetire));
+          concepts.add(toSnowstormConceptView(conceptToRetire));
         }
       } else {
         log.warning("Creating concept sequentially - this will be slow");
@@ -886,7 +887,7 @@ public class ProductCreationService {
           snowstormClient.updateConceptView(
               branch,
               conceptToRetire.getConceptId(),
-              SnowstormDtoUtil.toSnowstormConceptView(conceptToRetire),
+              toSnowstormConceptView(conceptToRetire),
               false);
         }
       }
@@ -1051,7 +1052,7 @@ public class ProductCreationService {
                       Set<SnowstormReferenceSetMemberViewComponent> newRefsetMembers =
                           n.getNewConceptDetails() != null
                               ? n.getNewConceptDetails().getReferenceSetMembers()
-                              : ReferenceSetUtils.calculateReferenceSetMembers(
+                              : calculateReferenceSetMembers(
                                   n.getNonDefiningProperties(),
                                   modelConfiguration,
                                   n.getModelLevel());
@@ -1121,7 +1122,7 @@ public class ProductCreationService {
           snowstormClient
               .getRefsetMembers(branch, retireAndReplaceIds, inScopeReferenceSetIds)
               .stream()
-              .filter(r -> Boolean.TRUE.equals(r.getActive()))
+              .filter(r -> TRUE.equals(r.getActive()))
               .toList());
 
       nodeCreateOrder.stream()
@@ -1148,7 +1149,7 @@ public class ProductCreationService {
               .map(
                   node -> {
                     Set<SnowstormReferenceSetMemberViewComponent> refsetMembers =
-                        ReferenceSetUtils.calculateReferenceSetMembers(
+                        calculateReferenceSetMembers(
                             node.getNonDefiningProperties(),
                             modelConfiguration,
                             node.getModelLevel());
@@ -1162,7 +1163,7 @@ public class ProductCreationService {
               .flatMap(Collection::stream)
               .filter(
                   existingRefset ->
-                      Boolean.TRUE.equals(existingRefset.getActive())
+                      TRUE.equals(existingRefset.getActive())
                           && requiredNewRefsetMembers.stream()
                               .noneMatch(
                                   newRefset ->
@@ -1306,7 +1307,7 @@ public class ProductCreationService {
           e);
     }
 
-    if (partialSaveName != null && !partialSaveName.isEmpty()) {
+    if (deletePartialSaveOnCreate && partialSaveName != null && !partialSaveName.isEmpty()) {
       try {
         ticketService.deleteProduct(ticket.getId(), Long.parseLong(partialSaveName));
       } catch (ResourceNotFoundProblem p) {
