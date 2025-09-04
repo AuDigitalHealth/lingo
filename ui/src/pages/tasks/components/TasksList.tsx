@@ -5,6 +5,7 @@ import {
   GridColDef,
   GridRenderCellParams,
   GridValueFormatterParams,
+  getGridSingleSelectOperators,
 } from '@mui/x-data-grid';
 
 import {
@@ -373,8 +374,9 @@ function TasksList({
       headerName: 'Reviewers',
       width: 200,
       type: 'singleSelect',
-      filterable: false,
+      filterable: true,
       sortable: true,
+      valueOptions: mapToUserOptions(jiraUsers),
       sortComparator: (v1, v2, param1, param2) => {
         // commented because it is not super clear what the values are/should be here.
         const valueA = param1.value; // Array of strings
@@ -419,7 +421,25 @@ function TasksList({
 
         return 0;
       },
-      disableColumnMenu: true,
+      disableColumnMenu: false,
+      filterOperators: [
+        {
+          ...getGridSingleSelectOperators().find(op => op.value === 'is')!,
+          getApplyFilterFn: (filterItem: any) => {
+            if (!filterItem.value) {
+              return null;
+            }
+            return (params: GridCellParams): boolean => {
+              return isUserExistsInList(
+                params.value as string[],
+                filterItem.value,
+                jiraUsers,
+              );
+            };
+          },
+        },
+      ],
+      // Keep your quick filter for the search bar
       getApplyQuickFilterFn: (value: string) => {
         if (!value) {
           return null;
