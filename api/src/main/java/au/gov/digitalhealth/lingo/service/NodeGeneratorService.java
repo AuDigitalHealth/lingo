@@ -16,6 +16,7 @@
 package au.gov.digitalhealth.lingo.service;
 
 import static au.gov.digitalhealth.lingo.util.AmtConstants.*;
+import static au.gov.digitalhealth.lingo.util.NmpcConstants.HAS_OTHER_IDENTIFYING_INFORMATION_NMPC;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.DEFINED;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.PRIMITIVE;
 
@@ -576,6 +577,11 @@ public class NodeGeneratorService {
     return node;
   }
 
+  private static boolean isOiiType(SnowstormRelationship r) {
+    return r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION.getValue())
+        || r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION_NMPC.getValue());
+  }
+
   /**
    * Post filters a set of concept to remove those that don't match the OII required by the set of
    * candidate relationships - this is because Snowstorm does not support String type concrete
@@ -590,11 +596,10 @@ public class NodeGeneratorService {
       String branch,
       Set<SnowstormRelationship> relationships,
       Collection<SnowstormConceptMini> matchingConcepts) {
-    if (relationships.stream()
-        .anyMatch(r -> r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION.getValue()))) {
+    if (relationships.stream().anyMatch(NodeGeneratorService::isOiiType)) {
       List<String> oii =
           relationships.stream()
-              .filter(r -> r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION.getValue()))
+              .filter(NodeGeneratorService::isOiiType)
               .map(r -> r.getConcreteValue().getValue())
               .toList();
 
@@ -617,10 +622,7 @@ public class NodeGeneratorService {
                                       a.getRelationships().stream()
                                           .anyMatch(
                                               r ->
-                                                  r.getTypeId()
-                                                          .equals(
-                                                              HAS_OTHER_IDENTIFYING_INFORMATION
-                                                                  .getValue())
+                                                  isOiiType(r)
                                                       && oii.contains(
                                                           r.getConcreteValue().getValue()))))
                   .map(SnowstormConcept::getConceptId)

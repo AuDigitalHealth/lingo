@@ -22,6 +22,9 @@ import static au.gov.digitalhealth.lingo.util.AmtConstants.COUNT_OF_DEVICE_TYPE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_CONTAINER_TYPE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.NO_OII_VALUE;
+import static au.gov.digitalhealth.lingo.util.NmpcConstants.CONTAINS_DEVICE_NMPC;
+import static au.gov.digitalhealth.lingo.util.NmpcConstants.HAS_OTHER_IDENTIFYING_INFORMATION_NMPC;
+import static au.gov.digitalhealth.lingo.util.NmpcConstants.PACKAGE_NMPC;
 import static au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter.calculateNonDefiningRelationships;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_UNIT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_VALUE;
@@ -128,7 +131,9 @@ public class DeviceProductCalculationService
         || productDetails.getOtherIdentifyingInformation() != null) {
       relationships.add(
           getSnowstormDatatypeComponent(
-              HAS_OTHER_IDENTIFYING_INFORMATION,
+              modelConfiguration.getModelType().equals(ModelType.NMPC)
+                  ? HAS_OTHER_IDENTIFYING_INFORMATION_NMPC
+                  : HAS_OTHER_IDENTIFYING_INFORMATION,
               !StringUtils.hasLength(productDetails.getOtherIdentifyingInformation())
                   ? NO_OII_VALUE.getValue()
                   : productDetails.getOtherIdentifyingInformation(),
@@ -176,7 +181,7 @@ public class DeviceProductCalculationService
         && productDetails.getGenericOtherIdentifyingInformation() != null) {
       relationships.add(
           getSnowstormDatatypeComponent(
-              HAS_OTHER_IDENTIFYING_INFORMATION,
+              HAS_OTHER_IDENTIFYING_INFORMATION_NMPC,
               !StringUtils.hasLength(productDetails.getGenericOtherIdentifyingInformation())
                   ? NO_OII_VALUE.getValue()
                   : productDetails.getGenericOtherIdentifyingInformation(),
@@ -565,14 +570,20 @@ public class DeviceProductCalculationService
       }
     } else {
       relationships.add(
-          getSnowstormRelationship(IS_A, PACKAGE, 0, modelConfiguration.getModuleId()));
+          getSnowstormRelationship(
+              IS_A,
+              modelConfiguration.getModelType().equals(ModelType.NMPC) ? PACKAGE_NMPC : PACKAGE,
+              0,
+              modelConfiguration.getModuleId()));
     }
     int group = 1;
     for (Entry<ProductQuantity<DeviceProductDetails>, ProductSummary> innerProductSummaryEntry :
         innerProductSummaries.entrySet()) {
       relationships.add(
           getSnowstormRelationship(
-              CONTAINS_DEVICE,
+              modelConfiguration.getModelType().equals(ModelType.NMPC)
+                  ? CONTAINS_DEVICE_NMPC
+                  : CONTAINS_DEVICE,
               innerProductSummaryEntry
                   .getValue()
                   .getSingleConceptOfType(containedType.getModelLevelType()),
@@ -624,7 +635,7 @@ public class DeviceProductCalculationService
       if (modelLevel.isBranded() && packageDetails.getOtherIdentifyingInformation() != null) {
         relationships.add(
             getSnowstormDatatypeComponent(
-                HAS_OTHER_IDENTIFYING_INFORMATION,
+                HAS_OTHER_IDENTIFYING_INFORMATION_NMPC,
                 !StringUtils.hasLength(packageDetails.getOtherIdentifyingInformation())
                     ? NO_OII_VALUE.getValue()
                     : packageDetails.getOtherIdentifyingInformation(),
@@ -635,7 +646,7 @@ public class DeviceProductCalculationService
       } else if (packageDetails.getGenericOtherIdentifyingInformation() != null) {
         relationships.add(
             getSnowstormDatatypeComponent(
-                HAS_OTHER_IDENTIFYING_INFORMATION,
+                HAS_OTHER_IDENTIFYING_INFORMATION_NMPC,
                 !StringUtils.hasLength(packageDetails.getGenericOtherIdentifyingInformation())
                     ? NO_OII_VALUE.getValue()
                     : packageDetails.getGenericOtherIdentifyingInformation(),

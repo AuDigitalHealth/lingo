@@ -20,6 +20,7 @@ import static au.gov.digitalhealth.lingo.service.ProductSummaryService.HAS_PRODU
 import static au.gov.digitalhealth.lingo.service.ProductSummaryService.IS_A_LABEL;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONTAINS_DEVICE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_DEVICE_TYPE;
+import static au.gov.digitalhealth.lingo.util.NmpcConstants.CONTAINS_DEVICE_NMPC;
 import static au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter.calculateNonDefiningRelationships;
 import static au.gov.digitalhealth.lingo.util.ReferenceSetUtils.calculateReferenceSetMembers;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONTAINS_CD;
@@ -810,6 +811,7 @@ public class BrandPackSizeService {
             r.getConcreteValue().setValueWithPrefix("#" + packSizeString);
           }
           if (r.getTypeId().equals(CONTAINS_DEVICE.getValue())
+              || r.getTypeId().equals(CONTAINS_DEVICE_NMPC.getValue())
               || r.getTypeId().equals(CONTAINS_CD.getValue())) {
             atomicCache.addFsnAndPt(
                 r.getDestinationId(),
