@@ -107,6 +107,7 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
       conceptId: brand.conceptId,
       pt: brand.pt || { term: brand.fsn?.term || 'Unnamed Brand' },
       fsn: brand.fsn || { term: brand.pt?.term || 'Unnamed Brand' },
+      definitionStatus: brand.definitionStatus,
     };
 
     if (isMultivalued) {
