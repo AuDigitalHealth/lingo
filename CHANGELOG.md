@@ -11,6 +11,9 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 - No updates yet.
 
 
+## [1.2.11] - 2025-09-03
+
+
 ## [1.2.10.6] - 2025-07-02
 
 ### Fixed
