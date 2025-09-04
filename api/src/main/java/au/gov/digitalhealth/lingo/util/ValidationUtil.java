@@ -18,6 +18,7 @@ package au.gov.digitalhealth.lingo.util;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONTAINS_DEVICE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONTAINS_PACKAGED_CD;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONTAINS_PACKAGED_DEVICE;
+import static au.gov.digitalhealth.lingo.util.NmpcConstants.CONTAINS_DEVICE_NMPC;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONTAINS_CD;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.UNIT_OF_PRESENTATION;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getSingleAxiom;
@@ -73,7 +74,8 @@ public class ValidationUtil {
             .filter(
                 r ->
                     r.getTypeId().equals(CONTAINS_CD.getValue())
-                        || r.getTypeId().equals(CONTAINS_DEVICE.getValue()))
+                        || r.getTypeId().equals(CONTAINS_DEVICE.getValue())
+                        || r.getTypeId().equals(CONTAINS_DEVICE_NMPC.getValue()))
             .collect(Collectors.toSet());
 
     if (containsProductRelationships.size() != 1) {
