@@ -23,6 +23,7 @@ import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_DEVICE_TYPE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_TOTAL_QUANTITY_UNIT;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_TOTAL_QUANTITY_VALUE;
+import static au.gov.digitalhealth.lingo.util.NmpcConstants.HAS_OTHER_IDENTIFYING_INFORMATION_NMPC;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.ADDITIONAL_RELATIONSHIP;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONTAINS_CD;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_ACTIVE_INGREDIENT;
@@ -391,7 +392,7 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
   }
 
   @Override
-  protected String getContainedUnitRelationshipType() {
+  protected String getContainedUnitRelationshipType(ModelConfiguration modelConfiguration) {
     return CONTAINS_CD.getValue();
   }
 
@@ -462,7 +463,7 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
       Set<SnowstormRelationship> relationships =
           filterActiveStatedRelationshipByType(
               getRelationshipsFromAxioms(unbrandedProduct),
-              HAS_OTHER_IDENTIFYING_INFORMATION.getValue());
+              HAS_OTHER_IDENTIFYING_INFORMATION_NMPC.getValue());
 
       if (relationships.size() == 1) {
         productDetails.setGenericOtherIdentifyingInformation(
@@ -473,7 +474,7 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
 
       Set<SnowstormRelationship> brandedRelationships =
           filterActiveStatedRelationshipByType(
-              productRelationships, HAS_OTHER_IDENTIFYING_INFORMATION.getValue());
+              productRelationships, HAS_OTHER_IDENTIFYING_INFORMATION_NMPC.getValue());
 
       if (brandedRelationships.size() == 1) {
         productDetails.setOtherIdentifyingInformation(
