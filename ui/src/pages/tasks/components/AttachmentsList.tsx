@@ -151,7 +151,9 @@ function DraggableAttachment({
 
         <IconButton
           size="small"
-          onClick={handleCopyUrl}
+          onClick={e => {
+            void handleCopyUrl(e);
+          }}
           sx={{
             ml: 1,
             color: 'text.secondary',
@@ -166,7 +168,9 @@ function DraggableAttachment({
 
         <IconButton
           size="small"
-          onClick={handleDownload}
+          onClick={e => {
+            void handleDownload(e);
+          }}
           sx={{
             ml: 0.5,
             color: 'text.secondary',
