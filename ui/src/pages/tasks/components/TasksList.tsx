@@ -5,6 +5,7 @@ import {
   GridColDef,
   GridRenderCellParams,
   GridValueFormatterParams,
+  getGridSingleSelectOperators,
 } from '@mui/x-data-grid';
 
 import {
@@ -16,36 +17,30 @@ import {
 import { Card, Chip, Grid } from '@mui/material';
 import { Link } from 'react-router-dom';
 
-import { ReactNode, useCallback, useEffect, useState } from 'react';
+import { ReactNode, useEffect } from 'react';
 import statusToColor from '../../../utils/statusToColor.ts';
 import { ValidationColor } from '../../../types/validationColor.ts';
-
-import { parseISO } from 'date-fns';
 
 import {
   isUserExists,
   mapToUserNameArray,
   mapToUserOptions,
   isUserExistsInList,
-  userExistsInList,
 } from '../../../utils/helpers/userUtils.ts';
 import CustomTaskAssigneeSelection from './CustomTaskAssigneeSelection.tsx';
 import CustomTaskReviewerSelection from './CustomTaskReviewerSelection.tsx';
 import { TableHeaders } from '../../../components/TableHeaders.tsx';
 import TasksActionBar from './TasksActionBar.tsx';
 import AuthoringPlatformLink from '../../../components/AuthoringPlatformLink.tsx';
-import { useAllTasks } from '../../../hooks/api/useAllTasks.tsx';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import { unavailableTasksErrorHandler } from '../../../types/ErrorHandler.ts';
-import useUserStore from '../../../stores/UserStore.ts';
 import { TaskStatusIcon } from '../../../components/icons/TaskStatusIcon.tsx';
 import { getTaskAssociationsByTaskId } from '../../../hooks/useGetTaskAssociationsByTaskId.tsx';
 import { useAllTaskAssociations } from '../../../hooks/api/useInitializeTickets.tsx';
 import { useJiraUsers } from '../../../hooks/api/useInitializeJiraUsers.tsx';
 import { useFieldBindings } from '../../../hooks/api/useInitializeConfig.tsx';
 import { getAllKeyValueMapForTheKey } from '../../../utils/helpers/FieldBindingUtils.ts';
-import message from '../../../layouts/MainLayout/Header/HeaderContent/Message.tsx';
 import { Project } from '../../../types/Project.ts';
 
 interface TaskListProps {
@@ -373,8 +368,9 @@ function TasksList({
       headerName: 'Reviewers',
       width: 200,
       type: 'singleSelect',
-      filterable: false,
+      filterable: true,
       sortable: true,
+      valueOptions: mapToUserOptions(jiraUsers),
       sortComparator: (v1, v2, param1, param2) => {
         // commented because it is not super clear what the values are/should be here.
         const valueA = param1.value; // Array of strings
@@ -419,7 +415,25 @@ function TasksList({
 
         return 0;
       },
-      disableColumnMenu: true,
+      disableColumnMenu: false,
+      filterOperators: [
+        {
+          ...getGridSingleSelectOperators().find(op => op.value === 'is')!,
+          getApplyFilterFn: (filterItem: any) => {
+            if (!filterItem.value) {
+              return null;
+            }
+            return (params: GridCellParams): boolean => {
+              return isUserExistsInList(
+                params.value as string[],
+                filterItem.value,
+                jiraUsers,
+              );
+            };
+          },
+        },
+      ],
+      // Keep your quick filter for the search bar
       getApplyQuickFilterFn: (value: string) => {
         if (!value) {
           return null;
