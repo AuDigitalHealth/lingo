@@ -244,7 +244,6 @@ export default function SearchProduct({
     branch,
     encodeURIComponent(ecl as string),
     allData,
-    true,
   );
 
   useEffect(() => {
