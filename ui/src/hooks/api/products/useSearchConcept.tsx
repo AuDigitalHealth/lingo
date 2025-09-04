@@ -165,7 +165,7 @@ export function useSearchConcept(
         return emptySnowstormResponse;
       }
     },
-    staleTime: 2 * (60 * 1000),
+    staleTime: 30 * 1000,
     enabled: shouldCall(),
   });
 
