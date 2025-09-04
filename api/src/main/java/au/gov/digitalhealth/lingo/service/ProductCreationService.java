@@ -508,11 +508,7 @@ public class ProductCreationService {
         // todo need to revise hard coding case sensitivity
         ENTIRE_TERM_CASE_SENSITIVE.getValue());
     addDescription(
-        newConcept,
-        fsn,
-        FSN.getValue(),
-        modelConfiguration,
-        ENTIRE_TERM_CASE_SENSITIVE.getValue());
+        newConcept, fsn, FSN.getValue(), modelConfiguration, ENTIRE_TERM_CASE_SENSITIVE.getValue());
 
     // Add the axiom to the concept
     SnowstormAxiom axiom = createPrimitiveAxiom(relationships, modelConfiguration.getModuleId());
@@ -822,9 +818,7 @@ public class ProductCreationService {
                 modelConfiguration,
                 editAndRetireConceptMap.get(node.getOriginalNode().getConceptId()));
       } else if (node.isRetireAndReplaceWithExisting()) {
-        concept =
-            toSnowstormConceptView(
-                editAndRetireConceptMap.get(node.getConceptId()));
+        concept = toSnowstormConceptView(editAndRetireConceptMap.get(node.getConceptId()));
       } else {
         concept = toSnowstormConceptView(node, modelConfiguration);
       }
