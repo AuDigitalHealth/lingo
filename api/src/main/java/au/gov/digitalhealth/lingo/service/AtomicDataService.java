@@ -820,7 +820,8 @@ public abstract class AtomicDataService<T extends ProductDetails> {
     Set<SnowstormRelationship> subpacksRelationships =
         getActiveRelationshipsOfType(basePackageRelationships, getSubpackRelationshipType());
     Set<SnowstormRelationship> productRelationships =
-        getActiveRelationshipsOfType(basePackageRelationships, getContainedUnitRelationshipType(modelConfiguration));
+        getActiveRelationshipsOfType(
+            basePackageRelationships, getContainedUnitRelationshipType(modelConfiguration));
 
     if (!subpacksRelationships.isEmpty()) {
       if (!productRelationships.isEmpty()) {
