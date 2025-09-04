@@ -250,7 +250,9 @@ function TaskDetailsActions() {
           startIcon={<QuestionAnswerIcon />}
           sx={customSx}
           color="info"
-          onClick={handleSubmitForReview}
+          onClick={() => {
+            void handleSubmitForReview();
+          }}
         >
           {ableToSubmitForReview ? 'Submit For Review' : task?.status}
         </Button>
