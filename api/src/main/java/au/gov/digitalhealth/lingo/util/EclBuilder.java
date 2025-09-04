@@ -17,6 +17,7 @@ package au.gov.digitalhealth.lingo.util;
 
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_CONTAINER_TYPE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
+import static au.gov.digitalhealth.lingo.util.NmpcConstants.HAS_OTHER_IDENTIFYING_INFORMATION_NMPC;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.COUNT_OF_ACTIVE_INGREDIENT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.COUNT_OF_BASE_ACTIVE_INGREDIENT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_ACTIVE_INGREDIENT;
@@ -177,7 +178,10 @@ public class EclBuilder {
     // TODO this is a Snowstorm defect - this is needed but has to be filtered out for now
     filteredRelationships =
         filteredRelationships.stream()
-            .filter(r -> !r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION.getValue()))
+            .filter(
+                r ->
+                    !r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION.getValue())
+                        && !r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION_NMPC.getValue()))
             .collect(Collectors.toSet());
 
     return filteredRelationships.stream()

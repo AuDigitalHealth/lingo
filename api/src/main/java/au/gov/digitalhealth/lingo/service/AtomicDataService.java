@@ -17,7 +17,8 @@ package au.gov.digitalhealth.lingo.service;
 
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONTAINS_DEVICE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_CONTAINER_TYPE;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
+import static au.gov.digitalhealth.lingo.util.NmpcConstants.CONTAINS_DEVICE_NMPC;
+import static au.gov.digitalhealth.lingo.util.NmpcConstants.HAS_OTHER_IDENTIFYING_INFORMATION_NMPC;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONTAINS_CD;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_UNIT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_VALUE;
@@ -278,7 +279,75 @@ public abstract class AtomicDataService<T extends ProductDetails> {
 
   protected abstract String getType();
 
-  protected abstract String getContainedUnitRelationshipType();
+  private static <T extends ProductDetails> void setOtherIdentifyingInformation(
+      String productId,
+      Maps maps,
+      ModelConfiguration modelConfiguration,
+      Set<SnowstormRelationship> basePackageRelationships,
+      PackageDetails<T> details) {
+    if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
+      basePackageRelationships.stream()
+          .filter(
+              r ->
+                  r.getTypeId().equals(IS_A.getValue())
+                      && maps.typeMap.get(r.getDestinationId()) != null
+                      && maps.typeMap
+                          .get(r.getDestinationId())
+                          .equals(
+                              modelConfiguration
+                                  .getLevelOfType(ModelLevelType.PACKAGED_CLINICAL_DRUG)
+                                  .getReferenceSetIdentifier()))
+          .findFirst()
+          .ifPresent(
+              r -> {
+                Set<SnowstormRelationship> relationships =
+                    filterActiveStatedRelationshipByType(
+                        getRelationshipsFromAxioms(maps.browserMap.get(r.getDestinationId())),
+                        HAS_OTHER_IDENTIFYING_INFORMATION_NMPC.getValue());
+
+                if (relationships.size() == 1) {
+                  details.setGenericOtherIdentifyingInformation(
+                      relationships.iterator().next().getConcreteValue().getValue());
+                }
+              });
+
+      Set<SnowstormRelationship> relationships =
+          filterActiveStatedRelationshipByType(
+              basePackageRelationships, HAS_OTHER_IDENTIFYING_INFORMATION_NMPC.getValue());
+      if (relationships.size() == 1) {
+        details.setOtherIdentifyingInformation(
+            relationships.iterator().next().getConcreteValue().getValue());
+      } else if (relationships.size() == 2
+          && details.getGenericOtherIdentifyingInformation() != null) {
+        // NMPC has two HAS_OTHER_IDENTIFYING_INFORMATION relationships, one for the generic
+        // and one for the specific
+        List<SnowstormRelationship> filteredRelationships =
+            relationships.stream()
+                .filter(
+                    r ->
+                        !r.getConcreteValue()
+                            .getValue()
+                            .equals(details.getGenericOtherIdentifyingInformation()))
+                .toList();
+
+        if (filteredRelationships.size() == 1) {
+          // if there is only one other identifying information relationship, use it
+          details.setOtherIdentifyingInformation(
+              filteredRelationships.get(0).getConcreteValue().getValue());
+        } else {
+          log.severe(
+              "Multiple relationships found for Has Other Identifying Information for product "
+                  + productId);
+        }
+      } else {
+        log.severe(
+            "Expected 1 or 2 relationships for Has Other Identifying Information for product "
+                + productId
+                + ", found: "
+                + relationships.size());
+      }
+    }
+  }
 
   protected abstract String getSubpackRelationshipType();
 
@@ -491,6 +560,89 @@ public abstract class AtomicDataService<T extends ProductDetails> {
     return productPackSizes;
   }
 
+  protected abstract String getContainedUnitRelationshipType(ModelConfiguration modelConfiguration);
+
+  private Map<String, SnowstormConceptMini> getPackVariantBrandMap(
+      String branch, List<SnowstormConcept> packVariantResult, Long productId) {
+    if (getModelConfiguration(branch).getModelType().equals(ModelType.AMT)) {
+      return packVariantResult.stream()
+          .collect(
+              Collectors.toMap(
+                  SnowstormConcept::getConceptId,
+                  pv ->
+                      getSingleActiveTarget(
+                          getSingleAxiom(pv).getRelationships(), HAS_PRODUCT_NAME.getValue())));
+    } else if (getModelConfiguration(branch).getModelType().equals(ModelType.NMPC)) {
+      // NMPC doesn't have the product name on the pack concept, only the product concepts
+      // so we have to go and find them all
+      Map<String, SnowstormConceptMini> map = new HashMap<>();
+
+      for (SnowstormConcept packVariant : packVariantResult) {
+        Collection<SnowstormConceptMini> brands =
+            getSnowStormApiClient()
+                .getConceptsFromEcl(
+                    branch,
+                    "<id>.774160008.774158006",
+                    Long.parseLong(packVariant.getConceptId()),
+                    0,
+                    100,
+                    getModelConfiguration(branch).isExecuteEclAsStated());
+
+        if (brands.isEmpty()) {
+          throw new AtomicDataExtractionProblem(
+              "No matching brands for contained products of pack "
+                  + packVariant.getConceptId()
+                  + "|"
+                  + packVariant.getFsn()
+                  + "|",
+              productId.toString());
+        } else if (brands.size() > 1) {
+          throw new AtomicDataExtractionProblem(
+              "Multiple matching brands for contained products of pack "
+                  + packVariant.getConceptId()
+                  + "|"
+                  + packVariant.getFsn()
+                  + "|, only products with one brand are supported",
+              productId.toString());
+        } else {
+          map.put(packVariant.getConceptId(), brands.iterator().next());
+        }
+      }
+
+      return map;
+    } else {
+      throw new AtomicDataExtractionProblem(
+          "Unsupported model type "
+              + getModelConfiguration(branch).getModelType().name()
+              + " for pack variant brand mapping",
+          branch);
+    }
+  }
+
+  @LogExecutionTime
+  protected Collection<String> getConceptsToMap(
+      String branch, String productId, String ecl, SnowstormClient snowStormApiClient) {
+    Collection<String> concepts =
+        snowStormApiClient.getConceptsIdsFromEcl(
+            branch,
+            ecl,
+            Long.parseLong(productId),
+            0,
+            100,
+            getModelConfiguration(branch).isExecuteEclAsStated());
+
+    if (concepts.isEmpty()) {
+      throw new ResourceNotFoundProblem(
+          "No matching product concepts for "
+              + productId
+              + " of type "
+              + getType()
+              + ", may be missing reference sets (is it fully migrated?). ECL: "
+              + ecl.replaceAll("\\<id\\>", productId));
+    }
+    return concepts;
+  }
+
   /**
    * Finds the brands for a given product.
    *
@@ -512,6 +664,10 @@ public abstract class AtomicDataService<T extends ProductDetails> {
         getRelationshipsFromAxioms(productConcept).stream()
             .anyMatch(r -> r.getTypeId().equals(CONTAINS_CD.getValue()));
 
+    final String containsDevice =
+        getModelConfiguration(branch).getModelType().equals(ModelType.NMPC)
+            ? CONTAINS_DEVICE_NMPC.getValue()
+            : CONTAINS_DEVICE.getValue();
     SnowstormConcept containedConcept =
         Mono.from(
                 snowStormApiClient.getBrowserConcepts(
@@ -520,9 +676,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
                         Objects.requireNonNull(
                             getSingleActiveTarget(
                                     getSingleAxiom(productConcept).getRelationships(),
-                                    medication
-                                        ? CONTAINS_CD.getValue()
-                                        : CONTAINS_DEVICE.getValue())
+                                    medication ? CONTAINS_CD.getValue() : containsDevice)
                                 .getConceptId()))))
             .block();
 
@@ -638,157 +792,6 @@ public abstract class AtomicDataService<T extends ProductDetails> {
     return productBrands;
   }
 
-  private Map<String, SnowstormConceptMini> getPackVariantBrandMap(
-      String branch, List<SnowstormConcept> packVariantResult, Long productId) {
-    if (getModelConfiguration(branch).getModelType().equals(ModelType.AMT)) {
-      return packVariantResult.stream()
-          .collect(
-              Collectors.toMap(
-                  SnowstormConcept::getConceptId,
-                  pv ->
-                      getSingleActiveTarget(
-                          getSingleAxiom(pv).getRelationships(), HAS_PRODUCT_NAME.getValue())));
-    } else if (getModelConfiguration(branch).getModelType().equals(ModelType.NMPC)) {
-      // NMPC doesn't have the product name on the pack concept, only the product concepts
-      // so we have to go and find them all
-      Map<String, SnowstormConceptMini> map = new HashMap<>();
-
-      for (SnowstormConcept packVariant : packVariantResult) {
-        Collection<SnowstormConceptMini> brands =
-            getSnowStormApiClient()
-                .getConceptsFromEcl(
-                    branch,
-                    "<id>.774160008.774158006",
-                    Long.parseLong(packVariant.getConceptId()),
-                    0,
-                    100,
-                    getModelConfiguration(branch).isExecuteEclAsStated());
-
-        if (brands.isEmpty()) {
-          throw new AtomicDataExtractionProblem(
-              "No matching brands for contained products of pack "
-                  + packVariant.getConceptId()
-                  + "|"
-                  + packVariant.getFsn()
-                  + "|",
-              productId.toString());
-        } else if (brands.size() > 1) {
-          throw new AtomicDataExtractionProblem(
-              "Multiple matching brands for contained products of pack "
-                  + packVariant.getConceptId()
-                  + "|"
-                  + packVariant.getFsn()
-                  + "|, only products with one brand are supported",
-              productId.toString());
-        } else {
-          map.put(packVariant.getConceptId(), brands.iterator().next());
-        }
-      }
-
-      return map;
-    } else {
-      throw new AtomicDataExtractionProblem(
-          "Unsupported model type "
-              + getModelConfiguration(branch).getModelType().name()
-              + " for pack variant brand mapping",
-          branch);
-    }
-  }
-
-  @LogExecutionTime
-  protected Collection<String> getConceptsToMap(
-      String branch, String productId, String ecl, SnowstormClient snowStormApiClient) {
-    Collection<String> concepts =
-        snowStormApiClient.getConceptsIdsFromEcl(
-            branch,
-            ecl,
-            Long.parseLong(productId),
-            0,
-            100,
-            getModelConfiguration(branch).isExecuteEclAsStated());
-
-    if (concepts.isEmpty()) {
-      throw new ResourceNotFoundProblem(
-          "No matching product concepts for "
-              + productId
-              + " of type "
-              + getType()
-              + ", may be missing reference sets (is it fully migrated?). ECL: "
-              + ecl.replaceAll("\\<id\\>", productId));
-    }
-    return concepts;
-  }
-
-  private static <T extends ProductDetails> void setOtherIdentifyingInformation(
-      String productId,
-      Maps maps,
-      ModelConfiguration modelConfiguration,
-      Set<SnowstormRelationship> basePackageRelationships,
-      PackageDetails<T> details) {
-    if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
-      basePackageRelationships.stream()
-          .filter(
-              r ->
-                  r.getTypeId().equals(IS_A.getValue())
-                      && maps.typeMap.get(r.getDestinationId()) != null
-                      && maps.typeMap
-                          .get(r.getDestinationId())
-                          .equals(
-                              modelConfiguration
-                                  .getLevelOfType(ModelLevelType.PACKAGED_CLINICAL_DRUG)
-                                  .getReferenceSetIdentifier()))
-          .findFirst()
-          .ifPresent(
-              r -> {
-                Set<SnowstormRelationship> relationships =
-                    filterActiveStatedRelationshipByType(
-                        getRelationshipsFromAxioms(maps.browserMap.get(r.getDestinationId())),
-                        HAS_OTHER_IDENTIFYING_INFORMATION.getValue());
-
-                if (relationships.size() == 1) {
-                  details.setGenericOtherIdentifyingInformation(
-                      relationships.iterator().next().getConcreteValue().getValue());
-                }
-              });
-
-      Set<SnowstormRelationship> relationships =
-          filterActiveStatedRelationshipByType(
-              basePackageRelationships, HAS_OTHER_IDENTIFYING_INFORMATION.getValue());
-      if (relationships.size() == 1) {
-        details.setOtherIdentifyingInformation(
-            relationships.iterator().next().getConcreteValue().getValue());
-      } else if (relationships.size() == 2
-          && details.getGenericOtherIdentifyingInformation() != null) {
-        // NMPC has two HAS_OTHER_IDENTIFYING_INFORMATION relationships, one for the generic
-        // and one for the specific
-        List<SnowstormRelationship> filteredRelationships =
-            relationships.stream()
-                .filter(
-                    r ->
-                        !r.getConcreteValue()
-                            .getValue()
-                            .equals(details.getGenericOtherIdentifyingInformation()))
-                .toList();
-
-        if (filteredRelationships.size() == 1) {
-          // if there is only one other identifying information relationship, use it
-          details.setOtherIdentifyingInformation(
-              filteredRelationships.get(0).getConcreteValue().getValue());
-        } else {
-          log.severe(
-              "Multiple relationships found for Has Other Identifying Information for product "
-                  + productId);
-        }
-      } else {
-        log.severe(
-            "Expected 1 or 2 relationships for Has Other Identifying Information for product "
-                + productId
-                + ", found: "
-                + relationships.size());
-      }
-    }
-  }
-
   @SuppressWarnings("null")
   private PackageDetails<T> populatePackageDetails(
       String branch, String productId, Maps maps, ModelConfiguration modelConfiguration) {
@@ -817,7 +820,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
     Set<SnowstormRelationship> subpacksRelationships =
         getActiveRelationshipsOfType(basePackageRelationships, getSubpackRelationshipType());
     Set<SnowstormRelationship> productRelationships =
-        getActiveRelationshipsOfType(basePackageRelationships, getContainedUnitRelationshipType());
+        getActiveRelationshipsOfType(basePackageRelationships, getContainedUnitRelationshipType(modelConfiguration));
 
     if (!subpacksRelationships.isEmpty()) {
       if (!productRelationships.isEmpty()) {

@@ -18,6 +18,8 @@ package au.gov.digitalhealth.lingo.service;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONTAINS_DEVICE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONTAINS_PACKAGED_DEVICE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
+import static au.gov.digitalhealth.lingo.util.NmpcConstants.CONTAINS_DEVICE_NMPC;
+import static au.gov.digitalhealth.lingo.util.NmpcConstants.HAS_OTHER_IDENTIFYING_INFORMATION_NMPC;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.IS_A;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.filterActiveStatedRelationshipByType;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getRelationshipsFromAxioms;
@@ -27,6 +29,7 @@ import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.exception.AtomicDataExtractionProblem;
 import au.gov.digitalhealth.lingo.product.details.DeviceProductDetails;
 import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
@@ -176,9 +179,13 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
             productDetails.getSpecificDeviceType(),
             modelConfiguration));
 
+    final String hasOtherIdentifyingInfoType =
+        modelConfiguration.getModelType().equals(ModelType.NMPC)
+            ? HAS_OTHER_IDENTIFYING_INFORMATION_NMPC.getValue()
+            : HAS_OTHER_IDENTIFYING_INFORMATION.getValue();
     Set<SnowstormRelationship> relationships =
         filterActiveStatedRelationshipByType(
-            getRelationshipsFromAxioms(product), HAS_OTHER_IDENTIFYING_INFORMATION.getValue());
+            getRelationshipsFromAxioms(product), hasOtherIdentifyingInfoType);
 
     if (relationships.size() == 1) {
       productDetails.setOtherIdentifyingInformation(
@@ -194,7 +201,7 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
                     .getBrowserConcepts(
                         branch, Set.of(productDetails.getSpecificDeviceType().getConceptId()))
                     .blockFirst()),
-            HAS_OTHER_IDENTIFYING_INFORMATION.getValue());
+            hasOtherIdentifyingInfoType);
 
     if (relationships.size() == 1) {
       productDetails.setGenericOtherIdentifyingInformation(
@@ -212,8 +219,10 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
   }
 
   @Override
-  protected String getContainedUnitRelationshipType() {
-    return CONTAINS_DEVICE.getValue();
+  protected String getContainedUnitRelationshipType(ModelConfiguration modelConfiguration) {
+    return modelConfiguration.getModelType().equals(ModelType.NMPC)
+        ? CONTAINS_DEVICE_NMPC.getValue()
+        : CONTAINS_DEVICE.getValue();
   }
 
   @Override
