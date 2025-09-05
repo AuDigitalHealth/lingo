@@ -47,6 +47,8 @@ public class ModelLevel {
   @NotNull
   private String referenceSetIdentifier;
 
+  private String referenceSetName;
+
   private String productModelEcl;
 
   /**
@@ -163,7 +165,8 @@ public class ModelLevel {
     ReferenceSet referenceSet = new ReferenceSet();
     referenceSet.setIdentifierScheme("levelMarker");
     referenceSet.setIdentifier(referenceSetIdentifier);
-    referenceSet.setTitle(name);
+    referenceSet.setTitle(
+        referenceSetName != null && !referenceSetName.isBlank() ? referenceSetName : name);
     referenceSet.setType(PropertyType.REFERENCE_SET);
 
     return referenceSet;
