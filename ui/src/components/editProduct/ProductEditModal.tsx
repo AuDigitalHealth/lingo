@@ -973,183 +973,201 @@ const FieldDescriptions = ({
   const isDisabled = disabled || !isActive;
 
   const isReleased = description?.released;
+
   return (
-    <Grid container spacing={1} key={field.id} alignItems="center">
-      <Grid item xs={12} md={2}>
-        <Controller
-          name={`descriptionUpdate.descriptions.${index}.type`}
-          control={control}
-          render={({ field: controllerField, fieldState }) => {
-            return (
-              <FormControl
-                fullWidth
-                margin="dense"
-                size="small"
-                error={!!fieldState.error}
-              >
-                <InputLabel>Type</InputLabel>
-                <Select
-                  {...controllerField}
+    <>
+      <Grid container spacing={1} key={field.id} alignItems="center">
+        <Grid item xs={12} md={2}>
+          <Controller
+            name={`descriptionUpdate.descriptions.${index}.type`}
+            control={control}
+            render={({ field: controllerField, fieldState }) => {
+              return (
+                <FormControl
+                  fullWidth
                   margin="dense"
-                  disabled={
-                    description?.descriptionId !== undefined || isDisabled
-                  }
+                  size="small"
+                  error={!!fieldState.error}
                 >
-                  {['FSN', 'SYNONYM'].map((value: string) => (
+                  <InputLabel>Type</InputLabel>
+                  <Select
+                    {...controllerField}
+                    margin="dense"
+                    disabled={
+                      description?.descriptionId !== undefined || isDisabled
+                    }
+                  >
+                    {['FSN', 'SYNONYM'].map((value: string) => (
+                      <MenuItem key={value} value={value}>
+                        {value}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {fieldState.error && (
+                    <FormHelperText>{fieldState.error.message}</FormHelperText>
+                  )}
+                </FormControl>
+              );
+            }}
+          />
+        </Grid>
+        <Grid item xs={12} md={4.5}>
+          <Controller
+            name={`descriptionUpdate.descriptions.${index}.active`}
+            control={control}
+            render={({ field: controllerField }) => {
+              return (
+                <Switch
+                  {...controllerField}
+                  disabled={disabled}
+                  checked={controllerField.value}
+                  onChange={e => {
+                    const newActiveState = e.target.checked;
+                    controllerField.onChange(newActiveState);
+
+                    // If switched to inactive, update all acceptability values to NOT ACCEPTABLE
+                    if (!newActiveState) {
+                      // Get all dialect entries from langRefsets
+                      langRefsets.forEach(dialect => {
+                        // Update each acceptability value to NOT ACCEPTABLE
+                        const fieldName =
+                          `descriptionUpdate.descriptions.${index}.acceptabilityMap.${dialect.en}` as 'descriptionUpdate.descriptions.${index}.acceptabilityMap.${dialect.en}';
+
+                        setValue(fieldName, 'NOT ACCEPTABLE');
+                      });
+                    }
+                  }}
+                  color="primary"
+                  size="small"
+                />
+              );
+            }}
+          />
+          <DescriptionTextInput
+            control={control}
+            index={index}
+            label={label}
+            isDisabled={isDisabled}
+            isReleased={isReleased || false}
+            isFsnOrPreferred={isFsnOrPreferred}
+          />
+          {/* Display Semantic Tag if available */}
+          {containsSemanticTag && (
+            <Typography
+              variant="caption"
+              color="textSecondary"
+              style={{ marginTop: '4px' }}
+            >
+              Semantic Tag: {containsSemanticTag}
+            </Typography>
+          )}
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <Grid container direction="column" spacing={1}>
+            {langRefsets.map(dialect => {
+              return (
+                <Grid item key={dialect.dialectName}>
+                  <Controller
+                    name={`descriptionUpdate.descriptions.${index}.acceptabilityMap.${dialect.en}`}
+                    control={control}
+                    defaultValue={
+                      sortedDescriptionsWithoutSemanticTag[index]
+                        ?.acceptabilityMap?.[dialect.en] ||
+                      ('NOT ACCEPTABLE' as Acceptability)
+                    }
+                    render={({ field: controllerField, fieldState }) => {
+                      return (
+                        <>
+                          <FormControl
+                            fullWidth
+                            margin="dense"
+                            size="small"
+                            error={!!fieldState.error}
+                          >
+                            <InputLabel>{dialect.dialectName}</InputLabel>
+                            <Select
+                              {...controllerField}
+                              disabled={
+                                isDisabled ||
+                                dialect.dialectName.toLowerCase() === 'en-gb'
+                              }
+                              error={!!fieldState.error}
+                            >
+                              {['PREFERRED', 'ACCEPTABLE'].map(
+                                (value: string) => (
+                                  <MenuItem key={value} value={value}>
+                                    {value}
+                                  </MenuItem>
+                                ),
+                              )}
+                              <MenuItem value={'NOT ACCEPTABLE'}>
+                                NOT ACCEPTABLE
+                              </MenuItem>
+                            </Select>
+                            {fieldState.error && (
+                              <FormHelperText>
+                                {fieldState.error.message}
+                              </FormHelperText>
+                            )}
+                          </FormControl>
+                        </>
+                      );
+                    }}
+                  />
+                </Grid>
+              );
+            })}
+          </Grid>
+        </Grid>
+        <Grid item xs={12} md={1.5}>
+          <FormControl fullWidth margin="dense" size="small">
+            <InputLabel>Case Sensitivity</InputLabel>
+            <Controller
+              name={`descriptionUpdate.descriptions.${index}.caseSignificance`}
+              control={control}
+              render={({ field: controllerField }) => (
+                <Select {...controllerField} disabled={isDisabled}>
+                  {Object.values(CaseSignificance).map(value => (
                     <MenuItem key={value} value={value}>
-                      {value}
+                      {caseSignificanceDisplay[value]}
                     </MenuItem>
                   ))}
                 </Select>
-                {fieldState.error && (
-                  <FormHelperText>{fieldState.error.message}</FormHelperText>
-                )}
-              </FormControl>
-            );
-          }}
-        />
-      </Grid>
-      <Grid item xs={12} md={4.5}>
-        <Controller
-          name={`descriptionUpdate.descriptions.${index}.active`}
-          control={control}
-          render={({ field: controllerField }) => {
-            return (
-              <Switch
-                {...controllerField}
-                disabled={disabled}
-                checked={controllerField.value}
-                onChange={e => {
-                  const newActiveState = e.target.checked;
-                  controllerField.onChange(newActiveState);
-
-                  // If switched to inactive, update all acceptability values to NOT ACCEPTABLE
-                  if (!newActiveState) {
-                    // Get all dialect entries from langRefsets
-                    langRefsets.forEach(dialect => {
-                      // Update each acceptability value to NOT ACCEPTABLE
-                      const fieldName =
-                        `descriptionUpdate.descriptions.${index}.acceptabilityMap.${dialect.en}` as 'descriptionUpdate.descriptions.${index}.acceptabilityMap.${dialect.en}';
-
-                      setValue(fieldName, 'NOT ACCEPTABLE');
-                    });
-                  }
-                }}
-                color="primary"
-                size="small"
-              />
-            );
-          }}
-        />
-        <DescriptionTextInput
-          control={control}
-          index={index}
-          label={label}
-          isDisabled={isDisabled}
-          isReleased={isReleased || false}
-          isFsnOrPreferred={isFsnOrPreferred}
-        />
-        {/* Display Semantic Tag if available */}
-        {containsSemanticTag && (
-          <Typography
-            variant="caption"
-            color="textSecondary"
-            style={{ marginTop: '4px' }}
-          >
-            Semantic Tag: {containsSemanticTag}
-          </Typography>
+              )}
+            />
+          </FormControl>
+        </Grid>
+        {/* Add Delete Button for New Descriptions */}
+        {description?.descriptionId === undefined && (
+          <Grid item xs={12} md={1}>
+            <IconButton
+              disabled={disabled}
+              onClick={() => handleDeleteDescription(index)}
+              color="error"
+            >
+              <Delete />
+            </IconButton>
+          </Grid>
         )}
+        {/* Display UNRELEASED text if not released */}
+        {!isReleased && (
+          <Grid item xs={12} sx={{ padding: 0 }}>
+            <Typography
+              variant="caption"
+              color="error.main"
+              sx={{
+                fontWeight: 'bold',
+                display: 'block',
+              }}
+            >
+              UNRELEASED
+            </Typography>
+          </Grid>
+        )}
+        <Divider sx={{ width: '100%', my: 1 }} />
       </Grid>
-
-      <Grid item xs={12} md={3}>
-        <Grid container direction="column" spacing={1}>
-          {langRefsets.map(dialect => {
-            return (
-              <Grid item key={dialect.dialectName}>
-                <Controller
-                  name={`descriptionUpdate.descriptions.${index}.acceptabilityMap.${dialect.en}`}
-                  control={control}
-                  defaultValue={
-                    sortedDescriptionsWithoutSemanticTag[index]
-                      ?.acceptabilityMap?.[dialect.en] ||
-                    ('NOT ACCEPTABLE' as Acceptability)
-                  }
-                  render={({ field: controllerField, fieldState }) => {
-                    return (
-                      <>
-                        <FormControl
-                          fullWidth
-                          margin="dense"
-                          size="small"
-                          error={!!fieldState.error}
-                        >
-                          <InputLabel>{dialect.dialectName}</InputLabel>
-                          <Select
-                            {...controllerField}
-                            disabled={
-                              isDisabled ||
-                              dialect.dialectName.toLowerCase() === 'en-gb'
-                            }
-                            error={!!fieldState.error}
-                          >
-                            {['PREFERRED', 'ACCEPTABLE'].map(
-                              (value: string) => (
-                                <MenuItem key={value} value={value}>
-                                  {value}
-                                </MenuItem>
-                              ),
-                            )}
-                            <MenuItem value={'NOT ACCEPTABLE'}>
-                              NOT ACCEPTABLE
-                            </MenuItem>
-                          </Select>
-                          {fieldState.error && (
-                            <FormHelperText>
-                              {fieldState.error.message}
-                            </FormHelperText>
-                          )}
-                        </FormControl>
-                      </>
-                    );
-                  }}
-                />
-              </Grid>
-            );
-          })}
-        </Grid>
-      </Grid>
-      <Grid item xs={12} md={1.5}>
-        <FormControl fullWidth margin="dense" size="small">
-          <InputLabel>Case Sensitivity</InputLabel>
-          <Controller
-            name={`descriptionUpdate.descriptions.${index}.caseSignificance`}
-            control={control}
-            render={({ field: controllerField }) => (
-              <Select {...controllerField} disabled={isDisabled}>
-                {Object.values(CaseSignificance).map(value => (
-                  <MenuItem key={value} value={value}>
-                    {caseSignificanceDisplay[value]}
-                  </MenuItem>
-                ))}
-              </Select>
-            )}
-          />
-        </FormControl>
-      </Grid>
-      {/* Add Delete Button for New Descriptions */}
-      {description?.descriptionId === undefined && (
-        <Grid item xs={12} md={1}>
-          <IconButton
-            disabled={disabled}
-            onClick={() => handleDeleteDescription(index)}
-            color="error"
-          >
-            <Delete />
-          </IconButton>
-        </Grid>
-      )}
-      <Divider sx={{ width: '100%', my: 1 }} />
-    </Grid>
+    </>
   );
 };
 
@@ -1265,11 +1283,17 @@ const DescriptionTextInput = ({
         multiline
         minRows={1}
         maxRows={4}
-        disabled={isDisabled || (isReleased && !isFsnOrPreferred)}
+        disabled={isDisabled}
       />
-      {hasChanged && isReleased && isFsnOrPreferred && (
+      {hasChanged && isReleased && (
         <FormHelperText sx={{ color: t => `${t.palette.warning.main}` }}>
           This change will retire this description and create a replacement.
+        </FormHelperText>
+      )}
+      {hasChanged && !isReleased && (
+        <FormHelperText sx={{ color: t => `${t.palette.warning.main}` }}>
+          This change will <u>NOT</u> retire this description, instead it will
+          be edited.
         </FormHelperText>
       )}
     </>
