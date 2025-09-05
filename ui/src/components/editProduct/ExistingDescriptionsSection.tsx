@@ -46,6 +46,7 @@ export function DescriptionDisplay({
         ? 'Preferred Term'
         : 'Synonym';
 
+  const isReleased = description?.released;
   return (
     <Grid
       container
@@ -175,6 +176,21 @@ export function DescriptionDisplay({
           </Box>
         )}
       </Grid>
+      {/* Display UNRELEASED text if not released */}
+      {!isReleased && (
+        <Grid item xs={12} sx={{ padding: 0 }}>
+          <Typography
+            variant="caption"
+            color="error.main"
+            sx={{
+              fontWeight: 'bold',
+              display: 'block',
+            }}
+          >
+            UNRELEASED
+          </Typography>
+        </Grid>
+      )}
     </Grid>
   );
 }
