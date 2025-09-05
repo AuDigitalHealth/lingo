@@ -29,6 +29,7 @@ models:
         drugDeviceSemanticTag: medicinal product
         deviceSemanticTag: physical object
         referenceSetIdentifier: 929360061000036106
+        referenceSetName: MP refset
         productModelEcl: "((> <id>) and ^ 929360061000036106) minus >((> <id>) and ^ 929360061000036106)"
       - name: Generic Product
         displayLabel: MPUU
@@ -37,6 +38,7 @@ models:
         drugDeviceSemanticTag: product
         deviceSemanticTag: physical object
         referenceSetIdentifier: 929360071000036103
+        referenceSetName: MPUU refset
         productModelEcl: "((> <id>) and ^ 929360071000036103) minus >((> <id>) and ^ 929360071000036103)"
       - name: Branded Product
         displayLabel: TPUU
@@ -45,6 +47,7 @@ models:
         deviceSemanticTag: branded physical object
         drugDeviceSemanticTag: branded product
         referenceSetIdentifier: 929360031000036100
+        referenceSetName: TPUU refset
         productModelEcl: "(>> ((<id>.774160008) or (<id>.999000081000168101))) and (^ 929360031000036100)"
       - name: Generic Pack
         displayLabel: MPP
@@ -53,6 +56,7 @@ models:
         deviceSemanticTag: physical object package
         drugDeviceSemanticTag: product package
         referenceSetIdentifier: 929360081000036101
+        referenceSetName: MPP refset
         productModelEcl: "((> <id>) and ^ 929360081000036101) minus >((> <id>) and ^ 929360081000036101)"
       - name: Branded Pack
         displayLabel: TPP
@@ -61,6 +65,7 @@ models:
         deviceSemanticTag: branded physical object package
         drugDeviceSemanticTag: branded product package
         referenceSetIdentifier: 929360041000036105
+        referenceSetName: TPP refset
         productModelEcl: "(> <id>) and ^ 929360041000036105"
       - name: Branded Container
         displayLabel: CTPP
@@ -69,6 +74,7 @@ models:
         deviceSemanticTag: containerized branded physical object package
         drugDeviceSemanticTag: containerized branded product package
         referenceSetIdentifier: 929360051000036108
+        referenceSetName: CTPP refset
       - name: Brand Name
         displayLabel: TP
         modelLevelType: PRODUCT_NAME
@@ -76,6 +82,7 @@ models:
         deviceSemanticTag: product name
         drugDeviceSemanticTag: product name
         referenceSetIdentifier: 929360021000036102
+        referenceSetName: TP refset
         productModelEcl: ">> <id>.774158006"
     mappings:
       - name: artgid
