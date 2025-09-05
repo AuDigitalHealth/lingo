@@ -1301,7 +1301,10 @@ public class ProductCreationService {
           e);
     }
 
-    if (deletePartialSaveOnCreate && partialSaveName != null && !partialSaveName.isEmpty()) {
+    if (deletePartialSaveOnCreate
+        && productDto.getOriginalConceptId() == null
+        && partialSaveName != null
+        && !partialSaveName.isEmpty()) {
       try {
         ticketService.deleteProduct(ticket.getId(), Long.parseLong(partialSaveName));
       } catch (ResourceNotFoundProblem p) {

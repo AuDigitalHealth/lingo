@@ -1170,6 +1170,10 @@ public class TicketServiceImpl implements TicketService {
       if (productDto.getConceptId() != null) {
         product.setConceptId(Long.valueOf(productDto.getConceptId()));
       }
+      if (productDto.getAction() != null) {
+        product.setAction(productDto.getAction());
+      }
+
       product.setPackageDetails(productDto.getPackageDetails());
       product.setOriginalPackageDetails(productDto.getOriginalPackageDetails());
       if (productDto.getOriginalConceptId() != null) {
