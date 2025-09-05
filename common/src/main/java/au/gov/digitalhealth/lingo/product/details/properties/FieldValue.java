@@ -17,11 +17,15 @@ package au.gov.digitalhealth.lingo.product.details.properties;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import java.util.Set;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Builder
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class FieldValue {
   String value;
   SnowstormConceptMini valueObject;
