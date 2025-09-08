@@ -4,16 +4,7 @@ import { Box, Divider, List, ListItem, Typography } from '@mui/material';
 import BrandDetails from '../../fields/bulkBrandPack/BrandDetails.tsx';
 
 const BrandArrayTemplate: React.FC<ArrayFieldTemplateProps> = props => {
-  const {
-    items,
-    uiSchema,
-    registry,
-    formData,
-    onChange,
-    schema,
-    title,
-    branch,
-  } = props;
+  const { items, uiSchema, registry, formData, schema, title, branch } = props;
 
   const { formContext } = registry;
   const options = uiSchema?.['ui:options'] || {};
@@ -51,7 +42,6 @@ const BrandArrayTemplate: React.FC<ArrayFieldTemplateProps> = props => {
   const handleBrandDetailsChange = (index: number, updatedBrandData: any) => {
     const newFormData = [...formData];
     newFormData[index] = updatedBrandData;
-    onChange(newFormData);
 
     // Also notify through formContext
     if (formContext?.onFormDataChange) {
