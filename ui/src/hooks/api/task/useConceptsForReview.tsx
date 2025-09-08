@@ -14,6 +14,7 @@ import {
   useIsReviewEnabled,
   useShowReviewControls,
 } from './useReviews';
+import { TaskStatus } from '../../../types/task';
 
 export function useConceptsForReview(branchPath: string | undefined) {
   const task = useTaskByKey(); // Gives projectKey and taskKey
@@ -129,5 +130,5 @@ export function useCanCompleteReview({ task, branch }: UseReviewProps) {
       return conceptReview.approved === false;
     }) === undefined;
 
-  return isReviewEnabled && allApproved;
+  return isReviewEnabled && allApproved && task?.status === TaskStatus.InReview;
 }
