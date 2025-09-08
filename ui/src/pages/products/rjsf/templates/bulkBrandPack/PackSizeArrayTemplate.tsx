@@ -4,8 +4,7 @@ import { Box, List, ListItem, Typography, Divider } from '@mui/material';
 import PackDetails from '../../fields/bulkBrandPack/PackDetails.tsx';
 
 const PackSizeArrayTemplate: React.FC<ArrayFieldTemplateProps> = props => {
-  const { items, uiSchema, registry, formData, onChange, schema, title } =
-    props;
+  const { items, uiSchema, registry, formData, schema, title } = props;
 
   const { formContext } = registry;
   const options = uiSchema?.['ui:options'] || {};
@@ -47,8 +46,6 @@ const PackSizeArrayTemplate: React.FC<ArrayFieldTemplateProps> = props => {
   const handlePackDetailsChange = (index: number, updatedPackData: any) => {
     const newFormData = [...formData];
     newFormData[index] = updatedPackData;
-    onChange(newFormData);
-
     // Also notify through formContext
     if (formContext?.onFormDataChange) {
       const fieldName = schema?.title?.toLowerCase().includes('existing')
