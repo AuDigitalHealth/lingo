@@ -277,7 +277,7 @@ export function useSearchConceptBySctIdList(
     ConceptResponse,
     AxiosError
   >({
-    queryKey: [`concept-${searchTerms.toLocaleString()}-${branch}`],
+    queryKey: [`concept-sctids-${searchTerms.toLocaleString()}-${branch}`],
     queryFn: () => {
       return ConceptService.searchUnPublishedCtppsByIds(
         searchTerms,
@@ -599,7 +599,7 @@ const useCombineSearchResults = (
           })),
         ];
       }
-      if (snowstormData) {
+      if (snowstormData && snowstormData?.items) {
         const tempArr = snowstormData?.items.map(item => ({
           ...item,
           type: UNPUBLISHED_CONCEPTS,
