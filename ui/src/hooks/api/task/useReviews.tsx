@@ -8,7 +8,10 @@ export interface UseReviewProps {
 
 export function useIsReviewEnabled({ task }: UseReviewProps) {
   const userLogin = useUserStore().login;
-  const inReview = task?.status === TaskStatus.InReview;
+  // const inReview = task?.status === TaskStatus.InReview;
+  const inReview =
+    task?.status === TaskStatus.InReview ||
+    task?.status === TaskStatus.ReviewCompleted;
 
   const userInReviewList = task?.reviewers?.filter(reviewer => {
     return reviewer.username === userLogin;
