@@ -68,6 +68,23 @@ export interface Ticket extends VersionedEntity {
   products?: TicketProductDto[];
   bulkProductActions?: TicketBulkProductActionDto[];
   productUpdates?: ProductUpdate[];
+  history?: TicketHistoryEntryDto[];
+}
+
+export interface TicketHistoryValueDto {
+  entityId: number | null;
+  value: string | null;
+}
+
+export interface TicketHistoryEntryDto {
+  revisionNumber: number;
+  timestamp: string;
+  revisionType: 'INSERT' | 'UPDATE' | 'DELETE';
+  fieldName: string;
+  oldValue: TicketHistoryValueDto | null;
+  newValue: TicketHistoryValueDto | null;
+  changeDescription: string;
+  username: string;
 }
 
 export interface PagedTicket extends PagedItem {

@@ -25,6 +25,23 @@ export const getTicketByTicketNumberOptions = (
   });
 };
 
+interface UseTicketHistoryProps {
+  ticketNumber: string | undefined;
+  fetch: boolean;
+}
+export function useTicketHistory({
+  ticketNumber,
+  fetch,
+}: UseTicketHistoryProps) {
+  return useQuery({
+    queryKey: [`ticket-history-${ticketNumber}`],
+    enabled: ticketNumber !== undefined && fetch,
+    queryFn: () => {
+      return TicketsService.getTicketHistory(ticketNumber as string);
+    },
+  });
+}
+
 export function useTicketByTicketNumber(
   ticketNumber: string | undefined,
   fetch: boolean,
@@ -35,7 +52,10 @@ export function useTicketByTicketNumber(
     ...getTicketByTicketNumberOptions(ticketNumber),
     enabled: ticketNumber !== undefined && fetch,
   });
-
+  const historyQuery = useTicketHistory({
+    ticketNumber: ticketNumber,
+    fetch: fetch,
+  });
   // Check if queryResult.data?.id is available before triggering products and bulk actions queries
   const productsQuery = useTicketProductsById(
     queryResult.data?.id ? String(queryResult.data.id) : undefined,
@@ -59,12 +79,17 @@ export function useTicketByTicketNumber(
         queryResult.data.bulkProductActions = bulkProductActionsQuery.data;
       }
 
+      if (historyQuery.data) {
+        queryResult.data.history = historyQuery.data;
+      }
+
       mergeTicket(queryResult.data);
     }
   }, [
     queryResult.data,
     productsQuery.data,
     bulkProductActionsQuery.data,
+    historyQuery.data,
     mergeTicket,
   ]);
 
