@@ -81,6 +81,7 @@
     "cypress-promise": "^1.1.0",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.12",
+    "dompurify": "3.2.6",
     "dotenv": "^16.4.5",
     "ecl-builder": "^0.2.1",
     "file-saver": "^2.0.5",
