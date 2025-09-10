@@ -7,6 +7,7 @@ import TicketFields from './components/TicketFields';
 import Attachments from './components/Attachments';
 import CommentSection from './comments/CommentSection';
 import TicketAssociationView from './components/TicketAssociationView';
+import TicketHistory from './TicketHistory';
 
 interface IndividualTicketEditProps {
   ticketNumber?: string;
@@ -32,6 +33,7 @@ function IndividualTicketEdit({ ticketNumber }: IndividualTicketEditProps) {
         <TicketAssociationView ticket={useTicketQuery.data} />
         <Divider sx={{ marginTop: '1.5em', marginBottom: '1.5em' }} />
         <Description ticket={useTicketQuery.data} editable={true} />
+        <TicketHistory ticketHistory={useTicketQuery.data?.history} />
         <Attachments ticket={useTicketQuery.data} />
         <CommentSection ticket={useTicketQuery.data} />
       </Card>
