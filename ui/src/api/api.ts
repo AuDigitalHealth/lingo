@@ -25,6 +25,7 @@ import {
 } from './ProblemDetail';
 import {
   isSentryAvailable,
+  Sentry,
   showSentryFeedbackDialog,
 } from '../sentry/SentryConfig';
 
@@ -116,6 +117,33 @@ api.interceptors.response.use(
           });
         } else if (isInternalServerError(potentialInternalServerError)) {
           if (isSentryAvailable()) {
+            Sentry.withScope(scope => {
+              scope.setTag('axios', 'true');
+              scope.setTag('http.status_code', error.response?.status);
+
+              // Correlation ID if backend sends one (e.g. `x-correlation-id`)
+              const correlationId =
+                error.response?.headers?.['x-correlation-id'] ||
+                error.response?.headers?.['sentry-event-id'];
+              if (correlationId) {
+                console.log('apicorrelation_id', correlationId);
+                scope.setTag('correlation_id', correlationId);
+              }
+
+              // Request + response details
+              scope.setContext('AxiosError', {
+                url: error.config?.url,
+                method: error.config?.method,
+                params: error.config?.params,
+                data: error.config?.data,
+                status: error.response?.status,
+                responseData: error.response?.data,
+              });
+
+              // Capture
+              Sentry.captureException(error);
+            });
+
             // Use Sentry feedback dialog
             showSentryFeedbackDialog(
               error,
