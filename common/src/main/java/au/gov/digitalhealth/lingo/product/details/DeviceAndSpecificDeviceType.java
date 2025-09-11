@@ -16,6 +16,7 @@
 package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.gov.digitalhealth.lingo.validation.AuthoringValidation;
 import au.gov.digitalhealth.lingo.validation.ValidSnowstormConceptMini;
 import java.util.Map;
 import lombok.Data;
@@ -25,9 +26,10 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = false)
 public class DeviceAndSpecificDeviceType extends ProductBaseDto {
 
-  @ValidSnowstormConceptMini(allowNull = false)
+  @ValidSnowstormConceptMini(groups = AuthoringValidation.class, allowNull = false)
   SnowstormConceptMini deviceType;
 
+  @ValidSnowstormConceptMini(groups = AuthoringValidation.class)
   SnowstormConceptMini specificDeviceType;
 
   @Override
