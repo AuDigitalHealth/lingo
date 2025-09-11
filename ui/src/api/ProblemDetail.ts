@@ -94,6 +94,7 @@ export const isUserReportableProblem = (
       data.type === 'http://lingo.csiro.au/problem/model-configuration' ||
       data.type ===
         'http://lingo.csiro.au/problem/atomic-data-extraction-problem' ||
-      data.type === 'http://lingo.csiro.au/problem/branch-locked')
+      data.type === 'http://lingo.csiro.au/problem/branch-locked' ||
+      data.type === 'http://lingo.csiro.au/problem/mismatching-properties')
   );
 };
