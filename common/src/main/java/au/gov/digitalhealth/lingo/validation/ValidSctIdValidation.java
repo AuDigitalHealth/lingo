@@ -15,7 +15,7 @@
  */
 package au.gov.digitalhealth.lingo.validation;
 
-import au.gov.digitalhealth.lingo.util.PartionIdentifier;
+import au.gov.digitalhealth.lingo.util.PartitionIdentifier;
 import au.gov.digitalhealth.lingo.util.SnomedIdentifierUtil;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
@@ -23,7 +23,7 @@ import jakarta.validation.constraints.NotNull;
 
 public class ValidSctIdValidation implements ConstraintValidator<ValidSctId, String> {
 
-  private @NotNull PartionIdentifier partitionIdentifier;
+  private @NotNull PartitionIdentifier partitionIdentifier;
 
   @Override
   public void initialize(ValidSctId constraintAnnotation) {

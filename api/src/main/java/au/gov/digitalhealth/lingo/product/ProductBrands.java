@@ -16,7 +16,7 @@
 package au.gov.digitalhealth.lingo.product;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.gov.digitalhealth.lingo.util.PartionIdentifier;
+import au.gov.digitalhealth.lingo.util.PartitionIdentifier;
 import au.gov.digitalhealth.lingo.validation.ValidSctId;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.Valid;
@@ -33,7 +33,7 @@ import lombok.Data;
 public class ProductBrands implements Serializable {
 
   @NotNull
-  @ValidSctId(partitionIdentifier = PartionIdentifier.CONCEPT)
+  @ValidSctId(partitionIdentifier = PartitionIdentifier.CONCEPT)
   private String productId;
 
   @Valid @NotNull @NotEmpty private Set<@Valid BrandWithIdentifiers> brands;

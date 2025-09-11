@@ -34,7 +34,7 @@ class SnomedIdentifierUtilTest {
     "993415201000168121, RELATIONSHIP, false, Invalid relationship id check digit"
   })
   void testIsValid(String id, String partition, boolean expected, String message) {
-    PartionIdentifier partitionIdentifier = PartionIdentifier.valueOf(partition);
+    PartitionIdentifier partitionIdentifier = PartitionIdentifier.valueOf(partition);
     Assert.assertEquals(message, expected, SnomedIdentifierUtil.isValid(id, partitionIdentifier));
   }
 }
