@@ -57,7 +57,7 @@ public class ValidSnowstormConceptMiniValidation
     if (id == null || id.isBlank()) {
       errors.add(new Violation("conceptId is missing", "conceptId"));
     } else if (!SnomedIdentifierUtil.isValid(id, PartionIdentifier.CONCEPT)) {
-      errors.add(new Violation("conceptId a valid concept id, got: " + id, "conceptId"));
+      errors.add(new Violation("conceptId must be a valid concept id, got: " + id, "conceptId"));
     }
 
     if (requirePt) {
