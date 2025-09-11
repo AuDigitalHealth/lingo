@@ -103,10 +103,13 @@ api.interceptors.response.use(
       const potentialProblemDetail = error?.response?.data;
 
       if (isUserReportableProblem(potentialProblemDetail)) {
-        enqueueSnackbar((potentialProblemDetail.detail ?? '').replace(/\r\n|\r|\n/g, '\n'), {
-          variant: 'error',
-          style: { whiteSpace: 'pre-line' }, // or 'pre-wrap' if you also want to preserve multiple spaces
-        });
+        enqueueSnackbar(
+          (potentialProblemDetail.detail ?? '').replace(/\r\n|\r|\n/g, '\n'),
+          {
+            variant: 'error',
+            style: { whiteSpace: 'pre-line' }, // or 'pre-wrap' if you also want to preserve multiple spaces
+          },
+        );
       } else {
         const potentialInternalServerError = error?.response?.data;
         if (
@@ -160,10 +163,13 @@ api.interceptors.response.use(
             );
           }
         } else if (isUserReportableProblem(potentialProblemDetail)) {
-          enqueueSnackbar((potentialProblemDetail.detail ?? '').replace(/\r\n|\r|\n/g, '\n'), {
-            variant: 'error',
-            style: { whiteSpace: 'pre-line' }, // or 'pre-wrap' if you also want to preserve multiple spaces
-          });
+          enqueueSnackbar(
+            (potentialProblemDetail.detail ?? '').replace(/\r\n|\r|\n/g, '\n'),
+            {
+              variant: 'error',
+              style: { whiteSpace: 'pre-line' }, // or 'pre-wrap' if you also want to preserve multiple spaces
+            },
+          );
         }
       }
     }
