@@ -353,7 +353,7 @@ public class DeviceProductCalculationService
     productSummary.updateNodeChangeStatus(
         taskChangedConceptIds.block(), projectChangedConceptIds.block());
 
-    productSummary.deduplicateNewNodes();
+    productSummary.deduplicateNewNodes(modelConfiguration);
 
     return productSummary;
   }
