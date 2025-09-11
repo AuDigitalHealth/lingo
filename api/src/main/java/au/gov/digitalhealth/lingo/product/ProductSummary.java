@@ -364,14 +364,14 @@ public class ProductSummary implements Serializable {
                       .map(BasePropertyDefinition::getName))
               .collect(Collectors.toSet());
 
-      Set<NonDefiningBase> multivaluedProerties =
+      Set<NonDefiningBase> multivaluedProperties =
           nodeSet.stream()
               .flatMap(n -> n.getNonDefiningProperties().stream())
               .filter(p -> multiValuedPropertySchemes.contains(p.getIdentifierScheme()))
               .collect(Collectors.toSet());
 
       for (Node node : nodeSet) {
-        for (NonDefiningBase prop : multivaluedProerties) {
+        for (NonDefiningBase prop : multivaluedProperties) {
           node.getNonDefiningProperties().add(prop);
         }
       }
