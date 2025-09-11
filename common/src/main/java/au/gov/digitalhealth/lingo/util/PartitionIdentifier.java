@@ -15,7 +15,7 @@
  */
 package au.gov.digitalhealth.lingo.util;
 
-public enum PartionIdentifier {
+public enum PartitionIdentifier {
   CONCEPT,
   DESCRIPTION,
   RELATIONSHIP

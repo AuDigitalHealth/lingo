@@ -16,7 +16,7 @@
 package au.gov.digitalhealth.lingo.validation;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.gov.digitalhealth.lingo.util.PartionIdentifier;
+import au.gov.digitalhealth.lingo.util.PartitionIdentifier;
 import au.gov.digitalhealth.lingo.util.SnomedIdentifierUtil;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
@@ -56,7 +56,7 @@ public class ValidSnowstormConceptMiniValidation
     String id = value.getConceptId();
     if (id == null || id.isBlank()) {
       errors.add(new Violation("conceptId is missing", "conceptId"));
-    } else if (!SnomedIdentifierUtil.isValid(id, PartionIdentifier.CONCEPT)) {
+    } else if (!SnomedIdentifierUtil.isValid(id, PartitionIdentifier.CONCEPT)) {
       errors.add(new Violation("conceptId must be a valid concept id, got: " + id, "conceptId"));
     }
 
