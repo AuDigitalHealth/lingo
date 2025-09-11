@@ -135,4 +135,13 @@ public class NonDefiningProperty extends NonDefiningBase implements Serializable
         .append(valueObject != null ? valueObject.getConceptId() : null)
         .toHashCode();
   }
+
+  @Override
+  public String toDisplay() {
+    return getTitle()
+        + ": "
+        + (getValue() == null
+            ? getValueObject().getConceptId() + "|" + getValueObject().getPt().getTerm() + "|"
+            : value);
+  }
 }

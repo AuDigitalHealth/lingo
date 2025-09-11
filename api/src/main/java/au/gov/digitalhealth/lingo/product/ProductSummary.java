@@ -17,12 +17,16 @@ package au.gov.digitalhealth.lingo.product;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import au.gov.digitalhealth.lingo.configuration.model.BasePropertyDefinition;
+import au.gov.digitalhealth.lingo.configuration.model.BasePropertyWithValueDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.exception.LingoProblem;
+import au.gov.digitalhealth.lingo.exception.MismatchingPropertiesProblem;
 import au.gov.digitalhealth.lingo.exception.MoreThanOneSubjectProblem;
 import au.gov.digitalhealth.lingo.exception.SingleConceptExpectedProblem;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.Sets;
@@ -40,6 +44,7 @@ import java.util.stream.Collectors;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
+import wiremock.com.google.common.collect.Streams;
 
 /**
  * "N-box" model DTO listing a set of nodes and edges between them where the nodes and edges have
@@ -283,52 +288,94 @@ public class ProductSummary implements Serializable {
                 && relationship.getSourceId().equals(duplicate.getConceptId()));
   }
 
+  /**
+   * Nodes are compared using equals, but their real primary key is the conceptId. If the conceptIds
+   * of Nodes match, but the Nodes are not equal there is a problem. If that mismatch is caused by a
+   * mismatch in the non-defining properties, this results in a MismatchedPropertiesProblem which
+   * reflects a bad request (400) and creates a message indicating the mismatching properties
+   * between the nodes. However if other properties are responsible for the difference something
+   * else has gone wrong and this is represented as an unexpected server error (500).
+   */
   @JsonIgnore
-  public void deduplicateNewNodes() {
+  public void checkNodesForMismatchedProperties(ModelConfiguration modelConfiguration) {
     synchronized (nodes) {
-      Map<Node, Set<Node>> deduplicatedNodes = new HashMap<>();
+      Map<String, List<Node>> byConceptId =
+          nodes.stream().collect(Collectors.groupingBy(Node::getConceptId));
 
-      nodes.stream()
-          .filter(Node::isNewConcept)
-          .forEach(
-              node -> {
-                Node key =
-                    deduplicatedNodes.keySet().stream()
-                        .filter(
-                            n ->
-                                n.isNewConcept()
-                                    && n.getNewConceptDetails()
-                                        .getAxioms()
-                                        .equals(node.getNewConceptDetails().getAxioms()))
-                        .findFirst()
-                        .orElse(null);
-                if (key != null) {
-                  deduplicatedNodes.get(key).add(node);
-                  key.getNonDefiningProperties().addAll(node.getNonDefiningProperties());
-                  key.getNewConceptDetails()
-                      .getNonDefiningProperties()
-                      .addAll(node.getNewConceptDetails().getNonDefiningProperties());
-                  key.getNewConceptDetails()
-                      .getReferenceSetMembers()
-                      .addAll(node.getNewConceptDetails().getReferenceSetMembers());
-                } else {
-                  deduplicatedNodes.put(node, new HashSet<>());
-                }
-              });
+      byConceptId
+          .values()
+          .forEach(nodeSet -> mergeMultivaluedProperties(modelConfiguration, nodeSet));
 
-      deduplicatedNodes.forEach(
-          (key, duplicates) -> {
-            duplicates.forEach(
-                duplicate -> {
-                  nodes.remove(duplicate);
-                  replaceEdges(duplicate, key);
-                  updateRelationships(duplicate, key);
-                });
-            if (!Sets.intersection(duplicates, subjects).isEmpty()) {
-              subjects.removeAll(duplicates);
-              subjects.add(key);
-            }
-          });
+      Map<String, Set<Node>> nonDefiningMismatches = new HashMap<>();
+
+      for (Map.Entry<String, List<Node>> entry : byConceptId.entrySet()) {
+        List<Node> group = entry.getValue();
+        if (group.size() <= 1) {
+          continue;
+        }
+
+        // If all nodes are exactly equal, should have been already merged because the source is a
+        // set.
+        Node first = group.get(0);
+
+        // Determine if the only differences are in non-defining properties.
+        Node base = first.cloneNode();
+        base.setNonDefiningProperties(new HashSet<>());
+
+        boolean onlyNonDefiningDiffs = true;
+        for (int i = 1; i < group.size(); i++) {
+          Node other = group.get(i).cloneNode();
+          other.setNonDefiningProperties(new HashSet<>());
+          if (!base.equals(other)) {
+            onlyNonDefiningDiffs = false;
+            break;
+          }
+        }
+
+        if (onlyNonDefiningDiffs) {
+          nonDefiningMismatches.put(entry.getKey(), new HashSet<>(group));
+        } else {
+          // Differences beyond non-defining properties indicate an unexpected server error.
+          throw new LingoProblem(
+              "product-summary",
+              "Mismatched nodes for conceptId " + entry.getKey(),
+              HttpStatus.INTERNAL_SERVER_ERROR,
+              "Nodes with the same conceptId differ in properties other than non-defining properties");
+        }
+      }
+
+      if (!nonDefiningMismatches.isEmpty()) {
+        throw new MismatchingPropertiesProblem(nonDefiningMismatches);
+      }
+    }
+  }
+
+  private void mergeMultivaluedProperties(
+      ModelConfiguration modelConfiguration, List<Node> nodeSet) {
+    if (nodeSet.size() <= 1) {
+      return;
+    }
+    final ModelLevel modelLevel = modelConfiguration.getLevelOfType(nodeSet.get(0).getModelLevel());
+    Set<String> multiValuedPropertySchemes =
+        Streams.concat(
+                modelConfiguration.getMappingsByLevel(modelLevel).stream()
+                    .filter(BasePropertyWithValueDefinition::isMultiValued)
+                    .map(BasePropertyDefinition::getName),
+                modelConfiguration.getNonDefiningPropertiesByLevel(modelLevel).stream()
+                    .filter(BasePropertyWithValueDefinition::isMultiValued)
+                    .map(BasePropertyDefinition::getName))
+            .collect(Collectors.toSet());
+
+    Set<NonDefiningBase> multivaluedProerties =
+        nodeSet.stream()
+            .flatMap(n -> n.getNonDefiningProperties().stream())
+            .filter(p -> multiValuedPropertySchemes.contains(p.getIdentifierScheme()))
+            .collect(Collectors.toSet());
+
+    for (Node node : nodeSet) {
+      for (NonDefiningBase prop : multivaluedProerties) {
+        node.getNonDefiningProperties().add(prop);
+      }
     }
   }
 
@@ -383,5 +430,56 @@ public class ProductSummary implements Serializable {
           }
           edges.add(edge);
         });
+  }
+
+  @JsonIgnore
+  public void deduplicateNewNodes(ModelConfiguration modelConfiguration) {
+    synchronized (nodes) {
+      Map<Node, Set<Node>> deduplicatedNodes = new HashMap<>();
+
+      nodes.stream()
+          .filter(Node::isNewConcept)
+          .forEach(
+              node -> {
+                Node key =
+                    deduplicatedNodes.keySet().stream()
+                        .filter(
+                            n ->
+                                n.isNewConcept()
+                                    && n.getNewConceptDetails()
+                                        .getAxioms()
+                                        .equals(node.getNewConceptDetails().getAxioms()))
+                        .findFirst()
+                        .orElse(null);
+                if (key != null) {
+                  deduplicatedNodes.get(key).add(node);
+                  key.getNonDefiningProperties().addAll(node.getNonDefiningProperties());
+                  key.getNewConceptDetails()
+                      .getNonDefiningProperties()
+                      .addAll(node.getNewConceptDetails().getNonDefiningProperties());
+                  key.getNewConceptDetails()
+                      .getReferenceSetMembers()
+                      .addAll(node.getNewConceptDetails().getReferenceSetMembers());
+                } else {
+                  deduplicatedNodes.put(node, new HashSet<>());
+                }
+              });
+
+      deduplicatedNodes.forEach(
+          (key, duplicates) -> {
+            duplicates.forEach(
+                duplicate -> {
+                  nodes.remove(duplicate);
+                  replaceEdges(duplicate, key);
+                  updateRelationships(duplicate, key);
+                });
+            if (!Sets.intersection(duplicates, subjects).isEmpty()) {
+              subjects.removeAll(duplicates);
+              subjects.add(key);
+            }
+          });
+
+      checkNodesForMismatchedProperties(modelConfiguration);
+    }
   }
 }
