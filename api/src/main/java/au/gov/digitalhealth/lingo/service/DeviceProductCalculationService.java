@@ -65,9 +65,11 @@ import au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils;
 import au.gov.digitalhealth.lingo.util.NonDefiningPropertyUtils;
 import au.gov.digitalhealth.lingo.util.ReferenceSetUtils;
 import au.gov.digitalhealth.lingo.util.SnomedConstants;
+import au.gov.digitalhealth.lingo.validation.AuthoringValidation;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.groups.Default;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -83,10 +85,12 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.validation.annotation.Validated;
 import reactor.core.publisher.Mono;
 
 @Service
 @Log
+@Validated({AuthoringValidation.class, Default.class})
 public class DeviceProductCalculationService
     extends ProductCalculationService<DeviceProductDetails> {
 
@@ -353,14 +357,14 @@ public class DeviceProductCalculationService
     productSummary.updateNodeChangeStatus(
         taskChangedConceptIds.block(), projectChangedConceptIds.block());
 
-    productSummary.deduplicateNewNodes();
+    productSummary.deduplicateNewNodes(modelConfiguration);
 
     return productSummary;
   }
 
   private ValidationResult validateInputData(
       String branch,
-      PackageDetails<@Valid DeviceProductDetails> packageDetails,
+      @Valid PackageDetails<@Valid DeviceProductDetails> packageDetails,
       ModelConfiguration modelConfiguration) {
     final DeviceDetailsValidator deviceDetailsValidator =
         deviceDetailsValidatorByQualifier.get(
@@ -376,8 +380,9 @@ public class DeviceProductCalculationService
   }
 
   @Override
+  @Validated(Default.class)
   public ValidationResult validateProductAtomicData(
-      String branch, PackageDetails<DeviceProductDetails> productDetails)
+      String branch, @Valid PackageDetails<@Valid DeviceProductDetails> productDetails)
       throws ProductAtomicDataValidationProblem {
     return validateInputData(branch, productDetails, models.getModelConfiguration(branch));
   }

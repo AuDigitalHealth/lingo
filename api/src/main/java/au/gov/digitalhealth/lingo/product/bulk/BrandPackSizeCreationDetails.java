@@ -17,7 +17,7 @@ package au.gov.digitalhealth.lingo.product.bulk;
 
 import au.gov.digitalhealth.lingo.product.ProductBrands;
 import au.gov.digitalhealth.lingo.product.ProductPackSizes;
-import au.gov.digitalhealth.lingo.util.PartionIdentifier;
+import au.gov.digitalhealth.lingo.util.PartitionIdentifier;
 import au.gov.digitalhealth.lingo.validation.ValidSctId;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.Valid;
@@ -38,7 +38,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class BrandPackSizeCreationDetails implements BulkProductActionDetails, Serializable {
   @NotNull
-  @ValidSctId(partitionIdentifier = PartionIdentifier.CONCEPT)
+  @ValidSctId(partitionIdentifier = PartitionIdentifier.CONCEPT)
   private String productId;
 
   @Valid private ProductBrands brands;

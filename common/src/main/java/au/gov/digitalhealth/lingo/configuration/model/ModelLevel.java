@@ -18,7 +18,7 @@ package au.gov.digitalhealth.lingo.configuration.model;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.product.details.properties.PropertyType;
 import au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet;
-import au.gov.digitalhealth.lingo.util.PartionIdentifier;
+import au.gov.digitalhealth.lingo.util.PartitionIdentifier;
 import au.gov.digitalhealth.lingo.validation.ValidSctId;
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
@@ -43,7 +43,7 @@ public class ModelLevel {
   @NotBlank private String deviceSemanticTag;
   @NotBlank private String drugDeviceSemanticTag;
 
-  @ValidSctId(partitionIdentifier = PartionIdentifier.CONCEPT)
+  @ValidSctId(partitionIdentifier = PartitionIdentifier.CONCEPT)
   @NotNull
   private String referenceSetIdentifier;
 
