@@ -18,6 +18,7 @@ package au.gov.digitalhealth.lingo.product.details;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.gov.digitalhealth.lingo.util.NmpcType;
 import au.gov.digitalhealth.lingo.validation.OnlyOnePopulated;
+import au.gov.digitalhealth.lingo.validation.ValidSnowstormConceptMini;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import jakarta.validation.Valid;
@@ -36,18 +37,18 @@ import lombok.EqualsAndHashCode;
     fields = {"containerType", "deviceType"},
     message = "Only container type or device type can be populated, not both")
 public class MedicationProductDetails extends ProductDetails {
-  SnowstormConceptMini existingMedicinalProduct;
-  SnowstormConceptMini existingClinicalDrug;
+  @ValidSnowstormConceptMini SnowstormConceptMini existingMedicinalProduct;
+  @ValidSnowstormConceptMini SnowstormConceptMini existingClinicalDrug;
 
-  SnowstormConceptMini genericForm;
-  SnowstormConceptMini specificForm;
+  @ValidSnowstormConceptMini SnowstormConceptMini genericForm;
+  @ValidSnowstormConceptMini SnowstormConceptMini specificForm;
 
   // These are the old unit of use/presentation attributes needed until purged
   @Valid Quantity quantity;
-  SnowstormConceptMini containerType;
-  SnowstormConceptMini unitOfPresentation;
+  @ValidSnowstormConceptMini SnowstormConceptMini containerType;
+  @ValidSnowstormConceptMini SnowstormConceptMini unitOfPresentation;
 
-  Set<SnowstormConceptMini> playsRole = new HashSet<>();
+  Set<@ValidSnowstormConceptMini SnowstormConceptMini> playsRole = new HashSet<>();
 
   List<@Valid Ingredient> activeIngredients = new ArrayList<>();
 
