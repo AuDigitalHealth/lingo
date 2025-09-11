@@ -26,6 +26,7 @@ import au.gov.digitalhealth.lingo.configuration.model.enumeration.NonDefiningPro
 import au.gov.digitalhealth.lingo.exception.AtomicDataExtractionProblem;
 import au.gov.digitalhealth.lingo.service.SnowstormClient;
 import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
+import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import au.gov.digitalhealth.lingo.validation.OnlyOneNotEmpty;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -273,14 +274,16 @@ public class ExternalIdentifier extends NonDefiningBase implements Serializable 
         .append(valueObject != null ? valueObject.getConceptId() : null)
         .toHashCode();
   }
-
+  
   @Override
   public String toDisplay() {
-    return getTitle()
-        + ": "
-        + (getValue() == null
-            ? getValueObject().getConceptId() + "|" + getValueObject().getPt().getTerm() + "|"
-            : value);
+    String valueString = null;
+    if (value != null) {
+      valueString = value;
+    } else if (valueObject != null) {
+      valueString = SnowstormDtoUtil.getIdAndFsnTerm(getValueObject());
+    }
+    return getTitle() + ": " + valueString;
   }
 
   public void updateFromDefinition(
