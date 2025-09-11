@@ -22,6 +22,8 @@ import {
   isProblemDetail,
   isUpstreamServerProblem,
   isUserReportableProblem,
+  normalizeMultilineMessage,
+  snackbarMultilineStyle,
 } from './ProblemDetail';
 import {
   isSentryAvailable,
@@ -104,10 +106,10 @@ api.interceptors.response.use(
 
       if (isUserReportableProblem(potentialProblemDetail)) {
         enqueueSnackbar(
-          (potentialProblemDetail.detail ?? '').replace(/\r\n|\r|\n/g, '\n'),
+          normalizeMultilineMessage(potentialProblemDetail.detail),
           {
             variant: 'error',
-            style: { whiteSpace: 'pre-line' }, // or 'pre-wrap' if you also want to preserve multiple spaces
+            style: snackbarMultilineStyle,
           },
         );
       } else {
@@ -164,10 +166,10 @@ api.interceptors.response.use(
           }
         } else if (isUserReportableProblem(potentialProblemDetail)) {
           enqueueSnackbar(
-            (potentialProblemDetail.detail ?? '').replace(/\r\n|\r|\n/g, '\n'),
+            normalizeMultilineMessage(potentialProblemDetail.detail),
             {
               variant: 'error',
-              style: { whiteSpace: 'pre-line' }, // or 'pre-wrap' if you also want to preserve multiple spaces
+              style: snackbarMultilineStyle,
             },
           );
         }
