@@ -15,7 +15,7 @@
  */
 package au.gov.digitalhealth.lingo.validation;
 
-import au.gov.digitalhealth.lingo.util.PartionIdentifier;
+import au.gov.digitalhealth.lingo.util.PartitionIdentifier;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 import jakarta.validation.constraints.NotNull;
@@ -32,7 +32,7 @@ public @interface ValidSctId {
   String message() default "Must be a valid SCTID";
 
   @NotNull
-  PartionIdentifier partitionIdentifier();
+  PartitionIdentifier partitionIdentifier();
 
   Class<?>[] groups() default {};
 
