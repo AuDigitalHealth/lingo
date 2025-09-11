@@ -296,87 +296,92 @@ public class ProductSummary implements Serializable {
    * between the nodes. However if other properties are responsible for the difference something
    * else has gone wrong and this is represented as an unexpected server error (500).
    */
-  @JsonIgnore
-  public void checkNodesForMismatchedProperties(ModelConfiguration modelConfiguration) {
-    synchronized (nodes) {
-      Map<String, List<Node>> byConceptId =
-          nodes.stream().collect(Collectors.groupingBy(Node::getConceptId));
+  private void checkNodesForMismatchedProperties(ModelConfiguration modelConfiguration) {
+    Map<String, List<Node>> byConceptId =
+        nodes.stream().collect(Collectors.groupingBy(Node::getConceptId));
 
-      byConceptId
-          .values()
-          .forEach(nodeSet -> mergeMultivaluedProperties(modelConfiguration, nodeSet));
+    Map<String, Set<Node>> nonDefiningMismatches = new HashMap<>();
 
-      Map<String, Set<Node>> nonDefiningMismatches = new HashMap<>();
+    for (Map.Entry<String, List<Node>> entry : byConceptId.entrySet()) {
+      List<Node> group = entry.getValue();
+      if (group.size() <= 1) {
+        continue;
+      }
 
-      for (Map.Entry<String, List<Node>> entry : byConceptId.entrySet()) {
-        List<Node> group = entry.getValue();
-        if (group.size() <= 1) {
-          continue;
-        }
+      // If all nodes are exactly equal, should have been already merged because the source is a
+      // set.
+      Node first = group.get(0);
 
-        // If all nodes are exactly equal, should have been already merged because the source is a
-        // set.
-        Node first = group.get(0);
+      // Determine if the only differences are in non-defining properties.
+      Node base = first.cloneNode();
+      base.setNonDefiningProperties(new HashSet<>());
 
-        // Determine if the only differences are in non-defining properties.
-        Node base = first.cloneNode();
-        base.setNonDefiningProperties(new HashSet<>());
-
-        boolean onlyNonDefiningDiffs = true;
-        for (int i = 1; i < group.size(); i++) {
-          Node other = group.get(i).cloneNode();
-          other.setNonDefiningProperties(new HashSet<>());
-          if (!base.equals(other)) {
-            onlyNonDefiningDiffs = false;
-            break;
-          }
-        }
-
-        if (onlyNonDefiningDiffs) {
-          nonDefiningMismatches.put(entry.getKey(), new HashSet<>(group));
-        } else {
-          // Differences beyond non-defining properties indicate an unexpected server error.
-          throw new LingoProblem(
-              "product-summary",
-              "Mismatched nodes for conceptId " + entry.getKey(),
-              HttpStatus.INTERNAL_SERVER_ERROR,
-              "Nodes with the same conceptId differ in properties other than non-defining properties");
+      boolean onlyNonDefiningDiffs = true;
+      for (int i = 1; i < group.size(); i++) {
+        Node other = group.get(i).cloneNode();
+        other.setNonDefiningProperties(new HashSet<>());
+        if (!base.equals(other)) {
+          onlyNonDefiningDiffs = false;
+          break;
         }
       }
 
-      if (!nonDefiningMismatches.isEmpty()) {
-        throw new MismatchingPropertiesProblem(nonDefiningMismatches);
+      if (onlyNonDefiningDiffs) {
+        nonDefiningMismatches.put(entry.getKey(), new HashSet<>(group));
+      } else {
+        // Differences beyond non-defining properties indicate an unexpected server error.
+        throw new LingoProblem(
+            "product-summary",
+            "Mismatched nodes for conceptId " + entry.getKey(),
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "Nodes with the same conceptId differ in properties other than non-defining properties");
       }
+    }
+
+    if (!nonDefiningMismatches.isEmpty()) {
+      throw new MismatchingPropertiesProblem(nonDefiningMismatches);
     }
   }
 
-  private void mergeMultivaluedProperties(
-      ModelConfiguration modelConfiguration, List<Node> nodeSet) {
-    if (nodeSet.size() <= 1) {
-      return;
-    }
-    final ModelLevel modelLevel = modelConfiguration.getLevelOfType(nodeSet.get(0).getModelLevel());
-    Set<String> multiValuedPropertySchemes =
-        Streams.concat(
-                modelConfiguration.getMappingsByLevel(modelLevel).stream()
-                    .filter(BasePropertyWithValueDefinition::isMultiValued)
-                    .map(BasePropertyDefinition::getName),
-                modelConfiguration.getNonDefiningPropertiesByLevel(modelLevel).stream()
-                    .filter(BasePropertyWithValueDefinition::isMultiValued)
-                    .map(BasePropertyDefinition::getName))
-            .collect(Collectors.toSet());
+  private void mergeMultivaluedProperties(ModelConfiguration modelConfiguration) {
 
-    Set<NonDefiningBase> multivaluedProerties =
-        nodeSet.stream()
-            .flatMap(n -> n.getNonDefiningProperties().stream())
-            .filter(p -> multiValuedPropertySchemes.contains(p.getIdentifierScheme()))
-            .collect(Collectors.toSet());
+    Map<String, List<Node>> byConceptId =
+        nodes.stream().collect(Collectors.groupingBy(Node::getConceptId));
 
-    for (Node node : nodeSet) {
-      for (NonDefiningBase prop : multivaluedProerties) {
-        node.getNonDefiningProperties().add(prop);
+    for (List<Node> nodeSet : byConceptId.values()) {
+      if (nodeSet.size() <= 1) {
+        continue;
+      }
+      final ModelLevel modelLevel =
+          modelConfiguration.getLevelOfType(nodeSet.get(0).getModelLevel());
+      Set<String> multiValuedPropertySchemes =
+          Streams.concat(
+                  modelConfiguration.getMappingsByLevel(modelLevel).stream()
+                      .filter(BasePropertyWithValueDefinition::isMultiValued)
+                      .map(BasePropertyDefinition::getName),
+                  modelConfiguration.getNonDefiningPropertiesByLevel(modelLevel).stream()
+                      .filter(BasePropertyWithValueDefinition::isMultiValued)
+                      .map(BasePropertyDefinition::getName))
+              .collect(Collectors.toSet());
+
+      Set<NonDefiningBase> multivaluedProerties =
+          nodeSet.stream()
+              .flatMap(n -> n.getNonDefiningProperties().stream())
+              .filter(p -> multiValuedPropertySchemes.contains(p.getIdentifierScheme()))
+              .collect(Collectors.toSet());
+
+      for (Node node : nodeSet) {
+        for (NonDefiningBase prop : multivaluedProerties) {
+          node.getNonDefiningProperties().add(prop);
+        }
       }
     }
+
+    // nodes that might have differed based on multi-valued properties are now merged.
+    // remove duplicates.
+    Set<Node> rebuilt = new HashSet<>(nodes);
+    nodes.clear();
+    nodes.addAll(rebuilt);
   }
 
   private void updateRelationships(Node duplicate, Node key) {
@@ -479,6 +484,7 @@ public class ProductSummary implements Serializable {
             }
           });
 
+      mergeMultivaluedProperties(modelConfiguration);
       checkNodesForMismatchedProperties(modelConfiguration);
     }
   }

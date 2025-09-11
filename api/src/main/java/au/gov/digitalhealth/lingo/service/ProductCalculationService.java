@@ -31,7 +31,9 @@ import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
 import au.gov.digitalhealth.lingo.service.validators.ValidationResult;
 import au.gov.digitalhealth.lingo.util.NmpcType;
+import au.gov.digitalhealth.lingo.validation.AuthoringValidation;
 import jakarta.validation.Valid;
+import jakarta.validation.groups.Default;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -44,8 +46,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.java.Log;
+import org.springframework.validation.annotation.Validated;
 
 @Log
+@Validated({AuthoringValidation.class, Default.class})
 public abstract class ProductCalculationService<T extends ProductDetails> {
   private static String getMinusClause(Set<String> existingNodeIds) {
     return existingNodeIds.isEmpty() ? "" : "MINUS (" + String.join(" OR ", existingNodeIds) + ")";
@@ -61,7 +65,7 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
    *     product
    */
   public abstract ProductSummary calculateProductFromAtomicData(
-      String branch, PackageDetails<T> packageDetails)
+      String branch, @Valid PackageDetails<@Valid T> packageDetails)
       throws ExecutionException, InterruptedException;
 
   /**
@@ -73,7 +77,7 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
    * @param productDetails details of the product to validate
    */
   public abstract ValidationResult validateProductAtomicData(
-      String branch, @Valid PackageDetails<T> productDetails)
+      String branch, @Valid PackageDetails<@Valid T> productDetails)
       throws ProductAtomicDataValidationProblem;
 
   /**
@@ -84,7 +88,7 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
    * @return CompletableFuture containing the ProductSummary
    */
   public abstract CompletableFuture<ProductSummary> calculateProductFromAtomicDataAsync(
-      String branch, PackageDetails<T> packageDetails)
+      String branch, @Valid PackageDetails<@Valid T> packageDetails)
       throws ExecutionException, InterruptedException;
 
   protected abstract SnowstormClient getSnowstormClient();

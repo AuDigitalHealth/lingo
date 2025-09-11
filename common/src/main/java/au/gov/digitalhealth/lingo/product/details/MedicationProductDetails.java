@@ -17,6 +17,7 @@ package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.gov.digitalhealth.lingo.util.NmpcType;
+import au.gov.digitalhealth.lingo.validation.AuthoringValidation;
 import au.gov.digitalhealth.lingo.validation.OnlyOnePopulated;
 import au.gov.digitalhealth.lingo.validation.ValidSnowstormConceptMini;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -37,18 +38,29 @@ import lombok.EqualsAndHashCode;
     fields = {"containerType", "deviceType"},
     message = "Only container type or device type can be populated, not both")
 public class MedicationProductDetails extends ProductDetails {
-  @ValidSnowstormConceptMini SnowstormConceptMini existingMedicinalProduct;
-  @ValidSnowstormConceptMini SnowstormConceptMini existingClinicalDrug;
+  @ValidSnowstormConceptMini(groups = AuthoringValidation.class)
+  SnowstormConceptMini existingMedicinalProduct;
 
-  @ValidSnowstormConceptMini SnowstormConceptMini genericForm;
-  @ValidSnowstormConceptMini SnowstormConceptMini specificForm;
+  @ValidSnowstormConceptMini(groups = AuthoringValidation.class)
+  SnowstormConceptMini existingClinicalDrug;
+
+  @ValidSnowstormConceptMini(groups = AuthoringValidation.class)
+  SnowstormConceptMini genericForm;
+
+  @ValidSnowstormConceptMini(groups = AuthoringValidation.class)
+  SnowstormConceptMini specificForm;
 
   // These are the old unit of use/presentation attributes needed until purged
   @Valid Quantity quantity;
-  @ValidSnowstormConceptMini SnowstormConceptMini containerType;
-  @ValidSnowstormConceptMini SnowstormConceptMini unitOfPresentation;
 
-  Set<@ValidSnowstormConceptMini SnowstormConceptMini> playsRole = new HashSet<>();
+  @ValidSnowstormConceptMini(groups = AuthoringValidation.class)
+  SnowstormConceptMini containerType;
+
+  @ValidSnowstormConceptMini(groups = AuthoringValidation.class)
+  SnowstormConceptMini unitOfPresentation;
+
+  Set<@ValidSnowstormConceptMini(groups = AuthoringValidation.class) SnowstormConceptMini>
+      playsRole = new HashSet<>();
 
   List<@Valid Ingredient> activeIngredients = new ArrayList<>();
 

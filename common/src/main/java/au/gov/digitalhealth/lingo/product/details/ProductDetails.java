@@ -17,6 +17,7 @@ package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
+import au.gov.digitalhealth.lingo.validation.AuthoringValidation;
 import au.gov.digitalhealth.lingo.validation.ValidSnowstormConceptMini;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -37,10 +38,13 @@ import lombok.EqualsAndHashCode;
   @JsonSubTypes.Type(value = NutritionalProductDetails.class, name = "nutritional")
 })
 public abstract class ProductDetails extends PackageProductDetailsBase {
-  @ValidSnowstormConceptMini(allowNull = false)
+
+  @ValidSnowstormConceptMini(groups = AuthoringValidation.class, allowNull = false)
   SnowstormConceptMini productName;
 
-  @ValidSnowstormConceptMini SnowstormConceptMini deviceType;
+  @ValidSnowstormConceptMini(groups = AuthoringValidation.class)
+  SnowstormConceptMini deviceType;
+
   String otherIdentifyingInformation;
   String genericOtherIdentifyingInformation;
 
