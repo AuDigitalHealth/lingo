@@ -17,7 +17,7 @@ package au.gov.digitalhealth.lingo.configuration.model.enumeration;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
-import au.gov.digitalhealth.lingo.util.PartionIdentifier;
+import au.gov.digitalhealth.lingo.util.PartitionIdentifier;
 import au.gov.digitalhealth.lingo.util.SnomedIdentifierUtil;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -177,7 +177,7 @@ public enum NonDefiningPropertyDataType {
           && valueObject.getConceptId() != null
           && valueObject.getPt() != null
           && valueObject.getPt().getTerm() != null
-          && SnomedIdentifierUtil.isValid(valueObject.getConceptId(), PartionIdentifier.CONCEPT);
+          && SnomedIdentifierUtil.isValid(valueObject.getConceptId(), PartitionIdentifier.CONCEPT);
     }
 
     @Override
