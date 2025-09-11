@@ -103,9 +103,12 @@ api.interceptors.response.use(
       const potentialProblemDetail = error?.response?.data;
 
       if (isUserReportableProblem(potentialProblemDetail)) {
-        enqueueSnackbar(potentialProblemDetail.detail, {
-          variant: 'error',
-        });
+        enqueueSnackbar(
+          potentialProblemDetail.detail ?? potentialProblemDetail.error,
+          {
+            variant: 'error',
+          },
+        );
       } else {
         const potentialInternalServerError = error?.response?.data;
         if (
