@@ -274,6 +274,15 @@ public class ExternalIdentifier extends NonDefiningBase implements Serializable 
         .toHashCode();
   }
 
+  @Override
+  public String toDisplay() {
+    return getTitle()
+        + ": "
+        + (getValue() == null
+            ? getValueObject().getConceptId() + "|" + getValueObject().getPt().getTerm() + "|"
+            : value);
+  }
+
   public void updateFromDefinition(
       ExternalIdentifierDefinition externalIdentifierDefinition, FhirClient fhirClient) {
     this.setIdentifierScheme(externalIdentifierDefinition.getName());
