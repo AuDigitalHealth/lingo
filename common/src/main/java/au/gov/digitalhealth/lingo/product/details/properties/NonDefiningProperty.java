@@ -19,6 +19,7 @@ import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.configuration.model.NonDefiningPropertyDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.NonDefiningPropertyDataType;
+import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import au.gov.digitalhealth.lingo.validation.OnlyOneNotEmpty;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -134,5 +135,16 @@ public class NonDefiningProperty extends NonDefiningBase implements Serializable
         .append(value)
         .append(valueObject != null ? valueObject.getConceptId() : null)
         .toHashCode();
+  }
+
+  @Override
+  public String toDisplay() {
+    String valueString = null;
+    if (value != null) {
+      valueString = value;
+    } else if (valueObject != null) {
+      valueString = SnowstormDtoUtil.getIdAndFsnTerm(getValueObject());
+    }
+    return getTitle() + ": " + valueString;
   }
 }

@@ -22,7 +22,9 @@ import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType
 import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.util.NmpcType;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
+import au.gov.digitalhealth.lingo.validation.AuthoringValidation;
 import au.gov.digitalhealth.lingo.validation.OnlyOneNotEmpty;
+import au.gov.digitalhealth.lingo.validation.ValidSnowstormConceptMini;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.Valid;
 import java.util.ArrayList;
@@ -41,8 +43,13 @@ import lombok.extern.java.Log;
     fields = {"containedProducts", "containedPackages"},
     message = "Either containedProducts or containedPackages must be populated, but not both")
 public class PackageDetails<T extends ProductDetails> extends PackageProductDetailsBase {
+
+  @ValidSnowstormConceptMini(groups = AuthoringValidation.class)
   SnowstormConceptMini productName;
+
+  @ValidSnowstormConceptMini(groups = AuthoringValidation.class)
   SnowstormConceptMini containerType;
+
   List<@Valid ProductQuantity<T>> containedProducts = new ArrayList<>();
   List<@Valid PackageQuantity<T>> containedPackages = new ArrayList<>();
   List<String> selectedConceptIdentifiers = new ArrayList<>();

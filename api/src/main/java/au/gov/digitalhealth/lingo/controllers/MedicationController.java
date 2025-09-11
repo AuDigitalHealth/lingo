@@ -35,8 +35,10 @@ import au.gov.digitalhealth.lingo.service.ProductCreationService;
 import au.gov.digitalhealth.lingo.service.ProductUpdateService;
 import au.gov.digitalhealth.lingo.service.TaskManagerService;
 import au.gov.digitalhealth.lingo.service.validators.ValidationResult;
+import au.gov.digitalhealth.lingo.validation.AuthoringValidation;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.groups.Default;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionException;
@@ -45,6 +47,7 @@ import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -57,6 +60,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(
     value = "/api",
     produces = {MediaType.APPLICATION_JSON_VALUE})
+@Validated({AuthoringValidation.class, Default.class})
 public class MedicationController {
 
   private final MedicationService medicationService;
@@ -221,6 +225,7 @@ public class MedicationController {
 
   @LogExecutionTime
   @PostMapping("/{branch}/medications/product/$validate")
+  @Validated(Default.class)
   public ResponseEntity<ValidationResult> validateMedicationProductAtomicData(
       @PathVariable String branch,
       @RequestBody @Valid PackageDetails<@Valid MedicationProductDetails> productDetails) {

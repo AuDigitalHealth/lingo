@@ -63,4 +63,6 @@ public abstract class NonDefiningBase {
   public int hashCode() {
     return new HashCodeBuilder(17, 37).append(identifierScheme).append(type).toHashCode();
   }
+
+  public abstract String toDisplay();
 }

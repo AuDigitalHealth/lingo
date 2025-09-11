@@ -15,26 +15,28 @@
  */
 package au.gov.digitalhealth.lingo.validation;
 
-import au.gov.digitalhealth.lingo.util.PartitionIdentifier;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
-import jakarta.validation.constraints.NotNull;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Constraint(validatedBy = ValidSctIdValidation.class)
-@Target({ElementType.FIELD, ElementType.PARAMETER})
+@Constraint(validatedBy = ValidSnowstormConceptMiniValidation.class)
+@Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.TYPE_USE})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ValidSctId {
-
-  String message() default "Must be a valid SCTID";
-
-  @NotNull
-  PartitionIdentifier partitionIdentifier();
+public @interface ValidSnowstormConceptMini {
+  String message() default
+      "Invalid concept: conceptId is required and must be numeric; PT/FSN may be required";
 
   Class<?>[] groups() default {};
 
   Class<? extends Payload>[] payload() default {};
+
+  // Configuration flags
+  boolean allowNull() default true; // null is valid by default (Bean Validation convention)
+
+  boolean requirePreferredTerm() default true; // PT must be present
+
+  boolean requireFullySpecifiedName() default true; // FSN must be present
 }

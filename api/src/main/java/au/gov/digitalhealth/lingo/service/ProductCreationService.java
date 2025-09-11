@@ -45,6 +45,7 @@ import au.gov.digitalhealth.lingo.product.details.ProductDetails;
 import au.gov.digitalhealth.lingo.service.identifier.IdentifierSource;
 import au.gov.digitalhealth.lingo.util.OwlAxiomService;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
+import au.gov.digitalhealth.lingo.validation.AuthoringValidation;
 import au.gov.digitalhealth.tickets.TicketDto;
 import au.gov.digitalhealth.tickets.TicketDtoExtended;
 import au.gov.digitalhealth.tickets.controllers.BulkProductActionDto;
@@ -55,6 +56,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.groups.Default;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
@@ -65,10 +67,12 @@ import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 import reactor.core.publisher.Mono;
 
 @Log
 @Service
+@Validated({AuthoringValidation.class, Default.class})
 public class ProductCreationService {
 
   private final BlobStorageService blobStorageService;
@@ -323,7 +327,7 @@ public class ProductCreationService {
    * @throws InterruptedException if the operation is interrupted
    */
   public ProductSummary createProductFromBrandPackSizeCreationDetails(
-      String branch, @Valid BulkProductAction<BrandPackSizeCreationDetails> creationDetails)
+      String branch, @Valid BulkProductAction<@Valid BrandPackSizeCreationDetails> creationDetails)
       throws InterruptedException {
 
     snowstormClient.throwIfBranchLocked(branch);
@@ -381,7 +385,7 @@ public class ProductCreationService {
    */
   public ProductSummary updateProductFromAtomicData(
       String branch,
-      @Valid ProductCreateUpdateDetails<? extends ProductDetails> productCreationDetails)
+      @Valid ProductCreateUpdateDetails<@Valid ? extends ProductDetails> productCreationDetails)
       throws InterruptedException {
     return createUpdateProductFromAtomicData(branch, productCreationDetails, false);
   }
@@ -397,7 +401,7 @@ public class ProductCreationService {
    */
   public ProductSummary createUpdateProductFromAtomicData(
       String branch,
-      @Valid ProductCreateUpdateDetails<? extends ProductDetails> productCreationDetails)
+      @Valid ProductCreateUpdateDetails<@Valid ? extends ProductDetails> productCreationDetails)
       throws InterruptedException {
     return createUpdateProductFromAtomicData(branch, productCreationDetails, true);
   }

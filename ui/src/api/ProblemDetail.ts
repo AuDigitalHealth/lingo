@@ -92,3 +92,19 @@ export const isUserReportableProblem = (
     data.path.startsWith('/api')
   );
 };
+
+/**
+ * Normalizes line endings in a message to LF so that CSS white-space handling can render them.
+ * Supports CRLF/CR/LF inputs.
+ */
+export function normalizeMultilineMessage(message?: string | null): string {
+  return (message ?? '').replace(/\r\n|\r|\n/g, '\n');
+}
+
+/**
+ * Style object for notistack/MUI to preserve hard returns in snackbar messages.
+ * Use with enqueueSnackbar(..., { style: snackbarMultilineStyle }).
+ */
+export const snackbarMultilineStyle: React.CSSProperties = {
+  whiteSpace: 'pre-line',
+};

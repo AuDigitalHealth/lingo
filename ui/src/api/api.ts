@@ -22,6 +22,8 @@ import {
   isProblemDetail,
   isUpstreamServerProblem,
   isUserReportableProblem,
+  normalizeMultilineMessage,
+  snackbarMultilineStyle,
 } from './ProblemDetail';
 import {
   isSentryAvailable,
@@ -104,9 +106,10 @@ api.interceptors.response.use(
 
       if (isUserReportableProblem(potentialProblemDetail)) {
         enqueueSnackbar(
-          potentialProblemDetail.detail ?? potentialProblemDetail.error,
+          normalizeMultilineMessage(potentialProblemDetail.detail),
           {
             variant: 'error',
+            style: snackbarMultilineStyle,
           },
         );
       } else {
@@ -161,6 +164,14 @@ api.interceptors.response.use(
               },
             );
           }
+        } else if (isUserReportableProblem(potentialProblemDetail)) {
+          enqueueSnackbar(
+            normalizeMultilineMessage(potentialProblemDetail.detail),
+            {
+              variant: 'error',
+              style: snackbarMultilineStyle,
+            },
+          );
         }
       }
     }
