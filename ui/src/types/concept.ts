@@ -47,7 +47,7 @@ export interface ConceptMini {
   conceptId: string;
   pt?: Term;
   fsn?: Term;
-  definitionStatus?: DefinitionStatus | null;
+  definitionStatus: DefinitionStatus;
 }
 
 export interface RefsetConceptCreate {
