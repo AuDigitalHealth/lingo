@@ -74,7 +74,7 @@ public class ValidSnowstormConceptMiniValidation
       }
     }
 
-    if (value.getDefinitionStatus() == null || value.getDefinitionStatus().isBlank()) {
+    if (value.getDefinitionStatus() == null) {
       errors.add(new Violation("definition status is missing", "definitionStatus"));
     }
 
