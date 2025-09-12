@@ -18,7 +18,7 @@ package au.gov.digitalhealth.lingo.configuration.model;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
 import au.gov.digitalhealth.lingo.product.details.properties.PropertyType;
-import au.gov.digitalhealth.lingo.util.PartionIdentifier;
+import au.gov.digitalhealth.lingo.util.PartitionIdentifier;
 import au.gov.digitalhealth.lingo.validation.ValidSctId;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -58,7 +58,7 @@ public abstract class BasePropertyDefinition {
 
   /** The ID if the property/refset where this is stored */
   @NotBlank
-  @ValidSctId(partitionIdentifier = PartionIdentifier.CONCEPT)
+  @ValidSctId(partitionIdentifier = PartitionIdentifier.CONCEPT)
   private String identifier;
 
   /**

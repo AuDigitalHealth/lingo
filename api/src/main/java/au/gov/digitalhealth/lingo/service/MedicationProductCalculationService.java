@@ -65,8 +65,11 @@ import au.gov.digitalhealth.lingo.util.OwlAxiomService;
 import au.gov.digitalhealth.lingo.util.ReferenceSetUtils;
 import au.gov.digitalhealth.lingo.util.RelationshipSorter;
 import au.gov.digitalhealth.lingo.util.SnomedConstants;
+import au.gov.digitalhealth.lingo.validation.AuthoringValidation;
 import au.gov.digitalhealth.tickets.service.TicketServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Valid;
+import jakarta.validation.groups.Default;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -91,10 +94,12 @@ import org.springframework.data.util.Pair;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.validation.annotation.Validated;
 import reactor.core.publisher.Mono;
 
 @Service
 @Log
+@Validated({AuthoringValidation.class, Default.class})
 public class MedicationProductCalculationService
     extends ProductCalculationService<MedicationProductDetails> {
 
@@ -312,7 +317,7 @@ public class MedicationProductCalculationService
 
   @Async
   public CompletableFuture<ProductSummary> calculateProductFromAtomicDataAsync(
-      String branch, PackageDetails<MedicationProductDetails> packageDetails)
+      String branch, @Valid PackageDetails<@Valid MedicationProductDetails> packageDetails)
       throws ExecutionException, InterruptedException {
     return CompletableFuture.completedFuture(
         calculateProductFromAtomicData(branch, packageDetails));
@@ -328,7 +333,7 @@ public class MedicationProductCalculationService
    *     product
    */
   public ProductSummary calculateProductFromAtomicData(
-      String branch, PackageDetails<MedicationProductDetails> packageDetails)
+      String branch, @Valid PackageDetails<@Valid MedicationProductDetails> packageDetails)
       throws ExecutionException, InterruptedException {
     // todo - this is a work around because the UI doesn't know which package to put the selected
     // identifiers in, so it puts them at the top level. They need to be cascaded down to the lower
@@ -348,8 +353,9 @@ public class MedicationProductCalculationService
   }
 
   @Override
+  @Validated(Default.class)
   public ValidationResult validateProductAtomicData(
-      String branch, PackageDetails<MedicationProductDetails> packageDetails)
+      String branch, @Valid PackageDetails<@Valid MedicationProductDetails> packageDetails)
       throws ProductAtomicDataValidationProblem {
     return validateInputData(branch, packageDetails, models.getModelConfiguration(branch));
   }
@@ -413,7 +419,7 @@ public class MedicationProductCalculationService
     productSummary.updateNodeChangeStatus(
         taskChangedConceptIds.block(), projectChangedConceptIds.block());
 
-    productSummary.deduplicateNewNodes();
+    productSummary.deduplicateNewNodes(modelConfiguration);
 
     return productSummary;
   }

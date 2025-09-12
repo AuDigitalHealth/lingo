@@ -20,7 +20,6 @@ import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.*;
 
 import au.csiro.snowstorm_client.model.*;
 import au.gov.digitalhealth.lingo.configuration.FieldBindingConfiguration;
-import au.gov.digitalhealth.lingo.configuration.ModellingConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ExternalIdentifierDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
@@ -45,6 +44,7 @@ import au.gov.digitalhealth.lingo.service.validators.ValidationResult;
 import au.gov.digitalhealth.lingo.util.InactivationReason;
 import au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
+import au.gov.digitalhealth.lingo.validation.AuthoringValidation;
 import au.gov.digitalhealth.tickets.models.BulkProductAction;
 import au.gov.digitalhealth.tickets.models.Ticket;
 import au.gov.digitalhealth.tickets.repository.BulkProductActionRepository;
@@ -53,6 +53,7 @@ import au.gov.digitalhealth.tickets.service.TicketServiceImpl;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.groups.Default;
 import java.time.Instant;
 import java.util.*;
 import java.util.Map.Entry;
@@ -64,14 +65,15 @@ import lombok.extern.java.Log;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
 @Log
 @Service
+@Validated({AuthoringValidation.class, Default.class})
 public class ProductUpdateService {
 
-  private final ModellingConfiguration modellingConfiguration;
   SnowstormClient snowstormClient;
   TicketServiceImpl ticketService;
 
@@ -94,7 +96,6 @@ public class ProductUpdateService {
       ProductCalculationServiceFactory productCalculationServiceFactory,
       TicketRepository ticketRepository,
       BulkProductActionRepository bulkProductActionRepository,
-      ModellingConfiguration modellingConfiguration,
       BlobStorageService blobStorageService) {
     this.snowstormClient = snowstormClient;
 
@@ -105,7 +106,6 @@ public class ProductUpdateService {
     this.models = models;
     this.productSummaryService = productSummaryService;
     this.productCalculationServiceFactory = productCalculationServiceFactory;
-    this.modellingConfiguration = modellingConfiguration;
     this.blobStorageService = blobStorageService;
   }
 

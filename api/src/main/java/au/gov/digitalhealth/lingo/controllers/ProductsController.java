@@ -24,8 +24,10 @@ import au.gov.digitalhealth.lingo.product.update.ProductUpdateRequest;
 import au.gov.digitalhealth.lingo.service.ProductSummaryService;
 import au.gov.digitalhealth.lingo.service.ProductUpdateService;
 import au.gov.digitalhealth.lingo.service.TaskManagerService;
+import au.gov.digitalhealth.lingo.validation.AuthoringValidation;
 import au.gov.digitalhealth.tickets.models.BulkProductAction;
 import jakarta.validation.Valid;
+import jakarta.validation.groups.Default;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -35,6 +37,7 @@ import lombok.extern.java.Log;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -42,6 +45,7 @@ import org.springframework.web.bind.annotation.*;
     value = "/api",
     produces = {MediaType.APPLICATION_JSON_VALUE})
 @Log
+@Validated({AuthoringValidation.class, Default.class})
 public class ProductsController {
 
   final ProductSummaryService productService;

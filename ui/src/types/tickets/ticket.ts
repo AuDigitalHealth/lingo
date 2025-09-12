@@ -310,6 +310,7 @@ export interface TicketBulkProductActionDto {
   conceptIds: string[];
   details: BrandPackSizeCreationDetails | ProductUpdateCreationDetails;
   created: string;
+  createdBy: string;
 }
 
 export interface AutocompleteGroupOption {

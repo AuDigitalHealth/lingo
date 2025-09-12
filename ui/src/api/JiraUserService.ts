@@ -30,6 +30,13 @@ const JiraUserService = {
     }
     return response.data as JiraUser[];
   },
+  async getAllInternalUsers(): Promise<string[]> {
+    const response = await api.get('/api/users/internal');
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    return response.data as string[];
+  },
 };
 
 export default JiraUserService;
