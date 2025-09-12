@@ -452,6 +452,7 @@ models:
         createConceptParentId: 774164004
         createConceptParentName: Supplier (supplier)
         createConceptSemanticTag: (supplier)
+        createConceptPostfix: (brand)
         multiValued: false
         showDefaultOptions: true
         order: 93
