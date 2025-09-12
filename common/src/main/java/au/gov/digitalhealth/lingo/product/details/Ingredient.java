@@ -16,6 +16,8 @@
 package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.gov.digitalhealth.lingo.validation.AuthoringValidation;
+import au.gov.digitalhealth.lingo.validation.ValidSnowstormConceptMini;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -27,9 +29,16 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = false)
 public class Ingredient extends ProductBaseDto {
   @NotNull SnowstormConceptMini activeIngredient;
+
+  @ValidSnowstormConceptMini(groups = AuthoringValidation.class)
   SnowstormConceptMini refinedActiveIngredient;
+
+  @ValidSnowstormConceptMini(groups = AuthoringValidation.class)
   SnowstormConceptMini preciseIngredient;
+
+  @ValidSnowstormConceptMini(groups = AuthoringValidation.class)
   SnowstormConceptMini basisOfStrengthSubstance;
+
   @Valid Quantity totalQuantity;
   @Valid Quantity concentrationStrength;
   @Valid Quantity presentationStrengthNumerator;
