@@ -295,5 +295,4 @@ public class ProductSummaryNodeDeduplicationTest {
         .historicalAssociations(new ArrayList<>())
         .build();
   }
-
 }
