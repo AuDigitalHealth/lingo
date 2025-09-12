@@ -298,7 +298,7 @@ public class ProductSummary implements Serializable {
                 && relationship.getSourceId().equals(duplicate.getConceptId()));
   }
 
-  private static Comparator<Node> createNodeDeduplicationComparator() {
+  static Comparator<Node> createNodeDeduplicationComparator() {
     return Comparator.comparing(Node::getConceptId)
         .thenComparing(Node::getLabel)
         .thenComparing(Node::getDisplayName)
@@ -462,22 +462,9 @@ public class ProductSummary implements Serializable {
         .sorted(
             Comparator.comparing(
                     NonDefiningBase::getIdentifierScheme, Comparator.nullsLast(String::compareTo))
-                .thenComparing(NonDefiningBase::getType, Comparator.nullsLast(Enum::compareTo))
                 .thenComparing(
-                    p -> getValueForComparison(p), Comparator.nullsLast(String::compareTo))
-                .thenComparing(p -> p.getTitle(), Comparator.nullsLast(String::compareTo))
-                .thenComparing(p -> p.getDescription(), Comparator.nullsLast(String::compareTo)))
-        .map(
-            p ->
-                p.getIdentifierScheme()
-                    + ":"
-                    + p.getType()
-                    + ":"
-                    + getValueForComparison(p)
-                    + ":"
-                    + p.getTitle()
-                    + ":"
-                    + p.getDescription())
+                    ProductSummary::getValueForComparison, Comparator.nullsLast(String::compareTo)))
+        .map(p -> p.getIdentifierScheme() + ":" + getValueForComparison(p))
         .collect(Collectors.joining(","));
   }
 
