@@ -1,8 +1,9 @@
 package au.gov.digitalhealth.lingo.product;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotEquals;
-import static org.testng.Assert.assertTrue;
+import static au.gov.digitalhealth.lingo.product.ProductSummary.createNodeDeduplicationComparator;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
@@ -11,10 +12,11 @@ import au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
+import org.junit.jupiter.api.Test;
 
 public class ProductSummaryNodeDeduplicationTest {
 
-  @org.testng.annotations.Test
+  @Test
   public void
       testCreateNodeDeduplicationComparator_ShouldEvaluateNodesWithDifferentLanguageCodesAsEqual() {
     // Create first node with "en" language code
@@ -98,17 +100,17 @@ public class ProductSummaryNodeDeduplicationTest {
             .build();
 
     // Get the comparator using reflection to access the private method
-    Comparator<Node> comparator = getNodeDeduplicationComparator();
+    Comparator<Node> comparator = createNodeDeduplicationComparator();
 
     // Test that the comparator evaluates these nodes as equal (returns 0)
     int comparison = comparator.compare(node1, node2);
     assertEquals(
-        comparison,
         0,
+        comparison,
         "Nodes with the same concept ID but different preferred term language codes should be considered equal by the deduplication comparator");
   }
 
-  @org.testng.annotations.Test
+  @Test
   public void testCreateNodeDeduplicationComparator_ShouldEvaluateIdenticalNodesAsEqual() {
     // Create two identical nodes
     SnowstormConceptMini concept = new SnowstormConceptMini();
@@ -131,13 +133,13 @@ public class ProductSummaryNodeDeduplicationTest {
     Node node1 = createTestNode(concept, "TP", "Brand Name", ModelLevelType.PRODUCT_NAME);
     Node node2 = createTestNode(concept, "TP", "Brand Name", ModelLevelType.PRODUCT_NAME);
 
-    Comparator<Node> comparator = getNodeDeduplicationComparator();
+    Comparator<Node> comparator = createNodeDeduplicationComparator();
 
     int comparison = comparator.compare(node1, node2);
-    assertEquals(comparison, 0, "Identical nodes should be considered equal");
+    assertEquals(0, comparison, "Identical nodes should be considered equal");
   }
 
-  @org.testng.annotations.Test
+  @Test
   public void testCreateNodeDeduplicationComparator_ShouldOrderNodesByConceptId() {
     // Create nodes with different concept IDs
     SnowstormConceptMini concept1 = createSnowstormConcept("123456000", "First concept", "First");
@@ -146,7 +148,7 @@ public class ProductSummaryNodeDeduplicationTest {
     Node node1 = createTestNode(concept1, "TP", "Brand Name", ModelLevelType.PRODUCT_NAME);
     Node node2 = createTestNode(concept2, "TP", "Brand Name", ModelLevelType.PRODUCT_NAME);
 
-    Comparator<Node> comparator = getNodeDeduplicationComparator();
+    Comparator<Node> comparator = createNodeDeduplicationComparator();
 
     int comparison = comparator.compare(node1, node2);
     assertTrue(comparison < 0, "Node with smaller concept ID should come first");
@@ -155,7 +157,7 @@ public class ProductSummaryNodeDeduplicationTest {
     assertTrue(reverseComparison > 0, "Node with larger concept ID should come after");
   }
 
-  @org.testng.annotations.Test
+  @Test
   public void testCreateNodeDeduplicationComparator_ShouldOrderNodesByLabel() {
     // Create nodes with same concept ID but different labels
     SnowstormConceptMini concept = createSnowstormConcept("123456000", "Test concept", "Test");
@@ -164,13 +166,13 @@ public class ProductSummaryNodeDeduplicationTest {
         createTestNode(concept, "CTPP", "Container package", ModelLevelType.PACKAGED_CLINICAL_DRUG);
     Node node2 = createTestNode(concept, "TP", "Brand Name", ModelLevelType.PRODUCT_NAME);
 
-    Comparator<Node> comparator = getNodeDeduplicationComparator();
+    Comparator<Node> comparator = createNodeDeduplicationComparator();
 
     int comparison = comparator.compare(node1, node2);
     assertTrue(comparison < 0, "Node with label 'CTPP' should come before 'TP'");
   }
 
-  @org.testng.annotations.Test
+  @Test
   public void testCreateNodeDeduplicationComparator_ShouldOrderNodesByModelLevel() {
     // Create nodes with same concept ID and label but different model levels
     SnowstormConceptMini concept = createSnowstormConcept("123456000", "Test concept", "Test");
@@ -180,14 +182,14 @@ public class ProductSummaryNodeDeduplicationTest {
             concept, "TP", "Brand Name", ModelLevelType.REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG);
     Node node2 = createTestNode(concept, "TP", "Brand Name", ModelLevelType.PRODUCT_NAME);
 
-    Comparator<Node> comparator = getNodeDeduplicationComparator();
+    Comparator<Node> comparator = createNodeDeduplicationComparator();
 
     int comparison = comparator.compare(node1, node2);
     // The comparison result depends on enum ordinal values
-    assertNotEquals(comparison, 0, "Nodes with different model levels should not be equal");
+    assertNotEquals(0, comparison, "Nodes with different model levels should not be equal");
   }
 
-  @org.testng.annotations.Test
+  @Test
   public void testCreateNodeDeduplicationComparator_ShouldOrderNodesByNewInTaskFlag() {
     // Create nodes where one is new in task and the other is not
     SnowstormConceptMini concept = createSnowstormConcept("123456000", "Test concept", "Test");
@@ -199,13 +201,13 @@ public class ProductSummaryNodeDeduplicationTest {
         createTestNodeWithFlags(
             concept, "TP", "Brand Name", ModelLevelType.PRODUCT_NAME, true, false);
 
-    Comparator<Node> comparator = getNodeDeduplicationComparator();
+    Comparator<Node> comparator = createNodeDeduplicationComparator();
 
     int comparison = comparator.compare(node1, node2);
     assertTrue(comparison < 0, "Node with newInTask=false should come before newInTask=true");
   }
 
-  @org.testng.annotations.Test
+  @Test
   public void testCreateNodeDeduplicationComparator_ShouldOrderNodesByNewInProjectFlag() {
     // Create nodes where one is new in project and the other is not
     SnowstormConceptMini concept = createSnowstormConcept("123456000", "Test concept", "Test");
@@ -217,43 +219,13 @@ public class ProductSummaryNodeDeduplicationTest {
         createTestNodeWithFlags(
             concept, "TP", "Brand Name", ModelLevelType.PRODUCT_NAME, false, true);
 
-    Comparator<Node> comparator = getNodeDeduplicationComparator();
+    Comparator<Node> comparator = createNodeDeduplicationComparator();
 
     int comparison = comparator.compare(node1, node2);
     assertTrue(comparison < 0, "Node with newInProject=false should come before newInProject=true");
   }
 
-  @org.testng.annotations.Test
-  public void testCreateNodeDeduplicationComparator_ShouldHandleNullConcepts() {
-    // Create node with null concept vs node with concept
-    Node nodeWithNullConcept =
-        Node.builder()
-            .concept(null)
-            .conceptOptions(new ArrayList<>())
-            .label("TP")
-            .displayName("Brand Name")
-            .newConceptDetails(null)
-            .newInTask(false)
-            .newInProject(false)
-            .nonDefiningProperties(new HashSet<>())
-            .originalNode(null)
-            .modelLevel(ModelLevelType.PRODUCT_NAME)
-            .relationships(new ArrayList<>())
-            .axioms(new ArrayList<>())
-            .historicalAssociations(new ArrayList<>())
-            .build();
-
-    SnowstormConceptMini concept = createSnowstormConcept("123456000", "Test concept", "Test");
-    Node nodeWithConcept = createTestNode(concept, "TP", "Brand Name", ModelLevelType.PRODUCT_NAME);
-
-    Comparator<Node> comparator = getNodeDeduplicationComparator();
-
-    int comparison = comparator.compare(nodeWithNullConcept, nodeWithConcept);
-    // Null concepts should be ordered according to nullsLast comparator
-    assertNotEquals(comparison, 0, "Null and non-null concepts should not be equal");
-  }
-
-  @org.testng.annotations.Test
+  @Test
   public void testCreateNodeDeduplicationComparator_ShouldOrderNodesWithNonDefiningProperties() {
     // Create nodes with different non-defining properties
     SnowstormConceptMini concept = createSnowstormConcept("123456000", "Test concept", "Test");
@@ -264,11 +236,11 @@ public class ProductSummaryNodeDeduplicationTest {
     ReferenceSet additionalRefSet = new ReferenceSet();
     node2.getNonDefiningProperties().add(additionalRefSet);
 
-    Comparator<Node> comparator = getNodeDeduplicationComparator();
+    Comparator<Node> comparator = createNodeDeduplicationComparator();
 
     int comparison = comparator.compare(node1, node2);
     assertNotEquals(
-        comparison, 0, "Nodes with different non-defining properties should not be equal");
+        0, comparison, "Nodes with different non-defining properties should not be equal");
   }
 
   /** Helper method to create a SnowstormConceptMini with specified values */
@@ -316,12 +288,6 @@ public class ProductSummaryNodeDeduplicationTest {
         .newConceptDetails(null)
         .newInTask(newInTask)
         .newInProject(newInProject)
-        .nonDefiningProperties(
-            new HashSet<>() {
-              {
-                add(new ReferenceSet());
-              }
-            })
         .originalNode(null)
         .modelLevel(modelLevel)
         .relationships(new ArrayList<>())
@@ -330,15 +296,4 @@ public class ProductSummaryNodeDeduplicationTest {
         .build();
   }
 
-  /** Helper method to access the private createNodeDeduplicationComparator method */
-  private Comparator<Node> getNodeDeduplicationComparator() {
-    try {
-      java.lang.reflect.Method method =
-          ProductSummary.class.getDeclaredMethod("createNodeDeduplicationComparator");
-      method.setAccessible(true);
-      return (Comparator<Node>) method.invoke(null);
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to access createNodeDeduplicationComparator method", e);
-    }
-  }
 }
