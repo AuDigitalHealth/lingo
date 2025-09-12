@@ -10,11 +10,21 @@ import DescriptionEditor from './individual/components/edit/DescriptionEditor';
 import { Ticket } from '../../types/tickets/ticket';
 import { useCanEditTicket } from '../../hooks/api/tickets/useCanEditTicket.tsx';
 import UnableToEditTicketTooltip from './components/UnableToEditTicketTooltip.tsx';
+import { useInternalUsers } from '../../hooks/api/useInitializeJiraUsers';
+
 interface DescriptionProps {
   ticket?: Ticket;
   editable?: boolean;
 }
+
 export default function Description({ ticket, editable }: DescriptionProps) {
+  const { internalUsers } = useInternalUsers();
+  const isInternalUser = !!(
+    internalUsers &&
+    ticket?.createdBy &&
+    internalUsers.some((user: string) => user === ticket?.createdBy)
+  );
+
   const theme = useTheme();
   const extensions = useExtensions();
   const [editMode, setEditMode] = useState(false);
@@ -22,6 +32,10 @@ export default function Description({ ticket, editable }: DescriptionProps) {
     setEditMode(bool);
   }, []);
   const { canEdit } = useCanEditTicket(ticket);
+
+  // Disable editing if created by internal user
+  const canEditDescription = canEdit && !isInternalUser;
+
   if (editMode) {
     return <DescriptionEditor ticket={ticket} onCancel={setEditModeStable} />;
   } else {
@@ -48,7 +62,10 @@ export default function Description({ ticket, editable }: DescriptionProps) {
           {editable && (
             <Stack direction="row" alignItems="center" spacing={0.5}>
               <Box sx={{ marginLeft: 'auto' }}>
-                <UnableToEditTicketTooltip canEdit={canEdit}>
+                <UnableToEditTicketTooltip
+                  canEdit={canEdit}
+                  isInternalUser={isInternalUser}
+                >
                   <LoadingButton
                     id="ticket-description-edit"
                     variant="text"
@@ -58,7 +75,7 @@ export default function Description({ ticket, editable }: DescriptionProps) {
                     onClick={() => {
                       setEditMode(true);
                     }}
-                    disabled={!canEdit}
+                    disabled={!canEditDescription}
                   >
                     EDIT
                   </LoadingButton>
