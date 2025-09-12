@@ -87,4 +87,9 @@ public class ReferenceSet extends NonDefiningBase implements Serializable {
         .append(getIdentifier())
         .toHashCode();
   }
+
+  @Override
+  public String toDisplay() {
+    return getTitle();
+  }
 }

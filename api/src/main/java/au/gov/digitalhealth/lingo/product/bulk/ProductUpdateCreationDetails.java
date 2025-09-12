@@ -16,7 +16,7 @@
 package au.gov.digitalhealth.lingo.product.bulk;
 
 import au.gov.digitalhealth.lingo.product.update.ProductUpdateState;
-import au.gov.digitalhealth.lingo.util.PartionIdentifier;
+import au.gov.digitalhealth.lingo.util.PartitionIdentifier;
 import au.gov.digitalhealth.lingo.validation.ValidSctId;
 import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -32,7 +32,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ProductUpdateCreationDetails implements BulkProductActionDetails, Serializable {
   @NotNull
-  @ValidSctId(partitionIdentifier = PartionIdentifier.CONCEPT)
+  @ValidSctId(partitionIdentifier = PartitionIdentifier.CONCEPT)
   private String productId;
 
   private ProductUpdateState historicState;

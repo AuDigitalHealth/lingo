@@ -726,7 +726,7 @@ public class BrandPackSizeService {
                     .getAxioms()
                     .forEach(RelationshipSorter::sortRelationships));
 
-    productSummary.deduplicateNewNodes();
+    productSummary.deduplicateNewNodes(modelConfiguration);
     // return the product summary
     return productSummary;
   }
