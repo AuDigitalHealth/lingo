@@ -29,9 +29,15 @@ public class TicketHistoryEntryDto {
   private String changeDescription;
   private String username;
 
-  public TicketHistoryEntryDto(Long revisionNumber, LocalDateTime timestamp,
-      String revisionType, String fieldName,
-      TicketHistoryValueDto oldValue, TicketHistoryValueDto newValue, String changeDescription, String username) {
+  public TicketHistoryEntryDto(
+      Long revisionNumber,
+      LocalDateTime timestamp,
+      String revisionType,
+      String fieldName,
+      TicketHistoryValueDto oldValue,
+      TicketHistoryValueDto newValue,
+      String changeDescription,
+      String username) {
     this.revisionNumber = revisionNumber;
     this.timestamp = timestamp;
     this.revisionType = revisionType;
@@ -41,5 +47,4 @@ public class TicketHistoryEntryDto {
     this.changeDescription = changeDescription;
     this.username = username;
   }
-
 }

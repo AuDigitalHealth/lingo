@@ -53,6 +53,8 @@ public abstract class BasePropertyWithValueDefinition extends BasePropertyDefini
 
   private String createConceptSemanticTag;
 
+  private String createConceptPostfix;
+
   private String createConceptParentId;
 
   private String createConceptParentName;

@@ -49,6 +49,7 @@ export interface CreateConceptConfig {
   semanticTags: string;
   parentConceptId: string;
   parentConceptName: string;
+  postfix: string | undefined;
 }
 
 // Helper function to extract errors for a specific scheme
@@ -540,6 +541,7 @@ const ExternalIdentifierRender: React.FC<
             semanticTag={binding.createConcept?.semanticTags}
             parentConceptId={binding.createConcept?.parentConceptId}
             parentConceptName={binding.createConcept?.parentConceptName}
+            postfix={binding.createConcept?.postfix}
           />
         </>
       )}
