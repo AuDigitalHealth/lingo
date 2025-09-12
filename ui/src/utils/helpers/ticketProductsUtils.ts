@@ -181,6 +181,7 @@ export function mapToProductDetailsArray(
   const productDetailsArray = productArray.map(function (item) {
     const id = indexStarts++;
     const productDto: ProductTableRow = {
+      createdBy: item.createdBy,
       id: id,
       productId: item.id as number,
       idToDelete: id,
@@ -212,6 +213,7 @@ export function mapToProductDetailsArrayFromBulkActions(
     item.details.type;
     const id = indexStarts++;
     const productDto: ProductTableRow = {
+      createdBy: item.createdBy,
       id: id,
       bulkProductActionId: item.id as number,
       idToDelete: id,

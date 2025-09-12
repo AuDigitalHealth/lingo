@@ -7,6 +7,7 @@ import {
   FormControlLabel,
   Paper,
   Switch,
+  Tooltip,
 } from '@mui/material';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import _ from 'lodash';
@@ -256,19 +257,32 @@ function DeviceAuthoring({
               </Button>
               <DraftSubmitPanel isDirty={isDirty} saveDraft={saveDraft} />
               <Box>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={mode === 'update'}
-                      onChange={(_, checked) =>
-                        setMode(checked ? 'update' : 'create')
-                      }
-                      color="primary"
-                      disabled={!selectedProduct && !originalConceptId}
-                    />
+                <Tooltip
+                  title={
+                    !selectedProduct && !originalConceptId
+                      ? 'Update disabled: product is partially saved or the form was opened without an existing product.'
+                      : ''
                   }
-                  label="Update Mode"
-                />
+                  disableHoverListener={
+                    !!selectedProduct || !!originalConceptId
+                  } // show only when disabled
+                >
+                  <span>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={mode === 'update'}
+                          onChange={(_, checked) =>
+                            setMode(checked ? 'update' : 'create')
+                          }
+                          color="primary"
+                          disabled={!selectedProduct && !originalConceptId}
+                        />
+                      }
+                      label="Update Mode"
+                    />
+                  </span>
+                </Tooltip>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                 <Button
