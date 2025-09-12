@@ -276,6 +276,13 @@ public class UiSchemaExtender {
             "semanticTags",
             objectMapper.valueToTree(nonDefiningPropertyBase.getCreateConceptSemanticTag()));
       }
+      if (nonDefiningPropertyBase.getCreateConceptPostfix() != null) {
+        if (createConcept == null) {
+          createConcept = objectMapper.createObjectNode();
+        }
+        createConcept.set(
+            "postfix", objectMapper.valueToTree(nonDefiningPropertyBase.getCreateConceptPostfix()));
+      }
       if (nonDefiningPropertyBase.getCreateConceptParentId() != null) {
         if (createConcept == null) {
           createConcept = objectMapper.createObjectNode();
