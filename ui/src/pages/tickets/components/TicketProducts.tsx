@@ -242,10 +242,11 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
   const productNameTemplateWithActiveStatus = useCallback(
     (rowData: ProductTableRow) => {
       const activeIds = activeConceptIds ? activeConceptIds.items : [];
-      const isInternalUser =
+      const isInternalUser = !!(
         internalUsers &&
         rowData.createdBy &&
-        internalUsers.some((user: string) => user === rowData.createdBy);
+        internalUsers.some((user: string) => user === rowData.createdBy)
+      );
 
       const renderIcon = () => {
         if (isInternalUser) {
