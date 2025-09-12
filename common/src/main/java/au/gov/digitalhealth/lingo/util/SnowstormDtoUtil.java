@@ -972,4 +972,83 @@ public class SnowstormDtoUtil {
                 ? new HashMap<>(description.getAssociationTargets())
                 : new HashMap<>());
   }
+
+  /**
+   * Determines if two sets of SnowstormAxioms are equivalent. The comparison ignores fields such as
+   * id, moduleId, released status, and effectiveTime, focusing only on the core content of the
+   * axioms.
+   *
+   * @param axioms the first set of {@code SnowstormAxiom} objects to compare
+   * @param axioms1 the second set of {@code SnowstormAxiom} objects to compare
+   * @return {@code true} if the two sets of axioms are equivalent, {@code false} otherwise
+   */
+  public static boolean sameAxioms(
+      @NotNull @NotEmpty Set<SnowstormAxiom> axioms,
+      @NotNull @NotEmpty Set<SnowstormAxiom> axioms1) {
+    if (axioms.size() != axioms1.size()) {
+      return false;
+    }
+    for (SnowstormAxiom axiom : axioms) {
+      if (!axioms1.contains(axiom)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * This isn't a straight equals - it is to tell if two axioms are the same, it ignores id,
+   * moduleid, released, effectiveTime etc.
+   *
+   * @param axiom1 axiom to compare
+   * @param axiom2 axiom to compare
+   * @return true if the axioms are the same, false if they are different
+   */
+  public static boolean sameAxiom(SnowstormAxiom axiom1, SnowstormAxiom axiom2) {
+    if (axiom1 == null && axiom2 == null) {
+      return true;
+    }
+    if (axiom1 == null || axiom2 == null) {
+      return false;
+    }
+
+    return Objects.equals(axiom1.getDefinitionStatus(), axiom2.getDefinitionStatus())
+        && sameRelationships(axiom1.getRelationships(), axiom2.getRelationships());
+  }
+
+  private static boolean sameRelationships(
+      Set<SnowstormRelationship> relationships1, Set<SnowstormRelationship> relationships2) {
+    if (relationships1 == null && relationships2 == null) {
+      return true;
+    }
+    if (relationships1 == null || relationships2 == null) {
+      return false;
+    }
+    if (relationships1.size() != relationships2.size()) {
+      return false;
+    }
+
+    return toGroupKeys(relationships1).equals(toGroupKeys(relationships2));
+  }
+
+  public static Set<Set<String>> toGroupKeys(Set<SnowstormRelationship> relationships1) {
+    return relationships1.stream()
+        .collect(Collectors.groupingBy(r -> r.getGroupId() == null ? 0 : r.getGroupId()))
+        .values()
+        .stream()
+        .map(group -> group.stream().map(SnowstormDtoUtil::toStringKey).collect(Collectors.toSet()))
+        .collect(Collectors.toSet());
+  }
+
+  private static String toStringKey(SnowstormRelationship relationship) {
+    return relationship.getTypeId()
+        + "|"
+        + (relationship.getConcreteValue() != null
+            ? relationship.getConcreteValue().getValue()
+            : relationship.getDestinationId())
+        + "|"
+        + relationship.getCharacteristicTypeId()
+        + "|"
+        + relationship.getModifierId();
+  }
 }
