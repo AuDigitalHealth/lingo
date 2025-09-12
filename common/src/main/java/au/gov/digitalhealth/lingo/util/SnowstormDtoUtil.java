@@ -374,7 +374,7 @@ public class SnowstormDtoUtil {
     String definitionStatusId = c.getDefinitionStatusId();
     if (definitionStatusId == null) {
       definitionStatusId =
-          c.getDefinitionStatus().equals(PRIMITIVE.getLabel())
+          c.getDefinitionStatus().equals(PRIMITIVE.name())
               ? PRIMITIVE.getValue()
               : DEFINED.getValue();
     }
