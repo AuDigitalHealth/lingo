@@ -57,26 +57,7 @@ interface TicketHistoryProps {
 // Helper function to format timestamp
 const formatTimestamp = (timestamp: string): string => {
   const date = new Date(timestamp);
-  const now = new Date();
-  const diffInDays = Math.floor(
-    (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24),
-  );
-
-  if (diffInDays === 0) {
-    return date.toLocaleTimeString('en-AU', {
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'Australia/Sydney',
-    });
-  } else if (diffInDays < 7) {
-    return `${diffInDays}d ago`;
-  } else {
-    return date.toLocaleDateString('en-AU', {
-      month: 'short',
-      day: 'numeric',
-      timeZone: 'Australia/Sydney',
-    });
-  }
+  return date.toLocaleDateString();
 };
 
 // Helper function to get color for change type

@@ -1,6 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
-import { Box, Button, CircularProgress, TextField } from '@mui/material';
+import {
+  Box,
+  Button,
+  CircularProgress,
+  InputAdornment,
+  TextField,
+} from '@mui/material';
 import { Concept } from '../../../../types/concept.ts';
 import { PrimitiveConceptCreationDetails } from '../../../../types/product.ts';
 import { Ticket } from '../../../../types/tickets/ticket.ts';
@@ -17,6 +23,7 @@ import BaseModalBody from '../../../../components/modal/BaseModalBody.tsx';
 import BaseModalFooter from '../../../../components/modal/BaseModalFooter.tsx';
 import BaseModalHeader from '../../../../components/modal/BaseModalHeader.tsx';
 import { FieldProps } from '@rjsf/utils';
+import { escapeRegExp } from 'lodash';
 
 interface CreatePrimitiveProps extends FieldProps {
   open: boolean;
@@ -29,6 +36,7 @@ interface CreatePrimitiveProps extends FieldProps {
   semanticTag: string;
   parentConceptId: string;
   parentConceptName: string;
+  postfix: string | undefined;
 }
 
 const CreatePrimitiveConcept: React.FC<CreatePrimitiveProps> = ({
@@ -42,12 +50,29 @@ const CreatePrimitiveConcept: React.FC<CreatePrimitiveProps> = ({
   semanticTag,
   parentConceptId,
   parentConceptName,
+  postfix,
 }) => {
+  const postfixRegex = useMemo(
+    () => new RegExp(`\\s*${escapeRegExp(postfix)}$`, 'i'),
+    [postfix],
+  );
   const [inputValue, setInputValue] = useState('');
-  const [nameExists, setNameExists] = useState(false);
+  const [invalidName, setInvalidName] = useState(false);
   const [error, setError] = useState('');
   const queryClient = useQueryClient();
-  const debouncedSearch = useDebounce(inputValue, 700);
+
+  const getConceptName = (
+    inputValue: string,
+    postfix: string | undefined,
+  ): string => {
+    if (!postfix) return inputValue;
+    // Use precomputed regex to remove duplicate postfix and faster
+    const cleanedValue = inputValue.replace(postfixRegex, '').trim();
+
+    return `${cleanedValue} ${postfix.trim()}`;
+  };
+
+  const debouncedSearch = useDebounce(getConceptName(inputValue, postfix), 700);
 
   const { allData, isLoading } = useSearchConceptsByEcl(
     debouncedSearch,
@@ -59,10 +84,10 @@ const CreatePrimitiveConcept: React.FC<CreatePrimitiveProps> = ({
   const createPrimitiveMutation = useCreatePrimitiveConcept();
 
   const handleCreatePrimitive = () => {
-    if (!nameExists && ticket && inputValue) {
+    if (!invalidName && ticket && inputValue) {
       setError('');
       const primitiveCreationDetails: PrimitiveConceptCreationDetails = {
-        conceptName: inputValue.trim(),
+        conceptName: getConceptName(inputValue, postfix).trim(),
         semanticTag: semanticTag,
         parentConceptId: parentConceptId,
         parentConceptName: parentConceptName,
@@ -106,31 +131,40 @@ const CreatePrimitiveConcept: React.FC<CreatePrimitiveProps> = ({
       setError(`${localTitle} is required`);
     } else if (!ticket) {
       setError('Ticket information is missing');
-    } else if (nameExists) {
+    } else if (invalidName) {
       setError(`This ${localTitle} already exists!`);
     }
   };
 
   useEffect(() => {
-    if (
-      allData?.some(
-        c =>
-          c.pt?.term.toLowerCase() === inputValue.toLowerCase().trim() ||
-          c.fsn?.term.toLowerCase() === inputValue.toLowerCase().trim(),
-      )
-    ) {
-      setNameExists(true);
+    if (!inputValue) return;
+
+    const endsWithPostfix = postfix && postfixRegex.test(inputValue);
+
+    const exists = allData?.some(
+      c =>
+        c.pt?.term.toLowerCase() ===
+          getConceptName(inputValue, postfix).toLowerCase().trim() ||
+        c.fsn?.term.toLowerCase() ===
+          getConceptName(inputValue, postfix).toLowerCase().trim(),
+    );
+
+    if (endsWithPostfix) {
+      setInvalidName(true);
+      setError(`Please do not include the postfix "${postfix}" in the name.`);
+    } else if (exists) {
+      setInvalidName(true);
       setError(`This ${localTitle} name already exists!`);
     } else {
-      setNameExists(false);
-      if (inputValue) setError('');
+      setInvalidName(false);
+      setError('');
     }
-  }, [allData, inputValue]);
+  }, [allData, inputValue, postfixRegex, postfix]);
 
   const handleCloseModal = () => {
     if (!createPrimitiveMutation.isPending) {
       setInputValue('');
-      setNameExists(false);
+      setInvalidName(false);
       setError('');
       onClose();
     }
@@ -138,7 +172,7 @@ const CreatePrimitiveConcept: React.FC<CreatePrimitiveProps> = ({
 
   const isButtonDisabled = () =>
     createPrimitiveMutation.isPending ||
-    nameExists ||
+    invalidName ||
     !inputValue ||
     inputValue.length < 3 ||
     isLoading;
@@ -158,6 +192,13 @@ const CreatePrimitiveConcept: React.FC<CreatePrimitiveProps> = ({
             concept. The name you enter below will be used as the preferred term
             and will also become the fully specified name with the semantic tag{' '}
             <strong>{semanticTag}</strong> appended.
+            {postfix && (
+              <>
+                {' '}
+                The postfix <strong>{postfix}</strong> will automatically be
+                added to the product name.
+              </>
+            )}
           </p>
         </Box>
         <TextField
@@ -172,7 +213,13 @@ const CreatePrimitiveConcept: React.FC<CreatePrimitiveProps> = ({
           autoFocus
           disabled={createPrimitiveMutation.isPending}
           data-testid="create-primitive-input"
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">{postfix}</InputAdornment>
+            ),
+          }}
         />
+
         {isLoading && <CircularProgress size={24} sx={{ mt: 2 }} />}
       </BaseModalBody>
       <BaseModalFooter

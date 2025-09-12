@@ -57,7 +57,8 @@
         "ecl": "<774167006",
         "semanticTags": "(product name)",
         "parentConceptId": "774167006",
-        "parentConceptName": "Product name (product name)"
+        "parentConceptName": "Product name (product name)",
+        "postfix": "(brand)"
       }
     }
   },
