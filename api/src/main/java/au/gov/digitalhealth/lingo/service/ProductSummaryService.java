@@ -21,12 +21,9 @@ import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
-import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
-import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
-import au.gov.digitalhealth.lingo.util.NmpcType;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -418,23 +415,6 @@ public class ProductSummaryService {
         model.getParentModelLevels(productNode.getModelLevel());
     if (parentModelLevels != null) {
       for (ModelLevel parentModelLevel : parentModelLevels) {
-        if (model.getModelType().equals(ModelType.NMPC)
-            && productNode.getNonDefiningProperties().stream()
-                .anyMatch(
-                    p ->
-                        p.getIdentifierScheme().equals("nmpcType")
-                            && p instanceof NonDefiningProperty ndp
-                            && NmpcType.NMPC_NUTRITIONAL_SUPPLEMENT
-                                .getValue()
-                                .equals(ndp.getValueObject().getConceptId()))
-            && (parentModelLevel.getModelLevelType().equals(ModelLevelType.MEDICINAL_PRODUCT_ONLY)
-                || parentModelLevel.getModelLevelType().equals(ModelLevelType.MEDICINAL_PRODUCT)
-                || parentModelLevel
-                    .getModelLevelType()
-                    .equals(ModelLevelType.REAL_MEDICINAL_PRODUCT))) {
-          continue;
-        }
-
         futures.add(
             nodeGeneratorService
                 .lookUpNode(
