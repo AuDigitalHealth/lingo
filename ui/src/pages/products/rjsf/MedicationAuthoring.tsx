@@ -7,7 +7,6 @@ import {
   FormControlLabel,
   Paper,
   Switch,
-  Tooltip,
 } from '@mui/material';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import _ from 'lodash';
@@ -49,6 +48,7 @@ import CustomSelectWidget from './widgets/CustomSelectWidget.tsx';
 import { evaluateExpression } from './helpers/rjsfUtils.ts';
 import WarningIcon from '@mui/icons-material/Warning';
 import CustomTextFieldWidget from './widgets/CustomTextFieldWidget.tsx';
+import UnableToEditTooltip from '../../tasks/components/UnableToEditTooltip.tsx';
 
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -281,32 +281,26 @@ function MedicationAuthoring({
               </Button>
               <DraftSubmitPanel isDirty={isDirty} saveDraft={saveDraft} />
               <Box>
-                <Tooltip
-                  title={
-                    !selectedProduct && !originalConceptId
-                      ? 'Update disabled: product is partially saved or the form was opened without an existing product.'
-                      : ''
+                <UnableToEditTooltip
+                  canEdit={!(!selectedProduct && !originalConceptId)}
+                  lockDescription={
+                    'Update disabled: product is partially saved or the form was opened without an existing product.'
                   }
-                  disableHoverListener={
-                    !!selectedProduct || !!originalConceptId
-                  } // show only when disabled
                 >
-                  <span>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={mode === 'update'}
-                          onChange={(_, checked) =>
-                            setMode(checked ? 'update' : 'create')
-                          }
-                          color="primary"
-                          disabled={!selectedProduct && !originalConceptId}
-                        />
-                      }
-                      label="Update Mode"
-                    />
-                  </span>
-                </Tooltip>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={mode === 'update'}
+                        onChange={(_, checked) =>
+                          setMode(checked ? 'update' : 'create')
+                        }
+                        color="primary"
+                        disabled={!selectedProduct && !originalConceptId}
+                      />
+                    }
+                    label="Update Mode"
+                  />
+                </UnableToEditTooltip>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                 <Button
