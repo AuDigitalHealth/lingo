@@ -20,9 +20,7 @@ const UnableToEditTicketTooltip = ({
     robotMessage || closedMessage
       ? `${robotMessage}${closedMessage}`
       : undefined;
-  if (robotMessage) {
-    debugger;
-  }
+
   console.log(tooltip);
   if (tooltip) {
     return (

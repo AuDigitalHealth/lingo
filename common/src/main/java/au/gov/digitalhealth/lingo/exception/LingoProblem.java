@@ -17,6 +17,7 @@ package au.gov.digitalhealth.lingo.exception;
 
 import java.io.Serial;
 import java.net.URI;
+import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.ErrorResponseException;
@@ -30,12 +31,31 @@ public class LingoProblem extends ErrorResponseException {
   @Serial private static final long serialVersionUID = 1L;
 
   public LingoProblem(
+      String uriSubPath,
+      String title,
+      HttpStatus status,
+      String detail,
+      Map<String, Object> properties,
+      Throwable e) {
+    super(status, asProblemDetail(uriSubPath, status, title, detail, properties), e);
+  }
+
+  public LingoProblem(
       String uriSubPath, String title, HttpStatus status, String detail, Throwable e) {
-    super(status, asProblemDetail(uriSubPath, status, title, detail), e);
+    super(status, asProblemDetail(uriSubPath, status, title, detail, null), e);
+  }
+
+  public LingoProblem(
+      String uriSubPath,
+      String title,
+      HttpStatus status,
+      String detail,
+      Map<String, Object> properties) {
+    this(uriSubPath, title, status, detail, properties, null);
   }
 
   public LingoProblem(String uriSubPath, String title, HttpStatus status, String detail) {
-    this(uriSubPath, title, status, detail, null);
+    this(uriSubPath, title, status, detail, null, null);
   }
 
   public LingoProblem(String uriSubPath, String title, HttpStatus status, Throwable e) {
@@ -43,7 +63,7 @@ public class LingoProblem extends ErrorResponseException {
   }
 
   public LingoProblem(String uriSubPath, String title, HttpStatus status) {
-    this(uriSubPath, title, status, null, null);
+    this(uriSubPath, title, status, null, null, null);
   }
 
   public LingoProblem(String message, Throwable e) {
@@ -63,11 +83,16 @@ public class LingoProblem extends ErrorResponseException {
   }
 
   protected static ProblemDetail asProblemDetail(
-      String uriSubPath, HttpStatus status, String title, String detail) {
+      String uriSubPath,
+      HttpStatus status,
+      String title,
+      String detail,
+      Map<String, Object> properties) {
     ProblemDetail problemDetail = ProblemDetail.forStatus(status);
     problemDetail.setTitle(title);
     problemDetail.setType(toTypeUri(uriSubPath));
     problemDetail.setDetail(detail);
+    problemDetail.setProperties(properties);
     return problemDetail;
   }
 }
