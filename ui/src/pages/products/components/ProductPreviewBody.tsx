@@ -243,8 +243,17 @@ function SubmitPanel({
           Cancel
         </Button>
         <UnableToEditTooltip
-          canEdit={canEdit}
-          lockDescription={lockDescription}
+          canEdit={
+            (canEdit && !(!isProductUpdate && !canSubmitNonProductUpdates)) ||
+            (isProductUpdate && !canSubmitProductUpdate)
+          }
+          lockDescription={
+            !isProductUpdate && !canSubmitNonProductUpdates
+              ? 'Create Disabled: No new concept changes detected.'
+              : isProductUpdate && !canSubmitProductUpdate
+                ? 'Update Disabled: No changes detected.'
+                : lockDescription
+          }
         >
           <Button
             variant="contained"
