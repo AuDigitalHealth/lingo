@@ -204,6 +204,7 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
             semanticTag={createPrimitiveSemanticTag as string}
             parentConceptId={createParentConceptId as string}
             parentConceptName={createParentConceptName as string}
+            postfix={createPrimitiveConcept.postfix}
           />
         )}
       </Box>
