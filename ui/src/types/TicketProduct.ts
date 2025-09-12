@@ -18,6 +18,7 @@ import { Concept } from './concept.ts';
 import { ProductType } from './product.ts';
 
 export interface ProductTableRow {
+  createdBy: string | undefined;
   id: number;
   productId?: number;
   name: string;
