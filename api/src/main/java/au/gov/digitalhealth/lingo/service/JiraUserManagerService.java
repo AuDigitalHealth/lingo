@@ -39,6 +39,9 @@ public class JiraUserManagerService extends GenericRefreshCacheService<List<Jira
   @Value("${snomio.jira.users:}")
   private Set<String> users;
 
+  @Value("${lingo.internal.users:}")
+  private Set<String> internalUsers;
+
   private final WebClient defaultAuthoringPlatformApiClient;
 
   @Autowired
@@ -58,6 +61,10 @@ public class JiraUserManagerService extends GenericRefreshCacheService<List<Jira
   @SuppressWarnings("unchecked")
   protected Class<List<JiraUser>> valueType() {
     return (Class<List<JiraUser>>) (Class<?>) List.class;
+  }
+
+  public Set<String> getAllInternalUsers() throws AccessDeniedException {
+    return this.internalUsers;
   }
 
   @Cacheable(cacheNames = CacheConstants.JIRA_USERS_CACHE)
