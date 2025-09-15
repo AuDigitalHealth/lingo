@@ -39,8 +39,8 @@ public class JiraUserController {
     return jiraUserManagerService.getAllJiraUsers();
   }
 
-    @GetMapping("/internal")
-    public Set<String> getAllInternalUsers(HttpServletRequest request) {
-      return jiraUserManagerService.getAllInternalUsers();
-    }
+  @GetMapping("/internal")
+  public Set<String> getAllInternalUsers(HttpServletRequest request) {
+    return jiraUserManagerService.getAllInternalUsers();
+  }
 }

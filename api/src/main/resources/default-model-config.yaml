@@ -459,10 +459,10 @@ models:
       - name: notifyingWholesaler
         title: Notifying Wholesaler
         identifier: 680071000220108
-        level: PRODUCT
+        level: PACKAGE
         dataType: CONCEPT
         eclBinding: <774164004
-        modelLevels: REAL_CLINICAL_DRUG
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
         showDefaultOptions: true

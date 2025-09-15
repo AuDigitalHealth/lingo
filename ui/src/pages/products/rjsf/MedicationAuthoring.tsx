@@ -48,6 +48,7 @@ import CustomSelectWidget from './widgets/CustomSelectWidget.tsx';
 import { evaluateExpression } from './helpers/rjsfUtils.ts';
 import WarningIcon from '@mui/icons-material/Warning';
 import CustomTextFieldWidget from './widgets/CustomTextFieldWidget.tsx';
+import UnableToEditTooltip from '../../tasks/components/UnableToEditTooltip.tsx';
 
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -280,19 +281,26 @@ function MedicationAuthoring({
               </Button>
               <DraftSubmitPanel isDirty={isDirty} saveDraft={saveDraft} />
               <Box>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={mode === 'update'}
-                      onChange={(_, checked) =>
-                        setMode(checked ? 'update' : 'create')
-                      }
-                      color="primary"
-                      disabled={!selectedProduct && !originalConceptId}
-                    />
+                <UnableToEditTooltip
+                  canEdit={!(!selectedProduct && !originalConceptId)}
+                  lockDescription={
+                    'Update disabled: product is partially saved or the form was opened without an existing product.'
                   }
-                  label="Update Mode"
-                />
+                >
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={mode === 'update'}
+                        onChange={(_, checked) =>
+                          setMode(checked ? 'update' : 'create')
+                        }
+                        color="primary"
+                        disabled={!selectedProduct && !originalConceptId}
+                      />
+                    }
+                    label="Update Mode"
+                  />
+                </UnableToEditTooltip>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                 <Button
