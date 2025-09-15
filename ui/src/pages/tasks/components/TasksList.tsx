@@ -9,6 +9,7 @@ import {
 } from '@mui/x-data-grid';
 
 import {
+  BranchState,
   Classification,
   Task,
   TaskStatus,
@@ -35,7 +36,7 @@ import AuthoringPlatformLink from '../../../components/AuthoringPlatformLink.tsx
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import { unavailableTasksErrorHandler } from '../../../types/ErrorHandler.ts';
-import { TaskStatusIcon } from '../../../components/icons/TaskStatusIcon.tsx';
+import { RebaseIcon } from '../../../components/icons/RebaseIcon.tsx';
 import { getTaskAssociationsByTaskId } from '../../../hooks/useGetTaskAssociationsByTaskId.tsx';
 import { useAllTaskAssociations } from '../../../hooks/api/useInitializeTickets.tsx';
 import { useJiraUsers } from '../../../hooks/api/useInitializeJiraUsers.tsx';
@@ -254,10 +255,7 @@ function TasksList({
       ),
       type: 'singleSelect',
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <ValidationBadge
-          params={params.value}
-          label={branchStateMap.get(params.value)}
-        />
+        <RebaseIcon branchState={params.value as BranchState} />
       ),
     },
     {
@@ -316,7 +314,12 @@ function TasksList({
       type: 'singleSelect',
       renderCell: (
         params: GridRenderCellParams<any, TaskStatus | undefined>,
-      ): ReactNode => <TaskStatusIcon status={params.formattedValue} />,
+      ): ReactNode => (
+        <ValidationBadge
+          params={params.formattedValue}
+          label={params.formattedValue}
+        />
+      ),
     },
     {
       field: 'feedbackMessagesStatus',
