@@ -45,6 +45,7 @@ import {
   resetDiscriminators,
 } from './helpers/validationHelper.ts';
 import { ErrorDisplay } from './components/ErrorDisplay.tsx';
+import UnableToEditTooltip from '../../tasks/components/UnableToEditTooltip.tsx';
 
 export interface DeviceAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -256,19 +257,26 @@ function DeviceAuthoring({
               </Button>
               <DraftSubmitPanel isDirty={isDirty} saveDraft={saveDraft} />
               <Box>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={mode === 'update'}
-                      onChange={(_, checked) =>
-                        setMode(checked ? 'update' : 'create')
-                      }
-                      color="primary"
-                      disabled={!selectedProduct && !originalConceptId}
-                    />
+                <UnableToEditTooltip
+                  canEdit={!(!selectedProduct && !originalConceptId)}
+                  lockDescription={
+                    'Update disabled: product is partially saved or the form was opened without an existing product.'
                   }
-                  label="Update Mode"
-                />
+                >
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={mode === 'update'}
+                        onChange={(_, checked) =>
+                          setMode(checked ? 'update' : 'create')
+                        }
+                        color="primary"
+                        disabled={!selectedProduct && !originalConceptId}
+                      />
+                    }
+                    label="Update Mode"
+                  />
+                </UnableToEditTooltip>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                 <Button

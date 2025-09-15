@@ -15,7 +15,9 @@
  */
 package au.gov.digitalhealth.lingo.product;
 
+import au.csiro.snowstorm_client.model.SnowstormAxiom;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.configuration.model.BasePropertyDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.BasePropertyWithValueDefinition;
@@ -26,7 +28,10 @@ import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.exception.MismatchingPropertiesProblem;
 import au.gov.digitalhealth.lingo.exception.MoreThanOneSubjectProblem;
 import au.gov.digitalhealth.lingo.exception.SingleConceptExpectedProblem;
+import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
+import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.Sets;
@@ -34,15 +39,19 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.extern.java.Log;
 import org.springframework.http.HttpStatus;
 import wiremock.com.google.common.collect.Streams;
 
@@ -52,6 +61,7 @@ import wiremock.com.google.common.collect.Streams;
  */
 @Getter
 @EqualsAndHashCode
+@Log
 public class ProductSummary implements Serializable {
 
   @NotNull final Set<Node> subjects = new HashSet<>();
@@ -288,100 +298,38 @@ public class ProductSummary implements Serializable {
                 && relationship.getSourceId().equals(duplicate.getConceptId()));
   }
 
-  /**
-   * Nodes are compared using equals, but their real primary key is the conceptId. If the conceptIds
-   * of Nodes match, but the Nodes are not equal there is a problem. If that mismatch is caused by a
-   * mismatch in the non-defining properties, this results in a MismatchedPropertiesProblem which
-   * reflects a bad request (400) and creates a message indicating the mismatching properties
-   * between the nodes. However if other properties are responsible for the difference something
-   * else has gone wrong and this is represented as an unexpected server error (500).
-   */
-  private void checkNodesForMismatchedProperties(ModelConfiguration modelConfiguration) {
-    Map<String, List<Node>> byConceptId =
-        nodes.stream().collect(Collectors.groupingBy(Node::getConceptId));
-
-    Map<String, Set<Node>> nonDefiningMismatches = new HashMap<>();
-
-    for (Map.Entry<String, List<Node>> entry : byConceptId.entrySet()) {
-      List<Node> group = entry.getValue();
-      if (group.size() <= 1) {
-        continue;
-      }
-
-      // If all nodes are exactly equal, should have been already merged because the source is a
-      // set.
-      Node first = group.get(0);
-
-      // Determine if the only differences are in non-defining properties.
-      Node base = first.cloneNode();
-      base.setNonDefiningProperties(new HashSet<>());
-
-      boolean onlyNonDefiningDiffs = true;
-      for (int i = 1; i < group.size(); i++) {
-        Node other = group.get(i).cloneNode();
-        other.setNonDefiningProperties(new HashSet<>());
-        if (!base.equals(other)) {
-          onlyNonDefiningDiffs = false;
-          break;
-        }
-      }
-
-      if (onlyNonDefiningDiffs) {
-        nonDefiningMismatches.put(entry.getKey(), new HashSet<>(group));
-      } else {
-        // Differences beyond non-defining properties indicate an unexpected server error.
-        throw new LingoProblem(
-            "product-summary",
-            "Mismatched nodes for conceptId " + entry.getKey(),
-            HttpStatus.INTERNAL_SERVER_ERROR,
-            "Nodes with the same conceptId differ in properties other than non-defining properties");
-      }
-    }
-
-    if (!nonDefiningMismatches.isEmpty()) {
-      throw new MismatchingPropertiesProblem(nonDefiningMismatches);
-    }
+  static Comparator<Node> createNodeDeduplicationComparator() {
+    return Comparator.comparing(Node::getConceptId)
+        .thenComparing(Node::getLabel)
+        .thenComparing(Node::getDisplayName)
+        .thenComparing(Node::isNewInTask)
+        .thenComparing(Node::isNewInProject)
+        .thenComparing(Node::getModelLevel)
+        .thenComparing(
+            node -> node.getConcept() != null ? node.getConcept().getConceptId() : null,
+            Comparator.nullsLast(String::compareTo))
+        .thenComparing(node -> compareAxioms(node.getAxioms()))
+        .thenComparing(node -> compareRelationships(node.getRelationships()))
+        .thenComparing(node -> compareHistoricalAssociations(node.getHistoricalAssociations()))
+        .thenComparing(node -> compareNonDefiningProperties(node.getNonDefiningProperties()))
+        .thenComparing(node -> compareConceptOptions(node.getConceptOptions()))
+        .thenComparing(node -> compareNewConceptDetails(node.getNewConceptDetails()))
+        .thenComparing(node -> compareOriginalNode(node.getOriginalNode()));
   }
 
-  private void mergeMultivaluedProperties(ModelConfiguration modelConfiguration) {
-
-    Map<String, List<Node>> byConceptId =
-        nodes.stream().collect(Collectors.groupingBy(Node::getConceptId));
-
-    for (List<Node> nodeSet : byConceptId.values()) {
-      if (nodeSet.size() <= 1) {
-        continue;
-      }
-      final ModelLevel modelLevel =
-          modelConfiguration.getLevelOfType(nodeSet.get(0).getModelLevel());
-      Set<String> multiValuedPropertySchemes =
-          Streams.concat(
-                  modelConfiguration.getMappingsByLevel(modelLevel).stream()
-                      .filter(BasePropertyWithValueDefinition::isMultiValued)
-                      .map(BasePropertyDefinition::getName),
-                  modelConfiguration.getNonDefiningPropertiesByLevel(modelLevel).stream()
-                      .filter(BasePropertyWithValueDefinition::isMultiValued)
-                      .map(BasePropertyDefinition::getName))
-              .collect(Collectors.toSet());
-
-      Set<NonDefiningBase> multivaluedProperties =
-          nodeSet.stream()
-              .flatMap(n -> n.getNonDefiningProperties().stream())
-              .filter(p -> multiValuedPropertySchemes.contains(p.getIdentifierScheme()))
-              .collect(Collectors.toSet());
-
-      for (Node node : nodeSet) {
-        for (NonDefiningBase prop : multivaluedProperties) {
-          node.getNonDefiningProperties().add(prop);
-        }
-      }
-    }
-
-    // nodes that might have differed based on multi-valued properties are now merged.
-    // remove duplicates.
-    Set<Node> rebuilt = new HashSet<>(nodes);
-    nodes.clear();
-    nodes.addAll(rebuilt);
+  private static String compareAxioms(Collection<SnowstormAxiom> axioms) {
+    if (axioms == null) return "";
+    return axioms.stream()
+        .sorted(
+            Comparator.comparing(SnowstormAxiom::getDefinitionStatus)
+                .thenComparing(
+                    axiom -> compareAxiomRelationshipsAsGroups(axiom.getRelationships())))
+        .map(
+            axiom ->
+                axiom.getDefinitionStatus()
+                    + ":"
+                    + compareAxiomRelationshipsAsGroups(axiom.getRelationships()))
+        .collect(Collectors.joining(";"));
   }
 
   private void updateRelationships(Node duplicate, Node key) {
@@ -437,6 +385,266 @@ public class ProductSummary implements Serializable {
         });
   }
 
+  private static String compareAxiomRelationshipsAsGroups(
+      Set<SnowstormRelationship> relationships) {
+    if (relationships == null) return "";
+
+    // Use the same approach as SnowstormDtoUtil.toGroupKeys
+    Set<Set<String>> groupKeys =
+        relationships.stream()
+            .collect(Collectors.groupingBy(r -> r.getGroupId() == null ? 0 : r.getGroupId()))
+            .values()
+            .stream()
+            .map(
+                group ->
+                    group.stream()
+                        .map(ProductSummary::toStringKeyForComparison)
+                        .collect(Collectors.toSet()))
+            .collect(Collectors.toSet());
+
+    // Convert the set of sets to a sorted, deterministic string representation
+    return groupKeys.stream()
+        .map(group -> group.stream().sorted().collect(Collectors.joining(",")))
+        .sorted()
+        .collect(Collectors.joining(";"));
+  }
+
+  private static String compareRelationships(Collection<SnowstormRelationship> relationships) {
+    if (relationships == null) return "";
+    return relationships.stream()
+        .sorted(
+            Comparator.comparing(
+                    SnowstormRelationship::getTypeId, Comparator.nullsLast(String::compareTo))
+                .thenComparing(r -> r.getDestinationId(), Comparator.nullsLast(String::compareTo))
+                .thenComparing(
+                    r -> r.getConcreteValue() != null ? r.getConcreteValue().getValue() : null,
+                    Comparator.nullsLast(String::compareTo))
+                .thenComparing(r -> r.getGroupId(), Comparator.nullsLast(Integer::compareTo)))
+        .map(ProductSummary::toStringKeyForComparison)
+        .collect(Collectors.joining(","));
+  }
+
+  private static String compareHistoricalAssociations(
+      Collection<SnowstormReferenceSetMember> associations) {
+    if (associations == null) return "";
+    return associations.stream()
+        .sorted(
+            Comparator.comparing(
+                    SnowstormReferenceSetMember::getRefsetId,
+                    Comparator.nullsLast(String::compareTo))
+                .thenComparing(
+                    r -> r.getReferencedComponentId(), Comparator.nullsLast(String::compareTo))
+                .thenComparing(r -> r.getActive(), Comparator.nullsLast(Boolean::compareTo))
+                .thenComparing(r -> compareAdditionalFields(r.getAdditionalFields())))
+        .map(
+            r ->
+                r.getRefsetId()
+                    + ":"
+                    + r.getReferencedComponentId()
+                    + ":"
+                    + r.getActive()
+                    + ":"
+                    + compareAdditionalFields(r.getAdditionalFields()))
+        .collect(Collectors.joining(","));
+  }
+
+  private static String compareAdditionalFields(Map<String, String> additionalFields) {
+    if (additionalFields == null) return "";
+    return additionalFields.entrySet().stream()
+        .sorted(Map.Entry.comparingByKey())
+        .map(entry -> entry.getKey() + "=" + entry.getValue())
+        .collect(Collectors.joining(";"));
+  }
+
+  private static String compareNonDefiningProperties(Set<NonDefiningBase> properties) {
+    if (properties == null) return "";
+    return properties.stream()
+        .sorted(
+            Comparator.comparing(
+                    NonDefiningBase::getIdentifierScheme, Comparator.nullsLast(String::compareTo))
+                .thenComparing(
+                    ProductSummary::getValueForComparison, Comparator.nullsLast(String::compareTo)))
+        .map(p -> p.getIdentifierScheme() + ":" + getValueForComparison(p))
+        .collect(Collectors.joining(","));
+  }
+
+  private static String getValueForComparison(NonDefiningBase property) {
+    if (property instanceof NonDefiningProperty ndp) {
+      if (ndp.getValue() != null) {
+        return ndp.getValue();
+      } else if (ndp.getValueObject() != null) {
+        return ndp.getValueObject().getConceptId();
+      }
+    } else if (property instanceof ExternalIdentifier ei) {
+      if (ei.getValue() != null) {
+        return ei.getValue();
+      } else if (ei.getValueObject() != null) {
+        return ei.getValueObject().getConceptId();
+      }
+    }
+    // For ReferenceSet or other types, return empty string since they don't have values
+    return "";
+  }
+
+  private static String compareConceptOptions(Collection<SnowstormConceptMini> options) {
+    if (options == null) return "";
+    return options.stream()
+        .sorted(
+            Comparator.comparing(
+                concept -> concept.getConceptId(), Comparator.nullsLast(String::compareTo)))
+        .map(SnowstormConceptMini::getConceptId)
+        .collect(Collectors.joining(","));
+  }
+
+  private static String compareNewConceptDetails(NewConceptDetails details) {
+    if (details == null) return "";
+    StringBuilder sb = new StringBuilder();
+    sb.append(details.getFullySpecifiedName());
+    sb.append(":");
+    sb.append(details.getPreferredTerm());
+    sb.append(":");
+    if (details.getAxioms() != null) {
+      // Use the same group-based axiom comparison approach
+      sb.append(
+          details.getAxioms().stream()
+              .sorted(Comparator.comparing(SnowstormAxiom::getDefinitionStatus))
+              .map(
+                  axiom ->
+                      axiom.getDefinitionStatus()
+                          + ":"
+                          + compareAxiomRelationshipsAsGroups(axiom.getRelationships()))
+              .collect(Collectors.joining(";")));
+    }
+    return sb.toString();
+  }
+
+  private static String toStringKeyForComparison(SnowstormRelationship relationship) {
+    return relationship.getTypeId()
+        + "|"
+        + (relationship.getConcreteValue() != null
+            ? relationship.getConcreteValue().getValue()
+            : relationship.getDestinationId())
+        + "|"
+        + relationship.getCharacteristicTypeId()
+        + "|"
+        + relationship.getModifierId();
+  }
+
+  private static String compareOriginalNode(OriginalNode originalNode) {
+    if (originalNode == null) return "";
+    StringBuilder sb = new StringBuilder();
+    if (originalNode.getNode() != null) {
+      sb.append(originalNode.getNode().getConceptId());
+    }
+    sb.append(":");
+    sb.append(originalNode.isReferencedByOtherProducts());
+    sb.append(":");
+    if (originalNode.getInactivationReason() != null) {
+      sb.append(originalNode.getInactivationReason().getValue());
+    }
+    return sb.toString();
+  }
+
+  /**
+   * Nodes are compared using equals, but their real primary key is the conceptId. If the conceptIds
+   * of Nodes match, but the Nodes are not equal there is a problem. If that mismatch is caused by a
+   * mismatch in the non-defining properties, this results in a MismatchedPropertiesProblem which
+   * reflects a bad request (400) and creates a message indicating the mismatching properties
+   * between the nodes. However if other properties are responsible for the difference something
+   * else has gone wrong and this is represented as an unexpected server error (500).
+   */
+  private void checkNodesForMismatchedProperties(ModelConfiguration modelConfiguration) {
+    Map<String, List<Node>> byConceptId =
+        nodes.stream().collect(Collectors.groupingBy(Node::getConceptId));
+
+    Map<String, Set<Node>> nonDefiningMismatches = new HashMap<>();
+
+    for (Map.Entry<String, List<Node>> entry : byConceptId.entrySet()) {
+      List<Node> group = entry.getValue();
+      if (group.size() <= 1) {
+        continue;
+      }
+
+      // If all nodes are exactly equal, should have been already merged because the source is a
+      // set.
+      Node first = group.get(0);
+
+      // Determine if the only differences are in non-defining properties.
+      Node base = first.cloneNode();
+      base.setNonDefiningProperties(new HashSet<>());
+
+      boolean onlyNonDefiningDiffs = true;
+      int mismatchingPropertyIndex = 0;
+      for (int i = 1; i < group.size(); i++) {
+        Node other = group.get(i).cloneNode();
+        other.setNonDefiningProperties(new HashSet<>());
+        if (!base.equals(other)) {
+          onlyNonDefiningDiffs = false;
+          mismatchingPropertyIndex = i;
+          break;
+        }
+      }
+
+      if (onlyNonDefiningDiffs) {
+        nonDefiningMismatches.put(entry.getKey(), new HashSet<>(group));
+      } else {
+        // Differences beyond non-defining properties indicate an unexpected server error.
+        throw new LingoProblem(
+            "product-summary",
+            "Mismatched nodes for conceptId " + entry.getKey(),
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "Nodes with the same conceptId differ in properties other than non-defining properties",
+            Map.of("firstNode", first, "secondNode", group.get(mismatchingPropertyIndex)));
+      }
+    }
+
+    if (!nonDefiningMismatches.isEmpty()) {
+      throw new MismatchingPropertiesProblem(nonDefiningMismatches);
+    }
+  }
+
+  private void mergeMultivaluedProperties(ModelConfiguration modelConfiguration) {
+
+    Map<String, List<Node>> byConceptId =
+        nodes.stream().collect(Collectors.groupingBy(Node::getConceptId));
+
+    for (List<Node> nodeSet : byConceptId.values()) {
+      if (nodeSet.size() <= 1) {
+        continue;
+      }
+      final ModelLevel modelLevel =
+          modelConfiguration.getLevelOfType(nodeSet.get(0).getModelLevel());
+      Set<String> multiValuedPropertySchemes =
+          Streams.concat(
+                  modelConfiguration.getMappingsByLevel(modelLevel).stream()
+                      .filter(BasePropertyWithValueDefinition::isMultiValued)
+                      .map(BasePropertyDefinition::getName),
+                  modelConfiguration.getNonDefiningPropertiesByLevel(modelLevel).stream()
+                      .filter(BasePropertyWithValueDefinition::isMultiValued)
+                      .map(BasePropertyDefinition::getName))
+              .collect(Collectors.toSet());
+
+      Set<NonDefiningBase> multivaluedProperties =
+          nodeSet.stream()
+              .flatMap(n -> n.getNonDefiningProperties().stream())
+              .filter(p -> multiValuedPropertySchemes.contains(p.getIdentifierScheme()))
+              .collect(Collectors.toSet());
+
+      for (Node node : nodeSet) {
+        for (NonDefiningBase prop : multivaluedProperties) {
+          node.getNonDefiningProperties().add(prop);
+        }
+      }
+    }
+
+    // nodes that might have differed based on multi-valued properties are now merged.
+    // remove duplicates.
+    Set<Node> rebuilt = new TreeSet<>(createNodeDeduplicationComparator());
+    rebuilt.addAll(nodes);
+    nodes.clear();
+    nodes.addAll(rebuilt);
+  }
+
   @JsonIgnore
   public void deduplicateNewNodes(ModelConfiguration modelConfiguration) {
     synchronized (nodes) {
@@ -451,9 +659,9 @@ public class ProductSummary implements Serializable {
                         .filter(
                             n ->
                                 n.isNewConcept()
-                                    && n.getNewConceptDetails()
-                                        .getAxioms()
-                                        .equals(node.getNewConceptDetails().getAxioms()))
+                                    && SnowstormDtoUtil.sameAxioms(
+                                        n.getNewConceptDetails().getAxioms(),
+                                        node.getNewConceptDetails().getAxioms()))
                         .findFirst()
                         .orElse(null);
                 if (key != null) {
