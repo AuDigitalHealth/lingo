@@ -32,7 +32,6 @@ import { Link } from 'react-router-dom';
 import { getAllKeyValueMapForTheKey } from '../../../utils/helpers/FieldBindingUtils.ts';
 import { useFieldBindings } from '../../../hooks/api/useInitializeConfig.tsx';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
-import { TaskStatusIcon } from '../../../components/icons/TaskStatusIcon.tsx';
 
 interface UserTaskListProps {
   propTasks?: Task[];
@@ -236,7 +235,12 @@ function UserTasksList({
       type: 'singleSelect',
       renderCell: (
         params: GridRenderCellParams<any, TaskStatus | undefined>,
-      ): ReactNode => <TaskStatusIcon status={params.formattedValue} />,
+      ): ReactNode => (
+        <ValidationBadge
+          params={params.formattedValue}
+          label={params.formattedValue}
+        />
+      ),
     },
     {
       field: 'feedbackMessagesStatus',

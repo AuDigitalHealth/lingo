@@ -44,19 +44,19 @@ const validationStatusToColor = (value: string): ValidationColor => {
 
   switch (value) {
     case ValidationStatus.NotTriggered:
-      type = ValidationColor.Error;
+      type = ValidationColor.Info;
       break;
     case ValidationStatus.Failed:
       type = ValidationColor.Error;
       break;
     case ValidationStatus.Pending:
-      type = ValidationColor.Warning;
+      type = ValidationColor.Info;
       break;
     case ValidationStatus.Stale:
       type = ValidationColor.Warning;
       break;
     case ValidationStatus.Scheduled:
-      type = ValidationColor.Success;
+      type = ValidationColor.Info;
       break;
     case ValidationStatus.Completed:
       type = ValidationColor.Success;
@@ -79,13 +79,13 @@ const taskStatusToColor = (value: string): ValidationColor => {
       type = ValidationColor.Error;
       break;
     case TaskStatus.New:
-      type = ValidationColor.Warning;
+      type = ValidationColor.Primary;
       break;
     case TaskStatus.InReview:
       type = ValidationColor.Info;
       break;
     case TaskStatus.ReviewCompleted:
-      type = ValidationColor.Success;
+      type = ValidationColor.Info;
       break;
     case TaskStatus.Completed:
       type = ValidationColor.Success;
@@ -107,16 +107,22 @@ const classificationStatusToColor = (value: string): ValidationColor => {
 
   switch (value) {
     case ClassificationStatus.Cancelled:
-      type = ValidationColor.Error;
+      type = ValidationColor.Info;
+      break;
+    case ClassificationStatus.SavingInProgress:
+      type = ValidationColor.Info;
+      break;
+    case ClassificationStatus.Cancelled:
+      type = ValidationColor.Info;
       break;
     case ClassificationStatus.Failed:
       type = ValidationColor.Error;
       break;
     case ClassificationStatus.Stale:
-      type = ValidationColor.Error;
+      type = ValidationColor.Warning;
       break;
     case ClassificationStatus.Running:
-      type = ValidationColor.Warning;
+      type = ValidationColor.Info;
       break;
     case ClassificationStatus.Scheduled:
       type = ValidationColor.Success;
@@ -126,6 +132,9 @@ const classificationStatusToColor = (value: string): ValidationColor => {
       break;
     case ClassificationStatus.Saved:
       type = ValidationColor.Success;
+      break;
+    case ClassificationStatus.SaveFailed:
+      type = ValidationColor.Error;
       break;
     default:
       type = ValidationColor.Info;
