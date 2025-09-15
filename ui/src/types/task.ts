@@ -35,6 +35,14 @@ export interface Task {
   updated: string;
 }
 
+export enum BranchState {
+  Forward = 'FORWARD',
+  Behind = 'BEHIND',
+  Up_To_Date = 'UP_TO_DATE',
+  Diverged = 'DIVERGED',
+  Stale = 'STALE',
+}
+
 export interface TaskDto {
   key?: string;
   projectKey: string;
