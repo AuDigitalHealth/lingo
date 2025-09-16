@@ -17,8 +17,10 @@
           ]
         }
       },
-      "minProperties": 2,
-      "required": ["conceptId", "definitionStatus"],
+      "minProperties": 1,
+      "required": [
+        "conceptId"
+      ],
       "errorMessage": { "required": "Invalid concept found, you might need to select a concept from the dropdown." },
       "title": "Concept"
     },
