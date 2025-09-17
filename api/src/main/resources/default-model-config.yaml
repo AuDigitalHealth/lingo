@@ -240,7 +240,7 @@ models:
           - RELATED
       - name: hpra
         title: HPRA Product Link
-        identifier: 689901000220106
+        identifier: 690021000220108
         level: PRODUCT
         dataType: CODED
         valueRegexValidation: ^.+$
