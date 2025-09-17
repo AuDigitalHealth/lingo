@@ -64,7 +64,7 @@ function useIsTaskLocked(task: Task | null | undefined, login: string | null) {
         setLocked(false);
       }
     }
-    if (task?.assignee.username != login) {
+    if (task && task?.assignee.username != login) {
       setIsOwner(false);
       setLockDescription('Must be Task owner');
     } else {

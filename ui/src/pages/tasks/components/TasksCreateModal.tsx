@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import BaseModal from '../../../components/modal/BaseModal';
 import BaseModalBody from '../../../components/modal/BaseModalBody';
 import BaseModalHeader from '../../../components/modal/BaseModalHeader';
@@ -55,13 +55,15 @@ export default function TasksCreateModal({
   );
   const navigate = useNavigate();
 
-  const { register, handleSubmit, formState } = useForm<TaskFormValues>({
-    defaultValues: {
-      title: '',
-      description: '',
-      count: '1',
-      project: project?.title,
-    },
+  const defaultValues = {
+    title: '',
+    description: '',
+    count: '1',
+    project: project?.title || '',
+  };
+
+  const { register, handleSubmit, formState, reset } = useForm<TaskFormValues>({
+    defaultValues,
   });
 
   const { errors, touchedFields } = formState;
@@ -73,6 +75,12 @@ export default function TasksCreateModal({
   const queryClient = useQueryClient();
 
   const queryKey = useAllTasksOptions(applicationConfig).queryKey;
+
+  useEffect(() => {
+    if (!open) {
+      reset(defaultValues);
+    }
+  }, [open, reset, project?.title]);
 
   const onSubmit = (data: TaskFormValues) => {
     if (!serviceStatus?.authoringPlatform.running) {
@@ -163,6 +171,7 @@ export default function TasksCreateModal({
       open={open}
       handleClose={!loading ? handleClose : () => null}
       sx={{ minWidth: '400px' }}
+      keepMounted={false}
     >
       <BaseModalHeader title={title} />
       {/* eslint-disable-next-line */}

@@ -11,7 +11,7 @@ function useTaskByKey(key?: string) {
 
   useEffect(() => {
     const tempTask: Task | null = getTaskById(usedKey, allTasks);
-    setTask(tempTask ? { ...tempTask } : null);
+    setTask(tempTask ? tempTask : null);
   }, [usedKey, allTasks]);
 
   return task;
