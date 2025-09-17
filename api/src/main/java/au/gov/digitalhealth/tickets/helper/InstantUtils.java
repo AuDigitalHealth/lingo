@@ -69,17 +69,30 @@ public class InstantUtils {
   }
 
   public static String[] splitDates(String dates) {
-    Pattern datePattern = Pattern.compile("(\\d{2}/\\d{2}/\\d{2})(?:-(\\d{2}/\\d{2}/\\d{2}))?");
+    // Updated pattern to match ISO datetime strings with optional second date
+    // Matches: "2018-12-06T07:18:43.000000+00:00" or "2018-12-06 07:18:43.000000 +00:00"
+    Pattern isoDatePattern = Pattern.compile(
+        "(\\d{4}-\\d{2}-\\d{2}[T\\s]\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:[+-]\\d{2}:?\\d{2}|Z)?)" +
+            "(?:\\s*-\\s*(\\d{4}-\\d{2}-\\d{2}[T\\s]\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:[+-]\\d{2}:?\\d{2}|Z)?))?");
 
-    Matcher matcher = datePattern.matcher(dates);
+    Matcher matcher = isoDatePattern.matcher(dates);
     String[] datesArray = {null, null};
+
     if (matcher.find()) {
       String date1 = matcher.group(1);
       String date2 = matcher.group(2);
-
       datesArray[0] = date1;
       datesArray[1] = date2;
+    } else {
+      // Fallback: try the old dd/MM/yy pattern for backward compatibility
+      Pattern legacyDatePattern = Pattern.compile("(\\d{2}/\\d{2}/\\d{2})(?:-(\\d{2}/\\d{2}/\\d{2}))?");
+      Matcher legacyMatcher = legacyDatePattern.matcher(dates);
+      if (legacyMatcher.find()) {
+        datesArray[0] = legacyMatcher.group(1);
+        datesArray[1] = legacyMatcher.group(2);
+      }
     }
+
     return datesArray;
   }
 
