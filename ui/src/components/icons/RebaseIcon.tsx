@@ -15,7 +15,6 @@ const StyledAvatar = styled(Avatar, {
 }));
 
 const getColorByStatus = (theme: Theme, status: BranchState | undefined) => {
-  debugger;
   switch (status) {
     case BranchState.Behind:
     case BranchState.Diverged:

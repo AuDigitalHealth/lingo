@@ -185,7 +185,6 @@ export const generateSearchConditions = (
       key: 'priorityBucket.name',
       operation: generateOperation(filters.priorityBucket.matchMode),
       condition: 'and',
-      // value: filters.priorityBucket?.value.name,
       valueIn: [],
     };
     filters.priorityBucket?.value?.forEach(priority => {
@@ -219,30 +218,16 @@ export const generateSearchConditions = (
       first = firstArray[0];
       const second = firstArray[1];
 
-      let value = first.toLocaleDateString(undefined, {
-        day: '2-digit',
-        month: '2-digit',
-        year: '2-digit',
-      });
+      let value = first.toISOString();
 
       if (second !== null && second !== undefined) {
         value += '-';
-        value += second.toLocaleDateString(undefined, {
-          day: '2-digit',
-          month: '2-digit',
-          year: '2-digit',
-        });
+        value += second.toISOString();
       }
 
       setValue = value;
     } else {
-      const value = first.toLocaleDateString(undefined, {
-        day: '2-digit',
-        month: '2-digit',
-        year: '2-digit',
-      });
-
-      setValue = value;
+      setValue = first.toISOString();
     }
 
     let operator =
