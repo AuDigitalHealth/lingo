@@ -14,11 +14,7 @@
 /// limitations under the License.
 ///
 
-import {
-  ClassificationStatus,
-  TaskStatus,
-  ValidationStatus,
-} from '../types/task';
+import { ClassificationStatus, TaskStatus, ValidationStatus } from '../types/task';
 import { ValidationColor } from '../types/validationColor';
 
 const statusToColor = (value: string): ValidationColor => {
@@ -110,9 +106,6 @@ const classificationStatusToColor = (value: string): ValidationColor => {
       type = ValidationColor.Info;
       break;
     case ClassificationStatus.SavingInProgress:
-      type = ValidationColor.Info;
-      break;
-    case ClassificationStatus.Cancelled:
       type = ValidationColor.Info;
       break;
     case ClassificationStatus.Failed:
