@@ -112,9 +112,6 @@ const classificationStatusToColor = (value: string): ValidationColor => {
     case ClassificationStatus.SavingInProgress:
       type = ValidationColor.Info;
       break;
-    case ClassificationStatus.Cancelled:
-      type = ValidationColor.Info;
-      break;
     case ClassificationStatus.Failed:
       type = ValidationColor.Error;
       break;
