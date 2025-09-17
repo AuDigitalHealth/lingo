@@ -11,6 +11,7 @@ import WarningIcon from '@mui/icons-material/Warning';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { arePropertiesEqual } from '../../../utils/helpers/commonUtils.ts';
+import AdditionalFieldsDisplay from './AdditionalFieldsDisplay.tsx';
 
 interface ItemDetailsDisplayProps {
   nonDefiningProperties?: NonDefiningProperty[];
@@ -399,7 +400,6 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
     const value = getItemValue(item);
     return value ? (
       <Chip
-        label={value}
         size="small"
         variant="outlined"
         sx={{
@@ -410,6 +410,12 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
               ? '#ffebee'
               : '#f5f5f5',
         }}
+        label={
+          <AdditionalFieldsDisplay
+            value={value}
+            additionalFields={item.additionalFields}
+          />
+        }
       />
     ) : null;
   };
