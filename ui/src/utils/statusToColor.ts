@@ -14,7 +14,11 @@
 /// limitations under the License.
 ///
 
-import { ClassificationStatus, TaskStatus, ValidationStatus } from '../types/task';
+import {
+  ClassificationStatus,
+  TaskStatus,
+  ValidationStatus,
+} from '../types/task';
 import { ValidationColor } from '../types/validationColor';
 
 const statusToColor = (value: string): ValidationColor => {
