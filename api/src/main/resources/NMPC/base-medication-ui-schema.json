@@ -232,8 +232,8 @@
           "ui:field": "AutoCompleteField",
           "ui:title": "Unit of Presentation",
           "ui:options": {
-            "ecl": "((<763158003 minus >(<763158003))).763032000",
-            "extendedEcl": "<105590001",
+            "ecl": "(((<763158003 minus >(<763158003))).763032000) AND <732935002",
+            "extendedEcl": "<732935002",
             "showDefaultOptions": false,
             "placeholder": "Select unit of presentation"
           }
