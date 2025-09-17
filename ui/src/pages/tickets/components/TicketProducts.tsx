@@ -195,6 +195,7 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
             <IconButton
               aria-label="delete"
               size="small"
+              disabled={!canEditTicket || !canEdit}
               onClick={e => {
                 setIdToDelete(rowData?.id);
 
