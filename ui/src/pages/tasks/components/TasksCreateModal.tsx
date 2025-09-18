@@ -151,7 +151,9 @@ export default function TasksCreateModal({
             if (redirectUrl.includes(':projectKey')) {
               redirectUrl = redirectUrl.replace(':projectKey', res.projectKey);
             }
-            navigate(`${redirectUrl}/${res.key}`);
+            navigate(`${redirectUrl}/${res.key}`, {
+              state: { isCreate: true },
+            });
           }
         }
       })
