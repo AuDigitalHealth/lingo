@@ -1190,7 +1190,11 @@ function processDescriptionsWithSemanticTags(
 
     let newTerm = updatedDesc.term;
 
-    if (updatedTag === undefined && existingTag !== undefined) {
+    if (
+      updatedTag === undefined &&
+      existingTag !== undefined &&
+      updatedDesc.type === DefinitionType.FSN
+    ) {
       // Updated description DOES NOT have a tag, but the old one DOES
       newTerm = `${updatedDesc.term.replace(/\s*\(.*?\)\s*$/, '').trim()} ${existingTag}`;
     } else if (updatedTag !== existingTag) {
