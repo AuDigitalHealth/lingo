@@ -21,6 +21,7 @@ import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.ReferenceSetDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.details.PackageProductDetailsBase;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
@@ -63,6 +64,7 @@ public class ReferenceSetUtils {
   }
 
   public static Map<String, Set<ReferenceSet>> getReferenceSetsFromRefsetMembers(
+      ProductPackageType productPackageType,
       Collection<SnowstormReferenceSetMember> refsetMembers,
       Set<ReferenceSetDefinition> mappingRefsets) {
 
@@ -72,6 +74,7 @@ public class ReferenceSetUtils {
 
     Map<String, ReferenceSetDefinition> referenceSetsConfigured =
         mappingRefsets.stream()
+            .filter(r -> r.getLevel().equals(productPackageType))
             .collect(Collectors.toMap(ReferenceSetDefinition::getIdentifier, Function.identity()));
 
     return refsetMembers.stream()
@@ -87,7 +90,10 @@ public class ReferenceSetUtils {
   }
 
   public static Mono<Map<String, List<ReferenceSet>>> getReferenceSetsFromRefsetMembers(
-      Flux<SnowstormReferenceSetMember> refsetMembers, Set<ReferenceSetDefinition> mappingRefsets) {
+      Flux<SnowstormReferenceSetMember> refsetMembers,
+      Map<String, ProductPackageType> conceptToProductPackageType,
+      ModelConfiguration modelConfiguration) {
+    Collection<ReferenceSetDefinition> mappingRefsets = modelConfiguration.getReferenceSets();
 
     if (mappingRefsets.isEmpty()) {
       return Mono.just(Map.of());
@@ -95,16 +101,23 @@ public class ReferenceSetUtils {
 
     Map<String, ReferenceSetDefinition> referenceSetsConfigured =
         mappingRefsets.stream()
-            .collect(Collectors.toMap(ReferenceSetDefinition::getIdentifier, Function.identity()));
+            .collect(Collectors.toMap(r -> r.getLevel() + r.getIdentifier(), Function.identity()));
 
     return refsetMembers
-        .filter(r -> referenceSetsConfigured.containsKey(r.getRefsetId()))
+        .filter(
+            r ->
+                referenceSetsConfigured.containsKey(
+                    conceptToProductPackageType.get(r.getReferencedComponentId())
+                        + r.getRefsetId()))
         .map(
             s ->
                 Pair.of(
                     s.getReferencedComponentId(),
                     new au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet(
-                        s, referenceSetsConfigured.get(s.getRefsetId()))))
+                        s,
+                        referenceSetsConfigured.get(
+                            conceptToProductPackageType.get(s.getReferencedComponentId())
+                                + s.getRefsetId()))))
         .collect(
             Collectors.groupingBy(
                 Pair::getFirst, Collectors.mapping(Pair::getSecond, Collectors.toList())));

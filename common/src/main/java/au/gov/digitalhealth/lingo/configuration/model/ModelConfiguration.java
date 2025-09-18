@@ -336,17 +336,6 @@ public class ModelConfiguration {
             Collectors.toMap(NonDefiningPropertyDefinition::getIdentifier, Function.identity()));
   }
 
-  public NonDefiningPropertyDefinition getNonDefiningPropertiesByIdentifier(String identifier) {
-    return getNonDefiningProperties().stream()
-        .filter(r -> r.getIdentifier().equals(identifier))
-        .findFirst()
-        .orElseThrow(
-            () ->
-                new LingoProblem(
-                    String.format(
-                        "Could not find non defining property with identifier %s", identifier)));
-  }
-
   public Map<String, NonDefiningPropertyDefinition> getNonDefiningPropertiesBySchemeForModelLevel(
       ModelLevel modelLevel) {
     return getNonDefiningProperties().stream()
@@ -496,6 +485,19 @@ public class ModelConfiguration {
         .collect(
             Collectors.toMap(
                 ModelLevel::getReferenceSetIdentifier, Function.identity(), (a, b) -> a));
+  }
+
+  public ModelLevel getLevelByRefsetId(String refsetId) {
+    return levels.stream()
+        .filter(level -> level.getReferenceSetIdentifier().equals(refsetId))
+        .findFirst()
+        .orElseThrow(
+            () ->
+                new LingoProblem(
+                    "No model level found for refset id: "
+                        + refsetId
+                        + " in model: "
+                        + this.modelType));
   }
 
   public BasePropertyDefinition getProperty(@NotNull @NotEmpty String identifierScheme) {
