@@ -243,7 +243,7 @@ models:
         identifier: 690021000220108
         level: PRODUCT
         dataType: CODED
-        valueRegexValidation: ^.+$
+        valueRegexValidation: ^[+-]?\d+(\.\d+)?$
         valueSetReference: https://nmpc.hse.ie/HPRA/vs
         codeSystem: https://nmpc.hse.ie/HPRA
         modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
@@ -252,7 +252,6 @@ models:
         defaultMappingType: RELATED
         mappingTypes:
           - RELATED
-        readOnly: true
     referenceSets:
       - name: blackTriangle
         title: Black Triangle
