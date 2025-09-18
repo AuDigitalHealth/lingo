@@ -244,7 +244,7 @@ models:
         level: PRODUCT
         dataType: CODED
         valueRegexValidation: ^[+-]?\d+(\.\d+)?$
-        valueSetReference: https://nmpc.hse.ie/HPRA/vs
+        valueSetReference: https://nmpc.hse.ie/HPRA/product
         codeSystem: https://nmpc.hse.ie/HPRA
         modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
