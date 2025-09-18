@@ -108,7 +108,7 @@
     "socket.io-client": "^4.7.5",
     "sockjs-client": "^1.6.1",
     "stompjs": "^2.3.3",
-    "vitest": "^1.6.0",
+    "vitest": "^3.2.4",
     "yup": "^1.4.0",
     "zustand": "^4.5.2"
   },
@@ -132,6 +132,6 @@
     "license-checker": "^25.0.1",
     "prettier": "^3.3.2",
     "typescript": "^5.4.5",
-    "vite": "^5.3.1"
+    "vite": "^5.4.20"
   }
 }
