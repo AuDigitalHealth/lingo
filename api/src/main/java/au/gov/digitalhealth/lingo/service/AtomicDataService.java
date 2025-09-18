@@ -42,6 +42,7 @@ import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.aspect.LogExecutionTime;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
+import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
@@ -411,10 +412,23 @@ public abstract class AtomicDataService<T extends ProductDetails> {
             getFhirClient(),
             snowStormApiClient);
 
+    Map<String, ProductPackageType> conceptToProductPackageType =
+        typeMap.block().entrySet().stream()
+            .collect(
+                Collectors.toMap(
+                    Map.Entry::getKey,
+                    entry -> {
+                      String refSetId = entry.getValue();
+                      ModelLevel level = getModelConfiguration(branch).getLevelByRefsetId(refSetId);
+                      return level.getModelLevelType().isPackageLevel()
+                          ? ProductPackageType.PACKAGE
+                          : ProductPackageType.PRODUCT;
+                    }));
+
     Mono<Map<String, List<au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet>>>
         referenceSets =
             ReferenceSetUtils.getReferenceSetsFromRefsetMembers(
-                refsetMembers, getModelConfiguration(branch).getReferenceSets());
+                refsetMembers, conceptToProductPackageType, getModelConfiguration(branch));
 
     Mono<
             Map<
@@ -422,7 +436,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
                 List<au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty>>>
         nonDefiningProperties =
             NonDefiningPropertyUtils.getNonDefiningPropertyFromConcepts(
-                browserMap, getModelConfiguration(branch).getNonDefiningProperties());
+                browserMap, conceptToProductPackageType, getModelConfiguration(branch));
 
     Maps maps =
         Mono.zip(browserMap, typeMap, mappingsMap, referenceSets, nonDefiningProperties)
@@ -537,6 +551,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
           .getNonDefiningProperties()
           .addAll(
               ReferenceSetUtils.getReferenceSetsFromRefsetMembers(
+                      ProductPackageType.PACKAGE,
                       packVariantRefsetMemebersResult,
                       getModelConfiguration(branch).getReferenceSets())
                   .getOrDefault(packVariant.getConceptId(), new HashSet<>()));
@@ -544,7 +559,9 @@ public abstract class AtomicDataService<T extends ProductDetails> {
           .getNonDefiningProperties()
           .addAll(
               NonDefiningPropertyUtils.getNonDefiningPropertyFromConcepts(
-                      Set.of(packVariant), getModelConfiguration(branch).getNonDefiningProperties())
+                      ProductPackageType.PACKAGE,
+                      Set.of(packVariant),
+                      getModelConfiguration(branch).getNonDefiningProperties())
                   .getOrDefault(packVariant.getConceptId(), new HashSet<>()));
 
       packSizeWithIdentifiers.add(packSizeWithIdentifier);
@@ -769,6 +786,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
           .getNonDefiningProperties()
           .addAll(
               ReferenceSetUtils.getReferenceSetsFromRefsetMembers(
+                      ProductPackageType.PACKAGE,
                       packVariantRefsetMemebersResult,
                       getModelConfiguration(branch).getReferenceSets())
                   .getOrDefault(packVariantId, new HashSet<>()));
@@ -776,6 +794,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
           .getNonDefiningProperties()
           .addAll(
               NonDefiningPropertyUtils.getNonDefiningPropertyFromConcepts(
+                      ProductPackageType.PACKAGE,
                       Set.of(packVariantMap.get(packVariantId)),
                       getModelConfiguration(branch).getNonDefiningProperties())
                   .getOrDefault(packVariantId, new HashSet<>()));

@@ -17,7 +17,9 @@ package au.gov.digitalhealth.lingo.util;
 
 import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.NonDefiningPropertyDefinition;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackageType;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,6 +38,7 @@ public class NonDefiningPropertyUtils {
   }
 
   public static Map<String, Set<NonDefiningProperty>> getNonDefiningPropertyFromConcepts(
+      ProductPackageType type,
       Collection<SnowstormConcept> concepts,
       Set<NonDefiningPropertyDefinition> nonDefiningProperties) {
 
@@ -45,6 +48,7 @@ public class NonDefiningPropertyUtils {
 
     Map<String, NonDefiningPropertyDefinition> nonDefiningPropertyMap =
         nonDefiningProperties.stream()
+            .filter(ndp -> ndp.getLevel().equals(type))
             .collect(
                 Collectors.toMap(
                     NonDefiningPropertyDefinition::getIdentifier, Function.identity()));
@@ -63,7 +67,11 @@ public class NonDefiningPropertyUtils {
 
   public static Mono<Map<String, List<NonDefiningProperty>>> getNonDefiningPropertyFromConcepts(
       Mono<Map<String, SnowstormConcept>> concepts,
-      Set<NonDefiningPropertyDefinition> nonDefiningProperties) {
+      Map<String, ProductPackageType> conceptToProductPackageType,
+      ModelConfiguration modelConfiguration) {
+
+    Collection<NonDefiningPropertyDefinition> nonDefiningProperties =
+        modelConfiguration.getNonDefiningProperties();
 
     if (nonDefiningProperties.isEmpty()) {
       return Mono.just(Map.of());
@@ -73,17 +81,24 @@ public class NonDefiningPropertyUtils {
         nonDefiningProperties.stream()
             .collect(
                 Collectors.toMap(
-                    NonDefiningPropertyDefinition::getIdentifier, Function.identity()));
+                    (ndp) -> ndp.getLevel() + ndp.getIdentifier(), Function.identity()));
 
     return concepts
         .flatMapIterable(Map::values)
         .flatMapIterable(SnowstormConcept::getRelationships)
-        .filter(relationship -> nonDefiningPropertyMap.containsKey(relationship.getTypeId()))
+        .filter(
+            relationship ->
+                nonDefiningPropertyMap.containsKey(
+                    conceptToProductPackageType.get(relationship.getSourceId())
+                        + relationship.getTypeId()))
         .collectMultimap(
             SnowstormRelationship::getSourceId,
             relationship ->
                 new NonDefiningProperty(
-                    relationship, nonDefiningPropertyMap.get(relationship.getTypeId())))
+                    relationship,
+                    nonDefiningPropertyMap.get(
+                        conceptToProductPackageType.get(relationship.getSourceId())
+                            + relationship.getTypeId())))
         .map(
             multimap -> {
               Map<String, List<NonDefiningProperty>> result = new HashMap<>();
