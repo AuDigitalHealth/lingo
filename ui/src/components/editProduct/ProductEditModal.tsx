@@ -1288,6 +1288,10 @@ const DescriptionTextInput = ({
         minRows={1}
         maxRows={4}
         disabled={isDisabled}
+        onBlur={e => {
+          const trimmed = e.target.value.trim();
+          field.onChange(trimmed);
+        }}
       />
       {hasChanged && isReleased && (
         <FormHelperText sx={{ color: t => `${t.palette.warning.main}` }}>

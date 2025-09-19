@@ -125,11 +125,9 @@ export default function ProductPreviewSimple({
     : undefined;
 
   const [optionsIgnored, setOptionsIgnored] = useState(false);
-  const [productTitle, setProductTitle] = useState(
-    fsnToggle
-      ? (product.concept?.fsn?.term as string)
-      : product.concept?.pt?.term,
-  );
+  const productTitle = fsnToggle
+    ? (product.concept?.fsn?.term as string)
+    : product.concept?.pt?.term;
 
   const [bgColor, setBgColor] = useState<string>(
     getColorByDefinitionStatus(product, optionsIgnored, [], []),
