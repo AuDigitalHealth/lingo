@@ -46,7 +46,7 @@ export default function TasksCreateModal({
   redirectEnabled = true,
   redirectUrl,
   projectsOptions,
-}: TasksCreateModalProps) {
+}: Readonly<TasksCreateModalProps>) {
   const [loading, setLoading] = useState(false);
   const { applicationConfig } = useApplicationConfig();
   const project = getProjectFromKey(
@@ -55,12 +55,15 @@ export default function TasksCreateModal({
   );
   const navigate = useNavigate();
 
-  const defaultValues = useMemo(() => ({
-    title: '',
-    description: '',
-    count: '1',
-    project: project?.title || '',
-  }), [project?.title]);
+  const defaultValues = useMemo(
+    () => ({
+      title: '',
+      description: '',
+      count: '1',
+      project: project?.title || '',
+    }),
+    [project?.title],
+  );
 
   const { register, handleSubmit, formState, reset } = useForm<TaskFormValues>({
     defaultValues,
