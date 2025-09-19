@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import BaseModal from '../../../components/modal/BaseModal';
 import BaseModalBody from '../../../components/modal/BaseModalBody';
 import BaseModalHeader from '../../../components/modal/BaseModalHeader';
@@ -55,12 +55,12 @@ export default function TasksCreateModal({
   );
   const navigate = useNavigate();
 
-  const defaultValues = {
+  const defaultValues = useMemo(() => ({
     title: '',
     description: '',
     count: '1',
     project: project?.title || '',
-  };
+  }), [project?.title]);
 
   const { register, handleSubmit, formState, reset } = useForm<TaskFormValues>({
     defaultValues,
@@ -80,7 +80,7 @@ export default function TasksCreateModal({
     if (!open) {
       reset(defaultValues);
     }
-  }, [open, reset, project?.title]);
+  }, [open, reset, defaultValues]);
 
   const onSubmit = (data: TaskFormValues) => {
     if (!serviceStatus?.authoringPlatform.running) {
