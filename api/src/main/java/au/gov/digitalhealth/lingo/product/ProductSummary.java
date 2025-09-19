@@ -165,11 +165,17 @@ public class ProductSummary implements Serializable {
     }
   }
 
-  public Set<Node> getNodesConnectedToSubject(){
+  public Set<Node> getNodesConnectedToSubject() {
     Node subject = getSingleSubject();
     return getNodes().stream()
-         .filter(n -> getEdges().stream().anyMatch(e -> e.getTarget().equals(n.getConceptId()) && e.getSource().equals(subject.getConceptId())))
-         .collect(Collectors.toSet());
+        .filter(
+            n ->
+                getEdges().stream()
+                    .anyMatch(
+                        e ->
+                            e.getTarget().equals(n.getConceptId())
+                                && e.getSource().equals(subject.getConceptId())))
+        .collect(Collectors.toSet());
   }
 
   public String getSingleTargetOfTypeWithLabel(String source, String nodeLabel, String edgeLabel) {
