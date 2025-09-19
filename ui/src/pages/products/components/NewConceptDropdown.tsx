@@ -373,7 +373,11 @@ function NewConceptDropdownField({
                   field.onChange(value);
                 }}
                 color={fieldChanged ? 'error' : 'primary'}
-                onBlur={handleBlur}
+                onBlur={e => {
+                  const trimmed = e.target.value.trim();
+                  field.onChange(trimmed);
+                  handleBlur();
+                }}
               />
               <IconButton onClick={handleCopy}>
                 <ContentCopy />
