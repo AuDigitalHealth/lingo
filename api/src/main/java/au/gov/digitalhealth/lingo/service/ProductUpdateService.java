@@ -746,7 +746,10 @@ public class ProductUpdateService {
     Set<String> allocatedExistingNodes = new HashSet<>();
 
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
-    newSummary.getNodes().stream()
+    final Set<@Valid Node> newNodes = newSummary.getNodesConnectedToSubject();
+    newNodes.add(newSummary.getSingleSubject());
+
+    newNodes.stream()
         .filter(
             node ->
                 !node.isNewConcept() && existingNodesByConceptId.containsKey(node.getConceptId()))
@@ -755,8 +758,14 @@ public class ProductUpdateService {
               allocatedExistingNodes.add(node.getConceptId());
             });
 
-    // for all the new nodes in the new summary, find the corresponding exisitng node
-    newSummary.getNodes().stream()
+    // the subject of the new summary is the same as the subject of the old summary by definition
+    newSummary
+        .getSingleSubject()
+        .setOriginalNode(new OriginalNode(existingSummary.getSingleSubject(), null, false));
+    allocatedExistingNodes.add(newSummary.getSingleSubject().getConceptId());
+
+    // for all the new nodes in the new summary, find the corresponding existing node
+    newNodes.stream()
         .filter(
             node ->
                 node.isNewConcept()
@@ -784,7 +793,7 @@ public class ProductUpdateService {
     // update all the existing nodes to indicate if they are referenced by other concepts outside
     // the ones in the summary
     Set<String> replacedConceptIds =
-        newSummary.getNodes().stream()
+        newNodes.stream()
             .filter(
                 node ->
                     node.getOriginalNode() != null
@@ -802,7 +811,7 @@ public class ProductUpdateService {
             newSummary.getUnmatchedPreviouslyReferencedNodes().stream()
                 .collect(Collectors.toMap(OriginalNode::getConceptId, Function.identity())));
     originalNodes.putAll(
-        newSummary.getNodes().stream()
+        newNodes.stream()
             .map(Node::getOriginalNode)
             .filter(Objects::nonNull)
             .collect(Collectors.toMap(on -> on.getNode().getConceptId(), Function.identity())));
@@ -810,34 +819,32 @@ public class ProductUpdateService {
     List<String> taskChangedIds = taskChangedConceptIds.block();
     List<String> projectChangedIds = projectChangedConceptIds.block();
 
-    newSummary
-        .getNodes()
-        .forEach(
-            node -> {
-              node.setNewInTask(
-                  taskChangedIds != null
-                      && (node.getConceptId().startsWith("-")
-                          || taskChangedIds.contains(node.getConceptId())));
-              node.setNewInProject(
-                  projectChangedIds != null && projectChangedIds.contains(node.getConceptId()));
-              if (node.getOriginalNode() != null && node.getOriginalNode().getNode() != null) {
-                node.getOriginalNode()
-                    .getNode()
-                    .setNewInTask(
-                        taskChangedIds != null
-                            && taskChangedIds.contains(node.getOriginalNode().getConceptId()));
-                node.getOriginalNode()
-                    .getNode()
-                    .setNewInProject(
-                        projectChangedIds != null
-                            && projectChangedIds.contains(node.getOriginalNode().getConceptId()));
-              }
-            });
+    newNodes.forEach(
+        node -> {
+          node.setNewInTask(
+              taskChangedIds != null
+                  && (node.getConceptId().startsWith("-")
+                      || taskChangedIds.contains(node.getConceptId())));
+          node.setNewInProject(
+              projectChangedIds != null && projectChangedIds.contains(node.getConceptId()));
+          if (node.getOriginalNode() != null && node.getOriginalNode().getNode() != null) {
+            node.getOriginalNode()
+                .getNode()
+                .setNewInTask(
+                    taskChangedIds != null
+                        && taskChangedIds.contains(node.getOriginalNode().getConceptId()));
+            node.getOriginalNode()
+                .getNode()
+                .setNewInProject(
+                    projectChangedIds != null
+                        && projectChangedIds.contains(node.getOriginalNode().getConceptId()));
+          }
+        });
 
     List<CompletableFuture<Void>> referencedByOtherProductsFutures = new ArrayList<>();
     Set<String> referenceSets = modelConfiguration.getAllLevelReferenceSetIds();
 
-    newSummary.getNodes().stream()
+    newNodes.stream()
         .filter(node -> node.getOriginalNode() != null)
         .forEach(
             newNode -> {
@@ -982,9 +989,7 @@ public class ProductUpdateService {
         .filter(node -> node.getModelLevel().equals(newNode.getModelLevel()))
         .filter(
             node ->
-                node.getFullySpecifiedName() != null
-                    && newNode.getFullySpecifiedName() != null
-                    && StringUtils.hasText(node.getFullySpecifiedName())
+                StringUtils.hasText(node.getFullySpecifiedName())
                     && StringUtils.hasText(newNode.getFullySpecifiedName()))
         .min(
             (a, b) ->
