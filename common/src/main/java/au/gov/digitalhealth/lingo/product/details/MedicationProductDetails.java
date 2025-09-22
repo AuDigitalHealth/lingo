@@ -16,48 +16,146 @@
 package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.gov.digitalhealth.lingo.util.NmpcType;
+import au.gov.digitalhealth.lingo.validation.AuthoringValidation;
 import au.gov.digitalhealth.lingo.validation.OnlyOnePopulated;
+import au.gov.digitalhealth.lingo.validation.ValidSnowstormConceptMini;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import jakarta.validation.Valid;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
+@JsonTypeName("medication")
 @OnlyOnePopulated(
     fields = {"containerType", "deviceType"},
     message = "Only container type or device type can be populated, not both")
 public class MedicationProductDetails extends ProductDetails {
+  @ValidSnowstormConceptMini(groups = AuthoringValidation.class)
+  SnowstormConceptMini existingMedicinalProduct;
+
+  @ValidSnowstormConceptMini(groups = AuthoringValidation.class)
+  SnowstormConceptMini existingClinicalDrug;
+
+  @ValidSnowstormConceptMini(groups = AuthoringValidation.class)
   SnowstormConceptMini genericForm;
+
+  @ValidSnowstormConceptMini(groups = AuthoringValidation.class)
   SnowstormConceptMini specificForm;
 
   // These are the old unit of use/presentation attributes needed until purged
   @Valid Quantity quantity;
+
+  @ValidSnowstormConceptMini(groups = AuthoringValidation.class)
   SnowstormConceptMini containerType;
+
+  @ValidSnowstormConceptMini(groups = AuthoringValidation.class)
+  SnowstormConceptMini unitOfPresentation;
+
+  Set<@ValidSnowstormConceptMini(groups = AuthoringValidation.class) SnowstormConceptMini>
+      playsRole = new HashSet<>();
 
   List<@Valid Ingredient> activeIngredients = new ArrayList<>();
 
   @Override
+  public ProductType getType() {
+    if (deviceType != null) {
+      this.type = ProductType.DRUG_DEVICE;
+    } else {
+      this.type = ProductType.MEDICATION;
+    }
+    return type;
+  }
+
+  @Override
+  public ProductTemplate getProductType() {
+    if (productType == null) {
+      productType = determineProductType(activeIngredients);
+    }
+    return productType;
+  }
+
+  private ProductTemplate determineProductType(List<Ingredient> activeIngredients) {
+    if (activeIngredients.isEmpty()) {
+      return ProductTemplate.NO_INGREDIENTS;
+    }
+
+    for (Ingredient ingredient : activeIngredients) {
+      if (ingredient.isIngredientConcentrationStrength()
+          && ingredient.isIngredientPresentationStrength()) {
+        return ProductTemplate.CONCENTRATION_AND_PRESENTATION_STRENGTH;
+      } else if (ingredient.isIngredientConcentrationStrength()) {
+        return ProductTemplate.CONCENTRATION_STRENGTH;
+      } else if (ingredient.isIngredientPresentationStrength()) {
+        return ProductTemplate.PRESENTATION_STRENGTH;
+      }
+    }
+
+    return ProductTemplate.NO_STRENGTH;
+  }
+
+  @Override
   protected Map<String, String> getSpecialisedIdFsnMap() {
-    Map<String, String> idMap = new HashMap<>();
+    Map<String, String> idMap = addToIdFsnMap(null, quantity);
     if (genericForm != null) {
-      idMap.put(genericForm.getConceptId(), genericForm.getFsn().getTerm());
+      addToIdFsnMap(idMap, genericForm);
     }
     if (specificForm != null) {
-      idMap.put(specificForm.getConceptId(), specificForm.getFsn().getTerm());
+      addToIdFsnMap(idMap, specificForm);
     }
     if (quantity != null) {
       idMap.putAll(quantity.getIdFsnMap());
     }
     if (containerType != null) {
-      idMap.put(containerType.getConceptId(), containerType.getFsn().getTerm());
+      addToIdFsnMap(idMap, containerType);
+    }
+    for (SnowstormConceptMini role : playsRole) {
+      addToIdFsnMap(idMap, role);
     }
     for (Ingredient ingredient : activeIngredients) {
-      idMap.putAll(ingredient.getIdFsnMap());
+      addToIdFsnMap(idMap, ingredient);
     }
     return idMap;
+  }
+
+  @Override
+  protected Map<String, String> getSpecialisedIdPtMap() {
+    Map<String, String> idMap = addToIdPtMap(null, quantity);
+    if (genericForm != null) {
+      addToIdPtMap(idMap, genericForm);
+    }
+    if (specificForm != null) {
+      addToIdPtMap(idMap, specificForm);
+    }
+    if (quantity != null) {
+      idMap.putAll(quantity.getIdPtMap());
+    }
+    if (containerType != null) {
+      addToIdPtMap(idMap, containerType);
+    }
+    for (SnowstormConceptMini role : playsRole) {
+      addToIdPtMap(idMap, role);
+    }
+    for (Ingredient ingredient : activeIngredients) {
+      addToIdPtMap(idMap, ingredient);
+    }
+    return idMap;
+  }
+
+  public boolean hasDeviceType() {
+    return deviceType != null;
+  }
+
+  @JsonIgnore
+  @Override
+  public NmpcType getNmpcType() {
+    return NmpcType.NMPC_MEDICATION;
   }
 }

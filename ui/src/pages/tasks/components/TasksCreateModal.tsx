@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import BaseModal from '../../../components/modal/BaseModal';
 import BaseModalBody from '../../../components/modal/BaseModalBody';
 import BaseModalHeader from '../../../components/modal/BaseModalHeader';
@@ -17,7 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import { unavailableErrorHandler } from '../../../types/ErrorHandler.ts';
 import { useQueryClient } from '@tanstack/react-query';
-import { useAllTasksOptions } from '../../../hooks/api/useAllTasks.tsx';
+import { useAllTasksOptions } from '../../../hooks/api/task/useAllTasks.tsx';
 import {
   getProjectByTitle,
   getProjectFromKey,
@@ -46,7 +46,7 @@ export default function TasksCreateModal({
   redirectEnabled = true,
   redirectUrl,
   projectsOptions,
-}: TasksCreateModalProps) {
+}: Readonly<TasksCreateModalProps>) {
   const [loading, setLoading] = useState(false);
   const { applicationConfig } = useApplicationConfig();
   const project = getProjectFromKey(
@@ -55,13 +55,18 @@ export default function TasksCreateModal({
   );
   const navigate = useNavigate();
 
-  const { register, handleSubmit, formState } = useForm<TaskFormValues>({
-    defaultValues: {
+  const defaultValues = useMemo(
+    () => ({
       title: '',
       description: '',
       count: '1',
-      project: project?.title,
-    },
+      project: project?.title || '',
+    }),
+    [project?.title],
+  );
+
+  const { register, handleSubmit, formState, reset } = useForm<TaskFormValues>({
+    defaultValues,
   });
 
   const { errors, touchedFields } = formState;
@@ -73,6 +78,12 @@ export default function TasksCreateModal({
   const queryClient = useQueryClient();
 
   const queryKey = useAllTasksOptions(applicationConfig).queryKey;
+
+  useEffect(() => {
+    if (!open) {
+      reset(defaultValues);
+    }
+  }, [open, reset, defaultValues]);
 
   const onSubmit = (data: TaskFormValues) => {
     if (!serviceStatus?.authoringPlatform.running) {
@@ -143,7 +154,9 @@ export default function TasksCreateModal({
             if (redirectUrl.includes(':projectKey')) {
               redirectUrl = redirectUrl.replace(':projectKey', res.projectKey);
             }
-            navigate(`${redirectUrl}/${res.key}`);
+            navigate(`${redirectUrl}/${res.key}`, {
+              state: { isCreate: true },
+            });
           }
         }
       })
@@ -163,6 +176,7 @@ export default function TasksCreateModal({
       open={open}
       handleClose={!loading ? handleClose : () => null}
       sx={{ minWidth: '400px' }}
+      keepMounted={false}
     >
       <BaseModalHeader title={title} />
       {/* eslint-disable-next-line */}

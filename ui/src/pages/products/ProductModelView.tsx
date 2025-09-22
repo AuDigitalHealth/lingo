@@ -5,7 +5,7 @@ import { isFsnToggleOn } from '../../utils/helpers/conceptUtils.ts';
 
 import { useConceptModel } from '../../hooks/api/products/useConceptModel.tsx';
 import Loading from '../../components/Loading.tsx';
-import ProductPreviewCreateOrViewMode from './ProductPreviewCreateOrViewMode.tsx';
+import ProductPreviewSaveOrViewMode from './ProductPreviewSaveOrViewMode.tsx';
 import useApplicationConfigStore from '../../stores/ApplicationConfigStore.ts';
 
 interface ProductModelViewProps {
@@ -30,12 +30,12 @@ function ProductModelView({ branch }: ProductModelViewProps) {
   );
 
   if (isLoading) {
-    return <Loading message={`Loading 7 Box model for ${conceptId}`} />;
+    return <Loading message={`Loading box model for ${conceptId}`} />;
   }
 
   if (data) {
     return (
-      <ProductPreviewCreateOrViewMode
+      <ProductPreviewSaveOrViewMode
         branch={branchPath}
         productModelResponse={data}
         readOnlyMode={true}

@@ -26,7 +26,7 @@ import useSearchTaskByKey from '../../../../hooks/api/task/useSearchTaskByKey.ts
 import { TaskTypographyTemplate } from '../../components/grid/Templates.tsx';
 
 import { TaskStatusIcon } from '../../../../components/icons/TaskStatusIcon.tsx';
-import { useAllTasks } from '../../../../hooks/api/useAllTasks.tsx';
+import { useAllTasks } from '../../../../hooks/api/task/useAllTasks';
 import {
   useAllExternalRequestors,
   useAllLabels,
@@ -67,7 +67,7 @@ export default function TicketFields({
 
   const formatField = (item: AdditionalFieldValue) => {
     return item.additionalFieldType.type === AdditionalFieldTypeEnum.DATE
-      ? new Date(Date.parse(item.valueOf)).toLocaleDateString('en-AU')
+      ? new Date(Date.parse(item.valueOf)).toLocaleDateString()
       : item.valueOf;
   };
 
@@ -188,7 +188,7 @@ export default function TicketFields({
                 fontWeight="bold"
                 sx={{ display: 'block', width: '120px' }}
               >
-                Iteration:
+                Release:
               </Typography>
             </Grid>
             {ticket?.iteration?.name ? (
@@ -210,7 +210,7 @@ export default function TicketFields({
                 fontWeight="bold"
                 sx={{ display: 'block', width: '120px' }}
               >
-                State:
+                Status:
               </Typography>
             </Grid>
             {ticket?.state?.label ? (
@@ -318,7 +318,7 @@ function TaskAssociationField({ ticket }: TaskAssociationFieldProps) {
     return (
       <Stack alignItems={'center'} gap={1} direction={'row'}>
         <Link
-          to={`/dashboard/tasks/edit/${taskAssociation?.taskId}/${ticket.ticketNumber}`}
+          to={`/dashboard/tasks/edit/${taskAssociation?.taskId}/ticket/${ticket.ticketNumber}`}
         >
           {ticket?.taskAssociation.taskId}
         </Link>

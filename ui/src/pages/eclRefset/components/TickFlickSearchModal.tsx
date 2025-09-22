@@ -3,15 +3,15 @@ import {
   Autocomplete,
   Box,
   Button,
+  capitalize,
   Checkbox,
+  createFilterOptions,
   FormControlLabel,
   IconButton,
   Stack,
   TextField,
   Tooltip,
   Typography,
-  capitalize,
-  createFilterOptions,
 } from '@mui/material';
 import {
   DataGrid,
@@ -311,14 +311,24 @@ export default function TickFlickSearchModal({
                     if (typeof option === 'string') return option;
                     return option.ecl;
                   }}
-                  renderOption={(props: object, option) => (
-                    <Box {...props} key={`${option.ecl} ${option.custom}`}>
-                      <Box width={'100%'}>
-                        <Typography variant="body1">{option.label}</Typography>
-                        <Typography variant="caption">{option.ecl}</Typography>
+                  renderOption={(props: object, option) => {
+                    const { key: key, ...otherProps } = props;
+                    return (
+                      <Box
+                        {...otherProps}
+                        key={`${option.ecl} ${option.custom}`}
+                      >
+                        <Box width={'100%'}>
+                          <Typography variant="body1">
+                            {option.label}
+                          </Typography>
+                          <Typography variant="caption">
+                            {option.ecl}
+                          </Typography>
+                        </Box>
                       </Box>
-                    </Box>
-                  )}
+                    );
+                  }}
                   sx={{ flex: 1, width: 500 }}
                 />
               </Stack>

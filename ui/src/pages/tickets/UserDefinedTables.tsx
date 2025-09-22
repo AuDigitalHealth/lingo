@@ -80,7 +80,6 @@ export default function UserDefinedTables() {
   const mutation = useUpdateUiSearchConfigurations();
   const { data: putData, isPending: putLoading, isError } = mutation;
 
-  // eslint-disable-next-line
   function handleDragEnd(event: DragEndEvent) {
     const filteredUiSearchConfiguration = dndItems?.filter(item => {
       return checkFilterExists(item);
@@ -100,7 +99,6 @@ export default function UserDefinedTables() {
 
   function onDragStart(event: DragStartEvent) {
     if (event.active.data.current?.type === 'Table') {
-      // eslint-disable-next-line
       setActiveConfiguration(event.active.data.current.uiSearchConfiguration);
       return;
     }
@@ -311,11 +309,9 @@ function UserDefinedTableQuadrant({
   count,
   allConfigurations,
 }: UserDefinedTableQuadrantProps) {
-  // eslint-disable-next-line
   const [length, setLength] = useState<'50%' | '100%'>(
     calculateLength(count, allConfigurations, uiSearchConfiguration),
   );
-  // eslint-disable-next-line
   const [height, setHeight] = useState<'50%' | '100%'>(
     count !== undefined && count === 1 ? '100%' : '50%',
   );

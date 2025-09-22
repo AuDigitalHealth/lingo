@@ -3,16 +3,13 @@ import {
   AccordionSummary,
   Box,
   Button,
-  FormHelperText,
   Grid,
   IconButton,
-  Link,
   MenuItem,
   Select,
   SelectChangeEvent,
   Tab,
   Tabs,
-  TextField,
   Tooltip,
   Typography,
 } from '@mui/material';
@@ -21,25 +18,23 @@ import {
   Concept,
   DefinitionStatus,
   Edge,
+  hasDescriptionChange,
   Product,
   Product7BoxBGColour,
   ProductSummary,
 } from '../../types/concept.ts';
 import {
-  ARTG_ID,
   cleanBrandPackSizeDetails,
   cleanDevicePackageDetails,
   cleanPackageDetails,
   containsNewConcept,
   filterByLabel,
-  filterKeypress,
   findProductUsingId,
   findRelations,
   getProductDisplayName,
   isDeviceType,
   isFsnToggleOn,
   OWL_EXPRESSION_ID,
-  setEmptyToNull,
 } from '../../utils/helpers/conceptUtils.ts';
 import { styled, useTheme } from '@mui/material/styles';
 import MuiAccordion, { AccordionProps } from '@mui/material/Accordion';
@@ -49,10 +44,8 @@ import LinkViews from './components/LinkViews.tsx';
 import ClearIcon from '@mui/icons-material/Clear';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import Loading from '../../components/Loading.tsx';
-import { InnerBoxSmall } from './components/style/ProductBoxes.tsx';
 import {
   Control,
-  Controller,
   useForm,
   UseFormGetValues,
   UseFormRegister,
@@ -60,7 +53,7 @@ import {
   useWatch,
 } from 'react-hook-form';
 
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import CircleIcon from '@mui/icons-material/Circle';
 import {
   ActionType,
@@ -68,7 +61,7 @@ import {
   BulkProductCreationDetails,
   DevicePackageDetails,
   MedicationPackageDetails,
-  ProductCreationDetails,
+  ProductSaveDetails,
   ProductGroupType,
   ProductType,
 } from '../../types/product.ts';
@@ -83,9 +76,7 @@ import {
   getTicketProductsByTicketIdOptions,
   useTicketByTicketNumber,
 } from '../../hooks/api/tickets/useTicketById.tsx';
-
-import { useLocation, useParams } from 'react-router-dom';
-import useTaskByKey from '../../hooks/useTaskById.tsx';
+import useTaskByKey from '../../hooks/useTaskByKey.tsx';
 import useAuthoringStore from '../../stores/AuthoringStore.ts';
 import {
   uniqueFsnValidator,
@@ -94,13 +85,7 @@ import {
 import WarningModal from '../../themes/overrides/WarningModal.tsx';
 import { closeSnackbar } from 'notistack';
 import ConceptDiagramModal from '../../components/conceptdiagrams/ConceptDiagramModal.tsx';
-import {
-  AccountTreeOutlined,
-  NewReleases,
-  NewReleasesOutlined,
-  LibraryBooks,
-} from '@mui/icons-material';
-import { FormattedMessage } from 'react-intl';
+import { AccountTreeOutlined } from '@mui/icons-material';
 import { validateProductSummaryNodes } from '../../types/productValidationUtils.ts';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -114,17 +99,15 @@ import {
 import { isNameContainsKeywords } from '../../../cypress/e2e/helpers/product.ts';
 import { useFieldBindings } from '../../hooks/api/useInitializeConfig.tsx';
 import { FieldBindings } from '../../types/FieldBindings.ts';
-import ProductRefsetModal from '../../components/refset/ProductRefsetModal.tsx';
 import { useRefsetMembersByComponentIds } from '../../hooks/api/refset/useRefsetMembersByComponentIds.tsx';
 import { RefsetMember } from '../../types/RefsetMember.ts';
 import productService from '../../api/ProductService.ts';
-import {
-  extractSemanticTag,
-  removeSemanticTagFromTerm,
-} from '../../utils/helpers/ProductPreviewUtils.ts';
+import ExistingConceptDropdown from './components/ExistingConceptDropdown.tsx';
+import NewConceptDropdown from './components/NewConceptDropdown.tsx';
+import { ProductStatusIndicators } from './components/ProductStatusIndicators.tsx';
 
 interface ProductModelEditProps {
-  productCreationDetails?: ProductCreationDetails;
+  productCreationDetails?: ProductSaveDetails;
   productModel: ProductSummary;
   handleClose?:
     | ((event: object, reason: 'backdropClick' | 'escapeKeyDown') => void)
@@ -274,7 +257,7 @@ function ProductModelEdit({
           productCreationDetails.packageDetails as DevicePackageDetails,
         );
         productService
-          .createDeviceProduct(productCreationDetails, branch)
+          .saveDeviceProduct(productCreationDetails, branch)
           .then(v => {
             if (handleClose) handleClose({}, 'escapeKeyDown');
             setLoading(false);
@@ -304,12 +287,16 @@ function ProductModelEdit({
             );
             setErrorKey(snackbarKey as string);
           });
-      } else if (selectedActionType === ActionType.newMedication) {
+      } else if (
+        selectedActionType === ActionType.newMedication ||
+        selectedActionType === ActionType.newVaccine ||
+        selectedActionType === ActionType.newNutritionalProduct
+      ) {
         productCreationDetails.packageDetails = cleanPackageDetails(
           productCreationDetails.packageDetails as MedicationPackageDetails,
         );
         productService
-          .createNewMedicationProduct(productCreationDetails, branch)
+          .saveMedicationProduct(productCreationDetails, branch)
           .then(v => {
             if (handleClose) handleClose({}, 'escapeKeyDown');
             setLoading(false);
@@ -638,63 +625,6 @@ interface NewConceptDropdownFieldProps {
   control: Control<ProductSummary>;
 }
 
-function NewConceptDropdownField({
-  fieldName,
-  legend,
-  getValues,
-  dataTestId,
-  control,
-}: NewConceptDropdownFieldProps) {
-  const [fieldChanged, setFieldChange] = useState(false);
-
-  const handleBlur = () => {
-    const currentVal: string = getValues(
-      fieldName as 'nodes.0.newConceptDetails.preferredTerm',
-    );
-    const preferredFieldName = fieldName.replace(
-      /\.(\w+)$/,
-      (match, p1: string) =>
-        `.generated${p1.charAt(0).toUpperCase() + p1.slice(1)}`,
-    );
-    const generatedVal: string = getValues(
-      preferredFieldName as 'nodes.0.newConceptDetails.preferredTerm',
-    );
-    setFieldChange(!(currentVal === generatedVal));
-  };
-
-  return (
-    <InnerBoxSmall component="fieldset">
-      <legend>{legend}</legend>
-
-      <Controller
-        name={fieldName as 'nodes.0.newConceptDetails.preferredTerm'}
-        control={control}
-        defaultValue=""
-        render={({ field }) => (
-          <TextField
-            {...field}
-            InputLabelProps={{ shrink: true }}
-            variant="outlined"
-            margin="dense"
-            fullWidth
-            multiline
-            minRows={1}
-            maxRows={4}
-            data-testid={dataTestId}
-            color={fieldChanged ? 'error' : 'primary'}
-            onBlur={handleBlur}
-          />
-        )}
-      />
-      {fieldChanged && (
-        <FormHelperText sx={{ color: t => `${t.palette.warning.main}` }}>
-          This name has been changed from the auto-generated name.
-        </FormHelperText>
-      )}
-    </InnerBoxSmall>
-  );
-}
-
 interface ConceptOptionsDropdownProps {
   control: Control<ProductSummary>;
   product: Product;
@@ -703,6 +633,7 @@ interface ConceptOptionsDropdownProps {
   handleConceptOptionsSubmit?: (concept: Concept) => void;
   setOptionsIgnored: (bool: boolean) => void;
   getValues: UseFormGetValues<ProductSummary>;
+  branch: string;
 }
 
 function ConceptOptionsDropdown({
@@ -712,6 +643,7 @@ function ConceptOptionsDropdown({
   setOptionsIgnored,
   getValues,
   control,
+  branch,
 }: ConceptOptionsDropdownProps) {
   const { ticketNumber } = useParams();
   const { data: ticket } = useTicketByTicketNumber(ticketNumber, true);
@@ -725,6 +657,8 @@ function ConceptOptionsDropdown({
     previewMedicationProduct,
     previewDeviceProduct,
     selectedProductType,
+    selectedConceptIdentifiers,
+    setSelectedConceptIdentifiers,
   } = useAuthoringStore();
 
   const [tabValue, setTabValue] = React.useState(0);
@@ -755,9 +689,12 @@ function ConceptOptionsDropdown({
       selectedConcept?.conceptId === undefined
     )
       return;
-    tempProductPreviewDetails.selectedConceptIdentifiers = [
+    const updatedConcepts = [
+      ...(selectedConceptIdentifiers ?? []),
       selectedConcept?.conceptId,
     ];
+    tempProductPreviewDetails.selectedConceptIdentifiers = updatedConcepts;
+    setSelectedConceptIdentifiers(updatedConcepts);
 
     previewMedicationProduct(
       tempProductPreviewDetails,
@@ -773,9 +710,12 @@ function ConceptOptionsDropdown({
       selectedConcept?.conceptId === undefined
     )
       return;
-    tempProductPreviewDetails.selectedConceptIdentifiers = [
+    const updatedConcepts = [
+      ...(selectedConceptIdentifiers ?? []),
       selectedConcept?.conceptId,
     ];
+    tempProductPreviewDetails.selectedConceptIdentifiers = updatedConcepts;
+    setSelectedConceptIdentifiers(updatedConcepts);
 
     previewDeviceProduct(
       tempProductPreviewDetails,
@@ -859,6 +799,7 @@ function ConceptOptionsDropdown({
             register={register}
             getValues={getValues}
             control={control}
+            branch={branch}
           />
         )}
       </CustomTabPanel>
@@ -866,53 +807,55 @@ function ConceptOptionsDropdown({
   );
 }
 
-interface ExistingConceptDropdownProps {
-  product: Product;
-  artgIds: string[];
-}
+// interface ExistingConceptDropdownProps {
+//   product: Product;
+//   artgIds: string[];
+// }
 
-// TODO: FIX ME! Why is there another one of these in ExistingConceptDropdown.tsx
-function ExistingConceptDropdown({
-  product,
-  artgIds,
-}: ExistingConceptDropdownProps) {
-  const semanticTag = extractSemanticTag(product.concept?.fsn?.term)
-    ?.trim()
-    .toLocaleLowerCase();
+// // TODO: FIX ME! Why is there another one of these in ExistingConceptDropdown.tsx
+// function ExistingConceptDropdown({
+//   product,
+//   artgIds,
+// }: ExistingConceptDropdownProps) {
+//   const semanticTag = extractSemanticTag(product.concept?.fsn?.term)
+//     ?.trim()
+//     .toLocaleLowerCase();
 
-  const termWithoutTag = removeSemanticTagFromTerm(product.concept?.fsn?.term);
-  return (
-    <div key={`${product.conceptId}-div`}>
-      <Stack direction="row" spacing={2}>
-        <span style={{ color: '#184E6B' }}>Concept Id:</span>
-        <Link>{product.conceptId}</Link>
-      </Stack>
-      <Stack direction="row" spacing={2}>
-        <Typography style={{ color: '#184E6B' }}>FSN:</Typography>
-        <Typography>
-          {termWithoutTag ? termWithoutTag : product.concept?.fsn?.term}
-        </Typography>
-      </Stack>
-      {semanticTag && (
-        <Stack direction="row" spacing={2}>
-          <Typography style={{ color: '#184E6B' }}>Semantic Tag:</Typography>
-          <Typography>{semanticTag}</Typography>
-        </Stack>
-      )}
-      <Stack direction="row" spacing={2}>
-        <Typography style={{ color: '#184E6B' }}>Preferred Term:</Typography>
-        <Typography>{product.concept?.pt?.term}</Typography>
-      </Stack>
-      {((artgIds && artgIds.length > 0) || product.label === 'CTPP') && (
-        <Stack direction="row" spacing={2}>
-          <Typography style={{ color: '#184E6B' }}>Artg Ids:</Typography>
+//   const termWithoutTag = removeSemanticTagFromTermSemTagUndefined(
+//     product.concept?.fsn?.term,
+//   );
+//   return (
+//     <div key={`${product.conceptId}-div`}>
+//       <Stack direction="row" spacing={2}>
+//         <span style={{ color: '#184E6B' }}>Concept Id:</span>
+//         <Link>{product.conceptId}</Link>
+//       </Stack>
+//       <Stack direction="row" spacing={2}>
+//         <Typography style={{ color: '#184E6B' }}>FSN:</Typography>
+//         <Typography>
+//           {termWithoutTag ? termWithoutTag : product.concept?.fsn?.term}
+//         </Typography>
+//       </Stack>
+//       {semanticTag && (
+//         <Stack direction="row" spacing={2}>
+//           <Typography style={{ color: '#184E6B' }}>Semantic Tag:</Typography>
+//           <Typography>{semanticTag}</Typography>
+//         </Stack>
+//       )}
+//       <Stack direction="row" spacing={2}>
+//         <Typography style={{ color: '#184E6B' }}>Preferred Term:</Typography>
+//         <Typography>{product.concept?.pt?.term}</Typography>
+//       </Stack>
+//       {((artgIds && artgIds.length > 0) || product.label === 'CTPP') && (
+//         <Stack direction="row" spacing={2}>
+//           <Typography style={{ color: '#184E6B' }}>Artg Ids:</Typography>
 
-          <Typography>{artgIds.join(',')}</Typography>
-        </Stack>
-      )}
-    </div>
-  );
-}
+//           <Typography>{artgIds.join(',')}</Typography>
+//         </Stack>
+//       )}
+//     </div>
+//   );
+// }
 
 function ProductHeaderWatch({
   control,
@@ -962,6 +905,13 @@ function ProductHeaderWatch({
     } else {
       handleChangeColor(Product7BoxBGColour.NEW);
     }
+  } else if (
+    product.propertyUpdate ||
+    product.inferredFormChanged ||
+    product.statedFormChanged ||
+    hasDescriptionChange(product)
+  ) {
+    handleChangeColor(Product7BoxBGColour.PROPERTY_CHANGE);
   }
 
   if (showHighLite) {
@@ -1053,11 +1003,10 @@ function ProductPanel({
   idsWithInvalidName,
   setIdsWithInvalidName,
   fieldBindings,
-  refsetMembers,
+  branch,
 }: ProductPanelProps) {
   const theme = useTheme();
   const [conceptDiagramModalOpen, setConceptDiagramModalOpen] = useState(false);
-  const [conceptRefsetModalOpen, setConceptRefsetModalOpen] = useState(false);
 
   const links = activeConcept
     ? findRelations(productModel?.edges, activeConcept, product.conceptId)
@@ -1135,17 +1084,10 @@ function ProductPanel({
         open={conceptDiagramModalOpen}
         handleClose={() => setConceptDiagramModalOpen(false)}
         newConcept={product.newConcept ? product.newConceptDetails : undefined}
-        concept={product.concept}
+        product={product}
         keepMounted={true}
+        branch={branch}
       />
-      {refsetMembers.length > 0 && (
-        <ProductRefsetModal
-          open={conceptRefsetModalOpen}
-          handleClose={() => setConceptRefsetModalOpen(false)}
-          refsetMembers={refsetMembers}
-          keepMounted={true}
-        />
-      )}
 
       <Grid>
         <Accordion
@@ -1230,43 +1172,13 @@ function ProductPanel({
                     )}
                   </Grid>
                   <Grid container justifyContent="flex-end" alignItems="center">
-                    {product.newInTask ? (
-                      <Tooltip
-                        title={
-                          <FormattedMessage
-                            id="changed-in-task"
-                            defaultMessage="Un-promoted changes in the task"
-                          />
-                        }
-                      >
-                        <NewReleases />
-                      </Tooltip>
-                    ) : product.newInProject ? (
-                      <Tooltip
-                        title={
-                          <FormattedMessage
-                            id="changed-in-project"
-                            defaultMessage="Unreleased changes in the project"
-                          />
-                        }
-                      >
-                        <NewReleasesOutlined />
-                      </Tooltip>
-                    ) : null}
+                    <ProductStatusIndicators product={product} />
                     <IconButton
                       size="small"
                       onClick={() => setConceptDiagramModalOpen(true)}
                     >
                       <AccountTreeOutlined />
                     </IconButton>
-                    {refsetMembers.length > 0 && (
-                      <IconButton
-                        size="small"
-                        onClick={() => setConceptRefsetModalOpen(true)}
-                      >
-                        <LibraryBooks />
-                      </IconButton>
-                    )}
                   </Grid>
                 </Stack>
               </Grid>
@@ -1306,43 +1218,13 @@ function ProductPanel({
                     ) : (
                       <></>
                     )}
-                    {product.newInTask ? (
-                      <Tooltip
-                        title={
-                          <FormattedMessage
-                            id="changed-in-task"
-                            defaultMessage="Unpromoted changes in the task"
-                          />
-                        }
-                      >
-                        <NewReleases />
-                      </Tooltip>
-                    ) : product.newInProject ? (
-                      <Tooltip
-                        title={
-                          <FormattedMessage
-                            id="changed-in-project"
-                            defaultMessage="Unreleased changes in the project"
-                          />
-                        }
-                      >
-                        <NewReleasesOutlined />
-                      </Tooltip>
-                    ) : null}
+                    <ProductStatusIndicators product={product} />
                     <IconButton
                       size="small"
                       onClick={() => setConceptDiagramModalOpen(true)}
                     >
                       <AccountTreeOutlined />
                     </IconButton>
-                    {refsetMembers.length > 0 && (
-                      <IconButton
-                        size="small"
-                        onClick={() => setConceptRefsetModalOpen(true)}
-                      >
-                        <LibraryBooks />
-                      </IconButton>
-                    )}
                   </Grid>
                 </Stack>
               </Grid>
@@ -1353,22 +1235,9 @@ function ProductPanel({
             {product.concept && (
               <ExistingConceptDropdown
                 product={product}
-                artgIds={
-                  refsetMembers
-                    ?.filter(
-                      r =>
-                        r.referencedComponentId === product.conceptId &&
-                        r.refsetId === ARTG_ID,
-                    )
-                    .flatMap(r => r.additionalFields?.mapTarget)
-                    .filter((id): id is string => id !== undefined)
-                    .sort((a, b) => {
-                      if (a !== undefined && b !== undefined) {
-                        return +a - +b;
-                      }
-                      return 0;
-                    }) ?? []
-                }
+                branch={branch}
+                control={control}
+                index={index}
               />
             )}
             {/* a new concept has to be made, as one does not exist */}
@@ -1382,6 +1251,8 @@ function ProductPanel({
                   register={register}
                   getValues={getValues}
                   control={control}
+                  fieldBindings={fieldBindings}
+                  branch={branch}
                 />
               )}
             {/* there is an option to pick a concept, but you could also create a new concept if you so desire. */}
@@ -1396,6 +1267,7 @@ function ProductPanel({
                   setOptionsIgnored={setOptionsIgnored}
                   control={control}
                   getValues={getValues}
+                  branch={branch}
                 />
               )}
           </AccordionDetails>
@@ -1538,6 +1410,8 @@ const getColorByDefinitionStatus = (
       return Product7BoxBGColour.INCOMPLETE;
     }
     return Product7BoxBGColour.NEW;
+  } else if (product.propertyUpdate) {
+    return Product7BoxBGColour.PROPERTY_CHANGE;
   }
   return product.concept?.definitionStatus === DefinitionStatus.Primitive
     ? Product7BoxBGColour.PRIMITIVE

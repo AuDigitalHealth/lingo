@@ -33,12 +33,19 @@ public class ProductPackSizes implements Serializable {
 
   @NotNull private SnowstormConceptMini unitOfMeasure;
 
-  @NotEmpty @NotNull private Set<PackSizeWithIdentifiers> packSizes;
+  @NotEmpty @NotNull private Set<@Valid PackSizeWithIdentifiers> packSizes;
 
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
     return Map.of(
         Objects.requireNonNull(unitOfMeasure.getConceptId()),
         Objects.requireNonNull(Objects.requireNonNull(unitOfMeasure.getFsn()).getTerm()));
+  }
+
+  @JsonIgnore
+  public Map<String, String> getIdPtMap() {
+    return Map.of(
+        Objects.requireNonNull(unitOfMeasure.getConceptId()),
+        Objects.requireNonNull(Objects.requireNonNull(unitOfMeasure.getPt()).getTerm()));
   }
 }

@@ -15,7 +15,6 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
-import au.gov.digitalhealth.lingo.configuration.CachingConfig;
 import au.gov.digitalhealth.lingo.service.ServiceStatus.Status;
 import au.gov.digitalhealth.lingo.util.CacheConstants;
 import au.gov.digitalhealth.lingo.util.ClientHelper;
@@ -24,6 +23,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import java.util.Arrays;
 import java.util.List;
+import lombok.extern.java.Log;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
@@ -33,24 +34,22 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @Service
+@Log
 public class TaskManagerClient {
 
   private final WebClient authoringPlatformApiClient;
 
   private final WebClient defaultAuthoringPlatformApiClient;
-
-  private final CachingConfig cachingConfig;
+  @Autowired private AllTasksService allTasksService;
 
   @Value("${ihtsdo.ap.projectKey}")
   String apProject;
 
   public TaskManagerClient(
       @Qualifier("authoringPlatformApiClient") WebClient authoringPlatformApiClient,
-      @Qualifier("defaultAuthoringPlatformApiClient") WebClient defaultAuthoringPlatformApiClient,
-      CachingConfig cachingConfig) {
+      @Qualifier("defaultAuthoringPlatformApiClient") WebClient defaultAuthoringPlatformApiClient) {
     this.authoringPlatformApiClient = authoringPlatformApiClient;
     this.defaultAuthoringPlatformApiClient = defaultAuthoringPlatformApiClient;
-    this.cachingConfig = cachingConfig;
   }
 
   public JsonArray getUserTasks() throws AccessDeniedException {
@@ -64,18 +63,10 @@ public class TaskManagerClient {
     return new Gson().fromJson(json, JsonArray.class); // //TODO Serialization Bean?
   }
 
-  @SuppressWarnings("java:S1192")
+  /** Get all tasks from cache if present, else fetch from remote. */
   @Cacheable(cacheNames = CacheConstants.ALL_TASKS_CACHE)
   public List<Task> getAllTasks() throws AccessDeniedException {
-
-    Task[] tasks =
-        authoringPlatformApiClient
-            .get()
-            .uri("/projects/" + apProject + "/tasks?lightweight=false")
-            .retrieve()
-            .bodyToMono(Task[].class)
-            .block();
-    return Arrays.asList(tasks);
+    return allTasksService.fetchFromSource();
   }
 
   public List<Task> getAllTasksOverProject() throws AccessDeniedException {
@@ -122,7 +113,7 @@ public class TaskManagerClient {
             .bodyToMono(Task.class)
             .block();
     if (createdTask != null) {
-      cachingConfig.refreshAllTasksCache(); // evict cache
+      allTasksService.refreshCache(); // async call
     }
     return createdTask;
   }

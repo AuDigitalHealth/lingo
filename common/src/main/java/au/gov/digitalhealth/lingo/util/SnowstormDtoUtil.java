@@ -15,11 +15,14 @@
  */
 package au.gov.digitalhealth.lingo.util;
 
-import static au.gov.digitalhealth.lingo.util.AmtConstants.ARTGID_REFSET;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.ARTGID_SCHEME;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.SCT_AU_MODULE;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.ADDITIONAL_RELATIONSHIP;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.ADDITIONAL_RELATIONSHIP_CHARACTERISTIC_TYPE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.DEFINED;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.ENTIRE_TERM_CASE_SENSITIVE;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.INFERRED_RELATIONSHIP;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.MAP_TARGET;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.MAP_TYPE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.PRIMITIVE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.SOME_MODIFIER;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.STATED_RELATIONSHIP;
@@ -27,15 +30,22 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.STATED_RELATIONSHU
 
 import au.csiro.snowstorm_client.model.*;
 import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
+import au.gov.digitalhealth.lingo.configuration.model.ExternalIdentifierDefinition;
+import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
+import au.gov.digitalhealth.lingo.configuration.model.ReferenceSetDefinition;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.MappingType;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.NonDefiningPropertyDataType;
 import au.gov.digitalhealth.lingo.exception.AtomicDataExtractionProblem;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.exception.ResourceNotFoundProblem;
 import au.gov.digitalhealth.lingo.product.NewConceptDetails;
 import au.gov.digitalhealth.lingo.product.Node;
-import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
-import au.gov.digitalhealth.lingo.product.details.PackageDetails;
-import au.gov.digitalhealth.lingo.product.details.ProductDetails;
 import au.gov.digitalhealth.lingo.product.details.Quantity;
+import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
+import au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.*;
@@ -78,34 +88,51 @@ public class SnowstormDtoUtil {
   }
 
   public static Set<SnowstormRelationship> filterActiveStatedRelationshipByType(
+      Set<SnowstormRelationship> relationships, String... type) {
+    return relationships.stream()
+        .filter(
+            r ->
+                Set.of(type)
+                    .contains(
+                        Objects.requireNonNull(r.getType(), "relationship must have a type")
+                            .getConceptId()))
+        .filter(r -> r.getActive() != null && r.getActive())
+        .filter(r -> STATED_RELATIONSHIP.getValue().equals(r.getCharacteristicType()))
+        .collect(Collectors.toSet());
+  }
+
+  public static Set<SnowstormRelationship> filterActiveInferredRelationshipByType(
       Set<SnowstormRelationship> relationships, String type) {
     return relationships.stream()
-        .filter(r -> r.getType().getConceptId().equals(type))
-        .filter(SnowstormRelationship::getActive)
-        .filter(r -> r.getCharacteristicType().equals(STATED_RELATIONSHIP.getValue()))
+        .filter(
+            r ->
+                type.equals(
+                    Objects.requireNonNull(r.getType(), "relationship must have a type")
+                        .getConceptId()))
+        .filter(r -> r.getActive() != null && r.getActive())
+        .filter(r -> INFERRED_RELATIONSHIP.getValue().equals(r.getCharacteristicType()))
         .collect(Collectors.toSet());
   }
 
   public static Set<SnowstormRelationship> getRelationshipsFromAxioms(SnowstormConcept concept) {
-    if (concept.getClassAxioms().size() != 1) {
-      throw new AtomicDataExtractionProblem(
-          "Expected 1 class axiom but found " + concept.getClassAxioms().size(),
-          concept.getConceptId());
-    }
-    return concept.getClassAxioms().iterator().next().getRelationships();
+    return getSingleAxiom(concept).getRelationships();
+  }
+
+  public static boolean inferredRelationshipOfTypeExists(
+      Set<SnowstormRelationship> subRoleGroup, String type) {
+    return !filterActiveInferredRelationshipByType(subRoleGroup, type).isEmpty();
   }
 
   public static boolean relationshipOfTypeExists(
-      Set<SnowstormRelationship> subRoleGroup, String type) {
+      Set<SnowstormRelationship> subRoleGroup, String... type) {
     return !filterActiveStatedRelationshipByType(subRoleGroup, type).isEmpty();
   }
 
   public static String getSingleActiveConcreteValue(
       Set<SnowstormRelationship> relationships, String type) {
-    return findSingleRelationshipsForActiveInferredByType(relationships, type)
-        .iterator()
-        .next()
-        .getConcreteValue()
+    return Objects.requireNonNull(
+            findSingleRelationshipsForActiveInferredByType(relationships, type).getConcreteValue(),
+            "relationship of type " + type + " does not have a concrete value as expected")
         .getValue();
   }
 
@@ -122,7 +149,7 @@ public class SnowstormDtoUtil {
     return null;
   }
 
-  public static Set<SnowstormRelationship> findSingleRelationshipsForActiveInferredByType(
+  public static @NotNull SnowstormRelationship findSingleRelationshipsForActiveInferredByType(
       Set<SnowstormRelationship> relationships, String type) {
     Set<SnowstormRelationship> filteredRelationships =
         filterActiveStatedRelationshipByType(relationships, type);
@@ -133,15 +160,24 @@ public class SnowstormDtoUtil {
           relationships.iterator().next().getSourceId());
     }
 
-    return filteredRelationships;
+    return filteredRelationships.iterator().next();
+  }
+
+  public static Set<SnowstormRelationship> getActiveRelationshipsInRoleGroup(
+      Integer group, Set<SnowstormRelationship> relationships) {
+    return relationships.stream()
+        .filter(r -> Objects.equals(r.getGroupId(), group))
+        .filter(r -> r.getActive() != null && r.getActive())
+        .filter(r -> "STATED_RELATIONSHIP".equals(r.getCharacteristicType()))
+        .collect(Collectors.toSet());
   }
 
   public static Set<SnowstormRelationship> getActiveRelationshipsInRoleGroup(
       SnowstormRelationship subpacksRelationship, Set<SnowstormRelationship> relationships) {
     return relationships.stream()
-        .filter(r -> r.getGroupId().equals(subpacksRelationship.getGroupId()))
-        .filter(SnowstormRelationship::getActive)
-        .filter(r -> r.getCharacteristicType().equals("STATED_RELATIONSHIP"))
+        .filter(r -> Objects.equals(r.getGroupId(), subpacksRelationship.getGroupId()))
+        .filter(r -> r.getActive() != null && r.getActive())
+        .filter(r -> "STATED_RELATIONSHIP".equals(r.getCharacteristicType()))
         .collect(Collectors.toSet());
   }
 
@@ -161,19 +197,30 @@ public class SnowstormDtoUtil {
   public static SnowstormConceptMini getSingleActiveTarget(
       Set<SnowstormRelationship> relationships, String type) {
     SnowstormConceptMini target =
-        findSingleRelationshipsForActiveInferredByType(relationships, type)
-            .iterator()
-            .next()
-            .getTarget();
+        findSingleRelationshipsForActiveInferredByType(relationships, type).getTarget();
+
+    if (target == null) {
+      throw new AtomicDataExtractionProblem(
+          "relationship of type " + type + " does not have a target as expected",
+          relationships.iterator().next().getSourceId());
+    }
 
     // need to fix the id and fsn because it isn't set properly for some reason
-    target.setIdAndFsnTerm(target.getConceptId() + " | " + target.getFsn().getTerm() + " |");
+    target.setIdAndFsnTerm(
+        target.getConceptId()
+            + " | "
+            + Objects.requireNonNull(
+                    target.getFsn(),
+                    "concept " + target.getConceptId() + "did not have an FSN populated")
+                .getTerm()
+            + " |");
     return target;
   }
 
   public static SnowstormRelationship getSnowstormRelationship(
-      LingoConstants type, LingoConstants destination, int group) {
-    SnowstormRelationship relationship = createBaseSnowstormRelationship(type, group);
+      LingoConstants type, LingoConstants destination, int group, String moduleId) {
+    SnowstormRelationship relationship =
+        createBaseSnowstormRelationship(type, group, STATED_RELATIONSHIP, moduleId);
     relationship.setConcrete(false);
     relationship.setDestinationId(destination.getValue());
     relationship.setTarget(toSnowstormConceptMini(destination));
@@ -181,8 +228,23 @@ public class SnowstormDtoUtil {
   }
 
   public static SnowstormRelationship getSnowstormRelationship(
-      LingoConstants type, Node destination, int group) {
-    SnowstormRelationship relationship = createBaseSnowstormRelationship(type, group);
+      LingoConstants type,
+      String destinationId,
+      String destinationName,
+      int group,
+      String moduleId) {
+    SnowstormRelationship relationship =
+        createBaseSnowstormRelationship(type, group, STATED_RELATIONSHIP, moduleId);
+    relationship.setConcrete(false);
+    relationship.setDestinationId(destinationId);
+    relationship.setTarget(toSnowstormConceptMini(destinationId, destinationName));
+    return relationship;
+  }
+
+  public static SnowstormRelationship getSnowstormRelationship(
+      LingoConstants type, Node destination, int group, String moduleId) {
+    SnowstormRelationship relationship =
+        createBaseSnowstormRelationship(type, group, STATED_RELATIONSHIP, moduleId);
     relationship.setConcrete(false);
     relationship.setDestinationId(destination.getConceptId());
     relationship.setTarget(toSnowstormConceptMini(destination));
@@ -190,8 +252,28 @@ public class SnowstormDtoUtil {
   }
 
   public static SnowstormRelationship getSnowstormRelationship(
-      LingoConstants type, SnowstormConceptMini destination, int group) {
-    SnowstormRelationship relationship = createBaseSnowstormRelationship(type, group);
+      LingoConstants type,
+      SnowstormConceptMini destination,
+      int group,
+      SnomedConstants characteristicType,
+      String moduleId) {
+    SnowstormRelationship relationship =
+        createBaseSnowstormRelationship(type, group, characteristicType, moduleId);
+    relationship.setConcrete(false);
+    relationship.setDestinationId(destination.getConceptId());
+    relationship.setTarget(destination);
+    return relationship;
+  }
+
+  public static SnowstormRelationship getSnowstormRelationship(
+      String typeId,
+      String typeTerm,
+      SnowstormConceptMini destination,
+      int group,
+      SnomedConstants characteristicType,
+      @NotEmpty String moduleId) {
+    SnowstormRelationship relationship =
+        createBaseSnowstormRelationship(typeId, typeTerm, group, characteristicType, moduleId);
     relationship.setConcrete(false);
     relationship.setDestinationId(destination.getConceptId());
     relationship.setTarget(destination);
@@ -199,14 +281,20 @@ public class SnowstormDtoUtil {
   }
 
   public static SnowstormRelationship getSnowstormDatatypeComponent(
-      LingoConstants propertyType, String value, DataTypeEnum type, int group) {
+      LingoConstants propertyType,
+      String value,
+      DataTypeEnum type,
+      int group,
+      SnomedConstants characteristicType,
+      String moduleId) {
     String prefixedValue = null;
     if (Objects.requireNonNull(type) == DataTypeEnum.DECIMAL || type == DataTypeEnum.INTEGER) {
       prefixedValue = "#" + value;
     } else if (type == DataTypeEnum.STRING) {
       prefixedValue = "\"" + value + "\"";
     }
-    SnowstormRelationship relationship = createBaseSnowstormRelationship(propertyType, group);
+    SnowstormRelationship relationship =
+        createBaseSnowstormRelationship(propertyType, group, characteristicType, moduleId);
     relationship.setConcrete(true);
     relationship.setConcreteValue(
         new SnowstormConcreteValue().value(value).dataType(type).valueWithPrefix(prefixedValue));
@@ -214,22 +302,38 @@ public class SnowstormDtoUtil {
   }
 
   private static SnowstormRelationship createBaseSnowstormRelationship(
-      LingoConstants type, int group) {
+      LingoConstants type, int group, SnomedConstants characteristicType, String moduleId) {
+    return createBaseSnowstormRelationship(
+        type.getValue(), type.getLabel(), group, characteristicType, moduleId);
+  }
+
+  private static SnowstormRelationship createBaseSnowstormRelationship(
+      String type,
+      String typeTerm,
+      int group,
+      SnomedConstants characteristicType,
+      String moduleId) {
     SnowstormRelationship relationship = new SnowstormRelationship();
     relationship.setActive(true);
-    relationship.setModuleId(SCT_AU_MODULE.getValue());
+    relationship.setModuleId(moduleId);
     relationship.setReleased(false);
     relationship.setGrouped(group > 0);
     relationship.setGroupId(group);
     relationship.setRelationshipGroup(group);
-    relationship.setType(toSnowstormConceptMini(type));
-    relationship.setTypeId(type.getValue());
+    relationship.setType(toSnowstormConceptMini(type, typeTerm));
+    relationship.setTypeId(type);
     relationship.setModifier("EXISTENTIAL");
     relationship.setModifierId(SOME_MODIFIER.getValue());
-    relationship.setCharacteristicType(STATED_RELATIONSHIP.getValue());
-    relationship.setCharacteristicTypeId(STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE.getValue());
-    relationship.setCharacteristicTypeId(STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE.getValue());
-    relationship.setInferred(false);
+    relationship.setCharacteristicType(characteristicType.getValue());
+    if (characteristicType == STATED_RELATIONSHIP) {
+      relationship.setCharacteristicTypeId(STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE.getValue());
+    } else if (characteristicType == ADDITIONAL_RELATIONSHIP) {
+      relationship.setCharacteristicTypeId(ADDITIONAL_RELATIONSHIP_CHARACTERISTIC_TYPE.getValue());
+    } else {
+      throw new IllegalArgumentException("Unknown characteristic type " + characteristicType);
+    }
+
+    relationship.setInferred(null);
     return relationship;
   }
 
@@ -270,7 +374,7 @@ public class SnowstormDtoUtil {
     String definitionStatusId = c.getDefinitionStatusId();
     if (definitionStatusId == null) {
       definitionStatusId =
-          c.getDefinitionStatus().equals(PRIMITIVE.getLabel())
+          c.getDefinitionStatus().equals(PRIMITIVE.name())
               ? PRIMITIVE.getValue()
               : DEFINED.getValue();
     }
@@ -305,40 +409,63 @@ public class SnowstormDtoUtil {
         .moduleId(SCT_AU_MODULE.getValue());
   }
 
-  public static void addQuantityIfNotNull(
+  public static boolean addQuantityIfNotNull(
       Quantity quantity,
       int decimalScale,
       Set<SnowstormRelationship> relationships,
       LingoConstants valueType,
       LingoConstants unitType,
       DataTypeEnum datatype,
-      int group) {
-    if (quantity != null) {
+      int group,
+      ModelConfiguration modelConfiguration) {
+    if (quantity != null && quantity.getValue() != null && quantity.getUnit() != null) {
       relationships.add(
           getSnowstormDatatypeComponent(
               valueType,
-              BigDecimalFormatter.formatBigDecimal(quantity.getValue(), decimalScale),
+              BigDecimalFormatter.formatBigDecimal(
+                  quantity.getValue(), decimalScale, modelConfiguration.isTrimWholeNumbers()),
               datatype,
-              group));
-      relationships.add(getSnowstormRelationship(unitType, quantity.getUnit(), group));
+              group,
+              STATED_RELATIONSHIP,
+              modelConfiguration.getModuleId()));
+      relationships.add(
+          getSnowstormRelationship(
+              unitType,
+              quantity.getUnit(),
+              group,
+              STATED_RELATIONSHIP,
+              modelConfiguration.getModuleId()));
+      return true;
     }
+    return false;
   }
 
   public static void addRelationshipIfNotNull(
       Set<SnowstormRelationship> relationships,
       SnowstormConceptMini property,
       LingoConstants type,
-      int group) {
+      int group,
+      String moduleId) {
     if (property != null) {
-      relationships.add(getSnowstormRelationship(type, property, group));
+      relationships.add(
+          getSnowstormRelationship(type, property, group, STATED_RELATIONSHIP, moduleId));
     }
   }
 
   public static void addSynoynms(
-      SnowstormConceptView concept, Set<SnowstormDescription> descriptions) {
+      SnowstormConceptView concept,
+      Set<SnowstormDescription> descriptions,
+      ModelConfiguration modelConfiguration) {
+
     if (descriptions == null) {
       return;
     }
+
+    String moduleId = modelConfiguration.getModuleId();
+    Set<String> languages = modelConfiguration.getPreferredLanguageRefsets();
+    Map<String, String> acceptabilityMap = new HashMap<>();
+    languages.forEach(
+        language -> acceptabilityMap.put(language, SnomedConstants.ACCEPTABLE.getValue()));
 
     descriptions.forEach(
         snowstormDescription -> {
@@ -349,19 +476,19 @@ public class SnowstormDtoUtil {
                   .term(snowstormDescription.getTerm())
                   .type(SnomedConstants.SYNONYM.toString())
                   .caseSignificance(ENTIRE_TERM_CASE_SENSITIVE.getValue())
-                  .moduleId(SCT_AU_MODULE.getValue())
-                  .acceptabilityMap(
-                      Map.of(AmtConstants.ADRS.getValue(), SnomedConstants.ACCEPTABLE.getValue()));
+                  .moduleId(moduleId)
+                  .acceptabilityMap(acceptabilityMap);
           concept.getDescriptions().add(desc);
         });
   }
 
-  public static void addDescription(SnowstormConceptView concept, String term, String type) {
+  public static void addDescription(
+      SnowstormConceptView concept,
+      String term,
+      String type,
+      ModelConfiguration modelConfiguration,
+      String caseSignificance) {
     Set<SnowstormDescription> descriptions = concept.getDescriptions();
-
-    if (descriptions == null) {
-      descriptions = new HashSet<>();
-    }
 
     descriptions.add(
         new SnowstormDescription()
@@ -369,22 +496,17 @@ public class SnowstormDtoUtil {
             .lang("en")
             .term(term)
             .type(type)
-            .caseSignificance(ENTIRE_TERM_CASE_SENSITIVE.getValue())
-            .moduleId(SCT_AU_MODULE.getValue())
-            .acceptabilityMap(
-                Map.of(
-                    AmtConstants.ADRS.getValue(),
-                    SnomedConstants.PREFERRED.getValue(),
-                    AmtConstants.GB_LANG_REFSET_ID.getValue(),
-                    SnomedConstants.PREFERRED.getValue(),
-                    AmtConstants.US_LANG_REFSET_ID.getValue(),
-                    SnomedConstants.PREFERRED.getValue())));
+            .caseSignificance(caseSignificance)
+            .moduleId(modelConfiguration.getModuleId())
+            .acceptabilityMap(modelConfiguration.getAcceptabilityMap()));
 
     concept.setDescriptions(descriptions);
   }
 
   public static void removeDescription(SnowstormConceptView concept, String term, String type) {
-    concept.getDescriptions().removeIf(d -> d.getTerm().equals(term) && d.getType().equals(type));
+    concept
+        .getDescriptions()
+        .removeIf(d -> d.getTerm().equals(term) && Objects.equals(d.getType(), type));
   }
 
   public static String getFsnTerm(@NotNull SnowstormConceptMini snowstormConceptMini) {
@@ -394,29 +516,63 @@ public class SnowstormDtoUtil {
     return snowstormConceptMini.getFsn().getTerm();
   }
 
-  public static SnowstormConceptView toSnowstormConceptView(Node node) {
+  public static String getPtTerm(SnowstormConceptMini snowstormConceptMini) {
+    if (snowstormConceptMini.getPt() == null) {
+      throw new ResourceNotFoundProblem("PT is null for " + snowstormConceptMini.getConceptId());
+    }
+    return snowstormConceptMini.getPt().getTerm();
+  }
+
+  public static SnowstormReferenceSetMemberViewComponent toSnowstormReferenceSetMember(
+      SnowstormReferenceSetMember referenceSetMember) {
+    return new SnowstormReferenceSetMemberViewComponent()
+        .active(referenceSetMember.getActive())
+        .moduleId(referenceSetMember.getModuleId())
+        .memberId(referenceSetMember.getMemberId())
+        .effectiveTime(referenceSetMember.getEffectiveTime())
+        .released(referenceSetMember.getReleased())
+        .releasedEffectiveTime(referenceSetMember.getReleasedEffectiveTime())
+        .refsetId(referenceSetMember.getRefsetId())
+        .referencedComponentId(referenceSetMember.getReferencedComponentId())
+        .additionalFields(referenceSetMember.getAdditionalFields());
+  }
+
+  public static SnowstormConceptView toSnowstormConceptView(
+      Node node, ModelConfiguration modelConfiguration) {
     SnowstormConceptView concept = new SnowstormConceptView();
 
     if (node.getNewConceptDetails().getConceptId() != null) {
       concept.setConceptId(node.getNewConceptDetails().getConceptId().toString());
     }
-    concept.setModuleId(SCT_AU_MODULE.getValue());
+    concept.setModuleId(modelConfiguration.getModuleId());
 
     NewConceptDetails newConceptDetails = node.getNewConceptDetails();
 
     SnowstormDtoUtil.addDescription(
-        concept, newConceptDetails.getPreferredTerm(), SnomedConstants.SYNONYM.getValue());
+        concept,
+        newConceptDetails.getPreferredTerm(),
+        SnomedConstants.SYNONYM.getValue(),
+        modelConfiguration,
+        // todo need to revise hard coding of ENTIRE_TERM_CASE_SENSITIVE
+        ENTIRE_TERM_CASE_SENSITIVE.getValue());
     SnowstormDtoUtil.addDescription(
-        concept, newConceptDetails.getFullySpecifiedName(), SnomedConstants.FSN.getValue());
-    SnowstormDtoUtil.addSynoynms(concept, node.getNewConceptDetails().getDescriptions());
+        concept,
+        newConceptDetails.getFullySpecifiedName(),
+        SnomedConstants.FSN.getValue(),
+        modelConfiguration,
+        ENTIRE_TERM_CASE_SENSITIVE.getValue());
+
+    SnowstormDtoUtil.addSynoynms(
+        concept, node.getNewConceptDetails().getDescriptions(), modelConfiguration);
 
     concept.setActive(true);
     concept.setDefinitionStatusId(
         newConceptDetails.getAxioms().stream()
-                .anyMatch(a -> a.getDefinitionStatus().equals(DEFINED.getValue()))
+                .anyMatch(a -> DEFINED.getValue().equals(a.getDefinitionStatus()))
             ? DEFINED.getValue()
             : PRIMITIVE.getValue());
     concept.setClassAxioms(newConceptDetails.getAxioms());
+    concept.setRelationships(newConceptDetails.getNonDefiningProperties());
 
     concept.setConceptId(newConceptDetails.getSpecifiedConceptId());
     if (concept.getConceptId() == null) {
@@ -425,41 +581,177 @@ public class SnowstormDtoUtil {
     return concept;
   }
 
-  public static Set<SnowstormReferenceSetMemberViewComponent>
-      getExternalIdentifierReferenceSetEntries(
-          PackageDetails<? extends ProductDetails> packageDetails) {
-    List<ExternalIdentifier> externalIdentifiers = packageDetails.getExternalIdentifiers();
-    return getExternalIdentifierReferenceSetEntries(externalIdentifiers);
+  public static SnowstormConceptView toSnowstormConceptView(
+      Node node, ModelConfiguration modelConfiguration, @NotNull SnowstormConcept existingConcept) {
+    SnowstormConceptView conceptView = toSnowstormConceptView(node, modelConfiguration);
+
+    // merge the existing concept's properties into the new concept view
+    if (existingConcept != null) {
+      // Merge descriptions
+      if (existingConcept.getDescriptions() != null) {
+        // add in the existing descriptions that are not the FSN or PT
+        conceptView
+            .getDescriptions()
+            .addAll(
+                existingConcept.getDescriptions().stream()
+                    .filter(
+                        d ->
+                            !d.getTerm().equals(existingConcept.getFsn().getTerm())
+                                && !d.getTerm().equals(existingConcept.getPt().getTerm()))
+                    .collect(Collectors.toSet()));
+      }
+      // no need to keep the inferred axiomx - classification is required anyway
+      // class axioms have been updated so nothing to keep from the existing concept
+
+      // add back any GCIs
+      conceptView.setGciAxioms(existingConcept.getGciAxioms());
+    }
+
+    return conceptView;
   }
 
   public static Set<SnowstormReferenceSetMemberViewComponent>
-      getExternalIdentifierReferenceSetEntries(Collection<ExternalIdentifier> externalIdentifiers) {
+      getExternalIdentifierReferenceSetEntries(
+          Collection<ExternalIdentifier> externalIdentifiers,
+          ModelConfiguration modelConfiguration,
+          ModelLevelType modelLevelType) {
+
+    Map<String, ExternalIdentifierDefinition> mappingRefsetMap =
+        modelConfiguration.getMappingsByName();
     Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers = new HashSet<>();
     for (ExternalIdentifier identifier : externalIdentifiers) {
-      if (identifier.getIdentifierScheme().equals(ARTGID_SCHEME.getValue())) {
-        referenceSetMembers.add(
-            new SnowstormReferenceSetMemberViewComponent()
-                .active(true)
-                .moduleId(SCT_AU_MODULE.getValue())
-                .refsetId(ARTGID_REFSET.getValue())
-                .additionalFields(Map.of("mapTarget", identifier.getIdentifierValue())));
-      } else {
+      ExternalIdentifierDefinition externalIdentifierDefinition =
+          mappingRefsetMap.get(identifier.getIdentifierScheme());
+
+      if (externalIdentifierDefinition == null) {
         throw new ProductAtomicDataValidationProblem(
             "Unknown identifier scheme " + identifier.getIdentifierScheme());
       }
+
+      if (identifier.isAdditionalFieldMismatch(externalIdentifierDefinition)) {
+        throw new ProductAtomicDataValidationProblem(
+            "ExternalIdentifierDefinition additional fields do not match the reference set member additional fields. "
+                + "Expected: "
+                + String.join(", ", externalIdentifierDefinition.getAdditionalFields().keySet())
+                + ", but got: "
+                + String.join(", ", identifier.getAdditionalFields().keySet())
+                + " for identifier: "
+                + identifier.getTitle());
+      }
+
+      if (externalIdentifierDefinition.getModelLevels().contains(modelLevelType)) {
+
+        Map<String, String> additionalFields = new HashMap<>();
+
+        if (externalIdentifierDefinition.getDataType().equals(NonDefiningPropertyDataType.CODED)) {
+          additionalFields.put("mapTarget", identifier.getValueObject().getConceptId());
+        } else {
+          additionalFields.put("mapTarget", identifier.getValue());
+        }
+
+        if (!MappingType.RELATED.equals(identifier.getRelationshipType())) {
+          additionalFields.put("mapType", identifier.getRelationshipType().getSctid());
+        }
+
+        if (identifier.getAdditionalFields() != null) {
+          identifier
+              .getAdditionalFields()
+              .forEach(
+                  (key, value) ->
+                      additionalFields.put(
+                          key,
+                          value.getValue() == null
+                              ? value.getValueObject().getConceptId()
+                              : value.getValue()));
+        }
+
+        SnowstormReferenceSetMemberViewComponent refsetMember =
+            new SnowstormReferenceSetMemberViewComponent()
+                .active(true)
+                .refsetId(externalIdentifierDefinition.getIdentifier())
+                .additionalFields(additionalFields);
+
+        referenceSetMembers.add(refsetMember);
+      }
     }
+
     return referenceSetMembers;
   }
 
   public static SnowstormReferenceSetMemberViewComponent
       createSnowstormReferenceSetMemberViewComponent(
-          ExternalIdentifier externalIdentifier, String referencedComponentId) {
+          NonDefiningBase baseProperty,
+          String referencedComponentId,
+          Collection<ExternalIdentifierDefinition> externalIdentifierDefinitions,
+          Collection<ReferenceSetDefinition> referenceSetDefinitions) {
+    switch (baseProperty.getType()) {
+      case REFERENCE_SET -> {
+        return createSnowstormReferenceSetMemberViewComponent(
+            (ReferenceSet) baseProperty, referencedComponentId, referenceSetDefinitions);
+      }
+      case EXTERNAL_IDENTIFIER -> {
+        return createSnowstormReferenceSetMemberViewComponent(
+            (ExternalIdentifier) baseProperty,
+            referencedComponentId,
+            externalIdentifierDefinitions);
+      }
+      default ->
+          throw new ProductAtomicDataValidationProblem(
+              "Cannot create a reference set member for a property of type "
+                  + baseProperty.getType());
+    }
+  }
+
+  public static SnowstormReferenceSetMemberViewComponent
+      createSnowstormReferenceSetMemberViewComponent(
+          ExternalIdentifier externalIdentifier,
+          String referencedComponentId,
+          Collection<ExternalIdentifierDefinition> externalIdentifierDefinitions) {
+
+    ExternalIdentifierDefinition externalIdentifierDefinition =
+        externalIdentifierDefinitions.stream()
+            .filter(m -> m.getName().equals(externalIdentifier.getIdentifierScheme()))
+            .findFirst()
+            .orElseThrow(
+                () ->
+                    new ProductAtomicDataValidationProblem(
+                        "Unknown identifier scheme " + externalIdentifier.getIdentifierScheme()));
+
+    Map<String, String> additionalFields = new HashMap<>();
+
+    additionalFields.put(MAP_TARGET.getValue(), externalIdentifier.getValue());
+
+    if (!MappingType.RELATED.equals(externalIdentifier.getRelationshipType())) {
+      additionalFields.put(
+          MAP_TYPE.getValue(), externalIdentifier.getRelationshipType().getSctid());
+    }
+
     return new SnowstormReferenceSetMemberViewComponent()
         .active(true)
         .referencedComponentId(referencedComponentId)
-        .moduleId(SCT_AU_MODULE.getValue())
-        .refsetId(ARTGID_REFSET.getValue())
-        .additionalFields(Map.of("mapTarget", externalIdentifier.getIdentifierValue()));
+        .refsetId(externalIdentifierDefinition.getIdentifier())
+        .additionalFields(additionalFields);
+  }
+
+  public static SnowstormReferenceSetMemberViewComponent
+      createSnowstormReferenceSetMemberViewComponent(
+          ReferenceSet referenceSet,
+          String referencedComponentId,
+          Collection<ReferenceSetDefinition> referenceSetDefinitionDefinitions) {
+
+    ReferenceSetDefinition referenceSetDefinition =
+        referenceSetDefinitionDefinitions.stream()
+            .filter(m -> m.getName().equals(referenceSet.getIdentifierScheme()))
+            .findFirst()
+            .orElseThrow(
+                () ->
+                    new ProductAtomicDataValidationProblem(
+                        "Unknown identifier scheme " + referenceSet.getIdentifierScheme()));
+
+    return new SnowstormReferenceSetMemberViewComponent()
+        .active(true)
+        .referencedComponentId(referencedComponentId)
+        .refsetId(referenceSetDefinition.getIdentifier());
   }
 
   public static String getIdAndFsnTerm(SnowstormConceptMini component) {
@@ -473,7 +765,7 @@ public class SnowstormDtoUtil {
     return new SnowstormConceptMini()
         .conceptId(lingoConstants.getValue())
         .id(lingoConstants.getValue())
-        .definitionStatus("PRIMITIVE")
+        .definitionStatus(PRIMITIVE.name())
         .definitionStatusId(PRIMITIVE.getValue())
         .active(true)
         .fsn(new SnowstormTermLangPojo().lang("en").term(lingoConstants.getLabel()))
@@ -486,11 +778,53 @@ public class SnowstormDtoUtil {
                         .substring(0, lingoConstants.getLabel().indexOf("(") - 1)));
   }
 
-  public static SnowstormAxiom getSingleAxiom(SnowstormConcept concept) {
-    SnowstormAxiom axiom = concept.getClassAxioms().iterator().next();
-    if (concept.getClassAxioms().size() > 1) {
+  public static SnowstormConceptMini toSnowstormConceptMini(String id, String term) {
+    return new SnowstormConceptMini()
+        .conceptId(id)
+        .id(id)
+        .definitionStatus(PRIMITIVE.name())
+        .definitionStatusId(PRIMITIVE.getValue())
+        .active(true)
+        .fsn(new SnowstormTermLangPojo().lang("en").term(term))
+        .pt(new SnowstormTermLangPojo().lang("en").term(term.substring(0, term.indexOf("(") - 1)));
+  }
+
+  public static SnowstormAxiom getSingleAxiom(SnowstormConceptView concept) {
+    if (getActiveClassAxioms(concept).size() != 1) {
       throw new AtomicDataExtractionProblem(
-          "Cannot handle more than one axiom determining brands", concept.getConceptId());
+          "Expected 1 class axiom but found " + getActiveClassAxioms(concept).size(),
+          concept.getConceptId());
+    }
+    return getActiveClassAxioms(concept).iterator().next();
+  }
+
+  public static SnowstormAxiom getSingleAxiom(SnowstormConcept concept) {
+    if (getActiveClassAxioms(concept).size() != 1) {
+      throw new AtomicDataExtractionProblem(
+          "Expected 1 class axiom but found " + getActiveClassAxioms(concept).size(),
+          concept.getConceptId());
+    }
+    return getActiveClassAxioms(concept).iterator().next();
+  }
+
+  public static Set<SnowstormAxiom> getActiveClassAxioms(SnowstormConcept concept) {
+    return concept.getClassAxioms().stream()
+        .filter(a -> a.getActive() == null || a.getActive())
+        .collect(Collectors.toSet());
+  }
+
+  public static Set<SnowstormAxiom> getActiveClassAxioms(SnowstormConceptView concept) {
+    return concept.getClassAxioms().stream()
+        .filter(a -> a.getActive() == null || a.getActive())
+        .collect(Collectors.toSet());
+  }
+
+  public static SnowstormAxiom getSingleAxiom(NewConceptDetails concept) {
+    SnowstormAxiom axiom = concept.getAxioms().iterator().next();
+    if (concept.getAxioms().size() > 1) {
+      throw new AtomicDataExtractionProblem(
+          "Cannot handle more than one axiom determining brands",
+          concept.getConceptId().toString());
     }
     return axiom;
   }
@@ -500,10 +834,11 @@ public class SnowstormDtoUtil {
    * ids
    *
    * @param existingRelationships the relationships to clone
+   * @param moduleId the module id to set on the cloned relationships
    * @return a new set of relationships with blank ids
    */
   public static Set<SnowstormRelationship> cloneNewRelationships(
-      Set<SnowstormRelationship> existingRelationships) {
+      Set<SnowstormRelationship> existingRelationships, @NotEmpty String moduleId) {
 
     return existingRelationships.stream()
         .map(
@@ -523,7 +858,7 @@ public class SnowstormDtoUtil {
                     .effectiveTime(r.getEffectiveTime())
                     .groupId(r.getGroupId())
                     .grouped(r.getGrouped())
-                    .moduleId(r.getModuleId())
+                    .moduleId(moduleId)
                     .modifier(r.getModifier())
                     .sourceId(r.getSourceId())
                     .target(r.getTarget())
@@ -548,12 +883,11 @@ public class SnowstormDtoUtil {
       Set<SnowstormDescription> descriptions, String dialectKey) {
     return descriptions.stream()
         .filter(
-            description -> {
-              return description.getType().equals("SYNONYM")
-                  && description.getAcceptabilityMap() != null
-                  && description.getAcceptabilityMap().get(dialectKey) != null
-                  && description.getAcceptabilityMap().get(dialectKey).equals("PREFERRED");
-            })
+            description ->
+                Objects.equals(description.getType(), "SYNONYM")
+                    && description.getAcceptabilityMap() != null
+                    && description.getAcceptabilityMap().get(dialectKey) != null
+                    && description.getAcceptabilityMap().get(dialectKey).equals("PREFERRED"))
         .findFirst()
         .orElse(null);
   }
@@ -637,5 +971,84 @@ public class SnowstormDtoUtil {
             description.getAssociationTargets() != null
                 ? new HashMap<>(description.getAssociationTargets())
                 : new HashMap<>());
+  }
+
+  /**
+   * Determines if two sets of SnowstormAxioms are equivalent. The comparison ignores fields such as
+   * id, moduleId, released status, and effectiveTime, focusing only on the core content of the
+   * axioms.
+   *
+   * @param axioms the first set of {@code SnowstormAxiom} objects to compare
+   * @param axioms1 the second set of {@code SnowstormAxiom} objects to compare
+   * @return {@code true} if the two sets of axioms are equivalent, {@code false} otherwise
+   */
+  public static boolean sameAxioms(
+      @NotNull @NotEmpty Set<SnowstormAxiom> axioms,
+      @NotNull @NotEmpty Set<SnowstormAxiom> axioms1) {
+    if (axioms.size() != axioms1.size()) {
+      return false;
+    }
+    for (SnowstormAxiom axiom : axioms) {
+      if (!axioms1.contains(axiom)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * This isn't a straight equals - it is to tell if two axioms are the same, it ignores id,
+   * moduleid, released, effectiveTime etc.
+   *
+   * @param axiom1 axiom to compare
+   * @param axiom2 axiom to compare
+   * @return true if the axioms are the same, false if they are different
+   */
+  public static boolean sameAxiom(SnowstormAxiom axiom1, SnowstormAxiom axiom2) {
+    if (axiom1 == null && axiom2 == null) {
+      return true;
+    }
+    if (axiom1 == null || axiom2 == null) {
+      return false;
+    }
+
+    return Objects.equals(axiom1.getDefinitionStatus(), axiom2.getDefinitionStatus())
+        && sameRelationships(axiom1.getRelationships(), axiom2.getRelationships());
+  }
+
+  private static boolean sameRelationships(
+      Set<SnowstormRelationship> relationships1, Set<SnowstormRelationship> relationships2) {
+    if (relationships1 == null && relationships2 == null) {
+      return true;
+    }
+    if (relationships1 == null || relationships2 == null) {
+      return false;
+    }
+    if (relationships1.size() != relationships2.size()) {
+      return false;
+    }
+
+    return toGroupKeys(relationships1).equals(toGroupKeys(relationships2));
+  }
+
+  public static Set<Set<String>> toGroupKeys(Set<SnowstormRelationship> relationships1) {
+    return relationships1.stream()
+        .collect(Collectors.groupingBy(r -> r.getGroupId() == null ? 0 : r.getGroupId()))
+        .values()
+        .stream()
+        .map(group -> group.stream().map(SnowstormDtoUtil::toStringKey).collect(Collectors.toSet()))
+        .collect(Collectors.toSet());
+  }
+
+  private static String toStringKey(SnowstormRelationship relationship) {
+    return relationship.getTypeId()
+        + "|"
+        + (relationship.getConcreteValue() != null
+            ? relationship.getConcreteValue().getValue()
+            : relationship.getDestinationId())
+        + "|"
+        + relationship.getCharacteristicTypeId()
+        + "|"
+        + relationship.getModifierId();
   }
 }

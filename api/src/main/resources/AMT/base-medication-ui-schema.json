@@ -1,0 +1,822 @@
+{
+  "ui:grid": [
+    {
+      "packType": 24,
+      "variant": 24
+    },
+
+    {
+      "productName": 12
+    },
+    {
+      "containerType": 12
+    },
+    {
+      "nonDefiningProperties": 24
+    },
+    {
+      "externalIdentifiers": 12,
+      "_empty": 12
+    },
+    {
+      "containedProducts": 24
+    },
+    {
+      "containedPackages": 24
+    }
+
+  ],
+  "ui:options": {
+    "skipTitle": true,
+    "dynamicDiscriminatorOptions": {
+      "path": "",
+      "options": {
+        "normal": [
+          {
+            "label": "Normal",
+            "value": "normal"
+          }
+        ],
+        "multipack": [
+          {
+            "label": "Multipack",
+            "value": "multipack"
+          }
+        ]
+      }
+    }
+  },
+  "packType": {
+    "ui:enumNames": ["Normal pack", "Multipack"],
+    "ui:widget": "select",
+    "ui:title": "Pack Type",
+    "ui:options": {
+      "updateSchemaOnChange": true,
+      "disableDropdown": {
+        "$eval": "formData.containedProducts?.[0]?.productDetails?.productName?.pt?.term?.length > 0 || formData.containedPackages?.[0]?.packageDetails?.productName?.pt?.term?.length > 0"
+      }
+    }
+  },
+  "variant": {
+    "ui:enumNames": ["Medication", "Drug Device Combination"],
+    "ui:widget": "select",
+    "ui:title": "Target Model",
+    "ui:options": {
+      "updateSchemaOnChange": true,
+      "disableDropdown": {
+        "$eval": "formData.containedProducts?.[0]?.productDetails?.productName?.pt?.term?.length > 0 || formData.containedPackages?.[0]?.packageDetails?.productName?.pt?.term?.length > 0"
+      }
+    }
+  },
+  "productName": {
+    "ui:field": "AutoCompleteField",
+    "ui:options": {
+      "ecl": "<774167006",
+      "showDefaultOptions": false,
+      "createPrimitiveConcept": {
+        "ecl": "<774167006",
+        "semanticTags": "(product name)",
+        "parentConceptId": "774167006",
+        "parentConceptName": "Product name (product name)"
+      }
+    }
+  },
+  "containerType": {
+    "ui:field": "AutoCompleteField",
+    "ui:options": {
+      "ecl": "^929360051000036108.30465011000036106",
+      "extendedEcl": "<49062001",
+      "showDefaultOptions": true
+    }
+  },
+  "containedProducts": {
+    "ui:field": "ConditionalArrayField",
+    "ui:options": {
+      "arrayTemplate": "accordion",
+      "skipTitle": true,
+      "searchAndAddProduct": {
+        "ecl": "^929360031000036100 AND <763158003",
+        "type": "medication",
+        "package": false
+      },
+      "conditions": [
+        {
+          "field": "containedPackages",
+          "operator": "lengthGreaterThan",
+          "value": 0
+        }
+      ],
+      "conditionLogic": "and"
+    },
+    "items": {
+      "ui:grid": [
+        {
+          "productDetails": 24
+        },
+        {
+          "value": 6,
+          "unit": 6,
+          "_empty": 12
+        }
+      ],
+      "ui:options": {
+        "titleSource": "productDetails.productName.pt.term",
+        "defaultTitle": "Product",
+        "skipTitle": true
+      },
+      "value": {
+        "ui:widget": "text",
+        "ui:options": {
+          "inputType": "text",
+          "title": "Pack Size"
+        }
+      },
+      "unit": {
+        "ui:field": "AutoCompleteField",
+        "ui:title": "Unit",
+        "ui:options": {
+          "ecl": "(^929360051000036108 : (774160008 OR 999000081000168101) = *).774163005",
+          "showDefaultOptions": true
+        }
+      },
+      "productDetails": {
+        "ui:options": {
+          "skipTitle": true
+        },
+        "ui:grid": [
+          { "productType": 24 },
+          {
+            "productName": 12,
+            "genericForm": 12
+          },
+          {
+            "activeIngredients": 12,
+            "_columnB": 12
+          }
+        ],
+        "_columnB": {
+          "ui:grid": [
+            {
+              "specificForm": 24
+            },
+            {
+              "quantity": 24
+            },
+            {
+              "containerType": 12,
+              "deviceType": 12
+            },
+            {
+              "otherIdentifyingInformation": 24
+            }
+          ]
+        },
+        "productType": {
+          "ui:enumNames": [
+            "Total Quantity Only",
+            "Concentration Strength Only",
+            "Total Quantity, Concentration Strength, and Size",
+            "No Strength"
+          ],
+          "ui:widget": "select",
+          "ui:title": "Product Template",
+          "ui:options": {
+            "updateSchemaOnChange": true
+          }
+        },
+        "type": {
+          "ui:widget": "hidden",
+          "ui:options": {
+            "skipTitle": true
+          }
+        },
+        "productName": {
+          "ui:field": "AutoCompleteField",
+          "ui:options": {
+            "ecl": "<774167006",
+            "showDefaultOptions": false
+          }
+        },
+        "activeIngredients": {
+          "ui:options": {
+            "skipTitle": true,
+            "arrayTemplate": "accordion",
+            "orderable": true,
+            "dragAndDrop": true
+          },
+          "items": {
+            "ui:grid": [
+              {
+                "activeIngredient": 24
+              },
+              {
+                "preciseIngredient": 24
+              },
+              {
+                "basisOfStrengthSubstance": 24
+              },
+              {
+                "concentrationStrength": 24
+              },
+              {
+                "totalQuantity": 24
+              }
+            ],
+            "ui:options": {
+              "titleSource": "activeIngredient.pt.term",
+              "defaultTitle": "Ingredient",
+              "skipTitle": true
+            },
+            "activeIngredient": {
+              "ui:field": "AutoCompleteField",
+              "ui:options": {
+                "skipTitle": true,
+                "dependants": [
+                  {
+                    "path": "../preciseIngredient",
+                    "ui:options": {
+                      "getEcl": "<@parent OR (<105590001:738774007=@parent) OR (<105590001:738774007=(<105590001:738774007=@parent)) OR (<105590001:738774007=(<105590001:738774007=(<105590001:738774007=@parent))) OR (<105590001:738774007=(<105590001:738774007=(<105590001:738774007=(<105590001:738774007=@parent))))",
+                      "showDefaultOptions": true
+                    }
+                  },
+                  {
+                    "path": "../basisOfStrengthSubstance",
+                    "ui:options": {
+                      "getEcl": "<<@parent OR (<105590001:738774007=@parent) OR (<105590001:738774007=(<105590001:738774007=@parent))",
+                      "getExtendedEcl": "<105590001",
+                      "showDefaultOptions": true
+                    }
+                  }
+                ],
+                "ecl": ">>^929360031000036100.127489000",
+                "extendedEcl": "<105590001",
+                "showDefaultOptions": false
+              }
+            },
+            "preciseIngredient": {
+              "ui:title": "Precise Ingredient",
+              "ui:field": "AutoCompleteField",
+              "ui:options": {
+                "skipTitle": true,
+                "showDefaultOptions": true
+              }
+            },
+            "basisOfStrengthSubstance": {
+              "ui:field": "AutoCompleteField",
+              "ui:title": "BoSS",
+              "ui:options": {
+                "skipTitle": true,
+                "ecl": "(^929360031000036100.732943007) OR (>>^929360031000036100.127489000)",
+                "extendedEcl": "<105590001",
+                "showDefaultOptions": false,
+                "placeholder": "Basis of Strength Substance (Optional)",
+                "description": "Only enabled if Active Ingredient is set."
+              }
+            },
+            "totalQuantity": {
+              "ui:options": {
+                "skipTitle": true
+              },
+              "ui:grid": [
+                {
+                  "value": 12,
+                  "unit": 12
+                }
+              ],
+              "value": {
+                "ui:widget": "text",
+                "ui:title": "Unit Strength",
+                "ui:options": {
+                  "inputType": "text"
+                }
+              },
+              "unit": {
+                "ui:field": "AutoCompleteField",
+                "ui:title": "Unit",
+                "ui:options": {
+                  "ecl": "^929360031000036100.999000051000168108",
+                  "extendedEcl": "(<767524001) MINUS (*:(700000091000036104=* OR 700000071000036103=*))",
+                  "showDefaultOptions": true
+                }
+              }
+            },
+            "concentrationStrength": {
+              "ui:options": {
+                "skipTitle": true
+              },
+              "ui:grid": [
+                {
+                  "value": 12,
+                  "unit": 12
+                }
+              ],
+              "value": {
+                "ui:widget": "text",
+                "ui:title": "Concentration Strength",
+                "ui:options": {
+                  "inputType": "text"
+                }
+              },
+              "unit": {
+                "ui:field": "AutoCompleteField",
+                "ui:title": "Unit",
+                "ui:options": {
+                  "ecl": "^929360031000036100.999000031000168102",
+                  "extendedEcl": "<767524001:(700000091000036104=* AND 700000071000036103=*)",
+                  "showDefaultOptions": true
+                }
+              }
+            }
+          }
+        },
+        "genericForm": {
+          "ui:field": "AutoCompleteField",
+          "ui:title": "Generic Dose Form",
+          "ui:options": {
+            "dependants": [
+              {
+                "path": "../specificForm",
+                "ui:options": {
+                  "getEcl": "<@parent",
+                  "showDefaultOptions": true
+                }
+              }
+            ],
+            "ecl": "^929360071000036103.411116001",
+            "extendedEcl": "<736542009",
+            "showDefaultOptions": true
+          }
+        },
+        "specificForm": {
+          "ui:title": "Specific Dose Form",
+          "ui:field": "AutoCompleteField",
+          "ui:options": {
+            "showDefaultOptions": true
+          }
+        },
+        "quantity": {
+          "ui:options": {
+            "skipTitle": true
+          },
+          "ui:grid": [
+            {
+              "value": 12,
+              "unit": 12
+            }
+          ],
+          "value": {
+            "ui:widget": "text",
+            "ui:title": "Unit Size",
+            "ui:options": {
+              "inputType": "text"
+            }
+          },
+          "unit": {
+            "ui:field": "AutoCompleteField",
+            "ui:title": "Unit",
+            "ui:options": {
+              "ecl": "^929360031000036100.774163005",
+              "extendedEcl": "(<767524001) MINUS (*:(700000091000036104=* OR 700000071000036103=*))",
+              "showDefaultOptions": true
+            }
+          }
+        },
+        "containerType": {
+          "ui:field": "AutoCompleteField",
+          "ui:title": "Container Type",
+          "ui:options": {
+            "ecl": "^929360031000036100.30465011000036106",
+            "extendedEcl": "<49062001",
+            "showDefaultOptions": true,
+            "exclusions": [
+              {
+                "path": "../deviceType"
+              }
+            ]
+          }
+        },
+        "deviceType": {
+          "ui:title": "Device Type",
+          "ui:field": "AutoCompleteField",
+          "ui:options": {
+            "ecl": "^929360031000036100.999000061000168105",
+            "extendedEcl": "<63653004",
+            "showDefaultOptions": true,
+            "exclusions": [
+              {
+                "path": "../containerType"
+              }
+            ]
+          }
+        },
+        "otherIdentifyingInformation": {
+          "ui:widget": "text",
+          "ui:title": "Other Identifying Information",
+          "ui:options": {
+            "placeholder": "Enter any additional identifying information"
+          }
+        }
+      }
+    }
+  },
+  "containedPackages": {
+    "ui:field": "ConditionalArrayField",
+    "ui:options": {
+      "arrayTemplate": "accordion",
+      "skipTitle": true,
+      "searchAndAddProduct": {
+        "ecl": "^929360051000036108:774160008=*",
+        "type": "medication",
+        "package": true
+      },
+      "conditions": [
+        {
+          "field": "containedProducts",
+          "operator": "lengthGreaterThan",
+          "value": 0
+        }
+      ],
+      "conditionLogic": "and"
+    },
+    "items": {
+      "ui:grid": [
+        {
+          "value": 6,
+          "unit": 6,
+          "_empty": 12
+        },
+        {
+          "packageDetails": 24
+        }
+      ],
+      "ui:options": {
+        "titleSource": "packageDetails.productName.pt.term",
+        "defaultTitle": "Package",
+        "skipTitle": true
+      },
+      "value": {
+        "ui:widget": "text",
+        "ui:options": {
+          "inputType": "text",
+          "title": "Quantity"
+        }
+      },
+      "unit": {
+        "ui:field": "AutoCompleteField",
+        "ui:title": "Unit",
+        "ui:options": {
+          "ecl": "(^929360051000036108 : (774160008 OR 999000081000168101) = *).774163005"
+        }
+      },
+      "packageDetails": {
+        "ui:options": {
+          "skipTitle": true
+        },
+        "ui:grid": [
+          {
+            "productName": 12,
+            "containerType": 12
+          },
+          {
+            "nonDefiningProperties": 24
+          },
+          {
+            "containedProducts": 24
+          }
+        ],
+        "productName": {
+          "ui:field": "AutoCompleteField",
+          "ui:options": {
+            "ecl": "<774167006",
+            "showDefaultOptions": true
+          }
+        },
+        "containerType": {
+          "ui:field": "AutoCompleteField",
+          "ui:options": {
+            "ecl": "^929360051000036108.30465011000036106",
+            "extendedEcl": "<49062001",
+            "showDefaultOptions": true
+          }
+        },
+        "containedProducts": {
+          "ui:options": {
+            "skipTitle": true,
+            "arrayTemplate": "accordion",
+            "searchAndAddProduct": {
+              "ecl": "^929360031000036100 AND <763158003",
+              "type": "medication",
+              "package": false
+            }
+          },
+          "items": {
+            "ui:grid": [
+              {
+                "productDetails": 24
+              },
+              {
+                "value": 6,
+                "unit": 6,
+                "_empty": 12
+              }
+            ],
+            "ui:options": {
+              "titleSource": "productDetails.productName.pt.term",
+              "defaultTitle": "Product",
+              "skipTitle": true
+            },
+            "value": {
+              "ui:widget": "text",
+              "ui:options": {
+                "inputType": "text",
+                "title": "Pack Size"
+              }
+            },
+            "unit": {
+              "ui:field": "AutoCompleteField",
+              "ui:title": "Unit",
+              "ui:options": {
+                "ecl": "(^929360051000036108 : (774160008 OR 999000081000168101) = *).774163005",
+                "showDefaultOptions": true
+              }
+            },
+            "productDetails": {
+              "ui:options": {
+                "skipTitle": true
+              },
+              "ui:grid": [
+                { "productType": 24 },
+                {
+                  "productName": 12,
+                  "genericForm": 12
+                },
+                {
+                  "activeIngredients": 12,
+                  "_columnB": 12
+                }
+              ],
+              "_columnB": {
+                "ui:grid": [
+                  {
+                    "specificForm": 24
+                  },
+                  {
+                    "quantity": 24
+                  },
+                  {
+                    "containerType": 12,
+                    "deviceType": 12
+                  },
+                  {
+                    "otherIdentifyingInformation": 24
+                  }
+                ]
+              },
+              "type": {
+                "ui:widget": "hidden",
+                "ui:options": {
+                  "skipTitle": true
+                }
+              },
+              "productType": {
+                "ui:enumNames": [
+                  "Total Quantity Only",
+                  "Concentration Strength Only",
+                  "Total Quantity, Concentration Strength, and Size",
+                  "No Strength"
+                ],
+                "ui:widget": "select",
+                "ui:title": "Product Template",
+                "ui:options": {
+                  "updateSchemaOnChange": true
+                }
+              },
+              "productName": {
+                "ui:field": "AutoCompleteField",
+                "ui:options": {
+                  "ecl": "<774167006",
+                  "showDefaultOptions": true
+                }
+              },
+              "activeIngredients": {
+                "ui:options": {
+                  "skipTitle": true,
+                  "arrayTemplate": "accordion"
+                },
+                "items": {
+                  "ui:grid": [
+                    {
+                      "activeIngredient": 24
+                    },
+                    {
+                      "preciseIngredient": 24
+                    },
+                    {
+                      "basisOfStrengthSubstance": 24
+                    },
+                    {
+                      "concentrationStrength": 24
+                    },
+                    {
+                      "totalQuantity": 24
+                    }
+                  ],
+                  "ui:options": {
+                    "titleSource": "activeIngredient.pt.term",
+                    "defaultTitle": "Ingredient",
+                    "skipTitle": true
+                  },
+                  "activeIngredient": {
+                    "ui:field": "AutoCompleteField",
+                    "ui:options": {
+                      "skipTitle": true,
+                      "dependants": [
+                        {
+                          "path": "../preciseIngredient",
+                          "ui:options": {
+                            "getEcl": "<@parent OR (<105590001:738774007=@parent) OR (<105590001:738774007=(<105590001:738774007=@parent)) OR (<105590001:738774007=(<105590001:738774007=(<105590001:738774007=@parent))) OR (<105590001:738774007=(<105590001:738774007=(<105590001:738774007=(<105590001:738774007=@parent))))",
+                            "showDefaultOptions": true
+                          }
+                        },
+                        {
+                          "path": "../basisOfStrengthSubstance",
+                          "ui:options": {
+                            "showDefaultOptions": true
+                          }
+                        }
+                      ],
+                      "ecl": ">>^929360031000036100.127489000",
+                      "extendedEcl": "<105590001",
+                      "showDefaultOptions": false
+                    }
+                  },
+                  "preciseIngredient": {
+                    "ui:title": "Precise Ingredient",
+                    "ui:field": "AutoCompleteField",
+                    "ui:options": {
+                      "skipTitle": true,
+                      "showDefaultOptions": true
+                    }
+                  },
+                  "basisOfStrengthSubstance": {
+                    "ui:field": "AutoCompleteField",
+                    "ui:title": "BoSS",
+                    "ui:options": {
+                      "skipTitle": true,
+                      "ecl": "(^929360031000036100.732943007) OR (>>^929360031000036100.127489000)",
+                      "extendedEcl": "<105590001",
+                      "showDefaultOptions": false,
+                      "placeholder": "Basis of Strength Substance (Optional)",
+                      "description": "Only enabled if Active Ingredient is set."
+                    }
+                  },
+                  "totalQuantity": {
+                    "ui:options": {
+                      "skipTitle": true
+                    },
+                    "ui:grid": [
+                      {
+                        "value": 12,
+                        "unit": 12
+                      }
+                    ],
+                    "value": {
+                      "ui:widget": "text",
+                      "ui:title": "Unit Strength",
+                      "ui:options": {
+                        "inputType": "text"
+                      }
+                    },
+                    "unit": {
+                      "ui:field": "AutoCompleteField",
+                      "ui:title": "Unit",
+                      "ui:options": {
+                        "ecl": "^929360031000036100.999000051000168108",
+                        "extendedEcl": "(<767524001) MINUS (*:(700000091000036104=* OR 700000071000036103=*))",
+                        "showDefaultOptions": true
+                      }
+                    }
+                  },
+                  "concentrationStrength": {
+                    "ui:options": {
+                      "skipTitle": true
+                    },
+                    "ui:grid": [
+                      {
+                        "value": 12,
+                        "unit": 12
+                      }
+                    ],
+                    "value": {
+                      "ui:widget": "text",
+                      "ui:title": "Concentration Strength",
+                      "ui:options": {
+                        "inputType": "text"
+                      }
+                    },
+                    "unit": {
+                      "ui:field": "AutoCompleteField",
+                      "ui:title": "Unit",
+                      "ui:options": {
+                        "ecl": "^929360031000036100.999000031000168102",
+                        "extendedEcl": "<767524001:(700000091000036104=* AND 700000071000036103=*)",
+                        "showDefaultOptions": true
+                      }
+                    }
+                  }
+                }
+              },
+              "genericForm": {
+                "ui:field": "AutoCompleteField",
+                "ui:title": "Generic Dose Form",
+                "ui:options": {
+                  "dependants": [
+                    {
+                      "path": "../specificForm",
+                      "ui:options": {
+                        "getEcl": "<@parent",
+                        "showDefaultOptions": true
+                      }
+                    }
+                  ],
+                  "ecl": "^929360071000036103.411116001",
+                  "extendedEcl": "<736542009",
+                  "showDefaultOptions": true
+                }
+              },
+              "specificForm": {
+                "ui:title": "Specific Dose Form",
+                "ui:field": "AutoCompleteField",
+                "ui:options": {
+                  "showDefaultOptions": true
+                }
+              },
+              "quantity": {
+                "ui:options": {
+                  "skipTitle": true
+                },
+                "ui:grid": [
+                  {
+                    "value": 12,
+                    "unit": 12
+                  }
+                ],
+                "value": {
+                  "ui:widget": "text",
+                  "ui:title": "Unit Size",
+                  "ui:options": {
+                    "inputType": "text"
+                  }
+                },
+                "unit": {
+                  "ui:field": "AutoCompleteField",
+                  "ui:title": "Unit",
+                  "ui:options": {
+                    "ecl": "^929360031000036100.774163005",
+                    "extendedEcl": "(<767524001) MINUS (*:(700000091000036104=* OR 700000071000036103=*))",
+                    "showDefaultOptions": true
+                  }
+                }
+              },
+              "containerType": {
+                "ui:field": "AutoCompleteField",
+                "ui:title": "Container Type",
+                "ui:options": {
+                  "ecl": "^929360051000036108.30465011000036106",
+                  "extendedEcl": "<49062001",
+                  "showDefaultOptions": true,
+                  "exclusions": [
+                    {
+                      "path": "../deviceType"
+                    }
+                  ]
+                }
+              },
+              "deviceType": {
+                "ui:title": "Device Type",
+                "ui:field": "AutoCompleteField",
+                "ui:options": {
+                  "ecl": "^929360031000036100.999000061000168105",
+                  "extendedEcl": "<63653004",
+                  "showDefaultOptions": true,
+                  "exclusions": [
+                    {
+                      "path": "../containerType"
+                    }
+                  ]
+                }
+              },
+              "otherIdentifyingInformation": {
+                "ui:widget": "text",
+                "ui:title": "Other Identifying Information",
+                "ui:options": {
+                  "placeholder": "Enter any additional identifying information"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

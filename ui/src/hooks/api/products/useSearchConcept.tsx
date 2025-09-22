@@ -46,7 +46,7 @@ export function useSearchConceptOntoserver(
       searchTerm !== undefined &&
       providedEcl !== undefined &&
       providedEcl !== 'undefined' &&
-      searchTerm.length > 2 &&
+      searchTerm?.length > 2 &&
       !(allData && checkConceptSearchResultAlreadyExists(allData, searchTerm));
 
     return validConfig && (showDefaultOptions || validSearch);
@@ -141,28 +141,31 @@ export function useSearchConcept(
           encodeURIComponent(searchTerm),
           branch,
           providedEcl,
+          true,
         );
       } else if (
         searchFilter === 'Sct Id' &&
         isSctIds(parseSearchTermsSctId(searchTerm))
       ) {
         const terms = parseSearchTermsSctId(searchTerm);
-        return ConceptService.searchUnpublishedConceptByIds(
+        return ConceptService.searchConceptByIds(
           terms,
           branch,
           providedEcl,
+          true,
         );
       } else if (searchFilter === 'Artg Id') {
         return ConceptService.searchConceptByArtgId(
           searchTerm,
           branch,
           providedEcl,
+          true,
         );
       } else {
         return emptySnowstormResponse;
       }
     },
-    staleTime: 20 * (60 * 1000),
+    staleTime: 30 * 1000,
     enabled: shouldCall(),
   });
 
@@ -186,6 +189,44 @@ function checkExists(
     // If checkItemAlreadyExists is a boolean value, return it directly
     return checkItemAlreadyExists;
   }
+}
+
+export function useSearchConceptOntoServerByUrl(
+  searchTerm: string | undefined,
+  url: string | undefined,
+  showDefaultOptions?: boolean,
+) {
+  const { applicationConfig } = useApplicationConfigStore();
+
+  const shouldCall = () => {
+    const validConfig =
+      applicationConfig?.fhirServerBaseUrl !== undefined &&
+      applicationConfig.fhirServerExtension !== undefined;
+
+    const validSearch = searchTerm !== undefined && searchTerm.length > 2;
+
+    return validConfig && (showDefaultOptions || validSearch);
+  };
+
+  const { isLoading, data, error, isFetching } = useQuery<ValueSet, AxiosError>(
+    {
+      queryKey: [`onto-concept-url-${url}-${searchTerm}`],
+      queryFn: () => {
+        return OntoserverService.searchConceptByUrl(
+          searchTerm === 'cod'
+            ? 'https://ontology.snowstorm.dc4h.link/staging-auth-proxy/fhir'
+            : applicationConfig.fhirServerBaseUrl,
+          url,
+          applicationConfig.fhirRequestCount,
+          searchTerm,
+        );
+      },
+      staleTime: 20 * (60 * 1000),
+      enabled: shouldCall(),
+    },
+  );
+
+  return { isLoading, data, error, isFetching };
 }
 
 export function useSearchConceptBySctIdList(
@@ -236,7 +277,7 @@ export function useSearchConceptBySctIdList(
     ConceptResponse,
     AxiosError
   >({
-    queryKey: [`concept-${searchTerms.toLocaleString()}-${branch}`],
+    queryKey: [`concept-sctids-${searchTerms.toLocaleString()}-${branch}`],
     queryFn: () => {
       return ConceptService.searchUnPublishedCtppsByIds(
         searchTerms,
@@ -558,7 +599,7 @@ const useCombineSearchResults = (
           })),
         ];
       }
-      if (snowstormData) {
+      if (snowstormData && snowstormData?.items) {
         const tempArr = snowstormData?.items.map(item => ({
           ...item,
           type: UNPUBLISHED_CONCEPTS,

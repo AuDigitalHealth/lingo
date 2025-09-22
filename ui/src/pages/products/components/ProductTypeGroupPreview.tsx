@@ -9,7 +9,6 @@ import {
 import React from 'react';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import { RefsetMember } from '../../../types/RefsetMember.ts';
-import { ProductGroupType } from '../../../types/product.ts';
 import {
   AccordionDetails,
   AccordionSummary,
@@ -42,7 +41,7 @@ interface ProductTypeGroupPreviewProps {
   fieldBindings: FieldBindings;
   branch: string;
   refsetData: RefsetMember[] | undefined;
-  editProduct: boolean;
+  isSimpleEdit: boolean;
   setValue: UseFormSetValue<ProductSummary>;
   ticket?: Ticket;
 }
@@ -63,13 +62,10 @@ function ProductTypeGroupPreview({
   fieldBindings,
   branch,
   refsetData,
-  editProduct,
+  isSimpleEdit,
   setValue,
   ticket,
 }: ProductTypeGroupPreviewProps) {
-  const productGroupEnum: ProductGroupType =
-    ProductGroupType[label as keyof typeof ProductGroupType];
-
   return (
     <Grid>
       <ProductPreviewAccordion
@@ -82,7 +78,7 @@ function ProductTypeGroupPreview({
           id="panel1a-header"
         >
           <Typography data-testid={`product-group-title-${label}`}>
-            {productGroupEnum}
+            {productLabelItems[0]?.displayName}
           </Typography>
         </AccordionSummary>
         <AccordionDetails key={label + '-accordion'}>
@@ -115,7 +111,7 @@ function ProductTypeGroupPreview({
                   fieldBindings={fieldBindings}
                   branch={branch}
                   refsetMembers={productRefSetMembers}
-                  editProduct={editProduct}
+                  isSimpleEdit={isSimpleEdit}
                   setValue={setValue}
                   ticket={ticket}
                 />

@@ -22,6 +22,7 @@ import { FieldBindings } from '../types/FieldBindings.ts';
 import { api } from './api.ts';
 import { unauthorizedApi } from './unauthorizedApi.ts';
 import axios from 'axios';
+
 export const ConfigService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
 
@@ -71,5 +72,91 @@ export const ConfigService = {
       throw new Error('Failed to fetch release version');
     }
     return response.data as string;
+  },
+  async fetchMedicationUiSchemaData(branchPath: string, type: string) {
+    const uiSchemaResponse = await fetch(
+      `/config/${type}/${branchPath}/ui-schema`,
+    );
+    if (!uiSchemaResponse.ok) {
+      throw new Error(`HTTP error! status: ${uiSchemaResponse.status}`);
+    }
+    return (await uiSchemaResponse.json()) as string;
+  },
+  async fetchMedicationSchemaData(branchPath: string, type: string) {
+    const schemaResponse = await fetch(`/config/${type}/${branchPath}/schema`);
+    if (!schemaResponse.ok) {
+      throw new Error(`HTTP error! status: ${schemaResponse.status}`);
+    }
+    return (await schemaResponse.json()) as string;
+  },
+  async fetchDeviceUiSchemaData(branchPath: string) {
+    const uiSchemaResponse = await fetch(
+      `/config/device/${branchPath}/ui-schema`,
+    );
+    if (!uiSchemaResponse.ok) {
+      throw new Error(`HTTP error! status: ${uiSchemaResponse.status}`);
+    }
+    return (await uiSchemaResponse.json()) as string;
+  },
+  async fetchDeviceSchemaData(branchPath: string) {
+    const schemaResponse = await fetch(`/config/device/${branchPath}/schema`);
+    if (!schemaResponse.ok) {
+      throw new Error(`HTTP error! status: ${schemaResponse.status}`);
+    }
+    return (await schemaResponse.json()) as string;
+  },
+  async fetchBulkBrandSchemaData(branchPath: string) {
+    const schemaResponse = await fetch(
+      `/config/bulk-brand/${branchPath}/schema`,
+    );
+    if (!schemaResponse.ok) {
+      throw new Error(`HTTP error! status: ${schemaResponse.status}`);
+    }
+    return (await schemaResponse.json()) as string;
+  },
+  async fetchBulkBrandUiSchemaData(branchPath: string) {
+    const schemaResponse = await fetch(
+      `/config/bulk-brand/${branchPath}/ui-schema`,
+    );
+    if (!schemaResponse.ok) {
+      throw new Error(`HTTP error! status: ${schemaResponse.status}`);
+    }
+    return (await schemaResponse.json()) as string;
+  },
+  async fetchBulkPackSchemaData(branchPath: string) {
+    const schemaResponse = await fetch(
+      `/config/bulk-pack/${branchPath}/schema`,
+    );
+    if (!schemaResponse.ok) {
+      throw new Error(`HTTP error! status: ${schemaResponse.status}`);
+    }
+    return (await schemaResponse.json()) as string;
+  },
+  async fetchBulkPackUiSchemaData(branchPath: string) {
+    const schemaResponse = await fetch(
+      `/config/bulk-pack/${branchPath}/ui-schema`,
+    );
+    if (!schemaResponse.ok) {
+      throw new Error(`HTTP error! status: ${schemaResponse.status}`);
+    }
+    return (await schemaResponse.json()) as string;
+  },
+  async fetchEditUiSchemaData(label: string, branchPath: string) {
+    const schemaResponse = await fetch(
+      `/config/edit/${branchPath}/${label}/ui-schema`,
+    );
+    if (!schemaResponse.ok) {
+      throw new Error(`HTTP error! status: ${schemaResponse.status}`);
+    }
+    return (await schemaResponse.json()) as string;
+  },
+  async fetchEditSchemaData(label: string, branchPath: string) {
+    const schemaResponse = await fetch(
+      `/config/edit/${branchPath}/${label}/schema`,
+    );
+    if (!schemaResponse.ok) {
+      throw new Error(`HTTP error! status: ${schemaResponse.status}`);
+    }
+    return (await schemaResponse.json()) as string;
   },
 };

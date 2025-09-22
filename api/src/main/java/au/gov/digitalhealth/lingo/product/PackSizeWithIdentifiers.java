@@ -15,16 +15,17 @@
  */
 package au.gov.digitalhealth.lingo.product;
 
-import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.HashSet;
 import java.util.Set;
 import lombok.Data;
 
 @Data
 public class PackSizeWithIdentifiers implements Serializable {
   @NotNull private BigDecimal packSize;
-  @NotNull @Valid private Set<@Valid ExternalIdentifier> externalIdentifiers;
+  @NotNull @Valid private Set<@Valid NonDefiningBase> nonDefiningProperties = new HashSet<>();
 }

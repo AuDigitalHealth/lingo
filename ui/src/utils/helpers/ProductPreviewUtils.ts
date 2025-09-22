@@ -16,9 +16,9 @@
 
 import {
   DefinitionStatus,
+  DefinitionType,
   Description,
   Product,
-  Product7BoxBGColour,
 } from '../../types/concept.ts';
 import {
   getBulkAuthorBrandOptions,
@@ -30,6 +30,9 @@ import {
   bulkAuthorPackSizes,
 } from '../../types/queryKeys.ts';
 import { cloneDeep } from 'lodash';
+import { isNewConcept, isReplacedWithExistingConcept } from './conceptUtils.ts';
+import { Product7BoxBGColour } from '../../pages/products/components/style/colors.ts';
+
 export function isNameContainsKeywords(name: string, keywords: string[]) {
   return keywords.some(substring =>
     name.toLowerCase().includes(substring.toLowerCase()),
@@ -57,7 +60,7 @@ export const getColorByDefinitionStatus = (
   ) {
     return Product7BoxBGColour.NEW;
   }
-  if (product.newConcept) {
+  if (isNewConcept(product)) {
     if (
       (product.fullySpecifiedName &&
         isNameContainsKeywords(
@@ -86,6 +89,9 @@ export const getColorByDefinitionStatus = (
       return Product7BoxBGColour.INCOMPLETE;
     }
     return Product7BoxBGColour.NEW;
+  }
+  if (product.propertyUpdate || isReplacedWithExistingConcept(product)) {
+    return Product7BoxBGColour.PROPERTY_CHANGE;
   }
   return product.concept?.definitionStatus === DefinitionStatus.Primitive
     ? Product7BoxBGColour.PRIMITIVE
@@ -142,6 +148,8 @@ export function extractSemanticTag(
 
 export const removeDescriptionSemanticTag = (desc: Description) => {
   const description = cloneDeep(desc);
+
+  if (description.type !== DefinitionType.FSN) return description;
   const containsSemanticTag = extractSemanticTag(description?.term)
     ?.trim()
     .toLocaleLowerCase();
@@ -161,7 +169,39 @@ export const removeDescriptionSemanticTag = (desc: Description) => {
   return description;
 };
 
-export const removeSemanticTagFromTerm = (term: string | undefined) => {
+export const removeSemanticTagFromTerm = (
+  term: string | undefined,
+  semanticTag: string | undefined,
+) => {
+  if (!term || !semanticTag) {
+    return term || '';
+  }
+
+  // Escape special regex characters in the semantic tag
+  const escapedSemanticTag = semanticTag.replace(
+    /[-/\\^$*+?.()|[\]{}]/g,
+    '\\$&',
+  );
+
+  // Remove the semantic tag from the term, handling both with and without parentheses
+  // First try to remove with parentheses, then without
+  let termWithoutTag = term
+    .replace(new RegExp(`\\s*\\(${escapedSemanticTag}\\)\\s*`, 'gi'), '')
+    .trim();
+
+  // If nothing was removed, try removing without parentheses
+  if (termWithoutTag === term.trim()) {
+    termWithoutTag = term
+      .replace(new RegExp(`\\s*${escapedSemanticTag}\\s*`, 'gi'), '')
+      .trim();
+  }
+
+  return termWithoutTag !== '' ? termWithoutTag : undefined;
+};
+
+export const removeSemanticTagFromTermSemTagUndefined = (
+  term: string | undefined,
+) => {
   const containsSemanticTag = extractSemanticTag(term)
     ?.trim()
     .toLocaleLowerCase();

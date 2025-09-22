@@ -4,14 +4,15 @@ import {
   Controller,
   UseFormGetValues,
   UseFormRegister,
+  UseFormSetValue,
   useFieldArray,
 } from 'react-hook-form';
 import {
-  Button,
+  FormControlLabel,
   FormHelperText,
   Grid,
-  IconButton,
   Stack,
+  Switch,
   TextField,
 } from '@mui/material';
 import { InnerBoxSmall } from './style/ProductBoxes.tsx';
@@ -25,7 +26,9 @@ import { FieldBindings } from '../../../types/FieldBindings.ts';
 import { replaceAllWithWhiteSpace } from '../../../types/productValidationUtils.ts';
 import { convertStringToRegex } from '../../../utils/helpers/stringUtils.ts';
 import { getValueFromFieldBindings } from '../../../utils/helpers/FieldBindingUtils.ts';
-import React, { useMemo, useState } from 'react';
+import React, { useRef, useState } from 'react';
+import AdditionalPropertiesDisplay from './AdditionalPropertiesDisplay.tsx';
+import { ProductRetireUpdate } from './ProductRetireUpdate.tsx';
 import {
   extractSemanticTag,
   removeSemanticTagFromTerm,
@@ -37,6 +40,9 @@ import useAvailableProjects, {
 } from '../../../hooks/api/useInitializeProjects.tsx';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 import { PlusCircleOutlined } from '@ant-design/icons';
+import { IconButton } from '@mui/material';
+import { Button } from '@mui/material';
+import useProjectLangRefsets from '../../../hooks/api/products/useProjectLangRefsets.tsx';
 
 interface NewConceptDropdownProps {
   product: Product;
@@ -45,6 +51,8 @@ interface NewConceptDropdownProps {
   getValues: UseFormGetValues<ProductSummary>;
   control: Control<ProductSummary>;
   fieldBindings: FieldBindings;
+  branch: string;
+  setValue?: UseFormSetValue<ProductSummary>;
 }
 
 function NewConceptDropdown({
@@ -54,13 +62,60 @@ function NewConceptDropdown({
   getValues,
   control,
   fieldBindings,
+  branch,
+  setValue,
 }: NewConceptDropdownProps) {
   const semanticTag = product.newConceptDetails?.semanticTag;
 
+  const initialStatusRef = useRef(
+    product.newConceptDetails?.axioms[0].definitionStatus ?? 'PRIMITIVE',
+  );
+  const [currentStatus, setCurrentStatus] = useState(initialStatusRef.current);
+  const [specificConceptIdError, setSpecificConceptIdError] = useState('');
   return (
     <div key={'div-' + product.conceptId}>
       <Grid item xs={12}>
         <Grid item xs={12}>
+          <Controller
+            name={
+              `nodes[${index}].newConceptDetails.axioms.0.definitionStatus` as const
+            }
+            control={control}
+            render={({ field }) => (
+              <>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={field.value === 'FULLY_DEFINED'}
+                      onChange={(_, checked: boolean) => {
+                        const status = checked ? 'FULLY_DEFINED' : 'PRIMITIVE';
+                        field.onChange(status);
+                        setCurrentStatus(status);
+                        setValue?.(
+                          `nodes.${index}.newConceptDetails.axioms.0.definitionStatusId`,
+                          checked ? '900000000000073002' : '900000000000074008',
+                        );
+                      }}
+                      color="primary"
+                    />
+                  }
+                  label={
+                    field.value === 'FULLY_DEFINED'
+                      ? 'Fully Defined'
+                      : 'Primitive'
+                  }
+                />
+                {currentStatus !== initialStatusRef.current && (
+                  <FormHelperText
+                    sx={{ color: t => `${t.palette.warning.main}` }}
+                  >
+                    Warning: You have changed the definition status from its
+                    calculated value.
+                  </FormHelperText>
+                )}
+              </>
+            )}
+          />
           <NewConceptDropdownField
             fieldName={`nodes[${index}].newConceptDetails.fullySpecifiedName`}
             originalValue={
@@ -103,27 +158,34 @@ function NewConceptDropdown({
             margin="dense"
             InputLabelProps={{ shrink: true }}
             onKeyDown={filterKeypress}
+            onBlur={e => {
+              const val = e.target.value.trim();
+              if (val !== '' && !/^\d+$/.test(val)) {
+                e.target.value = '';
+                setSpecificConceptIdError('Invalid Concept Id');
+                setValue(
+                  `nodes[${index}].newConceptDetails.specifiedConceptId` as 'nodes.0.newConceptDetails.specifiedConceptId',
+                  null,
+                );
+              } else {
+                setSpecificConceptIdError('');
+              }
+            }}
+            error={!!specificConceptIdError}
+            helperText={specificConceptIdError}
           />
         </InnerBoxSmall>
-        {product.label === 'CTPP' && (
-          <InnerBoxSmall component="fieldset">
-            <legend>Artg Ids</legend>
-            <TextField
-              fullWidth
-              value={product.newConceptDetails?.referenceSetMembers
-                .flatMap(r => r.additionalFields?.mapTarget)
-                .sort((a, b) => {
-                  if (a !== undefined && b !== undefined) {
-                    return +a - +b;
-                  }
-                  return 0;
-                })}
-              InputProps={{
-                readOnly: true,
-              }}
-            />
-          </InnerBoxSmall>
+        {setValue && (
+          <ProductRetireUpdate
+            product={product}
+            control={control}
+            index={index}
+            setValue={setValue}
+            branch={branch}
+          />
         )}
+
+        <AdditionalPropertiesDisplay product={product} branch={branch} />
       </Grid>
     </div>
   );
@@ -153,13 +215,7 @@ function AdditionalSynonymField({
 
   const project = getProjectFromKey(applicationConfig?.apProjectKey, projects);
 
-  const langRefsets = useMemo(() => {
-    if (project === undefined || project.metadata === undefined) {
-      return [];
-    }
-    const fromApi = [...project.metadata.requiredLanguageRefsets];
-    return fromApi;
-  }, [project]);
+  const langRefsets = useProjectLangRefsets({ project: project });
 
   const defaultLangRefset = findDefaultLangRefset(langRefsets);
 
@@ -261,17 +317,15 @@ function NewConceptDropdownField({
       fieldName as 'nodes.0.newConceptDetails.preferredTerm',
     );
 
-    if (extractSemanticTag(currentVal)) {
-      setCopyVal(currentVal);
-    } else {
-      setCopyVal(`${currentVal} ${semanticTag}`);
-    }
+    setCopyVal(`${currentVal} ${semanticTag}`);
 
     const generatedVal: string = getValues(
       preferredFieldName as 'nodes.0.newConceptDetails.preferredTerm',
     );
-    const generatedValWithoutSemanticTag =
-      removeSemanticTagFromTerm(generatedVal);
+    const generatedValWithoutSemanticTag = removeSemanticTagFromTerm(
+      generatedVal,
+      semanticTag,
+    );
     setFieldChange(!(currentVal === generatedValWithoutSemanticTag));
   };
 
@@ -319,7 +373,11 @@ function NewConceptDropdownField({
                   field.onChange(value);
                 }}
                 color={fieldChanged ? 'error' : 'primary'}
-                onBlur={handleBlur}
+                onBlur={e => {
+                  const trimmed = e.target.value.trim();
+                  field.onChange(trimmed);
+                  handleBlur();
+                }}
               />
               <IconButton onClick={handleCopy}>
                 <ContentCopy />
@@ -327,7 +385,7 @@ function NewConceptDropdownField({
             </Stack>
 
             {semanticTag && (
-              <FormHelperText>{`Semantic Tag: ${semanticTag}`}</FormHelperText>
+              <FormHelperText>{`Semantic Tag: (${semanticTag})`}</FormHelperText>
             )}
           </Stack>
         )}

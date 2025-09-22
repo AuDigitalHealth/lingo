@@ -14,7 +14,6 @@
 /// limitations under the License.
 ///
 
-/* eslint-disable */
 // material-ui
 import { Theme } from '@mui/material/styles';
 

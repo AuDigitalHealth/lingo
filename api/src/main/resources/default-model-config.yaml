@@ -1,0 +1,727 @@
+models:
+  MAIN_SNOMEDCT-AU_AUAMT:
+    modelType: AMT
+    moduleId: 32506021000036107
+    preferredLanguageRefsets:
+      - 32570271000036106
+      - 900000000000509007
+    baseMedicationSchema: classpath:AMT/base-medication-schema.json
+    baseMedicationUiSchema: classpath:AMT/base-medication-ui-schema.json
+    baseDeviceSchema: classpath:AMT/base-device-schema.json
+    baseDeviceUiSchema: classpath:AMT/base-device-ui-schema.json
+    baseBulkBrandSchema: classpath:AMT/base-bulk-brand-schema.json
+    baseBulkBrandUiSchema: classpath:AMT/base-bulk-brand-ui-schema.json
+    baseBulkPackSchema: classpath:AMT/base-bulk-pack-schema.json
+    baseBulkPackUiSchema: classpath:AMT/base-bulk-pack-ui-schema.json
+    baseEditSchema: classpath:AMT/base-edit-schema.json
+    baseEditUiSchema: classpath:AMT/base-edit-ui-schema.json
+    subpackFromPackageEcl: "((<id>.999000011000168107) or (<id>.999000111000168106))"
+    medicationPackageDataExtractionEcl: "(<id> or (<id>.999000011000168107) or (<id>.774160008) or (<id>.999000011000168107.774160008) or ((>>((<id>.774160008) or (<id>.999000011000168107.774160008))) and (^929360071000036103))) and <373873005"
+    medicationProductDataExtractionEcl: "(<id> or (>> <id> and ^929360071000036103)) and <373873005"
+    devicePackageDataExtractionEcl: "(<id> or (<id>.999000111000168106) or (<id>.999000081000168101) or (<id>.999000111000168106.999000081000168101) or ((>>((<id>.999000081000168101) or (<id>.999000111000168106.999000081000168101))) and (^929360071000036103 or ^929360061000036106))) and < 260787004"
+    deviceProductDataExtractionEcl: "(<id> or (>> <id> and (^929360071000036103 or ^929360061000036106))) and < 260787004"
+    levels:
+      - name: Product
+        displayLabel: MP
+        displayName: Product
+        modelLevelType: MEDICINAL_PRODUCT
+        medicineSemanticTag: medicinal product
+        drugDeviceSemanticTag: medicinal product
+        deviceSemanticTag: physical object
+        referenceSetIdentifier: 929360061000036106
+        referenceSetName: MP refset
+        productModelEcl: "((> <id>) and ^ 929360061000036106) minus >((> <id>) and ^ 929360061000036106)"
+      - name: Generic Product
+        displayLabel: MPUU
+        modelLevelType: CLINICAL_DRUG
+        medicineSemanticTag: clinical drug
+        drugDeviceSemanticTag: product
+        deviceSemanticTag: physical object
+        referenceSetIdentifier: 929360071000036103
+        referenceSetName: MPUU refset
+        productModelEcl: "((> <id>) and ^ 929360071000036103) minus >((> <id>) and ^ 929360071000036103)"
+      - name: Branded Product
+        displayLabel: TPUU
+        modelLevelType: REAL_CLINICAL_DRUG
+        medicineSemanticTag: branded clinical drug
+        deviceSemanticTag: branded physical object
+        drugDeviceSemanticTag: branded product
+        referenceSetIdentifier: 929360031000036100
+        referenceSetName: TPUU refset
+        productModelEcl: "(>> ((<id>.774160008) or (<id>.999000081000168101))) and (^ 929360031000036100)"
+      - name: Generic Pack
+        displayLabel: MPP
+        modelLevelType: PACKAGED_CLINICAL_DRUG
+        medicineSemanticTag: clinical drug package
+        deviceSemanticTag: physical object package
+        drugDeviceSemanticTag: product package
+        referenceSetIdentifier: 929360081000036101
+        referenceSetName: MPP refset
+        productModelEcl: "((> <id>) and ^ 929360081000036101) minus >((> <id>) and ^ 929360081000036101)"
+      - name: Branded Pack
+        displayLabel: TPP
+        modelLevelType: REAL_PACKAGED_CLINICAL_DRUG
+        medicineSemanticTag: branded clinical drug package
+        deviceSemanticTag: branded physical object package
+        drugDeviceSemanticTag: branded product package
+        referenceSetIdentifier: 929360041000036105
+        referenceSetName: TPP refset
+        productModelEcl: "(> <id>) and ^ 929360041000036105"
+      - name: Branded Container
+        displayLabel: CTPP
+        modelLevelType: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+        medicineSemanticTag: containerized branded clinical drug package
+        deviceSemanticTag: containerized branded physical object package
+        drugDeviceSemanticTag: containerized branded product package
+        referenceSetIdentifier: 929360051000036108
+        referenceSetName: CTPP refset
+      - name: Brand Name
+        displayLabel: TP
+        modelLevelType: PRODUCT_NAME
+        medicineSemanticTag: product name
+        deviceSemanticTag: product name
+        drugDeviceSemanticTag: product name
+        referenceSetIdentifier: 929360021000036102
+        referenceSetName: TP refset
+        productModelEcl: ">> <id>.774158006"
+    mappings:
+      - name: artgid
+        title: ARTGID
+        description: Australian Register of Therapeutic Goods Identifier
+        identifier: 11000168105
+        level: PACKAGE
+        dataType: STRING
+        valueRegexValidation: \d{3,8}
+        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+        defaultMappingType: RELATED
+        mappingTypes:
+          - RELATED
+    referenceSets:
+    nonDefiningProperties:
+  MAIN_SNOMEDCT-IE:
+    modelType: NMPC
+    moduleId: 1601000220105
+    preferredLanguageRefsets:
+      - 21000220103
+      - 900000000000509007
+    baseMedicationSchema: classpath:NMPC/base-medication-schema.json
+    baseMedicationUiSchema: classpath:NMPC/base-medication-ui-schema.json
+    baseDeviceSchema: classpath:NMPC/base-device-schema.json
+    baseDeviceUiSchema: classpath:NMPC/base-device-ui-schema.json
+    baseBulkBrandSchema: classpath:NMPC/base-bulk-brand-schema.json
+    baseBulkBrandUiSchema: classpath:NMPC/base-bulk-brand-ui-schema.json
+    baseBulkPackSchema: classpath:NMPC/base-bulk-pack-schema.json
+    baseBulkPackUiSchema: classpath:NMPC/base-bulk-pack-ui-schema.json
+    baseEditSchema: classpath:NMPC/base-edit-schema.json
+    baseEditUiSchema: classpath:NMPC/base-edit-ui-schema.json
+    medicationPackageDataExtractionEcl: "(<id> or (><id> and ^660391000220105) or (<id>.774160008) or (>>(>><id>.774160008) and (^660371000220109 or ^ 660351000220100))) and <373873005"
+    medicationProductDataExtractionEcl: "(<id> or (>> <id> and (^660371000220109 or ^ 660351000220100)) and <373873005"
+    devicePackageDataExtractionEcl: "(<id> or (><id> and ^660391000220105) or (<id>.689871000220106) or ((>>(<id>.689871000220106)) and (^660371000220109 or ^660351000220100))) and < 260787004"
+    deviceProductDataExtractionEcl: "(<id> or (>> <id> and (^660371000220109 or ^660351000220100))) and < 260787004"
+    trimWholeNumbers: true
+    levels:
+      - name: Virtual Therapeutic Moiety
+        displayLabel: MP
+        modelLevelType: MEDICINAL_PRODUCT_ONLY
+        medicineSemanticTag: medicinal product
+        deviceSemanticTag: device
+        drugDeviceSemanticTag: medicinal product
+        referenceSetIdentifier: 660351000220100
+        productModelEcl: "((> <id>) and ^ 660351000220100) minus >((> <id>) and ^ 660351000220100)"
+      - name: Virtual Medicinal Product
+        displayLabel: MPUU
+        modelLevelType: CLINICAL_DRUG
+        medicineSemanticTag: clinical drug
+        deviceSemanticTag: clinical device
+        drugDeviceSemanticTag: clinical drug
+        referenceSetIdentifier: 660371000220109
+        productModelEcl: "((> <id>) and ^ 660371000220109) minus >((> <id>) and ^ 660371000220109)"
+      - name: Actual Medicinal Product
+        displayLabel: TPUU
+        modelLevelType: REAL_CLINICAL_DRUG
+        medicineSemanticTag: real clinical drug
+        deviceSemanticTag: real clinical device
+        drugDeviceSemanticTag: real clinical drug
+        referenceSetIdentifier: 660381000220107
+        productModelEcl: "(>> ((<id>.774160008) OR (<id>.689871000220106))) and (^ 660381000220107)"
+      - name: Virtual Medicinal Product Pack
+        displayLabel: MPP
+        modelLevelType: PACKAGED_CLINICAL_DRUG
+        medicineSemanticTag: packaged clinical drug
+        deviceSemanticTag: packaged clinical device
+        drugDeviceSemanticTag: packaged clinical drug
+        referenceSetIdentifier: 660391000220105
+        productModelEcl: "((> <id>) and ^ 660391000220105) minus >((> <id>) and ^ 660391000220105)"
+      - name: Actual Medicinal Product Pack
+        displayLabel: TPP
+        modelLevelType: REAL_PACKAGED_CLINICAL_DRUG
+        medicineSemanticTag: real packaged clinical drug
+        deviceSemanticTag: real packaged clinical device
+        drugDeviceSemanticTag: real packaged clinical drug
+        referenceSetIdentifier: 660401000220107
+      - name: Actual Therapeutic Moiety
+        displayLabel: TP
+        modelLevelType: REAL_MEDICINAL_PRODUCT
+        medicineSemanticTag: real medicinal product
+        deviceSemanticTag: real device
+        drugDeviceSemanticTag: real medicinal product
+        referenceSetIdentifier: 660361000220103
+        productModelEcl: "> <id> and ^ 660361000220103"
+    mappings:
+      - name: gtin
+        title: GTIN
+        description: Global Trade Item Number including European Article Number (EAN)
+        identifier: 680431000220102
+        level: PACKAGE
+        dataType: STRING
+        valueRegexValidation: \d{8,14}
+        valueValidationErrorMessage: "Must be a valid number between 8 and 14 digits"
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+        defaultMappingType: RELATED
+        mappingTypes:
+          - RELATED
+        additionalFields:
+          status:
+            title: GTIN Status
+            dataType: STRING
+            allowedValues:
+              - "Current"
+              - "Historical"
+        order: 90
+      - name: ceNumber
+        title: CE number
+        identifier: 681031000220102
+        level: PACKAGE
+        dataType: UNSIGNED_INTEGER
+        valueRegexValidation: \d{4}
+        valueValidationErrorMessage: "Must be a 4 digit number"
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        defaultMappingType: RELATED
+        mappingTypes:
+          - RELATED
+        order: 90
+        suppressOnProductTypes: MEDICATION,NUTRITIONAL,VACCINE
+      - name: atc
+        title: ATC code
+        identifier: 680441000220106
+        level: PRODUCT
+        dataType: CODED
+        valueRegexValidation: ^.+$
+        valueSetReference: http://nmpc.hse.ie/ValueSet/atcselectable
+        codeSystem: http://www.whocc.no/atc
+        modelLevels: CLINICAL_DRUG,REAL_CLINICAL_DRUG,PACKAGED_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+        defaultMappingType: RELATED
+        mappingTypes:
+          - RELATED
+        order: 100
+        suppressOnProductTypes: DEVICE
+      - name: pcrs
+        title: PCRS Identifier and Name
+        description: PCRS Identifier and Name
+        identifier: 680461000220105
+        level: PACKAGE
+        dataType: CODED
+        valueRegexValidation: ^.+$
+        valueSetReference: https://nmpc.hse.ie/PCRS/vs
+        codeSystem: https://nmpc.hse.ie/PCRS
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        defaultMappingType: RELATED
+        mappingTypes:
+          - RELATED
+      - name: hpra
+        title: HPRA Product Link
+        identifier: 690021000220108
+        level: PRODUCT
+        dataType: CODED
+        valueRegexValidation: ^[+-]?\d+(\.\d+)?$
+        valueSetReference: https://nmpc.hse.ie/HPRA/product
+        codeSystem: https://nmpc.hse.ie/HPRA
+        modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+        defaultMappingType: RELATED
+        mappingTypes:
+          - RELATED
+    referenceSets:
+      - name: blackTriangle
+        title: Black Triangle
+        description: Medicines on the Black Triangle Scheme
+        identifier: 679961000220101
+        level: PRODUCT
+        modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
+        order: 60
+        suppressOnProductTypes: DEVICE
+      - name: combinationOnly
+        title: Multi component indicator
+        identifier: 679981000220105
+        level: PRODUCT
+        modelLevels: REAL_CLINICAL_DRUG
+        order: 1
+        suppressOnProductTypes: DEVICE
+      - name: ulmFlag
+        title: ULM flag
+        description: Unlicensed Medicine flag
+        identifier: 680761000220104
+        level: PRODUCT
+        modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        order: 81
+        suppressOnProductTypes: DEVICE
+      - name: parallelImport
+        title: Parallel import
+        identifier: 679941000220100
+        level: PRODUCT
+        modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
+        order: 80
+      - name: vmpNonPrescribable
+        title: Non-prescribable VMP
+        description: Non-prescribable at VMP level, must be brand prescribed
+        identifier: 679971000220107
+        level: PRODUCT
+        modelLevels: CLINICAL_DRUG
+        order: 70
+      - name: discontNotification
+        title: Discontinuation Notification
+        identifier: 681101000220108
+        level: PACKAGE
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        order: 99
+      - name: recallIndicator
+        title: Recall Indicator
+        identifier: 680301000220101
+        level: PRODUCT
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        readOnly: true
+        order: 100
+      - name: shortagesFlag
+        title: Shortages Flag
+        identifier: 680281000220100
+        level: PRODUCT
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        readOnly: true
+        order: 101
+    nonDefiningProperties:
+      - name: indicativePrice
+        title: Indicative Price
+        identifier: 680891000220101
+        level: PACKAGE
+        dataType: DECIMAL
+        valueRegexValidation: ^\d+(\.\d{0,2})?$
+        valueValidationErrorMessage: "Must be a valid decimal number with two decimal places"
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        order: 98
+      - name: unitpan
+        title: PAN
+        description: HPRA or EMA product authorisation number
+        identifier: 680041000220101
+        level: PRODUCT
+        dataType: STRING
+        valueRegexValidation: (P(P)?A\d{4,8}(\/\d{1,2})?(\/\d{1,2})?)|(EU\/\d{1}\/\d{1,3}\/\d{1,4}\/\d{1,4})
+        valueValidationErrorMessage: "Must be a valid HPRA (PA/PPA) or EMA product authorisation number (PA1234, PA1234/12, PA1234/12/34, EU/0/12/345/678, EU/0/12/3456/789)"
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+        suppressOnProductTypes: DEVICE
+        order: 30
+      - name: pan
+        title: PAN
+        description: HPRA or EMA product authorisation number
+        identifier: 680041000220101
+        level: PACKAGE
+        dataType: STRING
+        valueRegexValidation: (P(P)?A\d{4,8}(\/\d{1,2})?(\/\d{1,2})?)|(EU\/\d{1}\/\d{1,3}\/\d{1,4}\/\d{1,4})
+        valueValidationErrorMessage: "Must be a valid HPRA (PA/PPA) or EMA product authorisation number (PA1234, PA1234/12, PA1234/12/34, EU/0/12/345/678, EU/0/12/3456/789)"
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+        suppressOnProductTypes: DEVICE
+        order: 30
+      - name: nmpcType
+        title: NMPC Type
+        identifier: 680011000220100
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: <679901000220102
+        modelLevels: MEDICINAL_PRODUCT_ONLY,CLINICAL_DRUG,REAL_MEDICINAL_PRODUCT,REAL_CLINICAL_DRUG,PACKAGED_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+        readOnly: true
+        order: 20
+      - name: licencedRoute
+        title: Licenced Route
+        identifier: 680321000220105
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: <284009009
+        modelLevels: REAL_CLINICAL_DRUG,CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+        showDefaultOptions: true
+        order: 20
+        suppressOnProductTypes: DEVICE
+      - name: pil
+        title: PIL Information
+        identifier: 680181000220107
+        level: PACKAGE
+        dataType: URI
+        valueRegexValidation: ^(https?://.+|attachment://\d+)$
+        valueValidationErrorMessage: "Must be a valid HTTP/S URL or attachment reference"
+        modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+        order: 51
+        suppressOnProductTypes: DEVICE
+      - name: smpc
+        title: SmPC Information
+        identifier: 680171000220109
+        level: PACKAGE
+        dataType: URI
+        valueRegexValidation: ^(https?://.+|attachment://\d+)$
+        valueValidationErrorMessage: "Must be a valid HTTP/S URL or attachment reference"
+        modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+        order: 50
+        suppressOnProductTypes: DEVICE
+      - name: ulmCountryOrigin
+        title: ULM Country of Origin
+        description: ULM Country of Origin
+        identifier: 680881000220104
+        level: PACKAGE
+        dataType: CONCEPT
+        eclBinding: < 223369002 MINUS >(< 223369002)
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        showDefaultOptions: true
+        order: 80
+        suppressOnProductTypes: DEVICE
+      - name: licensingStatus
+        title: Licensing Status
+        identifier: 680341000220104
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: <679931000220109
+        modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        showDefaultOptions: true
+        order: 91
+        suppressOnProductTypes: DEVICE
+      - name: marketingStatus
+        title: Marketing Status
+        identifier: 680051000220104
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: <679951000220103
+        modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        showDefaultOptions: true
+        order: 92
+        suppressOnProductTypes: DEVICE
+      - name: deviceClass
+        title: Device Class
+        identifier: 681041000220106
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: <681051000220108
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: true
+        multiValued: false
+        showDefaultOptions: true
+        order: 93
+        suppressOnProductTypes: MEDICATION,NUTRITIONAL,VACCINE
+      - name: marketingAuthHolder
+        title: Marketing Authorisation Holder
+        identifier: 680061000220102
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: <774164004
+        modelLevels: REAL_MEDICINAL_PRODUCT,REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: true
+        createConcept: true
+        createConceptEcl: <774164004
+        createConceptParentId: 774164004
+        createConceptParentName: Supplier (supplier)
+        createConceptSemanticTag: (supplier)
+        createConceptPostfix: (brand)
+        multiValued: false
+        showDefaultOptions: true
+        order: 93
+      - name: notifyingWholesaler
+        title: Notifying Wholesaler
+        identifier: 680071000220108
+        level: PACKAGE
+        dataType: CONCEPT
+        eclBinding: <774164004
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+        showDefaultOptions: true
+        order: 94
+        suppressOnProductTypes: DEVICE
+      - name: legalSupplyStatus
+        title: Dispensing Legal Status
+        identifier: 680081000220106
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: <670041000220107
+        modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: true
+        multiValued: false
+        showDefaultOptions: true
+        order: 95
+        suppressOnProductTypes: DEVICE
+      - name: placeOfSale
+        title: Supply Legal Status
+        identifier: 680771000220105
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: <680711000220102
+        modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: true
+        multiValued: false
+        showDefaultOptions: true
+        order: 96
+        suppressOnProductTypes: DEVICE
+      - name: controlledDrugStatus
+        title: Legal Status - MDA Schedule
+        identifier: 680091000220109
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: <670021000220101
+        modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        showDefaultOptions: true
+        order: 97
+        suppressOnProductTypes: DEVICE
+      - name: packageType
+        title: Package Type
+        identifier: 680161000220103
+        level: PACKAGE
+        dataType: CONCEPT
+        eclBinding: <732935002
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        showDefaultOptions: true
+        order: 98
+      - name: discEffDate
+        title: Discontinuation Notification - Effective Date
+        identifier: 689851000220102
+        level: PACKAGE
+        dataType: DATE
+        format: YYYY-MM-DD
+        valueRegexValidation: \d{4}-\d{2}-\d{2}
+        valueValidationErrorMessage: "Must be a valid date in the format YYYY-MM-DD"
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        order: 99
+      - name: lastDateOfMan
+        title: Discontinuation Notification - Expiry Date of Last Manufactured Batch
+        identifier: 680191000220105
+        level: PACKAGE
+        dataType: DATE
+        format: YYYY-MM-DD
+        valueRegexValidation: \d{4}-\d{2}-\d{2}
+        valueValidationErrorMessage: "Must be a valid date in the format YYYY-MM-DD"
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        order: 100
+      - name: discontinuationUrl
+        title: Discontinuation Notification - Letter to HCPs
+        description: URL to the discontinuation notification letter
+        identifier: 680201000220108
+        level: PACKAGE
+        dataType: URI
+        valueRegexValidation: http(s)?://.+\.(pdf|html)
+        valueValidationErrorMessage: "Must be a valid URL ending in .pdf or .html"
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+        order: 101
+      - name: recallDate
+        title: Recall Published Date
+        identifier: 680221000220104
+        level: PRODUCT
+        dataType: DATE
+        format: YYYY-MM-DD
+        valueRegexValidation: \d{4}-\d{2}-\d{2}
+        valueValidationErrorMessage: "Must be a valid date in the format YYYY-MM-DD"
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        readOnly: true
+        order: 102
+        group: recall
+      - name: recallActions
+        title: Recall Marketing Actions
+        identifier: 680231000220101
+        level: PRODUCT
+        dataType: STRING
+        valueRegexValidation: ^.+$
+        valueValidationErrorMessage: "Must be a valid string"
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+        readOnly: true
+        order: 103
+        group: recall
+      - name: recallCategory
+        title: Recall Defect Category
+        identifier: 680241000220105
+        level: PRODUCT
+        dataType: STRING
+        valueRegexValidation: ^.+$
+        valueValidationErrorMessage: "Must be a valid string"
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        readOnly: true
+        order: 104
+        group: recall
+      - name: recallLevel
+        title: Recall Level
+        identifier: 680261000220109
+        level: PRODUCT
+        dataType: STRING
+        valueRegexValidation: ^.+$
+        valueValidationErrorMessage: "Must be a valid string"
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        readOnly: true
+        order: 105
+        group: recall
+      - name: recallDocuments
+        title: Recall Associated Documents
+        identifier: 680251000220107
+        level: PRODUCT
+        dataType: URI
+        valueRegexValidation: http(s)?://.+
+        valueValidationErrorMessage: "Must be a valid URL"
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: true
+        readOnly: true
+        order: 106
+        group: recall
+      - name: doseFormType
+        title: Dose Form Type
+        identifier: 680311000220103
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: <679911000220104
+        modelLevels: CLINICAL_DRUG,REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        showDefaultOptions: true
+        order: 90
+        suppressOnProductTypes: DEVICE
+      - name: nonPrescReason
+        title: Non-Prescribable Reason
+        identifier: 680331000220108
+        level: PRODUCT
+        dataType: CONCEPT
+        eclBinding: <679921000220106
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        showDefaultOptions: true
+        order: 71
+      - name: shortagesReason
+        title: Shortages Reason
+        identifier: 680101000220104
+        level: PRODUCT
+        dataType: STRING
+        valueRegexValidation: ^.+$
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        readOnly: true
+        order: 106
+      - name: theraAlternatve
+        title: Shortages Therapeutic Alternative
+        identifier: 680111000220101
+        level: PRODUCT
+        dataType: STRING
+        valueRegexValidation: ^.+$
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        readOnly: true
+        order: 106
+      - name: dateOfShortages
+        title: Date shortages reported
+        description: Date when shortages were reported
+        identifier: 680121000220108
+        level: PRODUCT
+        dataType: DATE
+        format: YYYY-MM-DD
+        valueRegexValidation: ^.+$
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        readOnly: true
+        order: 106
+      - name: dateShortageUpdated
+        title: Date Shortage Updated
+        description: Date when the shortage information was last updated
+        identifier: 680131000220106
+        level: PRODUCT
+        dataType: DATE
+        format: YYYY-MM-DD
+        valueRegexValidation: ^.+$
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        readOnly: true
+        order: 106
+      - name: shortageReturn
+        title: Expected Return Date
+        description: Date when the product is expected to return
+        identifier: 680141000220102
+        level: PRODUCT
+        dataType: DATE
+        format: YYYY-MM-DD
+        valueRegexValidation: ^.+$
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        readOnly: true
+        order: 106
+      - name: shortageInfo
+        title: Shortage Additional Information
+        description: Additional information about the shortage
+        identifier: 680151000220100
+        level: PRODUCT
+        dataType: URI
+        valueRegexValidation: ^.+$
+        modelLevels: REAL_CLINICAL_DRUG
+        mandatory: false
+        multiValued: false
+        readOnly: true
+        order: 106

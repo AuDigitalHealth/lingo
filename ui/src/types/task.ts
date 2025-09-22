@@ -35,6 +35,14 @@ export interface Task {
   updated: string;
 }
 
+export enum BranchState {
+  Forward = 'FORWARD',
+  Behind = 'BEHIND',
+  Up_To_Date = 'UP_TO_DATE',
+  Diverged = 'DIVERGED',
+  Stale = 'STALE',
+}
+
 export interface TaskDto {
   key?: string;
   projectKey: string;
@@ -58,6 +66,7 @@ export interface Classification {
   equivalentConceptsFound: boolean;
   id: string;
   inferredRelationshipChangesFound: boolean;
+  redundantStatedRelationshipsFound: boolean;
   lastCommitDate: string;
   path: string;
   reasonerId: string;
@@ -72,9 +81,9 @@ export enum ClassificationStatus {
   Failed = 'FAILED',
   Cancelled = 'CANCELLED',
   Stale = 'STALE',
-  // SavingInProgress = 'SAVING_IN_PROGRESS',
+  SavingInProgress = 'SAVING_IN_PROGRESS',
   Saved = 'SAVED',
-  // SaveFailed = 'SAVE_FAILED',
+  SaveFailed = 'SAVE_FAILED',
 }
 
 export enum ValidationStatus {
@@ -93,21 +102,11 @@ export enum TaskStatus {
   ReviewCompleted = 'Review Completed',
   Promoted = 'Promoted',
   Completed = 'Completed',
+  Auto_Classifying = 'Auto Classifying',
+  Auto_Promoting = 'Auto Promoting',
   Deleted = 'Deleted',
   Unknown = 'Unknown',
 }
-// export enum RebaseStatus { uncomment if needed
-//   UpToDate = 'UP_TO_DATE',
-//   Forward = 'FORWARD',
-//   Behind = 'BEHIND',
-//   Diverged = 'DIVERGED',
-//   Stale = 'Stale',
-// }
-// export enum FeedbackStatus {
-//   None = 'none',
-//   UnRead = 'unread',
-// }
-
 export interface TaskRequest {
   assignee: UserDetails;
   reviewers: UserDetails[];

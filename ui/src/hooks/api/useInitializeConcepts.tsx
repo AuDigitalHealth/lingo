@@ -32,8 +32,7 @@ export default function useInitializeConcepts(branch: string | undefined) {
 export function useDefaultUnit(branch: string) {
   const { isLoading, data } = useQuery({
     queryKey: ['defaultUnit'],
-    queryFn: () =>
-      ConceptService.searchUnpublishedConceptByIds([UnitEachId], branch),
+    queryFn: () => ConceptService.searchConceptByIds([UnitEachId], branch),
     staleTime: Infinity,
   });
 
@@ -46,8 +45,7 @@ export function useDefaultUnit(branch: string) {
 export function useUnitPack(branch: string) {
   const { isLoading, data } = useQuery({
     queryKey: ['unitPack'],
-    queryFn: () =>
-      ConceptService.searchUnpublishedConceptByIds([UnitPackId], branch),
+    queryFn: () => ConceptService.searchConceptByIds([UnitPackId], branch),
     staleTime: Infinity,
   });
 
@@ -74,10 +72,7 @@ export const getSearchConceptsByEclOptions = (
     queryKey,
     queryFn: () => {
       if (concept && concept.conceptId) {
-        return ConceptService.searchUnpublishedConceptByIds(
-          [concept.conceptId],
-          branch,
-        );
+        return ConceptService.searchConceptByIds([concept.conceptId], branch);
       }
       if (showDefaultOptions) {
         return ConceptService.searchConceptByEcl(
@@ -97,7 +92,7 @@ export const getSearchConceptsByEclOptions = (
     },
 
     staleTime: 60 * (60 * 1000),
-    enabled: isValidEclSearch(searchString, ecl, showDefaultOptions),
+    enabled: isValidEclSearch(searchString, ecl, showDefaultOptions, branch),
   };
 };
 
@@ -123,7 +118,8 @@ export const useSearchConceptsByEcl = (
     ),
   });
 
-  const { data: ontoResults, isFetching: isOntoFetching } =
+  // Call Ontoserver unconditionally
+  const { data: ontoResultsRaw, isFetching: isOntoFetchingRaw } =
     useSearchConceptOntoserver(
       encodeURIComponent(ecl as string),
       searchString,
@@ -131,6 +127,10 @@ export const useSearchConceptsByEcl = (
       undefined,
       showDefaultOptions,
     );
+
+  // Apply conditional logic to results
+  const ontoResults = turnOffPublishParam ? undefined : ontoResultsRaw;
+  const isOntoFetching = turnOffPublishParam ? false : isOntoFetchingRaw;
 
   const [ontoData, setOntoData] = useState<Concept[]>([]);
   const [allData, setAllData] = useState<ConceptSearchResult[]>([]);
@@ -191,12 +191,13 @@ function isValidEclSearch(
   searchString: string,
   ecl: string | undefined,
   showDefaultOptions: boolean,
+  branch: string,
 ) {
-  if (!ecl) {
+  if (!ecl || !branch) {
     return false;
   }
   return (
     showDefaultOptions ||
-    (searchString !== undefined && searchString.length > 2)
+    (searchString !== undefined && searchString?.length > 2)
   );
 }

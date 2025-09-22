@@ -37,6 +37,8 @@ public enum SnomedConstants implements LingoConstants {
   SOME_MODIFIER("900000000000450001", "Modifier (core metadata concept)"),
   STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE(
       "900000000000010007", "Stated relationship (core metadata concept)"),
+  ADDITIONAL_RELATIONSHIP_CHARACTERISTIC_TYPE(
+      "900000000000227009", "Additional relationship (core metadata concept)"),
   MEDICINAL_PRODUCT("763158003", "Medicinal product (product)"),
   MEDICINAL_PRODUCT_PACKAGE("781405001", "Medicinal product package (product)"),
   MEDICINAL_PRODUCT_SEMANTIC_TAG("medicinal product"),
@@ -66,12 +68,43 @@ public enum SnomedConstants implements LingoConstants {
   COUNT_OF_ACTIVE_INGREDIENT("1142140007", "Count of active ingredient (attribute)"),
   COUNT_OF_BASE_ACTIVE_INGREDIENT("1142139005", "Count of base of active ingredient (attribute)"),
   STATED_RELATIONSHIP("STATED_RELATIONSHIP"),
+  INFERRED_RELATIONSHIP("INFERRED_RELATIONSHIP"),
+  ADDITIONAL_RELATIONSHIP("ADDITIONAL_RELATIONSHIP"),
   ROLE_GROUP("609096000", "Role group (attribute)"),
   PACK("706437002", "Pack"),
   PACKAGE("999000071000168104", "Package (physical object)"),
   UNIT_MG("258684004", "mg"),
   UNIT_ML("258773002", "mL"),
-  MAP_TARGET("mapTarget");
+  MAP_TARGET("mapTarget"),
+  MAP_TYPE("mapType"),
+  HAS_SUPPLIER("774159003", "Has supplier (attribute)"),
+  HAS_UNIT_OF_PRESENTATION("763032000", "Has unit of presentation (attribute)"),
+  HAS_PRESENTATION_STRENGTH_NUMERATOR_VALUE(
+      "1142135004", "Has presentation strength numerator value (attribute)"),
+  HAS_PRESENTATION_STRENGTH_NUMERATOR_UNIT(
+      "732945000", "Has presentation strength numerator unit (attribute)"),
+  HAS_PRESENTATION_STRENGTH_DENOMINATOR_VALUE(
+      "1142136003", "Has presentation strength denominator value (attribute)"),
+  HAS_PRESENTATION_STRENGTH_DENOMINATOR_UNIT(
+      "732947008", "Has presentation strength denominator unit (attribute)"),
+  HAS_CONCENTRATION_STRENGTH_NUMERATOR_VALUE(
+      "1142138002", "Has concentration strength numerator value (attribute)"),
+  HAS_CONCENTRATION_STRENGTH_NUMERATOR_UNIT(
+      "733725009", "Has concentration strength numerator unit (attribute)"),
+  HAS_CONCENTRATION_STRENGTH_DENOMINATOR_VALUE(
+      "1142137007", "Has concentration strength denominator value (attribute)"),
+  HAS_CONCENTRATION_STRENGTH_DENOMINATOR_UNIT(
+      "733722007", "Has concentration strength denominator unit (attribute)"),
+  PRODUCT_NAME("774167006", "Product name (product name)"),
+  CONCEPT_INACTIVATION_INDICATOR_REFERENCE_SET(
+      "900000000000489007", "Concept inactivation indicator (core metadata concept)"),
+  PLAYS_ROLE("766939001", "Plays role (attribute)"),
+  HAS_TARGET_POPULATION("1149367008", "Has target population (attribute)"),
+  HAS_QUALITATIVE_STRENGTH("1149366004", "Has ingredient qualitative strength (attribute)"),
+  HAS_UNIT_OF_PRESENTATION_SIZE_QUANTITY(
+      "1148793005", "Unit of presentation size quantity (attribute)"),
+  HAS_UNIT_OF_PRESENTATION_SIZE_UNIT(
+      "320091000221107", "Has unit of presentation size unit (attribute)");
 
   private final String value;
   private final String label;

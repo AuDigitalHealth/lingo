@@ -41,12 +41,10 @@ const AttachmentService = {
     })
       .then((res: AxiosResponse) => {
         const blob: Blob = new Blob([res.data], {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           type: res.headers['content-type'],
         });
 
         const actualFileName = getFileNameFromContentDisposition(
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           res.headers['content-disposition'],
         );
 
