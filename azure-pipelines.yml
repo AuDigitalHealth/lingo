@@ -75,7 +75,7 @@ jobs:
           # use your repo config if present
           CFG_FLAG=""
           [ -f ".gitleaks.toml" ] && CFG_FLAG="--config .gitleaks.toml"
-          gitleaks detect --source . --log-opts="--all" $CFG_FLAG \
+          gitleaks detect --source . --log-opts="--all" "$CFG_FLAG" \
             --redact --report-format json --report-path gitleaks-report.json --exit-code 1
         displayName: "Run Gitleaks (all refs)"
 
