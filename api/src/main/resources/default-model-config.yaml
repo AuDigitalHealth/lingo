@@ -261,13 +261,6 @@ models:
         modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
         order: 60
         suppressOnProductTypes: DEVICE
-      - name: combinationOnly
-        title: Multi component indicator
-        identifier: 679981000220105
-        level: PRODUCT
-        modelLevels: REAL_CLINICAL_DRUG
-        order: 1
-        suppressOnProductTypes: DEVICE
       - name: ulmFlag
         title: ULM flag
         description: Unlicensed Medicine flag
