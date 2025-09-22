@@ -26,6 +26,66 @@ pool:
   vmImage: ubuntu-latest
 
 jobs:
+  - job: secrets_scan
+    displayName: "Secret scan (TruffleHog + Gitleaks)"
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+      - checkout: self
+        fetchDepth: 0   # full history for scanners
+
+      # TruffleHog (full history) — fails on findings
+      - task: UsePythonVersion@0
+        displayName: "Use Python (for TruffleHog)"
+        inputs:
+          versionSpec: "3.x"
+
+      - script: |
+          set -euo pipefail
+          pip install --disable-pip-version-check --no-cache-dir trufflehog
+          status=0
+          trufflehog git file://. --json --no-update > trufflehog-report.json || status=$?
+          if [ "$status" -eq 183 ]; then
+            echo "TruffleHog found potential secrets."
+            exit 1
+          elif [ "$status" -ne 0 ]; then
+            echo "TruffleHog error (exit $status)."
+            exit "$status"
+          fi
+        displayName: "Run TruffleHog (full history)"
+
+      # Gitleaks (all refs) — fails on findings
+      - script: |
+          set -euo pipefail
+          GL_VERSION="8.18.2"
+          curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${GL_VERSION}/gitleaks_${GL_VERSION}_linux_x64.tar.gz" \
+            | tar -xz gitleaks
+          sudo mv gitleaks /usr/local/bin/gitleaks
+          # use your repo config if present
+          CFG_FLAG=""
+          [ -f ".gitleaks.toml" ] && CFG_FLAG="--config .gitleaks.toml"
+          gitleaks detect --source . --log-opts="--all" $CFG_FLAG \
+            --redact --report-format json --report-path gitleaks-report.json --exit-code 1
+        displayName: "Run Gitleaks (all refs)"
+
+      # Publish reports regardless of pass/fail
+      - task: CopyFiles@2
+        displayName: "Collect secret scan reports"
+        condition: always()
+        inputs:
+          contents: |
+            trufflehog-report.json
+            gitleaks-report.json
+          targetFolder: "$(Build.ArtifactStagingDirectory)/secret-scan"
+
+      - task: PublishBuildArtifacts@1
+        displayName: "Publish Secret Scan Reports"
+        condition: always()
+        inputs:
+          PathtoPublish: "$(Build.ArtifactStagingDirectory)/secret-scan"
+          ArtifactName: "secret-scan-reports"
+          publishLocation: "Container"
+
   - job: set_image_tag
     displayName: Set Image Tag
     steps:
