@@ -40,6 +40,7 @@ import {
   TicketDtoMinimal,
   TicketFilter,
   TicketFilterDto,
+  TicketHistoryEntryDto,
   UiSearchConfiguration,
   UiSearchConfigurationDto,
 } from '../types/tickets/ticket';
@@ -70,6 +71,17 @@ const TicketsService = {
       this.handleErrors();
     }
     return response.data as Ticket;
+  },
+  async getTicketHistory(
+    ticketNumber: string,
+  ): Promise<TicketHistoryEntryDto[]> {
+    const response = await api.get(
+      `/api/tickets/ticketNumber/${ticketNumber}/history`,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    return response.data as TicketHistoryEntryDto[];
   },
   async createTicket(ticket: TicketDtoMinimal): Promise<Ticket> {
     const response = await api.post(`/api/tickets`, ticket);
@@ -570,12 +582,10 @@ const TicketsService = {
     });
 
     const blob: Blob = new Blob([response.data], {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       type: response.headers['content-type'],
     });
 
     const actualFileName = getFileNameFromContentDisposition(
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       response.headers['content-disposition'],
     );
 

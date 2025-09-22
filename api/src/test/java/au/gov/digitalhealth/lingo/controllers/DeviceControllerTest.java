@@ -43,9 +43,11 @@ class DeviceControllerTest extends LingoTestBase {
                 ProblemDetail.class);
 
     Assertions.assertEquals("Resource Not Found", problemDetail.getTitle());
-    Assertions.assertEquals(
-        "No matching concepts for " + AmtTestData.NEXIUM_HP7 + " of type device",
-        problemDetail.getDetail());
+    Assertions.assertTrue(
+        problemDetail
+            .getDetail()
+            .startsWith(
+                "No matching product concepts for " + AmtTestData.NEXIUM_HP7 + " of type device"));
   }
 
   @Test

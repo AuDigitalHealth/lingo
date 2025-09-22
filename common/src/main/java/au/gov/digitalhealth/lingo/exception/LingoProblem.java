@@ -17,6 +17,7 @@ package au.gov.digitalhealth.lingo.exception;
 
 import java.io.Serial;
 import java.net.URI;
+import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.ErrorResponseException;
@@ -25,16 +26,36 @@ import org.springframework.web.ErrorResponseException;
 public class LingoProblem extends ErrorResponseException {
 
   public static final String BASE_PROBLEM_TYPE_URI = "http://lingo.csiro.au/problem/";
-
+  public static final String URI_SUB_PATH = "lingo-problem";
+  public static final String GENERIC_TITLE = "Error";
   @Serial private static final long serialVersionUID = 1L;
 
   public LingoProblem(
+      String uriSubPath,
+      String title,
+      HttpStatus status,
+      String detail,
+      Map<String, Object> properties,
+      Throwable e) {
+    super(status, asProblemDetail(uriSubPath, status, title, detail, properties), e);
+  }
+
+  public LingoProblem(
       String uriSubPath, String title, HttpStatus status, String detail, Throwable e) {
-    super(status, asProblemDetail(uriSubPath, status, title, detail), e);
+    super(status, asProblemDetail(uriSubPath, status, title, detail, null), e);
+  }
+
+  public LingoProblem(
+      String uriSubPath,
+      String title,
+      HttpStatus status,
+      String detail,
+      Map<String, Object> properties) {
+    this(uriSubPath, title, status, detail, properties, null);
   }
 
   public LingoProblem(String uriSubPath, String title, HttpStatus status, String detail) {
-    this(uriSubPath, title, status, detail, null);
+    this(uriSubPath, title, status, detail, null, null);
   }
 
   public LingoProblem(String uriSubPath, String title, HttpStatus status, Throwable e) {
@@ -42,11 +63,19 @@ public class LingoProblem extends ErrorResponseException {
   }
 
   public LingoProblem(String uriSubPath, String title, HttpStatus status) {
-    this(uriSubPath, title, status, null, null);
+    this(uriSubPath, title, status, null, null, null);
+  }
+
+  public LingoProblem(String message, Throwable e) {
+    this(URI_SUB_PATH, GENERIC_TITLE, HttpStatus.INTERNAL_SERVER_ERROR, message, e);
+  }
+
+  public LingoProblem(String message) {
+    this(URI_SUB_PATH, GENERIC_TITLE, HttpStatus.INTERNAL_SERVER_ERROR, message);
   }
 
   public LingoProblem() {
-    this("lingo-problem", "Error", HttpStatus.INTERNAL_SERVER_ERROR);
+    this(URI_SUB_PATH, GENERIC_TITLE, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
   protected static URI toTypeUri(String subtype) {
@@ -54,11 +83,16 @@ public class LingoProblem extends ErrorResponseException {
   }
 
   protected static ProblemDetail asProblemDetail(
-      String uriSubPath, HttpStatus status, String title, String detail) {
+      String uriSubPath,
+      HttpStatus status,
+      String title,
+      String detail,
+      Map<String, Object> properties) {
     ProblemDetail problemDetail = ProblemDetail.forStatus(status);
     problemDetail.setTitle(title);
     problemDetail.setType(toTypeUri(uriSubPath));
     problemDetail.setDetail(detail);
+    problemDetail.setProperties(properties);
     return problemDetail;
   }
 }

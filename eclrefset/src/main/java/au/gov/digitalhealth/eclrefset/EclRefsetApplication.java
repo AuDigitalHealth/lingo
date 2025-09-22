@@ -15,8 +15,6 @@
  */
 package au.gov.digitalhealth.eclrefset;
 
-import au.csiro.snowstorm_client.model.SnowstormItemsPageReferenceSetMember;
-import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.gov.digitalhealth.eclrefset.model.addorremovequeryresponse.AddOrRemoveQueryResponse;
 import au.gov.digitalhealth.eclrefset.model.addorremovequeryresponse.AddRemoveItem;
 import au.gov.digitalhealth.eclrefset.model.refsetqueryresponse.Data;
@@ -42,7 +40,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -75,12 +72,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -143,14 +138,18 @@ public class EclRefsetApplication {
     jobResultDto.setResults(new ArrayList<>());
   }
 
-  private ExternalProcessDto getExternalProcessByName(LingoService lingoService, Cookie cookie, String processName) {
+  private ExternalProcessDto getExternalProcessByName(
+      LingoService lingoService, Cookie cookie, String processName) {
 
     List<ExternalProcessDto> externalProcessDto = lingoService.getExternalProcesses(cookie);
 
-    return externalProcessDto.stream().filter(process -> {
-      return process.getProcessName().equals(processName);
-    }).findFirst().orElse(null);
-
+    return externalProcessDto.stream()
+        .filter(
+            process -> {
+              return process.getProcessName().equals(processName);
+            })
+        .findFirst()
+        .orElse(null);
   }
 
   @Bean
@@ -162,9 +161,7 @@ public class EclRefsetApplication {
     uriBuilderFactory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.NONE);
 
     // Build the RestTemplate with the custom UriBuilderFactory
-    RestTemplate restTemplate = builder.uriTemplateHandler(uriBuilderFactory).build();
-
-    return restTemplate;
+    return builder.uriTemplateHandler(uriBuilderFactory).build();
   }
 
   @Bean
@@ -177,15 +174,17 @@ public class EclRefsetApplication {
       ImsService imsService = ctx.getBean(ImsService.class);
       Cookie cookie = imsService.getDefaultCookie();
 
-      ExternalProcessDto externalProcessDto = getExternalProcessByName(lingoService, cookie, processName);
+      ExternalProcessDto externalProcessDto =
+          getExternalProcessByName(lingoService, cookie, processName);
 
-      if(externalProcessDto == null){
+      if (externalProcessDto == null) {
         log.severe("No Corresponding process name found in lingo");
         return;
       }
 
-      if(!externalProcessDto.isEnabled()){
-        log.severe("Corresponding process name found in lingo, but snodine has intentionally been disabled");
+      if (!externalProcessDto.isEnabled()) {
+        log.severe(
+            "Corresponding process name found in lingo, but snodine has intentionally been disabled");
         return;
       }
 
@@ -196,7 +195,6 @@ public class EclRefsetApplication {
 
       Data refsetQueryResponse = getReferenceSetQueryResponse(restTemplate);
       List<JSONObject> bulkChangeList = new CopyOnWriteArrayList<>();
-
 
       log.info(
           "Found "
@@ -345,11 +343,11 @@ public class EclRefsetApplication {
         // and replace + encoding of spaces with %20 as URLEncoder encodes to +
         String addEcl =
             "(" + ecl + ") MINUS (^ " + item.getReferencedComponent().getConceptId() + ")";
-        addEcl = URLEncoder.encode(addEcl, StandardCharsets.UTF_8.name());
+        addEcl = URLEncoder.encode(addEcl, StandardCharsets.UTF_8);
         addEcl = addEcl.replace("+", "%20");
         String removeEcl =
             "(^ " + item.getReferencedComponent().getConceptId() + ") MINUS (" + ecl + ")";
-        removeEcl = URLEncoder.encode(removeEcl, StandardCharsets.UTF_8.name());
+        removeEcl = URLEncoder.encode(removeEcl, StandardCharsets.UTF_8);
         removeEcl = removeEcl.replace("+", "%20");
 
         String baseAddQuery =
@@ -365,15 +363,16 @@ public class EclRefsetApplication {
                 + removeEcl
                 + "&activeFilter=true&includeLeafFlag=false&form=inferred";
 
-        String removeInactiveConceptQuery = mainSnowstormUrl
-            + BRANCH
-            + "/concepts?ecl="
-            // equates to "^ "
-            + "%5E%20"
-            + item.getReferencedComponent().getId()
-            // equates to " {{C active = 0}}"
-            + "%20%7B%7BC%20active%20%3D%200%7D%7D"
-            + "&includeLeafFlag=false&form=inferred";
+        String removeInactiveConceptQuery =
+            mainSnowstormUrl
+                + BRANCH
+                + "/concepts?ecl="
+                // equates to "^ "
+                + "%5E%20"
+                + item.getReferencedComponent().getId()
+                // equates to " {{C active = 0}}"
+                + "%20%7B%7BC%20active%20%3D%200%7D%7D"
+                + "&includeLeafFlag=false&form=inferred";
 
         log.info("### Processing refsetId: " + item.getReferencedComponent().getConceptId());
         log.info("### ECL:" + ecl);
@@ -486,8 +485,9 @@ public class EclRefsetApplication {
                   removeResult);
 
           int totalToRemove = 0;
-          totalToRemove += allRemoveQueryResponse != null ? allRemoveQueryResponse.getTotal()  : 0;
-          totalToRemove += allInactiveQueryResponse != null ? allInactiveQueryResponse.getTotal()  : 0;
+          totalToRemove += allRemoveQueryResponse != null ? allRemoveQueryResponse.getTotal() : 0;
+          totalToRemove +=
+              allInactiveQueryResponse != null ? allInactiveQueryResponse.getTotal() : 0;
           removeResult.setCount(totalToRemove);
 
           removeResult.setItems(new ArrayList<>());
@@ -500,12 +500,26 @@ public class EclRefsetApplication {
               fileAppender,
               resultDto);
 
-          if(allRemoveQueryResponse != null){
-            processRefsetRemovals(allRemoveQueryResponse, restTemplate, baseRemoveQuery, bulkChangeList, fileAppender, item, removeResult);
+          if (allRemoveQueryResponse != null) {
+            processRefsetRemovals(
+                allRemoveQueryResponse,
+                restTemplate,
+                baseRemoveQuery,
+                bulkChangeList,
+                fileAppender,
+                item,
+                removeResult);
           }
 
-          if(allInactiveQueryResponse != null){
-            processRefsetRemovals(allInactiveQueryResponse, restTemplate, removeInactiveConceptQuery, bulkChangeList, fileAppender, item, removeResult);
+          if (allInactiveQueryResponse != null) {
+            processRefsetRemovals(
+                allInactiveQueryResponse,
+                restTemplate,
+                removeInactiveConceptQuery,
+                bulkChangeList,
+                fileAppender,
+                item,
+                removeResult);
           }
 
           log.info(LOG_SEPARATOR_LINE);
@@ -570,8 +584,15 @@ public class EclRefsetApplication {
     executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
   }
 
-  private void processRefsetRemovals(AddOrRemoveQueryResponse queryResponse, RestTemplate restTemplate, String removeQuery,
-      List<JSONObject> bulkChangeList, FileAppender fileAppender, Item item, ResultDto removeResult) throws InterruptedException, Exception{
+  private void processRefsetRemovals(
+      AddOrRemoveQueryResponse queryResponse,
+      RestTemplate restTemplate,
+      String removeQuery,
+      List<JSONObject> bulkChangeList,
+      FileAppender fileAppender,
+      Item item,
+      ResultDto removeResult)
+      throws InterruptedException, Exception {
 
     List<ResultItemDto> removeResultItems =
         queryResponse.getItems().stream()
@@ -585,8 +606,7 @@ public class EclRefsetApplication {
 
     removeResult.getItems().addAll(removeResultItems);
 
-    logAndRemoveRefsetMembersToBulk(
-        queryResponse, item, restTemplate, bulkChangeList);
+    logAndRemoveRefsetMembersToBulk(queryResponse, item, restTemplate, bulkChangeList);
 
     this.doBulkUpdate(restTemplate, bulkChangeList, removeResult, item);
     bulkChangeList.clear();
@@ -602,8 +622,7 @@ public class EclRefsetApplication {
               item.getReferencedComponent().getConceptId(),
               removeResult);
 
-      logAndRemoveRefsetMembersToBulk(
-          queryResponse, item, restTemplate, bulkChangeList);
+      logAndRemoveRefsetMembersToBulk(queryResponse, item, restTemplate, bulkChangeList);
 
       removeResultItems =
           queryResponse.getItems().stream()
@@ -621,6 +640,7 @@ public class EclRefsetApplication {
       bulkChangeList.clear();
     }
   }
+
   private void logAndRemoveRefsetMembersToBulk(
       AddOrRemoveQueryResponse allRemoveQueryResponse,
       Item item,
@@ -642,9 +662,8 @@ public class EclRefsetApplication {
     executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
   }
 
-  private void doBulkUpdate(RestTemplate restTemplate, List<JSONObject> bulkChangeList,
-      ResultDto resultDto, Item item)
-      {
+  private void doBulkUpdate(
+      RestTemplate restTemplate, List<JSONObject> bulkChangeList, ResultDto resultDto, Item item) {
     if (!bulkChangeList.isEmpty()) {
       // bulk update
       HttpHeaders headers = new HttpHeaders();
@@ -653,7 +672,7 @@ public class EclRefsetApplication {
       String requestBody = bulkChangeList.toString();
       HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
       String bulkQuery = perfSnowstormUrl + BRANCH + "/members/bulk";
-      try{
+      try {
         HttpEntity<String> bulkQueryResult =
             restTemplate.exchange(bulkQuery, HttpMethod.POST, request, String.class);
         String location =
@@ -691,7 +710,8 @@ public class EclRefsetApplication {
                       + " FAILED in "
                       + jsonNode.get("secondsDuration").asText());
               log.info("error message:" + jsonNode.get("message"));
-              throw new EclRefsetProcessingException("Bulk Update Failed:" + jsonNode.get("message"));
+              throw new EclRefsetProcessingException(
+                  "Bulk Update Failed:" + jsonNode.get("message"));
             } else {
               // maybe an error status?
               log.info("batch status is " + status);
@@ -699,17 +719,17 @@ public class EclRefsetApplication {
             }
           }
         }
-      } catch (Exception e){
-        ResultNotificationDto resultNotificationDto = ResultNotificationDto.builder()
-            .type(ResultNotificationType.ERROR)
-            .description(
-                "Error posting update to refset: "
-                    + item.getRefsetId()
-                    + LogThresholdInfo.ACTION_HAS_NOT_BEEN_CARRIED_OUT_MESSAGE)
-            .build();
+      } catch (Exception e) {
+        ResultNotificationDto resultNotificationDto =
+            ResultNotificationDto.builder()
+                .type(ResultNotificationType.ERROR)
+                .description(
+                    "Error posting update to refset: "
+                        + item.getRefsetId()
+                        + LogThresholdInfo.ACTION_HAS_NOT_BEEN_CARRIED_OUT_MESSAGE)
+                .build();
         resultDto.setNotification(resultNotificationDto);
       }
-
     }
   }
 
@@ -789,7 +809,8 @@ public class EclRefsetApplication {
       log.info("Query took " + elapsedTimeInSeconds + " seconds.");
 
       assert queryResponse != null;
-      if ((queryResponse.getTotal() >= countChangeThreshold) && (!ignoreCountChangeThresholdError)) {
+      if ((queryResponse.getTotal() >= countChangeThreshold)
+          && (!ignoreCountChangeThresholdError)) {
         resultDto.setCount(0);
         String countThresholdMessage =
             String.format(
@@ -900,14 +921,11 @@ public class EclRefsetApplication {
           ResultNotificationDto.builder()
               .type(ResultNotificationType.ERROR)
               .description(
-                  errorMessage
-                      + ". "
-                      + LogThresholdInfo.ACTION_HAS_NOT_BEEN_CARRIED_OUT_MESSAGE)
+                  errorMessage + ". " + LogThresholdInfo.ACTION_HAS_NOT_BEEN_CARRIED_OUT_MESSAGE)
               .build());
       fileAppender.appendToFile("### ERROR: REST call failed: " + errorMessage);
       return null;
     }
-
   }
 
   private void processCompoundExpressionConstraint(

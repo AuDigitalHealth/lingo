@@ -3,8 +3,13 @@ body {
 }
 
 .MuiDataGrid-main .MuiChip-root {
-  min-width: 128px;
+  min-width: 100px;
 }
 #sentry-feedback {
   --inset: auto auto 0px -10px;
+}
+
+.field-string > .MuiTextField-root,
+.field-number > .MuiTextField-root {
+  width: inherit;
 }

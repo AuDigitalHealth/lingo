@@ -16,7 +16,7 @@ import {
   getTaskById,
   useAllTasks,
   useUpdateTask,
-} from '../../../hooks/api/useAllTasks.tsx';
+} from '../../../hooks/api/task/useAllTasks.js';
 
 interface CustomTaskReviewerSelectionProps {
   id?: string;

@@ -14,6 +14,8 @@
 /// limitations under the License.
 ///
 
+import { NonDefiningProperty } from '../../types/product.ts';
+
 export function detectDelimiter(inputString: string): string | null {
   // Define the potential delimiters
   const delimiters = [',', '\t', '\r\n', '\n'];
@@ -71,3 +73,37 @@ export function parseSearchTermsSctId(
   // Convert each valid part to a number and return as an array
   return terms;
 }
+// More accurate comparison function for properties
+export const arePropertiesEqual = (
+  propA: NonDefiningProperty,
+  propB: NonDefiningProperty,
+) => {
+  // Compare identifierScheme
+  if (propA.identifierScheme !== propB.identifierScheme) return false;
+
+  // Compare value (handle null values)
+  if (
+    propA.value !== propB.value &&
+    !(propA.value === null && propB.value === null)
+  )
+    return false;
+
+  // Compare valueObject (only compare conceptId)
+  if (propA.valueObject && propB.valueObject) {
+    if (propA.valueObject.conceptId !== propB.valueObject.conceptId)
+      return false;
+  } else if (propA.valueObject || propB.valueObject) {
+    // One is null but not both
+    return false;
+  }
+
+  // Compare relationshipType for ExternalIdentifier
+  if (
+    propA.type === 'externalIdentifier' &&
+    propB.type === 'externalIdentifier'
+  ) {
+    if (propA.relationshipType !== propB.relationshipType) return false;
+  }
+
+  return true;
+};

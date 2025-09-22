@@ -19,6 +19,7 @@ import au.gov.digitalhealth.lingo.auth.JiraUser;
 import au.gov.digitalhealth.lingo.service.JiraUserManagerService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.Set;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,5 +37,10 @@ public class JiraUserController {
   @GetMapping("")
   public List<JiraUser> getAllUsers(HttpServletRequest request) {
     return jiraUserManagerService.getAllJiraUsers();
+  }
+
+  @GetMapping("/internal")
+  public Set<String> getAllInternalUsers(HttpServletRequest request) {
+    return jiraUserManagerService.getAllInternalUsers();
   }
 }

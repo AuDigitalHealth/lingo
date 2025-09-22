@@ -181,6 +181,16 @@ export default function AdditionalFieldInput({
           />
         )}
 
+        {type.type === AdditionalFieldTypeEnum.STRING && (
+          <AdditionalFieldStringInput
+            id={`ticket-af-input-${type.name}`}
+            value={updatedValue}
+            type={type}
+            setUpdatedValue={setUpdatedValue}
+            disabled={disabled || !canEdit}
+          />
+        )}
+
         {type.type !== AdditionalFieldTypeEnum.LIST && (
           <>
             <IconButton
@@ -430,6 +440,36 @@ export function AdditionalFieldNumberInput({
       disabled={disabled}
       label={type.name}
       type="number"
+      value={localVal ? localVal : ''}
+      onChange={handleUpdate}
+    />
+  );
+}
+
+export function AdditionalFieldStringInput({
+  id,
+  value,
+  type,
+  disabled,
+  setUpdatedValue,
+}: AdditionalFieldTypeInputProps) {
+  const localVal = useMemo(() => {
+    return value?.valueOf;
+  }, [value]);
+
+  const handleUpdate = (event: ChangeEvent<HTMLInputElement>) => {
+    setUpdatedValue(
+      value
+        ? Object.assign({}, value, { valueOf: event.target.value })
+        : { additionalFieldType: type, valueOf: event.target.value },
+    );
+  };
+
+  return (
+    <TextField
+      id={id}
+      disabled={disabled}
+      label={type.name}
       value={localVal ? localVal : ''}
       onChange={handleUpdate}
     />

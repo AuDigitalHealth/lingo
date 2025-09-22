@@ -22,6 +22,7 @@ import {
 import {
   AutocompleteGroupOption,
   AutocompleteGroupOptionType,
+  ProductAction,
   Ticket,
   TicketBulkProductActionDto,
   TicketProductDto,
@@ -30,19 +31,28 @@ import { ProductStatus, ProductTableRow } from '../../types/TicketProduct.ts';
 
 export function mapToTicketProductDto(
   packageDetails: MedicationPackageDetails | DevicePackageDetails,
+  originalPackageDetails:
+    | MedicationPackageDetails
+    | DevicePackageDetails
+    | null,
+  originalConceptId: string | null,
   ticket: Ticket,
   login: string,
   productName: string,
   create: boolean,
+  action: ProductAction,
 ) {
   const ticketProductDto: TicketProductDto = {
     ticketId: ticket.id,
     name: productName,
     conceptId: null,
     packageDetails: packageDetails,
+    originalPackageDetails: originalPackageDetails,
+    originalConceptId: originalConceptId,
     createdBy: create ? login : undefined,
     modifiedBy: login,
     version: null,
+    action: action,
   };
   return ticketProductDto;
 }
@@ -143,7 +153,7 @@ export function generateSuggestedProductName(
   ) {
     suggestedName += `-${packageDetails.containedProducts[0].value}`;
   } else if (
-    packageDetails.containedPackages.length > 0 &&
+    packageDetails.containedPackages?.length > 0 &&
     packageDetails.containedPackages[0].value
   ) {
     suggestedName += `-${packageDetails.containedPackages[0].value}`;
@@ -171,6 +181,7 @@ export function mapToProductDetailsArray(
   const productDetailsArray = productArray.map(function (item) {
     const id = indexStarts++;
     const productDto: ProductTableRow = {
+      createdBy: item.createdBy,
       id: id,
       productId: item.id as number,
       idToDelete: id,
@@ -186,7 +197,8 @@ export function mapToProductDetailsArray(
       ticketId: item.ticketId,
       version: item.version as number,
       productType: findProductType(item.packageDetails),
-      created: item.created as string,
+      created: item.created,
+      action: item.action,
     };
     return productDto;
   });
@@ -201,6 +213,7 @@ export function mapToProductDetailsArrayFromBulkActions(
     item.details.type;
     const id = indexStarts++;
     const productDto: ProductTableRow = {
+      createdBy: item.createdBy,
       id: id,
       bulkProductActionId: item.id as number,
       idToDelete: id,
@@ -212,8 +225,14 @@ export function mapToProductDetailsArrayFromBulkActions(
 
       status: ProductStatus.Completed,
       ticketId: item.ticketId,
-      productType: item.details.type,
+      productType:
+        item.details &&
+        item.details.packSizes &&
+        item.details.packSizes.packSizes
+          ? ProductType.bulkPackSize
+          : item.details.type,
       created: item.created,
+      // action: 'CREATE', // Default action for bulk actions is CREATE
     };
     return productDto;
   });

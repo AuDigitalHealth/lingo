@@ -16,26 +16,35 @@
 package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
+import au.gov.digitalhealth.lingo.validation.AllNullOrAllNotNull;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @NoArgsConstructor
 @AllArgsConstructor
-public class Quantity {
-  @NotNull @Positive BigDecimal value;
+@AllNullOrAllNotNull(
+    fields = {"value", "unit"},
+    message = "Value and unit must be either both populated or both not populated")
+public class Quantity extends ProductBaseDto {
+  @Positive BigDecimal value;
 
-  @NotNull SnowstormConceptMini unit;
+  SnowstormConceptMini unit;
 
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
-    return Map.of(unit.getConceptId(), SnowstormDtoUtil.getFsnTerm(unit));
+    return addToIdFsnMap(null, unit);
+  }
+
+  @JsonIgnore
+  public Map<String, String> getIdPtMap() {
+    return addToIdPtMap(null, unit);
   }
 }

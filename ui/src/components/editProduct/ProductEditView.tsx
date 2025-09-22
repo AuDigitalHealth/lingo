@@ -1,7 +1,7 @@
 import { Box, FormControlLabel, Grid, Switch, Typography } from '@mui/material';
 import { Ticket } from '../../types/tickets/ticket';
 import { useParams } from 'react-router-dom';
-import { ExistingDescriptionsSection } from './ProductEditModal';
+// import { ExistingDescriptionsSection } from './ProductEditModal';
 import { useMemo, useState } from 'react';
 import useAvailableProjects, {
   getProjectFromKey,
@@ -19,6 +19,9 @@ import {
 import { useExternalIdentifiers } from '../../hooks/api/products/useExternalIdentifiers';
 import { useSearchConceptByIdNoCache } from '../../hooks/api/products/useSearchConcept';
 import { BrowserConcept } from '../../types/concept';
+import { ExistingDescriptionsSection } from './ExistingDescriptionsSection';
+import useProjectLangRefsets from '../../hooks/api/products/useProjectLangRefsets';
+import { useNodeModel } from '../../hooks/api/products/useNodeModel';
 
 const USLangRefset: LanguageRefset = {
   default: 'false',
@@ -37,14 +40,7 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
   const { applicationConfig } = useApplicationConfig();
   const { data: projects } = useAvailableProjects();
   const project = getProjectFromKey(applicationConfig?.apProjectKey, projects);
-  const langRefsets = useMemo(() => {
-    if (project === undefined || project.metadata === undefined) {
-      return [];
-    }
-    const fromApi = [...project.metadata.requiredLanguageRefsets];
-    fromApi.push(USLangRefset);
-    return fromApi;
-  }, [project]);
+  const langRefsets = useProjectLangRefsets({ project: project });
 
   const defaultLangrefset = findDefaultLangRefset(langRefsets);
 
@@ -56,7 +52,7 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
     ? productUpdate?.details.updatedState.concept
     : undefined;
 
-  const branch = `/${applicationConfig?.apDefaultBranch}${branchKey ? `/${branchKey}` : ''}`;
+  const branch = `${applicationConfig?.apDefaultBranch}${branchKey ? `/${branchKey}` : ''}`;
 
   const { data: currentConcept, isFetching } = useSearchConceptByIdNoCache(
     updatedConcept?.conceptId,
@@ -67,10 +63,7 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
     currentConcept?.descriptions,
     defaultLangrefset,
   );
-  const { data: externalIdentifiers } = useExternalIdentifiers(
-    updatedConcept?.conceptId,
-    branch,
-  );
+  const { data: nodeModel } = useNodeModel(updatedConcept?.conceptId, branch);
 
   const historicDescriptions = isProductUpdateDetails(productUpdate?.details)
     ? sortDescriptions(
@@ -82,7 +75,7 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
   const historicExternalIdentifiers = isProductUpdateDetails(
     productUpdate?.details,
   )
-    ? productUpdate?.details.historicState.externalIdentifiers
+    ? productUpdate?.details.historicState.nonDefiningProperties
     : undefined;
 
   const updatedDescriptions = sortDescriptions(
@@ -93,7 +86,7 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
   const updatedExternalIdentifiers = isProductUpdateDetails(
     productUpdate?.details,
   )
-    ? productUpdate?.details.updatedState.externalIdentifiers
+    ? productUpdate?.details.updatedState.nonDefiningProperties
     : undefined;
 
   const containsExternalIdentifiers =
@@ -104,7 +97,7 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
     updatedConcept,
     currentConcept,
     updatedExternalIdentifiers,
-    externalIdentifiers,
+    nodeModel?.nonDefiningProperties,
     defaultLangrefset,
   );
   return (
@@ -134,15 +127,11 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
               displayRetiredDescriptions={displayRetiredDescriptions}
               descriptions={historicDescriptions}
               isFetching={false}
-              isCtpp={
-                containsExternalIdentifiers
-                  ? containsExternalIdentifiers
-                  : false
-              }
-              //   product={undefined}
-              externalIdentifiers={historicExternalIdentifiers}
+              nonDefiningProperties={historicExternalIdentifiers}
               title={'Old'}
               dialects={langRefsets}
+              displayMode="input"
+              showBorder
             />
           </Box>
         </Grid>
@@ -158,14 +147,11 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
               displayRetiredDescriptions={displayRetiredDescriptions}
               descriptions={updatedDescriptions}
               isFetching={false}
-              isCtpp={
-                containsExternalIdentifiers
-                  ? containsExternalIdentifiers
-                  : false
-              }
               title={'Updated'}
-              externalIdentifiers={updatedExternalIdentifiers}
+              nonDefiningProperties={updatedExternalIdentifiers}
               dialects={langRefsets}
+              displayMode="input"
+              showBorder
             />
           </Box>
         </Grid>
@@ -176,12 +162,11 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
             displayRetiredDescriptions={displayRetiredDescriptions}
             descriptions={currentDescriptions}
             isFetching={isFetching}
-            isCtpp={
-              externalIdentifiers ? externalIdentifiers.length > 0 : false
-            }
             title={'Current state'}
-            externalIdentifiers={externalIdentifiers}
+            nonDefiningProperties={nodeModel?.nonDefiningProperties}
             dialects={langRefsets}
+            displayMode="input"
+            showBorder
           />
         )}
       </Grid>

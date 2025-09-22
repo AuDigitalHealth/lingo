@@ -42,8 +42,41 @@ export function useConceptsByIds(branch: string, conceptIds: string[]) {
   const { data, error, isLoading } = useQuery({
     queryKey: [`concept-${branch}`, conceptIds],
     queryFn: () => {
-      if (conceptIds.length)
+      if (conceptIds.length) {
         return ConceptService.searchConceptsByIds(conceptIds, branch);
+      }
+      return null;
+    },
+    staleTime: 20 * (60 * 1000),
+    enabled: !!conceptIds.length,
+  });
+
+  useEffect(() => {
+    if (error) {
+      snowstormErrorHandler(error, 'Search Failed', serviceStatus);
+    }
+  }, [error, serviceStatus]);
+
+  return {
+    data,
+    error,
+    isLoading,
+  };
+}
+
+export function useConceptsByIdsPost(branch: string, conceptIds: string[]) {
+  const { serviceStatus } = useServiceStatus();
+
+  const { data, error, isLoading } = useQuery({
+    queryKey: [`concept-${branch}-post`, conceptIds],
+    queryFn: () => {
+      if (conceptIds.length) {
+        return ConceptService.searchConceptsByIdsPost(branch, {
+          conceptIds: conceptIds,
+          limit: 500,
+          offset: 0,
+        });
+      }
       return null;
     },
     staleTime: 20 * (60 * 1000),

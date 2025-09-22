@@ -31,7 +31,7 @@ import CustomTicketExternalRequestorSelection, {
 import { DropdownProps } from 'primereact/dropdown';
 import { StyledFakeLink } from './TicketDrawer.tsx';
 import { isTaskCurrent } from './helpers/isTaskCurrent.ts';
-import { useAllTasks } from '../../../../hooks/api/useAllTasks.tsx';
+import { useAllTasks } from '../../../../hooks/api/task/useAllTasks';
 import { useJiraUsers } from '../../../../hooks/api/useInitializeJiraUsers.tsx';
 import {
   useAllExternalRequestors,
@@ -52,14 +52,7 @@ export const TitleTemplate = (rowData: TicketDto) => {
 };
 
 export const TicketNumberTemplate = (rowData: TicketDto) => {
-  const navigate = useNavigate();
-  return (
-    <StyledFakeLink
-      onClick={() => navigate(`individual/${rowData.ticketNumber}`)}
-    >
-      {rowData?.ticketNumber}
-    </StyledFakeLink>
-  );
+  return <>{rowData?.ticketNumber}</>;
 };
 
 export const PriorityBucketTemplate = (rowData: TicketDto) => {
@@ -245,7 +238,7 @@ export const TaskAssocationTemplate = (rowData: Ticket) => {
     <>
       {isCurrent ? (
         <Link
-          to={`/dashboard/tasks/edit/${rowData.taskAssociation?.taskId}/${rowData.ticketNumber}`}
+          to={`/dashboard/tasks/edit/${rowData.taskAssociation?.taskId}/ticket/${rowData.ticketNumber}`}
         >
           {rowData.taskAssociation?.taskId}
         </Link>
@@ -280,7 +273,7 @@ export const CreatedTemplate = (rowData: TicketDto) => {
   const date = new Date(rowData.created);
   return (
     <Typography>
-      {date.toLocaleDateString('en-AU', {
+      {date.toLocaleDateString(undefined, {
         day: '2-digit',
         month: '2-digit',
         year: '2-digit',

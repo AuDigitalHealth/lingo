@@ -14,10 +14,6 @@
 /// limitations under the License.
 ///
 
-// material-ui
-// eslint-disable-next-line
-import * as Theme from '@mui/material/styles';
-
 // project import
 import { CustomShadowProps } from '../../types/theme';
 

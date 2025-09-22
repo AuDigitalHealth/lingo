@@ -4,11 +4,11 @@ import BaseModalBody from '../../../components/modal/BaseModalBody';
 import BaseModalFooter from '../../../components/modal/BaseModalFooter';
 import BaseModalHeader from '../../../components/modal/BaseModalHeader';
 import { useEffect, useState } from 'react';
-import { ProductCreationDetails } from '../../../types/product';
+import { ProductSaveDetails } from '../../../types/product';
 
 interface ProductNameOverrideModalProps {
   open: boolean;
-  productCreationDetails?: ProductCreationDetails;
+  productCreationDetails?: ProductSaveDetails;
   productName?: string;
   handleClose: () => void;
   ignore: () => void;
@@ -50,7 +50,10 @@ export function ProductNameOverrideModal({
       <BaseModalBody data-testid={'override-modal'}>
         <>
           'Choose whether to overwrite the existing saved product data, create a
-          saved product name, or go back'
+          saved product name, or go back. This will not change the name of the
+          product in snowstorm - this changes the name that this saved product
+          data is saved against this ticket, as duplicate names cannot be
+          saved.'
           <TextField
             fullWidth
             label="Updated Name"

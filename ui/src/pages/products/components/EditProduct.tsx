@@ -38,7 +38,7 @@ function EditProduct(productprops: EditProductProps) {
     setFsnToggle(isFsnToggleOn);
   }, [setFsnToggle]);
 
-  const { isLoading, data } = useConceptModel(
+  const { isFetching, data } = useConceptModel(
     selectedProduct && selectedProduct.conceptId
       ? selectedProduct.conceptId
       : undefined,
@@ -46,10 +46,10 @@ function EditProduct(productprops: EditProductProps) {
     branch,
   );
 
-  if (isLoading) {
+  if (isFetching) {
     return (
       <Loading
-        message={`Loading 7 Box model for ${selectedProduct?.conceptId}`}
+        message={`Loading box model for ${selectedProduct?.conceptId}`}
       />
     );
   }

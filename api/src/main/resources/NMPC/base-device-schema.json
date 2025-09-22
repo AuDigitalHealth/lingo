@@ -1,0 +1,271 @@
+{
+  "type": "object",
+  "$defs": {
+    "SnowstormConceptMini": {
+      "type": "object",
+      "properties": {
+        "conceptId": {
+          "type": "string"
+        },
+        "pt": {
+          "$ref": "#/$defs/SnowstormTermLangPojo"
+        },
+        "fsn": {
+          "$ref": "#/$defs/SnowstormTermLangPojo"
+        },
+        "definitionStatus": {
+          "type": "string",
+          "enum": [
+            "PRIMITIVE",
+            "FULLY_DEFINED"
+          ]
+        }
+      },
+      "minProperties": 1,
+      "required": ["conceptId"],
+      "errorMessage": { "required": "Invalid concept found, you might need to select a concept from the dropdown." }
+    },
+    "SnowstormTermLangPojo": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "lang": {
+          "type": "string"
+        },
+        "term": {
+          "type": "string"
+        }
+      }
+    },
+    "Quantity": {
+      "type": "object",
+      "properties": {
+        "unit": {
+          "$ref": "#/$defs/SnowstormConceptMini"
+        },
+        "value": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "minProperties": 2,
+      "errorMessage": {
+        "minProperties": "Both 'unit' and 'value' must be provided."
+      },
+      "dependencies": {
+        "unit": {
+          "oneOf": [
+            {
+              "properties": {
+                "unit": {
+                  "properties": {
+                    "conceptId": {
+                      "const": "732935002"
+                    }
+                  }
+                },
+                "value": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": ["value"]
+            },
+            {
+              "properties": {
+                "unit": {
+                  "properties": {
+                    "conceptId": {
+                      "not": {
+                        "const": "732935002"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "errorMessage": {
+            "oneOf": "Must be an integer ≥ 1 when 'unit' is 'Each'"
+          }
+        }
+      }
+    },
+    "ProductDetails": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "device"
+        },
+        "productName": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Product Name",
+          "description": "Select or create a product name (brand) for the device.",
+          "minProperties": 1,
+          "errorMessage": {
+            "minProperties": "Product Name must be populated."
+          }
+        },
+        "deviceType": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "ui:title": "VTM Level Device Type",
+          "description": "Select a VTM level device type for the product."
+        },
+        "specificDeviceType": {
+          "type": ["object", "null"],
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "ui:title": "Existing VMP Level Device Type",
+          "description": "Select an existing VMP level device type if available."
+        },
+        "newSpecificDeviceName": {
+          "type": "string",
+          "title": "New VMP Level Device Concept Name",
+          "description": "If the VMP level device type is not available, you can create a new VMP level device concept with this name."
+        },
+        "otherParentConcepts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SnowstormConceptMini"
+          },
+          "title": "New VMP Level Concept Additional Parent Concepts",
+          "description": "If creating a new VMP level device concept, add any parent concepts additional to the VTM device type."
+        },
+        "genericOtherIdentifyingInformation": {
+          "type": "string",
+          "title": "VMP other Identifying Information"
+        },
+        "otherIdentifyingInformation": {
+          "type": "string",
+          "title": "AMP other Identifying Information"
+        },
+        "nonDefiningProperties": {
+          "title": "Non Defining Properties",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DEVICE_PRODUCT_NonDefiningProperty"
+          }
+        }
+      },
+      "required": ["productName", "deviceType"]
+    },
+    "ContainedProduct": {
+      "type": "object",
+      "properties": {
+        "unit": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "default": {
+            "conceptId": "732935002",
+            "pt": {
+              "lang": "en",
+              "term": "Unit of presentation"
+            },
+            "fsn": {
+              "lang": "en",
+              "term": "Unit of presentation (unit of presentation)"
+            }
+          },
+          "errorMessage": {
+            "type": "Invalid Pack Size Unit",
+            "minProperties": "Field must be populated."
+          }
+        },
+        "value": {
+          "type": "number",
+          "minimum": 0,
+          "errorMessage": {
+            "type": "Value must be a number",
+            "minimum": "Value must be at least 0"
+          }
+        },
+        "productDetails": {
+          "$ref": "#/$defs/ProductDetails"
+        }
+      },
+      "required": ["unit", "value", "productDetails"],
+      "dependencies": {
+        "unit": {
+          "oneOf": [
+            {
+              "properties": {
+                "unit": {
+                  "properties": {
+                    "conceptId": {
+                      "const": "732935002",
+                      "errorMessage": {
+                        "const": "Invalid Unit and Value"
+                      }
+                    }
+                  },
+                  "required": ["conceptId"]
+                },
+                "value": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "errorMessage": {
+                    "type": "Value must be an integer when Unit is 'Each'",
+                    "const": "Unit must be 'Each' for this value constraint"
+                  }
+                }
+              },
+              "errorMessage": {
+                "oneOf": "Unit must be 'Each' with an integer value >= 1"
+              }
+            },
+            {
+              "properties": {
+                "unit": {
+                  "properties": {
+                    "conceptId": {
+                      "not": {
+                        "const": "732935002"
+                      }
+                    }
+                  }
+                },
+                "value": {
+                  "type": "number",
+                  "minimum": 0,
+                  "errorMessage": {
+                    "type": "Value must be a number ",
+                    "minimum": "Value must be at least 0"
+                  }
+                }
+              },
+              "errorMessage": {
+                "oneOf": "Unit must not be 'Each' and value must be a number >= 0"
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "properties": {
+    "containedProducts": {
+      "type": "array",
+      "title": "Contained Products",
+      "items": {
+        "$ref": "#/$defs/ContainedProduct"
+      },
+      "minItems": 1
+    },
+    "genericOtherIdentifyingInformation": {
+      "type": "string",
+      "title": "VMPP other Identifying Information"
+    },
+    "otherIdentifyingInformation": {
+      "type": "string",
+      "title": "AMPP other Identifying Information"
+    },
+    "nonDefiningProperties": {
+      "title": "Non Defining Properties",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/DEVICE_PACKAGE_NonDefiningProperty"
+      }
+    }
+  },
+  "required": ["containedProducts"],
+  "additionalProperties": false
+}
