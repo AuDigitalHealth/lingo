@@ -3,12 +3,7 @@ title = "Custom rules"
 [[rules]]
 id = "azure-functions-code"
 description = "Azure Functions URL with ?code= key"
-# RE2-compatible, no lazy quantifiers, broad but anchored on azurewebsites.net and code=
-regex = '''https?://[[:alnum:]\.\-]+\.azurewebsites\.net[^ \t\r\n"'<>\)]*\bcode=([A-Za-z0-9_-]{1,})'''
+# Only match “real” codes (20+ URL-safe chars), not REDACTED
+regex = '''https?://[[:alnum:]\.\-]+\.azurewebsites\.net[^ \t\r\n"'<>\)]*\bcode=([A-Za-z0-9_-]{20,})'''
 secretGroup = 1
 entropy = 0.0
-
-[rules.allowlist]
-regexes = [
-    '''code=REDACTED'''
-]
