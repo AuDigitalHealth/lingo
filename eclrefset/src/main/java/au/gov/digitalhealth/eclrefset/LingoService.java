@@ -28,13 +28,8 @@ import io.restassured.response.Response;
 import java.util.Comparator;
 import java.util.List;
 import org.apache.http.HttpStatus;
-import java.util.Comparator;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.util.UriBuilder;
-import reactor.core.publisher.Mono;
 
 @Service
 public class LingoService {
@@ -46,23 +41,25 @@ public class LingoService {
 
     RestAssured.defaultParser = Parser.JSON;
 
-    jobResultDto.getResults().sort(Comparator.comparing(
-        ResultDto::getName,
-        Comparator.nullsLast((a, b) -> {
-          if (a == null || a.trim().isEmpty()) return 1;
-          if (b == null || b.trim().isEmpty()) return -1;
+    jobResultDto
+        .getResults()
+        .sort(
+            Comparator.comparing(
+                ResultDto::getName,
+                Comparator.nullsLast(
+                    (a, b) -> {
+                      if (a == null || a.trim().isEmpty()) return 1;
+                      if (b == null || b.trim().isEmpty()) return -1;
 
-          String aText = a.contains("|") ? a.split("\\|")[1].trim() : a;
-          String bText = b.contains("|") ? b.split("\\|")[1].trim() : b;
+                      String aText = a.contains("|") ? a.split("\\|")[1].trim() : a;
+                      String bText = b.contains("|") ? b.split("\\|")[1].trim() : b;
 
-          if (aText.isEmpty()) return 1;
-          if (bText.isEmpty()) return -1;
+                      if (aText.isEmpty()) return 1;
+                      if (bText.isEmpty()) return -1;
 
-          // Compare entire strings after pipe instead of just first char
-          return aText.toLowerCase().compareTo(bText.toLowerCase());
-        })
-    ));
-
+                      // Compare entire strings after pipe instead of just first char
+                      return aText.toLowerCase().compareTo(bText.toLowerCase());
+                    })));
 
     Response response =
         given()

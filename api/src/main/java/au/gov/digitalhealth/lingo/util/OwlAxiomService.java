@@ -60,7 +60,7 @@ public class OwlAxiomService {
   public Set<String> translate(SnowstormConceptView concept) {
 
     try {
-      log.info("CONCEPT: " + mapper.writeValueAsString(concept));
+      log.finest("CONCEPT: " + mapper.writeValueAsString(concept));
     } catch (JsonProcessingException e) {
       throw new LingoProblem(
           "axiom-service", "Cannot process concept", HttpStatus.INTERNAL_SERVER_ERROR, e);
@@ -71,7 +71,7 @@ public class OwlAxiomService {
     OntologyService ontologyService = new OntologyService(ungroupedAttributes);
 
     try {
-      log.info("TAXONOMY: " + mapper.writeValueAsString(taxonomy));
+      log.finest("TAXONOMY: " + mapper.writeValueAsString(taxonomy));
     } catch (JsonProcessingException e) {
       throw new LingoProblem(
           "axiom-service", "Cannot process taxonomy", HttpStatus.INTERNAL_SERVER_ERROR, e);
@@ -128,7 +128,7 @@ public class OwlAxiomService {
 
     long relid = 0;
 
-    for (SnowstormAxiom axiom : concept.getClassAxioms()) {
+    for (SnowstormAxiom axiom : SnowstormDtoUtil.getActiveClassAxioms(concept)) {
       for (SnowstormRelationship relationship : axiom.getRelationships()) {
         if ((relationship.getActive() == null || relationship.getActive())
             && !relationship

@@ -131,50 +131,55 @@ function ExternalRequestorCreateOrUpdate({
             <Controller
               name={'displayColor'}
               control={control}
-              // eslint-disable-next-line
               render={({ field: { onChange, value, onBlur }, ...props }) => (
                 <Autocomplete
                   data-testid="external-requestor-modal-autocomplete"
                   options={colorOptions}
                   fullWidth
                   getOptionLabel={option => getColorCodeKey(option)}
-                  renderOption={(props, option, { selected }) => (
-                    <li
-                      {...props}
-                      data-testid={'li-color-option-' + getColorCodeKey(option)}
-                    >
-                      <Box
-                        data-testid={'color-option- ' + option}
-                        component="span"
-                        sx={{
-                          width: 14,
-                          height: 14,
-                          flexShrink: 0,
-                          borderRadius: '3px',
-                          mr: 1,
-                          mt: '2px',
-                        }}
-                        style={{ backgroundColor: option }}
-                      />
-                      <Box
-                        sx={{
-                          flexGrow: 1,
-                          '& span': {
-                            color: '#8b949e',
-                          },
-                        }}
+                  renderOption={(props, option, { selected }) => {
+                    const { key, ...otherProps } = props;
+                    return (
+                      <li
+                        key={key}
+                        {...otherProps}
+                        data-testid={
+                          'li-color-option-' + getColorCodeKey(option)
+                        }
                       >
-                        {getColorCodeKey(option)}
-                      </Box>
-                      <Box
-                        component={CloseIcon}
-                        sx={{ opacity: 0.6, width: 18, height: 18 }}
-                        style={{
-                          visibility: selected ? 'visible' : 'hidden',
-                        }}
-                      />
-                    </li>
-                  )}
+                        <Box
+                          data-testid={'color-option- ' + option}
+                          component="span"
+                          sx={{
+                            width: 14,
+                            height: 14,
+                            flexShrink: 0,
+                            borderRadius: '3px',
+                            mr: 1,
+                            mt: '2px',
+                          }}
+                          style={{ backgroundColor: option }}
+                        />
+                        <Box
+                          sx={{
+                            flexGrow: 1,
+                            '& span': {
+                              color: '#8b949e',
+                            },
+                          }}
+                        >
+                          {getColorCodeKey(option)}
+                        </Box>
+                        <Box
+                          component={CloseIcon}
+                          sx={{ opacity: 0.6, width: 18, height: 18 }}
+                          style={{
+                            visibility: selected ? 'visible' : 'hidden',
+                          }}
+                        />
+                      </li>
+                    );
+                  }}
                   renderInput={params => (
                     <TextField
                       {...params}
@@ -186,7 +191,7 @@ function ExternalRequestorCreateOrUpdate({
                     />
                   )}
                   onBlur={onBlur}
-                  onChange={(e, data) => onChange(data)}
+                  onChange={(_event, data) => onChange(data)}
                   value={value || null}
                 />
               )}

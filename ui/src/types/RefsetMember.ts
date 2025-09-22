@@ -14,6 +14,8 @@
 /// limitations under the License.
 ///
 
+import { Concept } from './concept';
+
 export interface RefsetMember {
   path?: string;
   start?: string;
@@ -30,7 +32,7 @@ export interface RefsetMember {
   referencedComponentId: string;
   conceptId?: string;
   additionalFields?: Record<string, string>;
-  referencedComponent?: object;
+  referencedComponent?: Concept;
   effectiveTime?: string;
 }
 

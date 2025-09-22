@@ -1,0 +1,85 @@
+{
+  "type": "object",
+  "$defs": {
+    "SnowstormConceptMini": {
+      "type": "object",
+      "properties": {
+        "conceptId": {
+          "type": "string"
+        },
+        "pt": {
+          "$ref": "#/$defs/SnowstormTermLangPojo"
+        },
+        "definitionStatus": {
+          "type": "string",
+          "enum": [
+            "PRIMITIVE",
+            "FULLY_DEFINED"
+          ]
+        }
+      },
+      "minProperties": 1,
+      "errorMessage": {
+        "minProperties": "Field must be populated."
+      }
+    },
+    "SnowstormTermLangPojo": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "lang": {
+          "type": "string"
+        },
+        "term": {
+          "type": "string"
+        }
+      }
+    },
+    "PackDetails": {
+      "type": "object",
+      "properties": {
+        "packSize": {
+          "type": "integer",
+          "minimum": 1,
+          "errorMessage": {
+            "minimum": "Pack size must be at least 1."
+          }
+        },
+        "nonDefiningProperties": {
+          "type": "array",
+          "title": "Properties",
+          "items": {
+            "$ref": "#/$defs/MEDICATION_PACKAGE_NonDefiningProperty"
+          }
+        }
+      },
+      "required": ["packSize"]
+    }
+  },
+  "properties": {
+    "selectedProduct": {
+      "type": "string",
+      "title": "Selected Product"
+    },
+    "existingPackSizes": {
+      "type": "array",
+      "title": "Existing Pack Sizes",
+      "items": {
+        "$ref": "#/$defs/PackDetails"
+      }
+    },
+    "packSizes": {
+      "type": "array",
+      "title": "New Pack Sizes",
+      "items": {
+        "$ref": "#/$defs/PackDetails"
+      }
+    },
+    "newPackSizeInput": {
+      "$ref": "#/$defs/PackDetails"
+    },
+    "addButton": {
+      "type": "null"
+    }
+  }
+}

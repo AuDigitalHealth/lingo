@@ -16,7 +16,12 @@
 package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.gov.digitalhealth.lingo.util.NmpcType;
+import au.gov.digitalhealth.lingo.validation.AuthoringValidation;
 import au.gov.digitalhealth.lingo.validation.OnlyOneNotEmpty;
+import au.gov.digitalhealth.lingo.validation.ValidSnowstormConceptMini;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.util.Map;
 import java.util.Set;
 import lombok.Data;
@@ -24,20 +29,56 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
+@JsonTypeName("device")
 @OnlyOneNotEmpty(
     fields = {"newSpecificDeviceName", "specificDeviceType"},
     message = "Either newSpecificDeviceName or specificDeviceType must be populated, but not both")
 public class DeviceProductDetails extends ProductDetails {
   String newSpecificDeviceName;
 
+  @ValidSnowstormConceptMini(groups = AuthoringValidation.class)
   SnowstormConceptMini specificDeviceType;
 
-  Set<SnowstormConceptMini> otherParentConcepts;
+  Set<@ValidSnowstormConceptMini(groups = AuthoringValidation.class) SnowstormConceptMini>
+      otherParentConcepts;
+
+  public DeviceProductDetails() {
+    this.type = ProductType.DEVICE;
+  }
 
   @Override
   protected Map<String, String> getSpecialisedIdFsnMap() {
     return specificDeviceType == null
+            || specificDeviceType.getFsn() == null
+            || specificDeviceType.getFsn().getTerm() == null
+            || specificDeviceType.getConceptId() == null
         ? Map.of()
         : Map.of(specificDeviceType.getConceptId(), specificDeviceType.getFsn().getTerm());
+  }
+
+  @Override
+  public ProductTemplate getProductType() {
+    return productType;
+  }
+
+  @Override
+  protected Map<String, String> getSpecialisedIdPtMap() {
+    return specificDeviceType == null
+            || specificDeviceType.getPt() == null
+            || specificDeviceType.getPt().getTerm() == null
+            || specificDeviceType.getConceptId() == null
+        ? Map.of()
+        : Map.of(specificDeviceType.getConceptId(), specificDeviceType.getPt().getTerm());
+  }
+
+  @Override
+  public boolean hasDeviceType() {
+    return true;
+  }
+
+  @JsonIgnore
+  @Override
+  public NmpcType getNmpcType() {
+    return NmpcType.NMPC_DEVICE;
   }
 }

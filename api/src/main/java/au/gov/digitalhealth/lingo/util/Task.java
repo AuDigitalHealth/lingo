@@ -90,6 +90,10 @@ public class Task {
 
     @JsonProperty("Auto Classifying")
     AUTO_CLASSIFYING("Auto Classifying"),
+    @JsonProperty("Auto Promoting")
+    AUTO_PROMOTING("Auto Promoting"),
+    @JsonProperty("Auto Conflict")
+    AUTO_CONFLICT("Auto Conflict"),
     @JsonProperty("Unknown")
     UNKNOWN("Unknown");
 

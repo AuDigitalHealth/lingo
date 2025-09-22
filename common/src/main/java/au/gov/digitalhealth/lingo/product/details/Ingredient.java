@@ -16,40 +16,73 @@
 package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
+import au.gov.digitalhealth.lingo.validation.AuthoringValidation;
+import au.gov.digitalhealth.lingo.validation.ValidSnowstormConceptMini;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import java.util.HashMap;
 import java.util.Map;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Data
-public class Ingredient {
+@EqualsAndHashCode(callSuper = false)
+public class Ingredient extends ProductBaseDto {
   @NotNull SnowstormConceptMini activeIngredient;
+
+  @ValidSnowstormConceptMini(groups = AuthoringValidation.class)
+  SnowstormConceptMini refinedActiveIngredient;
+
+  @ValidSnowstormConceptMini(groups = AuthoringValidation.class)
   SnowstormConceptMini preciseIngredient;
+
+  @ValidSnowstormConceptMini(groups = AuthoringValidation.class)
   SnowstormConceptMini basisOfStrengthSubstance;
+
   @Valid Quantity totalQuantity;
   @Valid Quantity concentrationStrength;
+  @Valid Quantity presentationStrengthNumerator;
+  @Valid Quantity presentationStrengthDenominator;
+  @Valid Quantity concentrationStrengthNumerator;
+  @Valid Quantity concentrationStrengthDenominator;
 
   @JsonIgnore
   public Map<String, String> getIdFsnMap() {
-    Map<String, String> idMap = new HashMap<>();
-    idMap.put(activeIngredient.getConceptId(), SnowstormDtoUtil.getFsnTerm(activeIngredient));
+    Map<String, String> idMap = addToIdFsnMap(null, totalQuantity, concentrationStrength);
+    if (activeIngredient != null) {
+      addToIdFsnMap(idMap, activeIngredient);
+    }
     if (preciseIngredient != null) {
-      idMap.put(preciseIngredient.getConceptId(), SnowstormDtoUtil.getFsnTerm(preciseIngredient));
+      addToIdFsnMap(idMap, preciseIngredient);
     }
     if (basisOfStrengthSubstance != null) {
-      idMap.put(
-          basisOfStrengthSubstance.getConceptId(),
-          SnowstormDtoUtil.getFsnTerm(basisOfStrengthSubstance));
-    }
-    if (totalQuantity != null) {
-      idMap.putAll(totalQuantity.getIdFsnMap());
-    }
-    if (concentrationStrength != null) {
-      idMap.putAll(concentrationStrength.getIdFsnMap());
+      addToIdFsnMap(idMap, basisOfStrengthSubstance);
     }
     return idMap;
+  }
+
+  @JsonIgnore
+  public Map<String, String> getIdPtMap() {
+    Map<String, String> idMap = addToIdPtMap(null, totalQuantity, concentrationStrength);
+    addToIdPtMap(idMap, activeIngredient);
+    if (preciseIngredient != null) {
+      addToIdPtMap(idMap, preciseIngredient);
+    }
+    if (basisOfStrengthSubstance != null) {
+      addToIdPtMap(idMap, basisOfStrengthSubstance);
+    }
+    return idMap;
+  }
+
+  @JsonIgnore
+  public boolean isIngredientPresentationStrength() {
+    return (presentationStrengthNumerator != null && presentationStrengthDenominator != null)
+        || totalQuantity != null;
+  }
+
+  @JsonIgnore
+  public boolean isIngredientConcentrationStrength() {
+    return (concentrationStrengthNumerator != null && concentrationStrengthDenominator != null)
+        || concentrationStrength != null;
   }
 }

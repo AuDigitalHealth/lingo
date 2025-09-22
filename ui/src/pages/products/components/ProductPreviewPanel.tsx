@@ -8,8 +8,8 @@ import {
 import {
   Concept,
   Edge,
+  hasDescriptionChange,
   Product,
-  Product7BoxBGColour,
   ProductSummary,
 } from '../../../types/concept.ts';
 import React, { useState } from 'react';
@@ -19,9 +19,9 @@ import { useTheme } from '@mui/material/styles';
 import {
   findProductUsingId,
   findRelations,
+  isNewConcept,
 } from '../../../utils/helpers/conceptUtils.ts';
 import ConceptDiagramModal from '../../../components/conceptdiagrams/ConceptDiagramModal.tsx';
-import ProductRefsetModal from '../../../components/refset/ProductRefsetModal.tsx';
 import {
   AccordionDetails,
   AccordionSummary,
@@ -39,21 +39,14 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Stack } from '@mui/system';
 import LinkViews from './LinkViews.tsx';
-import { FormattedMessage } from 'react-intl';
-import {
-  AccountTreeOutlined,
-  Edit,
-  LibraryBooks,
-  NewReleases,
-  NewReleasesOutlined,
-} from '@mui/icons-material';
+import { AccountTreeOutlined, Edit, NotesOutlined } from '@mui/icons-material';
 import CircleIcon from '@mui/icons-material/Circle';
 import ExistingConceptDropdown from './ExistingConceptDropdown.tsx';
 import NewConceptDropdown from './NewConceptDropdown.tsx';
 
 import { useParams } from 'react-router-dom';
 import { useTicketByTicketNumber } from '../../../hooks/api/tickets/useTicketById.tsx';
-import useTaskByKey from '../../../hooks/useTaskById.tsx';
+import useTaskByKey from '../../../hooks/useTaskByKey.tsx';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 import { ProductType } from '../../../types/product.ts';
@@ -67,6 +60,14 @@ import {
   isNameContainsKeywords,
 } from '../../../utils/helpers/ProductPreviewUtils.ts';
 import ProductEditModal from '../../../components/editProduct/ProductEditModal.tsx';
+import { ProductStatusIndicators } from './ProductStatusIndicators.tsx';
+import { ProductRetireView } from './ProductRetireView.tsx';
+import { useConceptsForReview } from '../../../hooks/api/task/useConceptsForReview.js';
+import ConceptReviews from './reviews/ConceptReviews.tsx';
+import ProductLoader from './ProductLoader.tsx';
+import { useShowReviewControls } from '../../../hooks/api/task/useReviews.tsx';
+import DescriptionModal from '../../../components/editProduct/DescriptionModal.tsx';
+import { Product7BoxBGColour } from './style/colors.ts';
 
 interface ProductPreviewPanelProps {
   control: Control<ProductSummary>;
@@ -84,7 +85,7 @@ interface ProductPreviewPanelProps {
   fieldBindings: FieldBindings;
   branch: string;
   refsetMembers: RefsetMember[];
-  editProduct: boolean;
+  isSimpleEdit: boolean;
   setValue: UseFormSetValue<ProductSummary>;
   ticket?: Ticket;
 }
@@ -103,15 +104,23 @@ function ProductPreviewPanel({
   idsWithInvalidName,
   setIdsWithInvalidName,
   fieldBindings,
-  refsetMembers,
-  editProduct,
+  isSimpleEdit,
+  setValue,
   branch,
   ticket,
 }: ProductPreviewPanelProps) {
   const theme = useTheme();
+  const task = useTaskByKey();
+  const showReviewControls = useShowReviewControls({ task });
   const [conceptDiagramModalOpen, setConceptDiagramModalOpen] = useState(false);
+  const [descriptionModalOpen, setDescriptionModalOpen] = useState(false);
   const [conceptRefsetModalOpen, setConceptRefsetModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const { conceptReviews, isLoadingConceptReviews } =
+    useConceptsForReview(branch);
+  const filteredConceptReviews = conceptReviews
+    ? conceptReviews.find(c => c.conceptId === product.conceptId)
+    : undefined;
 
   const links = activeConcept
     ? findRelations(productModel?.edges, activeConcept, product.conceptId)
@@ -137,6 +146,9 @@ function ProductPreviewPanel({
     : [];
 
   const [optionsIgnored, setOptionsIgnored] = useState(false);
+  const isSubject = productModel.subjects.some(
+    s => s.conceptId === product.conceptId,
+  );
   const productTitle = fsnToggle
     ? (product.concept?.fsn?.term as string)
     : product.concept?.pt?.term;
@@ -185,35 +197,37 @@ function ProductPreviewPanel({
       setActiveConcept(conceptId);
     }
   };
-  const isEditingCTPP = editProduct && product.label === 'CTPP';
+  const isEditingCTPP = isSimpleEdit && product.label === 'CTPP';
   const shouldRenderDropdownAsReadonly = product.concept && product.conceptId;
+
   const ctppId = productModel.subjects.find(subj => {
     return subj.conceptId;
   })?.conceptId;
+
+  if (isLoadingConceptReviews) {
+    <ProductLoader message={'Loading'} />;
+  }
+
   return (
     <>
       <ConceptDiagramModal
         open={conceptDiagramModalOpen}
         handleClose={() => setConceptDiagramModalOpen(false)}
         newConcept={
-          product.newConcept
-            ? product.newConceptDetails
-              ? product.newConceptDetails
-              : undefined
-            : undefined
+          product.newConceptDetails ? product.newConceptDetails : undefined
         }
-        concept={product.concept}
+        product={product}
         keepMounted={true}
+        branch={branch}
       />
-      {refsetMembers.length > 0 && (
-        <ProductRefsetModal
-          open={conceptRefsetModalOpen}
-          handleClose={() => setConceptRefsetModalOpen(false)}
-          refsetMembers={refsetMembers}
-          keepMounted={true}
-        />
-      )}
-      {editProduct && ticket && (
+      <DescriptionModal
+        handleClose={() => setDescriptionModalOpen(false)}
+        open={descriptionModalOpen}
+        product={product}
+        keepMounted={false}
+        branch={branch}
+      />
+      {isSimpleEdit && ticket && (
         <ProductEditModal
           isCtpp={isEditingCTPP}
           open={editModalOpen}
@@ -255,7 +269,7 @@ function ProductPreviewPanel({
               <Grid xs={40} item={true}>
                 <Stack direction="row" spacing={2} alignItems="center">
                   <Grid item xs={10}>
-                    {product.newConcept ? (
+                    {isNewConcept(product) ? (
                       <ProductHeaderWatch
                         control={control}
                         index={index}
@@ -269,6 +283,7 @@ function ProductPreviewPanel({
                         partialNameCheckKeywords={partialNameCheckKeywords}
                         nameGeneratorErrorKeywords={nameGeneratorErrorKeywords}
                         optionsIgnored={optionsIgnored}
+                        isSubject={isSubject}
                       />
                     ) : (
                       <Tooltip
@@ -300,50 +315,44 @@ function ProductPreviewPanel({
                         }}
                       >
                         <Typography>
-                          <span>{productTitle}</span>
+                          <span
+                            style={{
+                              fontWeight: isSubject ? 'bold' : 'normal',
+                            }}
+                          >
+                            {productTitle}
+                          </span>
                         </Typography>
                       </Tooltip>
                     )}
                   </Grid>
                   <Grid container justifyContent="flex-end" alignItems="center">
-                    {product.newInTask ? (
-                      <Tooltip
-                        title={
-                          <FormattedMessage
-                            id="changed-in-task"
-                            defaultMessage="Un-promoted changes in the task"
-                          />
-                        }
-                      >
-                        <NewReleases />
-                      </Tooltip>
-                    ) : product.newInProject ? (
-                      <Tooltip
-                        title={
-                          <FormattedMessage
-                            id="changed-in-project"
-                            defaultMessage="Unreleased changes in the project"
-                          />
-                        }
-                      >
-                        <NewReleasesOutlined />
-                      </Tooltip>
-                    ) : null}
+                    {showReviewControls && (
+                      <ConceptReviews
+                        conceptReview={filteredConceptReviews}
+                        branch={branch}
+                        ticket={ticket}
+                      />
+                    )}
+                    <ProductStatusIndicators product={product} />
+                    <ProductRetireView
+                      product={product}
+                      index={index}
+                      control={control}
+                    />
                     <IconButton
                       size="small"
                       onClick={() => setConceptDiagramModalOpen(true)}
                     >
                       <AccountTreeOutlined />
                     </IconButton>
-                    {refsetMembers.length > 0 && (
-                      <IconButton
-                        size="small"
-                        onClick={() => setConceptRefsetModalOpen(true)}
-                      >
-                        <LibraryBooks />
-                      </IconButton>
-                    )}
-                    {editProduct && (
+                    <IconButton
+                      size="small"
+                      onClick={() => setDescriptionModalOpen(true)}
+                    >
+                      <NotesOutlined />
+                    </IconButton>
+                    {isSimpleEdit && (
                       <IconButton
                         size="small"
                         onClick={() => setEditModalOpen(true)}
@@ -358,7 +367,7 @@ function ProductPreviewPanel({
               <Grid xs={40} item={true}>
                 <Stack direction="row" spacing={2} alignItems="center">
                   <Grid item xs={10}>
-                    {product.newConcept ? (
+                    {isNewConcept(product) ? (
                       <ProductHeaderWatch
                         control={control}
                         index={index}
@@ -372,14 +381,29 @@ function ProductPreviewPanel({
                         partialNameCheckKeywords={partialNameCheckKeywords}
                         nameGeneratorErrorKeywords={nameGeneratorErrorKeywords}
                         optionsIgnored={optionsIgnored}
+                        isSubject={isSubject}
                       />
                     ) : (
                       <Typography>
-                        <span>{productTitle}</span>
+                        <span
+                          style={{
+                            fontWeight: isSubject ? 'bold' : 'normal',
+                          }}
+                        >
+                          {productTitle}
+                        </span>
                       </Typography>
                     )}
                   </Grid>
                   <Grid container justifyContent="flex-end" alignItems="center">
+                    {showReviewControls && (
+                      <ConceptReviews
+                        conceptReview={filteredConceptReviews}
+                        branch={branch}
+                        ticket={ticket}
+                      />
+                    )}
+
                     {activeConcept === product.conceptId ? (
                       <CircleIcon
                         style={{ color: theme.palette.warning.light }}
@@ -387,44 +411,26 @@ function ProductPreviewPanel({
                     ) : (
                       <></>
                     )}
-                    {product.newInTask ? (
-                      <Tooltip
-                        title={
-                          <FormattedMessage
-                            id="changed-in-task"
-                            defaultMessage="Unpromoted changes in the task"
-                          />
-                        }
-                      >
-                        <NewReleases />
-                      </Tooltip>
-                    ) : product.newInProject ? (
-                      <Tooltip
-                        title={
-                          <FormattedMessage
-                            id="changed-in-project"
-                            defaultMessage="Unreleased changes in the project"
-                          />
-                        }
-                      >
-                        <NewReleasesOutlined />
-                      </Tooltip>
-                    ) : null}
+                    <ProductStatusIndicators product={product} />
+                    <ProductRetireView
+                      product={product}
+                      index={index}
+                      control={control}
+                    />
+
                     <IconButton
                       size="small"
                       onClick={() => setConceptDiagramModalOpen(true)}
                     >
                       <AccountTreeOutlined />
                     </IconButton>
-                    {refsetMembers.length > 0 && (
-                      <IconButton
-                        size="small"
-                        onClick={() => setConceptRefsetModalOpen(true)}
-                      >
-                        <LibraryBooks />
-                      </IconButton>
-                    )}
-                    {editProduct && (
+                    <IconButton
+                      size="small"
+                      onClick={() => setDescriptionModalOpen(true)}
+                    >
+                      <NotesOutlined />
+                    </IconButton>
+                    {isSimpleEdit && (
                       <IconButton
                         size="small"
                         onClick={() => setEditModalOpen(true)}
@@ -440,13 +446,19 @@ function ProductPreviewPanel({
           <AccordionDetails key={'accordion-details-' + product.conceptId}>
             {/* A single concept exists, you do not have an option to make a new concept */}
             {shouldRenderDropdownAsReadonly && (
-              <ExistingConceptDropdown product={product} />
+              <ExistingConceptDropdown
+                product={product}
+                branch={branch}
+                control={control}
+                index={index}
+                setValue={setValue}
+              />
             )}
             {/* a new concept has to be made, as one does not exist */}
             {product.concept === null &&
               product.conceptOptions &&
               product.conceptOptions.length === 0 &&
-              product.newConcept && (
+              isNewConcept(product) && (
                 <NewConceptDropdown
                   product={product}
                   index={index}
@@ -454,13 +466,15 @@ function ProductPreviewPanel({
                   getValues={getValues}
                   control={control}
                   fieldBindings={fieldBindings}
+                  branch={branch}
+                  setValue={setValue}
                 />
               )}
             {/*there is an option to pick a concept, but you could also create a new concept if you so desire.*/}
             {product.concept === null &&
               product.conceptOptions &&
               product.conceptOptions.length > 0 &&
-              product.newConcept && (
+              isNewConcept(product) && (
                 <ConceptOptionsDropdown
                   product={product}
                   index={index}
@@ -469,6 +483,8 @@ function ProductPreviewPanel({
                   control={control}
                   getValues={getValues}
                   fieldBindings={fieldBindings}
+                  branch={branch}
+                  setValue={setValue}
                 />
               )}
           </AccordionDetails>
@@ -486,6 +502,8 @@ interface ConceptOptionsDropdownProps {
   setOptionsIgnored: (bool: boolean) => void;
   getValues: UseFormGetValues<ProductSummary>;
   fieldBindings: FieldBindings;
+  branch: string;
+  setValue: UseFormSetValue<ProductSummary>;
 }
 function ConceptOptionsDropdown({
   product,
@@ -495,6 +513,8 @@ function ConceptOptionsDropdown({
   getValues,
   control,
   fieldBindings,
+  branch,
+  setValue,
 }: ConceptOptionsDropdownProps) {
   const { ticketNumber } = useParams();
   const { data: ticket } = useTicketByTicketNumber(ticketNumber, true);
@@ -508,6 +528,8 @@ function ConceptOptionsDropdown({
     previewMedicationProduct,
     previewDeviceProduct,
     selectedProductType,
+    selectedConceptIdentifiers,
+    setSelectedConceptIdentifiers,
   } = useAuthoringStore();
 
   const [tabValue, setTabValue] = React.useState(0);
@@ -537,9 +559,13 @@ function ConceptOptionsDropdown({
       selectedConcept?.conceptId === undefined
     )
       return;
-    tempProductPreviewDetails.selectedConceptIdentifiers = [
+
+    const updatedConcepts = [
+      ...(selectedConceptIdentifiers ?? []),
       selectedConcept?.conceptId,
     ];
+    tempProductPreviewDetails.selectedConceptIdentifiers = updatedConcepts;
+    setSelectedConceptIdentifiers(updatedConcepts);
 
     previewMedicationProduct(
       tempProductPreviewDetails,
@@ -555,9 +581,12 @@ function ConceptOptionsDropdown({
       selectedConcept?.conceptId === undefined
     )
       return;
-    tempProductPreviewDetails.selectedConceptIdentifiers = [
+    const updatedConcepts = [
+      ...(selectedConceptIdentifiers ?? []),
       selectedConcept?.conceptId,
     ];
+    tempProductPreviewDetails.selectedConceptIdentifiers = updatedConcepts;
+    setSelectedConceptIdentifiers(updatedConcepts);
 
     previewDeviceProduct(
       tempProductPreviewDetails,
@@ -642,6 +671,8 @@ function ConceptOptionsDropdown({
             getValues={getValues}
             control={control}
             fieldBindings={fieldBindings}
+            branch={branch}
+            setValue={setValue}
           />
         )}
       </CustomTabPanel>
@@ -662,8 +693,10 @@ function ProductHeaderWatch({
   partialNameCheckKeywords,
   nameGeneratorErrorKeywords,
   optionsIgnored,
+  isEditMode,
+  isSubject,
 }: {
-  control: Control<ProductSummary>;
+  control?: Control<ProductSummary>;
   index: number;
   fsnToggle: boolean;
   showHighLite: boolean;
@@ -672,32 +705,49 @@ function ProductHeaderWatch({
   productModel: ProductSummary;
   activeConcept: string | undefined;
   handleChangeColor: (value: string) => void;
-  partialNameCheckKeywords: string[];
-  nameGeneratorErrorKeywords: string[];
+  partialNameCheckKeywords?: string[];
+  nameGeneratorErrorKeywords?: string[];
   optionsIgnored: boolean;
+  isEditMode: boolean;
+  isSubject?: boolean;
 }) {
-  const pt = useWatch({
+  let pt = useWatch({
     control,
     name: `nodes[${index}].newConceptDetails.preferredTerm` as 'nodes.0.newConceptDetails.preferredTerm',
   });
 
-  const fsn = useWatch({
+  let fsn = useWatch({
     control,
     name: `nodes[${index}].newConceptDetails.fullySpecifiedName` as 'nodes.0.newConceptDetails.fullySpecifiedName',
   });
-  if (product.newConcept) {
+
+  if (!control) {
+    fsn = product.fullySpecifiedName as string;
+    pt = product.preferredTerm as string;
+  }
+
+  if (isNewConcept(product) && isEditMode) {
     if (
-      (fsn && isNameContainsKeywords(fsn, nameGeneratorErrorKeywords)) ||
-      (pt && isNameContainsKeywords(pt, nameGeneratorErrorKeywords))
+      (fsn &&
+        nameGeneratorErrorKeywords &&
+        isNameContainsKeywords(fsn, nameGeneratorErrorKeywords)) ||
+      (pt &&
+        nameGeneratorErrorKeywords &&
+        isNameContainsKeywords(pt, nameGeneratorErrorKeywords))
     ) {
       handleChangeColor(Product7BoxBGColour.INVALID);
     } else if (
-      (fsn && isNameContainsKeywords(fsn, partialNameCheckKeywords)) ||
-      (pt && isNameContainsKeywords(pt, partialNameCheckKeywords))
+      (fsn &&
+        partialNameCheckKeywords &&
+        isNameContainsKeywords(fsn, partialNameCheckKeywords)) ||
+      (pt &&
+        partialNameCheckKeywords &&
+        isNameContainsKeywords(pt, partialNameCheckKeywords))
     ) {
       handleChangeColor(Product7BoxBGColour.INCOMPLETE);
     } else if (
       fsn &&
+      partialNameCheckKeywords &&
       !isNameContainsKeywords(fsn, partialNameCheckKeywords) &&
       pt &&
       !isNameContainsKeywords(pt, partialNameCheckKeywords) &&
@@ -706,6 +756,7 @@ function ProductHeaderWatch({
       handleChangeColor(Product7BoxBGColour.NEW);
     } else if (
       fsn &&
+      partialNameCheckKeywords &&
       !isNameContainsKeywords(fsn, partialNameCheckKeywords) &&
       pt &&
       !isNameContainsKeywords(pt, partialNameCheckKeywords) &&
@@ -716,9 +767,30 @@ function ProductHeaderWatch({
     } else if (product.conceptOptions.length > 0 && !optionsIgnored) {
       handleChangeColor(Product7BoxBGColour.INVALID);
     }
+  } else if (
+    product.conceptOptions &&
+    product.conceptOptions.length > 0 &&
+    product.concept === null &&
+    !optionsIgnored
+  ) {
+    handleChangeColor(Product7BoxBGColour.INVALID);
+  } else if (
+    product.conceptOptions &&
+    product.conceptOptions.length > 0 &&
+    product.concept === null &&
+    optionsIgnored
+  ) {
+    handleChangeColor(Product7BoxBGColour.INCOMPLETE);
+  } else if (
+    product.propertyUpdate ||
+    product.statedFormChanged ||
+    product.inferredFormChanged ||
+    hasDescriptionChange(product)
+  ) {
+    handleChangeColor(Product7BoxBGColour.PROPERTY_CHANGE);
   }
 
-  if (showHighLite) {
+  if (showHighLite && control) {
     return (
       <Tooltip
         title={
@@ -749,7 +821,13 @@ function ProductHeaderWatch({
         }}
       >
         <Typography>
-          <span>{fsnToggle ? fsn : pt} </span>
+          <span
+            style={{
+              fontWeight: isSubject ? 'bold' : 'normal',
+            }}
+          >
+            {fsnToggle ? fsn : pt}
+          </span>
         </Typography>
       </Tooltip>
     );
@@ -757,7 +835,13 @@ function ProductHeaderWatch({
 
   return (
     <Typography>
-      <span>{fsnToggle ? fsn : pt}</span>
+      <span
+        style={{
+          fontWeight: isSubject ? 'bold' : 'normal',
+        }}
+      >
+        {fsnToggle ? fsn : pt}
+      </span>
     </Typography>
   );
   // end of ProductHeaderWatch

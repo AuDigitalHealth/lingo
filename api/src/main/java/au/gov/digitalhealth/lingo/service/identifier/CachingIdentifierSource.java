@@ -108,7 +108,7 @@ public class CachingIdentifierSource implements IdentifierSource {
   @Scheduled(fixedDelayString = "${cis.cache.topup.interval:10000}")
   public void topUp() throws InterruptedException {
     if (identifierSource != null && identifierSource.isReservationAvailable()) {
-      log.fine("Topping up identifier caches");
+      log.finest("Topping up identifier caches");
       for (IdentifierCache cache : reservedIds.values()) {
         try {
           cache.topUp();

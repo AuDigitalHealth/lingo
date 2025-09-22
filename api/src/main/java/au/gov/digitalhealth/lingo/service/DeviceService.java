@@ -17,8 +17,9 @@ package au.gov.digitalhealth.lingo.service;
 
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONTAINS_DEVICE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONTAINS_PACKAGED_DEVICE;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.MPUU_REFSET_ID;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.MP_REFSET_ID;
+import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
+import static au.gov.digitalhealth.lingo.util.NmpcConstants.CONTAINS_DEVICE_NMPC;
+import static au.gov.digitalhealth.lingo.util.NmpcConstants.HAS_OTHER_IDENTIFYING_INFORMATION_NMPC;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.IS_A;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.filterActiveStatedRelationshipByType;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getRelationshipsFromAxioms;
@@ -26,32 +27,40 @@ import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getRelationshipsF
 import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
+import au.gov.digitalhealth.lingo.configuration.model.Models;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.exception.AtomicDataExtractionProblem;
 import au.gov.digitalhealth.lingo.product.details.DeviceProductDetails;
+import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
+import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.extern.java.Log;
 import org.springframework.stereotype.Service;
 
 /** Service for product-centric operations */
+@Log
 @Service
 public class DeviceService extends AtomicDataService<DeviceProductDetails> {
-  private static final String PACKAGE_CONCEPTS_FOR_ATOMIC_EXTRACTION_DEVICE_ECL =
-      "(<id> or (<id>.999000111000168106) "
-          + "or (<id>.999000081000168101) "
-          + "or (<id>.999000111000168106.999000081000168101) "
-          + "or ((>>((<id>.999000081000168101) or (<id>.999000111000168106.999000081000168101))) and (^929360071000036103 or ^929360061000036106))) "
-          + "and < 260787004";
-  private static final String PRODUCT_CONCEPTS_FOR_ATOMIC_EXTRACTION_ECL =
-      "(<id> or (>> <id> and (^929360071000036103 or ^929360061000036106))) and < 260787004";
   private final SnowstormClient snowStormApiClient;
+  private final Models models;
+  private final FhirClient fhirClient;
 
-  DeviceService(SnowstormClient snowStormApiClient) {
+  DeviceService(SnowstormClient snowStormApiClient, Models models, FhirClient fhirClient) {
     this.snowStormApiClient = snowStormApiClient;
+    this.models = models;
+    this.fhirClient = fhirClient;
   }
 
-  private static SnowstormConceptMini getMpuu(
-      SnowstormConcept product, String productId, Map<String, String> typeMap) {
+  private static SnowstormConceptMini getLeafUnbrandedProduct(
+      SnowstormConcept product,
+      String productId,
+      Map<String, String> typeMap,
+      ModelConfiguration modelConfiguration) {
     Set<SnowstormConceptMini> mpuu =
         filterActiveStatedRelationshipByType(getRelationshipsFromAxioms(product), IS_A.getValue())
             .stream()
@@ -61,7 +70,10 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
                         && typeMap.get(r.getTarget().getConceptId()) != null
                         && typeMap
                             .get(r.getTarget().getConceptId())
-                            .equals(MPUU_REFSET_ID.getValue()))
+                            .equals(
+                                modelConfiguration
+                                    .getLeafUnbrandedProductModelLevel()
+                                    .getReferenceSetIdentifier()))
             .map(SnowstormRelationship::getTarget)
             .collect(Collectors.toSet());
 
@@ -71,11 +83,31 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
     return mpuu.iterator().next();
   }
 
-  private static SnowstormConceptMini getMp(
+  private SnowstormConceptMini getRootUnbrandedProduct(
+      String branch,
       String productId,
       Map<String, SnowstormConcept> browserMap,
       Map<String, String> typeMap,
-      SnowstormConceptMini mpuu) {
+      SnowstormConceptMini mpuu,
+      ModelConfiguration modelConfiguration) {
+
+    // if there is only one MP then it is the root type
+    String rootRefsetId =
+        modelConfiguration.getRootUnbrandedProductModelLevel().getReferenceSetIdentifier();
+
+    Optional<Entry<String, String>> rootTypeEntry =
+        typeMap.entrySet().stream().filter(e -> rootRefsetId.equals(e.getValue())).findFirst();
+
+    if (typeMap.entrySet().stream().filter(e -> rootRefsetId.equals(e.getValue())).count() == 1) {
+      return SnowstormDtoUtil.toSnowstormConceptMini(
+          browserMap.get(
+              rootTypeEntry
+                  .map(Map.Entry::getKey)
+                  .orElseThrow(
+                      () -> new AtomicDataExtractionProblem("Root type not found", productId))));
+    }
+
+    // otherwise we need to find the MP that is the root type first try the stated relationships
     Set<SnowstormConceptMini> mp =
         filterActiveStatedRelationshipByType(
                 getRelationshipsFromAxioms(browserMap.get(mpuu.getConceptId())), IS_A.getValue())
@@ -86,14 +118,27 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
                         && typeMap.get(r.getTarget().getConceptId()) != null
                         && typeMap
                             .get(r.getTarget().getConceptId())
-                            .equals(MP_REFSET_ID.getValue()))
+                            .equals(
+                                modelConfiguration
+                                    .getRootUnbrandedProductModelLevel()
+                                    .getReferenceSetIdentifier()))
             .map(SnowstormRelationship::getTarget)
             .collect(Collectors.toSet());
 
-    if (mp.size() != 1) {
-      throw new AtomicDataExtractionProblem("Expected 1 MP but found " + mp.size(), productId);
+    if (mp.size() == 1) {
+      return mp.iterator().next();
     }
-    return mp.iterator().next();
+
+    return snowStormApiClient.getConceptFromEcl(
+        branch,
+        modelConfiguration.getRootUnbrandedProductModelLevel().getProductModelEcl(),
+        Long.parseLong(mpuu.getConceptId()),
+        modelConfiguration.isExecuteEclAsStated());
+  }
+
+  @Override
+  protected FhirClient getFhirClient() {
+    return fhirClient;
   }
 
   @Override
@@ -102,30 +147,68 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
   }
 
   @Override
-  protected String getPackageAtomicDataEcl() {
-    return PACKAGE_CONCEPTS_FOR_ATOMIC_EXTRACTION_DEVICE_ECL;
+  protected String getPackageAtomicDataEcl(ModelConfiguration modelConfiguration) {
+    return modelConfiguration.getDevicePackageDataExtractionEcl();
   }
 
   @Override
-  protected String getProductAtomicDataEcl() {
-    return PRODUCT_CONCEPTS_FOR_ATOMIC_EXTRACTION_ECL;
+  protected String getProductAtomicDataEcl(ModelConfiguration modelConfiguration) {
+    return modelConfiguration.getDeviceProductDataExtractionEcl();
   }
 
   @Override
   protected DeviceProductDetails populateSpecificProductDetails(
+      String branch,
       SnowstormConcept product,
       String productId,
       Map<String, SnowstormConcept> browserMap,
-      Map<String, String> typeMap) {
+      Map<String, String> typeMap,
+      ModelConfiguration modelConfiguration) {
 
     DeviceProductDetails productDetails = new DeviceProductDetails();
 
-    productDetails.setSpecificDeviceType(getMpuu(product, productId, typeMap));
+    productDetails.setSpecificDeviceType(
+        getLeafUnbrandedProduct(product, productId, typeMap, modelConfiguration));
 
-    SnowstormConceptMini deviceType =
-        getMp(productId, browserMap, typeMap, productDetails.getSpecificDeviceType());
+    productDetails.setDeviceType(
+        getRootUnbrandedProduct(
+            branch,
+            productId,
+            browserMap,
+            typeMap,
+            productDetails.getSpecificDeviceType(),
+            modelConfiguration));
 
-    productDetails.setDeviceType(deviceType);
+    final String hasOtherIdentifyingInfoType =
+        modelConfiguration.getModelType().equals(ModelType.NMPC)
+            ? HAS_OTHER_IDENTIFYING_INFORMATION_NMPC.getValue()
+            : HAS_OTHER_IDENTIFYING_INFORMATION.getValue();
+    Set<SnowstormRelationship> relationships =
+        filterActiveStatedRelationshipByType(
+            getRelationshipsFromAxioms(product), hasOtherIdentifyingInfoType);
+
+    if (relationships.size() == 1) {
+      productDetails.setOtherIdentifyingInformation(
+          relationships.iterator().next().getConcreteValue().getValue());
+    } else {
+      log.severe("There are more than one relationship found for branded product");
+    }
+
+    relationships =
+        filterActiveStatedRelationshipByType(
+            getRelationshipsFromAxioms(
+                snowStormApiClient
+                    .getBrowserConcepts(
+                        branch, Set.of(productDetails.getSpecificDeviceType().getConceptId()))
+                    .blockFirst()),
+            hasOtherIdentifyingInfoType);
+
+    if (relationships.size() == 1) {
+      productDetails.setGenericOtherIdentifyingInformation(
+          relationships.iterator().next().getConcreteValue().getValue());
+    } else {
+      log.severe("There are more than one relationship found for unbranded product");
+    }
 
     return productDetails;
   }
@@ -136,12 +219,19 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
   }
 
   @Override
-  protected String getContainedUnitRelationshipType() {
-    return CONTAINS_DEVICE.getValue();
+  protected String getContainedUnitRelationshipType(ModelConfiguration modelConfiguration) {
+    return modelConfiguration.getModelType().equals(ModelType.NMPC)
+        ? CONTAINS_DEVICE_NMPC.getValue()
+        : CONTAINS_DEVICE.getValue();
   }
 
   @Override
   protected String getSubpackRelationshipType() {
     return CONTAINS_PACKAGED_DEVICE.getValue();
+  }
+
+  @Override
+  protected ModelConfiguration getModelConfiguration(String branch) {
+    return models.getModelConfiguration(branch);
   }
 }

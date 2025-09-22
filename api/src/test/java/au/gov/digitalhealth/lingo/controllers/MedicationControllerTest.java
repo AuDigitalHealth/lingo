@@ -21,6 +21,7 @@ import au.gov.digitalhealth.lingo.AmtTestData;
 import au.gov.digitalhealth.lingo.LingoTestBase;
 import au.gov.digitalhealth.lingo.product.ProductBrands;
 import au.gov.digitalhealth.lingo.product.ProductPackSizes;
+import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import io.restassured.common.mapper.TypeRef;
 import java.math.BigDecimal;
 import java.util.Set;
@@ -75,7 +76,10 @@ class MedicationControllerTest extends LingoTestBase {
                 p ->
                     Pair.of(
                         p.getPackSize(),
-                        p.getExternalIdentifiers().iterator().next().getIdentifierValue()))
+                        ExternalIdentifier.filter(p.getNonDefiningProperties())
+                            .iterator()
+                            .next()
+                            .getValue()))
             .collect(Collectors.toSet());
     assertThat(packSizeWithIdentifiers)
         .containsExactlyInAnyOrder(
@@ -92,7 +96,9 @@ class MedicationControllerTest extends LingoTestBase {
         getLingoTestClient()
             .getMedicationProductBrands(AmtTestData.AMOXIL_500_MG_CAPSULE_28_BLISTER_PACK);
     Assertions.assertEquals(2, brands.getBrands().size());
-    brands.getBrands().forEach(b -> Assertions.assertEquals(1, b.getExternalIdentifiers().size()));
+    brands
+        .getBrands()
+        .forEach(b -> Assertions.assertEquals(1, b.getNonDefiningProperties().size()));
   }
 
   @Test

@@ -6,7 +6,7 @@ import {
   ProductStatus,
   ProductTableRow,
 } from '../../../types/TicketProduct.ts';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ActionType, ProductType } from '../../../types/product.ts';
 import {
   Grid,
@@ -16,7 +16,12 @@ import {
   Typography,
 } from '@mui/material';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
-import { AddCircle, Delete } from '@mui/icons-material';
+import {
+  AddCircle,
+  DataObject,
+  Delete,
+  PrecisionManufacturingOutlined,
+} from '@mui/icons-material';
 import UnableToEditTooltip from '../../tasks/components/UnableToEditTooltip.tsx';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import { useCanEditTicket } from '../../../hooks/api/tickets/useCanEditTicket.tsx';
@@ -25,7 +30,6 @@ import {
   mapToProductDetailsArray,
   mapToProductDetailsArrayFromBulkActions,
 } from '../../../utils/helpers/ticketProductsUtils.ts';
-import { useNavigate } from 'react-router-dom';
 import useCanEditTask from '../../../hooks/useCanEditTask.tsx';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 import { Stack } from '@mui/system';
@@ -38,6 +42,8 @@ import { getTicketProductsByTicketIdOptions } from '../../../hooks/api/tickets/u
 import { useQueryClient } from '@tanstack/react-query';
 import { useActiveConceptIdsByIds } from '../../../hooks/eclRefset/useConceptsById.tsx';
 import WarningIcon from '@mui/icons-material/Warning';
+import JsonToProductModal from './JsonToProductModal.tsx';
+import { useInternalUsers } from '../../../hooks/api/useInitializeJiraUsers.tsx';
 
 interface TicketProductsProps {
   ticket: Ticket;
@@ -49,6 +55,7 @@ interface RowToExpand {
 }
 
 function TicketProducts({ ticket, branch }: TicketProductsProps) {
+  const { internalUsers } = useInternalUsers();
   const { canEdit: canEditTicket, lockDescription: ticketLockDescription } =
     useCanEditTicket(ticket);
   const { products, bulkProductActions } = ticket;
@@ -101,7 +108,6 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
   // Create a memoized version of data that includes the active status
   const enrichedData = useMemo(() => {
     if (!activeConceptIds) return data;
-
     return data.map(row => ({
       ...row,
       isActive: row.conceptId
@@ -189,6 +195,7 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
             <IconButton
               aria-label="delete"
               size="small"
+              disabled={!canEditTicket || !canEdit}
               onClick={e => {
                 setIdToDelete(rowData?.id);
 
@@ -229,7 +236,6 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
 
   // eslint-disable-next-line
   const onRowToggle = (e: any) => {
-    // eslint-disable-next-line
     setExpandedRows(e.data as ProductTableRow[]);
   };
 
@@ -237,81 +243,115 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
   const productNameTemplateWithActiveStatus = useCallback(
     (rowData: ProductTableRow) => {
       const activeIds = activeConceptIds ? activeConceptIds.items : [];
+      const isInternalUser = !!(
+        internalUsers &&
+        rowData.createdBy &&
+        internalUsers.some((user: string) => user === rowData.createdBy)
+      );
 
+      const renderIcon = () => {
+        if (isInternalUser) {
+          return (
+            <Tooltip
+              title={'Created by a robot account'}
+              key={`tooltip-${rowData.id}`}
+            >
+              <PrecisionManufacturingOutlined color="warning" />
+            </Tooltip>
+          );
+        }
+        return null;
+      };
       if (isProductUpdate(rowData)) {
         return (
-          <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
-            <Link
-              to={`product/view/update/${rowData.bulkProductActionId}`}
-              className={'product-view-update-link'}
-              key={`link-${rowData.id}`}
-              data-testid={`link-${rowData.id}`}
-              style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
-            >
-              {trimName(rowData.name)}
-            </Link>
-          </Tooltip>
+          <>
+            {renderIcon()}
+            <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
+              <Link
+                to={`product/view/update/${rowData.bulkProductActionId}`}
+                className={'product-view-update-link'}
+                key={`link-${rowData.id}`}
+                data-testid={`link-${rowData.id}`}
+                style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+              >
+                {trimName(rowData.name)}
+              </Link>
+            </Tooltip>
+          </>
         );
       }
       if (isBulkPackProductAction(rowData)) {
         return (
-          <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
-            <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>
-              {rowData.name}
-            </span>
-          </Tooltip>
+          <>
+            {renderIcon()}
+            <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
+              <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>
+                {rowData.name}
+              </span>
+            </Tooltip>
+          </>
         );
       } else if (isPartialProduct(rowData)) {
         return (
-          <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
-            <Link
-              to="product/edit"
-              state={{
-                productId: rowData?.productId,
-                productName: rowData?.name,
-                productType: rowData?.productType,
-                actionType: isDeviceType(rowData.productType as ProductType)
-                  ? ActionType.newDevice
-                  : ActionType.newMedication,
-              }}
-              className={'product-edit-link'}
-              key={`link-${rowData?.name}`}
-              data-testid={`link-${rowData?.name}`}
-              style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
-            >
-              {trimName(rowData.name)}
-            </Link>
-          </Tooltip>
+          <>
+            {renderIcon()}
+            <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
+              <Link
+                to="product/edit"
+                state={{
+                  productId: rowData?.productId,
+                  productName: rowData?.name,
+                  productType: rowData?.productType,
+                  actionType: isDeviceType(rowData.productType as ProductType)
+                    ? ActionType.newDevice
+                    : ActionType.newMedication,
+                }}
+                className={'product-edit-link'}
+                key={`link-${rowData?.name}`}
+                data-testid={`link-${rowData?.name}`}
+                style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+              >
+                {trimName(rowData.name)}
+              </Link>
+            </Tooltip>
+          </>
         );
       } else if (rowData.conceptId && activeIds.includes(rowData.conceptId)) {
         return (
-          <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
-            <Link
-              to={`product/view/${rowData.conceptId}`}
-              className={'product-view-link'}
-              key={`link-${rowData.id}`}
-              data-testid={`link-${rowData.id}`}
-              style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
-            >
-              {trimName(rowData.name)}
-            </Link>
-          </Tooltip>
+          <>
+            {renderIcon()}
+            <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
+              <Link
+                to={`product/view/${rowData.conceptId}`}
+                className={'product-view-link'}
+                key={`link-${rowData.id}`}
+                data-testid={`link-${rowData.id}`}
+                style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+              >
+                {trimName(rowData.name)}
+              </Link>
+            </Tooltip>
+          </>
         );
       } else {
         return (
-          <Tooltip
-            title={'Product no longer exists or is inactive.'}
-            key={`tooltip-${rowData.id}`}
-          >
-            <div>
-              <WarningIcon color="warning" />
-              <Typography>{trimName(rowData.name)}</Typography>
-            </div>
-          </Tooltip>
+          <>
+            {renderIcon()}
+            <Tooltip
+              title={'Product no longer exists or is inactive.'}
+              key={`tooltip-${rowData.id}`}
+            >
+              <div>
+                <WarningIcon color="warning" />
+
+                <Typography>{trimName(rowData.name)}</Typography>
+              </div>
+            </Tooltip>
+          </>
         );
       }
     },
-    [activeConceptIds], // This ensures the function is recreated when activeConceptIds changes
+    [activeConceptIds, internalUsers], // Added internalUsers to dependency array
   );
 
   // Show a loading indicator if we're still loading active concept IDs
@@ -339,6 +379,7 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
             <InputLabel sx={{ mt: 0.5 }}>Products:</InputLabel>
           </Grid>
           <Grid container justifyContent="flex-end">
+            <JsonToProductModal ticket={ticket} />
             <UnableToEditTooltip
               canEdit={canEditTicket && canEdit}
               lockDescription={
@@ -354,7 +395,7 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
                   navigate('product');
                 }}
               >
-                <Tooltip title={'Create new product'}>
+                <Tooltip title={'Create and manage product'}>
                   <AddCircle fontSize="medium" />
                 </Tooltip>
               </IconButton>
@@ -375,9 +416,10 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
                 minHeight: '100%',
                 maxHeight: '100%',
               }}
+              size="small"
               sortField={'created'}
               sortOrder={-1}
-              value={enrichedData} // Use the enriched data here
+              value={enrichedData}
               expandedRows={expandedRows}
               onRowClick={e => {
                 manuallyTriggerRowToggle(e.data as ProductTableRow);
@@ -389,16 +431,35 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
             >
               <Column
                 field="name"
-                body={productNameTemplateWithActiveStatus} // Use the memoized function
+                body={productNameTemplateWithActiveStatus}
                 header="Product Name"
                 style={{
                   maxWidth: '125px',
                   overflow: 'hidden',
-                  maxHeight: '20px',
+                  maxHeight: '18px',
                   textOverflow: 'ellipsis',
                 }}
               />
-              <Column field="productType" header="Product Type" />
+              <Column
+                field="actionProductType"
+                header="Action"
+                body={(rowData: ProductTableRow) => {
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <div>{rowData.productType || ''}</div>
+                      <div>
+                        {rowData.action ? rowData.action.toLowerCase() : ''}
+                      </div>
+                    </div>
+                  );
+                }}
+                style={{
+                  maxWidth: '3.5em',
+                  overflow: 'hidden',
+                  maxHeight: '18px',
+                  textOverflow: 'ellipsis',
+                }}
+              />
               <Column
                 field="created"
                 header="Created"
@@ -406,11 +467,17 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
                   const date = new Date(rowData.created);
                   return date.toISOString().split('T')[0];
                 }}
+                style={{
+                  maxWidth: '3em',
+                  overflow: 'hidden',
+                  maxHeight: '18px',
+                  textOverflow: 'ellipsis',
+                }}
               />
               <Column
-                header="Actions"
+                header=""
                 body={actionBodyTemplate}
-                style={{ textAlign: 'center', width: '10em' }}
+                style={{ textAlign: 'center', width: '1em' }}
               />
             </DataTable>
           </div>

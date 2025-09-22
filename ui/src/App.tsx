@@ -8,13 +8,18 @@ import {
   useFetchReleaseVersion,
   useSecureApplicationConfig,
 } from './hooks/api/useInitializeConfig.tsx';
+import { useEffect } from 'react';
 
 function App() {
   const { releaseVersion } = useFetchReleaseVersion();
   const { secureAppConfig } = useSecureApplicationConfig();
-  if (secureAppConfig && secureAppConfig.sentryEnabled) {
-    configureSentry(secureAppConfig, releaseVersion);
-  }
+
+  useEffect(() => {
+    if (secureAppConfig) {
+      // Configure Sentry when config is available
+      configureSentry(secureAppConfig, releaseVersion);
+    }
+  }, [secureAppConfig, releaseVersion]);
 
   return <RouterProvider router={browserRouter} />;
 }

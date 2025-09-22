@@ -373,8 +373,8 @@
     </dependency>
     <dependency>
       <artifactId>wiremock-standalone</artifactId>
-      <groupId>com.github.tomakehurst</groupId>
-      <version>3.0.0</version>
+      <groupId>org.wiremock</groupId>
+      <version>3.0.3</version>
     </dependency>
     <dependency>
       <artifactId>postgresql</artifactId>
@@ -443,6 +443,11 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <artifactId>rabbitmq</artifactId>
+      <groupId>org.testcontainers</groupId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <artifactId>jgrapht-core</artifactId>
       <groupId>org.jgrapht</groupId>
       <version>${jgrapht-core.version}</version>
@@ -493,13 +498,22 @@
     </dependency>
     <dependency>
       <artifactId>hibernate-jcache</artifactId>
-      <groupId>org.hibernate</groupId>
+      <groupId>org.hibernate.orm</groupId>
       <version>${hibernate.version}</version>
     </dependency>
     <dependency>
       <artifactId>ehcache</artifactId>
       <groupId>org.ehcache</groupId>
       <version>3.10.8</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>s3</artifactId>
+      <version>2.33.0</version>
     </dependency>
   </dependencies>
   <description>Api for Lingo</description>
@@ -510,24 +524,42 @@
   <parent>
     <artifactId>lingo</artifactId>
     <groupId>au.gov.digitalhealth</groupId>
-    <version>1.2.12-SNAPSHOT</version>
+    <version>1.3.0-SNAPSHOT</version>
   </parent>
   <profiles>
     <profile>
       <activation>
-        <property>
-          <name>buildnumber</name>
-        </property>
+        <activeByDefault>true</activeByDefault>
       </activation>
       <build>
         <plugins>
+          <plugin>
+            <artifactId>git-commit-id-maven-plugin</artifactId>
+            <configuration>
+              <generateGitPropertiesFile>true</generateGitPropertiesFile>
+              <includeOnlyProperties>
+                <includeOnlyProperty>git.commit.id.abbrev</includeOnlyProperty>
+              </includeOnlyProperties>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>revision</goal>
+                </goals>
+                <id>get-the-git-infos</id>
+                <phase>initialize</phase>
+              </execution>
+            </executions>
+            <groupId>io.github.git-commit-id</groupId>
+            <version>5.0.0</version>
+          </plugin>
           <plugin>
             <artifactId>maven-antrun-plugin</artifactId>
             <executions>
               <execution>
                 <configuration>
                   <target>
-                    <echo file="${staticdir}/buildnumber.txt">${buildnumber}</echo>
+                    <echo file="${staticdir}/buildnumber.txt">${buildnumber}-${git.commit.id.abbrev}</echo>
                   </target>
                 </configuration>
                 <goals>
@@ -540,7 +572,7 @@
           </plugin>
         </plugins>
       </build>
-      <id>azuredevops</id>
+      <id>buildnumber</id>
       <properties>
         <staticdir>${project.build.directory}/classes/static</staticdir>
       </properties>
@@ -603,7 +635,8 @@
     <postgres.version>42.7.3</postgres.version>
     <problem-spring-web.version>0.23.0</problem-spring-web.version>
     <querydsl.version>5.1.0</querydsl.version>
-    <snomed-owl-toolkit.version>5.4.0</snomed-owl-toolkit.version>
     <sentry.version>7.18.0</sentry.version>
+    <snomed-owl-toolkit.version>5.4.0</snomed-owl-toolkit.version>
+    <buildnumber>${project.version}</buildnumber>
   </properties>
 </project>

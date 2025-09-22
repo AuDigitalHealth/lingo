@@ -14,9 +14,6 @@
 /// limitations under the License.
 ///
 
-// eslint-disable-next-line
-import * as createPalette from '@mui/material/styles';
-
 declare module '@mui/material/styles' {
   interface SimplePaletteColorOptions {
     lighter?: string;

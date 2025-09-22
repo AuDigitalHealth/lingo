@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useAllTasks } from '../../../hooks/api/useAllTasks';
+import { useAllTasks } from '../../../hooks/api/task/useAllTasks';
 import TasksList from './TasksList';
 import { Task, TaskStatus } from '../../../types/task';
 import useUserStore from '../../../stores/UserStore';

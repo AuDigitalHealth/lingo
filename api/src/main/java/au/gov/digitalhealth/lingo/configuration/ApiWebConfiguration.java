@@ -18,6 +18,8 @@ package au.gov.digitalhealth.lingo.configuration;
 import au.gov.digitalhealth.lingo.auth.helper.AuthHelper;
 import au.gov.digitalhealth.lingo.log.SnowstormLogger;
 import au.gov.digitalhealth.lingo.util.AuthSnowstormLogger;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.logging.LogLevel;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,7 +28,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
@@ -53,10 +57,14 @@ public class ApiWebConfiguration {
                 "reactor.netty.http.client.HttpClient",
                 LogLevel.DEBUG,
                 AdvancedByteBufFormat.TEXTUAL);
+    ObjectMapper customMapper =
+        new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    Jackson2JsonEncoder encoder = new Jackson2JsonEncoder(customMapper, MediaType.APPLICATION_JSON);
     return webClientBuilder
         .codecs(
             clientCodecConfigurer ->
                 clientCodecConfigurer.defaultCodecs().maxInMemorySize(1024 * 1024 * 100))
+        .codecs(clientCodecConfigurer -> clientCodecConfigurer.customCodecs().register(encoder))
         .baseUrl(authoringServiceUrl)
         .clientConnector(new ReactorClientHttpConnector(httpClient))
         .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
@@ -71,18 +79,30 @@ public class ApiWebConfiguration {
     return webClientBuilder
         .baseUrl(authoringServiceUrl)
         .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-        .filter(authHelper.addImsAuthCookie) // Cookies are injected through filter
+        .filter(authHelper.addImsAuthCookie)
+        .exchangeStrategies(
+            ExchangeStrategies.builder()
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024))
+                .build())
         .build();
   }
 
   @Bean
   public WebClient nameGeneratorApiClient(
       @Value("${name.generator.api.url}") String namegenApiUrl,
+      @Value("${name.generator.api.key:}") String apiKeyHeader,
       WebClient.Builder webClientBuilder) {
-    return webClientBuilder
-        .baseUrl(namegenApiUrl)
-        .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-        .build();
+    WebClient.Builder builder =
+        webClientBuilder
+            .baseUrl(namegenApiUrl)
+            .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+
+    // Only add the API key header if it's not empty
+    if (apiKeyHeader != null && !apiKeyHeader.isEmpty()) {
+      builder.defaultHeader("X-API-Key", apiKeyHeader);
+    }
+
+    return builder.build();
   }
 
   @Bean
@@ -93,6 +113,10 @@ public class ApiWebConfiguration {
         .baseUrl(authoringServiceUrl)
         .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
         .filter(authHelper.addDefaultAuthCookie) // Cookies are injected through filter
+        .exchangeStrategies(
+            ExchangeStrategies.builder()
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024))
+                .build())
         .build();
   }
 
@@ -103,6 +127,16 @@ public class ApiWebConfiguration {
         .baseUrl(sergioUrl)
         .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
         .filter(authHelper.addDefaultAuthCookie)
+        .filter(logRequest())
+        .build();
+  }
+
+  @Bean
+  public WebClient fhirApiClient(
+      @Value("${fhir.server.url}") String fhirServerUrl, WebClient.Builder webClientBuilder) {
+    return webClientBuilder
+        .baseUrl(fhirServerUrl)
+        .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
         .filter(logRequest())
         .build();
   }

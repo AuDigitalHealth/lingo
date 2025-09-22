@@ -1,0 +1,187 @@
+{
+  "ui:grid": [
+    {
+      "containedProducts": 24
+    },
+    {
+      "genericOtherIdentifyingInformation": 12,
+      "otherIdentifyingInformation": 12
+    },
+    {
+      "nonDefiningProperties": 24
+    }
+  ],
+  "genericOtherIdentifyingInformation": {
+    "ui:widget": "text",
+    "ui:title": "VMPP other Identifying Information",
+    "ui:options": {
+      "placeholder": "Enter any additional identifying information"
+    }
+  },
+  "otherIdentifyingInformation": {
+    "ui:widget": "text",
+    "ui:title": "AMPP other Identifying Information",
+    "ui:options": {
+      "placeholder": "Enter any additional identifying information"
+    }
+  },
+  "containedProducts": {
+    "ui:field": "ConditionalArrayField",
+    "ui:options": {
+      "skipTitle": true,
+      "arrayTemplate": "accordion",
+      "initiallyExpanded": true,
+      "searchAndAddProduct": {
+        "ecl": "^660381000220107 AND <63653004",
+        "type": "device",
+        "package": false
+      }
+    },
+    "items": {
+      "ui:options": {
+        "skipTitle": true,
+        "titleSource": "productDetails.productName.pt.term",
+        "defaultTitle": "Product"
+      },
+      "ui:grid": [
+        {
+          "productDetails": 24
+        },
+        {
+          "value": 6,
+          "unit": 6,
+          "_empty": 12
+        }
+      ],
+      "value": {
+        "ui:widget": "text",
+        "ui:options": {
+          "inputType": "number",
+          "title": "Pack Size",
+          "skipTitle": true
+        }
+      },
+      "unit": {
+        "ui:field": "AutoCompleteField",
+        "ui:title": "Unit",
+        "ui:options": {
+          "ecl": "(^660401000220107 : (774160008 OR 999000081000168101) = *).774163005",
+          "extendedEcl": "<767524001",
+          "showDefaultOptions": true,
+          "skipTitle": true
+        }
+      },
+      "productDetails": {
+        "ui:options": {
+          "skipTitle": true
+        },
+        "ui:grid": [
+          {
+            "productName": 12,
+            "deviceType": 12
+          },
+          {
+            "_empty": 12,
+            "specificDeviceType": 12
+          },
+          {
+            "newSpecificDeviceName": 12,
+            "otherParentConcepts": 12
+          },
+          {
+            "genericOtherIdentifyingInformation": 12,
+            "otherIdentifyingInformation": 12
+          },
+          {
+            "nonDefiningProperties": 24
+          }
+        ],
+        "type": {
+          "ui:widget": "hidden",
+          "ui:options": {
+            "skipTitle": true
+          }
+        },
+        "productName": {
+          "ui:field": "AutoCompleteField",
+          "ui:options": {
+            "skipTitle": true,
+            "branch": "MAIN",
+            "ecl": "<774167006",
+            "showDefaultOptions": true,
+            "createPrimitiveConcept": {
+              "ecl": "<774167006",
+              "semanticTags": "(product name)",
+              "parentConceptId": "774167006",
+              "parentConceptName": "Product name (product name)",
+              "postfix": "(brand)"
+            }
+          }
+        },
+        "deviceType": {
+          "ui:field": "AutoCompleteField",
+          "ui:title": "VTM Level Device Type",
+          "ui:options": {
+            "skipTitle": true,
+            "ecl": "(((<< 49062001) MINUS ((< 49062001 MINUS >(< 49062001)))) MINUS (<<^660371000220109))",
+            "extendedEcl": "(<63653004 MINUS ^660371000220109) : [0..0] 774158006 = *",
+            "showDefaultOptions": false,
+            "dependants": [
+              {
+                "path": "../specificDeviceType",
+                "ui:options": {
+                  "skipTitle": true,
+                  "getEcl": "<@parent",
+                  "showDefaultOptions": true
+                }
+              }
+            ]
+          }
+        },
+        "specificDeviceType": {
+          "ui:field": "AutoCompleteField",
+          "ui:title": "Existing VMP Level Device Type",
+          "ui:options": {
+            "skipTitle": true,
+            "showDefaultOptions": true
+          }
+        },
+        "newSpecificDeviceName": {
+          "type": "string",
+          "ui:widget": "text",
+          "ui:options": {
+            "inputType": "text",
+            "skipTitle": true
+          }
+        },
+        "otherParentConcepts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SnowstormConceptMini"
+          },
+          "ui:field": "AutoCompleteField",
+          "ui:options": {
+            "ecl": "<63653004",
+            "skipTitle": true,
+            "showDefaultOptions": false,
+            "multiValued": true
+          }
+        },
+        "genericOtherIdentifyingInformation": {
+          "ui:widget": "text",
+          "ui:title": "VMP other Identifying Information",
+          "ui:options": {
+            "placeholder": "Enter any additional identifying information"
+          }
+        },
+        "otherIdentifyingInformation": {
+          "ui:widget": "text",
+          "ui:title": "AMP other Identifying Information",
+          "ui:options": {
+            "placeholder": "Enter any additional identifying information"
+          }
+        }
+      }
+    }
+  }
+}

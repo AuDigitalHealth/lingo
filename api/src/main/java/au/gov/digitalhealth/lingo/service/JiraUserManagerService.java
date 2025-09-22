@@ -25,6 +25,7 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -34,20 +35,45 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 @Service
 @EnableScheduling
-public class JiraUserManagerService {
+public class JiraUserManagerService extends GenericRefreshCacheService<List<JiraUser>> {
   @Value("${snomio.jira.users:}")
   private Set<String> users;
+
+  @Value("${lingo.internal.users:}")
+  private Set<String> internalUsers;
 
   private final WebClient defaultAuthoringPlatformApiClient;
 
   @Autowired
   public JiraUserManagerService(
-      @Qualifier("defaultAuthoringPlatformApiClient") WebClient defaultAuthoringPlatformApiClient) {
+      @Qualifier("defaultAuthoringPlatformApiClient") WebClient defaultAuthoringPlatformApiClient,
+      CacheManager cacheManager) {
+    super(cacheManager);
     this.defaultAuthoringPlatformApiClient = defaultAuthoringPlatformApiClient;
+  }
+
+  @Override
+  public String getCacheName() {
+    return CacheConstants.JIRA_USERS_CACHE;
+  }
+
+  @Override
+  @SuppressWarnings("unchecked")
+  protected Class<List<JiraUser>> valueType() {
+    return (Class<List<JiraUser>>) (Class<?>) List.class;
+  }
+
+  public Set<String> getAllInternalUsers() throws AccessDeniedException {
+    return this.internalUsers;
   }
 
   @Cacheable(cacheNames = CacheConstants.JIRA_USERS_CACHE)
   public List<JiraUser> getAllJiraUsers() throws AccessDeniedException {
+    return fetchFromSource();
+  }
+
+  @Override
+  protected List<JiraUser> fetchFromSource() throws AccessDeniedException {
     List<JiraUser> jiraUserList = new ArrayList<>();
     int offset = 0;
     int size = 0;

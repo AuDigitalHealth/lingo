@@ -16,11 +16,10 @@
 
 import axios from 'axios';
 
-import type { ValueSet, Parameters, CapabilityStatement } from 'fhir/r4';
+import type { CapabilityStatement, Parameters, ValueSet } from 'fhir/r4';
+import { Bundle, CodeSystem } from 'fhir/r4';
 import { appendIdsToEcl } from '../utils/helpers/EclUtils';
 import { StatusWithEffectiveDate } from '../types/applicationConfig';
-import { Bundle } from 'fhir/r4';
-import { CodeSystem } from 'fhir/r4';
 
 const OntoserverService = {
   handleErrors: () => {
@@ -34,13 +33,26 @@ const OntoserverService = {
     count: string,
     filter?: string,
   ): Promise<ValueSet> {
+    return this.searchConceptByUrl(
+      baseUrl,
+      `http://snomed.info/${extension}?fhir_vs=ecl/${providedEcl}`,
+      count,
+      filter,
+    );
+  },
+  async searchConceptByUrl(
+    baseUrl: string | undefined,
+    url: string | undefined,
+    count: string,
+    filter?: string,
+  ): Promise<ValueSet> {
     let encodedFilter = '';
     if (filter) {
       encodedFilter = encodeURIComponent(filter);
     }
 
     const response = await axios.get(
-      `${baseUrl}/ValueSet/$expand?url=http://snomed.info/${extension}?fhir_vs=ecl/${providedEcl}${filter ? '&filter=' + encodedFilter : ''}&includeDesignations=true&count=${count}`,
+      `${baseUrl}/ValueSet/$expand?url=${url}${filter ? '&filter=' + encodedFilter : ''}&includeDesignations=true&property=sufficientlyDefined&count=${count}`,
     );
 
     const statusCode = response.status;

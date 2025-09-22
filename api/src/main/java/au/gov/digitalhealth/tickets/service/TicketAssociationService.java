@@ -89,9 +89,9 @@ public class TicketAssociationService {
             .findById(id)
             .orElseThrow(
                 () -> new ResourceNotFoundProblem(String.format(ErrorMessages.ID_NOT_FOUND, id)));
-
-    ticketAssociation.setAssociationSource(null);
-    ticketAssociation.setAssociationTarget(null);
+    //
+    //    ticketAssociation.setAssociationSource(null);
+    //    ticketAssociation.setAssociationTarget(null);
 
     ticketAssociationRepository.save(ticketAssociation);
     ticketAssociationRepository.delete(ticketAssociation);

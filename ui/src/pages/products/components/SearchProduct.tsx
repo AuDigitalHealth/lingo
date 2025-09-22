@@ -21,10 +21,7 @@ import { Stack } from '@mui/system';
 import { Link } from 'react-router-dom';
 import { isFsnToggleOn } from '../../../utils/helpers/conceptUtils.ts';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
-import {
-  useSearchConcept,
-  useSearchConceptOntoserver,
-} from '../../../hooks/api/products/useSearchConcept.tsx';
+import { useSearchConcept } from '../../../hooks/api/products/useSearchConcept.tsx';
 import ConfirmationModal from '../../../themes/overrides/ConfirmationModal.tsx';
 
 import { ActionType, ProductType } from '../../../types/product.ts';
@@ -35,12 +32,11 @@ import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 
 import type { ValueSetExpansionContains } from 'fhir/r4';
 import { isValueSetExpansionContains } from '../../../types/predicates/isValueSetExpansionContains.ts';
-import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../utils/helpers/getValueSetExpansionContainsPt.ts';
+
 import {
   PUBLISHED_CONCEPTS,
   UNPUBLISHED_CONCEPTS,
 } from '../../../utils/statics/responses.ts';
-import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 
 export interface ConceptSearchResult extends Concept {
   type: string;
@@ -80,8 +76,6 @@ export default function SearchProduct({
   const [results, setResults] = useState<Concept[]>([]);
   const [open, setOpen] = useState(false);
 
-  const { applicationConfig } = useApplicationConfigStore();
-
   const [fsnToggle, setFsnToggle] = useState(localFsnToggle);
   const [searchFilter, setSearchFilter] = useState('Term');
   const filterTypes = ['Term', 'Artg Id', 'Sct Id'];
@@ -104,6 +98,7 @@ export default function SearchProduct({
   const [newActionType, setNewActionType] = useState<ActionType>(
     ActionType.newProduct,
   );
+  const [allData, setAllData] = useState<ConceptSearchResult[]>([]);
 
   const generateEcl = (
     providedEcl: string | undefined,
@@ -116,7 +111,7 @@ export default function SearchProduct({
       case ActionType.newBrand:
         returnVal = generateEclFromBinding(
           fieldBindings,
-          'medicationProduct.search',
+          'bulk.new-brand-pack-sizes',
         );
         break;
       case ActionType.newDevice:
@@ -135,6 +130,18 @@ export default function SearchProduct({
         returnVal = generateEclFromBinding(
           fieldBindings,
           'medicationProduct.search',
+        );
+        break;
+      case ActionType.newVaccine:
+        returnVal = generateEclFromBinding(
+          fieldBindings,
+          'vaccineProduct.search',
+        );
+        break;
+      case ActionType.newNutritionalProduct:
+        returnVal = generateEclFromBinding(
+          fieldBindings,
+          'nutritionalProduct.search',
         );
         break;
       default:
@@ -225,17 +232,10 @@ export default function SearchProduct({
     // if the user starts typing again
     if (inputValue === '' || !inputValue) {
       setResults([]);
-      setOntoResults([]);
     }
   }, [inputValue]);
 
   const debouncedSearch = useDebounce(inputValue, 400);
-
-  const [ontoResults, setOntoResults] = useState<Concept[]>([]);
-  const [allData, setAllData] = useState<ConceptSearchResult[]>([
-    ...results.map(item => ({ ...item, type: UNPUBLISHED_CONCEPTS })),
-    ...ontoResults.map(item => ({ ...item, type: PUBLISHED_CONCEPTS })),
-  ]);
 
   const { data, isFetching } = useSearchConcept(
     searchFilter,
@@ -246,59 +246,19 @@ export default function SearchProduct({
     allData,
   );
 
-  const { data: ontoData, isFetching: isOntoFetching } =
-    useSearchConceptOntoserver(
-      encodeURIComponent(ecl as string),
-      debouncedSearch,
-      searchFilter,
-      allData,
-    );
-
-  useEffect(() => {
-    if (ontoResults || results) {
-      let tempAllData: ConceptSearchResult[] = [];
-      if (ontoResults) {
-        tempAllData = [
-          ...ontoResults.map(item => ({
-            ...item,
-            type: 'Published Concepts',
-          })),
-        ];
-      }
-      if (results) {
-        const tempArr = results?.map(item => ({
-          ...item,
-          type: 'Unpublished Concepts',
-        }));
-        tempAllData.push(...tempArr);
-      }
-      setAllData(tempAllData);
-    }
-    if (!ontoResults && !results) {
-      setAllData([]);
-    }
-  }, [ontoResults, results]);
-
-  useEffect(() => {
-    if (ontoData) {
-      setOntoResults(
-        ontoData.expansion?.contains !== undefined
-          ? convertFromValueSetExpansionContainsListToSnowstormConceptMiniList(
-              ontoData.expansion.contains,
-              applicationConfig.fhirPreferredForLanguage,
-            )
-          : ([] as Concept[]),
-      );
-      return;
-    }
-    setOntoResults([]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ontoData]);
-
   useEffect(() => {
     if (data) {
       localStorage.setItem('fsn_toggle', fsnToggle.toString());
-      setResults(data.items);
+      const tempData = data.items;
+      setResults(tempData);
+      setAllData([
+        ...tempData
+          .filter(item => !item.effectiveTime) // no effectiveTime = unpublished
+          .map(item => ({ ...item, type: UNPUBLISHED_CONCEPTS })),
+        ...tempData
+          .filter(item => item.effectiveTime) // has effectiveTime = published
+          .map(item => ({ ...item, type: PUBLISHED_CONCEPTS })),
+      ]);
     }
   }, [data, fsnToggle]);
 
@@ -380,7 +340,7 @@ export default function SearchProduct({
           <Autocomplete
             data-testid="search-product-input"
             slotProps={{ clearIndicator: { type: 'button' } }}
-            loading={isFetching || isOntoFetching}
+            loading={isFetching}
             sx={{
               width: '400px',
               borderRadius: '0px 4px 4px 0px',
@@ -398,16 +358,24 @@ export default function SearchProduct({
               if (showConfirmationModalOnChange && v !== null) {
                 setChangeModalOpen(true);
               } else {
-                if (handleChange)
+                if (handleChange) {
+                  let productType: ProductType;
+                  switch (selectedActionType) {
+                    case ActionType.newDevice:
+                      productType = ProductType.device;
+                      break;
+                    case ActionType.newMedication:
+                      productType = ProductType.medication;
+                      break;
+                    default:
+                      productType = ProductType.medication;
+                  }
                   handleChange(
-                    v ? v : undefined,
-                    selectedActionType === ActionType.newDevice
-                      ? ProductType.device
-                      : ProductType.medication,
-                    selectedActionType
-                      ? selectedActionType
-                      : ActionType.newMedication,
+                    v ?? undefined,
+                    productType,
+                    selectedActionType || ActionType.newMedication,
                   );
+                }
               }
             }}
             open={open}
@@ -462,9 +430,7 @@ export default function SearchProduct({
                   endAdornment: (
                     <>
                       {/* So we can show two different loadings, one for onto, one for snowstorm */}
-                      {isOntoFetching ? (
-                        <CircularProgress color="success" size={20} />
-                      ) : null}
+
                       {isFetching ? (
                         <CircularProgress color="inherit" size={20} />
                       ) : null}
@@ -475,23 +441,22 @@ export default function SearchProduct({
               />
             )}
             renderOption={(props, option, { selected }) => {
+              const key = isValueSetExpansionContains(option)
+                ? option.code
+                : option.conceptId;
+
               return (
-                <li {...props}>
+                <li {...props} key={key}>
                   {!disableLinkOpen ? (
                     <Link
-                      to={linkPath(
-                        isValueSetExpansionContains(option)
-                          ? (option.code as string)
-                          : (option.conceptId as string),
-                      )}
+                      to={linkPath(key)}
                       style={{ textDecoration: 'none', color: '#003665' }}
                     >
                       {optionComponent(option, selected, fsnToggle)}
                     </Link>
                   ) : (
                     <div style={{ textDecoration: 'none', color: '#003665' }}>
-                      {' '}
-                      {optionComponent(option, selected, fsnToggle)}{' '}
+                      {optionComponent(option, selected, fsnToggle)}
                     </div>
                   )}
                 </li>
@@ -599,6 +564,7 @@ export default function SearchProduct({
                 >
                   Medication
                 </ToggleButton>
+
                 <ToggleButton
                   value={ActionType.newPackSize}
                   data-testid={'bulk-pack-toggle'}
@@ -612,7 +578,7 @@ export default function SearchProduct({
                   New Brands
                 </ToggleButton>
                 <ToggleButton value={ActionType.editProduct}>
-                  Edit Product
+                  Edit Terms
                 </ToggleButton>
               </ToggleButtonGroup>
             </span>
