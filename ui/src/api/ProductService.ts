@@ -14,19 +14,22 @@
 /// limitations under the License.
 ///
 
-import { ProductSummary } from '../types/concept.ts';
+import { Product } from '../types/concept.ts';
+import { Concept, ProductSummary } from '../types/concept.ts';
 
 import {
   BrandPackSizeCreationDetails,
   BulkProductCreationDetails,
   DevicePackageDetails,
   DeviceProductDetails,
-  ExternalIdentifier,
   MedicationPackageDetails,
   MedicationProductDetails,
+  NonDefiningProperty,
+  ProductActionType,
   ProductBrands,
-  ProductCreationDetails,
-  ProductExternalRequesterUpdateRequest,
+  ProductSaveDetails,
+  ProductDescriptionUpdateRequest,
+  ProductNonDefiningPropertyUpdateRequest,
   ProductPackSizes,
   ProductUpdateRequest,
 } from '../types/product.ts';
@@ -40,7 +43,14 @@ const ProductService = {
   handleErrors: () => {
     throw new Error('invalid product response');
   },
-
+  async getNode(conceptId: string, branch: string): Promise<Product> {
+    const response = await api.get(`/api/${branch}/node/${conceptId}`);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const productModel = response.data as Product;
+    return productModel;
+  },
   async getProductModel(id: string, branch: string): Promise<ProductSummary> {
     const response = await api.get(`/api/${branch}/product-model/${id}`);
     if (response.status != 200) {
@@ -92,8 +102,8 @@ const ProductService = {
     return deviceProductDetails;
   },
 
-  async previewNewMedicationProduct(
-    medicationPackage: MedicationPackageDetails,
+  async previewCreateMedicationProduct(
+    medicationPackage: MedicationProductDetails,
     branch: string,
   ): Promise<ProductSummary> {
     const response = await api.post(
@@ -106,31 +116,76 @@ const ProductService = {
     const productModel = response.data as ProductSummary;
     return productModel;
   },
-  async createNewMedicationProduct(
-    productCreationDetails: ProductCreationDetails,
+  async previewUpdateMedicationProduct(
+    medicationPackage: MedicationProductDetails,
+    productId: string | undefined,
     branch: string,
   ): Promise<ProductSummary> {
     const response = await api.post(
-      `/api/${branch}/medications/product`,
-      productCreationDetails,
+      `/api/${branch}/medications/product/${productId}/$calculateUpdate`,
+      medicationPackage,
     );
-    if (response.status !== 201 && response.status !== 422) {
+    if (response.status != 200) {
       this.handleErrors();
     }
     const productModel = response.data as ProductSummary;
     return productModel;
   },
-  async createDeviceProduct(
-    productCreationDetails: ProductCreationDetails,
+  async saveMedicationProduct(
+    productCreationDetails: ProductSaveDetails,
     branch: string,
   ): Promise<ProductSummary> {
-    const response = await api.post(
-      `/api/${branch}/devices/product`,
-      productCreationDetails,
-    );
-    if (response.status != 201 && response.status != 422) {
-      this.handleErrors();
+    let response;
+
+    if (productCreationDetails.type === ProductActionType.update) {
+      // Update existing product
+      response = await api.put(
+        `/api/${branch}/medications/product/${productCreationDetails.originalConceptId}`,
+        productCreationDetails,
+      );
+      if (response.status !== 200 && response.status !== 422) {
+        this.handleErrors();
+      }
+    } else {
+      // Create new product
+      response = await api.post(
+        `/api/${branch}/medications/product`,
+        productCreationDetails,
+      );
+      if (response.status !== 201 && response.status !== 422) {
+        this.handleErrors();
+      }
     }
+
+    const productModel = response.data as ProductSummary;
+    return productModel;
+  },
+  async saveDeviceProduct(
+    productCreationDetails: ProductSaveDetails,
+    branch: string,
+  ): Promise<ProductSummary> {
+    let response;
+
+    if (productCreationDetails.type === ProductActionType.update) {
+      // Update existing product
+      response = await api.put(
+        `/api/${branch}/devices/product/${productCreationDetails.originalConceptId}`,
+        productCreationDetails,
+      );
+      if (response.status !== 200 && response.status !== 422) {
+        this.handleErrors();
+      }
+    } else {
+      // Create new product
+      response = await api.post(
+        `/api/${branch}/devices/product`,
+        productCreationDetails,
+      );
+      if (response.status !== 201 && response.status !== 422) {
+        this.handleErrors();
+      }
+    }
+
     const productModel = response.data as ProductSummary;
     return productModel;
   },
@@ -148,8 +203,23 @@ const ProductService = {
     const productModel = response.data as ProductSummary;
     return productModel;
   },
+  async previewUpdateDeviceProduct(
+    devicePackageDetails: DevicePackageDetails,
+    productId: string | undefined,
+    branch: string,
+  ): Promise<ProductSummary> {
+    const response = await api.post(
+      `/api/${branch}/devices/product/${productId}/$calculateUpdate`,
+      devicePackageDetails,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    const productModel = response.data as ProductSummary;
+    return productModel;
+  },
   async createNewDeviceProduct(
-    productCreationDetails: ProductCreationDetails,
+    productCreationDetails: ProductSaveDetails,
     branch: string,
   ): Promise<ProductSummary> {
     const response = await api.post(
@@ -244,13 +314,13 @@ const ProductService = {
     const productModel = response.data as ProductSummary;
     return productModel;
   },
-  async editProduct(
+  async editProductDescriptions(
     productUpdateRequest: ProductUpdateRequest,
     productId: string,
     branch: string,
   ): Promise<TicketBulkProductActionDto> {
     const response = await api.put(
-      `/api/${branch}/product-model/${productId}/update`,
+      `/api/${branch}/product-model/${productId}/descriptions`,
       productUpdateRequest,
     );
     if (response.status != 200 && response.status != 422) {
@@ -262,29 +332,30 @@ const ProductService = {
   async getExternalIdentifiers(
     productId: string | undefined,
     branch: string,
-  ): Promise<ExternalIdentifier[]> {
+  ): Promise<NonDefiningProperty[]> {
     const response = await api.get(
-      `/api${branch}/product-model/${productId}/externalIdentifiers`,
+      `/api/${branch}/product-model/${productId}/externalIdentifiers`,
     );
     if (response.status != 200 && response.status != 422) {
       this.handleErrors();
     }
-    const res = response.data as ExternalIdentifier[];
+    const res = response.data as NonDefiningProperty[];
     return res;
   },
-  async editProductExternalIdentifiers(
-    externalRequesterUpdate: ProductExternalRequesterUpdateRequest,
+  async editProductNonDefiningProperties(
+    externalRequesterUpdate: ProductNonDefiningPropertyUpdateRequest,
     productId: string,
     branch: string,
-  ): Promise<ExternalIdentifier[]> {
+  ): Promise<NonDefiningProperty[]> {
+    const encodedBranch = encodeURIComponent(branch);
     const response = await api.put(
-      `/api/${branch}/product-model/${productId}/external-identifiers`,
+      `/api/${encodedBranch}/product-model/${productId}/properties`,
       externalRequesterUpdate,
     );
     if (response.status != 200 && response.status != 422) {
       this.handleErrors();
     }
-    const result = response.data as ExternalIdentifier[];
+    const result = response.data as NonDefiningProperty[];
     return result;
   },
 };

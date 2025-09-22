@@ -18,8 +18,9 @@ package au.gov.digitalhealth.lingo.product;
 import au.csiro.snowstorm_client.model.SnowstormAxiom;
 import au.csiro.snowstorm_client.model.SnowstormDescription;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
+import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
-import au.gov.digitalhealth.lingo.util.PartionIdentifier;
+import au.gov.digitalhealth.lingo.util.PartitionIdentifier;
 import au.gov.digitalhealth.lingo.validation.ValidDescription;
 import au.gov.digitalhealth.lingo.validation.ValidSctId;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -47,7 +48,7 @@ public class NewConceptDetails {
    * The SCTID of the concept to be created if the user wants to use a specific SCTID. This is
    * optional, if not specified a new concept will be created with a random SCTID.
    */
-  @ValidSctId(partitionIdentifier = PartionIdentifier.CONCEPT)
+  @ValidSctId(partitionIdentifier = PartitionIdentifier.CONCEPT)
   String specifiedConceptId;
 
   /**
@@ -55,11 +56,15 @@ public class NewConceptDetails {
    * the semantic tag which is in the element below.
    */
   @ValidDescription(fieldName = "fullySpecifiedName")
-  @NotNull @NotEmpty String fullySpecifiedName;
+  @NotNull
+  @NotEmpty
+  String fullySpecifiedName;
 
   /** Potentially updated preferred term of the concept to be created. */
   @ValidDescription(fieldName = "preferredTerm")
-  @NotNull @NotEmpty String preferredTerm;
+  @NotNull
+  @NotEmpty
+  String preferredTerm;
 
   /**
    * Generated, never updated Fully specified name of the concept to be created. This does not
@@ -78,7 +83,11 @@ public class NewConceptDetails {
 
   Set<SnowstormDescription> descriptions;
 
+  Set<SnowstormRelationship> nonDefiningProperties = new HashSet<>();
+
   Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers = new HashSet<>();
+
+  NameGeneratorSpec nameGeneratorSpec;
 
   public NewConceptDetails(int conceptId) {
     this.conceptId = conceptId;

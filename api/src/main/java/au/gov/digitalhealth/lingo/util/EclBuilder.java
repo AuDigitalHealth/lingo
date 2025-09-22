@@ -17,6 +17,7 @@ package au.gov.digitalhealth.lingo.util;
 
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_CONTAINER_TYPE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
+import static au.gov.digitalhealth.lingo.util.NmpcConstants.HAS_OTHER_IDENTIFYING_INFORMATION_NMPC;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.COUNT_OF_ACTIVE_INGREDIENT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.COUNT_OF_BASE_ACTIVE_INGREDIENT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_ACTIVE_INGREDIENT;
@@ -29,6 +30,8 @@ import static java.util.stream.Collectors.mapping;
 
 import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.exception.UnexpectedSnowstormResponseProblem;
 import java.util.Map;
 import java.util.Objects;
@@ -47,7 +50,8 @@ public class EclBuilder {
       Set<SnowstormRelationship> relationships,
       Set<String> referencedIds,
       boolean suppressIsa,
-      boolean suppressNegativeStatements) {
+      boolean suppressNegativeStatements,
+      ModelConfiguration modelConfiguration) {
     // first do the isa relationships
     // and the refsets
     // then group 0 relationships, including grouped relationships
@@ -70,7 +74,8 @@ public class EclBuilder {
     }
     ecl.append(")");
 
-    String ungrouped = buildUngroupedRelationships(relationships, suppressNegativeStatements);
+    String ungrouped =
+        buildUngroupedRelationships(relationships, suppressNegativeStatements, modelConfiguration);
     String grouped = buildGroupedRelationships(relationships);
 
     if (!ungrouped.isEmpty() && !grouped.isEmpty()) {
@@ -111,7 +116,9 @@ public class EclBuilder {
 
   @SuppressWarnings("java:S1192")
   private static String buildUngroupedRelationships(
-      Set<SnowstormRelationship> relationships, boolean suppressNegativeStatements) {
+      Set<SnowstormRelationship> relationships,
+      boolean suppressNegativeStatements,
+      ModelConfiguration modelConfiguration) {
     StringBuilder response = new StringBuilder();
 
     response.append(getRelationshipFilters(relationships));
@@ -125,8 +132,10 @@ public class EclBuilder {
                       && r.getDestinationId().equals(MEDICINAL_PRODUCT.getValue()))) {
         response.append(
             generateNegativeFilters(relationships, HAS_MANUFACTURED_DOSE_FORM.getValue()));
-        response.append(
-            generateNegativeFilters(relationships, COUNT_OF_ACTIVE_INGREDIENT.getValue()));
+        if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
+          response.append(
+              generateNegativeFilters(relationships, COUNT_OF_ACTIVE_INGREDIENT.getValue()));
+        }
         response.append(
             generateNegativeFilters(relationships, COUNT_OF_BASE_ACTIVE_INGREDIENT.getValue()));
         response.append(generateNegativeFilters(relationships, HAS_ACTIVE_INGREDIENT.getValue()));
@@ -134,7 +143,8 @@ public class EclBuilder {
             generateNegativeFilters(relationships, HAS_PRECISE_ACTIVE_INGREDIENT.getValue()));
       }
 
-      if (relationships.stream()
+      if (modelConfiguration.getModelType().equals(ModelType.AMT)
+          && relationships.stream()
               .anyMatch(
                   r ->
                       r.getTypeId().equals(SnomedConstants.IS_A.getValue())
@@ -168,7 +178,10 @@ public class EclBuilder {
     // TODO this is a Snowstorm defect - this is needed but has to be filtered out for now
     filteredRelationships =
         filteredRelationships.stream()
-            .filter(r -> !r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION.getValue()))
+            .filter(
+                r ->
+                    !r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION.getValue())
+                        && !r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION_NMPC.getValue()))
             .collect(Collectors.toSet());
 
     return filteredRelationships.stream()

@@ -20,13 +20,14 @@ import au.gov.digitalhealth.lingo.aspect.LogExecutionTime;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
-import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.update.ProductUpdateRequest;
 import au.gov.digitalhealth.lingo.service.ProductSummaryService;
 import au.gov.digitalhealth.lingo.service.ProductUpdateService;
 import au.gov.digitalhealth.lingo.service.TaskManagerService;
+import au.gov.digitalhealth.lingo.validation.AuthoringValidation;
 import au.gov.digitalhealth.tickets.models.BulkProductAction;
 import jakarta.validation.Valid;
+import jakarta.validation.groups.Default;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -36,6 +37,7 @@ import lombok.extern.java.Log;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -43,6 +45,7 @@ import org.springframework.web.bind.annotation.*;
     value = "/api",
     produces = {MediaType.APPLICATION_JSON_VALUE})
 @Log
+@Validated({AuthoringValidation.class, Default.class})
 public class ProductsController {
 
   final ProductSummaryService productService;
@@ -59,13 +62,19 @@ public class ProductsController {
   }
 
   @LogExecutionTime
+  @GetMapping("/{branch}/node/{conceptId}")
+  public Node getNode(@PathVariable String branch, @PathVariable Long conceptId) {
+    return productService.getNode(branch, conceptId);
+  }
+
+  @LogExecutionTime
   @GetMapping("/{branch}/product-model/{productId}")
   public ProductSummary getProductModel(@PathVariable String branch, @PathVariable Long productId) {
     return productService.getProductSummary(branch, productId.toString());
   }
 
   @LogExecutionTime
-  @PutMapping("/{branch}/product-model/{productId}/update")
+  @PutMapping("/{branch}/product-model/{productId}/descriptions")
   public ResponseEntity<BulkProductAction> updateProductDescriptions(
       @PathVariable String branch,
       @PathVariable Long productId,
@@ -73,17 +82,9 @@ public class ProductsController {
       throws InterruptedException {
     taskManagerService.validateTaskState(branch);
     BulkProductAction response =
-        productUpdateService.updateProduct(branch, String.valueOf(productId), productUpdateRequest);
+        productUpdateService.updateProductDescriptions(
+            branch, String.valueOf(productId), productUpdateRequest);
     return new ResponseEntity<>(response, HttpStatus.OK);
-  }
-
-  @LogExecutionTime
-  @GetMapping("/{branch}/product-model/{productId}/externalIdentifiers")
-  public ResponseEntity<Set<ExternalIdentifier>> getExternalIdentifiers(
-      @PathVariable String branch, @PathVariable Long productId) throws InterruptedException {
-    Set<ExternalIdentifier> externalIdentifiers =
-        productUpdateService.getExternalIdentifiers(branch, String.valueOf(productId));
-    return new ResponseEntity<>(externalIdentifiers, HttpStatus.OK);
   }
 
   @LogExecutionTime

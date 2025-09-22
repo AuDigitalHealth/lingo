@@ -68,6 +68,23 @@ export interface Ticket extends VersionedEntity {
   products?: TicketProductDto[];
   bulkProductActions?: TicketBulkProductActionDto[];
   productUpdates?: ProductUpdate[];
+  history?: TicketHistoryEntryDto[];
+}
+
+export interface TicketHistoryValueDto {
+  entityId: number | null;
+  value: string | null;
+}
+
+export interface TicketHistoryEntryDto {
+  revisionNumber: number;
+  timestamp: string;
+  revisionType: 'INSERT' | 'UPDATE' | 'DELETE';
+  fieldName: string;
+  oldValue: TicketHistoryValueDto | null;
+  newValue: TicketHistoryValueDto | null;
+  changeDescription: string;
+  username: string;
 }
 
 export interface PagedTicket extends PagedItem {
@@ -144,7 +161,7 @@ export interface ExternalRequestor extends VersionedEntity {
 }
 
 export interface BulkAddExternalRequestorRequest {
-  additionalFieldTypeName: string;
+  additionalFieldTypeName?: string;
   fieldValues: string[];
   externalRequestors: string[];
 }
@@ -262,6 +279,11 @@ export interface TaskAssocationDto {
   id?: number;
 }
 
+export enum ProductAction {
+  CREATE = 'CREATE',
+  UPDATE = 'UPDATE',
+}
+
 export interface TicketProductDto {
   id?: number;
   ticketId: number;
@@ -273,6 +295,12 @@ export interface TicketProductDto {
   name: string;
   conceptId: string | null;
   packageDetails: MedicationPackageDetails | DevicePackageDetails;
+  originalPackageDetails:
+    | MedicationPackageDetails
+    | DevicePackageDetails
+    | null;
+  originalConceptId: string | null;
+  action: ProductAction;
 }
 
 export interface TicketBulkProductActionDto {
@@ -282,6 +310,7 @@ export interface TicketBulkProductActionDto {
   conceptIds: string[];
   details: BrandPackSizeCreationDetails | ProductUpdateCreationDetails;
   created: string;
+  createdBy: string;
 }
 
 export interface AutocompleteGroupOption {

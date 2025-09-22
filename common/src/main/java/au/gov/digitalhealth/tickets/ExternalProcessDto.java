@@ -28,7 +28,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ExternalProcessDto extends BaseAuditableDto{
+public class ExternalProcessDto extends BaseAuditableDto {
 
   private String processName;
 

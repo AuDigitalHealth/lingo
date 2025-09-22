@@ -20,7 +20,7 @@ import { ArrowBack } from '@mui/icons-material';
 import { useTicketByTicketNumber } from '../../../hooks/api/tickets/useTicketById.tsx';
 import Loading from '../../../components/Loading';
 import ProductAuthoring from '../../products/ProductAuthoring';
-import useTaskByKey from '../../../hooks/useTaskById';
+import useTaskByKey from '../../../hooks/useTaskByKey.tsx';
 import ProductModelReadonly from '../../products/ProductModelReadonly.tsx';
 
 import { useEffect, useState } from 'react';
@@ -34,6 +34,7 @@ import TicketDrawer from '../../tickets/components/grid/TicketDrawer.tsx';
 import { queryClient } from '../../../hooks/api/config/useQueryConfig.ts';
 import { allTaskAssociationsOptions } from '../../../hooks/api/useInitializeTickets.tsx';
 import ProductEditView from '../../../components/editProduct/ProductEditView.tsx';
+import AttachmentsList from './AttachmentsList.tsx';
 
 interface TaskTicketProps {
   menuOpen: boolean;
@@ -41,6 +42,7 @@ interface TaskTicketProps {
 function TaskTicket({ menuOpen }: TaskTicketProps) {
   // These all need to be tied to actions - ? Whatever these actions look like, I really have no idea at the moment.
   // For now, we just have buttons
+
   const { branchKey, ticketNumber } = useParams();
   const task = useTaskByKey();
   const [refreshKey, setRefreshKey] = useState(0);
@@ -57,7 +59,6 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
     }
   }, [useTicketQuery.data, setSelectedActionType]);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const refresh = () => {
     setRefreshKey(oldKey => oldKey + 1);
   };
@@ -144,6 +145,8 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
           </Stack>
 
           <TicketFields ticket={useTicketQuery.data} isCondensed={true} />
+          <Divider />
+          <AttachmentsList ticket={useTicketQuery.data} />
           <Divider />
           <Description ticket={useTicketQuery.data} />
           <Divider />

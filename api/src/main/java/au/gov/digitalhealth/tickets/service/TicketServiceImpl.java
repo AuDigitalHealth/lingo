@@ -123,8 +123,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -1172,13 +1170,72 @@ public class TicketServiceImpl implements TicketService {
       if (productDto.getConceptId() != null) {
         product.setConceptId(Long.valueOf(productDto.getConceptId()));
       }
+      if (productDto.getAction() != null) {
+        product.setAction(productDto.getAction());
+      }
+
       product.setPackageDetails(productDto.getPackageDetails());
+      product.setOriginalPackageDetails(productDto.getOriginalPackageDetails());
+      if (productDto.getOriginalConceptId() != null) {
+        // If the original concept ID is provided, we set it
+        // Otherwise, we leave it as null
+        product.setOriginalConceptId(Long.parseLong(productDto.getOriginalConceptId()));
+      }
     } else {
       product = productMapper.toEntity(productDto);
       product.setTicket(ticketToUpdate);
     }
 
+    if (product.getOriginalPackageDetails() != null
+        && product.getOriginalPackageDetails().isUnpopulated()) {
+      product.setOriginalPackageDetails(null);
+    }
+
     productRepository.save(product);
+  }
+
+  public void putProductsOnTicket(Long ticketId, List<ProductDto> productDtos) {
+    Ticket ticketToUpdate =
+        ticketRepository
+            .findById(ticketId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
+
+    List<Product> productsToSave = new ArrayList<>();
+
+    for (ProductDto productDto : productDtos) {
+      Optional<Product> productOptional =
+          productRepository.findByNameAndTicketId(productDto.getName(), ticketId);
+      Product product;
+
+      if (productOptional.isPresent()) {
+        product = productOptional.get();
+        if (productDto.getConceptId() != null) {
+          product.setConceptId(Long.valueOf(productDto.getConceptId()));
+        }
+        product.setPackageDetails(productDto.getPackageDetails());
+        product.setOriginalPackageDetails(productDto.getOriginalPackageDetails());
+        if (productDto.getOriginalConceptId() != null) {
+          // If the original concept ID is provided, we set it
+          // Otherwise, we leave it as null
+          product.setOriginalConceptId(Long.parseLong(productDto.getOriginalConceptId()));
+        }
+      } else {
+        product = productMapper.toEntity(productDto);
+        product.setTicket(ticketToUpdate);
+      }
+
+      if (product.getOriginalPackageDetails() != null
+          && product.getOriginalPackageDetails().isUnpopulated()) {
+        product.setOriginalPackageDetails(null);
+      }
+
+      productsToSave.add(product);
+    }
+
+    productRepository.saveAll(productsToSave);
   }
 
   public Set<ProductDto> getProductsForTicket(Long ticketId) {
@@ -1703,12 +1760,8 @@ public class TicketServiceImpl implements TicketService {
   @Async
   public CompletableFuture<Ticket> processArtgIdAsync(
       String artgId, List<ExternalRequestor> externalRequestorList) {
-    SecurityContext securityContext = SecurityContextHolder.getContext();
-    return CompletableFuture.supplyAsync(
-        () -> {
-          SecurityContextHolder.setContext(securityContext);
-          return processArtgId(Long.parseLong(artgId), externalRequestorList);
-        });
+    return CompletableFuture.completedFuture(
+        processArtgId(Long.parseLong(artgId), externalRequestorList));
   }
 
   private Ticket processArtgId(Long artgId, List<ExternalRequestor> externalRequestorList) {

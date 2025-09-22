@@ -23,6 +23,7 @@ import {
   DefinitionType,
   Description,
   Product,
+  caseSignificanceDisplay,
 } from '../../types/concept.ts';
 import { Box, Stack } from '@mui/system';
 import {
@@ -44,6 +45,7 @@ import {
   FieldArrayWithId,
   FieldError,
   UseFormSetValue,
+  get,
   useController,
   useFieldArray,
   useForm,
@@ -52,18 +54,17 @@ import {
 } from 'react-hook-form';
 import {
   ExternalIdentifier,
+  NonDefiningProperty,
+  ProductPropertiesUpdateRequest,
   ProductUpdateRequest,
 } from '../../types/product.ts';
-import ArtgAutoComplete from '../../pages/products/components/ArtgAutoComplete.tsx';
-import {
-  useUpdateProduct,
-  useUpdateProductExternalIdentifiers,
-} from '../../hooks/api/products/useUpdateProduct.tsx';
+
+import { useUpdateProduct } from '../../hooks/api/products/useUpdateProduct.tsx';
 import { Ticket } from '../../types/tickets/ticket.ts';
 import { useTheme } from '@mui/material/styles';
 import {
-  areTwoExternalIdentifierArraysEqual,
-  sortExternalIdentifiers,
+  areTwoNonDefiningPropertiesArraysEqual,
+  sortNonDefiningProperties,
 } from '../../utils/helpers/tickets/additionalFieldsUtils.ts';
 import { getSearchConceptsByEclOptions } from '../../hooks/api/useInitializeConcepts.tsx';
 import { generateEclFromBinding } from '../../utils/helpers/EclUtils.ts';
@@ -90,23 +91,17 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { productUpdateValidationSchema } from '../../types/productValidations.ts';
 import WarningModal from '../../themes/overrides/WarningModal.tsx';
 import { deepClone } from '@mui/x-data-grid/utils/utils';
-
-const USLangRefset: LanguageRefset = {
-  default: 'false',
-  en: '900000000000509007',
-  dialectName: 'US',
-  readOnly: 'false',
-};
+import AdditionalPropertiesDisplay from '../../pages/products/components/AdditionalPropertiesDisplay.tsx';
+import { ExistingDescriptionsSection } from './ExistingDescriptionsSection.tsx';
+import useProjectLangRefsets from '../../hooks/api/products/useProjectLangRefsets.tsx';
+import AdditionalPropertiesEdit, {
+  AdditionalPropertiesEditForm,
+} from '../../pages/products/rjsf/AdditionalPropertiesEdit.tsx';
+import { arePropertiesEqual } from '../../utils/helpers/commonUtils.ts';
 
 const typeMap: Record<DefinitionType, string> = {
   [DefinitionType.FSN]: '900000000000003001',
   [DefinitionType.SYNONYM]: '900000000000013009',
-};
-
-const caseSignificanceDisplay: Record<CaseSignificance, string> = {
-  [CaseSignificance.ENTIRE_TERM_CASE_SENSITIVE]: 'CS',
-  [CaseSignificance.CASE_INSENSITIVE]: 'ci',
-  [CaseSignificance.INITIAL_CHARACTER_CASE_INSENSITIVE]: 'cI',
 };
 
 interface ProductEditModalProps {
@@ -143,7 +138,7 @@ export default function ProductEditModal({
           keepMounted={keepMounted}
           sx={{ width: '80%' }}
         >
-          <BaseModalHeader title={'Edit Product'} />
+          <BaseModalHeader title={'Edit Terms'} />
           <BaseModalBody>
             <EditConceptBody
               product={product}
@@ -199,22 +194,15 @@ function EditConceptBody({
   const [semanticTagWarningModalOpen, setSemanticTagWarningModalOpen] =
     useState(false);
 
-  const langRefsets = useMemo(() => {
-    if (project === undefined || project.metadata === undefined) {
-      return [];
-    }
-    const fromApi = [...project.metadata.requiredLanguageRefsets];
-    fromApi.push(USLangRefset);
-    return fromApi;
-  }, [project]);
+  const langRefsets = useProjectLangRefsets({ project: project });
 
   const descriptions = useMemo(() => {
     const existingDescriptions = data?.descriptions ? data.descriptions : [];
     return existingDescriptions;
   }, [data?.descriptions]);
 
-  const [artgOptVals, setArtgOptVals] = useState<ExternalIdentifier[]>(
-    product.externalIdentifiers ? product.externalIdentifiers : [],
+  const [artgOptVals, setArtgOptVals] = useState<NonDefiningProperty[]>(
+    product.nonDefiningProperties ? product.nonDefiningProperties : [],
   );
 
   const defaultLangRefset = findDefaultLangRefset(langRefsets);
@@ -235,12 +223,55 @@ function EditConceptBody({
 
   const ctppSearchEcl = generateEclFromBinding(fieldBindings, 'product.search');
 
+  const [updatedAdditionalProperties, setUpdatedAdditionalProperties] =
+    useState<ProductPropertiesUpdateRequest>({
+      newNonDefiningProperties: product.nonDefiningProperties
+        ? sortNonDefiningProperties(product.nonDefiningProperties)
+        : [],
+      existingNonDefiningProperties: product.nonDefiningProperties
+        ? sortNonDefiningProperties(product.nonDefiningProperties)
+        : [],
+    });
+
+  const additionalPropertiesChanged = useMemo(() => {
+    const originalProperties = product?.nonDefiningProperties || [];
+    const updatedProperties =
+      updatedAdditionalProperties.newNonDefiningProperties || [];
+
+    // Quick length check first
+    if (originalProperties.length !== updatedProperties.length) {
+      return true;
+    }
+
+    // Check if any property in original is missing or different in updated
+    const hasChanges = originalProperties.some(
+      originalProp =>
+        !updatedProperties.some(updatedProp =>
+          arePropertiesEqual(originalProp, updatedProp),
+        ),
+    );
+
+    if (hasChanges) {
+      return true;
+    }
+
+    // Check if any property in updated is missing in original (shouldn't be needed due to length check, but for completeness)
+    const hasNewProperties = updatedProperties.some(
+      updatedProp =>
+        !originalProperties.some(originalProp =>
+          arePropertiesEqual(updatedProp, originalProp),
+        ),
+    );
+
+    return hasNewProperties;
+  }, [product?.nonDefiningProperties, updatedAdditionalProperties]);
+
   const defaultValues = useMemo(() => {
     return {
       ticketId: ticket.id,
-      externalRequesterUpdate: {
-        externalIdentifiers: product.externalIdentifiers
-          ? sortExternalIdentifiers(product.externalIdentifiers)
+      propertiesUpdateRequest: {
+        newNonDefiningProperties: product.nonDefiningProperties
+          ? sortNonDefiningProperties(product.nonDefiningProperties)
           : [],
       },
       descriptionUpdate: {
@@ -256,8 +287,8 @@ function EditConceptBody({
     reset,
     getValues,
     setValue,
-    watch,
     trigger,
+    watch,
   } = useForm<ProductUpdateRequest>({
     mode: 'all',
     reValidateMode: 'onChange',
@@ -271,9 +302,9 @@ function EditConceptBody({
       if (name?.includes('term')) return;
       void trigger();
     });
-
     return () => subscription.unsubscribe();
-  }, [watch, trigger]);
+    // eslint-disable-next-line
+  }, [trigger]);
 
   const { fields, append } = useFieldArray({
     control,
@@ -305,36 +336,28 @@ function EditConceptBody({
 
   const theme = useTheme();
   const updateProductMutation = useUpdateProduct();
-  const updateProductExternalIdentifierMutation =
-    useUpdateProductExternalIdentifiers();
 
   const { isPending, data: updateProductDescriptionData } =
     updateProductMutation;
-  const {
-    isPending: isExternalIdentifiersPending,
-    data: updateExternalIdentifierData,
-  } = updateProductExternalIdentifierMutation;
 
-  const isUpdating = isPending || isExternalIdentifiersPending;
+  const isUpdating = isPending;
 
   useEffect(() => {
-    if (
-      !isUpdating &&
-      (updateProductDescriptionData || updateExternalIdentifierData)
-    ) {
+    if (!isUpdating && updateProductDescriptionData) {
       reset();
       handleClose();
     }
-  }, [
-    reset,
-    handleClose,
-    isUpdating,
-    updateProductDescriptionData,
-    isExternalIdentifiersPending,
-    updateExternalIdentifierData,
-  ]);
+  }, [reset, handleClose, isUpdating, updateProductDescriptionData]);
 
   const formSubmissionData = useRef<ProductUpdateRequest | null>(null);
+
+  const onPropertiesChange = (val: AdditionalPropertiesEditForm) => {
+    setUpdatedAdditionalProperties({
+      existingNonDefiningProperties:
+        updatedAdditionalProperties.existingNonDefiningProperties,
+      newNonDefiningProperties: val.nonDefiningProperties,
+    });
+  };
 
   const onSubmit = (data: ProductUpdateRequest) => {
     let shouldReturn = false;
@@ -378,6 +401,8 @@ function EditConceptBody({
   const sendUpdateProductRequest = (request: ProductUpdateRequest) => {
     const productId = product.conceptId;
     request.conceptId = productId;
+    request.propertiesUpdateRequest.existingNonDefiningProperties =
+      product.nonDefiningProperties;
     updateProductMutation.mutate(
       {
         productUpdateRequest: cloneDeep(request),
@@ -418,6 +443,7 @@ function EditConceptBody({
    * @param data
    */
   const updateProduct = (data: ProductUpdateRequest) => {
+    data.propertiesUpdateRequest = updatedAdditionalProperties;
     const newFsnIndex = data.descriptionUpdate?.descriptions?.findIndex(
       description => {
         return description.type === 'FSN' && description.active === true;
@@ -470,9 +496,9 @@ function EditConceptBody({
       data.descriptionUpdate?.descriptions,
     );
 
-    const artgModified = !areTwoExternalIdentifierArraysEqual(
-      data.externalRequesterUpdate.externalIdentifiers,
-      product.externalIdentifiers ? product.externalIdentifiers : [],
+    const artgModified = !areTwoNonDefiningPropertiesArraysEqual(
+      data.propertiesUpdateRequest.newNonDefiningProperties,
+      product.nonDefiningProperties ? product.nonDefiningProperties : [],
     );
 
     try {
@@ -496,7 +522,7 @@ function EditConceptBody({
 
   const resetAndClose = () => {
     setArtgOptVals(
-      product.externalIdentifiers ? product.externalIdentifiers : [],
+      product.nonDefiningProperties ? product.nonDefiningProperties : [],
     );
     reset(defaultValues);
 
@@ -603,11 +629,15 @@ function EditConceptBody({
                   <ExistingDescriptionsSection
                     displayRetiredDescriptions={displayRetiredDescriptions}
                     isFetching={isFetching}
-                    externalIdentifiers={product.externalIdentifiers}
+                    nonDefiningProperties={product.nonDefiningProperties}
                     descriptions={sortedDescriptions}
                     isCtpp={isCtpp}
                     dialects={langRefsets}
                     title={'Existing'}
+                    product={product}
+                    branch={branch}
+                    displayMode="input"
+                    showBorder
                   />
                 </Grid>
                 <Grid
@@ -657,6 +687,8 @@ function EditConceptBody({
                         }
                       />
                       <RightSection
+                        branch={branch}
+                        product={product}
                         isFetching={isFetching}
                         fields={fields}
                         displayRetiredDescriptions={displayRetiredDescriptions}
@@ -670,33 +702,8 @@ function EditConceptBody({
                         control={control}
                         handleAddDescription={handleAddDescription}
                         setValue={setValue}
+                        onPropertiesChange={onPropertiesChange}
                       />
-                      {isCtpp && (
-                        <Grid>
-                          <InnerBoxSmall component="fieldset">
-                            <legend>Artg Ids</legend>
-                            <Grid paddingTop={1}></Grid>
-                            <ArtgAutoCompleteWrapper
-                              isUpdating={isUpdating}
-                              control={control}
-                              setArtgOptVals={setArtgOptVals}
-                            />
-                            {artgOptVals.length === 0 &&
-                              product.externalIdentifiers &&
-                              product.externalIdentifiers?.length > 0 && (
-                                <Box style={{ marginBottom: '-2' }}>
-                                  <span
-                                    style={{
-                                      color: `${theme.palette.warning.darker}`,
-                                    }}
-                                  >
-                                    Warning!: This will remove all the artg ids{' '}
-                                  </span>
-                                </Box>
-                              )}
-                          </InnerBoxSmall>
-                        </Grid>
-                      )}
                       <ActionButton
                         control={control}
                         resetAndClose={resetAndClose}
@@ -705,6 +712,9 @@ function EditConceptBody({
                           toggleDisplayRetiredDescriptions
                         }
                         displayRetiredDescriptions={displayRetiredDescriptions}
+                        additionalPropertiesChanged={
+                          additionalPropertiesChanged
+                        }
                       />
                     </form>
                   </Box>
@@ -719,208 +729,10 @@ function EditConceptBody({
     </>
   );
 }
-interface ExistingDescriptionsSectionProps {
-  displayRetiredDescriptions: boolean;
-  isFetching: boolean;
-  externalIdentifiers?: ExternalIdentifier[];
-  descriptions?: Description[];
-  isCtpp: boolean;
-  dialects: LanguageRefset[];
-  title: string;
-}
-
-export function ExistingDescriptionsSection({
-  displayRetiredDescriptions,
-  isFetching,
-  descriptions,
-  isCtpp,
-  dialects,
-  title,
-  externalIdentifiers,
-}: ExistingDescriptionsSectionProps) {
-  // Function to determine preferred term based on AU dialect
-  const isPreferredTerm = (description: Description): boolean => {
-    const defaultDialectKey = dialects.find(langRefsets => {
-      return langRefsets.default === 'true';
-    });
-    return (
-      description.type === 'SYNONYM' &&
-      defaultDialectKey !== undefined &&
-      description.acceptabilityMap?.[defaultDialectKey.en] === 'PREFERRED'
-    );
-  };
-
-  return (
-    <Grid
-      item
-      xs={12}
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      <Typography variant="h6" marginBottom={1}>
-        {title}
-      </Typography>
-      <Box
-        border={0.1}
-        borderColor="grey.200"
-        padding={2}
-        sx={{
-          height: '100%',
-          width: '100%',
-          flexGrow: 1, // Ensures the height matches the right section
-        }}
-      >
-        {/* FSN and Synonyms Section */}
-        <InnerBoxSmall component="fieldset">
-          {isFetching && <Loading />}
-          {!isFetching && (
-            <>
-              {descriptions?.map((description, index) => {
-                const isPreferred = isPreferredTerm(description);
-                const label =
-                  description.type === 'FSN'
-                    ? 'FSN'
-                    : isPreferred
-                      ? 'Preferred Term'
-                      : 'Synonym';
-                if (!displayRetiredDescriptions && !description.active) {
-                  return <></>;
-                }
-                return (
-                  <Grid
-                    container
-                    spacing={1}
-                    key={`${description.descriptionId}-left`}
-                    alignItems="center"
-                  >
-                    <Grid item xs={12} md={2}>
-                      {/* <Typography variant="subtitle2">{label}</Typography> */}
-                      <FormControl fullWidth margin="dense" size="small">
-                        <InputLabel>Type</InputLabel>
-                        <Select
-                          // fullWidth
-                          // variant="standard"
-                          margin="dense"
-                          value={description.type}
-                          disabled
-                        >
-                          {Object.values(DefinitionType).map(
-                            (value: string) => (
-                              <MenuItem key={value} value={value}>
-                                {value}
-                              </MenuItem>
-                            ),
-                          )}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                    <Grid item xs={12} md={5}>
-                      <Switch
-                        disabled
-                        checked={description.active}
-                        color="primary"
-                        size="small"
-                      />
-                      <Typography variant="subtitle2">{label}</Typography>
-                      <TextField
-                        fullWidth
-                        variant="outlined"
-                        margin="dense"
-                        multiline
-                        minRows={1}
-                        maxRows={4}
-                        value={description.term || ''}
-                        disabled
-                      />
-                    </Grid>
-                    {/* Display Dialect Acceptability */}
-                    <Grid item xs={12} md={3}>
-                      <Grid container direction="column" spacing={1}>
-                        {dialects.map(dialect => (
-                          <Grid item xs={12} md={2.5} key={dialect.en}>
-                            <FormControl fullWidth margin="dense" size="small">
-                              <InputLabel>{dialect.dialectName}</InputLabel>
-                              <Select
-                                disabled
-                                defaultValue={() => {
-                                  return (
-                                    descriptions[index]?.acceptabilityMap?.[
-                                      dialect.en
-                                    ] || 'NOT ACCEPTABLE'
-                                  );
-                                }}
-                              >
-                                {['PREFERRED', 'ACCEPTABLE'].map(
-                                  (value: string) => (
-                                    <MenuItem key={value} value={value}>
-                                      {value}
-                                    </MenuItem>
-                                  ),
-                                )}
-                                <MenuItem value={'NOT ACCEPTABLE'}>
-                                  NOT ACCEPTABLE
-                                </MenuItem>
-                              </Select>
-                            </FormControl>
-                          </Grid>
-                        ))}
-                      </Grid>
-                    </Grid>
-                    <Grid item xs={12} md={2}>
-                      <FormControl fullWidth margin="dense" size="small">
-                        <InputLabel>Case Sensitivity</InputLabel>
-
-                        <Select
-                          disabled={true}
-                          value={description.caseSignificance}
-                        >
-                          {Object.values(CaseSignificance).map(value => (
-                            <MenuItem key={value} value={value}>
-                              {value}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                    <Divider sx={{ width: '100%', my: 1 }} />
-                  </Grid>
-                );
-              })}
-            </>
-          )}
-        </InnerBoxSmall>
-
-        {/* Artg Ids Section */}
-        {isCtpp && (
-          <Grid>
-            <InnerBoxSmall component="fieldset">
-              <legend>Artg Ids</legend>
-              <TextField
-                fullWidth
-                variant="outlined"
-                margin="dense"
-                InputLabelProps={{ shrink: true }}
-                onKeyDown={filterKeypress}
-                value={
-                  (externalIdentifiers
-                    ? sortExternalIdentifiers(externalIdentifiers)
-                        .map(artg => artg.identifierValue)
-                        .join(', ')
-                    : '') || ''
-                }
-                disabled
-              />
-            </InnerBoxSmall>
-          </Grid>
-        )}
-      </Box>
-    </Grid>
-  );
-}
 
 interface RightSectionProps {
+  branch: string;
+  product: Product;
   isFetching: boolean;
   fields: FieldArrayWithId<
     ProductUpdateRequest,
@@ -936,9 +748,12 @@ interface RightSectionProps {
   control: Control<ProductUpdateRequest>;
   handleAddDescription: React.MouseEventHandler<HTMLButtonElement> | undefined;
   setValue: UseFormSetValue<ProductUpdateRequest>;
+  onPropertiesChange: (val: AdditionalPropertiesEditForm) => void;
 }
 
 function RightSection({
+  branch,
+  product,
   isFetching,
   fields,
   displayRetiredDescriptions,
@@ -950,6 +765,7 @@ function RightSection({
   control,
   handleAddDescription,
   setValue,
+  onPropertiesChange,
 }: RightSectionProps) {
   return (
     <>
@@ -985,6 +801,13 @@ function RightSection({
       >
         <Add />
       </IconButton>
+      <AdditionalPropertiesEdit
+        isUpdating={isUpdating}
+        branch={branch}
+        label={product?.label}
+        nonDefiningProperties={product?.nonDefiningProperties}
+        onChange={onPropertiesChange}
+      />
     </>
   );
 }
@@ -995,19 +818,24 @@ interface ActionButtonProps {
   isSubmitting: boolean;
   toggleDisplayRetiredDescriptions: () => void;
   displayRetiredDescriptions: boolean;
+  additionalPropertiesChanged: boolean;
 }
+
 function ActionButton({
   control,
   resetAndClose,
   isSubmitting,
   toggleDisplayRetiredDescriptions,
   displayRetiredDescriptions,
+  additionalPropertiesChanged,
 }: ActionButtonProps) {
   const { dirtyFields, errors } = useFormState({ control });
   const hasErrors = Object.keys(errors).length > 0;
   const isDirty = Object.keys(dirtyFields).length > 0;
 
-  const isButtonDisabled = () => isSubmitting || !isDirty || hasErrors;
+  const isButtonDisabled = () =>
+    isSubmitting || (!isDirty && !additionalPropertiesChanged) || hasErrors;
+
   return (
     <Grid
       item
@@ -1116,11 +944,12 @@ const FieldDescriptions = ({
     defaultValue: description?.active ?? true,
   });
 
-  const containsSemanticTag = extractSemanticTag(
-    descriptionWithSemanticTag?.term,
-  )
-    ?.trim()
-    .toLocaleLowerCase();
+  const containsSemanticTag =
+    descriptionWithSemanticTag?.type === DefinitionType.FSN
+      ? extractSemanticTag(descriptionWithSemanticTag?.term)
+          ?.trim()
+          .toLocaleLowerCase()
+      : undefined;
 
   const defaultLangRefset = findDefaultLangRefset(langRefsets);
   const descriptionType = sortedDescriptionsWithoutSemanticTag[index]?.type;
@@ -1144,183 +973,201 @@ const FieldDescriptions = ({
   const isDisabled = disabled || !isActive;
 
   const isReleased = description?.released;
+
   return (
-    <Grid container spacing={1} key={field.id} alignItems="center">
-      <Grid item xs={12} md={2}>
-        <Controller
-          name={`descriptionUpdate.descriptions.${index}.type`}
-          control={control}
-          render={({ field: controllerField, fieldState }) => {
-            return (
-              <FormControl
-                fullWidth
-                margin="dense"
-                size="small"
-                error={!!fieldState.error}
-              >
-                <InputLabel>Type</InputLabel>
-                <Select
-                  {...controllerField}
+    <>
+      <Grid container spacing={1} key={field.id} alignItems="center">
+        <Grid item xs={12} md={2}>
+          <Controller
+            name={`descriptionUpdate.descriptions.${index}.type`}
+            control={control}
+            render={({ field: controllerField, fieldState }) => {
+              return (
+                <FormControl
+                  fullWidth
                   margin="dense"
-                  disabled={
-                    description?.descriptionId !== undefined || isDisabled
-                  }
+                  size="small"
+                  error={!!fieldState.error}
                 >
-                  {['FSN', 'SYNONYM'].map((value: string) => (
+                  <InputLabel>Type</InputLabel>
+                  <Select
+                    {...controllerField}
+                    margin="dense"
+                    disabled={
+                      description?.descriptionId !== undefined || isDisabled
+                    }
+                  >
+                    {['FSN', 'SYNONYM'].map((value: string) => (
+                      <MenuItem key={value} value={value}>
+                        {value}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {fieldState.error && (
+                    <FormHelperText>{fieldState.error.message}</FormHelperText>
+                  )}
+                </FormControl>
+              );
+            }}
+          />
+        </Grid>
+        <Grid item xs={12} md={4.5}>
+          <Controller
+            name={`descriptionUpdate.descriptions.${index}.active`}
+            control={control}
+            render={({ field: controllerField }) => {
+              return (
+                <Switch
+                  {...controllerField}
+                  disabled={disabled}
+                  checked={controllerField.value}
+                  onChange={e => {
+                    const newActiveState = e.target.checked;
+                    controllerField.onChange(newActiveState);
+
+                    // If switched to inactive, update all acceptability values to NOT ACCEPTABLE
+                    if (!newActiveState) {
+                      // Get all dialect entries from langRefsets
+                      langRefsets.forEach(dialect => {
+                        // Update each acceptability value to NOT ACCEPTABLE
+                        const fieldName =
+                          `descriptionUpdate.descriptions.${index}.acceptabilityMap.${dialect.en}` as 'descriptionUpdate.descriptions.${index}.acceptabilityMap.${dialect.en}';
+
+                        setValue(fieldName, 'NOT ACCEPTABLE');
+                      });
+                    }
+                  }}
+                  color="primary"
+                  size="small"
+                />
+              );
+            }}
+          />
+          <DescriptionTextInput
+            control={control}
+            index={index}
+            label={label}
+            isDisabled={isDisabled}
+            isReleased={isReleased || false}
+            isFsnOrPreferred={isFsnOrPreferred}
+          />
+          {/* Display Semantic Tag if available */}
+          {containsSemanticTag && (
+            <Typography
+              variant="caption"
+              color="textSecondary"
+              style={{ marginTop: '4px' }}
+            >
+              Semantic Tag: {containsSemanticTag}
+            </Typography>
+          )}
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <Grid container direction="column" spacing={1}>
+            {langRefsets.map(dialect => {
+              return (
+                <Grid item key={dialect.dialectName}>
+                  <Controller
+                    name={`descriptionUpdate.descriptions.${index}.acceptabilityMap.${dialect.en}`}
+                    control={control}
+                    defaultValue={
+                      sortedDescriptionsWithoutSemanticTag[index]
+                        ?.acceptabilityMap?.[dialect.en] ||
+                      ('NOT ACCEPTABLE' as Acceptability)
+                    }
+                    render={({ field: controllerField, fieldState }) => {
+                      return (
+                        <>
+                          <FormControl
+                            fullWidth
+                            margin="dense"
+                            size="small"
+                            error={!!fieldState.error}
+                          >
+                            <InputLabel>{dialect.dialectName}</InputLabel>
+                            <Select
+                              {...controllerField}
+                              disabled={
+                                isDisabled ||
+                                dialect.dialectName.toLowerCase() === 'en-gb'
+                              }
+                              error={!!fieldState.error}
+                            >
+                              {['PREFERRED', 'ACCEPTABLE'].map(
+                                (value: string) => (
+                                  <MenuItem key={value} value={value}>
+                                    {value}
+                                  </MenuItem>
+                                ),
+                              )}
+                              <MenuItem value={'NOT ACCEPTABLE'}>
+                                NOT ACCEPTABLE
+                              </MenuItem>
+                            </Select>
+                            {fieldState.error && (
+                              <FormHelperText>
+                                {fieldState.error.message}
+                              </FormHelperText>
+                            )}
+                          </FormControl>
+                        </>
+                      );
+                    }}
+                  />
+                </Grid>
+              );
+            })}
+          </Grid>
+        </Grid>
+        <Grid item xs={12} md={1.5}>
+          <FormControl fullWidth margin="dense" size="small">
+            <InputLabel>Case Sensitivity</InputLabel>
+            <Controller
+              name={`descriptionUpdate.descriptions.${index}.caseSignificance`}
+              control={control}
+              render={({ field: controllerField }) => (
+                <Select {...controllerField} disabled={isDisabled}>
+                  {Object.values(CaseSignificance).map(value => (
                     <MenuItem key={value} value={value}>
-                      {value}
+                      {caseSignificanceDisplay[value]}
                     </MenuItem>
                   ))}
                 </Select>
-                {fieldState.error && (
-                  <FormHelperText>{fieldState.error.message}</FormHelperText>
-                )}
-              </FormControl>
-            );
-          }}
-        />
-      </Grid>
-      <Grid item xs={12} md={4.5}>
-        <Controller
-          name={`descriptionUpdate.descriptions.${index}.active`}
-          control={control}
-          render={({ field: controllerField }) => {
-            return (
-              <Switch
-                {...controllerField}
-                disabled={disabled}
-                checked={controllerField.value}
-                onChange={e => {
-                  const newActiveState = e.target.checked;
-                  controllerField.onChange(newActiveState);
-
-                  // If switched to inactive, update all acceptability values to NOT ACCEPTABLE
-                  if (!newActiveState) {
-                    // Get all dialect entries from langRefsets
-                    langRefsets.forEach(dialect => {
-                      // Update each acceptability value to NOT ACCEPTABLE
-                      const fieldName =
-                        `descriptionUpdate.descriptions.${index}.acceptabilityMap.${dialect.en}` as 'descriptionUpdate.descriptions.${index}.acceptabilityMap.${dialect.en}';
-
-                      setValue(fieldName, 'NOT ACCEPTABLE');
-                    });
-                  }
-                }}
-                color="primary"
-                size="small"
-              />
-            );
-          }}
-        />
-        <DescriptionTextInput
-          control={control}
-          index={index}
-          label={label}
-          isDisabled={isDisabled}
-          isReleased={isReleased || false}
-          isFsnOrPreferred={isFsnOrPreferred}
-        />
-        {/* Display Semantic Tag if available */}
-        {containsSemanticTag && (
-          <Typography
-            variant="caption"
-            color="textSecondary"
-            style={{ marginTop: '4px' }}
-          >
-            Semantic Tag: {containsSemanticTag}
-          </Typography>
+              )}
+            />
+          </FormControl>
+        </Grid>
+        {/* Add Delete Button for New Descriptions */}
+        {description?.descriptionId === undefined && (
+          <Grid item xs={12} md={1}>
+            <IconButton
+              disabled={disabled}
+              onClick={() => handleDeleteDescription(index)}
+              color="error"
+            >
+              <Delete />
+            </IconButton>
+          </Grid>
         )}
+        {/* Display UNRELEASED text if not released */}
+        {!isReleased && (
+          <Grid item xs={12} sx={{ padding: 0 }}>
+            <Typography
+              variant="caption"
+              color="error.main"
+              sx={{
+                fontWeight: 'bold',
+                display: 'block',
+              }}
+            >
+              UNRELEASED
+            </Typography>
+          </Grid>
+        )}
+        <Divider sx={{ width: '100%', my: 1 }} />
       </Grid>
-
-      <Grid item xs={12} md={3}>
-        <Grid container direction="column" spacing={1}>
-          {langRefsets.map(dialect => {
-            return (
-              <Grid item key={dialect.dialectName}>
-                <Controller
-                  name={`descriptionUpdate.descriptions.${index}.acceptabilityMap.${dialect.en}`}
-                  control={control}
-                  defaultValue={
-                    sortedDescriptionsWithoutSemanticTag[index]
-                      ?.acceptabilityMap?.[dialect.en] ||
-                    ('NOT ACCEPTABLE' as Acceptability)
-                  }
-                  render={({ field: controllerField, fieldState }) => {
-                    return (
-                      <>
-                        <FormControl
-                          fullWidth
-                          margin="dense"
-                          size="small"
-                          error={!!fieldState.error}
-                        >
-                          <InputLabel>{dialect.dialectName}</InputLabel>
-                          <Select
-                            {...controllerField}
-                            disabled={
-                              isDisabled ||
-                              dialect.dialectName.toLowerCase() === 'en-gb'
-                            }
-                            error={!!fieldState.error}
-                          >
-                            {['PREFERRED', 'ACCEPTABLE'].map(
-                              (value: string) => (
-                                <MenuItem key={value} value={value}>
-                                  {value}
-                                </MenuItem>
-                              ),
-                            )}
-                            <MenuItem value={'NOT ACCEPTABLE'}>
-                              NOT ACCEPTABLE
-                            </MenuItem>
-                          </Select>
-                          {fieldState.error && (
-                            <FormHelperText>
-                              {fieldState.error.message}
-                            </FormHelperText>
-                          )}
-                        </FormControl>
-                      </>
-                    );
-                  }}
-                />
-              </Grid>
-            );
-          })}
-        </Grid>
-      </Grid>
-      <Grid item xs={12} md={1.5}>
-        <FormControl fullWidth margin="dense" size="small">
-          <InputLabel>Case Sensitivity</InputLabel>
-          <Controller
-            name={`descriptionUpdate.descriptions.${index}.caseSignificance`}
-            control={control}
-            render={({ field: controllerField }) => (
-              <Select {...controllerField} disabled={isDisabled}>
-                {Object.values(CaseSignificance).map(value => (
-                  <MenuItem key={value} value={value}>
-                    {caseSignificanceDisplay[value]}
-                  </MenuItem>
-                ))}
-              </Select>
-            )}
-          />
-        </FormControl>
-      </Grid>
-      {/* Add Delete Button for New Descriptions */}
-      {description?.descriptionId === undefined && (
-        <Grid item xs={12} md={1}>
-          <IconButton
-            disabled={disabled}
-            onClick={() => handleDeleteDescription(index)}
-            color="error"
-          >
-            <Delete />
-          </IconButton>
-        </Grid>
-      )}
-      <Divider sx={{ width: '100%', my: 1 }} />
-    </Grid>
+    </>
   );
 };
 
@@ -1343,7 +1190,11 @@ function processDescriptionsWithSemanticTags(
 
     let newTerm = updatedDesc.term;
 
-    if (updatedTag === undefined && existingTag !== undefined) {
+    if (
+      updatedTag === undefined &&
+      existingTag !== undefined &&
+      updatedDesc.type === DefinitionType.FSN
+    ) {
       // Updated description DOES NOT have a tag, but the old one DOES
       newTerm = `${updatedDesc.term.replace(/\s*\(.*?\)\s*$/, '').trim()} ${existingTag}`;
     } else if (updatedTag !== existingTag) {
@@ -1383,7 +1234,6 @@ function removeNotAcceptable(desc: Description) {
   if (desc.acceptabilityMap) {
     desc.acceptabilityMap = Object.fromEntries(
       Object.entries(desc.acceptabilityMap).filter(
-        // eslint-disable-next-line
         ([_, value]) => value !== 'NOT ACCEPTABLE',
       ),
     );
@@ -1437,40 +1287,23 @@ const DescriptionTextInput = ({
         multiline
         minRows={1}
         maxRows={4}
-        disabled={isDisabled || (isReleased && !isFsnOrPreferred)}
+        disabled={isDisabled}
+        onBlur={e => {
+          const trimmed = e.target.value.trim();
+          field.onChange(trimmed);
+        }}
       />
-      {hasChanged && isReleased && isFsnOrPreferred && (
+      {hasChanged && isReleased && (
         <FormHelperText sx={{ color: t => `${t.palette.warning.main}` }}>
           This change will retire this description and create a replacement.
+        </FormHelperText>
+      )}
+      {hasChanged && !isReleased && (
+        <FormHelperText sx={{ color: t => `${t.palette.warning.main}` }}>
+          This change will <u>NOT</u> retire this description, instead it will
+          be edited.
         </FormHelperText>
       )}
     </>
   );
 };
-
-interface ArtgAutoCompleteWrapperProps {
-  isUpdating: boolean;
-  control: Control<ProductUpdateRequest>;
-  setArtgOptVals: (externalIdentifiers: ExternalIdentifier[]) => void;
-}
-function ArtgAutoCompleteWrapper({
-  isUpdating,
-  control,
-  setArtgOptVals,
-}: ArtgAutoCompleteWrapperProps) {
-  const { errors } = useFormState({ control });
-
-  return (
-    <ArtgAutoComplete
-      disabled={isUpdating}
-      name="externalRequesterUpdate.externalIdentifiers"
-      control={control}
-      error={errors?.externalRequesterUpdate?.externalIdentifiers as FieldError}
-      dataTestId="package-brand"
-      optionValues={[]}
-      handleChange={(artgs: ExternalIdentifier[] | null) => {
-        setArtgOptVals(artgs ? artgs : []);
-      }}
-    />
-  );
-}

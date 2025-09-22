@@ -15,7 +15,7 @@
 ///
 
 import { RefsetMember } from './RefsetMember.ts';
-import { ExternalIdentifier } from './product.ts';
+import { NonDefiningProperty } from './product.ts';
 
 export enum DefinitionStatus {
   Primitive = 'PRIMITIVE',
@@ -42,6 +42,12 @@ export interface Concept {
   // leafStated: any;
   // extraFields: any;
   idAndFsnTerm?: string | null;
+}
+export interface ConceptMini {
+  conceptId: string;
+  pt?: Term;
+  fsn?: Term;
+  definitionStatus: DefinitionStatus;
 }
 
 export interface RefsetConceptCreate {
@@ -100,6 +106,12 @@ export enum CaseSignificance {
   INITIAL_CHARACTER_CASE_INSENSITIVE = 'INITIAL_CHARACTER_CASE_INSENSITIVE',
 }
 
+export const caseSignificanceDisplay: Record<CaseSignificance, string> = {
+  [CaseSignificance.ENTIRE_TERM_CASE_SENSITIVE]: 'CS',
+  [CaseSignificance.CASE_INSENSITIVE]: 'ci',
+  [CaseSignificance.INITIAL_CHARACTER_CASE_INSENSITIVE]: 'cI',
+};
+
 export interface SnowstormAxiom {
   axiomId: string;
   moduleId: string;
@@ -112,6 +124,10 @@ export interface SnowstormAxiom {
   effectiveTime: number;
 }
 
+export enum SnowstormRelationshipNewOrRemoved {
+  NEW = 'NEW',
+  REMOVED = 'REMOVED',
+}
 export interface SnowstormRelationship {
   internalId: string;
   path: string;
@@ -146,6 +162,7 @@ export interface SnowstormRelationship {
   concrete: boolean;
   effectiveTime: string;
   id: string;
+  newOrRemoved?: SnowstormRelationshipNewOrRemoved;
 }
 
 export interface ConcreteValue {
@@ -193,7 +210,7 @@ export interface Axiom {
 }
 
 export interface NewConceptAxioms {
-  axiomId: string | null;
+  axiomId: string;
   moduleId: string;
   active: boolean;
   released: boolean | null;
@@ -254,7 +271,7 @@ export interface AxiomRelationshipNewConcept {
   released: boolean | null;
   releaseHash: string | null;
   releasedEffectiveTime: number | null;
-  relationshipId: string | null;
+  relationshipId: string;
   sourceId: string | null;
   destinationId: string;
   value: string | null;
@@ -276,6 +293,7 @@ export interface AxiomRelationshipNewConcept {
   concrete: boolean;
   effectiveTime: string | null;
   id: string | null;
+  newOrRemoved?: SnowstormRelationshipNewOrRemoved;
 }
 
 export interface Term {
@@ -303,7 +321,22 @@ export interface Edge {
   label: string;
 }
 
+class InactivationReason {
+  value: string;
+  label: string;
+}
+
+class OriginalNode {
+  conceptId: string;
+  node: Product | null;
+  inactivationReason: InactivationReason | null;
+  referencedByOtherProducts: boolean;
+}
+
 export interface Product {
+  axioms?: SnowstormAxiom[];
+  relationShips?: SnowstormRelationship[];
+  displayName: string;
   concept: Concept | null;
   label: string;
   newConceptDetails: NewConceptDetails | null;
@@ -317,8 +350,30 @@ export interface Product {
   generatedFullySpecifiedName?: string;
   newInTask: boolean;
   newInProject: boolean;
-  externalIdentifiers?: ExternalIdentifier[];
+  nonDefiningProperties?: NonDefiningProperty[];
   isModified?: boolean;
+  propertyUpdate: boolean;
+  originalNode: OriginalNode | null;
+  statedFormChanged: boolean | null;
+  inferredFormChanged: boolean | null;
+  historicalAssociations?: RefsetMember[];
+}
+
+export function hasDescriptionChange(product: Product): boolean {
+  return (
+    product.originalNode != null &&
+    (product.fullySpecifiedName !==
+      product.originalNode.node?.fullySpecifiedName ||
+      product.preferredTerm !== product.originalNode.node?.preferredTerm)
+  );
+}
+
+export function hasHistoricalAssociationsChanged(product: Product): boolean {
+  const filtered = product?.historicalAssociations?.filter(ass => {
+    return ass.released === false;
+  });
+
+  return filtered?.length !== undefined && filtered?.length > 0;
 }
 
 export interface NewConceptDetails {
@@ -333,12 +388,4 @@ export interface NewConceptDetails {
   fsn?: Term;
   pt?: Term;
   descriptions?: Description[];
-}
-
-export enum Product7BoxBGColour {
-  NEW = '#00A854',
-  PRIMITIVE = '#99CCFF',
-  FULLY_DEFINED = '#CCCCFF',
-  INVALID = '#F04134',
-  INCOMPLETE = '#FFA500',
 }

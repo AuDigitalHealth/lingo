@@ -168,10 +168,33 @@ export function findConceptUsingPT(pt: string, concepts: Concept[]) {
 
 export function containsNewConcept(nodes: Product[]) {
   const product = nodes.find(function (p) {
-    return p.newConcept;
+    return isNewConcept(p);
   });
   return product !== undefined;
 }
+export function isNewConcept(product: Product) {
+  return (product.newConcept || product.newConceptDetails) && !product.concept;
+}
+export function isReplacedWithNewConcept(product: Product) {
+  return (
+    product.originalNode !== null &&
+    product.newConceptDetails !== null &&
+    (product.concept == null ||
+      product.concept.id != product.originalNode?.node?.concept?.id)
+  );
+}
+
+export function isReplacedWithExistingConcept(product: Product) {
+  return (
+    product.concept &&
+    !product.newConceptDetails &&
+    product.originalNode &&
+    product.concept.id !== product.originalNode.node?.concept?.id &&
+    !product.originalNode.referencedByOtherProducts &&
+    product.originalNode?.inactivationReason
+  );
+}
+
 export const isValidConceptName = (concept: Concept) => {
   return concept && concept.pt?.term !== '' && concept.pt?.term !== null;
 };
@@ -255,7 +278,7 @@ export const defaultPackage = (
         : undefined,
       containerType: undefined,
 
-      externalIdentifiers: [],
+      nonDefiningProperties: [],
       containedPackages: [],
       containedProducts: [defaultProduct(defaultUnit, defaultBrandName)],
     },
@@ -342,10 +365,15 @@ function cleanDeviceProductQty(item: DeviceProductQuantity) {
   }
 }
 export function cleanPackageDetails(packageDetails: MedicationPackageDetails) {
-  packageDetails.containedPackages.forEach(function (packageQty) {
-    packageQty.packageDetails?.containedProducts.map(p => cleanProductQty(p));
-  });
-  packageDetails.containedProducts.map(p => cleanProductQty(p));
+  if (packageDetails.containedPackages) {
+    packageDetails.containedPackages.forEach(function (packageQty) {
+      packageQty.packageDetails?.containedProducts.map(p => cleanProductQty(p));
+    });
+  }
+  if (packageDetails.containedProducts) {
+    packageDetails.containedProducts.map(p => cleanProductQty(p));
+  }
+
   return packageDetails;
 }
 
@@ -374,10 +402,11 @@ export function removeSemanticTagsFromTerms(
         node.newConceptDetails.semanticTag = semanticTag;
         const termWithoutTag = removeSemanticTagFromTerm(
           node.newConceptDetails.fullySpecifiedName,
+          node.semanticTag,
         );
         node.newConceptDetails.fullySpecifiedName = termWithoutTag
           ? termWithoutTag
-          : '';
+          : node.newConceptDetails.fullySpecifiedName;
       }
     }
     return node;
@@ -386,18 +415,21 @@ export function removeSemanticTagsFromTerms(
 
 export function reattachSemanticTags(productSummary: ProductSummary) {
   productSummary.nodes.forEach(node => {
-    if (node.newConceptDetails) {
-      const newSemanticTag = extractSemanticTag(
-        node.newConceptDetails.fullySpecifiedName,
-      );
-      // there's a new semantic tag, so update the semanticTag
-      if (node.newConceptDetails.semanticTag && newSemanticTag) {
-        node.newConceptDetails.semanticTag = newSemanticTag;
-        return;
-      }
-      // re-add old one
-      if (node.newConceptDetails && node.newConceptDetails.semanticTag) {
-        node.newConceptDetails.fullySpecifiedName = `${node.newConceptDetails.fullySpecifiedName?.trim()} ${node.newConceptDetails.semanticTag}`;
+    if (node.newConceptDetails && node.newConceptDetails.semanticTag) {
+      const fullySpecifiedName =
+        node.newConceptDetails.fullySpecifiedName?.trim() || '';
+      const semanticTag = node.newConceptDetails.semanticTag;
+
+      // Check if the semantic tag is already at the end (with or without brackets)
+      const tagWithBrackets = `(${semanticTag})`;
+      const tagWithoutBrackets = semanticTag;
+
+      const alreadyHasTag =
+        fullySpecifiedName.endsWith(tagWithBrackets) ||
+        fullySpecifiedName.endsWith(tagWithoutBrackets);
+
+      if (!alreadyHasTag) {
+        node.newConceptDetails.fullySpecifiedName = `${fullySpecifiedName} (${semanticTag})`;
       }
     }
   });
@@ -582,9 +614,28 @@ export const findDefaultLangRefset = (langRefsets: LanguageRefset[]) => {
     return langRefsets.default === 'true';
   });
 };
+export const isConceptOptionSelected = (
+  selectedConceptIdentifiers: string[] | null,
+  product: Product,
+): boolean =>
+  !!(
+    selectedConceptIdentifiers?.length &&
+    product.concept &&
+    product.conceptOptions?.some(c =>
+      selectedConceptIdentifiers.includes(c?.conceptId),
+    )
+  );
 export function trimIfTooLong(text: string, maxLength: number): string {
   if (text.length > maxLength) {
     return text.slice(0, maxLength);
   }
   return text;
 }
+export const filterOptionsByTermAndCode = createFilterOptions<Concept>({
+  stringify: (option: Concept) =>
+    [
+      option.pt?.term ?? '', // Preferred term
+      option.fsn?.term ?? '', // FSN term
+      option.conceptId ?? '', // Code
+    ].join(' '),
+});

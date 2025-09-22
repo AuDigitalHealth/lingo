@@ -1,0 +1,89 @@
+{
+  "type": "object",
+  "$defs": {
+    "SnowstormConceptMini": {
+      "type": "object",
+      "properties": {
+        "conceptId": {
+          "type": "string"
+        },
+        "pt": {
+          "$ref": "#/$defs/SnowstormTermLangPojo"
+        },
+        "fsn": {
+          "$ref": "#/$defs/SnowstormTermLangPojo"
+        },
+        "definitionStatus": {
+          "type": "string",
+          "enum": [
+            "PRIMITIVE",
+            "FULLY_DEFINED"
+          ]
+        }
+      },
+      "minProperties": 1,
+      "errorMessage": {
+        "minProperties": "Field must be populated."
+      }
+    },
+    "SnowstormTermLangPojo": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "lang": {
+          "type": "string"
+        },
+        "term": {
+          "type": "string"
+        }
+      }
+    },
+    "BrandDetails": {
+      "type": "object",
+      "properties": {
+        "brand": {
+          "$ref": "#/$defs/SnowstormConceptMini",
+          "title": "Brand",
+          "minProperties": 1,
+          "errorMessage": {
+            "minProperties": "Brand Name must be populated."
+          }
+        },
+        "nonDefiningProperties": {
+          "type": "array",
+          "title": "Properties",
+          "items": {
+            "$ref": "#/$defs/MEDICATION_PACKAGE_NonDefiningProperty"
+          }
+        }
+      },
+      "required": ["brand"]
+    }
+  },
+  "properties": {
+    "selectedProduct": {
+      "type": "string",
+      "title": "Selected Product"
+    },
+    "existingBrands": {
+      "type": "array",
+      "title": "Existing Brands",
+      "items": {
+        "$ref": "#/$defs/BrandDetails"
+      }
+    },
+    "brands": {
+      "type": "array",
+      "title": "New Brands",
+      "items": {
+        "$ref": "#/$defs/BrandDetails"
+      }
+    },
+    "newBrandInput": {
+      "$ref": "#/$defs/BrandDetails"
+    },
+    "addButton": {
+      "type": "null"
+    }
+  }
+}

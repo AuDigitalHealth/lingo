@@ -1,5 +1,5 @@
-import useTaskByKey from '../../hooks/useTaskById.tsx';
-import TaskEditCard from './components/TaskEditCard.tsx';
+import useTaskByKey from '../../hooks/useTaskByKey.tsx';
+import TaskEditCard, { TaskEdit } from './components/TaskEditCard.tsx';
 import TasksList from './components/TasksList.tsx';
 import TaskTicket from './components/TaskTicket.tsx';
 import { Stack } from '@mui/system';
@@ -51,11 +51,11 @@ function TaskEditLayout() {
           {/* info menu */}
           <Routes>
             <Route
-              path="/:ticketNumber/*"
+              path="ticket/:ticketNumber/*"
               element={<TaskTicket menuOpen={menuOpen} />}
             />
 
-            <Route path="" element={<TaskEditCard menuOpen={menuOpen} />} />
+            <Route path="*" element={<TaskEdit menuOpen={menuOpen} />} />
           </Routes>
         </Stack>
       </Stack>

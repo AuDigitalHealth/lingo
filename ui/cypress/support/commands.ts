@@ -293,7 +293,7 @@ Cypress.Commands.add('waitForCreateBulkBrandPack', (branch: string) => {
 Cypress.Commands.add('waitForConceptSearch', (branch: string) => {
   cy.intercept({
     method: 'GET',
-    url: `/snowstorm/${branch}/concepts?*`,
+    url: `/snowstorm/${encodeURIComponent(branch)}/concepts?*`,
   }).as('getConceptSearch');
 });
 
@@ -457,4 +457,11 @@ Cypress.Commands.add('setUpIteration', () => {
 
 Cypress.Commands.add('setUpExternalRequestor', () => {
   cy.wrap(setUpExternalRequestor());
+});
+
+/** Action that conditionally skips tests based on a given input */
+Cypress.Commands.add('onlyOn', (enabled: boolean) => {
+  if (enabled !== true) {
+    cy.state('runnable').ctx.skip();
+  }
 });

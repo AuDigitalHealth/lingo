@@ -97,6 +97,11 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
+        <artifactId>sergio-extension</artifactId>
+        <groupId>au.gov.digitalhealth</groupId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
         <artifactId>lingo-common</artifactId>
         <groupId>au.gov.digitalhealth</groupId>
         <version>${project.version}</version>
@@ -246,6 +251,6 @@
   </repositories>
 
 
-  <version>1.2.12-SNAPSHOT</version>
+  <version>1.3.1-SNAPSHOT</version>
 
 </project>

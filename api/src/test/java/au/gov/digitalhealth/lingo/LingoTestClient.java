@@ -18,18 +18,19 @@ package au.gov.digitalhealth.lingo;
 import static io.restassured.RestAssured.given;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
-import au.gov.digitalhealth.lingo.product.BrandCreationRequest;
+import au.gov.digitalhealth.lingo.product.PrimitiveConceptCreationRequest;
 import au.gov.digitalhealth.lingo.product.ProductBrands;
 import au.gov.digitalhealth.lingo.product.ProductCreationDetails;
 import au.gov.digitalhealth.lingo.product.ProductPackSizes;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
+import au.gov.digitalhealth.lingo.product.ProductUpdateDetails;
 import au.gov.digitalhealth.lingo.product.bulk.BrandPackSizeCreationDetails;
 import au.gov.digitalhealth.lingo.product.bulk.BulkProductAction;
 import au.gov.digitalhealth.lingo.product.details.DeviceProductDetails;
-import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
-import au.gov.digitalhealth.lingo.product.update.ProductExternalIdentifierUpdateRequest;
+import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
+import au.gov.digitalhealth.lingo.product.update.ProductPropertiesUpdateRequest;
 import au.gov.digitalhealth.lingo.product.update.ProductUpdateRequest;
 import au.gov.digitalhealth.tickets.controllers.BulkProductActionDto;
 import au.gov.digitalhealth.tickets.models.Ticket;
@@ -46,10 +47,12 @@ import jakarta.validation.Valid;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 
+@Slf4j
 public class LingoTestClient {
 
   private final Cookie imsCookie;
@@ -158,7 +161,8 @@ public class LingoTestClient {
         ProductSummary.class);
   }
 
-  public SnowstormConceptMini createBrand(BrandCreationRequest brandCreationRequest) {
+  public SnowstormConceptMini createPrimitive(
+      PrimitiveConceptCreationRequest brandCreationRequest) {
     return postRequest(
         "/api/MAIN/SNOMEDCT-AU/AUAMT/qualifier/product-name",
         brandCreationRequest,
@@ -169,17 +173,17 @@ public class LingoTestClient {
   public au.gov.digitalhealth.tickets.models.BulkProductAction updateProduct(
       ProductUpdateRequest productUpdateRequest, String productId) {
     return putRequest(
-        "/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/" + productId + "/update",
+        "/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/" + productId + "/descriptions",
         productUpdateRequest,
         HttpStatus.OK,
         au.gov.digitalhealth.tickets.models.BulkProductAction.class);
   }
 
-  public Set<ExternalIdentifier> updateProductExternalIdentifiers(
-      ProductExternalIdentifierUpdateRequest request, String productId) {
+  public Set<ExternalIdentifier> updateProductProperties(
+      ProductPropertiesUpdateRequest request, String productId) {
     Type responseType = new ParameterizedTypeReference<Set<ExternalIdentifier>>() {}.getType();
     return putRequest(
-        "/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/" + productId + "/external-identifiers",
+        "/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/" + productId + "/properties",
         request,
         HttpStatus.OK,
         responseType);
@@ -211,6 +215,18 @@ public class LingoTestClient {
         brandPackSizeCreationDetails,
         HttpStatus.OK,
         ProductSummary.class);
+  }
+
+  public ProductSummary calculateUpdateMedicationProductSummary(
+      Long productId, PackageDetails<MedicationProductDetails> packageDetails) {
+    final ProductSummary productSummary =
+        postRequest(
+            "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/product/" + productId + "/$calculateUpdate",
+            packageDetails,
+            HttpStatus.OK,
+            ProductSummary.class);
+    log.info(productSummary.toString());
+    return productSummary;
   }
 
   public <T> @Valid T getRequest(String path, HttpStatus expectedStatus, Class<T> responseType) {
@@ -313,5 +329,15 @@ public class LingoTestClient {
   public List<BulkProductActionDto> getBulkProductAction(Long id) {
     return getRequest(
         "/api/tickets/" + id + "/bulk-product-actions", HttpStatus.OK, new TypeRef<>() {});
+  }
+
+  public ProductSummary updateMedicationProductFromAtomicData(
+      Long productId,
+      ProductUpdateDetails<MedicationProductDetails> medicationProductDetailsProductUpdateDetails) {
+    return putRequest(
+        "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/product/" + productId,
+        medicationProductDetailsProductUpdateDetails,
+        HttpStatus.OK,
+        ProductSummary.class);
   }
 }

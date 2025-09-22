@@ -24,6 +24,7 @@ import au.gov.digitalhealth.lingo.exception.TicketImportProblem;
 import au.gov.digitalhealth.tickets.TicketBacklogDto;
 import au.gov.digitalhealth.tickets.TicketDto;
 import au.gov.digitalhealth.tickets.TicketDtoExtended;
+import au.gov.digitalhealth.tickets.TicketHistoryEntryDto;
 import au.gov.digitalhealth.tickets.TicketImportDto;
 import au.gov.digitalhealth.tickets.TicketMinimalDto;
 import au.gov.digitalhealth.tickets.helper.BulkAddExternalRequestorsRequest;
@@ -43,6 +44,7 @@ import au.gov.digitalhealth.tickets.repository.IterationRepository;
 import au.gov.digitalhealth.tickets.repository.ScheduleRepository;
 import au.gov.digitalhealth.tickets.repository.StateRepository;
 import au.gov.digitalhealth.tickets.repository.TicketRepository;
+import au.gov.digitalhealth.tickets.service.TicketHistoryService;
 import au.gov.digitalhealth.tickets.service.TicketServiceImpl;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -88,6 +90,8 @@ public class TicketController {
       Pattern.compile(ADDITIONAL_FIELD_TYPE_NAME_PATTERN);
   protected final Log logger = LogFactory.getLog(getClass());
   private final TicketServiceImpl ticketService;
+
+  private final TicketHistoryService ticketHistoryService;
   private final TicketRepository ticketRepository;
   private final StateRepository stateRepository;
 
@@ -103,12 +107,14 @@ public class TicketController {
 
   public TicketController(
       TicketServiceImpl ticketService,
+      TicketHistoryService ticketHistoryService,
       TicketRepository ticketRepository,
       StateRepository stateRepository,
       ScheduleRepository scheduleRepository,
       IterationRepository iterationRepository,
       TicketMapper ticketMapper) {
     this.ticketService = ticketService;
+    this.ticketHistoryService = ticketHistoryService;
     this.ticketRepository = ticketRepository;
     this.stateRepository = stateRepository;
     this.scheduleRepository = scheduleRepository;
@@ -255,6 +261,19 @@ public class TicketController {
   @GetMapping("/api/tickets/{ticketId}")
   public ResponseEntity<TicketDtoExtended> getTicket(@PathVariable Long ticketId) {
     return new ResponseEntity<>(ticketService.findTicket(ticketId), HttpStatus.OK);
+  }
+
+  @GetMapping("/api/tickets/ticketNumber/{ticketNumber}/history")
+  @Transactional
+  public ResponseEntity<List<TicketHistoryEntryDto>> getTicketHistory(
+      @PathVariable String ticketNumber) {
+    try {
+      List<TicketHistoryEntryDto> history = ticketHistoryService.getTicketHistory(ticketNumber);
+      return ResponseEntity.ok(history);
+    } catch (Exception e) {
+      logger.error("Error retrieving ticket history for ticket Number: " + ticketNumber, e);
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
   }
 
   @GetMapping("/api/tickets/ticketNumber/{ticketNumber}")

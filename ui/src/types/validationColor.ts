@@ -19,4 +19,5 @@ export enum ValidationColor {
   Success = 'success',
   Info = 'info',
   Warning = 'warning',
+  Primary = 'primary',
 }

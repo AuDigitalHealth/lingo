@@ -18,6 +18,7 @@ import { Concept } from './concept.ts';
 import { ProductType } from './product.ts';
 
 export interface ProductTableRow {
+  createdBy: string | undefined;
   id: number;
   productId?: number;
   name: string;
@@ -30,7 +31,8 @@ export interface ProductTableRow {
   productType: ProductType | undefined;
   bulkProductActionId?: number;
   conceptIds?: string[];
-  created: string;
+  created?: Date;
+  action?: string;
 }
 export enum ProductStatus {
   Completed = 'completed',

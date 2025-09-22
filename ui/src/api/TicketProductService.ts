@@ -101,6 +101,20 @@ const TicketProductService = {
 
     return response;
   },
+  async draftTicketProducts(
+    ticketId: number,
+    ticketProductDto: TicketProductDto[],
+  ): Promise<AxiosResponse> {
+    const response = await api.put(
+      `/api/tickets/${ticketId}/products/batch`,
+      ticketProductDto,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response;
+  },
 };
 
 export default TicketProductService;
