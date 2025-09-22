@@ -1,11 +1,114 @@
 repos:
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.18.2   # or latest v8.x
+    rev: v8.18.2
     hooks:
       - id: gitleaks
-        # 'protect' is the default entry; these are valid flags for protect
+        args: [ "protect", "--staged", "--verbose", "--redact", "--config=.gitleaks.toml" ]
+
+  - repo: local
+    hooks:
+      # --- Prettier (ui) — only runs when ui/* files are staged ---
+      - id: ui-prettier-check
+        name: Prettier (ui, check)
+        language: system
+        entry: bash -lc
         args:
-          - "--staged"
-          - "--config=.gitleaks.toml"
-          - "--redact"
-          - "--verbose"
+          - |
+            # skip if no filenames were passed
+            [ "$#" -eq 0 ] && exit 0
+
+            # Prettier check using UI config/ignore
+            npx prettier -c \
+              --config ui/.prettierrc.json \
+              --ignore-path ui/.prettierignore \
+              "$@"
+        pass_filenames: true
+        files: ^ui/
+        types_or: [ javascript, jsx, ts, tsx, json, css, scss, less, markdown, yaml, toml ]
+        exclude: ^ui/(node_modules|dist|build|coverage|cypress)(/|$)
+
+      # --- ESLint (ui) — cached, only when ui/*.{js,jsx,ts,tsx} are staged ---
+      - id: ui-eslint
+        name: ESLint (ui)
+        language: system
+        entry: bash -lc
+        args:
+          - |
+            # skip if no filenames were passed
+            [ "$#" -eq 0 ] && exit 0
+
+            # Map repo-root paths like ui/src/App.tsx -> src/App.tsx after cd ui
+            args=()
+            for f in "$@"; do args+=("${f#ui/}"); done
+
+            cd ui
+
+            # Ensure local deps are used (eslint v8 + plugins)
+            npx eslint \
+              --cache \
+              --cache-location .eslintcache \
+              --cache-strategy content \
+              --max-warnings=0 \
+              --ext .js,.jsx,.ts,.tsx \
+              --report-unused-disable-directives \
+              --no-error-on-unmatched-pattern \
+              --ignore-path .eslintignore \
+              "${args[@]}"
+        pass_filenames: true
+        files: ^ui/.*\.(js|jsx|ts|tsx)$
+        types_or: [ javascript, jsx, ts, tsx ]
+        exclude: ^ui/(node_modules|dist|build|coverage|cypress)(/|$)
+
+      - id: api-maven-format
+        name: Maven (api, spotify fmt plugin)
+        language: system
+        entry: bash -lc
+        args:
+          - |
+            # skip if no staged API files
+            [ "$#" -eq 0 ] && exit 0
+            
+            # only run when in api/ subdir
+            cd api
+            
+            # Run Spotify fmt plugin
+            mvn com.spotify.fmt:fmt-maven-plugin:format
+        pass_filenames: true
+        files: ^api/.*\.(java)$
+        types: [ java ]
+
+      # --- Optional manual fixers (run on demand) ---
+      - id: ui-prettier-fix
+        name: Prettier (ui, write)
+        language: system
+        entry: bash -lc
+        args:
+          - |
+            [ "$#" -eq 0 ] && exit 0
+            npx prettier -w \
+              --config ui/.prettierrc.json \
+              --ignore-path ui/.prettierignore \
+              "$@"
+        pass_filenames: true
+        files: ^ui/
+        stages: [ manual ]
+
+      - id: ui-eslint-fix
+        name: ESLint (ui, --fix)
+        language: system
+        entry: bash -lc
+        args:
+          - |
+            [ "$#" -eq 0 ] && exit 0
+            args=()
+            for f in "$@"; do args+=("${f#ui/}"); done
+            cd ui && npx eslint --fix \
+              --cache \
+              --cache-location .eslintcache \
+              --cache-strategy content \
+              --ext .js,.jsx,.ts,.tsx \
+              --ignore-path .eslintignore \
+              "${args[@]}"
+        pass_filenames: true
+        files: ^ui/.*\.(js|jsx|ts|tsx)$
+        stages: [ manual ]
