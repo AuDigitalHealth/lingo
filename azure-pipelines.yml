@@ -129,7 +129,9 @@ jobs:
         artifact: branchInfo
 
   - job: snomio_build_test_publish
-    dependsOn: set_image_tag
+    dependsOn:
+      - set_image_tag
+      - secrets_scan
     displayName: Build, run integration test and publish
     timeoutInMinutes: 60
     pool:
