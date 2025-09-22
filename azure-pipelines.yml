@@ -42,15 +42,26 @@ jobs:
 
       - script: |
           set -euo pipefail
-          pip install --disable-pip-version-check --no-cache-dir trufflehog
+          TH_VERSION="3.78.0"
+          echo "Installing TruffleHog v${TH_VERSION}…"
+          curl -sSL "https://github.com/trufflesecurity/trufflehog/releases/download/v${TH_VERSION}/trufflehog_${TH_VERSION}_linux_amd64.tar.gz" \
+            | tar -xz trufflehog
+          sudo mv trufflehog /usr/local/bin/trufflehog
+          trufflehog --version
+          
+          echo "Running TruffleHog (full repo history)…"
+          # Exit codes: 0 = clean, 183 = findings, other != error
           status=0
           trufflehog git file://. --json --no-update > trufflehog-report.json || status=$?
+          
           if [ "$status" -eq 183 ]; then
-            echo "TruffleHog found potential secrets."
+            echo "❌ TruffleHog found potential secrets."
             exit 1
           elif [ "$status" -ne 0 ]; then
-            echo "TruffleHog error (exit $status)."
+            echo "❌ TruffleHog error (exit $status)."
             exit "$status"
+          else
+            echo "✅ TruffleHog: no findings."
           fi
         displayName: "Run TruffleHog (full history)"
 
