@@ -36,3 +36,4 @@ node/*
 
 #env
 .env
+/.eslintcache
