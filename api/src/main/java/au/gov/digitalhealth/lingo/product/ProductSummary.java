@@ -165,6 +165,7 @@ public class ProductSummary implements Serializable {
     }
   }
 
+  @JsonIgnore
   public Set<Node> getNodesConnectedToSubject() {
     Node subject = getSingleSubject();
     return getNodes().stream()
