@@ -55,7 +55,7 @@ import { getExternalRequestorByName } from '../../../utils/helpers/tickets/exter
 interface BulkAddExternalRequestersModalProps {
   open: boolean;
   handleClose: () => void;
-  defaultAdditionalFieldType: AdditionalFieldType;
+  defaultAdditionalFieldType?: AdditionalFieldType;
 }
 
 export default function BulkAddExternalRequestersModal({
@@ -63,11 +63,12 @@ export default function BulkAddExternalRequestersModal({
   handleClose,
   defaultAdditionalFieldType,
 }: BulkAddExternalRequestersModalProps) {
-  const [selectedFilter, setSelectedFilter] = useState<string>(
-    defaultAdditionalFieldType.name,
+  const [selectedFilter, setSelectedFilter] = useState<string | undefined>(
+    defaultAdditionalFieldType?.name,
   );
-  const [selectedFilterType, setSelectedFilterType] =
-    useState<AdditionalFieldTypeEnum>(defaultAdditionalFieldType.type);
+  const [selectedFilterType, setSelectedFilterType] = useState<
+    AdditionalFieldTypeEnum | undefined
+  >(defaultAdditionalFieldType?.type);
   const [selectedExternalRequestersInput, setSelectedExternalRequestersInput] =
     useState<string[]>([]);
   const [selectedExternalRequesters, setSelectedExternalRequesters] = useState<
@@ -83,7 +84,7 @@ export default function BulkAddExternalRequestersModal({
   const { additionalFieldsTypesWithValues } =
     useAllAdditionalFieldsTypesValues();
   const defaultForm: BulkAddExternalRequestorRequest = {
-    additionalFieldTypeName: defaultAdditionalFieldType.name,
+    additionalFieldTypeName: defaultAdditionalFieldType?.name,
     fieldValues: [],
     externalRequestors: [],
   };
@@ -127,8 +128,8 @@ export default function BulkAddExternalRequestersModal({
   const handleClear = () => {
     setSelectedExternalRequestersInput([]);
     setInputValue('');
-    setSelectedFilter(defaultAdditionalFieldType.name);
-    setSelectedFilterType(defaultAdditionalFieldType.type);
+    setSelectedFilter(defaultAdditionalFieldType?.name);
+    setSelectedFilterType(defaultAdditionalFieldType?.type);
     reset(defaultForm);
   };
 
@@ -726,9 +727,10 @@ const convertExternalRequesterInputToArray = (
 
 const readyForUpdate = (
   selectedExternalRequestersInput: string[],
-  selectedFilter: string,
+  selectedFilter: string | undefined,
   inputValue: string,
 ) => {
+  if (selectedFilter === undefined) return false;
   return (
     selectedFilter.trim().length > 0 &&
     selectedExternalRequestersInput.length > 0 &&

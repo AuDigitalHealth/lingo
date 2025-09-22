@@ -16,9 +16,11 @@
 package au.gov.digitalhealth.tickets.controllers;
 
 import au.gov.digitalhealth.tickets.service.TicketServiceImpl;
+import java.util.List;
 import java.util.Set;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@Validated // no AuthoringValidation to allow partial saves with incomplete data
 public class ProductController {
 
   final TicketServiceImpl ticketService;
@@ -40,6 +43,13 @@ public class ProductController {
       consumes = MediaType.APPLICATION_JSON_VALUE)
   public void putProduct(@PathVariable Long ticketId, @RequestBody ProductDto product) {
     ticketService.putProductOnTicket(ticketId, product);
+  }
+
+  @PutMapping(
+      value = "/api/tickets/{ticketId}/products/batch",
+      consumes = MediaType.APPLICATION_JSON_VALUE)
+  public void putProducts(@PathVariable Long ticketId, @RequestBody List<ProductDto> products) {
+    ticketService.putProductsOnTicket(ticketId, products);
   }
 
   @GetMapping(value = "/api/tickets/{ticketId}/products")

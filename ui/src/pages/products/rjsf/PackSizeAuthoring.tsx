@@ -1,0 +1,309 @@
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { withTheme } from '@rjsf/core';
+import { Theme } from '@rjsf/mui';
+import { Alert, Box, Button, Grid, Paper } from '@mui/material';
+import WarningModal from '../../../themes/overrides/WarningModal';
+import useAuthoringStore from '../../../stores/AuthoringStore';
+import { useFetchBulkAuthorPackSizes } from '../../../hooks/api/tickets/useTicketProduct';
+import { findWarningsForBrandPackSizes } from '../../../types/productValidationUtils';
+import { Concept } from '../../../types/concept.ts';
+import type { ValueSetExpansionContains } from 'fhir/r4';
+import { Task } from '../../../types/task.ts';
+import { Ticket } from '../../../types/tickets/ticket.ts';
+import ProductLoader from '../components/ProductLoader.tsx';
+import ProductPreviewManageModal from '../components/ProductPreviewManageModal.tsx';
+import { customizeValidator } from '@rjsf/validator-ajv8';
+import ajvErrors from 'ajv-errors';
+import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
+import PackSizeArrayTemplate from './templates/bulkBrandPack/PackSizeArrayTemplate.tsx';
+import { BrandPackSizeCreationDetails } from '../../../types/product.ts';
+import TitleWidget from './widgets/TitleWidget.tsx';
+import AutoCompleteField from './fields/AutoCompleteField.tsx';
+import { useQuery } from '@tanstack/react-query';
+import MuiGridTemplate from './templates/MuiGridTemplate.tsx';
+import AddPackSizeButton from './fields/bulkBrandPack/AddPackSizeButton.tsx';
+import ExternalIdentifiers from './fields/bulkBrandPack/ExternalIdentifiers.tsx';
+import PackDetails from './fields/bulkBrandPack/PackDetails.tsx';
+import { ConfigService } from '../../../api/ConfigService.ts';
+
+interface FormData {
+  selectedProduct?: string;
+  existingPackSizes?: any[];
+  packSizes: any[];
+  newPackSizeInput: {
+    packSize?: number;
+    nonDefiningProperties: any[];
+  };
+  unitOfMeasure?: any;
+}
+
+const Form = withTheme(Theme);
+
+export interface PackSizeAuthoringV2Props {
+  selectedProduct: Concept | ValueSetExpansionContains | null;
+  task: Task;
+  ticket: Ticket;
+  fieldBindings: any;
+}
+
+const validator = customizeValidator();
+ajvErrors(validator.ajv);
+
+function PackSizeAuthoring({
+  selectedProduct,
+  task,
+  ticket,
+  fieldBindings,
+}: PackSizeAuthoringV2Props) {
+  const {
+    productSaveDetails,
+    previewModalOpen,
+    setPreviewModalOpen,
+    loadingPreview,
+    warningModalOpen,
+    setWarningModalOpen,
+    previewBrandPackSize,
+    handlePreviewToggleModal,
+    setBrandPackSizePreviewDetails,
+  } = useAuthoringStore();
+
+  const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
+    task.branchPath,
+  );
+  const { data: uiSchema, isLoading: isUiSchemaLoading } = useUiSchemaQuery(
+    task.branchPath,
+  );
+
+  const [runningWarningsCheck, setRunningWarningsCheck] = useState(false);
+  const [warnings, setWarnings] = useState<string[]>([]);
+  const [formData, setFormData] = useState<FormData>({
+    packSizes: [],
+    newPackSizeInput: { packSize: undefined, nonDefiningProperties: [] },
+  });
+
+  const { data, isFetching } = useFetchBulkAuthorPackSizes(
+    selectedProduct,
+    task.branchPath,
+  );
+  const formRef = useRef<any>(null);
+
+  const widgets = {
+    OneOfArrayWidget,
+    TitleWidget,
+  };
+
+  const fields = {
+    AddButtonField: AddPackSizeButton,
+    AutoCompleteField,
+    PackDetails,
+    ExternalIdentifiers,
+  };
+
+  const handleClear = useCallback(() => {
+    const newData: FormData = {
+      ...formData,
+      newPackSizeInput: { packSize: undefined, nonDefiningProperties: [] },
+    };
+    setFormData(newData);
+    if (formRef.current) {
+      formRef.current.reset();
+    }
+  }, [formData]);
+
+  useEffect(() => {
+    if (selectedProduct && data) {
+      const newData: FormData = {
+        selectedProduct: selectedProduct.pt?.term || '',
+        existingPackSizes: data.packSizes || [],
+        unitOfMeasure: data.unitOfMeasure,
+        packSizes: [],
+        newPackSizeInput: { packSize: undefined, nonDefiningProperties: [] },
+      };
+      console.log('Initial formData:', newData);
+      setFormData(newData);
+    }
+  }, [selectedProduct, data]);
+
+  const onSubmit = async (submittedFormData: FormData) => {
+    setFormData(submittedFormData);
+    setBrandPackSizePreviewDetails(undefined);
+    const packSizeDetails: BrandPackSizeCreationDetails = {
+      type: 'brand-pack-size',
+      productId: selectedProduct?.id,
+      packSizes: {
+        productId: selectedProduct?.id,
+        unitOfMeasure: data?.unitOfMeasure,
+        packSizes: submittedFormData.packSizes,
+      },
+      nonDefiningProperties: [],
+    };
+    setBrandPackSizePreviewDetails(packSizeDetails);
+    setRunningWarningsCheck(true);
+
+    try {
+      const warnings = await findWarningsForBrandPackSizes(
+        packSizeDetails,
+        task.branchPath,
+        fieldBindings,
+      );
+      if (warnings.length > 0) {
+        setWarnings(warnings);
+        setPreviewModalOpen(false);
+        setWarningModalOpen(true);
+      } else {
+        previewBrandPackSize(
+          packSizeDetails,
+          ticket,
+          task.branchPath,
+          null,
+          ticket.id,
+        );
+        setPreviewModalOpen(true);
+      }
+    } catch (error) {
+      console.error('Error during submission:', error);
+      setWarnings(['An error occurred while processing your request.']);
+      setWarningModalOpen(true);
+    } finally {
+      setRunningWarningsCheck(false);
+    }
+  };
+
+  const handlePreviewClick = () => {
+    if (formRef.current && formData) {
+      onSubmit(formData);
+    }
+  };
+
+  const formContext = {
+    formData,
+    uiSchema,
+    onFormDataChange: (newFormData: FormData) => {
+      console.log('Form data changed:', newFormData);
+      setFormData(newFormData);
+    },
+    unitOfMeasure: data?.unitOfMeasure,
+    handleClear,
+    validator,
+  };
+
+  if (isFetching)
+    return (
+      <ProductLoader
+        message={`Loading Product details for ${selectedProduct?.pt?.term}`}
+      />
+    );
+  if (loadingPreview)
+    return (
+      <ProductLoader
+        message={`Loading Product Preview for ${selectedProduct?.pt?.term}`}
+      />
+    );
+  if (runningWarningsCheck)
+    return <ProductLoader message={`Running validation before Preview`} />;
+
+  if (!selectedProduct || !data) {
+    return (
+      <Alert severity="info">
+        Search and select a product to create new pack size(s). Results are
+        limited to single-component products, as only these are eligible.
+      </Alert>
+    );
+  }
+
+  return (
+    <Box sx={{ width: '100%' }}>
+      <Grid container>
+        <WarningModal
+          open={warningModalOpen}
+          content={warnings.join('\n')}
+          handleClose={() => setWarningModalOpen(false)}
+          action="Proceed"
+          handleAction={() =>
+            previewBrandPackSize(
+              formData as any,
+              ticket,
+              task.branchPath,
+              null,
+              ticket.id,
+            )
+          }
+        />
+        <ProductPreviewManageModal
+          productType="medication"
+          productCreationDetails={productSaveDetails}
+          handleClose={handlePreviewToggleModal}
+          open={previewModalOpen}
+          branch={task.branchPath}
+          ticket={ticket}
+        />
+        <Grid item xs={12}>
+          <Paper>
+            <Box m={1} p={1}>
+              <Alert severity="info" sx={{ mb: 1 }}>
+                Enter one or more new pack sizes for the selected product.
+              </Alert>
+              <Form
+                ref={formRef}
+                schema={schema}
+                uiSchema={uiSchema}
+                formData={formData}
+                onChange={({ formData: newFormData }) =>
+                  setFormData(newFormData as FormData)
+                }
+                onSubmit={({ formData }) => onSubmit(formData)}
+                widgets={widgets}
+                fields={fields}
+                templates={{
+                  ArrayFieldTemplate: PackSizeArrayTemplate,
+                  ObjectFieldTemplate: MuiGridTemplate,
+                }}
+                validator={validator}
+                formContext={formContext}
+              >
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    gap: 1,
+                    mt: 1,
+                  }}
+                >
+                  <Button
+                    onClick={handlePreviewClick}
+                    variant="contained"
+                    color="primary"
+                    size="small"
+                    disabled={
+                      !formData.packSizes || formData.packSizes.length === 0
+                    }
+                  >
+                    Preview
+                  </Button>
+                </Box>
+              </Form>
+            </Box>
+          </Paper>
+        </Grid>
+      </Grid>
+    </Box>
+  );
+}
+
+export const useSchemaQuery = (branchPath: string) => {
+  return useQuery({
+    queryKey: ['bulk-pack-schema', branchPath],
+    queryFn: () => ConfigService.fetchBulkPackSchemaData(branchPath),
+    enabled: !!branchPath,
+  });
+};
+
+export const useUiSchemaQuery = (branchPath: string) => {
+  return useQuery({
+    queryKey: ['bulk-pack-uiSchema', branchPath],
+    queryFn: () => ConfigService.fetchBulkPackUiSchemaData(branchPath),
+    enabled: !!branchPath,
+  });
+};
+
+export default PackSizeAuthoring;

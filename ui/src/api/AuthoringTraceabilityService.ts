@@ -1,0 +1,38 @@
+///
+/// Copyright 2024 Australian Digital Health Agency ABN 84 425 496 912.
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///   http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+
+import { api } from './api';
+import { Activity } from '../types/ConceptReview';
+
+const AuthoringTraceabilityServices = {
+  // TODO more useful way to handle errors? retry? something about tasks service being down etc.
+
+  handleErrors: () => {
+    throw new Error('invalid task response');
+  },
+
+  async getTaskActivities(taskKey: string | undefined): Promise<Activity[]> {
+    const response = await api.get(
+      `/authoring-traceability-service/activities?onBranch=${taskKey}`,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    return response.data.content as Activity[];
+  },
+};
+
+export default AuthoringTraceabilityServices;

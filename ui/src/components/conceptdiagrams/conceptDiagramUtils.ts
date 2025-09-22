@@ -21,9 +21,14 @@ import {
   Concept,
   NewConceptDetails,
   SnowstormRelationship,
+  SnowstormRelationshipNewOrRemoved,
 } from '../../types/concept';
 import { Layer } from 'konva/lib/Layer';
 import { RefObject } from 'react';
+import {
+  newConceptBorderColor,
+  removedConceptBorderColor,
+} from '../../pages/products/components/style/colors';
 
 export function drawSctBox(
   layer: Layer,
@@ -32,7 +37,17 @@ export function drawSctBox(
   label: string,
   sctid: string | number,
   cssClass: string,
+  relationship?: AxiomRelationshipNewConcept,
 ) {
+  let border = undefined;
+  let newOrRemoved = undefined;
+  if (relationship?.newOrRemoved) newOrRemoved = relationship.newOrRemoved;
+  if (relationship?.newOrRemoved === SnowstormRelationshipNewOrRemoved.NEW)
+    border = newConceptBorderColor;
+  if (relationship?.newOrRemoved === SnowstormRelationshipNewOrRemoved.REMOVED)
+    border = removedConceptBorderColor;
+  let customStroke = undefined;
+  if (border !== undefined) customStroke = 4;
   // x,y coordinates of the top-left corner
   // testText is used to create a vector of the maximum size of the sctId || the label, to see how big the box has to be
 
@@ -95,8 +110,8 @@ export function drawSctBox(
       width: textWidth + widthPadding,
       height: textHeight + heightpadding,
       fill: '#99ccff',
-      stroke: '#333',
-      strokeWidth: 2,
+      stroke: border !== undefined ? border : '#333',
+      strokeWidth: customStroke || 2,
     });
   } else if (cssClass === 'concrete-domain') {
     if (textWidth + concreteWidthPadding + 4 > 65) {
@@ -108,8 +123,8 @@ export function drawSctBox(
       width,
       height: textHeight + concreteHeightPadding + 4,
       fill: '#BAEEC8',
-      stroke: '#333',
-      strokeWidth: 2,
+      stroke: border !== undefined ? border : '#333',
+      strokeWidth: customStroke || 2,
     });
   } else if (cssClass === 'sct-defined-concept') {
     rect = new Konva.Rect({
@@ -118,15 +133,15 @@ export function drawSctBox(
       width: textWidth + widthPadding + 4,
       height: textHeight + heightpadding + 4,
       fill: 'white',
-      stroke: '#333',
-      strokeWidth: 1,
+      stroke: border !== undefined ? border : '#333',
+      strokeWidth: customStroke || 2,
     });
     innerRect = new Konva.Rect({
       width: textWidth + widthPadding,
       height: textHeight + heightpadding,
       fill: '#ccccff',
-      stroke: '#333',
-      strokeWidth: 1,
+      stroke: border !== undefined ? border : '#333',
+      strokeWidth: customStroke || 2,
     });
   } else if (cssClass === 'sct-attribute') {
     rect = new Konva.Rect({
@@ -136,32 +151,43 @@ export function drawSctBox(
       width: textWidth + widthPadding + 4,
       height: textHeight + heightpadding + 4,
       fill: 'white',
-      stroke: '#333',
-      strokeWidth: 1,
+      stroke: border !== undefined ? border : '#333',
+      strokeWidth: customStroke || 2,
     });
     innerRect = new Konva.Rect({
       width: textWidth + widthPadding,
       height: textHeight + heightpadding,
       cornerRadius: 18,
       fill: '#ffffcc',
-      stroke: '#333',
-      strokeWidth: 1,
+      stroke: border !== undefined ? border : '#333',
+      strokeWidth: customStroke || 2,
+    });
+  } else if (cssClass === 'sct-additional-attribute') {
+    rect = new Konva.Rect({
+      x: -2,
+      y: -2,
+      cornerRadius: 18,
+      width: textWidth + widthPadding + 4,
+      height: textHeight + heightpadding + 4,
+      fill: '#cccc99',
+      stroke: border !== undefined ? border : '#333',
+      strokeWidth: customStroke || 2,
     });
   } else if (cssClass === 'sct-slot') {
     rect = new Konva.Rect({
       width: textWidth + widthPadding,
       height: textHeight + heightpadding,
       fill: '#99ccff',
-      stroke: '#333',
-      strokeWidth: 2,
+      stroke: border !== undefined ? border : '#333',
+      strokeWidth: customStroke || 2,
     });
   } else {
     rect = new Konva.Rect({
       width: textWidth + widthPadding,
       height: textHeight + heightpadding,
       fill: 'white',
-      stroke: 'black',
-      strokeWidth: 1,
+      stroke: border !== undefined ? border : 'black',
+      strokeWidth: customStroke || 2,
     });
   }
 
@@ -180,6 +206,11 @@ export function drawSctBox(
       fontFamily: fontFamily,
       fontSize: 12,
       fill: 'black',
+      textDecoration:
+        newOrRemoved &&
+        newOrRemoved === SnowstormRelationshipNewOrRemoved.REMOVED
+          ? 'line-through'
+          : '',
     });
   } else if (internalSctid && label) {
     permIdText = new Konva.Text({
@@ -197,6 +228,11 @@ export function drawSctBox(
       fontFamily: fontFamily,
       fontSize: 12,
       fill: 'black',
+      textDecoration:
+        newOrRemoved &&
+        newOrRemoved === SnowstormRelationshipNewOrRemoved.REMOVED
+          ? 'line-through'
+          : '',
     });
   } else if (label) {
     permIdText = new Konva.Text({
@@ -775,6 +811,7 @@ export function drawNewConceptDiagram(
             : (relationship.target.fsn?.term as string),
           relationship.target?.conceptId as string,
           sctClass,
+          relationship,
         );
 
         connectElements(
@@ -805,7 +842,10 @@ export function drawNewConceptDiagram(
             y,
             relationship.type?.fsn?.term as string,
             relationship.type?.conceptId as string,
-            'sct-attribute',
+            relationship.characteristicType === 'ADDITIONAL_RELATIONSHIP'
+              ? 'sct-additional-attribute'
+              : 'sct-attribute',
+            relationship,
           );
           connectElements(layer, internalCircle2, rectAttr, 'center', 'left');
           const rectTarget = drawSctBox(
@@ -819,6 +859,7 @@ export function drawNewConceptDiagram(
               : (relationship.target.fsn?.term as string),
             relationship.target?.conceptId as string,
             sctClass,
+            relationship,
           );
           connectElements(layer, rectAttr, rectTarget, 'right', 'left');
 
@@ -868,7 +909,10 @@ export function drawNewConceptDiagram(
             y,
             relationship.type.fsn?.term as string,
             relationship.type?.conceptId as string,
-            'sct-attribute',
+            relationship.characteristicType === 'ADDITIONAL_RELATIONSHIP'
+              ? 'sct-additional-attribute'
+              : 'sct-attribute',
+            relationship,
           );
           connectElements(layer, conjunctionNode, rectRole, 'center', 'left');
           const rectRole2 = drawSctBox(
@@ -882,6 +926,7 @@ export function drawNewConceptDiagram(
               : (relationship.target.fsn?.term as string),
             relationship.target?.conceptId as string,
             sctClass,
+            relationship,
           );
           connectElements(layer, rectRole, rectRole2, 'right', 'left');
           // move y down, so the next attribute is drawn in the correct position
@@ -967,8 +1012,9 @@ export function drawConceptDiagram(
     if (concept.relationships) {
       concept?.relationships.forEach(field => {
         if (
-          field.active === true &&
-          field.characteristicType === 'INFERRED_RELATIONSHIP'
+          field.active &&
+          (field.characteristicType === 'INFERRED_RELATIONSHIP' ||
+            field.characteristicType === 'ADDITIONAL_RELATIONSHIP')
         ) {
           if (!field.target) {
             field.target = {};
@@ -1092,6 +1138,7 @@ export function drawConceptDiagram(
         title as string,
         relationship.target.conceptId as string,
         sctClass,
+        relationship,
       );
 
       connectElements(
@@ -1126,7 +1173,10 @@ export function drawConceptDiagram(
             y,
             relationship.type.fsn?.term as string,
             relationship.type.conceptId as string,
-            'sct-attribute',
+            relationship.characteristicType === 'ADDITIONAL_RELATIONSHIP'
+              ? 'sct-additional-attribute'
+              : 'sct-attribute',
+            relationship,
           );
           connectElements(layer, circle2, rectAttr, 'center', 'left');
           x = x + rectAttr.getClientRect().width + 25;
@@ -1153,6 +1203,7 @@ export function drawConceptDiagram(
               : (relationship.target.fsn?.term as string),
             relationship.target.conceptId as string,
             sctClass,
+            relationship,
           );
           x = x + 100;
           connectElements(layer, circle3, rectTarget, 'right', 'left');
@@ -1177,7 +1228,10 @@ export function drawConceptDiagram(
             y,
             relationship.type.fsn?.term as string,
             relationship.type.conceptId as string,
-            'sct-attribute',
+            relationship.characteristicType === 'ADDITIONAL_RELATIONSHIP'
+              ? 'sct-additional-attribute'
+              : 'sct-attribute',
+            relationship,
           );
           connectElements(layer, circle2, rectAttr, 'center', 'left');
           rectTarget = drawSctBox(
@@ -1191,6 +1245,7 @@ export function drawConceptDiagram(
               : (relationship.target.fsn?.term as string),
             relationship.target.conceptId as string,
             sctClass,
+            relationship,
           );
           connectElements(layer, rectAttr, rectTarget, 'right', 'left');
           y = y + rectTarget.getClientRect().height + 25;
@@ -1236,7 +1291,10 @@ export function drawConceptDiagram(
             y,
             relationship.type.fsn?.term as string,
             relationship.type.conceptId as string,
-            'sct-attribute',
+            relationship.characteristicType === 'ADDITIONAL_RELATIONSHIP'
+              ? 'sct-additional-attribute'
+              : 'sct-attribute',
+            relationship,
           );
           connectElements(layer, conjunctionNode, rectRole, 'center', 'left');
           const rectRole2 = drawSctBox(
@@ -1250,6 +1308,7 @@ export function drawConceptDiagram(
               : (relationship.target.fsn?.term as string),
             relationship.target.conceptId as string,
             sctClass,
+            relationship,
           );
           connectElements(layer, rectRole, rectRole2, 'right', 'left');
           y = y + rectRole2.getClientRect().height + 25;
@@ -1338,6 +1397,7 @@ export function drawConceptDiagram(
             : (relationship.target.fsn?.term as string),
           relationship.target?.conceptId as string,
           sctClass,
+          relationship,
         );
 
         connectElements(
@@ -1368,7 +1428,10 @@ export function drawConceptDiagram(
             y,
             relationship.type.fsn?.term as string,
             relationship.type?.conceptId as string,
-            'sct-attribute',
+            relationship.characteristicType === 'ADDITIONAL_RELATIONSHIP'
+              ? 'sct-additional-attribute'
+              : 'sct-attribute',
+            relationship,
           );
           connectElements(layer, internalCircle2, rectAttr, 'center', 'left');
           const rectTarget = drawSctBox(
@@ -1382,6 +1445,7 @@ export function drawConceptDiagram(
               : (relationship.target.fsn?.term as string),
             relationship.target?.conceptId as string,
             sctClass,
+            relationship,
           );
           connectElements(layer, rectAttr, rectTarget, 'right', 'left');
 
@@ -1431,7 +1495,10 @@ export function drawConceptDiagram(
             y,
             relationship.type.fsn?.term as string,
             relationship.type?.conceptId as string,
-            'sct-attribute',
+            relationship.characteristicType === 'ADDITIONAL_RELATIONSHIP'
+              ? 'sct-additional-attribute'
+              : 'sct-attribute',
+            relationship,
           );
           connectElements(layer, conjunctionNode, rectRole, 'center', 'left');
           const rectRole2 = drawSctBox(
@@ -1445,6 +1512,7 @@ export function drawConceptDiagram(
               : (relationship.target.fsn?.term as string),
             relationship.target?.conceptId as string,
             sctClass,
+            relationship,
           );
           connectElements(layer, rectRole, rectRole2, 'right', 'left');
           // move y down, so the next attribute is drawn in the correct position

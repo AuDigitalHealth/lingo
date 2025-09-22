@@ -22,7 +22,7 @@ public class SnomedIdentifierUtil {
 
   private SnomedIdentifierUtil() {}
 
-  public static boolean isValid(String sctId, PartionIdentifier partitionIdentifier) {
+  public static boolean isValid(String sctId, PartitionIdentifier partitionIdentifier) {
     int partitionNumber = Integer.parseInt("" + sctId.charAt(sctId.length() - 2));
     if (partitionNumber != partitionIdentifier.ordinal()) {
       return false;

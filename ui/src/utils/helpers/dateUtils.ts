@@ -22,15 +22,15 @@ export function timeSince(dateString: string) {
   let interval = seconds / 31536000;
 
   if (interval > 1) {
-    return date.toLocaleDateString('en-AU');
+    return date.toLocaleDateString();
   }
   interval = seconds / 2592000;
   if (interval > 1) {
-    return date.toLocaleDateString('en-AU');
+    return date.toLocaleDateString();
   }
   interval = seconds / 86400;
   if (interval > 1) {
-    return date.toLocaleDateString('en-AU');
+    return date.toLocaleDateString();
   }
   interval = seconds / 3600;
   if (interval > 1) {

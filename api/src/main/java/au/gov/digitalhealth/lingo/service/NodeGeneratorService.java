@@ -15,78 +15,361 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
-import static au.gov.digitalhealth.lingo.service.ProductSummaryService.CTPP_LABEL;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.*;
-import static au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils.getExternalIdentifierReferenceSet;
+import static au.gov.digitalhealth.lingo.util.NmpcConstants.HAS_OTHER_IDENTIFYING_INFORMATION_NMPC;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.DEFINED;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.PRIMITIVE;
 
 import au.csiro.snowstorm_client.model.SnowstormAxiom;
 import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.csiro.snowstorm_client.model.SnowstormItemsPageReferenceSetMember;
+import au.csiro.snowstorm_client.model.SnowstormItemsPageRelationship;
+import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import au.gov.digitalhealth.lingo.configuration.model.ExternalIdentifierDefinition;
+import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
+import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
+import au.gov.digitalhealth.lingo.configuration.model.Models;
+import au.gov.digitalhealth.lingo.configuration.model.NonDefiningPropertyDefinition;
+import au.gov.digitalhealth.lingo.configuration.model.ReferenceSetDefinition;
+import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.exception.SingleConceptExpectedProblem;
 import au.gov.digitalhealth.lingo.product.NewConceptDetails;
 import au.gov.digitalhealth.lingo.product.Node;
+import au.gov.digitalhealth.lingo.product.OriginalNode;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
+import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
+import au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet;
+import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
+import au.gov.digitalhealth.lingo.util.BranchPatternMatcher;
 import au.gov.digitalhealth.lingo.util.EclBuilder;
+import au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils;
+import au.gov.digitalhealth.lingo.util.NonDefiningPropertyUtils;
+import au.gov.digitalhealth.lingo.util.ReferenceSetUtils;
+import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Service
 @Log
 @EnableAsync
 public class NodeGeneratorService {
   SnowstormClient snowstormClient;
+  Models models;
+  FhirClient fhirClient;
+  NodeGeneratorService self;
 
   @Value("${snomio.node.concept.search.limit:50}")
   private int limit;
 
   @Autowired
-  public NodeGeneratorService(SnowstormClient snowstormClient) {
+  public NodeGeneratorService(
+      SnowstormClient snowstormClient,
+      Models models,
+      FhirClient fhirClient,
+      @Lazy NodeGeneratorService nodeGeneratorService) {
     this.snowstormClient = snowstormClient;
+    this.models = models;
+    this.fhirClient = fhirClient;
+    this.self = nodeGeneratorService;
   }
 
   @Async
-  public CompletableFuture<Node> lookUpNode(String branch, String productId, String label) {
+  public CompletableFuture<Node> lookUpNode(
+      String branch, SnowstormConceptMini concept, ModelLevel modelLevel) {
     Node node = new Node();
-    node.setLabel(label);
-    SnowstormConceptMini concept = snowstormClient.getConcept(branch, productId);
+    if (modelLevel != null) {
+      node.setLabel(modelLevel.getDisplayLabel());
+      node.setModelLevel(modelLevel.getModelLevelType());
+      node.setDisplayName(modelLevel.getName());
+    }
     node.setConcept(concept);
+
+    populateNodeProperties(branch, modelLevel, node, null);
+
     return CompletableFuture.completedFuture(node);
   }
 
   @Async
   public CompletableFuture<Node> lookUpNode(
-      String branch, Long productId, String ecl, String label) {
+      String branch,
+      SnowstormConceptMini concept,
+      ModelLevel modelLevel,
+      Collection<NonDefiningBase> newProperties) {
     Node node = new Node();
-    node.setLabel(label);
-    SnowstormConceptMini concept = snowstormClient.getConceptFromEcl(branch, ecl, productId);
+    if (modelLevel != null) {
+      node.setLabel(modelLevel.getDisplayLabel());
+      node.setModelLevel(modelLevel.getModelLevelType());
+      node.setDisplayName(modelLevel.getName());
+    }
     node.setConcept(concept);
+
+    populateNodeProperties(branch, modelLevel, node, newProperties);
+
     return CompletableFuture.completedFuture(node);
   }
 
   @Async
+  public CompletableFuture<Node> lookUpNode(
+      String branch,
+      Long productId,
+      ModelLevel modelLevel,
+      Collection<NonDefiningBase> newProperties) {
+    Node node = new Node();
+    if (modelLevel != null) {
+      node.setLabel(modelLevel.getDisplayLabel());
+      node.setModelLevel(modelLevel.getModelLevelType());
+      node.setDisplayName(modelLevel.getName());
+    }
+    SnowstormConceptMini concept;
+    if (modelLevel != null
+        && modelLevel.getProductModelEcl() != null
+        && !modelLevel.getProductModelEcl().isBlank()) {
+      try {
+        concept =
+            snowstormClient.getConceptFromEcl(
+                branch,
+                modelLevel.getProductModelEcl(),
+                productId,
+                models.getModelConfiguration(branch).isExecuteEclAsStated());
+      } catch (SingleConceptExpectedProblem e) {
+        throw new LingoProblem(
+            "Unable to load "
+                + productId
+                + " with ECL "
+                + modelLevel.getProductModelEcl()
+                + " of type "
+                + modelLevel.getName(),
+            e);
+      }
+    } else {
+      concept = snowstormClient.getConcept(branch, productId.toString());
+    }
+    node.setConcept(concept);
+
+    populateNodeProperties(branch, modelLevel, node, newProperties);
+
+    return CompletableFuture.completedFuture(node);
+  }
+
+  private void populateNodeProperties(
+      String branch, ModelLevel modelLevel, Node node, Collection<NonDefiningBase> newProperties) {
+    ModelConfiguration configuration = models.getModelConfiguration(branch);
+
+    Flux<Void> historicalAssociationFlux =
+        snowstormClient
+            .getHistoricalAssociations(branch, node.getConceptId())
+            .doOnNext(node::setHistoricalAssociations)
+            .then()
+            .flux();
+
+    Flux<Void> refsetMembersFlux = addRefsetAndMapping(branch, modelLevel, configuration, node);
+
+    Flux<Void> nonDefiningPropertiesFlux =
+        addNonDefiningProperties(branch, modelLevel, configuration, node);
+
+    Flux<SnowstormConcept> axiomsFlux = addAxioms(branch, node);
+
+    CompletableFuture<Void> originalNode = null;
+    if (newProperties == null
+        && node.getConcept() != null
+        && BranchPatternMatcher.isTaskPattern(branch)
+        && !snowstormClient
+            .conceptIdsThatExist(
+                BranchPatternMatcher.getProjectFromTask(branch), Set.of(node.getConceptId()))
+            .isEmpty()) {
+      originalNode =
+          self.lookUpNode(
+                  BranchPatternMatcher.getProjectFromTask(branch), node.getConcept(), modelLevel)
+              .thenAccept(original -> node.setOriginalNode(new OriginalNode(original, null, true)));
+    }
+
+    // Create a Mono that completes when both Flux operations complete
+    Mono.when(refsetMembersFlux, nonDefiningPropertiesFlux, axiomsFlux, historicalAssociationFlux)
+        .doOnError(
+            e ->
+                log.log(
+                    Level.WARNING,
+                    "Error populating node properties for concept "
+                        + node.getConceptId()
+                        + ": "
+                        + e.getMessage(),
+                    e))
+        .block();
+
+    if (originalNode != null) {
+      try {
+        originalNode.get();
+      } catch (InterruptedException | ExecutionException e) {
+        Thread.currentThread().interrupt();
+        throw new LingoProblem(
+            "Failed loading original node for "
+                + node.getConceptId()
+                + " from "
+                + BranchPatternMatcher.getProjectFromTask(branch),
+            e);
+      }
+    } else if (newProperties != null) {
+      node.setOriginalNode(new OriginalNode(node.cloneNode(), null, true));
+      Map<String, NonDefiningPropertyDefinition> nonDefiningPropertiesMap =
+          configuration.getNonDefiningPropertiesBySchemeForModelLevel(modelLevel);
+      Map<String, ReferenceSetDefinition> referenceSetsMap =
+          configuration.getReferenceSetsBySchemeForModelLevel(modelLevel);
+      Map<String, ExternalIdentifierDefinition> externalIdentifiersMap =
+          configuration.getMappingsBySchemeForModelLevel(modelLevel);
+
+      node.getNonDefiningProperties().clear();
+
+      for (NonDefiningBase newProperty : newProperties) {
+        if (newProperty instanceof NonDefiningProperty p
+            && nonDefiningPropertiesMap.containsKey(p.getIdentifierScheme())) {
+          p.updateFromDefinition(nonDefiningPropertiesMap.get(p.getIdentifierScheme()));
+          node.getNonDefiningProperties().add(p);
+        } else if (newProperty instanceof ReferenceSet r
+            && referenceSetsMap.containsKey(r.getIdentifierScheme())) {
+          r.updateFromDefinition(referenceSetsMap.get(r.getIdentifierScheme()));
+          node.getNonDefiningProperties().add(r);
+        } else if (newProperty instanceof ExternalIdentifier e
+            && externalIdentifiersMap.containsKey(e.getIdentifierScheme())) {
+          e.updateFromDefinition(externalIdentifiersMap.get(e.getIdentifierScheme()), fhirClient);
+          node.getNonDefiningProperties().add(e);
+        }
+      }
+
+      node.getNonDefiningProperties().add(modelLevel.createMarkerRefset());
+    }
+  }
+
+  private Flux<SnowstormConcept> addAxioms(String branch, Node node) {
+    if (node.getConcept() != null) {
+      return snowstormClient
+          .getBrowserConcepts(branch, Set.of(node.getConceptId()))
+          .doOnNext(c -> node.setAxioms(c.getClassAxioms()));
+    }
+    return Flux.empty();
+  }
+
+  private Flux<Void> addNonDefiningProperties(
+      String branch, ModelLevel modelLevel, ModelConfiguration modelConfiguration, Node node) {
+
+    Map<String, NonDefiningPropertyDefinition> nonDefiningPropertiesMap =
+        modelLevel != null
+            ? modelConfiguration.getNonDefiningPropertiesByIdentifierForModelLevel(modelLevel)
+            : Map.of();
+
+    return snowstormClient
+        .getRelationships(branch, node.getConceptId())
+        .map(SnowstormItemsPageRelationship::getItems)
+        .doOnNext(rels -> node.setRelationships(rels))
+        .flatMapMany(Flux::fromIterable)
+        .filter(SnowstormRelationship::getActive)
+        .flatMap(
+            relationship -> {
+              if (nonDefiningPropertiesMap.containsKey(relationship.getTypeId())) {
+                node.getNonDefiningProperties()
+                    .add(
+                        new au.gov.digitalhealth.lingo.product.details.properties
+                            .NonDefiningProperty(
+                            relationship, nonDefiningPropertiesMap.get(relationship.getTypeId())));
+              }
+              return Mono.empty();
+            })
+        .then()
+        .flux();
+  }
+
+  private Flux<Void> addRefsetAndMapping(
+      String branch, ModelLevel modelLevel, ModelConfiguration modelConfiguration, Node node) {
+
+    if (modelLevel == null) {
+      return Flux.empty();
+    }
+
+    final Map<String, ReferenceSetDefinition> refsetMap =
+        modelConfiguration.getReferenceSetsByIdentifierForModelLevel(modelLevel);
+    final Map<String, ExternalIdentifierDefinition> mappingMap =
+        modelConfiguration.getMappingsByIdentifierForModelLevel(modelLevel);
+    // get reference set members for the concept
+
+    return snowstormClient
+        .getRefsetMembers(branch, Set.of(node.getConceptId()), Set.of(), 0, 1000)
+        .map(SnowstormItemsPageReferenceSetMember::getItems)
+        .flatMapMany(Flux::fromIterable)
+        .filter(SnowstormReferenceSetMember::getActive)
+        .flatMap(
+            member -> {
+              if (refsetMap.containsKey(member.getRefsetId())) {
+                return Mono.just(
+                    node.getNonDefiningProperties()
+                        .add(
+                            new au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet(
+                                member, refsetMap.get(member.getRefsetId()))));
+              } else if (mappingMap.containsKey(member.getRefsetId())) {
+                return au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier
+                    .create(
+                        branch,
+                        member,
+                        mappingMap.get(member.getRefsetId()),
+                        fhirClient,
+                        snowstormClient)
+                    .doOnNext(p -> node.getNonDefiningProperties().add(p))
+                    .then(Mono.empty());
+              } else if (member.getRefsetId().equals(modelLevel.getReferenceSetIdentifier())) {
+                return Mono.just(
+                    node.getNonDefiningProperties().add(modelLevel.createMarkerRefset()));
+              } else {
+                return Mono.empty();
+              }
+            })
+        .then()
+        .flux();
+  }
+
+  @Async
   public CompletableFuture<List<Node>> lookUpNodes(
-      String branch, String productId, String ecl, String label) {
+      String branch,
+      Long productId,
+      ModelLevel modelLevel,
+      Collection<NonDefiningBase> newProperties) {
+
     return CompletableFuture.completedFuture(
-        snowstormClient.getConceptsFromEcl(branch, ecl, Long.parseLong(productId), 0, 100).stream()
+        snowstormClient
+            .getConceptsFromEcl(
+                branch,
+                modelLevel.getProductModelEcl(),
+                productId,
+                0,
+                100,
+                models.getModelConfiguration(branch).isExecuteEclAsStated())
+            .stream()
             .map(
                 concept -> {
                   Node node = new Node();
-                  node.setLabel(label);
+                  node.setLabel(modelLevel.getDisplayLabel());
+                  node.setModelLevel(modelLevel.getModelLevelType());
+                  node.setDisplayName(modelLevel.getName());
                   node.setConcept(concept);
+                  populateNodeProperties(branch, modelLevel, node, newProperties);
                   return node;
                 })
             .toList());
@@ -98,26 +381,32 @@ public class NodeGeneratorService {
       AtomicCache atomicCache,
       Set<SnowstormRelationship> relationships,
       Set<String> refsets,
-      String label,
-      Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
+      ModelLevel modelLevel,
       String semanticTag,
+      Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
+      Set<SnowstormRelationship> nonDefiningProperties,
       List<String> selectedConceptIdentifiers,
+      Collection<NonDefiningBase> newProperties,
       boolean suppressIsa,
       boolean suppressNegativeStatements,
-      boolean enforceRefsets) {
+      boolean enforceRefsets,
+      boolean definedIfNoMatch) {
     return CompletableFuture.completedFuture(
         generateNode(
             branch,
             atomicCache,
             relationships,
             refsets,
-            label,
-            referenceSetMembers,
+            modelLevel,
             semanticTag,
+            referenceSetMembers,
+            nonDefiningProperties,
             selectedConceptIdentifiers,
+            newProperties,
             suppressIsa,
             suppressNegativeStatements,
-            enforceRefsets));
+            enforceRefsets,
+            definedIfNoMatch));
   }
 
   public Node generateNode(
@@ -125,17 +414,25 @@ public class NodeGeneratorService {
       AtomicCache atomicCache,
       Set<SnowstormRelationship> relationships,
       Set<String> refsets,
-      String label,
-      Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
+      ModelLevel modelLevel,
       String semanticTag,
+      Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
+      Set<SnowstormRelationship> nonDefiningProperties,
       List<String> selectedConceptIdentifiers,
+      Collection<NonDefiningBase> newProperties,
       boolean suppressIsa,
       boolean suppressNegativeStatements,
-      boolean enforceRefsets) {
+      boolean enforceRefsets,
+      boolean definedIfNoMatch) {
 
-    boolean selectedConcept = false; // indicates if a selected concept has been detected
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+
     Node node = new Node();
-    node.setLabel(label);
+    node.setLabel(modelLevel.getDisplayLabel());
+    node.setDisplayName(modelLevel.getName());
+    node.setModelLevel(modelLevel.getModelLevelType());
+
+    String label = modelLevel.getDisplayLabel();
 
     // if the relationships are empty or a relationship to a new concept (-ve id)
     // then don't bother looking
@@ -147,14 +444,16 @@ public class NodeGeneratorService {
                         && r.getDestinationId() != null
                         && Long.parseLong(r.getDestinationId()) < 0)) {
       String ecl =
-          EclBuilder.build(relationships, refsets, suppressIsa, suppressNegativeStatements);
+          EclBuilder.build(
+              relationships, refsets, suppressIsa, suppressNegativeStatements, modelConfiguration);
 
       if (log.isLoggable(Level.FINE)) {
         log.fine("ECL for " + label + " " + ecl);
       }
 
       Collection<SnowstormConceptMini> matchingConcepts =
-          snowstormClient.getConceptsFromEcl(branch, ecl, limit);
+          snowstormClient.getConceptsFromEcl(
+              branch, ecl, limit, modelConfiguration.isExecuteEclAsStated());
 
       matchingConcepts = filterByOii(branch, relationships, matchingConcepts);
 
@@ -165,29 +464,39 @@ public class NodeGeneratorService {
                 + " ECL "
                 + ecl
                 + " trying again without refset constraint");
-        ecl = EclBuilder.build(relationships, Set.of(), suppressIsa, suppressNegativeStatements);
+        ecl =
+            EclBuilder.build(
+                relationships,
+                Set.of(),
+                suppressIsa,
+                suppressNegativeStatements,
+                modelConfiguration);
+
+        if (log.isLoggable(Level.FINE)) {
+          log.fine("ECL for " + label + " " + ecl);
+        }
+
+        matchingConcepts =
+            snowstormClient.getConceptsFromEcl(
+                branch, ecl, limit, modelConfiguration.isExecuteEclAsStated());
+
+        matchingConcepts = filterByOii(branch, relationships, matchingConcepts);
       }
-
-      if (log.isLoggable(Level.FINE)) {
-        log.fine("ECL for " + label + " " + ecl);
-      }
-
-      matchingConcepts = snowstormClient.getConceptsFromEcl(branch, ecl, limit);
-
-      matchingConcepts = filterByOii(branch, relationships, matchingConcepts);
 
       if (matchingConcepts.isEmpty()) {
-        log.warning("No concept found for " + label + " ECL " + ecl);
+        log.info(
+            "No concept found suggesting new concept for "
+                + label
+                + " ECL was "
+                + ecl
+                + " branch "
+                + branch);
       } else if (matchingConcepts.size() == 1
-          && matchingConcepts.iterator().next().getDefinitionStatus().equals("FULLY_DEFINED")) {
+          && matchingConcepts.iterator().next().getDefinitionStatus().equals("FULLY_DEFINED")
+          && definedIfNoMatch) {
         node.setConcept(matchingConcepts.iterator().next());
-        if (node.getLabel().equals(CTPP_LABEL)
-            && referenceSetMembers != null) { // populate external identifiers in response
-
-          node.getExternalIdentifiers()
-              .addAll(getExternalIdentifierReferenceSet(referenceSetMembers));
-        }
-        atomicCache.addFsn(node.getConceptId(), node.getFullySpecifiedName());
+        atomicCache.addFsnAndPt(
+            node.getConceptId(), node.getFullySpecifiedName(), node.getPreferredTerm());
       } else {
         node.setConceptOptions(matchingConcepts);
         Set<SnowstormConceptMini> selectedConcepts =
@@ -203,34 +512,74 @@ public class NodeGeneratorService {
                     + String.join(", ", selectedConceptIdentifiers));
           }
           node.setConcept(selectedConcepts.iterator().next());
-          selectedConcept = true;
+          atomicCache.addFsnAndPt(
+              node.getConceptId(), node.getFullySpecifiedName(), node.getPreferredTerm());
         }
       }
     }
 
     // if there is no single matching concept found, or the user has selected a single concept
     // provide the modelling for a new concept so they can select a new concept as an option.
-    if (node.getConcept() == null || selectedConcept) {
+    if (node.getConcept() == null) {
       node.setLabel(label);
       NewConceptDetails newConceptDetails = new NewConceptDetails(atomicCache.getNextId());
       SnowstormAxiom axiom = new SnowstormAxiom();
       axiom.active(true);
-      axiom.setDefinitionStatusId(
-          node.getConceptOptions().isEmpty() ? DEFINED.getValue() : PRIMITIVE.getValue());
-      axiom.setDefinitionStatus(node.getConceptOptions().isEmpty() ? "FULLY_DEFINED" : "PRIMITIVE");
+      String definitionStatusId;
+      String definitionStatus;
+      if (node.getConceptOptions().isEmpty()) {
+        definitionStatusId = definedIfNoMatch ? DEFINED.getValue() : PRIMITIVE.getValue();
+        definitionStatus = definedIfNoMatch ? "FULLY_DEFINED" : "PRIMITIVE";
+      } else {
+        definitionStatusId = PRIMITIVE.getValue();
+        definitionStatus = "PRIMITIVE";
+      }
+      axiom.setDefinitionStatusId(definitionStatusId);
+      axiom.setDefinitionStatus(definitionStatus);
       axiom.setRelationships(relationships);
-      axiom.setModuleId(SCT_AU_MODULE.getValue());
+      axiom.setModuleId(modelConfiguration.getModuleId());
       axiom.setReleased(false);
       newConceptDetails.setSemanticTag(semanticTag);
       newConceptDetails.getAxioms().add(axiom);
       newConceptDetails.setReferenceSetMembers(referenceSetMembers);
+      newConceptDetails.setNonDefiningProperties(nonDefiningProperties);
       node.setNewConceptDetails(newConceptDetails);
+
+      Set<NonDefiningBase> properties =
+          new HashSet<>(
+              NonDefiningPropertyUtils.getNonDefiningProperties(
+                  nonDefiningProperties,
+                  modelConfiguration.getNonDefiningPropertiesByIdentifierForModelLevel(
+                      modelLevel)));
+      properties.addAll(
+          ReferenceSetUtils.getReferenceSetsFromNewRefsetComponentViewMembers(
+              referenceSetMembers,
+              modelConfiguration.getReferenceSetsByIdentifierForModelLevel(modelLevel),
+              modelLevel));
+      properties.addAll(
+          ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMemberViewComponents(
+              branch,
+              referenceSetMembers,
+              null,
+              new HashSet<>(
+                  modelConfiguration.getMappingsByIdentifierForModelLevel(modelLevel).values()),
+              fhirClient,
+              snowstormClient));
+      node.setNonDefiningProperties(properties);
+
       log.fine("New concept for " + label + " " + newConceptDetails.getConceptId());
     } else {
       log.fine("Concept found for " + label + " " + node.getConceptId());
+
+      populateNodeProperties(branch, modelLevel, node, newProperties);
     }
 
     return node;
+  }
+
+  private static boolean isOiiType(SnowstormRelationship r) {
+    return r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION.getValue())
+        || r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION_NMPC.getValue());
   }
 
   /**
@@ -247,11 +596,10 @@ public class NodeGeneratorService {
       String branch,
       Set<SnowstormRelationship> relationships,
       Collection<SnowstormConceptMini> matchingConcepts) {
-    if (relationships.stream()
-        .anyMatch(r -> r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION.getValue()))) {
+    if (relationships.stream().anyMatch(NodeGeneratorService::isOiiType)) {
       List<String> oii =
           relationships.stream()
-              .filter(r -> r.getTypeId().equals(HAS_OTHER_IDENTIFYING_INFORMATION.getValue()))
+              .filter(NodeGeneratorService::isOiiType)
               .map(r -> r.getConcreteValue().getValue())
               .toList();
 
@@ -260,28 +608,25 @@ public class NodeGeneratorService {
               .map(SnowstormConceptMini::getConceptId)
               .collect(Collectors.toSet());
 
+      List<SnowstormConcept> concepts =
+          snowstormClient.getBrowserConcepts(branch, matchingConceptIds).collectList().block();
       Set<String> idsWithMatchingOii =
-          snowstormClient
-              .getBrowserConcepts(branch, matchingConceptIds)
-              .collectList()
-              .block()
-              .stream()
-              .filter(
-                  c ->
-                      c.getClassAxioms().stream()
-                          .anyMatch(
-                              a ->
-                                  a.getRelationships().stream()
-                                      .anyMatch(
-                                          r ->
-                                              r.getTypeId()
-                                                      .equals(
-                                                          HAS_OTHER_IDENTIFYING_INFORMATION
-                                                              .getValue())
-                                                  && oii.contains(
-                                                      r.getConcreteValue().getValue()))))
-              .map(SnowstormConcept::getConceptId)
-              .collect(Collectors.toSet());
+          concepts == null
+              ? Set.of()
+              : concepts.stream()
+                  .filter(
+                      c ->
+                          SnowstormDtoUtil.getActiveClassAxioms(c).stream()
+                              .anyMatch(
+                                  a ->
+                                      a.getRelationships().stream()
+                                          .anyMatch(
+                                              r ->
+                                                  isOiiType(r)
+                                                      && oii.contains(
+                                                          r.getConcreteValue().getValue()))))
+                  .map(SnowstormConcept::getConceptId)
+                  .collect(Collectors.toSet());
 
       matchingConcepts =
           matchingConcepts.stream()
@@ -299,7 +644,8 @@ public class NodeGeneratorService {
             branch,
             "(<" + node.getConceptId() + ") AND (" + nodeIdOrClause + ")",
             0,
-            productSummary.getNodes().size())
+            productSummary.getNodes().size(),
+            models.getModelConfiguration(branch).isExecuteEclAsStated())
         .stream()
         .map(SnowstormConceptMini::getConceptId)
         .forEach(

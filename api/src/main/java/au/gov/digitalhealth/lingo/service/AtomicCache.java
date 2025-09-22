@@ -19,27 +19,43 @@ import au.gov.digitalhealth.lingo.util.LingoConstants;
 import jakarta.validation.constraints.NotNull;
 import java.util.*;
 
+/** An id to FSN map that can be used to substitute ids in axioms with their FSNs. */
 public class AtomicCache {
 
   private final Map<String, String> idToFsnMap;
+  private final Map<String, String> idToPtMap;
 
   private int nextId = -2;
 
   public <T extends LingoConstants> AtomicCache(
-      Map<String, String> idFsnMap, @SuppressWarnings("unchecked") T[]... enumerations) {
+      Map<String, String> idFsnMap,
+      Map<String, String> idPtMap,
+      @SuppressWarnings("unchecked") T[]... enumerations) {
     this.idToFsnMap = idFsnMap;
+    this.idToPtMap = idPtMap;
 
     Arrays.stream(enumerations)
         .flatMap(Arrays::stream)
         .filter(LingoConstants::hasLabel)
         .filter(con -> !this.containsFsnFor(con.getValue()))
-        .forEach(con -> this.addFsn(con.getValue(), con.getLabel()));
+        .forEach(con -> this.addFsnAndPt(con.getValue(), con.getLabel(), con.getLabel()));
   }
 
-  public String substituteIdsInAxiom(String axiom, @NotNull Integer conceptId) {
+  public String substituteIdsForFsnInAxiom(String axiom, @NotNull Integer conceptId) {
     synchronized (idToFsnMap) {
       for (String id : getFsnIds()) {
         axiom = substituteIdInAxiom(axiom, id, getFsn(id));
+      }
+      axiom = substituteIdInAxiom(axiom, conceptId.toString(), "");
+
+      return axiom;
+    }
+  }
+
+  public String substituteIdsForPtInAxiom(String axiom, @NotNull Integer conceptId) {
+    synchronized (idToPtMap) {
+      for (String id : getPtIds()) {
+        axiom = substituteIdInAxiom(axiom, id, getPt(id));
       }
       axiom = substituteIdInAxiom(axiom, conceptId.toString(), "");
 
@@ -60,9 +76,12 @@ public class AtomicCache {
     }
   }
 
-  public void addFsn(String id, String fsn) {
+  public void addFsnAndPt(String id, String fsn, String pt) {
     synchronized (idToFsnMap) {
       idToFsnMap.put(id, fsn);
+    }
+    synchronized (idToPtMap) {
+      idToPtMap.put(id, pt);
     }
   }
 
@@ -72,9 +91,21 @@ public class AtomicCache {
     }
   }
 
+  public Set<String> getPtIds() {
+    synchronized (idToPtMap) {
+      return this.idToPtMap.keySet();
+    }
+  }
+
   public String getFsn(String id) {
     synchronized (idToFsnMap) {
       return this.idToFsnMap.get(id);
+    }
+  }
+
+  public String getPt(String id) {
+    synchronized (idToPtMap) {
+      return this.idToPtMap.get(id);
     }
   }
 

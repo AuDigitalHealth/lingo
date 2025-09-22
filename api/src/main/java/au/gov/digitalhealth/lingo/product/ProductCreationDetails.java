@@ -17,10 +17,10 @@ package au.gov.digitalhealth.lingo.product;
 
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.ProductDetails;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
+import au.gov.digitalhealth.tickets.controllers.ProductDto;
+import au.gov.digitalhealth.tickets.models.ProductAction;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 /**
@@ -28,29 +28,25 @@ import lombok.NoArgsConstructor;
  *
  * @param <T> product details type either #MedicationProductDetails or #DeviceProductDetails
  */
-@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @Data
-public class ProductCreationDetails<T extends ProductDetails> {
-  /** Summary of the product concepts that exist and to create */
-  @NotNull @Valid ProductSummary productSummary;
+public class ProductCreationDetails<T extends ProductDetails>
+    extends ProductCreateUpdateDetails<T> {
 
-  /** Atomic data used to calculate the product summary */
-  @NotNull @Valid PackageDetails<T> packageDetails;
+  public ProductCreationDetails(
+      ProductSummary productSummary,
+      PackageDetails<T> packageDetails,
+      Long ticketIt,
+      String partialSaveName,
+      String nameOverride) {
+    super(productSummary, packageDetails, ticketIt, partialSaveName, nameOverride);
+  }
 
-  /** Ticket to record this against */
-  @NotNull Long ticketId;
-
-  /**
-   * The name of a previous partial save of the product details loaded and completed to create this
-   * product - will be overwritten with the creation product details.
-   */
-  String partialSaveName;
-
-  /**
-   * A name to override the name on the saved product, used in situations where two products on an
-   * authored ticket MAY have the same name, but the intention is not to override the already saved
-   * product, as the name + ticketId is meant to be unique
-   */
-  String nameOverride;
+  @Override
+  public ProductDto toProductDto() {
+    ProductDto productDto = super.toProductDto();
+    productDto.setAction(ProductAction.CREATE);
+    return productDto;
+  }
 }

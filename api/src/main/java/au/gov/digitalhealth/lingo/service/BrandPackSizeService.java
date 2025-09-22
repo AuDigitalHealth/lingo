@@ -16,34 +16,20 @@
 package au.gov.digitalhealth.lingo.service;
 
 import static au.gov.digitalhealth.lingo.service.ProductSummaryService.CONTAINS_LABEL;
-import static au.gov.digitalhealth.lingo.service.ProductSummaryService.CTPP_LABEL;
 import static au.gov.digitalhealth.lingo.service.ProductSummaryService.HAS_PRODUCT_NAME_LABEL;
 import static au.gov.digitalhealth.lingo.service.ProductSummaryService.IS_A_LABEL;
-import static au.gov.digitalhealth.lingo.service.ProductSummaryService.MPP_LABEL;
-import static au.gov.digitalhealth.lingo.service.ProductSummaryService.MPUU_LABEL;
-import static au.gov.digitalhealth.lingo.service.ProductSummaryService.TPP_LABEL;
-import static au.gov.digitalhealth.lingo.service.ProductSummaryService.TPUU_LABEL;
-import static au.gov.digitalhealth.lingo.service.ProductSummaryService.TP_LABEL;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONTAINS_DEVICE;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.CTPP_REFSET_ID;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_DEVICE_TYPE;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.MPP_REFSET_ID;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.TPP_REFSET_ID;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.TPUU_REFSET_ID;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.BRANDED_CLINICAL_DRUG_SEMANTIC_TAG;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.BRANDED_PRODUCT_SEMANTIC_TAG;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONTAINERIZED_BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONTAINERIZED_BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG;
+import static au.gov.digitalhealth.lingo.util.NmpcConstants.CONTAINS_DEVICE_NMPC;
+import static au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter.calculateNonDefiningRelationships;
+import static au.gov.digitalhealth.lingo.util.ReferenceSetUtils.calculateReferenceSetMembers;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONTAINS_CD;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.DEFINED;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_UNIT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_VALUE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRODUCT_NAME;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.IS_A;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.MEDICINAL_PRODUCT_PACKAGE;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.PRODUCT_PACKAGE_SEMANTIC_TAG;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.MEDICINAL_PRODUCT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.cloneNewRelationships;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getSingleActiveBigDecimal;
@@ -56,6 +42,11 @@ import static au.gov.digitalhealth.lingo.util.ValidationUtil.assertSingleCompone
 import au.csiro.snowstorm_client.model.SnowstormConcept;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
+import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
+import au.gov.digitalhealth.lingo.configuration.model.Models;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.BrandWithIdentifiers;
 import au.gov.digitalhealth.lingo.product.Edge;
@@ -65,17 +56,19 @@ import au.gov.digitalhealth.lingo.product.ProductBrands;
 import au.gov.digitalhealth.lingo.product.ProductPackSizes;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.bulk.BrandPackSizeCreationDetails;
-import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
+import au.gov.digitalhealth.lingo.service.validators.ValidationResult;
 import au.gov.digitalhealth.lingo.util.AmtConstants;
 import au.gov.digitalhealth.lingo.util.BigDecimalFormatter;
+import au.gov.digitalhealth.lingo.util.NmpcConstants;
 import au.gov.digitalhealth.lingo.util.RelationshipSorter;
 import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
+import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
@@ -92,6 +85,7 @@ public class BrandPackSizeService {
   private final SnowstormClient snowstormClient;
   private final NameGenerationService nameGenerationService;
   private final NodeGeneratorService nodeGeneratorService;
+  private final Models models;
 
   @Value("${snomio.decimal-scale}")
   int decimalScale;
@@ -101,25 +95,29 @@ public class BrandPackSizeService {
       SnowstormClient snowstormClient,
       NameGenerationService nameGenerationService,
       NodeGeneratorService nodeGeneratorService,
-      ProductSummaryService productSummaryService) {
+      ProductSummaryService productSummaryService,
+      Models models) {
     this.snowstormClient = snowstormClient;
     this.nameGenerationService = nameGenerationService;
     this.nodeGeneratorService = nodeGeneratorService;
     this.productSummaryService = productSummaryService;
+    this.models = models;
   }
 
   private static void validateUnitOfMeasure(
-      BrandPackSizeCreationDetails brandPackSizeCreationDetails, SnowstormConcept ctppConcept) {
+      BrandPackSizeCreationDetails brandPackSizeCreationDetails,
+      SnowstormConcept leafPackageConcept) {
     String ctppUnitOfMeasure =
         getSingleActiveTarget(
-                getSingleAxiom(ctppConcept).getRelationships(), HAS_PACK_SIZE_UNIT.getValue())
+                getSingleAxiom(leafPackageConcept).getRelationships(),
+                HAS_PACK_SIZE_UNIT.getValue())
             .getConceptId();
 
     assert ctppUnitOfMeasure != null;
     if (!ctppUnitOfMeasure.equals(
         brandPackSizeCreationDetails.getPackSizes().getUnitOfMeasure().getConceptId())) {
       throw new ProductAtomicDataValidationProblem(
-          "The selected product must have the same pack size unit of measure. The CTPP has a unit of measure of "
+          "The selected product must have the same pack size unit of measure. The new product has a unit of measure of "
               + ctppUnitOfMeasure
               + " and the selected product has a unit of measure of "
               + brandPackSizeCreationDetails.getPackSizes().getUnitOfMeasure().getConceptId());
@@ -127,23 +125,29 @@ public class BrandPackSizeService {
   }
 
   private static SnowstormConceptMini validateSingleBrand(
-      SnowstormConcept ctppConcept, SnowstormConcept tpuuConcept) {
-    SnowstormConceptMini ctppBrand =
-        getSingleActiveTarget(
-            getSingleAxiom(ctppConcept).getRelationships(), HAS_PRODUCT_NAME.getValue());
+      SnowstormConcept leafPackageConcept,
+      SnowstormConcept leafProductConcept,
+      ModelConfiguration modelConfiguration) {
 
-    SnowstormConceptMini tpuuBrand =
+    SnowstormConceptMini leafProductBrand =
         getSingleActiveTarget(
-            getSingleAxiom(tpuuConcept).getRelationships(), HAS_PRODUCT_NAME.getValue());
+            getSingleAxiom(leafProductConcept).getRelationships(), HAS_PRODUCT_NAME.getValue());
 
-    if (!Objects.equals(ctppBrand.getConceptId(), tpuuBrand.getConceptId())) {
-      throw new ProductAtomicDataValidationProblem(
-          "The brand of the CTPP and TPUU must be the same. Brands were "
-              + ctppBrand.getConceptId()
-              + " and "
-              + tpuuBrand.getConceptId());
+    if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
+      SnowstormConceptMini leafPackageBrand =
+          getSingleActiveTarget(
+              getSingleAxiom(leafPackageConcept).getRelationships(), HAS_PRODUCT_NAME.getValue());
+
+      if (!Objects.equals(leafPackageBrand.getConceptId(), leafProductBrand.getConceptId())) {
+        throw new ProductAtomicDataValidationProblem(
+            "The brand of the package and product must be the same. Brands were "
+                + leafPackageBrand.getConceptId()
+                + " and "
+                + leafProductBrand.getConceptId());
+      }
     }
-    return ctppBrand;
+
+    return leafProductBrand;
   }
 
   private static Set<SnowstormRelationship> calculateNewBrandedPackRelationships(
@@ -152,15 +156,20 @@ public class BrandPackSizeService {
       SnowstormConcept tppConcept,
       SnowstormConceptMini brand,
       Node newTpuuNode,
-      AtomicCache atomicCache) {
+      AtomicCache atomicCache,
+      ModelConfiguration modelConfiguration) {
     Set<SnowstormRelationship> newRelationships =
-        cloneNewRelationships(tppConcept.getClassAxioms().iterator().next().getRelationships());
+        cloneNewRelationships(
+            SnowstormDtoUtil.getRelationshipsFromAxioms(tppConcept),
+            modelConfiguration.getModuleId());
 
     for (SnowstormRelationship relationship : newRelationships) {
       relationship.setConcrete(relationship.getConcreteValue() != null);
       relationship.setCharacteristicTypeId(STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE.getValue());
       if (relationship.getTypeId().equals(HAS_PACK_SIZE_VALUE.getValue())) {
-        String packSizeString = BigDecimalFormatter.formatBigDecimal(packSize, decimalScale);
+        String packSizeString =
+            BigDecimalFormatter.formatBigDecimal(
+                packSize, decimalScale, modelConfiguration.isTrimWholeNumbers());
         Objects.requireNonNull(relationship.getConcreteValue()).setValue(packSizeString);
         Objects.requireNonNull(relationship.getConcreteValue())
             .setValueWithPrefix("#" + packSizeString);
@@ -181,80 +190,178 @@ public class BrandPackSizeService {
             .filter(r -> !r.getTypeId().equals(IS_A.getValue()))
             .collect(Collectors.toSet());
 
-    newRelationships.add(
-        SnowstormDtoUtil.getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT_PACKAGE, 0));
-
     newRelationships.forEach(
         r -> {
           if (r.getConcreteValue() == null && r.getTarget() != null) {
-            atomicCache.addFsn(r.getDestinationId(), r.getTarget().getFsn().getTerm());
+            atomicCache.addFsnAndPt(
+                r.getDestinationId(),
+                r.getTarget().getFsn().getTerm(),
+                r.getTarget().getPt().getTerm());
           }
         });
 
     return newRelationships;
   }
 
-  private static void addParent(Node child, Node parent) {
+  private static void addParent(Node child, Node parent, String moduleId) {
     if (child.isNewConcept()) {
       child
           .getNewConceptDetails()
           .getAxioms()
-          .forEach(a -> a.getRelationships().add(getSnowstormRelationship(IS_A, parent, 0)));
+          .forEach(
+              a -> a.getRelationships().add(getSnowstormRelationship(IS_A, parent, 0, moduleId)));
     }
   }
 
-  private static void addEdgesAndNodes(
-      Node newTpuuNode,
+  private static Node getGenericPackageNode(
+      Map<Pair<BigDecimal, ModelLevelType>, Set<CompletableFuture<Node>>> genericPackageFutureMap,
+      @NotNull BigDecimal packSize,
+      ModelConfiguration modelConfiguration) {
+    Set<CompletableFuture<Node>> newMppNodes =
+        genericPackageFutureMap.get(
+            Pair.of(
+                packSize,
+                modelConfiguration.getLeafUnbrandedPackageModelLevel().getModelLevelType()));
+    if (newMppNodes == null || newMppNodes.isEmpty()) {
+      throw new ProductAtomicDataValidationProblem(
+          "No leaf generic package node found for pack size " + packSize);
+    } else if (newMppNodes.size() > 1) {
+      throw new ProductAtomicDataValidationProblem(
+          "Multiple leaf generic package nodes found for pack size " + packSize);
+    }
+    return newMppNodes.iterator().next().join();
+  }
+
+  private static Node getBrandedProductNode(
+      Map<Pair<String, ModelLevelType>, Set<CompletableFuture<Node>>> brandedProductFutureMap,
+      SnowstormConceptMini brand,
+      ModelLevelType level) {
+    Set<CompletableFuture<Node>> nodes =
+        brandedProductFutureMap.get(Pair.of(brand.getConceptId(), level));
+    if (nodes == null || nodes.isEmpty()) {
+      throw new ProductAtomicDataValidationProblem(
+          "No leaf branded product node found for brand " + brand.getConceptId());
+    } else if (nodes.size() > 1) {
+      throw new ProductAtomicDataValidationProblem(
+          "Multiple leaf branded product nodes found for brand " + brand.getConceptId());
+    }
+    return nodes.iterator().next().join();
+  }
+
+  private void addEdgesAndNodes(
       ProductSummary productSummary,
       SnowstormConceptMini brand,
-      Node mpuu,
-      Node newMppNode,
-      CompletableFuture<Node> newTppNode,
-      Node tpuu,
-      Node mpp,
-      CompletableFuture<Node> newCtppNode) {
+      Node newBrandedProductLeafNode,
+      Node newGenericPackageLeafNode,
+      Map<ModelLevelType, CompletableFuture<Node>> newBrandedPackageNodeFutures,
+      Map<Pair<String, ModelLevelType>, Set<CompletableFuture<Node>>> brandedProductFutureMap,
+      Node leafUnbrandedProductNode,
+      ModelConfiguration modelConfiguration) {
 
-    Node tp = productSummary.getNode(brand.getConceptId());
-    if (tp == null) {
-      tp = new Node(brand, TP_LABEL);
-      productSummary.addNode(tp);
+    Node productName = null;
+
+    if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
+      ModelLevel productNameLevel = modelConfiguration.getLevelOfType(ModelLevelType.PRODUCT_NAME);
+      productName = productSummary.getNode(brand.getConceptId());
+      if (productName == null) {
+        productName = new Node(brand, productNameLevel);
+        productSummary.addNode(productName);
+      }
     }
 
-    if (newTpuuNode != null) {
-      productSummary.addNode(newTpuuNode);
-      productSummary.addEdge(newTpuuNode.getConceptId(), tp.getConceptId(), HAS_PRODUCT_NAME_LABEL);
-      productSummary.addEdge(newTpuuNode.getConceptId(), mpuu.getConceptId(), IS_A_LABEL);
-      addParent(newTpuuNode, mpuu);
+    if (newGenericPackageLeafNode != null) {
+      productSummary.addNode(newGenericPackageLeafNode);
+      productSummary.addEdge(
+          newGenericPackageLeafNode.getConceptId(),
+          leafUnbrandedProductNode.getConceptId(),
+          CONTAINS_LABEL);
     }
 
-    if (newMppNode != null) {
-      productSummary.addNode(newMppNode);
-      productSummary.addEdge(newMppNode.getConceptId(), mpuu.getConceptId(), CONTAINS_LABEL);
+    Map<ModelLevelType, CompletableFuture<Node>> newBrandedProductMap =
+        new EnumMap<>(ModelLevelType.class);
+    for (Entry<Pair<String, ModelLevelType>, Set<CompletableFuture<Node>>> entry :
+        brandedProductFutureMap.entrySet()) {
+      if (entry.getKey().getLeft().equals(brand.getConceptId())) {
+        Set<CompletableFuture<Node>> nodes = entry.getValue();
+        if (nodes == null || nodes.isEmpty()) {
+          throw new ProductAtomicDataValidationProblem(
+              "No branded product node found for brand " + brand.getConceptId());
+        } else if (nodes.size() > 1) {
+          throw new ProductAtomicDataValidationProblem(
+              "Multiple branded product nodes found for brand " + brand.getConceptId());
+        }
+        newBrandedProductMap.put(entry.getKey().getRight(), nodes.iterator().next());
+      }
     }
 
-    productSummary.addNode(newTppNode.join());
-    productSummary.addEdge(
-        newTppNode.join().getConceptId(),
-        newTpuuNode == null ? tpuu.getConceptId() : newTpuuNode.getConceptId(),
-        CONTAINS_LABEL);
-    productSummary.addEdge(
-        newTppNode.join().getConceptId(),
-        newMppNode == null ? mpp.getConceptId() : newMppNode.getConceptId(),
-        IS_A_LABEL);
-    addParent(newTppNode.join(), newMppNode == null ? mpp : newMppNode);
-    productSummary.addEdge(
-        newTppNode.join().getConceptId(), tp.getConceptId(), HAS_PRODUCT_NAME_LABEL);
+    for (CompletableFuture<Node> futureNode :
+        brandedProductFutureMap.entrySet().stream()
+            .filter(entry -> entry.getKey().getLeft().equals(brand.getConceptId()))
+            .flatMap(entry -> entry.getValue().stream())
+            .collect(Collectors.toSet())) {
+      Node newBrandedProductNode = futureNode.join();
+      productSummary.addNode(newBrandedProductNode);
+      if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
+        productSummary.addEdge(
+            newBrandedProductNode.getConceptId(),
+            productName.getConceptId(),
+            HAS_PRODUCT_NAME_LABEL);
+      }
+      if (newBrandedProductNode.getModelLevel().equals(newBrandedProductLeafNode.getModelLevel())) {
+        productSummary.addEdge(
+            newBrandedProductNode.getConceptId(),
+            leafUnbrandedProductNode.getConceptId(),
+            IS_A_LABEL);
+        addParent(
+            newBrandedProductNode, leafUnbrandedProductNode, modelConfiguration.getModuleId());
+      }
 
-    productSummary.addNode(newCtppNode.join());
-    productSummary.addEdge(
-        newCtppNode.join().getConceptId(),
-        newTpuuNode == null ? tpuu.getConceptId() : newTpuuNode.getConceptId(),
-        CONTAINS_LABEL);
-    productSummary.addEdge(
-        newCtppNode.join().getConceptId(), newTppNode.join().getConceptId(), IS_A_LABEL);
-    addParent(newCtppNode.join(), newTppNode.join());
-    productSummary.addEdge(
-        newCtppNode.join().getConceptId(), tp.getConceptId(), HAS_PRODUCT_NAME_LABEL);
+      modelConfiguration.getAncestorModelLevels(newBrandedProductNode.getModelLevel()).stream()
+          .filter(ModelLevel::isBranded)
+          .forEach(
+              ancestorModelLevel -> {
+                Node ancestorNode =
+                    newBrandedProductMap.get(ancestorModelLevel.getModelLevelType()).join();
+                productSummary.addEdge(
+                    newBrandedProductNode.getConceptId(), ancestorNode.getConceptId(), IS_A_LABEL);
+                addParent(newBrandedProductNode, ancestorNode, modelConfiguration.getModuleId());
+              });
+    }
+
+    for (CompletableFuture<Node> future : newBrandedPackageNodeFutures.values()) {
+      Node newBrandedPackageNode = future.join();
+      productSummary.addNode(newBrandedPackageNode);
+      productSummary.addEdge(
+          newBrandedPackageNode.getConceptId(),
+          newBrandedProductLeafNode.getConceptId(),
+          CONTAINS_LABEL);
+      if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
+        productSummary.addEdge(
+            newBrandedPackageNode.getConceptId(),
+            productName.getConceptId(),
+            HAS_PRODUCT_NAME_LABEL);
+      }
+      modelConfiguration.getAncestorModelLevels(newBrandedPackageNode.getModelLevel()).stream()
+          .filter(ModelLevel::isBranded)
+          .forEach(
+              ancestorLevel -> {
+                Node ancestorNode =
+                    newBrandedPackageNodeFutures.get(ancestorLevel.getModelLevelType()).join();
+                productSummary.addEdge(
+                    newBrandedPackageNode.getConceptId(), ancestorNode.getConceptId(), IS_A_LABEL);
+                addParent(newBrandedPackageNode, ancestorNode, modelConfiguration.getModuleId());
+              });
+
+      if (modelConfiguration.getAncestorModelLevels(newBrandedPackageNode.getModelLevel()).stream()
+          .noneMatch(ModelLevel::isBranded)) {
+        productSummary.addEdge(
+            newBrandedPackageNode.getConceptId(),
+            newGenericPackageLeafNode.getConceptId(),
+            IS_A_LABEL);
+        addParent(
+            newBrandedPackageNode, newGenericPackageLeafNode, modelConfiguration.getModuleId());
+      }
+    }
   }
 
   /**
@@ -268,6 +375,8 @@ public class BrandPackSizeService {
    */
   public ProductSummary calculateNewBrandPackSizes(
       String branch, BrandPackSizeCreationDetails brandPackSizeCreationDetails) {
+
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
     ProductBrands brands = brandPackSizeCreationDetails.getBrands();
     ProductPackSizes packSizes = brandPackSizeCreationDetails.getPackSizes();
@@ -284,58 +393,79 @@ public class BrandPackSizeService {
     AtomicCache atomicCache =
         new AtomicCache(
             brandPackSizeCreationDetails.getIdFsnMap(),
+            brandPackSizeCreationDetails.getIdPtMap(),
             AmtConstants.values(),
             SnomedConstants.values());
 
-    Node ctpp =
-        productSummary.getNode(productSummary.getSingleConceptWithLabel(CTPP_LABEL).getConceptId());
-    Node tpp =
-        productSummary.getNode(productSummary.getSingleConceptWithLabel(TPP_LABEL).getConceptId());
-    Node mpp =
-        productSummary.getNode(productSummary.getSingleConceptWithLabel(MPP_LABEL).getConceptId());
-    Node tpuu =
-        productSummary.getNode(productSummary.getSingleConceptWithLabel(TPUU_LABEL).getConceptId());
-    Node mpuu =
-        productSummary.getNode(productSummary.getSingleConceptWithLabel(MPUU_LABEL).getConceptId());
+    Map<ModelLevelType, Node> brandedPackageNodeMap =
+        productSummary.getNodes().stream()
+            .filter(n -> n.getModelLevel().isPackageLevel())
+            .filter(n -> n.getModelLevel().isBranded())
+            .collect(Collectors.toMap(Node::getModelLevel, n -> n));
+
+    Map<ModelLevelType, Node> brandedProductNodeMap =
+        productSummary.getNodes().stream()
+            .filter(n -> n.getModelLevel().isProductLevel())
+            .filter(n -> n.getModelLevel().isBranded())
+            .collect(Collectors.toMap(Node::getModelLevel, n -> n));
+
+    Map<ModelLevelType, Node> genericPackageNodeMap =
+        productSummary.getNodes().stream()
+            .filter(n -> n.getModelLevel().isPackageLevel())
+            .filter(n -> !n.getModelLevel().isBranded())
+            .collect(Collectors.toMap(Node::getModelLevel, n -> n));
+
+    Map<ModelLevelType, Node> genericProductNodeMap =
+        productSummary.getNodes().stream()
+            .filter(n -> n.getModelLevel().isProductLevel())
+            .filter(n -> !n.getModelLevel().isBranded())
+            .collect(Collectors.toMap(Node::getModelLevel, n -> n));
 
     Map<String, SnowstormConcept> concepts =
         snowstormClient
             .getBrowserConcepts(
-                branch,
-                Set.of(
-                    ctpp.getConceptId(),
-                    tpp.getConceptId(),
-                    mpp.getConceptId(),
-                    tpuu.getConceptId()))
+                branch, productSummary.getNodes().stream().map(Node::getConceptId).toList())
             .collectMap(SnowstormConcept::getConceptId, c -> c)
             .block();
 
     assert concepts != null;
 
-    SnowstormConcept ctppConcept = concepts.get(ctpp.getConceptId());
-    SnowstormConcept tppConcept = concepts.get(tpp.getConceptId());
-    SnowstormConcept mppConcept = concepts.get(mpp.getConceptId());
-    SnowstormConcept tpuuConcept = concepts.get(tpuu.getConceptId());
+    Node leafBrandedPackageNode =
+        brandedPackageNodeMap.get(
+            modelConfiguration.getLeafPackageModelLevel().getModelLevelType());
+    Node leafBrandedProductNode =
+        brandedProductNodeMap.get(
+            modelConfiguration.getLeafProductModelLevel().getModelLevelType());
+    Node leafUnbrandedPackageNode =
+        genericPackageNodeMap.get(
+            modelConfiguration.getLeafUnbrandedPackageModelLevel().getModelLevelType());
+    Node leafUnbrandedProductNode =
+        genericProductNodeMap.get(
+            modelConfiguration.getLeafUnbrandedProductModelLevel().getModelLevelType());
 
-    assertSingleComponentSinglePackProduct(ctppConcept);
+    final SnowstormConcept leafPackageConcept = concepts.get(leafBrandedPackageNode.getConceptId());
+    final SnowstormConcept leafProductConcept = concepts.get(leafBrandedProductNode.getConceptId());
 
-    SnowstormConceptMini ctppBrand = validateSingleBrand(ctppConcept, tpuuConcept);
+    assertSingleComponentSinglePackProduct(leafPackageConcept, new ValidationResult())
+        .throwIfInvalid();
+
+    SnowstormConceptMini selectedProductBrand =
+        validateSingleBrand(leafPackageConcept, leafProductConcept, modelConfiguration);
 
     if (packSizes != null) {
-      validateUnitOfMeasure(brandPackSizeCreationDetails, ctppConcept);
+      validateUnitOfMeasure(brandPackSizeCreationDetails, leafPackageConcept);
     }
 
-    BigDecimal ctppPackSizeValue =
+    BigDecimal leafPackSizeValue =
         getSingleActiveBigDecimal(
-            getSingleAxiom(ctppConcept).getRelationships(), HAS_PACK_SIZE_VALUE.getValue());
+            getSingleAxiom(leafPackageConcept).getRelationships(), HAS_PACK_SIZE_VALUE.getValue());
 
-    PackSizeWithIdentifiers cttpPackSize = new PackSizeWithIdentifiers();
-    cttpPackSize.setPackSize(ctppPackSizeValue);
-    cttpPackSize.setExternalIdentifiers(Collections.emptySet());
+    PackSizeWithIdentifiers leafPackSize = new PackSizeWithIdentifiers();
+    leafPackSize.setPackSize(leafPackSizeValue);
 
     boolean isDevice =
         getSingleOptionalActiveTarget(
-                getSingleAxiom(ctppConcept).getRelationships(), HAS_DEVICE_TYPE.getValue())
+                getSingleAxiom(leafPackageConcept).getRelationships(), HAS_DEVICE_TYPE.getValue())
             != null;
 
     if ((packSizes == null
@@ -345,7 +475,7 @@ public class BrandPackSizeService {
                     .iterator()
                     .next()
                     .getPackSize()
-                    .equals(cttpPackSize.getPackSize())))
+                    .equals(leafPackSize.getPackSize())))
         && (brands == null
             || (brands.getBrands().size() == 1
                 && brands
@@ -354,8 +484,9 @@ public class BrandPackSizeService {
                     .next()
                     .getBrand()
                     .getConceptId()
-                    .equals(ctppBrand.getConceptId())))) {
+                    .equals(selectedProductBrand.getConceptId())))) {
 
+      // todo not sure what this is necessary as there should be no new concepts
       productSummary.getNodes().stream()
           .filter(Node::isNewConcept)
           .forEach(
@@ -370,114 +501,110 @@ public class BrandPackSizeService {
 
     // get the CTPP, TPP, MPP and TPUU concepts and generate new concepts one per brand/pack
     // combination
-    List<Pair<String, CompletableFuture<Node>>> tpuuFutures = new ArrayList<>();
+    Map<Pair<String, ModelLevelType>, Set<CompletableFuture<Node>>> brandedProductFutureMap =
+        new HashMap<>();
     if (brands != null) {
       for (BrandWithIdentifiers brandPackSizeEntry : brands.getBrands()) {
         SnowstormConceptMini brand = brandPackSizeEntry.getBrand();
-        // if the brand is different, create a new TPUU node
-        if (!brand.getConceptId().equals(ctppBrand.getConceptId())) {
-          log.fine("Creating new TPUU node");
-          tpuuFutures.add(
-              Pair.of(
-                  brand.getConceptId(),
-                  createNewTpuuNode(branch, tpuuConcept, brand, atomicCache, isDevice)
-                      .thenApply(
-                          n -> {
-                            atomicCache.addFsn(n.getConceptId(), n.getFullySpecifiedName());
-                            return n;
-                          })));
-        } else {
-          log.fine("Reusing existing TPUU node");
-          atomicCache.addFsn(tpuu.getConceptId(), tpuu.getFullySpecifiedName());
-        }
+
+        brandedProductNodeMap.forEach(
+            (type, node) -> {
+              if (!brand.getConceptId().equals(selectedProductBrand.getConceptId())) {
+                log.fine("Creating new branded product node of type " + type);
+                brandedProductFutureMap
+                    .computeIfAbsent(
+                        Pair.of(brand.getConceptId(), node.getModelLevel()),
+                        k -> Collections.synchronizedSet(new HashSet<>()))
+                    .add(
+                        createNewBrandedProductNode(
+                                branch,
+                                concepts.get(node.getConceptId()),
+                                brand,
+                                atomicCache,
+                                brandPackSizeEntry.getNonDefiningProperties(),
+                                isDevice,
+                                node.getModelLevel())
+                            .thenApply(
+                                n -> {
+                                  atomicCache.addFsnAndPt(
+                                      n.getConceptId(),
+                                      n.getFullySpecifiedName(),
+                                      n.getPreferredTerm());
+                                  return n;
+                                }));
+              } else {
+                log.fine("Reusing existing " + type + " node");
+                atomicCache.addFsnAndPt(
+                    node.getConceptId(), node.getFullySpecifiedName(), node.getPreferredTerm());
+              }
+            });
       }
     }
 
-    List<Pair<BigDecimal, CompletableFuture<Node>>> mppFutures = new ArrayList<>();
+    Map<Pair<BigDecimal, ModelLevelType>, Set<CompletableFuture<Node>>> genericPackageFutureMap =
+        new HashMap<>();
     if (packSizes != null) {
       for (PackSizeWithIdentifiers packSize : packSizes.getPackSizes()) {
-        if (!packSize.getPackSize().equals(cttpPackSize.getPackSize())) {
-          log.fine("Creating new MPP node");
-          mppFutures.add(
-              Pair.of(
-                  packSize.getPackSize(),
-                  createNewMppNode(
-                          branch, packSize.getPackSize(), mppConcept, atomicCache, isDevice)
-                      .thenApply(
-                          m -> {
-                            atomicCache.addFsn(m.getConceptId(), m.getFullySpecifiedName());
-                            return m;
-                          })));
-        } else {
-          atomicCache.addFsn(mpp.getConceptId(), mpp.getFullySpecifiedName());
-          log.fine("Reusing existing MPP node");
-        }
+        genericPackageNodeMap.forEach(
+            (type, node) -> {
+              if (!packSize.getPackSize().equals(leafPackSize.getPackSize())) {
+                log.fine("Creating new MPP node");
+                genericPackageFutureMap
+                    .computeIfAbsent(
+                        Pair.of(packSize.getPackSize(), node.getModelLevel()),
+                        k -> Collections.synchronizedSet(new HashSet<>()))
+                    .add(
+                        createNewGenericPackageNode(
+                                branch,
+                                packSize.getPackSize(),
+                                concepts.get(node.getConceptId()),
+                                atomicCache,
+                                packSize.getNonDefiningProperties(),
+                                isDevice,
+                                node.getModelLevel())
+                            .thenApply(
+                                m -> {
+                                  atomicCache.addFsnAndPt(
+                                      m.getConceptId(),
+                                      m.getFullySpecifiedName(),
+                                      m.getPreferredTerm());
+                                  return m;
+                                }));
+              } else {
+                atomicCache.addFsnAndPt(
+                    node.getConceptId(), node.getFullySpecifiedName(), node.getPreferredTerm());
+                log.fine("Reusing existing MPP node");
+              }
+            });
       }
     }
 
-    Map<String, Node> tpuuMap =
-        new ConcurrentHashMap<>(
-            tpuuFutures.stream()
-                .collect(
-                    Collectors.toMap(
-                        Pair::getLeft,
-                        n -> n.getRight().join(),
-                        (existing, replacement) -> {
-                          if (existing.getConceptId().equals(replacement.getConceptId())) {
-                            return existing;
-                          } else {
-                            throw new IllegalStateException(
-                                "Duplicate key with different ConceptId");
-                          }
-                        })));
-    if (tpuuMap.isEmpty()) {
-      tpuuMap.put(tpuu.getConceptId(), tpuu);
+    if (brands != null
+        && brands.getBrands().stream()
+            .collect(Collectors.groupingBy(BrandWithIdentifiers::getBrand))
+            .values()
+            .stream()
+            .anyMatch(l -> l.size() > 1)) {
+      throw new ProductAtomicDataValidationProblem(
+          "Duplicate brands found in the provided brand list. Please ensure each brand is unique.");
     }
 
-    Map<BigDecimal, Node> mppMap =
-        new ConcurrentHashMap<>(
-            mppFutures.stream()
-                .collect(
-                    Collectors.toMap(
-                        Pair::getLeft,
-                        n -> n.getRight().join(),
-                        (existing, replacement) -> {
-                          if (existing.getConceptId().equals(replacement.getConceptId())) {
-                            return existing;
-                          } else {
-                            throw new IllegalStateException(
-                                "Duplicate key with different ConceptId");
-                          }
-                        })));
-    if (mppMap.isEmpty()) {
-      mppMap.put(cttpPackSize.getPackSize(), mpp);
-    }
-
-    Map<SnowstormConceptMini, Set<ExternalIdentifier>> consolidatedBrands =
+    Set<BrandWithIdentifiers> brandSet =
         brands == null
-            ? Map.of(ctppBrand, new HashSet<>())
-            : brands.getBrands().stream()
-                .collect(
-                    Collectors.toMap(
-                        BrandWithIdentifiers::getBrand,
-                        BrandWithIdentifiers::getExternalIdentifiers,
-                        (existing, replacement) -> {
-                          existing.addAll(replacement);
-                          return existing;
-                        }));
+            ? Set.of(BrandWithIdentifiers.builder().brand(selectedProductBrand).build())
+            : brands.getBrands();
 
     List<CompletableFuture<ProductSummary>> productSummaryFutures = new ArrayList<>();
 
     Set<PackSizeWithIdentifiers> packSizesToProcess =
-        packSizes == null ? Set.of(cttpPackSize) : packSizes.getPackSizes();
+        packSizes == null ? Set.of(leafPackSize) : packSizes.getPackSizes();
 
-    for (Entry<SnowstormConceptMini, Set<ExternalIdentifier>> brandPackSizeEntry :
-        consolidatedBrands.entrySet()) {
-      SnowstormConceptMini brand = brandPackSizeEntry.getKey();
-      Set<ExternalIdentifier> brandExternalIdentifiers = brandPackSizeEntry.getValue();
+    for (BrandWithIdentifiers brandPackSize : brandSet) {
+      SnowstormConceptMini brand = brandPackSize.getBrand();
       for (PackSizeWithIdentifiers packSize : packSizesToProcess) {
-        if (!brand.getConceptId().equals(ctppBrand.getConceptId())
-            || !packSize.getPackSize().equals(cttpPackSize.getPackSize())) {
+        final boolean newBrand = !brand.getConceptId().equals(selectedProductBrand.getConceptId());
+        final boolean newPackSize = !packSize.getPackSize().equals(leafPackSize.getPackSize());
+        if (newBrand || newPackSize) {
           if (log.isLoggable(Level.FINE)) {
             log.fine(
                 "Creating new brand pack size for brand "
@@ -485,37 +612,47 @@ public class BrandPackSizeService {
                     + " and pack size "
                     + packSize);
           }
-          Node newTpuuNode = tpuuMap.get(brand.getConceptId());
-          Node newMppNode = mppMap.get(packSize.getPackSize());
-          Set<ExternalIdentifier> unionOfBrandAndPackExternalIdentifiers =
-              new HashSet<>(packSize.getExternalIdentifiers());
-          unionOfBrandAndPackExternalIdentifiers.addAll(brandExternalIdentifiers);
+          final Node newBrandedProductLeafNode =
+              newBrand
+                  ? getBrandedProductNode(
+                      brandedProductFutureMap, brand, leafBrandedProductNode.getModelLevel())
+                  : leafBrandedProductNode;
+          final Node newGenericPackageLeafNode =
+              newPackSize
+                  ? getGenericPackageNode(
+                      genericPackageFutureMap, packSize.getPackSize(), modelConfiguration)
+                  : leafUnbrandedPackageNode;
 
-          log.fine("Creating new TPP node");
-          CompletableFuture<Node> newTppNode =
-              createNewTppNode(
-                  branch,
-                  packSize.getPackSize(),
-                  tppConcept,
-                  brand,
-                  newTpuuNode,
-                  atomicCache,
-                  isDevice);
+          Set<NonDefiningBase> unionOfBrandAndPackNonDefiningProperties =
+              new HashSet<>(packSize.getNonDefiningProperties());
+          unionOfBrandAndPackNonDefiningProperties.addAll(brandPackSize.getNonDefiningProperties());
 
-          log.fine("Creating new CTPP node");
-          CompletableFuture<Node> newCtppNode =
-              createNewCtppNode(
-                  branch,
-                  packSize.getPackSize(),
-                  ctppConcept,
-                  brand,
-                  newTpuuNode,
-                  atomicCache,
-                  unionOfBrandAndPackExternalIdentifiers,
-                  isDevice);
+          Map<ModelLevelType, CompletableFuture<Node>> newBrandedPackageNodeFutures =
+              new EnumMap<>(ModelLevelType.class);
+          brandedPackageNodeMap.forEach(
+              (type, node) -> {
+                if (log.isLoggable(Level.FINE)) {
+                  log.fine("Creating new branded package node of type " + type);
+                }
+                newBrandedPackageNodeFutures.put(
+                    type,
+                    createNewBrandedPackageNode(
+                        branch,
+                        packSize.getPackSize(),
+                        concepts.get(node.getConceptId()),
+                        brand,
+                        newBrandedProductLeafNode,
+                        atomicCache,
+                        unionOfBrandAndPackNonDefiningProperties,
+                        isDevice,
+                        modelConfiguration.getLevelOfType(type)));
+              });
 
           productSummaryFutures.add(
-              CompletableFuture.allOf(newTppNode, newCtppNode)
+              CompletableFuture.allOf(
+                      newBrandedPackageNodeFutures
+                          .values()
+                          .toArray(new CompletableFuture[newBrandedPackageNodeFutures.size()]))
                   .thenApply(
                       v -> {
                         if (log.isLoggable(Level.FINE)) {
@@ -525,32 +662,45 @@ public class BrandPackSizeService {
                                   + " and pack size "
                                   + packSize
                                   + " new TPUU node "
-                                  + (newTpuuNode != null && newTpuuNode.isNewConcept())
-                                  + " new CTPP node "
-                                  + newCtppNode.join().isNewConcept()
-                                  + " new TPP node "
-                                  + newTppNode.join().isNewConcept()
+                                  + (newBrandedProductLeafNode != null
+                                      && newBrandedProductLeafNode.isNewConcept())
                                   + " new MPP node "
-                                  + (newMppNode != null && newMppNode.isNewConcept()));
+                                  + (newGenericPackageLeafNode != null
+                                      && newGenericPackageLeafNode.isNewConcept())
+                                  + " new branded package nodes "
+                                  + newBrandedPackageNodeFutures.entrySet().stream()
+                                      .map(
+                                          e ->
+                                              "new "
+                                                  + e.getKey()
+                                                  + " node "
+                                                  + e.getValue().join().getConceptId())
+                                      .collect(Collectors.joining(", ")));
 
                           log.fine("Adding edges and nodes");
                         }
+
                         addEdgesAndNodes(
-                            newTpuuNode,
                             productSummary,
                             brand,
-                            mpuu,
-                            newMppNode,
-                            newTppNode,
-                            tpuu,
-                            mpp,
-                            newCtppNode);
+                            newBrandedProductLeafNode,
+                            newGenericPackageLeafNode,
+                            newBrandedPackageNodeFutures,
+                            brandedProductFutureMap,
+                            leafUnbrandedProductNode,
+                            modelConfiguration);
 
-                        log.fine(
-                            "adding subject "
-                                + newCtppNode.join().getConceptId()
-                                + " to product summary");
-                        productSummary.addSubject(newCtppNode.join());
+                        Node subject =
+                            newBrandedPackageNodeFutures
+                                .get(
+                                    modelConfiguration
+                                        .getLeafPackageModelLevel()
+                                        .getModelLevelType())
+                                .join();
+
+                        log.info(
+                            "adding subject " + subject.getConceptId() + " to product summary");
+                        productSummary.addSubject(subject);
 
                         return productSummary;
                       }));
@@ -575,150 +725,174 @@ public class BrandPackSizeService {
                 n.getNewConceptDetails()
                     .getAxioms()
                     .forEach(RelationshipSorter::sortRelationships));
+
+    productSummary.deduplicateNewNodes(modelConfiguration);
     // return the product summary
     return productSummary;
   }
 
-  private CompletableFuture<Node> createNewCtppNode(
+  private CompletableFuture<Node> createNewBrandedPackageNode(
       String branch,
       BigDecimal packSize,
-      SnowstormConcept ctppConcept,
+      SnowstormConcept existingConcept,
       SnowstormConceptMini brand,
-      Node newTpuuNode,
+      Node newLeafBrandedProductNode,
       AtomicCache atomicCache,
-      Set<ExternalIdentifier> externalIdentifiers,
-      boolean isDevice) {
+      Set<NonDefiningBase> properties,
+      boolean isDevice,
+      ModelLevel modelLevel) {
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     Set<SnowstormRelationship> newCtppRelationships =
         calculateNewBrandedPackRelationships(
-            packSize, decimalScale, ctppConcept, brand, newTpuuNode, atomicCache);
+            packSize,
+            decimalScale,
+            existingConcept,
+            brand,
+            newLeafBrandedProductNode,
+            atomicCache,
+            modelConfiguration);
 
     String semanticTag =
-        isDevice
-            ? CONTAINERIZED_BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG.getValue()
-            : CONTAINERIZED_BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue();
+        isDevice ? modelLevel.getDeviceSemanticTag() : modelLevel.getMedicineSemanticTag();
 
     return nodeGeneratorService
         .generateNodeAsync(
             branch,
             atomicCache,
             newCtppRelationships,
-            Set.of(CTPP_REFSET_ID.getValue()),
-            CTPP_LABEL,
-            SnowstormDtoUtil.getExternalIdentifierReferenceSetEntries(externalIdentifiers),
-            semanticTag,
+            Set.of(modelLevel.getReferenceSetIdentifier()),
+            modelLevel,
+            isDevice ? modelLevel.getDrugDeviceSemanticTag() : modelLevel.getMedicineSemanticTag(),
+            calculateReferenceSetMembers(
+                properties, models.getModelConfiguration(branch), modelLevel.getModelLevelType()),
+            calculateNonDefiningRelationships(
+                models.getModelConfiguration(branch), properties, modelLevel.getModelLevelType()),
             List.of(),
+            properties,
             false,
             false,
+            true,
             true)
         .thenApply(
             n -> {
-              nameGenerationService.addGeneratedFsnAndPt(atomicCache, semanticTag, n);
+              nameGenerationService.addGeneratedFsnAndPt(
+                  atomicCache, semanticTag, n, modelConfiguration, List.of());
               return n;
             });
   }
 
-  private CompletableFuture<Node> createNewTppNode(
-      String branch,
-      BigDecimal packSize,
-      SnowstormConcept tppConcept,
-      SnowstormConceptMini brand,
-      Node newTpuuNode,
-      AtomicCache atomicCache,
-      boolean isDevice) {
-    Set<SnowstormRelationship> newTppRelationships =
-        calculateNewBrandedPackRelationships(
-            packSize, decimalScale, tppConcept, brand, newTpuuNode, atomicCache);
-
-    String semanticTag =
-        isDevice
-            ? BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG.getValue()
-            : BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue();
-
-    return nodeGeneratorService
-        .generateNodeAsync(
-            branch,
-            atomicCache,
-            newTppRelationships,
-            Set.of(TPP_REFSET_ID.getValue()),
-            TPP_LABEL,
-            Set.of(),
-            semanticTag,
-            List.of(),
-            false,
-            false,
-            true)
-        .thenApply(
-            n -> {
-              nameGenerationService.addGeneratedFsnAndPt(atomicCache, semanticTag, n);
-              return n;
-            });
-  }
-
-  private CompletableFuture<Node> createNewMppNode(
+  private CompletableFuture<Node> createNewGenericPackageNode(
       String branch,
       BigDecimal packSize,
       SnowstormConcept mppConcept,
       AtomicCache atomicCache,
-      boolean isDevice) {
+      Set<NonDefiningBase> properties,
+      boolean isDevice,
+      ModelLevelType modelLevelType) {
+
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+
+    ModelLevel modelLevel = modelConfiguration.getLevelOfType(modelLevelType);
 
     Set<SnowstormRelationship> relationships =
-        cloneNewRelationships(mppConcept.getClassAxioms().iterator().next().getRelationships());
+        cloneNewRelationships(
+            SnowstormDtoUtil.getRelationshipsFromAxioms(mppConcept),
+            modelConfiguration.getModuleId());
 
     relationships.forEach(
         r -> {
           r.setCharacteristicTypeId(STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE.getValue());
           r.setConcrete(r.getConcreteValue() != null);
           if (r.getTypeId().equals(HAS_PACK_SIZE_VALUE.getValue())) {
-            String packSizeString = BigDecimalFormatter.formatBigDecimal(packSize, decimalScale);
+            String packSizeString =
+                BigDecimalFormatter.formatBigDecimal(
+                    packSize, decimalScale, modelConfiguration.isTrimWholeNumbers());
             r.getConcreteValue().setValue(packSizeString);
             r.getConcreteValue().setValueWithPrefix("#" + packSizeString);
           }
           if (r.getTypeId().equals(CONTAINS_DEVICE.getValue())
+              || r.getTypeId().equals(CONTAINS_DEVICE_NMPC.getValue())
               || r.getTypeId().equals(CONTAINS_CD.getValue())) {
-            atomicCache.addFsn(r.getDestinationId(), r.getTarget().getFsn().getTerm());
+            atomicCache.addFsnAndPt(
+                r.getDestinationId(),
+                r.getTarget().getFsn().getTerm(),
+                r.getTarget().getPt().getTerm());
           }
         });
 
     relationships.forEach(
         r -> {
           if (r.getConcreteValue() == null && r.getTarget() != null) {
-            atomicCache.addFsn(r.getDestinationId(), r.getTarget().getFsn().getTerm());
+            atomicCache.addFsnAndPt(
+                r.getDestinationId(),
+                r.getTarget().getFsn().getTerm(),
+                r.getTarget().getPt().getTerm());
           }
         });
 
     String semanticTag =
-        isDevice
-            ? PRODUCT_PACKAGE_SEMANTIC_TAG.getValue()
-            : CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue();
+        isDevice ? modelLevel.getDrugDeviceSemanticTag() : modelLevel.getMedicineSemanticTag();
 
     return nodeGeneratorService
         .generateNodeAsync(
             branch,
             atomicCache,
             relationships,
-            Set.of(MPP_REFSET_ID.getValue()),
-            MPP_LABEL,
-            Set.of(),
-            semanticTag,
+            Set.of(modelLevel.getReferenceSetIdentifier()),
+            modelLevel,
+            isDevice ? modelLevel.getDrugDeviceSemanticTag() : modelLevel.getMedicineSemanticTag(),
+            calculateReferenceSetMembers(
+                properties, models.getModelConfiguration(branch), modelLevel.getModelLevelType()),
+            calculateNonDefiningRelationships(
+                models.getModelConfiguration(branch), properties, modelLevel.getModelLevelType()),
             List.of(),
+            properties,
             false,
             false,
+            true,
             true)
         .thenApply(
             n -> {
-              nameGenerationService.addGeneratedFsnAndPt(atomicCache, semanticTag, n);
+              nameGenerationService.addGeneratedFsnAndPt(
+                  atomicCache, semanticTag, n, modelConfiguration, List.of());
               return n;
             });
   }
 
-  private CompletableFuture<Node> createNewTpuuNode(
+  private CompletableFuture<Node> createNewBrandedProductNode(
       String branch,
-      SnowstormConcept tpuuConcept,
+      SnowstormConcept leafProductConcept,
       SnowstormConceptMini brand,
       AtomicCache atomicCache,
-      boolean isDevice) {
+      Set<NonDefiningBase> properties,
+      boolean isDevice,
+      ModelLevelType modelLevelType) {
+
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+    ModelLevel modelLevel = modelConfiguration.getLevelOfType(modelLevelType);
+
     Set<SnowstormRelationship> relationships =
-        cloneNewRelationships(tpuuConcept.getClassAxioms().iterator().next().getRelationships());
+        cloneNewRelationships(
+                SnowstormDtoUtil.getRelationshipsFromAxioms(leafProductConcept),
+                modelConfiguration.getModuleId())
+            .stream()
+            .filter(relationship -> !relationship.getTypeId().equals(IS_A.getValue()))
+            .collect(Collectors.toSet());
+
+    if (modelLevelType.getAncestors().stream().noneMatch(ModelLevelType::isBranded)) {
+      if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
+        relationships.add(
+            SnowstormDtoUtil.getSnowstormRelationship(
+                IS_A,
+                NmpcConstants.VIRTUAL_MEDICINAL_PRODUCT,
+                0,
+                modelConfiguration.getModuleId()));
+      } else {
+        relationships.add(
+            SnowstormDtoUtil.getSnowstormRelationship(
+                IS_A, MEDICINAL_PRODUCT, 0, modelConfiguration.getModuleId()));
+      }
+    }
 
     relationships.forEach(
         r -> {
@@ -733,31 +907,41 @@ public class BrandPackSizeService {
     relationships.forEach(
         r -> {
           if (r.getConcreteValue() == null && r.getTarget() != null) {
-            atomicCache.addFsn(r.getDestinationId(), r.getTarget().getFsn().getTerm());
+            atomicCache.addFsnAndPt(
+                r.getDestinationId(),
+                r.getTarget().getFsn().getTerm(),
+                r.getTarget().getPt().getTerm());
           }
         });
 
     String semanticTag =
-        isDevice
-            ? BRANDED_PRODUCT_SEMANTIC_TAG.getValue()
-            : BRANDED_CLINICAL_DRUG_SEMANTIC_TAG.getValue();
+        isDevice ? modelLevel.getDrugDeviceSemanticTag() : modelLevel.getMedicineSemanticTag();
 
     return nodeGeneratorService
         .generateNodeAsync(
             branch,
             atomicCache,
             relationships,
-            Set.of(TPUU_REFSET_ID.getValue()),
-            TPUU_LABEL,
-            Set.of(),
-            semanticTag,
+            Set.of(modelLevel.getReferenceSetIdentifier()),
+            modelLevel,
+            isDevice ? modelLevel.getDrugDeviceSemanticTag() : modelLevel.getMedicineSemanticTag(),
+            calculateReferenceSetMembers(
+                properties, models.getModelConfiguration(branch), modelLevel.getModelLevelType()),
+            calculateNonDefiningRelationships(
+                models.getModelConfiguration(branch), properties, modelLevel.getModelLevelType()),
             List.of(),
+            properties,
             false,
             false,
-            true)
+            true,
+            DEFINED
+                .getValue()
+                .equals(
+                    SnowstormDtoUtil.getSingleAxiom(leafProductConcept).getDefinitionStatusId()))
         .thenApply(
             n -> {
-              nameGenerationService.addGeneratedFsnAndPt(atomicCache, semanticTag, n);
+              nameGenerationService.addGeneratedFsnAndPt(
+                  atomicCache, semanticTag, n, modelConfiguration, List.of());
               return n;
             });
   }

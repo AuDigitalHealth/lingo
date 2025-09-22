@@ -16,6 +16,8 @@
 package au.gov.digitalhealth.lingo.service;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptView;
+import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.FsnAndPt;
 import au.gov.digitalhealth.lingo.product.NameGeneratorSpec;
@@ -24,6 +26,7 @@ import au.gov.digitalhealth.lingo.util.OwlAxiomService;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
@@ -52,15 +55,21 @@ public class NameGenerationService {
     this.failOnBadInput = failOnBadInput;
   }
 
-  public void addGeneratedFsnAndPt(AtomicCache atomicCache, String semanticTag, Node node) {
+  public void addGeneratedFsnAndPt(
+      AtomicCache atomicCache,
+      String semanticTag,
+      Node node,
+      ModelConfiguration modelConfiguration,
+      List<String> order) {
     Instant start = Instant.now();
     Optional<NameGeneratorSpec> nameGeneratorSpec =
-        generateNameGeneratorSpec(atomicCache, semanticTag, node);
+        generateNameGeneratorSpec(atomicCache, semanticTag, node, modelConfiguration, order);
     if (nameGeneratorSpec.isEmpty()) return;
+    node.getNewConceptDetails().setNameGeneratorSpec(nameGeneratorSpec.get());
     FsnAndPt fsnAndPt = createFsnAndPreferredTerm(nameGeneratorSpec.get());
     node.getNewConceptDetails().setFullySpecifiedName(fsnAndPt.getFSN());
     node.getNewConceptDetails().setPreferredTerm(fsnAndPt.getPT());
-    atomicCache.addFsn(node.getConceptId(), fsnAndPt.getFSN());
+    atomicCache.addFsnAndPt(node.getConceptId(), fsnAndPt.getFSN(), fsnAndPt.getPT());
     if (log.isLoggable(java.util.logging.Level.FINE)) {
       log.fine(
           "Generated FSN and PT for "
@@ -76,9 +85,13 @@ public class NameGenerationService {
   }
 
   public Optional<NameGeneratorSpec> generateNameGeneratorSpec(
-      AtomicCache atomicCache, String semanticTag, Node node) {
+      AtomicCache atomicCache,
+      String semanticTag,
+      Node node,
+      ModelConfiguration modelConfiguration,
+      List<String> order) {
     if (node.isNewConcept()) {
-      SnowstormConceptView scon = SnowstormDtoUtil.toSnowstormConceptView(node);
+      SnowstormConceptView scon = SnowstormDtoUtil.toSnowstormConceptView(node, modelConfiguration);
       Set<String> axioms = owlAxiomService.translate(scon);
       String axiomN;
       try {
@@ -90,9 +103,16 @@ public class NameGenerationService {
         throw new ProductAtomicDataValidationProblem(
             "Could not calculate one (and only one) axiom for concept " + scon.getConceptId());
       }
-      axiomN = atomicCache.substituteIdsInAxiom(axiomN, node.getNewConceptDetails().getConceptId());
+      String axiomFsn =
+          atomicCache.substituteIdsForFsnInAxiom(
+              axiomN, node.getNewConceptDetails().getConceptId());
+      String axiomPt =
+          modelConfiguration.getModelType().equals(ModelType.NMPC)
+              ? ""
+              : atomicCache.substituteIdsForPtInAxiom(
+                  axiomN, node.getNewConceptDetails().getConceptId());
 
-      return Optional.of(new NameGeneratorSpec(semanticTag, axiomN));
+      return Optional.of(new NameGeneratorSpec(semanticTag, axiomFsn, axiomPt, order));
     }
 
     return Optional.empty();

@@ -27,7 +27,7 @@ export default function ProductRefsetList({
   const { branchKey } = useParams();
 
   const { applicationConfig } = useApplicationConfigStore();
-  const fullBranch = `/${applicationConfig.apDefaultBranch}${branchKey ? `/${branchKey}` : ''}`;
+  const fullBranch = `${applicationConfig.apDefaultBranch}${branchKey ? `/${branchKey}` : ''}`;
 
   const { conceptData, isConceptLoading } = useSearchConceptByIds(
     refsetMembers.flatMap(r => r.refsetId),

@@ -18,6 +18,7 @@ package au.gov.digitalhealth.lingo.security;
 import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
 
 import au.gov.digitalhealth.lingo.auth.security.CookieAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -80,7 +81,14 @@ public class SecurityConfiguration {
             "/api/(.*)/devices/.*",
             "/api/(.*)/qualifier/.*",
             "/api/(.*)/product-model/.*",
-            "/api/(.*)/product-model-graph/.*"));
+            "/api/(.*)/product-model-graph/.*",
+            "/api/(.*)/node/.*",
+            "/config/medication/(.*)/.*",
+            "/config/device/(.*)/.*",
+            "/config/bulk-brand/(.*)/.*",
+            "/config/bulk-pack/(.*)/.*",
+            "/config/edit/(.*)/.*/schema",
+            "/config/edit/(.*)/.*/ui-schema"));
   }
 
   @Bean
@@ -94,7 +102,8 @@ public class SecurityConfiguration {
   }
 
   @Bean
-  public DelegatingSecurityContextAsyncTaskExecutor taskExecutor(ThreadPoolTaskExecutor delegate) {
+  public DelegatingSecurityContextAsyncTaskExecutor taskExecutor(
+      @Qualifier("threadPoolTaskExecutor") ThreadPoolTaskExecutor delegate) {
     return new DelegatingSecurityContextAsyncTaskExecutor(delegate);
   }
 }
