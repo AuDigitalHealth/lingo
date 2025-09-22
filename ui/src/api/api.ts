@@ -136,25 +136,51 @@ api.interceptors.response.use(
                 scope.setTag('correlation_id', correlationId);
               }
 
-              // Request + response details
-              scope.setContext('AxiosError', {
+              scope.setContext('AxiosRequest', {
                 url: error.config?.url,
                 method: error.config?.method,
-                params: error.config?.params,
-                data: error.config?.data,
-                status: error.response?.status,
-                responseData: error.response?.data,
+                safeParams: error.config?.params,
+                safeData: error.config?.data,
               });
 
-              // Capture
-              Sentry.captureException(error);
-            });
+              scope.setContext('AxiosResponse', {
+                status: error.response?.status,
+                safeResponseData: error.response?.data,
+              });
 
-            // Use Sentry feedback dialog
-            showSentryFeedbackDialog(
-              error,
-              potentialInternalServerError.timestamp,
-            );
+              // Build descriptive error message with request details
+              const requestParams = error.config?.params
+                ? JSON.stringify(error.config.params)
+                : undefined;
+
+              const normalizedError = new Error(
+                [
+                  error.message || 'Axios request failed',
+                  `URL: ${error.config?.url}`,
+                  `Method: ${error.config?.method}`,
+                  requestParams ? `Params: ${requestParams}` : null,
+                  error.config?.data
+                    ? `Data: ${JSON.stringify(error.config.data)}`
+                    : null,
+                  error.response?.status
+                    ? `Status: ${error.response.status}`
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(' | '),
+              );
+
+              normalizedError.name = error.name || 'AxiosError';
+              if (error.stack) {
+                normalizedError.stack = error.stack;
+              }
+
+              // Capture and get eventId
+              const eventId = Sentry.captureException(normalizedError);
+
+              // Show user feedback dialog tied to this event
+              Sentry.showReportDialog({ eventId });
+            });
           } else {
             enqueueSnackbar(
               `Oops, something went wrong! Please copy the error details below and report it to support: \n\n` +
