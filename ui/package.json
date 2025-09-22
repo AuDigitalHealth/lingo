@@ -114,7 +114,7 @@
     "axe-core": "^4.7.2",
     "cypress": "13.3.0",
     "cypress-axe": "1.5.0",
-    "eslint": "8.55.0",
+    "eslint": "^8.57.1",
     "eslint-plugin-react-hooks": "4.6.0",
     "eslint-plugin-react-refresh": "0.4.1",
     "license-checker": "^25.0.1",
