@@ -15,81 +15,195 @@
  */
 package au.gov.digitalhealth.lingo.util;
 
-import static au.gov.digitalhealth.lingo.util.AmtConstants.ARTGID_REFSET;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.ARTGID_SCHEME;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.MAP_TARGET;
-
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
-import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
+import au.gov.digitalhealth.lingo.configuration.model.ExternalIdentifierDefinition;
+import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
+import au.gov.digitalhealth.lingo.service.SnowstormClient;
+import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public class ExternalIdentifierUtils {
 
-  // Helper method to filter and map objects to ExternalIdentifier
-  private static <T> Set<ExternalIdentifier> filterAndMapToExternalIdentifier(
-      Stream<T> stream,
-      String referencedComponentId,
-      Function<T, Boolean> isActive,
-      Function<T, String> getRefsetId,
-      Function<T, String> getReferencedComponentId,
-      Function<T, Map<String, String>> getAdditionalFields) {
-
-    return stream
-        .filter(
-            item ->
-                isActive.apply(item)
-                    && getRefsetId.apply(item).equals(ARTGID_REFSET.getValue())
-                    && getReferencedComponentId.apply(item).equals(referencedComponentId))
-        .map(
-            item ->
-                new ExternalIdentifier(
-                    ARTGID_SCHEME.getValue(),
-                    getAdditionalFields.apply(item).get(MAP_TARGET.getValue())))
-        .collect(Collectors.toSet());
-  }
-
-  public static Set<ExternalIdentifier> getExternalIdentifierReferenceSet(
-      Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers) {
-    return referenceSetMembers.stream()
-        .filter(item -> item.getRefsetId().equals(ARTGID_REFSET.getValue()))
-        .map(
-            item ->
-                new ExternalIdentifier(
-                    ARTGID_SCHEME.getValue(),
-                    item.getAdditionalFields().get(MAP_TARGET.getValue())))
-        .collect(Collectors.toSet());
+  private ExternalIdentifierUtils() {
+    // Utility class
   }
 
   // Processes Set<SnowstormReferenceSetMemberViewComponent>
-  public static Set<ExternalIdentifier> getExternalIdentifierReferenceSet(
-      Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
-      String referencedComponentId) {
+  public static Set<ExternalIdentifier> getExternalIdentifiersFromRefsetMemberViewComponents(
+      String branch,
+      Collection<SnowstormReferenceSetMemberViewComponent> referenceSetMembers,
+      String referencedComponentId,
+      Set<ExternalIdentifierDefinition> externalIdentifierDefinitions,
+      FhirClient fhirClient,
+      SnowstormClient snowstormClient) {
 
-    return filterAndMapToExternalIdentifier(
-        referenceSetMembers.stream(),
-        referencedComponentId,
-        SnowstormReferenceSetMemberViewComponent::getActive,
-        SnowstormReferenceSetMemberViewComponent::getRefsetId,
-        SnowstormReferenceSetMemberViewComponent::getReferencedComponentId,
-        SnowstormReferenceSetMemberViewComponent::getAdditionalFields);
+    Set<ExternalIdentifier> externalIdentifiers = new HashSet<>();
+
+    Map<String, Set<ExternalIdentifierDefinition>> mappingRefsetMap =
+        createMappingToIdentifierMap(externalIdentifierDefinitions);
+
+    referenceSetMembers.forEach(
+        r -> {
+          if (r.getActive() != null && r.getActive() && r.getReferencedComponentId() == null
+              || r.getReferencedComponentId().equals(referencedComponentId)
+                  && externalIdentifierDefinitions.stream()
+                      .map(ExternalIdentifierDefinition::getIdentifier)
+                      .collect(Collectors.toSet())
+                      .contains(r.getRefsetId())) {
+
+            externalIdentifiers.addAll(
+                mappingRefsetMap.getOrDefault(r.getRefsetId(), new HashSet<>()).stream()
+                    .map(
+                        m ->
+                            ExternalIdentifier.create(branch, r, m, fhirClient, snowstormClient)
+                                .block())
+                    .collect(Collectors.toSet()));
+          }
+        });
+
+    return externalIdentifiers;
   }
 
-  // Processes Flux<SnowstormReferenceSetMember>
-  public static Set<ExternalIdentifier> getExternalIdentifierReferences(
-      Flux<SnowstormReferenceSetMember> referenceSetMembers, String referencedComponentId) {
+  public static Set<ExternalIdentifier> getExternalIdentifiersFromRefsetMembers(
+      String branch,
+      Collection<SnowstormReferenceSetMember> referenceSetMembers,
+      String referencedComponentId,
+      Set<ExternalIdentifierDefinition> externalIdentifierDefinitions,
+      FhirClient fhirClient,
+      SnowstormClient snowstormClient) {
 
-    return filterAndMapToExternalIdentifier(
-        referenceSetMembers.toStream(),
-        referencedComponentId,
-        SnowstormReferenceSetMember::getActive,
-        SnowstormReferenceSetMember::getRefsetId,
-        SnowstormReferenceSetMember::getReferencedComponentId,
-        SnowstormReferenceSetMember::getAdditionalFields);
+    Set<ExternalIdentifier> externalIdentifiers = new HashSet<>();
+
+    Map<String, Set<ExternalIdentifierDefinition>> mappingRefsetMap =
+        createMappingToIdentifierMap(externalIdentifierDefinitions);
+
+    referenceSetMembers.forEach(
+        r -> {
+          if (r.getActive() != null
+              && r.getActive()
+              && r.getReferencedComponentId().equals(referencedComponentId)
+              && externalIdentifierDefinitions.stream()
+                  .map(ExternalIdentifierDefinition::getIdentifier)
+                  .collect(Collectors.toSet())
+                  .contains(r.getRefsetId())) {
+
+            externalIdentifiers.addAll(
+                mappingRefsetMap.getOrDefault(r.getRefsetId(), new HashSet<>()).stream()
+                    .map(
+                        m ->
+                            ExternalIdentifier.create(branch, r, m, fhirClient, snowstormClient)
+                                .block())
+                    .collect(Collectors.toSet()));
+          }
+        });
+
+    return externalIdentifiers;
+  }
+
+  public static Set<ExternalIdentifier> getExternalIdentifiersFromRefsetMembers(
+      String branch,
+      Flux<SnowstormReferenceSetMember> referenceSetMembers,
+      String referencedComponentId,
+      Set<ExternalIdentifierDefinition> externalIdentifierDefinitions,
+      FhirClient fhirClient,
+      SnowstormClient snowstormClient) {
+
+    Set<ExternalIdentifier> externalIdentifiers = new HashSet<>();
+
+    Map<String, Set<ExternalIdentifierDefinition>> mappingRefsetMap =
+        createMappingToIdentifierMap(externalIdentifierDefinitions);
+
+    referenceSetMembers
+        .toStream()
+        .forEach(
+            r -> {
+              if (r.getActive() != null
+                  && r.getActive()
+                  && r.getReferencedComponentId().equals(referencedComponentId)
+                  && externalIdentifierDefinitions.stream()
+                      .map(ExternalIdentifierDefinition::getIdentifier)
+                      .collect(Collectors.toSet())
+                      .contains(r.getRefsetId())) {
+
+                externalIdentifiers.addAll(
+                    mappingRefsetMap.getOrDefault(r.getRefsetId(), new HashSet<>()).stream()
+                        .map(
+                            m ->
+                                ExternalIdentifier.create(branch, r, m, fhirClient, snowstormClient)
+                                    .block())
+                        .collect(Collectors.toSet()));
+              }
+            });
+
+    return externalIdentifiers;
+  }
+
+  private static Map<String, Set<ExternalIdentifierDefinition>> createMappingToIdentifierMap(
+      Set<ExternalIdentifierDefinition> externalIdentifierDefinitions) {
+    return externalIdentifierDefinitions.stream()
+        .collect(
+            Collectors.groupingBy(ExternalIdentifierDefinition::getIdentifier, Collectors.toSet()));
+  }
+
+  public static Mono<Map<String, List<ExternalIdentifier>>>
+      getExternalIdentifiersMapFromRefsetMembers(
+          String branch,
+          Flux<SnowstormReferenceSetMember> refsetMembers,
+          Set<ExternalIdentifierDefinition> externalIdentifierDefinitions,
+          FhirClient fhirClient,
+          SnowstormClient snowstormClient) {
+
+    if (externalIdentifierDefinitions.isEmpty()) {
+      return Mono.just(Map.of());
+    }
+
+    Map<String, Set<ExternalIdentifierDefinition>> mappingRefsetMap =
+        createMappingToIdentifierMap(externalIdentifierDefinitions);
+
+    Set<String> refsetIdentifiers =
+        externalIdentifierDefinitions.stream()
+            .map(ExternalIdentifierDefinition::getIdentifier)
+            .collect(Collectors.toSet());
+
+    return refsetMembers
+        .filter(r -> r.getActive() != null && r.getActive())
+        .filter(r -> refsetIdentifiers.contains(r.getRefsetId()))
+        .flatMap(
+            r -> {
+              Set<ExternalIdentifierDefinition> mappingRefsetsList =
+                  mappingRefsetMap.get(r.getRefsetId());
+              if (mappingRefsetsList == null || mappingRefsetsList.isEmpty()) {
+                return Mono.empty();
+              }
+
+              // Create a Flux of ExternalIdentifier from all mappings for this refset
+              return Flux.fromIterable(mappingRefsetsList)
+                  .flatMap(
+                      m ->
+                          ExternalIdentifier.create(branch, r, m, fhirClient, snowstormClient)
+                              .map(
+                                  externalId ->
+                                      new AbstractMap.SimpleEntry<>(
+                                          r.getReferencedComponentId(), externalId)));
+            })
+        .collectMultimap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue)
+        .map(
+            multimap -> {
+              // Convert Multimap to Map<String, List<ExternalIdentifier>>
+              Map<String, List<ExternalIdentifier>> result = new HashMap<>();
+              multimap.forEach((key, values) -> result.put(key, new ArrayList<>(values)));
+              return result;
+            });
   }
 }

@@ -3,12 +3,15 @@ import { Card, Tab, Tabs } from '@mui/material';
 
 import TaskDetails from './TaskDetails';
 import TaskTicketList from './TaskTicketList';
-import { useLocation } from 'react-router-dom';
+import { Route, Routes, useLocation, useParams } from 'react-router-dom';
 
-import useTaskByKey from '../../../hooks/useTaskById.tsx';
+import useTaskByKey from '../../../hooks/useTaskByKey.tsx';
 import { Task } from '../../../types/task.ts';
 import Loading from '../../../components/Loading.tsx';
 import { useFetchAndCreateBranch } from '../../../hooks/api/task/useInitializeBranch.tsx';
+import { Stack } from '@mui/material';
+import { useNodeModel } from '../../../hooks/api/products/useNodeModel.tsx';
+import ProductPreviewSimple from '../../products/components/ProductPreviewSimple.tsx';
 
 interface LocationState {
   openTab: number;
@@ -101,6 +104,44 @@ function TaskEditCard({ menuOpen }: TaskEditCardProps) {
       )}
     </>
   );
+}
+
+export function TaskEdit({ menuOpen }: TaskEditCardProps) {
+  return (
+    <Stack flexDirection="row" sx={{ width: '100%' }} gap={2}>
+      <TaskEditCard menuOpen={menuOpen} />
+      <Routes>
+        <Route path="review/:conceptId/*" element={<TaskEditReview />} />
+      </Routes>
+    </Stack>
+  );
+}
+
+export function TaskEditReview() {
+  const task = useTaskByKey();
+  const branch = task?.branchPath;
+  const { conceptId } = useParams();
+  const { data, isLoading } = useNodeModel(conceptId, branch);
+
+  if (data && branch) {
+    return (
+      <Stack flexDirection={'column'} gap={2}>
+        <ProductPreviewSimple
+          product={data}
+          fsnToggle
+          isSimpleEdit={false}
+          branch={branch}
+          activeConcept=""
+          expandedConcepts={[]}
+        />
+      </Stack>
+    );
+  }
+
+  if (isLoading) {
+    return <Loading message={`Loading review for ${conceptId}`} />;
+  }
+  return <></>;
 }
 
 export default TaskEditCard;

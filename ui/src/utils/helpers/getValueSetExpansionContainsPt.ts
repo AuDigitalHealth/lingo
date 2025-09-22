@@ -15,7 +15,7 @@
 ///
 
 import type { ValueSetExpansionContains } from 'fhir/r4';
-import { Concept, Term } from '../../types/concept';
+import { Concept, DefinitionStatus, Term } from '../../types/concept';
 
 export function convertFromValueSetExpansionContainsListToSnowstormConceptMiniList(
   valueSet: ValueSetExpansionContains[],
@@ -41,6 +41,8 @@ export function convertFromValueSetExpansionContainsToSnowstormConceptMini(
     effectiveTime: '',
     fsn: generateFsnFromValueSetExpansionContains(valueSet),
     pt: generatePtFromValueSetExpansionContains(valueSet, preferredForLanguage),
+    definitionStatus:
+      generateDefinitionStatusFromValueSetExpansionContains(valueSet),
   };
 }
 
@@ -70,4 +72,25 @@ export function generatePtFromValueSetExpansionContains(
     term: pt?.value ? pt.value : valueSet.display ? valueSet.display : '',
     lang: pt?.language ? pt.language : 'en',
   };
+}
+
+function generateDefinitionStatusFromValueSetExpansionContains(
+  valueSet: ValueSetExpansionContains,
+): DefinitionStatus | undefined {
+  const sufficientlyDefinedExt = valueSet?.extension?.find(ext =>
+    ext.extension?.some(
+      e => e.url === 'code' && e.valueCode === 'sufficientlyDefined',
+    ),
+  );
+
+  if (!sufficientlyDefinedExt) {
+    return undefined;
+  }
+
+  const valueExt = sufficientlyDefinedExt.extension?.find(
+    e => e.url === 'value',
+  );
+  return valueExt?.valueBoolean
+    ? DefinitionStatus.FullyDefined
+    : DefinitionStatus.Primitive;
 }

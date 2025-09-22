@@ -32,7 +32,9 @@ import au.gov.digitalhealth.lingo.product.ProductCreationDetails;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.details.DeviceProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
+import au.gov.digitalhealth.lingo.product.details.ProductQuantity;
 import au.gov.digitalhealth.tickets.models.Ticket;
+import jakarta.validation.Valid;
 import java.math.BigDecimal;
 import lombok.extern.java.Log;
 import org.assertj.core.api.Assertions;
@@ -63,13 +65,13 @@ class DeviceCreationControllerTest extends LingoTestBase {
                 .orElseThrow()
                 .getConceptOptions())
         .isNotEmpty();
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, CTPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, TPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, TPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TP_LABEL);
 
     checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(productSummary, false, true, false);
@@ -92,13 +94,13 @@ class DeviceCreationControllerTest extends LingoTestBase {
         getLingoTestClient().calculateDeviceProductSummary(packageDetails);
 
     Assertions.assertThat(productSummary.isContainsNewConcepts()).isTrue();
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, CTPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, TPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, MPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, TPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TP_LABEL);
 
     checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(productSummary, false, true, false);
@@ -107,7 +109,6 @@ class DeviceCreationControllerTest extends LingoTestBase {
         getLingoTestClient().createTicket("createSimpleProductFromExistingWithPackSizeChange");
 
     // create
-    productSummary.getSubjects().clear();
     ProductSummary createdProduct =
         getLingoTestClient()
             .createDeviceProduct(
@@ -123,13 +124,13 @@ class DeviceCreationControllerTest extends LingoTestBase {
         getLingoTestClient().getProductModel(createdProduct.getSingleSubject().getConceptId());
 
     Assertions.assertThat(productModelPostCreation.isContainsNewConcepts()).isFalse();
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, CTPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, TP_LABEL);
 
     checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(productModelPostCreation, false, true, false);
@@ -151,23 +152,24 @@ class DeviceCreationControllerTest extends LingoTestBase {
     Assertions.assertThat(packageDetails.getContainedPackages()).isNullOrEmpty();
     Assertions.assertThat(packageDetails.getContainedProducts()).size().isEqualTo(1);
 
-    DeviceProductDetails productDetails =
-        packageDetails.getContainedProducts().iterator().next().getProductDetails();
-    productDetails.setSpecificDeviceType(null);
-    productDetails.setNewSpecificDeviceName("New specific device name");
+    @Valid
+    ProductQuantity<DeviceProductDetails> productDetails =
+        packageDetails.getContainedProducts().iterator().next();
+    productDetails.getProductDetails().setSpecificDeviceType(null);
+    productDetails.getProductDetails().setNewSpecificDeviceName("New specific device name");
 
     // calculate
     ProductSummary productSummary =
         getLingoTestClient().calculateDeviceProductSummary(packageDetails);
 
     Assertions.assertThat(productSummary.isContainsNewConcepts()).isTrue();
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, CTPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, TPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, MPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, TPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, MPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, MP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 1, TP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 1, 0, 0, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 1, TP_LABEL);
 
     checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(productSummary, false, true, false);
@@ -191,13 +193,13 @@ class DeviceCreationControllerTest extends LingoTestBase {
         getLingoTestClient().getProductModel(createdProduct.getSingleSubject().getConceptId());
 
     Assertions.assertThat(productModelPostCreation.isContainsNewConcepts()).isFalse();
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, CTPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MPP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MPUU_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, MP_LABEL);
-    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 1, TP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, CTPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, TPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, MPP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, TPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, MPUU_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, MP_LABEL);
+    MedicationAssertions.assertProductSummaryHas(productModelPostCreation, 0, 0, 1, TP_LABEL);
 
     checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(productModelPostCreation, false, true, false);
@@ -208,11 +210,22 @@ class DeviceCreationControllerTest extends LingoTestBase {
             .getDevicePackDetails(Long.parseLong(createdProduct.getSingleSubject().getConceptId()));
 
     Assertions.assertThat(packageDetailsPostCreation.getContainedProducts()).size().isEqualTo(1);
-    DeviceProductDetails productDetailsPostCreation =
-        packageDetailsPostCreation.getContainedProducts().iterator().next().getProductDetails();
-    Assertions.assertThat(productDetailsPostCreation.getSpecificDeviceType().getPt().getTerm())
+    @Valid
+    ProductQuantity<DeviceProductDetails> productDetailsPostCreation =
+        packageDetailsPostCreation.getContainedProducts().iterator().next();
+    Assertions.assertThat(
+            productDetailsPostCreation
+                .getProductDetails()
+                .getSpecificDeviceType()
+                .getPt()
+                .getTerm())
         .isEqualTo("New specific device name");
-    Assertions.assertThat(productDetailsPostCreation.getSpecificDeviceType().getFsn().getTerm())
+    Assertions.assertThat(
+            productDetailsPostCreation
+                .getProductDetails()
+                .getSpecificDeviceType()
+                .getFsn()
+                .getTerm())
         .isEqualTo("New specific device name (physical object)");
   }
 }

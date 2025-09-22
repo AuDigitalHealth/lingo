@@ -184,9 +184,7 @@ function getFormattedDate(comment: Comment) {
     ? (comment.modified as string)
     : comment.created;
 
-  const formattedDate = new Date(Date.parse(displayedDate)).toLocaleString(
-    'en-AU',
-  );
+  const formattedDate = new Date(Date.parse(displayedDate)).toLocaleString();
 
   return {
     formattedDate,

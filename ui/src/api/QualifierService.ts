@@ -16,7 +16,7 @@
 
 import { Concept } from '../types/concept.ts';
 
-import { BrandCreationDetails } from '../types/product.ts';
+import { PrimitiveConceptCreationDetails } from '../types/product.ts';
 
 import { api } from './api.ts';
 
@@ -26,8 +26,8 @@ const QualifierService = {
   handleErrors: () => {
     throw new Error('invalid product response');
   },
-  async createBrand(
-    creationDetails: BrandCreationDetails,
+  async createPrimitiveConcept(
+    creationDetails: PrimitiveConceptCreationDetails,
     branch: string,
   ): Promise<Concept> {
     const response = await api.post(

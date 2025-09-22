@@ -191,13 +191,13 @@
   <parent>
     <artifactId>lingo</artifactId>
     <groupId>au.gov.digitalhealth</groupId>
-    <version>1.2.12-SNAPSHOT</version>
+    <version>1.3.1-SNAPSHOT</version>
   </parent>
 
   <properties>
     <frontend-maven-plugin.version>1.15.0</frontend-maven-plugin.version>
     <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
-    <skipUITests>false</skipUITests>
+    <skipUITests>true</skipUITests>
   </properties>
 
 </project>

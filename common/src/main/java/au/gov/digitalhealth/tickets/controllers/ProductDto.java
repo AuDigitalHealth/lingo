@@ -17,6 +17,7 @@ package au.gov.digitalhealth.tickets.controllers;
 
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.ProductDetails;
+import au.gov.digitalhealth.tickets.models.ProductAction;
 import java.time.Instant;
 import lombok.Builder;
 import lombok.Data;
@@ -44,4 +45,10 @@ public class ProductDto {
   private String conceptId;
 
   private PackageDetails<? extends ProductDetails> packageDetails;
+
+  private PackageDetails<? extends ProductDetails> originalPackageDetails;
+
+  private String originalConceptId;
+
+  private ProductAction action;
 }

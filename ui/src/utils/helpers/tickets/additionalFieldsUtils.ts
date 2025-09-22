@@ -15,7 +15,7 @@
 ///
 
 import { AdditionalFieldType } from '../../../types/tickets/ticket';
-import { ExternalIdentifier } from '../../../types/product.ts';
+import { NonDefiningProperty } from '../../../types/product.ts';
 
 export const sortAdditionalFields = (
   unsortedFields: AdditionalFieldType[] | null,
@@ -68,34 +68,65 @@ export const sortAdditionalFields = (
 
   return sortedFields;
 };
-export const sortExternalIdentifiers = (
-  artgIds: ExternalIdentifier[],
-): ExternalIdentifier[] => {
-  return artgIds?.slice().sort((a, b) => {
-    const valA = parseInt(a.identifierValue, 10);
-    const valB = parseInt(b.identifierValue, 10);
 
-    // Handle cases where parseInt fails (returns NaN)
-    if (isNaN(valA) && isNaN(valB)) return 0; // Both are invalid, maintain original order
-    if (isNaN(valA)) return 1; // Move invalid values to the end
-    if (isNaN(valB)) return -1; // Move invalid values to the end
+export const sortNonDefiningProperties = (
+  properties: NonDefiningProperty[],
+): NonDefiningProperty[] => {
+  if (!properties || properties.length === 0) {
+    return [];
+  }
 
-    return valA - valB; // Numeric comparison for valid numbers
+  return properties.slice().sort((a, b) => {
+    // First sort by identifierScheme
+    const schemeA = a.identifierScheme || '';
+    const schemeB = b.identifierScheme || '';
+
+    const schemeComparison = schemeA.localeCompare(schemeB);
+    if (schemeComparison !== 0) {
+      return schemeComparison;
+    }
+
+    // Then sort by value if identifierScheme is the same
+    // For numeric values, try to sort numerically
+    const aValue =
+      a.value !== null
+        ? a.value
+        : a.valueObject?.pt?.term || a.valueObject?.conceptId || '';
+    const bValue =
+      b.value !== null
+        ? b.value
+        : b.valueObject?.pt?.term || b.valueObject?.conceptId || '';
+
+    // Try numeric sorting if both values can be parsed as numbers
+    const numA = parseFloat(String(aValue));
+    const numB = parseFloat(String(bValue));
+
+    if (!isNaN(numA) && !isNaN(numB)) {
+      return numA - numB;
+    }
+
+    // Fall back to string comparison for non-numeric values
+    return String(aValue).localeCompare(String(bValue));
   });
 };
-export function areTwoExternalIdentifierArraysEqual(
-  array1: ExternalIdentifier[],
-  array2: ExternalIdentifier[],
+
+export function areTwoNonDefiningPropertiesArraysEqual(
+  array1: NonDefiningProperty[] | undefined,
+  array2: NonDefiningProperty[] | undefined,
 ): boolean {
+  if (array1 === undefined && array2 === undefined) return true;
+  if (array1 === undefined || array2 === undefined) return true;
+
   if (array1.length !== array2.length) {
     return false; // Arrays must have the same length
   }
 
-  const sortedArray1 = sortExternalIdentifiers(array1);
-  const sortedArray2 = sortExternalIdentifiers(array2);
+  const sortedArray1 = sortNonDefiningProperties(array1);
+  const sortedArray2 = sortNonDefiningProperties(array2);
   return sortedArray1.every(
     (item, index) =>
       item.identifierScheme === sortedArray2[index].identifierScheme &&
-      item.identifierValue === sortedArray2[index].identifierValue,
+      item.value === sortedArray2[index].value &&
+      item.valueObject === sortedArray2[index].valueObject,
   );
 }

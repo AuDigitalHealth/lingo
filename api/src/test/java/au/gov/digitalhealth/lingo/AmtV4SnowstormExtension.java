@@ -61,7 +61,7 @@ public class AmtV4SnowstormExtension implements BeforeAllCallback, AfterAllCallb
               "JDK_JAVA_OPTIONS",
               """
                  -cp @/app/jib-classpath-file -Xms2g -Xmx4g
-                 -Dcache.ecl.enabled=false -Delasticsearch.index.max.terms.count=700000
+                 -Dcache.ecl.enabled=false -Delasticsearch.index.max.terms.count=700000 -Dlogging.level.org.snomed.snowstorm=DEBUG
                  --add-opens java.base/java.lang=ALL-UNNAMED
                  --add-opens=java.base/java.util=ALL-UNNAMED
               """)

@@ -22,7 +22,7 @@ public class BigDecimalFormatter {
 
   private BigDecimalFormatter() {}
 
-  public static String formatBigDecimal(BigDecimal number, int scale) {
+  public static String formatBigDecimal(BigDecimal number, int scale, boolean trimWholeNumbers) {
     // Set the scale with RoundingMode.HALF_UP
     BigDecimal scaledNumber = number.setScale(scale, RoundingMode.HALF_UP);
 
@@ -36,7 +36,11 @@ public class BigDecimalFormatter {
         endIndex--;
       }
       if (formattedNumber.charAt(endIndex - 1) == '.') {
-        endIndex++;
+        if (trimWholeNumbers) {
+          endIndex--;
+        } else {
+          endIndex++;
+        }
       }
       formattedNumber = formattedNumber.substring(0, endIndex);
     }

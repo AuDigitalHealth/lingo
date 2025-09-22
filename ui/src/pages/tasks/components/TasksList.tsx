@@ -5,9 +5,11 @@ import {
   GridColDef,
   GridRenderCellParams,
   GridValueFormatterParams,
+  getGridSingleSelectOperators,
 } from '@mui/x-data-grid';
 
 import {
+  BranchState,
   Classification,
   Task,
   TaskStatus,
@@ -16,7 +18,7 @@ import {
 import { Card, Chip, Grid } from '@mui/material';
 import { Link } from 'react-router-dom';
 
-import { ReactNode, useCallback, useEffect, useState } from 'react';
+import { ReactNode, useEffect } from 'react';
 import statusToColor from '../../../utils/statusToColor.ts';
 import { ValidationColor } from '../../../types/validationColor.ts';
 
@@ -25,25 +27,21 @@ import {
   mapToUserNameArray,
   mapToUserOptions,
   isUserExistsInList,
-  userExistsInList,
 } from '../../../utils/helpers/userUtils.ts';
 import CustomTaskAssigneeSelection from './CustomTaskAssigneeSelection.tsx';
 import CustomTaskReviewerSelection from './CustomTaskReviewerSelection.tsx';
 import { TableHeaders } from '../../../components/TableHeaders.tsx';
 import TasksActionBar from './TasksActionBar.tsx';
 import AuthoringPlatformLink from '../../../components/AuthoringPlatformLink.tsx';
-import { useAllTasks } from '../../../hooks/api/useAllTasks.tsx';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import { unavailableTasksErrorHandler } from '../../../types/ErrorHandler.ts';
-import useUserStore from '../../../stores/UserStore.ts';
-import { TaskStatusIcon } from '../../../components/icons/TaskStatusIcon.tsx';
+import { RebaseIcon } from '../../../components/icons/RebaseIcon.tsx';
 import { getTaskAssociationsByTaskId } from '../../../hooks/useGetTaskAssociationsByTaskId.tsx';
 import { useAllTaskAssociations } from '../../../hooks/api/useInitializeTickets.tsx';
 import { useJiraUsers } from '../../../hooks/api/useInitializeJiraUsers.tsx';
 import { useFieldBindings } from '../../../hooks/api/useInitializeConfig.tsx';
 import { getAllKeyValueMapForTheKey } from '../../../utils/helpers/FieldBindingUtils.ts';
-import message from '../../../layouts/MainLayout/Header/HeaderContent/Message.tsx';
 import { Project } from '../../../types/Project.ts';
 
 interface TaskListProps {
@@ -170,39 +168,40 @@ function TasksList({
     field: 'key',
     headerName: 'Task ID',
     minWidth: 90,
-    flex: 1,
+    // flex: 1,
     maxWidth: 90,
-    valueGetter: (params: GridRenderCellParams<any, string>): Task => {
-      return params.row;
+    valueGetter: (params: GridRenderCellParams<any, string>): string => {
+      return params.row?.key || '';
     },
     type: 'string',
-    sortComparator: (v1: any, v2: any, param1: any, param2: any) => {
-      // Sort by the task's key property
-      const key1 = param1.value?.key || '';
-      const key2 = param2.value?.key || '';
+    sortComparator: (v1: string, v2: string, param1: any, param2: any) => {
+      const key1 = v1 || '';
+      const key2 = v2 || '';
 
-      // Fallback to string comparison
       return key1.localeCompare(key2);
     },
-    renderCell: (params: GridRenderCellParams<any, Task>): ReactNode => {
+    renderCell: (params: GridRenderCellParams<any, string>): ReactNode => {
+      // Access the full row object for rendering
+      const task = params.row as Task;
+
       if (isSnodineList) {
         return naked ? (
-          <>{params.value?.key.toString()}</>
+          <>{task?.key?.toString()}</>
         ) : (
           <Link
-            to={`task/${params.value?.projectKey}/${params.value?.key}`}
+            to={`task/${task?.projectKey}/${task?.key}`}
             className={'task-details-link'}
           >
-            {params.value?.key.toString()}
+            {task?.key?.toString()}
           </Link>
         );
       }
       return (
         <AuthoringPlatformLink
-          to={`/dashboard/tasks/edit/${params.value?.key}`}
+          to={`/dashboard/tasks/edit/${task?.key}`}
           className={'task-details-link'}
         >
-          {params.value!.key?.toString()}
+          {task?.key?.toString()}
         </AuthoringPlatformLink>
       );
     },
@@ -213,14 +212,28 @@ function TasksList({
     {
       field: 'summary',
       headerName: 'Name',
-      width: 150,
+      minWidth: 150,
+      flex: 1,
+      maxWidth: 300,
+      renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
+        <div
+          style={{
+            whiteSpace: 'normal',
+            wordWrap: 'break-word',
+            lineHeight: '1.2',
+            padding: '8px 0',
+          }}
+        >
+          {params.value}
+        </div>
+      ),
     },
     taskIdColumn,
     {
       field: 'updated',
       headerName: 'Modified',
       minWidth: 100,
-      flex: 1,
+      // flex: 1,
       maxWidth: 100,
       valueFormatter: ({ value }: GridValueFormatterParams<string>) => {
         const date = new Date(value);
@@ -231,9 +244,9 @@ function TasksList({
     {
       field: 'branchState',
       headerName: 'Rebase',
-      minWidth: 100,
-      flex: 1,
-      maxWidth: 200,
+      width: 120,
+      align: 'center',
+      headerAlign: 'center',
       valueOptions: Array.from(branchStateMap.entries()).map(
         ([key, value]) => ({
           value: key,
@@ -242,18 +255,15 @@ function TasksList({
       ),
       type: 'singleSelect',
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
-        <ValidationBadge
-          params={params.value}
-          label={branchStateMap.get(params.value)}
-        />
+        <RebaseIcon branchState={params.value as BranchState} />
       ),
     },
     {
       field: 'latestClassificationJson',
       headerName: 'Classification',
-      minWidth: 100,
-      flex: 1,
-      maxWidth: 150,
+      width: 120,
+      align: 'center',
+      headerAlign: 'center',
       valueOptions: Array.from(classificationStatusMap.entries()).map(
         ([key, value]) => ({
           value: key,
@@ -270,15 +280,15 @@ function TasksList({
       valueGetter: (
         params: GridRenderCellParams<any, Classification>,
       ): string => {
-        return params.value?.status as string;
+        return params?.value?.status as string;
       },
     },
     {
       field: 'latestValidationStatus',
       headerName: 'Validation',
-      minWidth: 100,
-      flex: 1,
-      maxWidth: 200,
+      width: 120,
+      align: 'center',
+      headerAlign: 'center',
       valueOptions: Array.from(validationStatusMap.entries()).map(
         ([key, value]) => ({
           value: key,
@@ -298,16 +308,25 @@ function TasksList({
     {
       field: 'status',
       headerName: 'Status',
+      align: 'center',
+      headerAlign: 'center',
       valueOptions: Object.values(TaskStatus),
       type: 'singleSelect',
       renderCell: (
         params: GridRenderCellParams<any, TaskStatus | undefined>,
-      ): ReactNode => <TaskStatusIcon status={params.formattedValue} />,
+      ): ReactNode => (
+        <ValidationBadge
+          params={params.formattedValue}
+          label={params.formattedValue}
+        />
+      ),
     },
     {
       field: 'feedbackMessagesStatus',
       headerName: 'Feedback',
-      width: 150,
+      width: 120,
+      align: 'center',
+      headerAlign: 'center',
       valueOptions: Array.from(feedbackStatusMap.entries()).map(
         ([key, value]) => ({
           value: key, // Use the key for the actual value
@@ -325,8 +344,7 @@ function TasksList({
     {
       field: 'assignee',
       headerName: 'Owner',
-      minWidth: 100,
-      maxWidth: 100,
+      width: 100,
       type: 'singleSelect',
       valueOptions: mapToUserOptions(jiraUsers),
       getApplyQuickFilterFn: (value: string) => {
@@ -341,7 +359,7 @@ function TasksList({
         <CustomTaskAssigneeSelection
           user={params.value}
           userList={jiraUsers}
-          id={params.id as string}
+          id={(params.id as string) || ''}
         />
       ),
       valueGetter: (params: GridRenderCellParams<any, UserDetails>): string => {
@@ -351,13 +369,11 @@ function TasksList({
     {
       field: 'reviewers',
       headerName: 'Reviewers',
-
-      minWidth: 150,
-      flex: 1,
-      maxWidth: 250,
+      width: 200,
       type: 'singleSelect',
-      filterable: false,
+      filterable: true,
       sortable: true,
+      valueOptions: mapToUserOptions(jiraUsers),
       sortComparator: (v1, v2, param1, param2) => {
         // commented because it is not super clear what the values are/should be here.
         const valueA = param1.value; // Array of strings
@@ -402,7 +418,25 @@ function TasksList({
 
         return 0;
       },
-      disableColumnMenu: true,
+      disableColumnMenu: false,
+      filterOperators: [
+        {
+          ...getGridSingleSelectOperators().find(op => op.value === 'is')!,
+          getApplyFilterFn: (filterItem: any) => {
+            if (!filterItem.value) {
+              return null;
+            }
+            return (params: GridCellParams): boolean => {
+              return isUserExistsInList(
+                params.value as string[],
+                filterItem.value,
+                jiraUsers,
+              );
+            };
+          },
+        },
+      ],
+      // Keep your quick filter for the search bar
       getApplyQuickFilterFn: (value: string) => {
         if (!value) {
           return null;
@@ -455,6 +489,11 @@ function TasksList({
                   maxHeight: 'none !important',
                   paddingLeft: '24px',
                   paddingRight: '24px',
+                },
+                '& .MuiDataGrid-cell': {
+                  whiteSpace: 'normal !important',
+                  wordWrap: 'break-word',
+                  lineHeight: '1.2',
                 },
                 '& .MuiDataGrid-columnHeaders': {
                   border: 0,
@@ -524,7 +563,9 @@ function TasksList({
                       },
                     }
               }
-              pageSizeOptions={!naked ? [10, 15, 20, 25] : []}
+              pageSizeOptions={
+                !naked ? [10, 15, 20, 25, 100, { value: -1, label: 'All' }] : []
+              }
               disableColumnFilter={naked}
               disableColumnMenu={naked}
               disableRowSelectionOnClick={naked}

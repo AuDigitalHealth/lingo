@@ -21,10 +21,13 @@ import {
   ProductSummary,
 } from './concept.ts';
 import { VersionedEntity } from './tickets/ticket.ts';
+import { CreateConceptConfig } from '../pages/products/rjsf/fields/bulkBrandPack/ExternalIdentifiers.tsx';
 
 export enum ProductType {
   medication = 'medication',
   device = 'device',
+  vaccine = 'vaccine',
+  nutritional = 'nutritional',
   brandPackSize = 'brand-pack-size',
   bulkPackSize = 'bulk-pack-size',
   bulkBrand = 'bulk-brand',
@@ -35,24 +38,58 @@ export enum ActionType {
   newProduct = 'newProduct', //All product types including medication and device
   newDevice = 'newDevice',
   newMedication = 'newMedication',
+  newVaccine = 'newVaccine',
+  newNutritionalProduct = 'newNutritionalProduct',
   newPackSize = 'newPackSize',
   newBrand = 'newBrand',
   editProduct = 'editProduct',
 }
 
-export enum ProductGroupType {
-  MP = 'Product',
-  MPUU = 'Generic Product',
-  MPP = 'Generic Pack',
-  CTPP = 'Branded Container',
-  TP = 'Brand Name',
-  TPUU = 'Branded Product',
-  TPP = 'Branded Pack',
+export enum NonDefiningPropertyType {
+  EXTERNAL_IDENTIFIER = 'EXTERNAL_IDENTIFIER',
+  REFERENCE_SET = 'REFERENCE_SET',
+  NON_DEFINING_PROPERTY = 'NON_DEFINING_PROPERTY',
 }
-export interface ExternalIdentifier {
+
+export interface NonDefiningProperty {
+  title: string;
   identifierScheme: string;
-  identifierValue: string;
+  identifier: string;
+  value?: string | number | null;
+  relationshipType: string | null;
+  valueObject?: SnowstormConceptMini | null;
+  type?: NonDefiningPropertyType;
+  codeSystem?: string;
+  additionalProperties?: AdditionalProperty[];
+  additionalFields?: AdditionalFields;
 }
+
+export type AdditionalFields = {
+  [key: string]: { value?: string; valueObject?: SnowstormConceptMini };
+};
+
+export interface AdditionalProperty {
+  code: string;
+  codeSystem: string | null;
+  value: string;
+  subProperties?: SubAdditionalProperty[];
+}
+
+export interface SubAdditionalProperty {
+  code: string;
+  value: string;
+}
+
+export interface BindingConfig {
+  [key: string]: {
+    valueSet?: string;
+    ecl?: string;
+    showDefaultOptions?: boolean;
+    createConcept?: CreateConceptConfig;
+    placeholder?: string;
+  };
+}
+
 export interface Quantity {
   value: number;
   unit?: Concept;
@@ -90,11 +127,16 @@ export interface MedicationProductDetails {
 export interface MedicationPackageDetails {
   productName?: Concept | null;
   containerType?: Concept | null;
-  externalIdentifiers?: ExternalIdentifier[];
+  nonDefiningProperties?: NonDefiningProperty[];
   containedProducts: MedicationProductQuantity[];
   containedPackages: MedicationPackageQuantity[];
   selectedConceptIdentifiers?: string[];
 }
+
+export type ProductAddDetails =
+  | MedicationProductQuantity
+  | DeviceProductQuantity
+  | MedicationPackageQuantity;
 
 export interface NewPackSizeDetails {
   selectedConceptIdentifiers?: string[];
@@ -123,7 +165,7 @@ export interface DeviceProductQuantity {
 export interface DevicePackageDetails {
   productName?: Concept | null;
   containerType?: Concept;
-  externalIdentifiers?: ExternalIdentifier[];
+  nonDefiningProperties?: NonDefiningProperty[];
   containedProducts: DeviceProductQuantity[];
   selectedConceptIdentifiers?: string[];
 }
@@ -133,6 +175,26 @@ export interface BrandPackSizeCreationDetails {
   productId: string;
   brands?: ProductBrands;
   packSizes?: ProductPackSizes;
+}
+export enum ProductActionType {
+  create = 'create',
+  update = 'update',
+}
+export interface ProductSaveDetails {
+  type: ProductActionType;
+  productSummary: ProductSummary;
+  packageDetails:
+    | MedicationPackageDetails
+    | DevicePackageDetails
+    | BrandPackSizeCreationDetails;
+  ticketId: number;
+  partialSaveName: string | null;
+  nameOverride: string | null;
+  originalConceptId: string | null | undefined;
+  originalPackageDetails:
+    | MedicationPackageDetails
+    | DevicePackageDetails
+    | BrandPackSizeCreationDetails;
 }
 
 export const isProductUpdateDetails = (
@@ -152,7 +214,7 @@ export interface ProductUpdateCreationDetails {
 
 export interface ProductUpdateState {
   concept: BrowserConcept;
-  externalIdentifiers: ExternalIdentifier[];
+  nonDefiningProperties: NonDefiningProperty[];
 }
 
 export interface ProductCreationDetails {
@@ -163,8 +225,12 @@ export interface ProductCreationDetails {
     | BrandPackSizeCreationDetails;
   ticketId: number;
   partialSaveName: string | null;
-  saveName: string;
   nameOverride: string | null;
+  originalConceptId: string | null | undefined;
+  originalPackageDetails:
+    | MedicationPackageDetails
+    | DevicePackageDetails
+    | BrandPackSizeCreationDetails;
 }
 
 export interface ProductUpdate extends VersionedEntity {
@@ -183,14 +249,15 @@ export interface ProductUpdateRequest {
   // the concept that is actually being edited
   conceptId: string;
   descriptionUpdate: ProductDescriptionUpdateRequest;
-  externalRequesterUpdate: ProductExternalRequesterUpdateRequest;
+  propertiesUpdateRequest: ProductPropertiesUpdateRequest;
 }
 export interface ProductDescriptionUpdateRequest {
   descriptions: Description[];
 }
 
-export interface ProductExternalRequesterUpdateRequest {
-  externalIdentifiers: ExternalIdentifier[];
+export interface ProductPropertiesUpdateRequest {
+  newNonDefiningProperties: NonDefiningProperty[];
+  existingNonDefiningProperties: NonDefiningProperty[] | undefined;
 }
 
 export interface BulkProductCreationDetails {
@@ -212,12 +279,12 @@ export interface ProductPackSizes {
 
 export interface BrandWithIdentifiers {
   brand: SnowstormConceptMini;
-  externalIdentifiers: ExternalIdentifier[];
+  nonDefiningProperties?: NonDefiningProperty[];
 }
 
 export interface PackSizeWithIdentifiers {
   packSize: BigDecimal;
-  externalIdentifiers: ExternalIdentifier[];
+  nonDefiningProperties?: NonDefiningProperty[];
 }
 
 export type SnowstormConceptMini = Concept;
@@ -244,8 +311,11 @@ export interface SnowstormTermLangPojo {
   term?: string;
   lang?: string;
 }
-export interface BrandCreationDetails {
-  brandName: string;
+export interface PrimitiveConceptCreationDetails {
+  conceptName: string;
+  parentConceptId: string;
+  parentConceptName: string;
+  semanticTag: string;
   ticketId: number;
 }
 export type BigDecimal = number;

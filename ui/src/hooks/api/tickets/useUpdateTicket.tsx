@@ -37,7 +37,6 @@ export function usePatchTicket() {
   const queryClient = useQueryClient();
   const { mergeTicket } = useTicketStore();
   const mutation = useMutation({
-    // eslint-disable-next-line
     mutationFn: ({ updatedTicket, _clearCache = true }: UsePatchTicketArgs) => {
       const simpleTicket = {
         id: updatedTicket.id,
@@ -176,6 +175,7 @@ export function useBulkCreateTickets() {
     onSuccess: data => {
       enqueueSnackbar(`Updated ${data.length} rows`, {
         variant: 'success',
+        autoHideDuration: 5000,
       });
     },
   });
@@ -200,6 +200,7 @@ export function useBulkCreateExternalRequestors() {
     onSuccess: () => {
       enqueueSnackbar('Process complete.', {
         variant: 'success',
+        autoHideDuration: 5000,
       });
     },
   });

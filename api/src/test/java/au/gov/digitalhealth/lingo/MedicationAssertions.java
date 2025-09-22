@@ -28,6 +28,7 @@ import static au.gov.digitalhealth.lingo.service.ProductSummaryService.TP_LABEL;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.ARTGID_REFSET;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.BRANDED_CLINICAL_DRUG_SEMANTIC_TAG;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.BRANDED_PHYSICAL_OBJECT_SEMANTIC_TAG;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.BRANDED_PRODUCT_SEMANTIC_TAG;
@@ -45,9 +46,9 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.PRODUCT_SEMANTIC_T
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
-import au.gov.digitalhealth.lingo.product.details.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
+import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -60,7 +61,11 @@ import org.assertj.core.api.Assertions;
 public class MedicationAssertions {
 
   public static void assertProductSummaryHas(
-      ProductSummary productSummary, int numberOfNew, int numberOfExisting, String label) {
+      ProductSummary productSummary,
+      int numberOfNew,
+      int numberUpdated,
+      int numberOfExisting,
+      String label) {
     Set<Node> nodeSet =
         productSummary.getNodes().stream()
             .filter(n -> n.getLabel().equals(label))
@@ -77,7 +82,22 @@ public class MedicationAssertions {
               + label);
     }
 
-    long countExisting = nodeSet.stream().filter(n -> !n.isNewConcept()).count();
+    long countUpdated =
+        nodeSet.stream().filter(node -> node.isRetireAndReplace() || node.isConceptEdit()).count();
+    if (countUpdated != numberUpdated) {
+      throw new AssertionFailedError(
+          "Product summary had "
+              + countUpdated
+              + " updated nodes rather than expected "
+              + numberUpdated
+              + " of type "
+              + label);
+    }
+
+    long countExisting =
+        nodeSet.stream()
+            .filter(n -> !n.isNewConcept() && !n.isRetireAndReplace() && !n.isConceptEdit())
+            .count();
     if (countExisting != numberOfExisting) {
       throw new AssertionFailedError(
           "Product summary had "
@@ -96,10 +116,10 @@ public class MedicationAssertions {
         .isEqualTo(packageDetails.getProductName());
     Assertions.assertThat(packageDetailsPostCreation.getContainerType())
         .isEqualTo(packageDetails.getContainerType());
-    Assertions.assertThat(packageDetailsPostCreation.getExternalIdentifiers())
-        .containsAll(packageDetails.getExternalIdentifiers());
-    Assertions.assertThat(packageDetails.getExternalIdentifiers())
-        .containsAll(packageDetailsPostCreation.getExternalIdentifiers());
+    Assertions.assertThat(packageDetailsPostCreation.getNonDefiningProperties())
+        .containsAll(packageDetails.getNonDefiningProperties());
+    Assertions.assertThat(packageDetails.getNonDefiningProperties())
+        .containsAll(packageDetailsPostCreation.getNonDefiningProperties());
 
     Assertions.assertThat(packageDetailsPostCreation.getContainedProducts())
         .containsAll(packageDetails.getContainedProducts());
@@ -234,7 +254,7 @@ public class MedicationAssertions {
                     device
                         ? (medicated
                             ? BRANDED_PRODUCT_PACKAGE_SEMANTIC_TAG.getValue()
-                            : BRANDED_PHYSICAL_OBJECT_SEMANTIC_TAG.getValue())
+                            : BRANDED_PHYSICAL_OBJECT_PACKAGE_SEMANTIC_TAG.getValue())
                         : BRANDED_CLINICAL_DRUG_PACKAGE_SEMANTIC_TAG.getValue());
         case MPP_LABEL ->
             Assertions.assertThat(node.getNewConceptDetails().getSemanticTag())
@@ -310,7 +330,7 @@ public class MedicationAssertions {
                         + " "
                         + n.getNewConceptDetails().getReferenceSetMembers());
               } else if (n.getNewConceptDetails().getReferenceSetMembers() != null
-                  && packageDetails.getExternalIdentifiers() != null) {
+                  && packageDetails.getNonDefiningProperties() != null) {
                 Set<String> identifiers =
                     n.getNewConceptDetails().getReferenceSetMembers().stream()
                         .filter(r -> Objects.equals(r.getRefsetId(), ARTGID_REFSET.getValue()))
@@ -320,8 +340,9 @@ public class MedicationAssertions {
 
                 Assertions.assertThat(identifiers)
                     .isEqualTo(
-                        packageDetails.getExternalIdentifiers().stream()
-                            .map(ExternalIdentifier::getIdentifierValue)
+                        ExternalIdentifier.filter(packageDetails.getNonDefiningProperties())
+                            .stream()
+                            .map(ExternalIdentifier::getValue)
                             .collect(Collectors.toSet()));
 
                 log.info(
@@ -330,8 +351,9 @@ public class MedicationAssertions {
                         + " "
                         + identifiers
                         + " matches "
-                        + packageDetails.getExternalIdentifiers().stream()
-                            .map(ExternalIdentifier::getIdentifierValue)
+                        + ExternalIdentifier.filter(packageDetails.getNonDefiningProperties())
+                            .stream()
+                            .map(ExternalIdentifier::getValue)
                             .collect(Collectors.toSet()));
               }
             });

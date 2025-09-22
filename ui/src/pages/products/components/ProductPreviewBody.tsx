@@ -22,6 +22,7 @@ import UnableToEditTooltip from '../../tasks/components/UnableToEditTooltip.tsx'
 
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import ProductLoader from './ProductLoader.tsx';
+import ColorLegend from './ColorLegend.tsx';
 
 interface ProductPreviewBodyProps {
   productModel: ProductSummary;
@@ -30,7 +31,8 @@ interface ProductPreviewBodyProps {
   watch: UseFormWatch<ProductSummary>;
   getValues: UseFormGetValues<ProductSummary>;
   readOnlyMode: boolean;
-  editProduct: boolean;
+  isSimpleEdit: boolean;
+  isProductUpdate: boolean;
   newConceptFound: boolean;
 
   branch: string;
@@ -48,13 +50,14 @@ function ProductPreviewBody({
   register,
   watch,
   branch,
-  editProduct,
+  isSimpleEdit,
   newConceptFound,
   readOnlyMode,
   handleClose,
 
   setValue,
   ticket,
+  isProductUpdate,
 }: ProductPreviewBodyProps) {
   const lableTypesRight = ['TP', 'TPUU', 'TPP'];
   const lableTypesLeft = ['MP', 'MPUU', 'MPP'];
@@ -79,123 +82,156 @@ function ProductPreviewBody({
         id={'product-view'}
         data-testid={'product-view'}
       >
-        {isRefsetLoading ||
-          (fieldBindingIsLoading && (
-            <ProductLoader
-              message={`Loading 7 Box model for [${getProductDisplayName(productModel)}]`}
-            />
-          ))}
-        <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 3 }}>
-          <Grid xs={6} key={'left'} item={true}>
-            {lableTypesLeft.map((label, index) => (
-              <ProductTypeGroupPreview
-                key={`left-${label}-${index}`}
-                productLabelItems={filterByLabel(productModel?.nodes, label)}
-                label={label}
-                control={control}
-                productModel={productModel}
-                activeConcept={activeConcept}
-                setActiveConcept={setActiveConcept}
-                expandedConcepts={expandedConcepts}
-                setExpandedConcepts={setExpandedConcepts}
-                getValues={getValues}
-                register={register}
-                watch={watch}
-                idsWithInvalidName={idsWithInvalidName}
-                setIdsWithInvalidName={setIdsWithInvalidName}
-                fieldBindings={fieldBindings}
-                branch={branch}
-                refsetData={refsetData}
-                editProduct={editProduct}
-                setValue={setValue}
-                ticket={ticket}
+        <>
+          {isRefsetLoading ||
+            (fieldBindingIsLoading && (
+              <ProductLoader
+                message={`Loading box model for [${getProductDisplayName(productModel)}]`}
               />
             ))}
+          <Grid
+            container
+            rowSpacing={1}
+            columnSpacing={{ xs: 1, sm: 2, md: 3 }}
+          >
+            <Grid xs={6} key={'left'} item={true}>
+              {lableTypesLeft.map((label, index) => (
+                <ProductTypeGroupPreview
+                  key={`left-${label}-${index}`}
+                  productLabelItems={filterByLabel(productModel?.nodes, label)}
+                  label={label}
+                  control={control}
+                  productModel={productModel}
+                  activeConcept={activeConcept}
+                  setActiveConcept={setActiveConcept}
+                  expandedConcepts={expandedConcepts}
+                  setExpandedConcepts={setExpandedConcepts}
+                  getValues={getValues}
+                  register={register}
+                  watch={watch}
+                  idsWithInvalidName={idsWithInvalidName}
+                  setIdsWithInvalidName={setIdsWithInvalidName}
+                  fieldBindings={fieldBindings}
+                  branch={branch}
+                  refsetData={refsetData}
+                  isSimpleEdit={isSimpleEdit}
+                  setValue={setValue}
+                  ticket={ticket}
+                />
+              ))}
+            </Grid>
+            <Grid xs={6} key={'right'} item={true}>
+              {lableTypesRight.map((label, index) => (
+                <ProductTypeGroupPreview
+                  key={`left-${label}-${index}`}
+                  productLabelItems={filterByLabel(productModel?.nodes, label)}
+                  label={label}
+                  control={control}
+                  productModel={productModel}
+                  activeConcept={activeConcept}
+                  setActiveConcept={setActiveConcept}
+                  expandedConcepts={expandedConcepts}
+                  setExpandedConcepts={setExpandedConcepts}
+                  register={register}
+                  watch={watch}
+                  getValues={getValues}
+                  idsWithInvalidName={idsWithInvalidName}
+                  setIdsWithInvalidName={setIdsWithInvalidName}
+                  fieldBindings={fieldBindings}
+                  branch={branch}
+                  refsetData={refsetData}
+                  isSimpleEdit={isSimpleEdit}
+                  setValue={setValue}
+                  ticket={ticket}
+                />
+              ))}
+            </Grid>
+            <Grid xs={12} key={'bottom'} item={true}>
+              {lableTypesCentre.map((label, index) => {
+                const filteredItems = filterByLabel(productModel?.nodes, label);
+
+                // Only render the component if there are items to display
+                return filteredItems && filteredItems.length > 0 ? (
+                  <ProductTypeGroupPreview
+                    key={`left-${label}-${index}`}
+                    productLabelItems={filteredItems}
+                    label={label}
+                    control={control}
+                    productModel={productModel}
+                    activeConcept={activeConcept}
+                    setActiveConcept={setActiveConcept}
+                    expandedConcepts={expandedConcepts}
+                    setExpandedConcepts={setExpandedConcepts}
+                    register={register}
+                    watch={watch}
+                    getValues={getValues}
+                    idsWithInvalidName={idsWithInvalidName}
+                    setIdsWithInvalidName={setIdsWithInvalidName}
+                    fieldBindings={fieldBindings}
+                    branch={branch}
+                    refsetData={refsetData}
+                    isSimpleEdit={isSimpleEdit}
+                    setValue={setValue}
+                    ticket={ticket}
+                  />
+                ) : null;
+              })}
+            </Grid>
           </Grid>
-          <Grid xs={6} key={'right'} item={true}>
-            {lableTypesRight.map((label, index) => (
-              <ProductTypeGroupPreview
-                key={`left-${label}-${index}`}
-                productLabelItems={filterByLabel(productModel?.nodes, label)}
-                label={label}
-                control={control}
-                productModel={productModel}
-                activeConcept={activeConcept}
-                setActiveConcept={setActiveConcept}
-                expandedConcepts={expandedConcepts}
-                setExpandedConcepts={setExpandedConcepts}
-                register={register}
-                watch={watch}
-                getValues={getValues}
-                idsWithInvalidName={idsWithInvalidName}
-                setIdsWithInvalidName={setIdsWithInvalidName}
-                fieldBindings={fieldBindings}
-                branch={branch}
-                refsetData={refsetData}
-                editProduct={editProduct}
-                setValue={setValue}
-                ticket={ticket}
-              />
-            ))}
-          </Grid>
-          <Grid xs={12} key={'bottom'} item={true}>
-            {lableTypesCentre.map((label, index) => (
-              <ProductTypeGroupPreview
-                key={`left-${label}-${index}`}
-                productLabelItems={filterByLabel(productModel?.nodes, label)}
-                label={label}
-                control={control}
-                productModel={productModel}
-                activeConcept={activeConcept}
-                setActiveConcept={setActiveConcept}
-                expandedConcepts={expandedConcepts}
-                setExpandedConcepts={setExpandedConcepts}
-                register={register}
-                watch={watch}
-                getValues={getValues}
-                idsWithInvalidName={idsWithInvalidName}
-                setIdsWithInvalidName={setIdsWithInvalidName}
-                fieldBindings={fieldBindings}
-                branch={branch}
-                refsetData={refsetData}
-                editProduct={editProduct}
-                setValue={setValue}
-                ticket={ticket}
-              />
-            ))}
-          </Grid>
-        </Grid>
+        </>
       </Box>
-      {!readOnlyMode && !editProduct ? (
+      {!readOnlyMode && !isSimpleEdit ? (
         <SubmitPanel
+          productModel={productModel}
           idsWithInvalidName={idsWithInvalidName}
           newConceptFound={newConceptFound}
           handleClose={handleClose}
+          isProductUpdate={isProductUpdate}
         />
-      ) : (
-        <div />
-      )}
+      ) : null}
     </>
   );
 }
 interface SubmitPanelProps {
   newConceptFound: boolean;
-
+  productModel: ProductSummary;
   idsWithInvalidName: string[];
+  isProductUpdate: boolean;
   handleClose?:
     | ((event: object, reason: 'backdropClick' | 'escapeKeyDown') => void)
     | (() => void);
 }
 function SubmitPanel({
   newConceptFound,
-
+  productModel,
   idsWithInvalidName,
+  isProductUpdate,
   handleClose,
 }: SubmitPanelProps) {
   const { canEdit, lockDescription } = useCanEditTask();
 
+  const hasUpdatedProperties =
+    productModel?.nodes?.filter(subject => {
+      return (
+        subject.propertyUpdate ||
+        subject.statedFormChanged ||
+        subject.inferredFormChanged ||
+        subject.isModified
+      );
+    }).length > 0;
+
+  const canSubmitNonProductUpdates =
+    !isProductUpdate &&
+    canEdit &&
+    newConceptFound &&
+    idsWithInvalidName.length === 0;
+  const canSubmitProductUpdate =
+    isProductUpdate && canEdit && (hasUpdatedProperties || newConceptFound);
   return (
     <Box m={1} p={1}>
+      <Stack justifyContent="start">
+        <ColorLegend showLegend={true} />
+      </Stack>
       <Stack spacing={2} direction="row" justifyContent="end">
         <Button
           data-testid={'preview-cancel'}
@@ -207,19 +243,31 @@ function SubmitPanel({
           Cancel
         </Button>
         <UnableToEditTooltip
-          canEdit={canEdit}
-          lockDescription={lockDescription}
+          canEdit={
+            (canEdit && !(!isProductUpdate && !canSubmitNonProductUpdates)) ||
+            (isProductUpdate && !canSubmitProductUpdate)
+          }
+          lockDescription={
+            !isProductUpdate && !canSubmitNonProductUpdates
+              ? 'Create Disabled: No new concept changes detected.'
+              : isProductUpdate && !canSubmitProductUpdate
+                ? 'Update Disabled: No changes detected.'
+                : lockDescription
+          }
         >
           <Button
             variant="contained"
             type="submit"
             color="primary"
             disabled={
-              !newConceptFound || !canEdit || idsWithInvalidName.length > 0
+              (!isProductUpdate && !canSubmitNonProductUpdates) ||
+              (isProductUpdate && !canSubmitProductUpdate)
             }
-            data-testid={'create-product-btn'}
+            data-testid={
+              isProductUpdate ? 'update-product-btn' : 'create-product-btn'
+            }
           >
-            Create
+            {isProductUpdate ? 'Update' : 'Create'}
           </Button>
         </UnableToEditTooltip>
       </Stack>

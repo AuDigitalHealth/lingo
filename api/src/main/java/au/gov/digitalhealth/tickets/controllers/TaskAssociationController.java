@@ -24,6 +24,7 @@ import au.gov.digitalhealth.tickets.models.Ticket;
 import au.gov.digitalhealth.tickets.repository.TaskAssociationRepository;
 import au.gov.digitalhealth.tickets.repository.TicketRepository;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -79,23 +80,37 @@ public class TaskAssociationController {
   @DeleteMapping("/api/tickets/{ticketId}/taskAssociations/{taskAssociationId}")
   public ResponseEntity<TaskAssociation> deleteTaskAssociation(
       @PathVariable Long ticketId, @PathVariable Long taskAssociationId) {
+
     final Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
-    if (ticketOptional.isEmpty())
+    if (ticketOptional.isEmpty()) {
       throw new ResourceNotFoundProblem(String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId));
+    }
 
     Optional<TaskAssociation> taskAssociationOptional =
         taskAssociationRepository.findById(taskAssociationId);
-
-    if (taskAssociationOptional.isEmpty())
+    if (taskAssociationOptional.isEmpty()) {
       throw new ResourceNotFoundProblem(
           String.format(ErrorMessages.TASK_ASSOCIATION_ID_NOT_FOUND, taskAssociationId));
+    }
 
     Ticket ticket = ticketOptional.get();
-    ticket.setTaskAssociation(null);
+    TaskAssociation taskAssociation = taskAssociationOptional.get();
 
+    // Verify that the task association is actually associated with this ticket
+    if (!Objects.equals(ticket.getTaskAssociation(), taskAssociation)) {
+      throw new ResourceNotFoundProblem(
+          String.format(
+              "Task association %d is not associated with ticket %d", taskAssociationId, ticketId));
+    }
+
+    // Only remove the association from the ticket, don't delete the TaskAssociation entity
+    ticket.setTaskAssociation(null);
     ticketRepository.save(ticket);
 
-    taskAssociationRepository.delete(taskAssociationOptional.get());
+    // Optionally, you might also want to clear the ticket_id on the TaskAssociation
+    // if your model supports bidirectional relationships:
+    taskAssociation.setTicket(null);
+    taskAssociationRepository.save(taskAssociation);
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }

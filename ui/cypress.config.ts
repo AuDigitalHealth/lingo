@@ -57,6 +57,8 @@ export default defineConfig({
     },
     baseUrl: frontendUrl,
     experimentalStudio: false,
+    experimentalMemoryManagement: true,
+    numTestsKeptInMemory: 4,
     screenshotOnRunFailure: true,
     video: true,
   },

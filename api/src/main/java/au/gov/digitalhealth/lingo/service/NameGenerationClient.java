@@ -17,9 +17,13 @@ package au.gov.digitalhealth.lingo.service;
 
 import au.gov.digitalhealth.lingo.product.FsnAndPt;
 import au.gov.digitalhealth.lingo.product.NameGeneratorSpec;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.logging.Level;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -30,21 +34,40 @@ public class NameGenerationClient {
 
   public static final String GENERATED_NAME_UNAVAILABLE = "Generated name unavailable";
   WebClient client;
+  ObjectMapper objectMapper;
 
   @Autowired
-  public NameGenerationClient(@Qualifier("nameGeneratorApiClient") WebClient namegenApiClient) {
+  public NameGenerationClient(
+      @Qualifier("nameGeneratorApiClient") WebClient namegenApiClient, ObjectMapper objectMapper) {
     this.client = namegenApiClient;
+    this.objectMapper = objectMapper;
   }
 
+  @Cacheable(value = "nameGenerator", key = "#spec.toString()")
   public FsnAndPt generateNames(NameGeneratorSpec spec) {
+    if (log.isLoggable(Level.FINE)) {
+      log.fine("Generating names for spec: " + spec);
+    }
     return this.client
         .post()
-        //        .uri("/amt_name_gen")
         .contentType(MediaType.APPLICATION_JSON)
         .bodyValue(spec)
         .retrieve()
         .bodyToMono(FsnAndPt.class)
-        .doOnError(e -> log.severe("Name generator failed to execute with " + e.getMessage()))
+        .doOnError(
+            e -> {
+              try {
+                log.severe(
+                    "Name generator failed to execute with "
+                        + e.getMessage()
+                        + " for spec: "
+                        + objectMapper.writeValueAsString(spec));
+              } catch (JsonProcessingException ex) {
+                log.severe(
+                    "failed writing log message for name generator Json processing error "
+                        + ex.getMessage());
+              }
+            })
         .onErrorReturn(
             FsnAndPt.builder()
                 .FSN(GENERATED_NAME_UNAVAILABLE)
