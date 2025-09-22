@@ -1,0 +1,11 @@
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.2   # or latest v8.x
+    hooks:
+      - id: gitleaks
+        # 'protect' is the default entry; these are valid flags for protect
+        args:
+          - "--staged"
+          - "--config=.gitleaks.toml"
+          - "--redact"
+          - "--verbose"
