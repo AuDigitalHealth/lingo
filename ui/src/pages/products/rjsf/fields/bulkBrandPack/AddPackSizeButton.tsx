@@ -44,7 +44,8 @@ const AddPackSizeButton: React.FC<AddButtonFieldProps> = props => {
 
   const getInitialPackSizeData = () => ({
     packSize: undefined,
-    nonDefiningProperties: [],
+    nonDefiningProperties:
+      formContext.formData.newPackSizeInput.nonDefiningProperties,
   });
 
   const { handleAddClick, isEnabled } = useAddButton({

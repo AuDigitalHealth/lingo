@@ -45,10 +45,12 @@
   "newPackSizeInput": {
     "ui:field": "PackDetails",
     "ui:options": {
+      "inputType": "text",
       "readOnly": false,
       "allowDelete": false,
       "requireEditButton": false,
-      "multiValuedSchemes": ["artgid"]
+      "multiValuedSchemes": ["artgid"],
+      "nondefiningPropertyTitle": "ARTG ID"
     }
   },
   "addButton": {
@@ -70,19 +72,21 @@
       "readOnly": true,
       "allowDelete": false,
       "requireEditButton": false,
-      "multiValuedSchemes": ["artgid"]
+      "multiValuedSchemes": ["artgid"],
+      "nondefiningPropertyTitle": "ARTG ID"
     }
   },
   "packSizes": {
     "ui:template": "PackSizeArrayTemplate",
     "ui:options": {
       "orderable": false,
-      "skipTitle": true,
+      "skipTitle": false,
       "listTitle": "Newly Added Pack Sizes",
       "readOnly": false,
       "allowDelete": true,
       "requireEditButton": false,
-      "multiValuedSchemes": ["artgid"]
+      "multiValuedSchemes": ["artgid"],
+      "nondefiningPropertyTitle": "ARTG ID"
     }
   }
 }

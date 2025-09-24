@@ -25,6 +25,7 @@ import AddBrandButton from './fields/bulkBrandPack/AddBrandButton.tsx';
 import BrandDetails from './fields/bulkBrandPack/BrandDetails.tsx';
 import ExternalIdentifier from './fields/bulkBrandPack/ExternalIdentifiers.tsx';
 import { ConfigService } from '../../../api/ConfigService.ts';
+import { getMatchingNonDefiningProperties } from './helpers/helpers.ts';
 
 interface FormData {
   selectedProduct?: string;
@@ -111,13 +112,18 @@ function BrandAuthoring({
 
   useEffect(() => {
     if (selectedProduct && data) {
+      const matchingProperties = data.brands
+        ? getMatchingNonDefiningProperties(data.brands)
+        : [];
       const newData: FormData = {
         selectedProduct: selectedProduct.pt?.term || '',
         existingBrands: data.brands || [],
         brands: [],
-        newBrandInput: { brand: undefined, nonDefiningProperties: [] },
+        newBrandInput: {
+          brand: undefined,
+          nonDefiningProperties: matchingProperties,
+        },
       };
-      console.log('Initial formData:', newData);
       setFormData(newData);
     }
   }, [selectedProduct, data]);
@@ -176,7 +182,6 @@ function BrandAuthoring({
     formData,
     uiSchema,
     onFormDataChange: (newFormData: FormData) => {
-      console.log('Form data changed:', newFormData);
       setFormData(newFormData);
     },
     handleClear,

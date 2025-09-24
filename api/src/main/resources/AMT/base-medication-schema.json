@@ -980,7 +980,7 @@
             "minItems": "At least one Contained Products."
           }
         },
-        "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PACKAGE_NonDefiningProperty" }, "title": "Non Defining Properties" }
+        "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PACKAGE_NonDefiningProperty" }, "title": "ARTG ID" }
       },
       "required": ["productName", "containerType", "containedProducts"]
 
@@ -1089,7 +1089,7 @@
                 "$ref": "#/$defs/MedicationContainedProduct"
               }
             },
-            "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PACKAGE_NonDefiningProperty" }, "title": "Non Defining Properties" }
+            "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PACKAGE_NonDefiningProperty" }, "title": "ARTG ID" }
           },
           "required": ["productName", "containerType", "containedProducts"],
 
@@ -1123,7 +1123,7 @@
                 "$ref": "#/$defs/DrugDeviceContainedProduct"
               }
             },
-            "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PACKAGE_NonDefiningProperty" }, "title": "Non Defining Properties" }
+            "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PACKAGE_NonDefiningProperty" }, "title": "ARTG ID" }
           },
           "required": ["productName", "containerType", "containedProducts"],
           "additionalProperties": false
@@ -1175,7 +1175,7 @@
                 "$ref": "#/$defs/ContainedMedicationPackage"
               }
             },
-            "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PACKAGE_NonDefiningProperty" }, "title": "Non Defining Properties" }
+            "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PACKAGE_NonDefiningProperty" }, "title": "ARTG ID" }
           },
           "required": ["productName", "containerType"],
           "additionalProperties": false
@@ -1208,7 +1208,7 @@
                 "$ref": "#/$defs/ContainedDrugDevicePackage"
               }
             },
-            "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PACKAGE_NonDefiningProperty" }, "title": "Non Defining Properties" }
+            "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/MEDICATION_PACKAGE_NonDefiningProperty" }, "title": "ARTG ID" }
           },
           "required": ["productName", "containerType"],
           "additionalProperties": false

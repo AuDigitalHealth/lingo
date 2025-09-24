@@ -13,11 +13,14 @@ import { FieldProps } from '@rjsf/utils';
 import ExternalIdentifiers from './ExternalIdentifiers.tsx';
 import { sortNonDefiningProperties } from '../../../../../utils/helpers/tickets/additionalFieldsUtils.ts';
 import { RjsfUtils } from '../../helpers/rjsfUtils.ts';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 interface PackDetailsProps extends FieldProps {
   onDelete?: () => void;
   unitOfMeasure?: any;
   index?: number;
+  onCopyNonDefiningProperties?: () => void;
 }
 
 const PackDetails: React.FC<PackDetailsProps> = props => {
@@ -49,7 +52,14 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
     readOnly = false,
     allowDelete = true,
     requireEditButton = false,
+    nondefiningPropertyTitle,
+    inputType,
   } = packSizeUiSchemaOptions;
+
+  let isNumber = schema?.type === 'number' || schema?.type === 'integer';
+  if (inputType && inputType === 'text') {
+    isNumber = false;
+  }
 
   const [editMode, setEditMode] = useState(!readOnly && !requireEditButton);
   const [packSize, setPackSize] = useState(
@@ -99,6 +109,21 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
           gap: 1,
         }}
       >
+        {readOnly && props.onCopyNonDefiningProperties && (
+          <Tooltip title="Replace input with copied Non-Defining Properties">
+            <IconButton
+              size="small"
+              disabled={requireEditButton && !editMode}
+              onClick={props.onCopyNonDefiningProperties}
+              color="primary"
+            >
+              <Box display="flex" alignItems="center" gap={0.5}>
+                <ContentCopyIcon fontSize="small" />
+                <ArrowForwardIcon fontSize="small" />
+              </Box>
+            </IconButton>
+          </Tooltip>
+        )}
         {!readOnly && requireEditButton && (
           <Tooltip title={editMode ? 'Done' : 'Edit'}>
             <IconButton size="small" onClick={() => setEditMode(prev => !prev)}>
@@ -145,6 +170,7 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
                     ? 'Pack size must be a positive number'
                     : ''
                 }
+                type={isNumber ? 'number' : 'text'}
                 sx={{ maxWidth: '200px' }}
                 inputProps={{ min: 1 }}
               />
@@ -167,6 +193,7 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
                 readOnly: readOnly || (requireEditButton && !editMode),
                 binding,
                 multiValuedSchemes,
+                label: nondefiningPropertyTitle,
               },
             }}
             registry={registry}
