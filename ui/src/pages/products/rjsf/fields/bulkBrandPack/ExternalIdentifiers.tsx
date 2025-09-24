@@ -92,6 +92,10 @@ const ExternalIdentifiers: React.FC<
   if (!schemas) {
     return null;
   }
+  const title =
+    uiSchema?.['ui:options']?.label ??
+    schema?.title ??
+    'Non-defining properties';
 
   return (
     <>
@@ -109,7 +113,7 @@ const ExternalIdentifiers: React.FC<
           expandIcon={<ExpandMoreIcon />}
           sx={{ fontWeight: 'bold' }}
         >
-          Non-defining properties
+          {title}
         </AccordionSummary>
         <AccordionDetails>
           <Grid container spacing={2}>

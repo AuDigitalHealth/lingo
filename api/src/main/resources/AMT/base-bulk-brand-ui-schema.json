@@ -45,10 +45,12 @@
   "newBrandInput": {
     "ui:field": "BrandDetails",
     "ui:options": {
+      "inputType": "text",
       "readOnly": false,
       "allowDelete": false,
       "requireEditButton": false,
       "multiValuedSchemes": ["artgid"],
+      "nondefiningPropertyTitle": "ARTG ID",
       "mandatorySchemes": [],
       "ecl": "<774167006",
       "createPrimitiveConcept": {
@@ -79,20 +81,22 @@
       "allowDelete": false,
       "requireEditButton": false,
       "mandatorySchemes": [],
-      "multiValuedSchemes": ["artgid"]
+      "multiValuedSchemes": ["artgid"],
+      "nondefiningPropertyTitle": "ARTG ID"
     }
   },
   "brands": {
     "ui:template": "BrandArrayTemplate",
     "ui:options": {
       "orderable": false,
-      "skipTitle": true,
+      "skipTitle": false,
       "listTitle": "Newly Added Brands",
       "readOnly": false,
       "allowDelete": true,
       "requireEditButton": false,
       "mandatorySchemes": [],
-      "multiValuedSchemes": ["artgid"]
+      "multiValuedSchemes": ["artgid"],
+      "nondefiningPropertyTitle": "ARTG ID"
     }
   }
 }

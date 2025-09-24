@@ -15,6 +15,7 @@
 ///
 
 import _ from 'lodash';
+import { NonDefiningProperty } from '../../../../types/product.ts';
 
 export const getItemTitle = (
   uiSchema: any,
@@ -189,3 +190,60 @@ export const setUiSchemaById = (
 export const isEmptyObject = (obj: any): boolean => {
   return obj && typeof obj === 'object' && Object.keys(obj).length === 0;
 };
+/**
+ * Finds the common set of NonDefiningProperties across an array of items
+ * (e.g., PackSizeWithIdentifiers[] or BrandWithIdentifiers[]).
+ *
+ * This function compares the nonDefiningProperties of each item by generating
+ * a unique key for every property using the combination of:
+ *   - identifierScheme
+ *   - identifier
+ *   - value (if present) OR valueObject.conceptId (if present)
+ *
+ * Behavior:
+ * - If the array is empty, returns [].
+ * - If all items share the exact same set of nonDefiningProperties (both keys and size),
+ *   returns the properties from the first item.
+ * - If there is any mismatch (different sets, missing properties, etc.),
+ *   returns [].
+ *
+ * @typeParam T - Any type that contains an optional `nonDefiningProperties` array.
+ *
+ * @param items - The array of items (packs, brands, etc.) to compare.
+ *
+ * @returns An array of NonDefiningProperty objects from the first item if
+ *          all items match, otherwise [].
+ *
+ * @example
+ * // With packs
+ * const commonPackProps = getMatchingNonDefiningProperties(packs);
+ *
+ * // With brands
+ * const commonBrandProps = getMatchingNonDefiningProperties(brands);
+ */
+export function getMatchingNonDefiningProperties<
+  T extends { nonDefiningProperties?: NonDefiningProperty[] },
+>(items: T[]): NonDefiningProperty[] {
+  if (items.length === 0) return [];
+
+  const makeKey = (p: NonDefiningProperty) => {
+    const val =
+      p.value !== undefined && p.value !== null && p.value !== ''
+        ? String(p.value)
+        : (p.valueObject?.conceptId ?? '');
+    return `${p.identifierScheme}::${p.identifier}::${val}`;
+  };
+
+  // Normalize to sets of keys for each item
+  const itemKeys = items.map(
+    i => new Set((i.nonDefiningProperties ?? []).map(makeKey)),
+  );
+
+  // Compare all sets against the first one
+  const [firstSet, ...restSets] = itemKeys;
+  const allMatch = restSets.every(
+    s => s.size === firstSet.size && [...firstSet].every(k => s.has(k)),
+  );
+
+  return allMatch ? (items[0].nonDefiningProperties ?? []) : [];
+}

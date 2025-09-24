@@ -25,6 +25,7 @@ import AddPackSizeButton from './fields/bulkBrandPack/AddPackSizeButton.tsx';
 import ExternalIdentifiers from './fields/bulkBrandPack/ExternalIdentifiers.tsx';
 import PackDetails from './fields/bulkBrandPack/PackDetails.tsx';
 import { ConfigService } from '../../../api/ConfigService.ts';
+import { getMatchingNonDefiningProperties } from './helpers/helpers.ts';
 
 interface FormData {
   selectedProduct?: string;
@@ -112,14 +113,20 @@ function PackSizeAuthoring({
 
   useEffect(() => {
     if (selectedProduct && data) {
+      const matchingProperties = data.packSizes
+        ? getMatchingNonDefiningProperties(data.packSizes)
+        : [];
+
       const newData: FormData = {
         selectedProduct: selectedProduct.pt?.term || '',
         existingPackSizes: data.packSizes || [],
         unitOfMeasure: data.unitOfMeasure,
         packSizes: [],
-        newPackSizeInput: { packSize: undefined, nonDefiningProperties: [] },
+        newPackSizeInput: {
+          packSize: undefined,
+          nonDefiningProperties: matchingProperties,
+        },
       };
-      console.log('Initial formData:', newData);
       setFormData(newData);
     }
   }, [selectedProduct, data]);
@@ -179,7 +186,6 @@ function PackSizeAuthoring({
     formData,
     uiSchema,
     onFormDataChange: (newFormData: FormData) => {
-      console.log('Form data changed:', newFormData);
       setFormData(newFormData);
     },
     unitOfMeasure: data?.unitOfMeasure,
