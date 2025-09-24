@@ -1,5 +1,5 @@
 // ItemDetailsDisplay.tsx
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Box, Chip, Paper, Stack, Tooltip, Typography } from '@mui/material';
 import {
   NonDefiningProperty,
@@ -12,6 +12,8 @@ import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { arePropertiesEqual } from '../../../utils/helpers/commonUtils.ts';
 import AdditionalFieldsDisplay from './AdditionalFieldsDisplay.tsx';
+import MediaViewerModal from '../../tickets/individual/components/MediaViewerModal.tsx';
+import { OpenInFull } from '@mui/icons-material';
 
 interface ItemDetailsDisplayProps {
   nonDefiningProperties?: NonDefiningProperty[];
@@ -29,6 +31,16 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
   labelColor = '#184E6B',
   showWrapper = true,
 }) => {
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [attachmentId, setAttachmentId] = useState<number | undefined>(
+    undefined,
+  );
+
+  const handleClosePreview = () => {
+    setPreviewModalOpen(false);
+    setAttachmentId(undefined);
+  };
+
   const { applicationConfig } = useApplicationConfigStore();
 
   const {
@@ -212,6 +224,37 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
     isRemoved = false,
   ) => {
     // Determine styling based on whether the property is new or removed
+
+    const valAsString = typeof item?.value === 'string' ? item.value : '';
+    const isLink = valAsString && valAsString.includes('://');
+    const isExternalLink =
+      valAsString &&
+      (valAsString.startsWith('http://') || valAsString.startsWith('https://'));
+
+    // Handler for opening external links
+    const handleExternalLinkClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (isExternalLink && valAsString) {
+        window.open(valAsString, '_blank', 'noopener,noreferrer');
+      }
+    };
+
+    // Handler for opening media viewer modal (for internal links)
+    const handleInternalLinkClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      debugger;
+      if (isLink && !isExternalLink) {
+        // Extract fileId from attachment:// URL
+        const fileIdString = valAsString.replace('attachment://', '');
+        const fileId = parseInt(fileIdString, 10);
+
+        if (!isNaN(fileId)) {
+          setAttachmentId(fileId);
+          setPreviewModalOpen(true);
+        }
+      }
+    };
+
     const getChipStyle = () => {
       if (isNew) {
         return {
@@ -221,6 +264,7 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
           '&:hover': {
             backgroundColor: '#d4ecd4',
           },
+          ...(isLink && { cursor: 'pointer' }), // Add cursor pointer for links
         };
       } else if (isRemoved) {
         return {
@@ -231,6 +275,7 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
           '&:hover': {
             backgroundColor: '#ffdde0',
           },
+          ...(isLink && { cursor: 'pointer' }), // Add cursor pointer for links
         };
       } else {
         return {
@@ -240,7 +285,17 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
           '&:hover': {
             backgroundColor: '#e1f0ff',
           },
+          ...(isLink && { cursor: 'pointer' }), // Add cursor pointer for links
         };
+      }
+    };
+
+    // Handler for chip clicks
+    const handleChipClick = (e: React.MouseEvent) => {
+      if (isExternalLink) {
+        handleExternalLinkClick(e);
+      } else if (isLink) {
+        handleInternalLinkClick(e);
       }
     };
 
@@ -260,6 +315,7 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
             size="small"
             variant="outlined"
             sx={getChipStyle()}
+            onClick={isLink ? handleChipClick : undefined}
           />
         </Tooltip>
       );
@@ -321,7 +377,9 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
                 boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
               },
               ...(isRemoved && { textDecoration: 'line-through' }),
+              ...(isLink && { cursor: 'pointer' }), // Add cursor pointer for links
             }}
+            onClick={isLink ? handleChipClick : undefined}
           >
             <Box
               sx={{
@@ -410,14 +468,23 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
               ? '#ffebee'
               : '#f5f5f5',
         }}
+        onClick={isLink ? handleChipClick : undefined}
         label={
-          <AdditionalFieldsDisplay
-            value={value}
-            additionalFields={item.additionalFields}
-          />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <AdditionalFieldsDisplay
+              value={value}
+              additionalFields={item.additionalFields}
+            />
+            {isExternalLink && <OpenInNewIcon sx={{ fontSize: '14px' }} />}
+            {isLink && !isExternalLink && (
+              <OpenInFull sx={{ fontSize: '14px' }} />
+            )}
+          </Box>
         }
       />
-    ) : null;
+    ) : (
+      <></>
+    );
   };
 
   function getPropertyContent() {
@@ -643,7 +710,16 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
       {getPropertyContent()}
     </Paper>
   ) : (
-    <Box sx={{ mt: 2 }}>{getPropertyContent()}</Box>
+    <>
+      <Box sx={{ mt: 2 }}>{getPropertyContent()}</Box>
+      <>
+        <MediaViewerModal
+          open={previewModalOpen}
+          handleClose={handleClosePreview}
+          fileId={attachmentId}
+        />
+      </>
+    </>
   );
 };
 
