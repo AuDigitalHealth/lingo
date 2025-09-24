@@ -222,7 +222,6 @@ models:
         mappingTypes:
           - RELATED
         order: 100
-        suppressOnProductTypes: DEVICE
       - name: pcrs
         title: PCRS Identifier and Name
         description: PCRS Identifier and Name
@@ -260,6 +259,13 @@ models:
         level: PRODUCT
         modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
         order: 60
+        suppressOnProductTypes: DEVICE
+      - name: combinationOnly
+        title: Multi component indicator
+        identifier: 679981000220105
+        level: PRODUCT
+        modelLevels: REAL_CLINICAL_DRUG
+        order: 1
         suppressOnProductTypes: DEVICE
       - name: ulmFlag
         title: ULM flag
@@ -418,7 +424,6 @@ models:
         multiValued: false
         showDefaultOptions: true
         order: 92
-        suppressOnProductTypes: DEVICE
       - name: deviceClass
         title: Device Class
         identifier: 681041000220106
@@ -627,7 +632,7 @@ models:
         level: PRODUCT
         dataType: CONCEPT
         eclBinding: <679921000220106
-        modelLevels: REAL_CLINICAL_DRUG
+        modelLevels: CLINICAL_DRUG
         mandatory: false
         multiValued: false
         showDefaultOptions: true

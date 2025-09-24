@@ -44,7 +44,8 @@ const AddBrandButton: React.FC<AddBrandButtonFieldProps> = props => {
 
   const getInitialBrandData = () => ({
     brand: undefined,
-    nonDefiningProperties: [],
+    nonDefiningProperties:
+      formContext.formData.newBrandInput.nonDefiningProperties,
   });
 
   const { handleAddClick, isEnabled } = useAddButton({

@@ -6,10 +6,13 @@ import { FieldProps } from '@rjsf/utils';
 import AutoCompleteField from '../AutoCompleteField.tsx';
 import ExternalIdentifier from './ExternalIdentifiers.tsx';
 import { RjsfUtils } from '../../helpers/rjsfUtils.ts';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 interface BrandDetailsProps extends FieldProps {
   onDelete?: () => void;
   index?: number;
+  onCopyNonDefiningProperties?: () => void;
 }
 
 const BrandDetails: React.FC<BrandDetailsProps> = props => {
@@ -46,6 +49,7 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
     requireEditButton = false,
     ecl,
     createBrand,
+    nondefiningPropertyTitle,
   } = packSizeUiSchemaOptions;
 
   const [editMode, setEditMode] = useState(!readOnly && !requireEditButton);
@@ -118,6 +122,21 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
           gap: 1,
         }}
       >
+        {readOnly && props.onCopyNonDefiningProperties && (
+          <Tooltip title="Replace input with copied Non-Defining Properties">
+            <IconButton
+              size="small"
+              disabled={requireEditButton && !editMode}
+              onClick={props.onCopyNonDefiningProperties}
+              color="primary"
+            >
+              <Box display="flex" alignItems="center" gap={0.5}>
+                <ContentCopyIcon fontSize="small" />
+                <ArrowForwardIcon fontSize="small" />
+              </Box>
+            </IconButton>
+          </Tooltip>
+        )}
         {!readOnly && requireEditButton && (
           <Tooltip title={editMode ? 'Done' : 'Edit'}>
             <IconButton size="small" onClick={() => setEditMode(prev => !prev)}>
@@ -190,7 +209,7 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
                   mandatorySchemes,
                   multiValuedSchemes,
                   binding,
-                  label: 'Properties',
+                  label: nondefiningPropertyTitle,
                   skipTitle: false,
                 },
               }}

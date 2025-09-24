@@ -16,6 +16,7 @@ const BrandArrayTemplate: React.FC<ArrayFieldTemplateProps> = props => {
     skipTitle = false,
     mandatorySchemes = [],
     multiValuedSchemes = [],
+    nondefiningPropertyTitle,
   } = options;
 
   const handleDeleteBrand = (index: number) => {
@@ -36,6 +37,22 @@ const BrandArrayTemplate: React.FC<ArrayFieldTemplateProps> = props => {
         [fieldName]: newBrands,
       };
       formContext.onFormDataChange(newFormData);
+    }
+  };
+  const handleCopyNonDefiningProperties = (index: number) => {
+    const brandFormData = formData[index];
+    if (!brandFormData?.nonDefiningProperties) return;
+
+    if (formContext?.onFormDataChange) {
+      const newContextData = {
+        ...formContext.formData,
+        newBrandInput: {
+          ...formContext.formData.newBrandInput,
+          nonDefiningProperties: brandFormData.nonDefiningProperties,
+        },
+      };
+
+      formContext.onFormDataChange(newContextData);
     }
   };
 
@@ -97,6 +114,9 @@ const BrandArrayTemplate: React.FC<ArrayFieldTemplateProps> = props => {
                     onDelete={
                       allowDelete ? () => handleDeleteBrand(index) : undefined
                     }
+                    onCopyNonDefiningProperties={() =>
+                      handleCopyNonDefiningProperties(index)
+                    }
                     index={index}
                     uiSchema={{
                       ...(element.children.props.uiSchema || {}),
@@ -108,6 +128,7 @@ const BrandArrayTemplate: React.FC<ArrayFieldTemplateProps> = props => {
                         requireEditButton,
                         mandatorySchemes,
                         multiValuedSchemes,
+                        nondefiningPropertyTitle,
                       },
                     }}
                     schema={element.children.props.schema}

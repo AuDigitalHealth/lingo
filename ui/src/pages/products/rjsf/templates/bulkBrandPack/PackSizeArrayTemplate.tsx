@@ -16,6 +16,7 @@ const PackSizeArrayTemplate: React.FC<ArrayFieldTemplateProps> = props => {
     skipTitle = false,
     binding = {},
     multiValuedSchemes = [],
+    nondefiningPropertyTitle,
   } = options;
 
   // Get unitOfMeasure from context
@@ -40,6 +41,22 @@ const PackSizeArrayTemplate: React.FC<ArrayFieldTemplateProps> = props => {
         [fieldName]: newPackSizes,
       };
       formContext.onFormDataChange(newFormData);
+    }
+  };
+  const handleCopyNonDefiningProperties = (index: number) => {
+    const packFormData = formData[index];
+    if (!packFormData?.nonDefiningProperties) return;
+
+    if (formContext?.onFormDataChange) {
+      const newContextData = {
+        ...formContext.formData,
+        newPackSizeInput: {
+          ...formContext.formData.newPackSizeInput,
+          nonDefiningProperties: packFormData.nonDefiningProperties,
+        },
+      };
+
+      formContext.onFormDataChange(newContextData);
     }
   };
 
@@ -102,6 +119,9 @@ const PackSizeArrayTemplate: React.FC<ArrayFieldTemplateProps> = props => {
                         ? () => handleDeletePackSize(index)
                         : undefined
                     }
+                    onCopyNonDefiningProperties={() =>
+                      handleCopyNonDefiningProperties(index)
+                    }
                     unitOfMeasure={unitOfMeasure}
                     index={index}
                     uiSchema={{
@@ -114,6 +134,7 @@ const PackSizeArrayTemplate: React.FC<ArrayFieldTemplateProps> = props => {
                         requireEditButton,
                         binding,
                         multiValuedSchemes,
+                        nondefiningPropertyTitle,
                       },
                     }}
                     schema={element.children.props.schema}
