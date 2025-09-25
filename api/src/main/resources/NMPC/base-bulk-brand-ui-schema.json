@@ -51,6 +51,7 @@
       "multiValuedSchemes": [
         "artgid"
       ],
+      "nondefiningPropertyTitle": "Non-defining properties",
       "mandatorySchemes": [],
       "ecl": "<774167006",
       "createPrimitiveConcept": {
@@ -84,14 +85,15 @@
       "mandatorySchemes": [],
       "multiValuedSchemes": [
         "artgid"
-      ]
+      ],
+      "nondefiningPropertyTitle": "Non-defining properties"
     }
   },
   "brands": {
     "ui:template": "BrandArrayTemplate",
     "ui:options": {
       "orderable": false,
-      "skipTitle": true,
+      "skipTitle": false,
       "listTitle": "Newly Added Brands",
       "readOnly": false,
       "allowDelete": true,
@@ -99,7 +101,8 @@
       "mandatorySchemes": [],
       "multiValuedSchemes": [
         "artgid"
-      ]
+      ],
+      "nondefiningPropertyTitle": "Non-defining properties"
     }
   }
 }
