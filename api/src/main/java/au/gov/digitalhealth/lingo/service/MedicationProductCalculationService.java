@@ -35,7 +35,33 @@ import static au.gov.digitalhealth.lingo.util.NmpcConstants.ACTIVE_IMMUNITY_STIM
 import static au.gov.digitalhealth.lingo.util.NmpcConstants.HAS_OTHER_IDENTIFYING_INFORMATION_NMPC;
 import static au.gov.digitalhealth.lingo.util.NmpcConstants.VIRTUAL_MEDICINAL_PRODUCT;
 import static au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter.calculateNonDefiningRelationships;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.*;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONTAINS_CD;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.COUNT_OF_ACTIVE_INGREDIENT;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_ACTIVE_INGREDIENT;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_BOSS;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_CONCENTRATION_STRENGTH_DENOMINATOR_UNIT;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_CONCENTRATION_STRENGTH_DENOMINATOR_VALUE;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_CONCENTRATION_STRENGTH_NUMERATOR_UNIT;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_CONCENTRATION_STRENGTH_NUMERATOR_VALUE;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_MANUFACTURED_DOSE_FORM;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_UNIT;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_VALUE;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRECISE_ACTIVE_INGREDIENT;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRESENTATION_STRENGTH_DENOMINATOR_UNIT;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRESENTATION_STRENGTH_DENOMINATOR_VALUE;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRESENTATION_STRENGTH_NUMERATOR_UNIT;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRESENTATION_STRENGTH_NUMERATOR_VALUE;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRODUCT_NAME;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_QUALITATIVE_STRENGTH;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_TARGET_POPULATION;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_UNIT_OF_PRESENTATION;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_UNIT_OF_PRESENTATION_SIZE_QUANTITY;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_UNIT_OF_PRESENTATION_SIZE_UNIT;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.IS_A;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.MEDICINAL_PRODUCT;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.MEDICINAL_PRODUCT_PACKAGE;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.PLAYS_ROLE;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.STATED_RELATIONSHIP;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.addQuantityIfNotNull;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.addRelationshipIfNotNull;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getSingleAxiom;
@@ -56,7 +82,13 @@ import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
-import au.gov.digitalhealth.lingo.product.details.*;
+import au.gov.digitalhealth.lingo.product.details.Ingredient;
+import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
+import au.gov.digitalhealth.lingo.product.details.NutritionalProductDetails;
+import au.gov.digitalhealth.lingo.product.details.PackageDetails;
+import au.gov.digitalhealth.lingo.product.details.PackageQuantity;
+import au.gov.digitalhealth.lingo.product.details.ProductQuantity;
+import au.gov.digitalhealth.lingo.product.details.VaccineProductDetails;
 import au.gov.digitalhealth.lingo.service.validators.MedicationDetailsValidator;
 import au.gov.digitalhealth.lingo.service.validators.ValidationResult;
 import au.gov.digitalhealth.lingo.util.AmtConstants;
@@ -666,7 +698,8 @@ public class MedicationProductCalculationService
         label.equals(
             modelConfiguration.getLevelOfType(ModelLevelType.PACKAGED_CLINICAL_DRUG).getName()),
         enforceRefsets,
-        true);
+        true,
+        false);
   }
 
   private Set<SnowstormRelationship> createPackagedClinicalDrugRelationships(
@@ -1216,23 +1249,28 @@ public class MedicationProductCalculationService
 
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
+    boolean skipLookup = false;
+
     if (productDetails instanceof NutritionalProductDetails
         && modelConfiguration.getModelType().equals(ModelType.NMPC)
-        && !branded
-        && productDetails.getExistingClinicalDrug() != null
-        && productDetails.getExistingClinicalDrug().getConceptId() != null) {
-      return nodeGeneratorService.lookUpNode(
-          branch,
-          productDetails.getExistingClinicalDrug(),
-          level,
-          productDetails.getNonDefiningProperties().stream()
-              .filter(
-                  p ->
-                      modelConfiguration
-                          .getProperty(p.getIdentifierScheme())
-                          .getModelLevels()
-                          .contains(level.getModelLevelType()))
-              .collect(Collectors.toSet()));
+        && !branded) {
+      if (productDetails.getExistingClinicalDrug() != null
+          && productDetails.getExistingClinicalDrug().getConceptId() != null) {
+        return nodeGeneratorService.lookUpNode(
+            branch,
+            productDetails.getExistingClinicalDrug(),
+            level,
+            productDetails.getNonDefiningProperties().stream()
+                .filter(
+                    p ->
+                        modelConfiguration
+                            .getProperty(p.getIdentifierScheme())
+                            .getModelLevels()
+                            .contains(level.getModelLevelType()))
+                .collect(Collectors.toSet()));
+      } else {
+        skipLookup = true;
+      }
     }
 
     ModelLevelType modelLevelType = level.getModelLevelType();
@@ -1276,7 +1314,8 @@ public class MedicationProductCalculationService
         !branded,
         false,
         enforceRefsets,
-        defined);
+        defined,
+        skipLookup);
   }
 
   private CompletableFuture<Node> findOrCreateMp(
@@ -1332,7 +1371,8 @@ public class MedicationProductCalculationService
         false,
         false,
         false,
-        defined);
+        defined,
+        false);
   }
 
   private Set<SnowstormRelationship> createClinicalDrugRelationships(

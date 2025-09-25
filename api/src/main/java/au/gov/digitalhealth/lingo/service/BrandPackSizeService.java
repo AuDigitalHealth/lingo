@@ -66,8 +66,16 @@ import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -772,7 +780,8 @@ public class BrandPackSizeService {
             false,
             false,
             true,
-            true)
+            true,
+            false)
         .thenApply(
             n -> {
               nameGenerationService.addGeneratedFsnAndPt(
@@ -850,7 +859,8 @@ public class BrandPackSizeService {
             false,
             false,
             true,
-            true)
+            true,
+            false)
         .thenApply(
             n -> {
               nameGenerationService.addGeneratedFsnAndPt(
@@ -937,7 +947,8 @@ public class BrandPackSizeService {
             DEFINED
                 .getValue()
                 .equals(
-                    SnowstormDtoUtil.getSingleAxiom(leafProductConcept).getDefinitionStatusId()))
+                    SnowstormDtoUtil.getSingleAxiom(leafProductConcept).getDefinitionStatusId()),
+            false)
         .thenApply(
             n -> {
               nameGenerationService.addGeneratedFsnAndPt(

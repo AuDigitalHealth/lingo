@@ -544,7 +544,8 @@ public class DeviceProductCalculationService
             true,
             ModelLevelType.PACKAGED_CLINICAL_DRUG.equals(modelLevel.getModelLevelType()),
             true,
-            true)
+            true,
+            false)
         .thenApply(
             n -> {
               productSummary.addNode(n);
@@ -784,7 +785,8 @@ public class DeviceProductCalculationService
             false,
             false,
             true,
-            true);
+            true,
+            false);
     if (leafBrandedProductNode.isNewConcept()) {
       leafBrandedProductNode
           .getNewConceptDetails()
@@ -841,7 +843,8 @@ public class DeviceProductCalculationService
               false,
               false,
               true,
-              true);
+              true,
+              false);
       if (rootBrandedProductNode.isNewConcept()) {
         rootBrandedProductNode
             .getNewConceptDetails()
