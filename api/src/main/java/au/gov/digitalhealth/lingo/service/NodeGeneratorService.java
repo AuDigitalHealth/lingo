@@ -15,7 +15,7 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
-import static au.gov.digitalhealth.lingo.util.AmtConstants.*;
+import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
 import static au.gov.digitalhealth.lingo.util.NmpcConstants.HAS_OTHER_IDENTIFYING_INFORMATION_NMPC;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.DEFINED;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.PRIMITIVE;
@@ -390,7 +390,8 @@ public class NodeGeneratorService {
       boolean suppressIsa,
       boolean suppressNegativeStatements,
       boolean enforceRefsets,
-      boolean definedIfNoMatch) {
+      boolean definedIfNoMatch,
+      boolean skipLookup) {
     return CompletableFuture.completedFuture(
         generateNode(
             branch,
@@ -406,7 +407,8 @@ public class NodeGeneratorService {
             suppressIsa,
             suppressNegativeStatements,
             enforceRefsets,
-            definedIfNoMatch));
+            definedIfNoMatch,
+            skipLookup));
   }
 
   public Node generateNode(
@@ -423,7 +425,8 @@ public class NodeGeneratorService {
       boolean suppressIsa,
       boolean suppressNegativeStatements,
       boolean enforceRefsets,
-      boolean definedIfNoMatch) {
+      boolean definedIfNoMatch,
+      boolean skipLookup) {
 
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
@@ -436,7 +439,8 @@ public class NodeGeneratorService {
 
     // if the relationships are empty or a relationship to a new concept (-ve id)
     // then don't bother looking
-    if (!relationships.isEmpty()
+    if (!skipLookup
+        && !relationships.isEmpty()
         && relationships.stream()
             .noneMatch(
                 r ->
