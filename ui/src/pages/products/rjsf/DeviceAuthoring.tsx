@@ -102,10 +102,16 @@ function DeviceAuthoring({
     ticketProductId,
     ticket,
     setFunction: (data: any) => {
-      setMode(data.action === 'UPDATE' ? 'update' : 'create');
+      setMode(
+        data.action === 'UPDATE' && data.originalConceptId
+          ? 'update'
+          : 'create',
+      );
       setFormData(data.packageDetails);
       setInitialFormData(data.packageDetails);
-      setOriginalConceptId(data.conceptId);
+      setOriginalConceptId(
+        data.originalConceptId ? data.originalConceptId : data.conceptId,
+      );
     },
   });
   const mutation = useCalculateProduct();
@@ -121,8 +127,12 @@ function DeviceAuthoring({
   const handleChange = ({ formData }: any) => {
     const updatedFormData = resetDiscriminators(schema, formData, uiSchema);
     setFormData(updatedFormData);
-    if (!_.isEmpty(formData.productName)) {
-      setIsDirty(true); //TODO better way to handle check form is dirty
+    if (
+      !_.isEmpty(
+        updatedFormData.productName || updatedFormData.containedProducts,
+      )
+    ) {
+      setIsDirty(true);
     }
   };
 
@@ -279,23 +289,46 @@ function DeviceAuthoring({
                 </UnableToEditTooltip>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                <Button
-                  data-testid={mode === 'create' ? 'create-btn' : 'update-btn'}
-                  type="submit"
-                  variant="contained"
-                  color={mode === 'create' ? 'primary' : 'warning'}
-                  sx={mode === 'update' ? { color: '#000' } : {}}
-                  disabled={isPending}
-                  onClick={() => {
-                    setIsProductUpdate(mode === 'update');
-                  }}
+                <UnableToEditTooltip
+                  canEdit={
+                    !(
+                      mutation.isPending ||
+                      (mode != 'create' &&
+                        !selectedProduct &&
+                        !originalConceptId)
+                    )
+                  }
+                  lockDescription={
+                    mode != 'create'
+                      ? 'Update disabled: product is partially saved or the form was opened without an existing product.'
+                      : 'Submitting ...'
+                  }
                 >
-                  {isPending
-                    ? 'Submitting...'
-                    : mode === 'create'
-                      ? 'Create New Product'
-                      : 'Update Existing Product'}
-                </Button>
+                  <Button
+                    data-testid={
+                      mode === 'create' ? 'create-btn' : 'update-btn'
+                    }
+                    type="submit"
+                    variant="contained"
+                    color={mode === 'create' ? 'primary' : 'warning'}
+                    sx={mode === 'update' ? { color: '#000' } : {}}
+                    disabled={
+                      mutation.isPending ||
+                      (mode != 'create' &&
+                        !selectedProduct &&
+                        !originalConceptId)
+                    }
+                    onClick={() => {
+                      setIsProductUpdate(mode === 'update');
+                    }}
+                  >
+                    {isPending
+                      ? 'Submitting...'
+                      : mode === 'create'
+                        ? 'Create New Product'
+                        : 'Update Existing Product'}
+                  </Button>
+                </UnableToEditTooltip>
               </Box>
             </Box>
             {mode === 'update' && (
@@ -333,7 +366,9 @@ function DeviceAuthoring({
             open={saveModalOpen}
             ticket={ticket}
             existingProductId={ticketProductId}
-            actionType={ProductAction.CREATE} //default to create for partial save
+            actionType={
+              mode === 'update' ? ProductAction.UPDATE : ProductAction.CREATE
+            }
           />
           <ProductPreviewManageModal
             open={createModalOpen}

@@ -242,7 +242,6 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
     // Handler for opening media viewer modal (for internal links)
     const handleInternalLinkClick = (e: React.MouseEvent) => {
       e.stopPropagation();
-      debugger;
       if (isLink && !isExternalLink) {
         // Extract fileId from attachment:// URL
         const fileIdString = valAsString.replace('attachment://', '');
