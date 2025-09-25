@@ -23,6 +23,7 @@ import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_DEVICE_TYPE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_TOTAL_QUANTITY_UNIT;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_TOTAL_QUANTITY_VALUE;
+import static au.gov.digitalhealth.lingo.util.NmpcConstants.HAS_NMPC_PRODUCT_TYPE;
 import static au.gov.digitalhealth.lingo.util.NmpcConstants.HAS_OTHER_IDENTIFYING_INFORMATION_NMPC;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.ADDITIONAL_RELATIONSHIP;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONTAINS_CD;
@@ -68,7 +69,11 @@ import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.exception.AtomicDataExtractionProblem;
-import au.gov.digitalhealth.lingo.product.details.*;
+import au.gov.digitalhealth.lingo.product.details.Ingredient;
+import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
+import au.gov.digitalhealth.lingo.product.details.NutritionalProductDetails;
+import au.gov.digitalhealth.lingo.product.details.Quantity;
+import au.gov.digitalhealth.lingo.product.details.VaccineProductDetails;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
 import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import au.gov.digitalhealth.lingo.util.NmpcConstants;
@@ -86,10 +91,13 @@ import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-/** Service for product-centric operations */
+/**
+ * Service for product-centric operations
+ */
 @Service
 @Log
 public class MedicationService extends AtomicDataService<MedicationProductDetails> {
+
   private final SnowstormClient snowStormApiClient;
   private final Models models;
   private final FhirClient fhirClient;
@@ -202,7 +210,7 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
     final Set<SnowstormRelationship> relationshipsFromAxioms = getRelationshipsFromAxioms(concept);
     Map<String, SnowstormConceptMini> activeIngredients =
         filterActiveStatedRelationshipByType(
-                relationshipsFromAxioms, HAS_ACTIVE_INGREDIENT.getValue())
+            relationshipsFromAxioms, HAS_ACTIVE_INGREDIENT.getValue())
             .stream()
             .collect(Collectors.toMap(r -> r.getTarget().getConceptId(), r -> r.getTarget()));
 
@@ -283,10 +291,10 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
                     r.getTarget() != null
                         && typeMap.get(r.getTarget().getConceptId()) != null
                         && typeMap
-                            .get(r.getTarget().getConceptId())
-                            .equals(
-                                modelConfiguration.getReferenceSetIdForModelLevelType(
-                                    ModelLevelType.CLINICAL_DRUG)))
+                        .get(r.getTarget().getConceptId())
+                        .equals(
+                            modelConfiguration.getReferenceSetIdForModelLevelType(
+                                ModelLevelType.CLINICAL_DRUG)))
             .map(r -> browserMap.get(r.getTarget().getConceptId()))
             .collect(Collectors.toSet());
 
@@ -416,47 +424,52 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
     Set<SnowstormRelationship> productRelationships = getRelationshipsFromAxioms(product);
     MedicationProductDetails productDetails;
 
-    // todo only vaccines have plays role, target population and qualitative strength, maybe use
-    // nmpc type?
     if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
 
-      if (relationshipOfTypeExists(
-          productRelationships,
-          PLAYS_ROLE.getValue(),
-          HAS_TARGET_POPULATION.getValue(),
-          HAS_QUALITATIVE_STRENGTH.getValue())) {
+      NmpcType nmpcType = product.getRelationships().stream()
+          .filter(r -> r.getTypeId().equals(HAS_NMPC_PRODUCT_TYPE.getValue()))
+          .map(r -> NmpcType.fromValue(r.getDestinationId())).findFirst().orElseThrow(
+              () -> new AtomicDataExtractionProblem(
+                  "No HAS_NMPC_PRODUCT_TYPE relationship found for product " + productId,
+                  productId));
 
-        VaccineProductDetails vaccineProductDetails = new VaccineProductDetails();
-        if (relationshipOfTypeExists(productRelationships, PLAYS_ROLE.getValue())) {
-          Set<SnowstormRelationship> playsRoleRelationships =
-              filterActiveStatedRelationshipByType(productRelationships, PLAYS_ROLE.getValue());
-          vaccineProductDetails.setPlaysRole(
-              playsRoleRelationships.stream()
-                  .map(SnowstormRelationship::getTarget)
-                  .collect(Collectors.toSet()));
+      switch (nmpcType) {
+        case NMPC_VACCINE -> {
+          VaccineProductDetails vaccineProductDetails = new VaccineProductDetails();
+          if (relationshipOfTypeExists(productRelationships, PLAYS_ROLE.getValue())) {
+            Set<SnowstormRelationship> playsRoleRelationships =
+                filterActiveStatedRelationshipByType(productRelationships, PLAYS_ROLE.getValue());
+            vaccineProductDetails.setPlaysRole(
+                playsRoleRelationships.stream()
+                    .map(SnowstormRelationship::getTarget)
+                    .collect(Collectors.toSet()));
+          }
+          if (relationshipOfTypeExists(productRelationships, HAS_TARGET_POPULATION.getValue())) {
+            vaccineProductDetails.setTargetPopulation(
+                getSingleActiveTarget(productRelationships, HAS_TARGET_POPULATION.getValue()));
+          }
+          if (relationshipOfTypeExists(productRelationships, HAS_QUALITATIVE_STRENGTH.getValue())) {
+            vaccineProductDetails.setQualitiativeStrength(
+                getSingleActiveTarget(productRelationships, HAS_QUALITATIVE_STRENGTH.getValue()));
+          }
+          productDetails = vaccineProductDetails;
         }
-        if (relationshipOfTypeExists(productRelationships, HAS_TARGET_POPULATION.getValue())) {
-          vaccineProductDetails.setTargetPopulation(
-              getSingleActiveTarget(productRelationships, HAS_TARGET_POPULATION.getValue()));
-        }
-        if (relationshipOfTypeExists(productRelationships, HAS_QUALITATIVE_STRENGTH.getValue())) {
-          vaccineProductDetails.setQualitiativeStrength(
-              getSingleActiveTarget(productRelationships, HAS_QUALITATIVE_STRENGTH.getValue()));
-        }
-        productDetails = vaccineProductDetails;
-      } else if (relationshipOfTypeExists(
-          productRelationships,
-          HAS_ACTIVE_INGREDIENT.getValue(),
-          HAS_PRECISE_ACTIVE_INGREDIENT.getValue())) { // definitely nmpc medication
-        productDetails = new MedicationProductDetails();
-      } else {
-        NutritionalProductDetails nutritionalProductDetails = new NutritionalProductDetails();
+        case NMPC_NUTRITIONAL_SUPPLEMENT -> {
+          NutritionalProductDetails nutritionalProductDetails = new NutritionalProductDetails();
 
-        if (relationshipOfTypeExists(productRelationships, HAS_TARGET_POPULATION.getValue())) {
-          nutritionalProductDetails.setTargetPopulation(
-              getSingleActiveTarget(productRelationships, HAS_TARGET_POPULATION.getValue()));
+          if (relationshipOfTypeExists(productRelationships, HAS_TARGET_POPULATION.getValue())) {
+            nutritionalProductDetails.setTargetPopulation(
+                getSingleActiveTarget(productRelationships, HAS_TARGET_POPULATION.getValue()));
+          }
+          productDetails = nutritionalProductDetails;
         }
-        productDetails = nutritionalProductDetails;
+        case NMPC_MEDICATION -> productDetails = new MedicationProductDetails();
+        case NMPC_DEVICE -> throw new AtomicDataExtractionProblem(
+            "Expected medication or vaccine product but found device product for " + productId,
+            productId);
+
+        default -> throw new AtomicDataExtractionProblem(
+            "Unexpected NMPC product type " + nmpcType + " for " + productId, productId);
       }
     } else { // AMT
       productDetails = new MedicationProductDetails();
@@ -587,9 +600,9 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
 
     Set<Integer> ingredientGroups =
         filterActiveStatedRelationshipByType(
-                productRelationships,
-                HAS_ACTIVE_INGREDIENT.getValue(),
-                HAS_PRECISE_ACTIVE_INGREDIENT.getValue())
+            productRelationships,
+            HAS_ACTIVE_INGREDIENT.getValue(),
+            HAS_PRECISE_ACTIVE_INGREDIENT.getValue())
             .stream()
             .map(SnowstormRelationship::getGroupId)
             .collect(Collectors.toSet());
@@ -618,9 +631,9 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
     Map<Integer, ActivePreciseIngredient> preciseActiveInredientMap = new HashMap<>();
 
     filterActiveStatedRelationshipByType(
-            productRelationships,
-            HAS_ACTIVE_INGREDIENT.getValue(),
-            HAS_PRECISE_ACTIVE_INGREDIENT.getValue())
+        productRelationships,
+        HAS_ACTIVE_INGREDIENT.getValue(),
+        HAS_PRECISE_ACTIVE_INGREDIENT.getValue())
         .forEach(r -> addToMap(r, preciseActiveInredientMap, false));
 
     // find all the entries where active ingredients that are missing
@@ -639,15 +652,15 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
 
     if (modelConfiguration.getModelType().equals(ModelType.NMPC)
         && browserMap.values().stream()
-            .noneMatch(
-                c ->
-                    c.getRelationships().stream()
-                        .anyMatch(
-                            r ->
-                                NmpcConstants.HAS_NMPC_PRODUCT_TYPE.getValue().equals(r.getTypeId())
-                                    && NmpcType.NMPC_NUTRITIONAL_SUPPLEMENT
-                                        .getValue()
-                                        .equals(r.getDestinationId())))) {
+        .noneMatch(
+            c ->
+                c.getRelationships().stream()
+                    .anyMatch(
+                        r ->
+                            NmpcConstants.HAS_NMPC_PRODUCT_TYPE.getValue().equals(r.getTypeId())
+                                && NmpcType.NMPC_NUTRITIONAL_SUPPLEMENT
+                                .getValue()
+                                .equals(r.getDestinationId())))) {
       // active ingredients aren't on the branded product, need to look at the clinical drug and MP
       final Map<String, SnowstormConceptMini> refinedActiveIngredients =
           getClinicalDrugRelationships(
@@ -689,12 +702,12 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
    * Retrieves a concept based on a precise ingredient by first checking a direct mapping, then
    * falling back to ECL-based relationship traversal.
    *
-   * @param ingredientMap Map containing the target ingredients
+   * @param ingredientMap       Map containing the target ingredients
    * @param preciseIngredientId The ID of the precise ingredient to find a related concept for
-   * @param branch The branch to query
-   * @param conceptType Description of the concept type for error messages (e.g., "active
-   *     ingredient")
-   * @param productId The product ID for error reporting
+   * @param branch              The branch to query
+   * @param conceptType         Description of the concept type for error messages (e.g., "active
+   *                            ingredient")
+   * @param productId           The product ID for error reporting
    * @return The found ingredient concept
    * @throws AtomicDataExtractionProblem if the expected ingredient can't be found or is ambiguous
    */
@@ -733,8 +746,8 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
               + preciseIngredientId
               + " but found "
               + candidateIngredients.stream()
-                  .map(SnowstormConceptMini::getConceptId)
-                  .collect(Collectors.joining(",")),
+              .map(SnowstormConceptMini::getConceptId)
+              .collect(Collectors.joining(",")),
           productId);
     }
 
@@ -749,6 +762,7 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
   @Data
   @AllArgsConstructor
   class ActivePreciseIngredient {
+
     SnowstormConceptMini activeIngredient;
     SnowstormConceptMini refinedActiveIngredient;
     SnowstormConceptMini preciseIngredient;
