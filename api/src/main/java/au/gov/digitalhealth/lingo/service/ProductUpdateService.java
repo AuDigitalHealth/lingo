@@ -515,7 +515,8 @@ public class ProductUpdateService {
             .map(
                 item -> {
                   ExternalIdentifierDefinition def = mappingRefsets.get(item.getIdentifierScheme());
-                  ReferenceSetDefinition refDef = referenceSetDefinitionMap.get(item.getIdentifierScheme());
+                  ReferenceSetDefinition refDef =
+                      referenceSetDefinitionMap.get(item.getIdentifierScheme());
                   item.setTitle(def != null ? def.getTitle() : refDef.getTitle());
                   item.setDescription(def != null ? def.getDescription() : refDef.getDescription());
                   item.setType(def != null ? def.getPropertyType() : refDef.getPropertyType());

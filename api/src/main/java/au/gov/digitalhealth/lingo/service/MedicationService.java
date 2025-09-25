@@ -68,10 +68,7 @@ import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.exception.AtomicDataExtractionProblem;
-import au.gov.digitalhealth.lingo.product.details.Ingredient;
-import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
-import au.gov.digitalhealth.lingo.product.details.Quantity;
-import au.gov.digitalhealth.lingo.product.details.VaccineProductDetails;
+import au.gov.digitalhealth.lingo.product.details.*;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
 import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import au.gov.digitalhealth.lingo.util.NmpcConstants;
@@ -421,31 +418,47 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
 
     // todo only vaccines have plays role, target population and qualitative strength, maybe use
     // nmpc type?
-    if (modelConfiguration.getModelType().equals(ModelType.NMPC)
-        && relationshipOfTypeExists(
-            productRelationships,
-            PLAYS_ROLE.getValue(),
-            HAS_TARGET_POPULATION.getValue(),
-            HAS_QUALITATIVE_STRENGTH.getValue())) {
-      VaccineProductDetails vaccineProductDetails = new VaccineProductDetails();
-      if (relationshipOfTypeExists(productRelationships, PLAYS_ROLE.getValue())) {
-        Set<SnowstormRelationship> playsRoleRelationships =
-            filterActiveStatedRelationshipByType(productRelationships, PLAYS_ROLE.getValue());
-        vaccineProductDetails.setPlaysRole(
-            playsRoleRelationships.stream()
-                .map(SnowstormRelationship::getTarget)
-                .collect(Collectors.toSet()));
+    if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
+
+      if (relationshipOfTypeExists(
+          productRelationships,
+          PLAYS_ROLE.getValue(),
+          HAS_TARGET_POPULATION.getValue(),
+          HAS_QUALITATIVE_STRENGTH.getValue())) {
+
+        VaccineProductDetails vaccineProductDetails = new VaccineProductDetails();
+        if (relationshipOfTypeExists(productRelationships, PLAYS_ROLE.getValue())) {
+          Set<SnowstormRelationship> playsRoleRelationships =
+              filterActiveStatedRelationshipByType(productRelationships, PLAYS_ROLE.getValue());
+          vaccineProductDetails.setPlaysRole(
+              playsRoleRelationships.stream()
+                  .map(SnowstormRelationship::getTarget)
+                  .collect(Collectors.toSet()));
+        }
+        if (relationshipOfTypeExists(productRelationships, HAS_TARGET_POPULATION.getValue())) {
+          vaccineProductDetails.setTargetPopulation(
+              getSingleActiveTarget(productRelationships, HAS_TARGET_POPULATION.getValue()));
+        }
+        if (relationshipOfTypeExists(productRelationships, HAS_QUALITATIVE_STRENGTH.getValue())) {
+          vaccineProductDetails.setQualitiativeStrength(
+              getSingleActiveTarget(productRelationships, HAS_QUALITATIVE_STRENGTH.getValue()));
+        }
+        productDetails = vaccineProductDetails;
+      } else if (relationshipOfTypeExists(
+          productRelationships,
+          HAS_ACTIVE_INGREDIENT.getValue(),
+          HAS_PRECISE_ACTIVE_INGREDIENT.getValue())) { // definitely nmpc medication
+        productDetails = new MedicationProductDetails();
+      } else {
+        NutritionalProductDetails nutritionalProductDetails = new NutritionalProductDetails();
+
+        if (relationshipOfTypeExists(productRelationships, HAS_TARGET_POPULATION.getValue())) {
+          nutritionalProductDetails.setTargetPopulation(
+              getSingleActiveTarget(productRelationships, HAS_TARGET_POPULATION.getValue()));
+        }
+        productDetails = nutritionalProductDetails;
       }
-      if (relationshipOfTypeExists(productRelationships, HAS_TARGET_POPULATION.getValue())) {
-        vaccineProductDetails.setTargetPopulation(
-            getSingleActiveTarget(productRelationships, HAS_TARGET_POPULATION.getValue()));
-      }
-      if (relationshipOfTypeExists(productRelationships, HAS_QUALITATIVE_STRENGTH.getValue())) {
-        vaccineProductDetails.setQualitiativeStrength(
-            getSingleActiveTarget(productRelationships, HAS_QUALITATIVE_STRENGTH.getValue()));
-      }
-      productDetails = vaccineProductDetails;
-    } else {
+    } else { // AMT
       productDetails = new MedicationProductDetails();
     }
 

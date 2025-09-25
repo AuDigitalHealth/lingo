@@ -274,7 +274,7 @@ public class ExternalIdentifier extends NonDefiningBase implements Serializable 
         .append(valueObject != null ? valueObject.getConceptId() : null)
         .toHashCode();
   }
-  
+
   @Override
   public String toDisplay() {
     String valueString = null;
