@@ -78,6 +78,7 @@ import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty
 import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import au.gov.digitalhealth.lingo.util.NmpcConstants;
 import au.gov.digitalhealth.lingo.util.NmpcType;
+import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -424,6 +425,16 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
     Set<SnowstormRelationship> productRelationships = getRelationshipsFromAxioms(product);
     MedicationProductDetails productDetails;
 
+    final SnowstormConcept unbrandedProduct =
+        getUnbrandedProduct(
+            branch,
+            productId,
+            browserMap,
+            typeMap,
+            modelConfiguration,
+            product,
+            productRelationships);
+
     if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
 
       NmpcType nmpcType = product.getRelationships().stream()
@@ -462,6 +473,30 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
                 getSingleActiveTarget(productRelationships, HAS_TARGET_POPULATION.getValue()));
           }
           productDetails = nutritionalProductDetails;
+
+          // should only be one MP level concept
+          typeMap.entrySet().stream()
+              .filter(
+                  entry ->
+                      modelConfiguration
+                          .getLevelOfType(ModelLevelType.MEDICINAL_PRODUCT_ONLY)
+                          .getReferenceSetIdentifier()
+                          .equals(entry.getValue()))
+              .map(Entry::getKey)
+              .findFirst()
+              .ifPresent(
+                  mpId -> {
+                    SnowstormConcept mpConcept = browserMap.get(mpId);
+                    if (mpConcept != null) {
+                      productDetails.setExistingMedicinalProduct(
+                          SnowstormDtoUtil.toSnowstormConceptMini(mpConcept));
+                    } else {
+                      throw new AtomicDataExtractionProblem(
+                          "No MP level concept found for MP id: " + mpId, productId);
+                    }
+                  });
+          productDetails.setExistingClinicalDrug(
+              SnowstormDtoUtil.toSnowstormConceptMini(unbrandedProduct));
         }
         case NMPC_MEDICATION -> productDetails = new MedicationProductDetails();
         case NMPC_DEVICE -> throw new AtomicDataExtractionProblem(
@@ -474,16 +509,6 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
     } else { // AMT
       productDetails = new MedicationProductDetails();
     }
-
-    final SnowstormConcept unbrandedProduct =
-        getUnbrandedProduct(
-            branch,
-            productId,
-            browserMap,
-            typeMap,
-            modelConfiguration,
-            product,
-            productRelationships);
 
     if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
       Set<SnowstormRelationship> relationships =
