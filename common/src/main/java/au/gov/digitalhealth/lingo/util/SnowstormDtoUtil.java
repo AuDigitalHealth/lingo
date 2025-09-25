@@ -719,10 +719,10 @@ public class SnowstormDtoUtil {
 
     Map<String, String> additionalFields = new HashMap<>();
 
-    if(externalIdentifier.getValue() != null) {
+    if (externalIdentifier.getValue() != null) {
       additionalFields.put(MAP_TARGET.getValue(), externalIdentifier.getValue());
     }
-    if(externalIdentifier.getValue() == null && externalIdentifier.getValueObject() != null) {
+    if (externalIdentifier.getValue() == null && externalIdentifier.getValueObject() != null) {
       String val = externalIdentifier.getValueObject().getConceptId();
       additionalFields.put(MAP_TARGET.getValue(), val);
     }

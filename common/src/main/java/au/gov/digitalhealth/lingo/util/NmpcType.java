@@ -43,6 +43,15 @@ public enum NmpcType implements LingoConstants {
     this.label = label;
   }
 
+  public static NmpcType fromValue(String value) {
+    for (NmpcType type : NmpcType.values()) {
+      if (type.getValue().equals(value)) {
+        return type;
+      }
+    }
+    throw new IllegalArgumentException("Unknown NMPC type: " + value);
+  }
+
   public SnowstormConceptMini snowstormConceptMini() {
     return new SnowstormConceptMini()
         .conceptId(getValue())

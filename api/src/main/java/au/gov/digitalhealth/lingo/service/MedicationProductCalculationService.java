@@ -1399,7 +1399,7 @@ public class MedicationProductCalculationService
           getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT, 0, modelConfiguration.getModuleId()));
     }
 
-    if (productDetails instanceof NutritionalProductDetails) {
+    if (productDetails instanceof NutritionalProductDetails nutritionalProductDetails) {
       if (level.equals(CLINICAL_DRUG)) {
         relationships.add(
             getSnowstormRelationship(
@@ -1416,6 +1416,14 @@ public class MedicationProductCalculationService
                 0,
                 STATED_RELATIONSHIP,
                 modelConfiguration.getModuleId()));
+      }
+      if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
+        addRelationshipIfNotNull(
+            relationships,
+            nutritionalProductDetails.getTargetPopulation(),
+            HAS_TARGET_POPULATION,
+            0,
+            modelConfiguration.getModuleId());
       }
     }
 
