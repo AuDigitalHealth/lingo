@@ -85,7 +85,8 @@ public class SchemaExtender {
             productType,
             level.getModelLevelType().isPackageLevel()
                 ? ProductPackageType.PACKAGE
-                : ProductPackageType.PRODUCT);
+                : ProductPackageType.PRODUCT,
+            false);
 
     if (nonDefiningProperty != null) {
       schemaNode
@@ -99,22 +100,23 @@ public class SchemaExtender {
   private void updateSchemaForProperties(
       JsonNode schemaNode, Set<BasePropertyDefinition> properties, ProductType productType) {
 
-    injectTypeDef(schemaNode, properties, productType, ProductPackageType.PACKAGE);
+    injectTypeDef(schemaNode, properties, productType, ProductPackageType.PACKAGE, true);
 
-    injectTypeDef(schemaNode, properties, productType, ProductPackageType.PRODUCT);
+    injectTypeDef(schemaNode, properties, productType, ProductPackageType.PRODUCT, true);
 
-    injectTypeDef(schemaNode, properties, productType, ProductPackageType.CONTAINED_PACKAGE);
+    injectTypeDef(schemaNode, properties, productType, ProductPackageType.CONTAINED_PACKAGE, true);
   }
 
   private ArrayProperty injectTypeDef(
       JsonNode schemaNode,
       Set<BasePropertyDefinition> properties,
       ProductType productType,
-      ProductPackageType productPackageType) {
+      ProductPackageType productPackageType,
+      boolean filterProductPackageType) {
 
     Set<BasePropertyDefinition> levelMatchingProperties =
         properties.stream()
-            .filter(m -> m.getLevel().equals(productPackageType))
+            .filter(m -> !filterProductPackageType || m.getLevel().equals(productPackageType))
             .collect(Collectors.toSet());
 
     ArrayProperty resultingProperty = null;
