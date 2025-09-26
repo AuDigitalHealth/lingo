@@ -20,8 +20,23 @@ import au.csiro.snowstorm_client.api.ConceptsApi;
 import au.csiro.snowstorm_client.api.RefsetMembersApi;
 import au.csiro.snowstorm_client.api.RelationshipsApi;
 import au.csiro.snowstorm_client.invoker.ApiClient;
-import au.csiro.snowstorm_client.model.*;
+import au.csiro.snowstorm_client.model.SnowstormAsyncConceptChangeBatch;
 import au.csiro.snowstorm_client.model.SnowstormAsyncConceptChangeBatch.StatusEnum;
+import au.csiro.snowstorm_client.model.SnowstormAsyncRefsetMemberChangeBatch;
+import au.csiro.snowstorm_client.model.SnowstormBranchPojo;
+import au.csiro.snowstorm_client.model.SnowstormConcept;
+import au.csiro.snowstorm_client.model.SnowstormConceptBulkLoadRequestComponent;
+import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.csiro.snowstorm_client.model.SnowstormConceptSearchRequest;
+import au.csiro.snowstorm_client.model.SnowstormConceptView;
+import au.csiro.snowstorm_client.model.SnowstormItemsPageObject;
+import au.csiro.snowstorm_client.model.SnowstormItemsPageReferenceSetMember;
+import au.csiro.snowstorm_client.model.SnowstormItemsPageRelationship;
+import au.csiro.snowstorm_client.model.SnowstormMemberIdsPojoComponent;
+import au.csiro.snowstorm_client.model.SnowstormMemberSearchRequestComponent;
+import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
+import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
+import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.exception.BatchSnowstormRequestFailedProblem;
 import au.gov.digitalhealth.lingo.exception.BranchLockedProblem;
 import au.gov.digitalhealth.lingo.exception.LingoProblem;
@@ -1266,7 +1281,7 @@ public class SnowstormClient {
         getConceptsApi()
             .findConcepts(
                 branch, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, false, null, null, true, 0, 1000, null, null);
+                null, false, null, null, true, 0, 10000, null, null);
 
     return concepts.map(
         p ->
