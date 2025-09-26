@@ -21,6 +21,7 @@ import {
   ConceptResponseForIds,
   ConceptSearchResponse,
 } from '../types/concept.ts';
+import { IntegrityCheckResponse, Task } from '../types/task.ts';
 import {
   emptySnowstormResponse,
   filterByActiveConcepts,
@@ -35,6 +36,8 @@ import { FieldBindings } from '../types/FieldBindings.ts';
 import { api } from './api.ts';
 import OntoserverService from './OntoserverService.ts';
 import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../utils/helpers/getValueSetExpansionContainsPt.ts';
+import { AxiosResponse } from 'axios';
+import TasksServices from './TasksService.ts';
 
 const ConceptService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
@@ -65,6 +68,92 @@ const ConceptService = {
     const uniqueConcepts = filterByActiveConcepts(concepts);
     conceptResponse.items = uniqueConcepts;
     return conceptResponse;
+  },
+  async integrityCheck(branch: string): Promise<IntegrityCheckResponse> {
+    const url = `/snowstorm/${branch}/integrity-check`;
+    const response = await api.post(url);
+
+    if (response.status !== 201) {
+      this.handleErrors();
+    }
+    return response.data as IntegrityCheckResponse;
+  },
+  async mergeTask(
+    // main/head branch
+    headBranch: string,
+    // task/feature branch
+    taskBranch: string,
+    task: Task,
+  ): Promise<Task> {
+    const requestPayload = {
+      source: headBranch,
+      target: taskBranch,
+    };
+    const url = `/snowstorm/merges`;
+    const response = await api.post(url, requestPayload);
+
+    if (response.status !== 201) {
+      this.handleErrors();
+    }
+
+    // Extract location header to get the merge job URL
+    const locationHeader = response.headers.location;
+    if (!locationHeader) {
+      throw new Error('No location header returned from merge request');
+    }
+
+    const mergePath = new URL(locationHeader).pathname;
+
+    // Poll the merge progress until completion
+    await this.pollMergeProgress(mergePath);
+
+    // Once merge is complete, fetch and return the updated task
+    const returnTask = await TasksServices.getTask(task?.projectKey, task?.key);
+    return returnTask;
+  },
+  async pollMergeProgress(mergeUrl: string): Promise<void> {
+    const cleanedUrl = mergeUrl.replace('snomed-ct/', '');
+    const pollInterval = 5000;
+    const maxAttempts = 120;
+    let attempts = 0;
+
+    while (attempts < maxAttempts) {
+      try {
+        const progressResponse = await api.get(cleanedUrl);
+        const mergeStatus = progressResponse.data;
+
+        if (mergeStatus.status === 'COMPLETED') {
+          return;
+        }
+
+        if (
+          mergeStatus.status === 'FAILED' ||
+          mergeStatus.status === 'CANCELLED'
+        ) {
+          throw new Error(`Merge failed with status: ${mergeStatus.status}`);
+        }
+
+        // If status is IN_PROGRESS or any other pending status, wait and retry
+        await this.delay(pollInterval);
+        attempts++;
+      } catch (error) {
+        if (attempts >= maxAttempts - 1) {
+          throw new Error(
+            `Merge polling timed out after ${(maxAttempts * pollInterval) / 1000} seconds`,
+          );
+        }
+        // If it's a network error, wait and retry
+        await this.delay(pollInterval);
+        attempts++;
+      }
+    }
+
+    throw new Error(
+      `Merge polling timed out after ${(maxAttempts * pollInterval) / 1000} seconds`,
+    );
+  },
+  delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   },
   async searchConceptNoEcl(
     str: string,

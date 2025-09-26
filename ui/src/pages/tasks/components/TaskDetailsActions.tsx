@@ -44,6 +44,7 @@ import {
 } from '../../../hooks/api/task/useConceptsForReview.tsx';
 import { useCanPromoteTask } from '../../../hooks/api/task/useCanPromoteTask.tsx';
 import PromoteTaskModal from './PromoteTaskModal.tsx';
+import MergeTaskModal from './MergeTaskModal.tsx';
 
 const customSx: SxProps = {
   justifyContent: 'flex-start',
@@ -273,8 +274,9 @@ function TaskDetailsActions() {
           conceptReviews={conceptReviews}
           hasUnsavedConcepts={false}
           deletedCrsConceptFound={false}
-          customSx={customSx}
+          // customSx={customSx}
         />
+        <MergeTaskModal task={task} />
       </div>
     </>
   );

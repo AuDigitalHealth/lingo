@@ -23,7 +23,10 @@ import {
   setEmptyToNull,
 } from '../../../utils/helpers/conceptUtils.ts';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
-import { replaceAllWithWhiteSpace } from '../../../types/productValidationUtils.ts';
+import {
+  replaceAllWithWhiteSpace,
+  normalizeWhitespace,
+} from '../../../types/productValidationUtils.ts';
 import { convertStringToRegex } from '../../../utils/helpers/stringUtils.ts';
 import { getValueFromFieldBindings } from '../../../utils/helpers/FieldBindingUtils.ts';
 import React, { useRef, useState } from 'react';
@@ -145,6 +148,7 @@ function NewConceptDropdown({
           register={register}
           dataTestId={`pt-input`}
           control={control}
+          setValue={setValue}
         />
         <InnerBoxSmall component="fieldset">
           <legend>Specified Concept Id</legend>
@@ -196,6 +200,7 @@ interface AdditionalSynonymFieldProps {
   fieldName: string;
   dataTestId: string;
   control: Control<ProductSummary>;
+  setValue?: UseFormSetValue<ProductSummary>;
 }
 
 function AdditionalSynonymField({
@@ -203,6 +208,7 @@ function AdditionalSynonymField({
   fieldName,
   dataTestId,
   control,
+  setValue,
 }: AdditionalSynonymFieldProps) {
   // Use useFieldArray to manage the array of descriptions
   const { fields, append, remove } = useFieldArray({
@@ -248,6 +254,12 @@ function AdditionalSynonymField({
                 {...register(
                   descriptionFieldName as `nodes.0.newConceptDetails.descriptions`,
                 )}
+                onBlur={e => {
+                  const trimmed = normalizeWhitespace(e.target.value);
+                  if (trimmed) {
+                    setValue(descriptionFieldName, trimmed);
+                  }
+                }}
                 data-testid={`${dataTestId}-${index}`}
                 placeholder="Enter synonym term"
                 fullWidth
@@ -374,7 +386,7 @@ function NewConceptDropdownField({
                 }}
                 color={fieldChanged ? 'error' : 'primary'}
                 onBlur={e => {
-                  const trimmed = e.target.value.trim();
+                  const trimmed = normalizeWhitespace(e.target.value);
                   field.onChange(trimmed);
                   handleBlur();
                 }}

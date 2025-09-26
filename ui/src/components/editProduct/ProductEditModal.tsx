@@ -98,6 +98,7 @@ import AdditionalPropertiesEdit, {
   AdditionalPropertiesEditForm,
 } from '../../pages/products/rjsf/AdditionalPropertiesEdit.tsx';
 import { arePropertiesEqual } from '../../utils/helpers/commonUtils.ts';
+import { normalizeWhitespace } from '../../types/productValidationUtils.ts';
 
 const typeMap: Record<DefinitionType, string> = {
   [DefinitionType.FSN]: '900000000000003001',
@@ -1289,7 +1290,7 @@ const DescriptionTextInput = ({
         maxRows={4}
         disabled={isDisabled}
         onBlur={e => {
-          const trimmed = e.target.value.trim();
+          const trimmed = normalizeWhitespace(e.target.value);
           field.onChange(trimmed);
         }}
       />
