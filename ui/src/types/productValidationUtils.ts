@@ -23,7 +23,7 @@ import { isNewConcept } from '../utils/helpers/conceptUtils.ts';
 
 import { FieldBindings } from './FieldBindings.ts';
 
-import { Product } from './concept.ts';
+import { Description, Product } from './concept.ts';
 
 import { showErrors, snowstormErrorHandler } from './ErrorHandler.ts';
 import { ServiceStatus } from './applicationConfig.ts';
@@ -97,6 +97,42 @@ export async function validateProductSummaryNodes(
   return undefined;
 }
 
+export function cleanUpWhiteSpaceFromNodes(products: Product[]): Product[] {
+  return products.map(product => {
+    if (product.newConceptDetails) {
+      const details = product.newConceptDetails;
+
+      if (details.fullySpecifiedName) {
+        details.fullySpecifiedName = normalizeWhitespace(
+          details.fullySpecifiedName,
+        );
+      }
+      if (details.fsn && details.fsn.term) {
+        details.fsn.term = normalizeWhitespace(details.fsn.term);
+      }
+
+      if (details.preferredTerm) {
+        details.preferredTerm = normalizeWhitespace(details.preferredTerm);
+      }
+      if (details.pt && details.pt.term) {
+        details.pt.term = normalizeWhitespace(details.pt.term);
+      }
+      if (details.descriptions) {
+        details.descriptions = cleanUpDescriptions(details.descriptions);
+      }
+    }
+    return product;
+  });
+}
+export function cleanUpDescriptions(
+  descriptions: Description[],
+): Description[] {
+  return descriptions.map(desc => ({
+    ...desc,
+    term: normalizeWhitespace(desc.term) ?? desc.term,
+  }));
+}
+
 export function replaceAllWithWhiteSpace(regex: RegExp, inputValue: string) {
   if (regex === null) {
     return inputValue;
@@ -110,4 +146,8 @@ export function replaceAllWithWhiteSpace(regex: RegExp, inputValue: string) {
     return returnVal;
   }
   return inputValue;
+}
+
+export function normalizeWhitespace(str: string | undefined) {
+  return str ? str.trim().replace(/\s+/g, ' ') : str;
 }
