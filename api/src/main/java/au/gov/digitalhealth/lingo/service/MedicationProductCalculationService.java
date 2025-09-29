@@ -743,29 +743,25 @@ public class MedicationProductCalculationService
 
       if (modelConfiguration.getModelType().equals(ModelType.NMPC)
           && packageDetails.getOtherIdentifyingInformation() != null) {
+        String otherIdentifyingInformation;
+
+        if (StringUtils.hasLength(packageDetails.getOtherIdentifyingInformation())) {
+          otherIdentifyingInformation = packageDetails.getOtherIdentifyingInformation();
+        } else if (StringUtils.hasLength(packageDetails.getGenericOtherIdentifyingInformation())) {
+          otherIdentifyingInformation = packageDetails.getGenericOtherIdentifyingInformation();
+        } else {
+          otherIdentifyingInformation = NO_OII_VALUE.getValue();
+        }
+
         relationships.add(
             getSnowstormDatatypeComponent(
                 HAS_OTHER_IDENTIFYING_INFORMATION_NMPC,
-                !StringUtils.hasLength(packageDetails.getOtherIdentifyingInformation())
-                    ? NO_OII_VALUE.getValue()
-                    : packageDetails.getOtherIdentifyingInformation(),
+                otherIdentifyingInformation,
                 DataTypeEnum.STRING,
                 0,
                 STATED_RELATIONSHIP,
                 modelConfiguration.getModuleId()));
       }
-    } else if (modelConfiguration.getModelType().equals(ModelType.NMPC)
-        && packageDetails.getGenericOtherIdentifyingInformation() != null) {
-      relationships.add(
-          getSnowstormDatatypeComponent(
-              HAS_OTHER_IDENTIFYING_INFORMATION_NMPC,
-              !StringUtils.hasLength(packageDetails.getGenericOtherIdentifyingInformation())
-                  ? NO_OII_VALUE.getValue()
-                  : packageDetails.getGenericOtherIdentifyingInformation(),
-              DataTypeEnum.STRING,
-              0,
-              STATED_RELATIONSHIP,
-              modelConfiguration.getModuleId()));
     }
 
     int group = 1;
@@ -1458,8 +1454,7 @@ public class MedicationProductCalculationService
                 STATED_RELATIONSHIP,
                 modelConfiguration.getModuleId()));
       }
-    } else if (modelConfiguration.getModelType().equals(ModelType.NMPC)
-        && productDetails.getGenericOtherIdentifyingInformation() != null) {
+    } else if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
       relationships.add(
           getSnowstormDatatypeComponent(
               HAS_OTHER_IDENTIFYING_INFORMATION_NMPC,
