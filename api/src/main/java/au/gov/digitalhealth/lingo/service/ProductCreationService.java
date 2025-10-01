@@ -102,6 +102,7 @@ import reactor.core.publisher.Mono;
 public class ProductCreationService {
 
   private final BlobStorageService blobStorageService;
+  private final TicketServiceImpl ticketServiceImpl;
   SnowstormClient snowstormClient;
   NameGenerationService nameGenerationService;
   TicketServiceImpl ticketService;
@@ -131,7 +132,8 @@ public class ProductCreationService {
       FieldBindingConfiguration fieldBindingConfiguration,
       Models models,
       ExternalReferenceToBlobStorage externalReferenceToBlobStorage,
-      BlobStorageService blobStorageService) {
+      BlobStorageService blobStorageService,
+      TicketServiceImpl ticketServiceImpl) {
     this.snowstormClient = snowstormClient;
     this.nameGenerationService = nameGenerationService;
     this.ticketService = ticketService;
@@ -144,6 +146,7 @@ public class ProductCreationService {
     this.models = models;
     this.externalReferenceToBlobStorage = externalReferenceToBlobStorage;
     this.blobStorageService = blobStorageService;
+    this.ticketServiceImpl = ticketServiceImpl;
   }
 
   private static void updateAxiomIdentifierReferences(
@@ -426,7 +429,10 @@ public class ProductCreationService {
     }
 
     updateTicket(
-        ticket, productCreationDetails.toProductDto(), productCreationDetails.getPartialSaveName());
+        ticket,
+        productCreationDetails.toProductDto(),
+        productCreationDetails.getTicketProductId(),
+        branch);
     return productSummary;
   }
 
@@ -1260,7 +1266,7 @@ public class ProductCreationService {
     if (creationDetails.getPartialSaveName() != null
         && !creationDetails.getPartialSaveName().isEmpty()) {
       try {
-        ticketService.deleteProduct(ticket.getId(), creationDetails.getPartialSaveName());
+        ticketService.deleteProductByName(ticket.getId(), creationDetails.getPartialSaveName());
       } catch (ResourceNotFoundProblem p) {
         log.warning(
             "Partial save name "
@@ -1284,9 +1290,13 @@ public class ProductCreationService {
   }
 
   @SuppressWarnings("java:S1192")
-  private void updateTicket(TicketDto ticket, ProductDto productDto, String partialSaveName) {
+  private void updateTicket(
+      TicketDto ticket, ProductDto productDto, Long ticketProductId, String branch) {
+    boolean shouldDelete = shouldDeleteOldProduct(ticket, productDto, ticketProductId, branch);
+    ProductDto savedProduct = null;
+
     try {
-      ticketService.putProductOnTicket(ticket.getId(), productDto);
+      savedProduct = ticketService.putProductOnTicket(ticket.getId(), productDto);
     } catch (Exception e) {
       String dtoString = null;
       try {
@@ -1304,30 +1314,61 @@ public class ProductCreationService {
     }
 
     if (deletePartialSaveOnCreate
-        && productDto.getOriginalConceptId() == null
-        && partialSaveName != null
-        && !partialSaveName.isEmpty()) {
-      try {
-        ticketService.deleteProduct(ticket.getId(), Long.parseLong(partialSaveName));
-      } catch (ResourceNotFoundProblem p) {
-        log.warning(
-            "Partial save name "
-                + partialSaveName
-                + " on ticket "
-                + ticket.getId()
-                + " could not be found to be deleted on product creation. "
-                + "Ignored to allow new product details to be saved to the ticket.");
-      } catch (Exception e) {
-        log.log(
-            Level.SEVERE,
-            "Delete of partial save name "
-                + partialSaveName
-                + " on ticket "
-                + ticket.getId()
-                + " failed for new product creation. "
-                + "Ignored to allow new product details to be saved to the ticket.",
-            e);
-      }
+        && shouldDelete
+        && savedProduct != null
+        && !savedProduct.getId().equals(ticketProductId)) {
+      deleteOldProduct(ticket, ticketProductId);
+    }
+  }
+
+  private boolean shouldDeleteOldProduct(
+      TicketDto ticket, ProductDto productDto, Long ticketProductId, String branch) {
+    if (ticketProductId == null) {
+      return false;
+    }
+
+    ProductDto existingProductDto =
+        ticketServiceImpl.getProductById(ticket.getId(), ticketProductId);
+    if (existingProductDto == null) {
+      return false;
+    }
+    // Case 1: Partial record (no conceptId)
+    if (existingProductDto.getConceptId() == null) { // partial records including the update mode on
+      return true;
+    }
+
+    // Case 2: Different name and the previous concept is inactive we should delete that
+    if (existingProductDto.getName() != null
+        && !existingProductDto.getName().equals(productDto.getName())) {
+      Collection<String> existingConcepts =
+          snowstormClient.conceptIdsThatExist(branch, Set.of(existingProductDto.getConceptId()));
+      return existingConcepts.isEmpty();
+    }
+
+    return false;
+  }
+
+  private void deleteOldProduct(TicketDto ticket, Long ticketProductId) {
+    try {
+      ticketService.deleteProductById(ticket.getId(), ticketProductId);
+    } catch (ResourceNotFoundProblem p) {
+      log.warning(
+          "Partial save with id "
+              + ticketProductId
+              + " on ticket "
+              + ticket.getId()
+              + " could not be found to be deleted on product creation. "
+              + "Ignored to allow new product details to be saved to the ticket.");
+    } catch (Exception e) {
+      log.log(
+          Level.SEVERE,
+          "Delete of partial save id "
+              + ticketProductId
+              + " on ticket "
+              + ticket.getId()
+              + " failed for new product creation. "
+              + "Ignored to allow new product details to be saved to the ticket.",
+          e);
     }
   }
 }

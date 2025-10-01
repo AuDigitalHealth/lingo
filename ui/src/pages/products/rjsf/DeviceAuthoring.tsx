@@ -161,7 +161,7 @@ function DeviceAuthoring({
       setProductPreviewDetails,
       setProductSaveDetails,
       originalConceptId,
-      partialSaveName: ticketProductId,
+      ticketProductId: ticketProductId ? Number(ticketProductId) : null,
     });
   };
   const saveDraft = () => {
@@ -448,7 +448,7 @@ interface UseCalculateProductArguments {
   setProductPreviewDetails: (details: DevicePackageDetails | undefined) => void;
   setProductSaveDetails: (details: ProductSaveDetails | undefined) => void;
   originalConceptId: string | undefined;
-  partialSaveName?: string | null;
+  ticketProductId?: number | null;
 }
 
 export function useCalculateProduct() {
@@ -463,7 +463,7 @@ export function useCalculateProduct() {
       setProductPreviewDetails,
       setProductSaveDetails,
       originalConceptId,
-      partialSaveName,
+      ticketProductId,
     }: UseCalculateProductArguments) => {
       let productSummary;
       const originalConcept = selectedProduct
@@ -490,7 +490,7 @@ export function useCalculateProduct() {
         productSummary,
         packageDetails: formData as DevicePackageDetails,
         ticketId: ticket.id,
-        partialSaveName: partialSaveName || null,
+        ticketProductId: ticketProductId || null,
         nameOverride: null,
         originalConceptId: originalConcept,
         originalPackageDetails: initialFormData as DevicePackageDetails,

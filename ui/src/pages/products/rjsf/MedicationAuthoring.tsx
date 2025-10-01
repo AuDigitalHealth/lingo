@@ -172,7 +172,7 @@ function MedicationAuthoring({
       setProductPreviewDetails,
       setProductSaveDetails,
       originalConceptId,
-      partialSaveName: ticketProductId,
+      ticketProductId: ticketProductId ? Number(ticketProductId) : null,
     });
   };
 
@@ -470,7 +470,7 @@ interface UseCalculateProductArguments {
   ) => void;
   setProductSaveDetails: (details: ProductSaveDetails | undefined) => void;
   originalConceptId: string | undefined;
-  partialSaveName?: string | null;
+  ticketProductId?: number | null;
 }
 
 function useCalculateProduct() {
@@ -485,7 +485,7 @@ function useCalculateProduct() {
       setProductPreviewDetails,
       setProductSaveDetails,
       originalConceptId,
-      partialSaveName,
+      ticketProductId,
     }: UseCalculateProductArguments) => {
       let productSummary;
       const originalConcept = selectedProduct
@@ -511,7 +511,7 @@ function useCalculateProduct() {
         productSummary,
         packageDetails: formData as MedicationPackageDetails,
         ticketId: ticket.id,
-        partialSaveName: partialSaveName || null,
+        ticketProductId: ticketProductId || null,
         nameOverride: null,
         originalConceptId: originalConcept,
         originalPackageDetails: initialformData as MedicationPackageDetails,

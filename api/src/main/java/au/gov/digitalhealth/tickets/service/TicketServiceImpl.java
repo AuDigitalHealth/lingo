@@ -1152,7 +1152,7 @@ public class TicketServiceImpl implements TicketService {
     bulkProductActionRepository.save(bulkProductAction);
   }
 
-  public void putProductOnTicket(Long ticketId, ProductDto productDto) {
+  public ProductDto putProductOnTicket(Long ticketId, ProductDto productDto) {
     Ticket ticketToUpdate =
         ticketRepository
             .findById(ticketId)
@@ -1191,7 +1191,8 @@ public class TicketServiceImpl implements TicketService {
       product.setOriginalPackageDetails(null);
     }
 
-    productRepository.save(product);
+    Product updatedProduct = productRepository.save(product);
+    return productMapper.toDto(updatedProduct);
   }
 
   public void putProductsOnTicket(Long ticketId, List<ProductDto> productDtos) {
@@ -1287,7 +1288,7 @@ public class TicketServiceImpl implements TicketService {
     }
   }
 
-  public void deleteProduct(@NotNull Long ticketId, @NotNull @NotEmpty String name) {
+  public void deleteProductByName(@NotNull Long ticketId, @NotNull @NotEmpty String name) {
     assertTicketExists(ticketId);
 
     Product product = getProductIfExists(ticketId, name);
@@ -1311,7 +1312,7 @@ public class TicketServiceImpl implements TicketService {
                     String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
   }
 
-  public void deleteProduct(Long ticketId, Long id) {
+  public void deleteProductById(Long ticketId, Long id) {
     assertTicketExists(ticketId);
 
     Product product =

@@ -188,6 +188,7 @@ export interface ProductSaveDetails {
     | DevicePackageDetails
     | BrandPackSizeCreationDetails;
   ticketId: number;
+  ticketProductId: number | null;
   partialSaveName: string | null;
   nameOverride: string | null;
   originalConceptId: string | null | undefined;
@@ -215,22 +216,6 @@ export interface ProductUpdateCreationDetails {
 export interface ProductUpdateState {
   concept: BrowserConcept;
   nonDefiningProperties: NonDefiningProperty[];
-}
-
-export interface ProductCreationDetails {
-  productSummary: ProductSummary;
-  packageDetails:
-    | MedicationPackageDetails
-    | DevicePackageDetails
-    | BrandPackSizeCreationDetails;
-  ticketId: number;
-  partialSaveName: string | null;
-  nameOverride: string | null;
-  originalConceptId: string | null | undefined;
-  originalPackageDetails:
-    | MedicationPackageDetails
-    | DevicePackageDetails
-    | BrandPackSizeCreationDetails;
 }
 
 export interface ProductUpdate extends VersionedEntity {

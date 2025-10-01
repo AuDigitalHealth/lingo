@@ -86,10 +86,9 @@ export const isUserReportableProblem = (
   // eslint-disable-next-line
   data: any,
 ): data is ProblemDetail => {
+  const path = data.path ?? data.instance;
   return (
-    data.status === 400 &&
-    typeof data.path === 'string' &&
-    data.path.startsWith('/api')
+    data.status === 400 && typeof path === 'string' && path.startsWith('/api')
   );
 };
 
