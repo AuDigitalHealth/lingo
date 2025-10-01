@@ -34,7 +34,11 @@ import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductCreationDetails;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.ProductUpdateDetails;
-import au.gov.digitalhealth.lingo.product.details.*;
+import au.gov.digitalhealth.lingo.product.details.Ingredient;
+import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
+import au.gov.digitalhealth.lingo.product.details.PackageDetails;
+import au.gov.digitalhealth.lingo.product.details.PackageQuantity;
+import au.gov.digitalhealth.lingo.product.details.Quantity;
 import au.gov.digitalhealth.tickets.models.Ticket;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -1060,7 +1064,7 @@ class MedicationCreationControllerTest extends LingoTestBase {
 
     // Step 4: Verify the calculation
     // The product summary should contain new concepts for the changed strength
-    Assertions.assertThat(productSummary.getNodes().stream().anyMatch(Node::isRetireAndReplace))
+    Assertions.assertThat(productSummary.getNodes().stream().anyMatch(Node::isConceptEdit))
         .isTrue();
 
     Assertions.assertThat(productSummary.getUnmatchedPreviouslyReferencedNodes()).isEmpty();

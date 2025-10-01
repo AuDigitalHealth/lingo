@@ -17,11 +17,28 @@ package au.gov.digitalhealth.lingo.service;
 
 import static au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter.calculateNonDefiningRelationships;
 import static au.gov.digitalhealth.lingo.util.ReferenceSetUtils.calculateReferenceSetMembers;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.*;
-import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.*;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.ADDITIONAL_RELATIONSHIP;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONCEPT_INACTIVATION_INDICATOR_REFERENCE_SET;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.ENTIRE_TERM_CASE_SENSITIVE;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.FSN;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.IS_A;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.PRIMITIVE;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.SYNONYM;
+import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.addDescription;
+import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getActiveClassAxioms;
+import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getSingleAxiom;
+import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getSnowstormRelationship;
+import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.toSnowstormConceptMini;
+import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.toSnowstormConceptView;
 import static java.lang.Boolean.TRUE;
 
-import au.csiro.snowstorm_client.model.*;
+import au.csiro.snowstorm_client.model.SnowstormAxiom;
+import au.csiro.snowstorm_client.model.SnowstormConcept;
+import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.csiro.snowstorm_client.model.SnowstormConceptView;
+import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
+import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
+import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.configuration.ExternalReferenceToBlobStorage;
 import au.gov.digitalhealth.lingo.configuration.FieldBindingConfiguration;
 import au.gov.digitalhealth.lingo.configuration.NamespaceConfiguration;
@@ -57,7 +74,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.groups.Default;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -194,41 +220,6 @@ public class ProductCreationService {
         .anyMatch(node -> node.isRetireAndReplace() || node.isRetireAndReplaceWithExisting())) {
       throw new ProductAtomicDataValidationProblem(
           "Cannot retire and replace concepts as part of a create operation");
-    }
-  }
-
-  private static void validateUpdateOperation(ProductSummary productSummary) {
-    if (productSummary.getNodes().stream()
-        .anyMatch(
-            node ->
-                node.getConcept() != null
-                    && node.getNewConceptDetails() == null
-                    && node.getOriginalNode() != null
-                    && node.getConcept().getConceptId() != null
-                    && !node.getConcept()
-                        .getConceptId()
-                        .equals(node.getOriginalNode().getConceptId())
-                    && node.getOriginalNode().getInactivationReason() == null)) {
-
-      String offendingConcepts =
-          productSummary.getNodes().stream()
-              .filter(
-                  node ->
-                      node.getConcept() != null
-                          && node.getNewConceptDetails() == null
-                          && node.getOriginalNode() != null
-                          && node.getConcept().getConceptId() != null
-                          && !node.getConcept()
-                              .getConceptId()
-                              .equals(node.getOriginalNode().getConceptId())
-                          && node.getOriginalNode().getInactivationReason() == null)
-              .map(Node::getFullySpecifiedName)
-              .collect(Collectors.joining(", "));
-
-      throw new ProductAtomicDataValidationProblem(
-          "Cannot edit existing concept identified as the replacement with no defining changes "
-              + "required - retire and replace must be chosen instead. Offending concepts: "
-              + offendingConcepts);
     }
   }
 
@@ -551,7 +542,6 @@ public class ProductCreationService {
           && productSummary.getNodes().stream().noneMatch(Node::isPropertyUpdate)) {
         throw new EmptyProductCreationProblem();
       }
-      validateUpdateOperation(productSummary);
     }
 
     final ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
@@ -670,7 +660,15 @@ public class ProductCreationService {
       throws InterruptedException {
     Map<String, Node> nodesWithPropertyUpdates =
         productSummary.getNodes().stream()
-            .filter(Node::isPropertyUpdate)
+            // if this is a property update, or a concept swap
+            // concept swap might need marker reference set update
+            .filter(
+                node ->
+                    node.isPropertyUpdate()
+                        || (!node.isNewConcept()
+                            && node.getConcept() != null
+                            && node.getOriginalNode() != null
+                            && !node.getConceptId().equals(node.getOriginalNode().getConceptId())))
             .collect(Collectors.toMap(Node::getConceptId, n -> n));
 
     if (nodesWithPropertyUpdates.isEmpty()) {

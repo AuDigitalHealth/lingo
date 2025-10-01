@@ -71,7 +71,8 @@ public class MedicationAssertions {
             .filter(n -> n.getLabel().equals(label))
             .collect(Collectors.toSet());
 
-    long countNew = nodeSet.stream().filter(Node::isNewConcept).count();
+    long countNew =
+        nodeSet.stream().filter(node -> node.isNewConcept() && !node.isConceptEdit()).count();
     if (countNew != numberOfNew) {
       throw new AssertionFailedError(
           "Product summary had "
