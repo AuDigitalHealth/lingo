@@ -29,6 +29,7 @@ import java.util.Optional;
 import java.util.Set;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.util.Pair;
@@ -39,6 +40,7 @@ import reactor.core.publisher.Mono;
 
 @Log
 @Service
+@ConditionalOnBean(name = "fhirApiClient")
 public class FhirClient {
   private final WebClient client;
   private final FhirClient self;
