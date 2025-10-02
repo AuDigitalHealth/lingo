@@ -427,10 +427,10 @@ models:
       - name: deviceClass
         title: Device Class
         identifier: 681041000220106
-        level: PRODUCT
+        level: PACKAGE
         dataType: CONCEPT
         eclBinding: <681051000220108
-        modelLevels: REAL_CLINICAL_DRUG
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: true
         multiValued: false
         showDefaultOptions: true
