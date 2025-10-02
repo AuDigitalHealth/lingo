@@ -36,6 +36,7 @@ import {
 import { TicketBulkProductActionDto } from '../types/tickets/ticket.ts';
 
 import { api } from './api.ts';
+import { cleanUpWhiteSpaceFromNodes } from '../types/productValidationUtils.ts';
 
 const ProductService = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
@@ -114,6 +115,9 @@ const ProductService = {
       this.handleErrors();
     }
     const productModel = response.data as ProductSummary;
+    if (productModel && productModel.nodes) {
+      productModel.nodes = cleanUpWhiteSpaceFromNodes(productModel.nodes);
+    }
     return productModel;
   },
   async previewUpdateMedicationProduct(
@@ -129,6 +133,9 @@ const ProductService = {
       this.handleErrors();
     }
     const productModel = response.data as ProductSummary;
+    if (productModel && productModel.nodes) {
+      productModel.nodes = cleanUpWhiteSpaceFromNodes(productModel.nodes);
+    }
     return productModel;
   },
   async saveMedicationProduct(
@@ -201,6 +208,9 @@ const ProductService = {
       this.handleErrors();
     }
     const productModel = response.data as ProductSummary;
+    if (productModel && productModel.nodes) {
+      productModel.nodes = cleanUpWhiteSpaceFromNodes(productModel.nodes);
+    }
     return productModel;
   },
   async previewUpdateDeviceProduct(
@@ -216,6 +226,9 @@ const ProductService = {
       this.handleErrors();
     }
     const productModel = response.data as ProductSummary;
+    if (productModel && productModel.nodes) {
+      productModel.nodes = cleanUpWhiteSpaceFromNodes(productModel.nodes);
+    }
     return productModel;
   },
   async createNewDeviceProduct(

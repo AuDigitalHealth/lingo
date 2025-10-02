@@ -515,10 +515,12 @@ public class ProductUpdateService {
             .map(
                 item -> {
                   ExternalIdentifierDefinition def = mappingRefsets.get(item.getIdentifierScheme());
-                  item.setTitle(def.getTitle());
-                  item.setDescription(def.getDescription());
-                  item.setType(def.getPropertyType());
-                  item.setIdentifier(def.getIdentifier());
+                  ReferenceSetDefinition refDef =
+                      referenceSetDefinitionMap.get(item.getIdentifierScheme());
+                  item.setTitle(def != null ? def.getTitle() : refDef.getTitle());
+                  item.setDescription(def != null ? def.getDescription() : refDef.getDescription());
+                  item.setType(def != null ? def.getPropertyType() : refDef.getPropertyType());
+                  item.setIdentifier(def != null ? def.getIdentifier() : refDef.getIdentifier());
                   return item;
                 })
             .collect(

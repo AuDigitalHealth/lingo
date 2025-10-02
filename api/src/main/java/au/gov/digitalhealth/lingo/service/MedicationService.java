@@ -23,6 +23,7 @@ import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_DEVICE_TYPE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_TOTAL_QUANTITY_UNIT;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_TOTAL_QUANTITY_VALUE;
+import static au.gov.digitalhealth.lingo.util.NmpcConstants.HAS_NMPC_PRODUCT_TYPE;
 import static au.gov.digitalhealth.lingo.util.NmpcConstants.HAS_OTHER_IDENTIFYING_INFORMATION_NMPC;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.ADDITIONAL_RELATIONSHIP;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONTAINS_CD;
@@ -70,12 +71,14 @@ import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.exception.AtomicDataExtractionProblem;
 import au.gov.digitalhealth.lingo.product.details.Ingredient;
 import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
+import au.gov.digitalhealth.lingo.product.details.NutritionalProductDetails;
 import au.gov.digitalhealth.lingo.product.details.Quantity;
 import au.gov.digitalhealth.lingo.product.details.VaccineProductDetails;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
 import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import au.gov.digitalhealth.lingo.util.NmpcConstants;
 import au.gov.digitalhealth.lingo.util.NmpcType;
+import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -93,6 +96,7 @@ import org.springframework.stereotype.Service;
 @Service
 @Log
 public class MedicationService extends AtomicDataService<MedicationProductDetails> {
+
   private final SnowstormClient snowStormApiClient;
   private final Models models;
   private final FhirClient fhirClient;
@@ -419,36 +423,6 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
     Set<SnowstormRelationship> productRelationships = getRelationshipsFromAxioms(product);
     MedicationProductDetails productDetails;
 
-    // todo only vaccines have plays role, target population and qualitative strength, maybe use
-    // nmpc type?
-    if (modelConfiguration.getModelType().equals(ModelType.NMPC)
-        && relationshipOfTypeExists(
-            productRelationships,
-            PLAYS_ROLE.getValue(),
-            HAS_TARGET_POPULATION.getValue(),
-            HAS_QUALITATIVE_STRENGTH.getValue())) {
-      VaccineProductDetails vaccineProductDetails = new VaccineProductDetails();
-      if (relationshipOfTypeExists(productRelationships, PLAYS_ROLE.getValue())) {
-        Set<SnowstormRelationship> playsRoleRelationships =
-            filterActiveStatedRelationshipByType(productRelationships, PLAYS_ROLE.getValue());
-        vaccineProductDetails.setPlaysRole(
-            playsRoleRelationships.stream()
-                .map(SnowstormRelationship::getTarget)
-                .collect(Collectors.toSet()));
-      }
-      if (relationshipOfTypeExists(productRelationships, HAS_TARGET_POPULATION.getValue())) {
-        vaccineProductDetails.setTargetPopulation(
-            getSingleActiveTarget(productRelationships, HAS_TARGET_POPULATION.getValue()));
-      }
-      if (relationshipOfTypeExists(productRelationships, HAS_QUALITATIVE_STRENGTH.getValue())) {
-        vaccineProductDetails.setQualitiativeStrength(
-            getSingleActiveTarget(productRelationships, HAS_QUALITATIVE_STRENGTH.getValue()));
-      }
-      productDetails = vaccineProductDetails;
-    } else {
-      productDetails = new MedicationProductDetails();
-    }
-
     final SnowstormConcept unbrandedProduct =
         getUnbrandedProduct(
             branch,
@@ -458,6 +432,87 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
             modelConfiguration,
             product,
             productRelationships);
+
+    if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
+
+      NmpcType nmpcType =
+          product.getRelationships().stream()
+              .filter(r -> r.getTypeId().equals(HAS_NMPC_PRODUCT_TYPE.getValue()))
+              .map(r -> NmpcType.fromValue(r.getDestinationId()))
+              .findFirst()
+              .orElseThrow(
+                  () ->
+                      new AtomicDataExtractionProblem(
+                          "No HAS_NMPC_PRODUCT_TYPE relationship found for product " + productId,
+                          productId));
+
+      switch (nmpcType) {
+        case NMPC_VACCINE -> {
+          VaccineProductDetails vaccineProductDetails = new VaccineProductDetails();
+          if (relationshipOfTypeExists(productRelationships, PLAYS_ROLE.getValue())) {
+            Set<SnowstormRelationship> playsRoleRelationships =
+                filterActiveStatedRelationshipByType(productRelationships, PLAYS_ROLE.getValue());
+            vaccineProductDetails.setPlaysRole(
+                playsRoleRelationships.stream()
+                    .map(SnowstormRelationship::getTarget)
+                    .collect(Collectors.toSet()));
+          }
+          if (relationshipOfTypeExists(productRelationships, HAS_TARGET_POPULATION.getValue())) {
+            vaccineProductDetails.setTargetPopulation(
+                getSingleActiveTarget(productRelationships, HAS_TARGET_POPULATION.getValue()));
+          }
+          if (relationshipOfTypeExists(productRelationships, HAS_QUALITATIVE_STRENGTH.getValue())) {
+            vaccineProductDetails.setQualitiativeStrength(
+                getSingleActiveTarget(productRelationships, HAS_QUALITATIVE_STRENGTH.getValue()));
+          }
+          productDetails = vaccineProductDetails;
+        }
+        case NMPC_NUTRITIONAL_SUPPLEMENT -> {
+          NutritionalProductDetails nutritionalProductDetails = new NutritionalProductDetails();
+
+          if (relationshipOfTypeExists(productRelationships, HAS_TARGET_POPULATION.getValue())) {
+            nutritionalProductDetails.setTargetPopulation(
+                getSingleActiveTarget(productRelationships, HAS_TARGET_POPULATION.getValue()));
+          }
+          productDetails = nutritionalProductDetails;
+
+          // should only be one MP level concept
+          typeMap.entrySet().stream()
+              .filter(
+                  entry ->
+                      modelConfiguration
+                          .getLevelOfType(ModelLevelType.MEDICINAL_PRODUCT_ONLY)
+                          .getReferenceSetIdentifier()
+                          .equals(entry.getValue()))
+              .map(Entry::getKey)
+              .findFirst()
+              .ifPresent(
+                  mpId -> {
+                    SnowstormConcept mpConcept = browserMap.get(mpId);
+                    if (mpConcept != null) {
+                      productDetails.setExistingMedicinalProduct(
+                          SnowstormDtoUtil.toSnowstormConceptMini(mpConcept));
+                    } else {
+                      throw new AtomicDataExtractionProblem(
+                          "No MP level concept found for MP id: " + mpId, productId);
+                    }
+                  });
+          productDetails.setExistingClinicalDrug(
+              SnowstormDtoUtil.toSnowstormConceptMini(unbrandedProduct));
+        }
+        case NMPC_MEDICATION -> productDetails = new MedicationProductDetails();
+        case NMPC_DEVICE ->
+            throw new AtomicDataExtractionProblem(
+                "Expected medication or vaccine product but found device product for " + productId,
+                productId);
+
+        default ->
+            throw new AtomicDataExtractionProblem(
+                "Unexpected NMPC product type " + nmpcType + " for " + productId, productId);
+      }
+    } else { // AMT
+      productDetails = new MedicationProductDetails();
+    }
 
     if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
       Set<SnowstormRelationship> relationships =
@@ -736,6 +791,7 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
   @Data
   @AllArgsConstructor
   class ActivePreciseIngredient {
+
     SnowstormConceptMini activeIngredient;
     SnowstormConceptMini refinedActiveIngredient;
     SnowstormConceptMini preciseIngredient;

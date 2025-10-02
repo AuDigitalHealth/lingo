@@ -21,7 +21,7 @@ export interface Task {
   branchBaseTimeStamp: number;
   branchHeadTimeStamp: number;
   branchPath: string;
-  branchState: string;
+  branchState: BranchState;
   created: string;
   description: string;
   feedBackMessageStatus: string;
@@ -36,11 +36,20 @@ export interface Task {
 }
 
 export enum BranchState {
-  Forward = 'FORWARD',
   Behind = 'BEHIND',
+  // Parent branch has at least one change whilst the branch is unchanged. Branch can be safely rebased in this state, to bring in the parent changes.
   Up_To_Date = 'UP_TO_DATE',
+  // Branch is synchronised with parent
+  Forward = 'FORWARD',
+  // Branch has at least one change whilst its parent branch is unchanged. This is the required state for merging a branch.
   Diverged = 'DIVERGED',
+  // Both branch and its parent have at least one change since branch creation. Branch must be rebased before it can be safely promoted, to bring in the parent changes before promoting the branch.
   Stale = 'STALE',
+  // Branch is no longer associated with its original parent (and should be deleted).
+}
+
+export interface IntegrityCheckResponse {
+  empty: boolean;
 }
 
 export interface TaskDto {

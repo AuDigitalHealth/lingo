@@ -50,7 +50,8 @@
       "requireEditButton": false,
       "multiValuedSchemes": [
         "artgid"
-      ]
+      ],
+      "nondefiningPropertyTitle": "Non-defining properties"
     }
   },
   "addButton": {
@@ -74,21 +75,23 @@
       "requireEditButton": false,
       "multiValuedSchemes": [
         "artgid"
-      ]
+      ],
+      "nondefiningPropertyTitle": "Non-defining properties"
     }
   },
   "packSizes": {
     "ui:template": "PackSizeArrayTemplate",
     "ui:options": {
       "orderable": false,
-      "skipTitle": true,
+      "skipTitle": false,
       "listTitle": "Newly Added Pack Sizes",
       "readOnly": false,
       "allowDelete": true,
       "requireEditButton": false,
       "multiValuedSchemes": [
         "artgid"
-      ]
+      ],
+      "nondefiningPropertyTitle": "Non-defining properties"
     }
   }
 }

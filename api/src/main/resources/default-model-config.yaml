@@ -222,7 +222,6 @@ models:
         mappingTypes:
           - RELATED
         order: 100
-        suppressOnProductTypes: DEVICE
       - name: pcrs
         title: PCRS Identifier and Name
         description: PCRS Identifier and Name
@@ -329,19 +328,6 @@ models:
         mandatory: false
         multiValued: false
         order: 98
-      - name: unitpan
-        title: PAN
-        description: HPRA or EMA product authorisation number
-        identifier: 680041000220101
-        level: PRODUCT
-        dataType: STRING
-        valueRegexValidation: (P(P)?A\d{4,8}(\/\d{1,2})?(\/\d{1,2})?)|(EU\/\d{1}\/\d{1,3}\/\d{1,4}\/\d{1,4})
-        valueValidationErrorMessage: "Must be a valid HPRA (PA/PPA) or EMA product authorisation number (PA1234, PA1234/12, PA1234/12/34, EU/0/12/345/678, EU/0/12/3456/789)"
-        modelLevels: REAL_CLINICAL_DRUG
-        mandatory: false
-        multiValued: true
-        suppressOnProductTypes: DEVICE
-        order: 30
       - name: pan
         title: PAN
         description: HPRA or EMA product authorisation number
@@ -438,7 +424,6 @@ models:
         multiValued: false
         showDefaultOptions: true
         order: 92
-        suppressOnProductTypes: DEVICE
       - name: deviceClass
         title: Device Class
         identifier: 681041000220106
@@ -464,7 +449,7 @@ models:
         createConceptParentId: 774164004
         createConceptParentName: Supplier (supplier)
         createConceptSemanticTag: (supplier)
-        createConceptPostfix: (brand)
+        createConceptPostfix: (supplier)
         multiValued: false
         showDefaultOptions: true
         order: 93
@@ -647,7 +632,7 @@ models:
         level: PRODUCT
         dataType: CONCEPT
         eclBinding: <679921000220106
-        modelLevels: REAL_CLINICAL_DRUG
+        modelLevels: CLINICAL_DRUG
         mandatory: false
         multiValued: false
         showDefaultOptions: true

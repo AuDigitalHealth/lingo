@@ -38,9 +38,9 @@ public class ProductCreationDetails<T extends ProductDetails>
       ProductSummary productSummary,
       PackageDetails<T> packageDetails,
       Long ticketIt,
-      String partialSaveName,
-      String nameOverride) {
-    super(productSummary, packageDetails, ticketIt, partialSaveName, nameOverride);
+      String nameOverride,
+      Long ticketProductId) {
+    super(productSummary, packageDetails, ticketIt, nameOverride, ticketProductId);
   }
 
   @Override

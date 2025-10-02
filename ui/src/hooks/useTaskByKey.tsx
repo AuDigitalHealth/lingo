@@ -14,11 +14,11 @@ function useTaskByKey(key?: string) {
 
   useEffect(() => {
     const tempTask: Task | null = getTaskById(usedKey, allTasks);
-    if (tempTask) {
+    if (tempTask && usedKey !== undefined) {
       setTask(tempTask ? tempTask : null);
     } else {
       setTask(null);
-      if (!isCreate) {
+      if (!isCreate && usedKey !== undefined) {
         enqueueSnackbar(
           'Task is no longer available. Task has already been promoted or deleted.',
           { variant: 'error' },

@@ -6,7 +6,7 @@ import AttachmentService from '../../../../api/AttachmentService';
 interface MediaViewerModalProps {
   open: boolean;
   handleClose: () => void;
-  fileId: number;
+  fileId: number | undefined;
 }
 const MediaViewerModal = ({
   open,
@@ -91,12 +91,14 @@ const MediaViewerModal = ({
   const loadFile = async () => {
     try {
       setIsLoading(true);
-      const result = await AttachmentService.downloadAttachment(fileId);
-      if (result) {
-        const { blob, actualFileName } = result;
-        const url = URL.createObjectURL(blob);
-        setFileUrl(url);
-        setFileName(actualFileName);
+      if (fileId) {
+        const result = await AttachmentService.downloadAttachment(fileId);
+        if (result) {
+          const { blob, actualFileName } = result;
+          const url = URL.createObjectURL(blob);
+          setFileUrl(url);
+          setFileName(actualFileName);
+        }
       }
     } catch (error) {
       console.error('Error loading file:', error);

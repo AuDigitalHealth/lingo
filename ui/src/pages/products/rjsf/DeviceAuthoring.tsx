@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Form } from '@rjsf/mui';
 import {
+  Alert,
   Box,
   Button,
   Container,
@@ -69,6 +70,10 @@ function DeviceAuthoring({
   const [mode, setMode] = useState<'create' | 'update'>('create');
   const formRef = useRef<any>(null); // Ref to access the RJSF Form instance
   const [formErrors, setFormErrors] = useState<any[]>([]);
+  const [staleModeOn, setStaleModeOn] = useState(false);
+  const [manualLoading, setManualLoading] = useState(false);
+  const [partialUpdateMode, setPartialUpdateMode] = useState(false);
+
   const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
     task.branchPath,
   );
@@ -87,7 +92,7 @@ function DeviceAuthoring({
     handleClearForm,
   } = useAuthoringStore();
 
-  const { isLoading, isFetching } = useProductQuery({
+  const { isLoading, isFetching, refetchWithParam } = useProductQuery({
     selectedProduct,
     task,
     setFunction: (data: any) => {
@@ -102,10 +107,24 @@ function DeviceAuthoring({
     ticketProductId,
     ticket,
     setFunction: (data: any) => {
-      setMode(data.action === 'UPDATE' ? 'update' : 'create');
+      setMode(
+        data.action === 'UPDATE' && data.originalConceptId
+          ? 'update'
+          : 'create',
+      );
+      if (data.action === 'UPDATE' && data.originalConceptId) {
+        setPartialUpdateMode(true);
+      } else {
+        setPartialUpdateMode(false);
+      }
       setFormData(data.packageDetails);
       setInitialFormData(data.packageDetails);
-      setOriginalConceptId(data.conceptId);
+      setOriginalConceptId(
+        data.originalConceptId ? data.originalConceptId : data.conceptId,
+      );
+      if (data.originalConceptId || data.conceptId) {
+        setStaleModeOn(true);
+      }
     },
   });
   const mutation = useCalculateProduct();
@@ -121,8 +140,12 @@ function DeviceAuthoring({
   const handleChange = ({ formData }: any) => {
     const updatedFormData = resetDiscriminators(schema, formData, uiSchema);
     setFormData(updatedFormData);
-    if (!_.isEmpty(formData.productName)) {
-      setIsDirty(true); //TODO better way to handle check form is dirty
+    if (
+      !_.isEmpty(
+        updatedFormData.productName || updatedFormData.containedProducts,
+      )
+    ) {
+      setIsDirty(true);
     }
   };
 
@@ -138,7 +161,7 @@ function DeviceAuthoring({
       setProductPreviewDetails,
       setProductSaveDetails,
       originalConceptId,
-      partialSaveName: ticketProductId,
+      ticketProductId: ticketProductId ? Number(ticketProductId) : null,
     });
   };
   const saveDraft = () => {
@@ -164,6 +187,7 @@ function DeviceAuthoring({
 
   if (
     isLoading ||
+    manualLoading ||
     isFetching ||
     isTicketProductLoading ||
     isTicketProductFetching ||
@@ -207,6 +231,42 @@ function DeviceAuthoring({
     <Paper sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1 }}>
       <Box m={2} p={2}>
         <Container>
+          {staleModeOn && (
+            <Alert
+              severity="warning"
+              sx={{
+                mb: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+              action={
+                <Button
+                  color="inherit"
+                  size="small"
+                  onClick={async () => {
+                    if (originalConceptId) {
+                      setManualLoading(true);
+                      try {
+                        await refetchWithParam({
+                          conceptId: originalConceptId,
+                        });
+                        setStaleModeOn(false);
+                      } finally {
+                        setManualLoading(false);
+                      }
+                    }
+                  }}
+                >
+                  Reload
+                </Button>
+              }
+            >
+              Data loaded from the author’s saved action - useful for review but
+              may be stale. Reload from terminology for the latest data to
+              perform a product update.
+            </Alert>
+          )}
           <ErrorDisplay errors={formErrors} />
           <Form
             ref={formRef}
@@ -279,23 +339,48 @@ function DeviceAuthoring({
                 </UnableToEditTooltip>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                <Button
-                  data-testid={mode === 'create' ? 'create-btn' : 'update-btn'}
-                  type="submit"
-                  variant="contained"
-                  color={mode === 'create' ? 'primary' : 'warning'}
-                  sx={mode === 'update' ? { color: '#000' } : {}}
-                  disabled={isPending}
-                  onClick={() => {
-                    setIsProductUpdate(mode === 'update');
-                  }}
+                <UnableToEditTooltip
+                  canEdit={
+                    !(
+                      mutation.isPending ||
+                      (mode === 'update' &&
+                        ((staleModeOn && !partialUpdateMode) ||
+                          (!selectedProduct && !originalConceptId)))
+                    )
+                  }
+                  lockDescription={
+                    mode === 'update'
+                      ? staleModeOn && !partialUpdateMode
+                        ? 'Update disabled to prevent stale data. Please click reload to get the latest before updating.'
+                        : 'Update disabled: product is partially saved or the form was opened without an existing product.'
+                      : 'Submitting ...'
+                  }
                 >
-                  {isPending
-                    ? 'Submitting...'
-                    : mode === 'create'
-                      ? 'Create New Product'
-                      : 'Update Existing Product'}
-                </Button>
+                  <Button
+                    data-testid={
+                      mode === 'create' ? 'create-btn' : 'update-btn'
+                    }
+                    type="submit"
+                    variant="contained"
+                    color={mode === 'create' ? 'primary' : 'warning'}
+                    sx={mode === 'update' ? { color: '#000' } : {}}
+                    disabled={
+                      mutation.isPending ||
+                      (mode === 'update' &&
+                        ((staleModeOn && !partialUpdateMode) ||
+                          (!selectedProduct && !originalConceptId)))
+                    }
+                    onClick={() => {
+                      setIsProductUpdate(mode === 'update');
+                    }}
+                  >
+                    {isPending
+                      ? 'Submitting...'
+                      : mode === 'create'
+                        ? 'Create New Product'
+                        : 'Update Existing Product'}
+                  </Button>
+                </UnableToEditTooltip>
               </Box>
             </Box>
             {mode === 'update' && (
@@ -333,7 +418,9 @@ function DeviceAuthoring({
             open={saveModalOpen}
             ticket={ticket}
             existingProductId={ticketProductId}
-            actionType={ProductAction.CREATE} //default to create for partial save
+            actionType={
+              mode === 'update' ? ProductAction.UPDATE : ProductAction.CREATE
+            }
           />
           <ProductPreviewManageModal
             open={createModalOpen}
@@ -361,7 +448,7 @@ interface UseCalculateProductArguments {
   setProductPreviewDetails: (details: DevicePackageDetails | undefined) => void;
   setProductSaveDetails: (details: ProductSaveDetails | undefined) => void;
   originalConceptId: string | undefined;
-  partialSaveName?: string | null;
+  ticketProductId?: number | null;
 }
 
 export function useCalculateProduct() {
@@ -376,7 +463,7 @@ export function useCalculateProduct() {
       setProductPreviewDetails,
       setProductSaveDetails,
       originalConceptId,
-      partialSaveName,
+      ticketProductId,
     }: UseCalculateProductArguments) => {
       let productSummary;
       const originalConcept = selectedProduct
@@ -403,7 +490,7 @@ export function useCalculateProduct() {
         productSummary,
         packageDetails: formData as DevicePackageDetails,
         ticketId: ticket.id,
-        partialSaveName: partialSaveName || null,
+        ticketProductId: ticketProductId || null,
         nameOverride: null,
         originalConceptId: originalConcept,
         originalPackageDetails: initialFormData as DevicePackageDetails,
@@ -464,7 +551,7 @@ export const useProductQuery = ({
     ? selectedProduct.code
     : selectedProduct?.conceptId;
   const queryKey = ['product', productId, task?.branchPath];
-  return useQuery({
+  const query = useQuery({
     queryKey,
     queryFn: async () => {
       const data = await fetchProductDataFn({ selectedProduct, task });
@@ -473,6 +560,18 @@ export const useProductQuery = ({
     },
     enabled: !!selectedProduct && !!task?.branchPath,
   });
+  const refetchWithParam = async (
+    newProduct: Concept | ValueSetExpansionContains,
+  ) => {
+    const data = await fetchProductDataFn({
+      selectedProduct: newProduct,
+      task,
+    });
+    if (setFunction && data) setFunction(data);
+    return data;
+  };
+
+  return { ...query, refetchWithParam };
 };
 
 export default DeviceAuthoring;

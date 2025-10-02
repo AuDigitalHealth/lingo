@@ -87,13 +87,14 @@ public class UiSchemaExtender {
         nodeName,
         level.getModelLevelType().isPackageLevel()
             ? ProductPackageType.PACKAGE
-            : ProductPackageType.PRODUCT);
+            : ProductPackageType.PRODUCT,
+        false);
   }
 
   private void updateUiSchemaForType(
       JsonNode uiSchemaNode, String nodeName, Set<? extends BasePropertyDefinition> properties) {
     addUiNodeForPropertySet(
-        (ObjectNode) uiSchemaNode, properties, nodeName, ProductPackageType.PACKAGE);
+        (ObjectNode) uiSchemaNode, properties, nodeName, ProductPackageType.PACKAGE, true);
     JsonNode containedProductsNode = uiSchemaNode.get(CONTAINED_PRODUCTS);
     if (containedProductsNode != null && containedProductsNode.has(ITEMS)) {
       JsonNode itemsNode = containedProductsNode.get(ITEMS);
@@ -106,12 +107,16 @@ public class UiSchemaExtender {
           for (JsonNode oneOfMember : oneOfArray) {
             // Apply your logic to each member
             addUiNodeForPropertySet(
-                (ObjectNode) oneOfMember, properties, nodeName, ProductPackageType.PRODUCT);
+                (ObjectNode) oneOfMember, properties, nodeName, ProductPackageType.PRODUCT, true);
           }
         } else {
           // Fallback to original logic
           addUiNodeForPropertySet(
-              (ObjectNode) productDetailsNode, properties, nodeName, ProductPackageType.PRODUCT);
+              (ObjectNode) productDetailsNode,
+              properties,
+              nodeName,
+              ProductPackageType.PRODUCT,
+              true);
         }
       }
     }
@@ -119,7 +124,8 @@ public class UiSchemaExtender {
         uiSchemaNode.withObjectProperty("containedPackages").withObjectProperty(ITEMS),
         properties,
         nodeName,
-        ProductPackageType.PACKAGE);
+        ProductPackageType.PACKAGE,
+        true);
 
     addUiNodeForPropertySet(
         uiSchemaNode
@@ -128,7 +134,8 @@ public class UiSchemaExtender {
             .withObjectProperty(PACKAGE_DETAILS),
         properties,
         nodeName,
-        ProductPackageType.PACKAGE);
+        ProductPackageType.PACKAGE,
+        true);
     addUiNodeForPropertySet(
         uiSchemaNode
             .withObjectProperty("containedPackages")
@@ -139,18 +146,20 @@ public class UiSchemaExtender {
             .withObjectProperty(PRODUCT_DETAILS),
         properties,
         nodeName,
-        ProductPackageType.PRODUCT);
+        ProductPackageType.PRODUCT,
+        true);
   }
 
   private void addUiNodeForPropertySet(
       ObjectNode uiSchemaNode,
       Set<? extends BasePropertyDefinition> inputPropertySet,
       String nodeName,
-      ProductPackageType productPackageType) {
+      ProductPackageType productPackageType,
+      boolean filterProductPackageType) {
 
     List<? extends BasePropertyDefinition> filteredPropertySet =
         inputPropertySet.stream()
-            .filter(m -> m.getLevel().equals(productPackageType))
+            .filter(m -> !filterProductPackageType || m.getLevel().equals(productPackageType))
             .sorted(
                 Comparator.comparingInt(BasePropertyDefinition::getOrder)
                     .thenComparing(BasePropertyDefinition::getName))

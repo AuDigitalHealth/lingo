@@ -96,21 +96,21 @@ interface AuthoringStoreConfig {
     ticket: Ticket,
     branch: string,
     serviceStatus: ServiceStatus | undefined,
-    partialSaveName?: string,
+    ticketProductId?: number,
   ) => void;
   previewBrandPackSize: (
     data: BrandPackSizeCreationDetails | undefined,
     ticket: Ticket,
     branch: string,
     serviceStatus: ServiceStatus | undefined,
-    partialSaveName?: string,
+    ticketProductId?: number,
   ) => void;
   previewDeviceProduct: (
     data: DevicePackageDetails | undefined,
     ticket: Ticket,
     branch: string,
     serviceStatus: ServiceStatus | undefined,
-    partialSaveName?: string,
+    ticketProductId?: number,
   ) => void;
   handlePreviewToggleModal: (
     event: object,
@@ -211,7 +211,7 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
     ticket,
     branch,
     serviceStatus,
-    partialSaveName,
+    ticketProductId,
   ) => {
     get().setWarningModalOpen(false);
     const request = data ? data : get().brandPackSizePreviewDetails;
@@ -227,7 +227,7 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
             productSummary: mp,
             packageDetails: validatedData,
             ticketId: ticket.id,
-            partialSaveName: partialSaveName ? partialSaveName : null,
+            ticketProductId: ticketProductId ? ticketProductId : null,
           };
           get().setProductSaveDetails(productCreationObj);
           get().setPreviewModalOpen(true);
@@ -253,7 +253,7 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
     ticket,
     branch,
     serviceStatus,
-    partialSaveName,
+    ticketProductId,
   ) => {
     get().setWarningModalOpen(false);
     get().setLoadingPreview(true);
@@ -284,7 +284,7 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
         productSummary: mp,
         packageDetails: validatedData,
         ticketId: ticket.id,
-        partialSaveName: partialSaveName ?? null,
+        ticketProductId: ticketProductId ?? null,
         originalConceptId: originalConcept,
         originalPackageDetails: originalPackageDetails,
       };
@@ -325,7 +325,7 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
     ticket,
     branch,
     serviceStatus,
-    partialSaveName,
+    ticketProductId,
   ) => {
     get().setWarningModalOpen(false);
     const request = data ? data : get().devicePreviewDetails;
@@ -341,7 +341,7 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
             productSummary: mp,
             packageDetails: validatedData,
             ticketId: ticket.id,
-            partialSaveName: partialSaveName ? partialSaveName : null,
+            ticketProductId: ticketProductId ? ticketProductId : null,
           };
           get().setProductSaveDetails(productCreationObj);
           get().setPreviewModalOpen(true);

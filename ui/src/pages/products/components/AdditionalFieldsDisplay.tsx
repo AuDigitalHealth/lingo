@@ -11,6 +11,7 @@ const AdditionalFieldsDisplay: React.FC<AdditionalFieldsDisplayProps> = ({
   value,
   additionalFields,
 }) => {
+  const isLink = value && value.includes('://');
   const additionalFieldsDisplay = additionalFields
     ? Object.entries(additionalFields)
         .map(([key, field]) => `${key.toUpperCase()}: ${field?.value ?? ''}`)
@@ -36,6 +37,7 @@ const AdditionalFieldsDisplay: React.FC<AdditionalFieldsDisplayProps> = ({
               whiteSpace: 'nowrap',
               textOverflow: 'ellipsis',
               maxWidth: '40px',
+              ...(isLink && { textDecoration: 'underline' }),
             }}
           >
             {displayValue}
