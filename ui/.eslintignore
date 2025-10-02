@@ -1,0 +1,108 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+build/
+target/
+*.tsbuildinfo
+
+# Coverage reports
+coverage/
+.nyc_output/
+cypress/coverage/
+
+# Cypress
+cypress/videos/
+cypress/screenshots/
+cypress/downloads/
+cypress/fixtures/
+
+# Generated files
+dependency-licenses/
+buildnumber.txt
+*.generated.ts
+*.generated.js
+
+# Third-party libraries and vendors
+public/
+src/assets/
+
+# Configuration files that don't need linting
+*.config.js
+*.config.ts
+vite.config.ts
+cypress.config.ts
+.eslintrc.cjs
+prettier.config.js
+tailwind.config.js
+
+# Environment and build files
+.env*
+package-lock.json
+yarn.lock
+
+# IDE and editor files
+.vscode/
+.idea/
+
+# Test artifacts
+tests/e2e/videos/
+tests/e2e/screenshots/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Documentation
+docs/
+*.md
+
+# License files
+check-licenses.cjs
+record-npm-dependency-licenses.cjs
+format-npm-license.js
+allowed-licenses.json
+allowed-packages.json
+
+# Type definitions that shouldn't be linted
+src/vite-env.d.ts
+*.d.ts
+
+# Minified files
+*.min.js
+*.min.css
+
+# Storybook
+.storybook/
+storybook-static/
+
+# PWA
+sw.js
+workbox-*.js
+
+# Auto-generated API clients
+src/api/generated/
