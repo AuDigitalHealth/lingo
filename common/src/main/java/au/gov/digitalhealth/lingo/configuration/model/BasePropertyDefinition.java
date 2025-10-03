@@ -20,6 +20,7 @@ import au.gov.digitalhealth.lingo.configuration.model.enumeration.ProductPackage
 import au.gov.digitalhealth.lingo.product.details.properties.PropertyType;
 import au.gov.digitalhealth.lingo.util.PartitionIdentifier;
 import au.gov.digitalhealth.lingo.validation.ValidSctId;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -56,6 +57,13 @@ public abstract class BasePropertyDefinition {
    */
   @NotEmpty private List<ModelLevelType> modelLevels;
 
+  /**
+   * The model level that the property is stored at and cascades down from - it cannot cascade down
+   * from above this level
+   */
+  @NotNull
+  private ModelLevelType sourceModelLevel;
+
   /** The ID if the property/refset where this is stored */
   @NotBlank
   @ValidSctId(partitionIdentifier = PartitionIdentifier.CONCEPT)
@@ -73,4 +81,13 @@ public abstract class BasePropertyDefinition {
   private Set<ProductType> suppressOnProductTypes = new HashSet<>();
 
   public abstract PropertyType getPropertyType();
+
+  @AssertTrue(message = "Source model level must be one of the specified model levels")
+  private boolean isSourceModelLevelValid() {
+    if (sourceModelLevel == null || modelLevels == null) {
+      return true; // Let other validators handle null cases
+    }
+    return modelLevels.contains(sourceModelLevel);
+  }
+
 }
