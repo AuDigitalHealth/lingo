@@ -93,6 +93,7 @@ models:
         dataType: STRING
         valueRegexValidation: \d{3,8}
         modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+        sourceModelLevel: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
         defaultMappingType: RELATED
@@ -179,6 +180,7 @@ models:
         valueRegexValidation: \d{8,14}
         valueValidationErrorMessage: "Must be a valid number between 8 and 14 digits"
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        sourceModelLevel: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
         defaultMappingType: RELATED
@@ -200,6 +202,7 @@ models:
         valueRegexValidation: \d{4}
         valueValidationErrorMessage: "Must be a 4 digit number"
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        sourceModelLevel: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: false
         defaultMappingType: RELATED
@@ -216,6 +219,7 @@ models:
         valueSetReference: http://nmpc.hse.ie/ValueSet/atcselectable
         codeSystem: http://www.whocc.no/atc
         modelLevels: CLINICAL_DRUG,REAL_CLINICAL_DRUG,PACKAGED_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
+        sourceModelLevel: CLINICAL_DRUG
         mandatory: false
         multiValued: true
         defaultMappingType: RELATED
@@ -232,6 +236,7 @@ models:
         valueSetReference: https://nmpc.hse.ie/PCRS/vs
         codeSystem: https://nmpc.hse.ie/PCRS
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        sourceModelLevel: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: false
         defaultMappingType: RELATED
@@ -246,6 +251,7 @@ models:
         valueSetReference: https://nmpc.hse.ie/HPRA/product
         codeSystem: https://nmpc.hse.ie/HPRA
         modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
+        sourceModelLevel: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: true
         defaultMappingType: RELATED
@@ -258,6 +264,7 @@ models:
         identifier: 679961000220101
         level: PRODUCT
         modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
+        sourceModelLevel: REAL_CLINICAL_DRUG
         order: 60
         suppressOnProductTypes: DEVICE
       - name: combinationOnly
@@ -265,6 +272,7 @@ models:
         identifier: 679981000220105
         level: PRODUCT
         modelLevels: REAL_CLINICAL_DRUG
+        sourceModelLevel: REAL_CLINICAL_DRUG
         order: 1
         suppressOnProductTypes: DEVICE
       - name: ulmFlag
@@ -273,6 +281,7 @@ models:
         identifier: 680761000220104
         level: PRODUCT
         modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
+        sourceModelLevel: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: false
         order: 81
@@ -282,6 +291,7 @@ models:
         identifier: 679941000220100
         level: PRODUCT
         modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
+        sourceModelLevel: REAL_CLINICAL_DRUG
         order: 80
       - name: vmpNonPrescribable
         title: Non-prescribable VMP
@@ -289,12 +299,14 @@ models:
         identifier: 679971000220107
         level: PRODUCT
         modelLevels: CLINICAL_DRUG
+        sourceModelLevel: CLINICAL_DRUG
         order: 70
       - name: discontNotification
         title: Discontinuation Notification
         identifier: 681101000220108
         level: PACKAGE
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        sourceModelLevel: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: false
         order: 99
@@ -303,6 +315,7 @@ models:
         identifier: 680301000220101
         level: PRODUCT
         modelLevels: REAL_CLINICAL_DRUG
+        sourceModelLevel: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: false
         readOnly: true
@@ -312,6 +325,7 @@ models:
         identifier: 680281000220100
         level: PRODUCT
         modelLevels: REAL_CLINICAL_DRUG
+        sourceModelLevel: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: false
         readOnly: true
@@ -325,6 +339,7 @@ models:
         valueRegexValidation: ^\d+(\.\d{0,2})?$
         valueValidationErrorMessage: "Must be a valid decimal number with two decimal places"
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        sourceModelLevel: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: false
         order: 98
@@ -337,6 +352,7 @@ models:
         valueRegexValidation: (P(P)?A\d{4,8}(\/\d{1,2})?(\/\d{1,2})?)|(EU\/\d{1}\/\d{1,3}\/\d{1,4}\/\d{1,4})
         valueValidationErrorMessage: "Must be a valid HPRA (PA/PPA) or EMA product authorisation number (PA1234, PA1234/12, PA1234/12/34, EU/0/12/345/678, EU/0/12/3456/789)"
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        sourceModelLevel: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
         suppressOnProductTypes: DEVICE
@@ -348,6 +364,7 @@ models:
         dataType: CONCEPT
         eclBinding: <679901000220102
         modelLevels: MEDICINAL_PRODUCT_ONLY,CLINICAL_DRUG,REAL_MEDICINAL_PRODUCT,REAL_CLINICAL_DRUG,PACKAGED_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
+        sourceModelLevel: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
         readOnly: true
@@ -359,6 +376,7 @@ models:
         dataType: CONCEPT
         eclBinding: <284009009
         modelLevels: REAL_CLINICAL_DRUG,CLINICAL_DRUG
+        sourceModelLevel: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: true
         showDefaultOptions: true
@@ -372,6 +390,7 @@ models:
         valueRegexValidation: ^(https?://.+|attachment://\d+)$
         valueValidationErrorMessage: "Must be a valid HTTP/S URL or attachment reference"
         modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
+        sourceModelLevel: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
         order: 51
@@ -384,6 +403,7 @@ models:
         valueRegexValidation: ^(https?://.+|attachment://\d+)$
         valueValidationErrorMessage: "Must be a valid HTTP/S URL or attachment reference"
         modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
+        sourceModelLevel: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
         order: 50
@@ -396,6 +416,7 @@ models:
         dataType: CONCEPT
         eclBinding: < 223369002 MINUS >(< 223369002)
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        sourceModelLevel: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: false
         showDefaultOptions: true
@@ -408,6 +429,7 @@ models:
         dataType: CONCEPT
         eclBinding: <679931000220109
         modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
+        sourceModelLevel: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: false
         showDefaultOptions: true
@@ -420,6 +442,7 @@ models:
         dataType: CONCEPT
         eclBinding: <679951000220103
         modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
+        sourceModelLevel: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: false
         showDefaultOptions: true
@@ -427,10 +450,11 @@ models:
       - name: deviceClass
         title: Device Class
         identifier: 681041000220106
-        level: PRODUCT
+        level: PACKAGE
         dataType: CONCEPT
         eclBinding: <681051000220108
-        modelLevels: REAL_CLINICAL_DRUG
+        modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        sourceModelLevel: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: true
         multiValued: false
         showDefaultOptions: true
@@ -443,6 +467,7 @@ models:
         dataType: CONCEPT
         eclBinding: <774164004
         modelLevels: REAL_MEDICINAL_PRODUCT,REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
+        sourceModelLevel: REAL_MEDICINAL_PRODUCT
         mandatory: true
         createConcept: true
         createConceptEcl: <774164004
@@ -460,6 +485,7 @@ models:
         dataType: CONCEPT
         eclBinding: <774164004
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        sourceModelLevel: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
         showDefaultOptions: true
@@ -472,6 +498,7 @@ models:
         dataType: CONCEPT
         eclBinding: <670041000220107
         modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
+        sourceModelLevel: REAL_CLINICAL_DRUG
         mandatory: true
         multiValued: false
         showDefaultOptions: true
@@ -484,6 +511,7 @@ models:
         dataType: CONCEPT
         eclBinding: <680711000220102
         modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
+        sourceModelLevel: REAL_CLINICAL_DRUG
         mandatory: true
         multiValued: false
         showDefaultOptions: true
@@ -496,6 +524,7 @@ models:
         dataType: CONCEPT
         eclBinding: <670021000220101
         modelLevels: REAL_CLINICAL_DRUG,REAL_PACKAGED_CLINICAL_DRUG
+        sourceModelLevel: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: false
         showDefaultOptions: true
@@ -508,6 +537,7 @@ models:
         dataType: CONCEPT
         eclBinding: <732935002
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        sourceModelLevel: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: false
         showDefaultOptions: true
@@ -521,6 +551,7 @@ models:
         valueRegexValidation: \d{4}-\d{2}-\d{2}
         valueValidationErrorMessage: "Must be a valid date in the format YYYY-MM-DD"
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        sourceModelLevel: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: false
         order: 99
@@ -533,6 +564,7 @@ models:
         valueRegexValidation: \d{4}-\d{2}-\d{2}
         valueValidationErrorMessage: "Must be a valid date in the format YYYY-MM-DD"
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        sourceModelLevel: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: false
         order: 100
@@ -545,6 +577,7 @@ models:
         valueRegexValidation: http(s)?://.+\.(pdf|html)
         valueValidationErrorMessage: "Must be a valid URL ending in .pdf or .html"
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
+        sourceModelLevel: REAL_PACKAGED_CLINICAL_DRUG
         mandatory: false
         multiValued: true
         order: 101
@@ -557,6 +590,7 @@ models:
         valueRegexValidation: \d{4}-\d{2}-\d{2}
         valueValidationErrorMessage: "Must be a valid date in the format YYYY-MM-DD"
         modelLevels: REAL_CLINICAL_DRUG
+        sourceModelLevel: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: false
         readOnly: true
@@ -570,6 +604,7 @@ models:
         valueRegexValidation: ^.+$
         valueValidationErrorMessage: "Must be a valid string"
         modelLevels: REAL_CLINICAL_DRUG
+        sourceModelLevel: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: true
         readOnly: true
@@ -583,6 +618,7 @@ models:
         valueRegexValidation: ^.+$
         valueValidationErrorMessage: "Must be a valid string"
         modelLevels: REAL_CLINICAL_DRUG
+        sourceModelLevel: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: false
         readOnly: true
@@ -596,6 +632,7 @@ models:
         valueRegexValidation: ^.+$
         valueValidationErrorMessage: "Must be a valid string"
         modelLevels: REAL_CLINICAL_DRUG
+        sourceModelLevel: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: false
         readOnly: true
@@ -609,6 +646,7 @@ models:
         valueRegexValidation: http(s)?://.+
         valueValidationErrorMessage: "Must be a valid URL"
         modelLevels: REAL_CLINICAL_DRUG
+        sourceModelLevel: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: true
         readOnly: true
@@ -621,6 +659,7 @@ models:
         dataType: CONCEPT
         eclBinding: <679911000220104
         modelLevels: CLINICAL_DRUG,REAL_CLINICAL_DRUG
+        sourceModelLevel: CLINICAL_DRUG
         mandatory: false
         multiValued: false
         showDefaultOptions: true
@@ -633,6 +672,7 @@ models:
         dataType: CONCEPT
         eclBinding: <679921000220106
         modelLevels: CLINICAL_DRUG
+        sourceModelLevel: CLINICAL_DRUG
         mandatory: false
         multiValued: false
         showDefaultOptions: true
@@ -644,6 +684,7 @@ models:
         dataType: STRING
         valueRegexValidation: ^.+$
         modelLevels: REAL_CLINICAL_DRUG
+        sourceModelLevel: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: false
         readOnly: true
@@ -655,6 +696,7 @@ models:
         dataType: STRING
         valueRegexValidation: ^.+$
         modelLevels: REAL_CLINICAL_DRUG
+        sourceModelLevel: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: false
         readOnly: true
@@ -668,6 +710,7 @@ models:
         format: YYYY-MM-DD
         valueRegexValidation: ^.+$
         modelLevels: REAL_CLINICAL_DRUG
+        sourceModelLevel: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: false
         readOnly: true
@@ -681,6 +724,7 @@ models:
         format: YYYY-MM-DD
         valueRegexValidation: ^.+$
         modelLevels: REAL_CLINICAL_DRUG
+        sourceModelLevel: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: false
         readOnly: true
@@ -694,6 +738,7 @@ models:
         format: YYYY-MM-DD
         valueRegexValidation: ^.+$
         modelLevels: REAL_CLINICAL_DRUG
+        sourceModelLevel: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: false
         readOnly: true
@@ -706,6 +751,7 @@ models:
         dataType: URI
         valueRegexValidation: ^.+$
         modelLevels: REAL_CLINICAL_DRUG
+        sourceModelLevel: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: false
         readOnly: true

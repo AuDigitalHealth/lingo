@@ -565,21 +565,24 @@ function BulkActionChildConcepts({
     <div className="completed-row">
       <h5>Updated Products</h5>
       <ul>
-        {conceptData.map((concept, index) => (
-          <li key={index}>
-            <Tooltip title={concept.pt?.term} key={`tooltip-${concept.id}`}>
-              <Link
-                to={`product/view/${concept.conceptId}`}
-                className={'product-view-link'}
-                key={`link-${index}`}
-                data-testid={`link-${index}`}
-                style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
-              >
-                {concept.pt?.term}
-              </Link>
-            </Tooltip>
-          </li>
-        ))}
+        {conceptData
+          .slice()
+          .sort((a, b) => (a.pt?.term || '').localeCompare(b.pt?.term || ''))
+          .map((concept, index) => (
+            <li key={index}>
+              <Tooltip title={concept.pt?.term} key={`tooltip-${concept.id}`}>
+                <Link
+                  to={`product/view/${concept.conceptId}`}
+                  className="product-view-link"
+                  key={`link-${index}`}
+                  data-testid={`link-${index}`}
+                  style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+                >
+                  {concept.pt?.term}
+                </Link>
+              </Tooltip>
+            </li>
+          ))}
       </ul>
     </div>
   );

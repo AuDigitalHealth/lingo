@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
@@ -40,6 +41,10 @@ import org.springframework.validation.annotation.Validated;
     value = "classpath:default-model-config.yaml",
     factory = YamlPropertySourceFactory.class)
 @Validated
+@ConditionalOnProperty(
+    name = "lingo.models.enabled",
+    havingValue = "true",
+    matchIfMissing = true)
 public class Models extends HashMap<String, @Valid ModelConfiguration> implements InitializingBean {
   @Override
   public void afterPropertiesSet() throws ValidationException {
