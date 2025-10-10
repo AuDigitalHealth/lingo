@@ -165,10 +165,14 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
                       !p.getIdentifierScheme().equals("levelMarker")
                           && !p.getIdentifierScheme().equals("nmpcType"))
               .toList());
-      addedProperties.removeIf(p -> !p.getIdentifierScheme().equals("levelMarker")
-          && !p.getIdentifierScheme().equals("nmpcType") &&
-          !modelConfiguration.getProperty(p.getIdentifierScheme())
-              .getSourceModelLevel().equals(node.getModelLevel()));
+      addedProperties.removeIf(
+          p ->
+              !p.getIdentifierScheme().equals("levelMarker")
+                  && !p.getIdentifierScheme().equals("nmpcType")
+                  && !modelConfiguration
+                      .getProperty(p.getIdentifierScheme())
+                      .getSourceModelLevel()
+                      .equals(node.getModelLevel()));
       Set<NonDefiningBase> removedProperties =
           new HashSet<>(
               node.getOriginalNode().getNode().getNonDefiningProperties().stream()
@@ -178,10 +182,14 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
                               && !p.getIdentifierScheme().equals("nmpcType"))
                   .toList());
       removedProperties.removeAll(node.getNonDefiningProperties());
-      removedProperties.removeIf(p -> !p.getIdentifierScheme().equals("levelMarker")
-          && !p.getIdentifierScheme().equals("nmpcType") && !modelConfiguration.getProperty(
-              p.getIdentifierScheme())
-          .getSourceModelLevel().equals(node.getModelLevel()));
+      removedProperties.removeIf(
+          p ->
+              !p.getIdentifierScheme().equals("levelMarker")
+                  && !p.getIdentifierScheme().equals("nmpcType")
+                  && !modelConfiguration
+                      .getProperty(p.getIdentifierScheme())
+                      .getSourceModelLevel()
+                      .equals(node.getModelLevel()));
 
       Set<ModelLevel> levels =
           Stream.concat(addedProperties.stream(), removedProperties.stream())
