@@ -25,7 +25,11 @@ import { validator } from './helpers/validator.ts';
 import { Concept } from '../../../types/concept.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
 import { Task } from '../../../types/task.ts';
-import { ProductAction, Ticket } from '../../../types/tickets/ticket.ts';
+import {
+  ProductAction,
+  Ticket,
+  TicketProductAuditDto,
+} from '../../../types/tickets/ticket.ts';
 import {
   DevicePackageDetails,
   ProductActionType,
@@ -47,12 +51,16 @@ import {
 } from './helpers/validationHelper.ts';
 import { ErrorDisplay } from './components/ErrorDisplay.tsx';
 import UnableToEditTooltip from '../../tasks/components/UnableToEditTooltip.tsx';
+import { useActiveConceptIdsByIds } from '../../../hooks/eclRefset/useConceptsById.tsx';
+import { isOriginalConceptActive } from '../../../utils/helpers/conceptUtils.ts';
+import { showError } from '../../../types/ErrorHandler.ts';
 
 export interface DeviceAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
   task: Task;
   ticket: Ticket;
   ticketProductId?: string;
+  productAuditDto?: TicketProductAuditDto;
 }
 
 function DeviceAuthoring({
@@ -60,6 +68,7 @@ function DeviceAuthoring({
   selectedProduct,
   ticket,
   ticketProductId,
+  productAuditDto,
 }: DeviceAuthoringV2Props) {
   const [formData, setFormData] = useState({});
   const [initialFormData, setInitialFormData] = useState({});
@@ -105,6 +114,7 @@ function DeviceAuthoring({
     isFetching: isTicketProductFetching,
   } = useTicketProductQuery({
     ticketProductId,
+    productAuditDto,
     ticket,
     setFunction: (data: any) => {
       setMode(
@@ -112,7 +122,11 @@ function DeviceAuthoring({
           ? 'update'
           : 'create',
       );
-      if (data.action === 'UPDATE' && data.originalConceptId) {
+      if (
+        data.action === 'UPDATE' &&
+        data.originalConceptId &&
+        !data.conceptId
+      ) {
         setPartialUpdateMode(true);
       } else {
         setPartialUpdateMode(false);
@@ -181,6 +195,11 @@ function DeviceAuthoring({
     setOriginalConceptId(undefined);
   }, []);
 
+  const { activeConceptIds, activeConceptsLoading } = useActiveConceptIdsByIds(
+    task.branchPath,
+    originalConceptId ? [originalConceptId] : [],
+  );
+
   useEffect(() => {
     handleClear();
   }, [handleClear]);
@@ -231,42 +250,60 @@ function DeviceAuthoring({
     <Paper sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1 }}>
       <Box m={2} p={2}>
         <Container>
-          {staleModeOn && (
-            <Alert
-              severity="warning"
-              sx={{
-                mb: 2,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-              action={
-                <Button
-                  color="inherit"
-                  size="small"
-                  onClick={async () => {
-                    if (originalConceptId) {
-                      setManualLoading(true);
-                      try {
-                        await refetchWithParam({
-                          conceptId: originalConceptId,
-                        });
-                        setStaleModeOn(false);
-                      } finally {
-                        setManualLoading(false);
+          {staleModeOn &&
+            isOriginalConceptActive(originalConceptId, activeConceptIds) && (
+              <Alert
+                severity="warning"
+                sx={{
+                  mb: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+                action={
+                  <Button
+                    color="inherit"
+                    size="small"
+                    onClick={async () => {
+                      if (originalConceptId) {
+                        setManualLoading(true);
+                        try {
+                          await refetchWithParam({
+                            conceptId: originalConceptId,
+                          });
+                          setStaleModeOn(false);
+                        } catch (error) {
+                          showError(error.message);
+                        } finally {
+                          setManualLoading(false);
+                        }
                       }
-                    }
-                  }}
-                >
-                  Reload
-                </Button>
-              }
-            >
-              Data loaded from the author’s saved action - useful for review but
-              may be stale. Reload from terminology for the latest data to
-              perform a product update.
-            </Alert>
-          )}
+                    }}
+                  >
+                    Reload
+                  </Button>
+                }
+              >
+                Data loaded from the author’s saved action - useful for review
+                but may be stale. Reload from terminology for the latest data to
+                perform a product update.
+              </Alert>
+            )}
+          {staleModeOn &&
+            !isOriginalConceptActive(originalConceptId, activeConceptIds) && (
+              <Alert
+                severity="warning"
+                variant="outlined"
+                sx={{
+                  mb: 2,
+                }}
+              >
+                Data loaded from the author’s saved action — useful for review,
+                but it may be outdated. Reload option is unavailable because the
+                original concept could not be found or is inactive; therefore,
+                the update action has been disabled.
+              </Alert>
+            )}
           <ErrorDisplay errors={formErrors} />
           <Form
             ref={formRef}

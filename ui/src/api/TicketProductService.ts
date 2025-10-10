@@ -18,6 +18,7 @@ import { AxiosResponse } from 'axios';
 import {
   TicketAssociation,
   TicketBulkProductActionDto,
+  TicketProductAuditDto,
   TicketProductDto,
 } from '../types/tickets/ticket.ts';
 import { api } from './api.ts';
@@ -114,6 +115,18 @@ const TicketProductService = {
     }
 
     return response;
+  },
+  async getTicketProductAudit(
+    ticketId: number,
+    productId: string,
+  ): Promise<TicketProductAuditDto[]> {
+    const response = await api.get(
+      `/api/tickets/${ticketId}/products/id/${productId}/audit`,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    return response.data as TicketProductAuditDto[];
   },
 };
 
