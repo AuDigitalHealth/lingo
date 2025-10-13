@@ -44,6 +44,8 @@ import { useActiveConceptIdsByIds } from '../../../hooks/eclRefset/useConceptsBy
 import WarningIcon from '@mui/icons-material/Warning';
 import JsonToProductModal from './JsonToProductModal.tsx';
 import { useInternalUsers } from '../../../hooks/api/useInitializeJiraUsers.tsx';
+import ManageHistoryIcon from '@mui/icons-material/ManageHistory';
+import ProductAuditModal from './ProductAuditModal.tsx';
 
 interface TicketProductsProps {
   ticket: Ticket;
@@ -61,7 +63,14 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
   const { products, bulkProductActions } = ticket;
   const [disabled, setDisabled] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [idToDelete, setIdToDelete] = useState<number | undefined>(undefined);
+  const [auditModalOpen, setAuditModalOpen] = useState(false);
+  const [selectedRowId, setSelectedRowId] = useState<number | undefined>(
+    undefined,
+  );
+  const [selectedProductId, setSelectedProductId] = useState<
+    number | undefined
+  >(undefined);
+
   const [deleteModalContent, setDeleteModalContent] = useState('');
   const productDetailsArray = useMemo(
     () => (products ? mapToProductDetailsArray(products, 0) : []),
@@ -117,10 +126,10 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
   }, [data, activeConceptIds]);
 
   const handleDeleteProduct = () => {
-    if (idToDelete === undefined) {
+    if (selectedRowId === undefined) {
       return;
     }
-    const filteredProduct = filterProductRowById(idToDelete, data);
+    const filteredProduct = filterProductRowById(selectedRowId, data);
     if (filteredProduct) {
       TicketProductService.deleteTicketProduct(ticket.id, filteredProduct.name)
         .then(() => {
@@ -195,9 +204,9 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
             <IconButton
               aria-label="delete"
               size="small"
-              disabled={!canEditTicket || !canEdit}
+              disabled={!(canEditTicket && canEdit)}
               onClick={e => {
-                setIdToDelete(rowData?.id);
+                setSelectedRowId(rowData?.id);
 
                 setDeleteModalContent(
                   `You are about to permanently remove the history of the product authoring information for [${rowData?.concept?.pt?.term}] from the ticket.  This information cannot be recovered.`,
@@ -215,6 +224,28 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
           </UnableToEditTooltip>
         );
       }
+    } else return <></>;
+  };
+  const auditBodyTemplate = (rowData: ProductTableRow) => {
+    if (!isBulkPackProductAction(rowData)) {
+      return (
+        <IconButton
+          aria-label="audit"
+          size="small"
+          onClick={e => {
+            setSelectedProductId(rowData?.productId);
+            setAuditModalOpen(true);
+            e.stopPropagation();
+          }}
+        >
+          <Tooltip
+            title={'See the Audit history'}
+            key={`tooltip-${rowData?.productId}`}
+          >
+            <ManageHistoryIcon fontSize="small" />
+          </Tooltip>
+        </IconButton>
+      );
     } else return <></>;
   };
 
@@ -373,6 +404,14 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
         handleAction={handleDeleteProduct}
         reverseAction={'Cancel'}
       />
+      <ProductAuditModal
+        open={auditModalOpen}
+        ticketProductId={selectedProductId}
+        ticket={ticket}
+        handleClose={() => {
+          setAuditModalOpen(false);
+        }}
+      />
       <Stack direction="column" width="100%" marginTop="0.5em">
         <Stack direction="row" spacing={2} alignItems="center">
           <Grid item xs={10}>
@@ -415,6 +454,7 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
               tableStyle={{
                 minHeight: '100%',
                 maxHeight: '100%',
+                // tableLayout: 'auto'
               }}
               size="small"
               sortField={'created'}
@@ -474,9 +514,26 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
                   textOverflow: 'ellipsis',
                 }}
               />
+              {/*<Column*/}
+              {/*    header=""*/}
+              {/*    body={actionBodyTemplate}*/}
+              {/*    style={{ textAlign: 'center', width: '1em' }}*/}
+              {/*/>*/}
               <Column
                 header=""
-                body={actionBodyTemplate}
+                body={(rowData: ProductTableRow) => (
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                    }}
+                  >
+                    {actionBodyTemplate(rowData)}
+                    {auditBodyTemplate(rowData)}
+                  </div>
+                )}
                 style={{ textAlign: 'center', width: '1em' }}
               />
             </DataTable>

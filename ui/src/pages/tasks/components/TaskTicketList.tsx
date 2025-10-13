@@ -91,27 +91,32 @@ function TaskTicketList() {
         }}
       />
       <List aria-label="tickets">
-        {localTaskAssociations.map(taskAssocation => {
-          const ticket = localTickets.find(localTicket => {
-            return localTicket.id === taskAssocation.ticketId;
-          });
-          if (ticket === undefined)
+        {localTaskAssociations
+          .slice()
+          .sort((a, b) =>
+            (a?.ticketNumber || '').localeCompare(b?.ticketNumber || ''),
+          )
+          .map(taskAssocation => {
+            const ticket = localTickets.find(localTicket => {
+              return localTicket.id === taskAssocation.ticketId;
+            });
+            if (ticket === undefined)
+              return (
+                <React.Fragment key={taskAssocation.ticketId}></React.Fragment>
+              );
             return (
-              <React.Fragment key={taskAssocation.ticketId}></React.Fragment>
+              <TaskTicketPage
+                key={taskAssocation.ticketId}
+                ticket={ticket}
+                taskAssocation={taskAssocation}
+                setDeleteTicket={setDeleteTicket}
+                lockDescription={lockDescription}
+                canEdit={canEdit}
+                setDeleteAssociation={setDeleteAssociation}
+                setDeleteModalOpen={setDeleteModalOpen}
+              />
             );
-          return (
-            <TaskTicketPage
-              key={taskAssocation.ticketId}
-              ticket={ticket}
-              taskAssocation={taskAssocation}
-              setDeleteTicket={setDeleteTicket}
-              lockDescription={lockDescription}
-              canEdit={canEdit}
-              setDeleteAssociation={setDeleteAssociation}
-              setDeleteModalOpen={setDeleteModalOpen}
-            />
-          );
-        })}
+          })}
       </List>
       <Stack
         direction="row"

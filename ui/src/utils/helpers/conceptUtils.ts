@@ -639,3 +639,11 @@ export const filterOptionsByTermAndCode = createFilterOptions<Concept>({
       option.conceptId ?? '', // Code
     ].join(' '),
 });
+export function isOriginalConceptActive(
+  originalConceptId?: string | null,
+  activeConceptIds?: { items?: string[] } | null,
+): boolean {
+  return Boolean(
+    originalConceptId && activeConceptIds?.items?.includes(originalConceptId),
+  );
+}

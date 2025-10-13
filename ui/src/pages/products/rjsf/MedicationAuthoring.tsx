@@ -27,7 +27,11 @@ import { isValueSetExpansionContains } from '../../../types/predicates/isValueSe
 import { Concept } from '../../../types/concept.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
 import { Task } from '../../../types/task.ts';
-import { ProductAction, Ticket } from '../../../types/tickets/ticket.ts';
+import {
+  ProductAction,
+  Ticket,
+  TicketProductAuditDto,
+} from '../../../types/tickets/ticket.ts';
 import {
   MedicationPackageDetails,
   ProductActionType,
@@ -50,12 +54,16 @@ import { evaluateExpression } from './helpers/rjsfUtils.ts';
 import WarningIcon from '@mui/icons-material/Warning';
 import CustomTextFieldWidget from './widgets/CustomTextFieldWidget.tsx';
 import UnableToEditTooltip from '../../tasks/components/UnableToEditTooltip.tsx';
+import { showError } from '../../../types/ErrorHandler.ts';
+import { useActiveConceptIdsByIds } from '../../../hooks/eclRefset/useConceptsById.tsx';
+import { isOriginalConceptActive } from '../../../utils/helpers/conceptUtils.ts';
 
 export interface MedicationAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
   task: Task;
   ticket: Ticket;
   ticketProductId?: string;
+  productAuditDto?: TicketProductAuditDto;
 }
 
 function MedicationAuthoring({
@@ -63,6 +71,7 @@ function MedicationAuthoring({
   selectedProduct,
   ticketProductId,
   ticket,
+  productAuditDto,
 }: MedicationAuthoringV2Props) {
   const [formKey, setFormKey] = useState(0);
   const [formData, setFormData] = useState<any>({});
@@ -111,6 +120,7 @@ function MedicationAuthoring({
     isFetching: isTicketProductFetching,
   } = useTicketProductQuery({
     ticketProductId,
+    productAuditDto,
     ticket,
     setFunction: (data: any) => {
       setMode(
@@ -118,7 +128,11 @@ function MedicationAuthoring({
           ? 'update'
           : 'create',
       );
-      if (data.action === 'UPDATE' && data.originalConceptId) {
+      if (
+        data.action === 'UPDATE' &&
+        data.originalConceptId &&
+        !data.conceptId
+      ) {
         setPartialUpdateMode(true);
       } else {
         setPartialUpdateMode(false);
@@ -187,6 +201,10 @@ function MedicationAuthoring({
     setOriginalConceptId(undefined);
     setSelectedConceptIdentifiers([]);
   }, []);
+  const { activeConceptIds, activeConceptsLoading } = useActiveConceptIdsByIds(
+    task.branchPath,
+    originalConceptId ? [originalConceptId] : [],
+  );
 
   // Clear form data when schemaType changes
   useEffect(() => {
@@ -244,42 +262,62 @@ function MedicationAuthoring({
     <Paper sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1 }}>
       <Box m={2} p={2}>
         <Container data-testid="product-creation-grid">
-          {staleModeOn && (
-            <Alert
-              severity="warning"
-              sx={{
-                mb: 2,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-              action={
-                <Button
-                  color="inherit"
-                  size="small"
-                  onClick={async () => {
-                    if (originalConceptId) {
-                      setManualLoading(true);
-                      try {
-                        await refetchWithParam({
-                          conceptId: originalConceptId,
-                        });
-                        setStaleModeOn(false);
-                      } finally {
-                        setManualLoading(false);
+          {staleModeOn &&
+            isOriginalConceptActive(originalConceptId, activeConceptIds) && (
+              <Alert
+                severity="warning"
+                variant="outlined"
+                sx={{
+                  mb: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+                action={
+                  <Button
+                    color="inherit"
+                    size="small"
+                    onClick={async () => {
+                      if (originalConceptId) {
+                        setManualLoading(true);
+                        try {
+                          await refetchWithParam({
+                            conceptId: originalConceptId,
+                          });
+                          setStaleModeOn(false);
+                        } catch (error) {
+                          showError(error.message);
+                        } finally {
+                          setManualLoading(false);
+                        }
                       }
-                    }
-                  }}
-                >
-                  Reload
-                </Button>
-              }
-            >
-              Data loaded from the author’s saved action - useful for review but
-              may be stale. Reload from terminology for the latest data to
-              perform a product update.
-            </Alert>
-          )}
+                    }}
+                  >
+                    Reload
+                  </Button>
+                }
+              >
+                Data loaded from the author’s saved action - useful for review
+                but may be stale. Reload from terminology for the latest data to
+                perform a product update.
+              </Alert>
+            )}
+
+          {staleModeOn &&
+            !isOriginalConceptActive(originalConceptId, activeConceptIds) && (
+              <Alert
+                severity="warning"
+                variant="outlined"
+                sx={{
+                  mb: 2,
+                }}
+              >
+                Data loaded from the author’s saved action — useful for review,
+                but it may be outdated. Reload option is unavailable because the
+                original concept could not be found or is inactive; therefore,
+                the update action has been disabled.
+              </Alert>
+            )}
 
           {/* Custom Error Modal */}
           <ErrorDisplay errors={formErrors} />
