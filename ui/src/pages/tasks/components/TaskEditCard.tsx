@@ -132,7 +132,6 @@ export function TaskEditReview() {
           isSimpleEdit={false}
           branch={branch}
           activeConcept=""
-          expandedConcepts={[]}
         />
       </Stack>
     );

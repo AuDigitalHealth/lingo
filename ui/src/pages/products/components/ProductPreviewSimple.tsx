@@ -81,7 +81,7 @@ interface ProductPreviewPanelProps {
   product: Product;
   // productModel: ProductSummary;
   activeConcept: string | undefined;
-  expandedConcepts: string[];
+  // expandedConcepts: string[];
   // setExpandedConcepts: React.Dispatch<React.SetStateAction<string[]>>;
   // setActiveConcept: React.Dispatch<React.SetStateAction<string | undefined>>;
   // register: UseFormRegister<ProductSummary>;
@@ -97,17 +97,9 @@ interface ProductPreviewPanelProps {
 }
 
 export default function ProductPreviewSimple({
-  // control,
   fsnToggle,
-  // productModel,
   activeConcept,
   product,
-  expandedConcepts,
-  // setExpandedConcepts,
-  // setActiveConcept,
-  // idsWithInvalidName,
-  // setIdsWithInvalidName,
-  // fieldBindings,
   isSimpleEdit,
   branch,
   ticket,
@@ -118,6 +110,7 @@ export default function ProductPreviewSimple({
   const [conceptDiagramModalOpen, setConceptDiagramModalOpen] = useState(false);
   const [descriptionModalOpen, setDescriptionModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const { conceptReviews, isLoadingConceptReviews } =
     useConceptsForReview(branch);
   const filteredConceptReviews = conceptReviews
@@ -167,8 +160,8 @@ export default function ProductPreviewSimple({
         <ProductPreviewAccordion
           key={'accordion-' + product.conceptId}
           data-testid="accodion-product"
-          // onChange={() => accordionClicked(product.conceptId)}
-          // expanded={expandedConcepts.includes(product.conceptId)}
+          onChange={() => setExpanded(!expanded)}
+          expanded={expanded}
         >
           <AccordionSummary
             data-testid="accodion-product-summary"

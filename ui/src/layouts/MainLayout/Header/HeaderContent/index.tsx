@@ -42,20 +42,17 @@ const HeaderContent = () => {
       {menuOrientation === MenuOrientation.HORIZONTAL && !downLG && (
         <DrawerHeader open={true} />
       )}
-      {!downLG && (
-        <SearchProduct
-          disableLinkOpen={false}
-          inputValue={searchInputValue}
-          setInputValue={setSearchInputValue}
-          showDeviceSearch={false}
-          branch={
-            useApplicationConfigStore.getState().applicationConfig
-              ?.apDefaultBranch
-          }
-          fieldBindings={fieldBindings}
-        />
-      )}
-      {downLG && <Box sx={{ width: '100%', ml: 1 }} />}
+      <SearchProduct
+        disableLinkOpen={false}
+        inputValue={searchInputValue}
+        setInputValue={setSearchInputValue}
+        showDeviceSearch={false}
+        branch={
+          useApplicationConfigStore.getState().applicationConfig
+            ?.apDefaultBranch
+        }
+        fieldBindings={fieldBindings}
+      />
       <Stack
         direction="row"
         justifyContent="flex-end"
