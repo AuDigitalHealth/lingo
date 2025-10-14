@@ -15,6 +15,7 @@
  */
 package au.gov.digitalhealth.tickets.controllers;
 
+import au.gov.digitalhealth.tickets.service.ProductAuditService;
 import au.gov.digitalhealth.tickets.service.TicketServiceImpl;
 import java.util.List;
 import java.util.Set;
@@ -33,9 +34,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProductController {
 
   final TicketServiceImpl ticketService;
+  final ProductAuditService productAuditService;
 
-  public ProductController(TicketServiceImpl ticketService) {
+  public ProductController(
+      TicketServiceImpl ticketService, ProductAuditService productAuditService) {
     this.ticketService = ticketService;
+    this.productAuditService = productAuditService;
   }
 
   @PutMapping(
@@ -72,6 +76,12 @@ public class ProductController {
   @GetMapping(value = "/api/tickets/{ticketId}/products/id/{id}")
   public ProductDto getProductById(@PathVariable Long ticketId, @PathVariable Long id) {
     return ticketService.getProductById(ticketId, id);
+  }
+
+  @GetMapping(value = "/api/tickets/{ticketId}/products/id/{id}/audit")
+  public List<ProductAuditDto> getProductAudit(@PathVariable Long ticketId, @PathVariable Long id) {
+    ticketService.findTicket(ticketId);
+    return productAuditService.getProductAuditRecords(id);
   }
 
   @DeleteMapping(value = "/api/tickets/{ticketId}/products/id/{id}")

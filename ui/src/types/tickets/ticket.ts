@@ -302,6 +302,11 @@ export interface TicketProductDto {
   originalConceptId: string | null;
   action: ProductAction;
 }
+export interface TicketProductAuditDto extends TicketProductDto {
+  revisionType: string;
+  revisionDate: string;
+  revisionNumber: number;
+}
 
 export interface TicketBulkProductActionDto {
   id?: number;

@@ -147,7 +147,59 @@
           }
         }
       },
-      "required": ["productName", "deviceType"]
+      "required": ["productName", "deviceType"],
+      "allOf": [
+        {
+          "oneOf": [
+            {
+              "required": [
+                "specificDeviceType"
+              ],
+              "properties": {
+                "newSpecificDeviceName": {
+                  "type": "null",
+                  "errorMessage": {
+                    "type": "'New VMP Level Device Concept Name' must be empty when 'Existing VMP Level Device Type' is provided."
+                  }
+                }
+              },
+              "errorMessage": {
+                "required": "Exactly one of 'Existing VMP Level Device Type' or 'New VMP Level Device Concept Name' must be provided (provide one, not both)."
+              }
+            },
+            {
+              "required": [
+                "newSpecificDeviceName"
+              ],
+              "properties": {
+                "specificDeviceType": {
+                  "type": "null",
+                  "errorMessage": {
+                    "type": "'Existing VMP Level Device Type' must be empty when 'New VMP Level Device Concept Name' is provided."
+                  }
+                }
+              },
+              "errorMessage": {
+                "required": "Exactly one of 'Existing VMP Level Device Type' or 'New VMP Level Device Concept Name' must be provided (provide one, not both)."
+              }
+            }
+          ],
+          "errorMessage": {
+            "oneOf": "Exactly one of 'Existing VMP Level Device Type' or 'New VMP Level Device Concept Name' must be provided (provide one, not both)."
+          }
+        },
+        {
+          "not": {
+            "required": [
+              "specificDeviceType",
+              "newSpecificDeviceName"
+            ]
+          },
+          "errorMessage": {
+            "not": "Exactly one of 'Existing VMP Level Device Type' or 'New VMP Level Device Concept Name' must be provided (provide one, not both)."
+          }
+        }
+      ]
     },
     "ContainedProduct": {
       "type": "object",

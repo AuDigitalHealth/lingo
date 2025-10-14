@@ -18,7 +18,6 @@ export default function useCanEditTask() {
 }
 function useIsTaskLocked(task: Task | null | undefined, login: string | null) {
   const [isLocked, setLocked] = useState(false);
-  const [isOwner, setIsOwner] = useState(false);
   const [lockDescription, setLockDescription] = useState('');
   const shouldCall = () => {
     const call =
@@ -65,10 +64,10 @@ function useIsTaskLocked(task: Task | null | undefined, login: string | null) {
       }
       if (task?.assignee.username != login) {
         setLocked(true);
-        setIsOwner(false);
+
         setLockDescription('Must be Task owner');
       } else {
-        setIsOwner(true);
+        setLocked(false);
         setLockDescription('');
       }
     }
@@ -81,5 +80,5 @@ function useIsTaskLocked(task: Task | null | undefined, login: string | null) {
     }
   }, [data, isLoading]);
 
-  return { isLocked: !isOwner || isLocked, lockDescription };
+  return { isLocked: isLocked, lockDescription };
 }

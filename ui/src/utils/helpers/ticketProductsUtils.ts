@@ -25,6 +25,7 @@ import {
   ProductAction,
   Ticket,
   TicketBulkProductActionDto,
+  TicketProductAuditDto,
   TicketProductDto,
 } from '../../types/tickets/ticket.ts';
 import { ProductStatus, ProductTableRow } from '../../types/TicketProduct.ts';
@@ -237,4 +238,19 @@ export function mapToProductDetailsArrayFromBulkActions(
     return productDto;
   });
   return productDetailsArray;
+}
+export function mapAuditToProduct(
+  auditDto: TicketProductAuditDto,
+): TicketProductDto {
+  const {
+    revisionType, // omit
+    revisionDate, // omit
+    revisionNumber, // omit
+    ...productFields
+  } = auditDto;
+
+  return {
+    ...productFields,
+    version: auditDto.version ?? auditDto.revisionNumber ?? null,
+  };
 }

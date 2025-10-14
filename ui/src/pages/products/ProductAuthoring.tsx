@@ -7,7 +7,7 @@ import { Box, Stack } from '@mui/system';
 import useInitializeConcepts from '../../hooks/api/useInitializeConcepts.tsx';
 import Loading from '../../components/Loading.tsx';
 
-import { Ticket } from '../../types/tickets/ticket.ts';
+import { Ticket, TicketProductAuditDto } from '../../types/tickets/ticket.ts';
 import { Task } from '../../types/task.ts';
 import { useFieldBindings } from '../../hooks/api/useInitializeConfig.tsx';
 import { useNavigate } from 'react-router-dom';
@@ -28,6 +28,7 @@ interface ProductAuthoringProps {
   productId?: string;
   productType?: ProductType;
   actionType?: ActionType;
+  productAuditDto?: TicketProductAuditDto;
 }
 function ProductAuthoring({
   ticket,
@@ -36,6 +37,7 @@ function ProductAuthoring({
   productId,
   productType,
   actionType,
+  productAuditDto,
 }: ProductAuthoringProps) {
   const { fieldBindingIsLoading, fieldBindings } = useFieldBindings(
     task.branchPath,
@@ -115,9 +117,22 @@ function ProductAuthoring({
   } else {
     return (
       <Grid>
-        <h3>
-          {getTitle(productName, getActionType(actionType, selectedActionType))}
+        <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <span>
+            {getTitle(
+              productName,
+              getActionType(actionType, selectedActionType),
+              productAuditDto,
+            )}
+          </span>
+          {productAuditDto?.revisionNumber && (
+            <span style={{ color: '#d32f2f', fontWeight: 500 }}>
+              Loaded from historical record — revision{' '}
+              {productAuditDto.revisionNumber}
+            </span>
+          )}
         </h3>
+
         {!productName ? (
           <Stack direction="row" spacing={2} alignItems="center">
             <Card sx={{ marginY: '1em', padding: '1em', width: '100%' }}>
@@ -151,6 +166,7 @@ function ProductAuthoring({
               ticketProductId={productId}
               ticket={ticket}
               schemaType="medication"
+              productAuditDto={productAuditDto}
             />
           ) : getActionType(actionType, selectedActionType) ===
             ActionType.newDevice ? (
@@ -159,6 +175,7 @@ function ProductAuthoring({
               ticket={ticket}
               task={task}
               ticketProductId={productId}
+              productAuditDto={productAuditDto}
             />
           ) : getActionType(actionType, selectedActionType) ===
             ActionType.newPackSize ? (
@@ -200,14 +217,17 @@ function ProductAuthoring({
 const getTitle = (
   productName: string | undefined,
   actionType: ActionType | undefined,
+  productAuditDto: TicketProductAuditDto | undefined,
 ) => {
   if (actionType === ActionType.editProduct) {
     return 'Edit Terms';
   }
 
-  return productName
-    ? `Manage Product (Loaded from ${productName})`
-    : 'Manage Product';
+  return productName && productAuditDto
+    ? `Manage Product (${productName})`
+    : productName
+      ? `Manage Product (Loaded from ${productName})`
+      : 'Manage Product';
 };
 const getActionType = (
   actionType: ActionType | undefined,

@@ -27,12 +27,9 @@ import static au.gov.digitalhealth.lingo.util.AmtConstants.COUNT_OF_CONTAINED_CO
 import static au.gov.digitalhealth.lingo.util.AmtConstants.COUNT_OF_CONTAINED_PACKAGE_TYPE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_CONTAINER_TYPE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_DEVICE_TYPE;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_TOTAL_QUANTITY_UNIT;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_TOTAL_QUANTITY_VALUE;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.NO_OII_VALUE;
 import static au.gov.digitalhealth.lingo.util.NmpcConstants.ACTIVE_IMMUNITY_STIMULANT;
-import static au.gov.digitalhealth.lingo.util.NmpcConstants.HAS_OTHER_IDENTIFYING_INFORMATION_NMPC;
 import static au.gov.digitalhealth.lingo.util.NmpcConstants.VIRTUAL_MEDICINAL_PRODUCT;
 import static au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter.calculateNonDefiningRelationships;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONTAINS_CD;
@@ -125,7 +122,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.util.Pair;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import reactor.core.publisher.Mono;
 
@@ -671,8 +667,7 @@ public class MedicationProductCalculationService
             parentNodes,
             innerPackageSummaries,
             innnerProductSummaries,
-            packageLevel.isBranded(),
-            packageLevel.isContainerized(),
+            packageLevel,
             modelConfiguration);
 
     // todo remove this once using transformed nmpc data - should be enforced but can't be for NMPC
@@ -708,9 +703,11 @@ public class MedicationProductCalculationService
       Set<Node> parentNodes,
       Map<PackageQuantity<MedicationProductDetails>, ProductSummary> innerPackageSummaries,
       Map<ProductQuantity<MedicationProductDetails>, ProductSummary> innnerProductSummaries,
-      boolean branded,
-      boolean container,
+      ModelLevel packageLevel,
       ModelConfiguration modelConfiguration) {
+
+    boolean branded = packageLevel.isBranded();
+    boolean container = packageLevel.isContainerized();
 
     Set<SnowstormRelationship> relationships = new HashSet<>();
     if (parentNodes != null && !parentNodes.isEmpty()) {
@@ -740,33 +737,10 @@ public class MedicationProductCalculationService
           HAS_PRODUCT_NAME,
           0,
           modelConfiguration.getModuleId());
-
-      if (modelConfiguration.getModelType().equals(ModelType.NMPC)
-          && packageDetails.getOtherIdentifyingInformation() != null) {
-        relationships.add(
-            getSnowstormDatatypeComponent(
-                HAS_OTHER_IDENTIFYING_INFORMATION_NMPC,
-                !StringUtils.hasLength(packageDetails.getOtherIdentifyingInformation())
-                    ? NO_OII_VALUE.getValue()
-                    : packageDetails.getOtherIdentifyingInformation(),
-                DataTypeEnum.STRING,
-                0,
-                STATED_RELATIONSHIP,
-                modelConfiguration.getModuleId()));
-      }
-    } else if (modelConfiguration.getModelType().equals(ModelType.NMPC)
-        && packageDetails.getGenericOtherIdentifyingInformation() != null) {
-      relationships.add(
-          getSnowstormDatatypeComponent(
-              HAS_OTHER_IDENTIFYING_INFORMATION_NMPC,
-              !StringUtils.hasLength(packageDetails.getGenericOtherIdentifyingInformation())
-                  ? NO_OII_VALUE.getValue()
-                  : packageDetails.getGenericOtherIdentifyingInformation(),
-              DataTypeEnum.STRING,
-              0,
-              STATED_RELATIONSHIP,
-              modelConfiguration.getModuleId()));
     }
+
+    addPackageOtherIdentifyingInformation(
+        packageDetails, modelConfiguration, packageLevel, relationships);
 
     int group = 1;
     for (Entry<ProductQuantity<MedicationProductDetails>, ProductSummary> entry :
@@ -1442,35 +1416,9 @@ public class MedicationProductCalculationService
               0,
               STATED_RELATIONSHIP,
               modelConfiguration.getModuleId()));
-
-      if (modelConfiguration.getModelType().equals(ModelType.AMT)
-          || productDetails.getOtherIdentifyingInformation() != null) {
-        relationships.add(
-            getSnowstormDatatypeComponent(
-                modelConfiguration.getModelType().equals(ModelType.NMPC)
-                    ? HAS_OTHER_IDENTIFYING_INFORMATION_NMPC
-                    : HAS_OTHER_IDENTIFYING_INFORMATION,
-                !StringUtils.hasLength(productDetails.getOtherIdentifyingInformation())
-                    ? NO_OII_VALUE.getValue()
-                    : productDetails.getOtherIdentifyingInformation(),
-                DataTypeEnum.STRING,
-                0,
-                STATED_RELATIONSHIP,
-                modelConfiguration.getModuleId()));
-      }
-    } else if (modelConfiguration.getModelType().equals(ModelType.NMPC)
-        && productDetails.getGenericOtherIdentifyingInformation() != null) {
-      relationships.add(
-          getSnowstormDatatypeComponent(
-              HAS_OTHER_IDENTIFYING_INFORMATION_NMPC,
-              !StringUtils.hasLength(productDetails.getGenericOtherIdentifyingInformation())
-                  ? NO_OII_VALUE.getValue()
-                  : productDetails.getGenericOtherIdentifyingInformation(),
-              DataTypeEnum.STRING,
-              0,
-              STATED_RELATIONSHIP,
-              modelConfiguration.getModuleId()));
     }
+
+    addProductOtherIdentifyingInformation(productDetails, modelConfiguration, level, relationships);
 
     if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
       addRelationshipIfNotNull(

@@ -15,24 +15,52 @@
 ///
 
 import { useQuery } from '@tanstack/react-query';
-import { Ticket } from '../../../../types/tickets/ticket.ts';
+import {
+  Ticket,
+  TicketProductAuditDto,
+} from '../../../../types/tickets/ticket.ts';
 import TicketProductService from '../../../../api/TicketProductService.ts';
+import {
+  mapAuditToProduct,
+  mapToTicketProductDto,
+} from '../../../../utils/helpers/ticketProductsUtils.ts';
 interface TicketProductQueryProps {
   ticketProductId?: string;
+  productAuditDto?: TicketProductAuditDto;
   ticket: Ticket;
   setFunction?: ({}) => void;
 }
 export const useTicketProductQuery = ({
   ticketProductId,
+  productAuditDto,
   ticket,
   setFunction,
 }: TicketProductQueryProps) => {
-  const queryKey = ['ticket-product', ticketProductId];
+  const queryKey = [
+    'ticket-product',
+    ticketProductId,
+    productAuditDto ? productAuditDto?.revisionNumber : 0,
+  ];
   return useQuery({
     queryKey,
     queryFn: async () => {
-      const data = await fetchTicketProductDataFn({ ticketProductId, ticket });
-      if (setFunction && data) setFunction(data);
+      let data;
+
+      if (productAuditDto) {
+        // simulate async call
+        data = await new Promise(resolve => {
+          setTimeout(() => {
+            resolve(mapAuditToProduct(productAuditDto));
+          }, 0); // 0 ms ensures microtask
+        });
+      } else {
+        data = await fetchTicketProductDataFn({ ticketProductId, ticket });
+      }
+
+      if (setFunction && data) {
+        setFunction(data);
+      }
+
       return data;
     },
     enabled: !!ticketProductId && !!ticket.ticketNumber,
@@ -48,6 +76,39 @@ const fetchTicketProductDataFn = async ({
   if (!ticketProductId) return null;
 
   const mp = await TicketProductService.getTicketProduct(
+    ticket.id,
+    ticketProductId,
+  );
+  return mp ? mp : null;
+};
+export const useTicketProductAuditQuery = ({
+  ticketProductId,
+  ticket,
+  setFunction,
+}: TicketProductQueryProps) => {
+  const queryKey = ['ticket-product-audit', ticketProductId];
+  return useQuery({
+    queryKey,
+    queryFn: async () => {
+      const data = await fetchTicketProductAuditDataFn({
+        ticketProductId,
+        ticket,
+      });
+      if (setFunction && data) setFunction(data);
+      return data;
+    },
+    enabled: !!ticketProductId && !!ticket.ticketNumber,
+    staleTime: 0,
+    gcTime: 0,
+  });
+};
+const fetchTicketProductAuditDataFn = async ({
+  ticketProductId,
+  ticket,
+}: TicketProductQueryProps) => {
+  if (!ticketProductId) return null;
+
+  const mp = await TicketProductService.getTicketProductAudit(
     ticket.id,
     ticketProductId,
   );
