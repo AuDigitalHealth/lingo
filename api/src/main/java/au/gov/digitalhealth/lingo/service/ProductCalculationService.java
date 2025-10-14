@@ -15,7 +15,15 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
+import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
+import static au.gov.digitalhealth.lingo.util.AmtConstants.NO_OII_VALUE;
+import static au.gov.digitalhealth.lingo.util.NmpcConstants.HAS_OTHER_IDENTIFYING_INFORMATION_NMPC;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.STATED_RELATIONSHIP;
+import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getSnowstormDatatypeComponent;
+
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
+import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.NonDefiningPropertyDefinition;
@@ -30,6 +38,7 @@ import au.gov.digitalhealth.lingo.product.details.ProductDetails;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
 import au.gov.digitalhealth.lingo.service.validators.ValidationResult;
+import au.gov.digitalhealth.lingo.util.LingoConstants;
 import au.gov.digitalhealth.lingo.util.NmpcType;
 import au.gov.digitalhealth.lingo.validation.AuthoringValidation;
 import jakarta.validation.Valid;
@@ -46,6 +55,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.java.Log;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 
 @Log
@@ -90,6 +100,80 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
   public abstract CompletableFuture<ProductSummary> calculateProductFromAtomicDataAsync(
       String branch, @Valid PackageDetails<@Valid T> packageDetails)
       throws ExecutionException, InterruptedException;
+
+  /**
+   * Adds the other identifying information for a product to the relationships.
+   *
+   * <p>Only adds the other identifying information if the model is NMPC, or if the level is branded
+   * and the model is AMT. The OII is taken from the specific OII if the level is branded, otherwise
+   * it is taken from the generic OII. If neither, a default is used.
+   */
+  protected static void addProductOtherIdentifyingInformation(
+      ProductDetails productDetails,
+      ModelConfiguration modelConfiguration,
+      ModelLevel level,
+      Set<SnowstormRelationship> relationships) {
+
+    final boolean isNmpcModel = modelConfiguration.getModelType().equals(ModelType.NMPC);
+    final boolean isAmtModel = modelConfiguration.getModelType().equals(ModelType.AMT);
+
+    if (isNmpcModel || (level.isBranded() && isAmtModel)) {
+      LingoConstants propertyId =
+          isNmpcModel ? HAS_OTHER_IDENTIFYING_INFORMATION_NMPC : HAS_OTHER_IDENTIFYING_INFORMATION;
+
+      String value =
+          level.isBranded()
+                  && StringUtils.hasLength(productDetails.getOtherIdentifyingInformation())
+              ? productDetails.getOtherIdentifyingInformation()
+              : productDetails.getGenericOtherIdentifyingInformation();
+
+      relationships.add(
+          getSnowstormDatatypeComponent(
+              propertyId,
+              StringUtils.hasLength(value) ? value : NO_OII_VALUE.getValue(),
+              DataTypeEnum.STRING,
+              0,
+              STATED_RELATIONSHIP,
+              modelConfiguration.getModuleId()));
+    }
+  }
+
+  /**
+   * Adds the other identifying information for a package to the relationships.
+   *
+   * <p>Only adds the other identifying information if the model is NMPC. The OII is taken from the
+   * specific OII if the level is branded, otherwise it is taken from the generic OII. If neither, a
+   * default is used.
+   *
+   * @param packageDetails input package details to add the OII to.
+   * @param modelConfiguration the model configuration to use.
+   * @param level the level of the package to add the OII to.
+   * @param relationships the relationships to add the OII to.
+   */
+  protected void addPackageOtherIdentifyingInformation(
+      PackageDetails<?> packageDetails,
+      ModelConfiguration modelConfiguration,
+      ModelLevel level,
+      Set<SnowstormRelationship> relationships) {
+    final boolean isNmpcModel = modelConfiguration.getModelType().equals(ModelType.NMPC);
+
+    if (isNmpcModel) {
+      String value =
+          level.isBranded()
+                  && StringUtils.hasLength(packageDetails.getOtherIdentifyingInformation())
+              ? packageDetails.getOtherIdentifyingInformation()
+              : packageDetails.getGenericOtherIdentifyingInformation();
+
+      relationships.add(
+          getSnowstormDatatypeComponent(
+              HAS_OTHER_IDENTIFYING_INFORMATION_NMPC,
+              StringUtils.hasLength(value) ? value : NO_OII_VALUE.getValue(),
+              DataTypeEnum.STRING,
+              0,
+              STATED_RELATIONSHIP,
+              modelConfiguration.getModuleId()));
+    }
+  }
 
   protected abstract SnowstormClient getSnowstormClient();
 
