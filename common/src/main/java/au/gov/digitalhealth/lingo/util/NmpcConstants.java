@@ -33,10 +33,11 @@ import lombok.Getter;
  */
 @Getter
 public enum NmpcConstants implements LingoConstants {
-  CONTAINS_DEVICE_NMPC("689871000220106", "Contains device (attribute)"),
+  CONTAINS_DEVICE_NMPC("689871000220106", "Contains device (attribute)"), // 999000081000168101 in AMT
   HAS_OTHER_IDENTIFYING_INFORMATION_NMPC(
-      "689881000220109", "Has other identifying information (attribute)"),
-  PACKAGE_NMPC("689861000220100", "Package (physical object)"),
+      "689881000220109",
+      "Has other identifying information (attribute)"), // 999000001000168109 in AMT
+  PACKAGE_NMPC("689861000220100", "Package (physical object)"), // 999000071000168104 in AMT
   HAS_NMPC_PRODUCT_TYPE("680011000220100", "Has NMPC Product Type (attribute)"),
   VIRTUAL_MEDICINAL_PRODUCT("660341000220102", "Virtual medicinal product (product)"),
   ACTIVE_IMMUNITY_STIMULANT("318331000221102", "Active immunity stimulant role (role)");

@@ -20,10 +20,7 @@ import static au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLe
 import static au.gov.digitalhealth.lingo.util.AmtConstants.CONTAINS_DEVICE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.COUNT_OF_DEVICE_TYPE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_CONTAINER_TYPE;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
-import static au.gov.digitalhealth.lingo.util.AmtConstants.NO_OII_VALUE;
 import static au.gov.digitalhealth.lingo.util.NmpcConstants.CONTAINS_DEVICE_NMPC;
-import static au.gov.digitalhealth.lingo.util.NmpcConstants.HAS_OTHER_IDENTIFYING_INFORMATION_NMPC;
 import static au.gov.digitalhealth.lingo.util.NmpcConstants.PACKAGE_NMPC;
 import static au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter.calculateNonDefiningRelationships;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_UNIT;
@@ -84,7 +81,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import reactor.core.publisher.Mono;
 
@@ -131,21 +127,11 @@ public class DeviceProductCalculationService
             STATED_RELATIONSHIP,
             modelConfiguration.getModuleId()));
 
-    if (modelConfiguration.getModelType().equals(ModelType.AMT)
-        || productDetails.getOtherIdentifyingInformation() != null) {
-      relationships.add(
-          getSnowstormDatatypeComponent(
-              modelConfiguration.getModelType().equals(ModelType.NMPC)
-                  ? HAS_OTHER_IDENTIFYING_INFORMATION_NMPC
-                  : HAS_OTHER_IDENTIFYING_INFORMATION,
-              !StringUtils.hasLength(productDetails.getOtherIdentifyingInformation())
-                  ? NO_OII_VALUE.getValue()
-                  : productDetails.getOtherIdentifyingInformation(),
-              DataTypeEnum.STRING,
-              0,
-              STATED_RELATIONSHIP,
-              modelConfiguration.getModuleId()));
-    }
+    addProductOtherIdentifyingInformation(
+        productDetails,
+        modelConfiguration,
+        modelConfiguration.getLeafProductModelLevel(),
+        relationships);
     return relationships;
   }
 
@@ -181,19 +167,11 @@ public class DeviceProductCalculationService
                           modelConfiguration.getModuleId())));
     }
 
-    if (modelConfiguration.getModelType().equals(ModelType.NMPC)
-        && productDetails.getGenericOtherIdentifyingInformation() != null) {
-      relationships.add(
-          getSnowstormDatatypeComponent(
-              HAS_OTHER_IDENTIFYING_INFORMATION_NMPC,
-              !StringUtils.hasLength(productDetails.getGenericOtherIdentifyingInformation())
-                  ? NO_OII_VALUE.getValue()
-                  : productDetails.getGenericOtherIdentifyingInformation(),
-              DataTypeEnum.STRING,
-              0,
-              STATED_RELATIONSHIP,
-              modelConfiguration.getModuleId()));
-    }
+    addProductOtherIdentifyingInformation(
+        productDetails,
+        modelConfiguration,
+        modelConfiguration.getLeafUnbrandedProductModelLevel(),
+        relationships);
     return relationships;
   }
 
@@ -637,31 +615,8 @@ public class DeviceProductCalculationService
               modelConfiguration.getModuleId()));
     }
 
-    if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
-      if (modelLevel.isBranded() && packageDetails.getOtherIdentifyingInformation() != null) {
-        relationships.add(
-            getSnowstormDatatypeComponent(
-                HAS_OTHER_IDENTIFYING_INFORMATION_NMPC,
-                !StringUtils.hasLength(packageDetails.getOtherIdentifyingInformation())
-                    ? NO_OII_VALUE.getValue()
-                    : packageDetails.getOtherIdentifyingInformation(),
-                DataTypeEnum.STRING,
-                0,
-                STATED_RELATIONSHIP,
-                modelConfiguration.getModuleId()));
-      } else if (packageDetails.getGenericOtherIdentifyingInformation() != null) {
-        relationships.add(
-            getSnowstormDatatypeComponent(
-                HAS_OTHER_IDENTIFYING_INFORMATION_NMPC,
-                !StringUtils.hasLength(packageDetails.getGenericOtherIdentifyingInformation())
-                    ? NO_OII_VALUE.getValue()
-                    : packageDetails.getGenericOtherIdentifyingInformation(),
-                DataTypeEnum.STRING,
-                0,
-                STATED_RELATIONSHIP,
-                modelConfiguration.getModuleId()));
-      }
-    }
+    addPackageOtherIdentifyingInformation(
+        packageDetails, modelConfiguration, modelLevel, relationships);
 
     if (modelLevel.isContainerized()) {
       relationships.add(
