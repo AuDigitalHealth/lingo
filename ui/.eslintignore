@@ -1,0 +1,67 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+build/
+target/
+*.tsbuildinfo
+
+# Coverage reports
+coverage/
+.nyc_output/
+cypress/coverage/
+
+# Cypress
+cypress/videos/
+cypress/screenshots/
+cypress/downloads/
+
+# Generated files
+dependency-licenses/
+buildnumber.txt
+*.generated.ts
+*.generated.js
+
+# Configuration files that don't need linting
+*.config.js
+*.config.ts
+vite.config.ts
+cypress.config.ts
+.eslintrc.cjs
+prettier.config.js
+
+# Environment and build files
+.env*
+package-lock.json
+yarn.lock
+
+# IDE files
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# License files
+check-licenses.cjs
+record-npm-dependency-licenses.cjs
+format-npm-license.js
+allowed-licenses.json
+allowed-packages.json
+
+# Type definitions (be selective)
+src/vite-env.d.ts

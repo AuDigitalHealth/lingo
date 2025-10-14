@@ -16,6 +16,7 @@
 
 import {
   ClassificationStatus,
+  FeedbackStatus,
   TaskStatus,
   ValidationStatus,
 } from '../types/task';
@@ -35,7 +36,30 @@ const statusToColor = (value: string): ValidationColor => {
   ) {
     type = classificationStatusToColor(value);
   }
+  if (Object.values(FeedbackStatus).includes(value as FeedbackStatus)) {
+    type = feedbackStatusToColor(value);
+  }
 
+  return type;
+};
+
+const feedbackStatusToColor = (value: string): ValidationColor => {
+  let type: ValidationColor;
+
+  switch (value) {
+    case FeedbackStatus.None:
+      type = ValidationColor.Info;
+      break;
+    case FeedbackStatus.Unread:
+      type = ValidationColor.Error;
+      break;
+    case FeedbackStatus.Read:
+      type = ValidationColor.Warning;
+      break;
+
+    default:
+      type = ValidationColor.Info;
+  }
   return type;
 };
 

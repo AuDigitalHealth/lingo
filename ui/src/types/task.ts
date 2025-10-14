@@ -95,6 +95,12 @@ export enum ClassificationStatus {
   SaveFailed = 'SAVE_FAILED',
 }
 
+export enum FeedbackStatus {
+  Read = 'read',
+  Unread = 'unread',
+  None = 'none',
+}
+
 export enum ValidationStatus {
   NotTriggered = 'NOT_TRIGGERED',
   Failed = 'FAILED',
