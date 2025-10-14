@@ -150,7 +150,7 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
    * @param level the level of the package to add the OII to.
    * @param relationships the relationships to add the OII to.
    */
-  protected void addPackageOtherIdentifyingInformation(
+  protected static void addPackageOtherIdentifyingInformation(
       PackageDetails<?> packageDetails,
       ModelConfiguration modelConfiguration,
       ModelLevel level,
