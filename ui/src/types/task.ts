@@ -98,7 +98,7 @@ export enum ClassificationStatus {
 export enum FeedbackStatus {
   Read = 'read',
   Unread = 'unread',
-  None = 'none'
+  None = 'none',
 }
 
 export enum ValidationStatus {
