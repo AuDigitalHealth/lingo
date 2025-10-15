@@ -38,6 +38,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.java.Log;
@@ -59,6 +60,7 @@ public class ExternalIdentifier extends NonDefiningBase implements Serializable 
 
   String codeSystem;
 
+  @Builder.Default
   Map<String, FieldValue> additionalFields = new HashMap<>();
 
   /** Additional properties from the target concept, purely for display purposes. */
@@ -218,7 +220,7 @@ public class ExternalIdentifier extends NonDefiningBase implements Serializable 
               + "Expected: "
               + String.join(", ", fieldNames)
               + ", but got: "
-              + String.join(", ", additionalFields.keySet())
+              + String.join(", ", additionalFields == null ? Set.of() : additionalFields.keySet())
               + " for reference set: "
               + refsetId,
           referencedComponentId);

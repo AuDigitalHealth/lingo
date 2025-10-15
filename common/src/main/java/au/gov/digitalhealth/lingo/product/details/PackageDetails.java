@@ -26,11 +26,14 @@ import au.gov.digitalhealth.lingo.validation.AuthoringValidation;
 import au.gov.digitalhealth.lingo.validation.OnlyOneNotEmpty;
 import au.gov.digitalhealth.lingo.validation.ValidSnowstormConceptMini;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -52,7 +55,7 @@ public class PackageDetails<T extends ProductDetails> extends PackageProductDeta
 
   List<@Valid ProductQuantity<T>> containedProducts = new ArrayList<>();
   List<@Valid PackageQuantity<T>> containedPackages = new ArrayList<>();
-  List<String> selectedConceptIdentifiers = new ArrayList<>();
+  Set<String> selectedConceptIdentifiers = new HashSet<>();
   String otherIdentifyingInformation;
   String genericOtherIdentifyingInformation;
 
@@ -194,5 +197,26 @@ public class PackageDetails<T extends ProductDetails> extends PackageProductDeta
         && (containerType == null || containerType.getConceptId() == null)
         && containedProducts.isEmpty()
         && containedPackages.isEmpty();
+  }
+
+  @JsonSetter("selectedConceptIdentifiers")
+  public void setSelectedConceptIdentifiers(Set<String> selectedConceptIdentifiers) {
+    this.selectedConceptIdentifiers.addAll(selectedConceptIdentifiers);
+    // Automatically trigger post-processing when this field is set
+    propagateSelectedConceptIdentifiersDown();
+  }
+
+  @JsonIgnore
+  public void propagateSelectedConceptIdentifiersDown() {
+    if (selectedConceptIdentifiers.isEmpty()) {
+      return;
+    }
+    for (PackageQuantity<T> packageQuantity : containedPackages) {
+      PackageDetails<T> inner = packageQuantity.getPackageDetails();
+      if (inner != null) {
+        inner.getSelectedConceptIdentifiers().addAll(selectedConceptIdentifiers);
+        inner.propagateSelectedConceptIdentifiersDown();
+      }
+    }
   }
 }

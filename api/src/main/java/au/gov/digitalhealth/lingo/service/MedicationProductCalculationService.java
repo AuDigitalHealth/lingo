@@ -867,7 +867,7 @@ public class MedicationProductCalculationService
       String branch,
       MedicationProductDetails productDetails,
       AtomicCache atomicCache,
-      List<String> selectedConceptIdentifiers)
+      Set<String> selectedConceptIdentifiers)
       throws ExecutionException, InterruptedException {
 
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
@@ -1216,7 +1216,7 @@ public class MedicationProductCalculationService
       MedicationProductDetails productDetails,
       Set<Node> parents,
       AtomicCache atomicCache,
-      List<String> selectedConceptIdentifiers,
+      Set<String> selectedConceptIdentifiers,
       ModelLevel level) {
 
     boolean branded = level.isBranded();
@@ -1296,7 +1296,7 @@ public class MedicationProductCalculationService
       String branch,
       MedicationProductDetails details,
       AtomicCache atomicCache,
-      List<String> selectedConceptIdentifiers,
+      Set<String> selectedConceptIdentifiers,
       ModelLevel mpLevel) {
 
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
