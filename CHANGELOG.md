@@ -11,31 +11,99 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 ### Fixed
 
-- Fixed a defect affecting selection of multiple primitive concept options in product preview for
-  multi-pack products
-
+- Fixed a defect affecting multipack products when concept options are provided (primitive concepts
+  for example inert components) which was causing a loop not allowing product creation.
 
 ## [1.3.4] - 2025-10-14
 
+### Added
+
+- Added colours for feedback badges
+- Product audit view functionality
+
 ### Changed
 
+- Updated NMPC defaults for OII
+- Refactored other identifying information handling in calculation services
 - Changed device class for to AMPP from AMP for IEDC
-
 
 ## [1.3.3] - 2025-10-02
 
+### Fixed
+
+- Fixed search bar layout issues
+- Fixed unable to delete partial product bug
+- Fixed double space tabs etc from FSN and PT
+- Fixed error snackbar for 400's
+- Fixed issues with description update, around ATC code and serialization
+- Fixed TP refset not being added for primitive concept swaps in update scenarios
 
 ## [1.3.2] - 2025-09-30
 
+### Added
+
+- Bulk product action migration for brands, packsizes, and product updates
+- Reload button to prevent stale updates
+
+### Changed
+
+- Sort bulk products by PT ascending order
+- Sort task tickets by number
+- Preserve partial update mode enabled and allow update
+
+### Fixed
+
+- Fixed properties not showing on edit terms screen across product/package
+- Fixed I232 issue
+- Fixed nutritional product target population and variant type
+- Fixed existing clinical drug and existing MP for nutritional products
 
 ## [1.3.1] - 2025-09-24
 
+### Added
+
+- Secret scanning job with TruffleHog and Gitleaks to Azure Pipelines
+- Pre-commit hooks for secret scanning
+
+### Changed
+
+- Updated ECL for IEDC
+- Removed multi component indicator per I215
+- Removed unit level PAN as discussed with HSE
+
+### Fixed
+
+- Fixed task no longer exists error message
+- Fixed Sentry crash reports
+- Fixed for I193 where multicomponent products with cascading non-defining properties were not
+  correctly selecting and editing concepts
+- Trimmed leading/trailing spaces from terms
 
 ## [1.3.0] - 2025-09-22
 
+### Added
+
+- Generic backend refactor - major architectural changes
+- Enhanced error handling and validation
+- Improved product creation and update workflows
+
+### Changed
+
+- Major refactoring of backend services for better maintainability
+- Updated configuration management for different model types
+- Improved serialization handling
+
+### Fixed
+
+- Various formatting and linting issues
+- Test suite improvements
+- Enhanced stability for product operations
 
 ## [1.2.11] - 2025-09-03
 
+### Fixed
+
+- Multiple bug fixes and stability improvements
 
 ## [1.2.10.6] - 2025-07-02
 
