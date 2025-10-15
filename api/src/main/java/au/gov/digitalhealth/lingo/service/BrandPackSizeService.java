@@ -775,7 +775,7 @@ public class BrandPackSizeService {
                 properties, models.getModelConfiguration(branch), modelLevel.getModelLevelType()),
             calculateNonDefiningRelationships(
                 models.getModelConfiguration(branch), properties, modelLevel.getModelLevelType()),
-            List.of(),
+            Set.of(),
             properties,
             false,
             false,
@@ -854,7 +854,7 @@ public class BrandPackSizeService {
                 properties, models.getModelConfiguration(branch), modelLevel.getModelLevelType()),
             calculateNonDefiningRelationships(
                 models.getModelConfiguration(branch), properties, modelLevel.getModelLevelType()),
-            List.of(),
+            Set.of(),
             properties,
             false,
             false,
@@ -939,7 +939,7 @@ public class BrandPackSizeService {
                 properties, models.getModelConfiguration(branch), modelLevel.getModelLevelType()),
             calculateNonDefiningRelationships(
                 models.getModelConfiguration(branch), properties, modelLevel.getModelLevelType()),
-            List.of(),
+            Set.of(),
             properties,
             false,
             false,
