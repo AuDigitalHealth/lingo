@@ -1,7 +1,0 @@
-target/*
-build/*
-.mvn
-out
-.idea
-src/main/resources/static/*
-application-custom.properties
