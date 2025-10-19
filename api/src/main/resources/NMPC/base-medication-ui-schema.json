@@ -7,10 +7,6 @@
       "containedProducts": 24
     },
     {
-      "genericOtherIdentifyingInformation": 12,
-      "otherIdentifyingInformation": 12
-    },
-    {
       "nonDefiningProperties": 24
     }
   ],
@@ -90,20 +86,6 @@
           "placeholder": "Select unit (e.g., Each)"
         }
       },
-      "genericOtherIdentifyingInformation": {
-        "ui:widget": "text",
-        "ui:title": "VMPP other Identifying Information",
-        "ui:options": {
-          "placeholder": "Enter any additional identifying information"
-        }
-      },
-      "otherIdentifyingInformation": {
-        "ui:widget": "text",
-        "ui:title": "AMPP other Identifying Information",
-        "ui:options": {
-          "placeholder": "Enter any additional identifying information"
-        }
-      },
       "productDetails": {
         "ui:options": {
           "skipTitle": true,
@@ -165,12 +147,6 @@
             },
             {
               "qualitiativeStrength": 24
-            },
-            {
-              "genericOtherIdentifyingInformation": 24
-            },
-            {
-              "otherIdentifyingInformation": 24
             },
             {
               "nonDefiningProperties": 24
@@ -313,20 +289,6 @@
         },
         "newGenericProductName": {
           "ui:widget": "text"
-        },
-        "genericOtherIdentifyingInformation": {
-          "ui:widget": "text",
-          "ui:title": "VMP other Identifying Information",
-          "ui:options": {
-            "placeholder": "Enter any additional identifying information"
-          }
-        },
-        "otherIdentifyingInformation": {
-          "ui:widget": "text",
-          "ui:title": "AMP other Identifying Information",
-          "ui:options": {
-            "placeholder": "Enter any additional identifying information"
-          }
         },
         "activeIngredients": {
           "ui:options": {
