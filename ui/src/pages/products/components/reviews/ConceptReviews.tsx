@@ -56,6 +56,7 @@ import {
   useIsReviewEnabled,
   useShowReviewControls,
 } from '../../../../hooks/api/task/useReviews.tsx';
+import { usePendingMutations } from './usePendingMutations.tsx';
 
 interface ConceptReviewsProps {
   conceptReview: ConceptReview | undefined;
@@ -76,6 +77,23 @@ function ConceptReviews({ conceptReview }: ConceptReviewsProps) {
     showReviewControls,
   );
   const approveReviewMutation = useApproveReviewMutation();
+
+  const { isAnyMutationPending, addPendingMutation, removePendingMutation } =
+    usePendingMutations();
+  const conceptId = conceptReview?.concept?.id;
+
+  useEffect(() => {
+    if (approveReviewMutation.isPending && conceptId) {
+      addPendingMutation(conceptId);
+    } else if (conceptId) {
+      removePendingMutation(conceptId);
+    }
+  }, [
+    approveReviewMutation.isPending,
+    conceptId,
+    addPendingMutation,
+    removePendingMutation,
+  ]);
 
   if (!conceptReview) {
     return <></>;
@@ -184,16 +202,15 @@ function ConceptReviews({ conceptReview }: ConceptReviewsProps) {
             )}
           </Tooltip>
         )}
-
         {conceptReview.approved ? (
           <Tooltip title="Approved">
             <IconButton
               onClick={handleToggleReview}
-              disabled={!isReviewEnabled || approveReviewMutation.isPending}
+              disabled={!isReviewEnabled || isAnyMutationPending}
             >
               <ThumbUpIcon
                 color={
-                  !isReviewEnabled || approveReviewMutation.isPending
+                  !isReviewEnabled || isAnyMutationPending
                     ? 'disabled'
                     : 'success'
                 }
@@ -204,11 +221,11 @@ function ConceptReviews({ conceptReview }: ConceptReviewsProps) {
           <Tooltip title="Not Approved">
             <IconButton
               onClick={handleToggleReview}
-              disabled={!isReviewEnabled || approveReviewMutation.isPending}
+              disabled={!isReviewEnabled || isAnyMutationPending}
             >
               <ThumbUpIcon
                 color={
-                  !isReviewEnabled || approveReviewMutation.isPending
+                  !isReviewEnabled || isAnyMutationPending
                     ? 'disabled'
                     : 'action'
                 }

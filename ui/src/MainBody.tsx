@@ -17,6 +17,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { PrimeReactProvider } from 'primereact/api';
 import { queryClient } from './hooks/api/config/useQueryConfig.ts';
 import useApplicationConfigStore from './stores/ApplicationConfigStore.ts';
+import { PendingMutationsProvider } from './pages/products/components/reviews/PendingMutationsProvider.tsx';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -50,7 +51,9 @@ export const MainBody = () => {
               <Locales>
                 <CssBaseline />
                 <QueryClientProvider client={queryClient}>
-                  <App />
+                  <PendingMutationsProvider>
+                    <App />
+                  </PendingMutationsProvider>
                 </QueryClientProvider>
               </Locales>
             </LocalizationProvider>
