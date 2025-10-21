@@ -297,7 +297,7 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
         return (
           <>
             {renderIcon()}
-            <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
+            <Tooltip title={rowData.name} key={`tooltip-product-${rowData.id}`}>
               <Link
                 to={`product/view/update/${rowData.bulkProductActionId}`}
                 className={'product-view-update-link'}
@@ -315,7 +315,7 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
         return (
           <>
             {renderIcon()}
-            <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
+            <Tooltip title={rowData.name} key={`tooltip-product-${rowData.id}`}>
               <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>
                 {rowData.name}
               </span>
@@ -326,7 +326,7 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
         return (
           <>
             {renderIcon()}
-            <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
+            <Tooltip title={rowData.name} key={`tooltip-product-${rowData.id}`}>
               <Link
                 to="product/edit"
                 state={{
@@ -351,7 +351,7 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
         return (
           <>
             {renderIcon()}
-            <Tooltip title={rowData.name} key={`tooltip-${rowData.id}`}>
+            <Tooltip title={rowData.name} key={`tooltip-product-${rowData.id}`}>
               <Link
                 to={`product/view/${rowData.conceptId}`}
                 className={'product-view-link'}
@@ -370,7 +370,7 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
             {renderIcon()}
             <Tooltip
               title={'Product no longer exists or is inactive.'}
-              key={`tooltip-${rowData.id}`}
+              key={`tooltip-product-${rowData.id}`}
             >
               <div>
                 <WarningIcon color="warning" />

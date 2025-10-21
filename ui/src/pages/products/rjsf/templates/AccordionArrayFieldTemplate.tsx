@@ -33,7 +33,10 @@ import { CSS } from '@dnd-kit/utilities';
 import SearchAndAddIcon from '../../../../components/icons/SearchAndAddIcon';
 import SearchAndAddProduct from '../components/SearchAndAddProduct.tsx';
 import useSearchAndAddProduct from '../hooks/useSearchAndAddProduct.ts';
-import { getItemTitle } from '../helpers/helpers.ts';
+import { getFormDataById, getItemTitle } from '../helpers/helpers.ts';
+import { isEmptyObjectByValue } from '../../../../utils/helpers/conceptUtils.ts';
+import ChangeIndicator from '../components/ChangeIndicator.tsx';
+import { compareByValue } from '../helpers/comparator.ts';
 
 const containerStyle = {
   marginBottom: '10px',
@@ -162,6 +165,14 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
   const initiallyExpanded = uiOptions.initiallyExpanded === true;
   const shouldExpandByDefault = defaultExpanded || initiallyExpanded;
   const orderable = uiOptions.orderable === true;
+  const showDiff =
+    formContext?.mode === 'update' &&
+    !isEmptyObjectByValue(formContext?.snowStormFormData);
+
+  const originalValue = getFormDataById(
+    formContext?.snowStormFormData,
+    idSchema.$id,
+  );
 
   // Initialize expandedPanels state based on options
   const [expandedPanels, setExpandedPanels] = useState<string[]>(() => {
@@ -290,6 +301,16 @@ const AccordionArrayFieldTemplate: React.FC<ArrayFieldTemplateProps> = ({
             uiSchema={uiSchema}
           />
         )}
+        <div style={{ marginTop: '10px', display: 'flex', gap: '0px' }}>
+          <ChangeIndicator
+            value={items.length}
+            originalValue={originalValue ? originalValue.length : undefined}
+            id={idSchema.$id}
+            alwaysShow={showDiff}
+            comparator={compareByValue}
+            displayArraySize={true}
+          />
+        </div>
       </Toolbar>
 
       {orderable ? (

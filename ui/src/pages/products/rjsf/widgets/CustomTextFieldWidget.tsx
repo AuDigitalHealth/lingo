@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { WidgetProps } from '@rjsf/utils';
 import { TextField, Box } from '@mui/material';
+import { isEmptyObjectByValue } from '../../../../utils/helpers/conceptUtils.ts';
+import { defaultsToNone, getFormDataById } from '../helpers/helpers.ts';
+import { isEqual } from 'lodash';
+import ChangeIndicator from '../components/ChangeIndicator.tsx';
+import { compareByValue } from '../helpers/comparator.ts';
 
 const CustomTextFieldWidget: React.FC<WidgetProps> = ({
   id,
@@ -13,6 +18,8 @@ const CustomTextFieldWidget: React.FC<WidgetProps> = ({
   required,
   options,
   schema,
+  formData,
+  formContext,
 }) => {
   const placeholder = options?.placeholder || 'Enter value';
   let isNumber = schema?.type === 'number' || schema?.type === 'integer';
@@ -45,8 +52,21 @@ const CustomTextFieldWidget: React.FC<WidgetProps> = ({
     ? rawErrors.map(err => err?.message).join(', ')
     : '';
 
+  const showDiff =
+    formContext?.mode === 'update' &&
+    !isEmptyObjectByValue(formContext?.snowStormFormData);
+
+  const originalValue = getFormDataById(formContext?.snowStormFormData, id);
+
   return (
-    <Box sx={{ width: '100%' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1, // spacing between TextField and icon
+        width: '100%',
+      }}
+    >
       <TextField
         id={id}
         fullWidth
@@ -61,6 +81,14 @@ const CustomTextFieldWidget: React.FC<WidgetProps> = ({
         onFocus={handleFocus}
         error={hasError}
         helperText={hasError ? errorMessages : null}
+      />
+
+      <ChangeIndicator
+        value={defaultsToNone(value)}
+        originalValue={defaultsToNone(originalValue)}
+        comparator={compareByValue}
+        alwaysShow={showDiff}
+        id={id}
       />
     </Box>
   );

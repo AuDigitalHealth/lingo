@@ -65,7 +65,7 @@ export default function ProductAuditModal({
     <IconButton aria-label="delete" size="small">
       <Tooltip
         title={'Load in to atomic screen'}
-        key={`tooltip-${rowData?.revisionNumber}`}
+        key={`tooltip-audit-${rowData?.revisionNumber}`}
       >
         <Link
           to="product/edit"

@@ -16,6 +16,15 @@ import { useExclusionUpdates } from './../hooks/useExclusionUpdates.ts';
 import { RjsfUtils } from '../helpers/rjsfUtils';
 import { CreateConceptConfig } from './bulkBrandPack/ExternalIdentifiers.tsx';
 
+import ChangeIndicator from '../components/ChangeIndicator.tsx';
+import {
+  defaultsToNone,
+  getFormDataById,
+  hasConceptId,
+} from '../helpers/helpers.ts';
+import { isEmptyObjectByValue } from '../../../../utils/helpers/conceptUtils.ts';
+import { compareByConceptId } from '../helpers/comparator.ts';
+
 const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
   const { onChange, idSchema } = props;
 
@@ -132,6 +141,15 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
   const paddingRight = createPrimitiveConcept ? 5 : 0;
   const isDisabled = disabled || props.disabled || false;
 
+  const showDiff =
+    props.formContext?.mode === 'update' &&
+    !isEmptyObjectByValue(props.formContext?.snowStormFormData);
+
+  const originalValue = getFormDataById(
+    props.formContext?.snowStormFormData,
+    idSchema.$id,
+  );
+
   return (
     <span data-component-name="AutoCompleteField">
       <Box>
@@ -182,6 +200,7 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
               </Tooltip>
             )}
           </Box>
+
           {extendedEcl && (
             <Box flex={1}>
               <SetExtendedEclButton
@@ -191,6 +210,13 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
               />
             </Box>
           )}
+          <ChangeIndicator
+            value={hasConceptId(formData) ? formData : null}
+            originalValue={hasConceptId(originalValue) ? originalValue : null}
+            comparator={compareByConceptId}
+            alwaysShow={showDiff}
+            id={idSchema.$id}
+          />
         </Box>
         {createPrimitiveConcept && (
           <CreatePrimitiveConcept

@@ -43,6 +43,19 @@ import { PREFIX_MISSING_NONDEFINING_PROPERTIES } from '../../helpers/validationH
 import { ExternalIdentifierTextField } from '../../components/ExternalIdentifierTextField.tsx';
 
 import { AdditionalFieldsEditor } from '../../components/AdditionalFieldsEditor.tsx';
+import { isEmptyObjectByValue } from '../../../../../utils/helpers/conceptUtils.ts';
+import {
+  defaultForCheckBox,
+  defaultsToNone,
+  getFormDataById,
+} from '../../helpers/helpers.ts';
+import ChangeIndicator from '../../components/ChangeIndicator.tsx';
+import LeftRightAlign from '../../components/LeftRightAlign.tsx';
+import {
+  compareByConceptId,
+  compareByValue,
+  compareByValueAndAdditional,
+} from '../../helpers/comparator.ts';
 
 export interface CreateConceptConfig {
   ecl: string;
@@ -75,7 +88,15 @@ const isMissingMandatoryField = (
 const ExternalIdentifiers: React.FC<
   FieldProps<NonDefiningProperty[]>
 > = props => {
-  const { onChange, schema, uiSchema, registry, rawErrors } = props;
+  const {
+    onChange,
+    schema,
+    uiSchema,
+    registry,
+    rawErrors,
+    formContext,
+    idSchema,
+  } = props;
   const {
     optionsByScheme = {},
     schemeLimits = {},
@@ -140,6 +161,8 @@ const ExternalIdentifiers: React.FC<
                     <ExternalIdentifierRender
                       sx={{ margin: 1 }}
                       formData={formData}
+                      formContext={formContext}
+                      idSchema={idSchema}
                       onChange={updated => {
                         onChange(updated);
                       }}
@@ -165,7 +188,16 @@ interface ExternalIdentifierRenderProps
 const ExternalIdentifierRender: React.FC<
   ExternalIdentifierRenderProps
 > = props => {
-  const { onChange, schema, uiSchema, registry, branch, rawErrors } = props;
+  const {
+    onChange,
+    schema,
+    uiSchema,
+    registry,
+    branch,
+    rawErrors,
+    formContext,
+    idSchema,
+  } = props;
   const {
     optionsByScheme = {},
     schemeLimits = {},
@@ -238,6 +270,21 @@ const ExternalIdentifierRender: React.FC<
         entry.value = isNaN(num) ? entry.value : num;
       }
     });
+  }
+  const showDiff =
+    formContext?.mode === 'update' &&
+    !isEmptyObjectByValue(formContext?.snowStormFormData);
+
+  let originalSchemaEntries = [];
+  if (showDiff) {
+    const originalNonDefiningProperties = getFormDataById(
+      formContext?.snowStormFormData,
+      idSchema.$id,
+    );
+    originalSchemaEntries =
+      originalNonDefiningProperties?.filter(
+        f => f.identifierScheme === schema.properties.identifierScheme.const,
+      ) || [];
   }
 
   const validTextFieldInput = (value: string) => {
@@ -459,66 +506,144 @@ const ExternalIdentifierRender: React.FC<
       sx={{ width: '100%' }}
     >
       {useValueSetAutocomplete && isMultiValued && (
-        <MultiValueValueSetAutocomplete
-          label={schema.title}
-          url={binding.valueSet || ''}
-          showDefaultOptions={showDefaultOptions || false}
-          value={schemeEntries.map(entry => entry.valueObject)}
-          onChange={handleChangeConcepts}
-          disabled={readOnly ? true : false}
-          //   error={!!errorMessage}
-          info={info}
+        <LeftRightAlign
+          left={
+            <MultiValueValueSetAutocomplete
+              label={schema.title}
+              url={binding.valueSet || ''}
+              showDefaultOptions={showDefaultOptions || false}
+              value={schemeEntries.map(entry => entry.valueObject)}
+              onChange={handleChangeConcepts}
+              disabled={readOnly ? true : false}
+              //   error={!!errorMessage}
+              info={info}
+            />
+          }
+          right={
+            showDiff && (
+              <ChangeIndicator
+                value={schemeEntries.map(entry => entry.valueObject)}
+                originalValue={originalSchemaEntries.map(
+                  entry => entry.valueObject,
+                )}
+                comparator={compareByConceptId}
+                alwaysShow={showDiff}
+                id={schemeName}
+              />
+            )
+          }
         />
       )}
       {useValueSetAutocomplete && !isMultiValued && (
-        <ValueSetAutocomplete
-          label={schema.title}
-          url={binding.valueSet || ''}
-          showDefaultOptions={showDefaultOptions || false}
-          value={
-            schemeEntries[0] ? schemeEntries[0].valueObject : schemeEntries
+        <LeftRightAlign
+          left={
+            <ValueSetAutocomplete
+              label={schema.title}
+              url={binding.valueSet || ''}
+              showDefaultOptions={showDefaultOptions || false}
+              value={
+                schemeEntries[0] ? schemeEntries[0].valueObject : schemeEntries
+              }
+              onChange={handleChangeConcepts}
+              disabled={readOnly ? true : false}
+              required={isRequired}
+              errorMessage={
+                missingRequiredFieldError ? 'Field must be populated' : ''
+              }
+              info={info}
+            />
           }
-          onChange={handleChangeConcepts}
-          disabled={readOnly ? true : false}
-          required={isRequired}
-          errorMessage={
-            missingRequiredFieldError ? 'Field must be populated' : ''
+          right={
+            showDiff && (
+              <ChangeIndicator
+                value={
+                  schemeEntries[0]
+                    ? schemeEntries[0].valueObject
+                    : schemeEntries
+                }
+                originalValue={
+                  originalSchemaEntries && originalSchemaEntries[0]
+                    ? originalSchemaEntries[0].valueObject
+                    : originalSchemaEntries
+                }
+                comparator={compareByConceptId}
+                alwaysShow={showDiff}
+                id={schemeName}
+              />
+            )
           }
-          info={info}
         />
       )}
       {useEclAutocomplete && isMultiValued && (
-        <MultiValueEclAutocomplete
-          value={schemeEntries.map(entry => entry.valueObject)}
-          ecl={binding.ecl || ''}
-          branch={branch}
-          onChange={handleChangeConcepts}
-          showDefaultOptions={showDefaultOptions || false}
-          isDisabled={readOnly ? true : false}
-          errorMessage={
-            missingRequiredFieldError ? 'Field must be populated' : ''
+        <LeftRightAlign
+          left={
+            <MultiValueEclAutocomplete
+              value={schemeEntries.map(entry => entry.valueObject)}
+              ecl={binding.ecl || ''}
+              branch={branch}
+              onChange={handleChangeConcepts}
+              showDefaultOptions={showDefaultOptions || false}
+              isDisabled={readOnly ? true : false}
+              errorMessage={
+                missingRequiredFieldError ? 'Field must be populated' : ''
+              }
+              title={schema.title}
+              required={isRequired}
+              info={info}
+            />
           }
-          title={schema.title}
-          required={isRequired}
-          info={info}
+          right={
+            showDiff && (
+              <ChangeIndicator
+                value={schemeEntries.map(entry => entry.valueObject)}
+                originalValue={originalSchemaEntries.map(
+                  entry => entry.valueObject,
+                )}
+                comparator={compareByConceptId}
+                alwaysShow={showDiff}
+                id={schemeName}
+              />
+            )
+          }
         />
       )}
       {useEclAutocomplete && !isMultiValued && (
-        <EclAutocomplete
-          value={
-            schemeEntries[0] ? schemeEntries[0].valueObject : schemeEntries
+        <LeftRightAlign
+          left={
+            <EclAutocomplete
+              value={
+                schemeEntries[0] ? schemeEntries[0].valueObject : schemeEntries
+              }
+              ecl={binding.ecl || ''}
+              branch={branch}
+              onChange={handleChangeConcepts}
+              showDefaultOptions={showDefaultOptions || false}
+              isDisabled={readOnly ? true : false}
+              errorMessage={
+                missingRequiredFieldError ? 'Field must be populated' : ''
+              }
+              required={isRequired}
+              title={schema.title}
+              info={info}
+            />
           }
-          ecl={binding.ecl || ''}
-          branch={branch}
-          onChange={handleChangeConcepts}
-          showDefaultOptions={showDefaultOptions || false}
-          isDisabled={readOnly ? true : false}
-          errorMessage={
-            missingRequiredFieldError ? 'Field must be populated' : ''
+          right={
+            showDiff && (
+              <ChangeIndicator
+                value={
+                  schemeEntries[0] ? schemeEntries[0].valueObject : undefined
+                }
+                originalValue={
+                  originalSchemaEntries && originalSchemaEntries[0]
+                    ? originalSchemaEntries[0].valueObject
+                    : undefined
+                }
+                comparator={compareByConceptId}
+                alwaysShow={showDiff}
+                id={schemeName}
+              />
+            )
           }
-          required={isRequired}
-          title={schema.title}
-          info={info}
         />
       )}
       {useCreateConcept && (
@@ -550,49 +675,117 @@ const ExternalIdentifierRender: React.FC<
         </>
       )}
       {isCheckBox && ( // Checkbox implementation
-        <FormControlLabel
-          label={schema.title}
-          labelPlacement="start"
-          control={
-            <Checkbox
-              checked={formData?.some(
-                item =>
-                  item.type === 'REFERENCE_SET' &&
-                  item.identifierScheme ===
-                    schema.properties.identifierScheme.const,
-              )}
-              onChange={e => {
-                const scheme = schema.properties.identifierScheme.const;
-                const updated = e.target.checked
-                  ? [
-                      ...(formData || []),
-                      { type: 'REFERENCE_SET', identifierScheme: scheme },
-                    ]
-                  : formData?.filter(
-                      item =>
-                        !(
-                          item.type === 'REFERENCE_SET' &&
-                          item.identifierScheme === scheme
-                        ),
-                    ) || [];
-                onChange(updated);
-              }}
-              disabled={readOnly}
+        <LeftRightAlign
+          leftSx={{
+            flex: '0 0 auto', // shrink to fit content
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+          }}
+          left={
+            <FormControlLabel
+              label={schema.title}
+              labelPlacement="start"
+              control={
+                <Checkbox
+                  checked={formData?.some(
+                    item =>
+                      item.type === 'REFERENCE_SET' &&
+                      item.identifierScheme ===
+                        schema.properties.identifierScheme.const,
+                  )}
+                  onChange={e => {
+                    const scheme = schema.properties.identifierScheme.const;
+                    const updated = e.target.checked
+                      ? [
+                          ...(formData || []),
+                          { type: 'REFERENCE_SET', identifierScheme: scheme },
+                        ]
+                      : formData?.filter(
+                          item =>
+                            !(
+                              item.type === 'REFERENCE_SET' &&
+                              item.identifierScheme === scheme
+                            ),
+                        ) || [];
+                    onChange(updated);
+                  }}
+                  disabled={readOnly}
+                />
+              }
             />
+          }
+          right={
+            showDiff && (
+              <ChangeIndicator
+                value={defaultForCheckBox(
+                  formData?.some(
+                    item =>
+                      item.type === 'REFERENCE_SET' &&
+                      item.identifierScheme ===
+                        schema.properties.identifierScheme.const,
+                  ),
+                )}
+                originalValue={defaultForCheckBox(
+                  originalSchemaEntries?.some(
+                    item =>
+                      item.type === 'REFERENCE_SET' &&
+                      item.identifierScheme ===
+                        schema.properties.identifierScheme.const,
+                  ),
+                )}
+                comparator={compareByValue}
+                alwaysShow={showDiff}
+                id={schemeName}
+              />
+            )
           }
         />
       )}
       {dateFormat && (
-        <DesktopDatePickerField
-          label={schema.title}
-          format={dateFormat}
-          value={schemeEntries?.[0]?.value ? schemeEntries[0].value : null}
-          onChange={handleDateChange}
-          disabled={readOnly ? true : false}
-          error={errorTooltip || missingRequiredFieldError}
-          helperText={
-            errorTooltip ||
-            (missingRequiredFieldError ? 'Field must be populated' : info)
+        <LeftRightAlign
+          left={
+            <DesktopDatePickerField
+              label={schema.title}
+              format={dateFormat}
+              value={schemeEntries?.[0]?.value ? schemeEntries[0].value : null}
+              onChange={handleDateChange}
+              disabled={readOnly ? true : false}
+              error={errorTooltip || missingRequiredFieldError}
+              helperText={
+                errorTooltip ||
+                (missingRequiredFieldError ? 'Field must be populated' : info)
+              }
+            />
+          }
+          leftSx={{
+            '& .MuiInputBase-root': {
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            },
+            '& .MuiInputAdornment-root': {
+              marginRight: 0,
+            },
+          }}
+          rightSx={{
+            position: 'relative',
+            top: '-10px',
+          }}
+          right={
+            showDiff && (
+              <ChangeIndicator
+                value={schemeEntries[0] ? schemeEntries[0].value : undefined}
+                originalValue={
+                  originalSchemaEntries && originalSchemaEntries[0]
+                    ? originalSchemaEntries[0].value
+                    : undefined
+                }
+                comparator={compareByValue}
+                alwaysShow={showDiff}
+                id={schemeName}
+              />
+            )
           }
         />
       )}
@@ -602,95 +795,114 @@ const ExternalIdentifierRender: React.FC<
         !useValueSetAutocomplete &&
         !isCheckBox &&
         isMultiValued && (
-          <Autocomplete
-            multiple
-            freeSolo
-            disableClearable
-            filterSelectedOptions
-            disabled={readOnly}
-            options={availableOptions}
-            getOptionLabel={option => option}
-            value={schemeEntries?.map(e => e.value)}
-            inputValue={inputValue}
-            onInputChange={(_, newVal) => {
-              setInputValue(newVal);
-              setErrorTooltip('');
-            }}
-            onChange={(_, values, reason, details) => {
-              if (reason === 'selectOption' && details?.option) {
-                handleAdd(details.option);
-              } else if (reason === 'createOption') {
-                handleAdd(values[values.length - 1]);
-              }
-            }}
-            renderTags={(values, getTagProps) => (
-              <Stack direction="row" gap={1} flexWrap="wrap">
-                {values.map((val, index) => (
-                  <React.Fragment key={`${schemeName}-${val}-${index}`}>
-                    {renderChip({
-                      value: val,
-                      identifierScheme: schemeName,
-                      relationshipType:
-                        schema.properties.relationshipType?.const,
-                    })}
-                  </React.Fragment>
-                ))}
-              </Stack>
-            )}
-            renderInput={params => (
-              <TextField
-                {...params}
-                onBlur={() => {
-                  const trimmed = inputValue.trim();
-                  if (trimmed && !readOnly) {
-                    handleAdd(trimmed);
-                    setInputValue('');
+          <LeftRightAlign
+            left={
+              <Autocomplete
+                multiple
+                freeSolo
+                disableClearable
+                filterSelectedOptions
+                disabled={readOnly}
+                options={availableOptions}
+                getOptionLabel={option => option}
+                value={schemeEntries?.map(e => e.value)}
+                inputValue={inputValue}
+                onInputChange={(_, newVal) => {
+                  setInputValue(newVal);
+                  setErrorTooltip('');
+                }}
+                onChange={(_, values, reason, details) => {
+                  if (reason === 'selectOption' && details?.option) {
+                    handleAdd(details.option);
+                  } else if (reason === 'createOption') {
+                    handleAdd(values[values.length - 1]);
                   }
                 }}
-                label={schema.title}
-                error={errorTooltip || missingRequiredFieldError}
-                helperText={
-                  errorTooltip ||
-                  (missingRequiredFieldError ? 'Field must be populated' : info)
-                }
-                sx={{
-                  '& .MuiFormHelperText-root': {
-                    m: 0,
-                    minHeight: '1em',
-                    color:
-                      errorTooltip || missingRequiredFieldError
-                        ? 'error.main'
-                        : 'text.secondary',
-                  },
-                }}
-                InputProps={{
-                  ...params.InputProps,
-                  endAdornment: (
-                    <>
-                      {params.InputProps.endAdornment}
-                      {!readOnly && inputValue?.trim() && (
-                        <IconButton
-                          edge="end"
-                          size="small"
-                          onClick={() => {
-                            handleAdd(inputValue.trim());
-                            setInputValue('');
-                          }}
-                          disabled={schemeEntries.some(
-                            entry => entry.value === inputValue.trim(),
+                renderTags={(values, getTagProps) => (
+                  <Stack direction="row" gap={1} flexWrap="wrap">
+                    {values.map((val, index) => (
+                      <React.Fragment key={`${schemeName}-${val}-${index}`}>
+                        {renderChip({
+                          value: val,
+                          identifierScheme: schemeName,
+                          relationshipType:
+                            schema.properties.relationshipType?.const,
+                        })}
+                      </React.Fragment>
+                    ))}
+                  </Stack>
+                )}
+                renderInput={params => (
+                  <TextField
+                    {...params}
+                    onBlur={() => {
+                      const trimmed = inputValue.trim();
+                      if (trimmed && !readOnly) {
+                        handleAdd(trimmed);
+                        setInputValue('');
+                      }
+                    }}
+                    label={schema.title}
+                    error={errorTooltip || missingRequiredFieldError}
+                    helperText={
+                      errorTooltip ||
+                      (missingRequiredFieldError
+                        ? 'Field must be populated'
+                        : info)
+                    }
+                    sx={{
+                      '& .MuiFormHelperText-root': {
+                        m: 0,
+                        minHeight: '1em',
+                        color:
+                          errorTooltip || missingRequiredFieldError
+                            ? 'error.main'
+                            : 'text.secondary',
+                      },
+                    }}
+                    InputProps={{
+                      ...params.InputProps,
+                      endAdornment: (
+                        <>
+                          {params.InputProps.endAdornment}
+                          {!readOnly && inputValue?.trim() && (
+                            <IconButton
+                              edge="end"
+                              size="small"
+                              onClick={() => {
+                                handleAdd(inputValue.trim());
+                                setInputValue('');
+                              }}
+                              disabled={schemeEntries.some(
+                                entry => entry.value === inputValue.trim(),
+                              )}
+                              sx={{ ml: 1 }}
+                              title="Add value"
+                            >
+                              <AddCircleOutlineIcon color="primary" />
+                            </IconButton>
                           )}
-                          sx={{ ml: 1 }}
-                          title="Add value"
-                        >
-                          <AddCircleOutlineIcon color="primary" />
-                        </IconButton>
-                      )}
-                    </>
-                  ),
-                }}
+                        </>
+                      ),
+                    }}
+                  />
+                )}
+                sx={{ width: '100%' }}
               />
-            )}
-            sx={{ width: '100%' }}
+            }
+            right={
+              showDiff && (
+                <ChangeIndicator
+                  value={schemeEntries.map(entry => entry.value)}
+                  originalValue={originalSchemaEntries.map(
+                    entry => entry.value,
+                  )}
+                  comparator={compareByValue}
+                  alwaysShow={showDiff}
+                  id={schemeName}
+                />
+              )
+            }
           />
         )}
       {!dateFormat &&
@@ -698,19 +910,40 @@ const ExternalIdentifierRender: React.FC<
         !useValueSetAutocomplete &&
         !isCheckBox &&
         !isMultiValued && (
-          <ExternalIdentifierTextField
-            schema={schema}
-            schemeName={schemeName}
-            formData={formData}
-            schemeEntries={schemeEntries}
-            readOnly={readOnly}
-            errorTooltip={errorTooltip}
-            missingRequiredFieldError={missingRequiredFieldError}
-            info={info}
-            onChange={onChange}
-            inputValue={inputValue}
-            setInputValue={setInputValue}
-            handleTextFieldInputChange={handleTextFieldInputChange}
+          <LeftRightAlign
+            left={
+              <ExternalIdentifierTextField
+                schema={schema}
+                schemeName={schemeName}
+                formData={formData}
+                schemeEntries={schemeEntries}
+                readOnly={readOnly}
+                errorTooltip={errorTooltip}
+                missingRequiredFieldError={missingRequiredFieldError}
+                info={info}
+                onChange={onChange}
+                inputValue={inputValue}
+                setInputValue={setInputValue}
+                handleTextFieldInputChange={handleTextFieldInputChange}
+              />
+            }
+            right={
+              showDiff && (
+                <ChangeIndicator
+                  value={defaultsToNone(
+                    schemeEntries[0] ? schemeEntries[0].value : undefined,
+                  )}
+                  originalValue={defaultsToNone(
+                    originalSchemaEntries[0]
+                      ? originalSchemaEntries[0].value
+                      : undefined,
+                  )}
+                  comparator={compareByValue}
+                  alwaysShow={showDiff}
+                  id={schemeName}
+                />
+              )
+            }
           />
         )}
     </Stack>
@@ -719,54 +952,69 @@ const ExternalIdentifierRender: React.FC<
   return (
     <Box>
       {additionalFieldsSchema ? (
-        <Accordion
-          defaultExpanded
-          sx={{
-            backgroundColor: '#fdfcfc',
-            borderRadius: 2,
-            border: '1px solid #e0e0e0',
-            boxShadow: 'none',
-            mt: 2,
-          }}
-        >
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon sx={{ fontSize: 18 }} />}
-            sx={{
-              minHeight: 32,
-              paddingY: 0.5,
-              paddingX: 1.25,
-              '&.Mui-expanded': {
-                minHeight: 32,
-              },
-              '& .MuiAccordionSummary-content': {
-                marginY: 0.25,
-              },
-              '& .MuiAccordionSummary-expandIconWrapper': {
-                marginTop: '0 !important',
-                marginBottom: '0 !important',
-              },
-            }}
-          >
-            {schema.title}
-          </AccordionSummary>
+        <LeftRightAlign
+          left={
+            <Accordion
+              defaultExpanded
+              sx={{
+                backgroundColor: '#fdfcfc',
+                borderRadius: 2,
+                border: '1px solid #e0e0e0',
+                boxShadow: 'none',
+                mt: 2,
+              }}
+            >
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon sx={{ fontSize: 18 }} />}
+                sx={{
+                  minHeight: 32,
+                  paddingY: 0.5,
+                  paddingX: 1.25,
+                  '&.Mui-expanded': {
+                    minHeight: 32,
+                  },
+                  '& .MuiAccordionSummary-content': {
+                    marginY: 0.25,
+                  },
+                  '& .MuiAccordionSummary-expandIconWrapper': {
+                    marginTop: '0 !important',
+                    marginBottom: '0 !important',
+                  },
+                }}
+              >
+                {schema.title}
+              </AccordionSummary>
 
-          <AccordionDetails>
-            <AdditionalFieldsEditor
-              formData={formData}
-              schemeEntries={schemeEntries}
-              readOnly={readOnly}
-              info={info}
-              schema={schema}
-              errorTooltip={errorTooltip}
-              setErrorTooltip={setErrorTooltip}
-              missingRequiredFieldError={missingRequiredFieldError}
-              schemeName={schemeName}
-              onChange={onChange}
-              maxItems={100}
-              isMultivalued={isMultiValued}
-            ></AdditionalFieldsEditor>
-          </AccordionDetails>
-        </Accordion>
+              <AccordionDetails>
+                <AdditionalFieldsEditor
+                  formData={formData}
+                  schemeEntries={schemeEntries}
+                  readOnly={readOnly}
+                  info={info}
+                  schema={schema}
+                  errorTooltip={errorTooltip}
+                  setErrorTooltip={setErrorTooltip}
+                  missingRequiredFieldError={missingRequiredFieldError}
+                  schemeName={schemeName}
+                  onChange={onChange}
+                  maxItems={100}
+                  isMultivalued={isMultiValued}
+                ></AdditionalFieldsEditor>
+              </AccordionDetails>
+            </Accordion>
+          }
+          right={
+            showDiff && (
+              <ChangeIndicator
+                value={schemeEntries}
+                originalValue={originalSchemaEntries}
+                comparator={compareByValueAndAdditional}
+                alwaysShow={showDiff}
+                id={schemeName}
+              />
+            )
+          }
+        />
       ) : (
         renderNonDefiningProperty
       )}

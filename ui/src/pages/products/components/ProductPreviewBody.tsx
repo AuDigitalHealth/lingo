@@ -1,4 +1,4 @@
-import { ProductSummary } from '../../../types/concept.ts';
+import { Concept, ProductSummary } from '../../../types/concept.ts';
 import {
   Control,
   UseFormGetValues,
@@ -23,6 +23,7 @@ import UnableToEditTooltip from '../../tasks/components/UnableToEditTooltip.tsx'
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import ProductLoader from './ProductLoader.tsx';
 import ColorLegend from './ColorLegend.tsx';
+import useAuthoringStore from '../../../stores/AuthoringStore.ts';
 
 interface ProductPreviewBodyProps {
   productModel: ProductSummary;
@@ -209,6 +210,8 @@ function SubmitPanel({
   handleClose,
 }: SubmitPanelProps) {
   const { canEdit, lockDescription } = useCanEditTask();
+  const { originalConceptId, setOriginalConceptId, setMode } =
+    useAuthoringStore();
 
   const hasUpdatedProperties =
     productModel?.nodes?.filter(subject => {
@@ -238,10 +241,33 @@ function SubmitPanel({
           variant="contained"
           type="button"
           color="error"
-          onClick={() => handleClose && handleClose({}, 'escapeKeyDown')}
+          onClick={() => {
+            handleClose && handleClose({}, 'escapeKeyDown');
+          }}
         >
           Cancel
         </Button>
+        {!isProductUpdate && !canSubmitNonProductUpdates && (
+          <Button
+            data-testid={'preview-return-update'}
+            variant="contained"
+            type="button"
+            color="secondary"
+            onClick={() => {
+              if (!originalConceptId) {
+                const concept = productModel.subjects?.values().next().value;
+                if (concept && concept.conceptId) {
+                  setOriginalConceptId(concept.conceptId);
+                  setMode('update');
+                }
+              }
+              handleClose && handleClose({}, 'escapeKeyDown');
+            }}
+          >
+            Go back to update mode
+          </Button>
+        )}
+
         <UnableToEditTooltip
           canEdit={
             (canEdit && !(!isProductUpdate && !canSubmitNonProductUpdates)) ||

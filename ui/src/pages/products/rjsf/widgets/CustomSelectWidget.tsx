@@ -2,6 +2,14 @@ import React from 'react';
 import { WidgetProps } from '@rjsf/utils';
 import { Box, TextField, MenuItem, Typography } from '@mui/material';
 import { FormLabel } from '@mui/material';
+import { isEmptyObjectByValue } from '../../../../utils/helpers/conceptUtils.ts';
+import {
+  defaultsToNone,
+  getFormDataById,
+  hasConceptId,
+} from '../helpers/helpers.ts';
+import { compareByConceptId, compareByValue } from '../helpers/comparator.ts';
+import ChangeIndicator from '../components/ChangeIndicator.tsx';
 
 const CustomSelectWidget: React.FC<WidgetProps> = props => {
   const {
@@ -86,6 +94,15 @@ const CustomSelectWidget: React.FC<WidgetProps> = props => {
   const errorMessage = errorSchema?.__errors?.[0] || '';
   const needsAttention = !!errorMessage;
 
+  const showDiff =
+    props.formContext?.mode === 'update' &&
+    !isEmptyObjectByValue(props.formContext?.snowStormFormData);
+
+  const originalValue = getFormDataById(
+    props.formContext?.snowStormFormData,
+    id,
+  );
+
   return (
     <Box display="flex" alignItems="center" gap={1} sx={{ width: '100%' }}>
       <Box flex={50} sx={{ position: 'relative' }}>
@@ -161,6 +178,13 @@ const CustomSelectWidget: React.FC<WidgetProps> = props => {
           ))}
         </TextField>
       </Box>
+      <ChangeIndicator
+        value={defaultsToNone(value)}
+        originalValue={defaultsToNone(originalValue)}
+        comparator={compareByValue}
+        alwaysShow={showDiff}
+        id={id}
+      />
     </Box>
   );
 };

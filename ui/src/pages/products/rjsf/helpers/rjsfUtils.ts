@@ -135,11 +135,6 @@ export class RjsfUtils {
     return stack.join(delimiter);
   }
 
-  public static getFormDataById(rootFormData: any, rjsfId: string): any {
-    const lodashPath = RjsfUtils.rjsfIdToFormDataPath(rjsfId);
-    return _.get(rootFormData, lodashPath);
-  }
-
   public static setFormDataById(
     rootFormData: any,
     rjsfId: string,

@@ -48,6 +48,8 @@ interface AuthoringStoreConfig {
   isLoadingProduct: boolean;
   setIsLoadingProduct: (bool: boolean) => void;
   isProductUpdate: boolean;
+  mode: 'create' | 'update';
+  setMode: (val: 'create' | 'update') => void;
   setIsProductUpdate: (bool: boolean) => void;
   formContainsData: boolean;
   setFormContainsData: (bool: boolean) => void;
@@ -123,6 +125,10 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
   forceNavigation: false,
   previewErrorKeys: [],
   selectedConceptIdentifiers: [],
+  mode: 'create',
+  setMode: (mode: 'create' | 'update') => {
+    set({ mode });
+  },
   setForceNavigation: (bool: boolean) => {
     set({ forceNavigation: bool });
   },

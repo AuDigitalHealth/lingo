@@ -72,16 +72,22 @@ function DeviceAuthoring({
 }: DeviceAuthoringV2Props) {
   const [formData, setFormData] = useState({});
   const [initialFormData, setInitialFormData] = useState({});
+  const [snowStormFormData, setSnowStormFormData] = useState<any>({});
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [errorSchema, setErrorSchema] = useState({});
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [mode, setMode] = useState<'create' | 'update'>('create');
+
   const formRef = useRef<any>(null); // Ref to access the RJSF Form instance
   const [formErrors, setFormErrors] = useState<any[]>([]);
   const [staleModeOn, setStaleModeOn] = useState(false);
   const [manualLoading, setManualLoading] = useState(false);
   const [partialUpdateMode, setPartialUpdateMode] = useState(false);
+  const existingConceptToLoad = selectedProduct
+    ? isValueSetExpansionContains(selectedProduct)
+      ? selectedProduct.code
+      : selectedProduct.conceptId
+    : undefined;
 
   const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
     task.branchPath,
@@ -99,15 +105,28 @@ function DeviceAuthoring({
     isProductUpdate,
     setIsProductUpdate,
     handleClearForm,
+    mode,
+    setMode,
   } = useAuthoringStore();
 
   const { isLoading, isFetching, refetchWithParam } = useProductQuery({
-    selectedProduct,
+    productId: existingConceptToLoad,
     task,
     setFunction: (data: any) => {
       setFormData(data);
       setInitialFormData(data);
     },
+  });
+  const {
+    isLoading: originalConceptIsLoading,
+    isFetching: originalConceptIsFetching,
+  } = useProductQuery({
+    productId: originalConceptId ? originalConceptId : existingConceptToLoad,
+    task,
+    setFunction: (data: any) => {
+      setSnowStormFormData(data);
+    },
+    disabled: mode != 'update',
   });
   const {
     isLoading: isTicketProductLoading,
@@ -190,7 +209,7 @@ function DeviceAuthoring({
     if (formRef.current) {
       formRef.current.reset();
     }
-    setMode(prevState => 'create');
+    setMode('create');
     handleClearForm();
     setOriginalConceptId(undefined);
   }, []);
@@ -238,6 +257,8 @@ function DeviceAuthoring({
     formData,
     uiSchema,
     errorSchema,
+    snowStormFormData,
+    mode,
   };
 
   const onError = (errors: any) => {
@@ -268,9 +289,7 @@ function DeviceAuthoring({
                       if (originalConceptId) {
                         setManualLoading(true);
                         try {
-                          await refetchWithParam({
-                            conceptId: originalConceptId,
-                          });
+                          await refetchWithParam(originalConceptId);
                           setStaleModeOn(false);
                         } catch (error) {
                           showError(error.message);
@@ -381,8 +400,8 @@ function DeviceAuthoring({
                     !(
                       mutation.isPending ||
                       (mode === 'update' &&
-                        ((staleModeOn && !partialUpdateMode) ||
-                          (!selectedProduct && !originalConceptId)))
+                        !selectedProduct &&
+                        !originalConceptId)
                     )
                   }
                   lockDescription={
@@ -404,8 +423,8 @@ function DeviceAuthoring({
                     disabled={
                       mutation.isPending ||
                       (mode === 'update' &&
-                        ((staleModeOn && !partialUpdateMode) ||
-                          (!selectedProduct && !originalConceptId)))
+                        !selectedProduct &&
+                        !originalConceptId)
                     }
                     onClick={() => {
                       setIsProductUpdate(mode === 'update');
@@ -562,46 +581,36 @@ export const useUiSchemaQuery = (branchPath: string) => {
 };
 
 interface ProductQueryProps {
-  selectedProduct: Concept | ValueSetExpansionContains | null;
+  productId: string | null | undefined;
   task: Task;
   setFunction?: ({}) => void;
+  disabled?: boolean;
 }
 
-const fetchProductDataFn = async ({
-  selectedProduct,
-  task,
-}: ProductQueryProps) => {
-  if (!selectedProduct) return null;
-  const productId = isValueSetExpansionContains(selectedProduct)
-    ? selectedProduct.code
-    : selectedProduct.conceptId;
-
+const fetchProductDataFn = async ({ productId, task }: ProductQueryProps) => {
+  if (!productId) return null;
   return await productService.fetchDevice(productId || '', task.branchPath);
 };
 
 export const useProductQuery = ({
-  selectedProduct,
+  productId,
   task,
   setFunction,
+  disabled,
 }: ProductQueryProps) => {
-  const productId = isValueSetExpansionContains(selectedProduct)
-    ? selectedProduct.code
-    : selectedProduct?.conceptId;
   const queryKey = ['product', productId, task?.branchPath];
   const query = useQuery({
     queryKey,
     queryFn: async () => {
-      const data = await fetchProductDataFn({ selectedProduct, task });
+      const data = await fetchProductDataFn({ productId, task });
       if (setFunction && data) setFunction(data);
       return data;
     },
-    enabled: !!selectedProduct && !!task?.branchPath,
+    enabled: !!productId && !!task?.branchPath && !disabled,
   });
-  const refetchWithParam = async (
-    newProduct: Concept | ValueSetExpansionContains,
-  ) => {
+  const refetchWithParam = async (productId: string | null) => {
     const data = await fetchProductDataFn({
-      selectedProduct: newProduct,
+      productId,
       task,
     });
     if (setFunction && data) setFunction(data);

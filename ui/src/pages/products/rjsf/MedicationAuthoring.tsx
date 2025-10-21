@@ -76,16 +76,22 @@ function MedicationAuthoring({
   const [formKey, setFormKey] = useState(0);
   const [formData, setFormData] = useState<any>({});
   const [initialFormData, setInitialFormData] = useState<any>({});
+  const [snowStormFormData, setSnowStormFormData] = useState<any>({});
   const [errorSchema, setErrorSchema] = useState<any>({});
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const formRef = useRef<any>(null);
-  const [mode, setMode] = useState<'create' | 'update'>('create');
+
   const [isDirty, setIsDirty] = useState(false);
   const [formErrors, setFormErrors] = useState<any[]>([]);
   const [staleModeOn, setStaleModeOn] = useState(false);
   const [manualLoading, setManualLoading] = useState(false);
   const [partialUpdateMode, setPartialUpdateMode] = useState(false);
+  const existingConceptToLoad = selectedProduct
+    ? isValueSetExpansionContains(selectedProduct)
+      ? selectedProduct.code
+      : selectedProduct.conceptId
+    : undefined;
 
   const { data: schema, isLoading: isSchemaLoading } = useSchemaQuery(
     task.branchPath,
@@ -104,16 +110,29 @@ function MedicationAuthoring({
     setIsProductUpdate,
     handleClearForm,
     setSelectedConceptIdentifiers,
+    mode,
+    setMode,
   } = useAuthoringStore();
 
   const { isLoading, isFetching, refetchWithParam } = useProductQuery({
-    selectedProduct,
+    productId: existingConceptToLoad,
     task,
     setFunction: (data: any) => {
       setFormData(data);
       setInitialFormData(data);
       setFormErrors([]);
     },
+  });
+  const {
+    isLoading: originalConceptIsLoading,
+    isFetching: originalConceptIsFetching,
+  } = useProductQuery({
+    productId: originalConceptId ? originalConceptId : existingConceptToLoad,
+    task,
+    setFunction: (data: any) => {
+      setSnowStormFormData(data);
+    },
+    disabled: mode != 'update',
   });
   const {
     isLoading: isTicketProductLoading,
@@ -196,7 +215,7 @@ function MedicationAuthoring({
     setFormErrors([]);
     setIsDirty(false);
     setFormKey(prev => prev + 1);
-    setMode(prevState => 'create');
+    setMode('create');
     handleClearForm();
     setOriginalConceptId(undefined);
     setSelectedConceptIdentifiers([]);
@@ -246,6 +265,8 @@ function MedicationAuthoring({
     errorSchema,
     autoFillDefaults: true,
     evaluateExpression,
+    snowStormFormData,
+    mode,
   };
 
   const saveDraft = () => {
@@ -281,9 +302,7 @@ function MedicationAuthoring({
                       if (originalConceptId) {
                         setManualLoading(true);
                         try {
-                          await refetchWithParam({
-                            conceptId: originalConceptId,
-                          });
+                          await refetchWithParam(originalConceptId);
                           setStaleModeOn(false);
                         } catch (error) {
                           showError(error.message);
@@ -402,8 +421,8 @@ function MedicationAuthoring({
                     !(
                       mutation.isPending ||
                       (mode === 'update' &&
-                        ((staleModeOn && !partialUpdateMode) ||
-                          (!selectedProduct && !originalConceptId)))
+                        !selectedProduct &&
+                        !originalConceptId)
                     )
                   }
                   lockDescription={
@@ -425,8 +444,8 @@ function MedicationAuthoring({
                     disabled={
                       mutation.isPending ||
                       (mode === 'update' &&
-                        ((staleModeOn && !partialUpdateMode) ||
-                          (!selectedProduct && !originalConceptId)))
+                        !selectedProduct &&
+                        !originalConceptId)
                     }
                     onClick={() => {
                       setIsProductUpdate(mode === 'update');
@@ -585,49 +604,39 @@ const useUiSchemaQuery = (branchPath: string) => {
 };
 
 interface ProductQueryProps {
-  selectedProduct: Concept | ValueSetExpansionContains | null;
+  productId: string | null | undefined;
   task: Task;
   setFunction?: (data: any) => void;
+  disabled?: boolean;
 }
 
-const fetchProductDataFn = async ({
-  selectedProduct,
-  task,
-}: ProductQueryProps) => {
-  if (!selectedProduct) return null;
-  const productId = isValueSetExpansionContains(selectedProduct)
-    ? selectedProduct.code
-    : selectedProduct.conceptId;
+const fetchProductDataFn = async ({ productId, task }: ProductQueryProps) => {
+  if (!productId) return null;
 
   return await productService.fetchMedication(productId || '', task.branchPath);
 };
 
 const useProductQuery = ({
-  selectedProduct,
+  productId,
   task,
   setFunction,
+  disabled,
 }: ProductQueryProps) => {
-  const productId = isValueSetExpansionContains(selectedProduct)
-    ? selectedProduct.code
-    : selectedProduct?.conceptId;
-
   const queryKey = ['product', productId, task?.branchPath];
 
   const query = useQuery({
     queryKey,
     queryFn: async () => {
-      const data = await fetchProductDataFn({ selectedProduct, task });
+      const data = await fetchProductDataFn({ productId, task });
       if (setFunction && data) setFunction(data);
       return data;
     },
-    enabled: !!selectedProduct && !!task?.branchPath,
+    enabled: !!productId && !!task?.branchPath && !disabled,
   });
 
-  const refetchWithParam = async (
-    newProduct: Concept | ValueSetExpansionContains,
-  ) => {
+  const refetchWithParam = async (productId: string | null) => {
     const data = await fetchProductDataFn({
-      selectedProduct: newProduct,
+      productId,
       task,
     });
     if (setFunction && data) setFunction(data);

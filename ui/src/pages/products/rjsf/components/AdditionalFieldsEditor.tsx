@@ -109,8 +109,14 @@ export const AdditionalFieldsEditor: React.FC<AdditionalFieldsEditorProps> = ({
     }
   };
 
-  const handleDeleteEntry = (index: number) => {
-    const updated = formData?.filter((_, i) => i !== index);
+  const handleDeleteEntry = (entry: NonDefiningProperty) => {
+    const updated = formData?.filter(
+      fd =>
+        !(
+          fd.identifierScheme === entry.identifierScheme &&
+          fd.value === entry.value
+        ),
+    );
     onChange(updated);
   };
 
@@ -230,7 +236,7 @@ export const AdditionalFieldsEditor: React.FC<AdditionalFieldsEditorProps> = ({
           <AdditionalFieldDisplay
             key={index}
             entry={entry}
-            onDelete={() => handleDeleteEntry(index)}
+            onDelete={() => handleDeleteEntry(entry)}
           />
         ),
       )}
