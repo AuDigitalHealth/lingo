@@ -113,10 +113,7 @@ const ExternalIdentifiers: React.FC<
   if (!schemas) {
     return null;
   }
-  const title =
-    uiSchema?.['ui:options']?.label ??
-    schema?.title ??
-    'Non-defining properties';
+  const title = schema?.title ?? 'Non-defining properties';
 
   return (
     <>
