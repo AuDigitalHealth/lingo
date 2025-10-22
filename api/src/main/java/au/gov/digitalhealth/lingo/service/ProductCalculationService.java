@@ -17,7 +17,6 @@ package au.gov.digitalhealth.lingo.service;
 
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.NO_OII_VALUE;
-import static au.gov.digitalhealth.lingo.util.NmpcConstants.HAS_OTHER_IDENTIFYING_INFORMATION_NMPC;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.STATED_RELATIONSHIP;
 import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getSnowstormDatatypeComponent;
 
@@ -38,7 +37,6 @@ import au.gov.digitalhealth.lingo.product.details.ProductDetails;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
 import au.gov.digitalhealth.lingo.service.validators.ValidationResult;
-import au.gov.digitalhealth.lingo.util.LingoConstants;
 import au.gov.digitalhealth.lingo.util.NmpcType;
 import au.gov.digitalhealth.lingo.validation.AuthoringValidation;
 import jakarta.validation.Valid;
@@ -117,9 +115,12 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
     final boolean isNmpcModel = modelConfiguration.getModelType().equals(ModelType.NMPC);
     final boolean isAmtModel = modelConfiguration.getModelType().equals(ModelType.AMT);
 
-    if (isNmpcModel || (level.isBranded() && isAmtModel)) {
-      LingoConstants propertyId =
-          isNmpcModel ? HAS_OTHER_IDENTIFYING_INFORMATION_NMPC : HAS_OTHER_IDENTIFYING_INFORMATION;
+    // this has been commented out because HSE have decided to defer OII use,
+    // this can be reinstated later if needed
+//    if (isNmpcModel || (level.isBranded() && isAmtModel)) {
+    if (level.isBranded() && isAmtModel) {
+//      LingoConstants propertyId =
+//          isNmpcModel ? HAS_OTHER_IDENTIFYING_INFORMATION_NMPC : HAS_OTHER_IDENTIFYING_INFORMATION;
 
       String value =
           level.isBranded()
@@ -129,7 +130,7 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
 
       relationships.add(
           getSnowstormDatatypeComponent(
-              propertyId,
+              HAS_OTHER_IDENTIFYING_INFORMATION,
               StringUtils.hasLength(value) ? value : NO_OII_VALUE.getValue(),
               DataTypeEnum.STRING,
               0,
@@ -155,24 +156,27 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
       ModelConfiguration modelConfiguration,
       ModelLevel level,
       Set<SnowstormRelationship> relationships) {
-    final boolean isNmpcModel = modelConfiguration.getModelType().equals(ModelType.NMPC);
-
-    if (isNmpcModel) {
-      String value =
-          level.isBranded()
-                  && StringUtils.hasLength(packageDetails.getOtherIdentifyingInformation())
-              ? packageDetails.getOtherIdentifyingInformation()
-              : packageDetails.getGenericOtherIdentifyingInformation();
-
-      relationships.add(
-          getSnowstormDatatypeComponent(
-              HAS_OTHER_IDENTIFYING_INFORMATION_NMPC,
-              StringUtils.hasLength(value) ? value : NO_OII_VALUE.getValue(),
-              DataTypeEnum.STRING,
-              0,
-              STATED_RELATIONSHIP,
-              modelConfiguration.getModuleId()));
-    }
+    // this has been commented out because HSE have decided to defer OII use,
+    // this can be reinstated later if needed
+    
+//    final boolean isNmpcModel = modelConfiguration.getModelType().equals(ModelType.NMPC);
+//
+//    if (isNmpcModel) {
+//      String value =
+//          level.isBranded()
+//                  && StringUtils.hasLength(packageDetails.getOtherIdentifyingInformation())
+//              ? packageDetails.getOtherIdentifyingInformation()
+//              : packageDetails.getGenericOtherIdentifyingInformation();
+//
+//      relationships.add(
+//          getSnowstormDatatypeComponent(
+//              HAS_OTHER_IDENTIFYING_INFORMATION_NMPC,
+//              StringUtils.hasLength(value) ? value : NO_OII_VALUE.getValue(),
+//              DataTypeEnum.STRING,
+//              0,
+//              STATED_RELATIONSHIP,
+//              modelConfiguration.getModuleId()));
+//    }
   }
 
   protected abstract SnowstormClient getSnowstormClient();
