@@ -60,8 +60,7 @@ public class ExternalIdentifier extends NonDefiningBase implements Serializable 
 
   String codeSystem;
 
-  @Builder.Default
-  Map<String, FieldValue> additionalFields = new HashMap<>();
+  @Builder.Default Map<String, FieldValue> additionalFields = new HashMap<>();
 
   /** Additional properties from the target concept, purely for display purposes. */
   Set<AdditionalProperty> additionalProperties;

@@ -41,10 +41,7 @@ import org.springframework.validation.annotation.Validated;
     value = "classpath:default-model-config.yaml",
     factory = YamlPropertySourceFactory.class)
 @Validated
-@ConditionalOnProperty(
-    name = "lingo.models.enabled",
-    havingValue = "true",
-    matchIfMissing = true)
+@ConditionalOnProperty(name = "lingo.models.enabled", havingValue = "true", matchIfMissing = true)
 public class Models extends HashMap<String, @Valid ModelConfiguration> implements InitializingBean {
   @Override
   public void afterPropertiesSet() throws ValidationException {

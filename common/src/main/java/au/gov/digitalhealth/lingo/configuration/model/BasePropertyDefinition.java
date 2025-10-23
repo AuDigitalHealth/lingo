@@ -61,8 +61,7 @@ public abstract class BasePropertyDefinition {
    * The model level that the property is stored at and cascades down from - it cannot cascade down
    * from above this level
    */
-  @NotNull
-  private ModelLevelType sourceModelLevel;
+  @NotNull private ModelLevelType sourceModelLevel;
 
   /** The ID if the property/refset where this is stored */
   @NotBlank
@@ -89,5 +88,4 @@ public abstract class BasePropertyDefinition {
     }
     return modelLevels.contains(sourceModelLevel);
   }
-
 }
