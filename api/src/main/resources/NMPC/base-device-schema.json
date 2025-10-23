@@ -131,14 +131,6 @@
           "title": "New VMP Level Concept Additional Parent Concepts",
           "description": "If creating a new VMP level device concept, add any parent concepts additional to the VTM device type."
         },
-        "genericOtherIdentifyingInformation": {
-          "type": "string",
-          "title": "VMP other Identifying Information"
-        },
-        "otherIdentifyingInformation": {
-          "type": "string",
-          "title": "AMP other Identifying Information"
-        },
         "nonDefiningProperties": {
           "title": "Non Defining Properties",
           "type": "array",
@@ -301,14 +293,6 @@
         "$ref": "#/$defs/ContainedProduct"
       },
       "minItems": 1
-    },
-    "genericOtherIdentifyingInformation": {
-      "type": "string",
-      "title": "VMPP other Identifying Information"
-    },
-    "otherIdentifyingInformation": {
-      "type": "string",
-      "title": "AMPP other Identifying Information"
     },
     "nonDefiningProperties": {
       "title": "Non Defining Properties",
