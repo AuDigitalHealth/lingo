@@ -367,7 +367,7 @@ models:
         level: PRODUCT
         dataType: CONCEPT
         eclBinding: <284009009
-        modelLevels: REAL_CLINICAL_DRUG,CLINICAL_DRUG
+        modelLevels: REAL_CLINICAL_DRUG
         sourceModelLevel: REAL_CLINICAL_DRUG
         mandatory: false
         multiValued: true
