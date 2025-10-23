@@ -117,10 +117,11 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
 
     // this has been commented out because HSE have decided to defer OII use,
     // this can be reinstated later if needed
-//    if (isNmpcModel || (level.isBranded() && isAmtModel)) {
+    //    if (isNmpcModel || (level.isBranded() && isAmtModel)) {
     if (level.isBranded() && isAmtModel) {
-//      LingoConstants propertyId =
-//          isNmpcModel ? HAS_OTHER_IDENTIFYING_INFORMATION_NMPC : HAS_OTHER_IDENTIFYING_INFORMATION;
+      //      LingoConstants propertyId =
+      //          isNmpcModel ? HAS_OTHER_IDENTIFYING_INFORMATION_NMPC :
+      // HAS_OTHER_IDENTIFYING_INFORMATION;
 
       String value =
           level.isBranded()
@@ -158,25 +159,25 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
       Set<SnowstormRelationship> relationships) {
     // this has been commented out because HSE have decided to defer OII use,
     // this can be reinstated later if needed
-    
-//    final boolean isNmpcModel = modelConfiguration.getModelType().equals(ModelType.NMPC);
-//
-//    if (isNmpcModel) {
-//      String value =
-//          level.isBranded()
-//                  && StringUtils.hasLength(packageDetails.getOtherIdentifyingInformation())
-//              ? packageDetails.getOtherIdentifyingInformation()
-//              : packageDetails.getGenericOtherIdentifyingInformation();
-//
-//      relationships.add(
-//          getSnowstormDatatypeComponent(
-//              HAS_OTHER_IDENTIFYING_INFORMATION_NMPC,
-//              StringUtils.hasLength(value) ? value : NO_OII_VALUE.getValue(),
-//              DataTypeEnum.STRING,
-//              0,
-//              STATED_RELATIONSHIP,
-//              modelConfiguration.getModuleId()));
-//    }
+
+    //    final boolean isNmpcModel = modelConfiguration.getModelType().equals(ModelType.NMPC);
+    //
+    //    if (isNmpcModel) {
+    //      String value =
+    //          level.isBranded()
+    //                  && StringUtils.hasLength(packageDetails.getOtherIdentifyingInformation())
+    //              ? packageDetails.getOtherIdentifyingInformation()
+    //              : packageDetails.getGenericOtherIdentifyingInformation();
+    //
+    //      relationships.add(
+    //          getSnowstormDatatypeComponent(
+    //              HAS_OTHER_IDENTIFYING_INFORMATION_NMPC,
+    //              StringUtils.hasLength(value) ? value : NO_OII_VALUE.getValue(),
+    //              DataTypeEnum.STRING,
+    //              0,
+    //              STATED_RELATIONSHIP,
+    //              modelConfiguration.getModuleId()));
+    //    }
   }
 
   protected abstract SnowstormClient getSnowstormClient();
