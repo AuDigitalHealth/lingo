@@ -524,7 +524,7 @@
   <parent>
     <artifactId>lingo</artifactId>
     <groupId>au.gov.digitalhealth</groupId>
-    <version>1.3.7-SNAPSHOT</version>
+    <version>1.3.7</version>
   </parent>
   <profiles>
     <profile>
