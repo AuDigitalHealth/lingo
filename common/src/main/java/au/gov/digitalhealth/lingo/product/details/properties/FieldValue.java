@@ -16,6 +16,7 @@
 package au.gov.digitalhealth.lingo.product.details.properties;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import java.io.Serializable;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,7 +27,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class FieldValue {
+public class FieldValue implements Serializable {
   String value;
   SnowstormConceptMini valueObject;
   String codeSystem;
