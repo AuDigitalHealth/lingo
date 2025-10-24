@@ -59,10 +59,10 @@ public class ExternalIdentifier extends NonDefiningBase implements Serializable 
 
   String codeSystem;
 
-  Map<String, FieldValue> additionalFields = new HashMap<>();
+  private Map<String, FieldValue> additionalFields = new HashMap<>();
 
   /** Additional properties from the target concept, purely for display purposes. */
-  Set<AdditionalProperty> additionalProperties;
+  private Set<AdditionalProperty> additionalProperties;
 
   public ExternalIdentifier() {
     this.setType(PropertyType.EXTERNAL_IDENTIFIER);
