@@ -51,7 +51,7 @@
         },
         "nonDefiningProperties": {
           "type": "array",
-          "title": "Properties",
+          "title": "Non Defining Properties",
           "items": {
             "$ref": "#/$defs/MEDICATION_PACKAGE_NonDefiningProperty"
           }
