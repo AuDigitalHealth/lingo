@@ -33,5 +33,5 @@ public class FieldValue implements Serializable {
   String codeSystem;
 
   /** Additional properties from the target concept, purely for display purposes. */
-  Set<AdditionalProperty> additionalProperties;
+  private Set<AdditionalProperty> additionalProperties;
 }
