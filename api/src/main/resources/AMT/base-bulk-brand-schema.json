@@ -51,7 +51,7 @@
         },
         "nonDefiningProperties": {
           "type": "array",
-          "title": "Properties",
+          "title": "ARTG ID",
           "items": {
             "$ref": "#/$defs/MEDICATION_PACKAGE_NonDefiningProperty"
           }
