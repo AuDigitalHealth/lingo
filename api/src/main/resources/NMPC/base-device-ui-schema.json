@@ -47,7 +47,7 @@
         "ui:field": "AutoCompleteField",
         "ui:title": "Unit",
         "ui:options": {
-          "ecl": "(^660401000220107 : (774160008 OR 999000081000168101) = *).774163005",
+          "ecl": "(^660401000220107 : (774160008 OR 689871000220106) = *).774163005",
           "extendedEcl": "<767524001",
           "showDefaultOptions": true,
           "skipTitle": true

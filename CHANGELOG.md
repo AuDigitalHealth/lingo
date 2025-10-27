@@ -8,14 +8,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
 
+### Changed
+
+- NMPC field binding fix for contains device identifier
 
 ## [1.3.7] - 2025-10-23
 
+### Changed
+
+- NMPC VMP cascade for licenced route removed
 
 ## [1.3.6] - 2025-10-22
 
+### Changed
+
+- Removed OII for NMPC
+
+### Added
+
+- Convert create operation to update for found product
 
 ## [1.3.5] - 2025-10-15
 
