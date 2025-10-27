@@ -471,3 +471,25 @@ export function resetDiscriminators(
 
   return updatedData;
 }
+export const packSizeValidation = (
+  sourceData: any,
+  targetData: any[],
+  existingData: any[],
+) => {
+  if (!sourceData || typeof sourceData !== 'object') return false;
+
+  const packSize = sourceData.packSize;
+  if (!packSize || isNaN(packSize) || packSize <= 0) return false;
+
+  // Check for duplicates in target array
+  const duplicateInTarget = targetData.some(
+    (item: any) => item.packSize === packSize,
+  );
+
+  // Check for duplicates in existing values array
+  const duplicateInExisting = existingData.some(
+    (item: any) => item.packSize === packSize,
+  );
+
+  return !duplicateInTarget && !duplicateInExisting;
+};

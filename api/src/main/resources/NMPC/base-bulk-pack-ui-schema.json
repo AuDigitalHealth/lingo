@@ -85,6 +85,7 @@
       "orderable": false,
       "skipTitle": false,
       "listTitle": "Newly Added Pack Sizes",
+      "disablePackSizeEdit": true,
       "readOnly": false,
       "allowDelete": true,
       "requireEditButton": false,

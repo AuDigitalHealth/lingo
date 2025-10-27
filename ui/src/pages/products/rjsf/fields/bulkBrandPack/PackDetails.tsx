@@ -15,6 +15,8 @@ import { sortNonDefiningProperties } from '../../../../../utils/helpers/tickets/
 import { RjsfUtils } from '../../helpers/rjsfUtils.ts';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import { useAddButton } from '../../../hooks/useAddButton.ts';
+import { packSizeValidation } from '../../helpers/validationHelper.ts';
 
 interface PackDetailsProps extends FieldProps {
   onDelete?: () => void;
@@ -54,6 +56,7 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
     requireEditButton = false,
     nondefiningPropertyTitle,
     inputType,
+    disablePackSizeEdit,
   } = packSizeUiSchemaOptions;
 
   let isNumber = schema?.type === 'number' || schema?.type === 'integer';
@@ -95,6 +98,25 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
 
   const isValidPackSize =
     packSize && !isNaN(parseInt(packSize, 10)) && parseInt(packSize, 10) > 0;
+  const {
+    tooltipTitle = 'Add Pack Size',
+    sourcePath = 'newPackSizeInput',
+    targetPath = 'packSizes',
+    existingPath = 'existingPackSizes',
+  } = {};
+  const getInitialPackSizeData = () => ({
+    packSize: undefined,
+    nonDefiningProperties:
+      formContext.formData.newPackSizeInput.nonDefiningProperties,
+  });
+  const { handleAddClick, isEnabled } = useAddButton({
+    formContext,
+    sourcePath,
+    targetPath,
+    existingPath,
+    validationFn: packSizeValidation,
+    getInitialSourceData: getInitialPackSizeData,
+  });
 
   return (
     <Box sx={{ position: 'relative', width: '100%' }}>
@@ -131,7 +153,7 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
             </IconButton>
           </Tooltip>
         )}
-        {!readOnly && allowDelete && onDelete && (
+        {allowDelete && onDelete && (
           <Tooltip title="Delete">
             <IconButton
               size="small"
@@ -154,7 +176,9 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
         <Stack gap={2}>
           {/* Pack Size Input */}
           <Stack direction="row" alignItems="center" gap={1}>
-            {readOnly || (requireEditButton && !editMode) ? (
+            {readOnly ||
+            disablePackSizeEdit ||
+            (requireEditButton && !editMode) ? (
               <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                 {formData?.packSize ?? 'N/A'}
               </Typography>
@@ -164,11 +188,24 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
                 type="number"
                 value={packSize}
                 onChange={e => handlePackSizeChange(e.target.value)}
-                error={packSize !== '' && !isValidPackSize}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (isEnabled) {
+                      handleAddClick();
+                    }
+                  }
+                }}
+                error={
+                  (packSize !== '' && !isValidPackSize) ||
+                  (packSize !== '' && !isEnabled)
+                }
                 helperText={
                   packSize !== '' && !isValidPackSize
                     ? 'Pack size must be a positive number'
-                    : ''
+                    : packSize !== '' && !isEnabled
+                      ? 'Invalid Pack Size'
+                      : ''
                 }
                 type={isNumber ? 'number' : 'text'}
                 sx={{ maxWidth: '200px' }}

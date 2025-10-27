@@ -83,6 +83,7 @@
       "skipTitle": false,
       "listTitle": "Newly Added Pack Sizes",
       "readOnly": false,
+      "disablePackSizeEdit": true,
       "allowDelete": true,
       "requireEditButton": false,
       "multiValuedSchemes": ["artgid"],

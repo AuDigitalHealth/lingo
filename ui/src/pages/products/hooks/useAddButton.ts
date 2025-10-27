@@ -25,7 +25,7 @@ interface UseAddButtonProps {
     sourceData: any,
     targetData: any[],
     existingData: any[],
-  ) => boolean;
+  ) => boolean | string;
   getInitialSourceData: () => any;
 }
 
@@ -39,36 +39,20 @@ export const useAddButton = ({
 }: UseAddButtonProps) => {
   const handleAddClick = useCallback(() => {
     if (!formContext?.formData) return;
-
     const sourceData = formContext.formData[sourcePath];
     const targetData = formContext.formData[targetPath] || [];
-    const existingData = formContext.formData[existingPath] || [];
 
-    if (validationFn(sourceData, targetData, existingData)) {
-      // Add the item
-      const newTargetData = [...targetData, { ...sourceData }];
+    const newTargetData = [...targetData, { ...sourceData }];
+    const newFormData = {
+      ...formContext.formData,
+      [targetPath]: newTargetData,
+      [sourcePath]: getInitialSourceData(),
+    };
 
-      // Clear the source
-      const newFormData = {
-        ...formContext.formData,
-        [targetPath]: newTargetData,
-        [sourcePath]: getInitialSourceData(),
-      };
-
-      // Update form data
-      if (formContext.onFormDataChange) {
-        formContext.onFormDataChange(newFormData);
-      }
+    if (formContext.onFormDataChange) {
+      formContext.onFormDataChange(newFormData);
     }
-  }, [
-    formContext,
-    sourcePath,
-    targetPath,
-    existingPath,
-    validationFn,
-    getInitialSourceData,
-  ]);
-
+  }, [formContext, sourcePath, targetPath, getInitialSourceData]);
   const getIsEnabled = useCallback(() => {
     if (!formContext?.formData) return false;
 
