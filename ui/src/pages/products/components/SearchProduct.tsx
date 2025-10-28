@@ -12,7 +12,7 @@ import {
   ToggleButtonGroup,
 } from '@mui/material';
 import TuneIcon from '@mui/icons-material/Tune';
-import { Concept } from '../../../types/concept.ts';
+import { Concept, ConceptSearchResult } from '../../../types/concept.ts';
 import useDebounce from '../../../hooks/useDebounce.tsx';
 import Box from '@mui/material/Box';
 import CloseIcon from '@mui/icons-material/Close';
@@ -37,10 +37,6 @@ import {
   PUBLISHED_CONCEPTS,
   UNPUBLISHED_CONCEPTS,
 } from '../../../utils/statics/responses.ts';
-
-export interface ConceptSearchResult extends Concept {
-  type: string;
-}
 
 export interface SearchProductProps {
   disableLinkOpen: boolean;

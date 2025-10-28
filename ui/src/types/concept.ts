@@ -21,7 +21,9 @@ export enum DefinitionStatus {
   Primitive = 'PRIMITIVE',
   FullyDefined = 'FULLY_DEFINED',
 }
-
+export interface ConceptSearchResult extends Concept {
+  type: string;
+}
 export interface Concept {
   conceptId?: string;
   active?: boolean;

@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Autocomplete, CircularProgress, TextField } from '@mui/material';
-import { Concept, ConceptMini } from '../../../../types/concept.ts';
+import {
+  Concept,
+  ConceptMini,
+  ConceptSearchResult,
+} from '../../../../types/concept.ts';
 import { useSearchConceptsByEcl } from '../../../../hooks/api/useInitializeConcepts.tsx';
 import { FieldProps } from '@rjsf/utils';
 import useApplicationConfigStore from '../../../../stores/ApplicationConfigStore.ts';
@@ -28,8 +32,8 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
   const [inputValue, setInputValue] = useState<Concept>(
     value || createEmptyConcept(apLanguageHeader),
   );
-  const [options, setOptions] = useState<Concept[]>(
-    value ? [value as Concept] : [],
+  const [options, setOptions] = useState<ConceptSearchResult[]>(
+    value ? [value as ConceptSearchResult] : [],
   );
 
   const disabled = isDisabled || props.disabled || false;
@@ -61,8 +65,21 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
     if (disabled) return;
     let uniqueOptions: Concept[] = [];
     if (allData) {
+      let processedData = allData;
+
+      // Only classify types when turnOffPublishParam is true
+      if (turnOffPublishParam) {
+        processedData = [
+          ...allData
+            .filter(item => !item.effectiveTime) // no effectiveTime = unpublished
+            .map(item => ({ ...item, type: 'Unpublished Concepts' })),
+          ...allData
+            .filter(item => item.effectiveTime) // has effectiveTime = published
+            .map(item => ({ ...item, type: 'Published Concepts' })),
+        ];
+      }
       uniqueOptions = Array.from(
-        new Map(allData.map(item => [item.conceptId, item])).values(),
+        new Map(processedData.map(item => [item.conceptId, item])).values(),
       );
     }
     if (
@@ -128,12 +145,13 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
         loading={isLoading}
         disabled={disabled}
         options={disabled ? [] : options}
-        getOptionLabel={(option: Concept) => option?.pt?.term || ''}
+        getOptionLabel={(option: ConceptSearchResult) => option?.pt?.term || ''}
         value={normalizedValue}
         onInputChange={(event, newInputValue) => {
           !disabled &&
             setInputValue(createEmptyConcept(apLanguageHeader, newInputValue));
         }}
+        groupBy={option => option.type}
         onChange={(event, selectedValue) =>
           handleProductChange(selectedValue as Concept)
         }
