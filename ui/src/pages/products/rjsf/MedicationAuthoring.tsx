@@ -225,6 +225,19 @@ function MedicationAuthoring({
     originalConceptId ? [originalConceptId] : [],
   );
 
+  const isProductUpdateDisabled = () => {
+    if (mode === 'update') {
+      if (!selectedProduct && !originalConceptId) {
+        return true;
+      } else if (
+        originalConceptId &&
+        !isOriginalConceptActive(originalConceptId, activeConceptIds)
+      ) {
+        return true;
+      }
+    }
+    return false;
+  };
   // Clear form data when schemaType changes
   useEffect(() => {
     handleClear();
@@ -417,14 +430,7 @@ function MedicationAuthoring({
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                 <UnableToEditTooltip
-                  canEdit={
-                    !(
-                      mutation.isPending ||
-                      (mode === 'update' &&
-                        !selectedProduct &&
-                        !originalConceptId)
-                    )
-                  }
+                  canEdit={!(mutation.isPending || isProductUpdateDisabled())}
                   lockDescription={
                     mode === 'update'
                       ? staleModeOn && !partialUpdateMode
@@ -441,12 +447,7 @@ function MedicationAuthoring({
                     variant="contained"
                     color={mode === 'create' ? 'primary' : 'warning'}
                     sx={mode === 'update' ? { color: '#000' } : {}}
-                    disabled={
-                      mutation.isPending ||
-                      (mode === 'update' &&
-                        !selectedProduct &&
-                        !originalConceptId)
-                    }
+                    disabled={mutation.isPending || isProductUpdateDisabled()}
                     onClick={() => {
                       setIsProductUpdate(mode === 'update');
                     }}
