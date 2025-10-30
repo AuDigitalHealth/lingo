@@ -15,11 +15,14 @@
 ///
 
 import {
+  BranchJobStatusEnum,
+  BranchJobStatus,
   BrowserConcept,
   Concept,
   ConceptResponse,
   ConceptResponseForIds,
   ConceptSearchResponse,
+  MergeError,
 } from '../types/concept.ts';
 import { IntegrityCheckResponse, Task } from '../types/task.ts';
 import {
@@ -111,6 +114,7 @@ const ConceptService = {
     const returnTask = await TasksServices.getTask(task?.projectKey, task?.key);
     return returnTask;
   },
+
   async pollMergeProgress(mergeUrl: string): Promise<void> {
     const cleanedUrl = mergeUrl.replace('snomed-ct/', '');
     const pollInterval = 5000;
@@ -120,29 +124,32 @@ const ConceptService = {
     while (attempts < maxAttempts) {
       try {
         const progressResponse = await api.get(cleanedUrl);
-        const mergeStatus = progressResponse.data;
+        const mergeStatus = progressResponse.data as BranchJobStatus;
 
-        if (mergeStatus.status === 'COMPLETED') {
+        if (mergeStatus.status === BranchJobStatusEnum.COMPLETED) {
           return;
         }
 
-        if (
-          mergeStatus.status === 'FAILED' ||
-          mergeStatus.status === 'CANCELLED'
-        ) {
-          throw new Error(`Merge failed with status: ${mergeStatus.status}`);
+        if (mergeStatus.status === BranchJobStatusEnum.FAILED) {
+          throw new MergeError(
+            `Merge failed with status: ${mergeStatus.status}`,
+            mergeStatus,
+          );
         }
 
-        // If status is IN_PROGRESS or any other pending status, wait and retry
         await this.delay(pollInterval);
         attempts++;
       } catch (error) {
+        // If it's already a MergeError, re-throw it
+        if (error instanceof MergeError) {
+          throw error;
+        }
+
         if (attempts >= maxAttempts - 1) {
           throw new Error(
             `Merge polling timed out after ${(maxAttempts * pollInterval) / 1000} seconds`,
           );
         }
-        // If it's a network error, wait and retry
         await this.delay(pollInterval);
         attempts++;
       }

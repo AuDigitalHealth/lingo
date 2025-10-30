@@ -391,3 +391,39 @@ export interface NewConceptDetails {
   pt?: Term;
   descriptions?: Description[];
 }
+
+export enum BranchJobStatusEnum {
+  SCHEDULED = 'SCHEDULED',
+  IN_PROGRESS = 'IN_PROGRESS',
+  COMPLETED = 'COMPLETED',
+  FAILED = 'FAILED',
+  CONFLICTS = 'CONFLICTS',
+}
+
+export interface BranchJobStatusApiError {
+  message: string;
+  developerMessage: string;
+  additionalInfo?: Record<string, string>;
+}
+
+export interface BranchJobStatus {
+  id: string;
+  source: string;
+  target: string;
+  scheduledDate: string;
+  startDate: string;
+  status: BranchJobStatusEnum;
+  endDate: string;
+  message: string;
+  apiError: BranchJobStatusApiError;
+}
+
+export class MergeError extends Error {
+  mergeStatus?: BranchJobStatus;
+
+  constructor(message: string, mergeStatus?: BranchJobStatus) {
+    super(message);
+    this.name = 'MergeError';
+    this.mergeStatus = mergeStatus;
+  }
+}

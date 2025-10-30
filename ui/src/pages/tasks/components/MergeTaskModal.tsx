@@ -17,6 +17,7 @@ import { BranchState, Task, TaskStatus } from '../../../types/task';
 import { enqueueSnackbar } from 'notistack';
 import { useMergeTask } from '../../../hooks/api/task/useMergeTask';
 import { useIntegrityCheck } from '../../../hooks/api/task/useMergeTask';
+import { MergeError } from '../../../types/concept';
 
 interface MergeTaskModalProps {
   task: Task | null | undefined;
@@ -41,6 +42,28 @@ export default function MergeTaskModal({
     if (!mergeTaskMutation.isPending) {
       setModalOpen(false);
     }
+  };
+
+  const getErrorMessage = (): string => {
+    const error = mergeTaskMutation.error;
+
+    // Check if it's a MergeError with apiError details
+    if (error instanceof MergeError) {
+      const apiError = error.mergeStatus?.apiError;
+      if (apiError?.developerMessage) {
+        return apiError.developerMessage;
+      }
+      if (apiError?.message) {
+        return apiError.message;
+      }
+    }
+
+    // Fallback to standard error message
+    if (error instanceof Error) {
+      return error.message;
+    }
+
+    return 'An error occurred during merge. Please try again.';
   };
 
   const handleConfirmMerge = async () => {
@@ -119,8 +142,7 @@ export default function MergeTaskModal({
             {mergeTaskMutation.isError && (
               <Alert severity="error">
                 <AlertTitle>Rebase Failed</AlertTitle>
-                {mergeTaskMutation.error?.message ||
-                  'An error occurred during merge. Please try again.'}
+                {getErrorMessage()}
               </Alert>
             )}
           </Stack>

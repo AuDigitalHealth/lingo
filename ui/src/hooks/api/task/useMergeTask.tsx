@@ -22,12 +22,6 @@ export function useMergeTask() {
     onSuccess: (data, variables) => {
       updateTaskCache(queryClient, queryKey, data);
     },
-    onError: error => {
-      enqueueSnackbar(
-        'Auto merge task failed, please do it in the authoring platform',
-        { variant: 'error' },
-      );
-    },
   });
 }
 
