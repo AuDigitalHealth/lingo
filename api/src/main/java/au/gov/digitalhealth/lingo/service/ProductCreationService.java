@@ -671,6 +671,7 @@ public class ProductCreationService {
             .filter(
                 node ->
                     node.isPropertyUpdate()
+                        || (node.getOriginalNode() == null && node.getNewConceptDetails() == null)
                         || (!node.isNewConcept()
                             && node.getConcept() != null
                             && node.getOriginalNode() != null
