@@ -15,7 +15,10 @@ import BaseModalBody from '../../../components/modal/BaseModalBody';
 import BaseModalFooter from '../../../components/modal/BaseModalFooter';
 import { BranchState, Task, TaskStatus } from '../../../types/task';
 import { enqueueSnackbar } from 'notistack';
-import { useMergeTask } from '../../../hooks/api/task/useMergeTask';
+import {
+  useMergeReviewTask,
+  useMergeTask,
+} from '../../../hooks/api/task/useMergeTask';
 import { useIntegrityCheck } from '../../../hooks/api/task/useMergeTask';
 import { MergeError } from '../../../types/concept';
 
@@ -33,6 +36,7 @@ export default function MergeTaskModal({
   const [modalOpen, setModalOpen] = useState(false);
   const integrityCheckMutation = useIntegrityCheck();
   const mergeTaskMutation = useMergeTask();
+  const mergeTaskReviewMutation = useMergeReviewTask();
 
   const handleOpenModal = () => {
     setModalOpen(true);
@@ -71,23 +75,61 @@ export default function MergeTaskModal({
       if (!task) return;
       const projectKey = task?.branchPath?.split('/').slice(0, -1).join('/');
 
-      const updatedTask = await mergeTaskMutation.mutateAsync(
-        {
+      if (task.branchState !== BranchState.Diverged) {
+        await mergeTaskMutation.mutateAsync(
+          {
+            projectKey: projectKey,
+            taskKey: task?.branchPath,
+            task,
+          },
+          {
+            onSuccess: () => {
+              integrityCheckMutation.mutate({ taskBranch: task?.branchPath });
+            },
+          },
+        );
+        setModalOpen(false);
+        enqueueSnackbar('Task merged successfully!', {
+          variant: 'success',
+        });
+      } else {
+        // Diverged state - try merge review first
+        const reviewResult = await mergeTaskReviewMutation.mutateAsync({
           projectKey: projectKey,
           taskKey: task?.branchPath,
           task,
-        },
-        {
-          onSuccess: () => {
-            integrityCheckMutation.mutate({ taskBranch: task?.branchPath });
-          },
-        },
-      );
+        });
 
-      setModalOpen(false);
-      enqueueSnackbar('Task merged successfully!', {
-        variant: 'success',
-      });
+        if (reviewResult.hasConflicts) {
+          // Has conflicts - show error and keep modal open
+          enqueueSnackbar(
+            'Conflicts detected. Please resolve in the authoring platform.',
+            {
+              variant: 'error',
+            },
+          );
+          setModalOpen(false);
+        } else {
+          // No conflicts - proceed with regular merge
+          await mergeTaskMutation.mutateAsync(
+            {
+              projectKey: projectKey,
+              taskKey: task?.branchPath,
+              task,
+              reviewId: reviewResult.reviewId,
+            },
+            {
+              onSuccess: () => {
+                integrityCheckMutation.mutate({ taskBranch: task?.branchPath });
+              },
+            },
+          );
+          setModalOpen(false);
+          enqueueSnackbar('Task merged successfully!', {
+            variant: 'success',
+          });
+        }
+      }
     } catch (error) {
       enqueueSnackbar(
         'Error merging task. Please attempt in the authoring platform.',
@@ -98,8 +140,11 @@ export default function MergeTaskModal({
     }
   };
 
-  const canProceed = !mergeTaskMutation.isPending;
-  const isMerging = mergeTaskMutation.isPending;
+  const canProceed = !(
+    mergeTaskMutation.isPending || mergeTaskReviewMutation.isPending
+  );
+  const isMerging =
+    mergeTaskMutation.isPending || mergeTaskReviewMutation.isPending;
 
   return (
     <>

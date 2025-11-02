@@ -400,6 +400,14 @@ export enum BranchJobStatusEnum {
   CONFLICTS = 'CONFLICTS',
 }
 
+export enum BranchJobStatusReviewEnum {
+  CURRENT = 'CURRENT',
+  IN_PROGRESS = 'IN_PROGRESS',
+  COMPLETED = 'COMPLETED',
+  FAILED = 'FAILED',
+  CONFLICTS = 'CONFLICTS',
+}
+
 export interface BranchJobStatusApiError {
   message: string;
   developerMessage: string;
@@ -412,7 +420,7 @@ export interface BranchJobStatus {
   target: string;
   scheduledDate: string;
   startDate: string;
-  status: BranchJobStatusEnum;
+  status: BranchJobStatusEnum | BranchJobStatusReviewEnum;
   endDate: string;
   message: string;
   apiError: BranchJobStatusApiError;

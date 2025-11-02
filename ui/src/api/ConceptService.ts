@@ -23,6 +23,7 @@ import {
   ConceptResponseForIds,
   ConceptSearchResponse,
   MergeError,
+  BranchJobStatusReviewEnum,
 } from '../types/concept.ts';
 import { IntegrityCheckResponse, Task } from '../types/task.ts';
 import {
@@ -87,10 +88,12 @@ const ConceptService = {
     // task/feature branch
     taskBranch: string,
     task: Task,
+    reviewId?: string,
   ): Promise<Task> {
     const requestPayload = {
       source: headBranch,
       target: taskBranch,
+      ...(reviewId && { reviewId }),
     };
     const url = `/snowstorm/merges`;
     const response = await api.post(url, requestPayload);
@@ -114,7 +117,54 @@ const ConceptService = {
     const returnTask = await TasksServices.getTask(task?.projectKey, task?.key);
     return returnTask;
   },
+  async mergeTaskReview(
+    // main/head branch
+    headBranch: string,
+    // task/feature branch
+    taskBranch: string,
+    task: Task,
+  ): Promise<{ task: Task; hasConflicts: boolean; reviewId: string }> {
+    const requestPayload = {
+      source: headBranch,
+      target: taskBranch,
+    };
+    const url = `/snowstorm/merge-reviews`;
+    const response = await api.post(url, requestPayload);
 
+    if (response.status !== 201) {
+      this.handleErrors();
+    }
+
+    // Extract location header to get the merge review URL
+    const locationHeader = response.headers.location;
+    if (!locationHeader) {
+      throw new Error('No location header returned from merge review request');
+    }
+
+    const mergeReviewPath = new URL(locationHeader).pathname;
+
+    // Poll the merge review progress until completion
+    await this.pollMergeProgressReview(mergeReviewPath);
+
+    // Extract the merge review ID from the path
+    const mergeReviewId = mergeReviewPath.split('/').pop();
+
+    // Once merge review is complete, fetch the details
+    const detailsUrl = `/snowstorm/merge-reviews/${mergeReviewId}/details`;
+    const detailsResponse = await api.get(detailsUrl);
+
+    const mergeReviewDetails = detailsResponse.data;
+    const hasConflicts =
+      Array.isArray(mergeReviewDetails) && mergeReviewDetails.length > 0;
+
+    // Fetch and return the updated task
+    const returnTask = await TasksServices.getTask(task?.projectKey, task?.key);
+    return {
+      task: returnTask,
+      hasConflicts,
+      reviewId: mergeReviewId as string,
+    };
+  },
   async pollMergeProgress(mergeUrl: string): Promise<void> {
     const cleanedUrl = mergeUrl.replace('snomed-ct/', '');
     const pollInterval = 5000;
@@ -140,8 +190,47 @@ const ConceptService = {
         await this.delay(pollInterval);
         attempts++;
       } catch (error) {
-        // If it's already a MergeError, re-throw it
-        if (error instanceof MergeError) {
+        if (attempts >= maxAttempts - 1) {
+          throw new Error(
+            `Merge polling timed out after ${(maxAttempts * pollInterval) / 1000} seconds`,
+          );
+        }
+        if (error) {
+          throw error;
+        }
+      }
+    }
+
+    throw new Error(
+      `Merge polling timed out after ${(maxAttempts * pollInterval) / 1000} seconds`,
+    );
+  },
+  async pollMergeProgressReview(mergeUrl: string): Promise<void> {
+    const cleanedUrl = mergeUrl.replace('snomed-ct/', '');
+    const pollInterval = 5000;
+    const maxAttempts = 120;
+    let attempts = 0;
+
+    while (attempts < maxAttempts) {
+      try {
+        const progressResponse = await api.get(cleanedUrl);
+        const mergeStatus = progressResponse.data as BranchJobStatus;
+
+        if (mergeStatus.status === BranchJobStatusReviewEnum.CURRENT) {
+          return;
+        }
+
+        if (mergeStatus.status === BranchJobStatusReviewEnum.FAILED) {
+          throw new MergeError(
+            `Merge failed with status: ${mergeStatus.status}`,
+            mergeStatus,
+          );
+        }
+
+        await this.delay(pollInterval);
+        attempts++;
+      } catch (error) {
+        if (error) {
           throw error;
         }
 

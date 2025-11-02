@@ -9,6 +9,7 @@ interface MergeTaskParams {
   projectKey: string;
   taskKey: string;
   task: Task;
+  reviewId?: string;
 }
 
 export function useMergeTask() {
@@ -16,8 +17,18 @@ export function useMergeTask() {
   const { applicationConfig } = useApplicationConfigStore();
   const queryKey = useAllTasksOptions(applicationConfig).queryKey;
   return useMutation({
-    mutationFn: async ({ projectKey, taskKey, task }: MergeTaskParams) => {
-      return await ConceptService.mergeTask(projectKey, taskKey, task);
+    mutationFn: async ({
+      projectKey,
+      taskKey,
+      task,
+      reviewId,
+    }: MergeTaskParams) => {
+      return await ConceptService.mergeTask(
+        projectKey,
+        taskKey,
+        task,
+        reviewId,
+      );
     },
     onSuccess: (data, variables) => {
       updateTaskCache(queryClient, queryKey, data);
@@ -41,6 +52,20 @@ export function useIntegrityCheck() {
           { variant: 'error' },
         );
       }
+    },
+  });
+}
+
+export function useMergeReviewTask() {
+  const queryClient = useQueryClient();
+  const { applicationConfig } = useApplicationConfigStore();
+  const queryKey = useAllTasksOptions(applicationConfig).queryKey;
+  return useMutation({
+    mutationFn: async ({ projectKey, taskKey, task }: MergeTaskParams) => {
+      return await ConceptService.mergeTaskReview(projectKey, taskKey, task);
+    },
+    onSuccess: (data, variables) => {
+      updateTaskCache(queryClient, queryKey, data.task);
     },
   });
 }
