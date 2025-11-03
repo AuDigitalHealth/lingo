@@ -21,6 +21,7 @@ import au.gov.digitalhealth.lingo.util.AuthSnowstormLogger;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.logging.LogLevel;
+import java.time.Duration;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -34,7 +35,9 @@ import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
+import reactor.netty.http.client.PrematureCloseException;
 import reactor.netty.transport.logging.AdvancedByteBufFormat;
+import reactor.util.retry.Retry;
 
 @Configuration
 @Log
@@ -69,6 +72,8 @@ public class ApiWebConfiguration {
         .clientConnector(new ReactorClientHttpConnector(httpClient))
         .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
         .filter(authHelper.addImsAuthCookie) // Cookies are injected through filter
+        .filter(logRequestOnError())
+        .filter(retryFilter(2)) // Add retry logic here
         .build();
   }
 
@@ -157,6 +162,35 @@ public class ApiWebConfiguration {
 
           return Mono.just(clientRequest);
         });
+  }
+
+  private ExchangeFilterFunction logRequestOnError() {
+    return (request, next) ->
+        next.exchange(request)
+            .doOnError(
+                ex -> {
+                  log.severe(
+                      String.format(
+                          "[WebClient][Error] %s %s -> Exception: %s",
+                          request.method(), request.url(), ex.toString()));
+                });
+  }
+
+  private ExchangeFilterFunction retryFilter(int maxAttempt) {
+    return (request, next) ->
+        next.exchange(request)
+            .retryWhen(
+                Retry.backoff(maxAttempt, Duration.ofSeconds(2))
+                    .filter(ex -> ex instanceof PrematureCloseException)
+                    .doBeforeRetry(
+                        retrySignal -> {
+                          log.severe(
+                              String.format(
+                                  "[WebClient][Retry %d] Retrying: %s due to %s",
+                                  retrySignal.totalRetries() + 1,
+                                  request.url(),
+                                  retrySignal.failure().toString()));
+                        }));
   }
 
   @Bean
