@@ -42,8 +42,8 @@ public class RequestScopedBranchTimestampService {
   }
 
   private Long fetchBranchTimestamp(String branch) {
-    Long timestamp = snowstormClient.getBranchHeadTimestamp(branch);
-    log.fine("Fetched timestamp for branch " + branch + ": " + timestamp);
+    Long timestamp = snowstormClient.getBranchHeadAndBaseTimestamp(branch);
+    log.fine("Fetched timestamps for branch " + branch + ": " + timestamp);
     return timestamp;
   }
 }

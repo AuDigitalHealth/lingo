@@ -1292,10 +1292,11 @@ public class SnowstormClient {
     return new BranchingApi(getApiClient()).retrieveBranch(branch, false);
   }
 
-  public Long getBranchHeadTimestamp(String branch) {
+  public Long getBranchHeadAndBaseTimestamp(String branch) {
     log.fine("Retrieving branch head timestamp for branch " + branch);
+
     return getBranchMetadata(branch)
-        .map(SnowstormBranchPojo::getHeadTimestamp)
+        .map(pojo -> pojo.getHeadTimestamp() + pojo.getBaseTimestamp())
         .blockOptional()
         .orElse(null);
   }

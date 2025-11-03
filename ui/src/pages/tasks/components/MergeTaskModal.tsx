@@ -52,8 +52,9 @@ export default function MergeTaskModal({
     const error = mergeTaskMutation.error;
 
     // Check if it's a MergeError with apiError details
-    if (error instanceof MergeError) {
-      const apiError = error.mergeStatus?.apiError;
+    if (error && typeof error === 'object' && 'mergeStatus' in error) {
+      const mergeError = error as MergeError;
+      const apiError = mergeError.mergeStatus?.apiError;
       if (apiError?.developerMessage) {
         return apiError.developerMessage;
       }
