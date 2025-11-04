@@ -15,6 +15,7 @@ The following sections are considered for each release: **Added, Changed, Fixed,
     - My Backlog now shows "Tickets assigned to me (excluding closed tickets)"
     - Backlog now shows "All tickets in the system with filtering and bulk edit capabilities"
 - Updated color legend to clarify that primitive and fully defined concepts are existing concepts
+- Ability to open review messages in a new tab
 
 ## [1.3.11] - 2025-11-04
 
