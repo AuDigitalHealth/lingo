@@ -20,7 +20,6 @@ import au.gov.digitalhealth.lingo.product.details.ProductDetails;
 import au.gov.digitalhealth.tickets.controllers.ProductDto;
 import au.gov.digitalhealth.tickets.models.ProductAction;
 import com.fasterxml.jackson.annotation.JsonTypeName;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -42,7 +41,7 @@ public class ProductUpdateDetails<T extends ProductDetails> extends ProductCreat
   /**
    * Atomic data loaded before the edit started - used for a reference of the edit starting point
    */
-  @NotNull @Valid PackageDetails<T> originalPackageDetails;
+  @NotNull PackageDetails<T> originalPackageDetails;
 
   public ProductUpdateDetails(
       String originalConceptId,
