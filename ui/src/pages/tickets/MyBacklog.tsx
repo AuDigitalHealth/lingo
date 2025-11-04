@@ -1,9 +1,17 @@
-import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  ChangeEvent,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
 import {
-  LazyTicketTableState,
   generateDefaultTicketTableLazyState,
+  LazyTicketTableState,
 } from '../../types/tickets/table';
 import { TicketsBacklogView } from './components/grid/TicketsBacklogView';
 import { useSearchTickets } from './components/grid/useLocalTickets';
@@ -17,7 +25,7 @@ import {
 import { useAllStates } from '../../hooks/api/useInitializeTickets';
 import useUserStore from '../../stores/UserStore';
 import { InputText } from 'primereact/inputtext';
-import { Stack } from '@mui/material';
+import { Box, Stack, Typography } from '@mui/material';
 import useDebounce from '../../hooks/useDebounce';
 import TicketsActionBar from './components/TicketsActionBar';
 import { Route, Routes } from 'react-router-dom';
@@ -62,15 +70,51 @@ export default function MyBacklog() {
   const [globalFilterValue, setGlobalFilterValue] = useState<string>('');
   const debouncedGlobalFilterValue = useDebounce(globalFilterValue, 400);
 
+  // Refs for height calculation
+  const containerRef = useRef<HTMLDivElement>(null);
+  const titleContainerRef = useRef<HTMLDivElement>(null);
+  const actionBarRef = useRef<HTMLDivElement>(null);
+  const tableHeaderRef = useRef<HTMLDivElement>(null);
+  const [backlogHeight, setBacklogHeight] = useState(0);
+
+  useLayoutEffect(() => {
+    if (
+      containerRef.current &&
+      titleContainerRef.current &&
+      actionBarRef.current &&
+      tableHeaderRef.current
+    ) {
+      const containerHeight = containerRef.current.clientHeight;
+      const actionBarHeight = actionBarRef.current.clientHeight;
+      const tableHeaderHeight = tableHeaderRef.current.clientHeight;
+
+      // Get the title height including margin
+      const titleHeight = titleContainerRef.current.offsetHeight;
+      const titleStyles = window.getComputedStyle(titleContainerRef.current);
+      const titleMarginBottom = parseInt(titleStyles.marginBottom);
+
+      setBacklogHeight(
+        containerHeight -
+          actionBarHeight -
+          tableHeaderHeight -
+          titleHeight -
+          titleMarginBottom,
+      );
+    }
+  }, [containerRef, titleContainerRef, actionBarRef, tableHeaderRef]);
+
   // to search once on initial load
   useEffect(() => {
     searchTickets(lazyState, debouncedGlobalFilterValue);
     // eslint-disable-next-line
   }, [debouncedGlobalFilterValue]);
 
-  const onGlobalFilterChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setGlobalFilterValue(event.target.value);
-  };
+  const onGlobalFilterChange = useCallback(
+    (value: string) => {
+      setGlobalFilterValue(value);
+    },
+    [setGlobalFilterValue],
+  );
 
   const onSortChange = (event: DataTableSortEvent) => {
     const tempLazyState = {
@@ -110,22 +154,35 @@ export default function MyBacklog() {
     searchTickets(tempLazyState, debouncedGlobalFilterValue);
   };
 
-  const header = (() => {
+  const header = useMemo(() => {
     return (
-      <MyBacklogHeader
-        onGlobalFilterChange={onGlobalFilterChange}
-        globalFilterValue={globalFilterValue}
-        clearFilter={clearFilter}
-      />
+      <div ref={tableHeaderRef}>
+        <MyBacklogHeader
+          onGlobalFilterChange={onGlobalFilterChange}
+          globalFilterValue={globalFilterValue}
+          clearFilter={clearFilter}
+        />
+      </div>
     );
-  })();
+  }, [onGlobalFilterChange, globalFilterValue, clearFilter]);
 
   return (
     <>
-      <Stack sx={{ height: '100%' }}>
-        <TicketsActionBar createTaskEnabled createTicketEnabled />
+      <Stack sx={{ height: '100%' }} ref={containerRef}>
+        <Box ref={titleContainerRef} sx={{ mb: 2 }}>
+          <Typography variant="h4" sx={{ fontWeight: 600 }}>
+            My Backlog
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            Tickets assigned to me (excluding closed tickets)
+          </Typography>
+        </Box>
+        <div ref={actionBarRef}>
+          <TicketsActionBar createTaskEnabled createTicketEnabled />
+        </div>
 
         <TicketsBacklogView
+          height={backlogHeight}
           header={header}
           ticketStore={ticketStore}
           fields={defaultTableFields}
@@ -155,11 +212,13 @@ export default function MyBacklog() {
     </>
   );
 }
+
 interface MyBacklogHeaderProps {
   globalFilterValue: string;
   onGlobalFilterChange: (event: ChangeEvent<HTMLInputElement>) => void;
   clearFilter: () => void;
 }
+
 const MyBacklogHeader = ({
   globalFilterValue,
   onGlobalFilterChange,

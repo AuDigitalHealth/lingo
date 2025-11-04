@@ -1,5 +1,4 @@
-import { Typography } from '@mui/material';
-import { Box } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { Product7BoxBGColour } from './style/colors';
 
 interface LegendConfig {
@@ -26,13 +25,13 @@ const LEGEND_CONFIG: LegendConfig = {
       key: 'primitive',
       backgroundColor: Product7BoxBGColour.PRIMITIVE,
       borderColor: Product7BoxBGColour.PRIMITIVE,
-      description: 'Primitive',
+      description: 'Primitive (existing concept)',
     },
     {
       key: 'fully_defined',
       backgroundColor: Product7BoxBGColour.FULLY_DEFINED,
       borderColor: Product7BoxBGColour.FULLY_DEFINED,
-      description: 'Fully Defined',
+      description: 'Fully Defined (existing concept)',
     },
     {
       key: 'invalid',
