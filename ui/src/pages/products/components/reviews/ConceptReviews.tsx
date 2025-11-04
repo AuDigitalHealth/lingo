@@ -26,6 +26,7 @@ import {
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import MailIcon from '@mui/icons-material/Mail';
 import MarkunreadIcon from '@mui/icons-material/Markunread';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import BaseModal from '../../../../components/modal/BaseModal.js';
 import BaseModalHeader from '../../../../components/modal/BaseModalHeader.js';
 import BaseModalBody from '../../../../components/modal/BaseModalBody.js';
@@ -57,16 +58,21 @@ import {
   useShowReviewControls,
 } from '../../../../hooks/api/task/useReviews.tsx';
 import { usePendingMutations } from './usePendingMutations.tsx';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 
 interface ConceptReviewsProps {
   conceptReview: ConceptReview | undefined;
   branch: string;
   ticket?: Ticket;
 }
+
 function ConceptReviews({ conceptReview }: ConceptReviewsProps) {
   const [messageModalOpen, setMessageModalOpen] = useState(false);
   const task = useTaskByKey();
   const projectKey = task?.projectKey;
+  const navigate = useNavigate();
+  const params = useParams();
+  const location = useLocation();
 
   const taskKey = task?.key;
   const showReviewControls = useShowReviewControls({ task });
@@ -95,6 +101,18 @@ function ConceptReviews({ conceptReview }: ConceptReviewsProps) {
     removePendingMutation,
   ]);
 
+  // Check if we're on the review route with feedback-open for this concept
+  useEffect(() => {
+    const reviewConceptId = params.conceptId;
+    const isFeedbackRoute = location.pathname.includes('/feedback-open');
+    if (
+      reviewConceptId === conceptReview?.concept?.conceptId &&
+      isFeedbackRoute
+    ) {
+      setMessageModalOpen(true);
+    }
+  }, [params.conceptId, conceptReview?.concept?.conceptId, location.pathname]);
+
   if (!conceptReview) {
     return <></>;
   }
@@ -104,6 +122,15 @@ function ConceptReviews({ conceptReview }: ConceptReviewsProps) {
   const handleToggleMessageModalOpen = (e: React.MouseEvent) => {
     e.stopPropagation();
     setMessageModalOpen(!messageModalOpen);
+  };
+
+  const handleCloseModal = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setMessageModalOpen(false);
+    // Navigate back if we're on a feedback-open route
+    if (params.conceptId && location.pathname.includes('/feedback-open')) {
+      navigate(`/dashboard/tasks/edit/${taskKey}/review/${params.conceptId}`);
+    }
   };
 
   const handleToggleReview = (e: React.MouseEvent) => {
@@ -143,8 +170,8 @@ function ConceptReviews({ conceptReview }: ConceptReviewsProps) {
 
     // Call the mutation
     approveReviewMutation.mutate({
-      projectKey: projectKey as string, // assuming ticket has projectKey
-      taskKey: taskKey as string, // assuming ticket has key
+      projectKey: projectKey as string,
+      taskKey: taskKey as string,
       reviewedList: updatedReviewedList,
     });
   };
@@ -154,7 +181,7 @@ function ConceptReviews({ conceptReview }: ConceptReviewsProps) {
       {task && messageModalOpen && (
         <ReviewMessageModal
           open={messageModalOpen}
-          handleClose={handleToggleMessageModalOpen}
+          handleClose={handleCloseModal}
           conceptReview={conceptReview}
           task={task}
         />
@@ -244,6 +271,7 @@ interface ReviewMessageModalProps {
   handleClose: (e: React.MouseEvent) => void;
   task: Task;
 }
+
 function ReviewMessageModal({
   conceptReview,
   open,
@@ -258,7 +286,15 @@ function ReviewMessageModal({
   const hasUnread = unreadConceptIds?.includes(
     conceptReview.conceptId as string,
   );
+
+  const handleOpenInNewTab = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const reviewUrl = `/dashboard/tasks/edit/${taskKey}/review/${conceptReview?.concept?.conceptId}/feedback-open`;
+    window.open(reviewUrl, '_blank');
+  };
+
   const mutation = useFeedbackUnreadMutation();
+
   const handleToggleFeedbackRead = () => {
     const tempConceptIds = unreadConceptIds || [];
     const thisConceptId = conceptReview?.conceptId as string;
@@ -327,9 +363,16 @@ function ReviewMessageModal({
             </LoadingButton>
           }
           endChildren={
-            <Button variant="contained" onClick={handleClose}>
-              Close
-            </Button>
+            <Stack flexDirection={'row'} gap={1}>
+              <Tooltip title="Open review in new tab">
+                <IconButton onClick={handleOpenInNewTab}>
+                  <OpenInNewIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Button variant="contained" onClick={handleClose}>
+                Close
+              </Button>
+            </Stack>
           }
         />
       </BaseModal>
@@ -340,6 +383,7 @@ function ReviewMessageModal({
 interface ReviewMessageRenderProps {
   message: ReviewMessage;
 }
+
 function ReviewMessageRender({ message }: ReviewMessageRenderProps) {
   const user = useUserStore();
   const isCurrentUser = user?.login === message.fromUsername;
@@ -418,6 +462,7 @@ function ReviewMessageRender({ message }: ReviewMessageRenderProps) {
 interface ReviewMessageEditorProps {
   conceptId: string;
 }
+
 function ReviewMessageEditor({ conceptId }: ReviewMessageEditorProps) {
   const task = useTaskByKey();
   const projectKey = task?.projectKey;
@@ -464,6 +509,7 @@ function ReviewMessageEditor({ conceptId }: ReviewMessageEditorProps) {
       },
     );
   };
+
   return (
     <>
       <Box
@@ -476,7 +522,6 @@ function ReviewMessageEditor({ conceptId }: ReviewMessageEditorProps) {
         <RichTextEditor
           ref={rteRef}
           extensions={extensions}
-          //   content={exampleContent}
           editable={isEditable}
           editorProps={{}}
           renderControls={() => <ReviewEditorMenuControls />}
@@ -569,11 +614,8 @@ function ReviewEditorMenuControls() {
   return (
     <MenuControlsContainer>
       <MenuButtonBold />
-
       <MenuButtonItalic />
-
       <MenuButtonOrderedList />
-
       <MenuButtonBulletedList />
     </MenuControlsContainer>
   );
