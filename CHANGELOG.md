@@ -8,17 +8,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
 
+### Added
+
+- Headers and descriptions to backlog views for better navigation clarity
+    - My Backlog now shows "Tickets assigned to me (excluding closed tickets)"
+    - Backlog now shows "All tickets in the system with filtering and bulk edit capabilities"
+- Updated color legend to clarify that primitive and fully defined concepts are existing concepts
 
 ## [1.3.11] - 2025-11-04
 
+### Fixed
+
+- Fixed product update crash caused by validation issues in ProductUpdateDetails
 
 ## [1.3.10] - 2025-11-03
 
+### Fixed
+
+- Added retry logic and enhanced logging for PrematureCloseException errors from Snowstorm
+- Fixed cache invalidation for concept searches and product loading when branches are rebased
+- Improved merge handling for diverged tasks with conflict detection and resolution workflow
 
 ## [1.3.9] - 2025-10-30
 
+### Fixed
+
+- Resolved missing TP refset issue that was overlooked during merges
+- Enhanced bulk pack operations and functionality
+- Disabled update button for inactive/deleted products to prevent errors
+
+### Added
+
+- Separate display of unpublished and published concepts in Lingo for better visibility
+- Improved error messaging for task rebase operations to provide more informative feedback
 
 ## [1.3.8] - 2025-10-27
 
