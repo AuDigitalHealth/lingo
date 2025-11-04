@@ -2,8 +2,8 @@ import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
 import {
-  LazyTicketTableState,
   generateDefaultTicketTableLazyState,
+  LazyTicketTableState,
 } from '../../types/tickets/table';
 import { TicketsBacklogView } from './components/grid/TicketsBacklogView';
 import { useSearchTickets } from './components/grid/useLocalTickets';
@@ -17,7 +17,7 @@ import {
 import { useAllStates } from '../../hooks/api/useInitializeTickets';
 import useUserStore from '../../stores/UserStore';
 import { InputText } from 'primereact/inputtext';
-import { Stack } from '@mui/material';
+import { Stack, Typography } from '@mui/material';
 import useDebounce from '../../hooks/useDebounce';
 import TicketsActionBar from './components/TicketsActionBar';
 import { Route, Routes } from 'react-router-dom';
@@ -123,6 +123,12 @@ export default function MyBacklog() {
   return (
     <>
       <Stack sx={{ height: '100%' }}>
+        <Typography variant="h4" sx={{ fontWeight: 600 }}>
+          My Backlog
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+          Tickets assigned to me (excluding closed tickets)
+        </Typography>
         <TicketsActionBar createTaskEnabled createTicketEnabled />
 
         <TicketsBacklogView

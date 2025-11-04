@@ -1,7 +1,7 @@
 import {
   DataTableFilterEvent,
-  DataTableSortEvent,
   DataTablePageEvent,
+  DataTableSortEvent,
 } from 'primereact/datatable';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
@@ -21,10 +21,10 @@ import {
 } from 'react';
 import useTicketStore from '../../stores/TicketStore';
 import {
-  LazyTicketTableState,
   generateDefaultTicketTableLazyState,
   hasFiltersChanged,
   hasSortChanged,
+  LazyTicketTableState,
 } from '../../types/tickets/table';
 import useDebounce from '../../hooks/useDebounce';
 import { useSearchTickets } from './components/grid/useLocalTickets';
@@ -36,16 +36,15 @@ import BaseModalBody from '../../components/modal/BaseModalBody';
 import {
   Autocomplete,
   AutocompleteInputChangeReason,
+  Button as MuiButton,
   MenuItem,
   Select,
   TextField,
   Typography,
 } from '@mui/material';
-import { Button as MuiButton } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import BaseModalFooter from '../../components/modal/BaseModalFooter';
 import {
-  AdditionalFieldType,
   AutocompleteGroupOption,
   AutocompleteGroupOptionType,
   Ticket,
@@ -282,6 +281,14 @@ export default function TicketsBacklog() {
   return (
     <>
       <Stack sx={{ height: '100%' }} ref={containerRef}>
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="h4" sx={{ fontWeight: 600 }}>
+            Backlog
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            All tickets in the system with filtering and bulk edit capabilities
+          </Typography>
+        </Box>
         <div ref={actionBarRef}>
           <TicketsActionBar
             externalRequestorsEnabled
