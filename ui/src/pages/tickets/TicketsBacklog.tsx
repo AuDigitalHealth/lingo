@@ -228,20 +228,34 @@ export default function TicketsBacklog() {
   const containerRef = useRef<HTMLDivElement>(null);
   const actionBarRef = useRef<HTMLDivElement>(null);
   const tableHeaderRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLDivElement>(null);
   const [backlogHeight, setBacklogHeight] = useState(0);
 
   useLayoutEffect(() => {
     if (
       containerRef.current &&
       actionBarRef.current &&
-      tableHeaderRef.current
+      tableHeaderRef.current &&
+      titleRef.current
     ) {
       const containerHeight = containerRef.current.clientHeight;
       const actionBarHeight = actionBarRef.current.clientHeight;
       const tableHeaderHeight = tableHeaderRef.current.clientHeight;
-      setBacklogHeight(containerHeight - actionBarHeight - tableHeaderHeight);
+
+      // Get the title height including margin
+      const titleHeight = titleRef.current.offsetHeight;
+      const titleStyles = window.getComputedStyle(titleRef.current);
+      const titleMarginBottom = parseInt(titleStyles.marginBottom);
+
+      setBacklogHeight(
+        containerHeight -
+          actionBarHeight -
+          tableHeaderHeight -
+          titleHeight -
+          titleMarginBottom,
+      );
     }
-  }, [containerRef, actionBarRef, tableHeaderRef]);
+  }, [containerRef, actionBarRef, tableHeaderRef, titleRef]);
 
   const header = useMemo(() => {
     return (
@@ -281,7 +295,7 @@ export default function TicketsBacklog() {
   return (
     <>
       <Stack sx={{ height: '100%' }} ref={containerRef}>
-        <Box sx={{ mb: 2 }}>
+        <Box ref={titleRef} sx={{ mb: 2 }}>
           <Typography variant="h4" sx={{ fontWeight: 600 }}>
             Backlog
           </Typography>
