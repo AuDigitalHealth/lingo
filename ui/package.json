@@ -86,7 +86,7 @@
     "ecl-builder": "^0.2.1",
     "file-saver": "^2.0.5",
     "framer-motion": "^11.2.12",
-    "jsdom": "^24.1.0",
+    "jsdom": "^27.1.0",
     "konva": "^9.3.6",
     "lodash": "^4.17.21",
     "lodash.debounce": "^4.0.8",
