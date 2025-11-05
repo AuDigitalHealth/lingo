@@ -33,9 +33,9 @@ import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
-import reactor.netty.http.client.PrematureCloseException;
 import reactor.netty.transport.logging.AdvancedByteBufFormat;
 import reactor.util.retry.Retry;
 
@@ -181,7 +181,7 @@ public class ApiWebConfiguration {
         next.exchange(request)
             .retryWhen(
                 Retry.backoff(maxAttempt, Duration.ofSeconds(2))
-                    .filter(ex -> ex instanceof PrematureCloseException)
+                    .filter(ex -> ex instanceof WebClientRequestException)
                     .doBeforeRetry(
                         retrySignal -> {
                           log.severe(
