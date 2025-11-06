@@ -23,11 +23,15 @@ import au.gov.digitalhealth.lingo.exception.TicketStateClosedProblem;
 import au.gov.digitalhealth.lingo.service.SergioService;
 import au.gov.digitalhealth.tickets.AdditionalFieldValueDto;
 import au.gov.digitalhealth.tickets.ExternalRequesterDto;
+import au.gov.digitalhealth.tickets.IterationDto;
 import au.gov.digitalhealth.tickets.JsonFieldDto;
 import au.gov.digitalhealth.tickets.LabelDto;
+import au.gov.digitalhealth.tickets.PriorityBucketDto;
+import au.gov.digitalhealth.tickets.StateDto;
 import au.gov.digitalhealth.tickets.TicketBacklogDto;
 import au.gov.digitalhealth.tickets.TicketDto;
 import au.gov.digitalhealth.tickets.TicketDtoExtended;
+import au.gov.digitalhealth.tickets.TicketDtoOptionals;
 import au.gov.digitalhealth.tickets.TicketImportDto;
 import au.gov.digitalhealth.tickets.TicketMinimalDto;
 import au.gov.digitalhealth.tickets.controllers.BulkProductActionDto;
@@ -1840,53 +1844,73 @@ public class TicketServiceImpl implements TicketService {
 
   @SuppressWarnings("java:S1192")
   @Transactional
-  public TicketDto patchTicket(TicketDto ticketDto, Long ticketId) {
+  public TicketDto patchTicket(TicketDtoOptionals ticketDto, Long ticketId) {
     Ticket existingTicket =
         ticketRepository
             .findById(ticketId)
             .orElseThrow(
-                () ->
-                    new ResourceNotFoundProblem(
-                        ErrorMessages.TICKET_ID_NOT_FOUND + ticketDto.getId()));
+                () -> new ResourceNotFoundProblem(ErrorMessages.TICKET_ID_NOT_FOUND + ticketId));
 
-    // update fields if they are present in the dto
-
-    existingTicket.setTitle(ticketDto.getTitle());
-
-    existingTicket.setDescription(ticketDto.getDescription());
-
-    existingTicket.setAssignee(ticketDto.getAssignee());
-
-    if (ticketDto.getIteration() != null) {
-      existingTicket.setIteration(
-          iterationRepository
-              .findById(ticketDto.getIteration().getId())
-              .orElseThrow(() -> new ResourceNotFoundProblem("Iteration not found")));
+    // Update simple fields if they are present in the dto
+    if (ticketDto.getTitle().isPresent()) {
+      existingTicket.setTitle(ticketDto.getTitle().get());
+    }
+    if (ticketDto.getDescription().isPresent()) {
+      existingTicket.setDescription(ticketDto.getDescription().get());
+    }
+    if (ticketDto.getAssignee().isPresent()) {
+      existingTicket.setAssignee(ticketDto.getAssignee().get());
     }
 
-    if (ticketDto.getState() != null) {
-      existingTicket.setState(
-          stateRepository
-              .findById(ticketDto.getState().getId())
-              .orElseThrow(() -> new ResourceNotFoundProblem("Iteration not found")));
+    // Handle Iteration
+    if (ticketDto.getIteration().isPresent()) {
+      IterationDto iterationDto = ticketDto.getIteration().get();
+      if (iterationDto != null) {
+        existingTicket.setIteration(
+            iterationRepository
+                .findById(iterationDto.getId())
+                .orElseThrow(() -> new ResourceNotFoundProblem("Iteration not found")));
+      } else {
+        existingTicket.setIteration(null);
+      }
     }
 
-    if (ticketDto.getPriorityBucket() != null) {
-      existingTicket.setPriorityBucket(
-          priorityBucketRepository
-              .findById(ticketDto.getPriorityBucket().getId())
-              .orElseThrow(() -> new ResourceNotFoundProblem("Iteration not found")));
+    // Handle State
+    if (ticketDto.getState().isPresent()) {
+      StateDto stateDto = ticketDto.getState().get();
+      if (stateDto != null) {
+        existingTicket.setState(
+            stateRepository
+                .findById(stateDto.getId())
+                .orElseThrow(() -> new ResourceNotFoundProblem("State not found")));
+      } else {
+        existingTicket.setState(null);
+      }
     }
 
-    // labels
-    if (ticketDto.getLabels() != null) {
-      if (ticketDto.getLabels().isEmpty()) {
-        // If empty list is provided, clear all labels
+    // Handle PriorityBucket
+    if (ticketDto.getPriorityBucket().isPresent()) {
+      PriorityBucketDto priorityBucketDto = ticketDto.getPriorityBucket().get();
+      if (priorityBucketDto != null) {
+        existingTicket.setPriorityBucket(
+            priorityBucketRepository
+                .findById(priorityBucketDto.getId())
+                .orElseThrow(() -> new ResourceNotFoundProblem("PriorityBucket not found")));
+      } else {
+        existingTicket.setPriorityBucket(null);
+      }
+    }
+
+    // Handle Labels
+    if (ticketDto.getLabels().isPresent()) {
+      Set<LabelDto> labelDtos = ticketDto.getLabels().get();
+      if (labelDtos == null || labelDtos.isEmpty()) {
+        // If empty list or null is provided, clear all labels
         existingTicket.getLabels().clear();
       } else {
         // Replace all labels with the new ones
         Set<Label> newLabels =
-            ticketDto.getLabels().stream()
+            labelDtos.stream()
                 .map(
                     labelDto ->
                         labelRepository
@@ -1901,50 +1925,63 @@ public class TicketServiceImpl implements TicketService {
         existingTicket.getLabels().addAll(newLabels);
       }
     }
-    // External Requestors
-    if (ticketDto.getExternalRequestors() != null && !ticketDto.getExternalRequestors().isEmpty()) {
-      Set<ExternalRequestor> newRequestors =
-          ticketDto.getExternalRequestors().stream()
-              .map(
-                  requestorDto ->
-                      externalRequestorRepository
-                          .findById(requestorDto.getId())
-                          .orElseThrow(
-                              () ->
-                                  new ResourceNotFoundProblem(
-                                      "ExternalRequestor not found with id: "
-                                          + requestorDto.getId())))
-              .collect(Collectors.toSet());
-      existingTicket.getExternalRequestors().addAll(newRequestors);
+
+    // Handle External Requestors
+    if (ticketDto.getExternalRequestors().isPresent()) {
+      Set<ExternalRequesterDto> requestorDtos = ticketDto.getExternalRequestors().get();
+      if (requestorDtos != null && !requestorDtos.isEmpty()) {
+        Set<ExternalRequestor> newRequestors =
+            requestorDtos.stream()
+                .map(
+                    requestorDto ->
+                        externalRequestorRepository
+                            .findById(requestorDto.getId())
+                            .orElseThrow(
+                                () ->
+                                    new ResourceNotFoundProblem(
+                                        "ExternalRequestor not found with id: "
+                                            + requestorDto.getId())))
+                .collect(Collectors.toSet());
+        existingTicket.getExternalRequestors().clear();
+        existingTicket.getExternalRequestors().addAll(newRequestors);
+      } else {
+        existingTicket.getExternalRequestors().clear();
+      }
     }
 
-    // JSON Fields
-    if (ticketDto.getJsonFields() != null && !ticketDto.getJsonFields().isEmpty()) {
-      Map<String, JsonField> existingJsonFieldMap =
-          existingTicket.getJsonFields().stream()
-              .collect(Collectors.toMap(JsonField::getName, Function.identity()));
+    // Handle JSON Fields
+    if (ticketDto.getJsonFields().isPresent()) {
+      Set<JsonFieldDto> jsonFieldDtos = ticketDto.getJsonFields().get();
+      if (jsonFieldDtos != null && !jsonFieldDtos.isEmpty()) {
+        Map<String, JsonField> existingJsonFieldMap =
+            existingTicket.getJsonFields().stream()
+                .collect(Collectors.toMap(JsonField::getName, Function.identity()));
 
-      Set<JsonField> updatedJsonFields =
-          ticketDto.getJsonFields().stream()
-              .map(
-                  jsonFieldDto -> {
-                    JsonField jsonField = existingJsonFieldMap.get(jsonFieldDto.getName());
-                    if (jsonField == null) {
-                      // Create new JsonField if it doesn't exist
-                      jsonField = new JsonField();
-                      jsonField.setName(jsonFieldDto.getName());
-                      jsonField.setTicket(existingTicket);
-                    }
-                    // Update the value (for both new and existing fields)
-                    jsonField.setValue(jsonFieldDto.getValue());
-                    return jsonField;
-                  })
-              .collect(Collectors.toSet());
+        Set<JsonField> updatedJsonFields =
+            jsonFieldDtos.stream()
+                .map(
+                    jsonFieldDto -> {
+                      JsonField jsonField = existingJsonFieldMap.get(jsonFieldDto.getName());
+                      if (jsonField == null) {
+                        // Create new JsonField if it doesn't exist
+                        jsonField = new JsonField();
+                        jsonField.setName(jsonFieldDto.getName());
+                        jsonField.setTicket(existingTicket);
+                      }
+                      // Update the value (for both new and existing fields)
+                      jsonField.setValue(jsonFieldDto.getValue());
+                      return jsonField;
+                    })
+                .collect(Collectors.toSet());
 
-      existingTicket.getJsonFields().clear();
-      existingTicket.getJsonFields().addAll(updatedJsonFields);
+        existingTicket.getJsonFields().clear();
+        existingTicket.getJsonFields().addAll(updatedJsonFields);
+      } else {
+        existingTicket.getJsonFields().clear();
+      }
     }
 
+    // Handle Additional Field Values (this one wasn't wrapped in JsonNullable)
     if (ticketDto.getAdditionalFieldValues() != null
         && !ticketDto.getAdditionalFieldValues().isEmpty()) {
       Map<Long, AdditionalFieldValue> existingAFVMap =

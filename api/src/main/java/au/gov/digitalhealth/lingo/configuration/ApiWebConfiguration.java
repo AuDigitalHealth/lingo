@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.logging.LogLevel;
 import java.time.Duration;
 import lombok.extern.java.Log;
+import org.openapitools.jackson.nullable.JsonNullableModule;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,6 +31,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.http.codec.json.Jackson2JsonEncoder;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -47,6 +49,13 @@ public class ApiWebConfiguration {
 
   public ApiWebConfiguration(AuthHelper authHelper) {
     this.authHelper = authHelper;
+  }
+
+  @Bean
+  public ObjectMapper objectMapper(Jackson2ObjectMapperBuilder builder) {
+    ObjectMapper objectMapper = builder.createXmlMapper(false).build();
+    objectMapper.registerModule(new JsonNullableModule());
+    return objectMapper;
   }
 
   @Bean

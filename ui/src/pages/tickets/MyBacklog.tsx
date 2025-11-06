@@ -240,8 +240,11 @@ const MyBacklogHeader = ({
         <IconField iconPosition="left" style={{ marginLeft: 'auto' }}>
           <InputIcon className="pi pi-search" />
           <InputText
+            id="my-backlog-quick-search"
             value={globalFilterValue}
-            onChange={onGlobalFilterChange}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              onGlobalFilterChange(e.target.value)
+            }
             placeholder="Quick Search"
           />
         </IconField>

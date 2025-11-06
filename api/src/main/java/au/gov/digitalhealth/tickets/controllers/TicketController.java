@@ -24,6 +24,7 @@ import au.gov.digitalhealth.lingo.exception.TicketImportProblem;
 import au.gov.digitalhealth.tickets.TicketBacklogDto;
 import au.gov.digitalhealth.tickets.TicketDto;
 import au.gov.digitalhealth.tickets.TicketDtoExtended;
+import au.gov.digitalhealth.tickets.TicketDtoOptionals;
 import au.gov.digitalhealth.tickets.TicketHistoryEntryDto;
 import au.gov.digitalhealth.tickets.TicketImportDto;
 import au.gov.digitalhealth.tickets.TicketMinimalDto;
@@ -185,7 +186,7 @@ public class TicketController {
 
   @PatchMapping(value = "/api/tickets/{ticketId}", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<TicketDto> patchTicket(
-      @RequestBody TicketDto ticketDto, @PathVariable Long ticketId) {
+      @RequestBody TicketDtoOptionals ticketDto, @PathVariable Long ticketId) {
     return new ResponseEntity<>(ticketService.patchTicket(ticketDto, ticketId), HttpStatus.OK);
   }
 
