@@ -6,6 +6,8 @@ import { Button } from '@mui/material';
 import useAuthoringStore from '../../../../stores/AuthoringStore.ts';
 import ConfirmationModal from '../../../../themes/overrides/ConfirmationModal.tsx';
 import { FieldProps } from '@rjsf/utils';
+import useCanEditTask from '../../../../hooks/useCanEditTask.tsx';
+import UnableToEditTooltip from '../../../tasks/components/UnableToEditTooltip.tsx';
 
 export interface DraftSubmitPanelProps extends FieldProps {
   isDirty: boolean;
@@ -18,6 +20,7 @@ export function DraftSubmitPanel({
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
 
   const { forceNavigation } = useAuthoringStore();
+  const { canEdit, lockDescription } = useCanEditTask();
 
   const blocker = useBlocker(
     ({ currentLocation, nextLocation }) =>
@@ -57,27 +60,29 @@ export function DraftSubmitPanel({
 
   return (
     <>
-      <Button
-        variant="contained"
-        color="info"
-        disabled={!isDirty}
-        onClick={saveDraft}
-        data-testid={'partial-save-btn'}
-      >
-        Save Progress
-      </Button>
-      {blocker.proceed !== undefined && blocker.reset !== undefined && (
-        <ConfirmationModal
-          content={''}
-          disabled={false}
-          open={confirmationModalOpen}
-          title={'Unsaved changes will be lost'}
-          action="Proceed"
-          handleAction={handleProceed}
-          handleClose={handleReset}
-          reverseAction="Back"
-        />
-      )}
+      <UnableToEditTooltip canEdit={canEdit} lockDescription={lockDescription}>
+        <Button
+          variant="contained"
+          color="info"
+          disabled={!isDirty || !canEdit}
+          onClick={saveDraft}
+          data-testid={'partial-save-btn'}
+        >
+          Save Progress
+        </Button>
+        {blocker.proceed !== undefined && blocker.reset !== undefined && (
+          <ConfirmationModal
+            content={''}
+            disabled={false}
+            open={confirmationModalOpen}
+            title={'Unsaved changes will be lost'}
+            action="Proceed"
+            handleAction={handleProceed}
+            handleClose={handleReset}
+            reverseAction="Back"
+          />
+        )}
+      </UnableToEditTooltip>
     </>
   );
 }

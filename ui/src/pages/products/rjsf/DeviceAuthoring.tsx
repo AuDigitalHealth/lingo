@@ -54,6 +54,7 @@ import UnableToEditTooltip from '../../tasks/components/UnableToEditTooltip.tsx'
 import { useActiveConceptIdsByIds } from '../../../hooks/eclRefset/useConceptsById.tsx';
 import { isOriginalConceptActive } from '../../../utils/helpers/conceptUtils.ts';
 import { showError } from '../../../types/ErrorHandler.ts';
+import useCanEditTask from '../../../hooks/useCanEditTask.tsx';
 
 export interface DeviceAuthoringV2Props {
   selectedProduct: Concept | ValueSetExpansionContains | null;
@@ -83,6 +84,7 @@ function DeviceAuthoring({
   const [staleModeOn, setStaleModeOn] = useState(false);
   const [manualLoading, setManualLoading] = useState(false);
   const [partialUpdateMode, setPartialUpdateMode] = useState(false);
+  const { canEdit, lockDescription } = useCanEditTask();
   const existingConceptToLoad = selectedProduct
     ? isValueSetExpansionContains(selectedProduct)
       ? selectedProduct.code
@@ -230,6 +232,20 @@ function DeviceAuthoring({
       }
     }
     return false;
+  };
+  const getLockDescription = () => {
+    if (!canEdit) {
+      return lockDescription;
+    }
+
+    if (mode === 'update') {
+      if (staleModeOn && !partialUpdateMode) {
+        return 'Update disabled to prevent stale data. Please click reload to get the latest before updating.';
+      }
+      return 'Update disabled: product is partially saved or the form was opened without an existing product.';
+    }
+
+    return 'Submitting ...';
   };
 
   useEffect(() => {
@@ -409,14 +425,10 @@ function DeviceAuthoring({
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                 <UnableToEditTooltip
-                  canEdit={!(mutation.isPending || isProductUpdateDisabled())}
-                  lockDescription={
-                    mode === 'update'
-                      ? staleModeOn && !partialUpdateMode
-                        ? 'Update disabled to prevent stale data. Please click reload to get the latest before updating.'
-                        : 'Update disabled: product is partially saved or the form was opened without an existing product.'
-                      : 'Submitting ...'
+                  canEdit={
+                    canEdit && !mutation.isPending && !isProductUpdateDisabled()
                   }
+                  lockDescription={getLockDescription()}
                 >
                   <Button
                     data-testid={
@@ -426,7 +438,11 @@ function DeviceAuthoring({
                     variant="contained"
                     color={mode === 'create' ? 'primary' : 'warning'}
                     sx={mode === 'update' ? { color: '#000' } : {}}
-                    disabled={mutation.isPending || isProductUpdateDisabled()}
+                    disabled={
+                      mutation.isPending ||
+                      isProductUpdateDisabled() ||
+                      !canEdit
+                    }
                     onClick={() => {
                       setIsProductUpdate(mode === 'update');
                     }}
