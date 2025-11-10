@@ -8,3 +8,4 @@ ui/reports
 setenv.sh
 sergio-extension/dependency-reduced-pom.xml
 /eclrefset/target/
+ui/public/CHANGELOG.md

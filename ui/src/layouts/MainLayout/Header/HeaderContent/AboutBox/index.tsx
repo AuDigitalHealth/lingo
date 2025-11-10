@@ -1,11 +1,13 @@
 /* eslint-disable */
-import { useRef, useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useTheme } from '@mui/material/styles';
 import {
   Box,
+  Button,
   CardContent,
   ClickAwayListener,
+  Divider,
   Paper,
   Popper,
   Stack,
@@ -18,11 +20,15 @@ import IconButton from '../../../../../components/@extended/IconButton';
 import { InfoOutlined } from '@mui/icons-material';
 import useApplicationConfigStore from '../../../../../stores/ApplicationConfigStore.ts';
 import { useFetchReleaseVersion } from '../../../../../hooks/api/useInitializeConfig.tsx';
+import ChangelogModal from '../../../../../pages/settings/ChangelogModal';
+import LicensesModal from '../../../../../pages/settings/LicensesModal';
 
 const AboutBox = () => {
   const theme = useTheme();
 
   const [buildNumber, setBuildNumber] = useState('');
+  const [changelogOpen, setChangelogOpen] = useState(false);
+  const [licensesOpen, setLicensesOpen] = useState(false);
   const { applicationConfig, getEnvironmentColor } =
     useApplicationConfigStore();
   const { releaseVersion } = useFetchReleaseVersion();
@@ -46,88 +52,127 @@ const AboutBox = () => {
     setOpen(false);
   };
 
+  const handleChangelogOpen = () => {
+    setChangelogOpen(true);
+    setOpen(false); // Close the about popup
+  };
+
   const iconBackColorOpen =
     theme.palette.mode === ThemeMode.DARK ? 'grey.200' : 'grey.300';
   const iconBackColor =
     theme.palette.mode === ThemeMode.DARK ? 'background.default' : 'white';
 
   return (
-    <Box sx={{ flexShrink: 0, ml: 0.75 }}>
-      <IconButton
-        color="secondary"
-        variant="light"
-        sx={{
-          color: 'text.primary',
-          bgcolor: open ? iconBackColorOpen : iconBackColor,
-        }}
-        aria-label="open profile"
-        ref={anchorRef}
-        aria-controls={open ? 'profile-grow' : undefined}
-        aria-haspopup="true"
-        onClick={handleToggle}
-      >
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ p: 1 }}>
-          <InfoOutlined fontSize="small" />
-        </Stack>
-      </IconButton>
-      <Popper
-        placement="bottom-end"
-        open={open}
-        anchorEl={anchorRef.current}
-        role={undefined}
-        transition
-        disablePortal
-        popperOptions={{
-          modifiers: [
-            {
-              name: 'offset',
-              options: {
-                offset: [0, 9],
-              },
-            },
-          ],
-        }}
-      >
-        {({ TransitionProps }) => (
-          <Transitions
-            type="grow"
-            position="top-right"
-            in={open}
-            {...TransitionProps}
-          >
-            <Paper
-              sx={{
-                boxShadow: theme.customShadows.z1,
-                width: 290,
-                minWidth: 240,
-                maxWidth: 290,
-                [theme.breakpoints.down('md')]: {
-                  maxWidth: 250,
+    <>
+      <Box sx={{ flexShrink: 0, ml: 0.75 }}>
+        <IconButton
+          color="secondary"
+          variant="light"
+          sx={{
+            color: 'text.primary',
+            bgcolor: open ? iconBackColorOpen : iconBackColor,
+          }}
+          aria-label="open profile"
+          ref={anchorRef}
+          aria-controls={open ? 'profile-grow' : undefined}
+          aria-haspopup="true"
+          onClick={handleToggle}
+        >
+          <Stack direction="row" spacing={2} alignItems="center" sx={{ p: 1 }}>
+            <InfoOutlined fontSize="small" />
+          </Stack>
+        </IconButton>
+        <Popper
+          placement="bottom-end"
+          open={open}
+          anchorEl={anchorRef.current}
+          role={undefined}
+          transition
+          disablePortal
+          popperOptions={{
+            modifiers: [
+              {
+                name: 'offset',
+                options: {
+                  offset: [0, 9],
                 },
-              }}
+              },
+            ],
+          }}
+        >
+          {({ TransitionProps }) => (
+            <Transitions
+              type="grow"
+              position="top-right"
+              in={open}
+              {...TransitionProps}
             >
-              <ClickAwayListener onClickAway={handleClose}>
-                <MainCard elevation={0} border={false} content={false}>
-                  <CardContent
-                    sx={{ px: 2.5, pt: 3, alignItems: 'flex-start' }}
-                  >
-                    <Typography
-                      color={getEnvironmentColor()}
-                      sx={{ fontSize: '0.75rem', fontWeight: 'bold' }}
+              <Paper
+                sx={{
+                  boxShadow: theme.customShadows.z1,
+                  width: 290,
+                  minWidth: 240,
+                  maxWidth: 290,
+                  [theme.breakpoints.down('md')]: {
+                    maxWidth: 250,
+                  },
+                }}
+              >
+                <ClickAwayListener onClickAway={handleClose}>
+                  <MainCard elevation={0} border={false} content={false}>
+                    <CardContent
+                      sx={{ px: 2.5, pt: 3, pb: 2, alignItems: 'flex-start' }}
                     >
-                      {applicationConfig.appEnvironment.toUpperCase()}
-                    </Typography>
-                    <Typography variant="body1">
-                      Lingo build number: {buildNumber}
-                    </Typography>
-                  </CardContent>
-                </MainCard>
-              </ClickAwayListener>
-            </Paper>
-          </Transitions>
-        )}
-      </Popper>
-    </Box>
+                      <Typography
+                        color={getEnvironmentColor()}
+                        sx={{ fontSize: '0.75rem', fontWeight: 'bold' }}
+                      >
+                        {applicationConfig.appEnvironment.toUpperCase()}
+                      </Typography>
+                      <Typography variant="body1" sx={{ mb: 2 }}>
+                        Lingo build number: {buildNumber}
+                      </Typography>
+
+                      <Divider sx={{ my: 1.5 }} />
+
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={handleChangelogOpen}
+                        sx={{ width: '100%', mb: 1 }}
+                      >
+                        View Changelog
+                      </Button>
+
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => {
+                          setLicensesOpen(true);
+                          setOpen(false);
+                        }}
+                        sx={{ width: '100%' }}
+                      >
+                        Licenses and Attributions
+                      </Button>
+                    </CardContent>
+                  </MainCard>
+                </ClickAwayListener>
+              </Paper>
+            </Transitions>
+          )}
+        </Popper>
+      </Box>
+
+      <ChangelogModal
+        open={changelogOpen}
+        onClose={() => setChangelogOpen(false)}
+      />
+      <LicensesModal
+        open={licensesOpen}
+        onClose={() => setLicensesOpen(false)}
+      />
+    </>
   );
 };
 
