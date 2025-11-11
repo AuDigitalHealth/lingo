@@ -11,7 +11,7 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 ### Added
 
-- Changelog to user interface about box
+- Changelog to user interface about box, user gets notified of changes to the changelog with a snackbar
 - License and attribution information to user interface about box
 
 

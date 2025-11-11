@@ -11,24 +11,53 @@ import {
 import { Close as CloseIcon } from '@mui/icons-material';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useSnackbar } from 'notistack';
 import BaseModal from '../../components/modal/BaseModal';
 
 interface ChangelogModalProps {
   open: boolean;
   onClose: () => void;
+  setOpen: (bool: boolean) => void;
 }
 
-const ChangelogModal = ({ open, onClose }: ChangelogModalProps) => {
+const CHANGELOG_HASH_KEY = 'changelog_last_hash';
+
+// Simple hash function for strings
+const hashString = async (str: string): Promise<string> => {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(str);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+};
+
+const ChangelogModal = ({ open, onClose, setOpen }: ChangelogModalProps) => {
   const [changelogContent, setChangelogContent] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
+  const { enqueueSnackbar } = useSnackbar();
+
+  const checkForChangelogUpdates = useCallback(
+    async (content: string) => {
+      try {
+        const currentHash = await hashString(content);
+
+        // Update the stored hash when modal is opened (user has "seen" it)
+        if (open) {
+          localStorage.setItem(CHANGELOG_HASH_KEY, currentHash);
+        }
+      } catch (err) {
+        console.error('Error checking changelog updates:', err);
+      }
+    },
+    [open],
+  );
 
   const fetchChangelog = useCallback(async () => {
     setLoading(true);
     setError('');
 
     try {
-      // Fetch the changelog from the public folder or API endpoint
       const response = await fetch('/CHANGELOG.md');
       if (!response.ok) {
         setError('Failed to load changelog');
@@ -36,19 +65,63 @@ const ChangelogModal = ({ open, onClose }: ChangelogModalProps) => {
       }
       const content = await response.text();
       setChangelogContent(content);
+
+      // Check for updates after fetching
+      await checkForChangelogUpdates(content);
     } catch (err) {
       setError('Failed to load changelog');
       console.error('Error fetching changelog:', err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [checkForChangelogUpdates]);
 
   useEffect(() => {
     if (open && !changelogContent) {
       void fetchChangelog();
     }
   }, [open, changelogContent, fetchChangelog]);
+
+  // Check for updates on component mount (when app loads)
+  useEffect(() => {
+    const checkOnMount = async () => {
+      try {
+        const response = await fetch('/CHANGELOG.md');
+        if (response.ok) {
+          const content = await response.text();
+          const currentHash = await hashString(content);
+          const lastSeenHash = localStorage.getItem(CHANGELOG_HASH_KEY);
+
+          if (lastSeenHash && lastSeenHash !== currentHash) {
+            enqueueSnackbar(
+              'New version released, check the changelog for updates! 🎉',
+              {
+                variant: 'info',
+                action: key => (
+                  <Button
+                    color="inherit"
+                    size="small"
+                    onClick={() => {
+                      setOpen(true);
+                    }}
+                  >
+                    Click here to view the changes
+                  </Button>
+                ),
+              },
+            );
+          } else if (!lastSeenHash) {
+            // First time user, store the hash without notifying
+            localStorage.setItem(CHANGELOG_HASH_KEY, currentHash);
+          }
+        }
+      } catch (err) {
+        console.error('Error checking changelog on mount:', err);
+      }
+    };
+
+    void checkOnMount();
+  }, [enqueueSnackbar, setOpen]);
 
   const handleRetry = useCallback(() => {
     void fetchChangelog();

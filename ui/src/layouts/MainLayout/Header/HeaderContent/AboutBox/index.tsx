@@ -166,6 +166,7 @@ const AboutBox = () => {
 
       <ChangelogModal
         open={changelogOpen}
+        setOpen={(bool: boolean) => setChangelogOpen(bool)}
         onClose={() => setChangelogOpen(false)}
       />
       <LicensesModal
