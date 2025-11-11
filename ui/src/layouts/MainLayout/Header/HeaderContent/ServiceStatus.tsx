@@ -34,7 +34,7 @@ import OntoserverIcon from '../../../../components/logo/OntoserverIcon';
 import { CellTowerOutlined } from '@mui/icons-material';
 import SnowstormIcon from '../../../../components/logo/SnowstormIcon';
 import SnomedIcon from '../../../../components/logo/SnomedIcon';
-import { styled } from '@mui/system';
+import { Stack, styled } from '@mui/system';
 import { DatabaseTwoTone } from '@ant-design/icons';
 
 const StyledBadge = styled(Badge)(({ theme }) => ({
@@ -75,6 +75,35 @@ const actionSX = {
 
   transform: 'none',
 };
+
+const LegendItem = ({
+  color,
+  label,
+}: {
+  color: 'success' | 'warning' | 'error';
+  label: string;
+}) => (
+  <Stack direction="row" spacing={1} alignItems="center">
+    <StyledBadge
+      color={color}
+      overlap="circular"
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      variant="dot"
+    >
+      <Box
+        sx={{
+          width: 20,
+          height: 20,
+          borderRadius: '50%',
+          bgcolor: 'grey.300',
+        }}
+      />
+    </StyledBadge>
+    <Typography variant="body2" color="text.secondary">
+      {label}
+    </Typography>
+  </Stack>
+);
 
 // ==============================|| HEADER CONTENT - Service Status ||============================== //
 
@@ -229,6 +258,27 @@ const ServiceStatus = () => {
                   border={false}
                   content={false}
                 >
+                  <Stack
+                    direction="row"
+                    spacing={2}
+                    sx={{
+                      px: 2,
+                      py: 1,
+                      alignItems: 'center',
+                      borderBottom: '1px solid',
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <LegendItem color="success" label="Fully operational" />
+                    <LegendItem
+                      color="warning"
+                      label="Warning, operational but degraded"
+                    />
+                    <LegendItem
+                      color="error"
+                      label="Error, service unavailable"
+                    />
+                  </Stack>
                   <List
                     component="nav"
                     sx={{

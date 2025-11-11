@@ -188,7 +188,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <!--suppress UnresolvedMavenProperty -->
-          <argLine>${argLine} -Dspring.profiles.active=test</argLine>
+          <argLine>${argLine} -Dspring.profiles.active=test -Dapi.version=${docker.api.version}</argLine>
         </configuration>
       </plugin>
       <plugin>
@@ -638,5 +638,6 @@
     <sentry.version>7.18.0</sentry.version>
     <snomed-owl-toolkit.version>5.4.0</snomed-owl-toolkit.version>
     <buildnumber>${project.version}</buildnumber>
+    <docker.api.version>1.44</docker.api.version> <!-- default value -->
   </properties>
 </project>
