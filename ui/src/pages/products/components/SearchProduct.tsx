@@ -68,28 +68,35 @@ export default function SearchProduct({
   hideAdvancedSearch,
   actionType,
 }: SearchProductProps) {
+  // Helper function to compute filter types based on branch
+  const getFilterTypes = (branchName: string) => {
+    const baseFilters = ['Term', 'Sct Id'];
+    // Add 'Artg Id' only if branch contains 'AMT'
+    if (branchName?.includes('AMT')) {
+      return ['Term', 'Artg Id', 'Sct Id'];
+    }
+    return baseFilters;
+  };
+
   const localFsnToggle = isFsnToggleOn;
   const [results, setResults] = useState<Concept[]>([]);
   const [open, setOpen] = useState(false);
 
   const [fsnToggle, setFsnToggle] = useState(localFsnToggle);
-  const [searchFilter, setSearchFilter] = useState('Term');
-  // Dynamic filter types based on branch name
-  const filterTypes = React.useMemo(() => {
-    const baseFilters = ['Term', 'Sct Id'];
-    // Add 'Artg Id' only if branch contains 'AMT'
-    if (branch?.includes('AMT')) {
-      return ['Term', 'Artg Id', 'Sct Id'];
-    }
-    return baseFilters;
-  }, [branch]);
 
-  // Ensure searchFilter is always a valid filter type
+  // Dynamic filter types based on branch name
+  const filterTypes = React.useMemo(() => getFilterTypes(branch), [branch]);
+
+  // Initialize searchFilter with the first available filter type
+  const [searchFilter, setSearchFilter] = useState(() => getFilterTypes(branch)[0]);
+
+  // Ensure searchFilter is always a valid filter type when filterTypes changes
   useEffect(() => {
     if (!filterTypes.includes(searchFilter)) {
       setSearchFilter(filterTypes[0]);
     }
   }, [filterTypes, searchFilter]);
+  
   const termTypes = ['FSN', 'PT'];
 
   const [disabled] = useState(false);
