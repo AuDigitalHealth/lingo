@@ -111,6 +111,7 @@ export default function SearchProduct({
   ) => {
     if (providedEcl) return providedEcl;
 
+    let returnVal = undefined;
     switch (actionType) {
       case ActionType.newPackSize:
       case ActionType.newBrand:
