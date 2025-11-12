@@ -652,7 +652,7 @@ models:
         eclBinding: <679911000220104
         modelLevels: CLINICAL_DRUG,REAL_CLINICAL_DRUG
         sourceModelLevel: CLINICAL_DRUG
-        mandatory: false
+        mandatory: true
         multiValued: false
         showDefaultOptions: true
         order: 90
