@@ -1,4 +1,4 @@
-import { Concept, ProductSummary } from '../../../types/concept.ts';
+import { ProductSummary } from '../../../types/concept.ts';
 import {
   Control,
   UseFormGetValues,
@@ -181,6 +181,12 @@ function ProductPreviewBody({
           </Grid>
         </>
       </Box>
+      <Stack justifyContent="start">
+        <ColorLegend
+          showLegend={true}
+          includeNewConcept={!readOnlyMode && !isSimpleEdit}
+        />
+      </Stack>
       {!readOnlyMode && !isSimpleEdit ? (
         <SubmitPanel
           productModel={productModel}
@@ -232,9 +238,6 @@ function SubmitPanel({
     isProductUpdate && canEdit && (hasUpdatedProperties || newConceptFound);
   return (
     <Box m={1} p={1}>
-      <Stack justifyContent="start">
-        <ColorLegend showLegend={true} />
-      </Stack>
       <Stack spacing={2} direction="row" justifyContent="end">
         <Button
           data-testid={'preview-cancel'}

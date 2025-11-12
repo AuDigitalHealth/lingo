@@ -9,6 +9,11 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 ## [Unreleased]
 
+### Added
+
+- Colour/icon legend to all box model views
+- New in task/project icons to the legend for box model view
+
 ### Changed
 
 - Artg Id search to only appear for AMT branches
