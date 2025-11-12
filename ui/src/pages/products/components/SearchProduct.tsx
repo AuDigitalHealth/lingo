@@ -84,6 +84,12 @@ export default function SearchProduct({
     return baseFilters;
   }, [branch]);
 
+  // Ensure searchFilter is always a valid filter type
+  useEffect(() => {
+    if (!filterTypes.includes(searchFilter)) {
+      setSearchFilter(filterTypes[0]);
+    }
+  }, [filterTypes, searchFilter]);
   const termTypes = ['FSN', 'PT'];
 
   const [disabled] = useState(false);
