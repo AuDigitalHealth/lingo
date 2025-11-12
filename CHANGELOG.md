@@ -8,7 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
+
+### Changed
+
+- Artg Id search to only appear for AMT branches
+
+### Removed
+
+- RJSF refactor warning from the project README.md
 
 
 ## [1.3.18] - 2025-11-12

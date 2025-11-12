@@ -5,12 +5,6 @@
 An integration with Snomed International's Authoring Platform that extends functionality to improve
 authoring of medicinal terminology.
 
-# ⚠️ WARNING
-
-Over the next couple of months this repo will be undergoing UI changes using RJSF.
-
-If you intend on contributing, this is likely to affect you. Please get in touch and we can explain where we are up to and how to contribute.
-
 ## Getting Started
 
 To run this project you will need to follow some changes that are listed
