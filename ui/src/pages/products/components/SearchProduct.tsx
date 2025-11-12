@@ -88,7 +88,9 @@ export default function SearchProduct({
   const filterTypes = React.useMemo(() => getFilterTypes(branch), [branch]);
 
   // Initialize searchFilter with the first available filter type
-  const [searchFilter, setSearchFilter] = useState(() => getFilterTypes(branch)[0]);
+  const [searchFilter, setSearchFilter] = useState(
+    () => getFilterTypes(branch)[0],
+  );
 
   // Ensure searchFilter is always a valid filter type when filterTypes changes
   useEffect(() => {
@@ -96,7 +98,7 @@ export default function SearchProduct({
       setSearchFilter(filterTypes[0]);
     }
   }, [filterTypes, searchFilter]);
-  
+
   const termTypes = ['FSN', 'PT'];
 
   const [disabled] = useState(false);
