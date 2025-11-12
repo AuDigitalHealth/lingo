@@ -17,6 +17,8 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 - RJSF refactor warning from the project README.md
 
+### Changed
+Disable delete option for robot created product saved data
 
 ## [1.3.18] - 2025-11-12
 

@@ -196,15 +196,26 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
       } else if (isPartialProduct(rowData)) {
         return (
           <UnableToEditTooltip
-            canEdit={canEditTicket && canEdit}
+            canEdit={
+              canEditTicket &&
+              canEdit &&
+              !isInternalUser(rowData.createdBy, internalUsers)
+            }
             lockDescription={
-              !canEditTicket ? ticketLockDescription : lockDescription
+              !canEditTicket
+                ? ticketLockDescription
+                : isInternalUser(rowData.createdBy, internalUsers)
+                  ? 'Delete not allowed for robot-created products'
+                  : lockDescription
             }
           >
             <IconButton
               aria-label="delete"
               size="small"
-              disabled={!(canEditTicket && canEdit)}
+              disabled={
+                !(canEditTicket && canEdit) ||
+                isInternalUser(rowData.createdBy, internalUsers)
+              }
               onClick={e => {
                 setSelectedRowId(rowData?.id);
 
@@ -274,14 +285,9 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
   const productNameTemplateWithActiveStatus = useCallback(
     (rowData: ProductTableRow) => {
       const activeIds = activeConceptIds ? activeConceptIds.items : [];
-      const isInternalUser = !!(
-        internalUsers &&
-        rowData.createdBy &&
-        internalUsers.some((user: string) => user === rowData.createdBy)
-      );
 
       const renderIcon = () => {
-        if (isInternalUser) {
+        if (isInternalUser(rowData.createdBy, internalUsers)) {
           return (
             <Tooltip
               title={'Created by a robot account'}
@@ -382,7 +388,7 @@ function TicketProducts({ ticket, branch }: TicketProductsProps) {
         );
       }
     },
-    [activeConceptIds, internalUsers], // Added internalUsers to dependency array
+    [activeConceptIds, internalUsers],
   );
 
   // Show a loading indicator if we're still loading active concept IDs
@@ -642,6 +648,16 @@ function BulkActionChildConcepts({
           ))}
       </ul>
     </div>
+  );
+}
+function isInternalUser(
+  createdBy: string | undefined,
+  internalUsers: string[] | undefined,
+): boolean {
+  return !!(
+    internalUsers &&
+    createdBy &&
+    internalUsers.some((user: string) => user === createdBy)
   );
 }
 
