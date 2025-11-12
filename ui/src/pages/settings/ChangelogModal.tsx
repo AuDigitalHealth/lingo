@@ -11,7 +11,7 @@ import {
 import { Close as CloseIcon } from '@mui/icons-material';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { useSnackbar } from 'notistack';
+import { closeSnackbar, useSnackbar } from 'notistack';
 import BaseModal from '../../components/modal/BaseModal';
 
 interface ChangelogModalProps {
@@ -92,27 +92,33 @@ const ChangelogModal = ({ open, onClose, setOpen }: ChangelogModalProps) => {
           const currentHash = await hashString(content);
           const lastSeenHash = localStorage.getItem(CHANGELOG_HASH_KEY);
 
-          if (lastSeenHash && lastSeenHash !== currentHash) {
+          if (!lastSeenHash || lastSeenHash !== currentHash) {
             enqueueSnackbar(
               'New version released, check the changelog for updates! 🎉',
               {
                 variant: 'info',
                 action: key => (
-                  <Button
-                    color="inherit"
-                    size="small"
-                    onClick={() => {
-                      setOpen(true);
-                    }}
-                  >
-                    Click here to view the changes
-                  </Button>
+                  <>
+                    <Button
+                      color="inherit"
+                      size="small"
+                      onClick={() => {
+                        setOpen(true);
+                      }}
+                    >
+                      View changes
+                    </Button>
+                    <IconButton
+                      size="small"
+                      color="inherit"
+                      onClick={() => closeSnackbar(key)}
+                    >
+                      <CloseIcon />
+                    </IconButton>
+                  </>
                 ),
               },
             );
-          } else if (!lastSeenHash) {
-            // First time user, store the hash without notifying
-            localStorage.setItem(CHANGELOG_HASH_KEY, currentHash);
           }
         }
       } catch (err) {
