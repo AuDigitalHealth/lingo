@@ -74,7 +74,16 @@ export default function SearchProduct({
 
   const [fsnToggle, setFsnToggle] = useState(localFsnToggle);
   const [searchFilter, setSearchFilter] = useState('Term');
-  const filterTypes = ['Term', 'Artg Id', 'Sct Id'];
+  // Dynamic filter types based on branch name
+  const filterTypes = React.useMemo(() => {
+    const baseFilters = ['Term', 'Sct Id'];
+    // Add 'Artg Id' only if branch contains 'AMT'
+    if (branch?.includes('AMT')) {
+      return ['Term', 'Artg Id', 'Sct Id'];
+    }
+    return baseFilters;
+  }, [branch]);
+
   const termTypes = ['FSN', 'PT'];
 
   const [disabled] = useState(false);
