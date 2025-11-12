@@ -172,6 +172,14 @@ export default function TicketsBacklog() {
     searchTickets(tempLazyState, debouncedGlobalFilterValue);
   };
 
+  const refresh = useCallback(() => {
+    const tempLazyState = {
+      ...lazyState,
+    };
+    setlazyState(tempLazyState);
+    searchTickets(tempLazyState, debouncedGlobalFilterValue);
+  }, [lazyState, debouncedGlobalFilterValue, searchTickets]);
+
   // overwrites the value for the title filter, as well as creates a comment filter
   const onGlobalFilterChange = useCallback(
     (value: string) => {
@@ -269,6 +277,7 @@ export default function TicketsBacklog() {
           loadSavedFilter={handleSavedFilterLoad}
           bulkEditOpen={bulkEditOpen}
           setBulkEditOpen={setBulkEditOpen}
+          refresh={refresh}
         />
         <Stack>
           {bulkEditOpen && (
@@ -290,6 +299,7 @@ export default function TicketsBacklog() {
     selectedTickets,
     setBulkLoading,
     filters,
+    refresh,
   ]);
 
   return (
@@ -349,6 +359,7 @@ interface TicketTableHeaderProps {
   loadSavedFilter: (ticketFilter: TicketFilter) => void;
   bulkEditOpen: boolean;
   setBulkEditOpen: (bool: boolean) => void;
+  refresh: () => void;
 }
 
 // should maybe handle the disabled state internally
@@ -361,6 +372,7 @@ function TicketTableHeader({
   loadSavedFilter,
   bulkEditOpen,
   setBulkEditOpen,
+  refresh,
 }: TicketTableHeaderProps) {
   const [saveFilterModalOpen, setSaveFilterModalOpen] = useState(false);
   const [loadFilterModalOpen, setLoadFilterModalOpen] = useState(false);
@@ -451,17 +463,29 @@ function TicketTableHeader({
             }
           />
         </Stack>
-        <span className="p-input-icon-left">
-          <i className="pi pi-search" />
-          <InputText
-            id="backlog-quick-search"
-            value={globalFilterValue}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              onGlobalFilterChange(e.target.value)
-            }
-            placeholder="Quick Search"
+        <Stack flexDirection={'row'} gap={1}>
+          <span className="p-input-icon-left">
+            <i className="pi pi-search" style={{ left: '0.75rem' }} />
+            <InputText
+              id="backlog-quick-search"
+              value={globalFilterValue}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                onGlobalFilterChange(e.target.value)
+              }
+              placeholder="Quick Search"
+              style={{ paddingLeft: '2.5rem', width: '100%' }}
+            />
+          </span>
+          <Button
+            data-testid="backlog-bulk-add-external-requester"
+            type="button"
+            icon="pi pi-refresh"
+            disabled={false}
+            label="Refresh"
+            outlined
+            onClick={() => refresh()}
           />
-        </span>
+        </Stack>
       </div>
     </>
   );

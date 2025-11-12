@@ -13,7 +13,8 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 - Changelog to user interface about box, user gets notified of changes to the changelog with a snackbar
 - License and attribution information to user interface about box
-
+- Users can now refresh their backlog search, without having to refresh the page. This is useful in situations where the user has edited some tickets, which should drop out of the search.
+- Can now reset fields that will be updated in the bulk ticket edit feature.
 
 ## [1.3.17] - 2025-11-06
 

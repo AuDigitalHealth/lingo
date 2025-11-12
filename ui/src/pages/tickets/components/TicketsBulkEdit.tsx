@@ -115,6 +115,7 @@ export default function TicketsBulkEdit({
   const {
     control,
     handleSubmit,
+    reset,
     formState: { isDirty },
   } = useForm({
     defaultValues,
@@ -315,7 +316,14 @@ export default function TicketsBulkEdit({
               />
             </div>
           </Stack>
-          <div style={{ marginLeft: 'auto' }}>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem' }}>
+            <Button
+              disabled={!isDirty}
+              type="button"
+              label="Clear Selections"
+              severity="secondary"
+              onClick={() => reset()}
+            />
             <Button
               disabled={
                 !isDirty ||
