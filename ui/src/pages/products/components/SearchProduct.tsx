@@ -97,7 +97,7 @@ export default function SearchProduct({
   const [switchActionTypeOpen, setSwitchActionTypeOpen] = useState(false);
 
   const [selectedActionType, setSelectedActionType] = useState<ActionType>(
-    actionType ? actionType : ActionType.newProduct,
+    actionType || ActionType.newProduct,
   );
 
   const [newActionType, setNewActionType] = useState<ActionType>(
@@ -111,8 +111,8 @@ export default function SearchProduct({
   ) => {
     if (providedEcl) return providedEcl;
 
-    let returnVal = undefined;
     switch (actionType) {
+      case ActionType.newPackSize:
       case ActionType.newBrand:
         returnVal = generateEclFromBinding(
           fieldBindings,
@@ -123,12 +123,6 @@ export default function SearchProduct({
         returnVal = generateEclFromBinding(
           fieldBindings,
           'deviceProduct.search',
-        );
-        break;
-      case ActionType.newPackSize:
-        returnVal = generateEclFromBinding(
-          fieldBindings,
-          'bulk.new-brand-pack-sizes',
         );
         break;
       case ActionType.newMedication:
@@ -181,7 +175,7 @@ export default function SearchProduct({
         search.includes(concept.pt?.term as string) ||
         search.includes(concept.fsn?.term as string),
     );
-    return result.length > 0 ? true : false;
+    return result.length > 0;
   };
 
   const handleOnChange = () => {
@@ -359,28 +353,26 @@ export default function SearchProduct({
               return option.conceptId === value.conceptId;
             }}
             onChange={(e, v) => {
-              setSelectedValue(v !== null ? v : undefined);
+              setSelectedValue(v ?? undefined);
               if (showConfirmationModalOnChange && v !== null) {
                 setChangeModalOpen(true);
-              } else {
-                if (handleChange) {
-                  let productType: ProductType;
-                  switch (selectedActionType) {
-                    case ActionType.newDevice:
-                      productType = ProductType.device;
-                      break;
-                    case ActionType.newMedication:
-                      productType = ProductType.medication;
-                      break;
-                    default:
-                      productType = ProductType.medication;
-                  }
-                  handleChange(
-                    v ?? undefined,
-                    productType,
-                    selectedActionType || ActionType.newMedication,
-                  );
+              } else if (handleChange) {
+                let productType: ProductType;
+                switch (selectedActionType) {
+                  case ActionType.newDevice:
+                    productType = ProductType.device;
+                    break;
+                  case ActionType.newMedication:
+                    productType = ProductType.medication;
+                    break;
+                  default:
+                    productType = ProductType.medication;
                 }
+                handleChange(
+                  v ?? undefined,
+                  productType,
+                  selectedActionType || ActionType.newMedication,
+                );
               }
             }}
             open={open}
@@ -414,9 +406,7 @@ export default function SearchProduct({
             }}
             groupBy={option => option.type}
             options={allData}
-            value={
-              inputValue === '' ? null : selectedValue ? selectedValue : null
-            }
+            value={inputValue === '' ? null : (selectedValue ?? null)}
             renderInput={params => (
               <TextField
                 {...params}
@@ -452,17 +442,17 @@ export default function SearchProduct({
 
               return (
                 <li {...props} key={key}>
-                  {!disableLinkOpen ? (
+                  {disableLinkOpen ? (
+                    <div style={{ textDecoration: 'none', color: '#003665' }}>
+                      {optionComponent(option, selected, fsnToggle)}
+                    </div>
+                  ) : (
                     <Link
                       to={linkPath(key)}
                       style={{ textDecoration: 'none', color: '#003665' }}
                     >
                       {optionComponent(option, selected, fsnToggle)}
                     </Link>
-                  ) : (
-                    <div style={{ textDecoration: 'none', color: '#003665' }}>
-                      {optionComponent(option, selected, fsnToggle)}
-                    </div>
                   )}
                 </li>
               );
@@ -499,7 +489,9 @@ export default function SearchProduct({
               ))}
             </Select>
           </FormControl>
-          {!hideAdvancedSearch ? (
+          {hideAdvancedSearch ? (
+            <span></span>
+          ) : (
             <Button
               variant={'text'}
               color="primary"
@@ -516,8 +508,6 @@ export default function SearchProduct({
                 fontSize="small"
               ></TuneIcon>
             </Button>
-          ) : (
-            <span></span>
           )}
           {showDeviceSearch ? (
             <span>
