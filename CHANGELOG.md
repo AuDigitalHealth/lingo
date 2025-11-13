@@ -13,15 +13,17 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 - Colour/icon legend to all box model views
 - New in task/project icons to the legend for box model view
+- Extended search for pack size unit of measure for NMPC
 
 ### Changed
 
 - Artg Id search to only appear for AMT branches
+- Dose form type field for NMPC from optional to mandatory as requested.
+- Disable delete option for robot created product saved data
 
 ### Removed
 
 - RJSF refactor warning from the project README.md
-
 
 ## [1.3.18] - 2025-11-12
 
