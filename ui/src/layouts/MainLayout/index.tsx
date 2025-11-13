@@ -19,11 +19,13 @@ import { Stack } from '@mui/system';
 import useInitializeApp from '../../hooks/api/useInitializeApp';
 import Loading from '../../components/Loading';
 import useLogoutTimer from '../../hooks/useLogoutTimer';
+import { useFetchReleaseVersion } from '../../hooks/api/useInitializeConfig';
 
 // ==============================|| MAIN LAYOUT ||============================== //
 
 const MainLayout = () => {
   const theme = useTheme();
+  useFetchReleaseVersion();
   useMediaQuery(theme.breakpoints.down('xl'));
   const downLG = useMediaQuery(theme.breakpoints.down('lg'));
 
