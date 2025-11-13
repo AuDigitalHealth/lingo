@@ -184,7 +184,7 @@ function ProductPreviewBody({
       <Stack justifyContent="start">
         <ColorLegend
           showLegend={true}
-          includeNewConcept={!readOnlyMode && !isSimpleEdit}
+          readOnly={readOnlyMode || isSimpleEdit}
         />
       </Stack>
       {!readOnlyMode && !isSimpleEdit ? (
