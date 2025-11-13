@@ -9,6 +9,10 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 ## [Unreleased]
 
+### Added
+
+- Button to expand and collapse all the concepts in the box model screens
+
 ### Changed
 
 - Artg Id search to only appear for AMT branches
