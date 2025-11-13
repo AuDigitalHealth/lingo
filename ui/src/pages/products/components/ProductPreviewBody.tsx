@@ -8,7 +8,7 @@ import {
 } from 'react-hook-form';
 
 import useCanEditTask from '../../../hooks/useCanEditTask.tsx';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useFieldBindings } from '../../../hooks/api/useInitializeConfig.tsx';
 import { useRefsetMembersByComponentIds } from '../../../hooks/api/refset/useRefsetMembersByComponentIds.tsx';
 import { Box, Button, Grid } from '@mui/material';
@@ -69,6 +69,25 @@ function ProductPreviewBody({
   const [idsWithInvalidName, setIdsWithInvalidName] = useState<string[]>([]);
   const { fieldBindingIsLoading, fieldBindings } = useFieldBindings(branch);
 
+  const allConceptIds = useMemo(() => {
+    return productModel.nodes.map(node => node.conceptId);
+  }, [productModel.nodes]);
+
+  const areAllExpanded = useMemo(() => {
+    return allConceptIds.every(id => expandedConcepts.includes(id));
+  }, [allConceptIds, expandedConcepts]);
+
+  const handleToggleAll = () => {
+    if (areAllExpanded) {
+      // Collapse all
+      setExpandedConcepts([]);
+      setActiveConcept(undefined);
+    } else {
+      // Expand all
+      setExpandedConcepts(allConceptIds);
+    }
+  };
+
   const { refsetData, isRefsetLoading } = useRefsetMembersByComponentIds(
     branch,
     productModel.nodes
@@ -90,6 +109,18 @@ function ProductPreviewBody({
                 message={`Loading box model for [${getProductDisplayName(productModel)}]`}
               />
             ))}
+
+          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={handleToggleAll}
+              data-testid="toggle-all-accordions"
+            >
+              {areAllExpanded ? 'Collapse All' : 'Expand All'}
+            </Button>
+          </Box>
+
           <Grid
             container
             rowSpacing={1}
