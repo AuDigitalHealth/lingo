@@ -82,6 +82,7 @@
         "ui:title": "Unit",
         "ui:options": {
           "ecl": "((<781405001 minus >(<781405001)) : 774160008 = *).774163005",
+          "extendedEcl": "<767524001",
           "showDefaultOptions": true,
           "placeholder": "Select unit (e.g., Each)"
         }
