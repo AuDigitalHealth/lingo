@@ -22,6 +22,7 @@ import useApplicationConfigStore from '../../../../../stores/ApplicationConfigSt
 import { useFetchReleaseVersion } from '../../../../../hooks/api/useInitializeConfig.tsx';
 import ChangelogModal from '../../../../../pages/settings/ChangelogModal';
 import LicensesModal from '../../../../../pages/settings/LicensesModal';
+import { useChangelogPolling } from '../../../../../pages/settings/hooks/useChangelogPolling.ts';
 
 const AboutBox = () => {
   const theme = useTheme();
@@ -54,7 +55,7 @@ const AboutBox = () => {
 
   const handleChangelogOpen = () => {
     setChangelogOpen(true);
-    setOpen(false); // Close the about popup
+    setOpen(false);
   };
 
   const iconBackColorOpen =
