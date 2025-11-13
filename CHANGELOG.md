@@ -14,6 +14,7 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 - Colour/icon legend to all box model views
 - New in task/project icons to the legend for box model view
 - Extended search for pack size unit of measure for NMPC
+- Button to expand and collapse all the concepts in the box model screens
 
 ### Changed
 
