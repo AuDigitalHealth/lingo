@@ -1,5 +1,6 @@
 import { Box, Typography } from '@mui/material';
 import { Product7BoxBGColour } from './style/colors';
+import { NewReleases, NewReleasesOutlined } from '@mui/icons-material';
 
 interface LegendConfig {
   title: string;
@@ -11,6 +12,7 @@ interface LegendConfigItem {
   backgroundColor: string;
   borderColor: string;
   description: string;
+  displayForReadOnly: boolean;
 }
 const LEGEND_CONFIG: LegendConfig = {
   title: 'Legend:',
@@ -19,43 +21,63 @@ const LEGEND_CONFIG: LegendConfig = {
       key: 'new',
       backgroundColor: Product7BoxBGColour.NEW,
       borderColor: Product7BoxBGColour.NEW,
-      description: 'New Concept',
+      description: 'New Proposed Concept',
+      displayForReadOnly: false,
     },
     {
       key: 'primitive',
       backgroundColor: Product7BoxBGColour.PRIMITIVE,
       borderColor: Product7BoxBGColour.PRIMITIVE,
       description: 'Primitive (existing concept)',
+      displayForReadOnly: true,
     },
     {
       key: 'fully_defined',
       backgroundColor: Product7BoxBGColour.FULLY_DEFINED,
       borderColor: Product7BoxBGColour.FULLY_DEFINED,
       description: 'Fully Defined (existing concept)',
+      displayForReadOnly: true,
     },
     {
       key: 'invalid',
       backgroundColor: Product7BoxBGColour.INVALID,
       borderColor: Product7BoxBGColour.INVALID,
       description: 'Invalid Name/Concept',
+      displayForReadOnly: false,
     },
     {
       key: 'incomplete',
       backgroundColor: Product7BoxBGColour.INCOMPLETE,
       borderColor: Product7BoxBGColour.INCOMPLETE,
       description: 'Incomplete',
+      displayForReadOnly: false,
     },
     {
       key: 'property_change',
       backgroundColor: Product7BoxBGColour.PROPERTY_CHANGE,
       borderColor: Product7BoxBGColour.PROPERTY_CHANGE,
       description: 'Property Change',
+      displayForReadOnly: true,
     },
   ],
 };
 
+const newLegendItems = [
+  {
+    key: 'newConceptTask',
+    icon: <NewReleases sx={{ fontSize: 'inherit' }} />,
+    description: 'New unpromoted concept in task',
+  },
+  {
+    key: 'newConceptProject',
+    icon: <NewReleasesOutlined sx={{ fontSize: 'inherit' }} />,
+    description: 'New unreleased concept in project',
+  },
+];
+
 export default function ColorLegend({
   showLegend = true,
+  readOnly = true,
   config = LEGEND_CONFIG,
 }) {
   if (!showLegend) return null;
@@ -77,23 +99,44 @@ export default function ColorLegend({
         {config.title}
       </Typography>
 
-      {config.items.map(item => (
+      {newLegendItems.map(item => (
         <Box
           key={item.key}
           sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
         >
-          <Box
+          <Typography
+            variant="caption"
+            component="span"
             sx={{
-              width: 12,
-              height: 12,
-              backgroundColor: item.backgroundColor,
-              border: `1px solid ${item.borderColor}`,
-              borderRadius: 1,
+              display: 'flex',
+              alignItems: 'center',
+              fontSize: 'inherit',
             }}
-          />
+          >
+            {item.icon}
+          </Typography>
           <Typography variant="caption">{item.description}</Typography>
         </Box>
       ))}
+      {config.items
+        .filter(item => !readOnly || item.displayForReadOnly)
+        .map(item => (
+          <Box
+            key={item.key}
+            sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+          >
+            <Box
+              sx={{
+                width: 12,
+                height: 12,
+                backgroundColor: item.backgroundColor,
+                border: `1px solid ${item.borderColor}`,
+                borderRadius: 1,
+              }}
+            />
+            <Typography variant="caption">{item.description}</Typography>
+          </Box>
+        ))}
     </Box>
   );
 }

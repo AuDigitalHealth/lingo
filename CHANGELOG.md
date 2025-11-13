@@ -11,6 +11,8 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 ### Added
 
+- Colour/icon legend to all box model views
+- New in task/project icons to the legend for box model view
 - Extended search for pack size unit of measure for NMPC
 
 ### Changed
