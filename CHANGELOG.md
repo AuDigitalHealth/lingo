@@ -9,6 +9,10 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 ## [Unreleased]
 
+### Added
+
+- Extended search for pack size unit of measure for NMPC
+
 ### Changed
 
 - Artg Id search to only appear for AMT branches
