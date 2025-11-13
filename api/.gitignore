@@ -6,3 +6,6 @@ out
 src/main/resources/static/*
 application-custom.properties
 src/main/resources/application-local.properties
+src/main/resources/application-amtuat.properties
+src/main/resources/application-dc4h.properties
+src/main/resources/application-nmpcuat.properties
