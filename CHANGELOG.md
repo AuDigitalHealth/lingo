@@ -14,6 +14,7 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 - Colour/icon legend to all box model views
 - New in task/project icons to the legend for box model view
 - Extended search for pack size unit of measure for NMPC
+- Notification when the user is already on the page, and the released version of Lingo has changed. The notification prompts user to refresh the page.
 
 ### Changed
 
