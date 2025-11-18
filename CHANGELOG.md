@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
+- Fix error screen that could occur on task rebase
+- Change width of columns on the backlog screen, so there is no overflow on smaller screens
 
 
 ## [1.3.19] - 2025-11-13
