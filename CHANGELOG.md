@@ -9,6 +9,7 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 ## [Unreleased]
 - Fix error screen that could occur on task rebase
+- Change width of columns on the backlog screen, so there is no overflow on smaller screens
 
 
 ## [1.3.19] - 2025-11-13

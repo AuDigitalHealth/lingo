@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { MenuItem, Typography } from '@mui/material';
 
@@ -34,13 +34,38 @@ export default function CustomPrioritySelection({
   border,
   ticket,
   autoFetch = false,
-}: CustomPrioritySelectionProps) {
+  skinny = false,
+}: CustomPrioritySelectionProps & { skinny?: boolean }) {
   useTicketByTicketNumber(ticket?.ticketNumber, autoFetch);
   const { mergeTicket } = useTicketStore();
   const [disabled, setDisabled] = useState<boolean>(false);
   const { getTicketById } = useTicketStore();
   const { canEdit } = useCanEditTicket(ticket);
   const queryClient = useQueryClient();
+  const selectRef = useRef<HTMLDivElement>(null);
+  const [minWidth, setMinWidth] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    if (skinny && selectRef.current && priorityBucketList.length > 0) {
+      // Create a temporary element to measure the widest option
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.visibility = 'hidden';
+      tempDiv.style.whiteSpace = 'nowrap';
+      tempDiv.style.font = window.getComputedStyle(selectRef.current).font;
+      document.body.appendChild(tempDiv);
+
+      let maxWidth = 0;
+      priorityBucketList.forEach(priority => {
+        tempDiv.textContent = priority.name;
+        maxWidth = Math.max(maxWidth, tempDiv.offsetWidth);
+      });
+
+      document.body.removeChild(tempDiv);
+      // Add padding for the dropdown icon and padding (approximately 56px)
+      setMinWidth(maxWidth + 56);
+    }
+  }, [skinny, priorityBucketList]);
 
   const handleChange = (event: SelectChangeEvent) => {
     setDisabled(true);
@@ -106,12 +131,20 @@ export default function CustomPrioritySelection({
 
   return (
     <UnableToEditTicketTooltip canEdit={canEdit}>
-      <Box sx={{ width: '200px' }}>
+      <Box sx={{ width: skinny ? 'fit-content' : '200px' }}>
         <Select
+          ref={selectRef}
           id={`ticket-priority-select-${id}`}
           value={priorityBucket?.name ? priorityBucket?.name : ''}
           onChange={handleChange}
-          sx={{ width: '100%', maxWidth: '200px' }}
+          sx={{
+            width: skinny
+              ? minWidth
+                ? `${minWidth}px`
+                : 'fit-content'
+              : '100%',
+            maxWidth: skinny ? 'none' : '200px',
+          }}
           input={border ? <Select /> : <StyledSelect />}
           disabled={disabled || !canEdit}
           MenuProps={{

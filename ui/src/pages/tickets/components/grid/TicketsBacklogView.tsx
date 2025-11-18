@@ -471,7 +471,7 @@ export function TicketsBacklogView({
         <Column
           field="priorityBucket"
           header="Priority"
-          style={{ width: width ? '20%' : 'auto' }}
+          style={{ width: width ? '20%' : '50px' }}
           sortable={!minimal}
           filter={!minimal}
           filterPlaceholder="Search by Priority"
@@ -631,7 +631,6 @@ export function TicketsBacklogView({
             { label: 'Not Equals', value: FilterMatchMode.NOT_EQUALS },
           ]}
           filterMenuStyle={{ width: '14rem' }}
-          style={{ minWidth: '14rem' }}
         />
       )}
       {fieldsContains('created') && createdCalenderAsRange ? (

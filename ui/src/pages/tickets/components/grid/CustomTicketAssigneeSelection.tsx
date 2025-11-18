@@ -15,6 +15,7 @@ interface CustomTicketAssigneeSelectionProps {
   userList: JiraUser[];
   outlined?: boolean;
   label?: boolean;
+  skinny?: boolean;
 }
 
 export default function CustomTicketAssigneeSelection({
@@ -23,6 +24,7 @@ export default function CustomTicketAssigneeSelection({
   outlined,
   label,
   ticket,
+  skinny = false,
 }: CustomTicketAssigneeSelectionProps) {
   const { mergeTicket } = useTicketStore();
   const patchTicketMutation = usePatchTicket();
@@ -64,7 +66,9 @@ export default function CustomTicketAssigneeSelection({
         labelId="assignee-select"
         value={ticket?.assignee ?? ''}
         onChange={handleChange}
-        sx={{ width: '100%' }}
+        sx={{
+          width: skinny ? '100px' : '100%',
+        }}
         input={outlined ? <Select /> : <StyledSelect />}
         disabled={patchTicketMutation.isPending}
         renderValue={selected => <AvatarWithTooltip username={selected} />}

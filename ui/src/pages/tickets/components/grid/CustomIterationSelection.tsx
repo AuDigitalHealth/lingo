@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { Chip, MenuItem, Tooltip } from '@mui/material';
 
@@ -21,6 +21,7 @@ interface CustomIterationSelectionProps {
   iterationList: Iteration[];
   border?: boolean;
   autoFetch?: boolean;
+  skinny?: boolean;
 }
 
 export default function CustomIterationSelection({
@@ -30,12 +31,37 @@ export default function CustomIterationSelection({
   iterationList,
   border,
   autoFetch = false,
+  skinny = false,
 }: CustomIterationSelectionProps) {
   useTicketByTicketNumber(ticket?.ticketNumber, autoFetch);
   const [disabled, setDisabled] = useState<boolean>(false);
   const { getTicketById, mergeTicket } = useTicketStore();
   const { canEdit } = useCanEditTicket(ticket);
   const queryClient = useQueryClient();
+  const selectRef = useRef<HTMLDivElement>(null);
+  const [minWidth, setMinWidth] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    if (skinny && selectRef.current && iterationList.length > 0) {
+      // Create a temporary element to measure the widest option
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.visibility = 'hidden';
+      tempDiv.style.whiteSpace = 'nowrap';
+      tempDiv.style.font = window.getComputedStyle(selectRef.current).font;
+      document.body.appendChild(tempDiv);
+
+      let maxWidth = 0;
+      iterationList.forEach(iter => {
+        tempDiv.textContent = iter.name;
+        maxWidth = Math.max(maxWidth, tempDiv.offsetWidth);
+      });
+
+      document.body.removeChild(tempDiv);
+      // Add padding for the chip padding, dropdown icon and padding (approximately 80px to account for Chip styling)
+      setMinWidth(maxWidth + 80);
+    }
+  }, [skinny, iterationList]);
 
   const handleChange = (event: SelectChangeEvent) => {
     setDisabled(true);
@@ -98,12 +124,20 @@ export default function CustomIterationSelection({
 
   return (
     <UnableToEditTicketTooltip canEdit={canEdit}>
-      <Box sx={{ width: '200px' }}>
+      <Box sx={{ width: skinny ? 'fit-content' : '200px' }}>
         <Select
+          ref={selectRef}
           id={`ticket-iteration-select-${id}`}
           value={iteration?.name ? iteration?.name : ''}
           onChange={handleChange}
-          sx={{ width: '100%', maxWidth: '200px' }}
+          sx={{
+            width: skinny
+              ? minWidth
+                ? `${minWidth}px`
+                : 'fit-content'
+              : '100%',
+            maxWidth: skinny ? 'none' : '200px',
+          }}
           input={border ? <Select /> : <StyledSelect />}
           disabled={disabled || !canEdit}
           MenuProps={{

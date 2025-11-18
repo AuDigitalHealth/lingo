@@ -64,6 +64,7 @@ export const PriorityBucketTemplate = (rowData: TicketDto) => {
       id={rowData.id.toString()}
       priorityBucket={rowData.priorityBucket}
       priorityBucketList={priorityBuckets}
+      skinny={true}
     />
   );
 };
@@ -91,6 +92,7 @@ export const IterationTemplate = (rowData: TicketDto) => {
       id={rowData.id.toString()}
       iterationList={iterations}
       iteration={rowData.iteration}
+      skinny={true}
     />
   );
 };
@@ -131,6 +133,7 @@ export const AssigneeTemplate = (rowData: TicketDto) => {
       user={rowData.assignee}
       userList={jiraUsers}
       ticket={rowData}
+      skinny={true}
     />
   );
 };
