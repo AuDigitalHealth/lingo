@@ -63,11 +63,6 @@ export default function MergeTaskModal({
       }
     }
 
-    // Fallback to standard error message
-    if (error instanceof Error) {
-      return error.message;
-    }
-
     return 'An error occurred during merge. Please try again.';
   };
 

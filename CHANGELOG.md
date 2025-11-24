@@ -8,18 +8,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
+- Fix error screen that could occur on task rebase
+- Change width of columns on the backlog screen, so there is no overflow on smaller screens
+
+
+## [1.3.19] - 2025-11-13
+
+### Added
+
+- Colour/icon legend to all box model views
+- New in task/project icons to the legend for box model view
+- Extended search for pack size unit of measure for NMPC
+- Notification when the user is already on the page, and the released version of Lingo has changed. The notification prompts user to refresh the page.
+- Button to expand and collapse all the concepts in the box model screens
 
 ### Changed
 
 - Artg Id search to only appear for AMT branches
 - Add product level nondefining properties to brand and pack
+- Dose form type field for NMPC from optional to mandatory as requested.
+- Disable delete option for robot created product saved data
 
 ### Removed
 
 - RJSF refactor warning from the project README.md
-
-### Changed
-Disable delete option for robot created product saved data
 
 ## [1.3.18] - 2025-11-12
 

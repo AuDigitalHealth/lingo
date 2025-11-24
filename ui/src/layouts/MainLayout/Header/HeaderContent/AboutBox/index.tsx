@@ -54,7 +54,7 @@ const AboutBox = () => {
 
   const handleChangelogOpen = () => {
     setChangelogOpen(true);
-    setOpen(false); // Close the about popup
+    setOpen(false);
   };
 
   const iconBackColorOpen =

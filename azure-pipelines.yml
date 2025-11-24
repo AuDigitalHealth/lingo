@@ -212,6 +212,19 @@ jobs:
 
       - task: Maven@3
         condition: and(succeeded(), eq(variables.isRelease, true))
+        displayName: 'Push multi-platform image to Quay.io'
+        inputs:
+          mavenPomFile: 'pom.xml'
+          options: '-Dsnomio.extensions.sergio.enabled=false -Dlingo.internal.users=$(imsUsername) -Ddocker.registry.host=quay.io -Ddocker.repository=aehrc/lingo -Djib.to.tags=$(imageTag) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dihtsdo.ims.api.url=$(imsApiUrl) -Dihtsdo.ims.api.cookie.name=$(imsCookieName)"'
+          mavenOptions: '$(mavenOptions) -Xmx5072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(buildInfo)'
+          javaHomeOption: 'path'
+          jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
+          jdkArchitectureOption: 'x64'
+          publishJUnitResults: false
+          goals: 'compile jib:build -pl api'
+
+      - task: Maven@3
+        condition: and(succeeded(), eq(variables.isRelease, true))
         displayName: 'Deploy Release artefacts'
         inputs:
           mavenPomFile: 'pom.xml'
