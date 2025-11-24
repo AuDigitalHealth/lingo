@@ -17,6 +17,9 @@ const BrandArrayTemplate: React.FC<ArrayFieldTemplateProps> = props => {
     mandatorySchemes = [],
     multiValuedSchemes = [],
     nondefiningPropertyTitle,
+    propertyOrder,
+    allowCopy = false,
+    allowNonDefiningPropertyEdit = false,
   } = options;
 
   const handleDeleteBrand = (index: number) => {
@@ -125,10 +128,13 @@ const BrandArrayTemplate: React.FC<ArrayFieldTemplateProps> = props => {
                           {}),
                         readOnly,
                         allowDelete,
+                        allowCopy,
+                        allowNonDefiningPropertyEdit,
                         requireEditButton,
                         mandatorySchemes,
                         multiValuedSchemes,
                         nondefiningPropertyTitle,
+                        propertyOrder,
                       },
                     }}
                     schema={element.children.props.schema}

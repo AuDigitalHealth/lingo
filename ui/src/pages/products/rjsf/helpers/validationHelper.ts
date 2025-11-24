@@ -493,3 +493,19 @@ export const packSizeValidation = (
 
   return !duplicateInTarget && !duplicateInExisting;
 };
+export function getSubSchema(fullSchema: any, path: string) {
+  if (!fullSchema) return null;
+  const parts = path.split('.');
+  let node: any = fullSchema;
+  for (const p of parts) {
+    if (p === '') continue;
+    node = node?.[p];
+    if (node === undefined) return null;
+  }
+
+  // Return subtree as a full schema root that contains $defs so "#/$defs/..." refs resolve
+  return {
+    ...node,
+    $defs: fullSchema.$defs || {},
+  };
+}

@@ -252,7 +252,7 @@ const ExternalIdentifierRender: React.FC<
 
   const useValueSetAutocomplete = hasValueSetBinding(schemeName);
   const useEclAutocomplete = hasEclBinding(schemeName);
-  const useCreateConcept = hasCreateConcept(schemeName);
+  const useCreateConcept = hasCreateConcept(schemeName) && !readOnly;
 
   const binding = bindingConfig[schemeName] || {};
 
@@ -511,7 +511,7 @@ const ExternalIdentifierRender: React.FC<
               showDefaultOptions={showDefaultOptions || false}
               value={schemeEntries.map(entry => entry.valueObject)}
               onChange={handleChangeConcepts}
-              disabled={readOnly ? true : false}
+              readOnly={readOnly ? true : false}
               //   error={!!errorMessage}
               info={info}
             />
@@ -542,7 +542,7 @@ const ExternalIdentifierRender: React.FC<
                 schemeEntries[0] ? schemeEntries[0].valueObject : schemeEntries
               }
               onChange={handleChangeConcepts}
-              disabled={readOnly ? true : false}
+              readOnly={readOnly ? true : false}
               required={isRequired}
               errorMessage={
                 missingRequiredFieldError ? 'Field must be populated' : ''
@@ -580,7 +580,7 @@ const ExternalIdentifierRender: React.FC<
               branch={branch}
               onChange={handleChangeConcepts}
               showDefaultOptions={showDefaultOptions || false}
-              isDisabled={readOnly ? true : false}
+              readOnly={readOnly ? true : false}
               errorMessage={
                 missingRequiredFieldError ? 'Field must be populated' : ''
               }
@@ -615,7 +615,7 @@ const ExternalIdentifierRender: React.FC<
               branch={branch}
               onChange={handleChangeConcepts}
               showDefaultOptions={showDefaultOptions || false}
-              isDisabled={readOnly ? true : false}
+              readOnly={readOnly ? true : false}
               errorMessage={
                 missingRequiredFieldError ? 'Field must be populated' : ''
               }
@@ -986,7 +986,7 @@ const ExternalIdentifierRender: React.FC<
                 <AdditionalFieldsEditor
                   formData={formData}
                   schemeEntries={schemeEntries}
-                  readOnly={readOnly}
+                  readOnly={readOnly ? true : false}
                   info={info}
                   schema={schema}
                   errorTooltip={errorTooltip}

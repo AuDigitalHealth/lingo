@@ -564,6 +564,35 @@ public abstract class AtomicDataService<T extends ProductDetails> {
                       getModelConfiguration(branch).getNonDefiningProperties())
                   .getOrDefault(packVariant.getConceptId(), new HashSet<>()));
 
+      packSizeWithIdentifier
+          .getNonDefiningProperties()
+          .addAll(
+              ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMembers(
+                  branch,
+                  packVariantRefsetMemebersResult,
+                  packVariant.getConceptId(),
+                  getModelConfiguration(branch).getMappings().stream()
+                      .filter(m -> m.getLevel().equals(ProductPackageType.PRODUCT))
+                      .collect(Collectors.toSet()),
+                  getFhirClient(),
+                  getSnowStormApiClient()));
+      packSizeWithIdentifier
+          .getNonDefiningProperties()
+          .addAll(
+              ReferenceSetUtils.getReferenceSetsFromRefsetMembers(
+                      ProductPackageType.PRODUCT,
+                      packVariantRefsetMemebersResult,
+                      getModelConfiguration(branch).getReferenceSets())
+                  .getOrDefault(packVariant.getConceptId(), new HashSet<>()));
+      packSizeWithIdentifier
+          .getNonDefiningProperties()
+          .addAll(
+              NonDefiningPropertyUtils.getNonDefiningPropertyFromConcepts(
+                      ProductPackageType.PRODUCT,
+                      Set.of(packVariant),
+                      getModelConfiguration(branch).getNonDefiningProperties())
+                  .getOrDefault(packVariant.getConceptId(), new HashSet<>()));
+
       packSizeWithIdentifiers.add(packSizeWithIdentifier);
     }
 
@@ -795,6 +824,36 @@ public abstract class AtomicDataService<T extends ProductDetails> {
           .addAll(
               NonDefiningPropertyUtils.getNonDefiningPropertyFromConcepts(
                       ProductPackageType.PACKAGE,
+                      Set.of(packVariantMap.get(packVariantId)),
+                      getModelConfiguration(branch).getNonDefiningProperties())
+                  .getOrDefault(packVariantId, new HashSet<>()));
+
+      brandWithIdentifiers
+          .getNonDefiningProperties()
+          .addAll(
+              ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMembers(
+                  branch,
+                  packVariantRefsetMemebersResult,
+                  packVariantId,
+                  getModelConfiguration(branch).getMappings().stream()
+                      .filter(m -> m.getLevel().equals(ProductPackageType.PRODUCT))
+                      .collect(Collectors.toSet()),
+                  getFhirClient(),
+                  getSnowStormApiClient()));
+      brandWithIdentifiers
+          .getNonDefiningProperties()
+          .addAll(
+              ReferenceSetUtils.getReferenceSetsFromRefsetMembers(
+                      ProductPackageType.PRODUCT,
+                      packVariantRefsetMemebersResult,
+                      getModelConfiguration(branch).getReferenceSets())
+                  .getOrDefault(packVariantId, new HashSet<>()));
+
+      brandWithIdentifiers
+          .getNonDefiningProperties()
+          .addAll(
+              NonDefiningPropertyUtils.getNonDefiningPropertyFromConcepts(
+                      ProductPackageType.PRODUCT,
                       Set.of(packVariantMap.get(packVariantId)),
                       getModelConfiguration(branch).getNonDefiningProperties())
                   .getOrDefault(packVariantId, new HashSet<>()));

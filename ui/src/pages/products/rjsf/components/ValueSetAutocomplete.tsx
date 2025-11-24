@@ -17,6 +17,7 @@ interface ValueSetAutocompleteProps extends FieldProps {
   error?: string;
   info?: string;
   errorMessage?: string;
+  readOnly?: boolean;
 }
 
 const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
@@ -31,6 +32,7 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
   error,
   info,
   errorMessage,
+  readOnly,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [options, setOptions] = useState<Concept[]>([]);
@@ -99,14 +101,19 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
       sx={{ width: '100%' }}
       data-testid={idSchema?.$id || name}
       loading={isLoading}
+      disabled={disabled || readOnly}
       filterOptions={filterOptionsByTermAndCode}
       options={disabled ? [] : options}
       getOptionLabel={option =>
         option?.conceptId ? option.conceptId + ' - ' + option?.pt?.term : ''
       }
       value={selectedConcept}
-      onInputChange={(_, newInputValue) => setInputValue(newInputValue)}
-      onChange={(_, selectedValue) => handleChange(selectedValue as Concept)}
+      onInputChange={(_, newInputValue) =>
+        !readOnly && setInputValue(newInputValue)
+      }
+      onChange={(_, selectedValue) =>
+        !readOnly && handleChange(selectedValue as Concept)
+      }
       isOptionEqualToValue={(option, val) =>
         option?.conceptId === val?.conceptId ||
         option?.pt?.term === val?.pt?.term
@@ -133,6 +140,7 @@ const ValueSetAutocomplete: React.FC<ValueSetAutocompleteProps> = ({
           }
           InputProps={{
             ...params.InputProps,
+            readOnly: readOnly,
             endAdornment: (
               <>
                 {isLoading ? <CircularProgress size={20} /> : null}

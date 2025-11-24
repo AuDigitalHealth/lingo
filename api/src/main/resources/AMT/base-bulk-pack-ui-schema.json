@@ -71,6 +71,7 @@
       "listTitle": "Existing Pack Sizes",
       "readOnly": true,
       "allowDelete": false,
+      "allowCopy": true,
       "requireEditButton": false,
       "multiValuedSchemes": ["artgid"],
       "nondefiningPropertyTitle": "ARTG ID"
@@ -86,6 +87,7 @@
       "disablePackSizeEdit": true,
       "allowDelete": true,
       "requireEditButton": false,
+      "mandatorySchemes": [],
       "multiValuedSchemes": ["artgid"],
       "nondefiningPropertyTitle": "ARTG ID"
     }

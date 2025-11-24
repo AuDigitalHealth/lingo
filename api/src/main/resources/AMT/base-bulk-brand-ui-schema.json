@@ -47,6 +47,7 @@
     "ui:options": {
       "inputType": "text",
       "readOnly": false,
+      "allowNonDefiningPropertyEdit": true,
       "allowDelete": false,
       "requireEditButton": false,
       "multiValuedSchemes": ["artgid"],
@@ -78,7 +79,9 @@
       "skipTitle": true,
       "listTitle": "Existing Brands",
       "readOnly": true,
+      "allowNonDefiningPropertyEdit": false,
       "allowDelete": false,
+      "allowCopy": true,
       "requireEditButton": false,
       "mandatorySchemes": [],
       "multiValuedSchemes": ["artgid"],
@@ -91,12 +94,39 @@
       "orderable": false,
       "skipTitle": false,
       "listTitle": "Newly Added Brands",
-      "readOnly": false,
+      "readOnly": true,
+      "allowNonDefiningPropertyEdit": true,
       "allowDelete": true,
       "requireEditButton": false,
       "mandatorySchemes": [],
       "multiValuedSchemes": ["artgid"],
       "nondefiningPropertyTitle": "ARTG ID"
+    },
+    "items": {
+      "brandDetails": {
+        "brand": {
+          "ui:widget": "EclAutocomplete",
+          "ui:options": {
+            "conceptPath": "brand",
+            "minProperties": 1,
+            "showFsn": true,
+            "searchable": true
+          }
+        },
+        "nonDefiningProperties": {
+          "ui:field": "ExternalIdentifiers",
+          "ui:options": {
+            "label": false,
+            "skipTitle": true,
+            "mandatorySchemes": [],
+            "multiValuedSchemes": [],
+            "showDefaultOptionSchemes": [],
+            "binding": {},
+            "readOnlyProperties": [],
+            "propertyOrder": []
+          }
+        }
+      }
     }
   }
 }

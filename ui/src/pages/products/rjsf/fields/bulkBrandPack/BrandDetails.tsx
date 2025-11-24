@@ -41,6 +41,7 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
     binding = {},
     multiValuedSchemes = [],
     mandatorySchemes = [],
+    propertyOrder = [],
   } = nonDefiningPropertyOptions;
 
   const {
@@ -50,6 +51,8 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
     ecl,
     createBrand,
     nondefiningPropertyTitle,
+    allowCopy,
+    allowNonDefiningPropertyEdit,
   } = packSizeUiSchemaOptions;
 
   const [editMode, setEditMode] = useState(!readOnly && !requireEditButton);
@@ -122,7 +125,7 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
           gap: 1,
         }}
       >
-        {readOnly && props.onCopyNonDefiningProperties && (
+        {allowCopy && props.onCopyNonDefiningProperties && (
           <Tooltip title="Replace input with copied Non-Defining Properties">
             <IconButton
               size="small"
@@ -144,7 +147,7 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
             </IconButton>
           </Tooltip>
         )}
-        {!readOnly && allowDelete && onDelete && (
+        {allowDelete && onDelete && (
           <Tooltip title="Delete">
             <IconButton
               size="small"
@@ -205,14 +208,21 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
               schema={schema?.properties?.nonDefiningProperties}
               uiSchema={{
                 'ui:options': {
-                  readOnly: readOnly || (requireEditButton && !editMode),
+                  readOnly: allowNonDefiningPropertyEdit ? false : true, //change this to a new flag
                   mandatorySchemes,
                   multiValuedSchemes,
                   binding,
                   label: nondefiningPropertyTitle,
                   skipTitle: false,
+                  propertyOrder,
                 },
               }}
+              errorSchema={formContext.errorSchema}
+              rawErrors={
+                formContext.formErrors
+                  ? formContext.formErrors.map(e => e.message)
+                  : []
+              }
               registry={registry}
               formContext={formContext}
               branch={branch}

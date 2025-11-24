@@ -48,7 +48,11 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
     uiSchemaForNonDefiningProperties?.['ui:options'] || {};
   const packSizeUiSchemaOptions = uiSchema?.['ui:options'] || {};
 
-  const { binding = {}, multiValuedSchemes = [] } = nonDefiningPropertyOptions;
+  const {
+    binding = {},
+    multiValuedSchemes = [],
+    propertyOrder = [],
+  } = nonDefiningPropertyOptions;
 
   const {
     readOnly = false,
@@ -57,6 +61,7 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
     nondefiningPropertyTitle,
     inputType,
     disablePackSizeEdit,
+    allowCopy = false,
   } = packSizeUiSchemaOptions;
 
   let isNumber = schema?.type === 'number' || schema?.type === 'integer';
@@ -131,7 +136,7 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
           gap: 1,
         }}
       >
-        {readOnly && props.onCopyNonDefiningProperties && (
+        {allowCopy && props.onCopyNonDefiningProperties && (
           <Tooltip title="Replace input with copied Non-Defining Properties">
             <IconButton
               size="small"
@@ -227,9 +232,10 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
             schema={schema?.properties?.nonDefiningProperties}
             uiSchema={{
               'ui:options': {
-                readOnly: readOnly || (requireEditButton && !editMode),
+                readOnly: readOnly,
                 binding,
                 multiValuedSchemes,
+                propertyOrder,
                 label: nondefiningPropertyTitle,
               },
             }}

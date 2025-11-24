@@ -72,6 +72,7 @@
       "listTitle": "Existing Pack Sizes",
       "readOnly": true,
       "allowDelete": false,
+      "allowCopy": true,
       "requireEditButton": false,
       "multiValuedSchemes": [
         "artgid"
@@ -86,9 +87,10 @@
       "skipTitle": false,
       "listTitle": "Newly Added Pack Sizes",
       "disablePackSizeEdit": true,
-      "readOnly": false,
+      "readOnly": true,
       "allowDelete": true,
       "requireEditButton": false,
+      "mandatorySchemes": [],
       "multiValuedSchemes": [
         "artgid"
       ],

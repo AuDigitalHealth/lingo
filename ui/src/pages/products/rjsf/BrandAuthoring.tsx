@@ -12,8 +12,6 @@ import { Task } from '../../../types/task.ts';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import ProductLoader from '../components/ProductLoader.tsx';
 import ProductPreviewManageModal from '../components/ProductPreviewManageModal.tsx';
-import { customizeValidator } from '@rjsf/validator-ajv8';
-import ajvErrors from 'ajv-errors';
 import AutoCompleteField from './fields/AutoCompleteField.tsx';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 import BrandArrayTemplate from './templates/bulkBrandPack/BrandArrayTemplate.tsx';
@@ -26,6 +24,11 @@ import BrandDetails from './fields/bulkBrandPack/BrandDetails.tsx';
 import ExternalIdentifier from './fields/bulkBrandPack/ExternalIdentifiers.tsx';
 import { ConfigService } from '../../../api/ConfigService.ts';
 import { getMatchingNonDefiningProperties } from './helpers/helpers.ts';
+import { flattenAnyOfPreserveOrder } from './helpers/rjsfUtils.ts';
+import { validator } from './helpers/validator.ts';
+import { buildErrorSchema } from './helpers/validationHelper.ts';
+
+import { ErrorDisplay } from './components/ErrorDisplay.tsx';
 
 interface FormData {
   selectedProduct?: string;
@@ -45,9 +48,6 @@ export interface BrandAuthoringV2Props {
   ticket: Ticket;
   fieldBindings: any;
 }
-
-const validator = customizeValidator();
-ajvErrors(validator.ajv);
 
 function BrandAuthoring({
   selectedProduct,
@@ -73,6 +73,8 @@ function BrandAuthoring({
   const { data: uiSchema, isLoading: isUiSchemaLoading } = useUiSchemaQuery(
     task.branchPath,
   );
+  const [dynamicSchema, setDynamicSchema] = useState<any>(null);
+  const [dynamicUiSchema, setDynamicUiSchema] = useState<any>(null);
 
   const [runningWarningsCheck, setRunningWarningsCheck] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]);
@@ -80,6 +82,8 @@ function BrandAuthoring({
     brands: [],
     newBrandInput: { brand: undefined, nonDefiningProperties: [] },
   });
+  const [errorSchema, setErrorSchema] = useState<any>({});
+  const [formErrors, setFormErrors] = useState<any[]>([]);
 
   const { data, isFetching } = useFetchBulkAuthorBrands(
     selectedProduct,
@@ -99,6 +103,147 @@ function BrandAuthoring({
     ExternalIdentifier,
   };
 
+  const mergeUiOptions = (rootOpts = {}, productOpts = {}) => {
+    const merged = {
+      ...rootOpts,
+      ...productOpts,
+    };
+
+    // Utility: order-preserving merge (root → product)
+    const mergeArray = (rootArr = [], productArr = []) => {
+      const result = [...rootArr];
+      for (const item of productArr) {
+        if (!result.includes(item)) result.push(item);
+      }
+      return result;
+    };
+
+    merged.mandatorySchemes = mergeArray(
+      rootOpts.mandatorySchemes,
+      productOpts.mandatorySchemes,
+    );
+
+    merged.multiValuedSchemes = mergeArray(
+      rootOpts.multiValuedSchemes,
+      productOpts.multiValuedSchemes,
+    );
+
+    merged.showDefaultOptionSchemes = mergeArray(
+      rootOpts.showDefaultOptionSchemes,
+      productOpts.showDefaultOptionSchemes,
+    );
+
+    merged.readOnlyProperties = mergeArray(
+      rootOpts.readOnlyProperties,
+      productOpts.readOnlyProperties,
+    );
+
+    merged.propertyOrder = mergeArray(
+      rootOpts.propertyOrder,
+      productOpts.propertyOrder,
+    );
+
+    // binding → shallow merge, product overrides root, no deep merge
+    merged.binding = {
+      ...(rootOpts.binding || {}),
+      ...(productOpts.binding || {}),
+    };
+
+    return merged;
+  };
+
+  const rjsfValidationWrapper = {
+    ...validator,
+    validateFormData: (formData: any, schema: any, customUiSchema?: any) => {
+      const result = validator.validateFormData(
+        formData,
+        dynamicSchema,
+        dynamicUiSchema,
+      );
+
+      return result.length > 0
+        ? result.map((err: any) => ({
+            property: err.dataPath || err.instancePath || '', // map path
+            message: err.message,
+          }))
+        : [];
+    },
+  };
+
+  useEffect(() => {
+    if (!schema) return;
+
+    // --- Build dynamic Combined_NonDefiningProperty ---
+    const combinedNonDefiningProperty = {
+      type: 'object',
+      anyOf: [
+        ...flattenAnyOfPreserveOrder(
+          schema.$defs?.MEDICATION_PRODUCT_NonDefiningProperty,
+        ),
+        ...flattenAnyOfPreserveOrder(
+          schema.$defs?.MEDICATION_PACKAGE_NonDefiningProperty,
+        ),
+      ],
+    };
+
+    const updatedSchema = {
+      ...schema,
+      $defs: {
+        ...schema.$defs,
+        Combined_NonDefiningProperty: combinedNonDefiningProperty,
+        BrandDetails: {
+          ...schema.$defs?.BrandDetails,
+          properties: {
+            ...schema.$defs?.BrandDetails?.properties,
+            nonDefiningProperties: {
+              type: 'array',
+              title: 'Non Defining Properties',
+              items: { $ref: '#/$defs/Combined_NonDefiningProperty' },
+            },
+          },
+        },
+      },
+    };
+    setDynamicSchema(updatedSchema);
+  }, [schema, uiSchema]);
+
+  useEffect(() => {
+    if (!uiSchema) return;
+
+    const rootUiOptions = uiSchema?.nonDefiningProperties?.['ui:options'];
+
+    const productUiOptions =
+      uiSchema?.containedPackages?.items?.packageDetails?.containedProducts
+        ?.items?.productDetails?.nonDefiningProperties?.['ui:options']; //merging product nondefining props
+
+    const mergedUiOptions = mergeUiOptions(rootUiOptions, productUiOptions);
+
+    if (!mergedUiOptions) return;
+
+    const newUiSchema = { ...uiSchema };
+
+    // Apply merged ui:options back into both levels
+    if (!newUiSchema.nonDefiningProperties) {
+      newUiSchema.nonDefiningProperties = {};
+    }
+    newUiSchema.nonDefiningProperties['ui:options'] = mergedUiOptions;
+    newUiSchema.brands.items.brandDetails.nonDefiningProperties['ui:options'] =
+      mergedUiOptions;
+
+    const productPath =
+      newUiSchema?.containedPackages?.items?.packageDetails?.containedProducts
+        ?.items?.productDetails;
+
+    if (productPath) {
+      if (!productPath.nonDefiningProperties) {
+        productPath.nonDefiningProperties = {};
+      }
+      productPath.nonDefiningProperties['ui:options'] = mergedUiOptions;
+    }
+
+    setDynamicUiSchema(newUiSchema);
+  }, [uiSchema]);
+
   const handleClear = useCallback(() => {
     const newData: FormData = {
       ...formData,
@@ -112,6 +257,10 @@ function BrandAuthoring({
 
   useEffect(() => {
     if (selectedProduct && data) {
+      setFormData({
+        brands: [],
+        newBrandInput: { brand: undefined, nonDefiningProperties: [] },
+      });
       const matchingProperties = data.brands
         ? getMatchingNonDefiningProperties(data.brands)
         : [];
@@ -125,6 +274,11 @@ function BrandAuthoring({
         },
       };
       setFormData(newData);
+    } else {
+      setFormData({
+        brands: [],
+        newBrandInput: { brand: undefined, nonDefiningProperties: [] },
+      });
     }
   }, [selectedProduct, data]);
 
@@ -177,15 +331,30 @@ function BrandAuthoring({
       onSubmit(formData);
     }
   };
+  const onError = (errors: any) => {
+    if (errors && errors.length > 0) {
+      const newErrorSchema = buildErrorSchema(errors);
+      setErrorSchema(newErrorSchema);
+      setFormErrors(errors);
+    } else {
+      setFormErrors([]);
+    }
+  };
 
   const formContext = {
     formData,
-    uiSchema,
+    uiSchema: dynamicUiSchema,
+    schema: dynamicSchema,
+
+    errorSchema,
     onFormDataChange: (newFormData: FormData) => {
       setFormData(newFormData);
     },
     handleClear,
+    onError,
     validator,
+    formErrors,
+    setFormErrors,
   };
 
   if (isSchemaLoading || isUiSchemaLoading) {
@@ -247,14 +416,16 @@ function BrandAuthoring({
               <Alert severity="info" sx={{ mb: 1 }}>
                 Enter one or more new brands for the selected product.
               </Alert>
+              <ErrorDisplay errors={formErrors} />
               <Form
                 ref={formRef}
-                schema={schema}
-                uiSchema={uiSchema}
+                schema={dynamicSchema}
+                uiSchema={!dynamicUiSchema ? uiSchema : dynamicUiSchema}
                 formData={formData}
                 onChange={({ formData: newFormData }) =>
                   setFormData(newFormData as FormData)
                 }
+                onError={onError}
                 onSubmit={({ formData }) => onSubmit(formData)}
                 widgets={widgets}
                 fields={fields}
@@ -262,8 +433,9 @@ function BrandAuthoring({
                   ArrayFieldTemplate: BrandArrayTemplate,
                   ObjectFieldTemplate: MuiGridTemplate,
                 }}
-                validator={validator}
+                validator={rjsfValidationWrapper}
                 formContext={formContext}
+                showErrorList={false}
               >
                 <Box
                   sx={{

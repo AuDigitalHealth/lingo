@@ -128,6 +128,11 @@ function PackSizeAuthoring({
         },
       };
       setFormData(newData);
+    } else {
+      setFormData({
+        packSizes: [],
+        newPackSizeInput: { packSize: undefined, nonDefiningProperties: [] },
+      });
     }
   }, [selectedProduct, data]);
 

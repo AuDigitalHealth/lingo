@@ -25,6 +25,7 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
     required,
     turnOffPublishParam,
     info,
+    readOnly,
   } = props;
 
   const apLanguageHeader =
@@ -143,17 +144,22 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
     <span data-component-name="EclAutocomplete" style={{ width: 'inherit' }}>
       <Autocomplete
         loading={isLoading}
-        disabled={disabled}
+        disabled={disabled || readOnly}
         options={disabled ? [] : options}
         getOptionLabel={(option: ConceptSearchResult) => option?.pt?.term || ''}
         value={normalizedValue}
-        onInputChange={(event, newInputValue) => {
-          !disabled &&
-            setInputValue(createEmptyConcept(apLanguageHeader, newInputValue));
-        }}
+        onInputChange={
+          readOnly
+            ? undefined
+            : (event, newValue) =>
+                setInputValue(createEmptyConcept(apLanguageHeader, newValue))
+        }
         groupBy={option => option.type}
-        onChange={(event, selectedValue) =>
-          handleProductChange(selectedValue as Concept)
+        onChange={
+          readOnly
+            ? undefined
+            : (event, selectedValue) =>
+                handleProductChange(selectedValue as Concept)
         }
         isOptionEqualToValue={(option, selectedValue) =>
           option?.conceptId === selectedValue?.conceptId
@@ -169,7 +175,7 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
             data-test-id={id}
             label={label}
             // error={hasError}
-            onBlur={handleBlur}
+            onBlur={readOnly ? undefined : handleBlur}
             helperText={
               errorMessage
                 ? errorMessage
@@ -179,6 +185,7 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
             }
             InputProps={{
               ...params.InputProps,
+              readOnly: readOnly,
               endAdornment: (
                 <>
                   {isLoading ? <CircularProgress size={20} /> : null}

@@ -38,6 +38,12 @@
         }
       }
     },
+    "Combined_NonDefiningProperty": {
+      "anyOf": [
+        { "$ref": "#/$defs/MEDICATION_PRODUCT_NonDefiningProperty" },
+        { "$ref": "#/$defs/MEDICATION_PACKAGE_NonDefiningProperty" }
+      ]
+    },
     "BrandDetails": {
       "type": "object",
       "properties": {
