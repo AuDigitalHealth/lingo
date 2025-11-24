@@ -12,6 +12,7 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 ### Changed
 
 - Artg Id search to only appear for AMT branches
+- Add product level nondefining properties to brand and pack
 
 ### Removed
 
