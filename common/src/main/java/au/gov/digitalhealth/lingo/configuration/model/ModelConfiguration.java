@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.Data;
 
 /** Configuration of a specific model for a given project. */
@@ -388,6 +389,11 @@ public class ModelConfiguration {
         getPackageLevels().stream().filter(l -> !l.isBranded()).collect(Collectors.toSet()));
   }
 
+  public ModelLevel getRootBrandedPackageModelLevel() {
+    return ModelLevel.getRootLevel(
+        getPackageLevels().stream().filter(ModelLevel::isBranded).collect(Collectors.toSet()));
+  }
+
   public ModelLevel getRootUnbrandedProductModelLevel() {
     return ModelLevel.getRootLevel(
         getProductLevels().stream().filter(l -> !l.isBranded()).collect(Collectors.toSet()));
@@ -523,6 +529,16 @@ public class ModelConfiguration {
                 getProperty(property.getIdentifierScheme())
                     .getModelLevels()
                     .contains(level.getModelLevelType()))
+        .collect(Collectors.toSet());
+  }
+
+  /**
+   * Gets the union of non-defining properties, mappings and reference set defininitions configured for this model
+   */
+  public Set<BasePropertyDefinition> getAllProperties() {
+    return Stream.concat(
+            nonDefiningProperties.stream(),
+            Stream.concat(mappings.stream(), referenceSets.stream()))
         .collect(Collectors.toSet());
   }
 }
