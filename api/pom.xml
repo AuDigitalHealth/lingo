@@ -430,22 +430,19 @@
     <dependency>
       <artifactId>testcontainers</artifactId>
       <groupId>org.testcontainers</groupId>
-      <version>2.0.1</version>
+      <version>${testcontainers.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <artifactId>junit-jupiter</artifactId>
+      <artifactId>testcontainers-junit-jupiter</artifactId>
       <groupId>org.testcontainers</groupId>
+      <version>${testcontainers.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <artifactId>postgresql</artifactId>
+      <artifactId>testcontainers-postgresql</artifactId>
       <groupId>org.testcontainers</groupId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <artifactId>rabbitmq</artifactId>
-      <groupId>org.testcontainers</groupId>
+      <version>${testcontainers.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -640,5 +637,6 @@
     <snomed-owl-toolkit.version>5.4.0</snomed-owl-toolkit.version>
     <buildnumber>${project.version}</buildnumber>
     <docker.api.version>1.44</docker.api.version> <!-- default value -->
+    <testcontainers.version>2.0.2</testcontainers.version>
   </properties>
 </project>
