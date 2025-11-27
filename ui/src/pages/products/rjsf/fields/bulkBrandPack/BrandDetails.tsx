@@ -42,6 +42,7 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
     multiValuedSchemes = [],
     mandatorySchemes = [],
     propertyOrder = [],
+    readOnlyProperties = [],
   } = nonDefiningPropertyOptions;
 
   const {
@@ -211,6 +212,7 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
                   readOnly: allowNonDefiningPropertyEdit ? false : true, //change this to a new flag
                   mandatorySchemes,
                   multiValuedSchemes,
+                  readOnlyProperties,
                   binding,
                   label: nondefiningPropertyTitle,
                   skipTitle: false,

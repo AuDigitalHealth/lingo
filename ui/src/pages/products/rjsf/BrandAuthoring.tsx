@@ -250,6 +250,7 @@ function BrandAuthoring({
       newBrandInput: { brand: undefined, nonDefiningProperties: [] },
     };
     setFormData(newData);
+    setFormErrors([]);
     if (formRef.current) {
       formRef.current.reset();
     }
@@ -261,6 +262,7 @@ function BrandAuthoring({
         brands: [],
         newBrandInput: { brand: undefined, nonDefiningProperties: [] },
       });
+      setFormErrors([]);
       const matchingProperties = data.brands
         ? getMatchingNonDefiningProperties(data.brands)
         : [];
@@ -279,6 +281,7 @@ function BrandAuthoring({
         brands: [],
         newBrandInput: { brand: undefined, nonDefiningProperties: [] },
       });
+      setFormErrors([]);
     }
   }, [selectedProduct, data]);
 
@@ -333,9 +336,29 @@ function BrandAuthoring({
   };
   const onError = (errors: any) => {
     if (errors && errors.length > 0) {
-      const newErrorSchema = buildErrorSchema(errors);
+      const missingSchemes: string[] = errors[0]?.data?.missingSchemes ?? [];
+      const readOnlyProps: string[] =
+        dynamicUiSchema.nonDefiningProperties?.['ui:options']
+          ?.readOnlyProperties ?? [];
+
+      const hasReadOnlyMissingScheme = missingSchemes.some(scheme =>
+        readOnlyProps.includes(scheme),
+      );
+
+      const uiErrors = [...errors];
+
+      if (hasReadOnlyMissingScheme) {
+        uiErrors.push({
+          message:
+            'Some mandatory fields cannot be updated here because they are read-only. Please switch to the normal edit screen to make changes.',
+          stack:
+            'Some mandatory fields cannot be updated here because they are read-only. Please switch to the normal edit screen to make changes.',
+        });
+      }
+
+      const newErrorSchema = buildErrorSchema(uiErrors);
       setErrorSchema(newErrorSchema);
-      setFormErrors(errors);
+      setFormErrors(uiErrors);
     } else {
       setFormErrors([]);
     }

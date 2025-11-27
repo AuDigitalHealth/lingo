@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { FieldProps } from '@rjsf/utils';
 import { AddButton } from '../../../components/AddButton';
 import { useAddButton } from '../../../hooks/useAddButton';
@@ -35,6 +35,10 @@ const AddBrandButton: React.FC<AddBrandButtonFieldProps> = props => {
       $defs: rootSchema.$defs,
     };
   };
+  const brandValidationSchema = useMemo(
+    () => normalizeSchema(getBrandValidationSchema(formContext.schema)),
+    [formContext.schema],
+  );
 
   const brandValidation = (
     sourceData: any,
@@ -56,16 +60,14 @@ const AddBrandButton: React.FC<AddBrandButtonFieldProps> = props => {
       (item: any) => item.brand?.conceptId === brand.conceptId,
     );
 
-    const validationSchema = normalizeSchema(
-      getBrandValidationSchema(formContext.schema),
-    );
     const ajvErrors = validator.validateFormData(
       { brandDetails: sourceData },
-      validationSchema,
+      brandValidationSchema,
       formContext.uiSchema.brands?.items,
     );
-    formContext.onError(prefixAjvErrorsForBrand(ajvErrors.errors));
+
     if (ajvErrors && ajvErrors.errors.length > 0) {
+      formContext.onError(prefixAjvErrorsForBrand(ajvErrors.errors));
       return false;
     }
 

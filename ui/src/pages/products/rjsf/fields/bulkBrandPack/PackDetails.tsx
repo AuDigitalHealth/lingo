@@ -52,6 +52,7 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
     binding = {},
     multiValuedSchemes = [],
     propertyOrder = [],
+    readOnlyProperties = [],
   } = nonDefiningPropertyOptions;
 
   const {
@@ -235,6 +236,7 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
                 readOnly: readOnly,
                 binding,
                 multiValuedSchemes,
+                readOnlyProperties,
                 propertyOrder,
                 label: nondefiningPropertyTitle,
               },

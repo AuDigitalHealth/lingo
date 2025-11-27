@@ -117,14 +117,6 @@ export const getDiscriminatorValue = (
 
 // Build errorSchema from AJV errors
 export const buildErrorSchema = (errors: any[]) => {
-  const problematicErrors = errors.filter(e => !e.property && !e.instancePath);
-  if (problematicErrors.length > 0) {
-    console.log(
-      'Errors with empty property and instancePath:',
-      safeStringify(problematicErrors),
-    );
-  }
-
   const newErrorSchema = errors.reduce((acc: any, error: any) => {
     const path = error.property
       ? error.property.replace(/^\./, '')
