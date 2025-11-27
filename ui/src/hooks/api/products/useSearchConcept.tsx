@@ -264,7 +264,7 @@ export function useValidateConceptsInValueSet(
           applicationConfig.fhirServerBaseUrl,
           valueSetUrl!,
           concept.conceptId as string,
-          system,
+          system as string,
         );
 
         return {
@@ -276,6 +276,7 @@ export function useValidateConceptsInValueSet(
       enabled:
         applicationConfig?.fhirServerBaseUrl !== undefined &&
         valueSetUrl !== undefined &&
+        system !== undefined &&
         concept?.conceptId !== undefined,
     })),
   });
