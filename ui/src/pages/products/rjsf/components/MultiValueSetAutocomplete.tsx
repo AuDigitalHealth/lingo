@@ -2,7 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import { FieldProps } from '@rjsf/utils';
 import { Concept } from '../../../../types/concept.ts';
 import useApplicationConfigStore from '../../../../stores/ApplicationConfigStore.ts';
-import { useSearchConceptOntoServerByUrl } from '../../../../hooks/api/products/useSearchConcept.tsx';
+import {
+  useSearchConceptOntoServerByUrl,
+  useValidateConceptsInValueSet,
+} from '../../../../hooks/api/products/useSearchConcept.tsx';
 import { convertFromValueSetExpansionContainsListToSnowstormConceptMiniList } from '../../../../utils/helpers/getValueSetExpansionContainsPt.ts';
 import {
   Autocomplete,
@@ -13,16 +16,18 @@ import {
 import { Tooltip } from '@mui/material';
 import { Chip } from '@mui/material';
 import { filterOptionsByTermAndCode } from '../../../../utils/helpers/conceptUtils.ts';
+import { isSctId } from '../../../../utils/helpers/conceptUtils.ts';
 
 interface MultiValueValueSetAutocompleteProps extends FieldProps {
   label?: string;
   url: string;
   showDefaultOptions?: boolean;
-  value: Concept[] | null; // Array of Concept objects
+  value: Concept[] | null;
   onChange: (value: Concept[]) => void;
   disabled?: boolean;
   error?: string;
   info?: string;
+  codeSystem?: string;
 }
 
 export const MultiValueValueSetAutocomplete: React.FC<
@@ -33,11 +38,12 @@ export const MultiValueValueSetAutocomplete: React.FC<
   label,
   url,
   showDefaultOptions = false,
-  value, // Array of Concept objects
+  value,
   onChange,
   disabled = false,
   error,
   info,
+  codeSystem,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [options, setOptions] = useState<Concept[]>([]);
@@ -46,15 +52,40 @@ export const MultiValueValueSetAutocomplete: React.FC<
   );
   const isTypingRef = useRef(false);
   const { applicationConfig } = useApplicationConfigStore();
+
   const { isLoading, data } = useSearchConceptOntoServerByUrl(
     inputValue,
     url && url.length > 0 ? url : undefined,
     showDefaultOptions,
   );
 
+  const { validationResults, isValidating } = useValidateConceptsInValueSet(
+    value,
+    url,
+    codeSystem,
+  );
+
   // Helper function to check if a concept needs attention
   const conceptNeedsAttention = (concept: Concept) => {
-    return concept && concept.pt?.term && !concept.conceptId;
+    // Missing conceptId
+    if (concept && concept.pt?.term && !concept.conceptId) {
+      return true;
+    }
+
+    // Non-SCT code that needs validation
+    if (concept.conceptId && !isSctId(concept.conceptId) && url) {
+      const validationResult = validationResults[concept.conceptId];
+
+      // Needs attention if still validating or validation failed
+      if (validationResult) {
+        return validationResult.isLoading || !validationResult.isValid;
+      }
+
+      // If we don't have a validation result yet, assume it needs attention
+      return true;
+    }
+
+    return false;
   };
 
   // Check if any concept needs attention for overall component error state
@@ -73,12 +104,10 @@ export const MultiValueValueSetAutocomplete: React.FC<
       );
       setOptions(uniqueOptions);
 
-      // If value exists, prefer matching concepts from options for display
       if (value && value.length > 0) {
         const matchingConcepts = uniqueOptions.filter(option =>
           value.some(val => val.conceptId === option.conceptId),
         );
-        // Only update selectedConcept if options provide new matches
         if (matchingConcepts.length > 0) {
           setSelectedConcept(matchingConcepts);
         }
@@ -99,7 +128,6 @@ export const MultiValueValueSetAutocomplete: React.FC<
         selectedConcept.some(concept => concept.conceptId === val.conceptId),
       )
     ) {
-      // Prefer options for display (e.g., to get pt.term), but fallback to value if no matches
       const matchingConcepts =
         options.length > 0
           ? options.filter(option =>
@@ -112,16 +140,16 @@ export const MultiValueValueSetAutocomplete: React.FC<
 
   // Handle selection change
   const handleChange = (selectedValue: Concept[] | null) => {
-    isTypingRef.current = false; // Reset typing flag
+    isTypingRef.current = false;
     if (!selectedValue) {
       setSelectedConcept([]);
       onChange([]);
-      setInputValue(''); // Clear input after selection
+      setInputValue('');
       return;
     }
     setSelectedConcept(selectedValue);
     onChange(selectedValue);
-    setInputValue(''); // Clear input after selection
+    setInputValue('');
   };
 
   return (
@@ -134,10 +162,9 @@ export const MultiValueValueSetAutocomplete: React.FC<
       loading={isLoading}
       options={disabled ? [] : options}
       getOptionLabel={option => option?.pt?.term || ''}
-      value={selectedConcept} // Controlled by selectedConcept
-      inputValue={inputValue} // Controlled input value
+      value={selectedConcept}
+      inputValue={inputValue}
       onInputChange={(_, newInputValue, reason) => {
-        // Only update inputValue on user input
         if (reason === 'input') {
           isTypingRef.current = true;
           setInputValue(newInputValue);
@@ -151,15 +178,36 @@ export const MultiValueValueSetAutocomplete: React.FC<
       renderTags={(value, getTagProps) =>
         value.map((option, index) => {
           const needsAttention = conceptNeedsAttention(option);
+          const validationResult = option.conceptId
+            ? validationResults[option.conceptId]
+            : undefined;
+          const isValidatingThis = validationResult?.isLoading ?? false;
           const tagProps = getTagProps({ index });
+
+          const conceptId = option.conceptId || 'unknown';
+          const term = option.pt?.term || 'No term available';
+
+          let tooltipMessage = `${conceptId} - ${term}`;
+          if (isValidatingThis) {
+            tooltipMessage += ' (Validating...)';
+          } else if (
+            needsAttention &&
+            validationResult &&
+            !validationResult.isValid
+          ) {
+            tooltipMessage +=
+              ' (Invalid code - please search for and select a valid option)';
+          } else if (needsAttention) {
+            tooltipMessage += ' (Please search for and select a valid option)';
+          }
 
           return (
             <Tooltip
-              key={option.conceptId}
-              title={`${option.conceptId} - ${option.pt?.term}${needsAttention ? ' (Please search for and select a valid option)' : ''}`}
+              key={option.conceptId || `concept-${index}`}
+              title={tooltipMessage}
             >
               <Chip
-                label={option.pt?.term || ''}
+                label={term}
                 {...tagProps}
                 color={needsAttention ? 'error' : 'default'}
                 sx={{
@@ -186,7 +234,6 @@ export const MultiValueValueSetAutocomplete: React.FC<
         const { key, ...otherProps } = props;
         return (
           <li {...otherProps} key={option.conceptId}>
-            {/* Code is added to the term, some ValueSets have terms that are only distinquished by the code */}
             {option.conceptId} - {option.pt.term}
           </li>
         );
@@ -200,14 +247,18 @@ export const MultiValueValueSetAutocomplete: React.FC<
             error
               ? error
               : anyConceptNeedsAttention
-                ? 'One or more selections need attention - please search for and select valid options'
+                ? isValidating
+                  ? 'Validating selections...'
+                  : 'One or more selections are invalid - please search for and select valid options'
                 : info
           }
           InputProps={{
             ...params.InputProps,
             endAdornment: (
               <>
-                {isLoading ? <CircularProgress size={20} /> : null}
+                {isLoading || isValidating ? (
+                  <CircularProgress size={20} />
+                ) : null}
                 {params.InputProps.endAdornment}
               </>
             ),

@@ -63,6 +63,36 @@ const OntoserverService = {
 
     return response.data as ValueSet;
   },
+  async validateCode(
+    baseUrl: string,
+    valueSetUrl: string,
+    code: string,
+    system: string,
+  ): Promise<boolean> {
+    try {
+      const url = new URL(`${baseUrl}/ValueSet/$validate-code`);
+      url.searchParams.append('url', valueSetUrl);
+      url.searchParams.append('code', code);
+      url.searchParams.append('system', system);
+
+      const response = await axios.get<Parameters>(url.toString(), {
+        headers: {
+          Accept: 'application/fhir+json',
+        },
+      });
+
+      // Parse the Parameters resource response
+      const resultParam = response.data.parameter?.find(
+        p => p.name === 'result',
+      );
+
+      return resultParam?.valueBoolean === true;
+    } catch (error) {
+      console.error('Error validating code:', error);
+      // If there's an error, assume invalid
+      return false;
+    }
+  },
   async searchConceptByIds(
     baseUrl: string | undefined,
     extension: string | undefined,

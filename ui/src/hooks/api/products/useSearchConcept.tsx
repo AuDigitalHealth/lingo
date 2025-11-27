@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import ConceptService from '../../../api/ConceptService';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -10,6 +10,7 @@ import { useServiceStatus } from '../useServiceStatus.tsx';
 import { FieldBindings } from '../../../types/FieldBindings.ts';
 import {
   emptySnowstormResponse,
+  isSctId,
   isSctIds,
 } from '../../../utils/helpers/conceptUtils.ts';
 import OntoserverService from '../../../api/OntoserverService.ts';
@@ -227,6 +228,84 @@ export function useSearchConceptOntoServerByUrl(
   );
 
   return { isLoading, data, error, isFetching };
+}
+
+export interface ValidationResult {
+  conceptId: string;
+  isValid: boolean;
+  isLoading: boolean;
+  error?: AxiosError;
+}
+/**
+ * Hook to validate multiple concepts against a ValueSet
+ * Only validates non-SCT codes that have a conceptId
+ */
+export function useValidateConceptsInValueSet(
+  concepts: Concept[] | null,
+  valueSetUrl: string | undefined,
+  system: string | undefined,
+) {
+  const { applicationConfig } = useApplicationConfigStore();
+
+  // Filter concepts that need validation
+  const conceptsToValidate = (concepts || []).filter(
+    concept =>
+      concept?.conceptId &&
+      !isSctId(concept.conceptId) &&
+      valueSetUrl !== undefined,
+  );
+
+  // Create queries for each concept that needs validation
+  const validationQueries = useQueries({
+    queries: conceptsToValidate.map(concept => ({
+      queryKey: ['validate-code', valueSetUrl, concept.conceptId, system],
+      queryFn: async () => {
+        const result = await OntoserverService.validateCode(
+          applicationConfig.fhirServerBaseUrl,
+          valueSetUrl!,
+          concept.conceptId as string,
+          system,
+        );
+
+        return {
+          conceptId: concept.conceptId,
+          isValid: result,
+        };
+      },
+      staleTime: 30 * 60 * 1000, // 30 minutes - validation results are relatively stable
+      enabled:
+        applicationConfig?.fhirServerBaseUrl !== undefined &&
+        valueSetUrl !== undefined &&
+        concept?.conceptId !== undefined,
+    })),
+  });
+
+  // Transform results into a more usable format
+  const validationResults: Record<string, ValidationResult> = {};
+
+  conceptsToValidate.forEach((concept, index) => {
+    const query = validationQueries[index];
+    validationResults[concept.conceptId as string] = {
+      conceptId: concept.conceptId as string,
+      isValid: query.data?.isValid ?? false,
+      isLoading: query.isLoading || query.isFetching,
+      error: query.error as AxiosError | undefined,
+    };
+  });
+
+  // Overall loading state - true if any query is loading
+  const isValidating = validationQueries.some(q => q.isLoading || q.isFetching);
+
+  // Check if all queries have completed
+  const isComplete = validationQueries.every(
+    q => !q.isLoading && !q.isFetching,
+  );
+
+  return {
+    validationResults,
+    isValidating,
+    isComplete,
+  };
 }
 
 export function useSearchConceptBySctIdList(
