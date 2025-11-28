@@ -533,7 +533,8 @@ public class ModelConfiguration {
   }
 
   /**
-   * Gets the union of non-defining properties, mappings and reference set defininitions configured for this model
+   * Gets the union of non-defining properties, mappings and reference set defininitions configured
+   * for this model
    */
   public Set<BasePropertyDefinition> getAllProperties() {
     return Stream.concat(
