@@ -53,6 +53,7 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
     multiValuedSchemes = [],
     propertyOrder = [],
     readOnlyProperties = [],
+    mandatorySchemes = [],
   } = nonDefiningPropertyOptions;
 
   const {
@@ -236,11 +237,18 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
                 readOnly: readOnly,
                 binding,
                 multiValuedSchemes,
+                mandatorySchemes,
                 readOnlyProperties,
                 propertyOrder,
                 label: nondefiningPropertyTitle,
               },
             }}
+            errorSchema={formContext.errorSchema}
+            rawErrors={
+              formContext.formErrors
+                ? formContext.formErrors.map(e => e.message)
+                : []
+            }
             registry={registry}
             formContext={formContext}
             branch={branch}

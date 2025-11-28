@@ -152,24 +152,6 @@ function BrandAuthoring({
     return merged;
   };
 
-  const rjsfValidationWrapper = {
-    ...validator,
-    validateFormData: (formData: any, schema: any, customUiSchema?: any) => {
-      const result = validator.validateFormData(
-        formData,
-        dynamicSchema,
-        dynamicUiSchema,
-      );
-
-      return result.length > 0
-        ? result.map((err: any) => ({
-            property: err.dataPath || err.instancePath || '', // map path
-            message: err.message,
-          }))
-        : [];
-    },
-  };
-
   useEffect(() => {
     if (!schema) return;
 
@@ -258,11 +240,11 @@ function BrandAuthoring({
 
   useEffect(() => {
     if (selectedProduct && data) {
+      setFormErrors([]);
       setFormData({
         brands: [],
         newBrandInput: { brand: undefined, nonDefiningProperties: [] },
       });
-      setFormErrors([]);
       const matchingProperties = data.brands
         ? getMatchingNonDefiningProperties(data.brands)
         : [];
@@ -456,7 +438,7 @@ function BrandAuthoring({
                   ArrayFieldTemplate: BrandArrayTemplate,
                   ObjectFieldTemplate: MuiGridTemplate,
                 }}
-                validator={rjsfValidationWrapper}
+                validator={validator}
                 formContext={formContext}
                 showErrorList={false}
               >

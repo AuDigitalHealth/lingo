@@ -95,6 +95,36 @@
         "artgid"
       ],
       "nondefiningPropertyTitle": "Non-defining properties"
+    },
+    "items": {
+      "packDetails": {
+        "ui:field": "PackDetails",
+        "ui:options": {
+          "readOnly": true,
+          "allowDelete": true,
+          "requireEditButton": false,
+          "multiValuedSchemes": [],
+          "nondefiningPropertyTitle": "Non-defining properties"
+        },
+        "packSize": {
+          "ui:options": {
+
+          }
+        },
+        "nonDefiningProperties": {
+          "ui:field": "ExternalIdentifiers",
+          "ui:options": {
+            "label": false,
+            "skipTitle": true,
+            "mandatorySchemes": [],
+            "multiValuedSchemes": [],
+            "showDefaultOptionSchemes": [],
+            "binding": {},
+            "readOnlyProperties": [],
+            "propertyOrder": []
+          }
+        }
+      }
     }
   }
 }

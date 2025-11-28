@@ -4,7 +4,10 @@ import { AddButton } from '../../../components/AddButton';
 import { useAddButton } from '../../../hooks/useAddButton';
 import { validator } from '../../helpers/validator';
 import { normalizeSchema } from '../../helpers/rjsfUtils';
-import { getSubSchema } from '../../helpers/validationHelper';
+import {
+  getSubSchema,
+  prefixAjvErrorsForPackAndBrand,
+} from '../../helpers/validationHelper';
 
 interface AddBrandButtonFieldProps extends FieldProps {
   sourcePath?: string;
@@ -65,9 +68,14 @@ const AddBrandButton: React.FC<AddBrandButtonFieldProps> = props => {
       brandValidationSchema,
       formContext.uiSchema.brands?.items,
     );
-
+    formContext.onError(
+      prefixAjvErrorsForPackAndBrand(
+        ajvErrors.errors,
+        '/newBrandInput/brandDetails',
+        'newBrandInput.brandDetails',
+      ),
+    );
     if (ajvErrors && ajvErrors.errors.length > 0) {
-      formContext.onError(prefixAjvErrorsForBrand(ajvErrors.errors));
       return false;
     }
 
@@ -103,40 +111,4 @@ const AddBrandButton: React.FC<AddBrandButtonFieldProps> = props => {
     />
   );
 };
-function prefixAjvErrorsForBrand(
-  errors: any[],
-  prefixInstancePath = '/newBrandInput/brandDetails',
-  prefixProperty = 'newBrandInput.brandDetails',
-) {
-  if (!Array.isArray(errors)) return errors;
-
-  return errors.map(err => {
-    const updated = { ...err };
-
-    // Prefix instancePath (AJV path)
-    if (updated.instancePath) {
-      updated.instancePath = `${prefixInstancePath}${updated.instancePath}`;
-    } else {
-      updated.instancePath = prefixInstancePath;
-    }
-
-    // Prefix schemaPath only if exists
-    if (updated.schemaPath) {
-      updated.schemaPath = updated.schemaPath.replace(
-        /^#\//,
-        `#/${prefixProperty.replace(/\./g, '/')}/`,
-      );
-    }
-
-    // Prefix .property field (used by some validators)
-    if (updated.property) {
-      updated.property = `${prefixProperty}.${updated.property.replace(/^\./, '')}`;
-    } else {
-      updated.property = prefixProperty;
-    }
-
-    return updated;
-  });
-}
-
 export default AddBrandButton;
