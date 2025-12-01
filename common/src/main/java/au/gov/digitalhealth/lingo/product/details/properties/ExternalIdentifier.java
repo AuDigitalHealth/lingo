@@ -29,6 +29,7 @@ import au.gov.digitalhealth.lingo.service.SnowstormClient;
 import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import au.gov.digitalhealth.lingo.validation.OnlyOneNotEmpty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import jakarta.validation.constraints.NotNull;
@@ -373,6 +374,7 @@ public class ExternalIdentifier extends NonDefiningBase implements Serializable 
     }
   }
 
+  @JsonIgnore
   public boolean isUnknownCode() {
     return valueObject != null
         && valueObject.getPt() != null
