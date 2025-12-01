@@ -74,7 +74,7 @@ const ConceptService = {
     return conceptResponse;
   },
   async integrityCheck(branch: string): Promise<IntegrityCheckResponse> {
-    const url = `/snowstorm/${branch}/integrity-check`;
+    const url = `/snowstorm/${encodeURIComponent(branch)}/integrity-check`;
     const response = await api.post(url);
 
     if (response.status !== 201) {
