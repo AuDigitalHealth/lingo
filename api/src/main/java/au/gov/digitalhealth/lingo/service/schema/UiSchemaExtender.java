@@ -285,6 +285,10 @@ public class UiSchemaExtender {
         binding.set(
             "valueSet", objectMapper.valueToTree(nonDefiningPropertyBase.getValueSetReference()));
       }
+      if (nonDefiningPropertyBase.getCodeSystem() != null) {
+        binding.set(
+            "codeSystem", objectMapper.valueToTree(nonDefiningPropertyBase.getCodeSystem()));
+      }
       if (nonDefiningPropertyBase.getEclBinding() != null) {
         binding.set("ecl", objectMapper.valueToTree(nonDefiningPropertyBase.getEclBinding()));
       }

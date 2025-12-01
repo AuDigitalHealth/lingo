@@ -86,6 +86,7 @@ import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageQuantity;
 import au.gov.digitalhealth.lingo.product.details.ProductQuantity;
 import au.gov.digitalhealth.lingo.product.details.VaccineProductDetails;
+import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import au.gov.digitalhealth.lingo.service.validators.MedicationDetailsValidator;
 import au.gov.digitalhealth.lingo.service.validators.ValidationResult;
 import au.gov.digitalhealth.lingo.util.AmtConstants;
@@ -132,6 +133,7 @@ public class MedicationProductCalculationService
     extends ProductCalculationService<MedicationProductDetails> {
 
   private final Map<String, MedicationDetailsValidator> medicationDetailsValidatorByQualifier;
+  private final FhirClient fhirClient;
   SnowstormClient snowstormClient;
   NameGenerationService nameGenerationService;
   TicketServiceImpl ticketService;
@@ -156,7 +158,8 @@ public class MedicationProductCalculationService
       Models models,
       Map<String, MedicationDetailsValidator> medicationDetailsValidatorByQualifier,
       ProductSummaryService productSummaryService,
-      @Lazy MedicationProductCalculationService self) {
+      @Lazy MedicationProductCalculationService self,
+      FhirClient fhirClient) {
     this.snowstormClient = snowstormClient;
     this.nameGenerationService = nameGenerationService;
     this.ticketService = ticketService;
@@ -167,6 +170,7 @@ public class MedicationProductCalculationService
     this.medicationDetailsValidatorByQualifier = medicationDetailsValidatorByQualifier;
     this.productSummaryService = productSummaryService;
     this.self = self;
+    this.fhirClient = fhirClient;
   }
 
   private static void addParent(Node mpuuNode, Node mpNode, String moduleId) {
@@ -640,7 +644,8 @@ public class MedicationProductCalculationService
           "No medication details validator found for model type: "
               + modelConfiguration.getModelType());
     }
-    return medicationDetailsValidator.validatePackageDetails(packageDetails, branch);
+    return medicationDetailsValidator.validatePackageDetails(
+        packageDetails, branch, snowstormClient, fhirClient);
   }
 
   private CompletableFuture<Node> getOrCreatePackagedClinicalDrug(

@@ -87,6 +87,7 @@ export interface BindingConfig {
     showDefaultOptions?: boolean;
     createConcept?: CreateConceptConfig;
     placeholder?: string;
+    codeSystem?: string;
   };
 }
 

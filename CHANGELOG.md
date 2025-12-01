@@ -14,10 +14,12 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 ### Changed
 - Change width of columns on the backlog screen, so there is no overflow on smaller screens
+- Now shows invalid external identifiers in the atomic data entry form, these are highlighted in red.
+
+### Removed
 - Remove nondefining properties from product edit terms screen
 
 ### Added
-
 - Handling of non-defining properties with coded values no longer in the FHIR CodeSystem -
   highlights these non-defining properties in red to attract user attention
 

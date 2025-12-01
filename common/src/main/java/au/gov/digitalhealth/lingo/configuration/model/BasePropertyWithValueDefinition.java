@@ -64,6 +64,8 @@ public abstract class BasePropertyWithValueDefinition extends BasePropertyDefini
   /** External reference to a value set. */
   private String valueSetReference;
 
+  private String codeSystem;
+
   /** Indicates if the property is mandatory. */
   private boolean isMandatory;
 

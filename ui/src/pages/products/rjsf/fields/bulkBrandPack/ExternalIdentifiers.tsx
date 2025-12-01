@@ -505,6 +505,7 @@ const ExternalIdentifierRender: React.FC<
         <LeftRightAlign
           left={
             <MultiValueValueSetAutocomplete
+              codeSystem={binding.codeSystem}
               label={schema.title}
               url={binding.valueSet || ''}
               showDefaultOptions={showDefaultOptions || false}
