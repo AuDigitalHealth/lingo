@@ -54,6 +54,8 @@ import reactor.core.publisher.Mono;
 @OnlyOneNotEmpty(fields = {"value", "valueObject"})
 @Log
 public class ExternalIdentifier extends NonDefiningBase implements Serializable {
+
+  public static final String UNKNOWN_CODE = "Unknown code - ";
   String value;
   SnowstormConceptMini valueObject;
   @NotNull MappingType relationshipType;
@@ -155,9 +157,9 @@ public class ExternalIdentifier extends NonDefiningBase implements Serializable 
                     SnowstormConceptMini concept = new SnowstormConceptMini();
                     concept.setConceptId(mapTargetId);
                     concept.setFsn(
-                        new SnowstormTermLangPojo().term("Unknown code - " + mapTargetId)
+                        new SnowstormTermLangPojo().term(UNKNOWN_CODE + mapTargetId)
                             .lang("en"));
-                    concept.setPt(new SnowstormTermLangPojo().term("Unknown code - " + mapTargetId)
+                    concept.setPt(new SnowstormTermLangPojo().term(UNKNOWN_CODE + mapTargetId)
                         .lang("en"));
                     identifier.setValueObject(concept);
                     identifier.setCodeSystem(externalIdentifierDefinition.getCodeSystem());
@@ -375,6 +377,6 @@ public class ExternalIdentifier extends NonDefiningBase implements Serializable 
     return valueObject != null
         && valueObject.getPt() != null
         && valueObject.getPt().getTerm() != null
-        && valueObject.getPt().getTerm().startsWith("Unknown code - ");
+        && valueObject.getPt().getTerm().startsWith(UNKNOWN_CODE);
   }
 }
