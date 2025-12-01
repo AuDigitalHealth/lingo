@@ -8,9 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
+
+### Fixed
 - Fix error screen that could occur on task rebase
+
+### Changed
 - Change width of columns on the backlog screen, so there is no overflow on smaller screens
 - Now shows invalid external identifiers in the atomic data entry form, these are highlighted in red.
+
+### Added
+
+- Handling of non-defining properties with coded values no longer in the FHIR CodeSystem -
+  highlights these non-defining properties in red to attract user attention
 
 ## [1.3.19] - 2025-11-13
 
