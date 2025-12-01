@@ -22,6 +22,8 @@ import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.ProductQuantity;
 import au.gov.digitalhealth.lingo.product.details.ProductTemplate;
 import au.gov.digitalhealth.lingo.product.details.ProductType;
+import au.gov.digitalhealth.lingo.service.SnowstormClient;
+import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import au.gov.digitalhealth.lingo.util.ValidationUtil;
 import java.util.Set;
 import lombok.extern.java.Log;
@@ -31,10 +33,16 @@ import org.springframework.stereotype.Service;
 @Service("NMPC-DeviceDetailsValidator")
 @Log
 public class NmpcDeviceDetailsValidator extends DetailsValidator implements DeviceDetailsValidator {
+
+  private final SnowstormClient snowstormClient;
+  private final FhirClient fhirClient;
   Models models;
 
-  public NmpcDeviceDetailsValidator(Models models) {
+  public NmpcDeviceDetailsValidator(
+      Models models, SnowstormClient snowstormClient, FhirClient fhirClient) {
     this.models = models;
+    this.snowstormClient = snowstormClient;
+    this.fhirClient = fhirClient;
   }
 
   @Override
@@ -46,6 +54,9 @@ public class NmpcDeviceDetailsValidator extends DetailsValidator implements Devi
     validateTypeParameters(packageDetails, result);
 
     validateNonDefiningProperties(
+        snowstormClient,
+        fhirClient,
+        branch,
         packageDetails.getNonDefiningProperties(),
         ProductPackageType.PACKAGE,
         models.getModelConfiguration(branch),
@@ -91,6 +102,9 @@ public class NmpcDeviceDetailsValidator extends DetailsValidator implements Devi
     }
 
     validateNonDefiningProperties(
+        snowstormClient,
+        fhirClient,
+        branch,
         deviceProductDetails.getNonDefiningProperties(),
         ProductPackageType.PRODUCT,
         models.getModelConfiguration(branch),

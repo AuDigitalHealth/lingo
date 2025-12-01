@@ -17,9 +17,14 @@ package au.gov.digitalhealth.lingo.service.validators;
 
 import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
+import au.gov.digitalhealth.lingo.service.SnowstormClient;
+import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 
 public interface MedicationDetailsValidator {
 
   ValidationResult validatePackageDetails(
-      PackageDetails<MedicationProductDetails> packageDetails, String branch);
+      PackageDetails<MedicationProductDetails> packageDetails,
+      String branch,
+      SnowstormClient snowstormClient,
+      FhirClient fhirClient);
 }

@@ -32,6 +32,8 @@ import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.details.properties.FieldValue;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
+import au.gov.digitalhealth.lingo.service.SnowstormClient;
+import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import jakarta.validation.Valid;
 import java.math.BigDecimal;
 import java.util.Collection;
@@ -40,7 +42,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.extern.java.Log;
+import reactor.core.publisher.Mono;
 
+@Log
 public abstract class DetailsValidator {
 
   protected abstract Set<ProductType> getSupportedProductTypes();
@@ -159,6 +164,9 @@ public abstract class DetailsValidator {
   }
 
   protected void validateNonDefiningProperties(
+      SnowstormClient snowstormClient,
+      FhirClient fhirClient,
+      String branch,
       List<@Valid NonDefiningBase> nonDefiningProperties,
       ProductPackageType type,
       ModelConfiguration modelConfiguration,
@@ -204,6 +212,31 @@ public abstract class DetailsValidator {
                       + "' is not valid for scheme '"
                       + nonDefiningProperty.getIdentifierScheme()
                       + "'");
+            } else if (externalIdentifierDefinition.getCodeSystem() != null) {
+              // structrally valid external identifier, does it exist?
+              if (externalIdentifierDefinition.getCodeSystem().equals("http://snomed.info/sct")
+                  && snowstormClient.getConcept(branch, externalIdentifier.getValue()) == null) {
+                result.addProblem(
+                    "External identifier value '"
+                        + externalIdentifier.getValue()
+                        + "' does not exist in "
+                        + branch);
+              } else {
+                fhirClient
+                    .getConcept(
+                        externalIdentifier.getValueObject().getConceptId(),
+                        externalIdentifierDefinition.getCodeSystem())
+                    .onErrorResume(
+                        error -> {
+                          result.addProblem(
+                              "External identifier value '"
+                                  + externalIdentifier.getValueObject().getConceptId()
+                                  + "' does not exist in FHIR server for code system '"
+                                  + externalIdentifierDefinition.getCodeSystem());
+                          return Mono.empty();
+                        })
+                    .block();
+              }
             }
 
             if (externalIdentifier.isAdditionalFieldMismatch(externalIdentifierDefinition)) {

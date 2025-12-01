@@ -30,6 +30,7 @@ import au.gov.digitalhealth.lingo.product.details.ProductType;
 import au.gov.digitalhealth.lingo.product.details.Quantity;
 import au.gov.digitalhealth.lingo.product.details.VaccineProductDetails;
 import au.gov.digitalhealth.lingo.service.SnowstormClient;
+import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
@@ -42,6 +43,8 @@ import org.springframework.stereotype.Service;
 @Log
 public class NmpcMedicationDetailsValidator extends DetailsValidator
     implements MedicationDetailsValidator {
+
+  private final FhirClient fhirClient;
   Models models;
   SnowstormClient snowstormClient;
   FieldBindingConfiguration fieldBindingConfiguration;
@@ -49,10 +52,12 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
   public NmpcMedicationDetailsValidator(
       Models models,
       SnowstormClient snowstormClient,
-      FieldBindingConfiguration fieldBindingConfiguration) {
+      FieldBindingConfiguration fieldBindingConfiguration,
+      FhirClient fhirClient) {
     this.models = models;
     this.snowstormClient = snowstormClient;
     this.fieldBindingConfiguration = fieldBindingConfiguration;
+    this.fhirClient = fhirClient;
   }
 
   private static void validateQuantityPopulated(
@@ -65,12 +70,18 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
 
   @Override
   public ValidationResult validatePackageDetails(
-      PackageDetails<MedicationProductDetails> packageDetails, String branch) {
+      PackageDetails<MedicationProductDetails> packageDetails,
+      String branch,
+      SnowstormClient snowstormClient,
+      FhirClient fhirClient) {
     ValidationResult result = new ValidationResult();
 
     validateTypeParameters(packageDetails, result);
 
     validateNonDefiningProperties(
+        snowstormClient,
+        fhirClient,
+        branch,
         packageDetails.getNonDefiningProperties(),
         ProductPackageType.PACKAGE,
         models.getModelConfiguration(branch),
@@ -107,6 +118,9 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
       ValidationResult result) {
     // validate non-defining properties
     validateNonDefiningProperties(
+        snowstormClient,
+        fhirClient,
+        branch,
         productDetails.getNonDefiningProperties(),
         ProductPackageType.PRODUCT,
         models.getModelConfiguration(branch),

@@ -23,6 +23,8 @@ import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.ProductQuantity;
 import au.gov.digitalhealth.lingo.product.details.ProductTemplate;
 import au.gov.digitalhealth.lingo.product.details.ProductType;
+import au.gov.digitalhealth.lingo.service.SnowstormClient;
+import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import au.gov.digitalhealth.lingo.util.ValidationUtil;
 import java.util.Set;
 import lombok.extern.java.Log;
@@ -33,10 +35,14 @@ import org.springframework.stereotype.Service;
 @Log
 public class AmtDeviceValidator extends DetailsValidator implements DeviceDetailsValidator {
 
+  private final SnowstormClient snowstormClient;
+  private final FhirClient fhirClient;
   Models models;
 
-  public AmtDeviceValidator(Models models) {
+  public AmtDeviceValidator(Models models, SnowstormClient snowstormClient, FhirClient fhirClient) {
     this.models = models;
+    this.snowstormClient = snowstormClient;
+    this.fhirClient = fhirClient;
   }
 
   @Override
@@ -48,6 +54,9 @@ public class AmtDeviceValidator extends DetailsValidator implements DeviceDetail
     validateTypeParameters(packageDetails, result);
 
     validateNonDefiningProperties(
+        snowstormClient,
+        fhirClient,
+        branch,
         packageDetails.getNonDefiningProperties(),
         ProductPackageType.PACKAGE,
         models.getModelConfiguration(branch),
@@ -95,6 +104,9 @@ public class AmtDeviceValidator extends DetailsValidator implements DeviceDetail
     }
 
     validateNonDefiningProperties(
+        snowstormClient,
+        fhirClient,
+        branch,
         deviceProductDetails.getNonDefiningProperties(),
         ProductPackageType.PACKAGE,
         models.getModelConfiguration(branch),
