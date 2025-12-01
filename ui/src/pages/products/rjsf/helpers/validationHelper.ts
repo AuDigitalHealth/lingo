@@ -15,6 +15,7 @@
 ///
 
 import _, { cloneDeep, get, set } from 'lodash';
+import { validator } from './validator.ts';
 export const PREFIX_MISSING_NONDEFINING_PROPERTIES =
   'Non-defining property missing required fields:';
 // Resolve a $ref in the schema
@@ -117,14 +118,6 @@ export const getDiscriminatorValue = (
 
 // Build errorSchema from AJV errors
 export const buildErrorSchema = (errors: any[]) => {
-  const problematicErrors = errors.filter(e => !e.property && !e.instancePath);
-  if (problematicErrors.length > 0) {
-    console.log(
-      'Errors with empty property and instancePath:',
-      safeStringify(problematicErrors),
-    );
-  }
-
   const newErrorSchema = errors.reduce((acc: any, error: any) => {
     const path = error.property
       ? error.property.replace(/^\./, '')
@@ -471,10 +464,61 @@ export function resetDiscriminators(
 
   return updatedData;
 }
+
+const getPackValidationSchema = (rootSchema: any) => {
+  if (!rootSchema || !rootSchema.$defs) return null;
+  const pack = getSubSchema(rootSchema, '$defs.PackDetails');
+  if (!pack) return null;
+
+  return {
+    type: 'object',
+    properties: {
+      packDetails: pack,
+    },
+    $defs: rootSchema.$defs,
+  };
+};
+
+export function prefixAjvErrorsForPackAndBrand(
+  errors: any[],
+  prefixInstancePath = '/newPackSizeInput/packDetails',
+  prefixProperty = 'newPackSizeInput.packDetails',
+) {
+  if (!Array.isArray(errors)) return errors;
+
+  return errors.map(err => {
+    const updated = { ...err };
+
+    // Prefix instancePath (AJV path)
+    if (updated.instancePath) {
+      updated.instancePath = `${prefixInstancePath}${updated.instancePath}`;
+    } else {
+      updated.instancePath = prefixInstancePath;
+    }
+
+    // Prefix schemaPath only if exists
+    if (updated.schemaPath) {
+      updated.schemaPath = updated.schemaPath.replace(
+        /^#\//,
+        `#/${prefixProperty.replace(/\./g, '/')}/`,
+      );
+    }
+
+    // Prefix .property field (used by some validators)
+    if (updated.property) {
+      updated.property = `${prefixProperty}.${updated.property.replace(/^\./, '')}`;
+    } else {
+      updated.property = prefixProperty;
+    }
+
+    return updated;
+  });
+}
 export const packSizeValidation = (
   sourceData: any,
   targetData: any[],
   existingData: any[],
+  formContext?: any,
 ) => {
   if (!sourceData || typeof sourceData !== 'object') return false;
 
@@ -490,6 +534,32 @@ export const packSizeValidation = (
   const duplicateInExisting = existingData.some(
     (item: any) => item.packSize === packSize,
   );
+  const ajvErrors = validator.validateFormData(
+    { packDetails: sourceData },
+    getPackValidationSchema(formContext.validationSchema),
+    formContext.uiSchema.packSizes?.items,
+  );
+  formContext.onError(prefixAjvErrorsForPackAndBrand(ajvErrors.errors));
+  if (ajvErrors && ajvErrors.errors.length > 0) {
+    return false;
+  }
 
   return !duplicateInTarget && !duplicateInExisting;
 };
+
+export function getSubSchema(fullSchema: any, path: string) {
+  if (!fullSchema) return null;
+  const parts = path.split('.');
+  let node: any = fullSchema;
+  for (const p of parts) {
+    if (p === '') continue;
+    node = node?.[p];
+    if (node === undefined) return null;
+  }
+
+  // Return subtree as a full schema root that contains $defs so "#/$defs/..." refs resolve
+  return {
+    ...node,
+    $defs: fullSchema.$defs || {},
+  };
+}

@@ -16,8 +16,12 @@ const PackSizeArrayTemplate: React.FC<ArrayFieldTemplateProps> = props => {
     skipTitle = false,
     binding = {},
     multiValuedSchemes = [],
+    readOnlyProperties = [],
+    mandatorySchemes = [],
     nondefiningPropertyTitle,
     disablePackSizeEdit = false,
+    propertyOrder,
+    allowCopy = false,
   } = options;
 
   // Get unitOfMeasure from context
@@ -135,8 +139,12 @@ const PackSizeArrayTemplate: React.FC<ArrayFieldTemplateProps> = props => {
                         requireEditButton,
                         binding,
                         multiValuedSchemes,
+                        mandatorySchemes,
+                        readOnlyProperties,
                         nondefiningPropertyTitle,
                         disablePackSizeEdit,
+                        propertyOrder,
+                        allowCopy,
                       },
                     }}
                     schema={element.children.props.schema}

@@ -81,22 +81,6 @@ export const bulkAddExternalRequestorSchema: yup.ObjectSchema<BulkAddExternalReq
 export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateRequest> =
   yup
     .object({
-      propertiesUpdateRequest: yup
-        .object<ProductUpdateRequest>({
-          newNonDefiningProperties: yup
-            .array<NonDefiningProperty>()
-            .of(
-              yup.object({
-                identifierScheme: yup.string().required(),
-                identifier: yup.string().required(),
-                title: yup.string().required(),
-                type: yup.string().required(),
-              }),
-            )
-            .required(),
-        })
-        .defined(),
-
       descriptionUpdate: yup.object<ProductDescriptionUpdateRequest>({
         descriptions: yup
           .array<Description>()

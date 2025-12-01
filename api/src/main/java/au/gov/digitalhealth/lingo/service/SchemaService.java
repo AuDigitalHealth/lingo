@@ -15,9 +15,11 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
+import au.gov.digitalhealth.lingo.configuration.model.BasePropertyDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.configuration.model.ProductType;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.service.schema.SchemaExtender;
 import au.gov.digitalhealth.lingo.service.schema.UiSchemaExtender;
@@ -27,6 +29,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -68,7 +72,8 @@ public class SchemaService {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     JsonNode uiSchemaNode = readFileContentAsJson(modelConfiguration.getBaseMedicationUiSchema());
 
-    uiSchemaExtender.updateUiSchema(modelConfiguration, uiSchemaNode, ProductType.MEDICATION);
+    uiSchemaExtender.updateUiSchema(
+        modelConfiguration, uiSchemaNode, ProductType.MEDICATION, Set.of());
 
     return uiSchemaNode.toString();
   }
@@ -86,7 +91,7 @@ public class SchemaService {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     JsonNode uiSchemaNode = readFileContentAsJson(modelConfiguration.getBaseDeviceUiSchema());
 
-    uiSchemaExtender.updateUiSchema(modelConfiguration, uiSchemaNode, ProductType.DEVICE);
+    uiSchemaExtender.updateUiSchema(modelConfiguration, uiSchemaNode, ProductType.DEVICE, Set.of());
 
     return uiSchemaNode.toString();
   }
@@ -104,7 +109,26 @@ public class SchemaService {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     JsonNode uiSchemaNode = readFileContentAsJson(modelConfiguration.getBaseBulkBrandUiSchema());
 
-    uiSchemaExtender.updateUiSchema(modelConfiguration, uiSchemaNode, ProductType.MEDICATION);
+    // get the model levels that are above the root branded product level
+    Set<ModelLevelType> levelsWithReadOnlyProperties =
+        modelConfiguration.getLeafProductModelLevel().getModelLevelType().getAncestors();
+
+    // get the model levels that contain the product levels detected
+    levelsWithReadOnlyProperties.addAll(
+        modelConfiguration.getRootBrandedPackageModelLevel().getModelLevelType().getAncestors());
+
+    Set<BasePropertyDefinition> readOnlyProperties =
+        modelConfiguration.getAllProperties().stream()
+            .filter(
+                basePropertyDefinition ->
+                    levelsWithReadOnlyProperties.contains(
+                            basePropertyDefinition.getSourceModelLevel())
+                        || levelsWithReadOnlyProperties.stream()
+                            .anyMatch(l -> basePropertyDefinition.getModelLevels().contains(l)))
+            .collect(Collectors.toSet());
+
+    uiSchemaExtender.updateUiSchema(
+        modelConfiguration, uiSchemaNode, ProductType.MEDICATION, readOnlyProperties);
 
     return uiSchemaNode.toString();
   }
@@ -122,7 +146,8 @@ public class SchemaService {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     JsonNode uiSchemaNode = readFileContentAsJson(modelConfiguration.getBaseBulkPackUiSchema());
 
-    uiSchemaExtender.updateUiSchema(modelConfiguration, uiSchemaNode, ProductType.MEDICATION);
+    uiSchemaExtender.updateUiSchema(
+        modelConfiguration, uiSchemaNode, ProductType.MEDICATION, Set.of());
 
     return uiSchemaNode.toString();
   }

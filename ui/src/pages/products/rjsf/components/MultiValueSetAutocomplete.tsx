@@ -28,6 +28,7 @@ interface MultiValueValueSetAutocompleteProps extends FieldProps {
   error?: string;
   info?: string;
   codeSystem?: string;
+  readOnly?: boolean;
 }
 
 export const MultiValueValueSetAutocomplete: React.FC<
@@ -44,6 +45,7 @@ export const MultiValueValueSetAutocomplete: React.FC<
   error,
   info,
   codeSystem,
+  readOnly,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [options, setOptions] = useState<Concept[]>([]);
@@ -156,21 +158,29 @@ export const MultiValueValueSetAutocomplete: React.FC<
     <Autocomplete
       multiple
       filterOptions={filterOptionsByTermAndCode}
-      disabled={disabled}
+      disabled={disabled || readOnly}
       sx={{ width: '100%' }}
       data-testid={idSchema?.$id || name}
       loading={isLoading}
       options={disabled ? [] : options}
       getOptionLabel={option => option?.pt?.term || ''}
-      value={selectedConcept}
-      inputValue={inputValue}
-      onInputChange={(_, newInputValue, reason) => {
-        if (reason === 'input') {
-          isTypingRef.current = true;
-          setInputValue(newInputValue);
-        }
-      }}
-      onChange={(_, selectedValue) => handleChange(selectedValue as Concept[])}
+      value={selectedConcept} // Controlled by selectedConcept
+      inputValue={inputValue} // Controlled input value
+      onInputChange={
+        readOnly
+          ? undefined
+          : (_, newInputValue, reason) => {
+              if (reason === 'input') {
+                isTypingRef.current = true;
+                setInputValue(newInputValue);
+              }
+            }
+      }
+      onChange={
+        readOnly
+          ? undefined
+          : (_, selectedValue) => handleChange(selectedValue as Concept[])
+      }
       isOptionEqualToValue={(option, val) =>
         option?.conceptId === val?.conceptId ||
         (option?.pt?.term && val?.pt?.term && option.pt.term === val.pt.term)
@@ -208,7 +218,7 @@ export const MultiValueValueSetAutocomplete: React.FC<
             >
               <Chip
                 label={term}
-                {...tagProps}
+                {...(readOnly ? { onDelete: undefined } : tagProps)}
                 color={needsAttention ? 'error' : 'default'}
                 sx={{
                   ...(needsAttention && {
@@ -254,6 +264,7 @@ export const MultiValueValueSetAutocomplete: React.FC<
           }
           InputProps={{
             ...params.InputProps,
+            readOnly: readOnly,
             endAdornment: (
               <>
                 {isLoading || isValidating ? (

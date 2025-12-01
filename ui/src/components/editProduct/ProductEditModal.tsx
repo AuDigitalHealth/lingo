@@ -52,20 +52,12 @@ import {
   useFormState,
   useWatch,
 } from 'react-hook-form';
-import {
-  ExternalIdentifier,
-  NonDefiningProperty,
-  ProductPropertiesUpdateRequest,
-  ProductUpdateRequest,
-} from '../../types/product.ts';
+import { ProductUpdateRequest } from '../../types/product.ts';
 
 import { useUpdateProduct } from '../../hooks/api/products/useUpdateProduct.tsx';
 import { Ticket } from '../../types/tickets/ticket.ts';
 import { useTheme } from '@mui/material/styles';
-import {
-  areTwoNonDefiningPropertiesArraysEqual,
-  sortNonDefiningProperties,
-} from '../../utils/helpers/tickets/additionalFieldsUtils.ts';
+
 import { getSearchConceptsByEclOptions } from '../../hooks/api/useInitializeConcepts.tsx';
 import { generateEclFromBinding } from '../../utils/helpers/EclUtils.ts';
 import { useFieldBindings } from '../../hooks/api/useInitializeConfig.tsx';
@@ -91,13 +83,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { productUpdateValidationSchema } from '../../types/productValidations.ts';
 import WarningModal from '../../themes/overrides/WarningModal.tsx';
 import { deepClone } from '@mui/x-data-grid/utils/utils';
-import AdditionalPropertiesDisplay from '../../pages/products/components/AdditionalPropertiesDisplay.tsx';
 import { ExistingDescriptionsSection } from './ExistingDescriptionsSection.tsx';
 import useProjectLangRefsets from '../../hooks/api/products/useProjectLangRefsets.tsx';
-import AdditionalPropertiesEdit, {
-  AdditionalPropertiesEditForm,
-} from '../../pages/products/rjsf/AdditionalPropertiesEdit.tsx';
-import { arePropertiesEqual } from '../../utils/helpers/commonUtils.ts';
 import { normalizeWhitespace } from '../../types/productValidationUtils.ts';
 
 const typeMap: Record<DefinitionType, string> = {
@@ -202,10 +189,6 @@ function EditConceptBody({
     return existingDescriptions;
   }, [data?.descriptions]);
 
-  const [artgOptVals, setArtgOptVals] = useState<NonDefiningProperty[]>(
-    product.nonDefiningProperties ? product.nonDefiningProperties : [],
-  );
-
   const defaultLangRefset = findDefaultLangRefset(langRefsets);
 
   const sortedDescriptions = useMemo(() => {
@@ -224,62 +207,14 @@ function EditConceptBody({
 
   const ctppSearchEcl = generateEclFromBinding(fieldBindings, 'product.search');
 
-  const [updatedAdditionalProperties, setUpdatedAdditionalProperties] =
-    useState<ProductPropertiesUpdateRequest>({
-      newNonDefiningProperties: product.nonDefiningProperties
-        ? sortNonDefiningProperties(product.nonDefiningProperties)
-        : [],
-      existingNonDefiningProperties: product.nonDefiningProperties
-        ? sortNonDefiningProperties(product.nonDefiningProperties)
-        : [],
-    });
-
-  const additionalPropertiesChanged = useMemo(() => {
-    const originalProperties = product?.nonDefiningProperties || [];
-    const updatedProperties =
-      updatedAdditionalProperties.newNonDefiningProperties || [];
-
-    // Quick length check first
-    if (originalProperties.length !== updatedProperties.length) {
-      return true;
-    }
-
-    // Check if any property in original is missing or different in updated
-    const hasChanges = originalProperties.some(
-      originalProp =>
-        !updatedProperties.some(updatedProp =>
-          arePropertiesEqual(originalProp, updatedProp),
-        ),
-    );
-
-    if (hasChanges) {
-      return true;
-    }
-
-    // Check if any property in updated is missing in original (shouldn't be needed due to length check, but for completeness)
-    const hasNewProperties = updatedProperties.some(
-      updatedProp =>
-        !originalProperties.some(originalProp =>
-          arePropertiesEqual(updatedProp, originalProp),
-        ),
-    );
-
-    return hasNewProperties;
-  }, [product?.nonDefiningProperties, updatedAdditionalProperties]);
-
   const defaultValues = useMemo(() => {
     return {
       ticketId: ticket.id,
-      propertiesUpdateRequest: {
-        newNonDefiningProperties: product.nonDefiningProperties
-          ? sortNonDefiningProperties(product.nonDefiningProperties)
-          : [],
-      },
       descriptionUpdate: {
         descriptions: descriptions,
       },
     } as ProductUpdateRequest;
-  }, [product, ticket, descriptions]);
+  }, [ticket, descriptions]);
 
   const {
     handleSubmit,
@@ -352,14 +287,6 @@ function EditConceptBody({
 
   const formSubmissionData = useRef<ProductUpdateRequest | null>(null);
 
-  const onPropertiesChange = (val: AdditionalPropertiesEditForm) => {
-    setUpdatedAdditionalProperties({
-      existingNonDefiningProperties:
-        updatedAdditionalProperties.existingNonDefiningProperties,
-      newNonDefiningProperties: val.nonDefiningProperties,
-    });
-  };
-
   const onSubmit = (data: ProductUpdateRequest) => {
     let shouldReturn = false;
     if (!isCtpp) {
@@ -402,8 +329,6 @@ function EditConceptBody({
   const sendUpdateProductRequest = (request: ProductUpdateRequest) => {
     const productId = product.conceptId;
     request.conceptId = productId;
-    request.propertiesUpdateRequest.existingNonDefiningProperties =
-      product.nonDefiningProperties;
     updateProductMutation.mutate(
       {
         productUpdateRequest: cloneDeep(request),
@@ -444,7 +369,6 @@ function EditConceptBody({
    * @param data
    */
   const updateProduct = (data: ProductUpdateRequest) => {
-    data.propertiesUpdateRequest = updatedAdditionalProperties;
     const newFsnIndex = data.descriptionUpdate?.descriptions?.findIndex(
       description => {
         return description.type === 'FSN' && description.active === true;
@@ -497,13 +421,8 @@ function EditConceptBody({
       data.descriptionUpdate?.descriptions,
     );
 
-    const artgModified = !areTwoNonDefiningPropertiesArraysEqual(
-      data.propertiesUpdateRequest.newNonDefiningProperties,
-      product.nonDefiningProperties ? product.nonDefiningProperties : [],
-    );
-
     try {
-      if (artgModified || anyDescriptionModified) {
+      if (anyDescriptionModified) {
         sendUpdateProductRequest(data);
       }
     } catch (error) {
@@ -522,9 +441,6 @@ function EditConceptBody({
   };
 
   const resetAndClose = () => {
-    setArtgOptVals(
-      product.nonDefiningProperties ? product.nonDefiningProperties : [],
-    );
     reset(defaultValues);
 
     handleClose();
@@ -630,7 +546,6 @@ function EditConceptBody({
                   <ExistingDescriptionsSection
                     displayRetiredDescriptions={displayRetiredDescriptions}
                     isFetching={isFetching}
-                    nonDefiningProperties={product.nonDefiningProperties}
                     descriptions={sortedDescriptions}
                     isCtpp={isCtpp}
                     dialects={langRefsets}
@@ -639,6 +554,7 @@ function EditConceptBody({
                     branch={branch}
                     displayMode="input"
                     showBorder
+                    hideNonDefiningProperties={true}
                   />
                 </Grid>
                 <Grid
@@ -703,7 +619,6 @@ function EditConceptBody({
                         control={control}
                         handleAddDescription={handleAddDescription}
                         setValue={setValue}
-                        onPropertiesChange={onPropertiesChange}
                       />
                       <ActionButton
                         control={control}
@@ -713,9 +628,6 @@ function EditConceptBody({
                           toggleDisplayRetiredDescriptions
                         }
                         displayRetiredDescriptions={displayRetiredDescriptions}
-                        additionalPropertiesChanged={
-                          additionalPropertiesChanged
-                        }
                       />
                     </form>
                   </Box>
@@ -749,7 +661,6 @@ interface RightSectionProps {
   control: Control<ProductUpdateRequest>;
   handleAddDescription: React.MouseEventHandler<HTMLButtonElement> | undefined;
   setValue: UseFormSetValue<ProductUpdateRequest>;
-  onPropertiesChange: (val: AdditionalPropertiesEditForm) => void;
 }
 
 function RightSection({
@@ -766,7 +677,6 @@ function RightSection({
   control,
   handleAddDescription,
   setValue,
-  onPropertiesChange,
 }: RightSectionProps) {
   return (
     <>
@@ -802,13 +712,6 @@ function RightSection({
       >
         <Add />
       </IconButton>
-      <AdditionalPropertiesEdit
-        isUpdating={isUpdating}
-        branch={branch}
-        label={product?.label}
-        nonDefiningProperties={product?.nonDefiningProperties}
-        onChange={onPropertiesChange}
-      />
     </>
   );
 }
@@ -819,7 +722,6 @@ interface ActionButtonProps {
   isSubmitting: boolean;
   toggleDisplayRetiredDescriptions: () => void;
   displayRetiredDescriptions: boolean;
-  additionalPropertiesChanged: boolean;
 }
 
 function ActionButton({
@@ -828,14 +730,12 @@ function ActionButton({
   isSubmitting,
   toggleDisplayRetiredDescriptions,
   displayRetiredDescriptions,
-  additionalPropertiesChanged,
 }: ActionButtonProps) {
   const { dirtyFields, errors } = useFormState({ control });
   const hasErrors = Object.keys(errors).length > 0;
   const isDirty = Object.keys(dirtyFields).length > 0;
 
-  const isButtonDisabled = () =>
-    isSubmitting || (!isDirty && !additionalPropertiesChanged) || hasErrors;
+  const isButtonDisabled = () => isSubmitting || !isDirty || hasErrors;
 
   return (
     <Grid

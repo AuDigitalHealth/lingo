@@ -281,6 +281,7 @@ interface ExistingDescriptionsSectionProps {
   branch: string;
   displayMode: 'input' | 'text';
   showBorder: boolean;
+  hideNonDefiningProperties?: boolean;
 }
 
 // Updated ExistingDescriptionsSection Component
@@ -295,6 +296,7 @@ export function ExistingDescriptionsSection({
   branch,
   displayMode = 'input',
   showBorder,
+  hideNonDefiningProperties,
 }: ExistingDescriptionsSectionProps & { displayMode?: 'input' | 'text' }) {
   return (
     <Grid
@@ -328,7 +330,7 @@ export function ExistingDescriptionsSection({
             isFetching={isFetching}
           />
         </InnerBoxSmall>
-        {product && (
+        {!hideNonDefiningProperties && product && (
           <AdditionalPropertiesDisplay
             nonDefiningProperties={nonDefiningProperties}
             product={product}
@@ -336,7 +338,7 @@ export function ExistingDescriptionsSection({
             showWrapper={false}
           />
         )}{' '}
-        {!product && nonDefiningProperties && (
+        {!hideNonDefiningProperties && !product && nonDefiningProperties && (
           <SimplePropertiesDisplay
             nonDefiningProperties={nonDefiningProperties}
             branch={branch}

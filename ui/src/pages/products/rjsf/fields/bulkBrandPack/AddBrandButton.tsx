@@ -1,7 +1,13 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { FieldProps } from '@rjsf/utils';
 import { AddButton } from '../../../components/AddButton';
 import { useAddButton } from '../../../hooks/useAddButton';
+import { validator } from '../../helpers/validator';
+import { normalizeSchema } from '../../helpers/rjsfUtils';
+import {
+  getSubSchema,
+  prefixAjvErrorsForPackAndBrand,
+} from '../../helpers/validationHelper';
 
 interface AddBrandButtonFieldProps extends FieldProps {
   sourcePath?: string;
@@ -18,6 +24,24 @@ const AddBrandButton: React.FC<AddBrandButtonFieldProps> = props => {
     targetPath = 'brands',
     existingPath = 'existingBrands',
   } = options;
+
+  const getBrandValidationSchema = (rootSchema: any) => {
+    if (!rootSchema || !rootSchema.$defs) return null;
+    const brand = getSubSchema(rootSchema, '$defs.BrandDetails');
+    if (!brand) return null;
+
+    return {
+      type: 'object',
+      properties: {
+        brandDetails: brand,
+      },
+      $defs: rootSchema.$defs,
+    };
+  };
+  const brandValidationSchema = useMemo(
+    () => normalizeSchema(getBrandValidationSchema(formContext.schema)),
+    [formContext.schema],
+  );
 
   const brandValidation = (
     sourceData: any,
@@ -39,16 +63,32 @@ const AddBrandButton: React.FC<AddBrandButtonFieldProps> = props => {
       (item: any) => item.brand?.conceptId === brand.conceptId,
     );
 
+    const ajvErrors = validator.validateFormData(
+      { brandDetails: sourceData },
+      brandValidationSchema,
+      formContext.uiSchema.brands?.items,
+    );
+    formContext.onError(
+      prefixAjvErrorsForPackAndBrand(
+        ajvErrors.errors,
+        '/newBrandInput/brandDetails',
+        'newBrandInput.brandDetails',
+      ),
+    );
+    if (ajvErrors && ajvErrors.errors.length > 0) {
+      return false;
+    }
+
     return !duplicateInTarget && !duplicateInExisting;
   };
 
   const getInitialBrandData = () => ({
     brand: undefined,
     nonDefiningProperties:
-      formContext.formData.newBrandInput.nonDefiningProperties,
+      formContext.formData.newBrandInput.nonDefiningProperties || [],
   });
 
-  const { handleAddClick, isEnabled } = useAddButton({
+  const { handleAddClick: originalAddClick, isEnabled } = useAddButton({
     formContext,
     sourcePath,
     targetPath,
@@ -56,6 +96,10 @@ const AddBrandButton: React.FC<AddBrandButtonFieldProps> = props => {
     validationFn: brandValidation,
     getInitialSourceData: getInitialBrandData,
   });
+
+  const handleAddClick = () => {
+    originalAddClick();
+  };
 
   return (
     <AddButton
@@ -67,5 +111,4 @@ const AddBrandButton: React.FC<AddBrandButtonFieldProps> = props => {
     />
   );
 };
-
 export default AddBrandButton;

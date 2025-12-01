@@ -483,6 +483,28 @@ public abstract class AtomicDataService<T extends ProductDetails> {
     ValidationUtil.assertSingleComponentSinglePackProduct(concept, new ValidationResult())
         .throwIfInvalid();
 
+    boolean medication =
+        getRelationshipsFromAxioms(concept).stream()
+            .anyMatch(r -> r.getTypeId().equals(CONTAINS_CD.getValue()));
+
+    final String containsDevice =
+        getModelConfiguration(branch).getModelType().equals(ModelType.NMPC)
+            ? CONTAINS_DEVICE_NMPC.getValue()
+            : CONTAINS_DEVICE.getValue();
+    SnowstormConcept containedConcept =
+        Mono.from(
+                snowStormApiClient.getBrowserConcepts(
+                    branch,
+                    Set.of(
+                        Objects.requireNonNull(
+                            getSingleActiveTarget(
+                                    getSingleAxiom(concept).getRelationships(),
+                                    medication ? CONTAINS_CD.getValue() : containsDevice)
+                                .getConceptId()))))
+            .block();
+
+    assert containedConcept != null;
+
     SnowstormAxiom axiom = getSingleAxiom(concept);
 
     Collection<String> packVariantIds =
@@ -507,6 +529,13 @@ public abstract class AtomicDataService<T extends ProductDetails> {
                 0,
                 packVariantIds.size() * 100) // TODO Need to comeback
             .map(SnowstormItemsPageReferenceSetMember::getItems);
+
+    Mono<List<SnowstormReferenceSetMember>> productVariantRefsetMembers =
+        snowStormApiClient
+            .getRefsetMembers(branch, List.of(containedConcept.getConceptId()), null, 0, 100)
+            .map(SnowstormItemsPageReferenceSetMember::getItems);
+    List<SnowstormReferenceSetMember> productVariantRefsetMembersResult =
+        productVariantRefsetMembers.block();
 
     List<SnowstormConcept> packVariantResult = packVariants.block();
 
@@ -563,6 +592,35 @@ public abstract class AtomicDataService<T extends ProductDetails> {
                       Set.of(packVariant),
                       getModelConfiguration(branch).getNonDefiningProperties())
                   .getOrDefault(packVariant.getConceptId(), new HashSet<>()));
+
+      packSizeWithIdentifier
+          .getNonDefiningProperties()
+          .addAll(
+              ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMembers(
+                  branch,
+                  productVariantRefsetMembersResult,
+                  containedConcept.getConceptId(),
+                  getModelConfiguration(branch).getMappings().stream()
+                      .filter(m -> m.getLevel().equals(ProductPackageType.PRODUCT))
+                      .collect(Collectors.toSet()),
+                  getFhirClient(),
+                  getSnowStormApiClient()));
+      packSizeWithIdentifier
+          .getNonDefiningProperties()
+          .addAll(
+              ReferenceSetUtils.getReferenceSetsFromRefsetMembers(
+                      ProductPackageType.PRODUCT,
+                      productVariantRefsetMembersResult,
+                      getModelConfiguration(branch).getReferenceSets())
+                  .getOrDefault(containedConcept.getConceptId(), new HashSet<>()));
+      packSizeWithIdentifier
+          .getNonDefiningProperties()
+          .addAll(
+              NonDefiningPropertyUtils.getNonDefiningPropertyFromConcepts(
+                      ProductPackageType.PRODUCT,
+                      Set.of(containedConcept),
+                      getModelConfiguration(branch).getNonDefiningProperties())
+                  .getOrDefault(containedConcept.getConceptId(), new HashSet<>()));
 
       packSizeWithIdentifiers.add(packSizeWithIdentifier);
     }
@@ -728,6 +786,13 @@ public abstract class AtomicDataService<T extends ProductDetails> {
             .getRefsetMembers(branch, packVariantIds, null, 0, packVariantIds.size() * 100)
             .map(SnowstormItemsPageReferenceSetMember::getItems);
 
+    Mono<List<SnowstormReferenceSetMember>> productVariantRefsetMembers =
+        snowStormApiClient
+            .getRefsetMembers(branch, List.of(containedConcept.getConceptId()), null, 0, 100)
+            .map(SnowstormItemsPageReferenceSetMember::getItems);
+    List<SnowstormReferenceSetMember> productVariantRefsetMembersResult =
+        productVariantRefsetMembers.block();
+
     List<SnowstormConcept> packVariantResult = packVariants.block();
     if (packVariantResult == null || packVariantResult.isEmpty()) {
       throw new AtomicDataExtractionProblem("No pack variants found for ", productId.toString());
@@ -798,6 +863,36 @@ public abstract class AtomicDataService<T extends ProductDetails> {
                       Set.of(packVariantMap.get(packVariantId)),
                       getModelConfiguration(branch).getNonDefiningProperties())
                   .getOrDefault(packVariantId, new HashSet<>()));
+
+      brandWithIdentifiers
+          .getNonDefiningProperties()
+          .addAll(
+              ExternalIdentifierUtils.getExternalIdentifiersFromRefsetMembers(
+                  branch,
+                  productVariantRefsetMembersResult,
+                  containedConcept.getConceptId(),
+                  getModelConfiguration(branch).getMappings().stream()
+                      .filter(m -> m.getLevel().equals(ProductPackageType.PRODUCT))
+                      .collect(Collectors.toSet()),
+                  getFhirClient(),
+                  getSnowStormApiClient()));
+      brandWithIdentifiers
+          .getNonDefiningProperties()
+          .addAll(
+              ReferenceSetUtils.getReferenceSetsFromRefsetMembers(
+                      ProductPackageType.PRODUCT,
+                      productVariantRefsetMembersResult,
+                      getModelConfiguration(branch).getReferenceSets())
+                  .getOrDefault(containedConcept.getConceptId(), new HashSet<>()));
+
+      brandWithIdentifiers
+          .getNonDefiningProperties()
+          .addAll(
+              NonDefiningPropertyUtils.getNonDefiningPropertyFromConcepts(
+                      ProductPackageType.PRODUCT,
+                      Set.of(containedConcept),
+                      getModelConfiguration(branch).getNonDefiningProperties())
+                  .getOrDefault(containedConcept.getConceptId(), new HashSet<>()));
 
       if (newBrand) { // add only for not existing
         brandsWithIdentifiers.add(brandWithIdentifiers);

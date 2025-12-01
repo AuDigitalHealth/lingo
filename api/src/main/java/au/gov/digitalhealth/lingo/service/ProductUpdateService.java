@@ -15,16 +15,15 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.MAP_TARGET;
-import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.*;
+import static au.gov.digitalhealth.lingo.util.SnowstormDtoUtil.getFsnFromDescriptions;
 
-import au.csiro.snowstorm_client.model.*;
+import au.csiro.snowstorm_client.model.SnowstormConcept;
+import au.csiro.snowstorm_client.model.SnowstormDescription;
+import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.configuration.FieldBindingConfiguration;
-import au.gov.digitalhealth.lingo.configuration.model.ExternalIdentifierDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.configuration.model.NonDefiningPropertyDefinition;
-import au.gov.digitalhealth.lingo.configuration.model.ReferenceSetDefinition;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
@@ -33,8 +32,6 @@ import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.bulk.ProductUpdateCreationDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.ProductDetails;
-import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
-import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
 import au.gov.digitalhealth.lingo.product.update.ProductDescriptionUpdateRequest;
 import au.gov.digitalhealth.lingo.product.update.ProductPropertiesUpdateRequest;
@@ -55,8 +52,17 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.groups.Default;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
@@ -109,21 +115,6 @@ public class ProductUpdateService {
     this.blobStorageService = blobStorageService;
   }
 
-  private static String getIdentifierKey(ExternalIdentifierDefinition m, ExternalIdentifier id) {
-    return m.getIdentifier()
-        + " "
-        + (id.getValue() == null ? id.getValueObject().getConceptId() : id.getValue());
-  }
-
-  private static String getIdentifierKey(SnowstormReferenceSetMember id) {
-    if (id.getAdditionalFields() == null
-        || !id.getAdditionalFields().containsKey(MAP_TARGET.getValue())) {
-      throw new ProductAtomicDataValidationProblem(
-          "Mapping refset member does not contain a map target: " + id);
-    }
-    return id.getRefsetId() + " " + id.getAdditionalFields().get(MAP_TARGET.getValue());
-  }
-
   private static String getNonDefiningPropertyKeyForRelationship(
       SnowstormRelationship relationship) {
     String value;
@@ -150,8 +141,7 @@ public class ProductUpdateService {
   }
 
   public BulkProductAction updateProductDescriptions(
-      String branch, String productId, @Valid ProductUpdateRequest productUpdateRequest)
-      throws InterruptedException {
+      String branch, String productId, @Valid ProductUpdateRequest productUpdateRequest) {
 
     snowstormClient.throwIfBranchLocked(branch);
 
@@ -161,6 +151,12 @@ public class ProductUpdateService {
         productUpdateRequest.getDescriptionUpdate();
     ProductPropertiesUpdateRequest productExternalIdentifierUpdateRequest =
         productUpdateRequest.getPropertiesUpdateRequest();
+
+    if (productExternalIdentifierUpdateRequest != null) {
+      throw new ProductAtomicDataValidationProblem(
+          "Description edits no longer support non-defining property changes");
+    }
+
     Ticket ticket = ticketRepository.findById(productUpdateRequest.getTicketId()).orElseThrow();
     String fsn =
         getFsnFromDescriptions(productDescriptionUpdateRequest.getDescriptions()).getTerm();
@@ -177,12 +173,6 @@ public class ProductUpdateService {
     updateProductDescriptions(
         branch, conceptId, productDescriptionUpdateRequest, productUpdateCreationDetails);
     productUpdate.setDetails(productUpdateCreationDetails);
-
-    if (productExternalIdentifierUpdateRequest != null) {
-      log.info(String.format("Product update for %s contains ARTGIDS.", conceptId));
-      updateProductProperties(
-          branch, conceptId, productExternalIdentifierUpdateRequest, productUpdateCreationDetails);
-    }
 
     Optional<BulkProductAction> existingBulkProductAction =
         bulkProductActionRepository.findByNameAndTicketId(
@@ -467,112 +457,6 @@ public class ProductUpdateService {
 
   public SnowstormConcept fetchBrowserConcept(String branch, String conceptId) {
     return snowstormClient.getBrowserConcept(branch, conceptId).block();
-  }
-
-  private void updateProductProperties(
-      String branch,
-      String conceptId,
-      @Valid ProductPropertiesUpdateRequest productPropertiesUpdateRequest,
-      ProductUpdateCreationDetails productUpdateCreationDetails)
-      throws InterruptedException {
-
-    // validation done - update URL based non-defining properties
-    blobStorageService.updateNonDefiningUrlProperties(
-        models.getModelConfiguration(branch), productPropertiesUpdateRequest);
-
-    productUpdateCreationDetails
-        .getHistoricState()
-        .setNonDefiningProperties(
-            productPropertiesUpdateRequest.getExistingNonDefiningProperties());
-    HashSet<NonDefiningBase> nonDefiningBaseSet = new HashSet<>();
-
-    // Handle external identifiers and reference sets
-    nonDefiningBaseSet.addAll(
-        handleExternalIdentifiersAndReferenceSets(
-            branch, conceptId, productPropertiesUpdateRequest));
-    // Handle non-defining properties
-    nonDefiningBaseSet.addAll(
-        handleNonDefiningProperties(branch, conceptId, productPropertiesUpdateRequest));
-    productUpdateCreationDetails.getUpdatedState().setNonDefiningProperties(nonDefiningBaseSet);
-  }
-
-  private Collection<NonDefiningBase> handleExternalIdentifiersAndReferenceSets(
-      String branch,
-      String conceptId,
-      ProductPropertiesUpdateRequest productPropertiesUpdateRequest)
-      throws InterruptedException {
-    Map<String, ExternalIdentifierDefinition> mappingRefsets =
-        models.getModelConfiguration(branch).getMappingsByName();
-    Map<String, ReferenceSetDefinition> referenceSetDefinitionMap =
-        models.getModelConfiguration(branch).getReferenceSetsByName();
-
-    Map<String, NonDefiningBase> requestedExternalIdentifiers =
-        productPropertiesUpdateRequest.getNewNonDefiningProperties().stream()
-            .filter(
-                id ->
-                    mappingRefsets.containsKey(id.getIdentifierScheme())
-                        || referenceSetDefinitionMap.containsKey(id.getIdentifierScheme()))
-            .map(
-                item -> {
-                  ExternalIdentifierDefinition def = mappingRefsets.get(item.getIdentifierScheme());
-                  ReferenceSetDefinition refDef =
-                      referenceSetDefinitionMap.get(item.getIdentifierScheme());
-                  item.setTitle(def != null ? def.getTitle() : refDef.getTitle());
-                  item.setDescription(def != null ? def.getDescription() : refDef.getDescription());
-                  item.setType(def != null ? def.getPropertyType() : refDef.getPropertyType());
-                  item.setIdentifier(def != null ? def.getIdentifier() : refDef.getIdentifier());
-                  return item;
-                })
-            .collect(
-                Collectors.toMap(
-                    id ->
-                        mappingRefsets.get(id.getIdentifierScheme()) == null
-                            ? id.getIdentifierScheme()
-                            : getIdentifierKey(
-                                mappingRefsets.get(id.getIdentifierScheme()),
-                                (ExternalIdentifier) id),
-                    id -> id));
-
-    Map<String, SnowstormReferenceSetMember> existingMembers =
-        snowstormClient
-            .getRefsetMembers(
-                branch,
-                Set.of(conceptId),
-                mappingRefsets.values().stream()
-                    .map(ExternalIdentifierDefinition::getIdentifier)
-                    .collect(Collectors.toSet()))
-            .stream()
-            .filter(r -> r.getActive() != null && r.getActive())
-            .collect(Collectors.toMap(ProductUpdateService::getIdentifierKey, r -> r));
-
-    Set<SnowstormReferenceSetMember> idsToBeRemoved =
-        existingMembers.entrySet().stream()
-            .filter(entry -> !requestedExternalIdentifiers.containsKey(entry.getKey()))
-            .map(Entry::getValue)
-            .collect(Collectors.toSet());
-
-    Set<SnowstormReferenceSetMemberViewComponent> idsToBeAdded =
-        requestedExternalIdentifiers.entrySet().stream()
-            .filter(entry -> !existingMembers.containsKey(entry.getKey()))
-            .map(
-                entry ->
-                    createSnowstormReferenceSetMemberViewComponent(
-                        entry.getValue(),
-                        conceptId,
-                        mappingRefsets.values(),
-                        referenceSetDefinitionMap.values()))
-            .collect(Collectors.toSet());
-
-    if (!idsToBeAdded.isEmpty()) {
-      // Create new members in Snowstorm
-      snowstormClient.createRefsetMembers(branch, List.copyOf(idsToBeAdded));
-    }
-
-    if (!idsToBeRemoved.isEmpty()) {
-      // Remove outdated members from Snowstorm
-      snowstormClient.removeRefsetMembers(branch, idsToBeRemoved);
-    }
-    return requestedExternalIdentifiers.values();
   }
 
   public Collection<NonDefiningProperty> handleNonDefiningProperties(

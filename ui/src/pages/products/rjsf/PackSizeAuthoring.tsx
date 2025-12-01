@@ -12,8 +12,6 @@ import { Task } from '../../../types/task.ts';
 import { Ticket } from '../../../types/tickets/ticket.ts';
 import ProductLoader from '../components/ProductLoader.tsx';
 import ProductPreviewManageModal from '../components/ProductPreviewManageModal.tsx';
-import { customizeValidator } from '@rjsf/validator-ajv8';
-import ajvErrors from 'ajv-errors';
 import OneOfArrayWidget from './widgets/OneOfArrayWidget.tsx';
 import PackSizeArrayTemplate from './templates/bulkBrandPack/PackSizeArrayTemplate.tsx';
 import { BrandPackSizeCreationDetails } from '../../../types/product.ts';
@@ -26,6 +24,10 @@ import ExternalIdentifiers from './fields/bulkBrandPack/ExternalIdentifiers.tsx'
 import PackDetails from './fields/bulkBrandPack/PackDetails.tsx';
 import { ConfigService } from '../../../api/ConfigService.ts';
 import { getMatchingNonDefiningProperties } from './helpers/helpers.ts';
+import { validator } from './helpers/validator.ts';
+import { ErrorDisplay } from './components/ErrorDisplay.tsx';
+import { buildErrorSchema } from './helpers/validationHelper.ts';
+import { flattenAnyOfPreserveOrder } from './helpers/rjsfUtils.ts';
 
 interface FormData {
   selectedProduct?: string;
@@ -46,9 +48,6 @@ export interface PackSizeAuthoringV2Props {
   ticket: Ticket;
   fieldBindings: any;
 }
-
-const validator = customizeValidator();
-ajvErrors(validator.ajv);
 
 function PackSizeAuthoring({
   selectedProduct,
@@ -86,7 +85,11 @@ function PackSizeAuthoring({
     selectedProduct,
     task.branchPath,
   );
+  const [errorSchema, setErrorSchema] = useState<any>({});
+  const [formErrors, setFormErrors] = useState<any[]>([]);
   const formRef = useRef<any>(null);
+  const [dynamicUiSchema, setDynamicUiSchema] = useState<any>(null);
+  const [validationSchema, setValidationSchema] = useState<any>(null);
 
   const widgets = {
     OneOfArrayWidget,
@@ -106,6 +109,7 @@ function PackSizeAuthoring({
       newPackSizeInput: { packSize: undefined, nonDefiningProperties: [] },
     };
     setFormData(newData);
+    setFormErrors([]);
     if (formRef.current) {
       formRef.current.reset();
     }
@@ -116,7 +120,7 @@ function PackSizeAuthoring({
       const matchingProperties = data.packSizes
         ? getMatchingNonDefiningProperties(data.packSizes)
         : [];
-
+      setFormErrors([]);
       const newData: FormData = {
         selectedProduct: selectedProduct.pt?.term || '',
         existingPackSizes: data.packSizes || [],
@@ -128,6 +132,11 @@ function PackSizeAuthoring({
         },
       };
       setFormData(newData);
+    } else {
+      setFormData({
+        packSizes: [],
+        newPackSizeInput: { packSize: undefined, nonDefiningProperties: [] },
+      });
     }
   }, [selectedProduct, data]);
 
@@ -182,9 +191,94 @@ function PackSizeAuthoring({
     }
   };
 
+  useEffect(() => {
+    if (!schema) return;
+
+    // --- Build dynamic Combined_NonDefiningProperty ---
+    const combinedNonDefiningProperty = {
+      type: 'object',
+      anyOf: [
+        ...flattenAnyOfPreserveOrder(
+          schema.$defs?.MEDICATION_PRODUCT_NonDefiningProperty,
+        ),
+        ...flattenAnyOfPreserveOrder(
+          schema.$defs?.MEDICATION_PACKAGE_NonDefiningProperty,
+        ),
+      ],
+    };
+
+    const updatedSchema = {
+      ...schema,
+      $defs: {
+        ...schema.$defs,
+        Combined_NonDefiningProperty: combinedNonDefiningProperty,
+        PackDetails: {
+          ...schema.$defs?.PackDetails,
+          properties: {
+            ...schema.$defs?.PackDetails?.properties,
+            nonDefiningProperties: {
+              type: 'array',
+              title: 'Non Defining Properties',
+              items: { $ref: '#/$defs/Combined_NonDefiningProperty' },
+            },
+          },
+        },
+      },
+    };
+    setValidationSchema(updatedSchema);
+  }, [schema, uiSchema]);
+
+  useEffect(() => {
+    if (!uiSchema) return;
+    const rootUiOptions = uiSchema?.nonDefiningProperties?.['ui:options'];
+    const newUiSchema = { ...uiSchema };
+
+    newUiSchema.packSizes.items.packDetails.nonDefiningProperties[
+      'ui:options'
+    ] = rootUiOptions;
+
+    setDynamicUiSchema(newUiSchema);
+  }, [uiSchema]);
+
+  const onError = (errors: any) => {
+    if (errors && errors.length > 0) {
+      const missingSchemes: string[] = errors[0]?.data?.missingSchemes ?? [];
+      const readOnlyProps: string[] =
+        uiSchema?.nonDefiningProperties?.['ui:options']?.readOnlyProperties ??
+        [];
+
+      const hasReadOnlyMissingScheme = missingSchemes.some(scheme =>
+        readOnlyProps.includes(scheme),
+      );
+
+      const uiErrors = [...errors];
+
+      if (hasReadOnlyMissingScheme) {
+        uiErrors.push({
+          message:
+            'Some mandatory fields cannot be updated here because they are read-only. Please switch to the normal edit screen to make changes.',
+          stack:
+            'Some mandatory fields cannot be updated here because they are read-only. Please switch to the normal edit screen to make changes.',
+        });
+      }
+
+      const newErrorSchema = buildErrorSchema(uiErrors);
+      setErrorSchema(newErrorSchema);
+      setFormErrors(uiErrors);
+    } else {
+      setFormErrors([]);
+    }
+  };
+
   const formContext = {
     formData,
-    uiSchema,
+    uiSchema: dynamicUiSchema,
+    schema,
+    validationSchema,
+    errorSchema,
+    onError,
+    formErrors,
+    setFormErrors,
     onFormDataChange: (newFormData: FormData) => {
       setFormData(newFormData);
     },
@@ -249,6 +343,7 @@ function PackSizeAuthoring({
               <Alert severity="info" sx={{ mb: 1 }}>
                 Enter one or more new pack sizes for the selected product.
               </Alert>
+              <ErrorDisplay errors={formErrors} />
               <Form
                 ref={formRef}
                 schema={schema}

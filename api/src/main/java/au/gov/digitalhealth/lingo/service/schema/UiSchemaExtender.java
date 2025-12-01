@@ -52,13 +52,16 @@ public class UiSchemaExtender {
   }
 
   public void updateUiSchema(
-      ModelConfiguration modelConfiguration, JsonNode uiSchemaNode, ProductType productType) {
+      ModelConfiguration modelConfiguration,
+      JsonNode uiSchemaNode,
+      ProductType productType,
+      Set<BasePropertyDefinition> readOnlyProperties) {
     Set<BasePropertyDefinition> properties = new HashSet<>(modelConfiguration.getMappings());
     properties.addAll(modelConfiguration.getNonDefiningProperties());
     properties.addAll(modelConfiguration.getReferenceSets());
     properties.removeIf(p -> p.getSuppressOnProductTypes().contains(productType));
 
-    updateUiSchemaForType(uiSchemaNode, NON_DEFINING_PROPERTIES, properties);
+    updateUiSchemaForType(uiSchemaNode, NON_DEFINING_PROPERTIES, properties, readOnlyProperties);
   }
 
   public void updateEditUiSchema(
@@ -88,13 +91,22 @@ public class UiSchemaExtender {
         level.getModelLevelType().isPackageLevel()
             ? ProductPackageType.PACKAGE
             : ProductPackageType.PRODUCT,
-        false);
+        false,
+        Set.of());
   }
 
   private void updateUiSchemaForType(
-      JsonNode uiSchemaNode, String nodeName, Set<? extends BasePropertyDefinition> properties) {
+      JsonNode uiSchemaNode,
+      String nodeName,
+      Set<? extends BasePropertyDefinition> properties,
+      Set<BasePropertyDefinition> readOnlyProperties) {
     addUiNodeForPropertySet(
-        (ObjectNode) uiSchemaNode, properties, nodeName, ProductPackageType.PACKAGE, true);
+        (ObjectNode) uiSchemaNode,
+        properties,
+        nodeName,
+        ProductPackageType.PACKAGE,
+        true,
+        readOnlyProperties);
     JsonNode containedProductsNode = uiSchemaNode.get(CONTAINED_PRODUCTS);
     if (containedProductsNode != null && containedProductsNode.has(ITEMS)) {
       JsonNode itemsNode = containedProductsNode.get(ITEMS);
@@ -107,7 +119,12 @@ public class UiSchemaExtender {
           for (JsonNode oneOfMember : oneOfArray) {
             // Apply your logic to each member
             addUiNodeForPropertySet(
-                (ObjectNode) oneOfMember, properties, nodeName, ProductPackageType.PRODUCT, true);
+                (ObjectNode) oneOfMember,
+                properties,
+                nodeName,
+                ProductPackageType.PRODUCT,
+                true,
+                readOnlyProperties);
           }
         } else {
           // Fallback to original logic
@@ -116,7 +133,8 @@ public class UiSchemaExtender {
               properties,
               nodeName,
               ProductPackageType.PRODUCT,
-              true);
+              true,
+              readOnlyProperties);
         }
       }
     }
@@ -125,7 +143,8 @@ public class UiSchemaExtender {
         properties,
         nodeName,
         ProductPackageType.PACKAGE,
-        true);
+        true,
+        readOnlyProperties);
 
     addUiNodeForPropertySet(
         uiSchemaNode
@@ -135,7 +154,8 @@ public class UiSchemaExtender {
         properties,
         nodeName,
         ProductPackageType.PACKAGE,
-        true);
+        true,
+        readOnlyProperties);
     addUiNodeForPropertySet(
         uiSchemaNode
             .withObjectProperty("containedPackages")
@@ -147,7 +167,8 @@ public class UiSchemaExtender {
         properties,
         nodeName,
         ProductPackageType.PRODUCT,
-        true);
+        true,
+        readOnlyProperties);
   }
 
   private void addUiNodeForPropertySet(
@@ -155,7 +176,8 @@ public class UiSchemaExtender {
       Set<? extends BasePropertyDefinition> inputPropertySet,
       String nodeName,
       ProductPackageType productPackageType,
-      boolean filterProductPackageType) {
+      boolean filterProductPackageType,
+      Set<BasePropertyDefinition> readOnlyProperties) {
 
     List<? extends BasePropertyDefinition> filteredPropertySet =
         inputPropertySet.stream()
@@ -172,7 +194,7 @@ public class UiSchemaExtender {
           UI_FIELD, "ExternalIdentifiers"); // todo change this name to something more generic
       ObjectNode uiOptions = getUiOptions(false);
 
-      processNonDefiningPropertyBaseMembers(filteredPropertySet, uiOptions);
+      processNonDefiningPropertyBaseMembers(filteredPropertySet, uiOptions, readOnlyProperties);
 
       ArrayNode propertyOrder = objectMapper.createArrayNode();
 
@@ -191,7 +213,9 @@ public class UiSchemaExtender {
   }
 
   private void processNonDefiningPropertyBaseMembers(
-      List<? extends BasePropertyDefinition> filteredPropertySet, ObjectNode uiOptions) {
+      List<? extends BasePropertyDefinition> filteredPropertySet,
+      ObjectNode uiOptions,
+      Set<BasePropertyDefinition> readOnlyProperties) {
     ArrayNode mandatoryFields = objectMapper.createArrayNode();
     ArrayNode multiValuedFields = objectMapper.createArrayNode();
     ArrayNode showDefaultOptionsFields = objectMapper.createArrayNode();
@@ -204,7 +228,8 @@ public class UiSchemaExtender {
           multiValuedFields,
           bindingNode,
           readOnlyFields,
-          showDefaultOptionsFields);
+          showDefaultOptionsFields,
+          readOnlyProperties);
     }
 
     if (!mandatoryFields.isEmpty()) {
@@ -234,7 +259,8 @@ public class UiSchemaExtender {
       ArrayNode multiValuedFields,
       ObjectNode bindingNode,
       ArrayNode readOnlyFields,
-      ArrayNode showDefaultOptionsFields) {
+      ArrayNode showDefaultOptionsFields,
+      Set<BasePropertyDefinition> readOnlyProperties) {
     if (m instanceof BasePropertyWithValueDefinition nonDefiningPropertyBase) {
 
       if (nonDefiningPropertyBase.isMandatory()) {
@@ -317,7 +343,7 @@ public class UiSchemaExtender {
       }
     }
 
-    if (m.isReadOnly()) {
+    if (m.isReadOnly() || readOnlyProperties.contains(m)) {
       readOnlyFields.add(m.getName());
     }
   }
