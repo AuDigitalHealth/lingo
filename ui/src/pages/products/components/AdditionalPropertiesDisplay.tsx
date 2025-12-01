@@ -257,7 +257,7 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
 
     const value = getItemValue(item);
     const isUnknownCode =
-      item.valueObject?.fsn?.term?.startsWith('Unknown code -') || false;
+      item.valueObject?.pt?.term?.startsWith('Unknown code -') || false;
 
     // Handler for opening external links
     const handleExternalLinkClick = (e: React.MouseEvent) => {
