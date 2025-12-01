@@ -44,6 +44,10 @@ public class ExternalReferenceToBlobStorage {
     return whitelistPrefixes != null && !whitelistPrefixes.isEmpty() || s3 != null;
   }
 
+  public List<WhitelistEntry> getWhitelistPrefixes() {
+    return whitelistPrefixes == null ? List.of() : whitelistPrefixes;
+  }
+
   @AssertTrue(message = "S3 details are required if whitelist is configured")
   public boolean isConfiguredCorrectly() {
     return (whitelistPrefixes != null && !whitelistPrefixes.isEmpty() && s3 != null)

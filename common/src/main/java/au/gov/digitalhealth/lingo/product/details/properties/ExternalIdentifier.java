@@ -20,6 +20,7 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.MAP_TARGET;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
+import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
 import au.gov.digitalhealth.lingo.configuration.model.ExternalIdentifierDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.MappingType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.NonDefiningPropertyDataType;
@@ -28,6 +29,7 @@ import au.gov.digitalhealth.lingo.service.SnowstormClient;
 import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import au.gov.digitalhealth.lingo.validation.OnlyOneNotEmpty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import jakarta.validation.constraints.NotNull;
@@ -53,6 +55,8 @@ import reactor.core.publisher.Mono;
 @OnlyOneNotEmpty(fields = {"value", "valueObject"})
 @Log
 public class ExternalIdentifier extends NonDefiningBase implements Serializable {
+
+  public static final String UNKNOWN_CODE = "Unknown code - ";
   String value;
   SnowstormConceptMini valueObject;
   @NotNull MappingType relationshipType;
@@ -102,7 +106,7 @@ public class ExternalIdentifier extends NonDefiningBase implements Serializable 
         snowstormClient);
   }
 
-  public static Mono<ExternalIdentifier> create(
+  private static Mono<ExternalIdentifier> create(
       String branch,
       Map<String, String> additionalFields,
       String refsetId,
@@ -141,6 +145,26 @@ public class ExternalIdentifier extends NonDefiningBase implements Serializable 
                     identifier.setAdditionalProperties(c.getSecond());
                     identifier.setCodeSystem(externalIdentifierDefinition.getCodeSystem());
                     return identifier;
+                  })
+              .onErrorResume(
+                  ex -> {
+                    log.severe(
+                        "failed getting concept for "
+                            + mapTargetId
+                            + " for codeSystem "
+                            + externalIdentifierDefinition.getCodeSystem()
+                            + ": "
+                            + ex);
+                    SnowstormConceptMini concept = new SnowstormConceptMini();
+                    concept.setConceptId(mapTargetId);
+                    concept.setFsn(
+                        new SnowstormTermLangPojo().term(UNKNOWN_CODE + mapTargetId)
+                            .lang("en"));
+                    concept.setPt(new SnowstormTermLangPojo().term(UNKNOWN_CODE + mapTargetId)
+                        .lang("en"));
+                    identifier.setValueObject(concept);
+                    identifier.setCodeSystem(externalIdentifierDefinition.getCodeSystem());
+                    return Mono.just(identifier);
                   });
     } else {
       identifier.setValue(mapTargetId);
@@ -348,5 +372,13 @@ public class ExternalIdentifier extends NonDefiningBase implements Serializable 
     } else {
       return !fieldNames.equals(additionalFields.keySet());
     }
+  }
+
+  @JsonIgnore
+  public boolean isUnknownCode() {
+    return valueObject != null
+        && valueObject.getPt() != null
+        && valueObject.getPt().getTerm() != null
+        && valueObject.getPt().getTerm().startsWith(UNKNOWN_CODE);
   }
 }

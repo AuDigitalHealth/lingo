@@ -358,6 +358,7 @@ export interface Product {
   originalNode: OriginalNode | null;
   statedFormChanged: boolean | null;
   inferredFormChanged: boolean | null;
+  hasUnknownCodes: boolean | null;
   historicalAssociations?: RefsetMember[];
 }
 

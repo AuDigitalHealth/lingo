@@ -1355,7 +1355,9 @@ public class SnowstormClient {
           Thread.sleep(delayBetweenBranchLockChecks);
           attempts++;
         } else {
-          log.info("Branch " + branch + " is now unlocked. " + attempts + " attempts made.");
+          if (attempts > 0) {
+            log.info("Branch " + branch + " is now unlocked. " + attempts + " attempts made.");
+          }
           return;
         }
       } catch (InterruptedException e) {
