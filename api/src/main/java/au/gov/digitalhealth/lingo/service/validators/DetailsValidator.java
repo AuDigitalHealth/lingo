@@ -213,7 +213,7 @@ public abstract class DetailsValidator {
                       + nonDefiningProperty.getIdentifierScheme()
                       + "'");
             } else if (externalIdentifierDefinition.getCodeSystem() != null) {
-              // structrally valid external identifier, does it exist?
+              // structurally valid external identifier, does it exist?
               if (externalIdentifierDefinition.getCodeSystem().equals("http://snomed.info/sct")
                   && snowstormClient.getConcept(branch, externalIdentifier.getValue()) == null) {
                 result.addProblem(
