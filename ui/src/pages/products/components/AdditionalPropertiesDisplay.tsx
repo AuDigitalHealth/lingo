@@ -24,6 +24,30 @@ interface ItemDetailsDisplayProps {
   showWrapper?: boolean;
 }
 
+function getBackgroundColor(
+  isNew: boolean,
+  isRemoved: boolean,
+  isUnknownCode: boolean,
+) {
+  if (isNew) {
+    return '#d4ecd4';
+  } else if (isRemoved) {
+    return '#ffdde0';
+  } else if (isUnknownCode) {
+    return '#ffdde0';
+  } else {
+    return '#e1f0ff';
+  }
+}
+
+function getBorderColour(
+  isNew: boolean,
+  isRemoved: boolean,
+  isUnknownCode: boolean,
+) {
+  return isNew ? '#4caf50' : isRemoved || isUnknownCode ? '#f44336' : '#e0e0e0';
+}
+
 export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
   product,
   branch,
@@ -231,6 +255,10 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
       valAsString &&
       (valAsString.startsWith('http://') || valAsString.startsWith('https://'));
 
+    const value = getItemValue(item);
+    const isUnknownCode =
+      item.valueObject?.fsn?.term?.startsWith('Unknown code -') || false;
+
     // Handler for opening external links
     const handleExternalLinkClick = (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -255,7 +283,18 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
     };
 
     const getChipStyle = () => {
-      if (isNew) {
+      if (isUnknownCode) {
+        return {
+          borderRadius: 1,
+          backgroundColor: '#ffebee',
+          borderColor: '#f44336',
+          color: '#d32f2f',
+          '&:hover': {
+            backgroundColor: '#ffdde0',
+          },
+          ...(isLink && { cursor: 'pointer' }), // Add cursor pointer for links
+        };
+      } else if (isNew) {
         return {
           borderRadius: 1,
           backgroundColor: '#e6f7e6', // Light green for new properties
@@ -335,6 +374,11 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
               Removed property
             </div>
           )}
+          {isUnknownCode && (
+            <div style={{ fontWeight: 'bold', color: '#f44336' }}>
+              Unknown code - no longer valid in the code system
+            </div>
+          )}
           {item.additionalProperties && item.additionalProperties.length > 0
             ? [...item.additionalProperties]
                 .sort((a, b) => {
@@ -371,7 +415,7 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
               display: 'inline-flex',
               borderRadius: 1,
               overflow: 'hidden',
-              border: `1px solid ${isNew ? '#4caf50' : isRemoved ? '#f44336' : '#e0e0e0'}`,
+              border: `1px solid ${getBorderColour(isNew, isRemoved, isUnknownCode)}`,
               '&:hover': {
                 boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
               },
@@ -382,23 +426,23 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
           >
             <Box
               sx={{
-                backgroundColor: isNew
-                  ? '#e6f7e6'
-                  : isRemoved
-                    ? '#ffebee'
-                    : '#f0f7ff',
+                backgroundColor: getBackgroundColor(
+                  isNew,
+                  isRemoved,
+                  isUnknownCode,
+                ),
                 padding: '4px 8px',
                 fontWeight: 'medium',
                 fontSize: '0.8125rem',
-                borderRight: `1px solid ${isNew ? '#4caf50' : isRemoved ? '#f44336' : '#e0e0e0'}`,
+                borderRight: `1px solid ${getBorderColour(isNew, isRemoved, isUnknownCode)}`,
                 display: 'flex',
                 alignItems: 'center',
                 '&:hover': {
-                  backgroundColor: isNew
-                    ? '#d4ecd4'
-                    : isRemoved
-                      ? '#ffdde0'
-                      : '#e1f0ff',
+                  backgroundColor: getBackgroundColor(
+                    isNew,
+                    isRemoved,
+                    isUnknownCode,
+                  ),
                 },
               }}
             >
@@ -430,19 +474,19 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
             </Box>
             <Box
               sx={{
-                backgroundColor: isNew
-                  ? '#e6f7e6'
-                  : isRemoved
-                    ? '#ffebee'
-                    : '#f0f7ff',
+                backgroundColor: getBackgroundColor(
+                  isNew,
+                  isRemoved,
+                  isUnknownCode,
+                ),
                 padding: '4px 8px',
                 fontSize: '0.8125rem',
                 '&:hover': {
-                  backgroundColor: isNew
-                    ? '#d4ecd4'
-                    : isRemoved
-                      ? '#ffdde0'
-                      : '#e1f0ff',
+                  backgroundColor: getBackgroundColor(
+                    isNew,
+                    isRemoved,
+                    isUnknownCode,
+                  ),
                 },
               }}
             >
@@ -454,18 +498,13 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
     }
 
     // Use existing getItemValue for all other cases
-    const value = getItemValue(item);
     return value ? (
       <Chip
         size="small"
         variant="outlined"
         sx={{
           ...getChipStyle(),
-          backgroundColor: isNew
-            ? '#e6f7e6'
-            : isRemoved
-              ? '#ffebee'
-              : '#f5f5f5',
+          backgroundColor: getBackgroundColor(isNew, isRemoved, isUnknownCode),
         }}
         onClick={isLink ? handleChipClick : undefined}
         label={
@@ -520,8 +559,8 @@ export const AdditionalPropertiesDisplay: React.FC<ItemDetailsDisplayProps> = ({
                     sx={{
                       borderRadius: 1,
                       color: isNew ? '#000000' : '#1976d2',
-                      backgroundColor: isNew ? '#e6f7e6' : 'white',
-                      borderColor: isNew ? '#4caf50' : '#1976d2',
+                      backgroundColor: getBackgroundColor(isNew, false, false),
+                      borderColor: getBorderColour(isNew, false, false),
                       fontWeight: 500,
                       boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
                     }}

@@ -22,6 +22,7 @@ import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.exception.LingoProblem;
+import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import au.gov.digitalhealth.lingo.validation.OnlyOnePopulated;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -29,7 +30,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -211,6 +217,14 @@ public class Node {
     return originalNode != null
         && (!relationships.containsAll(originalNode.getNode().getRelationships())
             || !originalNode.getNode().getRelationships().containsAll(relationships));
+  }
+
+  @JsonProperty(value = "hasUnknownCodes", access = JsonProperty.Access.READ_ONLY)
+  public boolean hasUnknownCodes() {
+    return nonDefiningProperties.stream()
+        .filter(ExternalIdentifier.class::isInstance)
+        .map(ExternalIdentifier.class::cast)
+        .anyMatch(ExternalIdentifier::isUnknownCode);
   }
 
   /**

@@ -52,6 +52,9 @@ export const getColorByDefinitionStatus = (
   ) {
     return Product7BoxBGColour.INVALID;
   }
+  if (product.hasUnknownCodes) {
+    return Product7BoxBGColour.INVALID;
+  }
   if (
     product.conceptOptions &&
     product.conceptOptions.length > 0 &&
