@@ -14,6 +14,7 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 ### Changed
 - Change width of columns on the backlog screen, so there is no overflow on smaller screens
+- Remove nondefining properties from product edit terms screen
 
 ### Added
 
@@ -33,6 +34,7 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 ### Changed
 
 - Artg Id search to only appear for AMT branches
+- Add product level nondefining properties to brand and pack
 - Dose form type field for NMPC from optional to mandatory as requested.
 - Disable delete option for robot created product saved data
 

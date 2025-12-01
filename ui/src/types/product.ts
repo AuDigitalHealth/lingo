@@ -234,7 +234,6 @@ export interface ProductUpdateRequest {
   // the concept that is actually being edited
   conceptId: string;
   descriptionUpdate: ProductDescriptionUpdateRequest;
-  propertiesUpdateRequest: ProductPropertiesUpdateRequest;
 }
 export interface ProductDescriptionUpdateRequest {
   descriptions: Description[];

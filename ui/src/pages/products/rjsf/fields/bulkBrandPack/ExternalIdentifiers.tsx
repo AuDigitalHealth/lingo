@@ -146,12 +146,6 @@ const ExternalIdentifiers: React.FC<
                 }
                 return aScheme.localeCompare(bScheme);
               })
-              .filter(
-                schema =>
-                  !uiSchema['ui:options']?.readOnlyProperties?.includes(
-                    schema.properties.identifierScheme.const,
-                  ),
-              )
               .map((schema, index) => {
                 return (
                   <Grid item xs={12} md={6} key={index}>
@@ -222,6 +216,9 @@ const ExternalIdentifierRender: React.FC<
   const multiValuedSchemes: string[] =
     uiSchema['ui:options']?.multiValuedSchemes || [];
 
+  const readOnlyProperties: string[] =
+    uiSchema['ui:options']?.readOnlyProperties || [];
+
   const showDefaultOptionSchemes: string[] =
     uiSchema['ui:options']?.showDefaultOptionSchemes || [];
 
@@ -230,6 +227,7 @@ const ExternalIdentifierRender: React.FC<
   const isRequired = mandatorySchemes.includes(schemeName);
 
   const isMultiValued = multiValuedSchemes.includes(schemeName);
+  const isInReadOnlyList = readOnlyProperties.includes(schemeName);
   const showDefaultOptions = showDefaultOptionSchemes.includes(schemeName);
   const isCheckBox = schema?.properties?.type?.const === 'REFERENCE_SET';
   const isNumber = schema?.properties?.value?.type === 'number';
@@ -250,9 +248,10 @@ const ExternalIdentifierRender: React.FC<
     schemeName,
   );
 
+  const isReadOnly = readOnly || isInReadOnlyList;
   const useValueSetAutocomplete = hasValueSetBinding(schemeName);
   const useEclAutocomplete = hasEclBinding(schemeName);
-  const useCreateConcept = hasCreateConcept(schemeName);
+  const useCreateConcept = hasCreateConcept(schemeName) && !isReadOnly;
 
   const binding = bindingConfig[schemeName] || {};
 
@@ -474,7 +473,7 @@ const ExternalIdentifierRender: React.FC<
         key={`${item.identifierScheme}-${item.value}`}
         label={item.value}
         onDelete={
-          !readOnly
+          !isReadOnly
             ? () => handleDelete(item.value, item.identifierScheme)
             : undefined
         }
@@ -511,7 +510,7 @@ const ExternalIdentifierRender: React.FC<
               showDefaultOptions={showDefaultOptions || false}
               value={schemeEntries.map(entry => entry.valueObject)}
               onChange={handleChangeConcepts}
-              disabled={readOnly ? true : false}
+              readOnly={isReadOnly ? true : false}
               //   error={!!errorMessage}
               info={info}
             />
@@ -542,7 +541,7 @@ const ExternalIdentifierRender: React.FC<
                 schemeEntries[0] ? schemeEntries[0].valueObject : schemeEntries
               }
               onChange={handleChangeConcepts}
-              disabled={readOnly ? true : false}
+              readOnly={isReadOnly ? true : false}
               required={isRequired}
               errorMessage={
                 missingRequiredFieldError ? 'Field must be populated' : ''
@@ -580,7 +579,7 @@ const ExternalIdentifierRender: React.FC<
               branch={branch}
               onChange={handleChangeConcepts}
               showDefaultOptions={showDefaultOptions || false}
-              isDisabled={readOnly ? true : false}
+              readOnly={isReadOnly ? true : false}
               errorMessage={
                 missingRequiredFieldError ? 'Field must be populated' : ''
               }
@@ -615,7 +614,7 @@ const ExternalIdentifierRender: React.FC<
               branch={branch}
               onChange={handleChangeConcepts}
               showDefaultOptions={showDefaultOptions || false}
-              isDisabled={readOnly ? true : false}
+              readOnly={isReadOnly ? true : false}
               errorMessage={
                 missingRequiredFieldError ? 'Field must be populated' : ''
               }
@@ -707,7 +706,7 @@ const ExternalIdentifierRender: React.FC<
                         ) || [];
                     onChange(updated);
                   }}
-                  disabled={readOnly}
+                  disabled={isReadOnly}
                 />
               }
             />
@@ -747,7 +746,7 @@ const ExternalIdentifierRender: React.FC<
               format={dateFormat}
               value={schemeEntries?.[0]?.value ? schemeEntries[0].value : null}
               onChange={handleDateChange}
-              disabled={readOnly ? true : false}
+              disabled={isReadOnly ? true : false}
               error={errorTooltip || missingRequiredFieldError}
               helperText={
                 errorTooltip ||
@@ -799,7 +798,7 @@ const ExternalIdentifierRender: React.FC<
                 freeSolo
                 disableClearable
                 filterSelectedOptions
-                disabled={readOnly}
+                disabled={isReadOnly}
                 options={availableOptions}
                 getOptionLabel={option => option}
                 value={schemeEntries?.map(e => e.value)}
@@ -834,7 +833,7 @@ const ExternalIdentifierRender: React.FC<
                     {...params}
                     onBlur={() => {
                       const trimmed = inputValue.trim();
-                      if (trimmed && !readOnly) {
+                      if (trimmed && !isReadOnly) {
                         handleAdd(trimmed);
                         setInputValue('');
                       }
@@ -862,7 +861,7 @@ const ExternalIdentifierRender: React.FC<
                       endAdornment: (
                         <>
                           {params.InputProps.endAdornment}
-                          {!readOnly && inputValue?.trim() && (
+                          {!isReadOnly && inputValue?.trim() && (
                             <IconButton
                               edge="end"
                               size="small"
@@ -914,7 +913,7 @@ const ExternalIdentifierRender: React.FC<
                 schemeName={schemeName}
                 formData={formData}
                 schemeEntries={schemeEntries}
-                readOnly={readOnly}
+                readOnly={isReadOnly}
                 errorTooltip={errorTooltip}
                 missingRequiredFieldError={missingRequiredFieldError}
                 info={info}
@@ -986,7 +985,7 @@ const ExternalIdentifierRender: React.FC<
                 <AdditionalFieldsEditor
                   formData={formData}
                   schemeEntries={schemeEntries}
-                  readOnly={readOnly}
+                  readOnly={isReadOnly ? true : false}
                   info={info}
                   schema={schema}
                   errorTooltip={errorTooltip}

@@ -192,7 +192,7 @@ export const getUiSchemaNodeAtPath = (uiSchema: any, path: string[]): any => {
     return node[segment];
   }, uiSchema);
 };
-const getSchemaNodeAtPath = (schema: any, path: string[]): any => {
+export const getSchemaNodeAtPath = (schema: any, path: string[]): any => {
   let currentSchema = schema;
 
   for (const segment of path) {
@@ -310,4 +310,25 @@ function evaluateSingleExpression(
     return typeof value === 'string' && value.length > 0;
   }
   return false;
+}
+export function flattenAnyOfPreserveOrder(def: any): any[] {
+  if (!def) return [];
+  if (Array.isArray(def.anyOf)) {
+    // flatten recursively while preserving order
+    return def.anyOf.flatMap(flattenAnyOfPreserveOrder);
+  }
+  return [def];
+}
+export function normalizeSchema(schema) {
+  const rootDefs = { ...(schema.$defs ?? {}) };
+
+  if (schema.items?.$defs) {
+    Object.assign(rootDefs, schema.items.$defs);
+    delete schema.items.$defs;
+  }
+
+  return {
+    ...schema,
+    $defs: rootDefs,
+  };
 }

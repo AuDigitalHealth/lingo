@@ -46,6 +46,7 @@ export const AdditionalFieldsEditor: React.FC<AdditionalFieldsEditorProps> = ({
   setErrorTooltip,
   missingRequiredFieldError,
   isMultivalued = false,
+  readOnly,
 }) => {
   const isValueType = schema?.properties?.value ? true : false;
   const [currentEntry, setCurrentEntry] = useState<{
@@ -125,111 +126,113 @@ export const AdditionalFieldsEditor: React.FC<AdditionalFieldsEditorProps> = ({
   });
   return (
     <Box>
-      <Box sx={{ mb: 3, p: 2, border: '1px solid #ccc', borderRadius: 2 }}>
-        {isValueType ? (
-          <TextField
-            label={schema.title || 'Identifier'}
-            fullWidth
-            size="small"
-            margin="dense"
-            value={currentEntry.identifier}
-            onChange={e =>
-              setCurrentEntry(prev => ({
-                ...prev,
-                identifier: e.target.value,
-              }))
-            }
-            error={errorTooltip || missingRequiredFieldError}
-            helperText={
-              errorTooltip ||
-              (missingRequiredFieldError ? 'Field must be populated' : info)
-            }
-            sx={{
-              '& .MuiFormHelperText-root': {
-                m: 0,
-                minHeight: '1em',
-                color:
-                  errorTooltip || missingRequiredFieldError
-                    ? 'error.main'
-                    : 'text.secondary',
-              },
-            }}
-          />
-        ) : (
-          <span>Not supported type</span>
-        )}{' '}
-        {/* //TODO enhance it if needed in future */}
-        {Object.entries(additionalFieldsSchema || {}).map(
-          ([key, subschema]) => {
-            const enumOptions = subschema?.properties?.value?.enum;
-            return (
-              <FormControl
-                key={key}
-                fullWidth
-                size="small"
-                margin="dense"
-                sx={{ mt: 1 }}
-              >
-                <InputLabel id={`${key}-label`}>
-                  {subschema?.title || key}
-                </InputLabel>
-                {enumOptions ? (
-                  <Select
-                    labelId={`${key}-label`}
-                    value={
-                      currentEntry.additionalFields?.[key]?.value ||
-                      subschema?.properties?.value?.default
-                    }
-                    onChange={e =>
-                      setCurrentEntry(prev => ({
-                        ...prev,
-                        additionalFields: {
-                          ...prev.additionalFields,
-                          [key]: { value: e.target.value },
-                        },
-                      }))
-                    }
-                  >
-                    {enumOptions?.map((opt: string) => (
-                      <MenuItem key={opt} value={opt}>
-                        {opt}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                ) : (
-                  <span>Not supported additional field type</span>
-                )}{' '}
-                {/* //TODO enhance it if needed in future */}
-              </FormControl>
-            );
-          },
-        )}
-        <Box mt={2}>
-          <Tooltip
-            title={
-              !isMultivalued && formData?.length > 0
-                ? 'Only one value allowed for this field'
-                : 'Add Entry'
-            }
-          >
-            <span>
-              <IconButton
-                onClick={handleAddCombination}
-                disabled={!isMultivalued && formData?.length > 0}
-              >
-                <AddCircleOutlineIcon
-                  sx={{
-                    color:
-                      !isMultivalued && formData?.length > 0
-                        ? 'action.disabled'
-                        : 'primary.main',
-                  }}
-                />
-              </IconButton>
-            </span>
-          </Tooltip>
+      {!readOnly && (
+        <Box sx={{ mb: 3, p: 2, border: '1px solid #ccc', borderRadius: 2 }}>
+          {isValueType ? (
+            <TextField
+              label={schema.title || 'Identifier'}
+              fullWidth
+              size="small"
+              margin="dense"
+              value={currentEntry.identifier}
+              onChange={e =>
+                setCurrentEntry(prev => ({
+                  ...prev,
+                  identifier: e.target.value,
+                }))
+              }
+              error={errorTooltip || missingRequiredFieldError}
+              helperText={
+                errorTooltip ||
+                (missingRequiredFieldError ? 'Field must be populated' : info)
+              }
+              sx={{
+                '& .MuiFormHelperText-root': {
+                  m: 0,
+                  minHeight: '1em',
+                  color:
+                    errorTooltip || missingRequiredFieldError
+                      ? 'error.main'
+                      : 'text.secondary',
+                },
+              }}
+            />
+          ) : (
+            <span>Not supported type</span>
+          )}{' '}
+          {/* //TODO enhance it if needed in future */}
+          {Object.entries(additionalFieldsSchema || {}).map(
+            ([key, subschema]) => {
+              const enumOptions = subschema?.properties?.value?.enum;
+              return (
+                <FormControl
+                  key={key}
+                  fullWidth
+                  size="small"
+                  margin="dense"
+                  sx={{ mt: 1 }}
+                >
+                  <InputLabel id={`${key}-label`}>
+                    {subschema?.title || key}
+                  </InputLabel>
+                  {enumOptions ? (
+                    <Select
+                      labelId={`${key}-label`}
+                      value={
+                        currentEntry.additionalFields?.[key]?.value ||
+                        subschema?.properties?.value?.default
+                      }
+                      onChange={e =>
+                        setCurrentEntry(prev => ({
+                          ...prev,
+                          additionalFields: {
+                            ...prev.additionalFields,
+                            [key]: { value: e.target.value },
+                          },
+                        }))
+                      }
+                    >
+                      {enumOptions?.map((opt: string) => (
+                        <MenuItem key={opt} value={opt}>
+                          {opt}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  ) : (
+                    <span>Not supported additional field type</span>
+                  )}{' '}
+                  {/* //TODO enhance it if needed in future */}
+                </FormControl>
+              );
+            },
+          )}
+          <Box mt={2}>
+            <Tooltip
+              title={
+                !isMultivalued && formData?.length > 0
+                  ? 'Only one value allowed for this field'
+                  : 'Add Entry'
+              }
+            >
+              <span>
+                <IconButton
+                  onClick={handleAddCombination}
+                  disabled={!isMultivalued && formData?.length > 0}
+                >
+                  <AddCircleOutlineIcon
+                    sx={{
+                      color:
+                        !isMultivalued && formData?.length > 0
+                          ? 'action.disabled'
+                          : 'primary.main',
+                    }}
+                  />
+                </IconButton>
+              </span>
+            </Tooltip>
+          </Box>
         </Box>
-      </Box>
+      )}
 
       {(isMultivalued ? thisSchemasValues : thisSchemasValues.slice(0, 1)).map(
         (entry, index) => (
@@ -237,6 +240,7 @@ export const AdditionalFieldsEditor: React.FC<AdditionalFieldsEditorProps> = ({
             key={index}
             entry={entry}
             onDelete={() => handleDeleteEntry(entry)}
+            showDelete={!readOnly}
           />
         ),
       )}

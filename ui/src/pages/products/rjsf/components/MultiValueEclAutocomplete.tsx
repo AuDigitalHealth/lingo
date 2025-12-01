@@ -24,6 +24,7 @@ const MultiValueEclAutocomplete: React.FC<FieldProps<any, any>> = props => {
     uiSchema,
     showDefaultOptions,
     info,
+    readOnly,
   } = props;
 
   const [inputValue, setInputValue] = useState('');
@@ -32,6 +33,7 @@ const MultiValueEclAutocomplete: React.FC<FieldProps<any, any>> = props => {
     value || [],
   );
   const isThisDisabled = isDisabled || props.disabled || false;
+  const readonlyMode = readOnly || false;
 
   const isTypingRef = useRef(false);
 
@@ -104,19 +106,26 @@ const MultiValueEclAutocomplete: React.FC<FieldProps<any, any>> = props => {
       <Autocomplete
         multiple
         loading={isLoading}
-        disabled={isThisDisabled}
+        disabled={isThisDisabled || readonlyMode}
         options={isThisDisabled ? [] : options}
         getOptionLabel={(option: Concept) => option?.pt?.term || ''}
         value={selectedConcepts}
         inputValue={inputValue}
-        onInputChange={(_, newInputValue, reason) => {
-          // Only set typing flag if it's user input
-          if (reason === 'input') {
-            isTypingRef.current = true;
-            setInputValue(newInputValue);
-          }
-        }}
-        onChange={(_, selected) => handleChange(selected as Concept[])}
+        onInputChange={
+          readonlyMode
+            ? undefined
+            : (_, newInputValue, reason) => {
+                if (reason === 'input') {
+                  isTypingRef.current = true;
+                  setInputValue(newInputValue);
+                }
+              }
+        }
+        onChange={
+          readonlyMode
+            ? undefined
+            : (_, selected) => handleChange(selected as Concept[])
+        }
         isOptionEqualToValue={(option: Concept, val: ConceptMini) =>
           option?.conceptId === val?.conceptId
         }
@@ -132,7 +141,7 @@ const MultiValueEclAutocomplete: React.FC<FieldProps<any, any>> = props => {
               >
                 <Chip
                   label={option.pt?.term || ''}
-                  {...chipProps}
+                  {...(readonlyMode ? { onDelete: undefined } : chipProps)}
                   color={needsAttention ? 'error' : 'default'}
                   sx={{
                     ...(needsAttention && {

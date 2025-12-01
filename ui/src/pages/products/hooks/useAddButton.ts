@@ -25,6 +25,7 @@ interface UseAddButtonProps {
     sourceData: any,
     targetData: any[],
     existingData: any[],
+    formContext: any,
   ) => boolean | string;
   getInitialSourceData: () => any;
 }
@@ -60,7 +61,7 @@ export const useAddButton = ({
     const targetData = formContext.formData[targetPath] || [];
     const existingData = formContext.formData[existingPath] || [];
 
-    return validationFn(sourceData, targetData, existingData);
+    return validationFn(sourceData, targetData, existingData, formContext);
   }, [formContext, sourcePath, targetPath, existingPath, validationFn]);
 
   return {

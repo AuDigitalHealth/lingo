@@ -16,7 +16,7 @@ interface ErrorDisplayProps {
 }
 
 export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({ errors, sx }) => {
-  if (errors.length === 0) return null;
+  if (!errors || (errors && errors.length === 0)) return null;
 
   return (
     <Box
