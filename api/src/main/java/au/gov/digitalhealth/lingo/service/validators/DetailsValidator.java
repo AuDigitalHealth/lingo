@@ -232,7 +232,7 @@ public abstract class DetailsValidator {
                               "External identifier value '"
                                   + externalIdentifier.getValueObject().getConceptId()
                                   + "' does not exist in FHIR server for code system '"
-                                  + externalIdentifierDefinition.getCodeSystem());
+                                  + externalIdentifierDefinition.getCodeSystem() + "'");
                           return Mono.empty();
                         })
                     .block();
