@@ -1,8 +1,8 @@
 import React, { useCallback, useState } from 'react';
 import {
   Accordion,
-  AccordionSummary,
   AccordionDetails,
+  AccordionSummary,
   Autocomplete,
   Box,
   Checkbox,
@@ -12,11 +12,6 @@ import {
   IconButton,
   Stack,
   TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  FormHelperText,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { FieldProps } from '@rjsf/utils';
@@ -146,6 +141,12 @@ const ExternalIdentifiers: React.FC<
                 }
                 return aScheme.localeCompare(bScheme);
               })
+              .filter(
+                schema =>
+                  !uiSchema['ui:options']?.hiddenProperties?.includes(
+                    schema.properties.identifierScheme.const,
+                  ),
+              )
               .map((schema, index) => {
                 return (
                   <Grid item xs={12} md={6} key={index}>
