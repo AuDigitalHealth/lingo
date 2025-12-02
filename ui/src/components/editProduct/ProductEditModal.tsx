@@ -20,10 +20,10 @@ import BaseModalHeader from '../modal/BaseModalHeader';
 import {
   Acceptability,
   CaseSignificance,
+  caseSignificanceDisplay,
   DefinitionType,
   Description,
   Product,
-  caseSignificanceDisplay,
 } from '../../types/concept.ts';
 import { Box, Stack } from '@mui/system';
 import {
@@ -32,7 +32,6 @@ import {
 } from '../../pages/products/components/style/ProductBoxes.tsx';
 import {
   createDefaultDescription,
-  filterKeypress,
   findDefaultLangRefset,
   isPreferredTerm,
   sortDescriptions,
@@ -43,12 +42,10 @@ import {
   Control,
   Controller,
   FieldArrayWithId,
-  FieldError,
-  UseFormSetValue,
-  get,
   useController,
   useFieldArray,
   useForm,
+  UseFormSetValue,
   useFormState,
   useWatch,
 } from 'react-hook-form';
@@ -69,7 +66,7 @@ import {
 import { AxiosError } from 'axios';
 import { SnowstormError } from '../../types/ErrorHandler.ts';
 import { useSearchConceptByIdNoCache } from '../../hooks/api/products/useSearchConcept.tsx';
-import { isEqual, cloneDeep } from 'lodash';
+import { cloneDeep, isEqual } from 'lodash';
 import { Add, Delete } from '@mui/icons-material';
 import useAvailableProjects, {
   getProjectFromKey,
@@ -875,6 +872,8 @@ const FieldDescriptions = ({
 
   const isReleased = description?.released;
 
+  const caseSensitivityEnabled = false;
+
   return (
     <>
       <Grid container spacing={1} key={field.id} alignItems="center">
@@ -912,7 +911,7 @@ const FieldDescriptions = ({
             }}
           />
         </Grid>
-        <Grid item xs={12} md={4.5}>
+        <Grid item xs={12} md={caseSensitivityEnabled ? 4.5 : 7}>
           <Controller
             name={`descriptionUpdate.descriptions.${index}.active`}
             control={control}
@@ -1021,24 +1020,27 @@ const FieldDescriptions = ({
             })}
           </Grid>
         </Grid>
-        <Grid item xs={12} md={1.5}>
-          <FormControl fullWidth margin="dense" size="small">
-            <InputLabel>Case Sensitivity</InputLabel>
-            <Controller
-              name={`descriptionUpdate.descriptions.${index}.caseSignificance`}
-              control={control}
-              render={({ field: controllerField }) => (
-                <Select {...controllerField} disabled={isDisabled}>
-                  {Object.values(CaseSignificance).map(value => (
-                    <MenuItem key={value} value={value}>
-                      {caseSignificanceDisplay[value]}
-                    </MenuItem>
-                  ))}
-                </Select>
-              )}
-            />
-          </FormControl>
-        </Grid>
+
+        {caseSensitivityEnabled && (
+          <Grid item xs={12} md={1.5}>
+            <FormControl fullWidth margin="dense" size="small">
+              <InputLabel>Case Sensitivity</InputLabel>
+              <Controller
+                name={`descriptionUpdate.descriptions.${index}.caseSignificance`}
+                control={control}
+                render={({ field: controllerField }) => (
+                  <Select {...controllerField} disabled={isDisabled}>
+                    {Object.values(CaseSignificance).map(value => (
+                      <MenuItem key={value} value={value}>
+                        {caseSignificanceDisplay[value]}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                )}
+              />
+            </FormControl>
+          </Grid>
+        )}
         {/* Add Delete Button for New Descriptions */}
         {description?.descriptionId === undefined && (
           <Grid item xs={12} md={1}>

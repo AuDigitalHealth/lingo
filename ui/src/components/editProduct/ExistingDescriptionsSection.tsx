@@ -1,26 +1,28 @@
-import { InputLabel } from '@mui/material';
-import { MenuItem } from '@mui/material';
-import { Box } from '@mui/material';
-import { Chip } from '@mui/material';
-import { TextField } from '@mui/material';
-import { Switch } from '@mui/material';
-import { Typography } from '@mui/material';
-import { Select } from '@mui/material';
-import { FormControl } from '@mui/material';
-import { Grid } from '@mui/material';
+import {
+  Box,
+  Chip,
+  Divider,
+  FormControl,
+  Grid,
+  InputLabel,
+  MenuItem,
+  Select,
+  Switch,
+  TextField,
+  Typography,
+} from '@mui/material';
 import {
   CaseSignificance,
+  caseSignificanceDisplay,
   DefinitionType,
   Description,
   Product,
-  caseSignificanceDisplay,
 } from '../../types/concept';
 import Loading from '../Loading';
 import { NonDefiningProperty } from '../../types/product';
 import { LanguageRefset } from '../../types/Project';
 import { InnerBoxSmall } from '../../pages/products/components/style/ProductBoxes';
 import AdditionalPropertiesDisplay from '../../pages/products/components/AdditionalPropertiesDisplay';
-import { Divider } from '@mui/material';
 import SimplePropertiesDisplay from '../../pages/products/components/SimplePropertiesDisplay';
 
 interface DescriptionDisplayProps {
@@ -47,6 +49,7 @@ export function DescriptionDisplay({
         : 'Synonym';
 
   const isReleased = description?.released;
+  const caseSensitivityEnabled = false;
   return (
     <Grid
       container
@@ -75,7 +78,7 @@ export function DescriptionDisplay({
       </Grid>
 
       {/* Term Column */}
-      <Grid item xs={12} md={5}>
+      <Grid item xs={12} md={caseSensitivityEnabled ? 5 : 7}>
         <Box display="flex" alignItems="center" gap={1}>
           {displayMode === 'input' ? (
             <Switch
@@ -153,29 +156,31 @@ export function DescriptionDisplay({
       </Grid>
 
       {/* Case Sensitivity Column */}
-      <Grid item xs={12} md={2}>
-        {displayMode === 'input' ? (
-          <FormControl fullWidth margin="dense" size="small">
-            <InputLabel>Case Sensitivity</InputLabel>
-            <Select disabled={true} value={description.caseSignificance}>
-              {Object.values(CaseSignificance).map(value => (
-                <MenuItem key={value} value={value}>
-                  {value}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        ) : (
-          <Box>
-            <Typography variant="caption" color="text.secondary">
-              Case Sensitivity
-            </Typography>
-            <Typography variant="body2">
-              {caseSignificanceDisplay[description.caseSignificance]}
-            </Typography>
-          </Box>
-        )}
-      </Grid>
+      {caseSensitivityEnabled && (
+        <Grid item xs={12} md={2}>
+          {displayMode === 'input' ? (
+            <FormControl fullWidth margin="dense" size="small">
+              <InputLabel>Case Sensitivity</InputLabel>
+              <Select disabled={true} value={description.caseSignificance}>
+                {Object.values(CaseSignificance).map(value => (
+                  <MenuItem key={value} value={value}>
+                    {value}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          ) : (
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Case Sensitivity
+              </Typography>
+              <Typography variant="body2">
+                {caseSignificanceDisplay[description.caseSignificance]}
+              </Typography>
+            </Box>
+          )}
+        </Grid>
+      )}
       {/* Display UNRELEASED text if not released */}
       {!isReleased && (
         <Grid item xs={12} sx={{ padding: 0 }}>
