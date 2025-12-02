@@ -43,6 +43,7 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
     mandatorySchemes = [],
     propertyOrder = [],
     readOnlyProperties = [],
+    hiddenProperties = [],
   } = nonDefiningPropertyOptions;
 
   const {
@@ -213,6 +214,7 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
                   mandatorySchemes,
                   multiValuedSchemes,
                   readOnlyProperties,
+                  hiddenProperties,
                   binding,
                   label: nondefiningPropertyTitle,
                   skipTitle: false,

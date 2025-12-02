@@ -74,8 +74,11 @@ public abstract class BasePropertyDefinition {
    */
   private int order;
 
-  /** If the property is read only it will not be displayed in the UI for editing. */
+  /** If the property is read only it will be displayed in the UI but not be editable. */
   private boolean readOnly;
+
+  /** If the property is hidden it will not display in the UI at all. */
+  private boolean hidden;
 
   private Set<ProductType> suppressOnProductTypes = new HashSet<>();
 
