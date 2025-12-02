@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
+### Fix
+- Fix rebase process to prevent incorrect UI prompt to login
 
 
 ## [1.3.20] - 2025-12-01
