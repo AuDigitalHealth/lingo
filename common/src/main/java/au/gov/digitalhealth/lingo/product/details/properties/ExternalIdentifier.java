@@ -158,10 +158,9 @@ public class ExternalIdentifier extends NonDefiningBase implements Serializable 
                     SnowstormConceptMini concept = new SnowstormConceptMini();
                     concept.setConceptId(mapTargetId);
                     concept.setFsn(
-                        new SnowstormTermLangPojo().term(UNKNOWN_CODE + mapTargetId)
-                            .lang("en"));
-                    concept.setPt(new SnowstormTermLangPojo().term(UNKNOWN_CODE + mapTargetId)
-                        .lang("en"));
+                        new SnowstormTermLangPojo().term(UNKNOWN_CODE + mapTargetId).lang("en"));
+                    concept.setPt(
+                        new SnowstormTermLangPojo().term(UNKNOWN_CODE + mapTargetId).lang("en"));
                     identifier.setValueObject(concept);
                     identifier.setCodeSystem(externalIdentifierDefinition.getCodeSystem());
                     return Mono.just(identifier);

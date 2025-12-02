@@ -302,26 +302,6 @@ models:
         mandatory: false
         multiValued: false
         order: 99
-      - name: recallIndicator
-        title: Recall Indicator
-        identifier: 680301000220101
-        level: PRODUCT
-        modelLevels: REAL_CLINICAL_DRUG
-        sourceModelLevel: REAL_CLINICAL_DRUG
-        mandatory: false
-        multiValued: false
-        readOnly: true
-        order: 100
-      - name: shortagesFlag
-        title: Shortages Flag
-        identifier: 680281000220100
-        level: PRODUCT
-        modelLevels: REAL_CLINICAL_DRUG
-        sourceModelLevel: REAL_CLINICAL_DRUG
-        mandatory: false
-        multiValued: false
-        readOnly: true
-        order: 101
     nonDefiningProperties:
       - name: indicativePrice
         title: Indicative Price
@@ -360,6 +340,7 @@ models:
         mandatory: false
         multiValued: true
         readOnly: true
+        hidden: true
         order: 20
       - name: licencedRoute
         title: Licenced Route
@@ -573,77 +554,6 @@ models:
         mandatory: false
         multiValued: true
         order: 101
-      - name: recallDate
-        title: Recall Published Date
-        identifier: 680221000220104
-        level: PRODUCT
-        dataType: DATE
-        format: YYYY-MM-DD
-        valueRegexValidation: \d{4}-\d{2}-\d{2}
-        valueValidationErrorMessage: "Must be a valid date in the format YYYY-MM-DD"
-        modelLevels: REAL_CLINICAL_DRUG
-        sourceModelLevel: REAL_CLINICAL_DRUG
-        mandatory: false
-        multiValued: false
-        readOnly: true
-        order: 102
-        group: recall
-      - name: recallActions
-        title: Recall Marketing Actions
-        identifier: 680231000220101
-        level: PRODUCT
-        dataType: STRING
-        valueRegexValidation: ^.+$
-        valueValidationErrorMessage: "Must be a valid string"
-        modelLevels: REAL_CLINICAL_DRUG
-        sourceModelLevel: REAL_CLINICAL_DRUG
-        mandatory: false
-        multiValued: true
-        readOnly: true
-        order: 103
-        group: recall
-      - name: recallCategory
-        title: Recall Defect Category
-        identifier: 680241000220105
-        level: PRODUCT
-        dataType: STRING
-        valueRegexValidation: ^.+$
-        valueValidationErrorMessage: "Must be a valid string"
-        modelLevels: REAL_CLINICAL_DRUG
-        sourceModelLevel: REAL_CLINICAL_DRUG
-        mandatory: false
-        multiValued: false
-        readOnly: true
-        order: 104
-        group: recall
-      - name: recallLevel
-        title: Recall Level
-        identifier: 680261000220109
-        level: PRODUCT
-        dataType: STRING
-        valueRegexValidation: ^.+$
-        valueValidationErrorMessage: "Must be a valid string"
-        modelLevels: REAL_CLINICAL_DRUG
-        sourceModelLevel: REAL_CLINICAL_DRUG
-        mandatory: false
-        multiValued: false
-        readOnly: true
-        order: 105
-        group: recall
-      - name: recallDocuments
-        title: Recall Associated Documents
-        identifier: 680251000220107
-        level: PRODUCT
-        dataType: URI
-        valueRegexValidation: http(s)?://.+
-        valueValidationErrorMessage: "Must be a valid URL"
-        modelLevels: REAL_CLINICAL_DRUG
-        sourceModelLevel: REAL_CLINICAL_DRUG
-        mandatory: false
-        multiValued: true
-        readOnly: true
-        order: 106
-        group: recall
       - name: doseFormType
         title: Dose Form Type
         identifier: 680311000220103
@@ -669,82 +579,3 @@ models:
         multiValued: false
         showDefaultOptions: true
         order: 71
-      - name: shortagesReason
-        title: Shortages Reason
-        identifier: 680101000220104
-        level: PRODUCT
-        dataType: STRING
-        valueRegexValidation: ^.+$
-        modelLevels: REAL_CLINICAL_DRUG
-        sourceModelLevel: REAL_CLINICAL_DRUG
-        mandatory: false
-        multiValued: false
-        readOnly: true
-        order: 106
-      - name: theraAlternatve
-        title: Shortages Therapeutic Alternative
-        identifier: 680111000220101
-        level: PRODUCT
-        dataType: STRING
-        valueRegexValidation: ^.+$
-        modelLevels: REAL_CLINICAL_DRUG
-        sourceModelLevel: REAL_CLINICAL_DRUG
-        mandatory: false
-        multiValued: false
-        readOnly: true
-        order: 106
-      - name: dateOfShortages
-        title: Date shortages reported
-        description: Date when shortages were reported
-        identifier: 680121000220108
-        level: PRODUCT
-        dataType: DATE
-        format: YYYY-MM-DD
-        valueRegexValidation: ^.+$
-        modelLevels: REAL_CLINICAL_DRUG
-        sourceModelLevel: REAL_CLINICAL_DRUG
-        mandatory: false
-        multiValued: false
-        readOnly: true
-        order: 106
-      - name: dateShortageUpdated
-        title: Date Shortage Updated
-        description: Date when the shortage information was last updated
-        identifier: 680131000220106
-        level: PRODUCT
-        dataType: DATE
-        format: YYYY-MM-DD
-        valueRegexValidation: ^.+$
-        modelLevels: REAL_CLINICAL_DRUG
-        sourceModelLevel: REAL_CLINICAL_DRUG
-        mandatory: false
-        multiValued: false
-        readOnly: true
-        order: 106
-      - name: shortageReturn
-        title: Expected Return Date
-        description: Date when the product is expected to return
-        identifier: 680141000220102
-        level: PRODUCT
-        dataType: DATE
-        format: YYYY-MM-DD
-        valueRegexValidation: ^.+$
-        modelLevels: REAL_CLINICAL_DRUG
-        sourceModelLevel: REAL_CLINICAL_DRUG
-        mandatory: false
-        multiValued: false
-        readOnly: true
-        order: 106
-      - name: shortageInfo
-        title: Shortage Additional Information
-        description: Additional information about the shortage
-        identifier: 680151000220100
-        level: PRODUCT
-        dataType: URI
-        valueRegexValidation: ^.+$
-        modelLevels: REAL_CLINICAL_DRUG
-        sourceModelLevel: REAL_CLINICAL_DRUG
-        mandatory: false
-        multiValued: false
-        readOnly: true
-        order: 106
