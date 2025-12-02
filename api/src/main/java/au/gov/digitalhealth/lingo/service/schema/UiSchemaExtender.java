@@ -66,8 +66,8 @@ public class UiSchemaExtender {
     hiddenProperties.addAll(modelConfiguration.getReferenceSets());
     hiddenProperties.removeIf(p -> !p.isHidden());
 
-    updateUiSchemaForType(uiSchemaNode, NON_DEFINING_PROPERTIES, properties, readOnlyProperties,
-        hiddenProperties);
+    updateUiSchemaForType(
+        uiSchemaNode, NON_DEFINING_PROPERTIES, properties, readOnlyProperties, hiddenProperties);
   }
 
   public void updateEditUiSchema(
@@ -209,8 +209,8 @@ public class UiSchemaExtender {
           UI_FIELD, "ExternalIdentifiers"); // todo change this name to something more generic
       ObjectNode uiOptions = getUiOptions(false);
 
-      processNonDefiningPropertyBaseMembers(filteredPropertySet, uiOptions, readOnlyProperties,
-          hiddenProperties);
+      processNonDefiningPropertyBaseMembers(
+          filteredPropertySet, uiOptions, readOnlyProperties, hiddenProperties);
 
       ArrayNode propertyOrder = objectMapper.createArrayNode();
 
