@@ -800,6 +800,15 @@ public class ProductCreationService {
     }
   }
 
+  private static void inactivateConcept(SnowstormConcept conceptToRetire) {
+    conceptToRetire.setActive(false);
+    conceptToRetire.getClassAxioms().stream().filter(a -> a.getActive() == null || a.getActive())
+        .forEach(a -> {
+          a.setActive(false);
+          a.getRelationships().forEach(r -> r.setActive(false));
+        });
+  }
+
   private void createOrUpdateConcepts(
       String branch, List<Node> nodeCreateOrder, Map<String, String> idMap, boolean createOnly)
       throws InterruptedException {
@@ -867,7 +876,7 @@ public class ProductCreationService {
         if (node.isRetireAndReplace() || node.isRetireAndReplaceWithExisting()) {
           SnowstormConcept conceptToRetire =
               editAndRetireConceptMap.get(node.getOriginalNode().getConceptId());
-          conceptToRetire.setActive(false);
+          inactivateConcept(conceptToRetire);
           concepts.add(toSnowstormConceptView(conceptToRetire));
         }
       } else {
@@ -886,7 +895,7 @@ public class ProductCreationService {
         if (node.isRetireAndReplace() || node.isRetireAndReplaceWithExisting()) {
           SnowstormConcept conceptToRetire =
               editAndRetireConceptMap.get(node.getOriginalNode().getConceptId());
-          conceptToRetire.setActive(false);
+          inactivateConcept(conceptToRetire);
           snowstormClient.updateConceptView(
               branch,
               conceptToRetire.getConceptId(),
