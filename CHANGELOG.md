@@ -8,8 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
 
+### Fixed
+
+- Defect which did not retire stated relationships when retiring a concept - Snowstorm does not do
+  this itself when a concept is inactivated
+
+### Added
+
+- Configuration to enable editing of the Schedule 8 reference set for AMT
 
 ## [1.3.21] - 2025-12-02
 ### Fix
