@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
+- Fix jira user bug in production, jiraUser.getUsers().getItems() was returning null, added null check
 
 
 ## [1.3.21] - 2025-12-02

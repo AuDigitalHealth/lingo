@@ -22,6 +22,7 @@ import au.gov.digitalhealth.lingo.util.CacheConstants;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +36,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 @Service
 @EnableScheduling
+@Log
 public class JiraUserManagerService extends GenericRefreshCacheService<List<JiraUser>> {
   @Value("${snomio.jira.users:}")
   private Set<String> users;
@@ -83,13 +85,19 @@ public class JiraUserManagerService extends GenericRefreshCacheService<List<Jira
         throw new LingoProblem(
             "bad-jira-user-response", "Error getting Jira users", HttpStatus.BAD_GATEWAY);
       }
-      jiraUserList.addAll(
-          response.getUsers().getItems().stream()
-              .filter(jiraUser -> jiraUser.isActive() && users.contains(jiraUser.getName()))
-              .toList());
 
-      offset += 50;
-      size = response.getUsers().getSize();
+      if (response.getUsers() != null && response.getUsers().getItems() != null) {
+        jiraUserList.addAll(
+            response.getUsers().getItems().stream()
+                .filter(jiraUser -> jiraUser.isActive() && users.contains(jiraUser.getName()))
+                .toList());
+
+        size = response.getUsers().getSize();
+        offset += 50;
+      } else {
+        log.severe("Error with jira user response, getUsers.getItems is null.");
+        break;
+      }
     }
     return jiraUserList.stream().distinct().toList(); // remove any duplicates
   }
