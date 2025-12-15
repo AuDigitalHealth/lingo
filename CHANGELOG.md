@@ -18,6 +18,10 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 - Configuration to enable editing of the Schedule 8 reference set for AMT
 
+## [1.3.22] - 2025-12-15
+- Fix jira user bug in production, jiraUser.getUsers().getItems() was returning null, added null check
+
+
 ## [1.3.21] - 2025-12-02
 ### Fix
 - Fix rebase process to prevent incorrect UI prompt to login
