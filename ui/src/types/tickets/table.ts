@@ -120,8 +120,7 @@ interface LabelMetaData extends DataTableFilterMetaData {
 interface ExternalRequestorMetaData extends DataTableFilterMetaData {
   value: ExternalRequestor[];
 }
-interface ExternalRequestorOperatorMetaData
-  extends DataTableOperatorFilterMetaData {
+interface ExternalRequestorOperatorMetaData extends DataTableOperatorFilterMetaData {
   constraints: ExternalRequestorMetaData[];
 }
 interface AssigneeMetaData extends DataTableFilterMetaData {
