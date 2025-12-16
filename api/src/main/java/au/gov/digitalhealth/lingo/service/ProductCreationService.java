@@ -802,13 +802,15 @@ public class ProductCreationService {
 
   private static void inactivateConcept(SnowstormConcept conceptToRetire) {
     conceptToRetire.setActive(false);
-    conceptToRetire.getClassAxioms().stream()
-        .filter(a -> a.getActive() == null || a.getActive())
-        .forEach(
-            a -> {
-              a.setActive(false);
-              a.getRelationships().forEach(r -> r.setActive(false));
-            });
+    if (conceptToRetire.getClassAxioms() != null) {
+      conceptToRetire.getClassAxioms().stream()
+          .filter(a -> a.getActive() == null || a.getActive())
+          .forEach(
+              a -> {
+                a.setActive(false);
+                a.getRelationships().forEach(r -> r.setActive(false));
+              });
+    }
   }
 
   private void createOrUpdateConcepts(
