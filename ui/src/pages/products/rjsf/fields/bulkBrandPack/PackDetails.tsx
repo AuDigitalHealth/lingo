@@ -193,7 +193,6 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
             ) : (
               <TextField
                 label="Pack Size"
-                type="number"
                 value={packSize}
                 onChange={e => handlePackSizeChange(e.target.value)}
                 onKeyDown={e => {

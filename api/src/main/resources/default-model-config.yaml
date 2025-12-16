@@ -97,9 +97,19 @@ models:
         mandatory: false
         multiValued: true
         defaultMappingType: RELATED
+        order: 1
         mappingTypes:
           - RELATED
     referenceSets:
+      - name: schedule8
+        title: Schedule 8
+        description: Product on Schedule 8 of the poisons schedule
+        identifier: 1050951000168102
+        level: PACKAGE
+        modelLevels: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+        sourceModelLevel: REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG
+        order: 10
+        suppressOnProductTypes: DEVICE
     nonDefiningProperties:
   MAIN_SNOMEDCT-IE:
     modelType: NMPC
