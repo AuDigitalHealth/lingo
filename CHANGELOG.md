@@ -8,8 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
+- Remove default non-defining properties for HSE and display only read-only fields
 - fix allowed licences
-
 
 ## [1.3.22] - 2025-12-15
 - Fix jira user bug in production, jiraUser.getUsers().getItems() was returning null, added null check

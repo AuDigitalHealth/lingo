@@ -46,6 +46,7 @@
     "ui:field": "PackDetails",
     "ui:options": {
       "readOnly": false,
+      "showDefaultValues": false,
       "allowDelete": false,
       "requireEditButton": false,
       "multiValuedSchemes": [

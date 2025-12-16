@@ -47,6 +47,7 @@
     "ui:options": {
       "inputType": "text",
       "readOnly": false,
+      "showDefaultValues": true,
       "allowNonDefiningPropertyEdit": true,
       "allowDelete": false,
       "requireEditButton": false,

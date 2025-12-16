@@ -23,7 +23,7 @@ import AddPackSizeButton from './fields/bulkBrandPack/AddPackSizeButton.tsx';
 import ExternalIdentifiers from './fields/bulkBrandPack/ExternalIdentifiers.tsx';
 import PackDetails from './fields/bulkBrandPack/PackDetails.tsx';
 import { ConfigService } from '../../../api/ConfigService.ts';
-import { getMatchingNonDefiningProperties } from './helpers/helpers.ts';
+import { getDefaultNonDefiningProperties } from './helpers/helpers.ts';
 import { validator } from './helpers/validator.ts';
 import { ErrorDisplay } from './components/ErrorDisplay.tsx';
 import { buildErrorSchema } from './helpers/validationHelper.ts';
@@ -117,8 +117,20 @@ function PackSizeAuthoring({
 
   useEffect(() => {
     if (selectedProduct && data) {
-      const matchingProperties = data.packSizes
-        ? getMatchingNonDefiningProperties(data.packSizes)
+      const showDefaultValues =
+        dynamicUiSchema.newPackSizeInput['ui:options']?.showDefaultValues;
+
+      const readOnlyProperties =
+        dynamicUiSchema.packSizes.items.packDetails.nonDefiningProperties[
+          'ui:options'
+        ]?.readOnlyProperties;
+
+      const defaultProperties = data.packSizes
+        ? getDefaultNonDefiningProperties(
+            data.packSizes,
+            showDefaultValues,
+            readOnlyProperties,
+          )
         : [];
       setFormErrors([]);
       const newData: FormData = {
@@ -128,7 +140,7 @@ function PackSizeAuthoring({
         packSizes: [],
         newPackSizeInput: {
           packSize: undefined,
-          nonDefiningProperties: matchingProperties,
+          nonDefiningProperties: defaultProperties,
         },
       };
       setFormData(newData);
