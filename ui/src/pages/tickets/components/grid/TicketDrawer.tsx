@@ -23,7 +23,7 @@ export const StyledFakeLink = styled('a')({
   },
 });
 
-export interface TicketDrawerProps {
+interface TicketDrawerProps {
   onDelete?: () => void;
 }
 
