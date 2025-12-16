@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
-## [Unreleased]
+## [1.3.23] - 2025-12-16
 
 ### Fixed
 - Defect which did not retire stated relationships when retiring a concept - Snowstorm does not do
