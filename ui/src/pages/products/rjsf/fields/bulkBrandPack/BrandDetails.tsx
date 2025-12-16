@@ -111,9 +111,6 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
     }
   };
 
-  const isValidBrand =
-    formData?.brand && (formData.brand.conceptId || formData.brand.pt?.term);
-
   return (
     <Box sx={{ position: 'relative', width: '100%' }}>
       {/* Action Buttons */}

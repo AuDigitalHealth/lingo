@@ -23,7 +23,7 @@ import AddBrandButton from './fields/bulkBrandPack/AddBrandButton.tsx';
 import BrandDetails from './fields/bulkBrandPack/BrandDetails.tsx';
 import ExternalIdentifier from './fields/bulkBrandPack/ExternalIdentifiers.tsx';
 import { ConfigService } from '../../../api/ConfigService.ts';
-import { getMatchingNonDefiningProperties } from './helpers/helpers.ts';
+import { getDefaultNonDefiningProperties } from './helpers/helpers.ts';
 import { flattenAnyOfPreserveOrder } from './helpers/rjsfUtils.ts';
 import { validator } from './helpers/validator.ts';
 import { buildErrorSchema } from './helpers/validationHelper.ts';
@@ -245,8 +245,19 @@ function BrandAuthoring({
         brands: [],
         newBrandInput: { brand: undefined, nonDefiningProperties: [] },
       });
-      const matchingProperties = data.brands
-        ? getMatchingNonDefiningProperties(data.brands)
+      const showDefaultValues =
+        dynamicUiSchema.newBrandInput['ui:options']?.showDefaultValues;
+      const readOnlyProperties =
+        dynamicUiSchema.brands.items.brandDetails.nonDefiningProperties[
+          'ui:options'
+        ]?.readOnlyProperties;
+
+      const defaultProperties = data.brands
+        ? getDefaultNonDefiningProperties(
+            data.brands,
+            showDefaultValues,
+            readOnlyProperties,
+          )
         : [];
       const newData: FormData = {
         selectedProduct: selectedProduct.pt?.term || '',
@@ -254,7 +265,7 @@ function BrandAuthoring({
         brands: [],
         newBrandInput: {
           brand: undefined,
-          nonDefiningProperties: matchingProperties,
+          nonDefiningProperties: defaultProperties,
         },
       };
       setFormData(newData);

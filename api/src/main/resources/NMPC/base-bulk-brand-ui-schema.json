@@ -46,6 +46,7 @@
     "ui:field": "BrandDetails",
     "ui:options": {
       "readOnly": false,
+      "showDefaultValues": false,
       "allowNonDefiningPropertyEdit": true,
       "allowDelete": false,
       "requireEditButton": false,

@@ -197,9 +197,13 @@ export const isEmptyObject = (obj: any): boolean => {
  * // With brands
  * const commonBrandProps = getMatchingNonDefiningProperties(brands);
  */
-export function getMatchingNonDefiningProperties<
+export function getDefaultNonDefiningProperties<
   T extends { nonDefiningProperties?: NonDefiningProperty[] },
->(items: T[]): NonDefiningProperty[] {
+>(
+  items: T[],
+  enableDefaultValues: boolean,
+  readOnlyProperties: string[] = [],
+): NonDefiningProperty[] {
   if (items.length === 0) return [];
 
   const makeKey = (p: NonDefiningProperty) => {
@@ -220,8 +224,12 @@ export function getMatchingNonDefiningProperties<
   const allMatch = restSets.every(
     s => s.size === firstSet.size && [...firstSet].every(k => s.has(k)),
   );
-
-  return allMatch ? (items[0].nonDefiningProperties ?? []) : [];
+  const defaultValues = allMatch ? (items[0].nonDefiningProperties ?? []) : [];
+  return enableDefaultValues
+    ? defaultValues
+    : defaultValues.filter(p =>
+        readOnlyProperties.includes(p.identifierScheme),
+      ); // Return properties only in readOnlyProperties if default values are not enabled
 }
 
 export function defaultsToNone(value: any) {
