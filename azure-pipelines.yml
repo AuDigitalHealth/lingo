@@ -209,20 +209,6 @@ jobs:
           testResultsFiles: '**/surefire-reports/TEST-*.xml'
           goals: 'package'
 
-
-      #      - task: Maven@3
-      #        condition: and(succeeded(), eq(variables.isRelease, true))
-      #        displayName: 'Push multi-platform api image to Quay.io'
-      #        inputs:
-      #          mavenPomFile: 'pom.xml'
-      #          options: '-Dsnomio.extensions.sergio.enabled=false -Dlingo.internal.users=$(imsUsername) -Ddocker.registry.host=quay.io -Ddocker.repository=aehrc/lingo -Djib.to.tags=$(imageTag) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dihtsdo.ims.api.url=$(imsApiUrl) -Dihtsdo.ims.api.cookie.name=$(imsCookieName)"'
-      #          mavenOptions: '$(mavenOptions) -Xmx5072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(buildInfo)'
-      #          javaHomeOption: 'path'
-      #          jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
-      #          jdkArchitectureOption: 'x64'
-      #          publishJUnitResults: false
-      #          goals: 'package -pl api -am'
-
       - task: Maven@3
         condition: and(succeeded(), eq(variables.isRelease, true))
         displayName: 'Deploy Release artefacts'
@@ -236,6 +222,31 @@ jobs:
           publishJUnitResults: true
           testResultsFiles: '**/surefire-reports/TEST-*.xml'
           goals: 'deploy'
+
+      - script: |
+          set -euo pipefail
+          
+          sudo apt-get update
+          sudo apt-get install -y skopeo
+          
+          echo "Release build detected; copying image(s) from ACR to Quay..."
+          echo "imageTag: $(imageTag)"
+          
+          # imageTag may contain multiple tags separated by commas (e.g. "snomio-...,latest")
+          IFS=',' read -ra TAGS <<< "$(imageTag)"
+          
+          for tag in "${TAGS[@]}"; do
+            tag="$(echo "$tag" | xargs)" # trim whitespace
+            [ -z "$tag" ] && continue
+          
+            SRC="docker://$(dockerRegistry)/$(dockerRepository):${tag}"
+            DEST="docker://quay.io/aehrc/lingo:${tag}"
+          
+            echo "Copying (multi-arch) ${SRC} -> ${DEST}"
+            skopeo copy --all "${SRC}" "${DEST}"
+          done
+        displayName: 'Copy multi-arch image from ACR to Quay (release only)'
+        condition: and(succeeded(), eq(variables.isRelease, true))
 
       - task: Maven@3
         condition: not(and(succeeded(), eq(variables.isRelease, true)))
