@@ -51,7 +51,7 @@
       "allowDelete": false,
       "requireEditButton": false,
       "multiValuedSchemes": ["artgid"],
-      "nondefiningPropertyTitle": "ARTG ID"
+      "nondefiningPropertyTitle": "Non-defining properties"
     }
   },
   "addButton": {
@@ -75,7 +75,7 @@
       "allowCopy": true,
       "requireEditButton": false,
       "multiValuedSchemes": ["artgid"],
-      "nondefiningPropertyTitle": "ARTG ID"
+      "nondefiningPropertyTitle": "Non-defining properties"
     }
   },
   "packSizes": {
@@ -90,7 +90,7 @@
       "requireEditButton": false,
       "mandatorySchemes": [],
       "multiValuedSchemes": ["artgid"],
-      "nondefiningPropertyTitle": "ARTG ID"
+      "nondefiningPropertyTitle": "Non-defining properties"
     },
     "items": {
       "packDetails": {

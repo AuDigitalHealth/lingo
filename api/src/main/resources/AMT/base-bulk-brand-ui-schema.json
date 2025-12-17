@@ -52,7 +52,7 @@
       "allowDelete": false,
       "requireEditButton": false,
       "multiValuedSchemes": ["artgid"],
-      "nondefiningPropertyTitle": "ARTG ID",
+      "nondefiningPropertyTitle": "Non-defining properties",
       "mandatorySchemes": [],
       "ecl": "<774167006",
       "createPrimitiveConcept": {
@@ -86,7 +86,7 @@
       "requireEditButton": false,
       "mandatorySchemes": [],
       "multiValuedSchemes": ["artgid"],
-      "nondefiningPropertyTitle": "ARTG ID"
+      "nondefiningPropertyTitle": "Non-defining properties"
     }
   },
   "brands": {
@@ -101,7 +101,7 @@
       "requireEditButton": false,
       "mandatorySchemes": [],
       "multiValuedSchemes": ["artgid"],
-      "nondefiningPropertyTitle": "ARTG ID"
+      "nondefiningPropertyTitle": "Non-defining properties"
     },
     "items": {
       "brandDetails": {
