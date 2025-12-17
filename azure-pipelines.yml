@@ -246,7 +246,7 @@ jobs:
             skopeo copy --all "${SRC}" "${DEST}"
           done
         displayName: 'Copy multi-arch image from ACR to Quay (release only)'
-        condition: and(succeeded(), eq(variables.isRelease, true))
+        condition: and(succeeded(), eq(variables.isRelease, false))
 
       - task: Maven@3
         condition: not(and(succeeded(), eq(variables.isRelease, true)))
