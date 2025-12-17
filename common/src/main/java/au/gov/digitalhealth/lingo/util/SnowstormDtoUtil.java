@@ -28,8 +28,17 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.SOME_MODIFIER;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.STATED_RELATIONSHIP;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE;
 
-import au.csiro.snowstorm_client.model.*;
+import au.csiro.snowstorm_client.model.SnowstormAxiom;
+import au.csiro.snowstorm_client.model.SnowstormConcept;
+import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.csiro.snowstorm_client.model.SnowstormConceptView;
+import au.csiro.snowstorm_client.model.SnowstormConcreteValue;
 import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
+import au.csiro.snowstorm_client.model.SnowstormDescription;
+import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
+import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
+import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
 import au.gov.digitalhealth.lingo.configuration.model.ExternalIdentifierDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ReferenceSetDefinition;
@@ -48,7 +57,13 @@ import au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 
@@ -796,21 +811,29 @@ public class SnowstormDtoUtil {
   }
 
   public static SnowstormAxiom getSingleAxiom(SnowstormConceptView concept) {
-    if (getActiveClassAxioms(concept).size() != 1) {
-      throw new AtomicDataExtractionProblem(
-          "Expected 1 class axiom but found " + getActiveClassAxioms(concept).size(),
-          concept.getConceptId());
-    }
-    return getActiveClassAxioms(concept).iterator().next();
+    return validateAndReturnSingleAxiom(getActiveClassAxioms(concept), concept.getConceptId());
   }
 
   public static SnowstormAxiom getSingleAxiom(SnowstormConcept concept) {
-    if (getActiveClassAxioms(concept).size() != 1) {
+    return validateAndReturnSingleAxiom(getActiveClassAxioms(concept), concept.getConceptId());
+  }
+
+  private static SnowstormAxiom validateAndReturnSingleAxiom(Set<SnowstormAxiom> activeClassAxioms,
+      String conceptId) {
+    if (activeClassAxioms.size() != 1) {
+      log.log(
+          java.util.logging.Level.SEVERE,
+          "Expected 1 class axiom but found "
+              + activeClassAxioms.size()
+              + " for concept "
+              + conceptId,
+          new RuntimeException(conceptId));
       throw new AtomicDataExtractionProblem(
-          "Expected 1 class axiom but found " + getActiveClassAxioms(concept).size(),
-          concept.getConceptId());
+          "Expected 1 class axiom but found " + activeClassAxioms.size()
+              + " for concept " + conceptId,
+          conceptId);
     }
-    return getActiveClassAxioms(concept).iterator().next();
+    return activeClassAxioms.iterator().next();
   }
 
   public static Set<SnowstormAxiom> getActiveClassAxioms(SnowstormConcept concept) {
