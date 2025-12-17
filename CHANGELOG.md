@@ -11,6 +11,9 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 - No updates yet.
 
 
+## [1.3.25] - 2025-12-17
+- Enabled multiplatform api image push (with -am flag)
+
 ## [1.3.24] - 2025-12-17
 - Disable multiplatform image push
 
