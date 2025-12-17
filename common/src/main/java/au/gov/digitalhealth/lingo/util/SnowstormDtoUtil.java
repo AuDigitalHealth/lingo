@@ -811,41 +811,29 @@ public class SnowstormDtoUtil {
   }
 
   public static SnowstormAxiom getSingleAxiom(SnowstormConceptView concept) {
-    if (getActiveClassAxioms(concept).size() != 1) {
-      final RuntimeException callSiteStackTrace = new RuntimeException(concept.getConceptId());
-      System.out.println(callSiteStackTrace);
-      log.log(
-          java.util.logging.Level.SEVERE,
-          "Expected 1 class axiom but found "
-              + getActiveClassAxioms(concept).size()
-              + " for concept "
-              + concept.getConceptId(),
-          callSiteStackTrace);
-      throw new AtomicDataExtractionProblem(
-          "Expected 1 class axiom but found " + getActiveClassAxioms(concept).size()
-              + " for concept " + concept.getConceptId(),
-          concept.getConceptId());
-    }
-    return getActiveClassAxioms(concept).iterator().next();
+    return validateAndReturnSingleAxiom(getActiveClassAxioms(concept), concept.getConceptId());
   }
 
   public static SnowstormAxiom getSingleAxiom(SnowstormConcept concept) {
-    if (getActiveClassAxioms(concept).size() != 1) {
-      final RuntimeException callSiteStackTrace = new RuntimeException(concept.getConceptId());
-      System.out.println(callSiteStackTrace);
+    return validateAndReturnSingleAxiom(getActiveClassAxioms(concept), concept.getConceptId());
+  }
+
+  private static SnowstormAxiom validateAndReturnSingleAxiom(Set<SnowstormAxiom> activeClassAxioms,
+      String conceptId) {
+    if (activeClassAxioms.size() != 1) {
       log.log(
           java.util.logging.Level.SEVERE,
           "Expected 1 class axiom but found "
-              + getActiveClassAxioms(concept).size()
+              + activeClassAxioms.size()
               + " for concept "
-              + concept.getConceptId(),
-          callSiteStackTrace);
+              + conceptId,
+          new RuntimeException(conceptId));
       throw new AtomicDataExtractionProblem(
-          "Expected 1 class axiom but found " + getActiveClassAxioms(concept).size()
-              + " for concept " + concept.getConceptId(),
-          concept.getConceptId());
+          "Expected 1 class axiom but found " + activeClassAxioms.size()
+              + " for concept " + conceptId,
+          conceptId);
     }
-    return getActiveClassAxioms(concept).iterator().next();
+    return activeClassAxioms.iterator().next();
   }
 
   public static Set<SnowstormAxiom> getActiveClassAxioms(SnowstormConcept concept) {
