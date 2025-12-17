@@ -17,8 +17,6 @@ package au.gov.digitalhealth.lingo.exception;
 
 import au.gov.digitalhealth.lingo.auth.exception.AuthenticationProblem;
 import com.drew.lang.annotations.Nullable;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,12 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ProblemDetail;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -55,43 +48,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
   public static final String UPSTREAM_SERVICE = "upstream_service";
   public static final String UPSTREAM_STATUS = "upstream_status";
-  public static final String TRACE = "trace";
-
-  @Value("${server.error.include-stacktrace:NEVER}")
-  private String includeStacktrace;
-
-  private static String stackTraceToString(Throwable t) {
-    StringWriter sw = new StringWriter();
-    t.printStackTrace(new PrintWriter(sw));
-    return sw.toString();
-  }
 
   @ExceptionHandler(AuthenticationProblem.class)
   ProblemDetail handleAuthenticationProblem(AuthenticationProblem e) {
     return e.getBody();
-  }
-
-  @ExceptionHandler(LingoProblem.class)
-  ResponseEntity<ProblemDetail> handleLingoProblem(LingoProblem e, WebRequest request) {
-    ProblemDetail body = e.getBody();
-
-    if (shouldIncludeStackTrace(request)) {
-      body.setProperty(TRACE, stackTraceToString(e));
-    }
-
-    return new ResponseEntity<>(body, HttpStatus.valueOf(body.getStatus()));
-  }
-
-  private boolean shouldIncludeStackTrace(WebRequest request) {
-    if ("ALWAYS".equalsIgnoreCase(includeStacktrace)) {
-      return true;
-    }
-    if ("ON_PARAM".equalsIgnoreCase(includeStacktrace)
-        && request instanceof ServletWebRequest servletWebRequest) {
-      String traceParam = servletWebRequest.getRequest().getParameter("trace");
-      return "true".equalsIgnoreCase(traceParam) || "1".equals(traceParam);
-    }
-    return false;
   }
 
   @ExceptionHandler({

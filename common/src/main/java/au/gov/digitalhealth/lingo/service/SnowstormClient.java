@@ -467,44 +467,32 @@ public class SnowstormClient {
       snowstormConceptSearchRequest = snowstormConceptSearchRequest.eclFilter(ecl);
     }
 
-    try {
-      SnowstormItemsPageObject page =
-          api.search(branch, snowstormConceptSearchRequest, languageHeader).block();
+    SnowstormItemsPageObject page =
+        api.search(branch, snowstormConceptSearchRequest, languageHeader).block();
 
-      Instant end = Instant.now();
+    Instant end = Instant.now();
 
-      if (log.isLoggable(Level.FINE) && logger != null) {
-        logger.logFine(
-            " executed ECL: "
-                + ecl
-                + ", offset: "
-                + offset
-                + ", limit: "
-                + limit
-                + " in "
-                + Duration.between(start, end).toMillis()
-                + " ms on "
-                + (executeEclAsStated ? "stated form" : "inferred form"));
-      }
-
-      validatePage(branch, ecl, page);
-      return Objects.requireNonNull(
-              page.getItems(), "response page unexpectedly empty for ECL " + ecl)
-          .stream()
-          .map(SnowstormDtoUtil::fromLinkedHashMap)
-          .filter(c -> c.getActive() != null && c.getActive())
-          .toList();
-
-    } catch (WebClientResponseException e) {
-      log.severe(
-          "Snowstorm search failed: status="
-              + e.getStatusCode()
-              + " statusText="
-              + e.getStatusText()
-              + " body="
-              + e.getResponseBodyAsString());
-      throw new LingoProblem("Unexpected failure requesting Snowstorm concepts", e);
+    if (log.isLoggable(Level.FINE) && logger != null) {
+      logger.logFine(
+          " executed ECL: "
+              + ecl
+              + ", offset: "
+              + offset
+              + ", limit: "
+              + limit
+              + " in "
+              + Duration.between(start, end).toMillis()
+              + " ms on "
+              + (executeEclAsStated ? "stated form" : "inferred form"));
     }
+
+    validatePage(branch, ecl, page);
+    return Objects.requireNonNull(
+            page.getItems(), "response page unexpectedly empty for ECL " + ecl)
+        .stream()
+        .map(SnowstormDtoUtil::fromLinkedHashMap)
+        .filter(c -> c.getActive() != null && c.getActive())
+        .toList();
   }
 
   public List<SnowstormReferenceSetMember> getRefsetMembers(
