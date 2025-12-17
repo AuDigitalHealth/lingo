@@ -934,8 +934,9 @@ public class ProductCreationService {
     concepts.forEach(
         c -> {
           SnowstormConceptMini newConcept = conceptMap.get(c.getConceptId());
-          if (newConcept != null && newConcept.getActive() != null && Boolean.TRUE.equals(
-              newConcept.getActive())) {
+          if (newConcept != null
+              && newConcept.getActive() != null
+              && Boolean.TRUE.equals(newConcept.getActive())) {
             newConcept.setDefinitionStatusId(getSingleAxiom(c).getDefinitionStatusId());
             newConcept.setDefinitionStatus(getSingleAxiom(c).getDefinitionStatus());
           } else {
