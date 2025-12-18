@@ -8,8 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
 
+### Fixed
+
+- Incorrect detection of concepts referenced by existing products in update scenarios
 
 ## [1.3.25] - 2025-12-17
 

@@ -737,22 +737,37 @@ public class ProductUpdateService {
               OriginalNode originalNode = newNode.getOriginalNode();
               String originalConceptId = originalNode.getNode().getConceptId();
 
-              referencedByOtherProductsFutures.add(
-                  snowstormClient
-                      .getConceptIdsFromEclAsync(
-                          branch,
-                          "((<"
-                              + originalConceptId
-                              + ") or (*:*="
-                              + originalConceptId
-                              + ")) AND ("
-                              + referenceSets.stream()
-                                  .map(s -> "^" + s)
-                                  .collect(Collectors.joining(" OR "))
-                              + ")",
-                          0,
-                          1000,
-                          modelConfiguration.isExecuteEclAsStated())
+              // call ECL twice (stated and inferred), merge results and then mark concepts
+              final String ecl =
+                  "((<"
+                      + originalConceptId
+                      + ") or (*:*="
+                      + originalConceptId
+                      + ")) AND ("
+                      + referenceSets.stream().map(s -> "^" + s).collect(Collectors.joining(" OR "))
+                      + ")";
+
+              CompletableFuture<Collection<String>> inferredFuture =
+                  snowstormClient.getConceptIdsFromEclAsync(branch, ecl, 0, 1000, false);
+
+              CompletableFuture<Collection<String>> statedFuture =
+                  snowstormClient.getConceptIdsFromEclAsync(branch, ecl, 0, 1000, true);
+
+              CompletableFuture<Void> mergedFuture =
+                  statedFuture
+                      .thenCombine(
+                          inferredFuture,
+                          (stated, inferred) -> {
+                            // merge into a unique list (avoid nulls)
+                            Set<String> merged = new HashSet<>();
+                            if (stated != null) {
+                              merged.addAll(stated);
+                            }
+                            if (inferred != null) {
+                              merged.addAll(inferred);
+                            }
+                            return new ArrayList<>(merged);
+                          })
                       .thenAccept(
                           c -> {
                             final boolean referencedByOtherProducts =
@@ -775,7 +790,9 @@ public class ProductUpdateService {
                             } else {
                               originalNode.setInactivationReason(InactivationReason.ERRONEOUS);
                             }
-                          }));
+                          });
+
+              referencedByOtherProductsFutures.add(mergedFuture);
             });
 
     CompletableFuture.allOf(referencedByOtherProductsFutures.toArray(new CompletableFuture[0]))
