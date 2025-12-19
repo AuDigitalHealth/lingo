@@ -746,8 +746,8 @@ public class ProductUpdateService {
                               + originalConceptId
                               + ")) AND ("
                               + referenceSets.stream()
-                              .map(s -> "^" + s)
-                              .collect(Collectors.joining(" OR "))
+                                  .map(s -> "^" + s)
+                                  .collect(Collectors.joining(" OR "))
                               + ")",
                           0,
                           1000,
