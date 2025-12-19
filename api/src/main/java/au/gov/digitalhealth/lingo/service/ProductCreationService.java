@@ -868,11 +868,12 @@ public class ProductCreationService {
       // if edit, then nothing to do
       // if retire and replace, then need to create refset rows - could do at the end?
       if (bulkCreate) {
-        if (node.isConceptEdit() || node.isRetireAndReplaceWithExisting()) {
+        if (node.isConceptEdit()) {
           concept.setConceptId(node.getOriginalNode().getConceptId());
-        } else if (node.getNewConceptDetails().getSpecifiedConceptId() != null) {
+        } else if (node.getNewConceptDetails() != null
+            && node.getNewConceptDetails().getSpecifiedConceptId() != null) {
           concept.setConceptId(node.getNewConceptDetails().getSpecifiedConceptId());
-        } else {
+        } else if (!node.isRetireAndReplaceWithExisting()) {
           concept.setConceptId(preallocatedIdentifiers.pop());
           log.fine("Allocated identifier " + concept.getConceptId() + " for " + conceptId);
         }
