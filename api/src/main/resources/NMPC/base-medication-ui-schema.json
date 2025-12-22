@@ -191,7 +191,7 @@
                 }
               }
             ],
-            "ecl": "(>>((<763158003 minus >(<763158003)))).411116001",
+            "ecl": "^660371000220109.411116001",
             "extendedEcl": "<736542009",
             "showDefaultOptions": false,
             "placeholder": "Select generic dose form"
