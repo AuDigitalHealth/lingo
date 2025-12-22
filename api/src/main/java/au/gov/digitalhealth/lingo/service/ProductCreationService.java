@@ -800,17 +800,18 @@ public class ProductCreationService {
     }
   }
 
+  /**
+   * Inactivates a concept. To match what Snowstorm does, this inactivates the concept and its
+   * glass axioms, but not its stated relationships inside the axiom.
+   * @param conceptToRetire
+   */
   private static void inactivateConcept(SnowstormConcept conceptToRetire) {
     conceptToRetire.setActive(false);
-    if (conceptToRetire.getClassAxioms() != null) {
-      conceptToRetire.getClassAxioms().stream()
-          .filter(a -> a.getActive() == null || a.getActive())
-          .forEach(
-              a -> {
-                a.setActive(false);
-                a.getRelationships().forEach(r -> r.setActive(false));
-              });
-    }
+    conceptToRetire.getClassAxioms().stream()
+        .filter(a -> a.getActive() == null || a.getActive())
+        .forEach(
+            a ->
+                a.setActive(false));
   }
 
   private void createOrUpdateConcepts(
