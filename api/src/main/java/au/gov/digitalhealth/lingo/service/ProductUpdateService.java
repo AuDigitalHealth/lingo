@@ -736,7 +736,6 @@ public class ProductUpdateService {
             newNode -> {
               OriginalNode originalNode = newNode.getOriginalNode();
               String originalConceptId = originalNode.getNode().getConceptId();
-
               referencedByOtherProductsFutures.add(
                   snowstormClient
                       .getConceptIdsFromEclAsync(

@@ -800,17 +800,17 @@ public class ProductCreationService {
     }
   }
 
+  /**
+   * Inactivates a concept. To match what Snowstorm does, this inactivates the concept and its glass
+   * axioms, but not its stated relationships inside the axiom.
+   *
+   * @param conceptToRetire
+   */
   private static void inactivateConcept(SnowstormConcept conceptToRetire) {
     conceptToRetire.setActive(false);
-    if (conceptToRetire.getClassAxioms() != null) {
-      conceptToRetire.getClassAxioms().stream()
-          .filter(a -> a.getActive() == null || a.getActive())
-          .forEach(
-              a -> {
-                a.setActive(false);
-                a.getRelationships().forEach(r -> r.setActive(false));
-              });
-    }
+    conceptToRetire.getClassAxioms().stream()
+        .filter(a -> a.getActive() == null || a.getActive())
+        .forEach(a -> a.setActive(false));
   }
 
   private void createOrUpdateConcepts(
@@ -868,11 +868,12 @@ public class ProductCreationService {
       // if edit, then nothing to do
       // if retire and replace, then need to create refset rows - could do at the end?
       if (bulkCreate) {
-        if (node.isConceptEdit() || node.isRetireAndReplaceWithExisting()) {
+        if (node.isConceptEdit()) {
           concept.setConceptId(node.getOriginalNode().getConceptId());
-        } else if (node.getNewConceptDetails().getSpecifiedConceptId() != null) {
+        } else if (node.getNewConceptDetails() != null
+            && node.getNewConceptDetails().getSpecifiedConceptId() != null) {
           concept.setConceptId(node.getNewConceptDetails().getSpecifiedConceptId());
-        } else {
+        } else if (!node.isRetireAndReplaceWithExisting()) {
           concept.setConceptId(preallocatedIdentifiers.pop());
           log.fine("Allocated identifier " + concept.getConceptId() + " for " + conceptId);
         }

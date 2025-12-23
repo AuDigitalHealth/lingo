@@ -9,6 +9,9 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 ## [Unreleased]
 
+### Fixed
+
+- Incorrect detection of concepts referenced by existing products in update scenarios
 ### Changed
 
 - Simplfied ECL binding for generic and specific dose form for NMPC

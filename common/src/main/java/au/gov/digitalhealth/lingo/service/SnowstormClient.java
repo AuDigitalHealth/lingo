@@ -819,9 +819,9 @@ public class SnowstormClient {
 
     if (!complete) {
       throw new BatchSnowstormRequestFailedProblem(
-          "Batch failed creating/updating concepts on branch '"
+          "Batch timed out creating/updating concepts on branch '"
               + branch
-              + "' message was "
+              + "' last message from Snowstorm was "
               + lastMessage);
     }
 
