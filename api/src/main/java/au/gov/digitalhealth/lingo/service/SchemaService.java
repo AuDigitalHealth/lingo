@@ -117,7 +117,7 @@ public class SchemaService {
     // Need to allow properties for branded concepts because a new brand might be specified so
     // all branded properties would be in play. Note this leaves a loophole where an existing brand
     // is selected where a Real MP concept exists with different properties to those selected for
-    // the new branded product. This can only be caught in validation one submitted.
+    // the new branded product. This can only be caught in validation once submitted.
     levelsWithReadOnlyProperties.removeAll(
         modelConfiguration.getBrandedProductModelLevels().stream()
             .map(ModelLevel::getModelLevelType)
