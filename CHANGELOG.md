@@ -15,7 +15,7 @@ The following sections are considered for each release: **Added, Changed, Fixed,
   managed at upper brand and generic levels (HSE tracker 229)
 
 ### Changed
-- Simplfied ECL binding for generic and specific dose form for NMPC
+- Simplified ECL binding for generic and specific dose form for NMPC
 
 ## [1.3.25] - 2025-12-17
 
