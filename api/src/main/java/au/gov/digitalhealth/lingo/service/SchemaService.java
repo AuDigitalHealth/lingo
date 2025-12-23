@@ -17,6 +17,7 @@ package au.gov.digitalhealth.lingo.service;
 
 import au.gov.digitalhealth.lingo.configuration.model.BasePropertyDefinition;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
+import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.configuration.model.ProductType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
@@ -112,6 +113,15 @@ public class SchemaService {
     // get the model levels that are above the root branded product level
     Set<ModelLevelType> levelsWithReadOnlyProperties =
         modelConfiguration.getLeafProductModelLevel().getModelLevelType().getAncestors();
+
+    // Need to allow properties for branded concepts because a new brand might be specified so
+    // all branded properties would be in play. Note this leaves a loophole where an existing brand
+    // is selected where a Real MP concept exists with different properties to those selected for
+    // the new branded product. This can only be caught in validation one submitted.
+    levelsWithReadOnlyProperties.removeAll(
+        modelConfiguration.getBrandedProductModelLevels().stream()
+            .map(ModelLevel::getModelLevelType)
+            .collect(Collectors.toSet()));
 
     // get the model levels that contain the product levels detected
     levelsWithReadOnlyProperties.addAll(
