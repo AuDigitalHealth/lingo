@@ -207,8 +207,8 @@ function BrandAuthoring({
       Array.isArray(mergedUiOptions.mandatorySchemes)
     ) {
       const readOnly = mergedUiOptions.readOnlyProperties;
-      mergedUiOptions.mandatorySchemes = mergedUiOptions.mandatorySchemes.filter(
-        (scheme: string) => {
+      mergedUiOptions.mandatorySchemes =
+        mergedUiOptions.mandatorySchemes.filter((scheme: string) => {
           // if it's not a readOnly scheme keep it
           if (!readOnly.includes(scheme)) return true;
 
@@ -216,11 +216,12 @@ function BrandAuthoring({
           const hasExisting = !!(
             data?.brands &&
             Array.isArray(data.brands) &&
-            data.brands.some((brand: any) =>
-              Array.isArray(brand.nonDefiningProperties) &&
-              brand.nonDefiningProperties.some(
-                (ndp: any) => ndp?.identifierScheme === scheme,
-              ),
+            data.brands.some(
+              (brand: any) =>
+                Array.isArray(brand.nonDefiningProperties) &&
+                brand.nonDefiningProperties.some(
+                  (ndp: any) => ndp?.identifierScheme === scheme,
+                ),
             )
           );
 
@@ -229,8 +230,7 @@ function BrandAuthoring({
             return false;
           }
           return true;
-        },
-      );
+        });
     }
 
     if (!mergedUiOptions) return;
