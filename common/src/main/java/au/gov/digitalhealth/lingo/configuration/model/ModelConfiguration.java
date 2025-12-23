@@ -365,6 +365,10 @@ public class ModelConfiguration {
     return ModelLevel.getLeafLevel(getPackageLevels());
   }
 
+  public Set<ModelLevel> getBrandedProductModelLevels() {
+    return getProductLevels().stream().filter(ModelLevel::isBranded).collect(Collectors.toSet());
+  }
+
   public ModelLevel getLeafProductModelLevel() {
     return ModelLevel.getLeafLevel(getProductLevels());
   }

@@ -200,6 +200,39 @@ function BrandAuthoring({
 
     const mergedUiOptions = mergeUiOptions(rootUiOptions, productUiOptions);
 
+    // Remove read-only schemes from mandatorySchemes if no existing brand provides that identifier
+    if (
+      mergedUiOptions &&
+      Array.isArray(mergedUiOptions.readOnlyProperties) &&
+      Array.isArray(mergedUiOptions.mandatorySchemes)
+    ) {
+      const readOnly = mergedUiOptions.readOnlyProperties;
+      mergedUiOptions.mandatorySchemes =
+        mergedUiOptions.mandatorySchemes.filter((scheme: string) => {
+          // if it's not a readOnly scheme keep it
+          if (!readOnly.includes(scheme)) return true;
+
+          // Check if any existing brand has a nonDefiningProperties item with identifierScheme === scheme
+          const hasExisting = !!(
+            data?.brands &&
+            Array.isArray(data.brands) &&
+            data.brands.some(
+              (brand: any) =>
+                Array.isArray(brand.nonDefiningProperties) &&
+                brand.nonDefiningProperties.some(
+                  (ndp: any) => ndp?.identifierScheme === scheme,
+                ),
+            )
+          );
+
+          if (!hasExisting) {
+            // remove from mandatorySchemes by returning false
+            return false;
+          }
+          return true;
+        });
+    }
+
     if (!mergedUiOptions) return;
 
     const newUiSchema = { ...uiSchema };
@@ -224,7 +257,7 @@ function BrandAuthoring({
     }
 
     setDynamicUiSchema(newUiSchema);
-  }, [uiSchema]);
+  }, [uiSchema, data]);
 
   const handleClear = useCallback(() => {
     const newData: FormData = {
