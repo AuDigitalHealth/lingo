@@ -101,8 +101,8 @@
           "ui:title": "VTM Level Device Type",
           "ui:options": {
             "skipTitle": true,
-            "ecl": "(((<< 49062001) MINUS ((< 49062001 MINUS >(< 49062001)))) MINUS (<<^660371000220109))",
-            "extendedEcl": "(<63653004 MINUS ^660371000220109) : [0..0] 774158006 = *",
+            "ecl": "(<49062001 and ^660351000220100 ): [0..0] 774158006 = *",
+            "extendedEcl": "(<49062001): [0..0] 774158006 = *",
             "showDefaultOptions": false,
             "dependants": [
               {
