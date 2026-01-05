@@ -19,6 +19,10 @@ import Loading from '../Loading';
 import { ZoomIn, ZoomOut } from '@mui/icons-material';
 import useScreenSize from '../../hooks/useScreenSize';
 import { useParams } from 'react-router-dom';
+import {
+  useProjectFromUrlProjectPath,
+  useProjectFromUrlTaskPath,
+} from '../../hooks/useProjectFromUrlPath';
 
 interface ConceptDiagramProps {
   concept: Concept | null | undefined;
@@ -48,8 +52,15 @@ export default function ConceptDiagram({
   const element = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const [imageUri, setImageUri] = useState<string | undefined>(undefined);
-  const { applicationConfig } = useApplicationConfigStore();
-  const fullBranch = `${applicationConfig.apDefaultBranch}${branchKey ? `/${branchKey}` : ''}`;
+  const project = useProjectFromUrlProjectPath();
+  const { project: projectKey } = useParams();
+  const taskProject = useProjectFromUrlTaskPath();
+  const branchPath = taskProject?.branchPath
+    ? taskProject.branchPath
+    : projectKey
+      ? project?.branchPath
+      : useApplicationConfigStore.getState().applicationConfig?.apDefaultBranch;
+  const fullBranch = `${branchPath}${branchKey ? `/${branchKey}` : ''}`;
   const { data, isLoading } = useSearchConceptById(
     concept?.conceptId,
     fullBranch,

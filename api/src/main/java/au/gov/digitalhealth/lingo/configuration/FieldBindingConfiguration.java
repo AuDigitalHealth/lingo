@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.validation.annotation.Validated;
@@ -32,14 +33,17 @@ import org.springframework.validation.annotation.Validated;
 @Setter
 @Validated
 public class FieldBindingConfiguration {
-  private static final String DEFAULT_BRANCH_KEY = "MAIN_SNOMEDCT-AU_AUAMT";
+
+  @Value("${ihtsdo.ap.defaultBranch}")
+  String apDefaultBranch;
+
   Map<String, Map<String, String>> mappers = new HashMap<>();
 
   @Cacheable(cacheNames = CacheConstants.VALIDATION_EXCLUDED_SUBSTANCES)
   public Set<String> getExcludedSubstances() {
     // will use default branch for now
     Map<String, String> resultMap =
-        mappers.getOrDefault(DEFAULT_BRANCH_KEY, mappers.entrySet().iterator().next().getValue());
+        mappers.getOrDefault(apDefaultBranch, mappers.entrySet().iterator().next().getValue());
     String excludedItems = resultMap.getOrDefault("product.validation.exclude.substances", "");
     return Arrays.stream(excludedItems.split(","))
         .map(String::trim)
@@ -51,7 +55,7 @@ public class FieldBindingConfiguration {
   public String getBrandSemanticTag() {
     // will use default branch for now
     Map<String, String> resultMap =
-        mappers.getOrDefault(DEFAULT_BRANCH_KEY, mappers.entrySet().iterator().next().getValue());
+        mappers.getOrDefault(apDefaultBranch, mappers.entrySet().iterator().next().getValue());
     return resultMap.getOrDefault("product.productName.semanticTag", "");
   }
 }

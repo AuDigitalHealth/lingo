@@ -27,6 +27,7 @@ import {
   isSctId,
   parseSearchTermsSctId,
 } from '../utils/helpers/conceptUtils';
+import useAuthoringStore from '../stores/AuthoringStore';
 
 interface ConceptSearchSidebarProps {
   toggle: (bool: boolean) => void;
@@ -44,6 +45,8 @@ export function ConceptSearchSidebar({
     toggle(!open);
   }, [open, toggle]);
 
+  const { selectedProject } = useAuthoringStore();
+  const authoringStore = useAuthoringStore();
   const [searchTerm, setSearchTerm] = useState('');
 
   const [searchBySctIds, setSearchBySctIds] = useState<string[]>([]);
@@ -80,9 +83,8 @@ export function ConceptSearchSidebar({
 
   const { applicationConfig } = useApplicationConfigStore();
 
-  const { fieldBindings } = useFieldBindings(
-    applicationConfig?.apDefaultBranch,
-  );
+  const { fieldBindings } = useFieldBindings(selectedProject?.branchPath);
+
   const {
     snowstormIsFetching,
     ontoLoading,
@@ -92,7 +94,7 @@ export function ConceptSearchSidebar({
     snowstormError,
   } = useSearchConceptBySctIdList(
     searchBySctIds,
-    applicationConfig?.apDefaultBranch,
+    selectedProject?.branchPath,
     fieldBindings,
   );
 
@@ -105,7 +107,7 @@ export function ConceptSearchSidebar({
     snowstormError: snowstormErrorArtgId,
   } = useSearchConceptByArtgIdList(
     searchByArtgId,
-    applicationConfig?.apDefaultBranch,
+    selectedProject?.branchPath,
     fieldBindings,
   );
 
@@ -117,7 +119,7 @@ export function ConceptSearchSidebar({
     ontoError: ontoErrorTerm,
   } = useSearchConceptByTerm(
     letterSearchTerm,
-    applicationConfig?.apDefaultBranch,
+    selectedProject?.branchPath,
     encodeURIComponent(generateEclFromBinding(fieldBindings, 'product.search')),
   );
 

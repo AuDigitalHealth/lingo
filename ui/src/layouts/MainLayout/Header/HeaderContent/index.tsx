@@ -22,6 +22,7 @@ import { useFieldBindings } from '../../../../hooks/api/useInitializeConfig.tsx'
 import Loading from '../../../../components/Loading.tsx';
 import ServiceStatus from './ServiceStatus.tsx';
 import JobResultsIcon from './JobResultsIcon.tsx';
+import useAuthoringStore from '../../../../stores/AuthoringStore.ts';
 
 // ==============================|| HEADER - CONTENT ||============================== //
 
@@ -30,8 +31,9 @@ const HeaderContent = () => {
 
   const downLG = useMediaQuery((theme: Theme) => theme.breakpoints.down('lg'));
   const [searchInputValue, setSearchInputValue] = useState('');
+  const { selectedProject } = useAuthoringStore();
   const { fieldBindingIsLoading, fieldBindings } = useFieldBindings(
-    useApplicationConfigStore.getState().applicationConfig?.apDefaultBranch,
+    selectedProject?.branchPath,
   );
   if (fieldBindingIsLoading) {
     return <Loading />;

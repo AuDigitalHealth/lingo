@@ -6,7 +6,7 @@ import useUserStore from '../../../stores/UserStore';
 import { useApplicationConfig } from '../../../hooks/api/useInitializeConfig';
 import { userExistsInList } from '../../../utils/helpers/userUtils';
 import useAvailableProjects, {
-  getProjectFromKey,
+  getProjectsFromKeys,
 } from '../../../hooks/api/useInitializeProjects';
 
 interface TasksDisplayProps {
@@ -34,15 +34,18 @@ function TasksDisplay({
   const { allTasks, allTasksIsLoading } = useAllTasks();
   const [localTasks, setLocalTasks] = useState<Task[]>([]);
 
-  const { data: projects } = useAvailableProjects();
-  const project = getProjectFromKey(applicationConfig?.apProjectKey, projects);
+  const { data: allProjects } = useAvailableProjects();
+  const projects = getProjectsFromKeys(
+    applicationConfig?.apProjectKeys,
+    allProjects,
+  );
 
   const getFilteredMyTasks = useCallback(() => {
     if (!allTasks) return [];
     return allTasks?.filter(task => {
       if (
         task.assignee.email === email &&
-        task.projectKey === applicationConfig?.apProjectKey
+        projects?.some(project => project.key === task.projectKey)
       ) {
         return true;
       }
@@ -50,7 +53,7 @@ function TasksDisplay({
         return true;
       }
     });
-  }, [allTasks, applicationConfig?.apProjectKey, login, email]);
+  }, [allTasks, login, email, projects]);
 
   useEffect(() => {
     if (path === undefined || path === null) return;
@@ -77,7 +80,7 @@ function TasksDisplay({
       heading={heading}
       displayProject={displayProject}
       taskCreateRedirectUrl={taskCreateRedirectUrl}
-      projectOptions={project ? [project] : []}
+      projectOptions={projects ? projects : []}
     />
   );
 }

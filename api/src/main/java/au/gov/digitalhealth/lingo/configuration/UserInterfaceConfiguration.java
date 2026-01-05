@@ -16,6 +16,7 @@
 package au.gov.digitalhealth.lingo.configuration;
 
 import java.util.List;
+import java.util.Set;
 import lombok.Builder;
 import lombok.Value;
 
@@ -29,7 +30,7 @@ public class UserInterfaceConfiguration {
 
   String apUrl;
 
-  String apProjectKey;
+  Set<String> apProjectKeys;
 
   String apDefaultBranch;
 

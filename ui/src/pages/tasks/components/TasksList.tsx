@@ -101,6 +101,7 @@ function TasksList({
     fieldBindings,
     'task.validation.status',
   );
+
   const branchStateMap = getAllKeyValueMapForTheKey(
     fieldBindings,
     'task.branch.state',

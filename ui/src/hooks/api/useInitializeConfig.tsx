@@ -34,11 +34,12 @@ export function useSecureApplicationConfig() {
   return { secureAppConfigIsLoading, secureAppConfig };
 }
 
-export function useFieldBindings(branch: string) {
+export function useFieldBindings(branch: string | undefined) {
   const { isLoading, data } = useQuery({
     queryKey: [`fieldBindings-${branch}`],
-    queryFn: () => ConfigService.loadFieldBindings(branch),
+    queryFn: () => ConfigService.loadFieldBindings(branch as string),
     staleTime: Infinity,
+    enabled: branch !== undefined,
   });
 
   const fieldBindingIsLoading: boolean = isLoading;

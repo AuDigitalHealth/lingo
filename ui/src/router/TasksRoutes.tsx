@@ -5,17 +5,16 @@ import useInitializeTasks from '../hooks/api/task/useAllTasks.js';
 import { useJiraUsers } from '../hooks/api/useInitializeJiraUsers.tsx';
 import useApplicationConfigStore from '../stores/ApplicationConfigStore.ts';
 import useInitializeConcepts from '../hooks/api/useInitializeConcepts.tsx';
+import { useInitializeSelectedProject } from '../hooks/api/useInitializeProjects.tsx';
 
 function TasksRoutes() {
   const { applicationConfig } = useApplicationConfigStore();
   useInitializeTasks();
   const { jiraUsersIsLoading } = useJiraUsers();
 
-  const { conceptsLoading } = useInitializeConcepts(
-    applicationConfig?.apDefaultBranch,
-  );
-
-  if (jiraUsersIsLoading || conceptsLoading) {
+  useInitializeConcepts(applicationConfig?.apDefaultBranch);
+  const { isLoading } = useInitializeSelectedProject();
+  if (jiraUsersIsLoading || isLoading) {
     return <Loading />;
   } else {
     return (

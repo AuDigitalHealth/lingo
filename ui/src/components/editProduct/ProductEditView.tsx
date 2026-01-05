@@ -3,9 +3,7 @@ import { Ticket } from '../../types/tickets/ticket';
 import { useParams } from 'react-router-dom';
 // import { ExistingDescriptionsSection } from './ProductEditModal';
 import { useMemo, useState } from 'react';
-import useAvailableProjects, {
-  getProjectFromKey,
-} from '../../hooks/api/useInitializeProjects';
+import useAvailableProjects from '../../hooks/api/useInitializeProjects';
 import { useApplicationConfig } from '../../hooks/api/useInitializeConfig';
 import { LanguageRefset } from '../../types/Project';
 import {
@@ -16,12 +14,16 @@ import {
   findDefaultLangRefset,
   sortDescriptions,
 } from '../../utils/helpers/conceptUtils';
-import { useExternalIdentifiers } from '../../hooks/api/products/useExternalIdentifiers';
 import { useSearchConceptByIdNoCache } from '../../hooks/api/products/useSearchConcept';
 import { BrowserConcept } from '../../types/concept';
 import { ExistingDescriptionsSection } from './ExistingDescriptionsSection';
 import useProjectLangRefsets from '../../hooks/api/products/useProjectLangRefsets';
 import { useNodeModel } from '../../hooks/api/products/useNodeModel';
+import {
+  useProjectFromUrlProjectPath,
+  useProjectFromUrlTaskPath,
+} from '../../hooks/useProjectFromUrlPath';
+import useApplicationConfigStore from '../../stores/ApplicationConfigStore.ts';
 
 const USLangRefset: LanguageRefset = {
   default: 'false',
@@ -39,7 +41,6 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
     useState(false);
   const { applicationConfig } = useApplicationConfig();
   const { data: projects } = useAvailableProjects();
-  const project = getProjectFromKey(applicationConfig?.apProjectKey, projects);
   const langRefsets = useProjectLangRefsets({ project: project });
 
   const defaultLangrefset = findDefaultLangRefset(langRefsets);
@@ -52,11 +53,18 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
     ? productUpdate?.details.updatedState.concept
     : undefined;
 
-  const branch = `${applicationConfig?.apDefaultBranch}${branchKey ? `/${branchKey}` : ''}`;
+  const project = useProjectFromUrlProjectPath();
+  const { project: projectKey } = useParams();
+  const taskProject = useProjectFromUrlTaskPath();
+  const branchPath = taskProject?.branchPath
+    ? taskProject.branchPath
+    : projectKey
+      ? project?.branchPath
+      : useApplicationConfigStore.getState().applicationConfig?.apDefaultBranch;
 
   const { data: currentConcept, isFetching } = useSearchConceptByIdNoCache(
     updatedConcept?.conceptId,
-    branch,
+    branchPath,
   );
 
   const currentDescriptions = sortDescriptions(

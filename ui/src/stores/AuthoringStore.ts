@@ -35,8 +35,11 @@ import { Ticket } from '../types/tickets/ticket.ts';
 import { ServiceStatus } from '../types/applicationConfig.ts';
 import type { ValueSetExpansionContains } from 'fhir/r4';
 import productService from '../api/ProductService.ts';
+import { Project } from '../types/Project.ts';
 
 interface AuthoringStoreConfig {
+  selectedProject: Project | undefined;
+  setSelectedProject: (project: Project | undefined) => void;
   selectedProduct: Concept | ValueSetExpansionContains | null;
   setSelectedProduct: (
     concept: Concept | ValueSetExpansionContains | undefined,
@@ -121,6 +124,10 @@ interface AuthoringStoreConfig {
 }
 
 const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
+  selectedProject: undefined,
+  setSelectedProject: (project: Project | undefined) => {
+    set({ selectedProject: project });
+  },
   selectedProduct: null,
   forceNavigation: false,
   previewErrorKeys: [],

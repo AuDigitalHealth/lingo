@@ -23,6 +23,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -43,7 +44,7 @@ public class TaskManagerClient {
   @Autowired private AllTasksService allTasksService;
 
   @Value("${ihtsdo.ap.projectKey}")
-  String apProject;
+  Set<String> apProjects;
 
   public TaskManagerClient(
       @Qualifier("authoringPlatformApiClient") WebClient authoringPlatformApiClient,
@@ -67,18 +68,6 @@ public class TaskManagerClient {
   @Cacheable(cacheNames = CacheConstants.ALL_TASKS_CACHE)
   public List<Task> getAllTasks() throws AccessDeniedException {
     return allTasksService.fetchFromSource();
-  }
-
-  public List<Task> getAllTasksOverProject() throws AccessDeniedException {
-
-    Task[] tasks =
-        defaultAuthoringPlatformApiClient
-            .get()
-            .uri("/projects/tasks/search?criteria=" + apProject)
-            .retrieve()
-            .bodyToMono(Task[].class)
-            .block();
-    return Arrays.asList(tasks);
   }
 
   public Task getTaskByKey(String branch, String key) throws AccessDeniedException {

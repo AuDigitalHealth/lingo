@@ -80,10 +80,7 @@ const TasksServices = {
     return response.data as Task[];
   },
 
-  async getAllTasks(projectKey: string | undefined): Promise<Task[]> {
-    if (projectKey === undefined) {
-      this.handleErrors();
-    }
+  async getAllTasks(): Promise<Task[]> {
     const response = await api.get(`/api/tasks`);
     if (response.status != 200) {
       this.handleErrors();

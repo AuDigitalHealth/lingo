@@ -1,5 +1,5 @@
 models:
-  MAIN_SNOMEDCT-AU_AUAMT:
+  MAIN_SNOMEDCT-AU:
     modelType: AMT
     moduleId: 32506021000036107
     preferredLanguageRefsets:

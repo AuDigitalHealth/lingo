@@ -317,7 +317,9 @@ export function useSearchConceptBySctIdList(
   const { serviceStatus } = useServiceStatus();
 
   const conceptsSearchTerms = searchTerms.join(' OR ');
-  let ecl = generateEclFromBinding(fieldBindings, 'product.search.ctpp');
+  let ecl = fieldBindings
+    ? generateEclFromBinding(fieldBindings, 'product.search.ctpp')
+    : '';
 
   const eclSplit = ecl.split('[values]');
   ecl = eclSplit.join(conceptsSearchTerms);

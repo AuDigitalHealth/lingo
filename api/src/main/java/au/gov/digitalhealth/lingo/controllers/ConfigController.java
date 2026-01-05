@@ -57,7 +57,7 @@ public class ConfigController {
         UserInterfaceConfiguration.builder()
             .imsUrl(ihtsdoConfiguration.getImsApiUrl())
             .apUrl(ihtsdoConfiguration.getApApiUrl())
-            .apProjectKey(ihtsdoConfiguration.getApProjectKey())
+            .apProjectKeys(ihtsdoConfiguration.getApProjectKeys())
             .apDefaultBranch(ihtsdoConfiguration.getApDefaultBranch())
             .apSnodineDefaultBranch(ihtsdoConfiguration.getApSnodineDefaultBranch())
             .apLanguageHeader(ihtsdoConfiguration.getApLanguageHeader())

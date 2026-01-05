@@ -161,7 +161,7 @@ export const browserRouter = createBrowserRouter(
         {/* Search product Routes */}
         <Route path="/dashboard/products" element={<ProductRoutes />}>
           <Route
-            path="/dashboard/products/:conceptId"
+            path="/dashboard/products/:project/:conceptId"
             element={<ProductModelView />}
           />
         </Route>

@@ -24,10 +24,10 @@ export default function useInitializeTasks() {
 export const useAllTasksOptions = (
   applicationConfig: ApplicationConfig | null | undefined,
 ) => {
-  const queryKey = [`all-tasks-${applicationConfig?.apProjectKey}`];
+  const queryKey = [`all-tasks-${applicationConfig?.apProjectKeys?.length}`];
   return queryOptions({
     queryKey,
-    queryFn: () => TasksServices.getAllTasks(applicationConfig?.apProjectKey),
+    queryFn: () => TasksServices.getAllTasks(),
     staleTime: 5000,
     refetchInterval: 1 * (60 * 1000),
   });

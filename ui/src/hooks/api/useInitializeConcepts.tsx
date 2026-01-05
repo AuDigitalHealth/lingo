@@ -15,25 +15,26 @@ import {
   UNPUBLISHED_CONCEPTS,
 } from '../../utils/statics/responses.ts';
 import useApplicationConfigStore from '../../stores/ApplicationConfigStore.ts';
+import { useDefaultProject } from './useInitializeProjects.tsx';
 
 export default function useInitializeConcepts(branch: string | undefined) {
-  if (branch === undefined) {
-    branch = ''; //TODO handle error
-  }
+  const defaultProject = useDefaultProject();
 
-  const { defaultUnitIsLoading } = useDefaultUnit(branch);
-  const { unitPackIsLoading } = useUnitPack(branch);
+  const { defaultUnitIsLoading } = useDefaultUnit(defaultProject?.branchPath);
+  const { unitPackIsLoading } = useUnitPack(defaultProject?.branchPath);
 
   return {
     conceptsLoading: defaultUnitIsLoading || unitPackIsLoading,
   };
 }
 
-export function useDefaultUnit(branch: string) {
+export function useDefaultUnit(branch: string | undefined) {
   const { isLoading, data } = useQuery({
     queryKey: ['defaultUnit'],
-    queryFn: () => ConceptService.searchConceptByIds([UnitEachId], branch),
+    queryFn: () =>
+      ConceptService.searchConceptByIds([UnitEachId], branch as string),
     staleTime: Infinity,
+    enabled: branch !== undefined,
   });
 
   const defaultUnitIsLoading: boolean = isLoading;
@@ -42,11 +43,13 @@ export function useDefaultUnit(branch: string) {
 
   return { defaultUnitIsLoading, defaultUnit };
 }
-export function useUnitPack(branch: string) {
+export function useUnitPack(branch: string | undefined) {
   const { isLoading, data } = useQuery({
     queryKey: ['unitPack'],
-    queryFn: () => ConceptService.searchConceptByIds([UnitPackId], branch),
+    queryFn: () =>
+      ConceptService.searchConceptByIds([UnitPackId], branch as string),
     staleTime: Infinity,
+    enabled: branch !== undefined,
   });
 
   const unitPackIsLoading: boolean = isLoading;

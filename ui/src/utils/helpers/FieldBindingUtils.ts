@@ -29,9 +29,10 @@ export function getValueFromFieldBindings(
  * @param key
  */
 export function getAllKeyValueMapForTheKey(
-  fieldBinding: FieldBindings,
+  fieldBinding: FieldBindings | undefined,
   key: string,
 ) {
+  if (fieldBinding === undefined) return new Map();
   const value = getValueFromFieldBindings(fieldBinding, key);
 
   if (!value) {

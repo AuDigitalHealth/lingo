@@ -68,9 +68,7 @@ import { SnowstormError } from '../../types/ErrorHandler.ts';
 import { useSearchConceptByIdNoCache } from '../../hooks/api/products/useSearchConcept.tsx';
 import { cloneDeep, isEqual } from 'lodash';
 import { Add, Delete } from '@mui/icons-material';
-import useAvailableProjects, {
-  getProjectFromKey,
-} from '../../hooks/api/useInitializeProjects.tsx';
+import useAvailableProjects from '../../hooks/api/useInitializeProjects.tsx';
 import useApplicationConfigStore from '../../stores/ApplicationConfigStore.ts';
 import { LanguageRefset } from '../../types/Project.ts';
 import ConfirmationModal from '../../themes/overrides/ConfirmationModal.tsx';
@@ -83,6 +81,7 @@ import { deepClone } from '@mui/x-data-grid/utils/utils';
 import { ExistingDescriptionsSection } from './ExistingDescriptionsSection.tsx';
 import useProjectLangRefsets from '../../hooks/api/products/useProjectLangRefsets.tsx';
 import { normalizeWhitespace } from '../../types/productValidationUtils.ts';
+import { useProjectFromUrlTaskPath } from '../../hooks/useProjectFromUrlPath.tsx';
 
 const typeMap: Record<DefinitionType, string> = {
   [DefinitionType.FSN]: '900000000000003001',
@@ -170,7 +169,7 @@ function EditConceptBody({
     })?.term,
   );
 
-  const project = getProjectFromKey(applicationConfig?.apProjectKey, projects);
+  const project = useProjectFromUrlTaskPath();
 
   const [displayRetiredDescriptions, setDisplayRetiredDescriptions] =
     useState(false);

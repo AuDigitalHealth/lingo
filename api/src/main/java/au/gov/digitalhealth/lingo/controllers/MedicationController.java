@@ -17,7 +17,6 @@ package au.gov.digitalhealth.lingo.controllers;
 
 import au.gov.digitalhealth.lingo.aspect.LogExecutionTime;
 import au.gov.digitalhealth.lingo.configuration.FieldBindingConfiguration;
-import au.gov.digitalhealth.lingo.exception.MultipleFieldBindingsProblem;
 import au.gov.digitalhealth.lingo.exception.NoFieldBindingsProblem;
 import au.gov.digitalhealth.lingo.product.ProductBrands;
 import au.gov.digitalhealth.lingo.product.ProductCreationDetails;
@@ -39,8 +38,10 @@ import au.gov.digitalhealth.lingo.validation.AuthoringValidation;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.groups.Default;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -135,18 +136,28 @@ public class MedicationController {
   public Map<String, String> getMedicationAtomioDataFieldBindings(@PathVariable String branch) {
     String branchKey = branch.replace("|", "_");
 
-    Set<String> keys =
+    // Find all matching configurations, sorted by specificity (longest match first)
+    List<String> matchingKeys =
         fieldBindingConfiguration.getMappers().keySet().stream()
             .filter(branchKey::startsWith)
-            .collect(Collectors.toSet());
+            .sorted(Comparator.comparingInt(String::length).reversed())
+            .collect(Collectors.toList());
 
-    if (keys.isEmpty()) {
+    if (matchingKeys.isEmpty()) {
       throw new NoFieldBindingsProblem(branchKey, fieldBindingConfiguration.getMappers().keySet());
-    } else if (keys.size() > 1) {
-      throw new MultipleFieldBindingsProblem(branchKey, keys);
     }
 
-    return fieldBindingConfiguration.getMappers().get(keys.iterator().next());
+    // Merge configurations: start with most general, override with more specific
+    Map<String, String> mergedBindings = new LinkedHashMap<>();
+
+    // Process in reverse order (most general first, most specific last)
+    for (int i = matchingKeys.size() - 1; i >= 0; i--) {
+      String key = matchingKeys.get(i);
+      Map<String, String> configForKey = fieldBindingConfiguration.getMappers().get(key);
+      mergedBindings.putAll(configForKey); // More specific values override general ones
+    }
+
+    return mergedBindings;
   }
 
   @LogExecutionTime

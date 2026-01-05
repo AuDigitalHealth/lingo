@@ -20,6 +20,7 @@ import useInitializeApp from '../../hooks/api/useInitializeApp';
 import Loading from '../../components/Loading';
 import useLogoutTimer from '../../hooks/useLogoutTimer';
 import { useFetchReleaseVersion } from '../../hooks/api/useInitializeConfig';
+import { useInitializeSelectedProject } from '../../hooks/api/useInitializeProjects';
 
 // ==============================|| MAIN LAYOUT ||============================== //
 
@@ -36,10 +37,11 @@ const MainLayout = () => {
     menuOrientation === MenuOrientation.HORIZONTAL && !downLG;
 
   const { appLoading } = useInitializeApp();
+  const { isLoading: projectLoading } = useInitializeSelectedProject();
 
   return (
     <Box sx={{ display: 'flex', width: '100%' }}>
-      <Header />
+      {appLoading || projectLoading ? <Loading /> : <Header />}
       <Drawer />
 
       <Box

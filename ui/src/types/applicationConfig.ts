@@ -18,7 +18,7 @@ export default interface ApplicationConfig {
   appName: string;
   imsUrl: string;
   apUrl: string;
-  apProjectKey: string;
+  apProjectKeys: string[];
   apDefaultBranch: string;
   apSnodineDefaultBranch: string;
   apLanguageHeader: string;

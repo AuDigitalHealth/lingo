@@ -37,6 +37,12 @@ import {
   PUBLISHED_CONCEPTS,
   UNPUBLISHED_CONCEPTS,
 } from '../../../utils/statics/responses.ts';
+import useAvailableProjects, {
+  getProjectsFromKeys,
+  updateSelectedProject,
+  useDefaultProject,
+} from '../../../hooks/api/useInitializeProjects.tsx';
+import { useApplicationConfig } from '../../../hooks/api/useInitializeConfig.tsx';
 
 export interface SearchProductProps {
   disableLinkOpen: boolean;
@@ -55,6 +61,7 @@ export interface SearchProductProps {
   hideAdvancedSearch?: boolean;
   actionType?: ActionType;
 }
+
 export default function SearchProduct({
   disableLinkOpen,
   handleChange,
@@ -76,6 +83,29 @@ export default function SearchProduct({
       return ['Term', 'Artg Id', 'Sct Id'];
     }
     return baseFilters;
+  };
+
+  const { applicationConfig } = useApplicationConfig();
+  const allProjects = useAvailableProjects();
+  const defaultProject = useDefaultProject();
+
+  // Get selectedProject and setSelectedProject from store
+  const { selectedProject, setSelectedProject, selectedProduct } =
+    useAuthoringStore();
+
+  const projects = getProjectsFromKeys(
+    applicationConfig?.apProjectKeys,
+    allProjects.data,
+  );
+
+  const handleProjectChange = (event: SelectChangeEvent) => {
+    const newProjectKey = event.target.value;
+    updateSelectedProject(
+      newProjectKey,
+      projects,
+      defaultProject,
+      setSelectedProject,
+    );
   };
 
   const localFsnToggle = isFsnToggleOn;
@@ -107,7 +137,6 @@ export default function SearchProduct({
   const [selectedValue, setSelectedValue] = useState<
     ConceptSearchResult | undefined | null
   >();
-  const { selectedProduct } = useAuthoringStore();
 
   const [switchActionTypeOpen, setSwitchActionTypeOpen] = useState(false);
 
@@ -160,7 +189,7 @@ export default function SearchProduct({
         );
         break;
       default:
-        returnVal = generateEclFromBinding(fieldBindings, 'product.search'); //default to all product search
+        returnVal = generateEclFromBinding(fieldBindings, 'product.search');
         break;
     }
     return returnVal;
@@ -172,8 +201,8 @@ export default function SearchProduct({
 
   useEffect(() => {
     setEcl(generateEcl(providedEcl, selectedActionType));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedActionType]);
+    // eslint-disable-next-line
+  }, [selectedActionType, providedEcl]);
 
   const [advancedSearchOpen, setAdvancedSearchOpen] = useState(false);
 
@@ -239,12 +268,15 @@ export default function SearchProduct({
 
   const linkPath = (conceptId: string): string => {
     return disableLinkOpen
-      ? '/dashboard/products/' + conceptId + '/authoring'
-      : '/dashboard/products/' + conceptId;
+      ? '/dashboard/products/' +
+          selectedProject?.key +
+          '/' +
+          conceptId +
+          '/authoring'
+      : '/dashboard/products/' + selectedProject?.key + '/' + conceptId;
   };
 
   useEffect(() => {
-    // if the user starts typing again
     if (inputValue === '' || !inputValue) {
       setResults([]);
     }
@@ -256,7 +288,7 @@ export default function SearchProduct({
     searchFilter,
     debouncedSearch,
     checkItemAlreadyExists,
-    branch,
+    !hideAdvancedSearch ? (selectedProject?.branchPath as string) : branch,
     encodeURIComponent(ecl as string),
     allData,
   );
@@ -268,10 +300,10 @@ export default function SearchProduct({
       setResults(tempData);
       setAllData([
         ...tempData
-          .filter(item => !item.effectiveTime) // no effectiveTime = unpublished
+          .filter(item => !item.effectiveTime)
           .map(item => ({ ...item, type: UNPUBLISHED_CONCEPTS })),
         ...tempData
-          .filter(item => item.effectiveTime) // has effectiveTime = published
+          .filter(item => item.effectiveTime)
           .map(item => ({ ...item, type: PUBLISHED_CONCEPTS })),
       ]);
     }
@@ -327,6 +359,47 @@ export default function SearchProduct({
           alignItems="center"
           paddingLeft="1rem"
         >
+          {/* Project Selection Dropdown */}
+          {hideAdvancedSearch ? null : (projects && projects.length > 0) ||
+            defaultProject ? (
+            <FormControl>
+              <InputLabel id="project-select-label">Project</InputLabel>
+              <Select
+                data-testid="project-select-input"
+                sx={{
+                  width: '180px',
+                  height: '36px',
+                  borderRadius: '4px',
+                }}
+                labelId="project-select-label"
+                value={selectedProject?.key || ''}
+                label="Project"
+                onChange={handleProjectChange}
+              >
+                {defaultProject && (
+                  <MenuItem
+                    key={defaultProject.key}
+                    value={defaultProject.key}
+                    onKeyDown={e => e.stopPropagation()}
+                  >
+                    {defaultProject.title || defaultProject.key} (Default)
+                  </MenuItem>
+                )}
+                {projects
+                  ?.filter(p => p.key !== defaultProject?.key)
+                  .map(project => (
+                    <MenuItem
+                      key={project.key}
+                      value={project.key}
+                      onKeyDown={e => e.stopPropagation()}
+                    >
+                      {project.title || project.key}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+          ) : null}
+
           <FormControl>
             <InputLabel id="demo-simple-select-label">Search Filter</InputLabel>
             <Select
@@ -440,8 +513,6 @@ export default function SearchProduct({
                   ...params.InputProps,
                   endAdornment: (
                     <>
-                      {/* So we can show two different loadings, one for onto, one for snowstorm */}
-
                       {isFetching ? (
                         <CircularProgress color="inherit" size={20} />
                       ) : null}
@@ -606,6 +677,7 @@ export default function SearchProduct({
     </>
   );
 }
+
 const optionComponent = (
   option: Concept | ValueSetExpansionContains,
   selected: boolean,
@@ -648,6 +720,7 @@ const optionComponent = (
     </Stack>
   );
 };
+
 const getTermDisplay = (
   concept: Concept | ValueSetExpansionContains,
   fsnToggle: boolean,

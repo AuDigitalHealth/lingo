@@ -38,14 +38,13 @@ import {
 } from '../../../utils/helpers/ProductPreviewUtils.ts';
 import { ContentCopy, DeleteOutlined } from '@mui/icons-material';
 import { enqueueSnackbar } from 'notistack';
-import useAvailableProjects, {
-  getProjectFromKey,
-} from '../../../hooks/api/useInitializeProjects.tsx';
+import useAvailableProjects from '../../../hooks/api/useInitializeProjects.tsx';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 import { PlusCircleOutlined } from '@ant-design/icons';
 import { IconButton } from '@mui/material';
 import { Button } from '@mui/material';
 import useProjectLangRefsets from '../../../hooks/api/products/useProjectLangRefsets.tsx';
+import { useProjectFromUrlTaskPath } from '../../../hooks/useProjectFromUrlPath.tsx';
 
 interface NewConceptDropdownProps {
   product: Product;
@@ -219,7 +218,7 @@ function AdditionalSynonymField({
   const { data: projects } = useAvailableProjects();
   const { applicationConfig } = useApplicationConfigStore();
 
-  const project = getProjectFromKey(applicationConfig?.apProjectKey, projects);
+  const project = useProjectFromUrlTaskPath();
 
   const langRefsets = useProjectLangRefsets({ project: project });
 

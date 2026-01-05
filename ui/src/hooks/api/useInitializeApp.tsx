@@ -9,8 +9,13 @@ export default function useInitializeApp() {
   const { serviceStatusIsLoading } = useServiceStatus();
   const { ticketsLoading } = useInitializeTickets();
   const { jiraUsersIsLoading } = useJiraUsers();
+  const projects = useAvailableProjects();
 
   return {
-    appLoading: ticketsLoading || jiraUsersIsLoading || serviceStatusIsLoading,
+    appLoading:
+      ticketsLoading ||
+      jiraUsersIsLoading ||
+      serviceStatusIsLoading ||
+      projects.isLoading,
   };
 }

@@ -17,14 +17,16 @@ package au.gov.digitalhealth.lingo.service;
 
 import au.gov.digitalhealth.lingo.util.CacheConstants;
 import au.gov.digitalhealth.lingo.util.Task;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Service
 public class AllTasksService extends GenericRefreshCacheService<List<Task>> {
@@ -32,7 +34,7 @@ public class AllTasksService extends GenericRefreshCacheService<List<Task>> {
   private final WebClient defaultAuthoringPlatformApiClient;
 
   @Value("${ihtsdo.ap.projectKey}")
-  private String apProject;
+  private Set<String> apProjects;
 
   public AllTasksService(
       @Qualifier("defaultAuthoringPlatformApiClient") WebClient defaultAuthoringPlatformApiClient,
@@ -54,13 +56,18 @@ public class AllTasksService extends GenericRefreshCacheService<List<Task>> {
 
   @Override
   protected List<Task> fetchFromSource() throws AccessDeniedException {
-    Task[] tasks =
-        defaultAuthoringPlatformApiClient
-            .get()
-            .uri("/projects/" + apProject + "/tasks?lightweight=false")
-            .retrieve()
-            .bodyToMono(Task[].class)
-            .block();
-    return Arrays.asList(tasks);
+    Mono<List<Task>> allTasksMono =
+        Flux.fromIterable(apProjects)
+            .flatMap(
+                projectKey ->
+                    defaultAuthoringPlatformApiClient
+                        .get()
+                        .uri("/projects/" + projectKey + "/tasks?lightweight=false")
+                        .retrieve()
+                        .bodyToMono(Task[].class)
+                        .flatMapMany(tasks -> tasks == null ? Flux.empty() : Flux.fromArray(tasks)))
+            .collectList();
+
+    return allTasksMono.block();
   }
 }

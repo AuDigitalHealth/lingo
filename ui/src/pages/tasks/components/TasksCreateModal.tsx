@@ -20,7 +20,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAllTasksOptions } from '../../../hooks/api/task/useAllTasks.tsx';
 import {
   getProjectByTitle,
-  getProjectFromKey,
+  getProjectsFromKeys,
+  useDefaultProject,
 } from '../../../hooks/api/useInitializeProjects.tsx';
 import { useApplicationConfig } from '../../../hooks/api/useInitializeConfig.tsx';
 
@@ -49,10 +50,12 @@ export default function TasksCreateModal({
 }: Readonly<TasksCreateModalProps>) {
   const [loading, setLoading] = useState(false);
   const { applicationConfig } = useApplicationConfig();
-  const project = getProjectFromKey(
-    applicationConfig?.apProjectKey,
+  const projects = getProjectsFromKeys(
+    applicationConfig?.apProjectKeys,
     projectsOptions,
   );
+
+  const defaultProject = useDefaultProject();
   const navigate = useNavigate();
 
   const defaultValues = useMemo(
@@ -60,9 +63,9 @@ export default function TasksCreateModal({
       title: '',
       description: '',
       count: '1',
-      project: project?.title || '',
+      project: defaultProject?.title || '',
     }),
-    [project?.title],
+    [defaultProject],
   );
 
   const { register, handleSubmit, formState, reset } = useForm<TaskFormValues>({
@@ -224,7 +227,7 @@ export default function TasksCreateModal({
                   data-testid={'task-create-project'}
                   labelId="task-create-project"
                   {...register('project')}
-                  defaultValue={project?.title}
+                  defaultValue={defaultProject?.title}
                   error={!!errors.project && touchedFields.project}
                   sx={{ minWidth: '150px' }}
                 >

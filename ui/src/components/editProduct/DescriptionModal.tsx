@@ -1,10 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { Product } from '../../types/concept';
 import useApplicationConfigStore from '../../stores/ApplicationConfigStore';
-import {
-  useSearchConceptById,
-  useSearchConceptByIdNoCache,
-} from '../../hooks/api/products/useSearchConcept';
+import { useSearchConceptByIdNoCache } from '../../hooks/api/products/useSearchConcept';
 import BaseModal from '../modal/BaseModal';
 import BaseModalHeader from '../modal/BaseModalHeader';
 import BaseModalBody from '../modal/BaseModalBody';
@@ -13,12 +10,14 @@ import { Button } from '@mui/material';
 import { ExistingDescriptionsSection } from './ExistingDescriptionsSection';
 import { useMemo, useState } from 'react';
 import useProjectLangRefsets from '../../hooks/api/products/useProjectLangRefsets';
-import useAvailableProjects, {
-  getProjectFromKey,
-} from '../../hooks/api/useInitializeProjects';
+import useAvailableProjects from '../../hooks/api/useInitializeProjects';
 import { Typography } from '@mui/material';
 import { FormControlLabel } from '@mui/material';
 import { Switch } from '@mui/material';
+import {
+  useProjectFromUrlProjectPath,
+  useProjectFromUrlTaskPath,
+} from '../../hooks/useProjectFromUrlPath';
 
 interface DescriptionModalProps {
   open: boolean;
@@ -36,9 +35,16 @@ export default function DescriptionModal({
 }: DescriptionModalProps) {
   const { branchKey } = useParams();
   const { applicationConfig } = useApplicationConfigStore();
-  const fullBranch = branchKey
-    ? `${applicationConfig.apDefaultBranch}/${branchKey}`
-    : `${applicationConfig.apDefaultBranch}`;
+
+  const project = useProjectFromUrlProjectPath();
+  const { project: projectKey } = useParams();
+  const taskProject = useProjectFromUrlTaskPath();
+  const branchPath = taskProject?.branchPath
+    ? taskProject.branchPath
+    : projectKey
+      ? project?.branchPath
+      : useApplicationConfigStore.getState().applicationConfig?.apDefaultBranch;
+  const fullBranch = branchKey ? `${branchPath}/${branchKey}` : `${branchPath}`;
   const [displayRetiredDescriptions, setDisplayRetiredDescriptions] =
     useState(false);
   const conceptId = product.newConceptDetails ? undefined : product.conceptId;
@@ -47,8 +53,7 @@ export default function DescriptionModal({
     fullBranch,
   );
   const { data: projects } = useAvailableProjects();
-  const project = getProjectFromKey(applicationConfig?.apProjectKey, projects);
-  const langRefsets = useProjectLangRefsets({ project: project });
+  const langRefsets = useProjectLangRefsets({ project: taskProject });
 
   return (
     <BaseModal open={open} handleClose={handleClose} keepMounted={keepMounted}>

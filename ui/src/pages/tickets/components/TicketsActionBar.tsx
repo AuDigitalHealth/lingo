@@ -8,6 +8,7 @@ import TasksCreateModal from '../../tasks/components/TasksCreateModal';
 import { useApplicationConfig } from '../../../hooks/api/useInitializeConfig';
 import useAvailableProjects, {
   getProjectFromKey,
+  getProjectsFromKeys,
 } from '../../../hooks/api/useInitializeProjects';
 
 interface TicketsActionBarProps {
@@ -27,7 +28,10 @@ export default function TicketsActionBar({
 
   const { applicationConfig } = useApplicationConfig();
   const { data: projects } = useAvailableProjects();
-  const project = getProjectFromKey(applicationConfig?.apProjectKey, projects);
+  const project = getProjectsFromKeys(
+    applicationConfig?.apProjectKeys,
+    projects,
+  );
   return (
     <>
       <TasksCreateModal
@@ -35,7 +39,7 @@ export default function TicketsActionBar({
         open={tasksModalOpen}
         handleClose={() => setTasksModalOpen(false)}
         redirectEnabled={false}
-        projectsOptions={project ? [project] : []}
+        projectsOptions={project ? project : []}
         redirectUrl=""
       />
       <CreateTicketModal
