@@ -8,8 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
+
+### Added
 - Multiple projects can now be configured in snomio. To add another project, change the environment variable ihtsdo.ap.projectKey to be a comma-separated list.
 
+### Fixed
+
+- Fixed an issue where cascading non-defining properties failed to remove ancestor properties,
+  leading to unintended property value additions instead of replacements.
 
 ## [1.3.27] - 2025-12-24
 
