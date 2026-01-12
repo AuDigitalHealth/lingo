@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
-## [Unreleased]
+## [1.3.28] - 2026-01-12
 
 ### Added
 - Multiple projects can now be configured in snomio. To add another project, change the environment variable ihtsdo.ap.projectKey to be a comma-separated list.
