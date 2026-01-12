@@ -216,23 +216,27 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
                       .collect(Collectors.toSet()));
     }
     if (!removedProperties.isEmpty()) {
-      updated =
-          updated
-              || subordinateNode
-                  .getNonDefiningProperties()
-                  .removeAll(
-                      removedProperties.stream()
-                          .filter(
-                              p ->
-                                  !p.getIdentifierScheme().equals("levelMarker")
-                                      && !p.getIdentifierScheme().equals("nmpcType"))
-                          .filter(
-                              p ->
-                                  modelConfiguration
-                                      .getProperty(p.getIdentifierScheme())
-                                      .getModelLevels()
-                                      .contains(level.getModelLevelType()))
-                          .collect(Collectors.toSet()));
+      Set<NonDefiningBase> toRemove = removedProperties.stream()
+          .filter(
+              p ->
+                  !p.getIdentifierScheme().equals("levelMarker")
+                      && !p.getIdentifierScheme().equals("nmpcType"))
+          .filter(
+              p ->
+                  modelConfiguration
+                      .getProperty(p.getIdentifierScheme())
+                      .getModelLevels()
+                      .contains(level.getModelLevelType()))
+          .collect(Collectors.toSet());
+
+      if (!toRemove.isEmpty()) {
+        // Using removeIf ensures we iterate over the node's properties
+        // and perform a direct equals/contains check, bypassing AbstractSet's
+        // size-based optimization which often causes silent failures.
+        boolean wasRemoved = subordinateNode.getNonDefiningProperties()
+            .removeIf(toRemove::contains);
+        updated = updated || wasRemoved;
+      }
     }
     return updated;
   }
@@ -247,6 +251,7 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
     for (Node node : productSummary.getNodes().stream().filter(Node::isPropertyUpdate).toList()) {
       // find the property changes for the node
       Set<NonDefiningBase> addedProperties = new HashSet<>(node.getNonDefiningProperties());
+      // remove the properties already on the original node
       addedProperties.removeAll(
           node.getOriginalNode().getNode().getNonDefiningProperties().stream()
               .filter(
@@ -254,6 +259,7 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
                       !p.getIdentifierScheme().equals("levelMarker")
                           && !p.getIdentifierScheme().equals("nmpcType"))
               .toList());
+      // remove the properties that are not applicable to the current model level
       addedProperties.removeIf(
           p ->
               !p.getIdentifierScheme().equals("levelMarker")
@@ -262,6 +268,7 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
                       .getProperty(p.getIdentifierScheme())
                       .getSourceModelLevel()
                       .equals(node.getModelLevel()));
+      // find all the properties on the original node
       Set<NonDefiningBase> removedProperties =
           new HashSet<>(
               node.getOriginalNode().getNode().getNonDefiningProperties().stream()
@@ -270,7 +277,9 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
                           !p.getIdentifierScheme().equals("levelMarker")
                               && !p.getIdentifierScheme().equals("nmpcType"))
                   .toList());
+      // remove the properties that are already on the current node
       removedProperties.removeAll(node.getNonDefiningProperties());
+      // remove the properties that are not applicable to the current model level
       removedProperties.removeIf(
           p ->
               !p.getIdentifierScheme().equals("levelMarker")
@@ -280,6 +289,7 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
                       .getSourceModelLevel()
                       .equals(node.getModelLevel()));
 
+      // find all the applicable property levels for the added and removed properties
       Set<ModelLevel> levels =
           Stream.concat(addedProperties.stream(), removedProperties.stream())
               .filter(
