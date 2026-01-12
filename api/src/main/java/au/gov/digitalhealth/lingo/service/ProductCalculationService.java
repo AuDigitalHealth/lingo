@@ -216,25 +216,26 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
                       .collect(Collectors.toSet()));
     }
     if (!removedProperties.isEmpty()) {
-      Set<NonDefiningBase> toRemove = removedProperties.stream()
-          .filter(
-              p ->
-                  !p.getIdentifierScheme().equals("levelMarker")
-                      && !p.getIdentifierScheme().equals("nmpcType"))
-          .filter(
-              p ->
-                  modelConfiguration
-                      .getProperty(p.getIdentifierScheme())
-                      .getModelLevels()
-                      .contains(level.getModelLevelType()))
-          .collect(Collectors.toSet());
+      Set<NonDefiningBase> toRemove =
+          removedProperties.stream()
+              .filter(
+                  p ->
+                      !p.getIdentifierScheme().equals("levelMarker")
+                          && !p.getIdentifierScheme().equals("nmpcType"))
+              .filter(
+                  p ->
+                      modelConfiguration
+                          .getProperty(p.getIdentifierScheme())
+                          .getModelLevels()
+                          .contains(level.getModelLevelType()))
+              .collect(Collectors.toSet());
 
       if (!toRemove.isEmpty()) {
         // Using removeIf ensures we iterate over the node's properties
         // and perform a direct equals/contains check, bypassing AbstractSet's
         // size-based optimization which often causes silent failures.
-        boolean wasRemoved = subordinateNode.getNonDefiningProperties()
-            .removeIf(toRemove::contains);
+        boolean wasRemoved =
+            subordinateNode.getNonDefiningProperties().removeIf(toRemove::contains);
         updated = updated || wasRemoved;
       }
     }
