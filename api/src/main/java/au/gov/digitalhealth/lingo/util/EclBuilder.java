@@ -168,8 +168,8 @@ public class EclBuilder {
     return response.toString();
   }
 
-  private static void appendNoAttributeConstraint(StringBuilder response,
-      LingoConstants attributeType) {
+  private static void appendNoAttributeConstraint(
+      StringBuilder response, LingoConstants attributeType) {
     response.append(", [0..0] ").append(attributeType).append(" = *");
   }
 
