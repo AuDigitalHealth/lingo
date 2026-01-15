@@ -22,10 +22,11 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.COUNT_OF_ACTIVE_IN
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.COUNT_OF_BASE_ACTIVE_INGREDIENT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_ACTIVE_INGREDIENT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_MANUFACTURED_DOSE_FORM;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_UNIT;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_VALUE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRECISE_ACTIVE_INGREDIENT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRODUCT_NAME;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.MEDICINAL_PRODUCT;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.MEDICINAL_PRODUCT_PACKAGE;
 import static java.util.stream.Collectors.mapping;
 
 import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
@@ -143,25 +144,33 @@ public class EclBuilder {
             generateNegativeFilters(relationships, HAS_PRECISE_ACTIVE_INGREDIENT.getValue()));
       }
 
-      if (modelConfiguration.getModelType().equals(ModelType.AMT)
-          && relationships.stream()
-              .anyMatch(
-                  r ->
-                      r.getTypeId().equals(SnomedConstants.IS_A.getValue())
-                          && r.getDestinationId() != null
-                          && r.getDestinationId().equals(MEDICINAL_PRODUCT_PACKAGE.getValue()))
-          && relationships.stream()
-              .noneMatch(r -> r.getTypeId().equals(HAS_CONTAINER_TYPE.getValue()))) {
-        response.append(", [0..0] " + HAS_CONTAINER_TYPE + " = *");
+      if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
+        if (relationships.stream()
+            .noneMatch(r -> r.getTypeId().equals(HAS_CONTAINER_TYPE.getValue()))) {
+          appendNoAttributeConstraint(response, HAS_CONTAINER_TYPE);
+        }
+        if (relationships.stream()
+            .noneMatch(r -> r.getTypeId().equals(HAS_PACK_SIZE_UNIT.getValue()))) {
+          appendNoAttributeConstraint(response, HAS_PACK_SIZE_UNIT);
+        }
+        if (relationships.stream()
+            .noneMatch(r -> r.getTypeId().equals(HAS_PACK_SIZE_VALUE.getValue()))) {
+          appendNoAttributeConstraint(response, HAS_PACK_SIZE_VALUE);
+        }
       }
 
       if (relationships.stream()
           .noneMatch(r -> r.getTypeId().equals(HAS_PRODUCT_NAME.getValue()))) {
-        response.append(", [0..0] " + HAS_PRODUCT_NAME + " = *");
+        appendNoAttributeConstraint(response, HAS_PRODUCT_NAME);
       }
     }
 
     return response.toString();
+  }
+
+  private static void appendNoAttributeConstraint(StringBuilder response,
+      LingoConstants attributeType) {
+    response.append(", [0..0] ").append(attributeType).append(" = *");
   }
 
   private static String getRelationshipFilters(Set<SnowstormRelationship> relationships) {
