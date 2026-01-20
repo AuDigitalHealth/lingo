@@ -110,7 +110,31 @@ export function useAllTasks() {
   });
 
   const allTasksIsLoading: boolean = isLoading;
+
   const allTasks = data;
+
+  allTasks?.sort((a, b) => {
+    const keyA = a.key || '';
+    const keyB = b.key || '';
+
+    // Extract prefix and number from each key
+    const matchA = keyA.match(/^(.+?)-(\d+)$/);
+    const matchB = keyB.match(/^(.+?)-(\d+)$/);
+
+    if (!matchA && !matchB) return keyA.localeCompare(keyB);
+    if (!matchA) return 1;
+    if (!matchB) return -1;
+
+    const [, prefixA, numStrA] = matchA;
+    const [, prefixB, numStrB] = matchB;
+
+    // First compare prefixes
+    const prefixCompare = prefixA.localeCompare(prefixB);
+    if (prefixCompare !== 0) return prefixCompare;
+
+    // Then compare numbers numerically
+    return parseInt(numStrA, 10) - parseInt(numStrB, 10);
+  });
 
   return { allTasksIsLoading, allTasks, isError };
 }

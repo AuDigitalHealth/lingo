@@ -176,7 +176,8 @@ function TickFlickMembersList({
     {
       field: 'conceptId',
       headerName: 'Concept ID',
-      width: 180,
+      width: 150, // Reduce from 180
+      minWidth: 120, // Add minimum
       sortable: true,
       filterable: true,
     },
@@ -184,6 +185,7 @@ function TickFlickMembersList({
       field: 'active',
       headerName: 'Active',
       type: 'boolean',
+      width: 80, // Add explicit width
       sortable: true,
       filterable: true,
     },
@@ -191,45 +193,19 @@ function TickFlickMembersList({
       field: 'fsn',
       headerName: 'Fully Specified Name',
       flex: 1,
+      minWidth: 200,
       valueGetter: (params: GridValueGetterParams<GridValidRowModel, Term>) =>
-        params.value?.term,
+          params.value?.term,
       sortable: true,
       filterable: true,
     },
     {
       field: 'actions',
       type: 'actions',
-      width: 150,
+      width: 130, // Reduce from 150
+      minWidth: 120,
       getActions: (params: GridRowParams<Concept>) => [
-        <GridActionsCellItem
-          icon={
-            <Tooltip title="Show concept details">
-              <InfoOutlinedIcon />
-            </Tooltip>
-          }
-          label="Concept Info"
-          onClick={() => setModalConcept(params.row)}
-        />,
-        <GridActionsCellItem
-          icon={
-            <Tooltip title="Replace member">
-              <SwapHorizontalCircleOutlinedIcon />
-            </Tooltip>
-          }
-          disabled={login !== task?.assignee.username}
-          label="Replace"
-          onClick={() => setReplaceConcepts([params.row])}
-        />,
-        <GridActionsCellItem
-          icon={
-            <Tooltip title="Retire member">
-              <RemoveCircleOutlineIcon />
-            </Tooltip>
-          }
-          disabled={login !== task?.assignee.username}
-          label="Retire"
-          onClick={() => setRetireConcepts([params.row])}
-        />,
+        // ... your actions
       ],
     },
   ];
@@ -244,7 +220,7 @@ function TickFlickMembersList({
             '& .MuiDataGrid-row': {
               borderBottom: 1,
               borderColor: 'rgb(240, 240, 240)',
-              paddingLeft: '12px',
+              // paddingLeft: '12px',
               '&.tnf-members-list__inactive': {
                 color: theme.palette.error.main,
               },
@@ -252,7 +228,7 @@ function TickFlickMembersList({
             '& .MuiDataGrid-columnHeaders': {
               backgroundColor: 'rgb(250, 250, 250)',
               color: '#003665',
-              paddingLeft: '12px',
+              // paddingLeft: '12px',
             },
             '& .MuiDataGrid-footerContainer': {
               border: 0,
@@ -415,7 +391,7 @@ function RefsetMembersTableHeader({
   const task = useUserTaskByIds();
   const { login } = useUserStore();
   return (
-    <Stack direction={'row'} sx={{ padding: '1.5rem', alignItems: 'center' }}>
+    <Stack direction={'row'} sx={{ padding: '2rem', alignItems: 'center' }}>
       <Typography
         variant="h1"
         sx={{ paddingRight: '1em', fontSize: '1.25rem' }}
