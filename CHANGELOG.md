@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
+- Add support for decimal values in multi pack screen.
 
 
 ## [1.3.28] - 2026-01-12

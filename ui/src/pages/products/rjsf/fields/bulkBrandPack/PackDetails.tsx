@@ -17,6 +17,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { useAddButton } from '../../../hooks/useAddButton.ts';
 import { packSizeValidation } from '../../helpers/validationHelper.ts';
+import { isUnitEach } from '../../../../../utils/helpers/conceptUtils.ts';
 
 interface PackDetailsProps extends FieldProps {
   onDelete?: () => void;
@@ -38,6 +39,11 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
     formData = {},
     branch,
   } = props;
+
+  const unit =
+    unitOfMeasure ??
+    formContext?.formData?.unitOfMeasure ??
+    formContext?.unitOfMeasure;
 
   const uiSchemaForNonDefiningProperties = RjsfUtils.getUiSchemaById(
     registry.formContext.uiSchema,
@@ -88,7 +94,7 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
 
   const handlePackSizeChange = (newValue: string) => {
     setPackSize(newValue);
-    const parsedValue = newValue === '' ? undefined : parseInt(newValue, 10);
+    const parsedValue = newValue === '' ? undefined : Number(newValue);
     const updated = {
       ...formData,
       packSize: parsedValue,
@@ -105,7 +111,11 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
   };
 
   const isValidPackSize =
-    packSize && !isNaN(parseInt(packSize, 10)) && parseInt(packSize, 10) > 0;
+    packSize !== '' &&
+    packSize != null &&
+    !isNaN(Number(packSize)) &&
+    Number(packSize) > 0 &&
+    (!isUnitEach(unit) || Number.isInteger(Number(packSize)));
   const {
     tooltipTitle = 'Add Pack Size',
     sourcePath = 'newPackSizeInput',
@@ -208,11 +218,15 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
                   (packSize !== '' && !isEnabled)
                 }
                 helperText={
-                  packSize !== '' && !isValidPackSize
-                    ? 'Pack size must be a positive number'
-                    : packSize !== '' && !isEnabled
-                      ? 'Invalid Pack Size'
-                      : ''
+                  packSize !== '' &&
+                  isUnitEach(unit) &&
+                  !Number.isInteger(Number(packSize))
+                    ? 'Pack size must be a whole number when unit is each'
+                    : packSize !== '' && !isValidPackSize
+                      ? 'Pack size must be a positive number'
+                      : packSize !== '' && !isEnabled
+                        ? 'Invalid Pack Size'
+                        : ''
                 }
                 type={isNumber ? 'number' : 'text'}
                 sx={{ maxWidth: '200px' }}
