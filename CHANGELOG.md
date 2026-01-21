@@ -8,8 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
-- 
+
+### Fixed
+
+- Add support for decimal values in multi pack screen.
+- Defect #1675 where ECL generated for AMT MPUU concepts was not specific enough
+- Change snomio.namespace to support the AUAMCR project
+- If an iteration is completed, and it is not active, it will now be red instead of yellow.
+- Task Id is now sorted on the ticket screen, when you attempt to associate a ticket to a task through the ticket screen.
+- There is no longer a horizontal scroll on the tick and flick refset list.
 
 
 ## [1.3.28] - 2026-01-12
