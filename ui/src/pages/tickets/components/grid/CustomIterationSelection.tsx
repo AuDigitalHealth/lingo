@@ -25,14 +25,14 @@ interface CustomIterationSelectionProps {
 }
 
 export default function CustomIterationSelection({
-                                                   ticket,
-                                                   id,
-                                                   iteration,
-                                                   iterationList,
-                                                   border,
-                                                   autoFetch = false,
-                                                   skinny = false,
-                                                 }: CustomIterationSelectionProps) {
+  ticket,
+  id,
+  iteration,
+  iterationList,
+  border,
+  autoFetch = false,
+  skinny = false,
+}: CustomIterationSelectionProps) {
   useTicketByTicketNumber(ticket?.ticketNumber, autoFetch);
   const [disabled, setDisabled] = useState<boolean>(false);
   const { getTicketById, mergeTicket } = useTicketStore();
@@ -76,26 +76,26 @@ export default function CustomIterationSelection({
     const ticket = getTicketById(Number(id));
     if (ticket !== undefined && newIteration !== undefined) {
       TicketsService.updateTicketIteration(ticket.id, newIteration.id)
-      .then(() => {
-        setDisabled(false);
-        if (autoFetch) {
-          void queryClient.invalidateQueries({
-            queryKey: ['ticket', ticket.ticketNumber],
-          });
-          void queryClient.invalidateQueries({
-            queryKey: ['ticketDto', ticket?.id.toString()],
-          });
-        } else {
-          void TicketsService.getIndividualTicketByTicketNumber(
+        .then(() => {
+          setDisabled(false);
+          if (autoFetch) {
+            void queryClient.invalidateQueries({
+              queryKey: ['ticket', ticket.ticketNumber],
+            });
+            void queryClient.invalidateQueries({
+              queryKey: ['ticketDto', ticket?.id.toString()],
+            });
+          } else {
+            void TicketsService.getIndividualTicketByTicketNumber(
               ticket.ticketNumber,
-          ).then(ticket => {
-            mergeTicket(ticket);
-          });
-        }
-      })
-      .catch(() => {
-        setDisabled(false);
-      });
+            ).then(ticket => {
+              mergeTicket(ticket);
+            });
+          }
+        })
+        .catch(() => {
+          setDisabled(false);
+        });
     }
   };
 
@@ -104,70 +104,70 @@ export default function CustomIterationSelection({
     const ticket = getTicketById(Number(id));
     if (ticket !== undefined) {
       TicketsService.deleteTicketIteration(ticket)
-      .then(() => {
-        if (autoFetch) {
-          void queryClient.invalidateQueries({
-            queryKey: ['ticket', ticket.ticketNumber],
-          });
-          void queryClient.invalidateQueries({
-            queryKey: ['ticketDto', ticket?.id.toString()],
-          });
-        } else {
-          void TicketsService.getIndividualTicketByTicketNumber(
+        .then(() => {
+          if (autoFetch) {
+            void queryClient.invalidateQueries({
+              queryKey: ['ticket', ticket.ticketNumber],
+            });
+            void queryClient.invalidateQueries({
+              queryKey: ['ticketDto', ticket?.id.toString()],
+            });
+          } else {
+            void TicketsService.getIndividualTicketByTicketNumber(
               ticket.ticketNumber,
-          ).then(ticket => {
-            mergeTicket(ticket);
-          });
-        }
+            ).then(ticket => {
+              mergeTicket(ticket);
+            });
+          }
 
-        setDisabled(false);
-      })
-      .catch(() => {
-        setDisabled(false);
-      });
+          setDisabled(false);
+        })
+        .catch(() => {
+          setDisabled(false);
+        });
     }
   };
 
   return (
-      <UnableToEditTicketTooltip canEdit={canEdit}>
-        <Box sx={{ width: skinny ? 'fit-content' : '200px' }}>
-          <Select
-              ref={selectRef}
-              id={`ticket-iteration-select-${id}`}
-              value={iteration?.name ? iteration?.name : ''}
-              onChange={handleChange}
-              sx={{
-                width: skinny
-                    ? minWidth
-                        ? `${minWidth}px`
-                        : 'fit-content'
-                    : '100%',
-                maxWidth: skinny ? 'none' : '200px',
-              }}
-              input={border ? <Select /> : <StyledSelect />}
-              disabled={disabled || !canEdit}
-              MenuProps={{
-                PaperProps: {
-                  id: `ticket-iteration-select-${id}-container`,
-                },
-              }}
-          >
-            <MenuItem value="" onClick={handleDelete}>
-              <em>&#8205;</em>
+    <UnableToEditTicketTooltip canEdit={canEdit}>
+      <Box sx={{ width: skinny ? 'fit-content' : '200px' }}>
+        <Select
+          ref={selectRef}
+          id={`ticket-iteration-select-${id}`}
+          value={iteration?.name ? iteration?.name : ''}
+          onChange={handleChange}
+          sx={{
+            width: skinny
+              ? minWidth
+                ? `${minWidth}px`
+                : 'fit-content'
+              : '100%',
+            maxWidth: skinny ? 'none' : '200px',
+          }}
+          input={border ? <Select /> : <StyledSelect />}
+          disabled={disabled || !canEdit}
+          MenuProps={{
+            PaperProps: {
+              id: `ticket-iteration-select-${id}-container`,
+            },
+          }}
+        >
+          <MenuItem value="" onClick={handleDelete}>
+            <em>&#8205;</em>
+          </MenuItem>
+          {sortedIterationList.map(iterationLocal => (
+            <MenuItem
+              data-testid={iterationLocal.name}
+              key={iterationLocal.id}
+              value={iterationLocal.name}
+              onKeyDown={e => e.stopPropagation()}
+            >
+              <IterationItemDisplay iteration={iterationLocal} />
             </MenuItem>
-            {sortedIterationList.map(iterationLocal => (
-                <MenuItem
-                    data-testid={iterationLocal.name}
-                    key={iterationLocal.id}
-                    value={iterationLocal.name}
-                    onKeyDown={e => e.stopPropagation()}
-                >
-                  <IterationItemDisplay iteration={iterationLocal} />
-                </MenuItem>
-            ))}
-          </Select>
-        </Box>
-      </UnableToEditTicketTooltip>
+          ))}
+        </Select>
+      </Box>
+    </UnableToEditTicketTooltip>
   );
 }
 
@@ -176,16 +176,12 @@ interface IterationItemDisplayProps {
 }
 
 export function IterationItemDisplay({ iteration }: IterationItemDisplayProps) {
-  const active = iteration.active;
-  const color = active ? 'warning' : 'default';
+  const inactive = !iteration.active && iteration.completed;
+  const color = inactive ? 'default' : 'warning';
   debugger;
   return (
-      <Tooltip title={iteration.name} key={iteration.id}>
-        <Chip
-            color={color}
-            label={iteration.name}
-            size="small"
-        />
-      </Tooltip>
+    <Tooltip title={iteration.name} key={iteration.id}>
+      <Chip color={color} label={iteration.name} size="small" />
+    </Tooltip>
   );
 }
