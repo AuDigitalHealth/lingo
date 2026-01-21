@@ -13,6 +13,7 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 - Add support for decimal values in multi pack screen.
 - Defect #1675 where ECL generated for AMT MPUU concepts was not specific enough
+- Change snomio.namespace to support the AUAMCR project
 
 ## [1.3.28] - 2026-01-12
 
