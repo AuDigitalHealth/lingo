@@ -195,7 +195,7 @@ function TickFlickMembersList({
       flex: 1,
       minWidth: 200,
       valueGetter: (params: GridValueGetterParams<GridValidRowModel, Term>) =>
-          params.value?.term,
+        params.value?.term,
       sortable: true,
       filterable: true,
     },
