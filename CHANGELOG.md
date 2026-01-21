@@ -11,6 +11,7 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 ### Fixed
 - Add support for decimal values in multi pack screen.
+- Defect #1675 where ECL generated for AMT MPUU concepts was not specific enough
 - Updated discontinuation letter to enable attachments from tickets.
 
 ## [1.3.28] - 2026-01-12
