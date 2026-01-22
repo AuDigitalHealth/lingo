@@ -178,7 +178,6 @@ interface IterationItemDisplayProps {
 export function IterationItemDisplay({ iteration }: IterationItemDisplayProps) {
   const inactive = !iteration.active && iteration.completed;
   const color = inactive ? 'default' : 'warning';
-  debugger;
   return (
     <Tooltip title={iteration.name} key={iteration.id}>
       <Chip color={color} label={iteration.name} size="small" />
