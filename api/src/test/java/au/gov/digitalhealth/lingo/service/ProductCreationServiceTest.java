@@ -27,6 +27,14 @@ import org.junit.jupiter.api.Test;
 /** Unit tests for ProductCreationService focusing on relationship reactivation logic. */
 class ProductCreationServiceTest {
 
+  // Test data constants
+  private static final String TEST_TYPE_ID_1 = "123456";
+  private static final String TEST_DESTINATION_ID_1 = "789012";
+  private static final String TEST_TYPE_ID_2 = "999999";
+  private static final String TEST_DESTINATION_ID_2 = "888888";
+  private static final String TEST_CONCRETE_VALUE = "100";
+  private static final String NON_ADDITIONAL_RELATIONSHIP_TYPE = "SOME_OTHER_TYPE";
+
   /**
    * Helper method to invoke the private updateConceptNonDefiningRelationships method using
    * reflection.
@@ -52,16 +60,16 @@ class ProductCreationServiceTest {
     SnowstormRelationship inactiveRelationship = new SnowstormRelationship();
     inactiveRelationship.setCharacteristicType(ADDITIONAL_RELATIONSHIP.getValue());
     inactiveRelationship.setActive(false);
-    inactiveRelationship.setTypeId("123456");
-    inactiveRelationship.setDestinationId("789012");
+    inactiveRelationship.setTypeId(TEST_TYPE_ID_1);
+    inactiveRelationship.setDestinationId(TEST_DESTINATION_ID_1);
 
     Set<SnowstormRelationship> existingRelationships = new HashSet<>();
     existingRelationships.add(inactiveRelationship);
 
     // Create a new relationship that matches the inactive one
     SnowstormRelationship newRelationship = new SnowstormRelationship();
-    newRelationship.setTypeId("123456");
-    newRelationship.setDestinationId("789012");
+    newRelationship.setTypeId(TEST_TYPE_ID_1);
+    newRelationship.setDestinationId(TEST_DESTINATION_ID_1);
 
     Set<SnowstormRelationship> newRelationships = new HashSet<>();
     newRelationships.add(newRelationship);
@@ -83,16 +91,16 @@ class ProductCreationServiceTest {
     SnowstormRelationship inactiveRelationship = new SnowstormRelationship();
     inactiveRelationship.setCharacteristicType(ADDITIONAL_RELATIONSHIP.getValue());
     inactiveRelationship.setActive(false);
-    inactiveRelationship.setTypeId("123456");
-    inactiveRelationship.setDestinationId("789012");
+    inactiveRelationship.setTypeId(TEST_TYPE_ID_1);
+    inactiveRelationship.setDestinationId(TEST_DESTINATION_ID_1);
 
     Set<SnowstormRelationship> existingRelationships = new HashSet<>();
     existingRelationships.add(inactiveRelationship);
 
     // Create a new relationship that matches the inactive one
     SnowstormRelationship newRelationship = new SnowstormRelationship();
-    newRelationship.setTypeId("123456");
-    newRelationship.setDestinationId("789012");
+    newRelationship.setTypeId(TEST_TYPE_ID_1);
+    newRelationship.setDestinationId(TEST_DESTINATION_ID_1);
 
     Set<SnowstormRelationship> newRelationships = new HashSet<>();
     newRelationships.add(newRelationship);
@@ -112,16 +120,16 @@ class ProductCreationServiceTest {
     SnowstormRelationship inactiveRelationship = new SnowstormRelationship();
     inactiveRelationship.setCharacteristicType(ADDITIONAL_RELATIONSHIP.getValue());
     inactiveRelationship.setActive(false);
-    inactiveRelationship.setTypeId("123456");
-    inactiveRelationship.setDestinationId("789012");
+    inactiveRelationship.setTypeId(TEST_TYPE_ID_1);
+    inactiveRelationship.setDestinationId(TEST_DESTINATION_ID_1);
 
     Set<SnowstormRelationship> existingRelationships = new HashSet<>();
     existingRelationships.add(inactiveRelationship);
 
     // Create a new relationship that matches the inactive one
     SnowstormRelationship newRelationship = new SnowstormRelationship();
-    newRelationship.setTypeId("123456");
-    newRelationship.setDestinationId("789012");
+    newRelationship.setTypeId(TEST_TYPE_ID_1);
+    newRelationship.setDestinationId(TEST_DESTINATION_ID_1);
 
     Set<SnowstormRelationship> newRelationships = new HashSet<>();
     newRelationships.add(newRelationship);
@@ -144,8 +152,8 @@ class ProductCreationServiceTest {
     SnowstormRelationship activeRelationship = new SnowstormRelationship();
     activeRelationship.setCharacteristicType(ADDITIONAL_RELATIONSHIP.getValue());
     activeRelationship.setActive(true);
-    activeRelationship.setTypeId("123456");
-    activeRelationship.setDestinationId("789012");
+    activeRelationship.setTypeId(TEST_TYPE_ID_1);
+    activeRelationship.setDestinationId(TEST_DESTINATION_ID_1);
 
     Set<SnowstormRelationship> existingRelationships = new HashSet<>();
     existingRelationships.add(activeRelationship);
@@ -169,16 +177,16 @@ class ProductCreationServiceTest {
     SnowstormRelationship inactiveRelationship = new SnowstormRelationship();
     inactiveRelationship.setCharacteristicType(ADDITIONAL_RELATIONSHIP.getValue());
     inactiveRelationship.setActive(false);
-    inactiveRelationship.setTypeId("123456");
-    inactiveRelationship.setConcreteValue("100");
+    inactiveRelationship.setTypeId(TEST_TYPE_ID_1);
+    inactiveRelationship.setConcreteValue(TEST_CONCRETE_VALUE);
 
     Set<SnowstormRelationship> existingRelationships = new HashSet<>();
     existingRelationships.add(inactiveRelationship);
 
     // Create a new relationship that matches the inactive one
     SnowstormRelationship newRelationship = new SnowstormRelationship();
-    newRelationship.setTypeId("123456");
-    newRelationship.setConcreteValue("100");
+    newRelationship.setTypeId(TEST_TYPE_ID_1);
+    newRelationship.setConcreteValue(TEST_CONCRETE_VALUE);
 
     Set<SnowstormRelationship> newRelationships = new HashSet<>();
     newRelationships.add(newRelationship);
@@ -202,8 +210,8 @@ class ProductCreationServiceTest {
 
     // Create a new relationship
     SnowstormRelationship newRelationship = new SnowstormRelationship();
-    newRelationship.setTypeId("123456");
-    newRelationship.setDestinationId("789012");
+    newRelationship.setTypeId(TEST_TYPE_ID_1);
+    newRelationship.setDestinationId(TEST_DESTINATION_ID_1);
 
     Set<SnowstormRelationship> newRelationships = new HashSet<>();
     newRelationships.add(newRelationship);
@@ -228,15 +236,15 @@ class ProductCreationServiceTest {
     SnowstormRelationship activeRelationship = new SnowstormRelationship();
     activeRelationship.setCharacteristicType(ADDITIONAL_RELATIONSHIP.getValue());
     activeRelationship.setActive(true);
-    activeRelationship.setTypeId("123456");
-    activeRelationship.setDestinationId("789012");
+    activeRelationship.setTypeId(TEST_TYPE_ID_1);
+    activeRelationship.setDestinationId(TEST_DESTINATION_ID_1);
 
     Set<SnowstormRelationship> existingRelationships = new HashSet<>();
     existingRelationships.add(activeRelationship);
 
     // Create new relationships that don't match the active one
     SnowstormRelationship newRelationship = new SnowstormRelationship();
-    newRelationship.setTypeId("999999");
+    newRelationship.setTypeId(TEST_TYPE_ID_2);
     newRelationship.setDestinationId("888888");
 
     Set<SnowstormRelationship> newRelationships = new HashSet<>();
@@ -249,7 +257,7 @@ class ProductCreationServiceTest {
     // Verify that the active relationship was removed and the new one was added
     assertThat(result).isTrue();
     assertThat(existingRelationships).hasSize(1);
-    assertThat(existingRelationships.iterator().next().getTypeId()).isEqualTo("999999");
+    assertThat(existingRelationships.iterator().next().getTypeId()).isEqualTo(TEST_TYPE_ID_2);
   }
 
   /** Test that the method returns false when no relationships need to be modified. */
@@ -257,10 +265,10 @@ class ProductCreationServiceTest {
   void testMethodReturnsFalseWhenNoModificationsNeeded() throws Exception {
     // Create an inactive relationship (not ADDITIONAL_RELATIONSHIP characteristic type)
     SnowstormRelationship inactiveOtherRelationship = new SnowstormRelationship();
-    inactiveOtherRelationship.setCharacteristicType("SOME_OTHER_TYPE");
+    inactiveOtherRelationship.setCharacteristicType(NON_ADDITIONAL_RELATIONSHIP_TYPE);
     inactiveOtherRelationship.setActive(false);
-    inactiveOtherRelationship.setTypeId("123456");
-    inactiveOtherRelationship.setDestinationId("789012");
+    inactiveOtherRelationship.setTypeId(TEST_TYPE_ID_1);
+    inactiveOtherRelationship.setDestinationId(TEST_DESTINATION_ID_1);
 
     Set<SnowstormRelationship> existingRelationships = new HashSet<>();
     existingRelationships.add(inactiveOtherRelationship);
