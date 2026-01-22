@@ -28,6 +28,21 @@ import org.junit.jupiter.api.Test;
 class ProductCreationServiceTest {
 
   /**
+   * Helper method to invoke the private updateConceptNonDefiningRelationships method using
+   * reflection.
+   */
+  private boolean invokeUpdateConceptNonDefiningRelationships(
+      Set<SnowstormRelationship> existingRelationships,
+      Set<SnowstormRelationship> newRelationships)
+      throws Exception {
+    Method method =
+        ProductCreationService.class.getDeclaredMethod(
+            "updateConceptNonDefiningRelationships", Set.class, Set.class);
+    method.setAccessible(true);
+    return (boolean) method.invoke(null, existingRelationships, newRelationships);
+  }
+
+  /**
    * Test that an inactive ADDITIONAL_RELATIONSHIP is correctly reactivated when a matching new
    * relationship is provided.
    */
@@ -52,11 +67,8 @@ class ProductCreationServiceTest {
     newRelationships.add(newRelationship);
 
     // Invoke the private method using reflection
-    Method method =
-        ProductCreationService.class.getDeclaredMethod(
-            "updateConceptNonDefiningRelationships", Set.class, Set.class);
-    method.setAccessible(true);
-    boolean result = (boolean) method.invoke(null, existingRelationships, newRelationships);
+    boolean result =
+        invokeUpdateConceptNonDefiningRelationships(existingRelationships, newRelationships);
 
     // Verify that the relationship was reactivated
     assertThat(result).isTrue();
@@ -86,11 +98,7 @@ class ProductCreationServiceTest {
     newRelationships.add(newRelationship);
 
     // Invoke the private method using reflection
-    Method method =
-        ProductCreationService.class.getDeclaredMethod(
-            "updateConceptNonDefiningRelationships", Set.class, Set.class);
-    method.setAccessible(true);
-    method.invoke(null, existingRelationships, newRelationships);
+    invokeUpdateConceptNonDefiningRelationships(existingRelationships, newRelationships);
 
     // Verify that no duplicate was created - still only one relationship
     assertThat(existingRelationships).hasSize(1);
@@ -119,11 +127,8 @@ class ProductCreationServiceTest {
     newRelationships.add(newRelationship);
 
     // Invoke the private method using reflection
-    Method method =
-        ProductCreationService.class.getDeclaredMethod(
-            "updateConceptNonDefiningRelationships", Set.class, Set.class);
-    method.setAccessible(true);
-    boolean result = (boolean) method.invoke(null, existingRelationships, newRelationships);
+    boolean result =
+        invokeUpdateConceptNonDefiningRelationships(existingRelationships, newRelationships);
 
     // Verify that the method returns true when a relationship is reactivated
     assertThat(result).isTrue();
@@ -149,11 +154,8 @@ class ProductCreationServiceTest {
     Set<SnowstormRelationship> newRelationships = new HashSet<>();
 
     // Invoke the private method using reflection
-    Method method =
-        ProductCreationService.class.getDeclaredMethod(
-            "updateConceptNonDefiningRelationships", Set.class, Set.class);
-    method.setAccessible(true);
-    boolean result = (boolean) method.invoke(null, existingRelationships, newRelationships);
+    boolean result =
+        invokeUpdateConceptNonDefiningRelationships(existingRelationships, newRelationships);
 
     // Verify that the method returns true because the active relationship is removed
     assertThat(result).isTrue();
@@ -182,11 +184,8 @@ class ProductCreationServiceTest {
     newRelationships.add(newRelationship);
 
     // Invoke the private method using reflection
-    Method method =
-        ProductCreationService.class.getDeclaredMethod(
-            "updateConceptNonDefiningRelationships", Set.class, Set.class);
-    method.setAccessible(true);
-    boolean result = (boolean) method.invoke(null, existingRelationships, newRelationships);
+    boolean result =
+        invokeUpdateConceptNonDefiningRelationships(existingRelationships, newRelationships);
 
     // Verify that the relationship was reactivated
     assertThat(result).isTrue();
@@ -210,11 +209,8 @@ class ProductCreationServiceTest {
     newRelationships.add(newRelationship);
 
     // Invoke the private method using reflection
-    Method method =
-        ProductCreationService.class.getDeclaredMethod(
-            "updateConceptNonDefiningRelationships", Set.class, Set.class);
-    method.setAccessible(true);
-    boolean result = (boolean) method.invoke(null, existingRelationships, newRelationships);
+    boolean result =
+        invokeUpdateConceptNonDefiningRelationships(existingRelationships, newRelationships);
 
     // Verify that the new relationship was added
     assertThat(result).isTrue();
@@ -247,11 +243,8 @@ class ProductCreationServiceTest {
     newRelationships.add(newRelationship);
 
     // Invoke the private method using reflection
-    Method method =
-        ProductCreationService.class.getDeclaredMethod(
-            "updateConceptNonDefiningRelationships", Set.class, Set.class);
-    method.setAccessible(true);
-    boolean result = (boolean) method.invoke(null, existingRelationships, newRelationships);
+    boolean result =
+        invokeUpdateConceptNonDefiningRelationships(existingRelationships, newRelationships);
 
     // Verify that the active relationship was removed and the new one was added
     assertThat(result).isTrue();
@@ -276,11 +269,8 @@ class ProductCreationServiceTest {
     Set<SnowstormRelationship> newRelationships = new HashSet<>();
 
     // Invoke the private method using reflection
-    Method method =
-        ProductCreationService.class.getDeclaredMethod(
-            "updateConceptNonDefiningRelationships", Set.class, Set.class);
-    method.setAccessible(true);
-    boolean result = (boolean) method.invoke(null, existingRelationships, newRelationships);
+    boolean result =
+        invokeUpdateConceptNonDefiningRelationships(existingRelationships, newRelationships);
 
     // Verify that the method returns false because no modifications were made
     // (the inactive relationship is not an ADDITIONAL_RELATIONSHIP so it's not removed)
