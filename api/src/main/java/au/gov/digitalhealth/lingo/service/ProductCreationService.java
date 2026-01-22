@@ -293,8 +293,11 @@ public class ProductCreationService {
           } else if (existingRelationships.stream()
               .noneMatch(
                   existingRelationship ->
-                      isTypeAndDestinationMatch(existingRelationship, newRelationship))) {
-            // Only add if no relationship (active or inactive) exists
+                      ADDITIONAL_RELATIONSHIP
+                              .getValue()
+                              .equals(existingRelationship.getCharacteristicType())
+                          && isTypeAndDestinationMatch(existingRelationship, newRelationship))) {
+            // Only add if no ADDITIONAL_RELATIONSHIP (active or inactive) exists
             existingRelationships.add(newRelationship);
             relationshipsModified.set(true);
           }
