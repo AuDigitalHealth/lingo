@@ -18,6 +18,7 @@ package au.gov.digitalhealth.lingo.service;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.ADDITIONAL_RELATIONSHIP;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import au.csiro.snowstorm_client.model.SnowstormConcreteValue;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import java.lang.reflect.Method;
 import java.util.HashSet;
@@ -32,7 +33,8 @@ class ProductCreationServiceTest {
   private static final String TEST_DESTINATION_ID_1 = "789012";
   private static final String TEST_TYPE_ID_2 = "999999";
   private static final String TEST_DESTINATION_ID_2 = "888888";
-  private static final String TEST_CONCRETE_VALUE = "100";
+  private static final SnowstormConcreteValue TEST_CONCRETE_VALUE = new SnowstormConcreteValue().value(
+      "100");
   private static final String NON_ADDITIONAL_RELATIONSHIP_TYPE = "SOME_OTHER_TYPE";
 
   /**
