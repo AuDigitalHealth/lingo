@@ -257,31 +257,49 @@ public class ProductCreationService {
   private static boolean updateConceptNonDefiningRelationships(
       Set<SnowstormRelationship> existingRelationships,
       Set<SnowstormRelationship> newRelationships) {
-    // Remove any existing relationships that are not in the new relationships
+    // Remove any existing active relationships that are not in the new relationships
     boolean relationshipsRemoved =
         existingRelationships.removeIf(
             existingRelationship ->
                 ADDITIONAL_RELATIONSHIP
                         .getValue()
                         .equals(existingRelationship.getCharacteristicType())
+                    && TRUE.equals(existingRelationship.getActive())
                     && newRelationships.stream()
                         .noneMatch(
                             newRelationship ->
                                 isTypeAndDestinationMatch(existingRelationship, newRelationship)));
 
-    AtomicBoolean relationshipsAdded = new AtomicBoolean(false);
-    // Add the new relationships
+    AtomicBoolean relationshipsModified = new AtomicBoolean(false);
+    // Add or reactivate relationships
     newRelationships.forEach(
         newRelationship -> {
-          if (existingRelationships.stream()
+          // Check if an inactive relationship exists that matches
+          boolean reactivated =
+              existingRelationships.stream()
+                  .filter(
+                      existingRelationship ->
+                          ADDITIONAL_RELATIONSHIP
+                                  .getValue()
+                                  .equals(existingRelationship.getCharacteristicType())
+                              && !TRUE.equals(existingRelationship.getActive())
+                              && isTypeAndDestinationMatch(existingRelationship, newRelationship))
+                  .peek(existingRelationship -> existingRelationship.setActive(true))
+                  .findFirst()
+                  .isPresent();
+
+          if (reactivated) {
+            relationshipsModified.set(true);
+          } else if (existingRelationships.stream()
               .noneMatch(
                   existingRelationship ->
                       isTypeAndDestinationMatch(existingRelationship, newRelationship))) {
+            // Only add if no relationship (active or inactive) exists
             existingRelationships.add(newRelationship);
-            relationshipsAdded.set(true);
+            relationshipsModified.set(true);
           }
         });
-    return relationshipsAdded.get() || relationshipsRemoved;
+    return relationshipsModified.get() || relationshipsRemoved;
   }
 
   private static boolean isTypeAndDestinationMatch(
