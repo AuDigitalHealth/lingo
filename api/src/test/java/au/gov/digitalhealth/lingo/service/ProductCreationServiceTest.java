@@ -129,9 +129,12 @@ class ProductCreationServiceTest {
     assertThat(result).isTrue();
   }
 
-  /** Test that the method returns false when no relationships are modified. */
+  /**
+   * Test that the method returns true when an active ADDITIONAL_RELATIONSHIP is removed because it
+   * is not in the new relationships.
+   */
   @Test
-  void testMethodReturnsFalseWhenNoModifications() throws Exception {
+  void testMethodReturnsTrueWhenActiveRelationshipRemoved() throws Exception {
     // Create an active ADDITIONAL_RELATIONSHIP
     SnowstormRelationship activeRelationship = new SnowstormRelationship();
     activeRelationship.setCharacteristicType(ADDITIONAL_RELATIONSHIP.getValue());
@@ -254,5 +257,34 @@ class ProductCreationServiceTest {
     assertThat(result).isTrue();
     assertThat(existingRelationships).hasSize(1);
     assertThat(existingRelationships.iterator().next().getTypeId()).isEqualTo("999999");
+  }
+
+  /** Test that the method returns false when no relationships need to be modified. */
+  @Test
+  void testMethodReturnsFalseWhenNoModificationsNeeded() throws Exception {
+    // Create an inactive relationship (not ADDITIONAL_RELATIONSHIP characteristic type)
+    SnowstormRelationship inactiveOtherRelationship = new SnowstormRelationship();
+    inactiveOtherRelationship.setCharacteristicType("SOME_OTHER_TYPE");
+    inactiveOtherRelationship.setActive(false);
+    inactiveOtherRelationship.setTypeId("123456");
+    inactiveOtherRelationship.setDestinationId("789012");
+
+    Set<SnowstormRelationship> existingRelationships = new HashSet<>();
+    existingRelationships.add(inactiveOtherRelationship);
+
+    // Empty new relationships set
+    Set<SnowstormRelationship> newRelationships = new HashSet<>();
+
+    // Invoke the private method using reflection
+    Method method =
+        ProductCreationService.class.getDeclaredMethod(
+            "updateConceptNonDefiningRelationships", Set.class, Set.class);
+    method.setAccessible(true);
+    boolean result = (boolean) method.invoke(null, existingRelationships, newRelationships);
+
+    // Verify that the method returns false because no modifications were made
+    // (the inactive relationship is not an ADDITIONAL_RELATIONSHIP so it's not removed)
+    assertThat(result).isFalse();
+    assertThat(existingRelationships).hasSize(1);
   }
 }
