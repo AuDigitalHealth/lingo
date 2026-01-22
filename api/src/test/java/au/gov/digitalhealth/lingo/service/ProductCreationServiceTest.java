@@ -40,8 +40,7 @@ class ProductCreationServiceTest {
    * reflection.
    */
   private boolean invokeUpdateConceptNonDefiningRelationships(
-      Set<SnowstormRelationship> existingRelationships,
-      Set<SnowstormRelationship> newRelationships)
+      Set<SnowstormRelationship> existingRelationships, Set<SnowstormRelationship> newRelationships)
       throws Exception {
     Method method =
         ProductCreationService.class.getDeclaredMethod(
@@ -227,8 +226,7 @@ class ProductCreationServiceTest {
   }
 
   /**
-   * Test that active ADDITIONAL_RELATIONSHIP relationships are removed if not in new
-   * relationships.
+   * Test that active ADDITIONAL_RELATIONSHIP relationships are removed if not in new relationships.
    */
   @Test
   void testRemoveActiveRelationshipNotInNewRelationships() throws Exception {
