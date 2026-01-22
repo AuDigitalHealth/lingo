@@ -41,6 +41,12 @@ export default function CustomIterationSelection({
   const selectRef = useRef<HTMLDivElement>(null);
   const [minWidth, setMinWidth] = useState<number | undefined>(undefined);
 
+  // Sort iterations: active first, then inactive
+  const sortedIterationList = [...iterationList].sort((a, b) => {
+    if (a.active === b.active) return 0;
+    return a.active ? -1 : 1;
+  });
+
   useEffect(() => {
     if (skinny && selectRef.current && iterationList.length > 0) {
       // Create a temporary element to measure the widest option
@@ -149,7 +155,7 @@ export default function CustomIterationSelection({
           <MenuItem value="" onClick={handleDelete}>
             <em>&#8205;</em>
           </MenuItem>
-          {iterationList.map(iterationLocal => (
+          {sortedIterationList.map(iterationLocal => (
             <MenuItem
               data-testid={iterationLocal.name}
               key={iterationLocal.id}
@@ -170,9 +176,11 @@ interface IterationItemDisplayProps {
 }
 
 export function IterationItemDisplay({ iteration }: IterationItemDisplayProps) {
+  const inactive = !iteration.active && iteration.completed;
+  const color = inactive ? 'default' : 'warning';
   return (
     <Tooltip title={iteration.name} key={iteration.id}>
-      <Chip color={'warning'} label={iteration.name} size="small" />
+      <Chip color={color} label={iteration.name} size="small" />
     </Tooltip>
   );
 }
