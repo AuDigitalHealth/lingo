@@ -245,7 +245,7 @@ class ProductCreationServiceTest {
     // Create new relationships that don't match the active one
     SnowstormRelationship newRelationship = new SnowstormRelationship();
     newRelationship.setTypeId(TEST_TYPE_ID_2);
-    newRelationship.setDestinationId("888888");
+    newRelationship.setDestinationId(TEST_DESTINATION_ID_2);
 
     Set<SnowstormRelationship> newRelationships = new HashSet<>();
     newRelationships.add(newRelationship);
