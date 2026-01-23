@@ -6,18 +6,16 @@ import BaseModal from '../modal/BaseModal';
 import BaseModalHeader from '../modal/BaseModalHeader';
 import BaseModalBody from '../modal/BaseModalBody';
 import BaseModalFooter from '../modal/BaseModalFooter';
-import { Button } from '@mui/material';
+import { Button, FormControlLabel, Switch, Typography } from '@mui/material';
 import { ExistingDescriptionsSection } from './ExistingDescriptionsSection';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import useProjectLangRefsets from '../../hooks/api/products/useProjectLangRefsets';
-import useAvailableProjects from '../../hooks/api/useInitializeProjects';
-import { Typography } from '@mui/material';
-import { FormControlLabel } from '@mui/material';
-import { Switch } from '@mui/material';
 import {
   useProjectFromUrlProjectPath,
   useProjectFromUrlTaskPath,
 } from '../../hooks/useProjectFromUrlPath';
+import useAuthoringStore from '../../stores/AuthoringStore.ts';
+import { Project } from '../../types/Project.ts';
 
 interface DescriptionModalProps {
   open: boolean;
@@ -34,7 +32,6 @@ export default function DescriptionModal({
   branch,
 }: DescriptionModalProps) {
   const { branchKey } = useParams();
-  const { applicationConfig } = useApplicationConfigStore();
 
   const project = useProjectFromUrlProjectPath();
   const { project: projectKey } = useParams();
@@ -52,8 +49,10 @@ export default function DescriptionModal({
     conceptId,
     fullBranch,
   );
-  const { data: projects } = useAvailableProjects();
-  const langRefsets = useProjectLangRefsets({ project: taskProject });
+  const { selectedProject } = useAuthoringStore();
+  const resolvedProject: Project | undefined =
+    taskProject ?? project ?? selectedProject;
+  const langRefsets = useProjectLangRefsets({ project: resolvedProject });
 
   return (
     <BaseModal open={open} handleClose={handleClose} keepMounted={keepMounted}>
@@ -67,7 +66,6 @@ export default function DescriptionModal({
           isFetching={isLoading}
           nonDefiningProperties={product.nonDefiningProperties}
           descriptions={data?.descriptions}
-          isCtpp={false}
           dialects={langRefsets}
           title={''}
           product={product}
