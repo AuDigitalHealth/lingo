@@ -8,13 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
 
+### Fixed
+
+- Updated discontinuation letter to enable attachments from tickets.
 
 ## [1.3.29] - 2026-01-22
 
 ### Fixed
-
 - Add support for decimal values in multi pack screen.
 - Defect #1675 where ECL generated for AMT MPUU concepts was not specific enough
 - Change snomio.namespace to support the AUAMCR project

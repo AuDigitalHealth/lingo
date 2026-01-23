@@ -557,7 +557,7 @@ models:
         identifier: 680201000220108
         level: PACKAGE
         dataType: URI
-        valueRegexValidation: http(s)?://.+\.(pdf|html)
+        valueRegexValidation: ^(https?://.+|attachment://\d+)$
         valueValidationErrorMessage: "Must be a valid URL ending in .pdf or .html"
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
         sourceModelLevel: REAL_PACKAGED_CLINICAL_DRUG
