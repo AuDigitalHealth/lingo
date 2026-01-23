@@ -11,6 +11,8 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 ### Fixed
 
+- UI error loading a saved product description edit for review
+- Project level product model view not showing language reference sets on concept description view
 - Updated discontinuation letter to enable attachments from tickets.
 
 ## [1.3.29] - 2026-01-22

@@ -14,11 +14,9 @@
 /// limitations under the License.
 ///
 
-// material-ui
-import { Theme } from '@mui/material/styles';
-
 // types
 import { ColorProps } from '../types/extended';
+import { Theme } from '@mui/material';
 
 // ==============================|| CUSTOM FUNCTION - COLORS ||============================== //
 

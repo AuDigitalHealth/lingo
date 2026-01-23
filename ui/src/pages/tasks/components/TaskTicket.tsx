@@ -160,7 +160,12 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
         <Routes>
           <Route
             path="product/view/update/:updateId"
-            element={<ProductEditView ticket={useTicketQuery.data} />}
+            element={
+              <ProductEditView
+                ticket={useTicketQuery.data}
+                branchPath={task.branchPath}
+              />
+            }
           />
           <Route
             path="product/view/:conceptId/*"

@@ -263,7 +263,6 @@ export function DescriptionList({
               index={index}
               displayMode={displayMode}
               isPreferredTerm={isPreferred}
-              onDescriptionChange={onDescriptionChange}
             />
             {index < sortedDescriptions.length - 1 && (
               <Divider sx={{ width: '100%', my: 1 }} />
@@ -282,7 +281,7 @@ interface ExistingDescriptionsSectionProps {
   descriptions?: Description[];
   dialects: LanguageRefset[];
   title: string;
-  product: Product;
+  product?: Product;
   branch: string;
   displayMode: 'input' | 'text';
   showBorder: boolean;

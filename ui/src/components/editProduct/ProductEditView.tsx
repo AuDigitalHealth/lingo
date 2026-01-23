@@ -2,13 +2,11 @@ import { Box, FormControlLabel, Grid, Switch, Typography } from '@mui/material';
 import { Ticket } from '../../types/tickets/ticket';
 import { useParams } from 'react-router-dom';
 // import { ExistingDescriptionsSection } from './ProductEditModal';
-import { useMemo, useState } from 'react';
-import useAvailableProjects from '../../hooks/api/useInitializeProjects';
-import { useApplicationConfig } from '../../hooks/api/useInitializeConfig';
+import { useState } from 'react';
 import { LanguageRefset } from '../../types/Project';
 import {
-  ExternalIdentifier,
   isProductUpdateDetails,
+  NonDefiningProperty,
 } from '../../types/product';
 import {
   findDefaultLangRefset,
@@ -19,11 +17,7 @@ import { BrowserConcept } from '../../types/concept';
 import { ExistingDescriptionsSection } from './ExistingDescriptionsSection';
 import useProjectLangRefsets from '../../hooks/api/products/useProjectLangRefsets';
 import { useNodeModel } from '../../hooks/api/products/useNodeModel';
-import {
-  useProjectFromUrlProjectPath,
-  useProjectFromUrlTaskPath,
-} from '../../hooks/useProjectFromUrlPath';
-import useApplicationConfigStore from '../../stores/ApplicationConfigStore.ts';
+import { useProjectFromUrlProjectPath } from '../../hooks/useProjectFromUrlPath';
 
 const USLangRefset: LanguageRefset = {
   default: 'false',
@@ -34,13 +28,13 @@ const USLangRefset: LanguageRefset = {
 
 interface ProductEditViewProps {
   ticket: Ticket;
+  branchPath: string;
 }
-function ProductEditView({ ticket }: ProductEditViewProps) {
-  const { updateId, branchKey } = useParams();
+function ProductEditView({ ticket, branchPath }: ProductEditViewProps) {
+  const { updateId } = useParams();
   const [displayRetiredDescriptions, setDisplayRetiredDescriptions] =
     useState(false);
-  const { applicationConfig } = useApplicationConfig();
-  const { data: projects } = useAvailableProjects();
+  const project = useProjectFromUrlProjectPath();
   const langRefsets = useProjectLangRefsets({ project: project });
 
   const defaultLangrefset = findDefaultLangRefset(langRefsets);
@@ -53,15 +47,6 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
     ? productUpdate?.details.updatedState.concept
     : undefined;
 
-  const project = useProjectFromUrlProjectPath();
-  const { project: projectKey } = useParams();
-  const taskProject = useProjectFromUrlTaskPath();
-  const branchPath = taskProject?.branchPath
-    ? taskProject.branchPath
-    : projectKey
-      ? project?.branchPath
-      : useApplicationConfigStore.getState().applicationConfig?.apDefaultBranch;
-
   const { data: currentConcept, isFetching } = useSearchConceptByIdNoCache(
     updatedConcept?.conceptId,
     branchPath,
@@ -71,7 +56,10 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
     currentConcept?.descriptions,
     defaultLangrefset,
   );
-  const { data: nodeModel } = useNodeModel(updatedConcept?.conceptId, branch);
+  const { data: nodeModel } = useNodeModel(
+    updatedConcept?.conceptId,
+    branchPath,
+  );
 
   const historicDescriptions = isProductUpdateDetails(productUpdate?.details)
     ? sortDescriptions(
@@ -140,6 +128,7 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
               dialects={langRefsets}
               displayMode="input"
               showBorder
+              branch={branchPath}
             />
           </Box>
         </Grid>
@@ -160,6 +149,7 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
               dialects={langRefsets}
               displayMode="input"
               showBorder
+              branch={branchPath}
             />
           </Box>
         </Grid>
@@ -175,6 +165,7 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
             dialects={langRefsets}
             displayMode="input"
             showBorder
+            branch={branchPath}
           />
         )}
       </Grid>
@@ -205,8 +196,8 @@ function ProductEditView({ ticket }: ProductEditViewProps) {
 function hasConceptBeenChanged(
   updatedConcept: BrowserConcept | undefined,
   currentConcept: BrowserConcept | undefined,
-  updatedExternalIdentifiers: ExternalIdentifier[] | undefined,
-  currentExternalIdentifiers: ExternalIdentifier[] | undefined,
+  updatedExternalIdentifiers: NonDefiningProperty[] | undefined,
+  currentExternalIdentifiers: NonDefiningProperty[] | undefined,
   defaultLangRefset: LanguageRefset | undefined,
 ): boolean {
   const currentDescriptions = sortDescriptions(
@@ -282,14 +273,14 @@ function hasConceptBeenChanged(
   }
 
   // Create a frequency map for current identifiers
-  const currentIdFrequencyMap = new Map<string, Map<string, number>>();
+  const currentIdFrequencyMap = new Map<string, Map<unknown, number>>();
 
   for (const id of currentIds) {
     const key = id.identifierScheme;
-    const value = id.identifierValue;
+    const value = id.value;
 
     if (!currentIdFrequencyMap.has(key)) {
-      currentIdFrequencyMap.set(key, new Map<string, number>());
+      currentIdFrequencyMap.set(key, new Map<unknown, number>());
     }
 
     const valueMap = currentIdFrequencyMap.get(key)!;
@@ -297,14 +288,14 @@ function hasConceptBeenChanged(
   }
 
   // Create a frequency map for updated identifiers
-  const updatedIdFrequencyMap = new Map<string, Map<string, number>>();
+  const updatedIdFrequencyMap = new Map<string, Map<unknown, number>>();
 
   for (const id of updatedIds) {
     const key = id.identifierScheme;
-    const value = id.identifierValue;
+    const value = id.value;
 
     if (!updatedIdFrequencyMap.has(key)) {
-      updatedIdFrequencyMap.set(key, new Map<string, number>());
+      updatedIdFrequencyMap.set(key, new Map<unknown, number>());
     }
 
     const valueMap = updatedIdFrequencyMap.get(key)!;
