@@ -8,8 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
 
+### Fixed
+
+- UI error loading a saved porduct description edit for review
+- Project level product model view not showing language reference sets on concept description view
 
 ## [1.3.29] - 2026-01-22
 
