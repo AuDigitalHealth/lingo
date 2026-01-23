@@ -13,11 +13,11 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 - UI error loading a saved porduct description edit for review
 - Project level product model view not showing language reference sets on concept description view
+- Updated discontinuation letter to enable attachments from tickets.
 
 ## [1.3.29] - 2026-01-22
 
 ### Fixed
-
 - Add support for decimal values in multi pack screen.
 - Defect #1675 where ECL generated for AMT MPUU concepts was not specific enough
 - Change snomio.namespace to support the AUAMCR project
