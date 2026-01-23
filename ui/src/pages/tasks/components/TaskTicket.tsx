@@ -163,7 +163,7 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
             element={
               <ProductEditView
                 ticket={useTicketQuery.data}
-                branchPath={task?.branchPath}
+                branchPath={task.branchPath}
               />
             }
           />
