@@ -10,9 +10,19 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 ## [Unreleased]
 
 ### Fixed
+
+- Updated discontinuation letter to enable attachments from tickets.
+
+## [1.3.29] - 2026-01-22
+
+### Fixed
 - Add support for decimal values in multi pack screen.
 - Defect #1675 where ECL generated for AMT MPUU concepts was not specific enough
-- Updated discontinuation letter to enable attachments from tickets.
+- Change snomio.namespace to support the AUAMCR project
+- Fixed defect where inactive non-defining relationships were not being reactivated when updating products. Previously, if an existing relationship existed but was inactive, Snowstorm insisted that relationship needed to be reactivated instead of a new active relationship being added.
+- If an iteration is completed, and it is not active, it will now be red instead of yellow.
+- Task Id is now sorted on the ticket screen, when you attempt to associate a ticket to a task through the ticket screen.
+- There is no longer a horizontal scroll on the tick and flick refset list.
 
 ## [1.3.28] - 2026-01-12
 
