@@ -8,7 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
+
+### Changed
+- Product Authorisation number validation to allow 3 character PA numbers for NMPC
 
 
 ## [1.3.30] - 2026-01-23
