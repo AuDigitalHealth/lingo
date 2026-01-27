@@ -8,7 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
+
+### Changed
+- Changed CE number configuration datatype from UNSIGNED_INTEGER to STRING to preserve left-padded zeros
 
 
 ## [1.3.31] - 2026-01-27
