@@ -311,6 +311,7 @@ function NewConceptDropdownField({
   semanticTag,
 }: NewConceptDropdownFieldProps) {
   const [fieldChanged, setFieldChange] = useState(false);
+  const [isAIGenerated, setIsAIGenerated] = useState(false);
   const regExp = convertStringToRegex(
     getValueFromFieldBindings(fieldBindings, 'description.validation.regex'),
   );
@@ -337,7 +338,10 @@ function NewConceptDropdownField({
       generatedVal,
       semanticTag,
     );
-    setFieldChange(!(currentVal === generatedValWithoutSemanticTag));
+    const hasChanged = !(currentVal === generatedValWithoutSemanticTag);
+    setFieldChange(hasChanged);
+    // Check if field has AI-generated content (has a generated value and current value exists)
+    setIsAIGenerated(!!generatedVal && !!currentVal && !hasChanged);
   };
 
   const handleCopy = () => {
@@ -402,8 +406,21 @@ function NewConceptDropdownField({
         )}
       />
       {fieldChanged && (
-        <FormHelperText sx={{ color: t => `${t.palette.warning.main}` }}>
-          This name has been changed from the auto-generated name.
+        <FormHelperText 
+          sx={{ color: t => `${t.palette.warning.main}` }}
+          role="status"
+          aria-live="polite"
+        >
+          ⚠️ This name has been changed from the auto-generated name.
+        </FormHelperText>
+      )}
+      {isAIGenerated && !fieldChanged && (
+        <FormHelperText 
+          sx={{ color: t => `${t.palette.info.main}` }}
+          role="status"
+          aria-live="polite"
+        >
+          🤖 AI-generated suggestion based on editorial rules - please review
         </FormHelperText>
       )}
     </InnerBoxSmall>
