@@ -208,7 +208,7 @@ models:
         title: CE number
         identifier: 681031000220102
         level: PACKAGE
-        dataType: UNSIGNED_INTEGER
+        dataType: STRING
         valueRegexValidation: \d{4}
         valueValidationErrorMessage: "Must be a 4 digit number"
         modelLevels: REAL_PACKAGED_CLINICAL_DRUG
