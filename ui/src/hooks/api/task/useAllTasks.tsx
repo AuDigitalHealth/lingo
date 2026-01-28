@@ -111,7 +111,7 @@ export function useAllTasks() {
 
   const allTasksIsLoading: boolean = isLoading;
 
-  const allTasks = data;
+  const allTasks = data ? [...data] : undefined;
 
   allTasks?.sort((a, b) => {
     const keyA = a.key || '';

@@ -16,13 +16,13 @@ import {
 } from 'primereact/column';
 import React, { useMemo, useState } from 'react';
 import {
+  hasNestedResults,
+  isJobResult,
   JobResult,
   Result,
   ResultItem,
   ResultNotification,
-  isJobResult,
   ResultNotificationType,
-  hasNestedResults,
 } from '../../types/tickets/jobs';
 import { Button, Card, Tooltip, Typography } from '@mui/material';
 import { Link } from 'react-router-dom';
@@ -119,7 +119,7 @@ export default function Jobs() {
             sortFunction={(event: ResultArrayColumnSortEvent) => {
               const { data, order } = event;
 
-              return data.sort((a: Result, b: Result) => {
+              return [...data].sort((a: Result, b: Result) => {
                 const getTextAfterPipe = (str: string) => {
                   if (!str) return '';
                   const parts = str.split('|');
