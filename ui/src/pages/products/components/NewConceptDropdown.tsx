@@ -29,7 +29,7 @@ import {
 } from '../../../types/productValidationUtils.ts';
 import { convertStringToRegex } from '../../../utils/helpers/stringUtils.ts';
 import { getValueFromFieldBindings } from '../../../utils/helpers/FieldBindingUtils.ts';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import AdditionalPropertiesDisplay from './AdditionalPropertiesDisplay.tsx';
 import { ProductRetireUpdate } from './ProductRetireUpdate.tsx';
 import {
@@ -311,7 +311,6 @@ function NewConceptDropdownField({
   semanticTag,
 }: NewConceptDropdownFieldProps) {
   const [fieldChanged, setFieldChange] = useState(false);
-  const [isAIGenerated, setIsAIGenerated] = useState(false);
   const regExp = convertStringToRegex(
     getValueFromFieldBindings(fieldBindings, 'description.validation.regex'),
   );
@@ -324,6 +323,15 @@ function NewConceptDropdownField({
     (match, p1: string) =>
       `.generated${p1.charAt(0).toUpperCase() + p1.slice(1)}`,
   );
+  
+  // Check if there's a generated value for this field
+  const hasGeneratedValue = () => {
+    const generatedVal: string = getValues(
+      preferredFieldName as 'nodes.0.newConceptDetails.preferredTerm',
+    );
+    return !!generatedVal;
+  };
+  
   const handleBlur = () => {
     const currentVal: string = getValues(
       fieldName as 'nodes.0.newConceptDetails.preferredTerm',
@@ -340,28 +348,7 @@ function NewConceptDropdownField({
     );
     const hasChanged = !(currentVal === generatedValWithoutSemanticTag);
     setFieldChange(hasChanged);
-    // Check if field has AI-generated content (has a generated value and current value exists)
-    setIsAIGenerated(!!generatedVal && !!currentVal && !hasChanged);
   };
-
-  // Initialize AI-generated state on mount and when originalValue changes
-  useEffect(() => {
-    const currentVal: string = getValues(
-      fieldName as 'nodes.0.newConceptDetails.preferredTerm',
-    );
-    const generatedVal: string = getValues(
-      preferredFieldName as 'nodes.0.newConceptDetails.preferredTerm',
-    );
-    const generatedValWithoutSemanticTag = removeSemanticTagFromTerm(
-      generatedVal,
-      semanticTag,
-    );
-    const hasChanged = !(currentVal === generatedValWithoutSemanticTag);
-    // Set initial state for AI-generated indicator
-    if (!!generatedVal && !!currentVal && !hasChanged) {
-      setIsAIGenerated(true);
-    }
-  }, [originalValue, getValues, fieldName, preferredFieldName, semanticTag]);
 
   const handleCopy = () => {
     if (copyVal) {
@@ -433,7 +420,7 @@ function NewConceptDropdownField({
           ⚠️ This name has been changed from the auto-generated name.
         </FormHelperText>
       )}
-      {isAIGenerated && !fieldChanged && (
+      {!fieldChanged && hasGeneratedValue() && (
         <FormHelperText 
           sx={{ color: t => `${t.palette.info.main}` }}
           role="status"
