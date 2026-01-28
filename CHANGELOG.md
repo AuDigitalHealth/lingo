@@ -8,7 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
+
+### Added
+- AI transparency indicators for Fully Specified Names (FSN) and Preferred Terms (PT) in concept creation/editing. Displays informational messages to inform users when content is AI-generated and tracks modifications as a best practice exceeding EU AI Act requirements.
 
 
 ## [1.3.31] - 2026-01-27
