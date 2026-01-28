@@ -324,14 +324,6 @@ function NewConceptDropdownField({
       `.generated${p1.charAt(0).toUpperCase() + p1.slice(1)}`,
   );
   
-  // Check if there's a generated value for this field
-  const hasGeneratedValue = () => {
-    const generatedVal: string = getValues(
-      preferredFieldName as 'nodes.0.newConceptDetails.preferredTerm',
-    );
-    return !!generatedVal;
-  };
-  
   const handleBlur = () => {
     const currentVal: string = getValues(
       fieldName as 'nodes.0.newConceptDetails.preferredTerm',
@@ -420,7 +412,7 @@ function NewConceptDropdownField({
           ⚠️ This name has been changed from the auto-generated name.
         </FormHelperText>
       )}
-      {!fieldChanged && hasGeneratedValue() && (
+      {!fieldChanged && !!getValues(preferredFieldName as 'nodes.0.newConceptDetails.preferredTerm') && (
         <FormHelperText 
           sx={{ color: t => `${t.palette.info.main}` }}
           role="status"
