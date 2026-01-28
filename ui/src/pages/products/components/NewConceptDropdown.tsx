@@ -323,7 +323,7 @@ function NewConceptDropdownField({
     (match, p1: string) =>
       `.generated${p1.charAt(0).toUpperCase() + p1.slice(1)}`,
   );
-  
+
   const handleBlur = () => {
     const currentVal: string = getValues(
       fieldName as 'nodes.0.newConceptDetails.preferredTerm',
@@ -404,7 +404,7 @@ function NewConceptDropdownField({
         )}
       />
       {fieldChanged && (
-        <FormHelperText 
+        <FormHelperText
           sx={{ color: t => `${t.palette.warning.main}` }}
           role="status"
           aria-live="polite"
@@ -412,15 +412,18 @@ function NewConceptDropdownField({
           ⚠️ This name has been changed from the auto-generated name.
         </FormHelperText>
       )}
-      {!fieldChanged && !!getValues(preferredFieldName as 'nodes.0.newConceptDetails.preferredTerm') && (
-        <FormHelperText 
-          sx={{ color: t => `${t.palette.info.main}` }}
-          role="status"
-          aria-live="polite"
-        >
-          🤖 AI-generated suggestion based on editorial rules - please review
-        </FormHelperText>
-      )}
+      {!fieldChanged &&
+        !!getValues(
+          preferredFieldName as 'nodes.0.newConceptDetails.preferredTerm',
+        ) && (
+          <FormHelperText
+            sx={{ color: t => `${t.palette.info.main}` }}
+            role="status"
+            aria-live="polite"
+          >
+            🤖 AI-generated suggestion based on editorial rules - please review
+          </FormHelperText>
+        )}
     </InnerBoxSmall>
   );
 }

@@ -11,7 +11,8 @@ interface PostReviewMessageMutationVariables {
   message?: ReviewMessagePost;
 }
 
-interface PostReviewMessageMutationVariablesPost extends PostReviewMessageMutationVariables {
+interface PostReviewMessageMutationVariablesPost
+  extends PostReviewMessageMutationVariables {
   message: ReviewMessagePost;
   conceptId: string;
 }

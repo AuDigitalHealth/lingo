@@ -173,9 +173,8 @@ const ExternalIdentifiers: React.FC<
     </>
   );
 };
-interface ExternalIdentifierRenderProps extends FieldProps<
-  NonDefiningProperty[]
-> {
+interface ExternalIdentifierRenderProps
+  extends FieldProps<NonDefiningProperty[]> {
   branch: string | undefined;
 }
 const ExternalIdentifierRender: React.FC<
