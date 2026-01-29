@@ -6,8 +6,8 @@ import { queryOptions, useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
 function sortComments(comments: Comment[] | undefined) {
-  if (comments === undefined) return;
-  comments.sort((a: Comment, b: Comment) => {
+  if (comments === undefined) return undefined;
+  return [...comments].sort((a: Comment, b: Comment) => {
     return new Date(a.created).getTime() - new Date(b.created).getTime();
   });
 }
@@ -69,21 +69,22 @@ export function useTicketByTicketNumber(
 
   useEffect(() => {
     if (queryResult.data) {
-      sortComments(queryResult.data?.comments);
+      const ticket = { ...queryResult.data };
+      ticket.comments = sortComments(ticket.comments);
 
       if (productsQuery.data) {
-        queryResult.data.products = productsQuery.data;
+        ticket.products = productsQuery.data;
       }
 
       if (bulkProductActionsQuery.data) {
-        queryResult.data.bulkProductActions = bulkProductActionsQuery.data;
+        ticket.bulkProductActions = bulkProductActionsQuery.data;
       }
 
       if (historyQuery.data) {
-        queryResult.data.history = historyQuery.data;
+        ticket.history = historyQuery.data;
       }
 
-      mergeTicket(queryResult.data);
+      mergeTicket(ticket);
     }
   }, [
     queryResult.data,

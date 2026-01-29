@@ -9,6 +9,9 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 ## [Unreleased]
 
+### Added
+- AI transparency indicators for Fully Specified Names (FSN) and Preferred Terms (PT) in concept creation/editing. Displays informational messages to inform users when content is AI-generated and tracks modifications as a best practice exceeding EU AI Act requirements.
+
 ### Changed
 - Changed CE number configuration datatype from UNSIGNED_INTEGER to STRING to preserve left-padded zeros
 
