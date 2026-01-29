@@ -15,6 +15,8 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 ### Changed
 - Changed CE number configuration datatype from UNSIGNED_INTEGER to STRING to preserve left-padded zeros
+- When copying fsn's the semantic tag is now correctly enclosed in '()'
+- The advanced search bar when opening a products N box model now correctly links to the selected project
 - Reduced task cache refresh interval from 60 seconds to 30 seconds to improve responsiveness
 
 ## [1.3.31] - 2026-01-27

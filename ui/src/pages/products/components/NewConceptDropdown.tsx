@@ -315,7 +315,7 @@ function NewConceptDropdownField({
     getValueFromFieldBindings(fieldBindings, 'description.validation.regex'),
   );
   const originalValWithSemanticTag = semanticTag
-    ? `${originalValue} ${semanticTag}`
+    ? `${originalValue} (${semanticTag})`
     : originalValue;
   const [copyVal, setCopyVal] = useState(originalValWithSemanticTag);
   const preferredFieldName = fieldName.replace(

@@ -313,6 +313,7 @@ interface SearchResultsTableProps {
 }
 
 function SearchResultsTable({ concepts, isLoading }: SearchResultsTableProps) {
+  const { selectedProject } = useAuthoringStore();
   const columns: GridColDef[] = [
     {
       field: 'conceptId',
@@ -321,7 +322,7 @@ function SearchResultsTable({ concepts, isLoading }: SearchResultsTableProps) {
       // eslint-disable-next-line
       renderCell: (params: GridRenderCellParams<any, string>): ReactNode => (
         <Link
-          to={`/dashboard/products/${params.value}`}
+          to={`/dashboard/products/${selectedProject?.key}/${params.value}`}
           className={'task-details-link'}
         >
           {params.value!.toString()}
