@@ -94,6 +94,10 @@ public class Task {
     AUTO_PROMOTING("Auto Promoting"),
     @JsonProperty("Auto Conflict")
     AUTO_CONFLICT("Auto Conflict"),
+    @JsonProperty("Auto Queued")
+    AUTO_QUEUED("Auto Queued"),
+    @JsonProperty("Auto Rebasing")
+    AUTO_REBASING("Auto Rebasing"),
     @JsonProperty("Unknown")
     UNKNOWN("Unknown");
 
