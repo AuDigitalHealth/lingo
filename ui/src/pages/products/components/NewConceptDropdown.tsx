@@ -323,6 +323,7 @@ function NewConceptDropdownField({
     (match, p1: string) =>
       `.generated${p1.charAt(0).toUpperCase() + p1.slice(1)}`,
   );
+
   const handleBlur = () => {
     const currentVal: string = getValues(
       fieldName as 'nodes.0.newConceptDetails.preferredTerm',
@@ -337,7 +338,8 @@ function NewConceptDropdownField({
       generatedVal,
       semanticTag,
     );
-    setFieldChange(!(currentVal === generatedValWithoutSemanticTag));
+    const hasChanged = !(currentVal === generatedValWithoutSemanticTag);
+    setFieldChange(hasChanged);
   };
 
   const handleCopy = () => {
@@ -402,10 +404,26 @@ function NewConceptDropdownField({
         )}
       />
       {fieldChanged && (
-        <FormHelperText sx={{ color: t => `${t.palette.warning.main}` }}>
-          This name has been changed from the auto-generated name.
+        <FormHelperText
+          sx={{ color: t => `${t.palette.warning.main}` }}
+          role="status"
+          aria-live="polite"
+        >
+          ⚠️ This name has been changed from the auto-generated name.
         </FormHelperText>
       )}
+      {!fieldChanged &&
+        !!getValues(
+          preferredFieldName as 'nodes.0.newConceptDetails.preferredTerm',
+        ) && (
+          <FormHelperText
+            sx={{ color: t => `${t.palette.info.main}` }}
+            role="status"
+            aria-live="polite"
+          >
+            🤖 AI-generated suggestion based on editorial rules - please review
+          </FormHelperText>
+        )}
     </InnerBoxSmall>
   );
 }
