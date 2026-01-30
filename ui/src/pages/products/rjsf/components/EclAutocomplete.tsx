@@ -83,13 +83,6 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
         new Map(processedData.map(item => [item.conceptId, item])).values(),
       );
     }
-    // if (
-    //   value?.conceptId &&
-    //   !uniqueOptions.some(opt => opt.conceptId === value.conceptId)
-    // ) {
-    //   uniqueOptions.push(value as Concept);
-    // }
-    debugger;
     setOptions(uniqueOptions);
   }, [allData, disabled, value]);
 
