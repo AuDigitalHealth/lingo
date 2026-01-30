@@ -58,6 +58,7 @@ public class ValidationUtil {
       SnowstormConcept concept, ValidationResult result) {
     SnowstormAxiom axiom = getSingleAxiom(concept);
     if (axiom.getRelationships().stream()
+        .filter(r -> r.getActive() != null && r.getActive())
         .anyMatch(
             r ->
                 r.getTypeId().equals(CONTAINS_PACKAGED_CD.getValue())

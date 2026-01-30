@@ -93,6 +93,7 @@ public abstract class AtomicDataService<T extends ProductDetails> {
       ModelConfiguration modelConfiguration) {
     Set<SnowstormRelationship> eclRels =
         axiom.getRelationships().stream()
+            .filter(r -> r.getActive() == null || r.getActive())
             .filter(r -> !r.getTypeId().equals(typeToSuppress.getValue()))
             .filter(r -> !r.getTypeId().equals(IS_A.getValue()))
             .collect(Collectors.toSet());

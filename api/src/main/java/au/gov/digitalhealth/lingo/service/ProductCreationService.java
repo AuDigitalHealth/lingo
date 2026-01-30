@@ -175,7 +175,11 @@ public class ProductCreationService {
           "All negative identifiers should have been replaced",
           HttpStatus.INTERNAL_SERVER_ERROR);
     } else if (concepts.stream()
-        .flatMap(c -> getActiveClassAxioms(c).stream().flatMap(a -> a.getRelationships().stream()))
+        .flatMap(
+            c ->
+                getActiveClassAxioms(c).stream()
+                    .flatMap(a -> a.getRelationships().stream())
+                    .filter(r -> r.getActive() == null || r.getActive()))
         .anyMatch(
             r ->
                 r.getConcreteValue() == null
@@ -189,6 +193,7 @@ public class ProductCreationService {
                           .anyMatch(
                               a ->
                                   a.getRelationships().stream()
+                                      .filter(r -> r.getActive() == null || r.getActive())
                                       .anyMatch(
                                           r ->
                                               r.getConcreteValue() == null

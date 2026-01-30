@@ -282,7 +282,7 @@ public class NodeGeneratorService {
         .map(SnowstormItemsPageRelationship::getItems)
         .doOnNext(rels -> node.setRelationships(rels))
         .flatMapMany(Flux::fromIterable)
-        .filter(SnowstormRelationship::getActive)
+        .filter(r -> r.getActive() == null || r.getActive())
         .flatMap(
             relationship -> {
               if (nonDefiningPropertiesMap.containsKey(relationship.getTypeId())) {
@@ -624,6 +624,7 @@ public class NodeGeneratorService {
                               .anyMatch(
                                   a ->
                                       a.getRelationships().stream()
+                                          .filter(r -> r.getActive() == null || r.getActive())
                                           .anyMatch(
                                               r ->
                                                   isOiiType(r)

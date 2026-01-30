@@ -35,6 +35,7 @@ public class NewNodeDependencyComparator implements Comparator<Node> {
             n ->
                 n.getNewConceptDetails().getAxioms().stream()
                     .flatMap(axoim -> axoim.getRelationships().stream())
+                    .filter(r -> r.getActive() == null || r.getActive())
                     .filter(
                         r ->
                             r.getConcreteValue() == null
