@@ -220,9 +220,11 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
               }}
               errorSchema={formContext.errorSchema}
               rawErrors={
-                formContext.formErrors
-                  ? formContext.formErrors.map(e => e.message)
-                  : []
+                readOnly
+                  ? []
+                  : formContext.formErrors
+                    ? formContext.formErrors.map(e => e.message)
+                    : []
               }
               registry={registry}
               formContext={formContext}
