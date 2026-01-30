@@ -20,6 +20,8 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 - When copying fsn's the semantic tag is now correctly enclosed in '()'
 - The advanced search bar when opening a products N box model now correctly links to the selected project
 - Reduced task cache refresh interval from 60 seconds to 30 seconds to improve responsiveness
+- Undid fix that caused a bug in the list of products authored against a ticket, the bug caused the authored products to not be shown.
+- Previously when a brand/product name had been authored against a task on a ticket, and not promoted, then this task was abandoned and the ticket was attached to another task then loaded into the product authoring form, it would include the concept authored for brand/product on the last task, which doesn't exist on the new task. It now raises a warning 'Concept does not exist in this branch, please search or create the concept'. 
 
 ## [1.3.31] - 2026-01-27
 
