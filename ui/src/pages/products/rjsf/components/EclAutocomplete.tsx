@@ -136,14 +136,20 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
     options.find(option => option.conceptId === value?.conceptId) || value;
   const needsAttention = value && value.pt?.term && !value.conceptId;
 
-  const needsAttentionBecauseConceptMightNotExist = value && value.conceptId && !options.some(opt => opt.conceptId === value.conceptId);
+  const needsAttentionBecauseConceptMightNotExist =
+    value &&
+    value.conceptId &&
+    !options.some(opt => opt.conceptId === value.conceptId);
 
-  const needsAttentionBecauseConceptMightNotExistMessage = 'Concept might not exist in this branch, please search or create the concept';
+  const needsAttentionBecauseConceptMightNotExistMessage =
+    'Concept does not exist in this branch, please search or create the concept';
 
   const needsAttentionMessage =
     needsAttention && !errorMessage
       ? 'Please search for and select a valid option'
-      : needsAttentionBecauseConceptMightNotExist ?  needsAttentionBecauseConceptMightNotExistMessage : undefined;
+      : needsAttentionBecauseConceptMightNotExist
+        ? needsAttentionBecauseConceptMightNotExistMessage
+        : undefined;
 
   return (
     <span data-component-name="EclAutocomplete" style={{ width: 'inherit' }}>
@@ -204,7 +210,9 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
                 m: 0,
                 minHeight: '1em',
                 color:
-                  errorMessage || needsAttention || needsAttentionBecauseConceptMightNotExist
+                  errorMessage ||
+                  needsAttention ||
+                  needsAttentionBecauseConceptMightNotExist
                     ? 'error.main'
                     : 'text.secondary',
               },
