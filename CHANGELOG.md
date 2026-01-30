@@ -12,15 +12,21 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 ### Added
 - Support for new Snowstorm task statuses: "Auto Queued" and "Auto Rebasing"
 - AI transparency indicators for Fully Specified Names (FSN) and Preferred Terms (PT) in concept creation/editing. Displays informational messages to inform users when content is AI-generated and tracks modifications as a best practice exceeding EU AI Act requirements.
-- validation issue with non-def properties on new brands left hand side panel
 
+### Fixed
+
+- Unnecessary Vvlidation messages with non-def properties on new brands left hand side panel
+- TypeError when selecting "All Tasks" option caused by attempting to sort read-only query data
+  array
+- When copying fsn's the semantic tag is now correctly enclosed in '()'
+- The advanced search bar when opening a products N box model now correctly links to the selected
+  project
+- Undid fix that caused a bug in the list of products authored against a ticket, the bug caused the
+  authored products to not be shown.
 
 ### Changed
 - Changed CE number configuration datatype from UNSIGNED_INTEGER to STRING to preserve left-padded zeros
-- When copying fsn's the semantic tag is now correctly enclosed in '()'
-- The advanced search bar when opening a products N box model now correctly links to the selected project
 - Reduced task cache refresh interval from 60 seconds to 30 seconds to improve responsiveness
-- Undid fix that caused a bug in the list of products authored against a ticket, the bug caused the authored products to not be shown.
 - Previously when a brand/product name had been authored against a task on a ticket, and not promoted, then this task was abandoned and the ticket was attached to another task then loaded into the product authoring form, it would include the concept authored for brand/product on the last task, which doesn't exist on the new task. It now raises a warning 'Concept does not exist in this branch, please search or create the concept'. 
 
 ## [1.3.31] - 2026-01-27

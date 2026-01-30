@@ -111,9 +111,7 @@ export function useAllTasks() {
 
   const allTasksIsLoading: boolean = isLoading;
 
-  const allTasks = data;
-
-  allTasks?.sort((a, b) => {
+  const allTasks = data?.slice().sort((a, b) => {
     const keyA = a.key || '';
     const keyB = b.key || '';
 
