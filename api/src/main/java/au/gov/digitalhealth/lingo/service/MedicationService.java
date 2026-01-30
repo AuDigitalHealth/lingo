@@ -437,6 +437,7 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
 
       NmpcType nmpcType =
           product.getRelationships().stream()
+              .filter(r -> r.getActive() == null || r.getActive())
               .filter(r -> r.getTypeId().equals(HAS_NMPC_PRODUCT_TYPE.getValue()))
               .map(r -> NmpcType.fromValue(r.getDestinationId()))
               .findFirst()
@@ -608,7 +609,7 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
       if (inferredRelationshipOfTypeExists(productRelationships, HAS_SUPPLIER.getValue())) {
         if (filterActiveInferredRelationshipByType(productRelationships, HAS_SUPPLIER.getValue())
             .stream()
-            .filter(SnowstormRelationship::getActive)
+            .filter(r -> r.getActive() == null || r.getActive())
             .anyMatch(r -> !r.getModifier().equals(ADDITIONAL_RELATIONSHIP.getValue()))) {
           log.warning("Found active non additional relationship for HAS_SUPPLIER, " + productId);
         }
@@ -617,7 +618,7 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
             .add(
                 new NonDefiningProperty(
                     product.getRelationships().stream()
-                        .filter(r -> r.getActive())
+                        .filter(r -> r.getActive() == null || r.getActive())
                         .filter(r -> r.getTypeId().equals(HAS_SUPPLIER.getValue()))
                         .findFirst()
                         .orElseThrow(),
@@ -684,6 +685,7 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
             .noneMatch(
                 c ->
                     c.getRelationships().stream()
+                        .filter(r -> r.getActive() == null || r.getActive())
                         .anyMatch(
                             r ->
                                 NmpcConstants.HAS_NMPC_PRODUCT_TYPE.getValue().equals(r.getTypeId())

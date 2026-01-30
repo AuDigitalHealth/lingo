@@ -54,6 +54,7 @@ public class NonDefiningPropertyUtils {
                     NonDefiningPropertyDefinition::getIdentifier, Function.identity()));
     return concepts.stream()
         .flatMap(concept -> concept.getRelationships().stream())
+        .filter(r -> r.getActive() == null || r.getActive())
         .filter(relationship -> nonDefiningPropertyMap.containsKey(relationship.getTypeId()))
         .collect(
             Collectors.groupingBy(
@@ -86,6 +87,7 @@ public class NonDefiningPropertyUtils {
     return concepts
         .flatMapIterable(Map::values)
         .flatMapIterable(SnowstormConcept::getRelationships)
+        .filter(r -> r.getActive() == null || r.getActive())
         .filter(
             relationship ->
                 nonDefiningPropertyMap.containsKey(
@@ -115,6 +117,7 @@ public class NonDefiningPropertyUtils {
     }
 
     return nonDefiningProperties.stream()
+        .filter(r -> r.getActive() == null || r.getActive())
         .filter(
             relationship ->
                 nonDefiningPropertiesForModelLevel.containsKey(relationship.getTypeId()))

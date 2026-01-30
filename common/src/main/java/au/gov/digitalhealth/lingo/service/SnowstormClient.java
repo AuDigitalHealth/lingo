@@ -1136,6 +1136,7 @@ public class SnowstormClient {
 
     List<SnowstormConceptMini> numerators =
         relationships.stream()
+            .filter(r -> r.getActive() == null || r.getActive())
             .filter(r -> r.getTypeId().equals(AmtConstants.HAS_NUMERATOR_UNIT.getValue()))
             .map(SnowstormRelationship::getTarget)
             .toList();
@@ -1150,6 +1151,7 @@ public class SnowstormClient {
 
     List<SnowstormConceptMini> denominators =
         relationships.stream()
+            .filter(r -> r.getActive() == null || r.getActive())
             .filter(r -> r.getTypeId().equals(AmtConstants.HAS_DENOMINATOR_UNIT.getValue()))
             .map(SnowstormRelationship::getTarget)
             .toList();
