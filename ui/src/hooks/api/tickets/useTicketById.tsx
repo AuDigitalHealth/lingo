@@ -69,22 +69,21 @@ export function useTicketByTicketNumber(
 
   useEffect(() => {
     if (queryResult.data) {
-      const ticket = { ...queryResult.data };
-      ticket.comments = sortComments(ticket.comments);
+      sortComments(queryResult.data?.comments);
 
       if (productsQuery.data) {
-        ticket.products = productsQuery.data;
+        queryResult.data.products = productsQuery.data;
       }
 
       if (bulkProductActionsQuery.data) {
-        ticket.bulkProductActions = bulkProductActionsQuery.data;
+        queryResult.data.bulkProductActions = bulkProductActionsQuery.data;
       }
 
       if (historyQuery.data) {
-        ticket.history = historyQuery.data;
+        queryResult.data.history = historyQuery.data;
       }
 
-      mergeTicket(ticket);
+      mergeTicket(queryResult.data);
     }
   }, [
     queryResult.data,
