@@ -18,6 +18,7 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 - When copying fsn's the semantic tag is now correctly enclosed in '()'
 - The advanced search bar when opening a products N box model now correctly links to the selected project
 - Reduced task cache refresh interval from 60 seconds to 30 seconds to improve responsiveness
+- Undid fix that caused a bug in the list of products authored against a ticket, the bug caused the authored products to not be shown.
 
 ## [1.3.31] - 2026-01-27
 
