@@ -47,17 +47,19 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
   const task = useTaskByKey();
   const [refreshKey, setRefreshKey] = useState(0);
   const useTicketQuery = useTicketByTicketNumber(ticketNumber, true);
-  const { setSelectedActionType } = useAuthoringStore();
+  const { setSelectedActionType, selectedActionType } = useAuthoringStore();
   const theme = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
   const ticketMatch = location.pathname.match(/\/individual\/(.+)/);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   useEffect(() => {
-    if (useTicketQuery.data) {
+    if (useTicketQuery.data && !hasInitialized) {
       setSelectedActionType(ActionType.newMedication); //reset to medication on the beginning
+      setHasInitialized(true);
     }
-  }, [useTicketQuery.data, setSelectedActionType]);
+  }, [useTicketQuery.data, hasInitialized, setSelectedActionType]);
 
   const refresh = () => {
     setRefreshKey(oldKey => oldKey + 1);
