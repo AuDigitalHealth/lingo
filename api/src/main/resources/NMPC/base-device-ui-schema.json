@@ -86,7 +86,7 @@
             "skipTitle": true,
             "branch": "MAIN",
             "ecl": "<774167006",
-            "showDefaultOptions": true,
+            "showDefaultOptions": false,
             "createPrimitiveConcept": {
               "ecl": "<774167006",
               "semanticTags": "(product name)",
@@ -101,8 +101,8 @@
           "ui:title": "VTM Level Device Type",
           "ui:options": {
             "skipTitle": true,
-            "ecl": "(<49062001 and ^660351000220100 ): [0..0] 774158006 = *",
-            "extendedEcl": "(<49062001): [0..0] 774158006 = *",
+            "ecl": "(<<49062001 and ^660351000220100 ): [0..0] 774158006 = *",
+            "extendedEcl": "(<<49062001): [0..0] 774158006 = *",
             "showDefaultOptions": false,
             "dependants": [
               {
