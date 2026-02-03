@@ -341,7 +341,7 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
     ticketProductId,
   ) => {
     get().setWarningModalOpen(false);
-    const request = data ? data : get().devicePreviewDetails;
+    const request = data ? data : get().productPreviewDetails;
 
     if (request) {
       get().setProductSaveDetails(undefined);
