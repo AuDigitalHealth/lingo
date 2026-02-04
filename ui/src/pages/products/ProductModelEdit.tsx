@@ -653,7 +653,6 @@ function ConceptOptionsDropdown({
 
   const {
     productPreviewDetails,
-    devicePreviewDetails,
     previewMedicationProduct,
     previewDeviceProduct,
     selectedProductType,
@@ -704,7 +703,7 @@ function ConceptOptionsDropdown({
     );
   };
   const handleDeviceProductSubmit = () => {
-    const tempProductPreviewDetails = Object.assign({}, devicePreviewDetails);
+    const tempProductPreviewDetails = Object.assign({}, productPreviewDetails);
     if (
       tempProductPreviewDetails === undefined ||
       selectedConcept?.conceptId === undefined
