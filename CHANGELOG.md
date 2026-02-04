@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
-## [Unreleased]
+## [1.3.34] - 2026-02-04
 
 ### Fixed
 - There were 500 errors occuring on the concept diagram model api call on the product description update screen when the user was editing a task on a project which was not the default project, these are now fixed as requested by Snomed.
