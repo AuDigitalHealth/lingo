@@ -12,7 +12,7 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 ### Fixed
 
 - Issues with device type ECL and brand "show default options" configuration for NMPC blocking
-  device updats
+  device updates
 - Resolved product preview and primitive concept selection workflow for device updates
 
 
