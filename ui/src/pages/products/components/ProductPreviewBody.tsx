@@ -266,7 +266,10 @@ function SubmitPanel({
     newConceptFound &&
     idsWithInvalidName.length === 0;
   const canSubmitProductUpdate =
-    isProductUpdate && canEdit && (hasUpdatedProperties || newConceptFound);
+    isProductUpdate &&
+    canEdit &&
+    idsWithInvalidName.length === 0 &&
+    (hasUpdatedProperties || newConceptFound);
   return (
     <Box m={1} p={1}>
       <Stack spacing={2} direction="row" justifyContent="end">
