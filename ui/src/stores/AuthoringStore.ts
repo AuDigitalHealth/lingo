@@ -74,9 +74,12 @@ interface AuthoringStoreConfig {
   setOriginalConceptId: (conceptId: string | undefined) => void;
   productSaveDetails: ProductSaveDetails | undefined;
   setProductSaveDetails: (details: ProductSaveDetails | undefined) => void;
-  productPreviewDetails: MedicationPackageDetails | undefined;
+  productPreviewDetails:
+    | MedicationPackageDetails
+    | DevicePackageDetails
+    | undefined;
   setProductPreviewDetails: (
-    details: MedicationPackageDetails | undefined,
+    details: MedicationPackageDetails | DevicePackageDetails | undefined,
   ) => void;
 
   brandPackSizeCreationDetails: BrandPackSizeCreationDetails | undefined;
@@ -88,8 +91,6 @@ interface AuthoringStoreConfig {
     details: BrandPackSizeCreationDetails | undefined,
   ) => void;
 
-  devicePreviewDetails: DevicePackageDetails | undefined;
-  setDevicePreviewDetails: (details: DevicePackageDetails | undefined) => void;
   previewModalOpen: boolean;
   setPreviewModalOpen: (bool: boolean) => void;
   loadingPreview: boolean;
@@ -203,10 +204,6 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
   setBrandPackSizePreviewDetails: details => {
     set({ brandPackSizePreviewDetails: details });
   },
-  devicePreviewDetails: undefined,
-  setDevicePreviewDetails: details => {
-    set({ devicePreviewDetails: details });
-  },
   previewModalOpen: false,
   setPreviewModalOpen: bool => {
     set({ previewModalOpen: bool });
@@ -271,7 +268,9 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
     get().setWarningModalOpen(false);
     get().setLoadingPreview(true);
 
-    const request = data ? data : get().productPreviewDetails;
+    const request = (data ? data : get().productPreviewDetails) as
+      | MedicationPackageDetails
+      | undefined;
 
     if (!request) {
       get().setLoadingPreview(false);
@@ -341,38 +340,70 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
     ticketProductId,
   ) => {
     get().setWarningModalOpen(false);
-    const request = data ? data : get().productPreviewDetails;
+    get().setLoadingPreview(true);
 
-    if (request) {
-      get().setProductSaveDetails(undefined);
+    const request = (data ? data : get().productPreviewDetails) as
+      | DevicePackageDetails
+      | undefined;
+
+    if (!request) {
+      get().setLoadingPreview(false);
+      return;
+    }
+    const originalPackageDetails = get().productSaveDetails
+      ? get().productSaveDetails?.originalPackageDetails
+      : undefined;
+
+    get().setProductSaveDetails(undefined);
+    get().setPreviewModalOpen(true);
+
+    const validatedData = cleanDevicePackageDetails(request);
+    const originalConcept = get().selectedProduct
+      ? get().selectedProduct?.id
+      : get().originalConceptId;
+
+    const handleSuccess = (mp: ProductSummary) => {
+      const productSaveObj: ProductSaveDetails = {
+        type: get().isProductUpdate
+          ? ProductActionType.update
+          : ProductActionType.create,
+        productSummary: mp,
+        packageDetails: validatedData,
+        ticketId: ticket.id,
+        ticketProductId: ticketProductId ?? null,
+        originalConceptId: originalConcept,
+        originalPackageDetails: originalPackageDetails,
+      };
+
+      get().setProductSaveDetails(productSaveObj);
       get().setPreviewModalOpen(true);
-      const validatedData = cleanDevicePackageDetails(request);
+      get().setLoadingPreview(false);
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleError = (err: any) => {
+      const snackBarKey = snowstormErrorHandler(
+        err,
+        `Failed preview for [${request.productName?.pt?.term}]`,
+        serviceStatus,
+      );
+      const errorKeys = get().previewErrorKeys;
+      errorKeys.push(snackBarKey as string);
+      get().setPreviewErrorKeys(errorKeys);
+
+      get().setLoadingPreview(false);
+      get().setPreviewModalOpen(false);
+    };
+
+    if (get().isProductUpdate) {
+      productService
+        .previewUpdateDeviceProduct(validatedData, originalConcept, branch)
+        .then(handleSuccess)
+        .catch(handleError);
+    } else {
       productService
         .previewNewDeviceProduct(validatedData, branch)
-        .then(mp => {
-          const productCreationObj: ProductSaveDetails = {
-            productSummary: mp,
-            packageDetails: validatedData,
-            ticketId: ticket.id,
-            ticketProductId: ticketProductId ? ticketProductId : null,
-          };
-          get().setProductSaveDetails(productCreationObj);
-          get().setPreviewModalOpen(true);
-          get().setLoadingPreview(false);
-        })
-        .catch(err => {
-          const snackBarKey = snowstormErrorHandler(
-            err,
-            `Failed preview for  [${request.productName?.pt?.term}]`,
-            serviceStatus,
-          );
-          const errorKeys = get().previewErrorKeys;
-          errorKeys.push(snackBarKey as string);
-          get().setPreviewErrorKeys(errorKeys);
-
-          get().setLoadingPreview(false);
-          get().setPreviewModalOpen(false);
-        });
+        .then(handleSuccess)
+        .catch(handleError);
     }
   },
   handlePreviewToggleModal: (
