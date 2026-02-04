@@ -16,6 +16,10 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 - Resolved product preview and primitive concept selection workflow for device updates
 
 
+## [1.3.33] - 2026-02-02
+- modified generated names were not being saved when a product update was performed
+
+
 ## [1.3.32] - 2026-01-30
 
 ### Added

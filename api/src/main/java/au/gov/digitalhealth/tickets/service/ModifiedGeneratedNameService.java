@@ -18,7 +18,6 @@ package au.gov.digitalhealth.tickets.service;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.product.NameGeneratorSpec;
 import au.gov.digitalhealth.lingo.product.NewConceptDetails;
-import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.service.NameGenerationService;
 import au.gov.digitalhealth.tickets.models.ModifiedGeneratedName;
@@ -54,7 +53,7 @@ public class ModifiedGeneratedNameService {
 
     List<ModifiedGeneratedName> modifiedGeneratedNames =
         productSummaryClone.getNodes().stream()
-            .filter(Node::isNewConcept)
+            .filter(node -> node.isNewConcept() || node.isRetireAndReplace())
             .flatMap(
                 node -> {
                   NewConceptDetails newConceptDetails = node.getNewConceptDetails();
