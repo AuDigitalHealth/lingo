@@ -10,7 +10,7 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 ## [Unreleased]
 
 ### Fixed
-
+- There were 500 errors occuring on the concept diagram model api call on the product description update screen when the user was editing a task on a project which was not the default project, these are now fixed as requested by Snomed.
 - Issues with device type ECL and brand "show default options" configuration for NMPC blocking
   device updates
 - Resolved product preview and primitive concept selection workflow for device updates
