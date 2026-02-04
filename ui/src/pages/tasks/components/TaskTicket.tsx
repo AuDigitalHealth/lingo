@@ -47,7 +47,7 @@ function TaskTicket({ menuOpen }: TaskTicketProps) {
   const task = useTaskByKey();
   const [refreshKey, setRefreshKey] = useState(0);
   const useTicketQuery = useTicketByTicketNumber(ticketNumber, true);
-  const { setSelectedActionType, selectedActionType } = useAuthoringStore();
+  const { setSelectedActionType } = useAuthoringStore();
   const theme = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
