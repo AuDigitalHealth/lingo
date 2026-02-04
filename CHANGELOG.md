@@ -8,7 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
+
+### Fixed
+
+- Issues with device type ECL and brand "show default options" configuration for NMPC blocking
+  device updats
+- Resolved product preview and primitive concept selection workflow for device updates
 
 
 ## [1.3.32] - 2026-01-30
