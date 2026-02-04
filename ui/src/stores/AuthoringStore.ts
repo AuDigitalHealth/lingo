@@ -372,7 +372,9 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
         ticketId: ticket.id,
         ticketProductId: ticketProductId ?? null,
         originalConceptId: originalConcept,
-        originalPackageDetails: originalPackageDetails,
+        originalPackageDetails: originalPackageDetails ?? null,
+        partialSaveName: null,
+        nameOverride: null,
       };
 
       get().setProductSaveDetails(productSaveObj);
