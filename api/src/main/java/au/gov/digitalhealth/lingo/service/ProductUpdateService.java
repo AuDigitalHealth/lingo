@@ -624,6 +624,21 @@ public class ProductUpdateService {
     ProductSummary existingSummary = existingProductSummary.get();
     ProductSummary newSummary = newProductSummary.get();
 
+    if (newSummary.getNodes().stream().anyMatch(n -> !n.getConceptOptions().isEmpty())) {
+      log.info(
+          "Updated state contains concept options, using the existing product summary to ensure correlation");
+      Set<String> knownIds =
+          existingSummary.getNodes().stream()
+              .filter(n -> !n.isNewConcept())
+              .map(Node::getConceptId)
+              .collect(Collectors.toSet());
+
+      productDetails.setSelectedConceptIdentifiers(knownIds);
+
+      newSummary =
+          calculationService.calculateProductFromAtomicDataAsync(branch, productDetails).get();
+    }
+
     // correlate the existing product summary nodes to the new product summary nodes
     Map<String, Node> existingNodesByConceptId =
         existingSummary.getNodes().stream()
@@ -668,11 +683,12 @@ public class ProductUpdateService {
             });
 
     // include in the product summary all the unmatched existing nodes
+    final ProductSummary finalNewSummary = newSummary;
     existingNodesByConceptId.values().stream()
         .filter(node -> !allocatedExistingNodes.contains(node.getConceptId()))
         .forEach(
             node ->
-                newSummary
+                finalNewSummary
                     .getUnmatchedPreviouslyReferencedNodes()
                     .add(new OriginalNode(node, null, true)));
 
