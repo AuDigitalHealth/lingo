@@ -8,13 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
+
+### Added
+- Product update process upgraded to determine primitive concepts in calculated updates where
+  possible, saving the user from having to manually select from existing concept options.
+
+### Fixed
 - Fix accordion collapsing when clicking icon buttons in 7 box model screens
 
 
 ## [1.3.34] - 2026-02-04
 
 ### Fixed
-- There were 500 errors occuring on the concept diagram model api call on the product description update screen when the user was editing a task on a project which was not the default project, these are now fixed as requested by Snomed.
+
+- There were 500 errors occurring on the concept diagram model api call on the product description
+  update screen when the user was editing a task on a project which was not the default project,
+  these are now fixed as requested by Snomed.
 - Issues with device type ECL and brand "show default options" configuration for NMPC blocking
   device updates
 - Resolved product preview and primitive concept selection workflow for device updates
