@@ -10,9 +10,11 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 ## [Unreleased]
 
 ### Added
-
 - Product update process upgraded to determine primitive concepts in calculated updates where
   possible, saving the user from having to manually select from existing concept options.
+
+### Fixed
+- Fix accordion collapsing when clicking icon buttons in 7 box model screens
 
 
 ## [1.3.34] - 2026-02-04
