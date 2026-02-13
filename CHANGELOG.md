@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
-## [Unreleased]
+## [1.3.35] - 2026-02-13
 
 ### Added
 - Product update process upgraded to determine primitive concepts in calculated updates where
