@@ -15,6 +15,7 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 ### Fixed
 - Fix accordion collapsing when clicking icon buttons in 7 box model screens
+- Fix Issue with attachments, not converting to url after product create or product update.
 
 
 ## [1.3.34] - 2026-02-04

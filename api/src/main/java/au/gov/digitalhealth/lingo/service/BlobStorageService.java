@@ -30,7 +30,6 @@ import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
-import au.gov.digitalhealth.lingo.product.update.ProductPropertiesUpdateRequest;
 import au.gov.digitalhealth.tickets.models.Attachment;
 import au.gov.digitalhealth.tickets.repository.AttachmentRepository;
 import java.io.File;
@@ -51,6 +50,7 @@ import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -164,6 +164,7 @@ public class BlobStorageService {
 
       // Check if the object already exists in the bucket
       if (!fileAlreadyExists(s3, filePath, objectKey, s3Client)) {
+        log.info("Uploading to S3 bucket '" + s3.getBucketName() + "' with key: " + objectKey);
         PutObjectRequest putObjectRequest =
             PutObjectRequest.builder()
                 .bucket(s3.getBucketName())
@@ -173,6 +174,9 @@ public class BlobStorageService {
                 .build();
 
         s3Client.putObject(putObjectRequest, RequestBody.fromFile(filePath));
+        log.info("Successfully uploaded to S3: " + objectKey);
+      } else {
+        log.info("Skipped S3 upload, file already exists with matching size: " + objectKey);
       }
 
       return s3.getHttpBaseUrl() + "/" + objectKey;
@@ -216,26 +220,13 @@ public class BlobStorageService {
   }
 
   public void updateNonDefiningUrlProperties(
-      ModelConfiguration modelConfiguration, ProductPropertiesUpdateRequest updateRequest) {
-    Map<String, NonDefiningPropertyDefinition> nonDefiningPropertyDefinitionMap =
-        modelConfiguration.getNonDefiningProperties().stream()
-            .filter(p -> NonDefiningPropertyDataType.URI.equals(p.getDataType()))
-            .collect(Collectors.toMap(NonDefiningPropertyDefinition::getName, Function.identity()));
-    Map<String, ExternalIdentifierDefinition> externalIdentifierDefinitionMap =
-        modelConfiguration.getMappings().stream()
-            .filter(p -> NonDefiningPropertyDataType.URI.equals(p.getDataType()))
-            .collect(Collectors.toMap(ExternalIdentifierDefinition::getName, Function.identity()));
-
-    if (updateRequest.getNewNonDefiningProperties() != null) {
-      for (NonDefiningBase property : updateRequest.getNewNonDefiningProperties()) {
-        handlePropertyUpdate(
-            property, nonDefiningPropertyDefinitionMap, externalIdentifierDefinitionMap);
-      }
-    }
-  }
-
-  public void updateNonDefiningUrlProperties(
       ModelConfiguration modelConfiguration, ProductSummary productSummary) {
+    if (externalReferenceToBlobStorage == null || !externalReferenceToBlobStorage.isConfigured()) {
+      log.warning(
+          "Blob storage is not configured, skipping S3 upload for URL-based non-defining properties");
+      return;
+    }
+
     Map<String, NonDefiningPropertyDefinition> nonDefiningPropertyDefinitionMap =
         modelConfiguration.getNonDefiningProperties().stream()
             .filter(p -> NonDefiningPropertyDataType.URI.equals(p.getDataType()))
@@ -245,11 +236,7 @@ public class BlobStorageService {
             .filter(p -> NonDefiningPropertyDataType.URI.equals(p.getDataType()))
             .collect(Collectors.toMap(ExternalIdentifierDefinition::getName, Function.identity()));
 
-    if (externalReferenceToBlobStorage != null
-        && externalReferenceToBlobStorage.isConfigured()
-        && (!nonDefiningPropertyDefinitionMap.isEmpty()
-            || !externalIdentifierDefinitionMap.isEmpty())) {
-
+    if (!nonDefiningPropertyDefinitionMap.isEmpty() || !externalIdentifierDefinitionMap.isEmpty()) {
       productSummary
           .getNodes()
           .forEach(
@@ -261,7 +248,13 @@ public class BlobStorageService {
                                   property,
                                   nonDefiningPropertyDefinitionMap,
                                   externalIdentifierDefinitionMap)));
+    } else {
+      log.info(
+          "No URI-typed non-defining property or external identifier definitions found, skipping S3 upload");
     }
+
+    validateNoUnresolvedAttachmentReferences(
+        nonDefiningPropertyDefinitionMap, externalIdentifierDefinitionMap, productSummary);
   }
 
   private static String calculateSha256(Path tempFile) {
@@ -403,6 +396,7 @@ public class BlobStorageService {
 
   // Add method to handle attachment:// references
   private String copyAttachmentToBlobStorage(String attachmentReference) {
+    log.info("Processing attachment reference for S3 upload: " + attachmentReference);
     try {
       // Extract attachment ID from attachment://123 format
       String attachmentIdStr = attachmentReference.substring(ATTACHMENT_PROTOCOL.length());
@@ -437,6 +431,16 @@ public class BlobStorageService {
 
       // Use existing SHA256 if available, otherwise calculate it
       String sha256Hash = attachment.getSha256();
+      log.info(
+          "Uploading attachment "
+              + attachmentId
+              + " to S3 (sha256: "
+              + sha256Hash
+              + ", mimeType: "
+              + mimeType
+              + ", file: "
+              + attachment.getFilename()
+              + ")");
 
       // Upload to S3 using existing method
       S3 s3 = externalReferenceToBlobStorage.getS3();
@@ -450,6 +454,7 @@ public class BlobStorageService {
 
   // Update the main copyToBlobStorage method to handle attachment references
   private String copyToBlobStorage(String value) {
+    log.info("copyToBlobStorage called with value: " + value);
     // Handle internal attachment references
     if (value.startsWith(ATTACHMENT_PROTOCOL)) {
       return copyAttachmentToBlobStorage(value);
@@ -458,10 +463,53 @@ public class BlobStorageService {
     // Handle external URLs as before
     S3 s3 = externalReferenceToBlobStorage.getS3();
     URL urlToCopy = validateUrl(value);
+    log.info("Downloading external URL for S3 upload: " + urlToCopy);
     final Path tempFile = getTempFile();
     final String mimeType = getData(urlToCopy, tempFile);
     final String sha256Hash = calculateSha256(tempFile);
     return putDataToS3(s3, sha256Hash, mimeType, tempFile, extractFileExtension(urlToCopy));
+  }
+
+  public void validateNoUnresolvedAttachmentReferences(
+      Map<String, NonDefiningPropertyDefinition> nonDefiningPropertyDefinitionMap,
+      Map<String, ExternalIdentifierDefinition> externalIdentifierDefinitionMap,
+      ProductSummary productSummary) {
+
+    String unresolvedReferences =
+        productSummary.getNodes().stream()
+            .flatMap(
+                node ->
+                    node.getNonDefiningProperties().stream()
+                        .map(
+                            property -> {
+                              String value = null;
+                              if (nonDefiningPropertyDefinitionMap.containsKey(
+                                  property.getIdentifierScheme())) {
+                                value = ((NonDefiningProperty) property).getValue();
+                              } else if (externalIdentifierDefinitionMap.containsKey(
+                                  property.getIdentifierScheme())) {
+                                value = ((ExternalIdentifier) property).getValue();
+                              }
+                              if (value != null && value.startsWith(ATTACHMENT_PROTOCOL)) {
+                                return "node '"
+                                    + node.getConceptId()
+                                    + "' property '"
+                                    + property.getIdentifierScheme()
+                                    + "' still has unresolved attachment reference: "
+                                    + value;
+                              }
+                              return null;
+                            })
+                        .filter(Objects::nonNull))
+            .collect(Collectors.joining("; "));
+
+    if (!unresolvedReferences.isEmpty()) {
+      String message =
+          "Blob storage substitution failed, unresolved attachment references found: "
+              + unresolvedReferences;
+      log.severe(message);
+      throw new LingoProblem(message);
+    }
   }
 
   private void handlePropertyUpdate(
@@ -474,7 +522,17 @@ public class BlobStorageService {
       if (value.startsWith(ATTACHMENT_PROTOCOL)
           || externalReferenceToBlobStorage.getWhitelistPrefixes().stream()
               .anyMatch(prefix -> prefix.matches(value))) {
-        nonDefiningProperty.setValue(copyToBlobStorage(value));
+        String s3Url = copyToBlobStorage(value);
+        log.info(
+            "Uploaded non-defining property '" + p.getIdentifierScheme() + "' to S3: " + s3Url);
+        nonDefiningProperty.setValue(s3Url);
+      } else {
+        log.warning(
+            "Skipped S3 upload for non-defining property '"
+                + p.getIdentifierScheme()
+                + "': value '"
+                + value
+                + "' did not match attachment protocol or any whitelist prefix");
       }
     } else if (externalIdentifierDefinitionMap.containsKey(p.getIdentifierScheme())) {
       ExternalIdentifier externalIdentifier = (ExternalIdentifier) p;
@@ -482,8 +540,22 @@ public class BlobStorageService {
       if (value.startsWith(ATTACHMENT_PROTOCOL)
           || externalReferenceToBlobStorage.getWhitelistPrefixes().stream()
               .anyMatch(prefix -> prefix.matches(value))) {
-        externalIdentifier.setValue(copyToBlobStorage(value));
+        String s3Url = copyToBlobStorage(value);
+        log.info("Uploaded external identifier '" + p.getIdentifierScheme() + "' to S3: " + s3Url);
+        externalIdentifier.setValue(s3Url);
+      } else {
+        log.warning(
+            "Skipped S3 upload for external identifier '"
+                + p.getIdentifierScheme()
+                + "': value '"
+                + value
+                + "' did not match attachment protocol or any whitelist prefix");
       }
+    } else {
+      log.warning(
+          "Skipped S3 upload for property '"
+              + p.getIdentifierScheme()
+              + "': identifier scheme not found in non-defining property or external identifier definitions");
     }
   }
 }
