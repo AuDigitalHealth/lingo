@@ -7,7 +7,7 @@ import { useEffect } from 'react';
 
 function sortComments(comments: Comment[] | undefined) {
   if (comments === undefined) return undefined;
-  return [...comments].sort((a: Comment, b: Comment) => {
+  return comments.sort((a: Comment, b: Comment) => {
     return new Date(a.created).getTime() - new Date(b.created).getTime();
   });
 }
