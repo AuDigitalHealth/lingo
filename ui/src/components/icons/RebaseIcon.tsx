@@ -55,7 +55,7 @@ export function RebaseIcon({ branchState }: RebaseIconProps) {
       case BranchState.Diverged:
         return withTooltip(
           <RefreshOutlined fontSize="small" />,
-          BranchState.Stale,
+          BranchState.Diverged,
         );
       default:
         return <></>;

@@ -9,7 +9,7 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 ## [Unreleased]
 - Fix the order of comments on tickets so they are sorted sequentially.
-
+- Rebase Icon was showing 'STALE' text when task status was 'DIVERGED'
 
 ## [1.3.35] - 2026-02-13
 
