@@ -1087,7 +1087,7 @@ public class SnowstormClient {
                                     "concept " + concept.getConceptId() + " contains no FSN")
                                 .getTerm(),
                             "concept " + concept.getConceptId() + " FSN contains no term")
-                        .equalsIgnoreCase(fsn));
+                        .equals(fsn));
 
     if (isDuplicate) {
       throw new ProductAtomicDataValidationProblem(
