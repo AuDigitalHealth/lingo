@@ -15,7 +15,8 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
-// Add these imports
+import au.csiro.snowstorm_client.model.SnowstormConcreteValue;
+import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.auth.helper.AuthHelper;
 import au.gov.digitalhealth.lingo.configuration.ExternalReferenceToBlobStorage;
 import au.gov.digitalhealth.lingo.configuration.ExternalReferenceToBlobStorage.S3;
@@ -56,6 +57,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -237,24 +239,27 @@ public class BlobStorageService {
             .collect(Collectors.toMap(ExternalIdentifierDefinition::getName, Function.identity()));
 
     if (!nonDefiningPropertyDefinitionMap.isEmpty() || !externalIdentifierDefinitionMap.isEmpty()) {
-      productSummary
-          .getNodes()
+      Stream.concat(productSummary.getSubjects().stream(), productSummary.getNodes().stream())
           .forEach(
-              node ->
-                  node.getNonDefiningProperties()
-                      .forEach(
-                          property ->
-                              handlePropertyUpdate(
-                                  property,
-                                  nonDefiningPropertyDefinitionMap,
-                                  externalIdentifierDefinitionMap)));
+              node -> {
+                node.getNonDefiningProperties()
+                    .forEach(
+                        property ->
+                            handlePropertyUpdate(
+                                property,
+                                nonDefiningPropertyDefinitionMap,
+                                externalIdentifierDefinitionMap));
+                if (node.getNewConceptDetails() != null
+                    && node.getNewConceptDetails().getNonDefiningProperties() != null) {
+                  node.getNewConceptDetails().getNonDefiningProperties().stream()
+                      .filter(Objects::nonNull)
+                      .forEach(relationship -> handleRelationshipUpdate(relationship));
+                }
+              });
     } else {
       log.info(
           "No URI-typed non-defining property or external identifier definitions found, skipping S3 upload");
     }
-
-    validateNoUnresolvedAttachmentReferences(
-        nonDefiningPropertyDefinitionMap, externalIdentifierDefinitionMap, productSummary);
   }
 
   private static String calculateSha256(Path tempFile) {
@@ -470,48 +475,6 @@ public class BlobStorageService {
     return putDataToS3(s3, sha256Hash, mimeType, tempFile, extractFileExtension(urlToCopy));
   }
 
-  public void validateNoUnresolvedAttachmentReferences(
-      Map<String, NonDefiningPropertyDefinition> nonDefiningPropertyDefinitionMap,
-      Map<String, ExternalIdentifierDefinition> externalIdentifierDefinitionMap,
-      ProductSummary productSummary) {
-
-    String unresolvedReferences =
-        productSummary.getNodes().stream()
-            .flatMap(
-                node ->
-                    node.getNonDefiningProperties().stream()
-                        .map(
-                            property -> {
-                              String value = null;
-                              if (nonDefiningPropertyDefinitionMap.containsKey(
-                                  property.getIdentifierScheme())) {
-                                value = ((NonDefiningProperty) property).getValue();
-                              } else if (externalIdentifierDefinitionMap.containsKey(
-                                  property.getIdentifierScheme())) {
-                                value = ((ExternalIdentifier) property).getValue();
-                              }
-                              if (value != null && value.startsWith(ATTACHMENT_PROTOCOL)) {
-                                return "node '"
-                                    + node.getConceptId()
-                                    + "' property '"
-                                    + property.getIdentifierScheme()
-                                    + "' still has unresolved attachment reference: "
-                                    + value;
-                              }
-                              return null;
-                            })
-                        .filter(Objects::nonNull))
-            .collect(Collectors.joining("; "));
-
-    if (!unresolvedReferences.isEmpty()) {
-      String message =
-          "Blob storage substitution failed, unresolved attachment references found: "
-              + unresolvedReferences;
-      log.severe(message);
-      throw new LingoProblem(message);
-    }
-  }
-
   private void handlePropertyUpdate(
       NonDefiningBase p,
       Map<String, NonDefiningPropertyDefinition> nonDefiningPropertyDefinitionMap,
@@ -556,6 +519,25 @@ public class BlobStorageService {
           "Skipped S3 upload for property '"
               + p.getIdentifierScheme()
               + "': identifier scheme not found in non-defining property or external identifier definitions");
+    }
+  }
+
+  private void handleRelationshipUpdate(SnowstormRelationship relationship) {
+    SnowstormConcreteValue concreteValue = relationship.getConcreteValue();
+    if (concreteValue != null && concreteValue.getValue() != null) {
+      String value = concreteValue.getValue();
+      if (value.startsWith(ATTACHMENT_PROTOCOL)
+          || externalReferenceToBlobStorage.getWhitelistPrefixes().stream()
+              .anyMatch(prefix -> prefix.matches(value))) {
+        String s3Url = copyToBlobStorage(value);
+        log.info(
+            "Uploaded newConceptDetails relationship '"
+                + relationship.getTypeId()
+                + "' concreteValue to S3: "
+                + s3Url);
+        concreteValue.setValue(s3Url);
+        concreteValue.setValueWithPrefix(s3Url);
+      }
     }
   }
 }

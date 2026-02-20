@@ -12,6 +12,7 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 - Rebase Icon was showing 'STALE' text when task status was 'DIVERGED'
 ### Fixed
 - Fix issue where term edits fail when the only change is case (uppercase to lowercase or vice versa).
+- Fix issue where the S3 bucket URL is not being updated for the attachment.
 
 
 ## [1.3.35] - 2026-02-13
