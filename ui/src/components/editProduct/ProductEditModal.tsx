@@ -202,6 +202,7 @@ function EditConceptBody({
   const { fieldBindings } = useFieldBindings(branch);
 
   const ctppSearchEcl = generateEclFromBinding(fieldBindings, 'product.search');
+  const [storedSemanticTag, setStoredSemanticTag] = useState<string>();
 
   const defaultValues = useMemo(() => {
     return {
@@ -307,7 +308,9 @@ function EditConceptBody({
       });
       if (fsn) {
         const newSemanticTag = extractSemanticTag(fsn.term);
+
         if (newSemanticTag && newSemanticTag !== defaultSemanticTag) {
+          setStoredSemanticTag(newSemanticTag);
           setSemanticTagWarningModalOpen(true);
           formSubmissionData.current = data;
           shouldReturn = true;
@@ -595,9 +598,7 @@ function EditConceptBody({
                         handleClose={handleCloseSemanticTagWarningModal}
                         handleAction={handleConfirmSemanticTagWarning}
                         action={'Ignore Warning'}
-                        content={
-                          'The Semantic entered is not a valid semantic tag for this concept type. Is that correct?'
-                        }
+                        content={`The Semantic entered is not a valid semantic tag for this concept type. You have entered: ${storedSemanticTag} the original for this concept is ${defaultSemanticTag}. This may occur if the fsn ends with text inside of '()' to fix this, please enter at the end of the the fsn text field the desired semantic tag in '()'`}
                       />
                       <RightSection
                         branch={branch}

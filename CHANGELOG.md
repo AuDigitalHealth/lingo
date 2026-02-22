@@ -10,6 +10,8 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 ## [Unreleased]
 - Fix the order of comments on tickets so they are sorted sequentially.
 - Rebase Icon was showing 'STALE' text when task status was 'DIVERGED'
+- Changed the warning on the description update screen, to explain issues with semantic tags more clearly.
+
 ### Fixed
 - Fix issue where term edits fail when the only change is case (uppercase to lowercase or vice versa).
 - Fix issue where the S3 bucket URL is not being updated for the attachment.
