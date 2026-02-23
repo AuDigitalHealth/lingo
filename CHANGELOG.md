@@ -10,6 +10,8 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 ## [Unreleased]
 - Fix the order of comments on tickets so they are sorted sequentially.
 - Rebase Icon was showing 'STALE' text when task status was 'DIVERGED'
+- feature/show-ticket-authoring-number-on-ctpp-concept
+- When a product is viewed in it's n box model form, the subject concept accordion will now contain links to the tickets that this product was created/updated on.
 - Changed the warning on the description update screen, to explain issues with semantic tags more clearly.
 
 ### Fixed

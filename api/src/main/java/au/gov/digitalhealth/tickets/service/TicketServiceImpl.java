@@ -36,6 +36,7 @@ import au.gov.digitalhealth.tickets.TicketImportDto;
 import au.gov.digitalhealth.tickets.TicketMinimalDto;
 import au.gov.digitalhealth.tickets.controllers.BulkProductActionDto;
 import au.gov.digitalhealth.tickets.controllers.ProductDto;
+import au.gov.digitalhealth.tickets.controllers.TicketAuthoringHistoryDto;
 import au.gov.digitalhealth.tickets.helper.AttachmentUtils;
 import au.gov.digitalhealth.tickets.helper.BulkAddExternalRequestorsRequest;
 import au.gov.digitalhealth.tickets.helper.BulkAddExternalRequestorsResponse;
@@ -61,6 +62,7 @@ import au.gov.digitalhealth.tickets.models.JsonField;
 import au.gov.digitalhealth.tickets.models.Label;
 import au.gov.digitalhealth.tickets.models.PriorityBucket;
 import au.gov.digitalhealth.tickets.models.Product;
+import au.gov.digitalhealth.tickets.models.ProductAction;
 import au.gov.digitalhealth.tickets.models.Schedule;
 import au.gov.digitalhealth.tickets.models.State;
 import au.gov.digitalhealth.tickets.models.TaskAssociation;
@@ -1337,6 +1339,24 @@ public class TicketServiceImpl implements TicketService {
             .orElseThrow(() -> getProductResourceNotFoundProblem(ticketId, String.valueOf(id)));
 
     return productMapper.toDto(product);
+  }
+
+  public TicketAuthoringHistoryDto getTicketAuthoringHistory(Long conceptId) {
+    List<Product> products = productRepository.findByConceptId(conceptId);
+
+    List<String> creates =
+        products.stream()
+            .filter(p -> p.getAction() == ProductAction.CREATE)
+            .map(p -> p.getTicket().getTicketNumber())
+            .toList();
+
+    List<String> updates =
+        products.stream()
+            .filter(p -> p.getAction() == ProductAction.UPDATE)
+            .map(p -> p.getTicket().getTicketNumber())
+            .toList();
+
+    return new TicketAuthoringHistoryDto(creates, updates);
   }
 
   public void deleteBulkProductAction(@NotNull Long ticketId, @NotNull @NotEmpty String name) {

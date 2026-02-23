@@ -17,6 +17,7 @@
 import { AxiosResponse } from 'axios';
 import {
   TicketAssociation,
+  TicketAuthoringHistoryDto,
   TicketBulkProductActionDto,
   TicketProductAuditDto,
   TicketProductDto,
@@ -127,6 +128,17 @@ const TicketProductService = {
       this.handleErrors();
     }
     return response.data as TicketProductAuditDto[];
+  },
+  async getTicketAuthoringHistory(
+    productId: string,
+  ): Promise<TicketAuthoringHistoryDto> {
+    const response = await api.get(
+      `/api/tickets/products/${productId}/ticketAuthoringHistory`,
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    return response.data as TicketAuthoringHistoryDto;
   },
 };
 

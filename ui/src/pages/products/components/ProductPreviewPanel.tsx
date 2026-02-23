@@ -465,6 +465,7 @@ function ProductPreviewPanel({
             {/* A single concept exists, you do not have an option to make a new concept */}
             {shouldRenderDropdownAsReadonly && (
               <ExistingConceptDropdown
+                productModel={productModel}
                 product={product}
                 branch={branch}
                 control={control}

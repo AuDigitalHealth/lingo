@@ -308,6 +308,11 @@ export interface TicketProductAuditDto extends TicketProductDto {
   revisionNumber: number;
 }
 
+export interface TicketAuthoringHistoryDto {
+  creates: string[];
+  updates: string[];
+}
+
 export interface TicketBulkProductActionDto {
   id?: number;
   ticketId: number;

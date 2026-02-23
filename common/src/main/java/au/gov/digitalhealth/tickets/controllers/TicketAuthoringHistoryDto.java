@@ -13,22 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package au.gov.digitalhealth.tickets.repository;
+package au.gov.digitalhealth.tickets.controllers;
 
-import au.gov.digitalhealth.tickets.models.Product;
-import jakarta.validation.constraints.NotNull;
 import java.util.List;
-import java.util.Optional;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.lang.NonNull;
 
-public interface ProductRepository extends JpaRepository<Product, Long> {
-
-  List<Product> findByTicketId(@NotNull Long ticketId);
-
-  Optional<Product> findByNameAndTicketId(@NonNull String name, @NonNull Long ticketId);
-
-  Optional<Product> findByConceptIdAndTicketId(@NonNull Long conceptId, @NonNull Long ticketId);
-
-  List<Product> findByConceptId(@NonNull Long conceptId);
-}
+public record TicketAuthoringHistoryDto(List<String> creates, List<String> updates) {}

@@ -16,8 +16,10 @@ import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts
 import { ProductRetireUpdate } from './ProductRetireUpdate.tsx';
 import { Control, UseFormSetValue } from 'react-hook-form';
 import HistoricalAssociationsDisplay from './HistoricalAssociationsDisplay.tsx';
+import TicketAuthoringHistoryDisplay from './TicketAuthoringHistoryDisplay.tsx';
 
 interface ExistingConceptDropdownProps {
+  productModel: ProductSummary;
   product: Product;
   branch: string;
   control: Control<ProductSummary>;
@@ -26,6 +28,7 @@ interface ExistingConceptDropdownProps {
 }
 
 function ExistingConceptDropdown({
+  productModel,
   product,
   branch,
   control,
@@ -34,6 +37,10 @@ function ExistingConceptDropdown({
 }: ExistingConceptDropdownProps) {
   const { applicationConfig } = useApplicationConfigStore();
   const snowstormBaseUrl = applicationConfig.apApiBaseUrl;
+
+  const isSubject = productModel?.subjects?.some(
+    s => s.conceptId === product.conceptId,
+  );
 
   const branchParts = branch.split('/');
   const edition = branchParts.slice(0, 3).join('/');
@@ -137,6 +144,9 @@ function ExistingConceptDropdown({
         labelColor="#184E6B"
         showWrapper={false}
       />
+      {isSubject && (
+        <TicketAuthoringHistoryDisplay conceptId={product.conceptId} />
+      )}
     </div>
   );
 }

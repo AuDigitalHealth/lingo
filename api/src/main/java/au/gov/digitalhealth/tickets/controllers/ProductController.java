@@ -90,4 +90,9 @@ public class ProductController {
     ticketService.deleteProductById(ticketId, id);
     return ResponseEntity.noContent().build();
   }
+
+  @GetMapping(value = "/api/tickets/products/{productId}/ticketAuthoringHistory")
+  public TicketAuthoringHistoryDto getTicketAuthoringHistory(@PathVariable Long productId) {
+    return ticketService.getTicketAuthoringHistory(productId);
+  }
 }
