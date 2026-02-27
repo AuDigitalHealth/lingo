@@ -35,7 +35,7 @@
     "@opentelemetry/context-zone": "^1.25.0",
     "@opentelemetry/exporter-zipkin": "^1.25.0",
     "@opentelemetry/propagator-b3": "^1.25.0",
-    "@opentelemetry/resources": "^1.25.0",
+    "@opentelemetry/resources": "^2.2.0",
     "@opentelemetry/sdk-trace-web": "^1.25.0",
     "@opentelemetry/semantic-conventions": "^1.25.0",
     "@rjsf/core": "^5.24.12",
