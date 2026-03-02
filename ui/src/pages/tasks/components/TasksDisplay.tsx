@@ -44,7 +44,7 @@ function TasksDisplay({
     if (!allTasks) return [];
     return allTasks?.filter(task => {
       if (
-        task.assignee.email === email &&
+        (task.assignee.email === email || task.assignee.username === login) &&
         projects?.some(project => project.key === task.projectKey)
       ) {
         return true;
