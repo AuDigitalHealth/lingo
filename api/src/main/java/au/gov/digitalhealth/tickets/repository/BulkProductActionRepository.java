@@ -58,4 +58,13 @@ public interface BulkProductActionRepository extends JpaRepository<BulkProductAc
               + "FROM cte",
       nativeQuery = true)
   String findNewBulkProductPackSizeName(@Param("ticketId") Long ticketId);
+
+  @Query("SELECT b FROM BulkProductAction b WHERE :conceptId MEMBER OF b.conceptIds")
+  List<BulkProductAction> findByConceptId(@Param("conceptId") Long conceptId);
+
+  @Query(
+      value =
+          "SELECT * FROM bulk_product_action WHERE details->>'productId' = :productId AND details->>'type' = 'product-update'",
+      nativeQuery = true)
+  List<BulkProductAction> findByProductUpdateProductId(@Param("productId") String productId);
 }

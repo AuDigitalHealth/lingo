@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
+- Fix issue where the ticket that a concept was authored on was not correctly picking up bulk-brand/packsize updates
 - Update My task display logic to fall back to matching by username when email is not found
 
 

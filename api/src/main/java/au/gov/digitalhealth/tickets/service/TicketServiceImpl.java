@@ -1344,17 +1344,26 @@ public class TicketServiceImpl implements TicketService {
   public TicketAuthoringHistoryDto getTicketAuthoringHistory(Long conceptId) {
     List<Product> products = productRepository.findByConceptId(conceptId);
 
-    List<String> creates =
-        products.stream()
-            .filter(p -> p.getAction() == ProductAction.CREATE)
-            .map(p -> p.getTicket().getTicketNumber())
-            .toList();
+    List<String> creates = new ArrayList<>();
+    List<String> updates = new ArrayList<>();
 
-    List<String> updates =
-        products.stream()
-            .filter(p -> p.getAction() == ProductAction.UPDATE)
-            .map(p -> p.getTicket().getTicketNumber())
-            .toList();
+    products.stream()
+        .filter(p -> p.getAction() == ProductAction.CREATE)
+        .map(p -> p.getTicket().getTicketNumber())
+        .forEach(creates::add);
+
+    products.stream()
+        .filter(p -> p.getAction() == ProductAction.UPDATE)
+        .map(p -> p.getTicket().getTicketNumber())
+        .forEach(updates::add);
+
+    bulkProductActionRepository.findByConceptId(conceptId).stream()
+        .map(b -> b.getTicket().getTicketNumber())
+        .forEach(creates::add);
+
+    bulkProductActionRepository.findByProductUpdateProductId(String.valueOf(conceptId)).stream()
+        .map(b -> b.getTicket().getTicketNumber())
+        .forEach(updates::add);
 
     return new TicketAuthoringHistoryDto(creates, updates);
   }
