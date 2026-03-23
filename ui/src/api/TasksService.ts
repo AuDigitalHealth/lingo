@@ -406,6 +406,24 @@ const TasksServices = {
     }
     return response.data as string[];
   },
+  async editTaskDetails(
+    projectKey: string | undefined,
+    taskKey: string | undefined,
+    summary: string,
+    description: string,
+  ): Promise<Task> {
+    if (projectKey === undefined || taskKey === undefined) {
+      this.handleErrors();
+    }
+    const response = await api.put(
+      `/authoring-services/projects/${projectKey}/tasks/${taskKey}`,
+      { summary, description },
+    );
+    if (response.status !== 200) {
+      this.handleErrors();
+    }
+    return response.data as Task;
+  },
 };
 
 export default TasksServices;
