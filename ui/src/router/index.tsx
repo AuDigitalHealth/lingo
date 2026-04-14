@@ -31,6 +31,7 @@ import MyBacklog from '../pages/tickets/MyBacklog.tsx';
 import { FilterSettings } from '../pages/settings/FilterSettings.tsx';
 import { ExternalProcessesSettings } from '../pages/settings/ExternalProcessesSettings.tsx';
 import TasksDisplay from '../pages/tasks/components/TasksDisplay.tsx';
+import { SynonymConfigurationSettings } from '../pages/settings/SynonymConfigurationSettings.tsx';
 
 // ==============================|| ROUTING RENDER ||============================== //
 
@@ -185,6 +186,10 @@ export const browserRouter = createBrowserRouter(
           <Route
             path="/dashboard/settings/externalProcesses"
             element={<ExternalProcessesSettings />}
+          />
+          <Route
+            path="/dashboard/settings/synonymConfiguration"
+            element={<SynonymConfigurationSettings />}
           />
         </Route>
 

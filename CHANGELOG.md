@@ -10,6 +10,7 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 ## [Unreleased]
 - Fix issue where the ticket that a concept was authored on was not correctly picking up bulk-brand/packsize updates
 - Update My task display logic to fall back to matching by username when email is not found
+- Configuration added for the automatic creation of synonyms on the product authoring screen if the term contains a substring. These can be created a new page which is reachable through the drop down on the top right.
 
 
 ## [1.3.36] - 2026-02-23
