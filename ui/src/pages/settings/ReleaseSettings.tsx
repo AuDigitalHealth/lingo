@@ -278,7 +278,7 @@ export function ReleaseSettings({
                         paginationModel: { page: 0, pageSize: 20 },
                       },
                       sorting: {
-                        sortModel: [{ field: 'name', sort: 'asc' }],
+                        sortModel: [{ field: 'endDate', sort: 'desc' }],
                       },
                     }
                   : {}
