@@ -205,7 +205,35 @@ function TickFlickMembersList({
       width: 130, // Reduce from 150
       minWidth: 120,
       getActions: (params: GridRowParams<Concept>) => [
-        // ... your actions
+        <GridActionsCellItem
+          icon={
+            <Tooltip title="Show concept details">
+              <InfoOutlinedIcon />
+            </Tooltip>
+          }
+          label="Concept Info"
+          onClick={() => setModalConcept(params.row)}
+        />,
+        <GridActionsCellItem
+          icon={
+            <Tooltip title="Replace member">
+              <SwapHorizontalCircleOutlinedIcon />
+            </Tooltip>
+          }
+          disabled={login !== task?.assignee.username}
+          label="Replace"
+          onClick={() => setReplaceConcepts([params.row])}
+        />,
+        <GridActionsCellItem
+          icon={
+            <Tooltip title="Retire member">
+              <RemoveCircleOutlineIcon />
+            </Tooltip>
+          }
+          disabled={login !== task?.assignee.username}
+          label="Retire"
+          onClick={() => setRetireConcepts([params.row])}
+        />,
       ],
     },
   ];
