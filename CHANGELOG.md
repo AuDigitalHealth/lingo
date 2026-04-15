@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
-## [Unreleased]
+## [1.3.37] - 2026-04-15
 - Upgrade `ecl-builder` to `0.3.0`
 - Add `@aehrc/ecl-editor-react` dependency (required by `ecl-builder@0.3.0`)
 - Fix issue where the ticket that a concept was authored on was not correctly picking up bulk-brand/packsize updates
