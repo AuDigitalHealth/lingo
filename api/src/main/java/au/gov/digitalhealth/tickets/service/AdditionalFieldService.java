@@ -124,6 +124,23 @@ public class AdditionalFieldService {
     // update existing value of this type for this ticket - say update the artgid, startdate etc
     if (additionalFieldValueOptional.isPresent()) {
       AdditionalFieldValue additionalFieldValue = additionalFieldValueOptional.get();
+      // For shared-value types, unlink the old value and reuse/create a value for the new one
+      // to avoid mutating a shared entity or creating a duplicate row
+      if (additionalFieldType.isSharedValue()) {
+        ticket.getAdditionalFieldValues().remove(additionalFieldValue);
+        AdditionalFieldValue nafv =
+            additionalFieldValueRepository
+                .findByValueOfAndTypeId(additionalFieldType, valueOf)
+                .orElseGet(
+                    () ->
+                        AdditionalFieldValue.builder()
+                            .additionalFieldType(additionalFieldType)
+                            .valueOf(valueOf)
+                            .build());
+        ticket.getAdditionalFieldValues().add(nafv);
+        ticketRepository.save(ticket);
+        return additionalFieldValueMapper.toDto(nafv);
+      }
       additionalFieldValue.setValueOf(valueOf);
       AdditionalFieldValue nafv = additionalFieldValueRepository.save(additionalFieldValue);
 
@@ -131,6 +148,22 @@ public class AdditionalFieldService {
     }
 
     // isn't a list, this ticket doesn't have a value for this type, so we create a new one
+    // For shared-value types, reuse an existing value if one already exists to avoid duplicate rows
+    if (additionalFieldType.isSharedValue()) {
+      AdditionalFieldValue afv =
+          additionalFieldValueRepository
+              .findByValueOfAndTypeId(additionalFieldType, valueOf)
+              .orElseGet(
+                  () ->
+                      AdditionalFieldValue.builder()
+                          .additionalFieldType(additionalFieldType)
+                          .valueOf(valueOf)
+                          .build());
+      ticket.getAdditionalFieldValues().add(afv);
+      ticketRepository.save(ticket);
+      return additionalFieldValueMapper.toDto(afv);
+    }
+
     AdditionalFieldValue afv =
         AdditionalFieldValue.builder()
             .tickets(List.of(ticket))
@@ -190,12 +223,45 @@ public class AdditionalFieldService {
     // update existing value of this type for this ticket - say update the artgid, startdate etc
     if (additionalFieldValueOptional.isPresent()) {
       AdditionalFieldValue additionalFieldValue = additionalFieldValueOptional.get();
+      // For shared-value types, unlink the old value and reuse/create a value for the new one
+      // to avoid mutating a shared entity or creating a duplicate row
+      if (additionalFieldType.isSharedValue()) {
+        ticket.getAdditionalFieldValues().remove(additionalFieldValue);
+        AdditionalFieldValue nafv =
+            additionalFieldValueRepository
+                .findByValueOfAndTypeId(additionalFieldType, afv.getValueOf())
+                .orElseGet(
+                    () ->
+                        AdditionalFieldValue.builder()
+                            .additionalFieldType(additionalFieldType)
+                            .valueOf(afv.getValueOf())
+                            .build());
+        ticket.getAdditionalFieldValues().add(nafv);
+        ticketRepository.save(ticket);
+        return additionalFieldValueMapper.toDto(nafv);
+      }
       additionalFieldValue.setValueOf(afv.getValueOf());
       AdditionalFieldValue nafv = additionalFieldValueRepository.save(additionalFieldValue);
       return additionalFieldValueMapper.toDto(nafv);
     }
 
     // isn't a list, this ticket doesn't have a value for this type, so we create a new one
+    // For shared-value types, reuse an existing value if one already exists to avoid duplicate rows
+    if (additionalFieldType.isSharedValue()) {
+      AdditionalFieldValue afvLocal =
+          additionalFieldValueRepository
+              .findByValueOfAndTypeId(additionalFieldType, afv.getValueOf())
+              .orElseGet(
+                  () ->
+                      AdditionalFieldValue.builder()
+                          .additionalFieldType(additionalFieldType)
+                          .valueOf(afv.getValueOf())
+                          .build());
+      ticket.getAdditionalFieldValues().add(afvLocal);
+      ticketRepository.save(ticket);
+      return additionalFieldValueMapper.toDto(afvLocal);
+    }
+
     AdditionalFieldValue afvLocal =
         AdditionalFieldValue.builder()
             .tickets(List.of(ticket))

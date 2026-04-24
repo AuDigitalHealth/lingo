@@ -1,5 +1,7 @@
 {
-  "artgid": 443270,
+  "dedupeKey": "443270",
   "name": "Create a new ticket",
-  "description": "A test description"
+  "description": "A test description",
+  "externalRequestors": ["PBS"],
+  "labels": ["PBSRequest","Urgent"]
 }

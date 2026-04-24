@@ -21,6 +21,7 @@ import au.gov.digitalhealth.lingo.exception.ErrorMessages;
 import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.exception.ResourceNotFoundProblem;
 import au.gov.digitalhealth.lingo.exception.TicketImportProblem;
+import au.gov.digitalhealth.lingo.exception.TicketStateClosedProblem;
 import au.gov.digitalhealth.tickets.TicketBacklogDto;
 import au.gov.digitalhealth.tickets.TicketDto;
 import au.gov.digitalhealth.tickets.TicketDtoExtended;
@@ -30,12 +31,13 @@ import au.gov.digitalhealth.tickets.TicketImportDto;
 import au.gov.digitalhealth.tickets.TicketMinimalDto;
 import au.gov.digitalhealth.tickets.helper.BulkAddExternalRequestorsRequest;
 import au.gov.digitalhealth.tickets.helper.BulkAddExternalRequestorsResponse;
-import au.gov.digitalhealth.tickets.helper.PbsRequest;
-import au.gov.digitalhealth.tickets.helper.PbsRequestResponse;
 import au.gov.digitalhealth.tickets.helper.SafeUtils;
 import au.gov.digitalhealth.tickets.helper.SearchConditionBody;
 import au.gov.digitalhealth.tickets.helper.StringUtils;
+import au.gov.digitalhealth.tickets.helper.TicketMetadata;
 import au.gov.digitalhealth.tickets.helper.TicketPredicateBuilder;
+import au.gov.digitalhealth.tickets.helper.TicketSubmissionResponse;
+import au.gov.digitalhealth.tickets.helper.TicketUtils;
 import au.gov.digitalhealth.tickets.models.Iteration;
 import au.gov.digitalhealth.tickets.models.Schedule;
 import au.gov.digitalhealth.tickets.models.State;
@@ -402,15 +404,31 @@ public class TicketController {
     return ResponseEntity.noContent().build();
   }
 
-  /*
-   * First attempts to find a ticket by the artgid, if it is found, mark the ticket as a pbs ticket
-   * through a label. If not found, we need to create a new pbs ticket, with open state storing the
-   * artgid, sctid, name & description
-   */
-  @PostMapping(value = "/api/tickets/pbsRequest", consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<PbsRequestResponse> createPbsRequest(@RequestBody PbsRequest pbsRequest) {
-    Ticket ticket = ticketService.createPbsRequest(pbsRequest);
-    return new ResponseEntity<>(new PbsRequestResponse(pbsRequest, ticket), HttpStatus.CREATED);
+  @PostMapping(value = "/api/tickets/request", consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<TicketSubmissionResponse> createOrGetTicket(
+      @RequestBody TicketMetadata ticketMetadata) {
+    if (ticketMetadata.getDedupeKey() != null && !ticketMetadata.getDedupeKey().isBlank()) {
+      List<Ticket> tickets = ticketService.createOrGetTicketsByArtgId(ticketMetadata);
+      Ticket ticket =
+          tickets.stream()
+              .filter(t -> !TicketUtils.isTicketClosed(t) && !TicketUtils.isTicketDuplicate(t))
+              .findFirst()
+              .orElseThrow(
+                  () ->
+                      new TicketStateClosedProblem(
+                          "No active ticket could be created or found for dedupeKey: "
+                              + ticketMetadata.getDedupeKey()));
+      return new ResponseEntity<>(new TicketSubmissionResponse(ticket), HttpStatus.CREATED);
+    }
+    Ticket ticket = ticketService.createOrGetTicket(ticketMetadata);
+    return new ResponseEntity<>(new TicketSubmissionResponse(ticket), HttpStatus.CREATED);
+  }
+
+  @GetMapping("/api/tickets/{ticketNumber}/status")
+  public ResponseEntity<TicketSubmissionResponse> fetchTicketStatus(
+      @PathVariable String ticketNumber) {
+    TicketSubmissionResponse response = ticketService.fetchTicketStatus(ticketNumber);
+    return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @PostMapping(
@@ -421,20 +439,6 @@ public class TicketController {
     BulkAddExternalRequestorsResponse bulkAddExternalRequestorsResponse =
         ticketService.bulkAddExternalRequestors(bulkAddExternalRequestorsRequest);
     return new ResponseEntity<>(bulkAddExternalRequestorsResponse, HttpStatus.CREATED);
-  }
-
-  @GetMapping(
-      value = "/api/tickets/{ticketId}/pbsRequest",
-      consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<PbsRequestResponse> getPbsRequest(@PathVariable Long ticketId) {
-    return new ResponseEntity<>(ticketService.getPbsStatus(ticketId), HttpStatus.OK);
-  }
-
-  @GetMapping(value = "api/tickets/{ticketId}/pbsRequest")
-  public ResponseEntity<PbsRequestResponse> getTicketAuthoringStatus(
-      @PathVariable String ticketId) {
-
-    return new ResponseEntity<>(ticketService.getPbsStatus(Long.valueOf(ticketId)), HttpStatus.OK);
   }
 
   /*

@@ -15,24 +15,43 @@
  */
 package au.gov.digitalhealth.tickets.service;
 
+import au.gov.digitalhealth.lingo.exception.ErrorMessages;
 import au.gov.digitalhealth.lingo.exception.LingoProblem;
+import au.gov.digitalhealth.lingo.exception.ResourceNotFoundProblem;
+import au.gov.digitalhealth.tickets.AttachmentUploadResponse;
+import au.gov.digitalhealth.tickets.helper.AttachmentUtils;
+import au.gov.digitalhealth.tickets.helper.MimeTypeUtils;
+import au.gov.digitalhealth.tickets.helper.PathMultipartFile;
 import au.gov.digitalhealth.tickets.models.Attachment;
+import au.gov.digitalhealth.tickets.models.AttachmentType;
+import au.gov.digitalhealth.tickets.models.Ticket;
 import au.gov.digitalhealth.tickets.repository.AttachmentRepository;
+import au.gov.digitalhealth.tickets.repository.AttachmentTypeRepository;
+import au.gov.digitalhealth.tickets.repository.TicketRepository;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.Optional;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class AttachmentService {
-
+  public static final String UPLOAD_API = "/api/attachments/upload/";
   final AttachmentRepository attachmentRepository;
+  final TicketRepository ticketRepository;
+  final AttachmentTypeRepository attachmentTypeRepository;
 
   @Value("${snomio.attachments.directory}")
   private String attachmentsDirectory;
@@ -40,8 +59,162 @@ public class AttachmentService {
   protected final Log logger = LogFactory.getLog(getClass());
 
   @Autowired
-  public AttachmentService(AttachmentRepository attachmentRepository) {
+  public AttachmentService(
+      AttachmentRepository attachmentRepository,
+      TicketRepository ticketRepository,
+      AttachmentTypeRepository attachmentTypeRepository) {
     this.attachmentRepository = attachmentRepository;
+    this.ticketRepository = ticketRepository;
+    this.attachmentTypeRepository = attachmentTypeRepository;
+  }
+
+  public AttachmentUploadResponse processAttachmentUpload(Long ticketId, MultipartFile file) {
+    if (file == null || file.isEmpty()) {
+      throw new LingoProblem(
+          UPLOAD_API + ticketId,
+          "File is empty!",
+          HttpStatus.BAD_REQUEST,
+          "The file you are trying to upload is empty. [" + file.getOriginalFilename() + "]");
+    }
+    String attachmentsDir = attachmentsDirectory + (attachmentsDirectory.endsWith("/") ? "" : "/");
+
+    Ticket theTicket =
+        ticketRepository
+            .findById(ticketId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
+
+    try {
+      // Save attachment file to target location. Filename will be SHA256 hash
+      String attachmentSHA = AttachmentUtils.calculateSHA256(file);
+      String attachmentLocation =
+          AttachmentUtils.getAttachmentAbsolutePath(attachmentsDir, attachmentSHA);
+
+      String attachmentFileName = file.getOriginalFilename();
+      File attachmentFile = new File(attachmentLocation);
+
+      if (!attachmentFile.exists()) {
+        attachmentFile.getParentFile().mkdirs();
+        Files.copy(file.getInputStream(), Path.of(attachmentLocation));
+      }
+
+      // Handle the Content Type of the new attachment
+      String contentType = file.getContentType();
+      AttachmentType attachmentType = getExistingAttachmentType(contentType, ticketId);
+
+      Attachment newAttachment =
+          Attachment.builder()
+              .description(attachmentFileName)
+              .filename(attachmentFileName)
+              .location(AttachmentUtils.getAttachmentRelativePath(attachmentSHA))
+              .length(file.getSize())
+              .sha256(attachmentSHA)
+              .ticket(theTicket)
+              .attachmentType(attachmentType)
+              .build();
+
+      generateThumbnail(attachmentsDir, attachmentFile, newAttachment);
+
+      attachmentRepository.save(newAttachment);
+
+      return AttachmentUploadResponse.builder()
+          .message(AttachmentUploadResponse.MESSAGE_SUCCESS)
+          .attachmentId(newAttachment.getId())
+          .ticketId(ticketId)
+          .sha256(attachmentSHA)
+          .build();
+
+    } catch (IOException | NoSuchAlgorithmException e) {
+      throw new LingoProblem(
+          UPLOAD_API + ticketId,
+          "Could not upload file: " + file.getOriginalFilename(),
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          e.getMessage());
+    }
+  }
+
+  public AttachmentUploadResponse processAttachmentUploadFromUrl(
+      Long ticketId, String url, String fileName) {
+
+    if (url == null || url.isBlank()) {
+      throw new LingoProblem(
+          UPLOAD_API + ticketId,
+          "Invalid attachment URL",
+          HttpStatus.BAD_REQUEST,
+          "Attachment URL is missing");
+    }
+    Ticket theTicket =
+        ticketRepository
+            .findById(ticketId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
+    Path tempFile = null;
+
+    try (InputStream in = new URL(url).openStream()) {
+
+      tempFile = Files.createTempFile("attachment-", ".tmp");
+      Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
+
+      String resolvedFileName = fileName != null ? fileName : tempFile.getFileName().toString();
+
+      String contentType = Files.probeContentType(Path.of(resolvedFileName));
+
+      MultipartFile multipartFile = new PathMultipartFile(tempFile, resolvedFileName, contentType);
+
+      return processAttachmentUpload(theTicket.getId(), multipartFile);
+
+    } catch (Exception e) {
+      throw new LingoProblem(
+          UPLOAD_API + ticketId,
+          "Failed to upload attachment from URL",
+          HttpStatus.BAD_REQUEST,
+          e.getMessage());
+
+    } finally {
+      if (tempFile != null) {
+        try {
+          Files.deleteIfExists(tempFile);
+        } catch (IOException ignored) {
+        }
+      }
+    }
+  }
+
+  private AttachmentType getExistingAttachmentType(String contentType, Long ticketId) {
+    if (contentType == null || contentType.isEmpty()) {
+      throw new LingoProblem(
+          UPLOAD_API + ticketId, "Missing Content type", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    Optional<AttachmentType> existing = attachmentTypeRepository.findByMimeType(contentType);
+    if (existing.isPresent()) {
+      return existing.get();
+    }
+    attachmentTypeRepository.upsertAttachmentType(
+        contentType, MimeTypeUtils.toHumanReadable(contentType));
+    return attachmentTypeRepository
+        .findByMimeType(contentType)
+        .orElseThrow(
+            () ->
+                new LingoProblem(
+                    UPLOAD_API + ticketId,
+                    "Missing Content type",
+                    HttpStatus.INTERNAL_SERVER_ERROR));
+  }
+
+  // Generate thumbnail for the attachment if it's an image
+  private void generateThumbnail(
+      String attachmentsDir, File attachmentFile, Attachment newAttachment) throws IOException {
+    if (newAttachment.getAttachmentType().getMimeType().startsWith("image")
+        && (AttachmentUtils.saveThumbnail(
+            attachmentFile,
+            AttachmentUtils.getThumbnailAbsolutePath(attachmentsDir, newAttachment.getSha256())))) {
+      newAttachment.setThumbnailLocation(
+          AttachmentUtils.getThumbnailRelativePath(newAttachment.getSha256()));
+    }
   }
 
   public void deleteAttachmentFiles(Attachment attachment) {

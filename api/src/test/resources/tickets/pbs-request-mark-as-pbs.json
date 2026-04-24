@@ -1,5 +1,6 @@
 {
-  "artgid": 69696969,
+  "dedupeKey": "69696969",
   "name": "Singulair",
-  "description": null
+  "description": null,
+  "externalRequestors": ["PBS"]
 }

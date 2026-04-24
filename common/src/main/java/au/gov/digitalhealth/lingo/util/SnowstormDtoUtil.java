@@ -818,8 +818,8 @@ public class SnowstormDtoUtil {
     return validateAndReturnSingleAxiom(getActiveClassAxioms(concept), concept.getConceptId());
   }
 
-  private static SnowstormAxiom validateAndReturnSingleAxiom(Set<SnowstormAxiom> activeClassAxioms,
-      String conceptId) {
+  private static SnowstormAxiom validateAndReturnSingleAxiom(
+      Set<SnowstormAxiom> activeClassAxioms, String conceptId) {
     if (activeClassAxioms.size() != 1) {
       log.log(
           java.util.logging.Level.SEVERE,
@@ -829,8 +829,10 @@ public class SnowstormDtoUtil {
               + conceptId,
           new RuntimeException(conceptId));
       throw new AtomicDataExtractionProblem(
-          "Expected 1 class axiom but found " + activeClassAxioms.size()
-              + " for concept " + conceptId,
+          "Expected 1 class axiom but found "
+              + activeClassAxioms.size()
+              + " for concept "
+              + conceptId,
           conceptId);
     }
     return activeClassAxioms.iterator().next();

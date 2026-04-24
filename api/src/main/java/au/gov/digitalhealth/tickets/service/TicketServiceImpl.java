@@ -16,6 +16,7 @@
 package au.gov.digitalhealth.tickets.service;
 
 import au.gov.digitalhealth.lingo.exception.ErrorMessages;
+import au.gov.digitalhealth.lingo.exception.InvalidSearchProblem;
 import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.exception.ResourceNotFoundProblem;
 import au.gov.digitalhealth.lingo.exception.TicketImportProblem;
@@ -37,17 +38,7 @@ import au.gov.digitalhealth.tickets.TicketMinimalDto;
 import au.gov.digitalhealth.tickets.controllers.BulkProductActionDto;
 import au.gov.digitalhealth.tickets.controllers.ProductDto;
 import au.gov.digitalhealth.tickets.controllers.TicketAuthoringHistoryDto;
-import au.gov.digitalhealth.tickets.helper.AttachmentUtils;
-import au.gov.digitalhealth.tickets.helper.BulkAddExternalRequestorsRequest;
-import au.gov.digitalhealth.tickets.helper.BulkAddExternalRequestorsResponse;
-import au.gov.digitalhealth.tickets.helper.BulkProcessArtgIdsResult;
-import au.gov.digitalhealth.tickets.helper.InstantUtils;
-import au.gov.digitalhealth.tickets.helper.OrderCondition;
-import au.gov.digitalhealth.tickets.helper.PbsRequest;
-import au.gov.digitalhealth.tickets.helper.PbsRequestResponse;
-import au.gov.digitalhealth.tickets.helper.SafeUtils;
-import au.gov.digitalhealth.tickets.helper.SearchCondition;
-import au.gov.digitalhealth.tickets.helper.TicketUtils;
+import au.gov.digitalhealth.tickets.helper.*;
 import au.gov.digitalhealth.tickets.models.AdditionalFieldType;
 import au.gov.digitalhealth.tickets.models.AdditionalFieldType.Type;
 import au.gov.digitalhealth.tickets.models.AdditionalFieldValue;
@@ -161,6 +152,7 @@ public class TicketServiceImpl implements TicketService {
   private final JsonFieldMapper jsonFieldMapper;
   private final BulkProductActionMapper bulkProductActionMapper;
   private final ExternalRequestorMapper externalRequestorMapper;
+  private final LabelMapper labelMapper;
 
   private final AttachmentService attachmentService;
 
@@ -222,6 +214,7 @@ public class TicketServiceImpl implements TicketService {
     this.bulkProductActionMapper = bulkProductActionMapper;
     this.externalRequestorMapper = externalRequestorMapper;
     this.attachmentService = attachmentService;
+    this.labelMapper = labelMapper;
   }
 
   public static Sort toSpringDataSort(OrderCondition orderCondition) {
@@ -299,6 +292,7 @@ public class TicketServiceImpl implements TicketService {
     return new PageImpl<>(ticketDtos, pageable, ticketIds.getTotalElements());
   }
 
+  @Transactional
   public List<TicketDto> findDtoByAdditionalFieldTypeValueOf(
       String additionalFieldTypeName, String valueOf) {
 
@@ -453,16 +447,12 @@ public class TicketServiceImpl implements TicketService {
                 additionalFieldValue.getValueOf(), InstantUtils.YYYY_MM_DD_T_HH_MM_SS_SSSXXX));
       }
 
-      // ensure we don't end up with duplicate ARTGID's
-      // is there a better way to handle this? open to any suggestions.
-      // this is pretty 'us' specific code
+      // for shared-value field types, reuse an existing value row rather than creating a duplicate
       Optional<AdditionalFieldValue> afvOptional = Optional.empty();
-      if (additionalFieldType.getName().equals(ARTGID)) {
+      if (additionalFieldType.isSharedValue()) {
         afvOptional =
-            additionalFieldValueRepository.findByValueOfAndTypeIdAndTicketId(
-                additionalFieldType.getId(),
-                additionalFieldValue.getValueOf(),
-                ticketToSave.getId());
+            additionalFieldValueRepository.findByValueOfAndTypeId(
+                additionalFieldType, additionalFieldValue.getValueOf());
       }
 
       if (afvOptional.isPresent()) {
@@ -1662,57 +1652,191 @@ public class TicketServiceImpl implements TicketService {
   }
 
   @Transactional
-  public Ticket createPbsRequest(PbsRequest pbsRequest) {
-    // first attempt to find a ticket by the artgid
+  public Ticket createOrGetTicket(TicketMetadata ticketMetadata) {
+    List<ExternalRequestor> resolvedRequestors = resolveExternalRequestors(ticketMetadata);
+    List<Label> resolvedLabels = resolveLabels(ticketMetadata);
 
-    List<Ticket> tickets = new ArrayList<>();
-    try {
-      tickets = findByAdditionalFieldTypeValueOf(ARTGID, pbsRequest.getArtgid().toString());
-    } catch (ResourceNotFoundProblem ignored) {
-      logger.debug("No ticket found with ARTGID: " + pbsRequest.getArtgid());
+    List<String> requestorNames =
+        ticketMetadata.getExternalRequestors() != null
+            ? ticketMetadata.getExternalRequestors()
+            : List.of();
+
+    List<Ticket> existing =
+        ticketRepository.findTicketsByTitle(ticketMetadata.getName()).stream()
+            .filter(
+                t ->
+                    requestorNames.isEmpty()
+                        || requestorNames.stream()
+                            .allMatch(
+                                name ->
+                                    t.getExternalRequestors().stream()
+                                        .anyMatch(er -> er.getName().equalsIgnoreCase(name))))
+            .toList();
+
+    if (existing.isEmpty()) {
+      return createNewTicket(ticketMetadata, resolvedRequestors, resolvedLabels);
     }
 
-    ExternalRequestor externalRequestor =
-        externalRequestorRepository
-            .findByName("PBS")
-            .orElseThrow(
-                () ->
-                    new ResourceNotFoundProblem(
-                        String.format(ErrorMessages.EXTERNAL_REQUESTOR_NAME_NOT_FOUND, "PBS")));
-
-    // if empty, and supplied an artgid, call sergio and get it to create a ticket from an artgid
-    if (tickets.isEmpty() && pbsRequest.getArtgid() != null) {
-      return processArtgId(pbsRequest.getArtgid(), List.of(externalRequestor));
-    }
-
-    // if not found, create new
-    if (tickets.isEmpty()) {
-
-      Ticket newlyCreatedPbsTicket =
-          Ticket.builder()
-              .title(pbsRequest.getName())
-              .description(pbsRequest.createDescriptionMarkup())
-              .build();
-
-      newlyCreatedPbsTicket.setExternalRequestors(new HashSet<>());
-      newlyCreatedPbsTicket.getExternalRequestors().add(externalRequestor);
-
-      return createTicketFromDto(ticketMapper.toDto(newlyCreatedPbsTicket));
-    }
-
-    // if found, update
-
-    for (Ticket ticket : tickets) {
+    for (Ticket ticket : existing) {
       if (TicketUtils.isTicketDuplicate(ticket)) continue;
-      ticket.getExternalRequestors().add(externalRequestor);
-
-      if (!ticket.getDescription().contains(pbsRequest.createDescriptionMarkup())) {
-        ticket.setDescription(ticket.getDescription() + pbsRequest.createDescriptionMarkup());
+      if (TicketUtils.isTicketClosed(ticket)) {
+        logger.info("Reopening closed ticket: " + ticket.getTicketNumber());
+        ticket.setState(stateRepository.findByLabel("Reopened").orElse(ticket.getState()));
       }
-      return ticketRepository.save(ticket);
+      applyMetadataUpdates(ticket, resolvedRequestors, resolvedLabels, ticketMetadata);
+      Ticket saved = ticketRepository.save(ticket);
+      initializeProducts(saved);
+      return saved;
     }
 
-    return null;
+    // All existing are closed or duplicate — create a new ticket
+    return createNewTicket(ticketMetadata, resolvedRequestors, resolvedLabels);
+  }
+
+  private Ticket createNewTicket(
+      TicketMetadata ticketMetadata,
+      List<ExternalRequestor> resolvedRequestors,
+      List<Label> resolvedLabels) {
+    State toDoState = stateRepository.findByLabel("To Do").orElse(null);
+    Ticket newTicket =
+        Ticket.builder()
+            .title(ticketMetadata.getName())
+            .description(ticketMetadata.getResolvedDescription())
+            .state(toDoState)
+            .build();
+    newTicket.setExternalRequestors(new HashSet<>(resolvedRequestors));
+    if (resolvedLabels != null) {
+      newTicket.setLabels(new HashSet<>(resolvedLabels));
+    }
+    return createTicketFromDto(ticketMapper.toDto(newTicket));
+  }
+
+  @Transactional
+  public List<Ticket> createOrGetTicketsByArtgId(TicketMetadata ticketMetadata) {
+    if (ticketMetadata.getDedupeKey() == null || ticketMetadata.getDedupeKey().isBlank()) {
+      throw new InvalidSearchProblem("dedupeKey is required for ARTGID-based ticket lookup");
+    }
+    try {
+      List<ExternalRequestor> resolvedRequestors = resolveExternalRequestors(ticketMetadata);
+      List<Label> resolvedLabels = resolveLabels(ticketMetadata);
+
+      List<Ticket> tickets = new ArrayList<>();
+      try {
+        tickets = findByAdditionalFieldTypeValueOf(ARTGID, ticketMetadata.getDedupeKey());
+      } catch (ResourceNotFoundProblem ignored) {
+        logger.debug("No ticket found with dedupeKey: " + ticketMetadata.getDedupeKey());
+      }
+
+      List<Ticket> result = new ArrayList<>();
+      for (Ticket ticket : tickets) {
+        if (TicketUtils.isTicketDuplicate(ticket)) continue;
+        if (TicketUtils.isTicketClosed(ticket)) {
+          logger.info("Reopening closed ticket: " + ticket.getTicketNumber());
+          ticket.setState(stateRepository.findByLabel("Reopened").orElse(ticket.getState()));
+        }
+        applyMetadataUpdates(ticket, resolvedRequestors, resolvedLabels, ticketMetadata);
+        Ticket saved = ticketRepository.save(ticket);
+        initializeProducts(saved);
+        result.add(saved);
+      }
+
+      if (result.isEmpty()) {
+        // No open tickets — create a new one
+        Ticket newTicket =
+            processArtgId(
+                Long.valueOf(ticketMetadata.getDedupeKey()),
+                resolvedRequestors,
+                resolvedLabels,
+                Optional.ofNullable(ticketMetadata.getResolvedDescription()));
+        initializeProducts(newTicket);
+        result.add(newTicket);
+      }
+      return result;
+    } catch (Exception e) {
+      e.printStackTrace();
+      logger.error(
+          "Failed to create or get tickets for dedupeKey: " + ticketMetadata.getDedupeKey(), e);
+      throw e;
+    }
+  }
+
+  private List<ExternalRequestor> resolveExternalRequestors(TicketMetadata ticketMetadata) {
+    if (ticketMetadata.getExternalRequestors() == null
+        || ticketMetadata.getExternalRequestors().isEmpty()) {
+      return new ArrayList<>();
+    }
+    return ticketMetadata.getExternalRequestors().stream()
+        .map(
+            name ->
+                externalRequestorRepository
+                    .findByName(name)
+                    .orElseThrow(
+                        () ->
+                            new ResourceNotFoundProblem(
+                                String.format(
+                                    ErrorMessages.EXTERNAL_REQUESTOR_NAME_NOT_FOUND, name))))
+        .toList();
+  }
+
+  private List<Label> resolveLabels(TicketMetadata ticketMetadata) {
+    if (ticketMetadata.getLabels() == null) {
+      return null;
+    }
+    return ticketMetadata.getLabels().stream()
+        .map(
+            labelName ->
+                labelRepository
+                    .findByName(labelName)
+                    .orElseThrow(
+                        () ->
+                            new ResourceNotFoundProblem(
+                                String.format("Label '%s' not found", labelName))))
+        .toList();
+  }
+
+  private void applyMetadataUpdates(
+      Ticket ticket,
+      List<ExternalRequestor> resolvedRequestors,
+      List<Label> resolvedLabels,
+      TicketMetadata ticketMetadata) {
+    resolvedRequestors.forEach(
+        requestor -> {
+          if (ticket.getExternalRequestors().stream()
+              .noneMatch(er -> er.getName().equalsIgnoreCase(requestor.getName()))) {
+            ticket.getExternalRequestors().add(requestor);
+          }
+        });
+    if (resolvedLabels != null) {
+      resolvedLabels.forEach(
+          label -> {
+            if (ticket.getLabels().stream()
+                .noneMatch(l -> l.getName().equalsIgnoreCase(label.getName()))) {
+              ticket.getLabels().add(label);
+            }
+          });
+    }
+    String existingDescription = ticket.getDescription();
+    String newDescription = ticketMetadata.getResolvedDescription();
+    if (newDescription != null
+        && (existingDescription == null || !existingDescription.contains(newDescription))) {
+
+      Comment comment = Comment.builder().ticket(ticket).text(newDescription).build();
+      commentRepository.save(comment);
+    }
+  }
+
+  private void initializeProducts(Ticket ticket) {
+    if (ticket != null) {
+      if (ticket.getProducts() != null) {
+        ticket.getProducts().size(); // forces initialization safely inside TX
+      }
+      if (ticket.getAdditionalFieldValues() != null) {
+        ticket.getAdditionalFieldValues().size(); // forces initialization safely inside TX
+      }
+      if (ticket.getLabels() != null) {
+        ticket.getLabels().size(); // forces initialization safely inside TX
+      }
+    }
   }
 
   @Transactional
@@ -1795,16 +1919,26 @@ public class TicketServiceImpl implements TicketService {
   public CompletableFuture<Ticket> processArtgIdAsync(
       String artgId, List<ExternalRequestor> externalRequestorList) {
     return CompletableFuture.completedFuture(
-        processArtgId(Long.parseLong(artgId), externalRequestorList));
+        processArtgId(Long.parseLong(artgId), externalRequestorList, null, Optional.empty()));
   }
 
-  private Ticket processArtgId(Long artgId, List<ExternalRequestor> externalRequestorList) {
+  private Ticket processArtgId(
+      Long artgId,
+      List<ExternalRequestor> externalRequestorList,
+      List<Label> labels,
+      Optional<String> ammendDescription) {
     TicketDto ticketDto = sergioService.getTicketByArtgEntryId(artgId);
     if (ticketDto == null) {
       throw new IllegalArgumentException("TicketDto is null for artgId: " + artgId);
     }
     if (ticketDto.getExternalRequestors() == null) {
       ticketDto.setExternalRequestors(new HashSet<>());
+    } else {
+      ticketDto.getExternalRequestors().removeIf(Objects::isNull);
+    }
+    if (ammendDescription.isPresent()
+        && !ticketDto.getDescription().contains(ammendDescription.get())) {
+      ticketDto.setDescription(ticketDto.getDescription() + "<br>" + ammendDescription.get());
     }
     if (externalRequestorList != null) {
       externalRequestorList.forEach(
@@ -1816,6 +1950,22 @@ public class TicketServiceImpl implements TicketService {
               ticketDto
                   .getExternalRequestors()
                   .add(externalRequestorMapper.toDto(externalRequestor));
+            }
+          });
+    }
+    if (labels != null) {
+      if (ticketDto.getLabels() == null) {
+        ticketDto.setLabels(new HashSet<>());
+      } else {
+        ticketDto.getLabels().removeIf(Objects::isNull);
+      }
+      labels.forEach(
+          label -> {
+            if (label != null
+                && ticketDto.getLabels().stream()
+                    .map(LabelDto::getId)
+                    .noneMatch(id -> id.equals(label.getId()))) {
+              ticketDto.getLabels().add(labelMapper.toDto(label));
             }
           });
     }
@@ -1836,33 +1986,17 @@ public class TicketServiceImpl implements TicketService {
   }
 
   @Transactional
-  public PbsRequestResponse getPbsStatus(Long ticketId) {
+  public TicketSubmissionResponse fetchTicketStatus(String ticketNumber) {
     Ticket ticket =
         ticketRepository
-            .findById(ticketId)
+            .findByTicketNumber(ticketNumber)
             .orElseThrow(
                 () ->
                     new ResourceNotFoundProblem(
-                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
+                        String.format(ErrorMessages.TICKET_NUMBER_NOT_FOUND, ticketNumber)));
 
-    ExternalRequestor pbsExternalRequestor =
-        externalRequestorRepository
-            .findByName("PBS")
-            .orElseThrow(
-                () ->
-                    new ResourceNotFoundProblem(
-                        String.format(ErrorMessages.EXTERNAL_REQUESTOR_NAME_NOT_FOUND, "PBS")));
-
-    findTicket(ticketId).getExternalRequestors().stream()
-        .filter(requestor -> requestor.getName().equals(pbsExternalRequestor.getName()))
-        .findAny()
-        .orElseThrow(
-            () ->
-                new ResourceNotFoundProblem(
-                    String.format(
-                        "No Ticket with Id %s is marked as a requested item.", ticketId)));
-
-    return new PbsRequestResponse(ticket);
+    initializeProducts(ticket);
+    return new TicketSubmissionResponse(ticket);
   }
 
   public List<TicketMinimalDto> getTickets(List<String> ids) {
