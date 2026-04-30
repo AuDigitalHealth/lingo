@@ -272,11 +272,9 @@ class BrandPackSizeServiceTest {
         BrandPackSizeService.buildNewBrandedProductRelationships(
             sourceRels, newBrandMini(), ModelLevelType.REAL_MEDICINAL_PRODUCT, Set.of(), MODULE_ID);
 
-    Set<SnowstormRelationship> hpns =
-        result.stream()
-            .filter(r -> HAS_PRODUCT_NAME.getValue().equals(r.getTypeId()))
-            .collect(Collectors.toSet());
-    assertThat(hpns).hasSize(1);
-    assertThat(hpns.iterator().next().getDestinationId()).isEqualTo(NEW_BRAND_CONCEPT_ID);
+    assertThat(result)
+        .filteredOn(r -> HAS_PRODUCT_NAME.getValue().equals(r.getTypeId()))
+        .extracting(SnowstormRelationship::getDestinationId)
+        .containsExactly(NEW_BRAND_CONCEPT_ID);
   }
 }
