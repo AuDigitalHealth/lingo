@@ -56,6 +56,15 @@ public class LabelController {
     return new ResponseEntity<>(labels, HttpStatus.OK);
   }
 
+  @GetMapping("/api/tickets/labelType/search")
+  public ResponseEntity<Label> getLabelByName(@RequestParam String name) {
+    return labelRepository
+        .findByName(name)
+        .map(label -> new ResponseEntity<>(label, HttpStatus.OK))
+        .orElseThrow(
+            () -> new ResourceNotFoundProblem(String.format("Label with name %s not found", name)));
+  }
+
   @PostMapping(value = "/api/tickets/labelType", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<Label> createLabelType(@RequestBody Label label) {
 

@@ -87,6 +87,8 @@ import au.gov.digitalhealth.lingo.product.details.PackageQuantity;
 import au.gov.digitalhealth.lingo.product.details.ProductQuantity;
 import au.gov.digitalhealth.lingo.product.details.VaccineProductDetails;
 import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
+import au.gov.digitalhealth.lingo.service.namegenerator.NameGenerationService;
+import au.gov.digitalhealth.lingo.service.namegenerator.NodeNameGenerator;
 import au.gov.digitalhealth.lingo.service.validators.MedicationDetailsValidator;
 import au.gov.digitalhealth.lingo.service.validators.ValidationResult;
 import au.gov.digitalhealth.lingo.util.AmtConstants;
@@ -516,6 +518,10 @@ public class MedicationProductCalculationService
             .sorted(ModelLevel.getModelLevelHierarchyComparator(modelConfiguration))
             .toList();
 
+    NodeNameGenerator nameGenerator =
+        nameGenerationService.resolveNameGenerator(
+            branch, () -> extractAxiomConceptPtsFromPackage(packageDetails));
+
     Map<ModelLevel, CompletableFuture<Node>> packageLevelFutures = new HashMap<>();
     for (ModelLevel packageLevel : packageLevels) {
       Set<CompletableFuture<Node>> parents = new HashSet<>();
@@ -552,7 +558,8 @@ public class MedicationProductCalculationService
                                   packageLevel,
                                   node,
                                   modelConfiguration,
-                                  List.of());
+                                  List.of(),
+                                  nameGenerator);
                               productSummary.addNode(node);
                               parentNodes.forEach(
                                   parentNode -> {
@@ -885,6 +892,10 @@ public class MedicationProductCalculationService
             .sorted(ModelLevel.getModelLevelHierarchyComparator(modelConfiguration))
             .toList();
 
+    NodeNameGenerator nameGenerator =
+        nameGenerationService.resolveNameGenerator(
+            branch, () -> extractAxiomConceptPts(productDetails));
+
     Map<ModelLevel, CompletableFuture<Node>> levelFutureMap = new HashMap<>();
     for (ModelLevel level : productLevels) {
       Set<CompletableFuture<Node>> parents = new HashSet<>();
@@ -924,7 +935,8 @@ public class MedicationProductCalculationService
                                       productSummary,
                                       parentNodes,
                                       modelConfiguration,
-                                      order));
+                                      order,
+                                      nameGenerator));
                       case CLINICAL_DRUG, REAL_CLINICAL_DRUG ->
                           findOrCreateUnit(
                                   branch,
@@ -944,7 +956,8 @@ public class MedicationProductCalculationService
                                       productSummary,
                                       parentNodes,
                                       modelConfiguration,
-                                      order));
+                                      order,
+                                      nameGenerator));
                       default ->
                           throw new IllegalArgumentException(
                               "Unsupported model level type: " + level.getModelLevelType());
@@ -1010,9 +1023,10 @@ public class MedicationProductCalculationService
       ProductSummary productSummary,
       Set<Node> parentNodes,
       ModelConfiguration branchModelConfiguration,
-      List<String> order) {
+      List<String> order,
+      NodeNameGenerator nameGenerator) {
     return n -> {
-      generateName(atomicCache, productDetails, level, n, modelConfiguration, order);
+      generateName(atomicCache, productDetails, level, n, modelConfiguration, order, nameGenerator);
       productSummary.addNode(n);
       for (Node parent : parentNodes) {
         productSummary.addEdge(
@@ -1081,18 +1095,61 @@ public class MedicationProductCalculationService
     }
   }
 
+  /** Collects the preferred terms of every concept that participates in the product's OWL axiom. */
+  private static Set<String> extractAxiomConceptPts(MedicationProductDetails productDetails) {
+    Set<String> pts = new HashSet<>();
+    addConceptPt(pts, productDetails.getExistingMedicinalProduct());
+    addConceptPt(pts, productDetails.getExistingClinicalDrug());
+    addConceptPt(pts, productDetails.getGenericForm());
+    addConceptPt(pts, productDetails.getSpecificForm());
+    addConceptPt(pts, productDetails.getContainerType());
+    addConceptPt(pts, productDetails.getUnitOfPresentation());
+    addConceptPt(pts, productDetails.getProductName());
+    addConceptPt(pts, productDetails.getDeviceType());
+    if (productDetails.getPlaysRole() != null) {
+      productDetails.getPlaysRole().forEach(r -> addConceptPt(pts, r));
+    }
+    if (productDetails.getActiveIngredients() != null) {
+      for (Ingredient ingredient : productDetails.getActiveIngredients()) {
+        addConceptPt(pts, ingredient.getActiveIngredient());
+        addConceptPt(pts, ingredient.getRefinedActiveIngredient());
+        addConceptPt(pts, ingredient.getPreciseIngredient());
+        addConceptPt(pts, ingredient.getBasisOfStrengthSubstance());
+      }
+    }
+    return pts;
+  }
+
+  private static Set<String> extractAxiomConceptPtsFromPackage(
+      PackageDetails<MedicationProductDetails> packageDetails) {
+    Set<String> pts = new HashSet<>();
+    addConceptPt(pts, packageDetails.getProductName());
+    addConceptPt(pts, packageDetails.getContainerType());
+    packageDetails.getContainedProducts().stream()
+        .filter(pq -> pq.getProductDetails() != null)
+        .forEach(pq -> pts.addAll(extractAxiomConceptPts(pq.getProductDetails())));
+    return pts;
+  }
+
+  private static void addConceptPt(Set<String> pts, SnowstormConceptMini concept) {
+    if (concept != null && concept.getPt() != null && concept.getPt().getTerm() != null) {
+      pts.add(concept.getPt().getTerm());
+    }
+  }
+
   private void generateName(
       AtomicCache atomicCache,
       MedicationProductDetails productDetails,
       ModelLevel level,
       Node node,
       ModelConfiguration modelConfiguration,
-      List<String> order) {
+      List<String> order,
+      NodeNameGenerator nameGenerator) {
 
     if (productDetails instanceof NutritionalProductDetails nutritionalProductDetails) {
       handleNutritionalProductName(atomicCache, level, node, nutritionalProductDetails);
     } else {
-      nameGenerationService.addGeneratedFsnAndPt(
+      nameGenerator.generate(
           atomicCache,
           productDetails.hasDeviceType()
               ? level.getDrugDeviceSemanticTag()
@@ -1109,9 +1166,10 @@ public class MedicationProductCalculationService
       ModelLevel level,
       Node node,
       ModelConfiguration modelConfiguration,
-      List<String> order) {
+      List<String> order,
+      NodeNameGenerator nameGenerator) {
 
-    nameGenerationService.addGeneratedFsnAndPt(
+    nameGenerator.generate(
         atomicCache,
         hasDeviceType ? level.getDrugDeviceSemanticTag() : level.getMedicineSemanticTag(),
         node,

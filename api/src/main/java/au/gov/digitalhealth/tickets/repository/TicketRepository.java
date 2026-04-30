@@ -58,6 +58,8 @@ public interface TicketRepository
 
   Optional<Ticket> findByTitle(String title);
 
+  List<Ticket> findTicketsByTitle(String title);
+
   Optional<Ticket> findByTicketNumber(String tic);
 
   @Query(

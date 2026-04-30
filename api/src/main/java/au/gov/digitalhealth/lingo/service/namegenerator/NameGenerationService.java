@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package au.gov.digitalhealth.lingo.service;
+package au.gov.digitalhealth.lingo.service.namegenerator;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptView;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
@@ -22,14 +22,18 @@ import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.FsnAndPt;
 import au.gov.digitalhealth.lingo.product.NameGeneratorSpec;
 import au.gov.digitalhealth.lingo.product.Node;
+import au.gov.digitalhealth.lingo.service.AtomicCache;
 import au.gov.digitalhealth.lingo.util.OwlAxiomService;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,32 +45,47 @@ import org.springframework.stereotype.Service;
 public class NameGenerationService {
 
   private final boolean failOnBadInput;
-  NameGenerationClient client;
-
+  NameGenerationRouter router;
   OwlAxiomService owlAxiomService;
 
   @Autowired
   public NameGenerationService(
-      NameGenerationClient client,
+      NameGenerationRouter router,
       OwlAxiomService owlAxiomService,
       @Value("${snomio.nameGenerator.failOnBadInput:false}") boolean failOnBadInput) {
-    this.client = client;
+    this.router = router;
     this.owlAxiomService = owlAxiomService;
     this.failOnBadInput = failOnBadInput;
   }
 
-  public void addGeneratedFsnAndPt(
+  /**
+   * Resolves which name generator to use for a product (ECL-based or default), then returns a
+   * {@link NodeNameGenerator} that has that generator baked in. Call once per product and reuse for
+   * every node — this avoids repeated ECL lookups on each node.
+   */
+  public NodeNameGenerator resolveNameGenerator(
+      String branch, Supplier<Collection<String>> axiomConceptPtsSupplier) {
+    Function<NameGeneratorSpec, FsnAndPt> nameGenerator =
+        router.resolve(branch, axiomConceptPtsSupplier);
+    return (cache, tag, node, config, order) ->
+        addGeneratedFsnAndPt(cache, tag, node, config, order, nameGenerator);
+  }
+
+  private void addGeneratedFsnAndPt(
       AtomicCache atomicCache,
       String semanticTag,
       Node node,
       ModelConfiguration modelConfiguration,
-      List<String> order) {
+      List<String> order,
+      Function<NameGeneratorSpec, FsnAndPt> generator) {
     Instant start = Instant.now();
     Optional<NameGeneratorSpec> nameGeneratorSpec =
         generateNameGeneratorSpec(atomicCache, semanticTag, node, modelConfiguration, order);
     if (nameGeneratorSpec.isEmpty()) return;
     node.getNewConceptDetails().setNameGeneratorSpec(nameGeneratorSpec.get());
-    FsnAndPt fsnAndPt = createFsnAndPreferredTerm(nameGeneratorSpec.get());
+
+    FsnAndPt fsnAndPt = createFsnAndPreferredTerm(generator, node, nameGeneratorSpec.get());
+
     node.getNewConceptDetails().setFullySpecifiedName(fsnAndPt.getFSN());
     node.getNewConceptDetails().setPreferredTerm(fsnAndPt.getPT());
     atomicCache.addFsnAndPt(node.getConceptId(), fsnAndPt.getFSN(), fsnAndPt.getPT());
@@ -118,7 +137,8 @@ public class NameGenerationService {
     return Optional.empty();
   }
 
-  public FsnAndPt createFsnAndPreferredTerm(NameGeneratorSpec spec) {
+  public FsnAndPt createFsnAndPreferredTerm(
+      Function<NameGeneratorSpec, FsnAndPt> generator, Node node, NameGeneratorSpec spec) {
 
     if (spec.getOwl().matches(".*\\d{7,18}.*")) {
       String msg =
@@ -130,7 +150,7 @@ public class NameGenerationService {
       }
     }
 
-    FsnAndPt result = client.generateNames(spec);
+    FsnAndPt result = generator.apply(spec);
 
     if (log.isLoggable(Level.FINE)) {
       log.fine("NameGeneratorSpec: " + spec);

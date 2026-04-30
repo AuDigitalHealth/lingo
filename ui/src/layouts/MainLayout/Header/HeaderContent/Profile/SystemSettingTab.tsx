@@ -99,24 +99,42 @@ const SystemSettingsTab = () => {
           </ListItemIcon>
           <ListItemText primary="Edit Ticket Filters" />
         </ListItemButton>
-        <Link
-          to={'/dashboard/settings/externalProcesses'}
-          style={{ textDecoration: 'none', color: 'inherit' }}
-          key={'settings-filters'}
+      </Link>
+      <Link
+        to={'/dashboard/settings/externalProcesses'}
+        style={{ textDecoration: 'none', color: 'inherit' }}
+        key={'settings-filters'}
+      >
+        <ListItemButton
+          selected={selectedIndex === 4}
+          onClick={(event: React.MouseEvent<HTMLDivElement>) =>
+            handleListItemClick(event, 4)
+          }
+          data-testid="profile-card-external-process-tab-filters"
         >
-          <ListItemButton
-            selected={selectedIndex === 4}
-            onClick={(event: React.MouseEvent<HTMLDivElement>) =>
-              handleListItemClick(event, 4)
-            }
-            data-testid="profile-card-external-process-tab-filters"
-          >
-            <ListItemIcon>
-              <QuestionCircleOutlined />
-            </ListItemIcon>
-            <ListItemText primary="External Processes" />
-          </ListItemButton>
-        </Link>
+          <ListItemIcon>
+            <QuestionCircleOutlined />
+          </ListItemIcon>
+          <ListItemText primary="External Processes" />
+        </ListItemButton>
+      </Link>
+      <Link
+        to={'/dashboard/settings/synonymConfiguration'}
+        style={{ textDecoration: 'none', color: 'inherit' }}
+        key={'synonym-config'}
+      >
+        <ListItemButton
+          selected={selectedIndex === 4}
+          onClick={(event: React.MouseEvent<HTMLDivElement>) =>
+            handleListItemClick(event, 4)
+          }
+          data-testid="profile-card-external-process-tab-filters"
+        >
+          <ListItemIcon>
+            <QuestionCircleOutlined />
+          </ListItemIcon>
+          <ListItemText primary="Synonym Configuration" />
+        </ListItemButton>
       </Link>
     </List>
   );

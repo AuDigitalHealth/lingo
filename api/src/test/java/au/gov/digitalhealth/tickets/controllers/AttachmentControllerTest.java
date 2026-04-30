@@ -18,6 +18,7 @@ package au.gov.digitalhealth.tickets.controllers;
 import au.gov.digitalhealth.lingo.exception.ErrorMessages;
 import au.gov.digitalhealth.tickets.AttachmentUploadResponse;
 import au.gov.digitalhealth.tickets.TicketTestBaseLocal;
+import au.gov.digitalhealth.tickets.helper.AttachmentUrlDto;
 import au.gov.digitalhealth.tickets.models.Attachment;
 import au.gov.digitalhealth.tickets.models.Ticket;
 import au.gov.digitalhealth.tickets.repository.AttachmentRepository;
@@ -83,6 +84,16 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
   }
 
   @Test
+  void downloadAttachment_notFound_returns404() {
+    withAuth()
+        .contentType(ContentType.JSON)
+        .when()
+        .get(this.getSnomioLocation() + "/api/attachments/download/999999")
+        .then()
+        .statusCode(HttpStatus.NOT_FOUND.value());
+  }
+
+  @Test
   void downloadThumbnail() throws NoSuchAlgorithmException, IOException {
     List<Attachment> attachments = attachmentRepository.findAll();
     Attachment attachmentToTest =
@@ -101,6 +112,16 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
   }
 
   @Test
+  void downloadThumbnail_notFound_returns404() {
+    withAuth()
+        .contentType(ContentType.JSON)
+        .when()
+        .get(this.getSnomioLocation() + "/api/attachments/thumbnail/999999")
+        .then()
+        .statusCode(HttpStatus.NOT_FOUND.value());
+  }
+
+  @Test
   void downloadAttachmentJson() {
     List<Attachment> attachments = attachmentRepository.findAll();
     Attachment attachmentToTest =
@@ -112,6 +133,16 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
     Assertions.assertEquals(attachmentToTest, theAttachment);
     Assertions.assertEquals(
         "Adobe Portable Document Format", theAttachment.getAttachmentType().getName());
+  }
+
+  @Test
+  void getAttachment_notFound_returns404() {
+    withAuth()
+        .contentType(ContentType.JSON)
+        .when()
+        .get(this.getSnomioLocation() + "/api/attachments/999999")
+        .then()
+        .statusCode(HttpStatus.NOT_FOUND.value());
   }
 
   @Test
@@ -177,6 +208,146 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
     Assertions.assertNotNull(theAttachment.getThumbnailLocation());
     String thumbSha = calculateSha256(getThumbnail(theAttachment));
     Assertions.assertNotNull(thumbSha);
+  }
+
+  @Test
+  void uploadAttachmentsFromUrls() throws IOException {
+    List<Ticket> tickets = ticketRepository.findAll();
+    Ticket ticketToTest = tickets.stream().findFirst().orElseThrow();
+
+    String url =
+        this.getSnomioLocation() + "/api/attachments/upload/" + ticketToTest.getId() + "/from-urls";
+
+    // Missing fileName
+    AttachmentUrlDto missingFileName = new AttachmentUrlDto();
+    missingFileName.setUrl("https://example.com/file.pdf");
+    missingFileName.setSizeMb(0.1);
+
+    // Blank url
+    AttachmentUrlDto blankUrl = new AttachmentUrlDto();
+    blankUrl.setFileName("file.pdf");
+    blankUrl.setUrl("  ");
+    blankUrl.setSizeMb(0.1);
+
+    // Negative size
+    AttachmentUrlDto negativeSize = new AttachmentUrlDto();
+    negativeSize.setFileName("file.pdf");
+    negativeSize.setUrl("https://example.com/file.pdf");
+    negativeSize.setSizeMb(-1.0);
+
+    // Too long fileName (over 255 chars)
+    AttachmentUrlDto longName = new AttachmentUrlDto();
+    longName.setFileName("a".repeat(300));
+    longName.setUrl("https://example.com/file.pdf");
+    longName.setSizeMb(0.1);
+
+    // Invalid URL
+    AttachmentUrlDto invalidUrl = new AttachmentUrlDto();
+    invalidUrl.setFileName("file.pdf");
+    invalidUrl.setUrl("not-a-valid-url");
+    invalidUrl.setSizeMb(0.1);
+
+    List<AttachmentUrlDto> invalidList =
+        List.of(missingFileName, blankUrl, negativeSize, longName, invalidUrl);
+
+    // Entire list invalid -> Bad Request
+    withAuth()
+        .contentType(ContentType.JSON)
+        .body(invalidList)
+        .when()
+        .post(url)
+        .then()
+        .statusCode(HttpStatus.BAD_REQUEST.value());
+
+    // Single-item invalid -> Bad Request
+    withAuth()
+        .contentType(ContentType.JSON)
+        .body(List.of(missingFileName))
+        .when()
+        .post(url)
+        .then()
+        .statusCode(HttpStatus.BAD_REQUEST.value());
+
+    AttachmentUrlDto attachmentDto = new AttachmentUrlDto();
+    attachmentDto.setFileName("smoll.pdf");
+    attachmentDto.setUrl(
+        "https://adha-ncts-request-attachments-prod.s3.ap-southeast-2.amazonaws.com/b7f7d7763e9e4925a26a40c1db24081d");
+    List<au.gov.digitalhealth.tickets.helper.AttachmentUrlDto> request = List.of(attachmentDto);
+
+    AttachmentUploadResponse[] responses =
+        withAuth()
+            .contentType(ContentType.JSON)
+            .body(request)
+            .when()
+            .post(url)
+            .then()
+            .statusCode(HttpStatus.OK.value())
+            .extract()
+            .as(AttachmentUploadResponse[].class);
+
+    Assertions.assertEquals(1, responses.length);
+    AttachmentUploadResponse resp = responses[0];
+    Assertions.assertNotNull(resp);
+    Assertions.assertNotNull(resp.getAttachmentId());
+
+    Attachment theAttachment = getAttachmentJson(resp.getAttachmentId());
+    Assertions.assertNotNull(theAttachment);
+    Assertions.assertEquals("smoll.pdf", theAttachment.getFilename());
+    Assertions.assertNotNull(theAttachment.getLocation());
+  }
+
+  @Test
+  void uploadAttachmentsFromUrls_emptyList_returnsBadRequest() {
+    List<Ticket> tickets = ticketRepository.findAll();
+    Ticket ticketToTest = tickets.stream().findFirst().orElseThrow();
+
+    String url =
+        this.getSnomioLocation() + "/api/attachments/upload/" + ticketToTest.getId() + "/from-urls";
+
+    ProblemDetail response =
+        withAuth()
+            .contentType(ContentType.JSON)
+            .body(List.of())
+            .when()
+            .post(url)
+            .then()
+            .statusCode(HttpStatus.BAD_REQUEST.value())
+            .extract()
+            .as(ProblemDetail.class);
+
+    Assertions.assertTrue(response.getDetail().contains("empty"));
+  }
+
+  @Test
+  void uploadAttachmentsFromUrls_ticketNotFound_returns404() {
+    List<Ticket> tickets = ticketRepository.findAll();
+    List<Long> ticketIds = tickets.stream().map(Ticket::getId).toList();
+    Long nonExistentTicketId = ticketIds.isEmpty() ? 1L : Collections.max(ticketIds) + 1;
+
+    String url =
+        this.getSnomioLocation() + "/api/attachments/upload/" + nonExistentTicketId + "/from-urls";
+
+    AttachmentUrlDto attachmentDto = new AttachmentUrlDto();
+    attachmentDto.setFileName("test.pdf");
+    attachmentDto.setUrl(
+        "https://adha-ncts-request-attachments-prod.s3.ap-southeast-2.amazonaws.com/b7f7d7763e9e4925a26a40c1db24081d");
+
+    ProblemDetail response =
+        withAuth()
+            .contentType(ContentType.JSON)
+            .body(List.of(attachmentDto))
+            .when()
+            .post(url)
+            .then()
+            .statusCode(HttpStatus.NOT_FOUND.value())
+            .extract()
+            .as(ProblemDetail.class);
+
+    Assertions.assertTrue(
+        response
+            .getDetail()
+            .matches(
+                ErrorMessages.TICKET_ID_NOT_FOUND.replace("%s", nonExistentTicketId.toString())));
   }
 
   @Test

@@ -49,13 +49,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(
@@ -239,8 +233,13 @@ public class MedicationController {
   @Validated(Default.class)
   public ResponseEntity<ValidationResult> validateMedicationProductAtomicData(
       @PathVariable String branch,
-      @RequestBody @Valid PackageDetails<@Valid MedicationProductDetails> productDetails) {
-    taskManagerService.validateTaskState(branch);
+      @RequestBody @Valid PackageDetails<@Valid MedicationProductDetails> productDetails,
+      @RequestParam(name = "skipTaskStateValidation", defaultValue = "false")
+          boolean skipTaskStateValidation) {
+    if (!skipTaskStateValidation) {
+      taskManagerService.validateTaskState(branch);
+    }
+
     final ValidationResult validationResult =
         productCalculationServiceFactory
             .getCalculationService(MedicationProductDetails.class)

@@ -17,6 +17,7 @@
     "record-npm-dependency-licenses": "node record-npm-dependency-licenses.cjs"
   },
   "dependencies": {
+    "@aehrc/ecl-editor-react": "^1.1.2",
     "@ant-design/colors": "^7.0.0",
     "@ant-design/icons": "^5.2.5",
     "@dnd-kit/core": "^6.0.8",
@@ -83,7 +84,7 @@
     "dayjs": "^1.11.12",
     "dompurify": "3.2.6",
     "dotenv": "^16.4.5",
-    "ecl-builder": "^0.2.1",
+    "ecl-builder": "^0.3.0",
     "file-saver": "^2.0.5",
     "framer-motion": "^11.2.12",
     "jsdom": "^24.1.0",
@@ -103,8 +104,8 @@
     "react-gravatar": "^2.6.3",
     "react-hook-form": "7.49.2",
     "react-intl": "^6.6.2",
-    "react-router-dom": "^6.24.1",
     "react-markdown": "^9.0.1",
+    "react-router-dom": "^6.24.1",
     "remark-gfm": "^4.0.0",
     "simplebar-react": "^3.2.5",
     "socket.io-client": "^4.7.5",

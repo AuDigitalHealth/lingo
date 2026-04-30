@@ -112,7 +112,11 @@ function ECLExpressionEditor({
     <>
       <Stack spacing={1}>
         <ECLBuilderThemeProvider>
-          <ExpressionBuilder expression={newEcl} onChange={setNewEcl} />
+          <ExpressionBuilder
+            expression={newEcl}
+            onChange={setNewEcl}
+            options={{ eclEditor: true }}
+          />
         </ECLBuilderThemeProvider>
       </Stack>
 

@@ -8,8 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
+- No updates yet.
+
+
+## [1.3.38] - 2026-04-24
+
+
+## [1.3.37] - 2026-04-15
+- Upgrade `ecl-builder` to `0.3.0`
+- Add `@aehrc/ecl-editor-react` dependency (required by `ecl-builder@0.3.0`)
 - Fix issue where the ticket that a concept was authored on was not correctly picking up bulk-brand/packsize updates
 - Update My task display logic to fall back to matching by username when email is not found
+- Configuration added for the automatic creation of synonyms on the product authoring screen if the term contains a substring. These can be created a new page which is reachable through the drop down on the top right.
+- Fix regression in snodine where the tick and flick refset member actions had been removed.
 
 
 ## [1.3.36] - 2026-02-23

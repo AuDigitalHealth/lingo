@@ -62,6 +62,9 @@ public class AdditionalFieldType extends BaseAuditableEntity {
   @Column(columnDefinition = "BOOLEAN DEFAULT true")
   private boolean display;
 
+  @Column(columnDefinition = "BOOLEAN DEFAULT false")
+  private boolean sharedValue;
+
   @Enumerated(EnumType.STRING)
   @Column
   private Type type;
