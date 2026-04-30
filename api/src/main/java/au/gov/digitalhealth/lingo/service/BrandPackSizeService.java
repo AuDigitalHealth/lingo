@@ -880,6 +880,58 @@ public class BrandPackSizeService {
             });
   }
 
+  /**
+   * Build the stated relationships for a new branded product concept by cloning the source
+   * (template) branded product's axiom relationships, stripping the IS_A relationships that point
+   * at other branded product concepts being replaced (those are re-added by addEdgesAndNodes once
+   * the new branded ancestors exist), retargeting HAS_PRODUCT_NAME to the new brand, and ensuring
+   * the SNOMED MEDICINAL_PRODUCT root is present at the top branded level.
+   *
+   * <p>This is package-private and static so it can be unit-tested without spinning up the full
+   * Spring context. All other IS_A relationships from the source axiom are preserved verbatim so
+   * that type-specific modelling (NMPC nutritional product IS_A "NMPC Oral Nutritional product",
+   * vaccine IS_A target population parents, device parents, etc.) carries through to the newly
+   * minted branded concept the same way the regular create-product flow in
+   * MedicationProductCalculationService produces it.
+   */
+  static Set<SnowstormRelationship> buildNewBrandedProductRelationships(
+      Set<SnowstormRelationship> sourceAxiomRelationships,
+      SnowstormConceptMini brand,
+      ModelLevelType modelLevelType,
+      Set<String> existingBrandedProductConceptIds,
+      String moduleId) {
+    Set<SnowstormRelationship> relationships =
+        cloneNewRelationships(sourceAxiomRelationships, moduleId).stream()
+            .filter(
+                relationship ->
+                    !(relationship.getTypeId().equals(IS_A.getValue())
+                        && existingBrandedProductConceptIds.contains(
+                            relationship.getDestinationId())))
+            .collect(Collectors.toSet());
+
+    if (modelLevelType.getAncestors().stream().noneMatch(ModelLevelType::isBranded)
+        && relationships.stream()
+            .noneMatch(
+                r ->
+                    r.getTypeId().equals(IS_A.getValue())
+                        && MEDICINAL_PRODUCT.getValue().equals(r.getDestinationId()))) {
+      relationships.add(
+          SnowstormDtoUtil.getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT, 0, moduleId));
+    }
+
+    relationships.forEach(
+        r -> {
+          r.setConcrete(r.getConcreteValue() != null);
+          r.setCharacteristicTypeId(STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE.getValue());
+          if (r.getTypeId().equals(HAS_PRODUCT_NAME.getValue())) {
+            r.setDestinationId(brand.getConceptId());
+            r.setTarget(brand);
+          }
+        });
+
+    return relationships;
+  }
+
   private CompletableFuture<Node> createNewBrandedProductNode(
       String branch,
       SnowstormConcept leafProductConcept,
@@ -893,56 +945,13 @@ public class BrandPackSizeService {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     ModelLevel modelLevel = modelConfiguration.getLevelOfType(modelLevelType);
 
-    // Clone all relationships from the source branded product. We only strip the IS_A
-    // relationships that point at other branded product concepts in the source product summary
-    // because those are replaced by addEdgesAndNodes with IS_A relationships to the newly created
-    // branded ancestors. All other IS_A relationships are preserved so that the new concept
-    // retains the modelling style of the underlying product type. For example, NMPC nutritional
-    // products carry an additional IS_A to the unbranded medicinal product (VTM) and unbranded
-    // clinical drug (VMP) which the regular create-product flow adds via
-    // MedicationProductCalculationService#createMpRelationships and
-    // #createClinicalDrugRelationships - those parents do not change when only the brand is
-    // different, so they must be carried through here.
     Set<SnowstormRelationship> relationships =
-        cloneNewRelationships(
-                SnowstormDtoUtil.getRelationshipsFromAxioms(leafProductConcept),
-                modelConfiguration.getModuleId())
-            .stream()
-            .filter(
-                relationship ->
-                    !(relationship.getTypeId().equals(IS_A.getValue())
-                        && existingBrandedProductConceptIds.contains(
-                            relationship.getDestinationId())))
-            .collect(Collectors.toSet());
-
-    // Ensure the SNOMED CT MEDICINAL_PRODUCT root parent IS_A is present on the top-level branded
-    // product (the level whose ancestors include no other branded levels). The regular
-    // create-product flow always sets this for both AMT and NMPC branded medicinal products
-    // (see MedicationProductCalculationService#createMpRelationships line ~1129 and
-    // #createClinicalDrugRelationships). Earlier this code wrongly added VIRTUAL_MEDICINAL_PRODUCT
-    // for NMPC at this level - VIRTUAL_MEDICINAL_PRODUCT is the root for *unbranded* clinical
-    // drugs (VMP/MPUU) only. Branded medicinal products in NMPC (TP/ATM) are children of the
-    // SNOMED MEDICINAL_PRODUCT root, the same as in AMT.
-    if (modelLevelType.getAncestors().stream().noneMatch(ModelLevelType::isBranded)
-        && relationships.stream()
-            .noneMatch(
-                r ->
-                    r.getTypeId().equals(IS_A.getValue())
-                        && MEDICINAL_PRODUCT.getValue().equals(r.getDestinationId()))) {
-      relationships.add(
-          SnowstormDtoUtil.getSnowstormRelationship(
-              IS_A, MEDICINAL_PRODUCT, 0, modelConfiguration.getModuleId()));
-    }
-
-    relationships.forEach(
-        r -> {
-          r.setConcrete(r.getConcreteValue() != null);
-          r.setCharacteristicTypeId(STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE.getValue());
-          if (r.getTypeId().equals(HAS_PRODUCT_NAME.getValue())) {
-            r.setDestinationId(brand.getConceptId());
-            r.setTarget(brand);
-          }
-        });
+        buildNewBrandedProductRelationships(
+            SnowstormDtoUtil.getRelationshipsFromAxioms(leafProductConcept),
+            brand,
+            modelLevelType,
+            existingBrandedProductConceptIds,
+            modelConfiguration.getModuleId());
 
     relationships.forEach(
         r -> {
