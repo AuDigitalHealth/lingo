@@ -33,35 +33,19 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
-/**
- * Unit tests for BrandPackSizeService#buildNewBrandedProductRelationships covering the IS_A
- * preservation/replacement contract that fix #1755 is built on.
- *
- * <p>Each test exercises a specific scenario from the spec attached to the issue (see {@code
- * .ai/spec.md}) so the regression behaviour is locked in.
- */
 class BrandPackSizeServiceTest {
 
   private static final String MODULE_ID = "900062011000036108";
 
-  // Source/template branded product ATM concept being cloned from
   private static final String SOURCE_TP_CONCEPT_ID = "934531000220104";
-  // The new brand the user is creating (e.g. "Dougal Brandy")
   private static final String NEW_BRAND_CONCEPT_ID = "919341000220105";
   private static final String NEW_BRAND_TERM = "Dougal Brandy (brand) (product name)";
 
-  // Existing branded product ATM concept ids being replaced (at non-top branded levels these
-  // would be e.g. the TPP/CTPP being replaced by the new brand). For the top branded level we
-  // pass an empty set because there is no other branded ancestor in the source product summary.
   private static final String EXISTING_BRANDED_TPP_ID = "955511000220105";
 
-  // NMPC nutritional type-specific MP parent that must be preserved (e.g. "NMPC Oral Nutritional
-  // product" 681011000220107).
   private static final String NMPC_NUTRITIONAL_MP_ID = "681011000220107";
   private static final String NMPC_NUTRITIONAL_MP_TERM = "NMPC Oral Nutritional product (product)";
 
-  // An arbitrary "Has product name" target on the source axiom that must be retargeted to the
-  // new brand.
   private static final String SOURCE_BRAND_ID = "760151000220109";
   private static final String SOURCE_BRAND_TERM = "Ensure TwoCal (brand) (product name)";
 
@@ -102,12 +86,6 @@ class BrandPackSizeServiceTest {
         .collect(Collectors.toSet());
   }
 
-  /**
-   * Issue #1755 / image 1 vs image 4: when cloning an NMPC nutritional ATM (real medicinal product)
-   * to a new brand, the type-specific IS_A (e.g. "NMPC Oral Nutritional product") must be preserved
-   * AND the SNOMED MEDICINAL_PRODUCT root must remain the only top-level IS_A. No
-   * VIRTUAL_MEDICINAL_PRODUCT must appear at the branded level.
-   */
   @Test
   void preservesNmpcNutritionalTypeSpecificIsAAndAddsMedicinalProductRoot() {
     Set<SnowstormRelationship> sourceRels = new HashSet<>();
@@ -136,12 +114,6 @@ class BrandPackSizeServiceTest {
     assertThat(hpn.getTarget().getConceptId()).isEqualTo(NEW_BRAND_CONCEPT_ID);
   }
 
-  /**
-   * AMT regression: source has IS_A MEDICINAL_PRODUCT only at the branded MP level. The new branded
-   * concept must keep IS_A MEDICINAL_PRODUCT and have no other IS_A parents. Pre-fix this level
-   * would have added IS_A VIRTUAL_MEDICINAL_PRODUCT for NMPC; for AMT it added MEDICINAL_PRODUCT -
-   * this test pins the AMT root behaviour.
-   */
   @Test
   void amtTopBrandedLevelKeepsMedicinalProductRootOnly() {
     Set<SnowstormRelationship> sourceRels = new HashSet<>();
@@ -157,11 +129,6 @@ class BrandPackSizeServiceTest {
         .doesNotContain(NmpcConstants.VIRTUAL_MEDICINAL_PRODUCT.getValue());
   }
 
-  /**
-   * Where the source axiom is missing the SNOMED MEDICINAL_PRODUCT root IS_A but does carry a
-   * type-specific NMPC parent (e.g. legacy data), the helper must inject MEDICINAL_PRODUCT root
-   * because the regular create-product flow always emits it at the top branded level.
-   */
   @Test
   void addsMedicinalProductRootWhenMissingFromSource() {
     Set<SnowstormRelationship> sourceRels = new HashSet<>();
@@ -176,12 +143,6 @@ class BrandPackSizeServiceTest {
         .containsExactlyInAnyOrder(MEDICINAL_PRODUCT.getValue(), NMPC_NUTRITIONAL_MP_ID);
   }
 
-  /**
-   * When the source axiom carries IS_A relationships pointing at other branded product concepts
-   * being replaced by addEdgesAndNodes (the existingBrandedProductConceptIds set), those specific
-   * IS_A relationships must be stripped so the orchestration code can replace them with IS_A
-   * relationships to the newly minted branded ancestors.
-   */
   @Test
   void stripsIsARelationshipsToBrandedProductsBeingReplaced() {
     Set<SnowstormRelationship> sourceRels = new HashSet<>();
@@ -206,11 +167,6 @@ class BrandPackSizeServiceTest {
         .containsExactlyInAnyOrder(MEDICINAL_PRODUCT.getValue(), NMPC_NUTRITIONAL_MP_ID);
   }
 
-  /**
-   * Non-top branded levels (e.g. REAL_CLINICAL_DRUG which has REAL_MEDICINAL_PRODUCT as a branded
-   * ancestor) must NOT have the SNOMED MEDICINAL_PRODUCT root injected. Only the top branded level
-   * (no branded ancestors) gets the root parent.
-   */
   @Test
   void nonTopBrandedLevelDoesNotInjectMedicinalProductRoot() {
     Set<SnowstormRelationship> sourceRels = new HashSet<>();
@@ -226,20 +182,11 @@ class BrandPackSizeServiceTest {
             MODULE_ID);
 
     assertThat(isADestinationIds(result))
-        .as(
-            "REAL_CLINICAL_DRUG has a branded ancestor (REAL_MEDICINAL_PRODUCT) so the helper "
-                + "must not auto-add MEDICINAL_PRODUCT root - the addEdgesAndNodes orchestration "
-                + "will reattach an IS_A to the newly minted REAL_MEDICINAL_PRODUCT instead.")
+        .as("MEDICINAL_PRODUCT root must only be auto-added at the top branded level")
         .doesNotContain(MEDICINAL_PRODUCT.getValue());
-    assertThat(isADestinationIds(result))
-        .as("The IS_A pointing at the being-replaced branded ancestor must be stripped")
-        .doesNotContain(SOURCE_TP_CONCEPT_ID);
+    assertThat(isADestinationIds(result)).doesNotContain(SOURCE_TP_CONCEPT_ID);
   }
 
-  /**
-   * Every relationship coming back must be flagged as a stated relationship - the helper sets this
-   * on every cloned rel because the source axiom rels can carry the inferred characteristic id.
-   */
   @Test
   void marksAllRelationshipsAsStated() {
     Set<SnowstormRelationship> sourceRels = new HashSet<>();
@@ -257,11 +204,6 @@ class BrandPackSizeServiceTest {
                     .isEqualTo(STATED_RELATIONSHUIP_CHARACTRISTIC_TYPE.getValue()));
   }
 
-  /**
-   * The new brand replacement must apply even if the source axiom contains multiple
-   * HAS_PRODUCT_NAME relationships (defensive - shouldn't normally happen but the loop visits all
-   * of them).
-   */
   @Test
   void retargetsAllHasProductNameRelationshipsToNewBrand() {
     Set<SnowstormRelationship> sourceRels = new HashSet<>();

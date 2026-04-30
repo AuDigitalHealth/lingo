@@ -24,6 +24,7 @@ import static au.gov.digitalhealth.lingo.util.NmpcConstants.CONTAINS_DEVICE_NMPC
 import static au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter.calculateNonDefiningRelationships;
 import static au.gov.digitalhealth.lingo.util.ReferenceSetUtils.calculateReferenceSetMembers;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONTAINS_CD;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.DEFINED;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_UNIT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_VALUE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRODUCT_NAME;
@@ -525,14 +526,9 @@ public class BrandPackSizeService {
     // combination
     Map<Pair<String, ModelLevelType>, Set<CompletableFuture<Node>>> brandedProductFutureMap =
         new HashMap<>();
-    // Concept ids of the branded product nodes from the source product summary; IS_A
-    // relationships pointing at these in the cloned source must be replaced with IS_A
-    // relationships pointing at the newly minted branded product nodes (handled in
-    // addEdgesAndNodes). All other IS_A relationships from the source (e.g. IS_A SNOMED's
-    // MEDICINAL_PRODUCT root, IS_A the existing unbranded MP/CD parents that the regular
-    // create-product flow adds for type-specific products such as nutritional supplements in
-    // NMPC) are preserved by createNewBrandedProductNode so that the new branded concepts
-    // retain the correct modelling for their product type.
+    // IS_A relationships pointing at these are stripped when cloning so the orchestration
+    // can re-link them to the newly minted branded ancestors; everything else on the source
+    // axiom is preserved.
     final Set<String> existingBrandedProductConceptIds =
         brandedProductNodeMap.values().stream().map(Node::getConceptId).collect(Collectors.toSet());
 
@@ -899,18 +895,18 @@ public class BrandPackSizeService {
   }
 
   /**
-   * Build the stated relationships for a new branded product concept by cloning the source
-   * (template) branded product's axiom relationships, stripping the IS_A relationships that point
-   * at other branded product concepts being replaced (those are re-added by addEdgesAndNodes once
-   * the new branded ancestors exist), retargeting HAS_PRODUCT_NAME to the new brand, and ensuring
-   * the SNOMED MEDICINAL_PRODUCT root is present at the top branded level.
+   * Clones the source branded product's axiom relationships into the relationships for a new
+   * branded product:
    *
-   * <p>This is package-private and static so it can be unit-tested without spinning up the full
-   * Spring context. All other IS_A relationships from the source axiom are preserved verbatim so
-   * that type-specific modelling (NMPC nutritional product IS_A "NMPC Oral Nutritional product",
-   * vaccine IS_A target population parents, device parents, etc.) carries through to the newly
-   * minted branded concept the same way the regular create-product flow in
-   * MedicationProductCalculationService produces it.
+   * <ul>
+   *   <li>IS_A relationships whose destination is in {@code existingBrandedProductConceptIds} are
+   *       stripped (the caller re-attaches IS_A to the newly minted branded ancestors).
+   *   <li>HAS_PRODUCT_NAME is retargeted to {@code brand}.
+   *   <li>If {@code modelLevelType} has no branded ancestors and no IS_A to MEDICINAL_PRODUCT was
+   *       cloned, IS_A MEDICINAL_PRODUCT is added so the top branded level always carries the
+   *       SNOMED root parent.
+   *   <li>All output relationships are flagged as stated.
+   * </ul>
    */
   static Set<SnowstormRelationship> buildNewBrandedProductRelationships(
       Set<SnowstormRelationship> sourceAxiomRelationships,
@@ -1002,7 +998,10 @@ public class BrandPackSizeService {
             false,
             false,
             true,
-            true,
+            DEFINED
+                .getValue()
+                .equals(
+                    SnowstormDtoUtil.getSingleAxiom(leafProductConcept).getDefinitionStatusId()),
             false)
         .thenApply(
             n -> {
