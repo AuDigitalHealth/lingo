@@ -597,6 +597,44 @@ public class SnowstormClient {
         branch, true, null, null, conceptId, null, null, null, null, null, null, languageHeader);
   }
 
+  public static final String NON_DEFINING_CHARACTERISTIC_TYPE_ID = "900000000000227009";
+
+  public Mono<List<SnowstormReferenceSetMember>> getRefsetMembersModifiedOnBranch(String branch) {
+    SnowstormMemberSearchRequestComponent searchRequestComponent =
+        new SnowstormMemberSearchRequestComponent().active(true).nullEffectiveTime(true);
+    return getRefsetMembersApi()
+        .findRefsetMembers(branch, searchRequestComponent, 0, 10000, languageHeader)
+        .map(page -> page.getItems() == null ? List.<SnowstormReferenceSetMember>of() : page.getItems());
+  }
+
+  public Mono<List<SnowstormRelationship>> getNonDefiningRelationshipsModifiedOnBranch(
+      String branch) {
+    RelationshipsApi api = new RelationshipsApi(getApiClient());
+    return api.findRelationships(
+            branch,
+            true,
+            null,
+            null,
+            null,
+            null,
+            null,
+            NON_DEFINING_CHARACTERISTIC_TYPE_ID,
+            null,
+            0,
+            10000,
+            languageHeader)
+        .map(page -> page.getItems() == null ? List.<SnowstormRelationship>of() : page.getItems())
+        .map(
+            items ->
+                items.stream().filter(r -> Boolean.FALSE.equals(r.getReleased())).toList());
+  }
+
+  public void deleteRelationship(String branch, String relationshipId) {
+    new RelationshipsApi(getApiClient())
+        .deleteRelationship(branch, relationshipId, false)
+        .block();
+  }
+
   public Collection<SnowstormReferenceSetMember> getAllRefsetMembers(
       String branch, Collection<String> concepts, String referenceSetId, String module, int limit) {
     SnowstormMemberSearchRequestComponent searchRequestComponent =
