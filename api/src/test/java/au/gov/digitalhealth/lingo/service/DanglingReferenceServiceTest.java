@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -33,10 +34,10 @@ import au.gov.digitalhealth.lingo.promotion.DanglingReferenceSummary;
 import au.gov.digitalhealth.lingo.promotion.DanglingRefsetMember;
 import au.gov.digitalhealth.lingo.promotion.TidyAction;
 import au.gov.digitalhealth.lingo.promotion.TidyFailure;
+import au.gov.digitalhealth.lingo.promotion.TidyKind;
 import au.gov.digitalhealth.lingo.promotion.TidyResult;
 import au.gov.digitalhealth.lingo.promotion.TidySuccess;
 import java.util.List;
-import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -89,7 +90,6 @@ class DanglingReferenceServiceTest {
 
     assertThat(summary.danglingRefsetMembers()).isEmpty();
     assertThat(summary.danglingNonDefiningRelationships()).isEmpty();
-    assertThat(summary.hasDanglingReferences()).isFalse();
   }
 
   @Test
@@ -191,7 +191,31 @@ class DanglingReferenceServiceTest {
   }
 
   @Test
-  void tidy_releasedMemberInactivated_unreleasedDeleted() throws Exception {
+  void detect_isReadOnly_evenWithDanglingResults() throws Exception {
+    SnowstormReferenceSetMember m = member("m1", "refset-1", "c-retired", true);
+    SnowstormRelationship rel = relationship("r1", "c-retired", "c-active", "t", true);
+    when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH))
+        .thenReturn(Mono.just(List.of(m)));
+    when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
+        .thenReturn(Mono.just(List.of(rel)));
+    when(snowstormClient.getConceptsById(eq(BRANCH), any()))
+        .thenReturn(
+            List.of(
+                concept("c-retired", false, null),
+                concept("c-active", true, null),
+                concept("refset-1", true, null),
+                concept("t", true, null)));
+
+    service.detect(BRANCH);
+
+    verify(snowstormClient, never()).deleteRefsetMember(any(), any());
+    verify(snowstormClient, never()).inactivateRefsetMember(any(), any());
+    verify(snowstormClient, never()).deleteRelationship(any(), any());
+    verify(snowstormClient, never()).inactivateRelationship(any(), any());
+  }
+
+  @Test
+  void tidy_releasedMemberInactivated_unreleasedDeleted() {
     SnowstormReferenceSetMember released = member("m-released", "refset-1", "c-retired", true);
     SnowstormReferenceSetMember unreleased = member("m-unreleased", "refset-1", "c-deleted", false);
 
@@ -209,8 +233,8 @@ class DanglingReferenceServiceTest {
         .extracting(TidySuccess::id, TidySuccess::action)
         .containsExactlyInAnyOrder(
             tuple("m-released", TidyAction.INACTIVATED), tuple("m-unreleased", TidyAction.DELETED));
-    verify(snowstormClient).removeRefsetMembers(eq(BRANCH), eq(Set.of(released)));
-    verify(snowstormClient).removeRefsetMembers(eq(BRANCH), eq(Set.of(unreleased)));
+    verify(snowstormClient).inactivateRefsetMember(eq(BRANCH), eq(released));
+    verify(snowstormClient).deleteRefsetMember(eq(BRANCH), eq("m-unreleased"));
   }
 
   @Test
@@ -231,12 +255,51 @@ class DanglingReferenceServiceTest {
         .extracting(TidySuccess::id, TidySuccess::action)
         .containsExactlyInAnyOrder(
             tuple("r-rel", TidyAction.INACTIVATED), tuple("r-unrel", TidyAction.DELETED));
-    verify(snowstormClient).deleteRelationship(eq(BRANCH), eq("r-rel"));
+    verify(snowstormClient).inactivateRelationship(eq(BRANCH), eq(released));
     verify(snowstormClient).deleteRelationship(eq(BRANCH), eq("r-unrel"));
   }
 
   @Test
-  void tidy_partialFailureCapturesPerItemError() throws Exception {
+  void tidy_handlesBothKindsInOneCall() {
+    SnowstormReferenceSetMember releasedMember =
+        member("m-released", "refset-1", "c-retired", true);
+    SnowstormReferenceSetMember unreleasedMember =
+        member("m-unreleased", "refset-1", "c-deleted", false);
+    SnowstormRelationship releasedRel =
+        relationship("r-released", "c-retired", "c-active", "t", true);
+    SnowstormRelationship unreleasedRel =
+        relationship("r-unreleased", "c-active", "c-deleted", "t", false);
+
+    when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH))
+        .thenReturn(Mono.just(List.of(releasedMember, unreleasedMember)));
+    when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
+        .thenReturn(Mono.just(List.of(releasedRel, unreleasedRel)));
+    when(snowstormClient.getConceptsById(eq(BRANCH), any()))
+        .thenReturn(
+            List.of(
+                concept("c-retired", false, null),
+                concept("c-active", true, null),
+                concept("refset-1", true, null),
+                concept("t", true, null)));
+
+    TidyResult result = service.tidy(BRANCH);
+
+    assertThat(result.failed()).isEmpty();
+    assertThat(result.succeeded())
+        .extracting(TidySuccess::kind, TidySuccess::id, TidySuccess::action)
+        .containsExactlyInAnyOrder(
+            tuple(TidyKind.REFSET_MEMBER, "m-released", TidyAction.INACTIVATED),
+            tuple(TidyKind.REFSET_MEMBER, "m-unreleased", TidyAction.DELETED),
+            tuple(TidyKind.NON_DEFINING_RELATIONSHIP, "r-released", TidyAction.INACTIVATED),
+            tuple(TidyKind.NON_DEFINING_RELATIONSHIP, "r-unreleased", TidyAction.DELETED));
+    verify(snowstormClient).inactivateRefsetMember(eq(BRANCH), eq(releasedMember));
+    verify(snowstormClient).deleteRefsetMember(eq(BRANCH), eq("m-unreleased"));
+    verify(snowstormClient).inactivateRelationship(eq(BRANCH), eq(releasedRel));
+    verify(snowstormClient).deleteRelationship(eq(BRANCH), eq("r-unreleased"));
+  }
+
+  @Test
+  void tidy_partialFailureRefsetMember() {
     SnowstormReferenceSetMember m1 = member("m1", "r", "c-deleted", false);
     SnowstormReferenceSetMember m2 = member("m2", "r", "c-deleted", false);
 
@@ -248,14 +311,13 @@ class DanglingReferenceServiceTest {
 
     doAnswer(
             invocation -> {
-              Set<SnowstormReferenceSetMember> members = invocation.getArgument(1);
-              if (members.contains(m2)) {
+              if ("m2".equals(invocation.getArgument(1))) {
                 throw new RuntimeException("snowstorm exploded");
               }
               return null;
             })
         .when(snowstormClient)
-        .removeRefsetMembers(eq(BRANCH), any());
+        .deleteRefsetMember(eq(BRANCH), any());
 
     TidyResult result = service.tidy(BRANCH);
 
@@ -263,5 +325,34 @@ class DanglingReferenceServiceTest {
     assertThat(result.failed())
         .extracting(TidyFailure::id, TidyFailure::attemptedAction, TidyFailure::errorMessage)
         .containsExactly(tuple("m2", TidyAction.DELETED, "snowstorm exploded"));
+  }
+
+  @Test
+  void tidy_partialFailureRelationshipReportsError() {
+    SnowstormRelationship r1 = relationship("r1", "c-retired", "c-active", "t", false);
+    SnowstormRelationship r2 = relationship("r2", "c-retired", "c-active", "t", false);
+
+    when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH)).thenReturn(Mono.just(List.of()));
+    when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
+        .thenReturn(Mono.just(List.of(r1, r2)));
+    when(snowstormClient.getConceptsById(eq(BRANCH), any()))
+        .thenReturn(List.of(concept("c-retired", false, null), concept("c-active", true, null)));
+
+    doAnswer(
+            invocation -> {
+              if ("r2".equals(invocation.getArgument(1))) {
+                throw new RuntimeException("rel boom");
+              }
+              return null;
+            })
+        .when(snowstormClient)
+        .deleteRelationship(eq(BRANCH), any());
+
+    TidyResult result = service.tidy(BRANCH);
+
+    assertThat(result.succeeded()).extracting(TidySuccess::id).containsExactly("r1");
+    assertThat(result.failed())
+        .extracting(TidyFailure::id, TidyFailure::attemptedAction, TidyFailure::errorMessage)
+        .containsExactly(tuple("r2", TidyAction.DELETED, "rel boom"));
   }
 }

@@ -15,11 +15,26 @@
  */
 package au.gov.digitalhealth.lingo.promotion;
 
+import jakarta.annotation.Nullable;
+import java.util.Objects;
+
 public record DanglingRefsetMember(
     String memberId,
     String refsetId,
-    String refsetPt,
+    @Nullable String refsetPt,
     String referencedConceptId,
-    String referencedConceptPt,
+    @Nullable String referencedConceptPt,
     ConceptStatus referencedConceptStatus,
-    boolean released) {}
+    boolean released) {
+
+  public DanglingRefsetMember {
+    Objects.requireNonNull(memberId, "memberId");
+    Objects.requireNonNull(refsetId, "refsetId");
+    Objects.requireNonNull(referencedConceptId, "referencedConceptId");
+    Objects.requireNonNull(referencedConceptStatus, "referencedConceptStatus");
+    if (referencedConceptStatus == ConceptStatus.ACTIVE) {
+      throw new IllegalArgumentException(
+          "DanglingRefsetMember requires referencedConceptStatus != ACTIVE");
+    }
+  }
+}

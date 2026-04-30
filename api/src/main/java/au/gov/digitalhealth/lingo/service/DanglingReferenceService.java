@@ -33,10 +33,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import lombok.extern.java.Log;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 
+@Log
 @Service
 public class DanglingReferenceService {
 
@@ -65,7 +68,7 @@ public class DanglingReferenceService {
               m.getReferencedComponentId(),
               ptOrNull(referenced),
               status,
-              Boolean.TRUE.equals(m.getReleased())));
+              isReleased(m.getReleased())));
     }
 
     List<DanglingNonDefiningRelationship> danglingRels = new ArrayList<>();
@@ -87,7 +90,7 @@ public class DanglingReferenceService {
               r.getDestinationId(),
               ptOrNull(dst),
               dstStatus,
-              Boolean.TRUE.equals(r.getReleased())));
+              isReleased(r.getReleased())));
     }
 
     return new DanglingReferenceSummary(branch, danglingMembers, danglingRels);
@@ -103,14 +106,22 @@ public class DanglingReferenceService {
 
     for (SnowstormReferenceSetMember m : data.getT1()) {
       if (statusOf(m.getReferencedComponentId(), byId) == ConceptStatus.ACTIVE) continue;
-      TidyAction action =
-          Boolean.TRUE.equals(m.getReleased()) ? TidyAction.INACTIVATED : TidyAction.DELETED;
+      boolean released = isReleased(m.getReleased());
+      TidyAction action = released ? TidyAction.INACTIVATED : TidyAction.DELETED;
       try {
-        snowstormClient.removeRefsetMembers(branch, Set.of(m));
+        if (released) {
+          snowstormClient.inactivateRefsetMember(branch, m);
+        } else {
+          snowstormClient.deleteRefsetMember(branch, m.getMemberId());
+        }
         succeeded.add(new TidySuccess(TidyKind.REFSET_MEMBER, m.getMemberId(), action));
-      } catch (Exception e) {
+      } catch (RuntimeException e) {
+        log.log(
+            Level.SEVERE,
+            "Tidy of refset member " + m.getMemberId() + " on branch " + branch + " failed",
+            e);
         failed.add(
-            new TidyFailure(TidyKind.REFSET_MEMBER, m.getMemberId(), action, e.getMessage()));
+            new TidyFailure(TidyKind.REFSET_MEMBER, m.getMemberId(), action, errorMessage(e)));
       }
     }
 
@@ -118,16 +129,31 @@ public class DanglingReferenceService {
       ConceptStatus srcStatus = statusOf(r.getSourceId(), byId);
       ConceptStatus dstStatus = statusOf(r.getDestinationId(), byId);
       if (srcStatus == ConceptStatus.ACTIVE && dstStatus == ConceptStatus.ACTIVE) continue;
-      TidyAction action =
-          Boolean.TRUE.equals(r.getReleased()) ? TidyAction.INACTIVATED : TidyAction.DELETED;
+      boolean released = isReleased(r.getReleased());
+      TidyAction action = released ? TidyAction.INACTIVATED : TidyAction.DELETED;
       try {
-        snowstormClient.deleteRelationship(branch, r.getRelationshipId());
+        if (released) {
+          snowstormClient.inactivateRelationship(branch, r);
+        } else {
+          snowstormClient.deleteRelationship(branch, r.getRelationshipId());
+        }
         succeeded.add(
             new TidySuccess(TidyKind.NON_DEFINING_RELATIONSHIP, r.getRelationshipId(), action));
-      } catch (Exception e) {
+      } catch (RuntimeException e) {
+        log.log(
+            Level.SEVERE,
+            "Tidy of non-defining relationship "
+                + r.getRelationshipId()
+                + " on branch "
+                + branch
+                + " failed",
+            e);
         failed.add(
             new TidyFailure(
-                TidyKind.NON_DEFINING_RELATIONSHIP, r.getRelationshipId(), action, e.getMessage()));
+                TidyKind.NON_DEFINING_RELATIONSHIP,
+                r.getRelationshipId(),
+                action,
+                errorMessage(e)));
       }
     }
 
@@ -174,5 +200,16 @@ public class DanglingReferenceService {
 
   private static String ptOrNull(SnowstormConceptMini c) {
     return c == null || c.getPt() == null ? null : c.getPt().getTerm();
+  }
+
+  // A null `released` flag from Snowstorm is unexpected. Treat it as released so we
+  // attempt the safer "inactivate" path rather than a destructive delete.
+  private static boolean isReleased(Boolean released) {
+    return !Boolean.FALSE.equals(released);
+  }
+
+  private static String errorMessage(Throwable e) {
+    String msg = e.getMessage();
+    return msg != null && !msg.isBlank() ? msg : e.getClass().getSimpleName();
   }
 }

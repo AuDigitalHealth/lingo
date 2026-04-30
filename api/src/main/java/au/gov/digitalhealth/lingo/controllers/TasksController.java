@@ -65,6 +65,11 @@ public class TasksController {
     return danglingReferenceService.detect(resolveBranch(projectKey, taskKey));
   }
 
+  /**
+   * Tidies dangling references on the task branch on a best-effort, per-item basis. Always returns
+   * 200 with a {@link TidyResult}; the caller MUST inspect {@code failed} — a non-empty list
+   * signals partial or total tidy failure and the caller MUST NOT proceed with promotion.
+   */
   @PostMapping("/{projectKey}/{taskKey}/dangling-references/tidy")
   public TidyResult tidyDanglingReferences(
       @PathVariable String projectKey, @PathVariable String taskKey) throws AccessDeniedException {

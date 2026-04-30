@@ -15,14 +15,31 @@
  */
 package au.gov.digitalhealth.lingo.promotion;
 
+import jakarta.annotation.Nullable;
+import java.util.Objects;
+
 public record DanglingNonDefiningRelationship(
     String relationshipId,
     String typeId,
-    String typePt,
+    @Nullable String typePt,
     String sourceId,
-    String sourcePt,
+    @Nullable String sourcePt,
     ConceptStatus sourceStatus,
     String destinationId,
-    String destinationPt,
+    @Nullable String destinationPt,
     ConceptStatus destinationStatus,
-    boolean released) {}
+    boolean released) {
+
+  public DanglingNonDefiningRelationship {
+    Objects.requireNonNull(relationshipId, "relationshipId");
+    Objects.requireNonNull(typeId, "typeId");
+    Objects.requireNonNull(sourceId, "sourceId");
+    Objects.requireNonNull(destinationId, "destinationId");
+    Objects.requireNonNull(sourceStatus, "sourceStatus");
+    Objects.requireNonNull(destinationStatus, "destinationStatus");
+    if (sourceStatus == ConceptStatus.ACTIVE && destinationStatus == ConceptStatus.ACTIVE) {
+      throw new IllegalArgumentException(
+          "DanglingNonDefiningRelationship requires at least one non-ACTIVE endpoint");
+    }
+  }
+}

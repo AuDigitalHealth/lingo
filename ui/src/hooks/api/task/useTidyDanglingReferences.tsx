@@ -22,6 +22,9 @@ export function useTidyDanglingReferences() {
   return useMutation<TidyResult, Error, Params>({
     mutationFn: ({ projectKey, taskKey }) =>
       TasksServices.tidyDanglingReferences(projectKey, taskKey),
+    onError: (error: Error) => {
+      console.error('Tidy dangling references mutation failed:', error);
+    },
     onSettled: (_data, _error, variables) => {
       void queryClient.invalidateQueries({
         queryKey: [

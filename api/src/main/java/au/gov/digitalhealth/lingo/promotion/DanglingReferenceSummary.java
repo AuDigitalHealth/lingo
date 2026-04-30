@@ -16,13 +16,16 @@
 package au.gov.digitalhealth.lingo.promotion;
 
 import java.util.List;
+import java.util.Objects;
 
 public record DanglingReferenceSummary(
     String branch,
     List<DanglingRefsetMember> danglingRefsetMembers,
     List<DanglingNonDefiningRelationship> danglingNonDefiningRelationships) {
 
-  public boolean hasDanglingReferences() {
-    return !danglingRefsetMembers.isEmpty() || !danglingNonDefiningRelationships.isEmpty();
+  public DanglingReferenceSummary {
+    Objects.requireNonNull(branch, "branch");
+    danglingRefsetMembers = List.copyOf(danglingRefsetMembers);
+    danglingNonDefiningRelationships = List.copyOf(danglingNonDefiningRelationships);
   }
 }

@@ -79,8 +79,8 @@ export default function PromoteTaskModal({
   const handleConfirmPromotion = async () => {
     if (!task) return;
     setTidyFailures(null);
-    try {
-      if (hasDangling) {
+    if (hasDangling) {
+      try {
         const result = await tidyMutation.mutateAsync({
           projectKey: task.projectKey,
           taskKey: task.key,
@@ -89,18 +89,26 @@ export default function PromoteTaskModal({
           setTidyFailures(result.failed);
           return;
         }
+      } catch (error) {
+        console.error('Tidy of dangling references failed:', error);
+        enqueueSnackbar(
+          'Tidy failed. Promotion has been cancelled — please retry or contact support.',
+          { variant: 'error' },
+        );
+        return;
       }
+    }
+    try {
       await autoPromoteMutation.mutateAsync({
         projectKey: task.projectKey,
         taskKey: task.key,
       });
       setModalOpen(false);
     } catch (error) {
+      console.error('Auto-promote failed:', error);
       enqueueSnackbar(
         'Error promoting task. Please attempt in the authoring platform.',
-        {
-          variant: 'error',
-        },
+        { variant: 'error' },
       );
     }
   };
@@ -108,13 +116,16 @@ export default function PromoteTaskModal({
   const hasIssues = blockingIssues.length > 0 || warnings.length > 0;
   const isPromoting = autoPromoteMutation.isPending;
   const isTidying = tidyMutation.isPending;
+  const detectionRan = danglingQuery.isSuccess;
   const canProceed =
     blockingIssues.length === 0 &&
     !isPromoting &&
     !isTidying &&
     !danglingError &&
     !danglingLoading &&
-    !tidyFailures;
+    !tidyMutation.isError &&
+    !tidyFailures &&
+    detectionRan;
 
   const promoteLabel =
     blockingIssues.length > 0
@@ -187,7 +198,12 @@ export default function PromoteTaskModal({
                 <Typography variant="body2" sx={{ mb: 1 }}>
                   Detection failed. Please retry before promoting.
                 </Typography>
-                <Button size="small" onClick={() => danglingQuery.refetch()}>
+                <Button
+                  size="small"
+                  onClick={() => {
+                    void danglingQuery.refetch();
+                  }}
+                >
                   Retry
                 </Button>
               </Alert>

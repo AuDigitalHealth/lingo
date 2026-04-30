@@ -604,9 +604,22 @@ public class SnowstormClient {
         new SnowstormMemberSearchRequestComponent().active(true).nullEffectiveTime(true);
     return getRefsetMembersApi()
         .findRefsetMembers(branch, searchRequestComponent, 0, 10000, languageHeader)
-        .map(page -> page.getItems() == null ? List.<SnowstormReferenceSetMember>of() : page.getItems());
+        .flatMap(
+            page -> {
+              if (page == null) {
+                return Mono.error(
+                    new LingoProblem(
+                        "Snowstorm returned null page from findRefsetMembers on branch " + branch));
+              }
+              return Mono.just(page.getItems() == null ? List.of() : page.getItems());
+            });
   }
 
+  // Snowstorm's relationships search API does not expose a nullEffectiveTime filter, so
+  // we post-filter on effectiveTime == null to scope to changes on this branch only
+  // (a relationship modified on this task, whether previously released or new, has its
+  // effectiveTime cleared by Snowstorm; inherited unchanged relationships keep the prior
+  // effectiveTime).
   public Mono<List<SnowstormRelationship>> getNonDefiningRelationshipsModifiedOnBranch(
       String branch) {
     RelationshipsApi api = new RelationshipsApi(getApiClient());
@@ -623,16 +636,128 @@ public class SnowstormClient {
             0,
             10000,
             languageHeader)
-        .map(page -> page.getItems() == null ? List.<SnowstormRelationship>of() : page.getItems())
-        .map(
-            items ->
-                items.stream().filter(r -> Boolean.FALSE.equals(r.getReleased())).toList());
+        .flatMap(
+            page -> {
+              if (page == null) {
+                return Mono.error(
+                    new LingoProblem(
+                        "Snowstorm returned null page from findRelationships on branch "
+                            + branch));
+              }
+              List<SnowstormRelationship> items =
+                  page.getItems() == null ? List.<SnowstormRelationship>of() : page.getItems();
+              return Mono.just(
+                  items.stream().filter(r -> r.getEffectiveTime() == null).toList());
+            });
+  }
+
+  public void deleteRefsetMember(String branch, String memberId) {
+    try {
+      getRefsetMembersApi()
+          .deleteMembers(
+              branch,
+              new SnowstormMemberIdsPojoComponent().memberIds(Set.of(memberId)),
+              false)
+          .block();
+    } catch (RuntimeException e) {
+      throw new LingoProblem(
+          "Failed to delete refset member "
+              + memberId
+              + " on branch "
+              + branch
+              + ": "
+              + e.getMessage(),
+          e);
+    }
+  }
+
+  public void inactivateRefsetMember(String branch, SnowstormReferenceSetMember member) {
+    try {
+      SnowstormReferenceSetMemberViewComponent view =
+          new SnowstormReferenceSetMemberViewComponent()
+              .memberId(member.getMemberId())
+              .active(false)
+              .refsetId(member.getRefsetId())
+              .moduleId(member.getModuleId())
+              .referencedComponentId(member.getReferencedComponentId())
+              .additionalFields(member.getAdditionalFields());
+      // updateMember in the generated client takes (branch, uuid, view).
+      getRefsetMembersApi().updateMember(branch, member.getMemberId(), view).block();
+    } catch (RuntimeException e) {
+      throw new LingoProblem(
+          "Failed to inactivate refset member "
+              + member.getMemberId()
+              + " on branch "
+              + branch
+              + ": "
+              + e.getMessage(),
+          e);
+    }
   }
 
   public void deleteRelationship(String branch, String relationshipId) {
-    new RelationshipsApi(getApiClient())
-        .deleteRelationship(branch, relationshipId, false)
-        .block();
+    try {
+      new RelationshipsApi(getApiClient())
+          .deleteRelationship(branch, relationshipId, false)
+          .block();
+    } catch (RuntimeException e) {
+      throw new LingoProblem(
+          "Failed to delete relationship "
+              + relationshipId
+              + " on branch "
+              + branch
+              + ": "
+              + e.getMessage(),
+          e);
+    }
+  }
+
+  // Snowstorm does not expose a relationship update endpoint directly. Inactivating a
+  // released non-defining relationship requires fetching the parent concept via the
+  // browser API, flipping the relationship's active flag, and PUTting the concept back.
+  public void inactivateRelationship(String branch, SnowstormRelationship relationship) {
+    String relationshipId = relationship.getRelationshipId();
+    String sourceId = relationship.getSourceId();
+    if (sourceId == null) {
+      throw new LingoProblem(
+          "Cannot inactivate relationship " + relationshipId + " — sourceId is null");
+    }
+    try {
+      SnowstormConcept parent = getBrowserConcept(branch, sourceId).block();
+      if (parent == null || parent.getRelationships() == null) {
+        throw new LingoProblem(
+            "Source concept " + sourceId + " not found or has no relationships on branch " + branch);
+      }
+      boolean found = false;
+      for (SnowstormRelationship r : parent.getRelationships()) {
+        if (relationshipId.equals(r.getRelationshipId())) {
+          r.setActive(false);
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        throw new LingoProblem(
+            "Relationship "
+                + relationshipId
+                + " not found on source concept "
+                + sourceId
+                + " on branch "
+                + branch);
+      }
+      updateConcept(branch, sourceId, parent, false);
+    } catch (LingoProblem lp) {
+      throw lp;
+    } catch (RuntimeException e) {
+      throw new LingoProblem(
+          "Failed to inactivate relationship "
+              + relationshipId
+              + " on branch "
+              + branch
+              + ": "
+              + e.getMessage(),
+          e);
+    }
   }
 
   public Collection<SnowstormReferenceSetMember> getAllRefsetMembers(

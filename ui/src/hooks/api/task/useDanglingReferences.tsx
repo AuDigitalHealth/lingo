@@ -25,11 +25,18 @@ export function useDanglingReferences({
 }: Params) {
   return useQuery<DanglingReferenceSummary>({
     queryKey: ['dangling-references', projectKey, taskKey],
-    queryFn: () =>
-      TasksServices.getDanglingReferences(
-        projectKey as string,
-        taskKey as string,
-      ),
+    queryFn: async () => {
+      try {
+        return await TasksServices.getDanglingReferences(
+          projectKey as string,
+          taskKey as string,
+        );
+      } catch (error) {
+        console.error('Dangling references detection failed:', error);
+        throw error;
+      }
+    },
     enabled: enabled && Boolean(projectKey) && Boolean(taskKey),
+    retry: 1,
   });
 }

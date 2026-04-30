@@ -19,7 +19,8 @@ import java.util.List;
 
 public record TidyResult(List<TidySuccess> succeeded, List<TidyFailure> failed) {
 
-  public boolean hasFailures() {
-    return !failed.isEmpty();
+  public TidyResult {
+    succeeded = List.copyOf(succeeded);
+    failed = List.copyOf(failed);
   }
 }
