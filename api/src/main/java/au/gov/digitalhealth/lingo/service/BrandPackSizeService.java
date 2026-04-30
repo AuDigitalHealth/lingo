@@ -60,7 +60,6 @@ import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
 import au.gov.digitalhealth.lingo.service.validators.ValidationResult;
 import au.gov.digitalhealth.lingo.util.AmtConstants;
 import au.gov.digitalhealth.lingo.util.BigDecimalFormatter;
-import au.gov.digitalhealth.lingo.util.NmpcConstants;
 import au.gov.digitalhealth.lingo.util.RelationshipSorter;
 import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
@@ -511,6 +510,17 @@ public class BrandPackSizeService {
     // combination
     Map<Pair<String, ModelLevelType>, Set<CompletableFuture<Node>>> brandedProductFutureMap =
         new HashMap<>();
+    // Concept ids of the branded product nodes from the source product summary; IS_A
+    // relationships pointing at these in the cloned source must be replaced with IS_A
+    // relationships pointing at the newly minted branded product nodes (handled in
+    // addEdgesAndNodes). All other IS_A relationships from the source (e.g. IS_A SNOMED's
+    // MEDICINAL_PRODUCT root, IS_A the existing unbranded MP/CD parents that the regular
+    // create-product flow adds for type-specific products such as nutritional supplements in
+    // NMPC) are preserved by createNewBrandedProductNode so that the new branded concepts
+    // retain the correct modelling for their product type.
+    final Set<String> existingBrandedProductConceptIds =
+        brandedProductNodeMap.values().stream().map(Node::getConceptId).collect(Collectors.toSet());
+
     if (brands != null) {
       for (BrandWithIdentifiers brandPackSizeEntry : brands.getBrands()) {
         SnowstormConceptMini brand = brandPackSizeEntry.getBrand();
@@ -531,7 +541,8 @@ public class BrandPackSizeService {
                                 atomicCache,
                                 brandPackSizeEntry.getNonDefiningProperties(),
                                 isDevice,
-                                node.getModelLevel())
+                                node.getModelLevel(),
+                                existingBrandedProductConceptIds)
                             .thenApply(
                                 n -> {
                                   atomicCache.addFsnAndPt(
@@ -876,32 +887,51 @@ public class BrandPackSizeService {
       AtomicCache atomicCache,
       Set<NonDefiningBase> properties,
       boolean isDevice,
-      ModelLevelType modelLevelType) {
+      ModelLevelType modelLevelType,
+      Set<String> existingBrandedProductConceptIds) {
 
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     ModelLevel modelLevel = modelConfiguration.getLevelOfType(modelLevelType);
 
+    // Clone all relationships from the source branded product. We only strip the IS_A
+    // relationships that point at other branded product concepts in the source product summary
+    // because those are replaced by addEdgesAndNodes with IS_A relationships to the newly created
+    // branded ancestors. All other IS_A relationships are preserved so that the new concept
+    // retains the modelling style of the underlying product type. For example, NMPC nutritional
+    // products carry an additional IS_A to the unbranded medicinal product (VTM) and unbranded
+    // clinical drug (VMP) which the regular create-product flow adds via
+    // MedicationProductCalculationService#createMpRelationships and
+    // #createClinicalDrugRelationships - those parents do not change when only the brand is
+    // different, so they must be carried through here.
     Set<SnowstormRelationship> relationships =
         cloneNewRelationships(
                 SnowstormDtoUtil.getRelationshipsFromAxioms(leafProductConcept),
                 modelConfiguration.getModuleId())
             .stream()
-            .filter(relationship -> !relationship.getTypeId().equals(IS_A.getValue()))
+            .filter(
+                relationship ->
+                    !(relationship.getTypeId().equals(IS_A.getValue())
+                        && existingBrandedProductConceptIds.contains(
+                            relationship.getDestinationId())))
             .collect(Collectors.toSet());
 
-    if (modelLevelType.getAncestors().stream().noneMatch(ModelLevelType::isBranded)) {
-      if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
-        relationships.add(
-            SnowstormDtoUtil.getSnowstormRelationship(
-                IS_A,
-                NmpcConstants.VIRTUAL_MEDICINAL_PRODUCT,
-                0,
-                modelConfiguration.getModuleId()));
-      } else {
-        relationships.add(
-            SnowstormDtoUtil.getSnowstormRelationship(
-                IS_A, MEDICINAL_PRODUCT, 0, modelConfiguration.getModuleId()));
-      }
+    // Ensure the SNOMED CT MEDICINAL_PRODUCT root parent IS_A is present on the top-level branded
+    // product (the level whose ancestors include no other branded levels). The regular
+    // create-product flow always sets this for both AMT and NMPC branded medicinal products
+    // (see MedicationProductCalculationService#createMpRelationships line ~1129 and
+    // #createClinicalDrugRelationships). Earlier this code wrongly added VIRTUAL_MEDICINAL_PRODUCT
+    // for NMPC at this level - VIRTUAL_MEDICINAL_PRODUCT is the root for *unbranded* clinical
+    // drugs (VMP/MPUU) only. Branded medicinal products in NMPC (TP/ATM) are children of the
+    // SNOMED MEDICINAL_PRODUCT root, the same as in AMT.
+    if (modelLevelType.getAncestors().stream().noneMatch(ModelLevelType::isBranded)
+        && relationships.stream()
+            .noneMatch(
+                r ->
+                    r.getTypeId().equals(IS_A.getValue())
+                        && MEDICINAL_PRODUCT.getValue().equals(r.getDestinationId()))) {
+      relationships.add(
+          SnowstormDtoUtil.getSnowstormRelationship(
+              IS_A, MEDICINAL_PRODUCT, 0, modelConfiguration.getModuleId()));
     }
 
     relationships.forEach(
