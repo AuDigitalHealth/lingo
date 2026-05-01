@@ -661,6 +661,129 @@ public class SnowstormClient {
             });
   }
 
+  /**
+   * Returns the concept minis modified on the supplied branch — i.e. unpublished concepts whose
+   * path matches the branch (so changes inherited from parent project or MAIN are excluded).
+   * Returned concepts carry the conceptId, active flag and PT, sufficient to identify
+   * retired-on-task. We read path directly from the raw response map because the existing
+   * fromLinkedHashMap converter does not populate the path extraField.
+   */
+  public Mono<List<SnowstormConceptMini>> getConceptsModifiedOnBranch(String branch) {
+    return getConceptsApi()
+        .findConcepts(
+            branch,
+            null, /* activeFilter */
+            null, /* defStatus */
+            null, /* module */
+            null, /* term */
+            null, /* termActive */
+            null, /* descType */
+            null, /* language */
+            null, /* preferredIn */
+            null, /* acceptableIn */
+            null, /* preferredOrAcceptableIn */
+            null, /* ecl */
+            null, /* effectiveTime */
+            null, /* isNullEffectiveTime */
+            false, /* isPublished=false → only unpublished concepts */
+            null, /* statedEcl */
+            null, /* conceptIds */
+            false, /* returnIdOnly=false → full concept items */
+            0,
+            10000,
+            null,
+            null)
+        .flatMap(
+            page -> {
+              if (page == null) {
+                return Mono.error(
+                    new LingoProblem(
+                        "Snowstorm returned null page from findConcepts on branch " + branch));
+              }
+              if (page.getItems() == null) return Mono.just(List.<SnowstormConceptMini>of());
+              List<SnowstormConceptMini> filtered = new ArrayList<>();
+              for (Object item : page.getItems()) {
+                if (!(item instanceof java.util.LinkedHashMap)) continue;
+                java.util.LinkedHashMap<?, ?> raw = (java.util.LinkedHashMap<?, ?>) item;
+                if (!branch.equals(raw.get("path"))) continue;
+                filtered.add(SnowstormDtoUtil.fromLinkedHashMap(raw));
+              }
+              return Mono.just(filtered);
+            });
+  }
+
+  /**
+   * Active refset members on the branch whose referencedComponentId is one of the supplied
+   * concept IDs. Used for scenario 2 (a concept retired on the task may have inherited refset
+   * members on MAIN that are now dangling — these need to be retired or deleted regardless of
+   * which path the member's current version lives on).
+   */
+  public Mono<List<SnowstormReferenceSetMember>> findActiveRefsetMembersForConcepts(
+      String branch, Set<String> conceptIds) {
+    if (conceptIds == null || conceptIds.isEmpty()) return Mono.just(List.of());
+    SnowstormMemberSearchRequestComponent request =
+        new SnowstormMemberSearchRequestComponent()
+            .active(true)
+            .referencedComponentIds(List.copyOf(conceptIds));
+    return getRefsetMembersApi()
+        .findRefsetMembers(branch, request, 0, 10000, languageHeader)
+        .map(page -> page.getItems() == null ? List.<SnowstormReferenceSetMember>of() : page.getItems());
+  }
+
+  /**
+   * Active non-defining relationships on the branch where source or destination is one of the
+   * supplied concept IDs. Snowstorm's findRelationships filters by a single source or
+   * destination per call, so we issue a fan-out (2N parallel calls) and dedupe.
+   */
+  public Mono<List<SnowstormRelationship>> findActiveNonDefiningRelationshipsForConcepts(
+      String branch, Set<String> conceptIds) {
+    if (conceptIds == null || conceptIds.isEmpty()) return Mono.just(List.of());
+    RelationshipsApi api = new RelationshipsApi(getApiClient());
+    reactor.core.publisher.Flux<SnowstormRelationship> bySource =
+        reactor.core.publisher.Flux.fromIterable(conceptIds)
+            .flatMap(
+                id ->
+                    api.findRelationships(
+                            branch,
+                            true,
+                            null,
+                            null,
+                            id,
+                            null,
+                            null,
+                            NON_DEFINING_CHARACTERISTIC_TYPE_NAME,
+                            null,
+                            0,
+                            10000,
+                            languageHeader)
+                        .flatMapIterable(
+                            p -> p.getItems() == null ? List.<SnowstormRelationship>of() : p.getItems()));
+    reactor.core.publisher.Flux<SnowstormRelationship> byDestination =
+        reactor.core.publisher.Flux.fromIterable(conceptIds)
+            .flatMap(
+                id ->
+                    api.findRelationships(
+                            branch,
+                            true,
+                            null,
+                            null,
+                            null,
+                            null,
+                            id,
+                            NON_DEFINING_CHARACTERISTIC_TYPE_NAME,
+                            null,
+                            0,
+                            10000,
+                            languageHeader)
+                        .flatMapIterable(
+                            p -> p.getItems() == null ? List.<SnowstormRelationship>of() : p.getItems()));
+    return reactor.core.publisher.Flux.merge(bySource, byDestination)
+        .collect(
+            java.util.stream.Collectors.toMap(
+                SnowstormRelationship::getRelationshipId, r -> r, (a, b) -> a))
+        .map(map -> List.copyOf(map.values()));
+  }
+
   public void deleteRefsetMember(String branch, String memberId) {
     try {
       getRefsetMembersApi()

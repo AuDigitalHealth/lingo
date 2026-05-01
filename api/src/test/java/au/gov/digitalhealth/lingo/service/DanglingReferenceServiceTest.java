@@ -73,8 +73,25 @@ class DanglingReferenceServiceTest {
     }
   }
 
-  @Mock SnowstormClient snowstormClient;
+  @Mock(strictness = org.mockito.Mock.Strictness.LENIENT)
+  SnowstormClient snowstormClient;
+
   @InjectMocks DanglingReferenceService service;
+
+  @org.junit.jupiter.api.BeforeEach
+  void stubDefaultEmptyResponses() {
+    // Default everything to empty so each test can opt in to populated lists. Without these
+    // defaults the new three-way Mono.zip in detect() NPEs on the unstubbed methods.
+    when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH)).thenReturn(Mono.just(List.of()));
+    when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
+        .thenReturn(Mono.just(List.of()));
+    when(snowstormClient.getConceptsModifiedOnBranch(BRANCH)).thenReturn(Mono.just(List.of()));
+    when(snowstormClient.findActiveRefsetMembersForConcepts(eq(BRANCH), any()))
+        .thenReturn(Mono.just(List.of()));
+    when(snowstormClient.findActiveNonDefiningRelationshipsForConcepts(eq(BRANCH), any()))
+        .thenReturn(Mono.just(List.of()));
+    when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any())).thenReturn(List.of());
+  }
 
   private static SnowstormConceptMini concept(String id, Boolean active, String pt) {
     SnowstormConceptMini c = new SnowstormConceptMini().conceptId(id).active(active);
@@ -193,6 +210,83 @@ class DanglingReferenceServiceTest {
     DanglingReferenceSummary summary = service.detect(BRANCH);
 
     assertThat(summary.danglingRefsetMembers()).isEmpty();
+  }
+
+  @Test
+  void detect_scenario2_findsReleasedReferencesToConceptRetiredOnTask() {
+    // A concept retired on this task — its previously-published refset members and non-defining
+    // relationships live on a parent path (MAIN, project) but become dangling. They must be
+    // returned and tagged for inactivation (released=true).
+    SnowstormConceptMini retired = concept(C_RETIRED, false, "Retired thing");
+    when(snowstormClient.getConceptsModifiedOnBranch(BRANCH))
+        .thenReturn(Mono.just(List.of(retired)));
+
+    SnowstormReferenceSetMember releasedMember =
+        new SnowstormReferenceSetMember()
+            .memberId("m-released")
+            .refsetId(C_REFSET)
+            .referencedComponentId(C_RETIRED)
+            .released(true)
+            .active(true);
+    when(snowstormClient.findActiveRefsetMembersForConcepts(eq(BRANCH), any()))
+        .thenReturn(Mono.just(List.of(releasedMember)));
+
+    SnowstormRelationship releasedRel =
+        new SnowstormRelationship()
+            .relationshipId("r-released")
+            .sourceId(C_RETIRED)
+            .destinationId(C_ACTIVE)
+            .typeId(C_TYPE)
+            .released(true)
+            .active(true);
+    when(snowstormClient.findActiveNonDefiningRelationshipsForConcepts(eq(BRANCH), any()))
+        .thenReturn(Mono.just(List.of(releasedRel)));
+
+    when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
+        .thenReturn(
+            List.of(
+                concept(C_REFSET, true, "My refset"),
+                concept(C_ACTIVE, true, "Other end"),
+                concept(C_TYPE, true, "My type")));
+
+    DanglingReferenceSummary summary = service.detect(BRANCH);
+
+    assertThat(summary.danglingRefsetMembers())
+        .extracting(
+            DanglingRefsetMember::memberId,
+            DanglingRefsetMember::referencedConceptStatus,
+            DanglingRefsetMember::released)
+        .containsExactly(tuple("m-released", ConceptStatus.RETIRED, true));
+    assertThat(summary.danglingNonDefiningRelationships())
+        .extracting(
+            DanglingNonDefiningRelationship::relationshipId,
+            DanglingNonDefiningRelationship::sourceStatus,
+            DanglingNonDefiningRelationship::released)
+        .containsExactly(tuple("r-released", ConceptStatus.RETIRED, true));
+  }
+
+  @Test
+  void tidy_scenario2_inactivatesReleasedReferencesToRetiredConcept() {
+    SnowstormConceptMini retired = concept(C_RETIRED, false, null);
+    when(snowstormClient.getConceptsModifiedOnBranch(BRANCH))
+        .thenReturn(Mono.just(List.of(retired)));
+    SnowstormReferenceSetMember releasedMember =
+        new SnowstormReferenceSetMember()
+            .memberId("m-released")
+            .refsetId(C_REFSET)
+            .referencedComponentId(C_RETIRED)
+            .released(true)
+            .active(true);
+    when(snowstormClient.findActiveRefsetMembersForConcepts(eq(BRANCH), any()))
+        .thenReturn(Mono.just(List.of(releasedMember)));
+
+    TidyResult result = service.tidy(BRANCH);
+
+    assertThat(result.failed()).isEmpty();
+    assertThat(result.succeeded())
+        .extracting(TidySuccess::id, TidySuccess::action)
+        .containsExactly(tuple("m-released", TidyAction.INACTIVATED));
+    verify(snowstormClient).inactivateRefsetMember(eq(BRANCH), eq(releasedMember));
   }
 
   @Test
