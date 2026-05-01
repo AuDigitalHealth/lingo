@@ -10,6 +10,7 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 ## [Unreleased]
 - Fix issue where the ticket that a concept was authored on was not correctly picking up bulk-brand/packsize updates
 - Update My task display logic to fall back to matching by username when email is not found
+- On task promotion, detect dangling reference set members and non-defining relationships left by Authoring Platform retire/delete actions and offer to tidy them (delete unreleased, inactivate released) before promoting (#1753)
 
 
 ## [1.3.36] - 2026-02-23
