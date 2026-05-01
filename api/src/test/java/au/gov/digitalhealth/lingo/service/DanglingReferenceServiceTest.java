@@ -196,6 +196,33 @@ class DanglingReferenceServiceTest {
   }
 
   @Test
+  void detect_handlesNonDefiningRelationshipWithNullDestination() {
+    // Concrete-value relationships have a non-null sourceId/typeId but a null destinationId.
+    // The DTO must accept this and the source's RETIRED status must still flag it as dangling.
+    SnowstormRelationship rel =
+        new SnowstormRelationship()
+            .relationshipId("r-concrete")
+            .sourceId(C_RETIRED)
+            .destinationId(null)
+            .typeId(C_TYPE)
+            .released(false)
+            .active(true);
+    when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH)).thenReturn(Mono.just(List.of()));
+    when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
+        .thenReturn(Mono.just(List.of(rel)));
+    when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
+        .thenReturn(List.of(concept(C_RETIRED, false, null), concept(C_TYPE, true, null)));
+
+    DanglingReferenceSummary summary = service.detect(BRANCH);
+
+    assertThat(summary.danglingNonDefiningRelationships()).hasSize(1);
+    DanglingNonDefiningRelationship d = summary.danglingNonDefiningRelationships().get(0);
+    assertThat(d.destinationId()).isNull();
+    assertThat(d.destinationStatus()).isEqualTo(ConceptStatus.ACTIVE);
+    assertThat(d.sourceStatus()).isEqualTo(ConceptStatus.RETIRED);
+  }
+
+  @Test
   void detect_flagsNonDefiningRelationshipWhenSourceRetired() {
     SnowstormRelationship rel = relationship("r1", C_RETIRED, C_ACTIVE, C_TYPE, false);
     when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH)).thenReturn(Mono.just(List.of()));

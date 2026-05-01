@@ -35,7 +35,8 @@ export interface DanglingNonDefiningRelationship {
   sourceId: string;
   sourcePt: string | null;
   sourceStatus: ConceptStatus;
-  destinationId: string;
+  // destinationId is null for concrete-value relationships (numeric/string values).
+  destinationId: string | null;
   destinationPt: string | null;
   destinationStatus: ConceptStatus;
   released: boolean;

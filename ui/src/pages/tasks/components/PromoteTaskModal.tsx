@@ -287,8 +287,9 @@ export default function PromoteTaskModal({
                         <li key={r.relationshipId}>
                           {r.typePt ?? r.typeId}: {r.sourcePt ?? r.sourceId} (
                           {r.sourceStatus.toLowerCase()}) →{' '}
-                          {r.destinationPt ?? r.destinationId} (
-                          {r.destinationStatus.toLowerCase()})
+                          {r.destinationId
+                            ? `${r.destinationPt ?? r.destinationId} (${r.destinationStatus.toLowerCase()})`
+                            : '(concrete value)'}
                           {r.released
                             ? ' — will be inactivated'
                             : ' — will be deleted'}

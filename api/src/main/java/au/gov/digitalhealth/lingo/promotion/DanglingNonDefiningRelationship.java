@@ -25,7 +25,9 @@ public record DanglingNonDefiningRelationship(
     String sourceId,
     @Nullable String sourcePt,
     ConceptStatus sourceStatus,
-    String destinationId,
+    // destinationId may be null for relationships with a concrete value (numeric/string)
+    // instead of a concept destination.
+    @Nullable String destinationId,
     @Nullable String destinationPt,
     ConceptStatus destinationStatus,
     boolean released) {
@@ -34,7 +36,6 @@ public record DanglingNonDefiningRelationship(
     Objects.requireNonNull(relationshipId, "relationshipId");
     Objects.requireNonNull(typeId, "typeId");
     Objects.requireNonNull(sourceId, "sourceId");
-    Objects.requireNonNull(destinationId, "destinationId");
     Objects.requireNonNull(sourceStatus, "sourceStatus");
     Objects.requireNonNull(destinationStatus, "destinationStatus");
     if (sourceStatus == ConceptStatus.ACTIVE && destinationStatus == ConceptStatus.ACTIVE) {
