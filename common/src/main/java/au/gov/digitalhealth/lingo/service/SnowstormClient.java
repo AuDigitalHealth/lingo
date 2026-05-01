@@ -601,7 +601,33 @@ public class SnowstormClient {
   // Snowstorm's findRelationships expects the CharacteristicType enum name, not the SCTID.
   public static final String NON_DEFINING_CHARACTERISTIC_TYPE_NAME = "ADDITIONAL_RELATIONSHIP";
 
+  /**
+   * Refset members modified strictly on this task — set-difference of unreleased active members
+   * visible on the task branch minus those visible on the parent project. Snowstorm's basic
+   * search response doesn't include the {@code path} field, so we can't filter by path
+   * client-side; the set-difference pattern (matching {@link #getConceptIdsChangedOnTask}) gives
+   * a reliable scope to "members new specifically on this task".
+   */
   public Mono<List<SnowstormReferenceSetMember>> getRefsetMembersModifiedOnBranch(String branch) {
+    if (!BranchPatternMatcher.isTaskPattern(branch)) {
+      return getUnreleasedActiveRefsetMembers(branch);
+    }
+    String project = BranchPatternMatcher.getProjectFromTask(branch);
+    return Mono.zip(getUnreleasedActiveRefsetMembers(branch), getUnreleasedActiveRefsetMembers(project))
+        .map(
+            t -> {
+              Set<String> projectMemberIds =
+                  t.getT2().stream()
+                      .map(SnowstormReferenceSetMember::getMemberId)
+                      .filter(Objects::nonNull)
+                      .collect(Collectors.toSet());
+              return t.getT1().stream()
+                  .filter(m -> m.getMemberId() != null && !projectMemberIds.contains(m.getMemberId()))
+                  .toList();
+            });
+  }
+
+  private Mono<List<SnowstormReferenceSetMember>> getUnreleasedActiveRefsetMembers(String branch) {
     SnowstormMemberSearchRequestComponent searchRequestComponent =
         new SnowstormMemberSearchRequestComponent().active(true).nullEffectiveTime(true);
     return getRefsetMembersApi()
@@ -613,21 +639,42 @@ public class SnowstormClient {
                     new LingoProblem(
                         "Snowstorm returned null page from findRefsetMembers on branch " + branch));
               }
-              List<SnowstormReferenceSetMember> items =
-                  page.getItems() == null ? List.<SnowstormReferenceSetMember>of() : page.getItems();
-              // nullEffectiveTime=true returns any unreleased member visible on the branch —
-              // including those modified on the parent project or MAIN. Filter by the
-              // component's own path so we only see things authored on THIS task.
               return Mono.just(
-                  items.stream().filter(m -> branch.equals(m.getPath())).toList());
+                  page.getItems() == null
+                      ? List.<SnowstormReferenceSetMember>of()
+                      : page.getItems());
             });
   }
 
-  // Snowstorm's relationships search API does not expose a nullEffectiveTime filter, so
-  // we post-filter on effectiveTime == null and on path == this branch to scope to changes
-  // authored on this task only — without the path filter we'd also pick up unreleased
-  // changes made on parent branches (project, MAIN) since the last release.
+  /**
+   * Non-defining relationships modified strictly on this task — set-difference of unreleased
+   * active non-defining relationships visible on the task branch minus those visible on the
+   * parent project.
+   */
   public Mono<List<SnowstormRelationship>> getNonDefiningRelationshipsModifiedOnBranch(
+      String branch) {
+    if (!BranchPatternMatcher.isTaskPattern(branch)) {
+      return getUnreleasedActiveNonDefiningRelationships(branch);
+    }
+    String project = BranchPatternMatcher.getProjectFromTask(branch);
+    return Mono.zip(
+            getUnreleasedActiveNonDefiningRelationships(branch),
+            getUnreleasedActiveNonDefiningRelationships(project))
+        .map(
+            t -> {
+              Set<String> projectIds =
+                  t.getT2().stream()
+                      .map(SnowstormRelationship::getRelationshipId)
+                      .filter(Objects::nonNull)
+                      .collect(Collectors.toSet());
+              return t.getT1().stream()
+                  .filter(
+                      r -> r.getRelationshipId() != null && !projectIds.contains(r.getRelationshipId()))
+                  .toList();
+            });
+  }
+
+  private Mono<List<SnowstormRelationship>> getUnreleasedActiveNonDefiningRelationships(
       String branch) {
     RelationshipsApi api = new RelationshipsApi(getApiClient());
     return api.findRelationships(
@@ -653,22 +700,39 @@ public class SnowstormClient {
               }
               List<SnowstormRelationship> items =
                   page.getItems() == null ? List.<SnowstormRelationship>of() : page.getItems();
+              // findRelationships has no nullEffectiveTime filter — post-filter to unreleased.
               return Mono.just(
-                  items.stream()
-                      .filter(r -> r.getEffectiveTime() == null)
-                      .filter(r -> branch.equals(r.getPath()))
-                      .toList());
+                  items.stream().filter(r -> r.getEffectiveTime() == null).toList());
             });
   }
 
   /**
-   * Returns the concept minis modified on the supplied branch — i.e. unpublished concepts whose
-   * path matches the branch (so changes inherited from parent project or MAIN are excluded).
-   * Returned concepts carry the conceptId, active flag and PT, sufficient to identify
-   * retired-on-task. We read path directly from the raw response map because the existing
-   * fromLinkedHashMap converter does not populate the path extraField.
+   * Returns concept minis modified strictly on the supplied task branch — set-difference of
+   * unpublished concepts visible on the task minus those visible on the parent project. This
+   * mirrors {@link #getConceptIdsChangedOnTask}/{@link #getConceptIdsChangedOnProject} but
+   * returns full concept minis so callers can read the active flag (to identify
+   * retired-on-task).
    */
   public Mono<List<SnowstormConceptMini>> getConceptsModifiedOnBranch(String branch) {
+    if (!BranchPatternMatcher.isTaskPattern(branch)) {
+      return getUnpublishedConcepts(branch);
+    }
+    String project = BranchPatternMatcher.getProjectFromTask(branch);
+    return Mono.zip(getUnpublishedConcepts(branch), getUnpublishedConcepts(project))
+        .map(
+            t -> {
+              Set<String> projectIds =
+                  t.getT2().stream()
+                      .map(SnowstormConceptMini::getConceptId)
+                      .filter(Objects::nonNull)
+                      .collect(Collectors.toSet());
+              return t.getT1().stream()
+                  .filter(c -> c.getConceptId() != null && !projectIds.contains(c.getConceptId()))
+                  .toList();
+            });
+  }
+
+  private Mono<List<SnowstormConceptMini>> getUnpublishedConcepts(String branch) {
     return getConceptsApi()
         .findConcepts(
             branch,
@@ -701,14 +765,13 @@ public class SnowstormClient {
                         "Snowstorm returned null page from findConcepts on branch " + branch));
               }
               if (page.getItems() == null) return Mono.just(List.<SnowstormConceptMini>of());
-              List<SnowstormConceptMini> filtered = new ArrayList<>();
+              List<SnowstormConceptMini> items = new ArrayList<>();
               for (Object item : page.getItems()) {
-                if (!(item instanceof java.util.LinkedHashMap)) continue;
-                java.util.LinkedHashMap<?, ?> raw = (java.util.LinkedHashMap<?, ?>) item;
-                if (!branch.equals(raw.get("path"))) continue;
-                filtered.add(SnowstormDtoUtil.fromLinkedHashMap(raw));
+                if (item instanceof java.util.LinkedHashMap) {
+                  items.add(SnowstormDtoUtil.fromLinkedHashMap(item));
+                }
               }
-              return Mono.just(filtered);
+              return Mono.just(items);
             });
   }
 

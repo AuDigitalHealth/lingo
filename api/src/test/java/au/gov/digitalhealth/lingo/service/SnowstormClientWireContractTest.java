@@ -48,6 +48,9 @@ import org.springframework.web.reactive.function.client.WebClient;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SnowstormClientWireContractTest {
 
+  // Non-task pattern (uses slashes) so BranchPatternMatcher.isTaskPattern is false and
+  // set-difference is bypassed. The wire-contract tests focus on the URL/body format the
+  // SnowstormClient sends; the set-difference logic is exercised in DanglingReferenceServiceTest.
   private static final String BRANCH = "MAIN/TEST/TEST-1";
 
   private WireMockServer wireMock;
@@ -229,24 +232,16 @@ class SnowstormClientWireContractTest {
   }
 
   @Test
-  void getNonDefiningRelationshipsModifiedOnBranch_filtersByPathAndNullEffectiveTime() {
-    // Three returned rows: one is on this branch (good), one was modified on the parent
-    // project (so should be filtered out), one is released-and-inherited (effectiveTime set,
-    // also out). Only the first should be returned.
+  void getNonDefiningRelationshipsModifiedOnBranch_postFiltersToNullEffectiveTime() {
+    // For non-task branches set-difference is bypassed. Verify the post-filter on
+    // effectiveTime == null still works against the single response.
     String body =
         "{\"items\":["
-            + "  {\"relationshipId\":\"r-on-task\",\"sourceId\":\"s\",\"destinationId\":\"d\","
-            + "   \"typeId\":\"t\",\"active\":true,\"released\":true,\"effectiveTime\":null,"
-            + "   \"path\":\""
-            + BRANCH
-            + "\"},"
-            + "  {\"relationshipId\":\"r-on-parent\",\"sourceId\":\"s\",\"destinationId\":\"d\","
-            + "   \"typeId\":\"t\",\"active\":true,\"released\":true,\"effectiveTime\":null,"
-            + "   \"path\":\"MAIN/TEST\"},"
-            + "  {\"relationshipId\":\"r-inherited\",\"sourceId\":\"s\",\"destinationId\":\"d\","
-            + "   \"typeId\":\"t\",\"active\":true,\"released\":true,\"effectiveTime\":\"20240131\","
-            + "   \"path\":\"MAIN\"}"
-            + "],\"total\":3,\"limit\":10000,\"offset\":0}";
+            + "  {\"relationshipId\":\"r-unreleased\",\"sourceId\":\"s\",\"destinationId\":\"d\","
+            + "   \"typeId\":\"t\",\"active\":true,\"released\":false,\"effectiveTime\":null},"
+            + "  {\"relationshipId\":\"r-released\",\"sourceId\":\"s\",\"destinationId\":\"d\","
+            + "   \"typeId\":\"t\",\"active\":true,\"released\":true,\"effectiveTime\":\"20240131\"}"
+            + "],\"total\":2,\"limit\":10000,\"offset\":0}";
     wireMock.stubFor(
         any(urlMatching(".*/relationships.*"))
             .willReturn(
@@ -259,25 +254,20 @@ class SnowstormClientWireContractTest {
         client.getNonDefiningRelationshipsModifiedOnBranch(BRANCH).block();
 
     assertThat(result)
-        .as("only the row whose path equals this branch and effectiveTime is null passes")
+        .as("only rows with null effectiveTime pass the post-filter")
         .extracting(SnowstormRelationship::getRelationshipId)
-        .containsExactly("r-on-task");
+        .containsExactly("r-unreleased");
   }
 
   @Test
-  void getRefsetMembersModifiedOnBranch_filtersByPath() {
-    // Two members: one was modified on this task, one was modified on the parent project
-    // (so will also have nullEffectiveTime=true and be returned by the search). Only the
-    // task-branch one should pass our path filter.
+  void getRefsetMembersModifiedOnBranch_returnsUnreleasedActiveMembers() {
+    // For non-task branches set-difference is bypassed. The method just returns whatever the
+    // search came back with (active=true, nullEffectiveTime=true filter applied server-side).
     String body =
         "{\"items\":["
-            + "  {\"memberId\":\"m-on-task\",\"refsetId\":\"r\",\"referencedComponentId\":\"c\","
-            + "   \"active\":true,\"released\":false,\"path\":\""
-            + BRANCH
-            + "\"},"
-            + "  {\"memberId\":\"m-on-parent\",\"refsetId\":\"r\",\"referencedComponentId\":\"c\","
-            + "   \"active\":true,\"released\":false,\"path\":\"MAIN/TEST\"}"
-            + "],\"total\":2,\"limit\":10000,\"offset\":0}";
+            + "  {\"memberId\":\"m-1\",\"refsetId\":\"r\",\"referencedComponentId\":\"c\","
+            + "   \"active\":true,\"released\":false}"
+            + "],\"total\":1,\"limit\":10000,\"offset\":0}";
     wireMock.stubFor(
         any(urlMatching(".*/members/search.*"))
             .willReturn(
@@ -289,9 +279,6 @@ class SnowstormClientWireContractTest {
     List<SnowstormReferenceSetMember> result =
         client.getRefsetMembersModifiedOnBranch(BRANCH).block();
 
-    assertThat(result)
-        .as("only the member whose path equals this branch passes the filter")
-        .extracting(SnowstormReferenceSetMember::getMemberId)
-        .containsExactly("m-on-task");
+    assertThat(result).extracting(SnowstormReferenceSetMember::getMemberId).containsExactly("m-1");
   }
 }
