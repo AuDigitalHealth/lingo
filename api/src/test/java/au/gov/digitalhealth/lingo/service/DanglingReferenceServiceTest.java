@@ -122,7 +122,7 @@ class DanglingReferenceServiceTest {
         .thenReturn(Mono.just(List.of(m)));
     when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of()));
-    when(snowstormClient.getConceptsById(eq(BRANCH), any()))
+    when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
         .thenReturn(
             List.of(
                 concept(C_RETIRED, false, "Retired thing"), concept(C_REFSET, true, "My refset")));
@@ -145,7 +145,7 @@ class DanglingReferenceServiceTest {
         .thenReturn(Mono.just(List.of(m)));
     when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of()));
-    when(snowstormClient.getConceptsById(eq(BRANCH), any()))
+    when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
         .thenReturn(List.of(concept(C_REFSET, true, "My refset")));
 
     DanglingReferenceSummary summary = service.detect(BRANCH);
@@ -169,7 +169,7 @@ class DanglingReferenceServiceTest {
         .thenReturn(Mono.just(List.of(conceptMember, descriptionMember)));
     when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of()));
-    when(snowstormClient.getConceptsById(eq(BRANCH), any()))
+    when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
         .thenReturn(List.of(concept(C_RETIRED, false, null), concept(C_REFSET, true, null)));
 
     DanglingReferenceSummary summary = service.detect(BRANCH);
@@ -187,7 +187,7 @@ class DanglingReferenceServiceTest {
         .thenReturn(Mono.just(List.of(m)));
     when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of()));
-    when(snowstormClient.getConceptsById(eq(BRANCH), any()))
+    when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
         .thenReturn(List.of(concept(C_ACTIVE, true, null), concept(C_REFSET, true, null)));
 
     DanglingReferenceSummary summary = service.detect(BRANCH);
@@ -201,7 +201,7 @@ class DanglingReferenceServiceTest {
     when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH)).thenReturn(Mono.just(List.of()));
     when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(rel)));
-    when(snowstormClient.getConceptsById(eq(BRANCH), any()))
+    when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
         .thenReturn(
             List.of(
                 concept(C_RETIRED, false, "Retired source"),
@@ -223,7 +223,7 @@ class DanglingReferenceServiceTest {
     when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH)).thenReturn(Mono.just(List.of()));
     when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(rel)));
-    when(snowstormClient.getConceptsById(eq(BRANCH), any()))
+    when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
         .thenReturn(List.of(concept(C_ACTIVE, true, null), concept(C_TYPE, true, null)));
 
     DanglingReferenceSummary summary = service.detect(BRANCH);
@@ -242,7 +242,7 @@ class DanglingReferenceServiceTest {
         .thenReturn(Mono.just(List.of(m)));
     when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(rel)));
-    when(snowstormClient.getConceptsById(eq(BRANCH), any()))
+    when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
         .thenReturn(
             List.of(
                 concept(C_RETIRED, false, null),
@@ -267,7 +267,7 @@ class DanglingReferenceServiceTest {
         .thenReturn(Mono.just(List.of(released, unreleased)));
     when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of()));
-    when(snowstormClient.getConceptsById(eq(BRANCH), any()))
+    when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
         .thenReturn(List.of(concept(C_RETIRED, false, null), concept(C_REFSET, true, null)));
 
     TidyResult result = service.tidy(BRANCH);
@@ -289,7 +289,7 @@ class DanglingReferenceServiceTest {
     when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH)).thenReturn(Mono.just(List.of()));
     when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(released, unreleased)));
-    when(snowstormClient.getConceptsById(eq(BRANCH), any()))
+    when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
         .thenReturn(List.of(concept(C_RETIRED, false, null), concept(C_ACTIVE, true, null)));
 
     TidyResult result = service.tidy(BRANCH);
@@ -316,7 +316,7 @@ class DanglingReferenceServiceTest {
         .thenReturn(Mono.just(List.of(releasedMember, unreleasedMember)));
     when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(releasedRel, unreleasedRel)));
-    when(snowstormClient.getConceptsById(eq(BRANCH), any()))
+    when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
         .thenReturn(
             List.of(
                 concept(C_RETIRED, false, null),
@@ -349,7 +349,7 @@ class DanglingReferenceServiceTest {
         .thenReturn(Mono.just(List.of(m1, m2)));
     when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of()));
-    when(snowstormClient.getConceptsById(eq(BRANCH), any())).thenReturn(List.of());
+    when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any())).thenReturn(List.of());
 
     doAnswer(
             invocation -> {
@@ -377,7 +377,7 @@ class DanglingReferenceServiceTest {
     when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH)).thenReturn(Mono.just(List.of()));
     when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(r1, r2)));
-    when(snowstormClient.getConceptsById(eq(BRANCH), any()))
+    when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
         .thenReturn(List.of(concept(C_RETIRED, false, null), concept(C_ACTIVE, true, null)));
 
     doAnswer(

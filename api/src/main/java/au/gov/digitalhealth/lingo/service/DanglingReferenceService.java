@@ -162,10 +162,6 @@ public class DanglingReferenceService {
     return new TidyResult(succeeded, failed);
   }
 
-  // Snowstorm's findConcepts uses repeated `conceptIds=` query params, so we batch lookups
-  // to avoid blowing the request URI length budget when many ids need to be resolved.
-  private static final int CONCEPT_LOOKUP_BATCH_SIZE = 200;
-
   private Tuple2<List<SnowstormReferenceSetMember>, List<SnowstormRelationship>> fetch(
       String branch) {
     Tuple2<List<SnowstormReferenceSetMember>, List<SnowstormRelationship>> raw =
@@ -203,13 +199,10 @@ public class DanglingReferenceService {
     }
     Map<String, SnowstormConceptMini> byId = new HashMap<>();
     if (conceptIds.isEmpty()) return byId;
-    List<String> all = new ArrayList<>(conceptIds);
-    for (int from = 0; from < all.size(); from += CONCEPT_LOOKUP_BATCH_SIZE) {
-      int to = Math.min(from + CONCEPT_LOOKUP_BATCH_SIZE, all.size());
-      Set<String> batch = new HashSet<>(all.subList(from, to));
-      for (SnowstormConceptMini c : snowstormClient.getConceptsById(branch, batch)) {
-        byId.put(c.getConceptId(), c);
-      }
+    // Use the POST-based search variant so the conceptIds travel in the request body — single
+    // round-trip even when the modified set is large, with no URI length risk.
+    for (SnowstormConceptMini c : snowstormClient.getConceptsByIdViaSearch(branch, conceptIds)) {
+      byId.put(c.getConceptId(), c);
     }
     return byId;
   }

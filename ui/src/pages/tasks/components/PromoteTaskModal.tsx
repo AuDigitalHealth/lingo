@@ -6,6 +6,7 @@ import {
   AlertTitle,
   Typography,
   Box,
+  CircularProgress,
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import { CallMerge, Warning, Error } from '@mui/icons-material';
@@ -162,10 +163,42 @@ export default function PromoteTaskModal({
         <BaseModalBody>
           <Stack spacing={2}>
             <Typography variant="body1">
-              {hasIssues || hasDangling
-                ? 'The following issues were found during promotion validation:'
-                : 'Task is ready for promotion. Do you want to proceed?'}
+              {danglingLoading
+                ? 'Running pre-promotion checks…'
+                : isTidying
+                  ? 'Tidying dangling references before promotion…'
+                  : hasIssues || hasDangling
+                    ? 'The following issues were found during promotion validation:'
+                    : 'Task is ready for promotion. Do you want to proceed?'}
             </Typography>
+
+            {/* Pre-promotion progress */}
+            {(danglingLoading || isTidying) && (
+              <Stack
+                direction="row"
+                alignItems="center"
+                spacing={1.5}
+                sx={{
+                  p: 2,
+                  borderRadius: 1,
+                  bgcolor: 'background.paper',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                }}
+              >
+                <CircularProgress size={20} />
+                <Box>
+                  <Typography variant="body2">
+                    {isTidying
+                      ? 'Tidying dangling reference set members and non-defining relationships…'
+                      : 'Checking the task branch for dangling reference set members and non-defining relationships left by Authoring Platform retire/delete…'}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    The promote button is disabled until this check completes.
+                  </Typography>
+                </Box>
+              </Stack>
+            )}
 
             {/* Blocking Issues */}
             {blockingIssues.map((issue, index) => (

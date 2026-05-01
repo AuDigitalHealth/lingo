@@ -1195,6 +1195,31 @@ public class SnowstormClient {
   @Cacheable(
       value = CacheConstants.SNOWSTORM_CONCEPTS_BY_IDS,
       keyGenerator = "branchAwareKeyGenerator")
+  /**
+   * POST-based bulk concept lookup. Uses {@code /{branch}/concepts/search} so the conceptIds
+   * travel in the request body — safer than {@link #getConceptsById(String, Set)} when the id
+   * set is large enough that the GET form's repeated {@code conceptIds=} query params would
+   * overrun reverse-proxy URI length limits.
+   */
+  public List<SnowstormConceptMini> getConceptsByIdViaSearch(String branch, Set<String> ids) {
+    if (ids == null || ids.isEmpty()) return List.of();
+    SnowstormConceptSearchRequest request =
+        new SnowstormConceptSearchRequest().conceptIds(ids).limit(ids.size());
+    SnowstormItemsPageObject page =
+        getConceptsApi().search(branch, request, languageHeader).block();
+    if (page == null) {
+      throw new LingoProblem(
+          "no-page",
+          "No page from Snowstorm for concepts (search)",
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          "No page from Snowstorm for concepts on branch '" + branch + "' via POST search");
+    }
+    if (page.getItems() == null) return List.of();
+    return page.getItems().stream()
+        .map(o -> objectMapper.convertValue(o, SnowstormConceptMini.class))
+        .toList();
+  }
+
   public List<SnowstormConceptMini> getConceptsById(String branch, Set<String> ids) {
     SnowstormItemsPageObject page =
         getConceptsApi()
