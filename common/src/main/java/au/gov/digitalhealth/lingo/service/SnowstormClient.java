@@ -627,11 +627,34 @@ public class SnowstormClient {
             });
   }
 
+  // Page size for paginated walks via searchAfter. Snowstorm caps a single page at 10000;
+  // active projects can have well over that many unreleased refset members, so we must page.
+  private static final int SEARCH_AFTER_PAGE_SIZE = 5000;
+
   private Mono<List<SnowstormReferenceSetMember>> getUnreleasedActiveRefsetMembers(String branch) {
-    SnowstormMemberSearchRequestComponent searchRequestComponent =
-        new SnowstormMemberSearchRequestComponent().active(true).nullEffectiveTime(true);
+    return walkRefsetMembersBySearchAfter(branch, null);
+  }
+
+  // Recursive searchAfter walk for the GET /{branch}/members endpoint (which exposes
+  // searchAfter, unlike the POST variant). active=true, isNullEffectiveTime=true.
+  private Mono<List<SnowstormReferenceSetMember>> walkRefsetMembersBySearchAfter(
+      String branch, String searchAfter) {
     return getRefsetMembersApi()
-        .findRefsetMembers(branch, searchRequestComponent, 0, 10000, languageHeader)
+        .findRefsetMembers1(
+            branch,
+            null, /* referenceSet */
+            null, /* module */
+            null, /* referencedComponentId */
+            true, /* active */
+            true, /* isNullEffectiveTime */
+            null, /* targetComponent */
+            null, /* mapTarget */
+            null, /* owlExpressionConceptId */
+            null, /* owlExpressionGci */
+            null, /* offset — must be null when using searchAfter */
+            SEARCH_AFTER_PAGE_SIZE,
+            searchAfter,
+            languageHeader)
         .flatMap(
             page -> {
               if (page == null) {
@@ -639,10 +662,17 @@ public class SnowstormClient {
                     new LingoProblem(
                         "Snowstorm returned null page from findRefsetMembers on branch " + branch));
               }
-              return Mono.just(
-                  page.getItems() == null
-                      ? List.<SnowstormReferenceSetMember>of()
-                      : page.getItems());
+              List<SnowstormReferenceSetMember> items =
+                  page.getItems() == null ? List.<SnowstormReferenceSetMember>of() : page.getItems();
+              if (items.isEmpty() || page.getSearchAfter() == null) return Mono.just(items);
+              return walkRefsetMembersBySearchAfter(branch, page.getSearchAfter())
+                  .map(
+                      next -> {
+                        List<SnowstormReferenceSetMember> all = new ArrayList<>(items.size() + next.size());
+                        all.addAll(items);
+                        all.addAll(next);
+                        return all;
+                      });
             });
   }
 
@@ -733,6 +763,11 @@ public class SnowstormClient {
   }
 
   private Mono<List<SnowstormConceptMini>> getUnpublishedConcepts(String branch) {
+    return walkUnpublishedConceptsBySearchAfter(branch, null);
+  }
+
+  private Mono<List<SnowstormConceptMini>> walkUnpublishedConceptsBySearchAfter(
+      String branch, String searchAfter) {
     return getConceptsApi()
         .findConcepts(
             branch,
@@ -753,9 +788,9 @@ public class SnowstormClient {
             null, /* statedEcl */
             null, /* conceptIds */
             false, /* returnIdOnly=false → full concept items */
-            0,
-            10000,
-            null,
+            null, /* offset — must be null when using searchAfter */
+            SEARCH_AFTER_PAGE_SIZE,
+            searchAfter,
             null)
         .flatMap(
             page -> {
@@ -771,7 +806,15 @@ public class SnowstormClient {
                   items.add(SnowstormDtoUtil.fromLinkedHashMap(item));
                 }
               }
-              return Mono.just(items);
+              if (items.isEmpty() || page.getSearchAfter() == null) return Mono.just(items);
+              return walkUnpublishedConceptsBySearchAfter(branch, page.getSearchAfter())
+                  .map(
+                      next -> {
+                        List<SnowstormConceptMini> all = new ArrayList<>(items.size() + next.size());
+                        all.addAll(items);
+                        all.addAll(next);
+                        return all;
+                      });
             });
   }
 
