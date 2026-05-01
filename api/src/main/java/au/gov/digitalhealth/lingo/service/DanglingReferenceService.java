@@ -41,7 +41,6 @@ import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 /**
  * Detects and tidies dangling reference set members and non-defining relationships left behind by
@@ -219,66 +218,58 @@ public class DanglingReferenceService {
   }
 
   private DetectionContext collect(String branch) {
-    // Phase 1: three parallel queries against the task branch.
-    return Mono.zip(
-            snowstormClient.getRefsetMembersModifiedOnBranch(branch),
-            snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(branch),
-            snowstormClient.getConceptsModifiedOnBranch(branch))
-        .flatMap(
-            t -> {
-              List<SnowstormReferenceSetMember> taskMembers =
-                  t.getT1().stream().filter(DanglingReferenceService::referencesAConcept).toList();
-              List<SnowstormRelationship> taskRels = t.getT2();
-              List<SnowstormConceptMini> taskConcepts = t.getT3();
+    // Phase 1: three Mono-based queries in parallel — these use WebClient and don't touch any
+    // request-scoped beans, so they run safely on netty workers.
+    var phase1 =
+        Mono.zip(
+                snowstormClient.getRefsetMembersModifiedOnBranch(branch),
+                snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(branch),
+                snowstormClient.getConceptsModifiedOnBranch(branch))
+            .block();
 
-              Set<String> retiredOnTaskIds =
-                  taskConcepts.stream()
-                      .filter(c -> Boolean.FALSE.equals(c.getActive()))
-                      .map(SnowstormConceptMini::getConceptId)
-                      .filter(java.util.Objects::nonNull)
-                      .collect(Collectors.toSet());
+    List<SnowstormReferenceSetMember> taskMembers =
+        phase1.getT1().stream().filter(DanglingReferenceService::referencesAConcept).toList();
+    List<SnowstormRelationship> taskRels = phase1.getT2();
+    List<SnowstormConceptMini> taskConcepts = phase1.getT3();
 
-              // Phase 2: in parallel — resolve scenario 1 concepts, fetch scenario 2 references.
-              Set<String> scenario1Ids = collectReferencedConceptIds(taskMembers, taskRels);
-              Mono<List<SnowstormConceptMini>> scenario1Concepts =
-                  Mono.fromCallable(
-                          () -> snowstormClient.getConceptsByIdViaSearch(branch, scenario1Ids))
-                      .subscribeOn(Schedulers.boundedElastic());
-              Mono<List<SnowstormReferenceSetMember>> scenario2Members =
-                  snowstormClient.findActiveRefsetMembersForConcepts(branch, retiredOnTaskIds);
-              Mono<List<SnowstormRelationship>> scenario2Rels =
-                  snowstormClient.findActiveNonDefiningRelationshipsForConcepts(
-                      branch, retiredOnTaskIds);
+    Set<String> retiredOnTaskIds =
+        taskConcepts.stream()
+            .filter(c -> Boolean.FALSE.equals(c.getActive()))
+            .map(SnowstormConceptMini::getConceptId)
+            .filter(java.util.Objects::nonNull)
+            .collect(Collectors.toSet());
 
-              return Mono.zip(scenario1Concepts, scenario2Members, scenario2Rels)
-                  .flatMap(
-                      t2 -> {
-                        Map<String, SnowstormConceptMini> byId = new HashMap<>();
-                        for (SnowstormConceptMini c : taskConcepts) {
-                          byId.put(c.getConceptId(), c);
-                        }
-                        for (SnowstormConceptMini c : t2.getT1()) {
-                          byId.put(c.getConceptId(), c);
-                        }
-                        // Scenario 2 reference items may point at concepts not yet in byId (e.g.
-                        // a relationship destination is some other concept). Resolve those too.
-                        Set<String> extra = collectExtraIds(t2.getT2(), t2.getT3(), byId.keySet());
-                        Mono<List<SnowstormConceptMini>> extras =
-                            extra.isEmpty()
-                                ? Mono.just(List.of())
-                                : Mono.fromCallable(
-                                        () ->
-                                            snowstormClient.getConceptsByIdViaSearch(branch, extra))
-                                    .subscribeOn(Schedulers.boundedElastic());
-                        return extras.map(
-                            xs -> {
-                              for (SnowstormConceptMini c : xs) byId.put(c.getConceptId(), c);
-                              return new DetectionContext(
-                                  taskMembers, taskRels, t2.getT2(), t2.getT3(), byId);
-                            });
-                      });
-            })
-        .block();
+    // Phase 2: scenario-2 reference fetches in parallel, also Mono-based.
+    var phase2 =
+        Mono.zip(
+                snowstormClient.findActiveRefsetMembersForConcepts(branch, retiredOnTaskIds),
+                snowstormClient.findActiveNonDefiningRelationshipsForConcepts(
+                    branch, retiredOnTaskIds))
+            .block();
+    List<SnowstormReferenceSetMember> scenario2Members = phase2.getT1();
+    List<SnowstormRelationship> scenario2Rels = phase2.getT2();
+
+    // Phase 3: synchronous concept lookup. This goes through getConceptsByIdViaSearch which
+    // depends on request-scoped beans (BranchAwareKeyGenerator →
+    // RequestScopedBranchTimestampService).
+    // We must run it on the request thread — no Schedulers.boundedElastic offload — so the
+    // Spring request scope stays active. We're back on the request thread here courtesy of the
+    // .block() above.
+    Map<String, SnowstormConceptMini> byId = new HashMap<>();
+    for (SnowstormConceptMini c : taskConcepts) {
+      if (c.getConceptId() != null) byId.put(c.getConceptId(), c);
+    }
+    Set<String> toResolve = new HashSet<>();
+    toResolve.addAll(collectReferencedConceptIds(taskMembers, taskRels));
+    toResolve.addAll(collectExtraIds(scenario2Members, scenario2Rels, byId.keySet()));
+    toResolve.removeAll(byId.keySet());
+    if (!toResolve.isEmpty()) {
+      for (SnowstormConceptMini c : snowstormClient.getConceptsByIdViaSearch(branch, toResolve)) {
+        if (c.getConceptId() != null) byId.put(c.getConceptId(), c);
+      }
+    }
+
+    return new DetectionContext(taskMembers, taskRels, scenario2Members, scenario2Rels, byId);
   }
 
   private static boolean referencesAConcept(SnowstormReferenceSetMember m) {

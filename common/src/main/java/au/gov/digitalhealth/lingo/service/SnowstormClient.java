@@ -1323,15 +1323,17 @@ public class SnowstormClient {
         .toList();
   }
 
-  @Cacheable(
-      value = CacheConstants.SNOWSTORM_CONCEPTS_BY_IDS,
-      keyGenerator = "branchAwareKeyGenerator")
   /**
    * POST-based bulk concept lookup. Uses {@code /browser/{branch}/concepts/bulk-load} so the
    * conceptIds travel in the request body — safer than {@link #getConceptsById(String, Set)}
    * when the id set is large enough that the GET form's repeated {@code conceptIds=} query
    * params would overrun reverse-proxy URI length limits. Returns SnowstormConceptMini values
    * (id, active flag, PT) extracted from the full browser-concept responses.
+   *
+   * <p>Not @Cacheable — the BranchAwareKeyGenerator depends on the request-scoped branch
+   * timestamp service, so any caller that invokes this from a Reactor scheduler thread (rather
+   * than the request thread) would trip ScopeNotActiveException. Callers should invoke this on
+   * the request thread.
    */
   public List<SnowstormConceptMini> getConceptsByIdViaSearch(String branch, Set<String> ids) {
     if (ids == null || ids.isEmpty()) return List.of();
