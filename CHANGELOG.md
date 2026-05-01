@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
+- Fix new brand and pack size feature so that cloned source modelling (e.g. NMPC nutritional `IS_A NMPC Oral Nutritional product`) is preserved on new branded concepts, and the SNOMED CT `Medicinal product` root is used at the top branded level for both AMT and NMPC instead of `Virtual medicinal product`.
 
 
 ## [1.3.38] - 2026-04-24
