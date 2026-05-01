@@ -75,6 +75,21 @@ public class DanglingReferenceService {
 
     List<DanglingNonDefiningRelationship> danglingRels = new ArrayList<>();
     for (SnowstormRelationship r : data.getT2()) {
+      // Defend against malformed responses — the DTO requires relationshipId, typeId, sourceId
+      // and source/destinationStatus to be non-null. Skip with a log rather than 500-ing the
+      // whole detect call.
+      if (r.getRelationshipId() == null || r.getTypeId() == null || r.getSourceId() == null) {
+        log.warning(
+            "Skipping malformed non-defining relationship on branch "
+                + branch
+                + ": relationshipId="
+                + r.getRelationshipId()
+                + ", sourceId="
+                + r.getSourceId()
+                + ", typeId="
+                + r.getTypeId());
+        continue;
+      }
       ConceptStatus srcStatus = statusOf(r.getSourceId(), byId);
       ConceptStatus dstStatus = statusOf(r.getDestinationId(), byId);
       if (srcStatus == ConceptStatus.ACTIVE && dstStatus == ConceptStatus.ACTIVE) continue;
