@@ -613,15 +613,20 @@ public class SnowstormClient {
                     new LingoProblem(
                         "Snowstorm returned null page from findRefsetMembers on branch " + branch));
               }
-              return Mono.just(page.getItems() == null ? List.of() : page.getItems());
+              List<SnowstormReferenceSetMember> items =
+                  page.getItems() == null ? List.<SnowstormReferenceSetMember>of() : page.getItems();
+              // nullEffectiveTime=true returns any unreleased member visible on the branch —
+              // including those modified on the parent project or MAIN. Filter by the
+              // component's own path so we only see things authored on THIS task.
+              return Mono.just(
+                  items.stream().filter(m -> branch.equals(m.getPath())).toList());
             });
   }
 
   // Snowstorm's relationships search API does not expose a nullEffectiveTime filter, so
-  // we post-filter on effectiveTime == null to scope to changes on this branch only
-  // (a relationship modified on this task, whether previously released or new, has its
-  // effectiveTime cleared by Snowstorm; inherited unchanged relationships keep the prior
-  // effectiveTime).
+  // we post-filter on effectiveTime == null and on path == this branch to scope to changes
+  // authored on this task only — without the path filter we'd also pick up unreleased
+  // changes made on parent branches (project, MAIN) since the last release.
   public Mono<List<SnowstormRelationship>> getNonDefiningRelationshipsModifiedOnBranch(
       String branch) {
     RelationshipsApi api = new RelationshipsApi(getApiClient());
@@ -649,7 +654,10 @@ public class SnowstormClient {
               List<SnowstormRelationship> items =
                   page.getItems() == null ? List.<SnowstormRelationship>of() : page.getItems();
               return Mono.just(
-                  items.stream().filter(r -> r.getEffectiveTime() == null).toList());
+                  items.stream()
+                      .filter(r -> r.getEffectiveTime() == null)
+                      .filter(r -> branch.equals(r.getPath()))
+                      .toList());
             });
   }
 

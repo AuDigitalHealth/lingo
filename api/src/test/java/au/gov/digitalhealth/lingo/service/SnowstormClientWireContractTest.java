@@ -229,14 +229,24 @@ class SnowstormClientWireContractTest {
   }
 
   @Test
-  void getNonDefiningRelationshipsModifiedOnBranch_filtersToNullEffectiveTime() {
+  void getNonDefiningRelationshipsModifiedOnBranch_filtersByPathAndNullEffectiveTime() {
+    // Three returned rows: one is on this branch (good), one was modified on the parent
+    // project (so should be filtered out), one is released-and-inherited (effectiveTime set,
+    // also out). Only the first should be returned.
     String body =
         "{\"items\":["
-            + "  {\"relationshipId\":\"r-modified\",\"sourceId\":\"s\",\"destinationId\":\"d\","
-            + "   \"typeId\":\"t\",\"active\":true,\"released\":true,\"effectiveTime\":null},"
+            + "  {\"relationshipId\":\"r-on-task\",\"sourceId\":\"s\",\"destinationId\":\"d\","
+            + "   \"typeId\":\"t\",\"active\":true,\"released\":true,\"effectiveTime\":null,"
+            + "   \"path\":\""
+            + BRANCH
+            + "\"},"
+            + "  {\"relationshipId\":\"r-on-parent\",\"sourceId\":\"s\",\"destinationId\":\"d\","
+            + "   \"typeId\":\"t\",\"active\":true,\"released\":true,\"effectiveTime\":null,"
+            + "   \"path\":\"MAIN/TEST\"},"
             + "  {\"relationshipId\":\"r-inherited\",\"sourceId\":\"s\",\"destinationId\":\"d\","
-            + "   \"typeId\":\"t\",\"active\":true,\"released\":true,\"effectiveTime\":\"20240131\"}"
-            + "],\"total\":2,\"limit\":10000,\"offset\":0}";
+            + "   \"typeId\":\"t\",\"active\":true,\"released\":true,\"effectiveTime\":\"20240131\","
+            + "   \"path\":\"MAIN\"}"
+            + "],\"total\":3,\"limit\":10000,\"offset\":0}";
     wireMock.stubFor(
         any(urlMatching(".*/relationships.*"))
             .willReturn(
@@ -249,8 +259,39 @@ class SnowstormClientWireContractTest {
         client.getNonDefiningRelationshipsModifiedOnBranch(BRANCH).block();
 
     assertThat(result)
-        .as("only the row with null effectiveTime should pass the post-filter")
+        .as("only the row whose path equals this branch and effectiveTime is null passes")
         .extracting(SnowstormRelationship::getRelationshipId)
-        .containsExactly("r-modified");
+        .containsExactly("r-on-task");
+  }
+
+  @Test
+  void getRefsetMembersModifiedOnBranch_filtersByPath() {
+    // Two members: one was modified on this task, one was modified on the parent project
+    // (so will also have nullEffectiveTime=true and be returned by the search). Only the
+    // task-branch one should pass our path filter.
+    String body =
+        "{\"items\":["
+            + "  {\"memberId\":\"m-on-task\",\"refsetId\":\"r\",\"referencedComponentId\":\"c\","
+            + "   \"active\":true,\"released\":false,\"path\":\""
+            + BRANCH
+            + "\"},"
+            + "  {\"memberId\":\"m-on-parent\",\"refsetId\":\"r\",\"referencedComponentId\":\"c\","
+            + "   \"active\":true,\"released\":false,\"path\":\"MAIN/TEST\"}"
+            + "],\"total\":2,\"limit\":10000,\"offset\":0}";
+    wireMock.stubFor(
+        any(urlMatching(".*/members/search.*"))
+            .willReturn(
+                aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody(body)));
+
+    List<SnowstormReferenceSetMember> result =
+        client.getRefsetMembersModifiedOnBranch(BRANCH).block();
+
+    assertThat(result)
+        .as("only the member whose path equals this branch passes the filter")
+        .extracting(SnowstormReferenceSetMember::getMemberId)
+        .containsExactly("m-on-task");
   }
 }
