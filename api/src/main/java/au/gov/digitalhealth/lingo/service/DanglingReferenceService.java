@@ -27,6 +27,8 @@ import au.gov.digitalhealth.lingo.promotion.TidyFailure;
 import au.gov.digitalhealth.lingo.promotion.TidyKind;
 import au.gov.digitalhealth.lingo.promotion.TidyResult;
 import au.gov.digitalhealth.lingo.promotion.TidySuccess;
+import au.gov.digitalhealth.lingo.util.PartitionIdentifier;
+import au.gov.digitalhealth.lingo.util.SnomedIdentifierUtil;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -160,12 +162,29 @@ public class DanglingReferenceService {
     return new TidyResult(succeeded, failed);
   }
 
+  // Snowstorm's findConcepts uses repeated `conceptIds=` query params, so we batch lookups
+  // to avoid blowing the request URI length budget when many ids need to be resolved.
+  private static final int CONCEPT_LOOKUP_BATCH_SIZE = 200;
+
   private Tuple2<List<SnowstormReferenceSetMember>, List<SnowstormRelationship>> fetch(
       String branch) {
-    return Mono.zip(
-            snowstormClient.getRefsetMembersModifiedOnBranch(branch),
-            snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(branch))
-        .block();
+    Tuple2<List<SnowstormReferenceSetMember>, List<SnowstormRelationship>> raw =
+        Mono.zip(
+                snowstormClient.getRefsetMembersModifiedOnBranch(branch),
+                snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(branch))
+            .block();
+    // A refset member's referencedComponent can be a concept, description, or relationship.
+    // For dangling-reference detection we only care about concept-targeting members — language
+    // and acceptability refsets target descriptions and are out of scope here, and including
+    // them would also blow up the downstream concept lookup with thousands of description ids.
+    List<SnowstormReferenceSetMember> conceptTargetingMembers =
+        raw.getT1().stream().filter(DanglingReferenceService::referencesAConcept).toList();
+    return reactor.util.function.Tuples.of(conceptTargetingMembers, raw.getT2());
+  }
+
+  private static boolean referencesAConcept(SnowstormReferenceSetMember m) {
+    String id = m.getReferencedComponentId();
+    return id != null && SnomedIdentifierUtil.isValid(id, PartitionIdentifier.CONCEPT);
   }
 
   private Map<String, SnowstormConceptMini> resolveReferencedConcepts(
@@ -184,8 +203,13 @@ public class DanglingReferenceService {
     }
     Map<String, SnowstormConceptMini> byId = new HashMap<>();
     if (conceptIds.isEmpty()) return byId;
-    for (SnowstormConceptMini c : snowstormClient.getConceptsById(branch, conceptIds)) {
-      byId.put(c.getConceptId(), c);
+    List<String> all = new ArrayList<>(conceptIds);
+    for (int from = 0; from < all.size(); from += CONCEPT_LOOKUP_BATCH_SIZE) {
+      int to = Math.min(from + CONCEPT_LOOKUP_BATCH_SIZE, all.size());
+      Set<String> batch = new HashSet<>(all.subList(from, to));
+      for (SnowstormConceptMini c : snowstormClient.getConceptsById(branch, batch)) {
+        byId.put(c.getConceptId(), c);
+      }
     }
     return byId;
   }

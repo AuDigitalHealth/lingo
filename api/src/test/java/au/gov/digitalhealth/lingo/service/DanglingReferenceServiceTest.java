@@ -50,6 +50,29 @@ class DanglingReferenceServiceTest {
 
   private static final String BRANCH = "MAIN/SNOMIO-PROJECT/SNOMIO-1";
 
+  private static final org.apache.commons.validator.routines.checkdigit.VerhoeffCheckDigit
+      VERHOEFF = new org.apache.commons.validator.routines.checkdigit.VerhoeffCheckDigit();
+
+  // Real-format SCTIDs with valid Verhoeff checksums. Partition digit 0 = concept, 1 = description.
+  private static final String C_RETIRED = sctid("1000", "0");
+  private static final String C_DELETED = sctid("2000", "0");
+  private static final String C_ACTIVE = sctid("3000", "0");
+  private static final String C_REFSET = sctid("4000", "0");
+  private static final String C_TYPE = sctid("5000", "0");
+  private static final String C_OTHER = sctid("6000", "0");
+  // A description-format SCTID — must be filtered out by detect/tidy.
+  private static final String D_DESCRIPTION = sctid("7000", "1");
+
+  private static String sctid(String prefix, String partition) {
+    String body =
+        prefix + "0" + partition; // <prefix>0<partition>, partition: 0=concept,1=description
+    try {
+      return body + VERHOEFF.calculate(body);
+    } catch (org.apache.commons.validator.routines.checkdigit.CheckDigitException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   @Mock SnowstormClient snowstormClient;
   @InjectMocks DanglingReferenceService service;
 
@@ -94,7 +117,7 @@ class DanglingReferenceServiceTest {
 
   @Test
   void detect_flagsRefsetMemberReferencingRetiredConcept() {
-    SnowstormReferenceSetMember m = member("m1", "refset-1", "c-retired", true);
+    SnowstormReferenceSetMember m = member("m1", C_REFSET, C_RETIRED, true);
     when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(m)));
     when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
@@ -102,8 +125,7 @@ class DanglingReferenceServiceTest {
     when(snowstormClient.getConceptsById(eq(BRANCH), any()))
         .thenReturn(
             List.of(
-                concept("c-retired", false, "Retired thing"),
-                concept("refset-1", true, "My refset")));
+                concept(C_RETIRED, false, "Retired thing"), concept(C_REFSET, true, "My refset")));
 
     DanglingReferenceSummary summary = service.detect(BRANCH);
 
@@ -118,13 +140,13 @@ class DanglingReferenceServiceTest {
 
   @Test
   void detect_flagsRefsetMemberReferencingDeletedConcept() {
-    SnowstormReferenceSetMember m = member("m2", "refset-1", "c-deleted", false);
+    SnowstormReferenceSetMember m = member("m2", C_REFSET, C_DELETED, false);
     when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(m)));
     when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of()));
     when(snowstormClient.getConceptsById(eq(BRANCH), any()))
-        .thenReturn(List.of(concept("refset-1", true, "My refset")));
+        .thenReturn(List.of(concept(C_REFSET, true, "My refset")));
 
     DanglingReferenceSummary summary = service.detect(BRANCH);
 
@@ -137,14 +159,36 @@ class DanglingReferenceServiceTest {
   }
 
   @Test
+  void detect_filtersOutMembersWhoseReferencedComponentIsADescription() {
+    // Language and acceptability refsets target descriptions, not concepts. Including these in
+    // the lookup blew up the URL length on real branches with hundreds of authoring changes.
+    SnowstormReferenceSetMember conceptMember = member("m-concept", C_REFSET, C_RETIRED, true);
+    SnowstormReferenceSetMember descriptionMember =
+        member("m-description", C_REFSET, D_DESCRIPTION, true);
+    when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH))
+        .thenReturn(Mono.just(List.of(conceptMember, descriptionMember)));
+    when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
+        .thenReturn(Mono.just(List.of()));
+    when(snowstormClient.getConceptsById(eq(BRANCH), any()))
+        .thenReturn(List.of(concept(C_RETIRED, false, null), concept(C_REFSET, true, null)));
+
+    DanglingReferenceSummary summary = service.detect(BRANCH);
+
+    assertThat(summary.danglingRefsetMembers())
+        .as("description-targeting members must be filtered out before detection")
+        .extracting(DanglingRefsetMember::memberId)
+        .containsExactly("m-concept");
+  }
+
+  @Test
   void detect_ignoresRefsetMemberWhereReferencedConceptIsActive() {
-    SnowstormReferenceSetMember m = member("m3", "refset-1", "c-active", true);
+    SnowstormReferenceSetMember m = member("m3", C_REFSET, C_ACTIVE, true);
     when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(m)));
     when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of()));
     when(snowstormClient.getConceptsById(eq(BRANCH), any()))
-        .thenReturn(List.of(concept("c-active", true, null), concept("refset-1", true, null)));
+        .thenReturn(List.of(concept(C_ACTIVE, true, null), concept(C_REFSET, true, null)));
 
     DanglingReferenceSummary summary = service.detect(BRANCH);
 
@@ -153,16 +197,16 @@ class DanglingReferenceServiceTest {
 
   @Test
   void detect_flagsNonDefiningRelationshipWhenSourceRetired() {
-    SnowstormRelationship rel = relationship("r1", "c-retired", "c-active", "type-1", false);
+    SnowstormRelationship rel = relationship("r1", C_RETIRED, C_ACTIVE, C_TYPE, false);
     when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH)).thenReturn(Mono.just(List.of()));
     when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(rel)));
     when(snowstormClient.getConceptsById(eq(BRANCH), any()))
         .thenReturn(
             List.of(
-                concept("c-retired", false, "Retired source"),
-                concept("c-active", true, null),
-                concept("type-1", true, "My type")));
+                concept(C_RETIRED, false, "Retired source"),
+                concept(C_ACTIVE, true, null),
+                concept(C_TYPE, true, "My type")));
 
     DanglingReferenceSummary summary = service.detect(BRANCH);
 
@@ -175,12 +219,12 @@ class DanglingReferenceServiceTest {
 
   @Test
   void detect_flagsNonDefiningRelationshipWhenDestinationDeleted() {
-    SnowstormRelationship rel = relationship("r2", "c-active", "c-deleted", "type-1", false);
+    SnowstormRelationship rel = relationship("r2", C_ACTIVE, C_DELETED, C_TYPE, false);
     when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH)).thenReturn(Mono.just(List.of()));
     when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(rel)));
     when(snowstormClient.getConceptsById(eq(BRANCH), any()))
-        .thenReturn(List.of(concept("c-active", true, null), concept("type-1", true, null)));
+        .thenReturn(List.of(concept(C_ACTIVE, true, null), concept(C_TYPE, true, null)));
 
     DanglingReferenceSummary summary = service.detect(BRANCH);
 
@@ -192,8 +236,8 @@ class DanglingReferenceServiceTest {
 
   @Test
   void detect_isReadOnly_evenWithDanglingResults() throws Exception {
-    SnowstormReferenceSetMember m = member("m1", "refset-1", "c-retired", true);
-    SnowstormRelationship rel = relationship("r1", "c-retired", "c-active", "t", true);
+    SnowstormReferenceSetMember m = member("m1", C_REFSET, C_RETIRED, true);
+    SnowstormRelationship rel = relationship("r1", C_RETIRED, C_ACTIVE, "t", true);
     when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(m)));
     when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
@@ -201,9 +245,9 @@ class DanglingReferenceServiceTest {
     when(snowstormClient.getConceptsById(eq(BRANCH), any()))
         .thenReturn(
             List.of(
-                concept("c-retired", false, null),
-                concept("c-active", true, null),
-                concept("refset-1", true, null),
+                concept(C_RETIRED, false, null),
+                concept(C_ACTIVE, true, null),
+                concept(C_REFSET, true, null),
                 concept("t", true, null)));
 
     service.detect(BRANCH);
@@ -216,15 +260,15 @@ class DanglingReferenceServiceTest {
 
   @Test
   void tidy_releasedMemberInactivated_unreleasedDeleted() {
-    SnowstormReferenceSetMember released = member("m-released", "refset-1", "c-retired", true);
-    SnowstormReferenceSetMember unreleased = member("m-unreleased", "refset-1", "c-deleted", false);
+    SnowstormReferenceSetMember released = member("m-released", C_REFSET, C_RETIRED, true);
+    SnowstormReferenceSetMember unreleased = member("m-unreleased", C_REFSET, C_DELETED, false);
 
     when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(released, unreleased)));
     when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of()));
     when(snowstormClient.getConceptsById(eq(BRANCH), any()))
-        .thenReturn(List.of(concept("c-retired", false, null), concept("refset-1", true, null)));
+        .thenReturn(List.of(concept(C_RETIRED, false, null), concept(C_REFSET, true, null)));
 
     TidyResult result = service.tidy(BRANCH);
 
@@ -239,14 +283,14 @@ class DanglingReferenceServiceTest {
 
   @Test
   void tidy_releasedRelationshipInactivated_unreleasedDeleted() {
-    SnowstormRelationship released = relationship("r-rel", "c-retired", "c-active", "t", true);
-    SnowstormRelationship unreleased = relationship("r-unrel", "c-active", "c-deleted", "t", false);
+    SnowstormRelationship released = relationship("r-rel", C_RETIRED, C_ACTIVE, "t", true);
+    SnowstormRelationship unreleased = relationship("r-unrel", C_ACTIVE, C_DELETED, "t", false);
 
     when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH)).thenReturn(Mono.just(List.of()));
     when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(released, unreleased)));
     when(snowstormClient.getConceptsById(eq(BRANCH), any()))
-        .thenReturn(List.of(concept("c-retired", false, null), concept("c-active", true, null)));
+        .thenReturn(List.of(concept(C_RETIRED, false, null), concept(C_ACTIVE, true, null)));
 
     TidyResult result = service.tidy(BRANCH);
 
@@ -261,14 +305,12 @@ class DanglingReferenceServiceTest {
 
   @Test
   void tidy_handlesBothKindsInOneCall() {
-    SnowstormReferenceSetMember releasedMember =
-        member("m-released", "refset-1", "c-retired", true);
+    SnowstormReferenceSetMember releasedMember = member("m-released", C_REFSET, C_RETIRED, true);
     SnowstormReferenceSetMember unreleasedMember =
-        member("m-unreleased", "refset-1", "c-deleted", false);
-    SnowstormRelationship releasedRel =
-        relationship("r-released", "c-retired", "c-active", "t", true);
+        member("m-unreleased", C_REFSET, C_DELETED, false);
+    SnowstormRelationship releasedRel = relationship("r-released", C_RETIRED, C_ACTIVE, "t", true);
     SnowstormRelationship unreleasedRel =
-        relationship("r-unreleased", "c-active", "c-deleted", "t", false);
+        relationship("r-unreleased", C_ACTIVE, C_DELETED, "t", false);
 
     when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(releasedMember, unreleasedMember)));
@@ -277,9 +319,9 @@ class DanglingReferenceServiceTest {
     when(snowstormClient.getConceptsById(eq(BRANCH), any()))
         .thenReturn(
             List.of(
-                concept("c-retired", false, null),
-                concept("c-active", true, null),
-                concept("refset-1", true, null),
+                concept(C_RETIRED, false, null),
+                concept(C_ACTIVE, true, null),
+                concept(C_REFSET, true, null),
                 concept("t", true, null)));
 
     TidyResult result = service.tidy(BRANCH);
@@ -300,8 +342,8 @@ class DanglingReferenceServiceTest {
 
   @Test
   void tidy_partialFailureRefsetMember() {
-    SnowstormReferenceSetMember m1 = member("m1", "r", "c-deleted", false);
-    SnowstormReferenceSetMember m2 = member("m2", "r", "c-deleted", false);
+    SnowstormReferenceSetMember m1 = member("m1", "r", C_DELETED, false);
+    SnowstormReferenceSetMember m2 = member("m2", "r", C_DELETED, false);
 
     when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(m1, m2)));
@@ -329,14 +371,14 @@ class DanglingReferenceServiceTest {
 
   @Test
   void tidy_partialFailureRelationshipReportsError() {
-    SnowstormRelationship r1 = relationship("r1", "c-retired", "c-active", "t", false);
-    SnowstormRelationship r2 = relationship("r2", "c-retired", "c-active", "t", false);
+    SnowstormRelationship r1 = relationship("r1", C_RETIRED, C_ACTIVE, "t", false);
+    SnowstormRelationship r2 = relationship("r2", C_RETIRED, C_ACTIVE, "t", false);
 
     when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH)).thenReturn(Mono.just(List.of()));
     when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(r1, r2)));
     when(snowstormClient.getConceptsById(eq(BRANCH), any()))
-        .thenReturn(List.of(concept("c-retired", false, null), concept("c-active", true, null)));
+        .thenReturn(List.of(concept(C_RETIRED, false, null), concept(C_ACTIVE, true, null)));
 
     doAnswer(
             invocation -> {
