@@ -19,10 +19,20 @@ import au.gov.digitalhealth.tickets.models.AttachmentType;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface AttachmentTypeRepository extends JpaRepository<AttachmentType, Long> {
 
   List<AttachmentType> findAllByMimeType(String type);
 
   Optional<AttachmentType> findByMimeType(String type);
+
+  @Modifying
+  @Query(
+      value =
+          "INSERT INTO attachment_type (mime_type, name) VALUES (:mimeType, :name) ON CONFLICT (mime_type) DO NOTHING",
+      nativeQuery = true)
+  void upsertAttachmentType(@Param("mimeType") String mimeType, @Param("name") String name);
 }

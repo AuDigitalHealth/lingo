@@ -1,0 +1,38 @@
+{
+  "id": null,
+  "version": null,
+  "created": null,
+  "modified": null,
+  "createdBy": null,
+  "modifiedBy": null,
+  "iteration": null,
+  "title": "TGA - ARTG ID 69696969 Singulair",
+  "description": "<div><table><tbody><tr><th>ARTG Summary URL</th><td></td></tr><tr><th>TGA entry type</th><td>Medicine Listed</td></tr></tbody></table></div>",
+  "ticketType": null,
+  "state": {
+    "id": 2,
+    "label": "To Do",
+    "description": "",
+    "grouping": null
+  },
+  "labels": null,
+  "externalRequestors": null,
+  "assignee": null,
+  "priorityBucket": null,
+  "taskAssociation": null,
+  "schedule": null,
+  "jsonFields": [],
+  "ticketSourceAssociations": null,
+  "ticketTargetAssociations": null,
+  "ticket-additional-fields": [
+    {
+      "additionalFieldType": {
+        "id": 5,
+        "name": "ARTGID",
+        "description": "ARTG ID",
+        "type": "NUMBER"
+      },
+      "valueOf": "69696969"
+    }
+  ]
+}

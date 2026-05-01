@@ -6,6 +6,8 @@ import {
   UseFormRegister,
   UseFormSetValue,
   useFieldArray,
+  useFormContext,
+  useWatch,
 } from 'react-hook-form';
 import {
   FormControlLabel,
@@ -14,6 +16,7 @@ import {
   Stack,
   Switch,
   TextField,
+  Typography,
 } from '@mui/material';
 import { InnerBoxSmall } from './style/ProductBoxes.tsx';
 import {
@@ -29,7 +32,7 @@ import {
 } from '../../../types/productValidationUtils.ts';
 import { convertStringToRegex } from '../../../utils/helpers/stringUtils.ts';
 import { getValueFromFieldBindings } from '../../../utils/helpers/FieldBindingUtils.ts';
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import AdditionalPropertiesDisplay from './AdditionalPropertiesDisplay.tsx';
 import { ProductRetireUpdate } from './ProductRetireUpdate.tsx';
 import {
@@ -45,6 +48,7 @@ import { IconButton } from '@mui/material';
 import { Button } from '@mui/material';
 import useProjectLangRefsets from '../../../hooks/api/products/useProjectLangRefsets.tsx';
 import { useProjectFromUrlTaskPath } from '../../../hooks/useProjectFromUrlPath.tsx';
+import { useAllSynonymConfigurations } from '../../../hooks/api/tickets/useUpdateSynonymConfiguration.tsx';
 
 interface NewConceptDropdownProps {
   product: Product;
@@ -143,11 +147,14 @@ function NewConceptDropdown({
           fieldBindings={fieldBindings}
         />
         <AdditionalSynonymField
+          index={index}
           fieldName={`nodes[${index}].newConceptDetails.descriptions`}
           register={register}
           dataTestId={`pt-input`}
           control={control}
           setValue={setValue}
+          product={product}
+          getValues={getValues}
         />
         <InnerBoxSmall component="fieldset">
           <legend>Specified Concept Id</legend>
@@ -200,6 +207,9 @@ interface AdditionalSynonymFieldProps {
   dataTestId: string;
   control: Control<ProductSummary>;
   setValue?: UseFormSetValue<ProductSummary>;
+  product: Product;
+  getValues: UseFormGetValues<ProductSummary>;
+  index: number;
 }
 
 function AdditionalSynonymField({
@@ -208,6 +218,9 @@ function AdditionalSynonymField({
   dataTestId,
   control,
   setValue,
+  product,
+  index,
+  getValues,
 }: AdditionalSynonymFieldProps) {
   // Use useFieldArray to manage the array of descriptions
   const { fields, append, remove } = useFieldArray({
@@ -224,7 +237,159 @@ function AdditionalSynonymField({
 
   const defaultLangRefset = findDefaultLangRefset(langRefsets);
 
-  // Handle adding a new synonym
+  const { synonymConfigurations } = useAllSynonymConfigurations();
+
+  // Track if synonym generation is enabled
+  const [synonymGenerationEnabled, setSynonymGenerationEnabled] =
+    useState(true);
+
+  // Track the generated synonym index to know which one to update/remove
+  const generatedSynonymIndexRef = useRef<number | null>(null);
+
+  // Track if the user has manually edited the generated synonym
+  const synonymManuallyEditedRef = useRef(false);
+
+  // Function to perform substitutions on a term
+  const performSubstitutions = useCallback(
+    (term: string | undefined): string | null => {
+      if (
+        !term ||
+        !synonymConfigurations ||
+        synonymConfigurations.length === 0
+      ) {
+        return null;
+      }
+
+      let result = term;
+      let hasChanged = false;
+
+      // Apply all synonym configurations
+      for (const config of synonymConfigurations) {
+        const regex = new RegExp(config.searchString, 'g');
+        const newResult = result.replace(regex, config.replacementString);
+        if (newResult !== result) {
+          hasChanged = true;
+          result = newResult;
+        }
+      }
+
+      return hasChanged ? result : null;
+    },
+    [synonymConfigurations],
+  );
+
+  // Generate or update synonym based on rules
+  const updateGeneratedSynonym = useCallback(() => {
+    if (!synonymGenerationEnabled) {
+      return;
+    }
+
+    // If user has manually edited the generated synonym, don't overwrite it
+    if (
+      synonymManuallyEditedRef.current &&
+      generatedSynonymIndexRef.current !== null
+    ) {
+      return;
+    }
+
+    const fsnFieldName = `nodes[${index}].newConceptDetails.fullySpecifiedName`;
+    const ptFieldName = `nodes[${index}].newConceptDetails.preferredTerm`;
+
+    const fsn: string = getValues(
+      fsnFieldName as 'nodes.0.newConceptDetails.fullySpecifiedName',
+    );
+    const pt: string = getValues(
+      ptFieldName as 'nodes.0.newConceptDetails.preferredTerm',
+    );
+
+    const substitutedFSN = performSubstitutions(fsn);
+    const substitutedPT = performSubstitutions(pt);
+
+    let synonymToAdd: string | null = null;
+
+    // Apply the rules from the comment
+    if (substitutedFSN && substitutedPT) {
+      // Both FSN and PT have substitutions - use PT
+      synonymToAdd = substitutedPT;
+    } else if (substitutedFSN) {
+      // Only FSN has substitution
+      synonymToAdd = substitutedFSN;
+    } else if (substitutedPT) {
+      // Only PT has substitution
+      synonymToAdd = substitutedPT;
+    }
+
+    // If we have a synonym to add
+    if (synonymToAdd) {
+      if (generatedSynonymIndexRef.current !== null) {
+        // Update existing generated synonym
+        const descriptionFieldName = `${fieldName}.${generatedSynonymIndexRef.current}.term`;
+        setValue(descriptionFieldName, synonymToAdd);
+      } else {
+        // Create new generated synonym
+        const defaultDescription = createDefaultDescription(
+          '1',
+          '900000000000013009',
+          defaultLangRefset?.en,
+        );
+
+        defaultDescription.term = synonymToAdd;
+        synonymManuallyEditedRef.current = false;
+        append(defaultDescription);
+        generatedSynonymIndexRef.current = fields.length;
+      }
+    } else {
+      // No synonym should exist, remove it if it was previously generated
+      if (generatedSynonymIndexRef.current !== null) {
+        remove(generatedSynonymIndexRef.current);
+        generatedSynonymIndexRef.current = null;
+      }
+    }
+  }, [
+    performSubstitutions,
+    synonymGenerationEnabled,
+    fields.length,
+    append,
+    remove,
+    setValue,
+    fieldName,
+    defaultLangRefset,
+    getValues,
+    index,
+  ]);
+
+  // Watch FSN and PT fields for changes
+  const fsnFieldName =
+    `nodes[${index}].newConceptDetails.fullySpecifiedName` as const;
+  const ptFieldName =
+    `nodes[${index}].newConceptDetails.preferredTerm` as const;
+
+  const watchedFSN = useWatch({ control, name: fsnFieldName });
+  const watchedPT = useWatch({ control, name: ptFieldName });
+
+  // Run on initial load and when FSN/PT changes
+  useEffect(() => {
+    updateGeneratedSynonym();
+  }, [watchedFSN, watchedPT, synonymConfigurations, updateGeneratedSynonym]);
+
+  // Handle toggling synonym generation
+  const handleToggleSynonymGeneration = () => {
+    if (synonymGenerationEnabled) {
+      // Disabling - remove generated synonym if it exists
+      if (generatedSynonymIndexRef.current !== null) {
+        remove(generatedSynonymIndexRef.current);
+        generatedSynonymIndexRef.current = null;
+      }
+      setSynonymGenerationEnabled(false);
+    } else {
+      // Enabling - regenerate synonym
+      synonymManuallyEditedRef.current = false;
+      setSynonymGenerationEnabled(true);
+      // The useEffect will handle regeneration
+    }
+  };
+
+  // Handle adding a new synonym manually
   const handleAddSynonym = () => {
     const defaultDescription = createDefaultDescription(
       '1',
@@ -236,23 +401,48 @@ function AdditionalSynonymField({
 
   return (
     <Stack>
-      {/* <fieldset>
-        <legend>{legend}</legend> */}
+      {/* Toggle button for synonym generation */}
+      <Stack
+        flexDirection={'row'}
+        justifyContent={'space-between'}
+        alignItems={'center'}
+        mb={2}
+      >
+        <Typography variant="body2">
+          Auto-generate synonym from replacements
+        </Typography>
+        <Button
+          size="small"
+          variant={synonymGenerationEnabled ? 'contained' : 'outlined'}
+          onClick={handleToggleSynonymGeneration}
+          data-testid={`${dataTestId}-toggle-generation`}
+        >
+          {synonymGenerationEnabled ? 'Disable' : 'Enable'}
+        </Button>
+      </Stack>
 
       {/* Display existing synonyms with ability to edit */}
       {fields.map((field, index) => {
-        // For each description in the array, create an input field
         const descriptionFieldName = `${fieldName}.${index}.term`;
+        const isGeneratedSynonym = index === generatedSynonymIndexRef.current;
+
+        const { onChange: registerOnChange, ...registerRest } = register(
+          descriptionFieldName as `nodes.0.newConceptDetails.descriptions`,
+        );
 
         return (
-          <InnerBoxSmall component="fieldset">
-            <legend>Synonym</legend>
+          <InnerBoxSmall component="fieldset" key={field.id}>
+            <legend>Synonym {isGeneratedSynonym && '(Auto-generated)'}</legend>
             <Stack flexDirection={'row'} alignItems={'center'}>
               <TextField
                 type="text"
-                {...register(
-                  descriptionFieldName as `nodes.0.newConceptDetails.descriptions`,
-                )}
+                {...registerRest}
+                onChange={e => {
+                  if (isGeneratedSynonym) {
+                    synonymManuallyEditedRef.current = true;
+                  }
+                  void registerOnChange(e);
+                }}
                 onBlur={e => {
                   const trimmed = normalizeWhitespace(e.target.value);
                   if (trimmed) {
@@ -263,7 +453,17 @@ function AdditionalSynonymField({
                 placeholder="Enter synonym term"
                 fullWidth
               />
-              <IconButton color="error" onClick={() => remove(index)}>
+              <IconButton
+                color="error"
+                onClick={() => {
+                  // If removing the generated synonym, clear the ref
+                  if (index === generatedSynonymIndexRef.current) {
+                    generatedSynonymIndexRef.current = null;
+                    setSynonymGenerationEnabled(false);
+                  }
+                  remove(index);
+                }}
+              >
                 <DeleteOutlined />
               </IconButton>
             </Stack>
@@ -283,7 +483,6 @@ function AdditionalSynonymField({
           Add Synonym
         </Button>
       </Stack>
-      {/* </fieldset> */}
     </Stack>
   );
 }

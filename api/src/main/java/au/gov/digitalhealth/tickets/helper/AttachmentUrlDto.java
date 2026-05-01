@@ -15,36 +15,35 @@
  */
 package au.gov.digitalhealth.tickets.helper;
 
-import au.gov.digitalhealth.tickets.models.Ticket;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.validator.constraints.URL;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PbsRequest {
+public class AttachmentUrlDto {
 
-  // corresponds to a ticket id
-  private Long id;
+  @NotBlank(message = "fileName must not be blank")
+  @Size(max = 255, message = "fileName must be at most 255 characters")
+  private String fileName;
 
-  private Long artgid;
+  @NotNull(message = "sizeMb must not be null")
+  @DecimalMin(
+      value = "0.0",
+      inclusive = true,
+      message = "sizeMb must be greater than or equal to 0")
+  private Double sizeMb;
 
-  private String name;
-
-  private String description;
-
-  public String createDescriptionMarkup() {
-    return "<p><strong>Pbs Description:</strong>" + this.getDescription() + "</p>";
-  }
-
-  // TODO: name and description, as these aren't necassarily what is in the title & description of
-  // the ticket
-  public static PbsRequest fromTicket(Ticket ticket) {
-    String artgid = AdditionalFieldUtils.findValueByAdditionalFieldName("ARTGID", ticket);
-    Long artgidLong = artgid != null ? Long.valueOf(artgid) : null;
-    return PbsRequest.builder().id(ticket.getId()).artgid(artgidLong).build();
-  }
+  @NotBlank(message = "url must not be blank")
+  @Size(max = 2048, message = "url must be at most 2048 characters")
+  @URL(message = "url must be a valid URL")
+  private String url;
 }

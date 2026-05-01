@@ -34,6 +34,8 @@ import {
   PriorityBucket,
   Schedule,
   State,
+  SynonymConfiguration,
+  SynonymConfigurationDto,
   TaskAssocation,
   Ticket,
   TicketAssociation,
@@ -721,6 +723,41 @@ const TicketsService = {
     }
 
     return response.status;
+  },
+  async getAllSynonymConfigurations(): Promise<SynonymConfiguration[]> {
+    const url = `/api/synonyms`;
+
+    const res = await api.get<SynonymConfiguration[]>(url);
+    return res.data;
+  },
+
+  async getSynonymConfiguration(id: number): Promise<SynonymConfiguration> {
+    const url = `/api/synonyms/${id}`;
+    const res = await api.get<SynonymConfiguration>(url);
+    return res.data;
+  },
+
+  async createSynonymConfiguration(
+    data: SynonymConfigurationDto,
+  ): Promise<SynonymConfiguration> {
+    const url = `/api/synonyms`;
+    const res = await api.post<SynonymConfiguration>(url, data);
+    return res.data;
+  },
+
+  async updateSynonymConfiguration(
+    id: number,
+    data: SynonymConfigurationDto,
+  ): Promise<SynonymConfiguration> {
+    const url = `/api/synonyms/${id}`;
+    const res = await api.put<SynonymConfiguration>(url, data);
+    return res.data;
+  },
+
+  async deleteSynonymConfiguration(id: number): Promise<void> {
+    const url = `/api/synonyms/${id}`;
+    const res = await api.delete<void>(url);
+    return res.data;
   },
 };
 

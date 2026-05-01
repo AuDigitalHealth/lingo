@@ -13,39 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package au.gov.digitalhealth.tickets;
+package au.gov.digitalhealth.tickets.helper;
 
-import java.io.Serializable;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.List;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
-import lombok.experimental.SuperBuilder;
 
-@SuperBuilder
 @Data
-@ToString(callSuper = true)
-@AllArgsConstructor
+@Builder
 @NoArgsConstructor
-public class AdditionalFieldTypeDto implements Serializable {
-
-  @EqualsAndHashCode.Exclude private Long id;
+@AllArgsConstructor
+public class TicketMetadata {
 
   private String name;
-
   private String description;
+  private String descriptionMarkup;
+  private List<String> externalRequestors;
+  private String dedupeKey;
+  private List<String> labels;
 
-  private AdditionalFieldTypeDto.Type type;
-
-  private boolean display;
-
-  private boolean sharedValue;
-
-  public enum Type {
-    DATE,
-    NUMBER,
-    STRING,
-    LIST
+  @JsonIgnore
+  public String getResolvedDescription() {
+    if (descriptionMarkup != null && !descriptionMarkup.isEmpty()) {
+      return descriptionMarkup;
+    }
+    if (description != null && !description.isEmpty()) {
+      return description;
+    }
+    return null;
   }
 }

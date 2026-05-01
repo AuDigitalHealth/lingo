@@ -26,15 +26,17 @@ import au.gov.digitalhealth.tickets.TicketMinimalDto;
 import au.gov.digitalhealth.tickets.TicketTestBaseContainer;
 import au.gov.digitalhealth.tickets.helper.AdditionalFieldUtils;
 import au.gov.digitalhealth.tickets.helper.JsonReader;
-import au.gov.digitalhealth.tickets.helper.PbsRequest;
-import au.gov.digitalhealth.tickets.helper.PbsRequestResponse;
 import au.gov.digitalhealth.tickets.helper.SearchCondition;
 import au.gov.digitalhealth.tickets.helper.SearchConditionBody;
+import au.gov.digitalhealth.tickets.helper.TicketMetadata;
 import au.gov.digitalhealth.tickets.helper.TicketResponse;
+import au.gov.digitalhealth.tickets.helper.TicketSubmissionResponse;
 import au.gov.digitalhealth.tickets.models.ExternalRequestor;
 import au.gov.digitalhealth.tickets.models.Iteration;
+import au.gov.digitalhealth.tickets.models.Label;
 import au.gov.digitalhealth.tickets.models.Ticket;
 import au.gov.digitalhealth.tickets.repository.ExternalRequestorRepository;
+import au.gov.digitalhealth.tickets.repository.LabelRepository;
 import au.gov.digitalhealth.tickets.repository.TicketRepository;
 import au.gov.digitalhealth.tickets.service.TicketServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -60,6 +62,7 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
   @Autowired private ObjectMapper mapper;
   @Autowired private TicketRepository ticketRepository;
   @Autowired private ExternalRequestorRepository externalRequestorRepository;
+  @Autowired private LabelRepository labelRepository;
   @Autowired private TicketServiceImpl ticketService;
 
   @DynamicPropertySource
@@ -272,16 +275,228 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
   }
 
   @Test
-  void testPbsRequest() throws JsonProcessingException {
-    // Make sure PBS external requester exists create if needed
-    Optional<ExternalRequestor> externalRequestorOptional =
-        externalRequestorRepository.findByName("PBS");
-    if (!externalRequestorOptional.isPresent()) {
+  void testCreateOrGetTicket() throws JsonProcessingException {
+    // Ensure PBS external requester and labels exist
+    ensureExternalRequestorExists("PBS", "PBS", "success");
+    ensureLabelExists("PBSRequest", "PBS Request Label");
+    ensureLabelExists("Urgent", "Urgent Label");
+
+    // new ticket needs to be created through sergio, this dedupeKey doesn't exist in the db
+    String newPbsRequestString = JsonReader.readJsonFile("tickets/pbs-request-new.json");
+    TicketMetadata newRequest = mapper.readValue(newPbsRequestString, TicketMetadata.class);
+    String newPbsRequestSergioResponse =
+        JsonReader.readJsonFile("tickets/pbs-request-new-sergio-response.json");
+
+    SergioMockConfig.stubSergioResponse(
+        Long.valueOf(newRequest.getDedupeKey()), newPbsRequestSergioResponse);
+    TicketSubmissionResponse ticketSubmissionResponse =
+        withAuth()
+            .contentType(ContentType.JSON)
+            .when()
+            .body(newRequest)
+            .post(this.getSnomioLocation() + "/api/tickets/request")
+            .then()
+            .statusCode(201)
+            .extract()
+            .as(TicketSubmissionResponse.class);
+
+    Assertions.assertNotNull(ticketSubmissionResponse);
+    Assertions.assertNotNull(ticketSubmissionResponse.getTicketId());
+    Assertions.assertNotNull(ticketSubmissionResponse.getTicketNumber());
+
+    createTicketComplex();
+
+    // The ticket with ARTG ID 69696969 exists but is Closed — a new one will be created via Sergio
+    String markAsPbsRequestedString =
+        JsonReader.readJsonFile("tickets/pbs-request-mark-as-pbs.json");
+    TicketMetadata markAsPbsRequested =
+        mapper.readValue(markAsPbsRequestedString, TicketMetadata.class);
+    markAsPbsRequested.setLabels(List.of("PBSRequest", "Urgent"));
+
+    String markAsPbsSergioResponse =
+        JsonReader.readJsonFile("tickets/pbs-request-mark-as-pbs-sergio-response.json");
+    SergioMockConfig.stubSergioResponse(
+        Long.valueOf(markAsPbsRequested.getDedupeKey()), markAsPbsSergioResponse);
+
+    TicketSubmissionResponse markAsPbsRequestedResponse =
+        withAuth()
+            .contentType(ContentType.JSON)
+            .when()
+            .body(markAsPbsRequested)
+            .post(this.getSnomioLocation() + "/api/tickets/request")
+            .then()
+            .statusCode(201)
+            .extract()
+            .as(TicketSubmissionResponse.class);
+
+    Assertions.assertNotNull(markAsPbsRequestedResponse);
+
+    // check the external requester and labels are on the ticket
+    TicketDtoExtended ticketWithPbsExternalRequester =
+        ticketService.findTicket(markAsPbsRequestedResponse.getTicketId());
+    ticketWithPbsExternalRequester.getExternalRequestors().stream()
+        .filter(requestor -> requestor.getName().equals("PBS"))
+        .findAny()
+        .orElseThrow();
+    Assertions.assertTrue(
+        ticketWithPbsExternalRequester.getLabels().stream()
+            .anyMatch(label -> label.getName().equals("PBSRequest")));
+    Assertions.assertTrue(
+        ticketWithPbsExternalRequester.getLabels().stream()
+            .anyMatch(label -> label.getName().equals("Urgent")));
+
+    // now we can get the status of this ticket
+    TicketSubmissionResponse statusResponse =
+        withAuth()
+            .contentType(ContentType.JSON)
+            .when()
+            .get(
+                this.getSnomioLocation()
+                    + String.format(
+                        "/api/tickets/%s/status", markAsPbsRequestedResponse.getTicketNumber()))
+            .then()
+            .statusCode(200)
+            .extract()
+            .as(TicketSubmissionResponse.class);
+
+    Assertions.assertNotNull(statusResponse);
+    Assertions.assertEquals(markAsPbsRequestedResponse.getTicketId(), statusResponse.getTicketId());
+  }
+
+  @Test
+  void testCreateOrGetTicketExistingTicketWithSameTitleAndExternalRequestor()
+      throws JsonProcessingException {
+    // Ensure PBS external requestor and labels exist
+    ensureExternalRequestorExists("PBS", "PBS", "success");
+    ensureLabelExists("PBSRequest", "PBS Request Label");
+
+    // Create first request without dedupeKey - this should create a new ticket
+    String requestString = JsonReader.readJsonFile("tickets/pbs-request-no-artgid.json");
+    TicketMetadata ticketMetadata = mapper.readValue(requestString, TicketMetadata.class);
+    ticketMetadata.setLabels(List.of("PBSRequest"));
+
+    TicketSubmissionResponse firstResponse =
+        withAuth()
+            .contentType(ContentType.JSON)
+            .when()
+            .body(ticketMetadata)
+            .post(this.getSnomioLocation() + "/api/tickets/request")
+            .then()
+            .statusCode(201)
+            .extract()
+            .as(TicketSubmissionResponse.class);
+
+    Assertions.assertNotNull(firstResponse);
+    Long firstTicketId = firstResponse.getTicketId();
+    Assertions.assertNotNull(firstTicketId);
+
+    // Verify label was added to the ticket
+    TicketDtoExtended firstTicket = ticketService.findTicket(firstTicketId);
+    Assertions.assertTrue(
+        firstTicket.getLabels().stream().anyMatch(label -> label.getName().equals("PBSRequest")));
+
+    // Make the same request again with same title and externalRequestor
+    // This should return the existing ticket instead of creating a new one
+    TicketSubmissionResponse secondResponse =
+        withAuth()
+            .contentType(ContentType.JSON)
+            .when()
+            .body(ticketMetadata)
+            .post(this.getSnomioLocation() + "/api/tickets/request")
+            .then()
+            .statusCode(201)
+            .extract()
+            .as(TicketSubmissionResponse.class);
+
+    Assertions.assertNotNull(secondResponse);
+    // Should return the same ticket ID as the first request
+    Assertions.assertEquals(firstTicketId, secondResponse.getTicketId());
+
+    // Verify only one ticket exists with this title
+    Optional<Ticket> ticket = ticketRepository.findByTitle(ticketMetadata.getName());
+    Assertions.assertTrue(ticket.isPresent());
+    Assertions.assertEquals(firstTicketId, ticket.get().getId());
+  }
+
+  @Test
+  void testCreateOrGetTicketDifferentExternalRequestorCreatesSeparateTicket()
+      throws JsonProcessingException {
+    // Ensure PBS and TGA external requestors and labels exist
+    ensureExternalRequestorExists("PBS", "PBS", "success");
+    ensureExternalRequestorExists("TGA", "TGA", "primary");
+    ensureLabelExists("PBSRequest", "PBS Request Label");
+    ensureLabelExists("TGARequest", "TGA Request Label");
+
+    String uniqueTitle = "Test Different Requestor " + System.currentTimeMillis();
+
+    // Create first request with PBS and PBSRequest label
+    TicketMetadata pbsRequest =
+        TicketMetadata.builder()
+            .name(uniqueTitle)
+            .description("PBS description")
+            .externalRequestors(List.of("PBS"))
+            .labels(List.of("PBSRequest"))
+            .build();
+
+    TicketSubmissionResponse pbsResponse =
+        withAuth()
+            .contentType(ContentType.JSON)
+            .when()
+            .body(pbsRequest)
+            .post(this.getSnomioLocation() + "/api/tickets/request")
+            .then()
+            .statusCode(201)
+            .extract()
+            .as(TicketSubmissionResponse.class);
+
+    Assertions.assertNotNull(pbsResponse);
+    Long pbsTicketId = pbsResponse.getTicketId();
+
+    // Verify PBS ticket has the PBSRequest label
+    TicketDtoExtended pbsTicket = ticketService.findTicket(pbsTicketId);
+    Assertions.assertTrue(
+        pbsTicket.getLabels().stream().anyMatch(label -> label.getName().equals("PBSRequest")));
+
+    // Create second request with same title but different external requestor (TGA) and label
+    TicketMetadata tgaRequest =
+        TicketMetadata.builder()
+            .name(uniqueTitle)
+            .description("TGA description")
+            .externalRequestors(List.of("TGA"))
+            .labels(List.of("TGARequest"))
+            .build();
+
+    TicketSubmissionResponse tgaResponse =
+        withAuth()
+            .contentType(ContentType.JSON)
+            .when()
+            .body(tgaRequest)
+            .post(this.getSnomioLocation() + "/api/tickets/request")
+            .then()
+            .statusCode(201)
+            .extract()
+            .as(TicketSubmissionResponse.class);
+
+    Assertions.assertNotNull(tgaResponse);
+    Long tgaTicketId = tgaResponse.getTicketId();
+
+    // Should create a different ticket since external requestor is different
+    Assertions.assertNotEquals(pbsTicketId, tgaTicketId);
+
+    // Verify TGA ticket has the TGARequest label
+    TicketDtoExtended tgaTicket = ticketService.findTicket(tgaTicketId);
+    Assertions.assertTrue(
+        tgaTicket.getLabels().stream().anyMatch(label -> label.getName().equals("TGARequest")));
+  }
+
+  private void ensureExternalRequestorExists(String name, String description, String displayColor) {
+    Optional<ExternalRequestor> existing = externalRequestorRepository.findByName(name);
+    if (!existing.isPresent()) {
       ExternalRequestor externalRequestor =
           ExternalRequestor.builder()
-              .name("PBS")
-              .description("PBS")
-              .displayColor("success")
+              .name(name)
+              .description(description)
+              .displayColor(displayColor)
               .build();
       withAuth()
           .contentType(ContentType.JSON)
@@ -291,80 +506,20 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
           .then()
           .statusCode(200);
     }
+  }
 
-    // new ticket needs to be created through sergio, this artgid doesn't exist in the db
-    String newPbsRequestString = JsonReader.readJsonFile("tickets/pbs-request-new.json");
-    PbsRequest newPbsRequest = mapper.readValue(newPbsRequestString, PbsRequest.class);
-    String newPbsRequestSergioResponse =
-        JsonReader.readJsonFile("tickets/pbs-request-new-sergio-response.json");
-
-    SergioMockConfig.stubSergioResponse(newPbsRequest.getArtgid(), newPbsRequestSergioResponse);
-    PbsRequestResponse pbsRequestResponse =
-        withAuth()
-            .contentType(ContentType.JSON)
-            .when()
-            .body(newPbsRequest)
-            .post(this.getSnomioLocation() + "/api/tickets/pbsRequest")
-            .then()
-            .statusCode(201)
-            .extract()
-            .as(PbsRequestResponse.class);
-
-    Assertions.assertNotNull(pbsRequestResponse);
-    Assertions.assertEquals(443270L, pbsRequestResponse.getProductSubmission().getArtgid());
-    Assertions.assertEquals(
-        "TGA - ARTG ID 443270 STROING'EM capsules",
-        pbsRequestResponse.getProductSubmission().getName());
-
-    createTicketComplex();
-    // already exists, mark it as a pbs ticket
-    String markAsPbsRequestedString =
-        JsonReader.readJsonFile("tickets/pbs-request-mark-as-pbs.json");
-    PbsRequest markAsPbsRequested = mapper.readValue(markAsPbsRequestedString, PbsRequest.class);
-
-    PbsRequestResponse markAsPbsRequestedResponse =
-        withAuth()
-            .contentType(ContentType.JSON)
-            .when()
-            .body(markAsPbsRequested)
-            .post(this.getSnomioLocation() + "/api/tickets/pbsRequest")
-            .then()
-            .statusCode(201)
-            .extract()
-            .as(PbsRequestResponse.class);
-    //
-    Assertions.assertNotNull(markAsPbsRequestedResponse);
-    // check the pbs requested label is now there
-
-    TicketDtoExtended ticketWithPbsExternalRequester =
-        ticketService.findTicket(markAsPbsRequestedResponse.getId());
-    ticketWithPbsExternalRequester.getExternalRequestors().stream()
-        .filter(requestor -> requestor.getName().equals("PBS"))
-        .findAny()
-        .orElseThrow();
-    // now we can get the status of this request
-    withAuth()
-        .contentType(ContentType.JSON)
-        .when()
-        .get(
-            this.getSnomioLocation()
-                + String.format("/api/tickets/%s/pbsRequest", markAsPbsRequestedResponse.getId()))
-        .then()
-        .statusCode(200)
-        .extract()
-        .as(PbsRequestResponse.class);
-
-    // where as a random ticket this isn't a pbs ticket, will throw 500
-    TicketDto ticketDto =
-        createTicket("test title-", "test description-", TicketMinimalDto.TGA_ENTRY_FIELD_NAME);
-
-    withAuth()
-        .contentType(ContentType.JSON)
-        .when()
-        .body(markAsPbsRequested)
-        .get(this.getSnomioLocation() + "/api/tickets/" + ticketDto.getId() + "/pbsRequest")
-        .then()
-        .statusCode(404);
+  private void ensureLabelExists(String name, String description) {
+    Optional<Label> existing = labelRepository.findByName(name);
+    if (!existing.isPresent()) {
+      Label label = Label.builder().name(name).description(description).build();
+      withAuth()
+          .contentType(ContentType.JSON)
+          .when()
+          .body(label)
+          .post(this.getSnomioLocation() + "/api/tickets/labelType")
+          .then()
+          .statusCode(200);
+    }
   }
 
   private void findOrCreateIteration() {

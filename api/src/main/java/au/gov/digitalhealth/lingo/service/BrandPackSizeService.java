@@ -57,6 +57,8 @@ import au.gov.digitalhealth.lingo.product.ProductPackSizes;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.bulk.BrandPackSizeCreationDetails;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
+import au.gov.digitalhealth.lingo.service.namegenerator.NameGenerationService;
+import au.gov.digitalhealth.lingo.service.namegenerator.NodeNameGenerator;
 import au.gov.digitalhealth.lingo.service.validators.ValidationResult;
 import au.gov.digitalhealth.lingo.util.AmtConstants;
 import au.gov.digitalhealth.lingo.util.BigDecimalFormatter;
@@ -438,6 +440,20 @@ public class BrandPackSizeService {
 
     assert concepts != null;
 
+    NodeNameGenerator nameGenerator =
+        nameGenerationService.resolveNameGenerator(
+            branch,
+            () ->
+                concepts.values().stream()
+                    .flatMap(c -> SnowstormDtoUtil.getRelationshipsFromAxioms(c).stream())
+                    .filter(
+                        r ->
+                            r.getTarget() != null
+                                && r.getTarget().getPt() != null
+                                && r.getTarget().getPt().getTerm() != null)
+                    .map(r -> r.getTarget().getPt().getTerm())
+                    .collect(Collectors.toSet()));
+
     Node leafBrandedPackageNode =
         brandedPackageNodeMap.get(
             modelConfiguration.getLeafPackageModelLevel().getModelLevelType());
@@ -531,7 +547,8 @@ public class BrandPackSizeService {
                                 atomicCache,
                                 brandPackSizeEntry.getNonDefiningProperties(),
                                 isDevice,
-                                node.getModelLevel())
+                                node.getModelLevel(),
+                                nameGenerator)
                             .thenApply(
                                 n -> {
                                   atomicCache.addFsnAndPt(
@@ -569,7 +586,8 @@ public class BrandPackSizeService {
                                 atomicCache,
                                 packSize.getNonDefiningProperties(),
                                 isDevice,
-                                node.getModelLevel())
+                                node.getModelLevel(),
+                                nameGenerator)
                             .thenApply(
                                 m -> {
                                   atomicCache.addFsnAndPt(
@@ -653,7 +671,8 @@ public class BrandPackSizeService {
                         atomicCache,
                         unionOfBrandAndPackNonDefiningProperties,
                         isDevice,
-                        modelConfiguration.getLevelOfType(type)));
+                        modelConfiguration.getLevelOfType(type),
+                        nameGenerator));
               });
 
           productSummaryFutures.add(
@@ -748,7 +767,8 @@ public class BrandPackSizeService {
       AtomicCache atomicCache,
       Set<NonDefiningBase> properties,
       boolean isDevice,
-      ModelLevel modelLevel) {
+      ModelLevel modelLevel,
+      NodeNameGenerator nameGenerator) {
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     Set<SnowstormRelationship> newCtppRelationships =
         calculateNewBrandedPackRelationships(
@@ -784,8 +804,7 @@ public class BrandPackSizeService {
             false)
         .thenApply(
             n -> {
-              nameGenerationService.addGeneratedFsnAndPt(
-                  atomicCache, semanticTag, n, modelConfiguration, List.of());
+              nameGenerator.generate(atomicCache, semanticTag, n, modelConfiguration, List.of());
               return n;
             });
   }
@@ -797,7 +816,8 @@ public class BrandPackSizeService {
       AtomicCache atomicCache,
       Set<NonDefiningBase> properties,
       boolean isDevice,
-      ModelLevelType modelLevelType) {
+      ModelLevelType modelLevelType,
+      NodeNameGenerator nameGenerator) {
 
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
@@ -863,8 +883,7 @@ public class BrandPackSizeService {
             false)
         .thenApply(
             n -> {
-              nameGenerationService.addGeneratedFsnAndPt(
-                  atomicCache, semanticTag, n, modelConfiguration, List.of());
+              nameGenerator.generate(atomicCache, semanticTag, n, modelConfiguration, List.of());
               return n;
             });
   }
@@ -876,7 +895,8 @@ public class BrandPackSizeService {
       AtomicCache atomicCache,
       Set<NonDefiningBase> properties,
       boolean isDevice,
-      ModelLevelType modelLevelType) {
+      ModelLevelType modelLevelType,
+      NodeNameGenerator nameGenerator) {
 
     ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
     ModelLevel modelLevel = modelConfiguration.getLevelOfType(modelLevelType);
@@ -951,8 +971,7 @@ public class BrandPackSizeService {
             false)
         .thenApply(
             n -> {
-              nameGenerationService.addGeneratedFsnAndPt(
-                  atomicCache, semanticTag, n, modelConfiguration, List.of());
+              nameGenerator.generate(atomicCache, semanticTag, n, modelConfiguration, List.of());
               return n;
             });
   }

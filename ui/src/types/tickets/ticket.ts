@@ -366,3 +366,18 @@ export interface UiSearchConfigurationDto {
   filter: TicketFilter;
   grouping: number;
 }
+
+export interface SynonymConfiguration {
+  id?: number;
+  searchString: string;
+  replacementString: string;
+  created?: string;
+  modified?: string;
+  createdBy?: string;
+  modifiedBy?: string;
+}
+
+export interface SynonymConfigurationDto {
+  searchString: string;
+  replacementString: string;
+}

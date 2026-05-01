@@ -13,39 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package au.gov.digitalhealth.tickets;
+package au.gov.digitalhealth.tickets.models;
 
-import java.io.Serializable;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.envers.Audited;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+@Getter
+@Setter
+@ToString
 @SuperBuilder
-@Data
-@ToString(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
-public class AdditionalFieldTypeDto implements Serializable {
+@Table(name = "synonym_configuration")
+@Entity
+@Audited
+@EntityListeners(AuditingEntityListener.class)
+public class SynonymConfiguration extends BaseAuditableEntity {
 
-  @EqualsAndHashCode.Exclude private Long id;
+  private String searchString;
 
-  private String name;
-
-  private String description;
-
-  private AdditionalFieldTypeDto.Type type;
-
-  private boolean display;
-
-  private boolean sharedValue;
-
-  public enum Type {
-    DATE,
-    NUMBER,
-    STRING,
-    LIST
-  }
+  private String replacementString;
 }

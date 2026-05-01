@@ -24,6 +24,10 @@ public class TicketUtils {
 
   private TicketUtils() {}
 
+  public static boolean isTicketClosed(Ticket ticket) {
+    return ticket.getState() != null && "Closed".equalsIgnoreCase(ticket.getState().getLabel());
+  }
+
   public static boolean isTicketDuplicate(Ticket ticket) {
     for (Label label : ticket.getLabels()) {
       if (DUPLICATE_LABEL_NAME.equals(label.getName())) {

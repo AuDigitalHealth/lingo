@@ -298,13 +298,21 @@ export default function SearchProduct({
       localStorage.setItem('fsn_toggle', fsnToggle.toString());
       const tempData = data.items;
       setResults(tempData);
+      const getTerm = (item: ConceptSearchResult) =>
+        fsnToggle ? (item.fsn?.term ?? '') : (item.pt?.term ?? '');
+      const sort = (items: ConceptSearchResult[]) =>
+        [...items].sort((a, b) => getTerm(a).localeCompare(getTerm(b)));
       setAllData([
-        ...tempData
-          .filter(item => !item.effectiveTime)
-          .map(item => ({ ...item, type: UNPUBLISHED_CONCEPTS })),
-        ...tempData
-          .filter(item => item.effectiveTime)
-          .map(item => ({ ...item, type: PUBLISHED_CONCEPTS })),
+        ...sort(
+          tempData
+            .filter(item => !item.effectiveTime)
+            .map(item => ({ ...item, type: UNPUBLISHED_CONCEPTS })),
+        ),
+        ...sort(
+          tempData
+            .filter(item => item.effectiveTime)
+            .map(item => ({ ...item, type: PUBLISHED_CONCEPTS })),
+        ),
       ]);
     }
   }, [data, fsnToggle]);

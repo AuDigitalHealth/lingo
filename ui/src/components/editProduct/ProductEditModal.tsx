@@ -45,8 +45,10 @@ import {
   useController,
   useFieldArray,
   useForm,
+  UseFormGetValues,
   UseFormSetValue,
   useFormState,
+  UseFormWatch,
   useWatch,
 } from 'react-hook-form';
 import { ProductUpdateRequest } from '../../types/product.ts';
@@ -67,7 +69,7 @@ import { AxiosError } from 'axios';
 import { SnowstormError } from '../../types/ErrorHandler.ts';
 import { useSearchConceptByIdNoCache } from '../../hooks/api/products/useSearchConcept.tsx';
 import { cloneDeep, isEqual } from 'lodash';
-import { Add, Delete } from '@mui/icons-material';
+import { Add, AutoFixHigh, Delete } from '@mui/icons-material';
 import useAvailableProjects from '../../hooks/api/useInitializeProjects.tsx';
 import useApplicationConfigStore from '../../stores/ApplicationConfigStore.ts';
 import { LanguageRefset } from '../../types/Project.ts';
@@ -82,6 +84,7 @@ import { ExistingDescriptionsSection } from './ExistingDescriptionsSection.tsx';
 import useProjectLangRefsets from '../../hooks/api/products/useProjectLangRefsets.tsx';
 import { normalizeWhitespace } from '../../types/productValidationUtils.ts';
 import { useProjectFromUrlTaskPath } from '../../hooks/useProjectFromUrlPath.tsx';
+import { useAllSynonymConfigurations } from '../../hooks/api/tickets/useUpdateSynonymConfiguration.tsx';
 
 const typeMap: Record<DefinitionType, string> = {
   [DefinitionType.FSN]: '900000000000003001',
@@ -616,6 +619,8 @@ function EditConceptBody({
                         control={control}
                         handleAddDescription={handleAddDescription}
                         setValue={setValue}
+                        getValues={getValues}
+                        watch={watch}
                       />
                       <ActionButton
                         control={control}
@@ -658,8 +663,11 @@ interface RightSectionProps {
   control: Control<ProductUpdateRequest>;
   handleAddDescription: React.MouseEventHandler<HTMLButtonElement> | undefined;
   setValue: UseFormSetValue<ProductUpdateRequest>;
+  getValues: UseFormGetValues<ProductUpdateRequest>;
+  watch: UseFormWatch<ProductUpdateRequest>;
 }
 
+// Update RightSection component
 function RightSection({
   branch,
   product,
@@ -674,12 +682,153 @@ function RightSection({
   control,
   handleAddDescription,
   setValue,
+  getValues,
+  watch,
 }: RightSectionProps) {
+  const { synonymConfigurations } = useAllSynonymConfigurations(); // You'll need to import this hook
+  const defaultLangRefset = findDefaultLangRefset(langRefsets);
+
+  // Function to perform substitutions on a term
+  const performSubstitutions = (term: string | undefined): string | null => {
+    if (!term || !synonymConfigurations || synonymConfigurations.length === 0) {
+      return null;
+    }
+
+    let result = term;
+    let hasChanged = false;
+
+    // Apply all synonym configurations
+    for (const config of synonymConfigurations) {
+      const regex = new RegExp(config.searchString, 'g');
+      const newResult = result.replace(regex, config.replacementString);
+      if (newResult !== result) {
+        hasChanged = true;
+        result = newResult;
+      }
+    }
+
+    return hasChanged ? result : null;
+  };
+
+  // Function to calculate what synonym would be generated
+  const calculateGeneratedSynonym = (): string | null => {
+    // Find FSN and PT
+    const fsnIndex = fields.findIndex(
+      (field, idx) =>
+        sortedDescriptionsWithoutSemanticTags[idx]?.type === 'FSN' &&
+        sortedDescriptionsWithoutSemanticTags[idx]?.active,
+    );
+
+    const ptIndex = fields.findIndex((field, idx) => {
+      const desc = sortedDescriptionsWithoutSemanticTags[idx];
+      return (
+        desc?.type === 'SYNONYM' &&
+        desc?.active &&
+        isPreferredTerm(desc, defaultLangRefset)
+      );
+    });
+
+    if (fsnIndex === -1 && ptIndex === -1) {
+      return null;
+    }
+
+    const fsn =
+      fsnIndex !== -1
+        ? getValues(`descriptionUpdate.descriptions.${fsnIndex}.term`)
+        : undefined;
+    const pt =
+      ptIndex !== -1
+        ? getValues(`descriptionUpdate.descriptions.${ptIndex}.term`)
+        : undefined;
+
+    const substitutedFSN = performSubstitutions(fsn);
+    const substitutedPT = performSubstitutions(pt);
+
+    let synonymToAdd: string | null = null;
+
+    // Apply the rules from the comment
+    if (substitutedFSN && substitutedPT) {
+      // Both FSN and PT have substitutions - use PT
+      synonymToAdd = substitutedPT;
+    } else if (substitutedFSN) {
+      // Only FSN has substitution
+      synonymToAdd = substitutedFSN;
+    } else if (substitutedPT) {
+      // Only PT has substitution
+      synonymToAdd = substitutedPT;
+    }
+
+    return synonymToAdd;
+  };
+
+  // Check if the generated synonym already exists
+  const generatedSynonymExists = (): boolean => {
+    const synonymToAdd = calculateGeneratedSynonym();
+    if (!synonymToAdd) return false;
+
+    const currentDescriptions = getValues('descriptionUpdate.descriptions');
+    return currentDescriptions.some(
+      (desc: Description) =>
+        desc.term?.trim().toLowerCase() === synonymToAdd.trim().toLowerCase() &&
+        desc.active,
+    );
+  };
+
+  // Function to generate synonym based on rules
+  const handleGenerateSynonym = () => {
+    const synonymToAdd = calculateGeneratedSynonym();
+
+    if (!synonymToAdd) {
+      enqueueSnackbar('No substitutions found - synonym not generated', {
+        variant: 'info',
+      });
+      return;
+    }
+
+    // Check if synonym already exists
+    if (generatedSynonymExists()) {
+      enqueueSnackbar('This synonym already exists', {
+        variant: 'warning',
+      });
+      return;
+    }
+
+    // Create the synonym
+    const tempDescription = createDefaultDescription(
+      product.conceptId,
+      '900000000000013009',
+      defaultLangRefset?.en,
+    );
+
+    tempDescription.acceptabilityMap = langRefsets.reduce(
+      (acc, langRefset) => {
+        acc[langRefset.en] = 'NOT ACCEPTABLE' as Acceptability;
+        return acc;
+      },
+      {} as Record<string, Acceptability>,
+    );
+
+    tempDescription.term = synonymToAdd;
+
+    // Use the append function from the parent
+    const currentDescriptions = getValues('descriptionUpdate.descriptions');
+    setValue(
+      'descriptionUpdate.descriptions',
+      [...currentDescriptions, tempDescription],
+      {
+        shouldDirty: true,
+      },
+    );
+
+    enqueueSnackbar('Synonym generated successfully', {
+      variant: 'success',
+    });
+  };
+
   return (
     <>
       <InnerBoxSmall component="fieldset">
         <FieldLabelRequired>FSN</FieldLabelRequired>
-        {/* {!isLoading && */}
         {isFetching && <Loading />}
         {!isFetching &&
           fields.map((field, index) => {
@@ -702,13 +851,23 @@ function RightSection({
             );
           })}
       </InnerBoxSmall>
-      <IconButton
-        onClick={handleAddDescription}
-        aria-label="add description"
-        disabled={isUpdating}
-      >
-        <Add />
-      </IconButton>
+      <Stack direction="row" spacing={1} alignItems="center">
+        <IconButton
+          onClick={handleAddDescription}
+          aria-label="add description"
+          disabled={isUpdating}
+        >
+          <Add />
+        </IconButton>
+        <IconButton
+          onClick={handleGenerateSynonym}
+          aria-label="generate synonym"
+          disabled={isUpdating || generatedSynonymExists()}
+          color="primary"
+        >
+          <AutoFixHigh />
+        </IconButton>
+      </Stack>
     </>
   );
 }

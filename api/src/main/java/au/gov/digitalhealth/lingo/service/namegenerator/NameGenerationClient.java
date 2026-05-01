@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package au.gov.digitalhealth.lingo.service;
+package au.gov.digitalhealth.lingo.service.namegenerator;
 
 import au.gov.digitalhealth.lingo.product.FsnAndPt;
 import au.gov.digitalhealth.lingo.product.NameGeneratorSpec;

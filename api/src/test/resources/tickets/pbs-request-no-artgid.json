@@ -1,0 +1,7 @@
+{
+  "dedupeKey": null,
+  "name": "Test Duplicate Detection",
+  "description": "A test description for duplicate detection",
+  "externalRequestors": ["PBS"],
+  "labels": ["PBSRequest","Urgent"]
+}

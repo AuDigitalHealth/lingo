@@ -19,7 +19,7 @@ import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.product.NameGeneratorSpec;
 import au.gov.digitalhealth.lingo.product.NewConceptDetails;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
-import au.gov.digitalhealth.lingo.service.NameGenerationService;
+import au.gov.digitalhealth.lingo.service.namegenerator.NameGenerationService;
 import au.gov.digitalhealth.tickets.models.ModifiedGeneratedName;
 import au.gov.digitalhealth.tickets.repository.ModifiedGeneratedNameRepository;
 import java.util.List;

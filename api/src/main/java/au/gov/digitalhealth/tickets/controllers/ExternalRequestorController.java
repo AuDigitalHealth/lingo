@@ -50,6 +50,17 @@ public class ExternalRequestorController {
     return new ResponseEntity<>(externalRequestors, HttpStatus.OK);
   }
 
+  @GetMapping("/api/tickets/externalRequestors/search")
+  public ResponseEntity<ExternalRequestor> getExternalRequestorByName(@RequestParam String name) {
+    return externalRequestorRepository
+        .findByName(name)
+        .map(er -> new ResponseEntity<>(er, HttpStatus.OK))
+        .orElseThrow(
+            () ->
+                new ResourceNotFoundProblem(
+                    String.format("External Requestor with Name %s not found", name)));
+  }
+
   @PostMapping(
       value = "/api/tickets/externalRequestors",
       consumes = MediaType.APPLICATION_JSON_VALUE)
