@@ -22,6 +22,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.log.SnowstormLogger;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -53,7 +54,7 @@ class SnowstormClientWireContractTest {
   private SnowstormClient client;
 
   @BeforeAll
-  void startWireMock() {
+  void startWireMock() throws ReflectiveOperationException {
     wireMock =
         new WireMockServer(
             WireMockConfiguration.wireMockConfig().dynamicPort().bindAddress("127.0.0.1"));
@@ -67,6 +68,16 @@ class SnowstormClientWireContractTest {
             new ObjectMapper(),
             Mockito.mock(SnowstormLogger.class),
             Mockito.mock(SnowstormClient.class));
+    // @Value-injected fields default to their Java defaults (0) outside Spring; set them so
+    // waitForBranchLock loops at least once and reads the stubbed branch metadata.
+    setField("maxBranchLockChecks", 5);
+    setField("delayBetweenBranchLockChecks", 1L);
+  }
+
+  private void setField(String name, Object value) throws ReflectiveOperationException {
+    java.lang.reflect.Field f = SnowstormClient.class.getDeclaredField(name);
+    f.setAccessible(true);
+    f.set(client, value);
   }
 
   @AfterAll
@@ -86,6 +97,15 @@ class SnowstormClientWireContractTest {
                     .withStatus(200)
                     .withHeader("Content-Type", "application/json")
                     .withBody("{\"items\":[],\"total\":0,\"limit\":10000,\"offset\":0}")));
+    // Branch metadata: returned by waitForBranchLock — must report locked=false to let
+    // mutating endpoints (updateConcept, etc.) proceed.
+    wireMock.stubFor(
+        any(urlMatching(".*/branches/.*"))
+            .willReturn(
+                aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody("{\"path\":\"" + BRANCH + "\",\"locked\":false}")));
   }
 
   @Test
@@ -115,6 +135,97 @@ class SnowstormClientWireContractTest {
     String body = requests.get(0).getBodyAsString();
     assertThat(body).contains("\"active\":true");
     assertThat(body).contains("\"nullEffectiveTime\":true");
+  }
+
+  @Test
+  void deleteRefsetMember_issuesDeleteWithMemberIdsBodyAndForceFalse() {
+    client.deleteRefsetMember(BRANCH, "m-1");
+
+    List<LoggedRequest> requests = wireMock.findAll(anyRequestedFor(urlMatching(".*/members.*")));
+    assertThat(requests).as("members endpoint should have been called").isNotEmpty();
+    LoggedRequest req = requests.get(0);
+    assertThat(req.getMethod().getName()).isEqualTo("DELETE");
+    assertThat(req.queryParameter("force").firstValue()).isEqualTo("false");
+    assertThat(req.getBodyAsString()).contains("\"memberIds\":[\"m-1\"]");
+  }
+
+  @Test
+  void inactivateRefsetMember_issuesPutToMemberUuidWithActiveFalse() {
+    SnowstormReferenceSetMember member =
+        new SnowstormReferenceSetMember()
+            .memberId("m-1")
+            .refsetId("refset-1")
+            .moduleId("module-1")
+            .referencedComponentId("c-1")
+            .released(true)
+            .active(true);
+
+    client.inactivateRefsetMember(BRANCH, member);
+
+    List<LoggedRequest> requests =
+        wireMock.findAll(anyRequestedFor(urlMatching(".*/members/m-1.*")));
+    assertThat(requests).as("PUT /{branch}/members/{uuid} should have been called").isNotEmpty();
+    LoggedRequest req = requests.get(0);
+    assertThat(req.getMethod().getName()).isEqualTo("PUT");
+    assertThat(req.getBodyAsString())
+        .as("PUT body must carry active=false to inactivate the released member")
+        .contains("\"active\":false");
+    assertThat(req.getBodyAsString()).contains("\"memberId\":\"m-1\"");
+    assertThat(req.getBodyAsString()).contains("\"refsetId\":\"refset-1\"");
+    assertThat(req.getBodyAsString()).contains("\"referencedComponentId\":\"c-1\"");
+  }
+
+  @Test
+  void deleteRelationship_issuesDeleteWithForceFalse() {
+    client.deleteRelationship(BRANCH, "r-1");
+
+    List<LoggedRequest> requests =
+        wireMock.findAll(anyRequestedFor(urlMatching(".*/relationships/r-1.*")));
+    assertThat(requests)
+        .as("DELETE /{branch}/relationships/{id} should have been called")
+        .isNotEmpty();
+    LoggedRequest req = requests.get(0);
+    assertThat(req.getMethod().getName()).isEqualTo("DELETE");
+    assertThat(req.queryParameter("force").firstValue()).isEqualTo("false");
+  }
+
+  @Test
+  void inactivateRelationship_fetchesParentConceptAndPutsActiveFalse() {
+    String fetchedConcept =
+        "{\"conceptId\":\"c-source\",\"active\":true,\"relationships\":["
+            + "  {\"relationshipId\":\"r-1\",\"sourceId\":\"c-source\",\"destinationId\":\"c-dst\","
+            + "   \"typeId\":\"t\",\"active\":true,\"released\":true}"
+            + "]}";
+    wireMock.stubFor(
+        any(urlMatching(".*/browser/.*/concepts/c-source"))
+            .willReturn(
+                aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody(fetchedConcept)));
+
+    SnowstormRelationship rel =
+        new SnowstormRelationship()
+            .relationshipId("r-1")
+            .sourceId("c-source")
+            .destinationId("c-dst")
+            .typeId("t")
+            .released(true)
+            .active(true);
+
+    client.inactivateRelationship(BRANCH, rel);
+
+    List<LoggedRequest> putRequests =
+        wireMock.findAll(anyRequestedFor(urlMatching(".*/browser/.*/concepts/c-source.*")));
+    LoggedRequest put =
+        putRequests.stream()
+            .filter(r -> r.getMethod().getName().equals("PUT"))
+            .findFirst()
+            .orElseThrow(() -> new AssertionError("expected PUT to browser concepts endpoint"));
+    assertThat(put.getBodyAsString())
+        .as("PUT body must inactivate the matching relationship")
+        .contains("\"relationshipId\":\"r-1\"")
+        .contains("\"active\":false");
   }
 
   @Test
