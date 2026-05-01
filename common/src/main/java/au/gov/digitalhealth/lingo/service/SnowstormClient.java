@@ -598,6 +598,8 @@ public class SnowstormClient {
   }
 
   public static final String NON_DEFINING_CHARACTERISTIC_TYPE_ID = "900000000000227009";
+  // Snowstorm's findRelationships expects the CharacteristicType enum name, not the SCTID.
+  public static final String NON_DEFINING_CHARACTERISTIC_TYPE_NAME = "ADDITIONAL_RELATIONSHIP";
 
   public Mono<List<SnowstormReferenceSetMember>> getRefsetMembersModifiedOnBranch(String branch) {
     SnowstormMemberSearchRequestComponent searchRequestComponent =
@@ -631,7 +633,7 @@ public class SnowstormClient {
             null,
             null,
             null,
-            NON_DEFINING_CHARACTERISTIC_TYPE_ID,
+            NON_DEFINING_CHARACTERISTIC_TYPE_NAME,
             null,
             0,
             10000,
