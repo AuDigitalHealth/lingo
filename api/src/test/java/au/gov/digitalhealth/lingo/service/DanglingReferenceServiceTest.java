@@ -198,6 +198,27 @@ class DanglingReferenceServiceTest {
   }
 
   @Test
+  void detect_skipsMembersInExpectedInactiveReferenceRefsets() {
+    // Inactivation indicator and historical association refsets reference inactive concepts by
+    // design — flagging them would delete the very metadata that records why a concept was
+    // retired. They must always be skipped, even when the referenced concept is retired.
+    SnowstormReferenceSetMember inactivationIndicator =
+        member("m-ii", "900000000000489007", C_RETIRED, false);
+    SnowstormReferenceSetMember sameAsAssociation =
+        member("m-sameas", "900000000000527005", C_RETIRED, false);
+    when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH))
+        .thenReturn(Mono.just(List.of(inactivationIndicator, sameAsAssociation)));
+    when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
+        .thenReturn(Mono.just(List.of()));
+    when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
+        .thenReturn(List.of(concept(C_RETIRED, false, "Retired thing")));
+
+    DanglingReferenceSummary summary = service.detect(BRANCH);
+
+    assertThat(summary.danglingRefsetMembers()).isEmpty();
+  }
+
+  @Test
   void detect_ignoresRefsetMemberWhereReferencedConceptIsActive() {
     SnowstormReferenceSetMember m = member("m3", C_REFSET, C_ACTIVE, true);
     when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH))

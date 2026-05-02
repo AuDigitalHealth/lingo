@@ -133,12 +133,11 @@ class SnowstormClientWireContractTest {
     client.getRefsetMembersModifiedOnBranch(BRANCH).block();
 
     List<LoggedRequest> requests =
-        wireMock.findAll(anyRequestedFor(urlMatching(".*/members(?!/).*")));
-    assertThat(requests).as("members endpoint should have been called").isNotEmpty();
-    LoggedRequest req = requests.get(0);
-    assertThat(req.getMethod().getName()).isEqualTo("GET");
-    assertThat(req.queryParameter("active").firstValue()).isEqualTo("true");
-    assertThat(req.queryParameter("isNullEffectiveTime").firstValue()).isEqualTo("true");
+        wireMock.findAll(anyRequestedFor(urlMatching(".*/members/search.*")));
+    assertThat(requests).as("members search endpoint should have been called").isNotEmpty();
+    String body = requests.get(0).getBodyAsString();
+    assertThat(body).contains("\"active\":true");
+    assertThat(body).contains("\"nullEffectiveTime\":true");
   }
 
   @Test
@@ -270,7 +269,7 @@ class SnowstormClientWireContractTest {
             + "   \"active\":true,\"released\":false}"
             + "],\"total\":1,\"limit\":10000,\"offset\":0}";
     wireMock.stubFor(
-        any(urlMatching(".*/members(?!/).*"))
+        any(urlMatching(".*/members/search.*"))
             .willReturn(
                 aResponse()
                     .withStatus(200)

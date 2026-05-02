@@ -65,6 +65,27 @@ import reactor.core.publisher.Mono;
 @Service
 public class DanglingReferenceService {
 
+  // Refsets that legitimately reference inactive concepts as part of their normal function —
+  // a member in any of these pointing to an inactive/retired concept is NOT dangling.
+  // - 900000000000489007 |Concept inactivation indicator attribute value reference set|
+  // - <<900000000000522004 |Historical association reference set| and its descendants
+  // We hardcode the well-known SCTIDs rather than querying Snowstorm so detection is reliable
+  // even if the project's view of the metadata hierarchy is incomplete.
+  static final Set<String> EXPECTED_INACTIVE_REFERENCE_REFSETS =
+      Set.of(
+          "900000000000489007", // Concept inactivation indicator attribute value reference set
+          "900000000000523009", // POSSIBLY EQUIVALENT TO association reference set
+          "900000000000524003", // MOVED FROM association reference set
+          "900000000000525002", // MOVED TO association reference set
+          "900000000000526001", // REPLACED BY association reference set
+          "900000000000527005", // SAME AS association reference set
+          "900000000000528000", // WAS A association reference set
+          "900000000000530003", // ALTERNATIVE association reference set
+          "900000000000531004", // REFERS TO concept association reference set
+          "1186921009", // PARTIALLY EQUIVALENT TO association reference set
+          "1186924001", // PARTIALLY OVERLAPS THE MEANING OF association reference set
+          "1193550005"); // POSSIBLY REPLACED BY association reference set
+
   private final SnowstormClient snowstormClient;
 
   public DanglingReferenceService(SnowstormClient snowstormClient) {
@@ -79,6 +100,7 @@ public class DanglingReferenceService {
 
     // Scenario 1 — items new on this task referencing a missing/inactive concept.
     for (SnowstormReferenceSetMember m : ctx.taskMembers) {
+      if (isExpectedInactiveReferenceRefset(m)) continue;
       ConceptStatus status = statusOf(m.getReferencedComponentId(), ctx.byId);
       if (status == ConceptStatus.ACTIVE) continue;
       danglingMembers.add(toDanglingMember(m, status, ctx.byId));
@@ -96,6 +118,7 @@ public class DanglingReferenceService {
         danglingMembers.stream().map(DanglingRefsetMember::memberId).collect(Collectors.toSet());
     for (SnowstormReferenceSetMember m : ctx.scenario2Members) {
       if (m.getMemberId() == null || !seenMembers.add(m.getMemberId())) continue;
+      if (isExpectedInactiveReferenceRefset(m)) continue;
       // referencedComponentId is one of the retired concepts on task → status RETIRED.
       danglingMembers.add(toDanglingMember(m, ConceptStatus.RETIRED, ctx.byId));
     }
@@ -124,11 +147,13 @@ public class DanglingReferenceService {
     LinkedHashMap<String, SnowstormReferenceSetMember> members = new LinkedHashMap<>();
     for (SnowstormReferenceSetMember m : ctx.taskMembers) {
       if (m.getMemberId() == null) continue;
+      if (isExpectedInactiveReferenceRefset(m)) continue;
       if (statusOf(m.getReferencedComponentId(), ctx.byId) == ConceptStatus.ACTIVE) continue;
       members.put(m.getMemberId(), m);
     }
     for (SnowstormReferenceSetMember m : ctx.scenario2Members) {
       if (m.getMemberId() == null) continue;
+      if (isExpectedInactiveReferenceRefset(m)) continue;
       members.putIfAbsent(m.getMemberId(), m);
     }
 
@@ -275,6 +300,13 @@ public class DanglingReferenceService {
   private static boolean referencesAConcept(SnowstormReferenceSetMember m) {
     String id = m.getReferencedComponentId();
     return id != null && SnomedIdentifierUtil.isValid(id, PartitionIdentifier.CONCEPT);
+  }
+
+  // True for members whose refset is one of the well-known refsets that legitimately point to
+  // inactive concepts. Such members must never be flagged as dangling — that would cause us to
+  // delete the very metadata that records why a concept was retired.
+  private static boolean isExpectedInactiveReferenceRefset(SnowstormReferenceSetMember m) {
+    return m.getRefsetId() != null && EXPECTED_INACTIVE_REFERENCE_REFSETS.contains(m.getRefsetId());
   }
 
   private static Set<String> collectReferencedConceptIds(

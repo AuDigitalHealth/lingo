@@ -627,52 +627,23 @@ public class SnowstormClient {
             });
   }
 
-  // Page size for paginated walks via searchAfter. Snowstorm caps a single page at 10000;
-  // active projects can have well over that many unreleased refset members, so we must page.
-  private static final int SEARCH_AFTER_PAGE_SIZE = 5000;
-
-  // Synchronous searchAfter walk. Pagination cannot be expressed as a recursive `flatMap` because
-  // the next page would subscribe on a netty event-loop thread (where the previous response
-  // completed) — at that point the AuthHelper ExchangeFilterFunction runs without the request
-  // thread's SecurityContextHolder ThreadLocal and NPEs reading the IMS cookie. Each page must be
-  // subscribed from the request thread, which means a `while`-loop with per-page `.block()` rather
-  // than reactor chaining.
   private Mono<List<SnowstormReferenceSetMember>> getUnreleasedActiveRefsetMembers(String branch) {
-    return Mono.fromSupplier(() -> walkRefsetMembersSync(branch));
-  }
-
-  private List<SnowstormReferenceSetMember> walkRefsetMembersSync(String branch) {
-    List<SnowstormReferenceSetMember> all = new ArrayList<>();
-    String searchAfter = null;
-    while (true) {
-      var page =
-          getRefsetMembersApi()
-              .findRefsetMembers1(
-                  branch,
-                  null, /* referenceSet */
-                  null, /* module */
-                  null, /* referencedComponentId */
-                  true, /* active */
-                  true, /* isNullEffectiveTime */
-                  null, /* targetComponent */
-                  null, /* mapTarget */
-                  null, /* owlExpressionConceptId */
-                  null, /* owlExpressionGci */
-                  null, /* offset — must be null when using searchAfter */
-                  SEARCH_AFTER_PAGE_SIZE,
-                  searchAfter,
-                  languageHeader)
-              .block();
-      if (page == null) {
-        throw new LingoProblem(
-            "Snowstorm returned null page from findRefsetMembers on branch " + branch);
-      }
-      List<SnowstormReferenceSetMember> items =
-          page.getItems() == null ? List.of() : page.getItems();
-      all.addAll(items);
-      if (items.isEmpty() || page.getSearchAfter() == null) return all;
-      searchAfter = page.getSearchAfter();
-    }
+    SnowstormMemberSearchRequestComponent searchRequestComponent =
+        new SnowstormMemberSearchRequestComponent().active(true).nullEffectiveTime(true);
+    return getRefsetMembersApi()
+        .findRefsetMembers(branch, searchRequestComponent, 0, 10000, languageHeader)
+        .flatMap(
+            page -> {
+              if (page == null) {
+                return Mono.error(
+                    new LingoProblem(
+                        "Snowstorm returned null page from findRefsetMembers on branch " + branch));
+              }
+              return Mono.just(
+                  page.getItems() == null
+                      ? List.<SnowstormReferenceSetMember>of()
+                      : page.getItems());
+            });
   }
 
   /**
@@ -774,56 +745,46 @@ public class SnowstormClient {
   }
 
   private Mono<List<SnowstormConceptMini>> getUnpublishedConcepts(String branch) {
-    return Mono.fromSupplier(() -> walkUnpublishedConceptsSync(branch));
-  }
-
-  // Synchronous searchAfter walk — see walkRefsetMembersSync for why this isn't reactive.
-  private List<SnowstormConceptMini> walkUnpublishedConceptsSync(String branch) {
-    List<SnowstormConceptMini> all = new ArrayList<>();
-    String searchAfter = null;
-    while (true) {
-      var page =
-          getConceptsApi()
-              .findConcepts(
-                  branch,
-                  null, /* activeFilter */
-                  null, /* defStatus */
-                  null, /* module */
-                  null, /* term */
-                  null, /* termActive */
-                  null, /* descType */
-                  null, /* language */
-                  null, /* preferredIn */
-                  null, /* acceptableIn */
-                  null, /* preferredOrAcceptableIn */
-                  null, /* ecl */
-                  null, /* effectiveTime */
-                  null, /* isNullEffectiveTime */
-                  false, /* isPublished=false → only unpublished concepts */
-                  null, /* statedEcl */
-                  null, /* conceptIds */
-                  false, /* returnIdOnly=false → full concept items */
-                  null, /* offset — must be null when using searchAfter */
-                  SEARCH_AFTER_PAGE_SIZE,
-                  searchAfter,
-                  null)
-              .block();
-      if (page == null) {
-        throw new LingoProblem(
-            "Snowstorm returned null page from findConcepts on branch " + branch);
-      }
-      if (page.getItems() != null) {
-        for (Object item : page.getItems()) {
-          if (item instanceof java.util.LinkedHashMap) {
-            all.add(SnowstormDtoUtil.fromLinkedHashMap(item));
-          }
-        }
-      }
-      if (page.getItems() == null
-          || page.getItems().isEmpty()
-          || page.getSearchAfter() == null) return all;
-      searchAfter = page.getSearchAfter();
-    }
+    return getConceptsApi()
+        .findConcepts(
+            branch,
+            null, /* activeFilter */
+            null, /* defStatus */
+            null, /* module */
+            null, /* term */
+            null, /* termActive */
+            null, /* descType */
+            null, /* language */
+            null, /* preferredIn */
+            null, /* acceptableIn */
+            null, /* preferredOrAcceptableIn */
+            null, /* ecl */
+            null, /* effectiveTime */
+            null, /* isNullEffectiveTime */
+            false, /* isPublished=false → only unpublished concepts */
+            null, /* statedEcl */
+            null, /* conceptIds */
+            false, /* returnIdOnly=false → full concept items */
+            0,
+            10000,
+            null,
+            null)
+        .flatMap(
+            page -> {
+              if (page == null) {
+                return Mono.error(
+                    new LingoProblem(
+                        "Snowstorm returned null page from findConcepts on branch " + branch));
+              }
+              if (page.getItems() == null) return Mono.just(List.<SnowstormConceptMini>of());
+              List<SnowstormConceptMini> items = new ArrayList<>();
+              for (Object item : page.getItems()) {
+                if (item instanceof java.util.LinkedHashMap) {
+                  items.add(SnowstormDtoUtil.fromLinkedHashMap(item));
+                }
+              }
+              return Mono.just(items);
+            });
   }
 
   /**
