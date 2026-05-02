@@ -631,49 +631,48 @@ public class SnowstormClient {
   // active projects can have well over that many unreleased refset members, so we must page.
   private static final int SEARCH_AFTER_PAGE_SIZE = 5000;
 
+  // Synchronous searchAfter walk. Pagination cannot be expressed as a recursive `flatMap` because
+  // the next page would subscribe on a netty event-loop thread (where the previous response
+  // completed) — at that point the AuthHelper ExchangeFilterFunction runs without the request
+  // thread's SecurityContextHolder ThreadLocal and NPEs reading the IMS cookie. Each page must be
+  // subscribed from the request thread, which means a `while`-loop with per-page `.block()` rather
+  // than reactor chaining.
   private Mono<List<SnowstormReferenceSetMember>> getUnreleasedActiveRefsetMembers(String branch) {
-    return walkRefsetMembersBySearchAfter(branch, null);
+    return Mono.fromSupplier(() -> walkRefsetMembersSync(branch));
   }
 
-  // Recursive searchAfter walk for the GET /{branch}/members endpoint (which exposes
-  // searchAfter, unlike the POST variant). active=true, isNullEffectiveTime=true.
-  private Mono<List<SnowstormReferenceSetMember>> walkRefsetMembersBySearchAfter(
-      String branch, String searchAfter) {
-    return getRefsetMembersApi()
-        .findRefsetMembers1(
-            branch,
-            null, /* referenceSet */
-            null, /* module */
-            null, /* referencedComponentId */
-            true, /* active */
-            true, /* isNullEffectiveTime */
-            null, /* targetComponent */
-            null, /* mapTarget */
-            null, /* owlExpressionConceptId */
-            null, /* owlExpressionGci */
-            null, /* offset — must be null when using searchAfter */
-            SEARCH_AFTER_PAGE_SIZE,
-            searchAfter,
-            languageHeader)
-        .flatMap(
-            page -> {
-              if (page == null) {
-                return Mono.error(
-                    new LingoProblem(
-                        "Snowstorm returned null page from findRefsetMembers on branch " + branch));
-              }
-              List<SnowstormReferenceSetMember> items =
-                  page.getItems() == null ? List.<SnowstormReferenceSetMember>of() : page.getItems();
-              if (items.isEmpty() || page.getSearchAfter() == null) return Mono.just(items);
-              return walkRefsetMembersBySearchAfter(branch, page.getSearchAfter())
-                  .map(
-                      next -> {
-                        List<SnowstormReferenceSetMember> all = new ArrayList<>(items.size() + next.size());
-                        all.addAll(items);
-                        all.addAll(next);
-                        return all;
-                      });
-            });
+  private List<SnowstormReferenceSetMember> walkRefsetMembersSync(String branch) {
+    List<SnowstormReferenceSetMember> all = new ArrayList<>();
+    String searchAfter = null;
+    while (true) {
+      var page =
+          getRefsetMembersApi()
+              .findRefsetMembers1(
+                  branch,
+                  null, /* referenceSet */
+                  null, /* module */
+                  null, /* referencedComponentId */
+                  true, /* active */
+                  true, /* isNullEffectiveTime */
+                  null, /* targetComponent */
+                  null, /* mapTarget */
+                  null, /* owlExpressionConceptId */
+                  null, /* owlExpressionGci */
+                  null, /* offset — must be null when using searchAfter */
+                  SEARCH_AFTER_PAGE_SIZE,
+                  searchAfter,
+                  languageHeader)
+              .block();
+      if (page == null) {
+        throw new LingoProblem(
+            "Snowstorm returned null page from findRefsetMembers on branch " + branch);
+      }
+      List<SnowstormReferenceSetMember> items =
+          page.getItems() == null ? List.of() : page.getItems();
+      all.addAll(items);
+      if (items.isEmpty() || page.getSearchAfter() == null) return all;
+      searchAfter = page.getSearchAfter();
+    }
   }
 
   /**
@@ -742,10 +741,16 @@ public class SnowstormClient {
    * mirrors {@link #getConceptIdsChangedOnTask}/{@link #getConceptIdsChangedOnProject} but
    * returns full concept minis so callers can read the active flag (to identify
    * retired-on-task).
+   *
+   * <p>Result is post-filtered on {@code effectiveTime == null}. Snowstorm's {@code
+   * isPublished=false} can return concepts that are released upstream when the task branch is
+   * stale relative to a rebased project, which would otherwise produce false positives in
+   * scenario-2 detection (the released-and-retired concept gets treated as "retired on this
+   * task" and its inherited refset members get flagged for inactivation).
    */
   public Mono<List<SnowstormConceptMini>> getConceptsModifiedOnBranch(String branch) {
     if (!BranchPatternMatcher.isTaskPattern(branch)) {
-      return getUnpublishedConcepts(branch);
+      return getUnpublishedConcepts(branch).map(SnowstormClient::filterToUnreleased);
     }
     String project = BranchPatternMatcher.getProjectFromTask(branch);
     return Mono.zip(getUnpublishedConcepts(branch), getUnpublishedConcepts(project))
@@ -756,66 +761,69 @@ public class SnowstormClient {
                       .map(SnowstormConceptMini::getConceptId)
                       .filter(Objects::nonNull)
                       .collect(Collectors.toSet());
-              return t.getT1().stream()
-                  .filter(c -> c.getConceptId() != null && !projectIds.contains(c.getConceptId()))
-                  .toList();
+              return filterToUnreleased(
+                  t.getT1().stream()
+                      .filter(
+                          c -> c.getConceptId() != null && !projectIds.contains(c.getConceptId()))
+                      .toList());
             });
+  }
+
+  private static List<SnowstormConceptMini> filterToUnreleased(List<SnowstormConceptMini> items) {
+    return items.stream().filter(c -> c.getEffectiveTime() == null).toList();
   }
 
   private Mono<List<SnowstormConceptMini>> getUnpublishedConcepts(String branch) {
-    return walkUnpublishedConceptsBySearchAfter(branch, null);
+    return Mono.fromSupplier(() -> walkUnpublishedConceptsSync(branch));
   }
 
-  private Mono<List<SnowstormConceptMini>> walkUnpublishedConceptsBySearchAfter(
-      String branch, String searchAfter) {
-    return getConceptsApi()
-        .findConcepts(
-            branch,
-            null, /* activeFilter */
-            null, /* defStatus */
-            null, /* module */
-            null, /* term */
-            null, /* termActive */
-            null, /* descType */
-            null, /* language */
-            null, /* preferredIn */
-            null, /* acceptableIn */
-            null, /* preferredOrAcceptableIn */
-            null, /* ecl */
-            null, /* effectiveTime */
-            null, /* isNullEffectiveTime */
-            false, /* isPublished=false → only unpublished concepts */
-            null, /* statedEcl */
-            null, /* conceptIds */
-            false, /* returnIdOnly=false → full concept items */
-            null, /* offset — must be null when using searchAfter */
-            SEARCH_AFTER_PAGE_SIZE,
-            searchAfter,
-            null)
-        .flatMap(
-            page -> {
-              if (page == null) {
-                return Mono.error(
-                    new LingoProblem(
-                        "Snowstorm returned null page from findConcepts on branch " + branch));
-              }
-              if (page.getItems() == null) return Mono.just(List.<SnowstormConceptMini>of());
-              List<SnowstormConceptMini> items = new ArrayList<>();
-              for (Object item : page.getItems()) {
-                if (item instanceof java.util.LinkedHashMap) {
-                  items.add(SnowstormDtoUtil.fromLinkedHashMap(item));
-                }
-              }
-              if (items.isEmpty() || page.getSearchAfter() == null) return Mono.just(items);
-              return walkUnpublishedConceptsBySearchAfter(branch, page.getSearchAfter())
-                  .map(
-                      next -> {
-                        List<SnowstormConceptMini> all = new ArrayList<>(items.size() + next.size());
-                        all.addAll(items);
-                        all.addAll(next);
-                        return all;
-                      });
-            });
+  // Synchronous searchAfter walk — see walkRefsetMembersSync for why this isn't reactive.
+  private List<SnowstormConceptMini> walkUnpublishedConceptsSync(String branch) {
+    List<SnowstormConceptMini> all = new ArrayList<>();
+    String searchAfter = null;
+    while (true) {
+      var page =
+          getConceptsApi()
+              .findConcepts(
+                  branch,
+                  null, /* activeFilter */
+                  null, /* defStatus */
+                  null, /* module */
+                  null, /* term */
+                  null, /* termActive */
+                  null, /* descType */
+                  null, /* language */
+                  null, /* preferredIn */
+                  null, /* acceptableIn */
+                  null, /* preferredOrAcceptableIn */
+                  null, /* ecl */
+                  null, /* effectiveTime */
+                  null, /* isNullEffectiveTime */
+                  false, /* isPublished=false → only unpublished concepts */
+                  null, /* statedEcl */
+                  null, /* conceptIds */
+                  false, /* returnIdOnly=false → full concept items */
+                  null, /* offset — must be null when using searchAfter */
+                  SEARCH_AFTER_PAGE_SIZE,
+                  searchAfter,
+                  null)
+              .block();
+      if (page == null) {
+        throw new LingoProblem(
+            "Snowstorm returned null page from findConcepts on branch " + branch);
+      }
+      if (page.getItems() != null) {
+        for (Object item : page.getItems()) {
+          if (item instanceof java.util.LinkedHashMap) {
+            all.add(SnowstormDtoUtil.fromLinkedHashMap(item));
+          }
+        }
+      }
+      if (page.getItems() == null
+          || page.getItems().isEmpty()
+          || page.getSearchAfter() == null) return all;
+      searchAfter = page.getSearchAfter();
+    }
   }
 
   /**
