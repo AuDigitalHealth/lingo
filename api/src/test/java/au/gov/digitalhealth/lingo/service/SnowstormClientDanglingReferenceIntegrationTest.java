@@ -17,7 +17,10 @@ package au.gov.digitalhealth.lingo.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import au.csiro.snowstorm_client.api.RefsetMembersApi;
+import au.csiro.snowstorm_client.model.SnowstormMemberSearchRequestComponent;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.AmtV4SnowstormExtension;
@@ -31,6 +34,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 /**
  * Integration test for SnowstormClient's dangling-reference helpers against a real Snowstorm
@@ -106,5 +110,36 @@ class SnowstormClientDanglingReferenceIntegrationTest {
     List<SnowstormRelationship> result =
         client.getNonDefiningRelationshipsModifiedOnBranch(BRANCH).block();
     assertThat(result).isEmpty();
+  }
+
+  @Test
+  void findRefsetMembers_rejectsOffsetPlusLimitBeyondResultWindow() throws Exception {
+    // Pins the Elasticsearch result-window constraint that broke offset-based pagination on
+    // findRefsetMembers: Snowstorm rejects offset+limit > 10000 with HTTP 400. Any future
+    // attempt to add offset-based pagination on this POST endpoint must reckon with this — the
+    // way through is the GET /{branch}/members + searchAfter variant, but that has its own
+    // semantic mismatch with the POST endpoint that needs untangling first. Until then this
+    // test is the canary that fails loudly if someone re-introduces offset > 10000 here.
+    RefsetMembersApi api = (RefsetMembersApi) invokeOnClient(client, "getRefsetMembersApi");
+    SnowstormMemberSearchRequestComponent request =
+        new SnowstormMemberSearchRequestComponent().active(true).nullEffectiveTime(true);
+
+    // First page (offset=0, limit=10000) is fine — well within the result window.
+    assertThatCode(() -> api.findRefsetMembers(BRANCH, request, 0, 10000, null).block())
+        .as("first page within result window must succeed")
+        .doesNotThrowAnyException();
+
+    // Second page (offset=10000) crosses the result window and Snowstorm 400s.
+    assertThatThrownBy(() -> api.findRefsetMembers(BRANCH, request, 10000, 10000, null).block())
+        .as(
+            "Snowstorm rejects offset+limit > 10000 — this is the constraint our pagination has"
+                + " to respect")
+        .isInstanceOf(WebClientResponseException.BadRequest.class);
+  }
+
+  private static Object invokeOnClient(SnowstormClient client, String methodName) throws Exception {
+    java.lang.reflect.Method m = SnowstormClient.class.getDeclaredMethod(methodName);
+    m.setAccessible(true);
+    return m.invoke(client);
   }
 }
