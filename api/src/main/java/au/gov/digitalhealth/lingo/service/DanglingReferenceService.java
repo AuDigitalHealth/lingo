@@ -27,6 +27,7 @@ import au.gov.digitalhealth.lingo.promotion.TidyFailure;
 import au.gov.digitalhealth.lingo.promotion.TidyKind;
 import au.gov.digitalhealth.lingo.promotion.TidyResult;
 import au.gov.digitalhealth.lingo.promotion.TidySuccess;
+import au.gov.digitalhealth.lingo.util.BranchPatternMatcher;
 import au.gov.digitalhealth.lingo.util.PartitionIdentifier;
 import au.gov.digitalhealth.lingo.util.SnomedIdentifierUtil;
 import java.util.ArrayList;
@@ -257,12 +258,20 @@ public class DanglingReferenceService {
     List<SnowstormRelationship> taskRels = phase1.getT2();
     List<SnowstormConceptMini> taskConcepts = phase1.getT3();
 
-    Set<String> retiredOnTaskIds =
+    Set<String> candidateRetiredOnTaskIds =
         taskConcepts.stream()
             .filter(c -> Boolean.FALSE.equals(c.getActive()))
             .map(SnowstormConceptMini::getConceptId)
             .filter(java.util.Objects::nonNull)
             .collect(Collectors.toSet());
+
+    // Cross-check candidates against the project. "Retired on this task" means active on the
+    // project but inactive on the task — if the project also sees the concept as inactive, the
+    // retirement happened upstream (rebase brought in an already-retired concept) and the task
+    // didn't actually retire it. Without this check, scenario-2 fans out from
+    // already-retired-elsewhere concepts and flags every active member referencing them (e.g. the
+    // refset descriptor row pointing at an upstream-retired refset concept) for inactivation.
+    Set<String> retiredOnTaskIds = filterToRetiredOnlyOnTask(branch, candidateRetiredOnTaskIds);
 
     // Phase 2: scenario-2 reference fetches in parallel, also Mono-based.
     var phase2 =
@@ -307,6 +316,22 @@ public class DanglingReferenceService {
   // delete the very metadata that records why a concept was retired.
   private static boolean isExpectedInactiveReferenceRefset(SnowstormReferenceSetMember m) {
     return m.getRefsetId() != null && EXPECTED_INACTIVE_REFERENCE_REFSETS.contains(m.getRefsetId());
+  }
+
+  // Keep only candidates the project still sees as active. If the project sees the concept as
+  // inactive too, the retirement is from upstream — not done on this task — so it's outside the
+  // scope of scenario-2 cleanup.
+  private Set<String> filterToRetiredOnlyOnTask(String taskBranch, Set<String> candidateIds) {
+    if (candidateIds.isEmpty()) return candidateIds;
+    if (!BranchPatternMatcher.isTaskPattern(taskBranch)) return candidateIds;
+    String project = BranchPatternMatcher.getProjectFromTask(taskBranch);
+    Set<String> activeOnProject = new HashSet<>();
+    for (SnowstormConceptMini c : snowstormClient.getConceptsByIdViaSearch(project, candidateIds)) {
+      if (c.getConceptId() != null && Boolean.TRUE.equals(c.getActive())) {
+        activeOnProject.add(c.getConceptId());
+      }
+    }
+    return candidateIds.stream().filter(activeOnProject::contains).collect(Collectors.toSet());
   }
 
   private static Set<String> collectReferencedConceptIds(

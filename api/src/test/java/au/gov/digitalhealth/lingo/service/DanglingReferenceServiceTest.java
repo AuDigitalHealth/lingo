@@ -38,6 +38,7 @@ import au.gov.digitalhealth.lingo.promotion.TidyKind;
 import au.gov.digitalhealth.lingo.promotion.TidyResult;
 import au.gov.digitalhealth.lingo.promotion.TidySuccess;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -284,6 +285,41 @@ class DanglingReferenceServiceTest {
             DanglingNonDefiningRelationship::sourceStatus,
             DanglingNonDefiningRelationship::released)
         .containsExactly(tuple("r-released", ConceptStatus.RETIRED, true));
+  }
+
+  @Test
+  void detect_scenario2_skipsConceptsThatWereAlreadyRetiredOnProject() {
+    // Cross-check: a concept that comes back from getConceptsModifiedOnBranch with active=false
+    // is only "retired on this task" if the project still sees it as active. If the project also
+    // sees it inactive, the retirement is from upstream (e.g. an international release rebased
+    // into the project) and the task didn't perform that retirement — its inherited refset
+    // members must NOT be flagged for inactivation.
+    String taskBranch = "MAIN|CODESYSTEM|PROJECT|TASK";
+    String projectBranch = "MAIN|CODESYSTEM|PROJECT";
+    SnowstormConceptMini upstreamRetired = concept(C_RETIRED, false, "Upstream-retired thing");
+    when(snowstormClient.getRefsetMembersModifiedOnBranch(taskBranch))
+        .thenReturn(Mono.just(List.of()));
+    when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(taskBranch))
+        .thenReturn(Mono.just(List.of()));
+    when(snowstormClient.getConceptsModifiedOnBranch(taskBranch))
+        .thenReturn(Mono.just(List.of(upstreamRetired)));
+    when(snowstormClient.findActiveRefsetMembersForConcepts(eq(taskBranch), any()))
+        .thenReturn(Mono.just(List.of()));
+    when(snowstormClient.findActiveNonDefiningRelationshipsForConcepts(eq(taskBranch), any()))
+        .thenReturn(Mono.just(List.of()));
+    when(snowstormClient.getConceptsByIdViaSearch(eq(taskBranch), any())).thenReturn(List.of());
+    // Project sees the same concept as inactive too — confirms upstream retirement, not on task.
+    when(snowstormClient.getConceptsByIdViaSearch(eq(projectBranch), any()))
+        .thenReturn(List.of(concept(C_RETIRED, false, "Upstream-retired thing")));
+
+    DanglingReferenceSummary summary = service.detect(taskBranch);
+
+    assertThat(summary.danglingRefsetMembers()).isEmpty();
+    assertThat(summary.danglingNonDefiningRelationships()).isEmpty();
+    // Cross-check filtered the candidate out, so scenario-2 fan-out runs against an empty id
+    // set rather than against the upstream-retired concept.
+    verify(snowstormClient).findActiveRefsetMembersForConcepts(taskBranch, Set.of());
+    verify(snowstormClient).findActiveNonDefiningRelationshipsForConcepts(taskBranch, Set.of());
   }
 
   @Test
