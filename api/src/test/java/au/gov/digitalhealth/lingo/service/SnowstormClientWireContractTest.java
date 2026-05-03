@@ -112,11 +112,11 @@ class SnowstormClientWireContractTest {
   }
 
   @Test
-  void getNonDefiningRelationshipsModifiedOnBranch_usesEnumNameNotSctid() {
+  void getUnreleasedActiveNonDefiningRelationshipsOnBranch_usesEnumNameNotSctid() {
     // Snowstorm rejects SCTIDs for the characteristicType query param — it expects the
     // CharacteristicType enum name (ADDITIONAL_RELATIONSHIP). This test pins that contract:
     // it issues the call and verifies the outgoing request carried the enum name.
-    client.getNonDefiningRelationshipsModifiedOnBranch(BRANCH).block();
+    client.getUnreleasedActiveNonDefiningRelationshipsOnBranch(BRANCH).block();
 
     List<LoggedRequest> requests =
         wireMock.findAll(anyRequestedFor(urlMatching(".*/relationships.*")));
@@ -129,8 +129,8 @@ class SnowstormClientWireContractTest {
   }
 
   @Test
-  void getRefsetMembersModifiedOnBranch_sendsActiveAndNullEffectiveTimeFilters() {
-    client.getRefsetMembersModifiedOnBranch(BRANCH).block();
+  void getUnreleasedActiveRefsetMembersOnBranch_sendsActiveAndNullEffectiveTimeFilters() {
+    client.getUnreleasedActiveRefsetMembersOnBranch(BRANCH).block();
 
     List<LoggedRequest> requests =
         wireMock.findAll(anyRequestedFor(urlMatching(".*/members/search.*")));
@@ -232,7 +232,7 @@ class SnowstormClientWireContractTest {
   }
 
   @Test
-  void getNonDefiningRelationshipsModifiedOnBranch_postFiltersToNullEffectiveTime() {
+  void getUnreleasedActiveNonDefiningRelationshipsOnBranch_postFiltersToNullEffectiveTime() {
     // For non-task branches set-difference is bypassed. Verify the post-filter on
     // effectiveTime == null still works against the single response.
     String body =
@@ -251,7 +251,7 @@ class SnowstormClientWireContractTest {
                     .withBody(body)));
 
     List<SnowstormRelationship> result =
-        client.getNonDefiningRelationshipsModifiedOnBranch(BRANCH).block();
+        client.getUnreleasedActiveNonDefiningRelationshipsOnBranch(BRANCH).block();
 
     assertThat(result)
         .as("only rows with null effectiveTime pass the post-filter")
@@ -260,7 +260,7 @@ class SnowstormClientWireContractTest {
   }
 
   @Test
-  void getRefsetMembersModifiedOnBranch_returnsUnreleasedActiveMembers() {
+  void getUnreleasedActiveRefsetMembersOnBranch_returnsUnreleasedActiveMembers() {
     // For non-task branches set-difference is bypassed. The method just returns whatever the
     // search came back with (active=true, nullEffectiveTime=true filter applied server-side).
     String body =
@@ -277,7 +277,7 @@ class SnowstormClientWireContractTest {
                     .withBody(body)));
 
     List<SnowstormReferenceSetMember> result =
-        client.getRefsetMembersModifiedOnBranch(BRANCH).block();
+        client.getUnreleasedActiveRefsetMembersOnBranch(BRANCH).block();
 
     assertThat(result).extracting(SnowstormReferenceSetMember::getMemberId).containsExactly("m-1");
   }

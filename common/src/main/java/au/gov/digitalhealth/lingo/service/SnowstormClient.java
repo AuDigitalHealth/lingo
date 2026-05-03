@@ -602,38 +602,14 @@ public class SnowstormClient {
   public static final String NON_DEFINING_CHARACTERISTIC_TYPE_NAME = "ADDITIONAL_RELATIONSHIP";
 
   /**
-   * Refset members modified strictly on this task — set-difference of unreleased active members
-   * visible on the task branch minus those visible on the parent project. Snowstorm's basic
-   * search response doesn't include the {@code path} field, so we can't filter by path
-   * client-side; the set-difference pattern (matching {@link #getConceptIdsChangedOnTask}) gives
-   * a reliable scope to "members new specifically on this task".
+   * All unreleased active reference set members on the branch — i.e. members the branch shows as
+   * {@code active=true, effectiveTime=null}. Capped at Snowstorm's 10000 result-window limit
+   * (offset+limit > 10000 returns 400 from {@code from-and-size-max-result-window}). Callers
+   * needing scope-on-this-task semantics should intersect with the traceability change log
+   * rather than asking Snowstorm to compute the difference.
    */
-  public Mono<List<SnowstormReferenceSetMember>> getRefsetMembersModifiedOnBranch(String branch) {
-    if (!BranchPatternMatcher.isTaskPattern(branch)) {
-      return getUnreleasedActiveRefsetMembers(branch);
-    }
-    String project = BranchPatternMatcher.getProjectFromTask(branch);
-    return Mono.zip(getUnreleasedActiveRefsetMembers(branch), getUnreleasedActiveRefsetMembers(project))
-        .map(
-            t -> {
-              Set<String> projectMemberIds =
-                  t.getT2().stream()
-                      .map(SnowstormReferenceSetMember::getMemberId)
-                      .filter(Objects::nonNull)
-                      .collect(Collectors.toSet());
-              return t.getT1().stream()
-                  .filter(m -> m.getMemberId() != null && !projectMemberIds.contains(m.getMemberId()))
-                  .toList();
-            });
-  }
-
-  // Single-page query capped at Snowstorm's 10000 result-window limit. Snowstorm rejects
-  // offset+limit > 10000 with a 400 (from-size-max-result-window), so offset-based pagination
-  // on this POST endpoint can't go further. Going beyond 10000 requires the GET endpoint with
-  // searchAfter, but switching to that introduced regressions in set-difference detection — it
-  // appears to return a different set of items than POST + nullEffectiveTime: true. Until that
-  // semantic mismatch is investigated, we accept the 10000-item cap as a known limitation.
-  private Mono<List<SnowstormReferenceSetMember>> getUnreleasedActiveRefsetMembers(String branch) {
+  public Mono<List<SnowstormReferenceSetMember>> getUnreleasedActiveRefsetMembersOnBranch(
+      String branch) {
     SnowstormMemberSearchRequestComponent searchRequestComponent =
         new SnowstormMemberSearchRequestComponent().active(true).nullEffectiveTime(true);
     return getRefsetMembersApi()
@@ -653,34 +629,11 @@ public class SnowstormClient {
   }
 
   /**
-   * Non-defining relationships modified strictly on this task — set-difference of unreleased
-   * active non-defining relationships visible on the task branch minus those visible on the
-   * parent project.
+   * All unreleased active non-defining relationships on the branch. Snowstorm's
+   * findRelationships has no nullEffectiveTime filter, so we post-filter the active set
+   * client-side to those with {@code effectiveTime == null}.
    */
-  public Mono<List<SnowstormRelationship>> getNonDefiningRelationshipsModifiedOnBranch(
-      String branch) {
-    if (!BranchPatternMatcher.isTaskPattern(branch)) {
-      return getUnreleasedActiveNonDefiningRelationships(branch);
-    }
-    String project = BranchPatternMatcher.getProjectFromTask(branch);
-    return Mono.zip(
-            getUnreleasedActiveNonDefiningRelationships(branch),
-            getUnreleasedActiveNonDefiningRelationships(project))
-        .map(
-            t -> {
-              Set<String> projectIds =
-                  t.getT2().stream()
-                      .map(SnowstormRelationship::getRelationshipId)
-                      .filter(Objects::nonNull)
-                      .collect(Collectors.toSet());
-              return t.getT1().stream()
-                  .filter(
-                      r -> r.getRelationshipId() != null && !projectIds.contains(r.getRelationshipId()))
-                  .toList();
-            });
-  }
-
-  private Mono<List<SnowstormRelationship>> getUnreleasedActiveNonDefiningRelationships(
+  public Mono<List<SnowstormRelationship>> getUnreleasedActiveNonDefiningRelationshipsOnBranch(
       String branch) {
     RelationshipsApi api = new RelationshipsApi(getApiClient());
     return api.findRelationships(
@@ -706,164 +659,9 @@ public class SnowstormClient {
               }
               List<SnowstormRelationship> items =
                   page.getItems() == null ? List.<SnowstormRelationship>of() : page.getItems();
-              // findRelationships has no nullEffectiveTime filter — post-filter to unreleased.
               return Mono.just(
                   items.stream().filter(r -> r.getEffectiveTime() == null).toList());
             });
-  }
-
-  /**
-   * Returns concept minis modified strictly on the supplied task branch — set-difference of
-   * unpublished concepts visible on the task minus those visible on the parent project. This
-   * mirrors {@link #getConceptIdsChangedOnTask}/{@link #getConceptIdsChangedOnProject} but
-   * returns full concept minis so callers can read the active flag (to identify
-   * retired-on-task).
-   *
-   * <p>Result is post-filtered on {@code effectiveTime == null}. Snowstorm's {@code
-   * isPublished=false} can return concepts that are released upstream when the task branch is
-   * stale relative to a rebased project, which would otherwise produce false positives in
-   * scenario-2 detection (the released-and-retired concept gets treated as "retired on this
-   * task" and its inherited refset members get flagged for inactivation).
-   */
-  public Mono<List<SnowstormConceptMini>> getConceptsModifiedOnBranch(String branch) {
-    if (!BranchPatternMatcher.isTaskPattern(branch)) {
-      return getUnpublishedConcepts(branch).map(SnowstormClient::filterToUnreleased);
-    }
-    String project = BranchPatternMatcher.getProjectFromTask(branch);
-    return Mono.zip(getUnpublishedConcepts(branch), getUnpublishedConcepts(project))
-        .map(
-            t -> {
-              Set<String> projectIds =
-                  t.getT2().stream()
-                      .map(SnowstormConceptMini::getConceptId)
-                      .filter(Objects::nonNull)
-                      .collect(Collectors.toSet());
-              return filterToUnreleased(
-                  t.getT1().stream()
-                      .filter(
-                          c -> c.getConceptId() != null && !projectIds.contains(c.getConceptId()))
-                      .toList());
-            });
-  }
-
-  private static List<SnowstormConceptMini> filterToUnreleased(List<SnowstormConceptMini> items) {
-    return items.stream().filter(c -> c.getEffectiveTime() == null).toList();
-  }
-
-  // Single-page query capped at 10000 — see getUnreleasedActiveRefsetMembers for why.
-  private Mono<List<SnowstormConceptMini>> getUnpublishedConcepts(String branch) {
-    return getConceptsApi()
-        .findConcepts(
-            branch,
-            null, /* activeFilter */
-            null, /* defStatus */
-            null, /* module */
-            null, /* term */
-            null, /* termActive */
-            null, /* descType */
-            null, /* language */
-            null, /* preferredIn */
-            null, /* acceptableIn */
-            null, /* preferredOrAcceptableIn */
-            null, /* ecl */
-            null, /* effectiveTime */
-            null, /* isNullEffectiveTime */
-            false, /* isPublished=false → only unpublished concepts */
-            null, /* statedEcl */
-            null, /* conceptIds */
-            false, /* returnIdOnly=false → full concept items */
-            0,
-            10000,
-            null,
-            null)
-        .flatMap(
-            page -> {
-              if (page == null) {
-                return Mono.error(
-                    new LingoProblem(
-                        "Snowstorm returned null page from findConcepts on branch " + branch));
-              }
-              if (page.getItems() == null) return Mono.just(List.<SnowstormConceptMini>of());
-              List<SnowstormConceptMini> items = new ArrayList<>();
-              for (Object item : page.getItems()) {
-                if (item instanceof java.util.LinkedHashMap) {
-                  items.add(SnowstormDtoUtil.fromLinkedHashMap(item));
-                }
-              }
-              return Mono.just(items);
-            });
-  }
-
-  /**
-   * Active refset members on the branch whose referencedComponentId is one of the supplied
-   * concept IDs. Used for scenario 2 (a concept retired on the task may have inherited refset
-   * members on MAIN that are now dangling — these need to be retired or deleted regardless of
-   * which path the member's current version lives on).
-   */
-  public Mono<List<SnowstormReferenceSetMember>> findActiveRefsetMembersForConcepts(
-      String branch, Set<String> conceptIds) {
-    if (conceptIds == null || conceptIds.isEmpty()) return Mono.just(List.of());
-    SnowstormMemberSearchRequestComponent request =
-        new SnowstormMemberSearchRequestComponent()
-            .active(true)
-            .referencedComponentIds(List.copyOf(conceptIds));
-    return getRefsetMembersApi()
-        .findRefsetMembers(branch, request, 0, 10000, languageHeader)
-        .map(page -> page.getItems() == null ? List.<SnowstormReferenceSetMember>of() : page.getItems());
-  }
-
-  /**
-   * Active non-defining relationships on the branch where source or destination is one of the
-   * supplied concept IDs. Snowstorm's findRelationships filters by a single source or
-   * destination per call, so we issue a fan-out (2N parallel calls) and dedupe.
-   */
-  public Mono<List<SnowstormRelationship>> findActiveNonDefiningRelationshipsForConcepts(
-      String branch, Set<String> conceptIds) {
-    if (conceptIds == null || conceptIds.isEmpty()) return Mono.just(List.of());
-    RelationshipsApi api = new RelationshipsApi(getApiClient());
-    reactor.core.publisher.Flux<SnowstormRelationship> bySource =
-        reactor.core.publisher.Flux.fromIterable(conceptIds)
-            .flatMap(
-                id ->
-                    api.findRelationships(
-                            branch,
-                            true,
-                            null,
-                            null,
-                            id,
-                            null,
-                            null,
-                            NON_DEFINING_CHARACTERISTIC_TYPE_NAME,
-                            null,
-                            0,
-                            10000,
-                            languageHeader)
-                        .flatMapIterable(
-                            p -> p.getItems() == null ? List.<SnowstormRelationship>of() : p.getItems()));
-    reactor.core.publisher.Flux<SnowstormRelationship> byDestination =
-        reactor.core.publisher.Flux.fromIterable(conceptIds)
-            .flatMap(
-                id ->
-                    api.findRelationships(
-                            branch,
-                            true,
-                            null,
-                            null,
-                            null,
-                            null,
-                            id,
-                            NON_DEFINING_CHARACTERISTIC_TYPE_NAME,
-                            null,
-                            0,
-                            10000,
-                            languageHeader)
-                        .flatMapIterable(
-                            p -> p.getItems() == null ? List.<SnowstormRelationship>of() : p.getItems()));
-    return reactor.core.publisher.Flux.merge(bySource, byDestination)
-        .collect(
-            java.util.stream.Collectors.toMap(
-                SnowstormRelationship::getRelationshipId, r -> r, (a, b) -> a))
-        .map(map -> List.copyOf(map.values()));
   }
 
   public void deleteRefsetMember(String branch, String memberId) {

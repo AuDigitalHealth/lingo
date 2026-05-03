@@ -27,7 +27,8 @@ import au.gov.digitalhealth.lingo.promotion.TidyFailure;
 import au.gov.digitalhealth.lingo.promotion.TidyKind;
 import au.gov.digitalhealth.lingo.promotion.TidyResult;
 import au.gov.digitalhealth.lingo.promotion.TidySuccess;
-import au.gov.digitalhealth.lingo.util.BranchPatternMatcher;
+import au.gov.digitalhealth.lingo.traceability.BranchChangeSummary;
+import au.gov.digitalhealth.lingo.traceability.TraceabilityServiceClient;
 import au.gov.digitalhealth.lingo.util.PartitionIdentifier;
 import au.gov.digitalhealth.lingo.util.SnomedIdentifierUtil;
 import java.util.ArrayList;
@@ -38,29 +39,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 /**
- * Detects and tidies dangling reference set members and non-defining relationships left behind by
- * authoring activity on a task branch.
+ * Detects and tidies dangling reference set members and non-defining relationships authored on a
+ * task branch.
  *
- * <p>Two scenarios are checked, both in a single end-to-end flow:
+ * <p>Detection scope comes from the SNOMED CT authoring-traceability-service: only refset members
+ * and non-defining relationships that the traceability log records as "currently present" on the
+ * branch (i.e. their last non-superseded change isn't a {@code DELETE}) are considered. For each
+ * such component we ask Snowstorm what its referenced concepts currently look like; anything
+ * pointing at an inactive or missing concept is flagged.
  *
- * <ul>
- *   <li><b>Scenario 1</b> — items new on this task whose referenced concept is missing or inactive.
- *       The members and relationships are unreleased on this task, so the tidy action is to delete
- *       them outright.
- *   <li><b>Scenario 2</b> — concepts retired on this task. Any active refset member or non-defining
- *       relationship referencing them (on any path the task can see) is dangling. If the
- *       member/relationship was previously released it is inactivated; if not, it is deleted.
- * </ul>
- *
- * <p>Three top-level Snowstorm queries (members modified on task, non-defining relationships
- * modified on task, concepts modified on task) run in parallel via {@link Mono#zip}; the scenario-1
- * concept resolution and the two scenario-2 reference queries also run in parallel.
+ * <p>Tidy mirrors the rule: released components are inactivated (we keep the audit trail);
+ * unreleased components are deleted outright.
  */
 @Log
 @Service
@@ -88,9 +82,12 @@ public class DanglingReferenceService {
           "1193550005"); // POSSIBLY REPLACED BY association reference set
 
   private final SnowstormClient snowstormClient;
+  private final TraceabilityServiceClient traceabilityServiceClient;
 
-  public DanglingReferenceService(SnowstormClient snowstormClient) {
+  public DanglingReferenceService(
+      SnowstormClient snowstormClient, TraceabilityServiceClient traceabilityServiceClient) {
     this.snowstormClient = snowstormClient;
+    this.traceabilityServiceClient = traceabilityServiceClient;
   }
 
   public DanglingReferenceSummary detect(String branch) {
@@ -99,7 +96,6 @@ public class DanglingReferenceService {
     List<DanglingRefsetMember> danglingMembers = new ArrayList<>();
     List<DanglingNonDefiningRelationship> danglingRels = new ArrayList<>();
 
-    // Scenario 1 — items new on this task referencing a missing/inactive concept.
     for (SnowstormReferenceSetMember m : ctx.taskMembers) {
       if (isExpectedInactiveReferenceRefset(m)) continue;
       ConceptStatus status = statusOf(m.getReferencedComponentId(), ctx.byId);
@@ -114,28 +110,6 @@ public class DanglingReferenceService {
       danglingRels.add(toDanglingRel(r, srcStatus, dstStatus, ctx.byId));
     }
 
-    // Scenario 2 — items anywhere on the branch referencing a concept retired on this task.
-    Set<String> seenMembers =
-        danglingMembers.stream().map(DanglingRefsetMember::memberId).collect(Collectors.toSet());
-    for (SnowstormReferenceSetMember m : ctx.scenario2Members) {
-      if (m.getMemberId() == null || !seenMembers.add(m.getMemberId())) continue;
-      if (isExpectedInactiveReferenceRefset(m)) continue;
-      // referencedComponentId is one of the retired concepts on task → status RETIRED.
-      danglingMembers.add(toDanglingMember(m, ConceptStatus.RETIRED, ctx.byId));
-    }
-    Set<String> seenRels =
-        danglingRels.stream()
-            .map(DanglingNonDefiningRelationship::relationshipId)
-            .collect(Collectors.toSet());
-    for (SnowstormRelationship r : ctx.scenario2Rels) {
-      if (!isWellFormed(r, branch)) continue;
-      if (!seenRels.add(r.getRelationshipId())) continue;
-      ConceptStatus srcStatus = statusOf(r.getSourceId(), ctx.byId);
-      ConceptStatus dstStatus = statusOf(r.getDestinationId(), ctx.byId);
-      if (srcStatus == ConceptStatus.ACTIVE && dstStatus == ConceptStatus.ACTIVE) continue;
-      danglingRels.add(toDanglingRel(r, srcStatus, dstStatus, ctx.byId));
-    }
-
     return new DanglingReferenceSummary(branch, danglingMembers, danglingRels);
   }
 
@@ -144,18 +118,13 @@ public class DanglingReferenceService {
     List<TidySuccess> succeeded = new ArrayList<>();
     List<TidyFailure> failed = new ArrayList<>();
 
-    // Build the same combined member/rel sets as detect() so we tidy exactly what we summarised.
+    // Build the same member/rel set as detect() so we tidy exactly what we summarised.
     LinkedHashMap<String, SnowstormReferenceSetMember> members = new LinkedHashMap<>();
     for (SnowstormReferenceSetMember m : ctx.taskMembers) {
       if (m.getMemberId() == null) continue;
       if (isExpectedInactiveReferenceRefset(m)) continue;
       if (statusOf(m.getReferencedComponentId(), ctx.byId) == ConceptStatus.ACTIVE) continue;
       members.put(m.getMemberId(), m);
-    }
-    for (SnowstormReferenceSetMember m : ctx.scenario2Members) {
-      if (m.getMemberId() == null) continue;
-      if (isExpectedInactiveReferenceRefset(m)) continue;
-      members.putIfAbsent(m.getMemberId(), m);
     }
 
     LinkedHashMap<String, SnowstormRelationship> rels = new LinkedHashMap<>();
@@ -165,10 +134,6 @@ public class DanglingReferenceService {
       ConceptStatus d = statusOf(r.getDestinationId(), ctx.byId);
       if (s == ConceptStatus.ACTIVE && d == ConceptStatus.ACTIVE) continue;
       rels.put(r.getRelationshipId(), r);
-    }
-    for (SnowstormRelationship r : ctx.scenario2Rels) {
-      if (!isWellFormed(r, branch)) continue;
-      rels.putIfAbsent(r.getRelationshipId(), r);
     }
 
     for (SnowstormReferenceSetMember m : members.values()) {
@@ -221,89 +186,70 @@ public class DanglingReferenceService {
     return new TidyResult(succeeded, failed);
   }
 
-  // Holds everything detect/tidy need after the parallel Snowstorm fan-out.
+  // Holds everything detect/tidy need after the traceability + Snowstorm fan-out.
   private static final class DetectionContext {
     final List<SnowstormReferenceSetMember> taskMembers;
     final List<SnowstormRelationship> taskRels;
-    final List<SnowstormReferenceSetMember> scenario2Members;
-    final List<SnowstormRelationship> scenario2Rels;
     final Map<String, SnowstormConceptMini> byId;
 
     DetectionContext(
         List<SnowstormReferenceSetMember> taskMembers,
         List<SnowstormRelationship> taskRels,
-        List<SnowstormReferenceSetMember> scenario2Members,
-        List<SnowstormRelationship> scenario2Rels,
         Map<String, SnowstormConceptMini> byId) {
       this.taskMembers = taskMembers;
       this.taskRels = taskRels;
-      this.scenario2Members = scenario2Members;
-      this.scenario2Rels = scenario2Rels;
       this.byId = byId;
     }
   }
 
   private DetectionContext collect(String branch) {
-    // Phase 1: three Mono-based queries in parallel — these use WebClient and don't touch any
-    // request-scoped beans, so they run safely on netty workers.
+    // Phase 1: parallel — fetch every unreleased active refset member and non-defining
+    // relationship visible on the branch, plus the traceability log of what was actually
+    // authored on it. The traceability log is the authoritative scope; the Snowstorm queries
+    // give us the current state of those components.
     var phase1 =
         Mono.zip(
-                snowstormClient.getRefsetMembersModifiedOnBranch(branch),
-                snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(branch),
-                snowstormClient.getConceptsModifiedOnBranch(branch))
+                snowstormClient.getUnreleasedActiveRefsetMembersOnBranch(branch),
+                snowstormClient.getUnreleasedActiveNonDefiningRelationshipsOnBranch(branch),
+                Mono.fromSupplier(
+                    () -> traceabilityServiceClient.getContentChangeActivitiesOnBranch(branch)))
             .block();
 
+    List<SnowstormReferenceSetMember> allActiveMembers = phase1.getT1();
+    List<SnowstormRelationship> allActiveRels = phase1.getT2();
+    BranchChangeSummary summary = BranchChangeSummary.from(phase1.getT3());
+
+    // Phase 2: intersect the active components on the branch with the traceability scope. A
+    // member that's active+unreleased on the branch but doesn't appear as still-present in the
+    // traceability log was inherited (not authored on this task) — out of scope.
+    Set<String> taskMemberIds = summary.refsetMemberIdsStillOnBranch();
+    Set<String> taskRelationshipIds = summary.relationshipIdsStillOnBranch();
     List<SnowstormReferenceSetMember> taskMembers =
-        phase1.getT1().stream().filter(DanglingReferenceService::referencesAConcept).toList();
-    List<SnowstormRelationship> taskRels = phase1.getT2();
-    List<SnowstormConceptMini> taskConcepts = phase1.getT3();
+        allActiveMembers.stream()
+            .filter(m -> m.getMemberId() != null && taskMemberIds.contains(m.getMemberId()))
+            .filter(DanglingReferenceService::referencesAConcept)
+            .toList();
+    List<SnowstormRelationship> taskRels =
+        allActiveRels.stream()
+            .filter(
+                r ->
+                    r.getRelationshipId() != null
+                        && taskRelationshipIds.contains(r.getRelationshipId()))
+            .toList();
 
-    Set<String> candidateRetiredOnTaskIds =
-        taskConcepts.stream()
-            .filter(c -> Boolean.FALSE.equals(c.getActive()))
-            .map(SnowstormConceptMini::getConceptId)
-            .filter(java.util.Objects::nonNull)
-            .collect(Collectors.toSet());
-
-    // Cross-check candidates against the project. "Retired on this task" means active on the
-    // project but inactive on the task — if the project also sees the concept as inactive, the
-    // retirement happened upstream (rebase brought in an already-retired concept) and the task
-    // didn't actually retire it. Without this check, scenario-2 fans out from
-    // already-retired-elsewhere concepts and flags every active member referencing them (e.g. the
-    // refset descriptor row pointing at an upstream-retired refset concept) for inactivation.
-    Set<String> retiredOnTaskIds = filterToRetiredOnlyOnTask(branch, candidateRetiredOnTaskIds);
-
-    // Phase 2: scenario-2 reference fetches in parallel, also Mono-based.
-    var phase2 =
-        Mono.zip(
-                snowstormClient.findActiveRefsetMembersForConcepts(branch, retiredOnTaskIds),
-                snowstormClient.findActiveNonDefiningRelationshipsForConcepts(
-                    branch, retiredOnTaskIds))
-            .block();
-    List<SnowstormReferenceSetMember> scenario2Members = phase2.getT1();
-    List<SnowstormRelationship> scenario2Rels = phase2.getT2();
-
-    // Phase 3: synchronous concept lookup. This goes through getConceptsByIdViaSearch which
-    // depends on request-scoped beans (BranchAwareKeyGenerator →
-    // RequestScopedBranchTimestampService).
-    // We must run it on the request thread — no Schedulers.boundedElastic offload — so the
-    // Spring request scope stays active. We're back on the request thread here courtesy of the
-    // .block() above.
+    // Phase 3: bulk-fetch the referenced concepts (refset, referencedComponent, source,
+    // destination, type) so we can determine each component's status. Synchronous — runs on the
+    // request thread because getConceptsByIdViaSearch depends on request-scoped beans.
+    Set<String> referencedIds = collectReferencedConceptIds(taskMembers, taskRels);
     Map<String, SnowstormConceptMini> byId = new HashMap<>();
-    for (SnowstormConceptMini c : taskConcepts) {
-      if (c.getConceptId() != null) byId.put(c.getConceptId(), c);
-    }
-    Set<String> toResolve = new HashSet<>();
-    toResolve.addAll(collectReferencedConceptIds(taskMembers, taskRels));
-    toResolve.addAll(collectExtraIds(scenario2Members, scenario2Rels, byId.keySet()));
-    toResolve.removeAll(byId.keySet());
-    if (!toResolve.isEmpty()) {
-      for (SnowstormConceptMini c : snowstormClient.getConceptsByIdViaSearch(branch, toResolve)) {
+    if (!referencedIds.isEmpty()) {
+      for (SnowstormConceptMini c :
+          snowstormClient.getConceptsByIdViaSearch(branch, referencedIds)) {
         if (c.getConceptId() != null) byId.put(c.getConceptId(), c);
       }
     }
 
-    return new DetectionContext(taskMembers, taskRels, scenario2Members, scenario2Rels, byId);
+    return new DetectionContext(taskMembers, taskRels, byId);
   }
 
   private static boolean referencesAConcept(SnowstormReferenceSetMember m) {
@@ -316,22 +262,6 @@ public class DanglingReferenceService {
   // delete the very metadata that records why a concept was retired.
   private static boolean isExpectedInactiveReferenceRefset(SnowstormReferenceSetMember m) {
     return m.getRefsetId() != null && EXPECTED_INACTIVE_REFERENCE_REFSETS.contains(m.getRefsetId());
-  }
-
-  // Keep only candidates the project still sees as active. If the project sees the concept as
-  // inactive too, the retirement is from upstream — not done on this task — so it's outside the
-  // scope of scenario-2 cleanup.
-  private Set<String> filterToRetiredOnlyOnTask(String taskBranch, Set<String> candidateIds) {
-    if (candidateIds.isEmpty()) return candidateIds;
-    if (!BranchPatternMatcher.isTaskPattern(taskBranch)) return candidateIds;
-    String project = BranchPatternMatcher.getProjectFromTask(taskBranch);
-    Set<String> activeOnProject = new HashSet<>();
-    for (SnowstormConceptMini c : snowstormClient.getConceptsByIdViaSearch(project, candidateIds)) {
-      if (c.getConceptId() != null && Boolean.TRUE.equals(c.getActive())) {
-        activeOnProject.add(c.getConceptId());
-      }
-    }
-    return candidateIds.stream().filter(activeOnProject::contains).collect(Collectors.toSet());
   }
 
   private static Set<String> collectReferencedConceptIds(
@@ -347,23 +277,6 @@ public class DanglingReferenceService {
       if (r.getTypeId() != null) ids.add(r.getTypeId());
     }
     return ids;
-  }
-
-  private static Set<String> collectExtraIds(
-      List<SnowstormReferenceSetMember> members,
-      List<SnowstormRelationship> rels,
-      Set<String> already) {
-    Set<String> extra = new HashSet<>();
-    for (SnowstormReferenceSetMember m : members) {
-      if (m.getRefsetId() != null && !already.contains(m.getRefsetId())) extra.add(m.getRefsetId());
-    }
-    for (SnowstormRelationship r : rels) {
-      if (r.getTypeId() != null && !already.contains(r.getTypeId())) extra.add(r.getTypeId());
-      if (r.getSourceId() != null && !already.contains(r.getSourceId())) extra.add(r.getSourceId());
-      if (r.getDestinationId() != null && !already.contains(r.getDestinationId()))
-        extra.add(r.getDestinationId());
-    }
-    return extra;
   }
 
   private DanglingRefsetMember toDanglingMember(

@@ -81,34 +81,34 @@ class SnowstormClientDanglingReferenceIntegrationTest {
   }
 
   @Test
-  void getRefsetMembersModifiedOnBranch_acceptsLiveSnowstormResponse() {
-    assertThatCode(() -> client.getRefsetMembersModifiedOnBranch(BRANCH).block())
+  void getUnreleasedActiveRefsetMembersOnBranch_acceptsLiveSnowstormResponse() {
+    assertThatCode(() -> client.getUnreleasedActiveRefsetMembersOnBranch(BRANCH).block())
         .doesNotThrowAnyException();
   }
 
   @Test
-  void getRefsetMembersModifiedOnBranch_returnsEmptyForCleanReleasedMain() {
+  void getUnreleasedActiveRefsetMembersOnBranch_returnsEmptyForCleanReleasedMain() {
     // Members on MAIN of a freshly imported release have effectiveTime set, so the
     // nullEffectiveTime=true filter must yield an empty list. Anything non-empty here would
     // signal that our scope filter is broken and we'd be tidying inherited released members.
     List<SnowstormReferenceSetMember> result =
-        client.getRefsetMembersModifiedOnBranch(BRANCH).block();
+        client.getUnreleasedActiveRefsetMembersOnBranch(BRANCH).block();
     assertThat(result).isEmpty();
   }
 
   @Test
-  void getNonDefiningRelationshipsModifiedOnBranch_acceptsLiveSnowstormResponse() {
+  void getUnreleasedActiveNonDefiningRelationshipsOnBranch_acceptsLiveSnowstormResponse() {
     // This is the test that would have caught the original bug where we passed the SCTID
     // 900000000000227009 instead of the CharacteristicType enum name ADDITIONAL_RELATIONSHIP —
     // Snowstorm responds with 400 Bad Request on a malformed characteristicType.
-    assertThatCode(() -> client.getNonDefiningRelationshipsModifiedOnBranch(BRANCH).block())
+    assertThatCode(() -> client.getUnreleasedActiveNonDefiningRelationshipsOnBranch(BRANCH).block())
         .doesNotThrowAnyException();
   }
 
   @Test
-  void getNonDefiningRelationshipsModifiedOnBranch_returnsEmptyForCleanReleasedMain() {
+  void getUnreleasedActiveNonDefiningRelationshipsOnBranch_returnsEmptyForCleanReleasedMain() {
     List<SnowstormRelationship> result =
-        client.getNonDefiningRelationshipsModifiedOnBranch(BRANCH).block();
+        client.getUnreleasedActiveNonDefiningRelationshipsOnBranch(BRANCH).block();
     assertThat(result).isEmpty();
   }
 

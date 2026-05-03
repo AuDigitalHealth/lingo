@@ -37,8 +37,15 @@ import au.gov.digitalhealth.lingo.promotion.TidyFailure;
 import au.gov.digitalhealth.lingo.promotion.TidyKind;
 import au.gov.digitalhealth.lingo.promotion.TidyResult;
 import au.gov.digitalhealth.lingo.promotion.TidySuccess;
+import au.gov.digitalhealth.lingo.traceability.Activity;
+import au.gov.digitalhealth.lingo.traceability.ComponentChange;
+import au.gov.digitalhealth.lingo.traceability.ComponentChange.ChangeType;
+import au.gov.digitalhealth.lingo.traceability.ComponentChange.ComponentType;
+import au.gov.digitalhealth.lingo.traceability.ConceptChange;
+import au.gov.digitalhealth.lingo.traceability.TraceabilityServiceClient;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -60,7 +67,10 @@ class DanglingReferenceServiceTest {
   private static final String C_ACTIVE = sctid("3000", "0");
   private static final String C_REFSET = sctid("4000", "0");
   private static final String C_TYPE = sctid("5000", "0");
+
+  @SuppressWarnings("unused")
   private static final String C_OTHER = sctid("6000", "0");
+
   // A description-format SCTID — must be filtered out by detect/tidy.
   private static final String D_DESCRIPTION = sctid("7000", "1");
 
@@ -77,21 +87,48 @@ class DanglingReferenceServiceTest {
   @Mock(strictness = org.mockito.Mock.Strictness.LENIENT)
   SnowstormClient snowstormClient;
 
+  @Mock(strictness = org.mockito.Mock.Strictness.LENIENT)
+  TraceabilityServiceClient traceabilityServiceClient;
+
   @InjectMocks DanglingReferenceService service;
 
   @org.junit.jupiter.api.BeforeEach
   void stubDefaultEmptyResponses() {
     // Default everything to empty so each test can opt in to populated lists. Without these
-    // defaults the new three-way Mono.zip in detect() NPEs on the unstubbed methods.
-    when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH)).thenReturn(Mono.just(List.of()));
-    when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
+    // defaults the detect() Mono.zip NPEs on the unstubbed methods.
+    when(snowstormClient.getUnreleasedActiveRefsetMembersOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of()));
-    when(snowstormClient.getConceptsModifiedOnBranch(BRANCH)).thenReturn(Mono.just(List.of()));
-    when(snowstormClient.findActiveRefsetMembersForConcepts(eq(BRANCH), any()))
+    when(snowstormClient.getUnreleasedActiveNonDefiningRelationshipsOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of()));
-    when(snowstormClient.findActiveNonDefiningRelationshipsForConcepts(eq(BRANCH), any()))
-        .thenReturn(Mono.just(List.of()));
+    when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))
+        .thenReturn(List.of());
     when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any())).thenReturn(List.of());
+  }
+
+  // Build a single-activity log scoping the named members and relationships as still-present
+  // (last change CREATE, not subsequently DELETEd).
+  private static List<Activity> traceabilityScope(
+      List<String> memberIds, List<String> relationshipIds) {
+    List<ComponentChange> changes = new ArrayList<>();
+    for (String memberId : memberIds) {
+      changes.add(
+          new ComponentChange(
+              memberId, ChangeType.CREATE, ComponentType.REFERENCE_SET_MEMBER, null, true, false));
+    }
+    for (String relId : relationshipIds) {
+      changes.add(
+          new ComponentChange(
+              relId, ChangeType.CREATE, ComponentType.RELATIONSHIP, null, true, false));
+    }
+    return List.of(
+        new Activity(
+            "act-1",
+            "tester",
+            BRANCH,
+            BRANCH,
+            OffsetDateTime.parse("2026-05-01T00:00:00Z"),
+            "CONTENT_CHANGE",
+            List.of(new ConceptChange("concept-1", changes))));
   }
 
   private static SnowstormConceptMini concept(String id, Boolean active, String pt) {
@@ -122,10 +159,12 @@ class DanglingReferenceServiceTest {
   }
 
   @Test
-  void detect_returnsEmptySummaryWhenNoModifiedComponents() {
-    when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH)).thenReturn(Mono.just(List.of()));
-    when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
-        .thenReturn(Mono.just(List.of()));
+  void detect_returnsEmptySummaryWhenTraceabilityIsEmpty() {
+    // No traceability activities at all → no scope → nothing to flag, regardless of what
+    // Snowstorm shows on the branch.
+    SnowstormReferenceSetMember inheritedActive = member("m-inherited", C_REFSET, C_RETIRED, true);
+    when(snowstormClient.getUnreleasedActiveRefsetMembersOnBranch(BRANCH))
+        .thenReturn(Mono.just(List.of(inheritedActive)));
 
     DanglingReferenceSummary summary = service.detect(BRANCH);
 
@@ -136,10 +175,10 @@ class DanglingReferenceServiceTest {
   @Test
   void detect_flagsRefsetMemberReferencingRetiredConcept() {
     SnowstormReferenceSetMember m = member("m1", C_REFSET, C_RETIRED, true);
-    when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH))
+    when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))
+        .thenReturn(traceabilityScope(List.of("m1"), List.of()));
+    when(snowstormClient.getUnreleasedActiveRefsetMembersOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(m)));
-    when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
-        .thenReturn(Mono.just(List.of()));
     when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
         .thenReturn(
             List.of(
@@ -159,10 +198,10 @@ class DanglingReferenceServiceTest {
   @Test
   void detect_flagsRefsetMemberReferencingDeletedConcept() {
     SnowstormReferenceSetMember m = member("m2", C_REFSET, C_DELETED, false);
-    when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH))
+    when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))
+        .thenReturn(traceabilityScope(List.of("m2"), List.of()));
+    when(snowstormClient.getUnreleasedActiveRefsetMembersOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(m)));
-    when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
-        .thenReturn(Mono.just(List.of()));
     when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
         .thenReturn(List.of(concept(C_REFSET, true, "My refset")));
 
@@ -183,10 +222,10 @@ class DanglingReferenceServiceTest {
     SnowstormReferenceSetMember conceptMember = member("m-concept", C_REFSET, C_RETIRED, true);
     SnowstormReferenceSetMember descriptionMember =
         member("m-description", C_REFSET, D_DESCRIPTION, true);
-    when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH))
+    when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))
+        .thenReturn(traceabilityScope(List.of("m-concept", "m-description"), List.of()));
+    when(snowstormClient.getUnreleasedActiveRefsetMembersOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(conceptMember, descriptionMember)));
-    when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
-        .thenReturn(Mono.just(List.of()));
     when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
         .thenReturn(List.of(concept(C_RETIRED, false, null), concept(C_REFSET, true, null)));
 
@@ -207,10 +246,10 @@ class DanglingReferenceServiceTest {
         member("m-ii", "900000000000489007", C_RETIRED, false);
     SnowstormReferenceSetMember sameAsAssociation =
         member("m-sameas", "900000000000527005", C_RETIRED, false);
-    when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH))
+    when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))
+        .thenReturn(traceabilityScope(List.of("m-ii", "m-sameas"), List.of()));
+    when(snowstormClient.getUnreleasedActiveRefsetMembersOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(inactivationIndicator, sameAsAssociation)));
-    when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
-        .thenReturn(Mono.just(List.of()));
     when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
         .thenReturn(List.of(concept(C_RETIRED, false, "Retired thing")));
 
@@ -220,130 +259,33 @@ class DanglingReferenceServiceTest {
   }
 
   @Test
+  void detect_ignoresInheritedMemberNotInTraceabilityScope() {
+    // Member is unreleased+active on the branch but doesn't appear in the traceability log —
+    // the task didn't author it, so it's out of scope even if it points at a retired concept.
+    SnowstormReferenceSetMember inherited = member("m-inherited", C_REFSET, C_RETIRED, true);
+    when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))
+        .thenReturn(List.of()); // empty traceability — task authored nothing
+    when(snowstormClient.getUnreleasedActiveRefsetMembersOnBranch(BRANCH))
+        .thenReturn(Mono.just(List.of(inherited)));
+
+    DanglingReferenceSummary summary = service.detect(BRANCH);
+
+    assertThat(summary.danglingRefsetMembers()).isEmpty();
+  }
+
+  @Test
   void detect_ignoresRefsetMemberWhereReferencedConceptIsActive() {
     SnowstormReferenceSetMember m = member("m3", C_REFSET, C_ACTIVE, true);
-    when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH))
+    when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))
+        .thenReturn(traceabilityScope(List.of("m3"), List.of()));
+    when(snowstormClient.getUnreleasedActiveRefsetMembersOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(m)));
-    when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
-        .thenReturn(Mono.just(List.of()));
     when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
         .thenReturn(List.of(concept(C_ACTIVE, true, null), concept(C_REFSET, true, null)));
 
     DanglingReferenceSummary summary = service.detect(BRANCH);
 
     assertThat(summary.danglingRefsetMembers()).isEmpty();
-  }
-
-  @Test
-  void detect_scenario2_findsReleasedReferencesToConceptRetiredOnTask() {
-    // A concept retired on this task — its previously-published refset members and non-defining
-    // relationships live on a parent path (MAIN, project) but become dangling. They must be
-    // returned and tagged for inactivation (released=true).
-    SnowstormConceptMini retired = concept(C_RETIRED, false, "Retired thing");
-    when(snowstormClient.getConceptsModifiedOnBranch(BRANCH))
-        .thenReturn(Mono.just(List.of(retired)));
-
-    SnowstormReferenceSetMember releasedMember =
-        new SnowstormReferenceSetMember()
-            .memberId("m-released")
-            .refsetId(C_REFSET)
-            .referencedComponentId(C_RETIRED)
-            .released(true)
-            .active(true);
-    when(snowstormClient.findActiveRefsetMembersForConcepts(eq(BRANCH), any()))
-        .thenReturn(Mono.just(List.of(releasedMember)));
-
-    SnowstormRelationship releasedRel =
-        new SnowstormRelationship()
-            .relationshipId("r-released")
-            .sourceId(C_RETIRED)
-            .destinationId(C_ACTIVE)
-            .typeId(C_TYPE)
-            .released(true)
-            .active(true);
-    when(snowstormClient.findActiveNonDefiningRelationshipsForConcepts(eq(BRANCH), any()))
-        .thenReturn(Mono.just(List.of(releasedRel)));
-
-    when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
-        .thenReturn(
-            List.of(
-                concept(C_REFSET, true, "My refset"),
-                concept(C_ACTIVE, true, "Other end"),
-                concept(C_TYPE, true, "My type")));
-
-    DanglingReferenceSummary summary = service.detect(BRANCH);
-
-    assertThat(summary.danglingRefsetMembers())
-        .extracting(
-            DanglingRefsetMember::memberId,
-            DanglingRefsetMember::referencedConceptStatus,
-            DanglingRefsetMember::released)
-        .containsExactly(tuple("m-released", ConceptStatus.RETIRED, true));
-    assertThat(summary.danglingNonDefiningRelationships())
-        .extracting(
-            DanglingNonDefiningRelationship::relationshipId,
-            DanglingNonDefiningRelationship::sourceStatus,
-            DanglingNonDefiningRelationship::released)
-        .containsExactly(tuple("r-released", ConceptStatus.RETIRED, true));
-  }
-
-  @Test
-  void detect_scenario2_skipsConceptsThatWereAlreadyRetiredOnProject() {
-    // Cross-check: a concept that comes back from getConceptsModifiedOnBranch with active=false
-    // is only "retired on this task" if the project still sees it as active. If the project also
-    // sees it inactive, the retirement is from upstream (e.g. an international release rebased
-    // into the project) and the task didn't perform that retirement — its inherited refset
-    // members must NOT be flagged for inactivation.
-    String taskBranch = "MAIN|CODESYSTEM|PROJECT|TASK";
-    String projectBranch = "MAIN|CODESYSTEM|PROJECT";
-    SnowstormConceptMini upstreamRetired = concept(C_RETIRED, false, "Upstream-retired thing");
-    when(snowstormClient.getRefsetMembersModifiedOnBranch(taskBranch))
-        .thenReturn(Mono.just(List.of()));
-    when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(taskBranch))
-        .thenReturn(Mono.just(List.of()));
-    when(snowstormClient.getConceptsModifiedOnBranch(taskBranch))
-        .thenReturn(Mono.just(List.of(upstreamRetired)));
-    when(snowstormClient.findActiveRefsetMembersForConcepts(eq(taskBranch), any()))
-        .thenReturn(Mono.just(List.of()));
-    when(snowstormClient.findActiveNonDefiningRelationshipsForConcepts(eq(taskBranch), any()))
-        .thenReturn(Mono.just(List.of()));
-    when(snowstormClient.getConceptsByIdViaSearch(eq(taskBranch), any())).thenReturn(List.of());
-    // Project sees the same concept as inactive too — confirms upstream retirement, not on task.
-    when(snowstormClient.getConceptsByIdViaSearch(eq(projectBranch), any()))
-        .thenReturn(List.of(concept(C_RETIRED, false, "Upstream-retired thing")));
-
-    DanglingReferenceSummary summary = service.detect(taskBranch);
-
-    assertThat(summary.danglingRefsetMembers()).isEmpty();
-    assertThat(summary.danglingNonDefiningRelationships()).isEmpty();
-    // Cross-check filtered the candidate out, so scenario-2 fan-out runs against an empty id
-    // set rather than against the upstream-retired concept.
-    verify(snowstormClient).findActiveRefsetMembersForConcepts(taskBranch, Set.of());
-    verify(snowstormClient).findActiveNonDefiningRelationshipsForConcepts(taskBranch, Set.of());
-  }
-
-  @Test
-  void tidy_scenario2_inactivatesReleasedReferencesToRetiredConcept() {
-    SnowstormConceptMini retired = concept(C_RETIRED, false, null);
-    when(snowstormClient.getConceptsModifiedOnBranch(BRANCH))
-        .thenReturn(Mono.just(List.of(retired)));
-    SnowstormReferenceSetMember releasedMember =
-        new SnowstormReferenceSetMember()
-            .memberId("m-released")
-            .refsetId(C_REFSET)
-            .referencedComponentId(C_RETIRED)
-            .released(true)
-            .active(true);
-    when(snowstormClient.findActiveRefsetMembersForConcepts(eq(BRANCH), any()))
-        .thenReturn(Mono.just(List.of(releasedMember)));
-
-    TidyResult result = service.tidy(BRANCH);
-
-    assertThat(result.failed()).isEmpty();
-    assertThat(result.succeeded())
-        .extracting(TidySuccess::id, TidySuccess::action)
-        .containsExactly(tuple("m-released", TidyAction.INACTIVATED));
-    verify(snowstormClient).inactivateRefsetMember(eq(BRANCH), eq(releasedMember));
   }
 
   @Test
@@ -358,8 +300,9 @@ class DanglingReferenceServiceTest {
             .typeId(C_TYPE)
             .released(false)
             .active(true);
-    when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH)).thenReturn(Mono.just(List.of()));
-    when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
+    when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))
+        .thenReturn(traceabilityScope(List.of(), List.of("r-concrete")));
+    when(snowstormClient.getUnreleasedActiveNonDefiningRelationshipsOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(rel)));
     when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
         .thenReturn(List.of(concept(C_RETIRED, false, null), concept(C_TYPE, true, null)));
@@ -376,8 +319,9 @@ class DanglingReferenceServiceTest {
   @Test
   void detect_flagsNonDefiningRelationshipWhenSourceRetired() {
     SnowstormRelationship rel = relationship("r1", C_RETIRED, C_ACTIVE, C_TYPE, false);
-    when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH)).thenReturn(Mono.just(List.of()));
-    when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
+    when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))
+        .thenReturn(traceabilityScope(List.of(), List.of("r1")));
+    when(snowstormClient.getUnreleasedActiveNonDefiningRelationshipsOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(rel)));
     when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
         .thenReturn(
@@ -398,8 +342,9 @@ class DanglingReferenceServiceTest {
   @Test
   void detect_flagsNonDefiningRelationshipWhenDestinationDeleted() {
     SnowstormRelationship rel = relationship("r2", C_ACTIVE, C_DELETED, C_TYPE, false);
-    when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH)).thenReturn(Mono.just(List.of()));
-    when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
+    when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))
+        .thenReturn(traceabilityScope(List.of(), List.of("r2")));
+    when(snowstormClient.getUnreleasedActiveNonDefiningRelationshipsOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(rel)));
     when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
         .thenReturn(List.of(concept(C_ACTIVE, true, null), concept(C_TYPE, true, null)));
@@ -416,9 +361,11 @@ class DanglingReferenceServiceTest {
   void detect_isReadOnly_evenWithDanglingResults() throws Exception {
     SnowstormReferenceSetMember m = member("m1", C_REFSET, C_RETIRED, true);
     SnowstormRelationship rel = relationship("r1", C_RETIRED, C_ACTIVE, "t", true);
-    when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH))
+    when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))
+        .thenReturn(traceabilityScope(List.of("m1"), List.of("r1")));
+    when(snowstormClient.getUnreleasedActiveRefsetMembersOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(m)));
-    when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
+    when(snowstormClient.getUnreleasedActiveNonDefiningRelationshipsOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(rel)));
     when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
         .thenReturn(
@@ -441,10 +388,10 @@ class DanglingReferenceServiceTest {
     SnowstormReferenceSetMember released = member("m-released", C_REFSET, C_RETIRED, true);
     SnowstormReferenceSetMember unreleased = member("m-unreleased", C_REFSET, C_DELETED, false);
 
-    when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH))
+    when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))
+        .thenReturn(traceabilityScope(List.of("m-released", "m-unreleased"), List.of()));
+    when(snowstormClient.getUnreleasedActiveRefsetMembersOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(released, unreleased)));
-    when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
-        .thenReturn(Mono.just(List.of()));
     when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
         .thenReturn(List.of(concept(C_RETIRED, false, null), concept(C_REFSET, true, null)));
 
@@ -464,8 +411,9 @@ class DanglingReferenceServiceTest {
     SnowstormRelationship released = relationship("r-rel", C_RETIRED, C_ACTIVE, "t", true);
     SnowstormRelationship unreleased = relationship("r-unrel", C_ACTIVE, C_DELETED, "t", false);
 
-    when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH)).thenReturn(Mono.just(List.of()));
-    when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
+    when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))
+        .thenReturn(traceabilityScope(List.of(), List.of("r-rel", "r-unrel")));
+    when(snowstormClient.getUnreleasedActiveNonDefiningRelationshipsOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(released, unreleased)));
     when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
         .thenReturn(List.of(concept(C_RETIRED, false, null), concept(C_ACTIVE, true, null)));
@@ -490,9 +438,13 @@ class DanglingReferenceServiceTest {
     SnowstormRelationship unreleasedRel =
         relationship("r-unreleased", C_ACTIVE, C_DELETED, "t", false);
 
-    when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH))
+    when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))
+        .thenReturn(
+            traceabilityScope(
+                List.of("m-released", "m-unreleased"), List.of("r-released", "r-unreleased")));
+    when(snowstormClient.getUnreleasedActiveRefsetMembersOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(releasedMember, unreleasedMember)));
-    when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
+    when(snowstormClient.getUnreleasedActiveNonDefiningRelationshipsOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(releasedRel, unreleasedRel)));
     when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
         .thenReturn(
@@ -520,13 +472,13 @@ class DanglingReferenceServiceTest {
 
   @Test
   void tidy_partialFailureRefsetMember() {
-    SnowstormReferenceSetMember m1 = member("m1", "r", C_DELETED, false);
-    SnowstormReferenceSetMember m2 = member("m2", "r", C_DELETED, false);
+    SnowstormReferenceSetMember m1 = member("m1", C_REFSET, C_DELETED, false);
+    SnowstormReferenceSetMember m2 = member("m2", C_REFSET, C_DELETED, false);
 
-    when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH))
+    when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))
+        .thenReturn(traceabilityScope(List.of("m1", "m2"), List.of()));
+    when(snowstormClient.getUnreleasedActiveRefsetMembersOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(m1, m2)));
-    when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
-        .thenReturn(Mono.just(List.of()));
     when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any())).thenReturn(List.of());
 
     doAnswer(
@@ -552,8 +504,9 @@ class DanglingReferenceServiceTest {
     SnowstormRelationship r1 = relationship("r1", C_RETIRED, C_ACTIVE, "t", false);
     SnowstormRelationship r2 = relationship("r2", C_RETIRED, C_ACTIVE, "t", false);
 
-    when(snowstormClient.getRefsetMembersModifiedOnBranch(BRANCH)).thenReturn(Mono.just(List.of()));
-    when(snowstormClient.getNonDefiningRelationshipsModifiedOnBranch(BRANCH))
+    when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))
+        .thenReturn(traceabilityScope(List.of(), List.of("r1", "r2")));
+    when(snowstormClient.getUnreleasedActiveNonDefiningRelationshipsOnBranch(BRANCH))
         .thenReturn(Mono.just(List.of(r1, r2)));
     when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
         .thenReturn(List.of(concept(C_RETIRED, false, null), concept(C_ACTIVE, true, null)));
