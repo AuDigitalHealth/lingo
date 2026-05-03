@@ -102,6 +102,21 @@ public class ApiWebConfiguration {
   }
 
   @Bean
+  public WebClient authoringTraceabilityApiClient(
+      @Value("${ihtsdo.traceability.api.url}") String traceabilityUrl,
+      WebClient.Builder webClientBuilder) {
+    return webClientBuilder
+        .baseUrl(traceabilityUrl)
+        .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+        .filter(authHelper.addImsAuthCookie)
+        .exchangeStrategies(
+            ExchangeStrategies.builder()
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(50 * 1024 * 1024))
+                .build())
+        .build();
+  }
+
+  @Bean
   public WebClient nameGeneratorApiClient(
       @Value("${name.generator.api.url}") String namegenApiUrl,
       @Value("${name.generator.api.key:}") String apiKeyHeader,
