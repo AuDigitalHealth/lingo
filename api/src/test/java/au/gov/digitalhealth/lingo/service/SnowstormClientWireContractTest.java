@@ -48,9 +48,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SnowstormClientWireContractTest {
 
-  // Non-task pattern (uses slashes) so BranchPatternMatcher.isTaskPattern is false and
-  // set-difference is bypassed. The wire-contract tests focus on the URL/body format the
-  // SnowstormClient sends; the set-difference logic is exercised in DanglingReferenceServiceTest.
+  // Wire-contract tests focus on the URL/body format the SnowstormClient sends. The branch path
+  // here is irrelevant to the wire shape — any string round-trips identically.
   private static final String BRANCH = "MAIN/TEST/TEST-1";
 
   private WireMockServer wireMock;

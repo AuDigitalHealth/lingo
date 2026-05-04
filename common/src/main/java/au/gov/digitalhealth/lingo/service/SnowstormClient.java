@@ -603,8 +603,8 @@ public class SnowstormClient {
 
   /**
    * All unreleased active reference set members on the branch — i.e. members the branch shows as
-   * {@code active=true, effectiveTime=null}. Capped at Snowstorm's 10000 result-window limit
-   * (offset+limit > 10000 returns 400 from {@code from-and-size-max-result-window}). Callers
+   * {@code active=true, effectiveTime=null}. Capped at Snowstorm's Elasticsearch result-window
+   * (offset+limit > {@code index.max_result_window}, default 10000, returns 400). Callers
    * needing scope-on-this-task semantics should intersect with the traceability change log
    * rather than asking Snowstorm to compute the difference.
    */

@@ -259,6 +259,62 @@ class DanglingReferenceServiceTest {
   }
 
   @Test
+  void detect_acrossActivities_createThenDeleteNetsToOutOfScope() {
+    // The IEDC-7374 case in miniature: a member is CREATEd in activity A and DELETEd in
+    // activity B. Even if Snowstorm somehow still surfaces it as active+unreleased on the
+    // branch, traceability says it's gone, and detection must respect that.
+    SnowstormReferenceSetMember stillVisible = member("m-zombie", C_REFSET, C_RETIRED, false);
+    List<Activity> twoActivities =
+        List.of(
+            new Activity(
+                "act-create",
+                "tester",
+                BRANCH,
+                BRANCH,
+                OffsetDateTime.parse("2026-05-01T00:00:00Z"),
+                "CONTENT_CHANGE",
+                List.of(
+                    new ConceptChange(
+                        "concept-1",
+                        List.of(
+                            new ComponentChange(
+                                "m-zombie",
+                                ChangeType.CREATE,
+                                ComponentType.REFERENCE_SET_MEMBER,
+                                null,
+                                true,
+                                false))))),
+            new Activity(
+                "act-delete",
+                "tester",
+                BRANCH,
+                BRANCH,
+                OffsetDateTime.parse("2026-05-01T00:01:00Z"),
+                "CONTENT_CHANGE",
+                List.of(
+                    new ConceptChange(
+                        "concept-1",
+                        List.of(
+                            new ComponentChange(
+                                "m-zombie",
+                                ChangeType.DELETE,
+                                ComponentType.REFERENCE_SET_MEMBER,
+                                null,
+                                true,
+                                false))))));
+    when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))
+        .thenReturn(twoActivities);
+    when(snowstormClient.getUnreleasedActiveRefsetMembersOnBranch(BRANCH))
+        .thenReturn(Mono.just(List.of(stillVisible)));
+
+    DanglingReferenceSummary summary = service.detect(BRANCH);
+
+    assertThat(summary.danglingRefsetMembers())
+        .as("create-then-delete must net to out-of-scope, regardless of Snowstorm's view")
+        .isEmpty();
+  }
+
+  @Test
   void detect_ignoresInheritedMemberNotInTraceabilityScope() {
     // Member is unreleased+active on the branch but doesn't appear in the traceability log —
     // the task didn't author it, so it's out of scope even if it points at a retired concept.

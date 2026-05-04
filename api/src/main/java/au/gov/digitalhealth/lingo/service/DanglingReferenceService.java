@@ -110,6 +110,14 @@ public class DanglingReferenceService {
       danglingRels.add(toDanglingRel(r, srcStatus, dstStatus, ctx.byId));
     }
 
+    log.info(
+        "Dangling-reference detection on branch "
+            + branch
+            + ": "
+            + danglingMembers.size()
+            + " dangling refset member(s), "
+            + danglingRels.size()
+            + " dangling non-defining relationship(s)");
     return new DanglingReferenceSummary(branch, danglingMembers, danglingRels);
   }
 
@@ -136,6 +144,14 @@ public class DanglingReferenceService {
       rels.put(r.getRelationshipId(), r);
     }
 
+    log.info(
+        "Tidying "
+            + members.size()
+            + " dangling refset member(s) and "
+            + rels.size()
+            + " dangling non-defining relationship(s) on branch "
+            + branch);
+
     for (SnowstormReferenceSetMember m : members.values()) {
       boolean released = isReleased(m.getReleased());
       TidyAction action = released ? TidyAction.INACTIVATED : TidyAction.DELETED;
@@ -145,6 +161,19 @@ public class DanglingReferenceService {
         } else {
           snowstormClient.deleteRefsetMember(branch, m.getMemberId());
         }
+        log.info(
+            "Tidied refset member "
+                + m.getMemberId()
+                + " (refset="
+                + m.getRefsetId()
+                + ", referencedComponent="
+                + m.getReferencedComponentId()
+                + ", released="
+                + released
+                + ") on branch "
+                + branch
+                + ": "
+                + action);
         succeeded.add(new TidySuccess(TidyKind.REFSET_MEMBER, m.getMemberId(), action));
       } catch (RuntimeException e) {
         log.log(
@@ -164,6 +193,21 @@ public class DanglingReferenceService {
         } else {
           snowstormClient.deleteRelationship(branch, r.getRelationshipId());
         }
+        log.info(
+            "Tidied non-defining relationship "
+                + r.getRelationshipId()
+                + " (type="
+                + r.getTypeId()
+                + ", source="
+                + r.getSourceId()
+                + ", destination="
+                + r.getDestinationId()
+                + ", released="
+                + released
+                + ") on branch "
+                + branch
+                + ": "
+                + action);
         succeeded.add(
             new TidySuccess(TidyKind.NON_DEFINING_RELATIONSHIP, r.getRelationshipId(), action));
       } catch (RuntimeException e) {
@@ -183,6 +227,14 @@ public class DanglingReferenceService {
                 errorMessage(e)));
       }
     }
+    log.info(
+        "Tidy complete on branch "
+            + branch
+            + ": "
+            + succeeded.size()
+            + " succeeded, "
+            + failed.size()
+            + " failed");
     return new TidyResult(succeeded, failed);
   }
 
@@ -348,7 +400,18 @@ public class DanglingReferenceService {
     return !Boolean.FALSE.equals(released);
   }
 
+  // The TidyFailure.errorMessage is the only thing the user sees per failed item, so we
+  // surface as much detail as the WebClient throwable carries: the response body for 4xx/5xx
+  // (often the only place Snowstorm returns the actual reason) plus the status, and a sensible
+  // default for everything else.
   private static String errorMessage(Throwable e) {
+    if (e
+        instanceof
+        org.springframework.web.reactive.function.client.WebClientResponseException wre) {
+      String body = wre.getResponseBodyAsString();
+      String prefix = wre.getStatusCode() + " from Snowstorm";
+      return (body != null && !body.isBlank()) ? prefix + ": " + body : prefix;
+    }
     String msg = e.getMessage();
     return msg != null && !msg.isBlank() ? msg : e.getClass().getSimpleName();
   }

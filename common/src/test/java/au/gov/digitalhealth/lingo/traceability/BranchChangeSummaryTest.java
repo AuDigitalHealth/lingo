@@ -104,6 +104,85 @@ class BranchChangeSummaryTest {
     assertEquals(Set.of("mem-1"), summary.refsetMemberIdsStillOnBranch());
   }
 
+  @Test
+  void from_inactivateChange_keepsComponentInStillPresent() {
+    // INACTIVATE is not DELETE, so the component is still present on the branch — just inactive.
+    // Its referenced concept is still our concern; whether it's a dangling reference depends on
+    // current Snowstorm state, not the change type.
+    Activity activity =
+        activity(
+            "t1",
+            "2026-01-01T00:00:00Z",
+            "concept-1",
+            new ComponentChange(
+                "m1",
+                ChangeType.INACTIVATE,
+                ComponentType.REFERENCE_SET_MEMBER,
+                null,
+                true,
+                false));
+
+    BranchChangeSummary summary = BranchChangeSummary.from(List.of(activity));
+
+    assertEquals(Set.of("m1"), summary.refsetMemberIdsStillOnBranch());
+  }
+
+  @Test
+  void from_updateChange_keepsComponentInStillPresent() {
+    Activity activity =
+        activity(
+            "t1",
+            "2026-01-01T00:00:00Z",
+            "concept-1",
+            new ComponentChange(
+                "m1", ChangeType.UPDATE, ComponentType.REFERENCE_SET_MEMBER, null, true, false));
+
+    BranchChangeSummary summary = BranchChangeSummary.from(List.of(activity));
+
+    assertEquals(Set.of("m1"), summary.refsetMemberIdsStillOnBranch());
+  }
+
+  @Test
+  void from_nullCommitDate_doesNotThrowAndOrdersLast() {
+    // A null commitDate must not poison the comparator. The dated CREATE comes first; the
+    // null-dated DELETE applies after — net result: deleted.
+    Activity create = activity("t1", "2026-01-01T00:00:00Z", "concept-1", refsetMemberCreate("m1"));
+    Activity delete =
+        new Activity(
+            "t-null",
+            "tester",
+            "MAIN/PROJECT/TASK",
+            "MAIN/PROJECT/TASK",
+            null,
+            "CONTENT_CHANGE",
+            List.of(new ConceptChange("concept-1", List.of(refsetMemberDelete("m1")))));
+
+    BranchChangeSummary summary = BranchChangeSummary.from(List.of(create, delete));
+
+    assertTrue(summary.refsetMemberIdsStillOnBranch().isEmpty());
+  }
+
+  @Test
+  void from_nullActivities_yieldsEmptySummary() {
+    BranchChangeSummary summary = BranchChangeSummary.from(null);
+
+    assertTrue(summary.conceptIdsTouched().isEmpty());
+    assertTrue(summary.refsetMemberIdsStillOnBranch().isEmpty());
+    assertTrue(summary.relationshipIdsStillOnBranch().isEmpty());
+  }
+
+  @Test
+  void from_returnsImmutableSets() {
+    Activity create = activity("t1", "2026-01-01T00:00:00Z", "concept-1", refsetMemberCreate("m1"));
+    BranchChangeSummary summary = BranchChangeSummary.from(List.of(create));
+
+    org.junit.jupiter.api.Assertions.assertThrows(
+        UnsupportedOperationException.class,
+        () -> summary.refsetMemberIdsStillOnBranch().add("evil"));
+    org.junit.jupiter.api.Assertions.assertThrows(
+        UnsupportedOperationException.class, () -> summary.conceptIdsTouched().add("evil"));
+  }
+
   private static Activity activity(
       String id, String commitDate, String conceptId, ComponentChange... changes) {
     return new Activity(
