@@ -36,7 +36,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
 import lombok.extern.java.Log;
@@ -64,8 +63,6 @@ public class DanglingReferenceService {
   // a member in any of these pointing to an inactive/retired concept is NOT dangling.
   // - 900000000000489007 |Concept inactivation indicator attribute value reference set|
   // - <<900000000000522004 |Historical association reference set| and its descendants
-  // We hardcode the well-known SCTIDs rather than querying Snowstorm so detection is reliable
-  // even if the project's view of the metadata hierarchy is incomplete.
   static final Set<String> EXPECTED_INACTIVE_REFERENCE_REFSETS =
       Set.of(
           "900000000000489007", // Concept inactivation indicator attribute value reference set
@@ -94,17 +91,32 @@ public class DanglingReferenceService {
     return detectFromContext(branch, collect(branch));
   }
 
-  // Detection given an already-built context. Extracted so tidy() can drive its actions from
-  // exactly the same summary detect() would return — the two can never disagree about scope.
+  /**
+   * Detects dangling references in a given branch - used by both #detect() and #tidy().
+   *
+   * @param branch The branch to detect dangling references in.
+   * @return A summary of dangling references found.
+   */
   private DanglingReferenceSummary detectFromContext(String branch, DetectionContext ctx) {
     List<DanglingRefsetMember> danglingMembers = new ArrayList<>();
     List<DanglingNonDefiningRelationship> danglingRels = new ArrayList<>();
 
     for (SnowstormReferenceSetMember m : ctx.taskMembers) {
-      evaluateRefsetMember(m, ctx.byId).ifPresent(danglingMembers::add);
+      if (!isExpectedInactiveReferenceRefset(m)) {
+        ConceptStatus status = statusOf(m.getReferencedComponentId(), ctx.byId);
+        if (status != ConceptStatus.ACTIVE) {
+          danglingMembers.add(toDanglingMember(m, status, ctx.byId));
+        }
+      }
     }
     for (SnowstormRelationship r : ctx.taskRels) {
-      evaluateRelationship(r, branch, ctx.byId).ifPresent(danglingRels::add);
+      if (isWellFormed(r, branch)) {
+        ConceptStatus srcStatus = statusOf(r.getSourceId(), ctx.byId);
+        ConceptStatus dstStatus = statusOf(r.getDestinationId(), ctx.byId);
+        if (srcStatus != ConceptStatus.ACTIVE || dstStatus != ConceptStatus.ACTIVE) {
+          danglingRels.add(toDanglingRel(r, srcStatus, dstStatus, ctx.byId));
+        }
+      }
     }
 
     log.info(
@@ -116,28 +128,6 @@ public class DanglingReferenceService {
             + danglingRels.size()
             + " dangling non-defining relationship(s)");
     return new DanglingReferenceSummary(branch, danglingMembers, danglingRels);
-  }
-
-  // Returns the DanglingRefsetMember for a member that is in scope and references a
-  // non-active concept; empty otherwise. Hoisted out of the detect loop so the loop body has
-  // no early-exit statements (Sonar S135 — at most one break/continue per loop).
-  private Optional<DanglingRefsetMember> evaluateRefsetMember(
-      SnowstormReferenceSetMember m, Map<String, SnowstormConceptMini> byId) {
-    if (isExpectedInactiveReferenceRefset(m)) return Optional.empty();
-    ConceptStatus status = statusOf(m.getReferencedComponentId(), byId);
-    if (status == ConceptStatus.ACTIVE) return Optional.empty();
-    return Optional.of(toDanglingMember(m, status, byId));
-  }
-
-  private Optional<DanglingNonDefiningRelationship> evaluateRelationship(
-      SnowstormRelationship r, String branch, Map<String, SnowstormConceptMini> byId) {
-    if (!isWellFormed(r, branch)) return Optional.empty();
-    ConceptStatus srcStatus = statusOf(r.getSourceId(), byId);
-    ConceptStatus dstStatus = statusOf(r.getDestinationId(), byId);
-    if (srcStatus == ConceptStatus.ACTIVE && dstStatus == ConceptStatus.ACTIVE) {
-      return Optional.empty();
-    }
-    return Optional.of(toDanglingRel(r, srcStatus, dstStatus, byId));
   }
 
   public TidyResult tidy(String branch) {
@@ -168,9 +158,6 @@ public class DanglingReferenceService {
             + " dangling non-defining relationship(s) on branch "
             + branch);
 
-    // Order preserves the LinkedHashMap-equivalent semantics the prior implementation had: the
-    // summary's lists are in iteration order of ctx.taskMembers / ctx.taskRels, which is what
-    // collect() built them from.
     for (DanglingRefsetMember dangling : summary.danglingRefsetMembers()) {
       SnowstormReferenceSetMember m = memberById.get(dangling.memberId());
       if (m == null) continue; // skipped: no source object to send to Snowstorm
@@ -198,11 +185,14 @@ public class DanglingReferenceService {
       SnowstormReferenceSetMember m,
       List<TidySuccess> succeeded,
       List<TidyFailure> failed) {
-    TidyAction action = isReleased(m) ? TidyAction.INACTIVATED : TidyAction.DELETED;
+
+    TidyAction action = null;
     try {
       if (isReleased(m)) {
+        action = TidyAction.INACTIVATED;
         snowstormClient.inactivateRefsetMember(branch, m);
       } else {
+        action = TidyAction.DELETED;
         snowstormClient.deleteRefsetMember(branch, m.getMemberId());
       }
       log.info(
@@ -222,7 +212,12 @@ public class DanglingReferenceService {
     } catch (RuntimeException e) {
       log.log(
           Level.SEVERE,
-          "Tidy of refset member " + m.getMemberId() + " on branch " + branch + " failed",
+          "Tidy of refset member "
+              + m.getMemberId()
+              + " on branch "
+              + branch
+              + " failed for action "
+              + action,
           e);
       failed.add(new TidyFailure(TidyKind.REFSET_MEMBER, m.getMemberId(), action, errorMessage(e)));
     }
@@ -233,11 +228,13 @@ public class DanglingReferenceService {
       SnowstormRelationship r,
       List<TidySuccess> succeeded,
       List<TidyFailure> failed) {
-    TidyAction action = isReleased(r) ? TidyAction.INACTIVATED : TidyAction.DELETED;
+    TidyAction action = null;
     try {
       if (isReleased(r)) {
+        action = TidyAction.INACTIVATED;
         snowstormClient.inactivateRelationship(branch, r);
       } else {
+        action = TidyAction.DELETED;
         snowstormClient.deleteRelationship(branch, r.getRelationshipId());
       }
       log.info(
@@ -264,7 +261,8 @@ public class DanglingReferenceService {
               + r.getRelationshipId()
               + " on branch "
               + branch
-              + " failed",
+              + " failed for action "
+              + action,
           e);
       failed.add(
           new TidyFailure(
