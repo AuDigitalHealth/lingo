@@ -16,6 +16,7 @@
 package au.gov.digitalhealth.lingo.product.update;
 
 import au.csiro.snowstorm_client.model.SnowstormDescription;
+import au.gov.digitalhealth.lingo.validation.ValidProductDescriptionPreferredTermLength;
 import jakarta.validation.Valid;
 import java.io.Serializable;
 import java.util.HashSet;
@@ -27,6 +28,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Valid
+@ValidProductDescriptionPreferredTermLength
 @Builder
 @Data
 @NoArgsConstructor

@@ -30,7 +30,10 @@ import {
   normalizeWhitespace,
 } from '../../../types/productValidationUtils.ts';
 import { convertStringToRegex } from '../../../utils/helpers/stringUtils.ts';
-import { getValueFromFieldBindings } from '../../../utils/helpers/FieldBindingUtils.ts';
+import {
+  getValueFromFieldBindings,
+  resolvePreferredTermMaxLength,
+} from '../../../utils/helpers/FieldBindingUtils.ts';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import AdditionalPropertiesDisplay from './AdditionalPropertiesDisplay.tsx';
 import { ProductRetireUpdate } from './ProductRetireUpdate.tsx';
@@ -521,24 +524,10 @@ function NewConceptDropdownField({
   const regExp = convertStringToRegex(
     getValueFromFieldBindings(fieldBindings, 'description.validation.regex'),
   );
-  const ptMaxLengthConfigStr = getValueFromFieldBindings(
+  const ptMaxLength = resolvePreferredTermMaxLength(
     fieldBindings,
-    'description.preferredTerm.maxLength',
+    langRefsetCode,
   );
-  const ptMaxLength = (() => {
-    if (!ptMaxLengthConfigStr) return 4096;
-    if (ptMaxLengthConfigStr.includes(':')) {
-      const pairs = ptMaxLengthConfigStr
-        .split(',')
-        .map(pair => pair.split(':').map(s => s.trim()));
-      if (langRefsetCode) {
-        const entry = pairs.find(([code]) => code === langRefsetCode);
-        return entry ? parseInt(entry[1], 10) : 4096;
-      }
-      return Math.min(...pairs.map(([, val]) => parseInt(val, 10)));
-    }
-    return parseInt(ptMaxLengthConfigStr, 10);
-  })();
   const originalValWithSemanticTag = semanticTag
     ? `${originalValue} (${semanticTag})`
     : originalValue;

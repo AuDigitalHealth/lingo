@@ -81,6 +81,10 @@ public class ValidPreferredTermLengthValidator
         resolvedMaxLength, preferredRefsets, defaultBranch);
   }
 
+  public int getResolvedMaxLength() {
+    return resolvedMaxLength;
+  }
+
   @Override
   public boolean isValid(NewConceptDetails details, ConstraintValidatorContext context) {
     if (details == null || details.getPreferredTerm() == null) return true;
