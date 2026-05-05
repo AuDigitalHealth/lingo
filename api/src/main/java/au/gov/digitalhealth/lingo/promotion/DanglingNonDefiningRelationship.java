@@ -16,28 +16,23 @@
 package au.gov.digitalhealth.lingo.promotion;
 
 import jakarta.annotation.Nullable;
-import java.util.Objects;
+import lombok.NonNull;
 
 public record DanglingNonDefiningRelationship(
-    String relationshipId,
-    String typeId,
+    @NonNull String relationshipId,
+    @NonNull String typeId,
     @Nullable String typePt,
-    String sourceId,
+    @NonNull String sourceId,
     @Nullable String sourcePt,
-    ConceptStatus sourceStatus,
+    @NonNull ConceptStatus sourceStatus,
     // destinationId may be null for relationships with a concrete value (numeric/string)
     // instead of a concept destination.
     @Nullable String destinationId,
     @Nullable String destinationPt,
-    ConceptStatus destinationStatus,
+    @NonNull ConceptStatus destinationStatus,
     boolean released) {
 
   public DanglingNonDefiningRelationship {
-    Objects.requireNonNull(relationshipId, "relationshipId");
-    Objects.requireNonNull(typeId, "typeId");
-    Objects.requireNonNull(sourceId, "sourceId");
-    Objects.requireNonNull(sourceStatus, "sourceStatus");
-    Objects.requireNonNull(destinationStatus, "destinationStatus");
     if (sourceStatus == ConceptStatus.ACTIVE && destinationStatus == ConceptStatus.ACTIVE) {
       throw new IllegalArgumentException(
           "DanglingNonDefiningRelationship requires at least one non-ACTIVE endpoint");

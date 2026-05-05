@@ -16,22 +16,18 @@
 package au.gov.digitalhealth.lingo.promotion;
 
 import jakarta.annotation.Nullable;
-import java.util.Objects;
+import lombok.NonNull;
 
 public record DanglingRefsetMember(
-    String memberId,
-    String refsetId,
+    @NonNull String memberId,
+    @NonNull String refsetId,
     @Nullable String refsetPt,
-    String referencedConceptId,
+    @NonNull String referencedConceptId,
     @Nullable String referencedConceptPt,
-    ConceptStatus referencedConceptStatus,
+    @NonNull ConceptStatus referencedConceptStatus,
     boolean released) {
 
   public DanglingRefsetMember {
-    Objects.requireNonNull(memberId, "memberId");
-    Objects.requireNonNull(refsetId, "refsetId");
-    Objects.requireNonNull(referencedConceptId, "referencedConceptId");
-    Objects.requireNonNull(referencedConceptStatus, "referencedConceptStatus");
     if (referencedConceptStatus == ConceptStatus.ACTIVE) {
       throw new IllegalArgumentException(
           "DanglingRefsetMember requires referencedConceptStatus != ACTIVE");
