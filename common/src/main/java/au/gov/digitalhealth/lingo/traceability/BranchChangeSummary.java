@@ -30,10 +30,10 @@ import java.util.logging.Logger;
  * The net effect of a sequence of traceability activities on a single branch.
  *
  * <p>Replays the activity log chronologically (oldest commit first), ignoring entries marked
- * {@code superseded=true}. The three fields follow different rules — refset members and
- * relationships are filtered to "still present" (i.e. their latest non-superseded change is not
- * a {@code DELETE}), while {@link #conceptIdsTouched} is the broader "any concept mentioned in
- * any activity" set used for context lookup. Descriptions are intentionally not tracked.
+ * {@code superseded=true}, and reports the refset member and relationship IDs whose latest
+ * non-superseded change is not a {@code DELETE}. Concept changes themselves and description
+ * changes are intentionally not tracked — dangling-reference detection only inspects components
+ * that reference concepts, not the concepts being referenced.
  *
  * <p>Used by dangling-reference detection to scope inspection to exactly the components the task
  * actually authored, instead of inferring scope from Snowstorm queries that don't always mean
@@ -44,14 +44,11 @@ import java.util.logging.Logger;
  * supplied mutable inputs.
  */
 public record BranchChangeSummary(
-    Set<String> conceptIdsTouched,
-    Set<String> refsetMemberIdsStillOnBranch,
-    Set<String> relationshipIdsStillOnBranch) {
+    Set<String> refsetMemberIdsStillOnBranch, Set<String> relationshipIdsStillOnBranch) {
 
   private static final Logger log = Logger.getLogger(BranchChangeSummary.class.getName());
 
   public BranchChangeSummary {
-    conceptIdsTouched = conceptIdsTouched == null ? Set.of() : Set.copyOf(conceptIdsTouched);
     refsetMemberIdsStillOnBranch =
         refsetMemberIdsStillOnBranch == null ? Set.of() : Set.copyOf(refsetMemberIdsStillOnBranch);
     relationshipIdsStillOnBranch =
@@ -60,7 +57,7 @@ public record BranchChangeSummary(
 
   public static BranchChangeSummary from(List<Activity> activities) {
     if (activities == null || activities.isEmpty()) {
-      return new BranchChangeSummary(Set.of(), Set.of(), Set.of());
+      return new BranchChangeSummary(Set.of(), Set.of());
     }
     // Sort defensively so callers don't have to. Activities with a null commitDate sort last so
     // they don't get misordered ahead of dated entries; same-date ties keep insertion order.
@@ -69,7 +66,6 @@ public record BranchChangeSummary(
         Comparator.comparing(
             Activity::commitDate, Comparator.nullsLast(Comparator.naturalOrder())));
 
-    Set<String> conceptIdsTouched = new HashSet<>();
     // Track only the LAST non-superseded change per componentId. ChangeType=DELETE on the latest
     // change means the component is gone; anything else means it's still there.
     Map<String, ChangeType> lastMemberChange = new HashMap<>();
@@ -78,9 +74,7 @@ public record BranchChangeSummary(
     for (Activity activity : ordered) {
       if (activity == null || activity.conceptChanges() == null) continue;
       for (ConceptChange conceptChange : activity.conceptChanges()) {
-        if (conceptChange == null) continue;
-        if (conceptChange.conceptId() != null) conceptIdsTouched.add(conceptChange.conceptId());
-        if (conceptChange.componentChanges() == null) continue;
+        if (conceptChange == null || conceptChange.componentChanges() == null) continue;
         for (ComponentChange change : conceptChange.componentChanges()) {
           if (change == null) continue;
           if (Boolean.TRUE.equals(change.superseded())) continue;
@@ -111,9 +105,7 @@ public record BranchChangeSummary(
     }
 
     return new BranchChangeSummary(
-        conceptIdsTouched,
-        stillPresent(lastMemberChange),
-        stillPresent(lastRelationshipChange));
+        stillPresent(lastMemberChange), stillPresent(lastRelationshipChange));
   }
 
   private static Set<String> stillPresent(Map<String, ChangeType> latest) {

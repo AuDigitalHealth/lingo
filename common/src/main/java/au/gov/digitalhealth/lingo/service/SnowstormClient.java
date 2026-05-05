@@ -597,9 +597,9 @@ public class SnowstormClient {
         branch, true, null, null, conceptId, null, null, null, null, null, null, languageHeader);
   }
 
-  public static final String NON_DEFINING_CHARACTERISTIC_TYPE_ID = "900000000000227009";
-  // Snowstorm's findRelationships expects the CharacteristicType enum name, not the SCTID.
-  public static final String NON_DEFINING_CHARACTERISTIC_TYPE_NAME = "ADDITIONAL_RELATIONSHIP";
+  // Snowstorm's findRelationships expects the CharacteristicType enum name, not the SCTID
+  // (900000000000227009).
+  private static final String NON_DEFINING_CHARACTERISTIC_TYPE_NAME = "ADDITIONAL_RELATIONSHIP";
 
   /**
    * All unreleased active reference set members on the branch — i.e. members the branch shows as

@@ -31,7 +31,6 @@ class BranchChangeSummaryTest {
   void from_emptyActivities_yieldsEmptySummary() {
     BranchChangeSummary summary = BranchChangeSummary.from(List.of());
 
-    assertTrue(summary.conceptIdsTouched().isEmpty());
     assertTrue(summary.refsetMemberIdsStillOnBranch().isEmpty());
     assertTrue(summary.relationshipIdsStillOnBranch().isEmpty());
   }
@@ -43,7 +42,6 @@ class BranchChangeSummaryTest {
     BranchChangeSummary summary = BranchChangeSummary.from(List.of(create));
 
     assertEquals(Set.of("m1"), summary.refsetMemberIdsStillOnBranch());
-    assertEquals(Set.of("concept-1"), summary.conceptIdsTouched());
   }
 
   @Test
@@ -57,7 +55,6 @@ class BranchChangeSummaryTest {
     BranchChangeSummary summary = BranchChangeSummary.from(List.of(create, delete));
 
     assertTrue(summary.refsetMemberIdsStillOnBranch().isEmpty());
-    assertEquals(Set.of("concept-1"), summary.conceptIdsTouched());
   }
 
   @Test
@@ -166,7 +163,6 @@ class BranchChangeSummaryTest {
   void from_nullActivities_yieldsEmptySummary() {
     BranchChangeSummary summary = BranchChangeSummary.from(null);
 
-    assertTrue(summary.conceptIdsTouched().isEmpty());
     assertTrue(summary.refsetMemberIdsStillOnBranch().isEmpty());
     assertTrue(summary.relationshipIdsStillOnBranch().isEmpty());
   }
@@ -180,7 +176,8 @@ class BranchChangeSummaryTest {
         UnsupportedOperationException.class,
         () -> summary.refsetMemberIdsStillOnBranch().add("evil"));
     org.junit.jupiter.api.Assertions.assertThrows(
-        UnsupportedOperationException.class, () -> summary.conceptIdsTouched().add("evil"));
+        UnsupportedOperationException.class,
+        () -> summary.relationshipIdsStillOnBranch().add("evil"));
   }
 
   private static Activity activity(
