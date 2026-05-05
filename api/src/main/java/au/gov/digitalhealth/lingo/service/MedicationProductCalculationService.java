@@ -1324,14 +1324,14 @@ public class MedicationProductCalculationService
     // Also, if the product has a productName then it is defined by default
     boolean defined =
         !productDetails.getActiveIngredients().isEmpty()
-            && productDetails.getActiveIngredients().stream()
-                .allMatch(
-                    i ->
-                        i.getConcentrationStrength() != null
-                            || i.getTotalQuantity() != null
-                            || i.getPresentationStrengthNumerator() != null
-                            || i.getConcentrationStrengthNumerator() != null
-                ) || productDetails.getProductName() != null;
+                && productDetails.getActiveIngredients().stream()
+                    .allMatch(
+                        i ->
+                            i.getConcentrationStrength() != null
+                                || i.getTotalQuantity() != null
+                                || i.getPresentationStrengthNumerator() != null
+                                || i.getConcentrationStrengthNumerator() != null)
+            || productDetails.getProductName() != null;
 
     return nodeGeneratorService.generateNodeAsync(
         branch,
