@@ -16,15 +16,16 @@
 package au.gov.digitalhealth.lingo.promotion;
 
 import java.util.List;
-import java.util.Objects;
+import lombok.NonNull;
 
 public record DanglingReferenceSummary(
-    String branch,
+    @NonNull String branch,
     List<DanglingRefsetMember> danglingRefsetMembers,
     List<DanglingNonDefiningRelationship> danglingNonDefiningRelationships) {
 
+  // List.copyOf() is a transformation (defensive immutable copy), not a check —
+  // it can't be expressed by an annotation. Keep it in the compact constructor.
   public DanglingReferenceSummary {
-    Objects.requireNonNull(branch, "branch");
     danglingRefsetMembers = List.copyOf(danglingRefsetMembers);
     danglingNonDefiningRelationships = List.copyOf(danglingNonDefiningRelationships);
   }
