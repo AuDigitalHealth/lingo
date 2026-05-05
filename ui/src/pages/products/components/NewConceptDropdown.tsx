@@ -6,7 +6,6 @@ import {
   UseFormRegister,
   UseFormSetValue,
   useFieldArray,
-  useFormContext,
   useWatch,
 } from 'react-hook-form';
 import {
@@ -78,6 +77,10 @@ function NewConceptDropdown({
   );
   const [currentStatus, setCurrentStatus] = useState(initialStatusRef.current);
   const [specificConceptIdError, setSpecificConceptIdError] = useState('');
+  const project = useProjectFromUrlTaskPath();
+  const langRefsets = useProjectLangRefsets({ project });
+  const defaultLangRefset = findDefaultLangRefset(langRefsets);
+  const langRefsetCode = defaultLangRefset?.en;
   return (
     <div key={'div-' + product.conceptId}>
       <Grid item xs={12}>
@@ -134,6 +137,7 @@ function NewConceptDropdown({
             control={control}
             fieldBindings={fieldBindings}
             semanticTag={semanticTag}
+            langRefsetCode={langRefsetCode}
           />
         </Grid>
         <NewConceptDropdownField
@@ -145,6 +149,7 @@ function NewConceptDropdown({
           dataTestId={`pt-input`}
           control={control}
           fieldBindings={fieldBindings}
+          langRefsetCode={langRefsetCode}
         />
         <AdditionalSynonymField
           index={index}
@@ -497,6 +502,7 @@ interface NewConceptDropdownFieldProps {
   control: Control<ProductSummary>;
   fieldBindings: FieldBindings;
   semanticTag?: string;
+  langRefsetCode?: string;
 }
 
 function NewConceptDropdownField({
@@ -508,11 +514,31 @@ function NewConceptDropdownField({
   control,
   fieldBindings,
   semanticTag,
+  langRefsetCode,
 }: NewConceptDropdownFieldProps) {
   const [fieldChanged, setFieldChange] = useState(false);
+  const [ptLengthError, setPtLengthError] = useState('');
   const regExp = convertStringToRegex(
     getValueFromFieldBindings(fieldBindings, 'description.validation.regex'),
   );
+  const ptMaxLengthConfigStr = getValueFromFieldBindings(
+    fieldBindings,
+    'description.preferredTerm.maxLength',
+  );
+  const ptMaxLength = (() => {
+    if (!ptMaxLengthConfigStr) return 4096;
+    if (ptMaxLengthConfigStr.includes(':')) {
+      const pairs = ptMaxLengthConfigStr
+        .split(',')
+        .map(pair => pair.split(':').map(s => s.trim()));
+      if (langRefsetCode) {
+        const entry = pairs.find(([code]) => code === langRefsetCode);
+        return entry ? parseInt(entry[1], 10) : 4096;
+      }
+      return Math.min(...pairs.map(([, val]) => parseInt(val, 10)));
+    }
+    return parseInt(ptMaxLengthConfigStr, 10);
+  })();
   const originalValWithSemanticTag = semanticTag
     ? `${originalValue} (${semanticTag})`
     : originalValue;
@@ -559,11 +585,22 @@ function NewConceptDropdownField({
         name={fieldName as 'nodes.0.newConceptDetails.preferredTerm'}
         control={control}
         defaultValue=""
-        render={({ field }) => (
+        rules={
+          legend === 'Preferred Term'
+            ? {
+                validate: value =>
+                  !value || (value as string).length <= ptMaxLength
+                    ? true
+                    : `Preferred term exceeds maximum length of ${ptMaxLength} characters (current: ${(value as string).length}).`,
+              }
+            : undefined
+        }
+        render={({ field, fieldState }) => (
           <Stack sx={{ flexDirection: 'column' }}>
             <Stack flexDirection={'row'} alignItems={'center'}>
               <TextField
                 {...field}
+                error={!!fieldState.error || !!ptLengthError}
                 InputLabelProps={{ shrink: true }}
                 variant="outlined"
                 margin="dense"
@@ -583,6 +620,15 @@ function NewConceptDropdownField({
                       : e.target.value;
 
                   field.onChange(value);
+                  if (legend === 'Preferred Term') {
+                    if (value.length > ptMaxLength) {
+                      setPtLengthError(
+                        `Preferred term exceeds maximum length of ${ptMaxLength} characters (current: ${value.length}).`,
+                      );
+                    } else if (ptLengthError) {
+                      setPtLengthError('');
+                    }
+                  }
                 }}
                 color={fieldChanged ? 'error' : 'primary'}
                 onBlur={e => {
@@ -596,6 +642,11 @@ function NewConceptDropdownField({
               </IconButton>
             </Stack>
 
+            {ptLengthError && (
+              <FormHelperText error role="alert">
+                {ptLengthError}
+              </FormHelperText>
+            )}
             {semanticTag && (
               <FormHelperText>{`Semantic Tag: (${semanticTag})`}</FormHelperText>
             )}
