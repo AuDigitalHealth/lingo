@@ -198,10 +198,9 @@ public class DanglingReferenceService {
       SnowstormReferenceSetMember m,
       List<TidySuccess> succeeded,
       List<TidyFailure> failed) {
-    boolean released = isReleased(m.getReleased());
-    TidyAction action = released ? TidyAction.INACTIVATED : TidyAction.DELETED;
+    TidyAction action = isReleased(m) ? TidyAction.INACTIVATED : TidyAction.DELETED;
     try {
-      if (released) {
+      if (isReleased(m)) {
         snowstormClient.inactivateRefsetMember(branch, m);
       } else {
         snowstormClient.deleteRefsetMember(branch, m.getMemberId());
@@ -214,7 +213,7 @@ public class DanglingReferenceService {
               + ", referencedComponent="
               + m.getReferencedComponentId()
               + ", released="
-              + released
+              + isReleased(m)
               + ") on branch "
               + branch
               + ": "
@@ -234,10 +233,9 @@ public class DanglingReferenceService {
       SnowstormRelationship r,
       List<TidySuccess> succeeded,
       List<TidyFailure> failed) {
-    boolean released = isReleased(r.getReleased());
-    TidyAction action = released ? TidyAction.INACTIVATED : TidyAction.DELETED;
+    TidyAction action = isReleased(r) ? TidyAction.INACTIVATED : TidyAction.DELETED;
     try {
-      if (released) {
+      if (isReleased(r)) {
         snowstormClient.inactivateRelationship(branch, r);
       } else {
         snowstormClient.deleteRelationship(branch, r.getRelationshipId());
@@ -252,7 +250,7 @@ public class DanglingReferenceService {
               + ", destination="
               + r.getDestinationId()
               + ", released="
-              + released
+              + isReleased(r)
               + ") on branch "
               + branch
               + ": "
@@ -378,7 +376,7 @@ public class DanglingReferenceService {
         m.getReferencedComponentId(),
         ptOrNull(referenced),
         status,
-        isReleased(m.getReleased()));
+        isReleased(m));
   }
 
   private DanglingNonDefiningRelationship toDanglingRel(
@@ -399,7 +397,7 @@ public class DanglingReferenceService {
         r.getDestinationId(),
         ptOrNull(dst),
         dstStatus,
-        isReleased(r.getReleased()));
+        isReleased(r));
   }
 
   private boolean isWellFormed(SnowstormRelationship r, String branch) {
@@ -432,8 +430,12 @@ public class DanglingReferenceService {
 
   // A null `released` flag from Snowstorm is unexpected. Treat it as released so we
   // attempt the safer "inactivate" path rather than a destructive delete.
-  private static boolean isReleased(Boolean released) {
-    return !Boolean.FALSE.equals(released);
+  private static boolean isReleased(SnowstormReferenceSetMember m) {
+    return !Boolean.FALSE.equals(m.getReleased());
+  }
+
+  private static boolean isReleased(SnowstormRelationship r) {
+    return !Boolean.FALSE.equals(r.getReleased());
   }
 
   // The TidyFailure.errorMessage is the only thing the user sees per failed item, so we
