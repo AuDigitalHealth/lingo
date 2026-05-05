@@ -1321,6 +1321,7 @@ public class MedicationProductCalculationService
 
     // if the product has ingredients and they have some sort of strength or quantity then it can be
     // defined, otherwise we'll guess primitive - user can always override the decision
+    // Also, if the product has a productName then it is defined by default
     boolean defined =
         !productDetails.getActiveIngredients().isEmpty()
             && productDetails.getActiveIngredients().stream()
@@ -1329,7 +1330,8 @@ public class MedicationProductCalculationService
                         i.getConcentrationStrength() != null
                             || i.getTotalQuantity() != null
                             || i.getPresentationStrengthNumerator() != null
-                            || i.getConcentrationStrengthNumerator() != null);
+                            || i.getConcentrationStrengthNumerator() != null
+                ) || productDetails.getProductName() != null;
 
     return nodeGeneratorService.generateNodeAsync(
         branch,

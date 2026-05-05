@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
+- Some concepts were defaulting to Primitive when they should not have been
+- After creating a task previously the application would sometimes hang for a long time, this no longer happens.
 
 
 ## [1.3.38] - 2026-04-24
