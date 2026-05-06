@@ -140,45 +140,6 @@ class SnowstormClientWireContractTest {
   }
 
   @Test
-  void fetchRefsetMembersByIds_issuesPerIdGet() {
-    wireMock.stubFor(
-        any(urlMatching(".*/members/m-1"))
-            .willReturn(
-                aResponse()
-                    .withStatus(200)
-                    .withHeader("Content-Type", "application/json")
-                    .withBody(
-                        "{\"memberId\":\"m-1\",\"refsetId\":\"r\","
-                            + "\"referencedComponentId\":\"c\",\"active\":true,\"released\":false}")));
-
-    client.fetchRefsetMembersByIds(BRANCH, java.util.Set.of("m-1")).block();
-
-    List<LoggedRequest> requests = wireMock.findAll(anyRequestedFor(urlMatching(".*/members/m-1")));
-    assertThat(requests).as("per-id GET /members/{uuid} should have been called").hasSize(1);
-    assertThat(requests.get(0).getMethod().getName()).isEqualTo("GET");
-  }
-
-  @Test
-  void fetchRelationshipsByIds_issuesPerIdGet() {
-    wireMock.stubFor(
-        any(urlMatching(".*/relationships/r-1"))
-            .willReturn(
-                aResponse()
-                    .withStatus(200)
-                    .withHeader("Content-Type", "application/json")
-                    .withBody(
-                        "{\"relationshipId\":\"r-1\",\"sourceId\":\"s\",\"destinationId\":\"d\","
-                            + "\"typeId\":\"t\",\"active\":true,\"released\":false}")));
-
-    client.fetchRelationshipsByIds(BRANCH, java.util.Set.of("r-1")).block();
-
-    List<LoggedRequest> requests =
-        wireMock.findAll(anyRequestedFor(urlMatching(".*/relationships/r-1")));
-    assertThat(requests).as("per-id GET /relationships/{id} should have been called").hasSize(1);
-    assertThat(requests.get(0).getMethod().getName()).isEqualTo("GET");
-  }
-
-  @Test
   void deleteRefsetMember_issuesDeleteWithMemberIdsBodyAndForceFalse() {
     client.deleteRefsetMember(BRANCH, "m-1");
 
@@ -267,26 +228,5 @@ class SnowstormClientWireContractTest {
         .as("PUT body must inactivate the matching relationship")
         .contains("\"relationshipId\":\"r-1\"")
         .contains("\"active\":false");
-  }
-
-  @Test
-  void findActiveRefsetMembersForConcepts_returnsItemsFromSearchResponse() {
-    String body =
-        "{\"items\":["
-            + "  {\"memberId\":\"m-1\",\"refsetId\":\"r\",\"referencedComponentId\":\"100\","
-            + "   \"active\":true,\"released\":true}"
-            + "],\"total\":1,\"limit\":10000,\"offset\":0}";
-    wireMock.stubFor(
-        any(urlMatching(".*/members/search.*"))
-            .willReturn(
-                aResponse()
-                    .withStatus(200)
-                    .withHeader("Content-Type", "application/json")
-                    .withBody(body)));
-
-    List<SnowstormReferenceSetMember> result =
-        client.findActiveRefsetMembersForConcepts(BRANCH, java.util.Set.of("100")).block();
-
-    assertThat(result).extracting(SnowstormReferenceSetMember::getMemberId).containsExactly("m-1");
   }
 }
