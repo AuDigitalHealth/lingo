@@ -328,6 +328,115 @@ class DanglingReferenceServiceTest {
   }
 
   @Test
+  void detect_scenarioB_conceptInactivatedOnTask_flagsInheritedReferences() {
+    // The task INACTIVATEd a pre-existing concept. Inherited refset members and non-defining
+    // relationships referencing it (which the task didn't itself touch) need cleanup, so the
+    // scenario-B fan-out via findActiveRefsetMembersForConcepts /
+    // findActiveNonDefiningRelationshipsForConcepts should pull them in and detect should flag
+    // them as dangling.
+    Activity inactivateActivity =
+        new Activity(
+            "act-inactivate",
+            "tester",
+            BRANCH,
+            BRANCH,
+            OffsetDateTime.parse("2026-05-01T00:00:00Z"),
+            "CONTENT_CHANGE",
+            List.of(
+                new ConceptChange(
+                    C_RETIRED,
+                    List.of(
+                        new ComponentChange(
+                            C_RETIRED,
+                            ChangeType.INACTIVATE,
+                            ComponentType.CONCEPT,
+                            null,
+                            true,
+                            false)))));
+    when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))
+        .thenReturn(List.of(inactivateActivity));
+
+    SnowstormReferenceSetMember inheritedMember = member("m-inherited", C_REFSET, C_RETIRED, true);
+    SnowstormRelationship inheritedRel =
+        relationship("r-inherited", C_RETIRED, C_ACTIVE, C_TYPE, true);
+    when(snowstormClient.findActiveRefsetMembersForConcepts(eq(BRANCH), any()))
+        .thenReturn(Mono.just(List.of(inheritedMember)));
+    when(snowstormClient.findActiveNonDefiningRelationshipsForConcepts(eq(BRANCH), any()))
+        .thenReturn(Mono.just(List.of(inheritedRel)));
+    when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
+        .thenReturn(
+            List.of(
+                concept(C_RETIRED, false, "Retired thing"),
+                concept(C_REFSET, true, "My refset"),
+                concept(C_ACTIVE, true, "Other end"),
+                concept(C_TYPE, true, "Type")));
+
+    DanglingReferenceSummary summary = service.detect(BRANCH);
+
+    assertThat(summary.danglingRefsetMembers())
+        .extracting(DanglingRefsetMember::memberId)
+        .containsExactly("m-inherited");
+    assertThat(summary.danglingNonDefiningRelationships())
+        .extracting(DanglingNonDefiningRelationship::relationshipId)
+        .containsExactly("r-inherited");
+    // Verify the fan-out was driven by the right id set: the inactivated concept.
+    verify(snowstormClient).findActiveRefsetMembersForConcepts(BRANCH, java.util.Set.of(C_RETIRED));
+    verify(snowstormClient)
+        .findActiveNonDefiningRelationshipsForConcepts(BRANCH, java.util.Set.of(C_RETIRED));
+  }
+
+  @Test
+  void detect_dedupesMembersInBothAuthoredAndScenarioBSets() {
+    // A member can show up in both fetches: authored on the task (fetchRefsetMembersByIds) AND
+    // referencing a concept the task inactivated (findActiveRefsetMembersForConcepts). The merge
+    // must dedupe by memberId so the dangling list doesn't carry duplicates.
+    SnowstormReferenceSetMember m = member("m-dual", C_REFSET, C_RETIRED, true);
+    Activity activity =
+        new Activity(
+            "act-1",
+            "tester",
+            BRANCH,
+            BRANCH,
+            OffsetDateTime.parse("2026-05-01T00:00:00Z"),
+            "CONTENT_CHANGE",
+            List.of(
+                new ConceptChange(
+                    C_RETIRED,
+                    List.of(
+                        new ComponentChange(
+                            "m-dual",
+                            ChangeType.CREATE,
+                            ComponentType.REFERENCE_SET_MEMBER,
+                            null,
+                            true,
+                            false),
+                        new ComponentChange(
+                            C_RETIRED,
+                            ChangeType.INACTIVATE,
+                            ComponentType.CONCEPT,
+                            null,
+                            true,
+                            false)))));
+    when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))
+        .thenReturn(List.of(activity));
+    when(snowstormClient.fetchRefsetMembersByIds(eq(BRANCH), any()))
+        .thenReturn(Mono.just(List.of(m)));
+    when(snowstormClient.findActiveRefsetMembersForConcepts(eq(BRANCH), any()))
+        .thenReturn(Mono.just(List.of(m)));
+    when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
+        .thenReturn(
+            List.of(
+                concept(C_RETIRED, false, "Retired thing"), concept(C_REFSET, true, "My refset")));
+
+    DanglingReferenceSummary summary = service.detect(BRANCH);
+
+    assertThat(summary.danglingRefsetMembers())
+        .as("merge must dedupe by memberId — the same member shouldn't appear twice")
+        .extracting(DanglingRefsetMember::memberId)
+        .containsExactly("m-dual");
+  }
+
+  @Test
   void detect_ignoresRefsetMemberWhereReferencedConceptIsActive() {
     SnowstormReferenceSetMember m = member("m3", C_REFSET, C_ACTIVE, true);
     when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))

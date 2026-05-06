@@ -19,8 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import au.csiro.snowstorm_client.api.RefsetMembersApi;
-import au.csiro.snowstorm_client.model.SnowstormMemberSearchRequestComponent;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.AmtV4SnowstormExtension;
@@ -109,33 +107,37 @@ class SnowstormClientDanglingReferenceIntegrationTest {
   }
 
   @Test
-  void findRefsetMembers_rejectsOffsetPlusLimitBeyondResultWindow() throws Exception {
-    // Pins the Elasticsearch result-window constraint that broke offset-based pagination on
-    // findRefsetMembers: Snowstorm rejects offset+limit > 10000 with HTTP 400. Any future
-    // attempt to add offset-based pagination on this POST endpoint must reckon with this — the
-    // way through is the GET /{branch}/members + searchAfter variant, but that has its own
-    // semantic mismatch with the POST endpoint that needs untangling first. Until then this
-    // test is the canary that fails loudly if someone re-introduces offset > 10000 here.
-    RefsetMembersApi api = (RefsetMembersApi) invokeOnClient(client, "getRefsetMembersApi");
-    SnowstormMemberSearchRequestComponent request =
-        new SnowstormMemberSearchRequestComponent().active(true).nullEffectiveTime(true);
-
-    // First page (offset=0, limit=10000) is fine — well within the result window.
-    assertThatCode(() -> api.findRefsetMembers(BRANCH, request, 0, 10000, null).block())
-        .as("first page within result window must succeed")
-        .doesNotThrowAnyException();
-
-    // Second page (offset=10000) crosses the result window and Snowstorm 400s.
-    assertThatThrownBy(() -> api.findRefsetMembers(BRANCH, request, 10000, 10000, null).block())
-        .as(
-            "Snowstorm rejects offset+limit > 10000 — this is the constraint our pagination has"
-                + " to respect")
-        .isInstanceOf(WebClientResponseException.BadRequest.class);
+  void fetchRefsetMembersByIds_emptyIdSet_returnsEmpty() {
+    List<SnowstormReferenceSetMember> result =
+        client.fetchRefsetMembersByIds(BRANCH, java.util.Set.of()).block();
+    assertThat(result).isEmpty();
   }
 
-  private static Object invokeOnClient(SnowstormClient client, String methodName) throws Exception {
-    java.lang.reflect.Method m = SnowstormClient.class.getDeclaredMethod(methodName);
-    m.setAccessible(true);
-    return m.invoke(client);
+  @Test
+  void fetchRefsetMembersByIds_unknownId_throws404() {
+    // The traceability log claims a member exists. If Snowstorm doesn't have it, fail loudly
+    // (don't silently skip work the caller was told would happen) — this test pins the contract
+    // that an unknown id surfaces a WebClient 404 rather than swallowing it.
+    assertThatThrownBy(
+            () ->
+                client
+                    .fetchRefsetMembersByIds(
+                        BRANCH, java.util.Set.of("00000000-0000-0000-0000-000000000000"))
+                    .block())
+        .isInstanceOf(WebClientResponseException.NotFound.class);
+  }
+
+  @Test
+  void fetchRelationshipsByIds_emptyIdSet_returnsEmpty() {
+    List<SnowstormRelationship> result =
+        client.fetchRelationshipsByIds(BRANCH, java.util.Set.of()).block();
+    assertThat(result).isEmpty();
+  }
+
+  @Test
+  void fetchRelationshipsByIds_unknownId_throws404() {
+    assertThatThrownBy(
+            () -> client.fetchRelationshipsByIds(BRANCH, java.util.Set.of("999999999")).block())
+        .isInstanceOf(WebClientResponseException.NotFound.class);
   }
 }
