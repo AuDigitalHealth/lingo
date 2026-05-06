@@ -32,6 +32,7 @@ import au.gov.digitalhealth.lingo.traceability.TraceabilityServiceClient;
 import au.gov.digitalhealth.lingo.util.PartitionIdentifier;
 import au.gov.digitalhealth.lingo.util.SnomedIdentifierUtil;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -42,6 +43,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClientException;
 import reactor.core.publisher.Mono;
 
 /**
@@ -237,7 +239,7 @@ public class DanglingReferenceService {
               + ": "
               + action);
       succeeded.add(new TidySuccess(TidyKind.REFSET_MEMBER, m.getMemberId(), action));
-    } catch (RuntimeException e) {
+    } catch (WebClientException e) {
       log.log(
           Level.SEVERE,
           "Tidy of refset member "
@@ -282,7 +284,7 @@ public class DanglingReferenceService {
               + action);
       succeeded.add(
           new TidySuccess(TidyKind.NON_DEFINING_RELATIONSHIP, r.getRelationshipId(), action));
-    } catch (RuntimeException e) {
+    } catch (WebClientException e) {
       log.log(
           Level.SEVERE,
           "Tidy of non-defining relationship "
@@ -299,19 +301,17 @@ public class DanglingReferenceService {
   }
 
   // Holds everything detect/tidy need after the traceability + Snowstorm fan-out.
-  private static final class DetectionContext {
-    final List<SnowstormReferenceSetMember> taskMembers;
-    final List<SnowstormRelationship> taskRels;
-    final Map<String, SnowstormConceptMini> byId;
+  private record DetectionContext(
+      List<SnowstormReferenceSetMember> taskMembers,
+      List<SnowstormRelationship> taskRels,
+      Map<String, SnowstormConceptMini> byId) {}
 
-    DetectionContext(
-        List<SnowstormReferenceSetMember> taskMembers,
-        List<SnowstormRelationship> taskRels,
-        Map<String, SnowstormConceptMini> byId) {
-      this.taskMembers = taskMembers;
-      this.taskRels = taskRels;
-      this.byId = byId;
-    }
+  // Which input wins when the same id appears in both lists during a merge. Authored-on-task
+  // entries always overwrite references-to-inactivated entries (their bookkeeping is what tidy's
+  // audit log surfaces), but never the other way round.
+  private enum Precedence {
+    AUTHORED_WINS,
+    FIRST_WINS
   }
 
   private DetectionContext collect(String branch) {
@@ -354,9 +354,45 @@ public class DanglingReferenceService {
           snowstormClient.getConceptsByIdViaSearch(branch, referencedIds)) {
         if (c.getConceptId() != null) byId.put(c.getConceptId(), c);
       }
+      logBulkConceptFetchOutcome(branch, referencedIds, byId.keySet());
     }
 
     return new DetectionContext(taskMembers, taskRels, byId);
+  }
+
+  // statusOf() returns DELETED for any concept missing from the bulk fetch — that's correct when
+  // the concept genuinely doesn't exist on the branch, but would silently mask a truncation bug
+  // in the paginated search. Log the missing-id count so an unexpectedly large gap shows up in
+  // ops logs even though the per-concept fallback to DELETED stays the same.
+  private static void logBulkConceptFetchOutcome(
+      String branch, Set<String> requested, Set<String> returned) {
+    int missing = requested.size() - returned.size();
+    if (missing <= 0) return;
+    Set<String> missingIds = new HashSet<>(requested);
+    missingIds.removeAll(returned);
+    log.info(
+        "Concept bulk fetch on branch "
+            + branch
+            + " returned "
+            + returned.size()
+            + "/"
+            + requested.size()
+            + " concepts; "
+            + missing
+            + " absent (will be treated as DELETED): "
+            + truncateForLog(missingIds));
+  }
+
+  private static String truncateForLog(Collection<String> ids) {
+    int max = 50;
+    if (ids.size() <= max) return ids.toString();
+    List<String> head = new ArrayList<>(max);
+    int i = 0;
+    for (String id : ids) {
+      if (i++ >= max) break;
+      head.add(id);
+    }
+    return head + " (+" + (ids.size() - max) + " more)";
   }
 
   private static boolean referencesAConcept(SnowstormReferenceSetMember m) {
@@ -372,18 +408,18 @@ public class DanglingReferenceService {
       List<SnowstormReferenceSetMember> authoredOnTask,
       List<SnowstormReferenceSetMember> referencingInactivated) {
     Map<String, SnowstormReferenceSetMember> byId = new LinkedHashMap<>();
-    addMembers(authoredOnTask, byId, false);
-    addMembers(referencingInactivated, byId, true);
+    addMembers(authoredOnTask, byId, Precedence.AUTHORED_WINS);
+    addMembers(referencingInactivated, byId, Precedence.FIRST_WINS);
     return List.copyOf(byId.values());
   }
 
   private static void addMembers(
       List<SnowstormReferenceSetMember> source,
       Map<String, SnowstormReferenceSetMember> byId,
-      boolean keepExisting) {
+      Precedence precedence) {
     for (SnowstormReferenceSetMember m : source) {
       if (m.getMemberId() == null || !referencesAConcept(m)) continue;
-      if (keepExisting) {
+      if (precedence == Precedence.FIRST_WINS) {
         byId.putIfAbsent(m.getMemberId(), m);
       } else {
         byId.put(m.getMemberId(), m);
@@ -395,18 +431,18 @@ public class DanglingReferenceService {
       List<SnowstormRelationship> authoredOnTask,
       List<SnowstormRelationship> referencingInactivated) {
     Map<String, SnowstormRelationship> byId = new LinkedHashMap<>();
-    addRelationships(authoredOnTask, byId, false);
-    addRelationships(referencingInactivated, byId, true);
+    addRelationships(authoredOnTask, byId, Precedence.AUTHORED_WINS);
+    addRelationships(referencingInactivated, byId, Precedence.FIRST_WINS);
     return List.copyOf(byId.values());
   }
 
   private static void addRelationships(
       List<SnowstormRelationship> source,
       Map<String, SnowstormRelationship> byId,
-      boolean keepExisting) {
+      Precedence precedence) {
     for (SnowstormRelationship r : source) {
       if (r.getRelationshipId() == null) continue;
-      if (keepExisting) {
+      if (precedence == Precedence.FIRST_WINS) {
         byId.putIfAbsent(r.getRelationshipId(), r);
       } else {
         byId.put(r.getRelationshipId(), r);

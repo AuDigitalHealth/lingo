@@ -19,6 +19,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.any;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -228,5 +229,34 @@ class SnowstormClientWireContractTest {
         .as("PUT body must inactivate the matching relationship")
         .contains("\"relationshipId\":\"r-1\"")
         .contains("\"active\":false");
+  }
+
+  // SnowstormClient's per-id loops swallow 404 (the traceability log claimed an id existed but
+  // it's already been deleted on the branch — recoverable, not a hard error). Pin that contract
+  // here at the wire level: a 404 on one id must NOT propagate; the surviving member is still
+  // returned in the result list.
+  @Test
+  void fetchRefsetMembersByIds_skips404AndReturnsRemaining() {
+    String foundBody = "{\"memberId\":\"m-found\",\"refsetId\":\"refset-1\",\"active\":true}";
+    wireMock.stubFor(
+        get(urlMatching(".*/members/m-found.*"))
+            .willReturn(
+                aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody(foundBody)));
+    wireMock.stubFor(
+        get(urlMatching(".*/members/m-missing.*")).willReturn(aResponse().withStatus(404)));
+
+    List<SnowstormReferenceSetMember> result =
+        client
+            .fetchRefsetMembersByIds(
+                BRANCH, new java.util.LinkedHashSet<>(java.util.List.of("m-found", "m-missing")))
+            .block();
+
+    assertThat(result)
+        .as("404 on one id must be skipped, not propagated; surviving id is returned")
+        .extracting(SnowstormReferenceSetMember::getMemberId)
+        .containsExactly("m-found");
   }
 }

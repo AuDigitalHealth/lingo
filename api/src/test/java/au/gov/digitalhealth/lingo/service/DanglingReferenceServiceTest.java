@@ -51,6 +51,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
 @ExtendWith(MockitoExtension.class)
@@ -389,8 +391,13 @@ class DanglingReferenceServiceTest {
   void detect_dedupesMembersInBothAuthoredAndScenarioBSets() {
     // A member can show up in both fetches: authored on the task (fetchRefsetMembersByIds) AND
     // referencing a concept the task inactivated (findActiveRefsetMembersForConcepts). The merge
-    // must dedupe by memberId so the dangling list doesn't carry duplicates.
-    SnowstormReferenceSetMember m = member("m-dual", C_REFSET, C_RETIRED, true);
+    // must dedupe by memberId so the dangling list doesn't carry duplicates AND the authored-on-
+    // task copy must win — its bookkeeping (e.g. released flag drives whether tidy inactivates or
+    // deletes) is what the audit log surfaces. Distinguish the two copies by `released` so the
+    // assertion can prove which one made it through.
+    SnowstormReferenceSetMember authored = member("m-dual", C_REFSET, C_RETIRED, true);
+    SnowstormReferenceSetMember referencingInactivated =
+        member("m-dual", C_REFSET, C_RETIRED, false);
     Activity activity =
         new Activity(
             "act-1",
@@ -420,9 +427,9 @@ class DanglingReferenceServiceTest {
     when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))
         .thenReturn(List.of(activity));
     when(snowstormClient.fetchRefsetMembersByIds(eq(BRANCH), any()))
-        .thenReturn(Mono.just(List.of(m)));
+        .thenReturn(Mono.just(List.of(authored)));
     when(snowstormClient.findActiveRefsetMembersForConcepts(eq(BRANCH), any()))
-        .thenReturn(Mono.just(List.of(m)));
+        .thenReturn(Mono.just(List.of(referencingInactivated)));
     when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
         .thenReturn(
             List.of(
@@ -431,9 +438,9 @@ class DanglingReferenceServiceTest {
     DanglingReferenceSummary summary = service.detect(BRANCH);
 
     assertThat(summary.danglingRefsetMembers())
-        .as("merge must dedupe by memberId — the same member shouldn't appear twice")
-        .extracting(DanglingRefsetMember::memberId)
-        .containsExactly("m-dual");
+        .as("merge must dedupe by memberId AND keep the authored-on-task copy")
+        .extracting(DanglingRefsetMember::memberId, DanglingRefsetMember::released)
+        .containsExactly(tuple("m-dual", true));
   }
 
   @Test
@@ -647,7 +654,12 @@ class DanglingReferenceServiceTest {
     doAnswer(
             invocation -> {
               if ("m2".equals(invocation.getArgument(1))) {
-                throw new RuntimeException("snowstorm exploded");
+                throw WebClientResponseException.create(
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    "snowstorm exploded",
+                    null,
+                    null,
+                    null);
               }
               return null;
             })
@@ -658,8 +670,9 @@ class DanglingReferenceServiceTest {
 
     assertThat(result.succeeded()).extracting(TidySuccess::id).containsExactly("m1");
     assertThat(result.failed())
-        .extracting(TidyFailure::id, TidyFailure::attemptedAction, TidyFailure::errorMessage)
-        .containsExactly(tuple("m2", TidyAction.DELETED, "snowstorm exploded"));
+        .extracting(TidyFailure::id, TidyFailure::attemptedAction)
+        .containsExactly(tuple("m2", TidyAction.DELETED));
+    assertThat(result.failed().get(0).errorMessage()).contains("500");
   }
 
   @Test
@@ -677,7 +690,8 @@ class DanglingReferenceServiceTest {
     doAnswer(
             invocation -> {
               if ("r2".equals(invocation.getArgument(1))) {
-                throw new RuntimeException("rel boom");
+                throw WebClientResponseException.create(
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(), "rel boom", null, null, null);
               }
               return null;
             })
@@ -688,7 +702,63 @@ class DanglingReferenceServiceTest {
 
     assertThat(result.succeeded()).extracting(TidySuccess::id).containsExactly("r1");
     assertThat(result.failed())
-        .extracting(TidyFailure::id, TidyFailure::attemptedAction, TidyFailure::errorMessage)
-        .containsExactly(tuple("r2", TidyAction.DELETED, "rel boom"));
+        .extracting(TidyFailure::id, TidyFailure::attemptedAction)
+        .containsExactly(tuple("r2", TidyAction.DELETED));
+    assertThat(result.failed().get(0).errorMessage()).contains("500");
+  }
+
+  // Catch in tidy() is narrowed to WebClientException so non-HTTP errors (programming bugs,
+  // SecurityException, etc.) bubble up rather than being silently swallowed and marked as a
+  // routine "this id failed" entry. Pinning the behaviour: a NullPointerException thrown by the
+  // SnowstormClient must propagate from tidy().
+  @Test
+  void tidy_propagatesNonWebClientErrors() {
+    SnowstormReferenceSetMember m1 = member("m1", C_REFSET, C_DELETED, false);
+
+    when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))
+        .thenReturn(traceabilityScope(List.of("m1"), List.of()));
+    when(snowstormClient.fetchRefsetMembersByIds(eq(BRANCH), any()))
+        .thenReturn(Mono.just(List.of(m1)));
+    when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any())).thenReturn(List.of());
+
+    doAnswer(
+            invocation -> {
+              throw new NullPointerException("programming bug");
+            })
+        .when(snowstormClient)
+        .deleteRefsetMember(eq(BRANCH), any());
+
+    org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.tidy(BRANCH))
+        .isInstanceOf(NullPointerException.class)
+        .hasMessageContaining("programming bug");
+  }
+
+  // isWellFormed requires relationshipId, sourceId, and typeId to be non-null. The previous
+  // version skipped only on null relationshipId/sourceId, leaving null typeId to slip through
+  // toDanglingRel which then crashed on @NonNull. Pin the typeId check explicitly.
+  @Test
+  void detect_skipsMalformedRelationshipMissingTypeId() {
+    SnowstormRelationship malformed =
+        new SnowstormRelationship()
+            .relationshipId("r-malformed")
+            .sourceId(C_RETIRED)
+            .destinationId(C_ACTIVE)
+            .released(true)
+            .active(true);
+    // typeId deliberately omitted — should be filtered out by isWellFormed and never reach the
+    // dangling list.
+
+    when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))
+        .thenReturn(traceabilityScope(List.of(), List.of("r-malformed")));
+    when(snowstormClient.fetchRelationshipsByIds(eq(BRANCH), any()))
+        .thenReturn(Mono.just(List.of(malformed)));
+    when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
+        .thenReturn(List.of(concept(C_RETIRED, false, null), concept(C_ACTIVE, true, null)));
+
+    DanglingReferenceSummary summary = service.detect(BRANCH);
+
+    assertThat(summary.danglingNonDefiningRelationships())
+        .as("malformed relationship without typeId must not surface as dangling")
+        .isEmpty();
   }
 }
