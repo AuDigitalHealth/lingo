@@ -37,6 +37,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import lombok.extern.java.Log;
@@ -334,7 +335,7 @@ public class DanglingReferenceService {
 
   private static boolean referencesAConcept(SnowstormReferenceSetMember m) {
     String id = m.getReferencedComponentId();
-    return id != null && SnomedIdentifierUtil.isValid(id, PartitionIdentifier.CONCEPT);
+    return SnomedIdentifierUtil.isValid(id, PartitionIdentifier.CONCEPT);
   }
 
   // Combine the authored-on-task members and the references-to-inactivated members, deduping by
@@ -391,51 +392,65 @@ public class DanglingReferenceService {
   // inactive concepts. Such members must never be flagged as dangling — that would cause us to
   // delete the very metadata that records why a concept was retired.
   private static boolean isExpectedInactiveReferenceRefset(SnowstormReferenceSetMember m) {
-    return m.getRefsetId() != null && EXPECTED_INACTIVE_REFERENCE_REFSETS.contains(m.getRefsetId());
+    return EXPECTED_INACTIVE_REFERENCE_REFSETS.contains(m.getRefsetId());
   }
 
   private static Set<String> collectReferencedConceptIds(
       List<SnowstormReferenceSetMember> members, List<SnowstormRelationship> relationships) {
     Set<String> ids = new HashSet<>();
     for (SnowstormReferenceSetMember m : members) {
-      if (m.getReferencedComponentId() != null) ids.add(m.getReferencedComponentId());
-      if (m.getRefsetId() != null) ids.add(m.getRefsetId());
+      ids.add(m.getReferencedComponentId());
+      ids.add(m.getRefsetId());
     }
     for (SnowstormRelationship r : relationships) {
       if (r.getSourceId() != null) ids.add(r.getSourceId());
       if (r.getDestinationId() != null) ids.add(r.getDestinationId());
-      if (r.getTypeId() != null) ids.add(r.getTypeId());
+      ids.add(r.getTypeId());
     }
     return ids;
   }
 
+  // Caller invariants (see mergeMembers / referencesAConcept): memberId, refsetId, and
+  // referencedComponentId are all non-null by the time we reach this helper. Snowstorm's bean
+  // accessors are nullable in their generated form so the IDE can't infer that — pull them into
+  // locals via requireNonNull to assert the contract once and silence the warning at every
+  // constructor argument.
   private DanglingRefsetMember toDanglingMember(
       SnowstormReferenceSetMember m, ConceptStatus status, Map<String, SnowstormConceptMini> byId) {
-    SnowstormConceptMini refset = byId.get(m.getRefsetId());
-    SnowstormConceptMini referenced = byId.get(m.getReferencedComponentId());
+    String memberId = Objects.requireNonNull(m.getMemberId(), "memberId");
+    String refsetId = Objects.requireNonNull(m.getRefsetId(), "refsetId");
+    String referencedComponentId =
+        Objects.requireNonNull(m.getReferencedComponentId(), "referencedComponentId");
+    SnowstormConceptMini refset = byId.get(refsetId);
+    SnowstormConceptMini referenced = byId.get(referencedComponentId);
     return new DanglingRefsetMember(
-        m.getMemberId(),
-        m.getRefsetId(),
+        memberId,
+        refsetId,
         ptOrNull(refset),
-        m.getReferencedComponentId(),
+        referencedComponentId,
         ptOrNull(referenced),
         status,
         isReleased(m));
   }
 
+  // Caller invariants (see isWellFormed): relationshipId, typeId, and sourceId are non-null.
+  // destinationId may legitimately be null (concrete-value relationships).
   private DanglingNonDefiningRelationship toDanglingRel(
       SnowstormRelationship r,
       ConceptStatus srcStatus,
       ConceptStatus dstStatus,
       Map<String, SnowstormConceptMini> byId) {
-    SnowstormConceptMini type = byId.get(r.getTypeId());
-    SnowstormConceptMini src = byId.get(r.getSourceId());
-    SnowstormConceptMini dst = byId.get(r.getDestinationId());
+    String relationshipId = Objects.requireNonNull(r.getRelationshipId(), "relationshipId");
+    String typeId = Objects.requireNonNull(r.getTypeId(), "typeId");
+    String sourceId = Objects.requireNonNull(r.getSourceId(), "sourceId");
+    SnowstormConceptMini type = byId.get(typeId);
+    SnowstormConceptMini src = byId.get(sourceId);
+    SnowstormConceptMini dst = r.getDestinationId() == null ? null : byId.get(r.getDestinationId());
     return new DanglingNonDefiningRelationship(
-        r.getRelationshipId(),
-        r.getTypeId(),
+        relationshipId,
+        typeId,
         ptOrNull(type),
-        r.getSourceId(),
+        sourceId,
         ptOrNull(src),
         srcStatus,
         r.getDestinationId(),
@@ -444,20 +459,20 @@ public class DanglingReferenceService {
         isReleased(r));
   }
 
-  private boolean isWellFormed(SnowstormRelationship r, String branch) {
-    if (r.getRelationshipId() == null || r.getTypeId() == null || r.getSourceId() == null) {
-      log.warning(
-          "Skipping malformed non-defining relationship on branch "
-              + branch
-              + ": relationshipId="
-              + r.getRelationshipId()
-              + ", sourceId="
-              + r.getSourceId()
-              + ", typeId="
-              + r.getTypeId());
-      return false;
+  // The TidyFailure.errorMessage is the only thing the user sees per failed item, so we
+  // surface as much detail as the WebClient throwable carries: the response body for 4xx/5xx
+  // (often the only place Snowstorm returns the actual reason) plus the status, and a sensible
+  // default for everything else.
+  private static String errorMessage(Throwable e) {
+    if (e
+        instanceof
+        org.springframework.web.reactive.function.client.WebClientResponseException wre) {
+      String body = wre.getResponseBodyAsString();
+      String prefix = wre.getStatusCode() + " from Snowstorm";
+      return (!body.isBlank()) ? prefix + ": " + body : prefix;
     }
-    return true;
+    String msg = e.getMessage();
+    return msg != null && !msg.isBlank() ? msg : e.getClass().getSimpleName();
   }
 
   private static ConceptStatus statusOf(String id, Map<String, SnowstormConceptMini> byId) {
@@ -482,19 +497,19 @@ public class DanglingReferenceService {
     return !Boolean.FALSE.equals(r.getReleased());
   }
 
-  // The TidyFailure.errorMessage is the only thing the user sees per failed item, so we
-  // surface as much detail as the WebClient throwable carries: the response body for 4xx/5xx
-  // (often the only place Snowstorm returns the actual reason) plus the status, and a sensible
-  // default for everything else.
-  private static String errorMessage(Throwable e) {
-    if (e
-        instanceof
-        org.springframework.web.reactive.function.client.WebClientResponseException wre) {
-      String body = wre.getResponseBodyAsString();
-      String prefix = wre.getStatusCode() + " from Snowstorm";
-      return (body != null && !body.isBlank()) ? prefix + ": " + body : prefix;
+  private boolean isWellFormed(SnowstormRelationship r, String branch) {
+    if (r.getRelationshipId() == null || r.getSourceId() == null) {
+      log.warning(
+          "Skipping malformed non-defining relationship on branch "
+              + branch
+              + ": relationshipId="
+              + r.getRelationshipId()
+              + ", sourceId="
+              + r.getSourceId()
+              + ", typeId="
+              + r.getTypeId());
+      return false;
     }
-    String msg = e.getMessage();
-    return msg != null && !msg.isBlank() ? msg : e.getClass().getSimpleName();
+    return true;
   }
 }
