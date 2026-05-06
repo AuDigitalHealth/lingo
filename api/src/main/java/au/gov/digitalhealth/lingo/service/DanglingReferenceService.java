@@ -45,17 +45,26 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 /**
- * Detects and tidies dangling reference set members and non-defining relationships authored on a
- * task branch.
+ * Detects and tidies dangling reference set members and non-defining relationships on a task
+ * branch.
  *
- * <p>Detection scope comes from the SNOMED CT authoring-traceability-service: only refset members
- * and non-defining relationships that the traceability log records as "currently present" on the
- * branch (i.e. their last non-superseded change isn't a {@code DELETE}) are considered. For each
- * such component we ask Snowstorm what its referenced concepts currently look like; anything
- * pointing at an inactive or missing concept is flagged.
+ * <p>Detection scope is the union of two sources, both anchored on the SNOMED CT
+ * authoring-traceability-service:
+ *
+ * <ul>
+ *   <li><b>Authored on this task</b> — refset members and non-defining relationships whose
+ *       traceability log entry's latest non-superseded change isn't a {@code DELETE}. Any of these
+ *       that point at an inactive or missing concept are flagged.
+ *   <li><b>Inherited references to concepts inactivated on this task</b> — for every concept the
+ *       traceability log records as INACTIVATEd, fan out via Snowstorm to find any active refset
+ *       member or non-defining relationship anywhere on the branch that still references it. Those
+ *       are dangling and need cleanup too.
+ * </ul>
  *
  * <p>Tidy mirrors the rule: released components are inactivated (we keep the audit trail);
- * unreleased components are deleted outright.
+ * unreleased components are deleted outright. Tidy never disagrees with detect about scope — it
+ * consumes detect's {@link DanglingReferenceSummary} and looks the source objects back up via
+ * id-indexed maps from the same {@link DetectionContext}.
  */
 @Log
 @Service
@@ -160,14 +169,31 @@ public class DanglingReferenceService {
             + " dangling non-defining relationship(s) on branch "
             + branch);
 
+    // Every dangling.memberId() / .relationshipId() comes from the same ctx.taskMembers /
+    // ctx.taskRels that the indices are built from — a missing lookup means the detect/tidy
+    // contract is broken (e.g. a member with a null id slipped past upstream filters). Fail
+    // loudly with branch context rather than silently dropping work the caller was told would
+    // happen.
     for (DanglingRefsetMember dangling : summary.danglingRefsetMembers()) {
-      SnowstormReferenceSetMember m = memberById.get(dangling.memberId());
-      if (m == null) continue; // skipped: no source object to send to Snowstorm
+      SnowstormReferenceSetMember m =
+          Objects.requireNonNull(
+              memberById.get(dangling.memberId()),
+              () ->
+                  "memberId "
+                      + dangling.memberId()
+                      + " has no source SnowstormReferenceSetMember on branch "
+                      + branch);
       tidyRefsetMember(branch, m, succeeded, failed);
     }
     for (DanglingNonDefiningRelationship dangling : summary.danglingNonDefiningRelationships()) {
-      SnowstormRelationship r = relationshipById.get(dangling.relationshipId());
-      if (r == null) continue; // skipped: no source object to send to Snowstorm
+      SnowstormRelationship r =
+          Objects.requireNonNull(
+              relationshipById.get(dangling.relationshipId()),
+              () ->
+                  "relationshipId "
+                      + dangling.relationshipId()
+                      + " has no source SnowstormRelationship on branch "
+                      + branch);
       tidyRelationship(branch, r, succeeded, failed);
     }
 
@@ -497,8 +523,11 @@ public class DanglingReferenceService {
     return !Boolean.FALSE.equals(r.getReleased());
   }
 
+  // The three required fields a non-defining relationship must have for us to act on it. The
+  // toDanglingRel helper relies on each being non-null when constructing the DTO, so the
+  // invariant must be enforced here — adding typeId fixes the gap the previous version left.
   private boolean isWellFormed(SnowstormRelationship r, String branch) {
-    if (r.getRelationshipId() == null || r.getSourceId() == null) {
+    if (r.getRelationshipId() == null || r.getSourceId() == null || r.getTypeId() == null) {
       log.warning(
           "Skipping malformed non-defining relationship on branch "
               + branch

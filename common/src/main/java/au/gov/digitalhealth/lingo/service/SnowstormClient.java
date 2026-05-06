@@ -604,29 +604,65 @@ public class SnowstormClient {
   /**
    * Fetch the named refset members from the branch. Used for scope-on-this-task lookups: the
    * traceability log gives us the IDs the task authored, and we ask Snowstorm for each so we can
-   * inspect the current referencedComponentId / refsetId / released state. A 404 on any id
-   * propagates — the traceability log claimed it existed.
+   * inspect the current referencedComponentId / refsetId / released state.
+   *
+   * <p>A 404 on any id is logged and skipped. The traceability log claimed it existed, so a
+   * miss usually means the component was deleted between traceability writing the activity and
+   * us reading it (e.g. a concurrent revert), or the id is from a path that doesn't reach this
+   * branch — neither warrants aborting the rest of the fan-out, but we shouldn't be silent about
+   * it either. Other failures (5xx, timeout, deserialisation) propagate.
+   *
+   * <p>Implemented as a synchronous loop with per-id {@code .block()} rather than a reactive
+   * {@code Flux.flatMap} chain. The latter subscribes follow-up calls from netty event-loop
+   * threads where the request-scoped {@code SecurityContextHolder} ThreadLocal — relied on by
+   * the {@code AuthHelper.addImsAuthCookie} filter — is empty, causing NPE on the IMS cookie.
    */
   public Mono<List<SnowstormReferenceSetMember>> fetchRefsetMembersByIds(
       String branch, Set<String> memberIds) {
     if (memberIds == null || memberIds.isEmpty()) return Mono.just(List.of());
+    return Mono.fromSupplier(() -> fetchRefsetMembersByIdsSync(branch, memberIds));
+  }
+
+  private List<SnowstormReferenceSetMember> fetchRefsetMembersByIdsSync(
+      String branch, Set<String> memberIds) {
     RefsetMembersApi api = getRefsetMembersApi();
-    return reactor.core.publisher.Flux.fromIterable(memberIds)
-        .flatMap(id -> api.fetchMember(branch, id, languageHeader))
-        .collectList();
+    List<SnowstormReferenceSetMember> result = new ArrayList<>(memberIds.size());
+    for (String id : memberIds) {
+      try {
+        SnowstormReferenceSetMember m = api.fetchMember(branch, id, languageHeader).block();
+        if (m != null) result.add(m);
+      } catch (WebClientResponseException.NotFound e) {
+        log.warning(
+            "Refset member " + id + " not found on branch " + branch + " — skipping (traceability log claimed it existed)");
+      }
+    }
+    return result;
   }
 
   /**
-   * Fetch the named relationships from the branch. Mirror of {@link #fetchRefsetMembersByIds};
-   * the per-relationship fetch is the only id-keyed lookup Snowstorm exposes for relationships.
+   * Fetch the named relationships from the branch. Mirror of {@link #fetchRefsetMembersByIds} —
+   * synchronous loop, 404 logged and skipped, other errors propagate.
    */
   public Mono<List<SnowstormRelationship>> fetchRelationshipsByIds(
       String branch, Set<String> relationshipIds) {
     if (relationshipIds == null || relationshipIds.isEmpty()) return Mono.just(List.of());
+    return Mono.fromSupplier(() -> fetchRelationshipsByIdsSync(branch, relationshipIds));
+  }
+
+  private List<SnowstormRelationship> fetchRelationshipsByIdsSync(
+      String branch, Set<String> relationshipIds) {
     RelationshipsApi api = new RelationshipsApi(getApiClient());
-    return reactor.core.publisher.Flux.fromIterable(relationshipIds)
-        .flatMap(id -> api.fetchRelationship(branch, id, languageHeader))
-        .collectList();
+    List<SnowstormRelationship> result = new ArrayList<>(relationshipIds.size());
+    for (String id : relationshipIds) {
+      try {
+        SnowstormRelationship r = api.fetchRelationship(branch, id, languageHeader).block();
+        if (r != null) result.add(r);
+      } catch (WebClientResponseException.NotFound e) {
+        log.warning(
+            "Relationship " + id + " not found on branch " + branch + " — skipping (traceability log claimed it existed)");
+      }
+    }
+    return result;
   }
 
   /**
@@ -652,61 +688,54 @@ public class SnowstormClient {
   /**
    * Active non-defining relationships on the branch where source or destination is one of the
    * supplied concept ids. Snowstorm's findRelationships filters by a single source or
-   * destination per call, so we issue a fan-out (2N parallel calls) and dedupe.
+   * destination per call, so we issue a fan-out (2N requests) and dedupe by relationshipId.
+   *
+   * <p>Synchronous loop rather than reactive fan-out for the same reason as
+   * {@link #fetchRefsetMembersByIds}: each follow-up Snowstorm call needs the IMS auth filter
+   * to run on a thread that has the request's SecurityContextHolder.
    */
   public Mono<List<SnowstormRelationship>> findActiveNonDefiningRelationshipsForConcepts(
       String branch, Set<String> conceptIds) {
     if (conceptIds == null || conceptIds.isEmpty()) return Mono.just(List.of());
+    return Mono.fromSupplier(() -> findActiveNonDefiningRelationshipsForConceptsSync(branch, conceptIds));
+  }
+
+  private List<SnowstormRelationship> findActiveNonDefiningRelationshipsForConceptsSync(
+      String branch, Set<String> conceptIds) {
     RelationshipsApi api = new RelationshipsApi(getApiClient());
-    reactor.core.publisher.Flux<SnowstormRelationship> bySource =
-        reactor.core.publisher.Flux.fromIterable(conceptIds)
-            .flatMap(
-                id ->
-                    api.findRelationships(
-                            branch,
-                            true,
-                            null,
-                            null,
-                            id,
-                            null,
-                            null,
-                            NON_DEFINING_CHARACTERISTIC_TYPE_NAME,
-                            null,
-                            0,
-                            10000,
-                            languageHeader)
-                        .flatMapIterable(
-                            p ->
-                                p.getItems() == null
-                                    ? List.<SnowstormRelationship>of()
-                                    : p.getItems()));
-    reactor.core.publisher.Flux<SnowstormRelationship> byDestination =
-        reactor.core.publisher.Flux.fromIterable(conceptIds)
-            .flatMap(
-                id ->
-                    api.findRelationships(
-                            branch,
-                            true,
-                            null,
-                            null,
-                            null,
-                            null,
-                            id,
-                            NON_DEFINING_CHARACTERISTIC_TYPE_NAME,
-                            null,
-                            0,
-                            10000,
-                            languageHeader)
-                        .flatMapIterable(
-                            p ->
-                                p.getItems() == null
-                                    ? List.<SnowstormRelationship>of()
-                                    : p.getItems()));
-    return reactor.core.publisher.Flux.merge(bySource, byDestination)
-        .collect(
-            java.util.stream.Collectors.toMap(
-                SnowstormRelationship::getRelationshipId, r -> r, (a, b) -> a))
-        .map(map -> List.copyOf(map.values()));
+    Map<String, SnowstormRelationship> byId = new java.util.LinkedHashMap<>();
+    for (String id : conceptIds) {
+      addRelationshipsTo(byId, api, branch, id, /* asSource = */ true);
+      addRelationshipsTo(byId, api, branch, id, /* asSource = */ false);
+    }
+    return List.copyOf(byId.values());
+  }
+
+  private void addRelationshipsTo(
+      Map<String, SnowstormRelationship> byId,
+      RelationshipsApi api,
+      String branch,
+      String conceptId,
+      boolean asSource) {
+    SnowstormItemsPageRelationship page =
+        api.findRelationships(
+                branch,
+                /* active= */ true,
+                /* module= */ null,
+                /* effectiveTime= */ null,
+                /* source= */ asSource ? conceptId : null,
+                /* type= */ null,
+                /* destination= */ asSource ? null : conceptId,
+                NON_DEFINING_CHARACTERISTIC_TYPE_NAME,
+                /* preferredOrAcceptableIn= */ null,
+                /* offset= */ 0,
+                /* limit= */ 10000,
+                languageHeader)
+            .block();
+    if (page == null || page.getItems() == null) return;
+    for (SnowstormRelationship r : page.getItems()) {
+      if (r.getRelationshipId() != null) byId.putIfAbsent(r.getRelationshipId(), r);
+    }
   }
 
   public void deleteRefsetMember(String branch, String memberId) {
