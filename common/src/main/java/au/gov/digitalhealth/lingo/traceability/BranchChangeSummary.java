@@ -69,79 +69,122 @@ public record BranchChangeSummary(
     if (activities == null || activities.isEmpty()) {
       return new BranchChangeSummary(Set.of(), Set.of(), Set.of());
     }
-    // Sort defensively so callers don't have to. Activities with a null commitDate sort last so
-    // they don't get misordered ahead of dated entries; same-date ties keep insertion order.
-    List<Activity> ordered = new ArrayList<>(activities);
-    ordered.sort(
-        Comparator.comparing(
-            Activity::commitDate, Comparator.nullsLast(Comparator.naturalOrder())));
-
-    // Track only the LAST non-superseded change per componentId. For members/rels, DELETE on the
-    // latest change means the component is gone; anything else means it's still there. For
+    // Track only the LAST non-superseded change per componentId. For members/rels, DELETE on
+    // the latest change means the component is gone; anything else means it's still there. For
     // concepts, INACTIVATE on the latest change means the concept ended up retired on this task
     // (so its inherited references may be dangling).
     Map<String, ChangeType> lastMemberChange = new HashMap<>();
     Map<String, ChangeType> lastRelationshipChange = new HashMap<>();
     Map<String, ChangeType> lastConceptChange = new HashMap<>();
-
-    for (Activity activity : ordered) {
-      if (activity == null || activity.conceptChanges() == null) continue;
-      for (ConceptChange conceptChange : activity.conceptChanges()) {
-        if (conceptChange == null || conceptChange.componentChanges() == null) continue;
-        for (ComponentChange change : conceptChange.componentChanges()) {
-          if (change == null) continue;
-          if (Boolean.TRUE.equals(change.superseded())) continue;
-          if (change.componentId() == null
-              || change.componentType() == null
-              || change.changeType() == null) {
-            // The traceability service should never emit a record without these — log it so a
-            // genuine contract violation surfaces instead of being dropped.
-            log.warning(
-                "Skipping malformed traceability ComponentChange on concept "
-                    + conceptChange.conceptId()
-                    + " (componentId="
-                    + change.componentId()
-                    + ", componentType="
-                    + change.componentType()
-                    + ", changeType="
-                    + change.changeType()
-                    + ")");
-            continue;
-          }
-          if (change.componentType() == ComponentType.REFERENCE_SET_MEMBER) {
-            lastMemberChange.put(change.componentId(), change.changeType());
-          } else if (change.componentType() == ComponentType.RELATIONSHIP) {
-            lastRelationshipChange.put(change.componentId(), change.changeType());
-          } else if (change.componentType() == ComponentType.CONCEPT) {
-            lastConceptChange.put(change.componentId(), change.changeType());
-          }
-        }
-      }
+    for (Activity activity : orderedByCommitDate(activities)) {
+      recordActivity(activity, lastMemberChange, lastRelationshipChange, lastConceptChange);
     }
-
     return new BranchChangeSummary(
         stillPresent(lastMemberChange),
         stillPresent(lastRelationshipChange),
-        whereLatestIs(lastConceptChange, ChangeType.INACTIVATE));
+        inactivated(lastConceptChange));
   }
 
+  // Sort defensively so callers don't have to. Activities with a null commitDate sort last so
+  // they don't get misordered ahead of dated entries; same-date ties keep insertion order.
+  private static List<Activity> orderedByCommitDate(List<Activity> activities) {
+    List<Activity> ordered = new ArrayList<>(activities);
+    ordered.sort(
+        Comparator.comparing(
+            Activity::commitDate, Comparator.nullsLast(Comparator.naturalOrder())));
+    return ordered;
+  }
+
+  private static void recordActivity(
+      Activity activity,
+      Map<String, ChangeType> lastMember,
+      Map<String, ChangeType> lastRel,
+      Map<String, ChangeType> lastConcept) {
+    if (activity != null && activity.conceptChanges() != null) {
+      for (ConceptChange conceptChange : activity.conceptChanges()) {
+        recordConceptChange(conceptChange, lastMember, lastRel, lastConcept);
+      }
+    }
+  }
+
+  private static void recordConceptChange(
+      ConceptChange conceptChange,
+      Map<String, ChangeType> lastMember,
+      Map<String, ChangeType> lastRel,
+      Map<String, ChangeType> lastConcept) {
+    if (conceptChange != null && conceptChange.componentChanges() != null) {
+      for (ComponentChange change : conceptChange.componentChanges()) {
+        recordComponentChange(
+            change, conceptChange.conceptId(), lastMember, lastRel, lastConcept);
+      }
+    }
+  }
+
+  private static void recordComponentChange(
+      ComponentChange change,
+      String conceptIdForLog,
+      Map<String, ChangeType> lastMember,
+      Map<String, ChangeType> lastRel,
+      Map<String, ChangeType> lastConcept) {
+    if (change == null || Boolean.TRUE.equals(change.superseded())) {
+      return;
+    }
+    if (!isWellFormed(change)) {
+      // The traceability service should never emit a record without componentId / componentType
+      // / changeType — log it so a genuine contract violation surfaces instead of being dropped.
+      log.log(
+          java.util.logging.Level.WARNING,
+          "Skipping malformed traceability ComponentChange on concept {0}"
+              + " (componentId={1}, componentType={2}, changeType={3})",
+          new Object[] {
+            conceptIdForLog, change.componentId(), change.componentType(), change.changeType()
+          });
+      return;
+    }
+    Map<String, ChangeType> target =
+        mapFor(change.componentType(), lastMember, lastRel, lastConcept);
+    if (target != null) {
+      target.put(change.componentId(), change.changeType());
+    }
+  }
+
+  private static boolean isWellFormed(ComponentChange change) {
+    return change.componentId() != null
+        && change.componentType() != null
+        && change.changeType() != null;
+  }
+
+  // Picks the bucket the change should land in, or null for component types we intentionally
+  // don't track (DESCRIPTION today). Centralised so the recordComponentChange body stays a
+  // straight line of decisions rather than a chain of if/else-if/else-if.
+  private static Map<String, ChangeType> mapFor(
+      ComponentType type,
+      Map<String, ChangeType> lastMember,
+      Map<String, ChangeType> lastRel,
+      Map<String, ChangeType> lastConcept) {
+    return switch (type) {
+      case REFERENCE_SET_MEMBER -> lastMember;
+      case RELATIONSHIP -> lastRel;
+      case CONCEPT -> lastConcept;
+      default -> null;
+    };
+  }
+
+  // The latest change for each component id is anything but a DELETE — so the component is
+  // still present on the branch.
   private static Set<String> stillPresent(Map<String, ChangeType> latest) {
-    return whereLatestIsNot(latest, ChangeType.DELETE);
-  }
-
-  private static Set<String> whereLatestIsNot(
-      Map<String, ChangeType> latest, ChangeType excluded) {
     Set<String> result = new HashSet<>();
     for (Map.Entry<String, ChangeType> entry : latest.entrySet()) {
-      if (entry.getValue() != excluded) result.add(entry.getKey());
+      if (entry.getValue() != ChangeType.DELETE) result.add(entry.getKey());
     }
     return result;
   }
 
-  private static Set<String> whereLatestIs(Map<String, ChangeType> latest, ChangeType wanted) {
+  // The latest change for each component id is INACTIVATE — concepts retired on the task.
+  private static Set<String> inactivated(Map<String, ChangeType> latest) {
     Set<String> result = new HashSet<>();
     for (Map.Entry<String, ChangeType> entry : latest.entrySet()) {
-      if (entry.getValue() == wanted) result.add(entry.getKey());
+      if (entry.getValue() == ChangeType.INACTIVATE) result.add(entry.getKey());
     }
     return result;
   }
