@@ -111,11 +111,11 @@ class SnowstormClientWireContractTest {
   }
 
   @Test
-  void getUnreleasedActiveNonDefiningRelationshipsOnBranch_usesEnumNameNotSctid() {
+  void findActiveNonDefiningRelationshipsForConcepts_usesEnumNameNotSctid() {
     // Snowstorm rejects SCTIDs for the characteristicType query param — it expects the
     // CharacteristicType enum name (ADDITIONAL_RELATIONSHIP). This test pins that contract:
     // it issues the call and verifies the outgoing request carried the enum name.
-    client.getUnreleasedActiveNonDefiningRelationshipsOnBranch(BRANCH).block();
+    client.findActiveNonDefiningRelationshipsForConcepts(BRANCH, java.util.Set.of("100")).block();
 
     List<LoggedRequest> requests =
         wireMock.findAll(anyRequestedFor(urlMatching(".*/relationships.*")));
@@ -128,15 +128,54 @@ class SnowstormClientWireContractTest {
   }
 
   @Test
-  void getUnreleasedActiveRefsetMembersOnBranch_sendsActiveAndNullEffectiveTimeFilters() {
-    client.getUnreleasedActiveRefsetMembersOnBranch(BRANCH).block();
+  void findActiveRefsetMembersForConcepts_sendsActiveAndReferencedComponentIds() {
+    client.findActiveRefsetMembersForConcepts(BRANCH, java.util.Set.of("100")).block();
 
     List<LoggedRequest> requests =
         wireMock.findAll(anyRequestedFor(urlMatching(".*/members/search.*")));
     assertThat(requests).as("members search endpoint should have been called").isNotEmpty();
     String body = requests.get(0).getBodyAsString();
     assertThat(body).contains("\"active\":true");
-    assertThat(body).contains("\"nullEffectiveTime\":true");
+    assertThat(body).contains("\"referencedComponentIds\":[\"100\"]");
+  }
+
+  @Test
+  void fetchRefsetMembersByIds_issuesPerIdGet() {
+    wireMock.stubFor(
+        any(urlMatching(".*/members/m-1"))
+            .willReturn(
+                aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody(
+                        "{\"memberId\":\"m-1\",\"refsetId\":\"r\","
+                            + "\"referencedComponentId\":\"c\",\"active\":true,\"released\":false}")));
+
+    client.fetchRefsetMembersByIds(BRANCH, java.util.Set.of("m-1")).block();
+
+    List<LoggedRequest> requests = wireMock.findAll(anyRequestedFor(urlMatching(".*/members/m-1")));
+    assertThat(requests).as("per-id GET /members/{uuid} should have been called").hasSize(1);
+    assertThat(requests.get(0).getMethod().getName()).isEqualTo("GET");
+  }
+
+  @Test
+  void fetchRelationshipsByIds_issuesPerIdGet() {
+    wireMock.stubFor(
+        any(urlMatching(".*/relationships/r-1"))
+            .willReturn(
+                aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody(
+                        "{\"relationshipId\":\"r-1\",\"sourceId\":\"s\",\"destinationId\":\"d\","
+                            + "\"typeId\":\"t\",\"active\":true,\"released\":false}")));
+
+    client.fetchRelationshipsByIds(BRANCH, java.util.Set.of("r-1")).block();
+
+    List<LoggedRequest> requests =
+        wireMock.findAll(anyRequestedFor(urlMatching(".*/relationships/r-1")));
+    assertThat(requests).as("per-id GET /relationships/{id} should have been called").hasSize(1);
+    assertThat(requests.get(0).getMethod().getName()).isEqualTo("GET");
   }
 
   @Test
@@ -231,41 +270,11 @@ class SnowstormClientWireContractTest {
   }
 
   @Test
-  void getUnreleasedActiveNonDefiningRelationshipsOnBranch_postFiltersToNullEffectiveTime() {
-    // For non-task branches set-difference is bypassed. Verify the post-filter on
-    // effectiveTime == null still works against the single response.
+  void findActiveRefsetMembersForConcepts_returnsItemsFromSearchResponse() {
     String body =
         "{\"items\":["
-            + "  {\"relationshipId\":\"r-unreleased\",\"sourceId\":\"s\",\"destinationId\":\"d\","
-            + "   \"typeId\":\"t\",\"active\":true,\"released\":false,\"effectiveTime\":null},"
-            + "  {\"relationshipId\":\"r-released\",\"sourceId\":\"s\",\"destinationId\":\"d\","
-            + "   \"typeId\":\"t\",\"active\":true,\"released\":true,\"effectiveTime\":\"20240131\"}"
-            + "],\"total\":2,\"limit\":10000,\"offset\":0}";
-    wireMock.stubFor(
-        any(urlMatching(".*/relationships.*"))
-            .willReturn(
-                aResponse()
-                    .withStatus(200)
-                    .withHeader("Content-Type", "application/json")
-                    .withBody(body)));
-
-    List<SnowstormRelationship> result =
-        client.getUnreleasedActiveNonDefiningRelationshipsOnBranch(BRANCH).block();
-
-    assertThat(result)
-        .as("only rows with null effectiveTime pass the post-filter")
-        .extracting(SnowstormRelationship::getRelationshipId)
-        .containsExactly("r-unreleased");
-  }
-
-  @Test
-  void getUnreleasedActiveRefsetMembersOnBranch_returnsUnreleasedActiveMembers() {
-    // For non-task branches set-difference is bypassed. The method just returns whatever the
-    // search came back with (active=true, nullEffectiveTime=true filter applied server-side).
-    String body =
-        "{\"items\":["
-            + "  {\"memberId\":\"m-1\",\"refsetId\":\"r\",\"referencedComponentId\":\"c\","
-            + "   \"active\":true,\"released\":false}"
+            + "  {\"memberId\":\"m-1\",\"refsetId\":\"r\",\"referencedComponentId\":\"100\","
+            + "   \"active\":true,\"released\":true}"
             + "],\"total\":1,\"limit\":10000,\"offset\":0}";
     wireMock.stubFor(
         any(urlMatching(".*/members/search.*"))
@@ -276,7 +285,7 @@ class SnowstormClientWireContractTest {
                     .withBody(body)));
 
     List<SnowstormReferenceSetMember> result =
-        client.getUnreleasedActiveRefsetMembersOnBranch(BRANCH).block();
+        client.findActiveRefsetMembersForConcepts(BRANCH, java.util.Set.of("100")).block();
 
     assertThat(result).extracting(SnowstormReferenceSetMember::getMemberId).containsExactly("m-1");
   }

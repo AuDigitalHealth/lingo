@@ -602,66 +602,111 @@ public class SnowstormClient {
   private static final String NON_DEFINING_CHARACTERISTIC_TYPE_NAME = "ADDITIONAL_RELATIONSHIP";
 
   /**
-   * All unreleased active reference set members on the branch — i.e. members the branch shows as
-   * {@code active=true, effectiveTime=null}. Capped at Snowstorm's Elasticsearch result-window
-   * (offset+limit > {@code index.max_result_window}, default 10000, returns 400). Callers
-   * needing scope-on-this-task semantics should intersect with the traceability change log
-   * rather than asking Snowstorm to compute the difference.
+   * Fetch the named refset members from the branch. Used for scope-on-this-task lookups: the
+   * traceability log gives us the IDs the task authored, and we ask Snowstorm for each so we can
+   * inspect the current referencedComponentId / refsetId / released state. A 404 on any id
+   * propagates — the traceability log claimed it existed.
    */
-  public Mono<List<SnowstormReferenceSetMember>> getUnreleasedActiveRefsetMembersOnBranch(
-      String branch) {
-    SnowstormMemberSearchRequestComponent searchRequestComponent =
-        new SnowstormMemberSearchRequestComponent().active(true).nullEffectiveTime(true);
-    return getRefsetMembersApi()
-        .findRefsetMembers(branch, searchRequestComponent, 0, 10000, languageHeader)
-        .flatMap(
-            page -> {
-              if (page == null) {
-                return Mono.error(
-                    new LingoProblem(
-                        "Snowstorm returned null page from findRefsetMembers on branch " + branch));
-              }
-              return Mono.just(
-                  page.getItems() == null
-                      ? List.<SnowstormReferenceSetMember>of()
-                      : page.getItems());
-            });
+  public Mono<List<SnowstormReferenceSetMember>> fetchRefsetMembersByIds(
+      String branch, Set<String> memberIds) {
+    if (memberIds == null || memberIds.isEmpty()) return Mono.just(List.of());
+    RefsetMembersApi api = getRefsetMembersApi();
+    return reactor.core.publisher.Flux.fromIterable(memberIds)
+        .flatMap(id -> api.fetchMember(branch, id, languageHeader))
+        .collectList();
   }
 
   /**
-   * All unreleased active non-defining relationships on the branch. Snowstorm's
-   * findRelationships has no nullEffectiveTime filter, so we post-filter the active set
-   * client-side to those with {@code effectiveTime == null}.
+   * Fetch the named relationships from the branch. Mirror of {@link #fetchRefsetMembersByIds};
+   * the per-relationship fetch is the only id-keyed lookup Snowstorm exposes for relationships.
    */
-  public Mono<List<SnowstormRelationship>> getUnreleasedActiveNonDefiningRelationshipsOnBranch(
-      String branch) {
+  public Mono<List<SnowstormRelationship>> fetchRelationshipsByIds(
+      String branch, Set<String> relationshipIds) {
+    if (relationshipIds == null || relationshipIds.isEmpty()) return Mono.just(List.of());
     RelationshipsApi api = new RelationshipsApi(getApiClient());
-    return api.findRelationships(
-            branch,
-            true,
-            null,
-            null,
-            null,
-            null,
-            null,
-            NON_DEFINING_CHARACTERISTIC_TYPE_NAME,
-            null,
-            0,
-            10000,
-            languageHeader)
-        .flatMap(
-            page -> {
-              if (page == null) {
-                return Mono.error(
-                    new LingoProblem(
-                        "Snowstorm returned null page from findRelationships on branch "
-                            + branch));
-              }
-              List<SnowstormRelationship> items =
-                  page.getItems() == null ? List.<SnowstormRelationship>of() : page.getItems();
-              return Mono.just(
-                  items.stream().filter(r -> r.getEffectiveTime() == null).toList());
-            });
+    return reactor.core.publisher.Flux.fromIterable(relationshipIds)
+        .flatMap(id -> api.fetchRelationship(branch, id, languageHeader))
+        .collectList();
+  }
+
+  /**
+   * Active refset members on the branch whose referencedComponentId is one of the supplied
+   * concept ids. Used by dangling-reference detection's scenario-B fan-out: when a concept is
+   * inactivated on this task, every active member referencing it (whether on the task path or
+   * inherited) is dangling and needs cleanup.
+   */
+  public Mono<List<SnowstormReferenceSetMember>> findActiveRefsetMembersForConcepts(
+      String branch, Set<String> conceptIds) {
+    if (conceptIds == null || conceptIds.isEmpty()) return Mono.just(List.of());
+    SnowstormMemberSearchRequestComponent request =
+        new SnowstormMemberSearchRequestComponent()
+            .active(true)
+            .referencedComponentIds(List.copyOf(conceptIds));
+    return getRefsetMembersApi()
+        .findRefsetMembers(branch, request, 0, 10000, languageHeader)
+        .map(
+            page ->
+                page.getItems() == null ? List.<SnowstormReferenceSetMember>of() : page.getItems());
+  }
+
+  /**
+   * Active non-defining relationships on the branch where source or destination is one of the
+   * supplied concept ids. Snowstorm's findRelationships filters by a single source or
+   * destination per call, so we issue a fan-out (2N parallel calls) and dedupe.
+   */
+  public Mono<List<SnowstormRelationship>> findActiveNonDefiningRelationshipsForConcepts(
+      String branch, Set<String> conceptIds) {
+    if (conceptIds == null || conceptIds.isEmpty()) return Mono.just(List.of());
+    RelationshipsApi api = new RelationshipsApi(getApiClient());
+    reactor.core.publisher.Flux<SnowstormRelationship> bySource =
+        reactor.core.publisher.Flux.fromIterable(conceptIds)
+            .flatMap(
+                id ->
+                    api.findRelationships(
+                            branch,
+                            true,
+                            null,
+                            null,
+                            id,
+                            null,
+                            null,
+                            NON_DEFINING_CHARACTERISTIC_TYPE_NAME,
+                            null,
+                            0,
+                            10000,
+                            languageHeader)
+                        .flatMapIterable(
+                            p ->
+                                p.getItems() == null
+                                    ? List.<SnowstormRelationship>of()
+                                    : p.getItems()));
+    reactor.core.publisher.Flux<SnowstormRelationship> byDestination =
+        reactor.core.publisher.Flux.fromIterable(conceptIds)
+            .flatMap(
+                id ->
+                    api.findRelationships(
+                            branch,
+                            true,
+                            null,
+                            null,
+                            null,
+                            null,
+                            id,
+                            NON_DEFINING_CHARACTERISTIC_TYPE_NAME,
+                            null,
+                            0,
+                            10000,
+                            languageHeader)
+                        .flatMapIterable(
+                            p ->
+                                p.getItems() == null
+                                    ? List.<SnowstormRelationship>of()
+                                    : p.getItems()));
+    return reactor.core.publisher.Flux.merge(bySource, byDestination)
+        .collect(
+            java.util.stream.Collectors.toMap(
+                SnowstormRelationship::getRelationshipId, r -> r, (a, b) -> a))
+        .map(map -> List.copyOf(map.values()));
   }
 
   public void deleteRefsetMember(String branch, String memberId) {

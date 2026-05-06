@@ -102,6 +102,68 @@ class BranchChangeSummaryTest {
   }
 
   @Test
+  void from_conceptInactivate_recordsInConceptIdsInactivated() {
+    // Pre-existing concept whose latest change is INACTIVATE — its inherited refset members /
+    // relationships need to be cleaned up by detect's scenario-B fan-out.
+    Activity activity =
+        activity(
+            "t1",
+            "2026-01-01T00:00:00Z",
+            "concept-retired",
+            new ComponentChange(
+                "concept-retired",
+                ChangeType.INACTIVATE,
+                ComponentType.CONCEPT,
+                null,
+                true,
+                false));
+
+    BranchChangeSummary summary = BranchChangeSummary.from(List.of(activity));
+
+    assertEquals(Set.of("concept-retired"), summary.conceptIdsInactivatedOnBranch());
+  }
+
+  @Test
+  void from_conceptCreatedThenInactivated_recordsLatestChange() {
+    // CREATE then INACTIVATE — latest change wins, so the concept is marked inactivated.
+    Activity create =
+        activity(
+            "t1",
+            "2026-01-01T00:00:00Z",
+            "concept-1",
+            new ComponentChange(
+                "concept-1", ChangeType.CREATE, ComponentType.CONCEPT, null, true, false));
+    Activity inactivate =
+        activity(
+            "t2",
+            "2026-01-02T00:00:00Z",
+            "concept-1",
+            new ComponentChange(
+                "concept-1", ChangeType.INACTIVATE, ComponentType.CONCEPT, null, true, false));
+
+    BranchChangeSummary summary = BranchChangeSummary.from(List.of(create, inactivate));
+
+    assertEquals(Set.of("concept-1"), summary.conceptIdsInactivatedOnBranch());
+  }
+
+  @Test
+  void from_conceptUpdate_doesNotRecordAsInactivated() {
+    // A non-INACTIVATE change on a concept (CREATE / UPDATE / DELETE) shouldn't fall into the
+    // inactivated set — only an explicit INACTIVATE change qualifies.
+    Activity activity =
+        activity(
+            "t1",
+            "2026-01-01T00:00:00Z",
+            "concept-1",
+            new ComponentChange(
+                "concept-1", ChangeType.UPDATE, ComponentType.CONCEPT, null, true, false));
+
+    BranchChangeSummary summary = BranchChangeSummary.from(List.of(activity));
+
+    assertTrue(summary.conceptIdsInactivatedOnBranch().isEmpty());
+  }
+
+  @Test
   void from_inactivateChange_keepsComponentInStillPresent() {
     // INACTIVATE is not DELETE, so the component is still present on the branch — just inactive.
     // Its referenced concept is still our concern; whether it's a dangling reference depends on

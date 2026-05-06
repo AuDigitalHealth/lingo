@@ -30,21 +30,27 @@ import java.util.logging.Logger;
  * The net effect of a sequence of traceability activities on a single branch.
  *
  * <p>Replays the activity log chronologically (oldest commit first), ignoring entries marked
- * {@code superseded=true}, and reports the refset member and relationship IDs whose latest
- * non-superseded change is not a {@code DELETE}. Concept changes themselves and description
- * changes are intentionally not tracked — dangling-reference detection only inspects components
- * that reference concepts, not the concepts being referenced.
+ * {@code superseded=true}, and reports three id sets keyed by what dangling-reference detection
+ * needs to look up:
  *
- * <p>Used by dangling-reference detection to scope inspection to exactly the components the task
- * actually authored, instead of inferring scope from Snowstorm queries that don't always mean
- * what we want.
+ * <ul>
+ *   <li>{@link #refsetMemberIdsStillOnBranch()} — refset members whose latest non-superseded
+ *       change is not a {@code DELETE}. Used to fetch per-id from Snowstorm and check that each
+ *       member's referenced concept is still active.
+ *   <li>{@link #relationshipIdsStillOnBranch()} — same shape for non-defining relationships.
+ *   <li>{@link #conceptIdsInactivatedOnBranch()} — concepts whose latest non-superseded change
+ *       is an {@code INACTIVATE}. Used to fan out and find any active member or relationship on
+ *       the branch that still references them; those are dangling and need cleanup too.
+ * </ul>
  *
- * <p>The returned record is immutable: the canonical constructor wraps each input set in a
- * defensive {@link Set#copyOf}, so accessors hand out unmodifiable views even if a caller
- * supplied mutable inputs.
+ * <p>Description changes are intentionally not tracked. The returned record is immutable: the
+ * canonical constructor wraps each input set in a defensive {@link Set#copyOf}, so accessors
+ * hand out unmodifiable views even if a caller supplied mutable inputs.
  */
 public record BranchChangeSummary(
-    Set<String> refsetMemberIdsStillOnBranch, Set<String> relationshipIdsStillOnBranch) {
+    Set<String> refsetMemberIdsStillOnBranch,
+    Set<String> relationshipIdsStillOnBranch,
+    Set<String> conceptIdsInactivatedOnBranch) {
 
   private static final Logger log = Logger.getLogger(BranchChangeSummary.class.getName());
 
@@ -53,11 +59,15 @@ public record BranchChangeSummary(
         refsetMemberIdsStillOnBranch == null ? Set.of() : Set.copyOf(refsetMemberIdsStillOnBranch);
     relationshipIdsStillOnBranch =
         relationshipIdsStillOnBranch == null ? Set.of() : Set.copyOf(relationshipIdsStillOnBranch);
+    conceptIdsInactivatedOnBranch =
+        conceptIdsInactivatedOnBranch == null
+            ? Set.of()
+            : Set.copyOf(conceptIdsInactivatedOnBranch);
   }
 
   public static BranchChangeSummary from(List<Activity> activities) {
     if (activities == null || activities.isEmpty()) {
-      return new BranchChangeSummary(Set.of(), Set.of());
+      return new BranchChangeSummary(Set.of(), Set.of(), Set.of());
     }
     // Sort defensively so callers don't have to. Activities with a null commitDate sort last so
     // they don't get misordered ahead of dated entries; same-date ties keep insertion order.
@@ -66,10 +76,13 @@ public record BranchChangeSummary(
         Comparator.comparing(
             Activity::commitDate, Comparator.nullsLast(Comparator.naturalOrder())));
 
-    // Track only the LAST non-superseded change per componentId. ChangeType=DELETE on the latest
-    // change means the component is gone; anything else means it's still there.
+    // Track only the LAST non-superseded change per componentId. For members/rels, DELETE on the
+    // latest change means the component is gone; anything else means it's still there. For
+    // concepts, INACTIVATE on the latest change means the concept ended up retired on this task
+    // (so its inherited references may be dangling).
     Map<String, ChangeType> lastMemberChange = new HashMap<>();
     Map<String, ChangeType> lastRelationshipChange = new HashMap<>();
+    Map<String, ChangeType> lastConceptChange = new HashMap<>();
 
     for (Activity activity : ordered) {
       if (activity == null || activity.conceptChanges() == null) continue;
@@ -99,20 +112,37 @@ public record BranchChangeSummary(
             lastMemberChange.put(change.componentId(), change.changeType());
           } else if (change.componentType() == ComponentType.RELATIONSHIP) {
             lastRelationshipChange.put(change.componentId(), change.changeType());
+          } else if (change.componentType() == ComponentType.CONCEPT) {
+            lastConceptChange.put(change.componentId(), change.changeType());
           }
         }
       }
     }
 
     return new BranchChangeSummary(
-        stillPresent(lastMemberChange), stillPresent(lastRelationshipChange));
+        stillPresent(lastMemberChange),
+        stillPresent(lastRelationshipChange),
+        whereLatestIs(lastConceptChange, ChangeType.INACTIVATE));
   }
 
   private static Set<String> stillPresent(Map<String, ChangeType> latest) {
-    Set<String> present = new HashSet<>();
+    return whereLatestIsNot(latest, ChangeType.DELETE);
+  }
+
+  private static Set<String> whereLatestIsNot(
+      Map<String, ChangeType> latest, ChangeType excluded) {
+    Set<String> result = new HashSet<>();
     for (Map.Entry<String, ChangeType> entry : latest.entrySet()) {
-      if (entry.getValue() != ChangeType.DELETE) present.add(entry.getKey());
+      if (entry.getValue() != excluded) result.add(entry.getKey());
     }
-    return present;
+    return result;
+  }
+
+  private static Set<String> whereLatestIs(Map<String, ChangeType> latest, ChangeType wanted) {
+    Set<String> result = new HashSet<>();
+    for (Map.Entry<String, ChangeType> entry : latest.entrySet()) {
+      if (entry.getValue() == wanted) result.add(entry.getKey());
+    }
+    return result;
   }
 }

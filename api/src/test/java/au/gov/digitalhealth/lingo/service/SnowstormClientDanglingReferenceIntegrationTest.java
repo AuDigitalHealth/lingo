@@ -81,34 +81,30 @@ class SnowstormClientDanglingReferenceIntegrationTest {
   }
 
   @Test
-  void getUnreleasedActiveRefsetMembersOnBranch_acceptsLiveSnowstormResponse() {
-    assertThatCode(() -> client.getUnreleasedActiveRefsetMembersOnBranch(BRANCH).block())
-        .doesNotThrowAnyException();
-  }
-
-  @Test
-  void getUnreleasedActiveRefsetMembersOnBranch_returnsEmptyForCleanReleasedMain() {
-    // Members on MAIN of a freshly imported release have effectiveTime set, so the
-    // nullEffectiveTime=true filter must yield an empty list. Anything non-empty here would
-    // signal that our scope filter is broken and we'd be tidying inherited released members.
+  void findActiveRefsetMembersForConcepts_emptyConceptSet_returnsEmpty() {
     List<SnowstormReferenceSetMember> result =
-        client.getUnreleasedActiveRefsetMembersOnBranch(BRANCH).block();
+        client.findActiveRefsetMembersForConcepts(BRANCH, java.util.Set.of()).block();
     assertThat(result).isEmpty();
   }
 
   @Test
-  void getUnreleasedActiveNonDefiningRelationshipsOnBranch_acceptsLiveSnowstormResponse() {
+  void findActiveNonDefiningRelationshipsForConcepts_acceptsLiveSnowstormResponse() {
     // This is the test that would have caught the original bug where we passed the SCTID
     // 900000000000227009 instead of the CharacteristicType enum name ADDITIONAL_RELATIONSHIP —
     // Snowstorm responds with 400 Bad Request on a malformed characteristicType.
-    assertThatCode(() -> client.getUnreleasedActiveNonDefiningRelationshipsOnBranch(BRANCH).block())
+    assertThatCode(
+            () ->
+                client
+                    .findActiveNonDefiningRelationshipsForConcepts(
+                        BRANCH, java.util.Set.of("138875005"))
+                    .block())
         .doesNotThrowAnyException();
   }
 
   @Test
-  void getUnreleasedActiveNonDefiningRelationshipsOnBranch_returnsEmptyForCleanReleasedMain() {
+  void findActiveNonDefiningRelationshipsForConcepts_emptyConceptSet_returnsEmpty() {
     List<SnowstormRelationship> result =
-        client.getUnreleasedActiveNonDefiningRelationshipsOnBranch(BRANCH).block();
+        client.findActiveNonDefiningRelationshipsForConcepts(BRANCH, java.util.Set.of()).block();
     assertThat(result).isEmpty();
   }
 

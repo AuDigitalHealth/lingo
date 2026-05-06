@@ -34,6 +34,7 @@ import au.gov.digitalhealth.lingo.util.SnomedIdentifierUtil;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -287,39 +288,34 @@ public class DanglingReferenceService {
   }
 
   private DetectionContext collect(String branch) {
-    // Phase 1: parallel — fetch every unreleased active refset member and non-defining
-    // relationship visible on the branch, plus the traceability log of what was actually
-    // authored on it. The traceability log is the authoritative scope; the Snowstorm queries
-    // give us the current state of those components.
-    var phase1 =
+    // Phase 1: traceability is the authoritative scope. Get it first; everything else flows
+    // from the ids it returns.
+    BranchChangeSummary summary =
+        BranchChangeSummary.from(
+            traceabilityServiceClient.getContentChangeActivitiesOnBranch(branch));
+
+    // Phase 2: parallel — fetch the actual member/relationship payloads for the ids the task
+    // authored, plus (in parallel) any active refset members and non-defining relationships
+    // anywhere on the branch that reference a concept the task inactivated. Together these are
+    // the candidate set: anything authored on the task whose target may be invalid, and any
+    // existing reference to a concept the task just retired.
+    var phase2 =
         Mono.zip(
-                snowstormClient.getUnreleasedActiveRefsetMembersOnBranch(branch),
-                snowstormClient.getUnreleasedActiveNonDefiningRelationshipsOnBranch(branch),
-                Mono.fromSupplier(
-                    () -> traceabilityServiceClient.getContentChangeActivitiesOnBranch(branch)))
+                snowstormClient.fetchRefsetMembersByIds(
+                    branch, summary.refsetMemberIdsStillOnBranch()),
+                snowstormClient.fetchRelationshipsByIds(
+                    branch, summary.relationshipIdsStillOnBranch()),
+                snowstormClient.findActiveRefsetMembersForConcepts(
+                    branch, summary.conceptIdsInactivatedOnBranch()),
+                snowstormClient.findActiveNonDefiningRelationshipsForConcepts(
+                    branch, summary.conceptIdsInactivatedOnBranch()))
             .block();
 
-    List<SnowstormReferenceSetMember> allActiveMembers = phase1.getT1();
-    List<SnowstormRelationship> allActiveRels = phase1.getT2();
-    BranchChangeSummary summary = BranchChangeSummary.from(phase1.getT3());
-
-    // Phase 2: intersect the active components on the branch with the traceability scope. A
-    // member that's active+unreleased on the branch but doesn't appear as still-present in the
-    // traceability log was inherited (not authored on this task) — out of scope.
-    Set<String> taskMemberIds = summary.refsetMemberIdsStillOnBranch();
-    Set<String> taskRelationshipIds = summary.relationshipIdsStillOnBranch();
-    List<SnowstormReferenceSetMember> taskMembers =
-        allActiveMembers.stream()
-            .filter(m -> m.getMemberId() != null && taskMemberIds.contains(m.getMemberId()))
-            .filter(DanglingReferenceService::referencesAConcept)
-            .toList();
-    List<SnowstormRelationship> taskRels =
-        allActiveRels.stream()
-            .filter(
-                r ->
-                    r.getRelationshipId() != null
-                        && taskRelationshipIds.contains(r.getRelationshipId()))
-            .toList();
+    // Combine the authored-on-task and references-to-inactivated sets. Dedupe by id so we
+    // don't double-flag a member that was both authored on the task and references an
+    // inactivated concept.
+    List<SnowstormReferenceSetMember> taskMembers = mergeMembers(phase2.getT1(), phase2.getT3());
+    List<SnowstormRelationship> taskRels = mergeRelationships(phase2.getT2(), phase2.getT4());
 
     // Phase 3: bulk-fetch the referenced concepts (refset, referencedComponent, source,
     // destination, type) so we can determine each component's status. Synchronous — runs on the
@@ -339,6 +335,56 @@ public class DanglingReferenceService {
   private static boolean referencesAConcept(SnowstormReferenceSetMember m) {
     String id = m.getReferencedComponentId();
     return id != null && SnomedIdentifierUtil.isValid(id, PartitionIdentifier.CONCEPT);
+  }
+
+  // Combine the authored-on-task members and the references-to-inactivated members, deduping by
+  // memberId. Authored-on-task wins on collisions because we want detect() to operate on the
+  // task's view of the member (the dangling-reference behaviour is identical either way; it's
+  // bookkeeping that matters for the audit log in tidy()).
+  private static List<SnowstormReferenceSetMember> mergeMembers(
+      List<SnowstormReferenceSetMember> authoredOnTask,
+      List<SnowstormReferenceSetMember> referencingInactivated) {
+    Map<String, SnowstormReferenceSetMember> byId = new LinkedHashMap<>();
+    addMembers(authoredOnTask, byId, false);
+    addMembers(referencingInactivated, byId, true);
+    return List.copyOf(byId.values());
+  }
+
+  private static void addMembers(
+      List<SnowstormReferenceSetMember> source,
+      Map<String, SnowstormReferenceSetMember> byId,
+      boolean keepExisting) {
+    for (SnowstormReferenceSetMember m : source) {
+      if (m.getMemberId() == null || !referencesAConcept(m)) continue;
+      if (keepExisting) {
+        byId.putIfAbsent(m.getMemberId(), m);
+      } else {
+        byId.put(m.getMemberId(), m);
+      }
+    }
+  }
+
+  private static List<SnowstormRelationship> mergeRelationships(
+      List<SnowstormRelationship> authoredOnTask,
+      List<SnowstormRelationship> referencingInactivated) {
+    Map<String, SnowstormRelationship> byId = new LinkedHashMap<>();
+    addRelationships(authoredOnTask, byId, false);
+    addRelationships(referencingInactivated, byId, true);
+    return List.copyOf(byId.values());
+  }
+
+  private static void addRelationships(
+      List<SnowstormRelationship> source,
+      Map<String, SnowstormRelationship> byId,
+      boolean keepExisting) {
+    for (SnowstormRelationship r : source) {
+      if (r.getRelationshipId() == null) continue;
+      if (keepExisting) {
+        byId.putIfAbsent(r.getRelationshipId(), r);
+      } else {
+        byId.put(r.getRelationshipId(), r);
+      }
+    }
   }
 
   // True for members whose refset is one of the well-known refsets that legitimately point to
