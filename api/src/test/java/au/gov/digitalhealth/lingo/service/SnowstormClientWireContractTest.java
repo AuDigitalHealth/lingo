@@ -57,11 +57,8 @@ class SnowstormClientWireContractTest {
   private SnowstormClient client;
 
   @BeforeAll
-  void startWireMock() throws ReflectiveOperationException {
-    wireMock =
-        new WireMockServer(
-            WireMockConfiguration.wireMockConfig().dynamicPort().bindAddress("127.0.0.1"));
-    wireMock.start();
+  void startWireMock() throws ReflectiveOperationException, java.io.IOException {
+    wireMock = startWireMockOnUncontestedPort();
     String url = "http://127.0.0.1:" + wireMock.port();
     WebClient webClient = WebClient.builder().baseUrl(url).build();
     client =
@@ -75,6 +72,72 @@ class SnowstormClientWireContractTest {
     // waitForBranchLock loops at least once and reads the stubbed branch metadata.
     setField("maxBranchLockChecks", 5);
     setField("delayBetweenBranchLockChecks", 1L);
+  }
+
+  /**
+   * Start WireMock on a port that *actually* reaches WireMock when connected to.
+   *
+   * <p>WireMock's {@code dynamicPort()} asks the OS for an unused port via {@code ServerSocket(0)}.
+   * That's normally fine, but Testcontainers running in the same JVM publish container ports via
+   * Docker iptables NAT — which forwards 127.0.0.1:&lt;hostPort&gt; to the container without
+   * binding the port at the OS-socket layer. {@code ServerSocket(0)} doesn't see those NAT-only
+   * ports as in-use and may hand WireMock a port that's already being intercepted by iptables; the
+   * test then sends requests to "WireMock" and gets routed straight into the Snowstorm
+   * Testcontainer (returning 400/404 instead of stub responses, which is what was happening on CI).
+   *
+   * <p>Fix: try a few times. After each {@code start()}, hit a sentinel endpoint and check that the
+   * response body matches what we stubbed. If a Docker NAT rule is intercepting, the body won't
+   * match (or we get a connection error) and we retry on a fresh dynamic port. This costs a few
+   * extra port hops in the worst case but eliminates the silent collision entirely.
+   */
+  private static WireMockServer startWireMockOnUncontestedPort() throws java.io.IOException {
+    final String sentinel = "/__wiremock_sentinel__";
+    final String token = "wiremock-" + java.util.UUID.randomUUID();
+    java.util.List<WireMockServer> abandoned = new java.util.ArrayList<>();
+    try {
+      for (int attempt = 0; attempt < 8; attempt++) {
+        WireMockServer wm =
+            new WireMockServer(
+                WireMockConfiguration.wireMockConfig().dynamicPort().bindAddress("127.0.0.1"));
+        wm.start();
+        wm.stubFor(
+            com.github.tomakehurst.wiremock.client.WireMock.get(
+                    com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo(sentinel))
+                .willReturn(
+                    com.github.tomakehurst.wiremock.client.WireMock.aResponse()
+                        .withStatus(200)
+                        .withBody(token)));
+        if (sentinelReturnsExpectedToken(wm.port(), sentinel, token)) {
+          wm.resetAll();
+          return wm;
+        }
+        // Port is being intercepted by something else (almost certainly Docker iptables NAT for a
+        // Testcontainer). Keep WireMock alive on this port — stopping it could free the port for
+        // the OS to hand back to us next attempt, looping forever — and try again on a new port.
+        abandoned.add(wm);
+      }
+      throw new IllegalStateException(
+          "Could not start WireMock on a port that reaches WireMock after 8 attempts; suspected "
+              + "Docker iptables collision with a Testcontainer in the same JVM");
+    } finally {
+      for (WireMockServer wm : abandoned) wm.stop();
+    }
+  }
+
+  private static boolean sentinelReturnsExpectedToken(int port, String path, String expectedBody) {
+    try {
+      java.net.HttpURLConnection conn =
+          (java.net.HttpURLConnection)
+              java.net.URI.create("http://127.0.0.1:" + port + path).toURL().openConnection();
+      conn.setConnectTimeout(2000);
+      conn.setReadTimeout(2000);
+      if (conn.getResponseCode() != 200) return false;
+      try (java.io.InputStream in = conn.getInputStream()) {
+        return expectedBody.equals(new String(in.readAllBytes()));
+      }
+    } catch (java.io.IOException e) {
+      return false;
+    }
   }
 
   private void setField(String name, Object value) throws ReflectiveOperationException {

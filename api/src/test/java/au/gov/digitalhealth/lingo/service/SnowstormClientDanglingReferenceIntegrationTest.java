@@ -17,7 +17,6 @@ package au.gov.digitalhealth.lingo.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
@@ -32,7 +31,6 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 /**
  * Integration test for SnowstormClient's dangling-reference helpers against a real Snowstorm
@@ -114,17 +112,18 @@ class SnowstormClientDanglingReferenceIntegrationTest {
   }
 
   @Test
-  void fetchRefsetMembersByIds_unknownId_throws404() {
-    // The traceability log claims a member exists. If Snowstorm doesn't have it, fail loudly
-    // (don't silently skip work the caller was told would happen) — this test pins the contract
-    // that an unknown id surfaces a WebClient 404 rather than swallowing it.
-    assertThatThrownBy(
-            () ->
-                client
-                    .fetchRefsetMembersByIds(
-                        BRANCH, java.util.Set.of("00000000-0000-0000-0000-000000000000"))
-                    .block())
-        .isInstanceOf(WebClientResponseException.NotFound.class);
+  void fetchRefsetMembersByIds_unknownId_logsAndSkips() {
+    // The traceability log can race with revert/delete operations on the same branch — by the
+    // time we read it back, an authored id may already be gone. Treating that single 404 as a
+    // hard failure would collapse the rest of the dangling-detection batch (it's all in one
+    // Mono.zip), so SnowstormClient catches WebClientResponseException.NotFound per-id, logs a
+    // warning, and returns the surviving members. This test pins that contract end-to-end.
+    List<SnowstormReferenceSetMember> result =
+        client
+            .fetchRefsetMembersByIds(
+                BRANCH, java.util.Set.of("00000000-0000-0000-0000-000000000000"))
+            .block();
+    assertThat(result).isEmpty();
   }
 
   @Test
@@ -135,9 +134,9 @@ class SnowstormClientDanglingReferenceIntegrationTest {
   }
 
   @Test
-  void fetchRelationshipsByIds_unknownId_throws404() {
-    assertThatThrownBy(
-            () -> client.fetchRelationshipsByIds(BRANCH, java.util.Set.of("999999999")).block())
-        .isInstanceOf(WebClientResponseException.NotFound.class);
+  void fetchRelationshipsByIds_unknownId_logsAndSkips() {
+    List<SnowstormRelationship> result =
+        client.fetchRelationshipsByIds(BRANCH, java.util.Set.of("999999999")).block();
+    assertThat(result).isEmpty();
   }
 }
