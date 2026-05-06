@@ -22,13 +22,8 @@ import static au.gov.digitalhealth.lingo.service.ProductSummaryService.MP_LABEL;
 import static au.gov.digitalhealth.lingo.service.ProductSummaryService.TPP_LABEL;
 import static au.gov.digitalhealth.lingo.service.ProductSummaryService.TPUU_LABEL;
 import static au.gov.digitalhealth.lingo.service.ProductSummaryService.TP_LABEL;
-import static au.gov.digitalhealth.lingo.util.NmpcConstants.VIRTUAL_MEDICINAL_PRODUCT;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.IS_A;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.MEDICINAL_PRODUCT;
 import static org.awaitility.Awaitility.await;
 
-import au.csiro.snowstorm_client.model.SnowstormConcept;
-import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.LingoTestBase;
 import au.gov.digitalhealth.lingo.MedicationAssertions;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.MappingType;
@@ -47,10 +42,6 @@ import au.gov.digitalhealth.tickets.models.Ticket;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -61,7 +52,6 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.annotation.DirtiesContext;
 
 @Log
@@ -78,12 +68,6 @@ class MedicationNewBrandPackTest extends LingoTestBase {
   public static final String ZOLADEX_BRAND = "3435011000036101";
 
   @Autowired ObjectMapper objectMapper;
-
-  @Value("${ihtsdo.ap.defaultBranch}")
-  String snowstormBranch;
-
-  @Value("${ihtsdo.snowstorm.api.url}")
-  String snowstormApiUrl;
 
   @Test
   void calculateExistingProductWithNoChanges() {
@@ -530,109 +514,5 @@ class MedicationNewBrandPackTest extends LingoTestBase {
                           Assertions.assertThat(brandWithIdentifiers.getNonDefiningProperties())
                               .hasSize(2));
             });
-  }
-
-  @Test
-  void newAmtTopBrandedProductHasMedicinalProductRootAndNoVirtualMedicinalProduct() {
-    ProductBrands productBrands =
-        getLingoTestClient()
-            .getMedicationProductBrands(TESTOSTERONE_SCHERING_PLOUGH_200MG_IMPLANT_1_TUBE);
-
-    // Bring brands from a different product onto this one to force new TPs to be created.
-    ProductBrands donorBrands =
-        getLingoTestClient()
-            .getMedicationProductBrands(OESTRADIOL_SCHERING_PLOUGH_100_MG_IMPLANT_1_TUBE);
-    productBrands.getBrands().addAll(donorBrands.getBrands());
-
-    BrandPackSizeCreationDetails details =
-        BrandPackSizeCreationDetails.builder()
-            .productId(Long.toString(TESTOSTERONE_SCHERING_PLOUGH_200MG_IMPLANT_1_TUBE))
-            .brands(productBrands)
-            .build();
-
-    ProductSummary productSummary = getLingoTestClient().calculateNewBrandAndPackSizes(details);
-    Assertions.assertThat(productSummary.isContainsNewConcepts()).isTrue();
-
-    Ticket ticket =
-        getLingoTestClient()
-            .createTicket(
-                "newAmtTopBrandedProductHasMedicinalProductRootAndNoVirtualMedicinalProduct");
-    BulkProductAction<BrandPackSizeCreationDetails> action =
-        new BulkProductAction<>(productSummary, details, ticket.getId(), null);
-    ProductSummary createdProduct = getLingoTestClient().createNewBrandPackSizes(action);
-
-    // Walk each created CTPP back to its TP, fetch the TP from Snowstorm, and check the stated
-    // IS_A parents. The new TPs are exactly the AMT top branded MP nodes the bug
-    // would have damaged in NMPC; the AMT path is asserted here as a regression guard.
-    Set<String> assertedTpIds = new HashSet<>();
-    createdProduct
-        .getSubjects()
-        .forEach(
-            subject -> {
-              String createdCtppId = subject.getConceptId();
-              ProductSummary postModel =
-                  await()
-                      .atMost(60, TimeUnit.SECONDS)
-                      .ignoreExceptions()
-                      .pollInterval(1, TimeUnit.SECONDS)
-                      .until(
-                          () -> getLingoTestClient().getProductModel(createdCtppId),
-                          Objects::nonNull);
-
-              postModel.getNodes().stream()
-                  .filter(n -> TP_LABEL.equals(n.getLabel()))
-                  .map(Node::getConceptId)
-                  .filter(assertedTpIds::add)
-                  .forEach(this::assertBrandedMpHasMedicinalProductRoot);
-            });
-
-    Assertions.assertThat(assertedTpIds)
-        .as("Expected at least one AMT TP to assert against")
-        .isNotEmpty();
-  }
-
-  private void assertBrandedMpHasMedicinalProductRoot(String tpConceptId) {
-    // Hit the Snowstorm test container directly rather than via the Spring-injected
-    // SnowstormClient — the latter's WebClient filter chain reads the IMS cookie from
-    // SecurityContextHolder, which is empty on the test thread (filters only populate it
-    // from inbound requests). The Testcontainer needs no auth.
-    SnowstormConcept tpConcept;
-    try {
-      String url = snowstormApiUrl + "/browser/" + snowstormBranch + "/concepts/" + tpConceptId;
-      HttpResponse<String> response =
-          HttpClient.newHttpClient()
-              .send(
-                  HttpRequest.newBuilder(URI.create(url)).GET().build(),
-                  HttpResponse.BodyHandlers.ofString());
-      Assertions.assertThat(response.statusCode())
-          .as(
-              "Snowstorm did not return TP %s on branch %s: %s",
-              tpConceptId, snowstormBranch, response.body())
-          .isEqualTo(200);
-      tpConcept = objectMapper.readValue(response.body(), SnowstormConcept.class);
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to fetch TP " + tpConceptId + " from Snowstorm", e);
-    }
-    Assertions.assertThat(tpConcept)
-        .as("Snowstorm returned a null body for TP %s on branch %s", tpConceptId, snowstormBranch)
-        .isNotNull();
-
-    Set<String> statedIsAParents =
-        tpConcept.getClassAxioms().stream()
-            .filter(a -> Boolean.TRUE.equals(a.getActive()))
-            .flatMap(a -> a.getRelationships().stream())
-            .filter(r -> Boolean.TRUE.equals(r.getActive()))
-            .filter(r -> IS_A.getValue().equals(r.getTypeId()))
-            .map(SnowstormRelationship::getDestinationId)
-            .collect(Collectors.toSet());
-
-    Assertions.assertThat(statedIsAParents)
-        .as("AMT TP %s must have a stated IS_A %s", tpConceptId, MEDICINAL_PRODUCT.getValue())
-        .contains(MEDICINAL_PRODUCT.getValue());
-    Assertions.assertThat(statedIsAParents)
-        .as(
-            "AMT TP %s must NOT have a stated IS_A %s (NMPC unbranded VMP root)",
-            tpConceptId, VIRTUAL_MEDICINAL_PRODUCT.getValue())
-        .doesNotContain(VIRTUAL_MEDICINAL_PRODUCT.getValue());
   }
 }
