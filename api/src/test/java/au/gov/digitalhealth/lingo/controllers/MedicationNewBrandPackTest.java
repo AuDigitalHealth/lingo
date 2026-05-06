@@ -43,11 +43,14 @@ import au.gov.digitalhealth.lingo.product.bulk.BrandPackSizeCreationDetails;
 import au.gov.digitalhealth.lingo.product.bulk.BulkProductAction;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
-import au.gov.digitalhealth.lingo.service.SnowstormClient;
 import au.gov.digitalhealth.tickets.models.Ticket;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -76,10 +79,11 @@ class MedicationNewBrandPackTest extends LingoTestBase {
 
   @Autowired ObjectMapper objectMapper;
 
-  @Autowired SnowstormClient snowstormClient;
-
   @Value("${ihtsdo.ap.defaultBranch}")
   String snowstormBranch;
+
+  @Value("${ihtsdo.snowstorm.api.url}")
+  String snowstormApiUrl;
 
   @Test
   void calculateExistingProductWithNoChanges() {
@@ -588,10 +592,29 @@ class MedicationNewBrandPackTest extends LingoTestBase {
   }
 
   private void assertBrandedMpHasMedicinalProductRoot(String tpConceptId) {
-    SnowstormConcept tpConcept =
-        snowstormClient.getBrowserConcept(snowstormBranch, tpConceptId).block();
+    // Hit the Snowstorm test container directly rather than via the Spring-injected
+    // SnowstormClient — the latter's WebClient filter chain reads the IMS cookie from
+    // SecurityContextHolder, which is empty on the test thread (filters only populate it
+    // from inbound requests). The Testcontainer needs no auth.
+    SnowstormConcept tpConcept;
+    try {
+      String url = snowstormApiUrl + "/browser/" + snowstormBranch + "/concepts/" + tpConceptId;
+      HttpResponse<String> response =
+          HttpClient.newHttpClient()
+              .send(
+                  HttpRequest.newBuilder(URI.create(url)).GET().build(),
+                  HttpResponse.BodyHandlers.ofString());
+      Assertions.assertThat(response.statusCode())
+          .as(
+              "Snowstorm did not return TP %s on branch %s: %s",
+              tpConceptId, snowstormBranch, response.body())
+          .isEqualTo(200);
+      tpConcept = objectMapper.readValue(response.body(), SnowstormConcept.class);
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to fetch TP " + tpConceptId + " from Snowstorm", e);
+    }
     Assertions.assertThat(tpConcept)
-        .as("Snowstorm did not return new TP %s on branch %s", tpConceptId, snowstormBranch)
+        .as("Snowstorm returned a null body for TP %s on branch %s", tpConceptId, snowstormBranch)
         .isNotNull();
 
     Set<String> statedIsAParents =
