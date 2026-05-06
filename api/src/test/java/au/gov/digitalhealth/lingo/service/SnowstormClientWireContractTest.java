@@ -91,10 +91,14 @@ class SnowstormClientWireContractTest {
   @BeforeEach
   void resetStubs() {
     wireMock.resetAll();
-    // Default: any unmatched request returns an empty page so missing stubs surface as
-    // assertion failures, not silent 404s.
+    // WireMock matches stubs by priority (lower number = higher priority); ties fall back to
+    // registration order. Setting priorities explicitly removes any JVM-dependent ordering: the
+    // catch-all sits at priority 10 and the specific stubs override it at priority 1. Without
+    // this, CI runs were observed to fall through to a default 404 because the more-specific
+    // /branches/ matcher lost to the anyUrl() catch-all under some JVM orderings.
     wireMock.stubFor(
         any(anyUrl())
+            .atPriority(10)
             .willReturn(
                 aResponse()
                     .withStatus(200)
@@ -104,6 +108,7 @@ class SnowstormClientWireContractTest {
     // mutating endpoints (updateConcept, etc.) proceed.
     wireMock.stubFor(
         any(urlMatching(".*/branches/.*"))
+            .atPriority(1)
             .willReturn(
                 aResponse()
                     .withStatus(200)
@@ -201,6 +206,7 @@ class SnowstormClientWireContractTest {
             + "]}";
     wireMock.stubFor(
         any(urlMatching(".*/browser/.*/concepts/c-source"))
+            .atPriority(1)
             .willReturn(
                 aResponse()
                     .withStatus(200)
@@ -240,13 +246,16 @@ class SnowstormClientWireContractTest {
     String foundBody = "{\"memberId\":\"m-found\",\"refsetId\":\"refset-1\",\"active\":true}";
     wireMock.stubFor(
         get(urlMatching(".*/members/m-found.*"))
+            .atPriority(1)
             .willReturn(
                 aResponse()
                     .withStatus(200)
                     .withHeader("Content-Type", "application/json")
                     .withBody(foundBody)));
     wireMock.stubFor(
-        get(urlMatching(".*/members/m-missing.*")).willReturn(aResponse().withStatus(404)));
+        get(urlMatching(".*/members/m-missing.*"))
+            .atPriority(1)
+            .willReturn(aResponse().withStatus(404)));
 
     List<SnowstormReferenceSetMember> result =
         client
