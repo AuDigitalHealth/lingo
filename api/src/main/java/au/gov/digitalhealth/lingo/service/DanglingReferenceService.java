@@ -18,6 +18,7 @@ package au.gov.digitalhealth.lingo.service;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.promotion.ConceptStatus;
 import au.gov.digitalhealth.lingo.promotion.DanglingNonDefiningRelationship;
 import au.gov.digitalhealth.lingo.promotion.DanglingReferenceSummary;
@@ -44,6 +45,7 @@ import java.util.logging.Level;
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
 /**
@@ -239,7 +241,7 @@ public class DanglingReferenceService {
               + ": "
               + action);
       succeeded.add(new TidySuccess(TidyKind.REFSET_MEMBER, m.getMemberId(), action));
-    } catch (WebClientException e) {
+    } catch (WebClientException | LingoProblem e) {
       log.log(
           Level.SEVERE,
           "Tidy of refset member "
@@ -284,7 +286,7 @@ public class DanglingReferenceService {
               + action);
       succeeded.add(
           new TidySuccess(TidyKind.NON_DEFINING_RELATIONSHIP, r.getRelationshipId(), action));
-    } catch (WebClientException e) {
+    } catch (WebClientException | LingoProblem e) {
       log.log(
           Level.SEVERE,
           "Tidy of non-defining relationship "
@@ -526,9 +528,7 @@ public class DanglingReferenceService {
   // (often the only place Snowstorm returns the actual reason) plus the status, and a sensible
   // default for everything else.
   private static String errorMessage(Throwable e) {
-    if (e
-        instanceof
-        org.springframework.web.reactive.function.client.WebClientResponseException wre) {
+    if (e instanceof WebClientResponseException wre) {
       String body = wre.getResponseBodyAsString();
       String prefix = wre.getStatusCode() + " from Snowstorm";
       return (!body.isBlank()) ? prefix + ": " + body : prefix;
@@ -561,7 +561,7 @@ public class DanglingReferenceService {
 
   // The three required fields a non-defining relationship must have for us to act on it. The
   // toDanglingRel helper relies on each being non-null when constructing the DTO, so the
-  // invariant must be enforced here — adding typeId fixes the gap the previous version left.
+  // invariant must be enforced here.
   private boolean isWellFormed(SnowstormRelationship r, String branch) {
     if (r.getRelationshipId() == null || r.getSourceId() == null || r.getTypeId() == null) {
       log.warning(

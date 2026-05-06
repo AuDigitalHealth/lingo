@@ -28,6 +28,7 @@ import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
+import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.promotion.ConceptStatus;
 import au.gov.digitalhealth.lingo.promotion.DanglingNonDefiningRelationship;
 import au.gov.digitalhealth.lingo.promotion.DanglingReferenceSummary;
@@ -707,12 +708,11 @@ class DanglingReferenceServiceTest {
     assertThat(result.failed().get(0).errorMessage()).contains("500");
   }
 
-  // Catch in tidy() is narrowed to WebClientException so non-HTTP errors (programming bugs,
-  // SecurityException, etc.) bubble up rather than being silently swallowed and marked as a
-  // routine "this id failed" entry. Pinning the behaviour: a NullPointerException thrown by the
-  // SnowstormClient must propagate from tidy().
+  // tidy() catches HTTP errors (WebClientException + LingoProblem) and records them as
+  // TidyFailure rows; everything else (programming bugs, SecurityException, ...) must
+  // propagate so the caller sees the real problem instead of a routine "this id failed" entry.
   @Test
-  void tidy_propagatesNonWebClientErrors() {
+  void tidy_propagatesNonHttpErrors() {
     SnowstormReferenceSetMember m1 = member("m1", C_REFSET, C_DELETED, false);
 
     when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))
@@ -733,9 +733,8 @@ class DanglingReferenceServiceTest {
         .hasMessageContaining("programming bug");
   }
 
-  // isWellFormed requires relationshipId, sourceId, and typeId to be non-null. The previous
-  // version skipped only on null relationshipId/sourceId, leaving null typeId to slip through
-  // toDanglingRel which then crashed on @NonNull. Pin the typeId check explicitly.
+  // typeId must be non-null upstream of toDanglingRel, which @NonNull-asserts each of the three
+  // IDs.
   @Test
   void detect_skipsMalformedRelationshipMissingTypeId() {
     SnowstormRelationship malformed =
@@ -760,5 +759,71 @@ class DanglingReferenceServiceTest {
     assertThat(summary.danglingNonDefiningRelationships())
         .as("malformed relationship without typeId must not surface as dangling")
         .isEmpty();
+  }
+
+  // SnowstormClient's mutation methods catch RuntimeException internally and rethrow as
+  // LingoProblem (sibling of WebClientException, not subclass) — so tidy() must catch both or
+  // every Snowstorm-side failure aborts the loop on the first error instead of being recorded
+  // as a TidyFailure.
+  @Test
+  void tidy_recordsLingoProblemAsFailure() {
+    SnowstormReferenceSetMember m1 = member("m1", C_REFSET, C_DELETED, false);
+    SnowstormReferenceSetMember m2 = member("m2", C_REFSET, C_DELETED, false);
+
+    when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))
+        .thenReturn(traceabilityScope(List.of("m1", "m2"), List.of()));
+    when(snowstormClient.fetchRefsetMembersByIds(eq(BRANCH), any()))
+        .thenReturn(Mono.just(List.of(m1, m2)));
+    when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any())).thenReturn(List.of());
+
+    doAnswer(
+            invocation -> {
+              if ("m2".equals(invocation.getArgument(1))) {
+                throw new LingoProblem(
+                    "delete-failed",
+                    "Failed to delete refset member",
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "snowstorm rejected the delete");
+              }
+              return null;
+            })
+        .when(snowstormClient)
+        .deleteRefsetMember(eq(BRANCH), any());
+
+    TidyResult result = service.tidy(BRANCH);
+
+    assertThat(result.succeeded()).extracting(TidySuccess::id).containsExactly("m1");
+    assertThat(result.failed())
+        .as("tidy must record LingoProblem as a per-id failure, not abort the whole loop")
+        .extracting(TidyFailure::id, TidyFailure::attemptedAction)
+        .containsExactly(tuple("m2", TidyAction.DELETED));
+  }
+
+  // mergeRelationships uses Precedence.AUTHORED_WINS — pin it so a future swap of the call
+  // ordering in mergeRelationships shows up as a test failure (otherwise tidy could end up
+  // operating on the inherited copy whose released flag may differ, flipping a
+  // delete-vs-inactivate decision).
+  @Test
+  void detect_dedupesRelationshipsAndKeepsAuthoredCopy() {
+    SnowstormRelationship authored = relationship("r-dual", C_RETIRED, C_ACTIVE, "t", true);
+    SnowstormRelationship referencingInactivated =
+        relationship("r-dual", C_RETIRED, C_ACTIVE, "t", false);
+
+    when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))
+        .thenReturn(traceabilityScope(List.of(), List.of("r-dual")));
+    when(snowstormClient.fetchRelationshipsByIds(eq(BRANCH), any()))
+        .thenReturn(Mono.just(List.of(authored)));
+    when(snowstormClient.findActiveNonDefiningRelationshipsForConcepts(eq(BRANCH), any()))
+        .thenReturn(Mono.just(List.of(referencingInactivated)));
+    when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
+        .thenReturn(List.of(concept(C_RETIRED, false, null), concept(C_ACTIVE, true, null)));
+
+    DanglingReferenceSummary summary = service.detect(BRANCH);
+
+    assertThat(summary.danglingNonDefiningRelationships())
+        .extracting(
+            DanglingNonDefiningRelationship::relationshipId,
+            DanglingNonDefiningRelationship::released)
+        .containsExactly(tuple("r-dual", true));
   }
 }
