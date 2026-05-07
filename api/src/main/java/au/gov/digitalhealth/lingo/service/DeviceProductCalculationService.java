@@ -59,6 +59,7 @@ import au.gov.digitalhealth.lingo.service.validators.ValidationResult;
 import au.gov.digitalhealth.lingo.util.AmtConstants;
 import au.gov.digitalhealth.lingo.util.BigDecimalFormatter;
 import au.gov.digitalhealth.lingo.util.ExternalIdentifierUtils;
+import au.gov.digitalhealth.lingo.util.NmpcConstants;
 import au.gov.digitalhealth.lingo.util.NonDefiningPropertyUtils;
 import au.gov.digitalhealth.lingo.util.ReferenceSetUtils;
 import au.gov.digitalhealth.lingo.util.SnomedConstants;
@@ -228,7 +229,8 @@ public class DeviceProductCalculationService
             packageDetails.getIdFsnMap(),
             packageDetails.getIdPtMap(),
             AmtConstants.values(),
-            SnomedConstants.values());
+            SnomedConstants.values(),
+            NmpcConstants.values());
 
     validateInputData(branch, packageDetails, modelConfiguration).throwIfInvalid();
 

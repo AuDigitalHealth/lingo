@@ -93,6 +93,7 @@ import au.gov.digitalhealth.lingo.service.validators.MedicationDetailsValidator;
 import au.gov.digitalhealth.lingo.service.validators.ValidationResult;
 import au.gov.digitalhealth.lingo.util.AmtConstants;
 import au.gov.digitalhealth.lingo.util.BigDecimalFormatter;
+import au.gov.digitalhealth.lingo.util.NmpcConstants;
 import au.gov.digitalhealth.lingo.util.OwlAxiomService;
 import au.gov.digitalhealth.lingo.util.ReferenceSetUtils;
 import au.gov.digitalhealth.lingo.util.RelationshipSorter;
@@ -383,7 +384,8 @@ public class MedicationProductCalculationService
             packageDetails.getIdFsnMap(),
             packageDetails.getIdPtMap(),
             AmtConstants.values(),
-            SnomedConstants.values()));
+            SnomedConstants.values(),
+            NmpcConstants.values()));
   }
 
   @Override
