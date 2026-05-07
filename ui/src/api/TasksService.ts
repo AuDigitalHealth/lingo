@@ -34,6 +34,10 @@ import {
   ReviewMessagePost,
   ReviewedList,
 } from '../types/ConceptReview';
+import {
+  DanglingReferenceSummary,
+  TidyResult,
+} from '../types/danglingReferences';
 
 const TasksServices = {
   // TODO more useful way to handle errors? retry? something about tasks service being down etc.
@@ -162,6 +166,30 @@ const TasksServices = {
     }
     const returnTask = await this.getTask(projectKey, taskKey);
     return returnTask;
+  },
+  async getDanglingReferences(
+    projectKey: string,
+    taskKey: string,
+  ): Promise<DanglingReferenceSummary> {
+    const response = await api.get<DanglingReferenceSummary>(
+      `/api/tasks/${projectKey}/${taskKey}/dangling-references`,
+    );
+    if (response.status !== 200) {
+      this.handleErrors();
+    }
+    return response.data;
+  },
+  async tidyDanglingReferences(
+    projectKey: string,
+    taskKey: string,
+  ): Promise<TidyResult> {
+    const response = await api.post<TidyResult>(
+      `/api/tasks/${projectKey}/${taskKey}/dangling-references/tidy`,
+    );
+    if (response.status !== 200) {
+      this.handleErrors();
+    }
+    return response.data;
   },
   async submitForReview(
     projectKey: string | undefined,
