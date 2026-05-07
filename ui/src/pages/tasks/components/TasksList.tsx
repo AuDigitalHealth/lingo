@@ -18,7 +18,7 @@ import {
 import { Card, Chip, Grid } from '@mui/material';
 import { Link } from 'react-router-dom';
 
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import statusToColor from '../../../utils/statusToColor.ts';
 import { ValidationColor } from '../../../types/validationColor.ts';
 
@@ -96,6 +96,10 @@ function TasksList({
   const { applicationConfig } = useApplicationConfigStore();
   const { fieldBindings } = useFieldBindings(applicationConfig.apDefaultBranch);
   const { serviceStatus } = useServiceStatus();
+  const [paginationModel, setPaginationModel] = useState({
+    page: 0,
+    pageSize: 10,
+  });
 
   const validationStatusMap = getAllKeyValueMapForTheKey(
     fieldBindings,
@@ -548,22 +552,24 @@ function TasksList({
                     }
                   : {}
               }
-              initialState={
+              paginationModel={!naked ? paginationModel : undefined}
+              onPaginationModelChange={
                 !naked
-                  ? {
-                      pagination: {
-                        paginationModel: { page: 0, pageSize: 10 },
-                      },
-                      sorting: {
-                        sortModel: [{ field: 'key', sort: 'desc' }],
-                      },
-                    }
-                  : {
-                      sorting: {
-                        sortModel: [{ field: 'key', sort: 'desc' }],
-                      },
-                    }
+                  ? newModel =>
+                      setPaginationModel(prev => ({
+                        ...newModel,
+                        page:
+                          newModel.pageSize !== prev.pageSize
+                            ? 0
+                            : newModel.page,
+                      }))
+                  : undefined
               }
+              initialState={{
+                sorting: {
+                  sortModel: [{ field: 'key', sort: 'desc' }],
+                },
+              }}
               pageSizeOptions={
                 !naked ? [10, 15, 20, 25, 100, { value: -1, label: 'All' }] : []
               }
@@ -571,6 +577,14 @@ function TasksList({
               disableColumnMenu={naked}
               disableRowSelectionOnClick={naked}
               hideFooter={naked}
+              localeText={{
+                MuiTablePagination: {
+                  labelDisplayedRows: ({ from, to, count }) => {
+                    if (from > to) return `1–${count} of ${count}`;
+                    return `${from}–${to === -1 ? count : to} of ${count}`;
+                  },
+                },
+              }}
             />
           </Card>
         </Grid>
