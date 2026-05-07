@@ -15,6 +15,7 @@
  */
 package au.gov.digitalhealth.lingo.validation;
 
+import au.gov.digitalhealth.lingo.configuration.FieldBindingConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.product.NewConceptDetails;
 import jakarta.annotation.PostConstruct;
@@ -39,8 +40,8 @@ public class ValidPreferredTermLengthValidator
 
   private static final int DEFAULT_MAX_LENGTH = 4096;
 
-  @Value("${description.preferredTerm.maxLength:}")
-  private String preferredTermMaxLengthConfig;
+  @Autowired
+  private FieldBindingConfiguration fieldBindingConfiguration;
 
   @Value("${ihtsdo.ap.defaultBranch}")
   private String defaultBranch;
@@ -52,6 +53,7 @@ public class ValidPreferredTermLengthValidator
 
   @PostConstruct
   private void init() {
+    String preferredTermMaxLengthConfig = fieldBindingConfiguration.getPreferredTermMaxLength();
     if (preferredTermMaxLengthConfig == null || preferredTermMaxLengthConfig.isBlank()) {
       return;
     }

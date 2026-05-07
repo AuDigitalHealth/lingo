@@ -15,6 +15,7 @@
  */
 package au.gov.digitalhealth.lingo.validation;
 
+import au.gov.digitalhealth.lingo.configuration.FieldBindingConfiguration;
 import jakarta.annotation.PostConstruct;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
@@ -22,7 +23,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -33,8 +34,8 @@ public class ValidDescriptionValidation implements ConstraintValidator<ValidDesc
   private Pattern invalidCharPattern;
   private boolean validationActive = false; // Flag to indicate if validation is active
 
-  @Value("${description.validation.regex:}")
-  private String descriptionValidationRegex;
+  @Autowired
+  private FieldBindingConfiguration fieldBindingConfiguration;
 
   private String fieldName;
 
@@ -44,6 +45,7 @@ public class ValidDescriptionValidation implements ConstraintValidator<ValidDesc
    */
   @PostConstruct
   private void initPattern() {
+    String descriptionValidationRegex = fieldBindingConfiguration.getDescriptionValidationRegex();
     if (descriptionValidationRegex == null || descriptionValidationRegex.trim().isEmpty()) {
       log.warn(
           "No description validation regex provided (description.validation.regex). "

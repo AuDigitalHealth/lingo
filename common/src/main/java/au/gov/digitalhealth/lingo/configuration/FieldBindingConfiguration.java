@@ -39,12 +39,17 @@ public class FieldBindingConfiguration {
 
   Map<String, Map<String, String>> mappers = new HashMap<>();
 
+  private Map<String, String> resolveMapperForDefaultBranch() {
+    String normalizedBranch = apDefaultBranch.replace("/", "_");
+    return mappers.getOrDefault(
+        normalizedBranch, mappers.entrySet().iterator().next().getValue());
+  }
+
   @Cacheable(cacheNames = CacheConstants.VALIDATION_EXCLUDED_SUBSTANCES)
   public Set<String> getExcludedSubstances() {
-    // will use default branch for now
-    Map<String, String> resultMap =
-        mappers.getOrDefault(apDefaultBranch, mappers.entrySet().iterator().next().getValue());
-    String excludedItems = resultMap.getOrDefault("product.validation.exclude.substances", "");
+    String excludedItems =
+        resolveMapperForDefaultBranch()
+            .getOrDefault("product.validation.exclude.substances", "");
     return Arrays.stream(excludedItems.split(","))
         .map(String::trim)
         .filter(item -> !item.isEmpty())
@@ -53,9 +58,17 @@ public class FieldBindingConfiguration {
 
   @Cacheable(cacheNames = CacheConstants.BRAND_SEMANTIC_TAG)
   public String getBrandSemanticTag() {
-    // will use default branch for now
-    Map<String, String> resultMap =
-        mappers.getOrDefault(apDefaultBranch, mappers.entrySet().iterator().next().getValue());
-    return resultMap.getOrDefault("product.productName.semanticTag", "");
+    return resolveMapperForDefaultBranch().getOrDefault("product.productName.semanticTag", "");
+  }
+
+  @Cacheable(cacheNames = CacheConstants.PREFERRED_TERM_MAX_LENGTH)
+  public String getPreferredTermMaxLength() {
+    return resolveMapperForDefaultBranch()
+        .getOrDefault("description.preferredTerm.maxLength", "");
+  }
+
+  @Cacheable(cacheNames = CacheConstants.DESCRIPTION_VALIDATION_REGEX)
+  public String getDescriptionValidationRegex() {
+    return resolveMapperForDefaultBranch().getOrDefault("description.validation.regex", "");
   }
 }
