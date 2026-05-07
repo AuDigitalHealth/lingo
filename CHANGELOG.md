@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
+- Enforce configurable maximum character length for preferred terms, resolved per language refset, on concept authoring and edit term screens
 
 
 ## [1.3.38] - 2026-04-24
