@@ -442,6 +442,7 @@ export function TicketsBacklogView({
       loading={loading}
       onPage={onPaginationChange}
       paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
+      currentPageReportTemplate="({currentPage} of {totalPages}) · {totalRecords} results"
       pageLinkSize={10}
       emptyMessage="No Tickets Found"
       header={header}
