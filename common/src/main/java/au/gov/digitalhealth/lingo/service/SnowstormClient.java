@@ -597,6 +597,256 @@ public class SnowstormClient {
         branch, true, null, null, conceptId, null, null, null, null, null, null, languageHeader);
   }
 
+  // Snowstorm's findRelationships expects the CharacteristicType enum name, not the SCTID
+  // (900000000000227009).
+  private static final String NON_DEFINING_CHARACTERISTIC_TYPE_NAME = "ADDITIONAL_RELATIONSHIP";
+
+  /**
+   * Fetch the named refset members from the branch. Used for scope-on-this-task lookups: the
+   * traceability log gives us the IDs the task authored, and we ask Snowstorm for each so we can
+   * inspect the current referencedComponentId / refsetId / released state.
+   *
+   * <p>A 404 on any id is logged and skipped. The traceability log claimed it existed, so a
+   * miss usually means the component was deleted between traceability writing the activity and
+   * us reading it (e.g. a concurrent revert), or the id is from a path that doesn't reach this
+   * branch — neither warrants aborting the rest of the fan-out, but we shouldn't be silent about
+   * it either. Other failures (5xx, timeout, deserialisation) propagate.
+   *
+   * <p>Implemented as a synchronous loop with per-id {@code .block()} rather than a reactive
+   * {@code Flux.flatMap} chain. The latter subscribes follow-up calls from netty event-loop
+   * threads where the request-scoped {@code SecurityContextHolder} ThreadLocal — relied on by
+   * the {@code AuthHelper.addImsAuthCookie} filter — is empty, causing NPE on the IMS cookie.
+   */
+  public Mono<List<SnowstormReferenceSetMember>> fetchRefsetMembersByIds(
+      String branch, Set<String> memberIds) {
+    if (memberIds == null || memberIds.isEmpty()) return Mono.just(List.of());
+    return Mono.fromSupplier(() -> fetchRefsetMembersByIdsSync(branch, memberIds));
+  }
+
+  private List<SnowstormReferenceSetMember> fetchRefsetMembersByIdsSync(
+      String branch, Set<String> memberIds) {
+    RefsetMembersApi api = getRefsetMembersApi();
+    List<SnowstormReferenceSetMember> result = new ArrayList<>(memberIds.size());
+    for (String id : memberIds) {
+      try {
+        SnowstormReferenceSetMember m = api.fetchMember(branch, id, languageHeader).block();
+        if (m != null) result.add(m);
+      } catch (WebClientResponseException.NotFound e) {
+        log.warning(
+            "Refset member " + id + " not found on branch " + branch + " — skipping (traceability log claimed it existed)");
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Fetch the named relationships from the branch. Mirror of {@link #fetchRefsetMembersByIds} —
+   * synchronous loop, 404 logged and skipped, other errors propagate.
+   */
+  public Mono<List<SnowstormRelationship>> fetchRelationshipsByIds(
+      String branch, Set<String> relationshipIds) {
+    if (relationshipIds == null || relationshipIds.isEmpty()) return Mono.just(List.of());
+    return Mono.fromSupplier(() -> fetchRelationshipsByIdsSync(branch, relationshipIds));
+  }
+
+  private List<SnowstormRelationship> fetchRelationshipsByIdsSync(
+      String branch, Set<String> relationshipIds) {
+    RelationshipsApi api = new RelationshipsApi(getApiClient());
+    List<SnowstormRelationship> result = new ArrayList<>(relationshipIds.size());
+    for (String id : relationshipIds) {
+      try {
+        SnowstormRelationship r = api.fetchRelationship(branch, id, languageHeader).block();
+        if (r != null) result.add(r);
+      } catch (WebClientResponseException.NotFound e) {
+        log.warning(
+            "Relationship " + id + " not found on branch " + branch + " — skipping (traceability log claimed it existed)");
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Active refset members on the branch whose referencedComponentId is one of the supplied
+   * concept ids. Used by dangling-reference detection's scenario-B fan-out: when a concept is
+   * inactivated on this task, every active member referencing it (whether on the task path or
+   * inherited) is dangling and needs cleanup.
+   */
+  public Mono<List<SnowstormReferenceSetMember>> findActiveRefsetMembersForConcepts(
+      String branch, Set<String> conceptIds) {
+    if (conceptIds == null || conceptIds.isEmpty()) return Mono.just(List.of());
+    SnowstormMemberSearchRequestComponent request =
+        new SnowstormMemberSearchRequestComponent()
+            .active(true)
+            .referencedComponentIds(List.copyOf(conceptIds));
+    return getRefsetMembersApi()
+        .findRefsetMembers(branch, request, 0, 10000, languageHeader)
+        .map(
+            page ->
+                page.getItems() == null ? List.<SnowstormReferenceSetMember>of() : page.getItems());
+  }
+
+  /**
+   * Active non-defining relationships on the branch where source or destination is one of the
+   * supplied concept ids. Snowstorm's findRelationships filters by a single source or
+   * destination per call, so we issue a fan-out (2N requests) and dedupe by relationshipId.
+   *
+   * <p>Synchronous loop rather than reactive fan-out for the same reason as
+   * {@link #fetchRefsetMembersByIds}: each follow-up Snowstorm call needs the IMS auth filter
+   * to run on a thread that has the request's SecurityContextHolder.
+   */
+  public Mono<List<SnowstormRelationship>> findActiveNonDefiningRelationshipsForConcepts(
+      String branch, Set<String> conceptIds) {
+    if (conceptIds == null || conceptIds.isEmpty()) return Mono.just(List.of());
+    return Mono.fromSupplier(() -> findActiveNonDefiningRelationshipsForConceptsSync(branch, conceptIds));
+  }
+
+  private List<SnowstormRelationship> findActiveNonDefiningRelationshipsForConceptsSync(
+      String branch, Set<String> conceptIds) {
+    RelationshipsApi api = new RelationshipsApi(getApiClient());
+    Map<String, SnowstormRelationship> byId = new java.util.LinkedHashMap<>();
+    for (String id : conceptIds) {
+      addRelationshipsTo(byId, api, branch, id, /* asSource = */ true);
+      addRelationshipsTo(byId, api, branch, id, /* asSource = */ false);
+    }
+    return List.copyOf(byId.values());
+  }
+
+  private void addRelationshipsTo(
+      Map<String, SnowstormRelationship> byId,
+      RelationshipsApi api,
+      String branch,
+      String conceptId,
+      boolean asSource) {
+    SnowstormItemsPageRelationship page =
+        api.findRelationships(
+                branch,
+                /* active= */ true,
+                /* module= */ null,
+                /* effectiveTime= */ null,
+                /* source= */ asSource ? conceptId : null,
+                /* type= */ null,
+                /* destination= */ asSource ? null : conceptId,
+                NON_DEFINING_CHARACTERISTIC_TYPE_NAME,
+                /* preferredOrAcceptableIn= */ null,
+                /* offset= */ 0,
+                /* limit= */ 10000,
+                languageHeader)
+            .block();
+    if (page == null || page.getItems() == null) return;
+    for (SnowstormRelationship r : page.getItems()) {
+      if (r.getRelationshipId() != null) byId.putIfAbsent(r.getRelationshipId(), r);
+    }
+  }
+
+  public void deleteRefsetMember(String branch, String memberId) {
+    try {
+      getRefsetMembersApi()
+          .deleteMembers(
+              branch,
+              new SnowstormMemberIdsPojoComponent().memberIds(Set.of(memberId)),
+              false)
+          .block();
+    } catch (RuntimeException e) {
+      throw new LingoProblem(
+          "Failed to delete refset member "
+              + memberId
+              + " on branch "
+              + branch
+              + ": "
+              + e.getMessage(),
+          e);
+    }
+  }
+
+  public void inactivateRefsetMember(String branch, SnowstormReferenceSetMember member) {
+    try {
+      SnowstormReferenceSetMemberViewComponent view =
+          new SnowstormReferenceSetMemberViewComponent()
+              .memberId(member.getMemberId())
+              .active(false)
+              .refsetId(member.getRefsetId())
+              .moduleId(member.getModuleId())
+              .referencedComponentId(member.getReferencedComponentId())
+              .additionalFields(member.getAdditionalFields());
+      // updateMember in the generated client takes (branch, uuid, view).
+      getRefsetMembersApi().updateMember(branch, member.getMemberId(), view).block();
+    } catch (RuntimeException e) {
+      throw new LingoProblem(
+          "Failed to inactivate refset member "
+              + member.getMemberId()
+              + " on branch "
+              + branch
+              + ": "
+              + e.getMessage(),
+          e);
+    }
+  }
+
+  public void deleteRelationship(String branch, String relationshipId) {
+    try {
+      new RelationshipsApi(getApiClient())
+          .deleteRelationship(branch, relationshipId, false)
+          .block();
+    } catch (RuntimeException e) {
+      throw new LingoProblem(
+          "Failed to delete relationship "
+              + relationshipId
+              + " on branch "
+              + branch
+              + ": "
+              + e.getMessage(),
+          e);
+    }
+  }
+
+  // Snowstorm does not expose a relationship update endpoint directly. Inactivating a
+  // released non-defining relationship requires fetching the parent concept via the
+  // browser API, flipping the relationship's active flag, and PUTting the concept back.
+  public void inactivateRelationship(String branch, SnowstormRelationship relationship) {
+    String relationshipId = relationship.getRelationshipId();
+    String sourceId = relationship.getSourceId();
+    if (sourceId == null) {
+      throw new LingoProblem(
+          "Cannot inactivate relationship " + relationshipId + " — sourceId is null");
+    }
+    try {
+      SnowstormConcept parent = getBrowserConcept(branch, sourceId).block();
+      if (parent == null || parent.getRelationships() == null) {
+        throw new LingoProblem(
+            "Source concept " + sourceId + " not found or has no relationships on branch " + branch);
+      }
+      boolean found = false;
+      for (SnowstormRelationship r : parent.getRelationships()) {
+        if (relationshipId.equals(r.getRelationshipId())) {
+          r.setActive(false);
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        throw new LingoProblem(
+            "Relationship "
+                + relationshipId
+                + " not found on source concept "
+                + sourceId
+                + " on branch "
+                + branch);
+      }
+      updateConcept(branch, sourceId, parent, false);
+    } catch (LingoProblem lp) {
+      throw lp;
+    } catch (RuntimeException e) {
+      throw new LingoProblem(
+          "Failed to inactivate relationship "
+              + relationshipId
+              + " on branch "
+              + branch
+              + ": "
+              + e.getMessage(),
+          e);
+    }
+  }
+
   public Collection<SnowstormReferenceSetMember> getAllRefsetMembers(
       String branch, Collection<String> concepts, String referenceSetId, String module, int limit) {
     SnowstormMemberSearchRequestComponent searchRequestComponent =
@@ -1027,9 +1277,36 @@ public class SnowstormClient {
         .toList();
   }
 
-  @Cacheable(
-      value = CacheConstants.SNOWSTORM_CONCEPTS_BY_IDS,
-      keyGenerator = "branchAwareKeyGenerator")
+  /**
+   * POST-based bulk concept lookup. Uses {@code /browser/{branch}/concepts/bulk-load} so the
+   * conceptIds travel in the request body — safer than {@link #getConceptsById(String, Set)}
+   * when the id set is large enough that the GET form's repeated {@code conceptIds=} query
+   * params would overrun reverse-proxy URI length limits. Returns SnowstormConceptMini values
+   * (id, active flag, PT) extracted from the full browser-concept responses.
+   *
+   * <p>Not @Cacheable — the BranchAwareKeyGenerator depends on the request-scoped branch
+   * timestamp service, so any caller that invokes this from a Reactor scheduler thread (rather
+   * than the request thread) would trip ScopeNotActiveException. Callers should invoke this on
+   * the request thread.
+   */
+  public List<SnowstormConceptMini> getConceptsByIdViaSearch(String branch, Set<String> ids) {
+    if (ids == null || ids.isEmpty()) return List.of();
+    SnowstormConceptBulkLoadRequestComponent request =
+        new SnowstormConceptBulkLoadRequestComponent().conceptIds(List.copyOf(ids));
+    List<SnowstormConcept> concepts =
+        getConceptsApi().getBrowserConcepts(branch, request, languageHeader).collectList().block();
+    if (concepts == null) return List.of();
+    return concepts.stream()
+        .map(
+            c ->
+                new SnowstormConceptMini()
+                    .conceptId(c.getConceptId())
+                    .active(c.getActive())
+                    .pt(c.getPt())
+                    .fsn(c.getFsn()))
+        .toList();
+  }
+
   public List<SnowstormConceptMini> getConceptsById(String branch, Set<String> ids) {
     SnowstormItemsPageObject page =
         getConceptsApi()
