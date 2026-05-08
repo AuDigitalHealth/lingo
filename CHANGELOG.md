@@ -21,6 +21,7 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 - Fix NMPC concept ids (e.g. Virtual medicinal product) leaking into the name generator input as raw SCTIDs by seeding the FSN/PT cache with `NmpcConstants` alongside `AmtConstants` and `SnomedConstants`.
 - Some concepts were defaulting to Primitive when they should not have been
 - After creating a task previously the application would sometimes hang for a long time, this no longer happens.
+- Fix null pointer exception in quantity unit validation for unit "each"
 - 
 ## [1.3.38] - 2026-04-24
 
