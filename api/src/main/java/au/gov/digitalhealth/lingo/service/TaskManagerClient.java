@@ -21,6 +21,7 @@ import au.gov.digitalhealth.lingo.util.ClientHelper;
 import au.gov.digitalhealth.lingo.util.Task;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -28,7 +29,10 @@ import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.interceptor.SimpleKey;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -42,6 +46,7 @@ public class TaskManagerClient {
 
   private final WebClient defaultAuthoringPlatformApiClient;
   @Autowired private AllTasksService allTasksService;
+  @Autowired private CacheManager cacheManager;
 
   @Value("${ihtsdo.ap.projectKey}")
   Set<String> apProjects;
@@ -102,7 +107,17 @@ public class TaskManagerClient {
             .bodyToMono(Task.class)
             .block();
     if (createdTask != null) {
-      allTasksService.refreshCache(); // async call
+      Cache cache = cacheManager.getCache(CacheConstants.ALL_TASKS_CACHE);
+      if (cache != null) {
+        List<Task> cached = cache.get(SimpleKey.EMPTY, List.class);
+        if (cached != null) {
+          List<Task> updated = new ArrayList<>(cached);
+          updated.add(createdTask);
+          cache.put(SimpleKey.EMPTY, updated);
+        } else {
+          allTasksService.refreshCache();
+        }
+      }
     }
     return createdTask;
   }

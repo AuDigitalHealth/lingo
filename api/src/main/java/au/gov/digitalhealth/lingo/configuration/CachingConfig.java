@@ -25,6 +25,7 @@ import static au.gov.digitalhealth.lingo.util.CacheConstants.USERS_CACHE;
 import au.gov.digitalhealth.lingo.service.AllTasksService;
 import au.gov.digitalhealth.lingo.service.JiraUserManagerService;
 import au.gov.digitalhealth.lingo.service.SnowstormClient;
+import au.gov.digitalhealth.lingo.service.TaskAssociationCleanupService;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,6 +44,7 @@ public class CachingConfig implements CachingConfigurer {
 
   SnowstormClient snowstormClient;
   AllTasksService allTasksService;
+  TaskAssociationCleanupService taskAssociationCleanupService;
 
   JiraUserManagerService jiraUserManagerService;
 
@@ -55,10 +57,12 @@ public class CachingConfig implements CachingConfigurer {
   CachingConfig(
       SnowstormClient snowstormClient,
       JiraUserManagerService jiraUserManagerService,
-      AllTasksService allTasksService) {
+      AllTasksService allTasksService,
+      TaskAssociationCleanupService taskAssociationCleanupService) {
     this.snowstormClient = snowstormClient;
     this.jiraUserManagerService = jiraUserManagerService;
     this.allTasksService = allTasksService;
+    this.taskAssociationCleanupService = taskAssociationCleanupService;
   }
 
   @CacheEvict(value = USERS_CACHE, allEntries = true)
@@ -96,7 +100,9 @@ public class CachingConfig implements CachingConfigurer {
   @Scheduled(fixedRateString = "${caching.spring.allTaskTTL}")
   public void refreshAllTasksCache() {
     log.info("Triggering async refresh of cache [" + allTasksService.getCacheName() + "]");
-    allTasksService.refreshCache();
+    allTasksService
+        .refreshCache()
+        .thenAccept(taskAssociationCleanupService::cleanupTerminalTaskAssociations);
   }
 
   @CacheEvict(value = COMPOSITE_UNIT_CACHE)
