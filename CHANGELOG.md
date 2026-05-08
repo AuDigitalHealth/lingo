@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
-## [Unreleased]
+## [1.3.39] - 2026-05-08
 
 ### Added
 - On task promotion, detect dangling reference set members and non-defining relationships left by Authoring Platform retire/delete actions and offer to tidy them (delete unreleased, inactivate released) before promoting (#1753)
