@@ -22,7 +22,9 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 - Some concepts were defaulting to Primitive when they should not have been
 - After creating a task previously the application would sometimes hang for a long time, this no longer happens.
 - Fix null pointer exception in quantity unit validation for unit "each"
-- 
+- Fix new brand and pack size feature so that cloned source modelling (e.g. NMPC nutritional `IS_A NMPC Oral Nutritional product`) is preserved on new branded concepts, and the SNOMED CT `Medicinal product` root is used at the top branded level for both AMT and NMPC instead of `Virtual medicinal product`.
+
+
 ## [1.3.38] - 2026-04-24
 
 

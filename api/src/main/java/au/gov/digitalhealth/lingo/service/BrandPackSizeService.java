@@ -62,7 +62,6 @@ import au.gov.digitalhealth.lingo.service.namegenerator.NodeNameGenerator;
 import au.gov.digitalhealth.lingo.service.validators.ValidationResult;
 import au.gov.digitalhealth.lingo.util.AmtConstants;
 import au.gov.digitalhealth.lingo.util.BigDecimalFormatter;
-import au.gov.digitalhealth.lingo.util.NmpcConstants;
 import au.gov.digitalhealth.lingo.util.RelationshipSorter;
 import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
@@ -528,6 +527,12 @@ public class BrandPackSizeService {
     // combination
     Map<Pair<String, ModelLevelType>, Set<CompletableFuture<Node>>> brandedProductFutureMap =
         new HashMap<>();
+    // IS_A relationships pointing at these are stripped when cloning so the orchestration
+    // can re-link them to the newly minted branded ancestors; everything else on the source
+    // axiom is preserved.
+    final Set<String> existingBrandedProductConceptIds =
+        brandedProductNodeMap.values().stream().map(Node::getConceptId).collect(Collectors.toSet());
+
     if (brands != null) {
       for (BrandWithIdentifiers brandPackSizeEntry : brands.getBrands()) {
         SnowstormConceptMini brand = brandPackSizeEntry.getBrand();
@@ -549,6 +554,7 @@ public class BrandPackSizeService {
                                 brandPackSizeEntry.getNonDefiningProperties(),
                                 isDevice,
                                 node.getModelLevel(),
+                                existingBrandedProductConceptIds,
                                 nameGenerator)
                             .thenApply(
                                 n -> {
@@ -889,40 +895,43 @@ public class BrandPackSizeService {
             });
   }
 
-  private CompletableFuture<Node> createNewBrandedProductNode(
-      String branch,
-      SnowstormConcept leafProductConcept,
+  /**
+   * Clones the source branded product's axiom relationships into the relationships for a new
+   * branded product:
+   *
+   * <ul>
+   *   <li>IS_A relationships whose destination is in {@code existingBrandedProductConceptIds} are
+   *       stripped (the caller re-attaches IS_A to the newly minted branded ancestors).
+   *   <li>HAS_PRODUCT_NAME is retargeted to {@code brand}.
+   *   <li>If {@code modelLevelType} has no branded ancestors and no IS_A to MEDICINAL_PRODUCT was
+   *       cloned, IS_A MEDICINAL_PRODUCT is added so the top branded level always carries the
+   *       SNOMED root parent.
+   *   <li>All output relationships are flagged as stated.
+   * </ul>
+   */
+  static Set<SnowstormRelationship> buildNewBrandedProductRelationships(
+      Set<SnowstormRelationship> sourceAxiomRelationships,
       SnowstormConceptMini brand,
-      AtomicCache atomicCache,
-      Set<NonDefiningBase> properties,
-      boolean isDevice,
       ModelLevelType modelLevelType,
-      NodeNameGenerator nameGenerator) {
-
-    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
-    ModelLevel modelLevel = modelConfiguration.getLevelOfType(modelLevelType);
-
+      Set<String> existingBrandedProductConceptIds,
+      String moduleId) {
     Set<SnowstormRelationship> relationships =
-        cloneNewRelationships(
-                SnowstormDtoUtil.getRelationshipsFromAxioms(leafProductConcept),
-                modelConfiguration.getModuleId())
-            .stream()
-            .filter(relationship -> !relationship.getTypeId().equals(IS_A.getValue()))
+        cloneNewRelationships(sourceAxiomRelationships, moduleId).stream()
+            .filter(
+                relationship ->
+                    !(relationship.getTypeId().equals(IS_A.getValue())
+                        && existingBrandedProductConceptIds.contains(
+                            relationship.getDestinationId())))
             .collect(Collectors.toSet());
 
-    if (modelLevelType.getAncestors().stream().noneMatch(ModelLevelType::isBranded)) {
-      if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
-        relationships.add(
-            SnowstormDtoUtil.getSnowstormRelationship(
-                IS_A,
-                NmpcConstants.VIRTUAL_MEDICINAL_PRODUCT,
-                0,
-                modelConfiguration.getModuleId()));
-      } else {
-        relationships.add(
-            SnowstormDtoUtil.getSnowstormRelationship(
-                IS_A, MEDICINAL_PRODUCT, 0, modelConfiguration.getModuleId()));
-      }
+    if (modelLevelType.getAncestors().stream().noneMatch(ModelLevelType::isBranded)
+        && relationships.stream()
+            .noneMatch(
+                r ->
+                    r.getTypeId().equals(IS_A.getValue())
+                        && MEDICINAL_PRODUCT.getValue().equals(r.getDestinationId()))) {
+      relationships.add(
+          SnowstormDtoUtil.getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT, 0, moduleId));
     }
 
     relationships.forEach(
@@ -934,6 +943,31 @@ public class BrandPackSizeService {
             r.setTarget(brand);
           }
         });
+
+    return relationships;
+  }
+
+  private CompletableFuture<Node> createNewBrandedProductNode(
+      String branch,
+      SnowstormConcept leafProductConcept,
+      SnowstormConceptMini brand,
+      AtomicCache atomicCache,
+      Set<NonDefiningBase> properties,
+      boolean isDevice,
+      ModelLevelType modelLevelType,
+      Set<String> existingBrandedProductConceptIds,
+      NodeNameGenerator nameGenerator) {
+
+    ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+    ModelLevel modelLevel = modelConfiguration.getLevelOfType(modelLevelType);
+
+    Set<SnowstormRelationship> relationships =
+        buildNewBrandedProductRelationships(
+            SnowstormDtoUtil.getRelationshipsFromAxioms(leafProductConcept),
+            brand,
+            modelLevelType,
+            existingBrandedProductConceptIds,
+            modelConfiguration.getModuleId());
 
     relationships.forEach(
         r -> {
