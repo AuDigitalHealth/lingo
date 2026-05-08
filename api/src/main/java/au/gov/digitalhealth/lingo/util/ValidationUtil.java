@@ -29,7 +29,6 @@ import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.product.details.Quantity;
 import au.gov.digitalhealth.lingo.service.validators.ValidationResult;
 import java.math.BigDecimal;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -45,8 +44,7 @@ public class ValidationUtil {
 
   public static void validateQuantityValueIsOneIfUnitIsEach(
       Quantity quantity, ValidationResult result) {
-    if (Objects.requireNonNull(quantity.getUnit().getConceptId())
-            .equals(UNIT_OF_PRESENTATION.getValue())
+    if (UNIT_OF_PRESENTATION.getValue().equals(quantity.getUnit().getConceptId())
         && !isIntegerValue(quantity.getValue())) {
       result.addProblem(
           "Quantity must be an integer if the unit is 'each', unit was "
