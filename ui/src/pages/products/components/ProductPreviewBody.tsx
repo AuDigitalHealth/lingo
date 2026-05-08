@@ -42,6 +42,7 @@ interface ProductPreviewBodyProps {
     | ((event: object, reason: 'backdropClick' | 'escapeKeyDown') => void)
     | (() => void);
   setValue: UseFormSetValue<ProductSummary>;
+  isValid: boolean;
 }
 
 function ProductPreviewBody({
@@ -59,6 +60,7 @@ function ProductPreviewBody({
   setValue,
   ticket,
   isProductUpdate,
+  isValid,
 }: ProductPreviewBodyProps) {
   const lableTypesRight = ['TP', 'TPUU', 'TPP'];
   const lableTypesLeft = ['MP', 'MPUU', 'MPP'];
@@ -225,6 +227,7 @@ function ProductPreviewBody({
           newConceptFound={newConceptFound}
           handleClose={handleClose}
           isProductUpdate={isProductUpdate}
+          isValid={isValid}
         />
       ) : null}
     </>
@@ -235,6 +238,7 @@ interface SubmitPanelProps {
   productModel: ProductSummary;
   idsWithInvalidName: string[];
   isProductUpdate: boolean;
+  isValid: boolean;
   handleClose?:
     | ((event: object, reason: 'backdropClick' | 'escapeKeyDown') => void)
     | (() => void);
@@ -244,6 +248,7 @@ function SubmitPanel({
   productModel,
   idsWithInvalidName,
   isProductUpdate,
+  isValid,
   handleClose,
 }: SubmitPanelProps) {
   const { canEdit, lockDescription } = useCanEditTask();
@@ -324,7 +329,8 @@ function SubmitPanel({
             color="primary"
             disabled={
               (!isProductUpdate && !canSubmitNonProductUpdates) ||
-              (isProductUpdate && !canSubmitProductUpdate)
+              (isProductUpdate && !canSubmitProductUpdate) ||
+              !isValid
             }
             data-testid={
               isProductUpdate ? 'update-product-btn' : 'create-product-btn'

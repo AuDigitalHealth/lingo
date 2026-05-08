@@ -112,7 +112,32 @@ export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateReques
                     }
                     return true;
                   },
-                ),
+                )
+                .test('preferred-term-max-length', function (value) {
+                  const ctx = this.options.context as
+                    | { ptMaxLength?: number; langRefsetCode?: string }
+                    | undefined;
+                  const ptMaxLength = ctx?.ptMaxLength ?? 4096;
+                  const langRefsetCode = ctx?.langRefsetCode;
+
+                  if (!langRefsetCode || !value) return true;
+
+                  const description = this.parent as Description;
+                  if (!description.active) return true;
+                  if (description.type !== 'SYNONYM') return true;
+                  if (
+                    description.acceptabilityMap?.[langRefsetCode] !==
+                    'PREFERRED'
+                  )
+                    return true;
+
+                  if (value.length > ptMaxLength) {
+                    return this.createError({
+                      message: `Preferred term exceeds maximum length of ${ptMaxLength} characters (current: ${value.length}).`,
+                    });
+                  }
+                  return true;
+                }),
               conceptId: yup.string().required(),
               typeId: yup.string().required(),
               acceptabilityMap: yup

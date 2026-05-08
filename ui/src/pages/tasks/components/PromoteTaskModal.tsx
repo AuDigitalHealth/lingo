@@ -6,6 +6,7 @@ import {
   AlertTitle,
   Typography,
   Box,
+  CircularProgress,
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import { CallMerge, Warning, Error } from '@mui/icons-material';
@@ -15,8 +16,11 @@ import BaseModalBody from '../../../components/modal/BaseModalBody';
 import BaseModalFooter from '../../../components/modal/BaseModalFooter';
 import { useCanPromoteTask } from '../../../hooks/api/task/useCanPromoteTask';
 import { useAutoPromoteTask } from '../../../hooks/api/task/useAutoPromoteTask';
+import { useDanglingReferences } from '../../../hooks/api/task/useDanglingReferences';
+import { useTidyDanglingReferences } from '../../../hooks/api/task/useTidyDanglingReferences';
 import { Task, TaskStatus } from '../../../types/task';
 import { ConceptReview } from '../../../types/ConceptReview';
+import { TidyFailure } from '../../../types/danglingReferences';
 import { enqueueSnackbar } from 'notistack';
 
 interface PromoteTaskModalProps {
@@ -38,7 +42,7 @@ export default function PromoteTaskModal({
 }: PromoteTaskModalProps) {
   const [modalOpen, setModalOpen] = useState(false);
 
-  const { promotable, warnings, blockingIssues } = useCanPromoteTask({
+  const { warnings, blockingIssues } = useCanPromoteTask({
     task,
     conceptReviews,
     hasUnsavedConcepts,
@@ -46,40 +50,92 @@ export default function PromoteTaskModal({
   });
 
   const autoPromoteMutation = useAutoPromoteTask();
+  const danglingQuery = useDanglingReferences({
+    projectKey: task?.projectKey,
+    taskKey: task?.key,
+    enabled: modalOpen && Boolean(task),
+  });
+  const tidyMutation = useTidyDanglingReferences();
+  const [tidyFailures, setTidyFailures] = useState<TidyFailure[] | null>(null);
+
+  const dangling = danglingQuery.data;
+  const danglingError = danglingQuery.isError;
+  const danglingLoading = danglingQuery.isFetching;
+  const hasDangling =
+    Boolean(dangling) &&
+    (dangling!.danglingRefsetMembers.length > 0 ||
+      dangling!.danglingNonDefiningRelationships.length > 0);
 
   const handleOpenModal = () => {
+    setTidyFailures(null);
     setModalOpen(true);
   };
 
   const handleCloseModal = () => {
-    if (!autoPromoteMutation.isPending) {
+    if (!autoPromoteMutation.isPending && !tidyMutation.isPending) {
       setModalOpen(false);
     }
   };
 
   const handleConfirmPromotion = async () => {
+    if (!task) return;
+    setTidyFailures(null);
+    if (hasDangling) {
+      try {
+        const result = await tidyMutation.mutateAsync({
+          projectKey: task.projectKey,
+          taskKey: task.key,
+        });
+        if (result.failed.length > 0) {
+          setTidyFailures(result.failed);
+          return;
+        }
+      } catch (error) {
+        console.error('Tidy of dangling references failed:', error);
+        enqueueSnackbar(
+          'Tidy failed. Promotion has been cancelled — please retry or contact support.',
+          { variant: 'error' },
+        );
+        return;
+      }
+    }
     try {
-      if (!task) return;
-      const updatedTask = await autoPromoteMutation.mutateAsync({
-        projectKey: task?.projectKey,
-        taskKey: task?.key,
+      await autoPromoteMutation.mutateAsync({
+        projectKey: task.projectKey,
+        taskKey: task.key,
       });
-
       setModalOpen(false);
     } catch (error) {
+      console.error('Auto-promote failed:', error);
       enqueueSnackbar(
         'Error promoting task. Please attempt in the authoring platform.',
-        {
-          variant: 'error',
-        },
+        { variant: 'error' },
       );
     }
   };
 
   const hasIssues = blockingIssues.length > 0 || warnings.length > 0;
-  const canProceed =
-    blockingIssues.length === 0 && !autoPromoteMutation.isPending;
   const isPromoting = autoPromoteMutation.isPending;
+  const isTidying = tidyMutation.isPending;
+  const detectionRan = danglingQuery.isSuccess;
+  const canProceed =
+    blockingIssues.length === 0 &&
+    !isPromoting &&
+    !isTidying &&
+    !danglingError &&
+    !danglingLoading &&
+    !tidyMutation.isError &&
+    !tidyFailures &&
+    detectionRan;
+
+  const promoteLabel =
+    blockingIssues.length > 0
+      ? 'Cannot Promote'
+      : hasDangling
+        ? 'Tidy & Promote'
+        : warnings.length > 0
+          ? 'Promote Anyway'
+          : 'Promote Task';
 
   return (
     <>
@@ -100,17 +156,49 @@ export default function PromoteTaskModal({
 
       <BaseModal
         open={modalOpen}
-        handleClose={!isPromoting ? handleCloseModal : undefined}
+        handleClose={!isPromoting && !isTidying ? handleCloseModal : undefined}
         sx={{ minWidth: '500px', maxWidth: '700px' }}
       >
         <BaseModalHeader title="Promote Task" />
         <BaseModalBody>
           <Stack spacing={2}>
             <Typography variant="body1">
-              {hasIssues
-                ? 'The following issues were found during promotion validation:'
-                : 'Task is ready for promotion. Do you want to proceed?'}
+              {danglingLoading
+                ? 'Running pre-promotion checks…'
+                : isTidying
+                  ? 'Tidying dangling references before promotion…'
+                  : hasIssues || hasDangling
+                    ? 'The following issues were found during promotion validation:'
+                    : 'Task is ready for promotion. Do you want to proceed?'}
             </Typography>
+
+            {/* Pre-promotion progress */}
+            {(danglingLoading || isTidying) && (
+              <Stack
+                direction="row"
+                alignItems="center"
+                spacing={1.5}
+                sx={{
+                  p: 2,
+                  borderRadius: 1,
+                  bgcolor: 'background.paper',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                }}
+              >
+                <CircularProgress size={20} />
+                <Box>
+                  <Typography variant="body2">
+                    {isTidying
+                      ? 'Tidying dangling reference set members and non-defining relationships…'
+                      : 'Checking the task branch for dangling reference set members and non-defining relationships left by Authoring Platform retire/delete…'}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    The promote button is disabled until this check completes.
+                  </Typography>
+                </Box>
+              </Stack>
+            )}
 
             {/* Blocking Issues */}
             {blockingIssues.map((issue, index) => (
@@ -136,8 +224,107 @@ export default function PromoteTaskModal({
               </Alert>
             ))}
 
+            {/* Detection error */}
+            {danglingError && (
+              <Alert severity="error">
+                <AlertTitle>Could not check for dangling references</AlertTitle>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  Detection failed. Please retry before promoting.
+                </Typography>
+                <Button
+                  size="small"
+                  onClick={() => {
+                    void danglingQuery.refetch();
+                  }}
+                >
+                  Retry
+                </Button>
+              </Alert>
+            )}
+
+            {/* Dangling references summary */}
+            {hasDangling && dangling && (
+              <Alert severity="warning" icon={<Warning />}>
+                <AlertTitle>
+                  {dangling.danglingRefsetMembers.length} dangling refset member
+                  {dangling.danglingRefsetMembers.length === 1 ? '' : 's'},{' '}
+                  {dangling.danglingNonDefiningRelationships.length} dangling
+                  non-defining relationship
+                  {dangling.danglingNonDefiningRelationships.length === 1
+                    ? ''
+                    : 's'}
+                </AlertTitle>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  These were left behind by retire/delete actions in the
+                  Authoring Platform. On promote, Lingo will tidy them: released
+                  components are inactivated, unreleased components are deleted.
+                </Typography>
+                {dangling.danglingRefsetMembers.length > 0 && (
+                  <>
+                    <Typography variant="subtitle2">Refset members</Typography>
+                    <ul>
+                      {dangling.danglingRefsetMembers.map(m => (
+                        <li key={m.memberId}>
+                          {m.refsetPt ?? m.refsetId} →{' '}
+                          {m.referencedConceptPt
+                            ? `${m.referencedConceptPt} (${m.referencedConceptStatus.toLowerCase()})`
+                            : `concept ${m.referencedConceptId} (deleted)`}
+                          {m.released
+                            ? ' — will be inactivated'
+                            : ' — will be deleted'}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+                {dangling.danglingNonDefiningRelationships.length > 0 && (
+                  <>
+                    <Typography variant="subtitle2">
+                      Non-defining relationships
+                    </Typography>
+                    <ul>
+                      {dangling.danglingNonDefiningRelationships.map(r => (
+                        <li key={r.relationshipId}>
+                          {r.typePt ?? r.typeId}: {r.sourcePt ?? r.sourceId} (
+                          {r.sourceStatus.toLowerCase()}) →{' '}
+                          {r.destinationId
+                            ? `${r.destinationPt ?? r.destinationId} (${r.destinationStatus.toLowerCase()})`
+                            : '(concrete value)'}
+                          {r.released
+                            ? ' — will be inactivated'
+                            : ' — will be deleted'}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </Alert>
+            )}
+
+            {/* Tidy failures */}
+            {tidyFailures && tidyFailures.length > 0 && (
+              <Alert severity="error">
+                <AlertTitle>
+                  Tidy failed for {tidyFailures.length} item
+                  {tidyFailures.length === 1 ? '' : 's'}
+                </AlertTitle>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  Promotion has been blocked. Please contact support and quote
+                  the following details:
+                </Typography>
+                <ul>
+                  {tidyFailures.map(f => (
+                    <li key={`${f.kind}-${f.id}`}>
+                      {f.kind} <code>{f.id}</code> — attempted{' '}
+                      {f.attemptedAction.toLowerCase()}: {f.errorMessage}
+                    </li>
+                  ))}
+                </ul>
+              </Alert>
+            )}
+
             {/* Success message if no issues */}
-            {!hasIssues && (
+            {!hasIssues && !hasDangling && !danglingError && (
               <Alert severity="success">
                 <AlertTitle>Ready for Promotion</AlertTitle>
                 All validation checks have passed. The task is ready to be
@@ -179,22 +366,18 @@ export default function PromoteTaskModal({
             <Stack direction="row" spacing={1}>
               <LoadingButton
                 variant="contained"
-                loading={isPromoting}
+                loading={isPromoting || isTidying}
                 disabled={!canProceed}
                 onClick={handleConfirmPromotion}
                 color="info"
                 sx={{ color: '#fff' }}
               >
-                {blockingIssues.length > 0
-                  ? 'Cannot Promote'
-                  : warnings.length > 0
-                    ? 'Promote Anyway'
-                    : 'Promote Task'}
+                {promoteLabel}
               </LoadingButton>
               <Button
                 variant="contained"
                 onClick={handleCloseModal}
-                disabled={isPromoting}
+                disabled={isPromoting || isTidying}
                 color="error"
               >
                 Cancel

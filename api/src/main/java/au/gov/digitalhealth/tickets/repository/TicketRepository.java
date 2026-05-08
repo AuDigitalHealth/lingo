@@ -18,6 +18,7 @@ package au.gov.digitalhealth.tickets.repository;
 import au.gov.digitalhealth.tickets.models.ExternalRequestor;
 import au.gov.digitalhealth.tickets.models.Iteration;
 import au.gov.digitalhealth.tickets.models.Label;
+import au.gov.digitalhealth.tickets.models.State;
 import au.gov.digitalhealth.tickets.models.Ticket;
 import au.gov.digitalhealth.tickets.models.TicketType;
 import com.querydsl.core.types.Predicate;
@@ -29,6 +30,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.EntityGraph.EntityGraphType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.repository.query.Param;
@@ -118,4 +120,14 @@ public interface TicketRepository
   @Query(
       "SELECT t FROM Ticket t JOIN t.state state WHERE state.label NOT IN :labels AND t.taskAssociation IS NOT NULL")
   List<Ticket> findAllByStatesNotInWithTask(List<String> labels);
+
+  @Modifying
+  @Query(
+      "UPDATE Ticket t SET t.taskAssociation = null WHERE t.taskAssociation.id = :taskAssociationId")
+  void clearTaskAssociation(@Param("taskAssociationId") Long taskAssociationId);
+
+  @Modifying
+  @Query("UPDATE Ticket t SET t.state = :state WHERE t.taskAssociation.id = :taskAssociationId")
+  void updateStateByTaskAssociation(
+      @Param("taskAssociationId") Long taskAssociationId, @Param("state") State state);
 }

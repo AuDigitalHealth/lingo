@@ -15,6 +15,7 @@
  */
 package au.gov.digitalhealth.lingo.product.update;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
@@ -27,7 +28,7 @@ public class ProductUpdateRequest {
 
   private String conceptId;
 
-  private ProductDescriptionUpdateRequest descriptionUpdate;
+  @Valid private ProductDescriptionUpdateRequest descriptionUpdate;
 
   private ProductPropertiesUpdateRequest propertiesUpdateRequest;
 }

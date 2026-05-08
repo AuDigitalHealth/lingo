@@ -404,7 +404,8 @@ public class BrandPackSizeService {
             brandPackSizeCreationDetails.getIdFsnMap(),
             brandPackSizeCreationDetails.getIdPtMap(),
             AmtConstants.values(),
-            SnomedConstants.values());
+            SnomedConstants.values(),
+            NmpcConstants.values());
 
     Map<ModelLevelType, Node> brandedPackageNodeMap =
         productSummary.getNodes().stream()

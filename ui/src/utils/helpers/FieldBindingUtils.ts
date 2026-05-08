@@ -23,6 +23,29 @@ export function getValueFromFieldBindings(
   return fieldBinding.bindingsMap.get(key) as string;
 }
 
+export function resolvePreferredTermMaxLength(
+  fieldBindings: FieldBindings | undefined,
+  langRefsetCode: string | undefined,
+): number {
+  const configStr = fieldBindings
+    ? (fieldBindings.bindingsMap.get('description.preferredTerm.maxLength') as
+        | string
+        | undefined)
+    : undefined;
+  if (!configStr) return 4096;
+  if (configStr.includes(':')) {
+    const pairs = configStr
+      .split(',')
+      .map(pair => pair.split(':').map(s => s.trim()));
+    if (langRefsetCode) {
+      const entry = pairs.find(([code]) => code === langRefsetCode);
+      return entry ? parseInt(entry[1], 10) : 4096;
+    }
+    return Math.min(...pairs.map(([, val]) => parseInt(val, 10)));
+  }
+  return parseInt(configStr, 10);
+}
+
 /**
  * Handling multi key,value pairs eg:"NOT_TRIGGERED:Not Triggered,FAILED:FAILED,PENDING:PENDING"
  * @param fieldBinding

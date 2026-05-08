@@ -85,6 +85,7 @@ import useProjectLangRefsets from '../../hooks/api/products/useProjectLangRefset
 import { normalizeWhitespace } from '../../types/productValidationUtils.ts';
 import { useProjectFromUrlTaskPath } from '../../hooks/useProjectFromUrlPath.tsx';
 import { useAllSynonymConfigurations } from '../../hooks/api/tickets/useUpdateSynonymConfiguration.tsx';
+import { resolvePreferredTermMaxLength } from '../../utils/helpers/FieldBindingUtils.ts';
 
 const typeMap: Record<DefinitionType, string> = {
   [DefinitionType.FSN]: '900000000000003001',
@@ -189,6 +190,7 @@ function EditConceptBody({
   }, [data?.descriptions]);
 
   const defaultLangRefset = findDefaultLangRefset(langRefsets);
+  const langRefsetCode = defaultLangRefset?.en;
 
   const sortedDescriptions = useMemo(() => {
     if (!descriptions) return [];
@@ -206,6 +208,11 @@ function EditConceptBody({
 
   const ctppSearchEcl = generateEclFromBinding(fieldBindings, 'product.search');
   const [storedSemanticTag, setStoredSemanticTag] = useState<string>();
+
+  const ptMaxLength = resolvePreferredTermMaxLength(
+    fieldBindings,
+    langRefsetCode,
+  );
 
   const defaultValues = useMemo(() => {
     return {
@@ -231,6 +238,7 @@ function EditConceptBody({
     criteriaMode: 'all',
     defaultValues,
     resolver: yupResolver(productUpdateValidationSchema),
+    context: { ptMaxLength, langRefsetCode },
   });
 
   useEffect(() => {
