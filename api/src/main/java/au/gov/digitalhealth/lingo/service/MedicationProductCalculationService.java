@@ -93,6 +93,7 @@ import au.gov.digitalhealth.lingo.service.validators.MedicationDetailsValidator;
 import au.gov.digitalhealth.lingo.service.validators.ValidationResult;
 import au.gov.digitalhealth.lingo.util.AmtConstants;
 import au.gov.digitalhealth.lingo.util.BigDecimalFormatter;
+import au.gov.digitalhealth.lingo.util.NmpcConstants;
 import au.gov.digitalhealth.lingo.util.OwlAxiomService;
 import au.gov.digitalhealth.lingo.util.ReferenceSetUtils;
 import au.gov.digitalhealth.lingo.util.RelationshipSorter;
@@ -383,7 +384,8 @@ public class MedicationProductCalculationService
             packageDetails.getIdFsnMap(),
             packageDetails.getIdPtMap(),
             AmtConstants.values(),
-            SnomedConstants.values()));
+            SnomedConstants.values(),
+            NmpcConstants.values()));
   }
 
   @Override
@@ -1321,15 +1323,17 @@ public class MedicationProductCalculationService
 
     // if the product has ingredients and they have some sort of strength or quantity then it can be
     // defined, otherwise we'll guess primitive - user can always override the decision
+    // Also, if the product has a productName then it is defined by default
     boolean defined =
         !productDetails.getActiveIngredients().isEmpty()
-            && productDetails.getActiveIngredients().stream()
-                .allMatch(
-                    i ->
-                        i.getConcentrationStrength() != null
-                            || i.getTotalQuantity() != null
-                            || i.getPresentationStrengthNumerator() != null
-                            || i.getConcentrationStrengthNumerator() != null);
+                && productDetails.getActiveIngredients().stream()
+                    .allMatch(
+                        i ->
+                            i.getConcentrationStrength() != null
+                                || i.getTotalQuantity() != null
+                                || i.getPresentationStrengthNumerator() != null
+                                || i.getConcentrationStrengthNumerator() != null)
+            || productDetails.getProductName() != null;
 
     return nodeGeneratorService.generateNodeAsync(
         branch,
