@@ -22,6 +22,7 @@ import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
 import au.gov.digitalhealth.lingo.util.PartitionIdentifier;
 import au.gov.digitalhealth.lingo.validation.ValidDescription;
+import au.gov.digitalhealth.lingo.validation.ValidPreferredTermLength;
 import au.gov.digitalhealth.lingo.validation.ValidSctId;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.NotEmpty;
@@ -37,6 +38,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
+@ValidPreferredTermLength
 public class NewConceptDetails {
   /**
    * A temporary identifier for this new concept as a placeholder, is used in Edges in the product

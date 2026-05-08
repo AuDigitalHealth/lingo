@@ -217,14 +217,22 @@ function ProductPreviewSaveOrViewMode({
     };
   };
 
-  const { register, handleSubmit, reset, control, getValues, setValue, watch } =
-    useForm<ProductSummary>({
-      defaultValues: {
-        nodes: [],
-        edges: [],
-        subjects: [],
-      },
-    });
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    getValues,
+    setValue,
+    watch,
+    formState: { isValid },
+  } = useForm<ProductSummary>({
+    defaultValues: {
+      nodes: [],
+      edges: [],
+      subjects: [],
+    },
+  });
 
   const { setForceNavigation, selectedProductType, selectedActionType } =
     useAuthoringStore();
@@ -526,6 +534,7 @@ function ProductPreviewSaveOrViewMode({
               isProductUpdate={
                 productSaveDetails?.type === ProductActionType.update
               }
+              isValid={isValid}
             />
           </form>
         </Box>

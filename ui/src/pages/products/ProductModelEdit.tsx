@@ -163,7 +163,7 @@ function ProductModelEdit({
     control,
     getValues,
     watch,
-    formState: { isSubmitting },
+    formState: { isSubmitting, isValid },
   } = useForm<ProductSummary>({
     defaultValues: {
       nodes: [],
@@ -523,7 +523,8 @@ function ProductModelEdit({
                         !newConceptFound ||
                         !canEdit ||
                         isSubmitting ||
-                        idsWithInvalidName.length > 0
+                        idsWithInvalidName.length > 0 ||
+                        !isValid
                       }
                       data-testid={'create-product-btn'}
                     >

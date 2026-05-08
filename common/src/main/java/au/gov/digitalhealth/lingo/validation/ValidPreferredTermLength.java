@@ -13,22 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package au.gov.digitalhealth.lingo.product.update;
+package au.gov.digitalhealth.lingo.validation;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-import lombok.Builder;
-import lombok.Data;
+import jakarta.validation.Constraint;
+import jakarta.validation.Payload;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-@Data
-@Builder
-public class ProductUpdateRequest {
+@Constraint(validatedBy = ValidPreferredTermLengthValidator.class)
+@Target({ElementType.TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface ValidPreferredTermLength {
 
-  @NotNull Long ticketId;
+  String message() default "Preferred term exceeds the maximum allowed length";
 
-  private String conceptId;
+  Class<?>[] groups() default {};
 
-  @Valid private ProductDescriptionUpdateRequest descriptionUpdate;
-
-  private ProductPropertiesUpdateRequest propertiesUpdateRequest;
+  Class<? extends Payload>[] payload() default {};
 }

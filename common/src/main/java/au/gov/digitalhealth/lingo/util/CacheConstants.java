@@ -26,6 +26,8 @@ public class CacheConstants {
   public static final String UNIT_NUMERATOR_DENOMINATOR_CACHE = "unit-numerator-denominator";
   public static final String VALIDATION_EXCLUDED_SUBSTANCES = "validation-excluded-substances";
   public static final String BRAND_SEMANTIC_TAG = "brand-semantic-tag";
+  public static final String PREFERRED_TERM_MAX_LENGTH = "preferred-term-max-length";
+  public static final String DESCRIPTION_VALIDATION_REGEX = "description-validation-regex";
   public static final String SNOWSTORM_CONCEPTS_IDS_FROM_ECL = "snowstorm-concepts-ids-from-ecl";
   public static final String SNOWSTORM_CONCEPTS_FROM_ECL = "snowstorm-concepts-from-ecl";
   public static final String SNOWSTORM_CONCEPT = "snowstorm-concept";

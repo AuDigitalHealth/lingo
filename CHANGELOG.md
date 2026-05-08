@@ -14,6 +14,7 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 - When a task changes to status 'promoted' or 'completed' the associated ticket will now be automatically be changed to state 'Closed'
 - When a task is either deleted or has been released the ticket assocation to this task will now be automatically deleted.
 - The display of the tickets backlog page now includes the total number of tickets that is returned for a query.
+- Enforce configurable maximum character length for preferred terms, resolved per language refset, on concept authoring and edit term screens
 
 ### Fixed
 - The Rows per page: 'All' option on the tasks page now correctly shows 1 - n of n instead of n + 1 - n  of n for the items displayed
