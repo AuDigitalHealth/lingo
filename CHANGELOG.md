@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
+- Fix Attachment content type to fallback to jdk detected content type when the file is uploaded without a content type
 
 
 ## [1.3.39] - 2026-05-08
