@@ -297,6 +297,106 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
   }
 
   @Test
+  void uploadAttachmentsFromUrls_blankUrl_returnsBadRequestWithTitle() {
+    List<Ticket> tickets = ticketRepository.findAll();
+    Ticket ticketToTest = tickets.stream().findFirst().orElseThrow();
+
+    String url =
+        this.getSnomioLocation() + "/api/attachments/upload/" + ticketToTest.getId() + "/from-urls";
+
+    AttachmentUrlDto blankUrl = new AttachmentUrlDto();
+    blankUrl.setFileName("file.pdf");
+    blankUrl.setUrl("  ");
+    blankUrl.setSizeMb(0.1);
+
+    ProblemDetail response =
+        withAuth()
+            .contentType(ContentType.JSON)
+            .body(List.of(blankUrl))
+            .when()
+            .post(url)
+            .then()
+            .statusCode(HttpStatus.BAD_REQUEST.value())
+            .extract()
+            .as(ProblemDetail.class);
+
+    Assertions.assertEquals("Invalid attachment URL", response.getTitle());
+  }
+
+  @Test
+  void uploadAttachmentsFromUrls_malformedUrl_badRequestDetailContainsContext() {
+    List<Ticket> tickets = ticketRepository.findAll();
+    Ticket ticketToTest = tickets.stream().findFirst().orElseThrow();
+    Long ticketId = ticketToTest.getId();
+
+    String url = this.getSnomioLocation() + "/api/attachments/upload/" + ticketId + "/from-urls";
+
+    AttachmentUrlDto malformedUrl = new AttachmentUrlDto();
+    malformedUrl.setFileName("report.pdf");
+    malformedUrl.setUrl("http://localhost:0/no-such-server/report.pdf");
+    malformedUrl.setSizeMb(0.1);
+
+    ProblemDetail response =
+        withAuth()
+            .contentType(ContentType.JSON)
+            .body(List.of(malformedUrl))
+            .when()
+            .post(url)
+            .then()
+            .statusCode(HttpStatus.BAD_REQUEST.value())
+            .extract()
+            .as(ProblemDetail.class);
+
+    Assertions.assertNotNull(response.getDetail());
+    Assertions.assertTrue(
+        response.getDetail().contains("report.pdf"), "Detail should contain the file name");
+    Assertions.assertTrue(
+        response.getDetail().contains(ticketId.toString()), "Detail should contain the ticket ID");
+  }
+
+  @Test
+  void uploadAttachmentsFromUrls_unknownExtension_noContentType_returnsBadRequestWithDetail()
+      throws IOException {
+    List<Ticket> tickets = ticketRepository.findAll();
+    Ticket ticketToTest = tickets.stream().findFirst().orElseThrow();
+    Long ticketId = ticketToTest.getId();
+
+    String endpointUrl =
+        this.getSnomioLocation() + "/api/attachments/upload/" + ticketId + "/from-urls";
+
+    // Use a local classpath resource as the download source via file:// URL.
+    // The fileName is set to an unknown extension so that content-type probing returns null.
+    File sourceFile = new ClassPathResource("grrfile.grr").getFile();
+    String fileUrl = sourceFile.toURI().toURL().toString();
+
+    AttachmentUrlDto dto = new AttachmentUrlDto();
+    dto.setFileName("data.xyz");
+    dto.setUrl(fileUrl);
+    dto.setSizeMb(0.1);
+
+    ProblemDetail response =
+        withAuth()
+            .contentType(ContentType.JSON)
+            .body(List.of(dto))
+            .when()
+            .post(endpointUrl)
+            .then()
+            .statusCode(HttpStatus.BAD_REQUEST.value())
+            .extract()
+            .as(ProblemDetail.class);
+
+    Assertions.assertEquals("Failed to upload attachment from URL", response.getTitle());
+    Assertions.assertNotNull(response.getDetail());
+    Assertions.assertTrue(
+        response.getDetail().contains("Cannot determine content type"),
+        "Detail should reference the underlying content type failure");
+    Assertions.assertTrue(
+        response.getDetail().contains("data.xyz"), "Detail should contain the file name");
+    Assertions.assertTrue(
+        response.getDetail().contains(ticketId.toString()), "Detail should contain the ticket ID");
+  }
+
+  @Test
   void uploadAttachmentsFromUrls_emptyList_returnsBadRequest() {
     List<Ticket> tickets = ticketRepository.findAll();
     Ticket ticketToTest = tickets.stream().findFirst().orElseThrow();
