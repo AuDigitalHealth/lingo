@@ -57,6 +57,12 @@ public class AttachmentService {
   @Value("${snomio.attachments.directory}")
   private String attachmentsDirectory;
 
+  @Value("${snomio.attachments.url.connect-timeout-ms:10000}")
+  private int urlConnectTimeoutMs;
+
+  @Value("${snomio.attachments.url.read-timeout-ms:30000}")
+  private int urlReadTimeoutMs;
+
   protected final Log logger = LogFactory.getLog(getClass());
 
   @Autowired
@@ -155,10 +161,14 @@ public class AttachmentService {
                         String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
     Path tempFile = null;
 
-    try (InputStream in = new URL(url).openStream()) {
-
+    try {
+      URLConnection connection = new URL(url).openConnection();
+      connection.setConnectTimeout(urlConnectTimeoutMs);
+      connection.setReadTimeout(urlReadTimeoutMs);
       tempFile = Files.createTempFile("attachment-", ".tmp");
-      Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
+      try (InputStream in = connection.getInputStream()) {
+        Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
+      }
 
       String resolvedFileName = fileName != null ? fileName : tempFile.getFileName().toString();
 
