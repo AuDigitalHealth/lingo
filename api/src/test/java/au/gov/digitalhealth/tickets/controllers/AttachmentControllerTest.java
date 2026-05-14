@@ -370,7 +370,7 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
     String fileUrl = sourceFile.toURI().toURL().toString();
 
     AttachmentUrlDto dto = new AttachmentUrlDto();
-    dto.setFileName("data.xyz");
+    dto.setFileName("data.grr");
     dto.setUrl(fileUrl);
     dto.setSizeMb(0.1);
 
@@ -391,7 +391,7 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
         response.getDetail().contains("Cannot determine content type"),
         "Detail should reference the underlying content type failure");
     Assertions.assertTrue(
-        response.getDetail().contains("data.xyz"), "Detail should contain the file name");
+        response.getDetail().contains("data.grr"), "Detail should contain the file name");
     Assertions.assertTrue(
         response.getDetail().contains(ticketId.toString()), "Detail should contain the ticket ID");
   }

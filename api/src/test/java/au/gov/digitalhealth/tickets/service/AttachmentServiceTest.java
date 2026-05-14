@@ -105,7 +105,7 @@ class AttachmentServiceTest {
 
   @Test
   void processAttachmentUploadFromUrl_unknownExtension_noContentType_throwsBadRequest() {
-    stubFile("/data.xyz");
+    stubFile("/data.grr");
     when(ticketRepository.findById(TICKET_ID)).thenReturn(Optional.of(aTicket()));
 
     // "Cannot determine content type" LingoProblem is thrown inside the try block and caught
@@ -116,11 +116,11 @@ class AttachmentServiceTest {
             LingoProblem.class,
             () ->
                 attachmentService.processAttachmentUploadFromUrl(
-                    TICKET_ID, wireMock.baseUrl() + "/data.xyz", "data.xyz", null));
+                    TICKET_ID, wireMock.baseUrl() + "/data.grr", "data.grr", null));
 
     assertThat(ex.getBody().getTitle()).isEqualTo("Failed to upload attachment from URL");
     assertThat(ex.getBody().getDetail()).contains("Cannot determine content type");
-    assertThat(ex.getBody().getDetail()).contains("data.xyz");
+    assertThat(ex.getBody().getDetail()).contains("data.grr");
     assertThat(ex.getBody().getDetail()).contains(String.valueOf(TICKET_ID));
   }
 
