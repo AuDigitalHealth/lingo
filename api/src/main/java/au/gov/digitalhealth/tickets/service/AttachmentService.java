@@ -105,13 +105,7 @@ public class AttachmentService {
 
       if (!attachmentFile.exists()) {
         attachmentFile.getParentFile().mkdirs();
-        try {
-          Files.copy(file.getInputStream(), Path.of(attachmentLocation));
-        } catch (FileAlreadyExistsException ignored) {
-          logger.warn(
-              "Attachment file already exists (concurrent upload of same content): "
-                  + attachmentLocation);
-        }
+        copyAttachmentFile(file, attachmentLocation);
       }
 
       // Handle the Content Type of the new attachment
@@ -172,7 +166,7 @@ public class AttachmentService {
       URLConnection connection = new URL(url).openConnection();
       connection.setConnectTimeout(urlConnectTimeoutMs);
       connection.setReadTimeout(urlReadTimeoutMs);
-      tempFile = Files.createTempFile("attachment-", ".tmp");
+      tempFile = Files.createTempFile(Path.of(attachmentsDirectory), "attachment-", ".tmp");
       try (InputStream in = connection.getInputStream()) {
         Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
       }
@@ -233,6 +227,17 @@ public class AttachmentService {
         } catch (IOException ignored) {
         }
       }
+    }
+  }
+
+  private void copyAttachmentFile(MultipartFile file, String attachmentLocation)
+      throws IOException {
+    try {
+      Files.copy(file.getInputStream(), Path.of(attachmentLocation));
+    } catch (FileAlreadyExistsException ignored) {
+      logger.warn(
+          "Attachment file already exists (concurrent upload of same content): "
+              + attachmentLocation);
     }
   }
 
