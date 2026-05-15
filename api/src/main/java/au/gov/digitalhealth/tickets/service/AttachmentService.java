@@ -32,6 +32,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.net.URLConnection;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -55,6 +57,12 @@ public class AttachmentService {
 
   @Value("${snomio.attachments.directory}")
   private String attachmentsDirectory;
+
+  @Value("${snomio.attachments.url.connect-timeout-ms:10000}")
+  private int urlConnectTimeoutMs;
+
+  @Value("${snomio.attachments.url.read-timeout-ms:30000}")
+  private int urlReadTimeoutMs;
 
   protected final Log logger = LogFactory.getLog(getClass());
 
@@ -97,7 +105,7 @@ public class AttachmentService {
 
       if (!attachmentFile.exists()) {
         attachmentFile.getParentFile().mkdirs();
-        Files.copy(file.getInputStream(), Path.of(attachmentLocation));
+        copyAttachmentFile(file, attachmentLocation);
       }
 
       // Handle the Content Type of the new attachment
@@ -136,7 +144,7 @@ public class AttachmentService {
   }
 
   public AttachmentUploadResponse processAttachmentUploadFromUrl(
-      Long ticketId, String url, String fileName) {
+      Long ticketId, String url, String fileName, String contentType) {
 
     if (url == null || url.isBlank()) {
       throw new LingoProblem(
@@ -154,25 +162,63 @@ public class AttachmentService {
                         String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
     Path tempFile = null;
 
-    try (InputStream in = new URL(url).openStream()) {
-
-      tempFile = Files.createTempFile("attachment-", ".tmp");
-      Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
+    try {
+      URLConnection connection = new URL(url).openConnection();
+      connection.setConnectTimeout(urlConnectTimeoutMs);
+      connection.setReadTimeout(urlReadTimeoutMs);
+      tempFile = Files.createTempFile(Path.of(attachmentsDirectory), "attachment-", ".tmp");
+      try (InputStream in = connection.getInputStream()) {
+        Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
+      }
 
       String resolvedFileName = fileName != null ? fileName : tempFile.getFileName().toString();
 
-      String contentType = Files.probeContentType(Path.of(resolvedFileName));
+      String resolvedContentType =
+          contentType != null && !contentType.isBlank() ? contentType : null;
+      if (resolvedContentType == null) {
+        resolvedContentType = Files.probeContentType(Path.of(resolvedFileName));
+      }
+      if (resolvedContentType == null) {
+        resolvedContentType = URLConnection.guessContentTypeFromName(resolvedFileName);
+      }
+      if (resolvedContentType == null) {
+        logger.error(
+            String.format(
+                "Cannot determine content type for attachment: ticketId=%d, url=%s, fileName=%s",
+                ticketId, url, resolvedFileName));
+        throw new LingoProblem(
+            UPLOAD_API + ticketId,
+            "Cannot determine content type",
+            HttpStatus.BAD_REQUEST,
+            String.format(
+                "Could not determine content type for file '%s' from url '%s' (ticketId=%d)."
+                    + " Provide the content type explicitly.",
+                resolvedFileName, url, ticketId));
+      }
 
-      MultipartFile multipartFile = new PathMultipartFile(tempFile, resolvedFileName, contentType);
+      logger.info(
+          String.format(
+              "Processing attachment from URL: ticketId=%d, url=%s, fileName=%s, contentType=%s",
+              ticketId, url, resolvedFileName, resolvedContentType));
+
+      MultipartFile multipartFile =
+          new PathMultipartFile(tempFile, resolvedFileName, resolvedContentType);
 
       return processAttachmentUpload(theTicket.getId(), multipartFile);
 
     } catch (Exception e) {
+      logger.error(
+          String.format(
+              "Failed to upload attachment from URL: ticketId=%d, url=%s, fileName=%s, error=%s",
+              ticketId, url, fileName, e.getMessage()),
+          e);
       throw new LingoProblem(
           UPLOAD_API + ticketId,
           "Failed to upload attachment from URL",
           HttpStatus.BAD_REQUEST,
-          e.getMessage());
+          String.format(
+              "Failed to process attachment '%s' from url '%s' (ticketId=%d): %s",
+              fileName, url, ticketId, e.getMessage()));
 
     } finally {
       if (tempFile != null) {
@@ -181,6 +227,17 @@ public class AttachmentService {
         } catch (IOException ignored) {
         }
       }
+    }
+  }
+
+  private void copyAttachmentFile(MultipartFile file, String attachmentLocation)
+      throws IOException {
+    try {
+      Files.copy(file.getInputStream(), Path.of(attachmentLocation));
+    } catch (FileAlreadyExistsException ignored) {
+      logger.warn(
+          "Attachment file already exists (concurrent upload of same content): "
+              + attachmentLocation);
     }
   }
 
@@ -201,7 +258,7 @@ public class AttachmentService {
             () ->
                 new LingoProblem(
                     UPLOAD_API + ticketId,
-                    "Missing Content type",
+                    "Missing Content in DB",
                     HttpStatus.INTERNAL_SERVER_ERROR));
   }
 
@@ -229,32 +286,35 @@ public class AttachmentService {
           attachmentsDirectory + (attachmentsDirectory.endsWith("/") ? "" : "/");
       File attachmentFile = new File(attachmentsDir + attachmentPath);
       try {
-        // SonarLint likes Files.delete
-        Files.delete(attachmentFile.toPath());
+        if (Files.deleteIfExists(attachmentFile.toPath())) {
+          logger.info("Deleted attachment file " + attachmentPath);
+        } else {
+          logger.warn("Attachment file not found on disk, skipping delete: " + attachmentPath);
+        }
       } catch (IOException e) {
+        logger.error("Could not delete attachment file at " + attachmentPath, e);
         throw new LingoProblem(
             "/api/attachments/" + attachment.getId(),
-            "Could not delete Attachment! Check attachment file at "
-                + attachmentsDir
-                + "/"
-                + attachmentPath,
-            HttpStatus.INTERNAL_SERVER_ERROR);
+            "Could not delete Attachment! Check attachment file at " + attachmentPath,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            e.getMessage());
       }
-      logger.info("Deleted attachment file " + attachmentPath);
       if (thumbPath != null && !thumbPath.isEmpty()) {
         File thumbFile = new File(attachmentsDir + thumbPath);
         try {
-          Files.delete(thumbFile.toPath());
+          if (Files.deleteIfExists(thumbFile.toPath())) {
+            logger.info("Deleted thumbnail file " + thumbPath);
+          } else {
+            logger.warn("Thumbnail file not found on disk, skipping delete: " + thumbPath);
+          }
         } catch (IOException e) {
+          logger.error("Could not delete thumbnail file at " + thumbPath, e);
           throw new LingoProblem(
               "/api/attachments/" + attachment.getId(),
-              "Could not delete Thumbnail for attachment! Check thumbnail at "
-                  + attachmentsDir
-                  + "/"
-                  + thumbPath,
-              HttpStatus.INTERNAL_SERVER_ERROR);
+              "Could not delete Thumbnail for attachment! Check thumbnail at " + thumbPath,
+              HttpStatus.INTERNAL_SERVER_ERROR,
+              e.getMessage());
         }
-        logger.info("Deleted thumbnail file " + thumbPath);
       }
     }
   }
