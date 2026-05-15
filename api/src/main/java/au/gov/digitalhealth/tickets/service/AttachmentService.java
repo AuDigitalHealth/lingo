@@ -286,32 +286,35 @@ public class AttachmentService {
           attachmentsDirectory + (attachmentsDirectory.endsWith("/") ? "" : "/");
       File attachmentFile = new File(attachmentsDir + attachmentPath);
       try {
-        // SonarLint likes Files.delete
-        Files.delete(attachmentFile.toPath());
+        if (Files.deleteIfExists(attachmentFile.toPath())) {
+          logger.info("Deleted attachment file " + attachmentPath);
+        } else {
+          logger.warn("Attachment file not found on disk, skipping delete: " + attachmentPath);
+        }
       } catch (IOException e) {
+        logger.error("Could not delete attachment file at " + attachmentPath, e);
         throw new LingoProblem(
             "/api/attachments/" + attachment.getId(),
-            "Could not delete Attachment! Check attachment file at "
-                + attachmentsDir
-                + "/"
-                + attachmentPath,
-            HttpStatus.INTERNAL_SERVER_ERROR);
+            "Could not delete Attachment! Check attachment file at " + attachmentPath,
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            e.getMessage());
       }
-      logger.info("Deleted attachment file " + attachmentPath);
       if (thumbPath != null && !thumbPath.isEmpty()) {
         File thumbFile = new File(attachmentsDir + thumbPath);
         try {
-          Files.delete(thumbFile.toPath());
+          if (Files.deleteIfExists(thumbFile.toPath())) {
+            logger.info("Deleted thumbnail file " + thumbPath);
+          } else {
+            logger.warn("Thumbnail file not found on disk, skipping delete: " + thumbPath);
+          }
         } catch (IOException e) {
+          logger.error("Could not delete thumbnail file at " + thumbPath, e);
           throw new LingoProblem(
               "/api/attachments/" + attachment.getId(),
-              "Could not delete Thumbnail for attachment! Check thumbnail at "
-                  + attachmentsDir
-                  + "/"
-                  + thumbPath,
-              HttpStatus.INTERNAL_SERVER_ERROR);
+              "Could not delete Thumbnail for attachment! Check thumbnail at " + thumbPath,
+              HttpStatus.INTERNAL_SERVER_ERROR,
+              e.getMessage());
         }
-        logger.info("Deleted thumbnail file " + thumbPath);
       }
     }
   }
