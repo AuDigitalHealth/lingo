@@ -69,6 +69,32 @@ class ModelLevelDefiningAttributesTest {
   }
 
   @Test
+  void nmpcClinicalDrugIncludesTemplateDistinguishingAttributes() {
+    // Per the NMPC modelling docs (v6/v7), unit of presentation and BoSS are present in some
+    // VMP templates and absent in others; including them here lets the ECL distinguish the
+    // templates.
+    Set<LingoConstants> attrs =
+        ModelLevelDefiningAttributes.getDefiningAttributeTypes(
+            ModelLevelType.CLINICAL_DRUG, ModelType.NMPC);
+
+    assertTrue(attrs.contains(SnomedConstants.HAS_UNIT_OF_PRESENTATION));
+    assertTrue(attrs.contains(SnomedConstants.HAS_UNIT_OF_PRESENTATION_SIZE_QUANTITY));
+    assertTrue(attrs.contains(SnomedConstants.HAS_UNIT_OF_PRESENTATION_SIZE_UNIT));
+    assertTrue(attrs.contains(SnomedConstants.HAS_BOSS));
+  }
+
+  @Test
+  void nmpcRealClinicalDrugAlsoIncludesTemplateDistinguishingAttributes() {
+    // AMP follows the same template structure as VMP, so the same attribute set applies.
+    Set<LingoConstants> attrs =
+        ModelLevelDefiningAttributes.getDefiningAttributeTypes(
+            ModelLevelType.REAL_CLINICAL_DRUG, ModelType.NMPC);
+
+    assertTrue(attrs.contains(SnomedConstants.HAS_UNIT_OF_PRESENTATION));
+    assertTrue(attrs.contains(SnomedConstants.HAS_BOSS));
+  }
+
+  @Test
   void amtClinicalDrugOmitsNmpcUserAttributes() {
     Set<LingoConstants> attrs =
         ModelLevelDefiningAttributes.getDefiningAttributeTypes(
@@ -76,7 +102,20 @@ class ModelLevelDefiningAttributesTest {
 
     assertFalse(attrs.contains(SnomedConstants.HAS_TARGET_POPULATION));
     assertFalse(attrs.contains(SnomedConstants.PLAYS_ROLE));
+    assertFalse(attrs.contains(SnomedConstants.HAS_UNIT_OF_PRESENTATION));
+    assertFalse(attrs.contains(SnomedConstants.HAS_BOSS));
     assertTrue(attrs.contains(SnomedConstants.HAS_PRODUCT_NAME));
+  }
+
+  @Test
+  void mpLevelOmitsClinicalDrugLevelAttributes() {
+    // The unit-of-presentation attributes belong at VMP/AMP, not at VTM/MP.
+    Set<LingoConstants> attrs =
+        ModelLevelDefiningAttributes.getDefiningAttributeTypes(
+            ModelLevelType.MEDICINAL_PRODUCT_ONLY, ModelType.NMPC);
+
+    assertFalse(attrs.contains(SnomedConstants.HAS_UNIT_OF_PRESENTATION));
+    assertFalse(attrs.contains(SnomedConstants.HAS_BOSS));
   }
 
   @Test

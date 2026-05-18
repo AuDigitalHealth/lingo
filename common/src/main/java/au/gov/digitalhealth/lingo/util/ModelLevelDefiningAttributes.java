@@ -19,6 +19,7 @@ import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_CONTAINER_TYPE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.COUNT_OF_ACTIVE_INGREDIENT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.COUNT_OF_BASE_ACTIVE_INGREDIENT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_ACTIVE_INGREDIENT;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_BOSS;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_MANUFACTURED_DOSE_FORM;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_UNIT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_VALUE;
@@ -26,6 +27,9 @@ import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRECISE_ACTIVE
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRODUCT_NAME;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_QUALITATIVE_STRENGTH;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_TARGET_POPULATION;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_UNIT_OF_PRESENTATION;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_UNIT_OF_PRESENTATION_SIZE_QUANTITY;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_UNIT_OF_PRESENTATION_SIZE_UNIT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.PLAYS_ROLE;
 
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
@@ -53,21 +57,23 @@ import java.util.stream.Collectors;
  *       attribute would be excluded just because the user hadn't yet filled in their value).
  * </ol>
  *
- * <p>The catalogue today covers the attributes whose absence-in-update has been reported as
- * causing missed-change bugs (notably the MP-level NMPC user attributes — {@link
- * SnomedConstants#HAS_TARGET_POPULATION}, {@link SnomedConstants#PLAYS_ROLE}, {@link
- * SnomedConstants#HAS_QUALITATIVE_STRENGTH}). Known omissions that may be candidates for future
- * inclusion if a similar bug surfaces:
+ * <p>The catalogue covers, for NMPC clinical-drug level, the template-distinguishing attributes
+ * documented in the NMPC Medicinal / Vaccine / Nutritional product modelling v6/v7 documents.
+ * Form-driven optional attributes — like {@link SnomedConstants#HAS_UNIT_OF_PRESENTATION} (absent
+ * in medicinal Template 2 "concentration strength, no unit of presentation"),
+ * {@link SnomedConstants#HAS_UNIT_OF_PRESENTATION_SIZE_QUANTITY} /
+ * {@link SnomedConstants#HAS_UNIT_OF_PRESENTATION_SIZE_UNIT} (absent in vaccine Detailed
+ * template), and {@link SnomedConstants#HAS_BOSS} (absent in nutritional VMP and vaccine
+ * Simplified) — are listed here because the form-driven {@code addRelationshipIfNotNull} emission
+ * means a Template-2 lookup correctly omits them, and the {@code [0..0] X = *} filter therefore
+ * admits Template-2 candidates while excluding Template-1 ones (and vice versa).
  *
- * <ul>
- *   <li>NMPC clinical-drug attributes: {@code HAS_UNIT_OF_PRESENTATION}, {@code
- *       HAS_UNIT_OF_PRESENTATION_SIZE_*}, presentation/concentration strength values and units.
- *   <li>AMT clinical-drug attributes: {@code HAS_BOSS}, {@code HAS_TOTAL_QUANTITY_*}, {@code
- *       CONCENTRATION_STRENGTH_*}, {@code HAS_DEVICE_TYPE}.
- * </ul>
- *
- * Each candidate addition needs to be analysed against criterion (2) above before being added —
- * blindly including them risks over-filtering partially-specified lookups.
+ * <p>Concrete grouped strength values
+ * ({@code HAS_PRESENTATION_STRENGTH_*_VALUE} / {@code HAS_CONCENTRATION_STRENGTH_*_VALUE}) and AMT
+ * clinical-drug attributes ({@code HAS_TOTAL_QUANTITY_*}, AMT {@code CONCENTRATION_STRENGTH_*},
+ * {@code HAS_DEVICE_TYPE}) are deliberately omitted today because each one needs further analysis
+ * (concrete multi-value attributes hit the {@code [N..N]} cardinality approximation; AMT
+ * per-ingredient attributes need careful thought about partial-form lookups).
  *
  * <p><strong>Sync requirement:</strong> when {@code MedicationProductCalculationService}'s
  * {@code createMpRelationships}, {@code createClinicalDrugRelationships}, or {@code
@@ -98,6 +104,7 @@ public final class ModelLevelDefiningAttributes {
     }
     Set<LingoConstants> attributes = new HashSet<>(levelSpecificAttributes(levelType, modelType));
     attributes.addAll(nmpcUserControllableAttributes(levelType, modelType));
+    attributes.addAll(nmpcClinicalDrugAttributes(levelType, modelType));
     attributes.addAll(modelTypeWideAttributes(modelType));
     return Collections.unmodifiableSet(attributes);
   }
@@ -159,6 +166,46 @@ public final class ModelLevelDefiningAttributes {
       return Set.of();
     }
     return Set.of(PLAYS_ROLE, HAS_TARGET_POPULATION, HAS_QUALITATIVE_STRENGTH);
+  }
+
+  /**
+   * NMPC clinical-drug-level attributes that distinguish the medicinal-product / vaccine /
+   * nutritional templates. Each is form-driven and emitted by the calculation services only when
+   * the user supplies a value via {@code productDetails.getUnitOfPresentation()},
+   * {@code productDetails.getQuantity()} or {@code ingredient.getBasisOfStrengthSubstance()}.
+   *
+   * <ul>
+   *   <li>{@link SnomedConstants#HAS_UNIT_OF_PRESENTATION} — present in vaccine VMP (both
+   *       templates), nutritional VMP, medicinal Templates 1 &amp; 3; absent in medicinal Template
+   *       2 (concentration strength). The form sends null for Template 2 so the
+   *       {@code [0..0] X = *} filter matches Template-2 candidates correctly.
+   *   <li>{@link SnomedConstants#HAS_UNIT_OF_PRESENTATION_SIZE_QUANTITY} /
+   *       {@link SnomedConstants#HAS_UNIT_OF_PRESENTATION_SIZE_UNIT} — present in vaccine
+   *       Simplified template; absent in vaccine Detailed and most medicinal templates. Same
+   *       form-driven mechanism.
+   *   <li>{@link SnomedConstants#HAS_BOSS} — present in medicinal VMP (all three templates),
+   *       vaccine Detailed; absent in vaccine Simplified, nutritional VMP. Grouped per
+   *       ingredient — concept-valued so the multi-value OR form is exact.
+   * </ul>
+   *
+   * <p>Concrete strength values (presentation/concentration numerator/denominator) are still
+   * omitted because they would hit the cardinality-approximation path in the ECL builder for
+   * multi-ingredient products with shared values. Their corresponding unit attributes are also
+   * omitted today because they're paired with the values; if added they should be added together.
+   */
+  private static Set<LingoConstants> nmpcClinicalDrugAttributes(
+      ModelLevelType levelType, ModelType modelType) {
+    if (modelType != ModelType.NMPC) {
+      return Set.of();
+    }
+    if (levelType != ModelLevelType.CLINICAL_DRUG && levelType != ModelLevelType.REAL_CLINICAL_DRUG) {
+      return Set.of();
+    }
+    return Set.of(
+        HAS_UNIT_OF_PRESENTATION,
+        HAS_UNIT_OF_PRESENTATION_SIZE_QUANTITY,
+        HAS_UNIT_OF_PRESENTATION_SIZE_UNIT,
+        HAS_BOSS);
   }
 
   private static Set<LingoConstants> modelTypeWideAttributes(ModelType modelType) {

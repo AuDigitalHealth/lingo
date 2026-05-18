@@ -167,6 +167,108 @@ class EclBuilderNegativeFilterTest {
     return r;
   }
 
+  /**
+   * NMPC Medicinal VMP Template 2 ("Concentration Strength — No Unit of Presentation") has no
+   * HAS_UNIT_OF_PRESENTATION relationship. The ECL filter must allow such candidates through
+   * (positive filter is omitted because the form-driven addRelationshipIfNotNull omits the
+   * relationship when the user doesn't supply a value) while excluding Template-1 candidates that
+   * DO carry a UoP.
+   */
+  @Test
+  void medicinalTemplate2OmitsUnitOfPresentationFilter() {
+    Set<SnowstormRelationship> relationships = new HashSet<>();
+    relationships.add(isAMp());
+    relationships.add(rel(SnomedConstants.HAS_ACTIVE_INGREDIENT.getValue(), "111", 1));
+    // NO unit of presentation — Template 2 doesn't have one
+
+    ModelLevel vmp = new ModelLevel();
+    vmp.setName("VMP");
+    vmp.setDisplayLabel("VMP");
+    vmp.setModelLevelType(ModelLevelType.CLINICAL_DRUG);
+
+    String ecl = EclBuilder.build(relationships, Set.of(), false, false, nmpcModel(), vmp);
+
+    assertThat(ecl)
+        .as("Template 2 lookup should still constrain absence of HAS_UNIT_OF_PRESENTATION")
+        .contains("[0..0] " + SnomedConstants.HAS_UNIT_OF_PRESENTATION.getValue() + " = *");
+  }
+
+  /**
+   * When a user supplies a unit of presentation (Template 1 or Template 3), the ECL emits the
+   * positive filter and a value-exclusion negative filter so a candidate with a different unit of
+   * presentation (e.g. vial vs syringe) is excluded.
+   */
+  @Test
+  void nmpcVmpWithUnitOfPresentationExcludesOtherUnits() {
+    Set<SnowstormRelationship> relationships = new HashSet<>();
+    relationships.add(isAMp());
+    relationships.add(rel(SnomedConstants.HAS_ACTIVE_INGREDIENT.getValue(), "111", 1));
+    relationships.add(rel(SnomedConstants.HAS_UNIT_OF_PRESENTATION.getValue(), "733026001", 0));
+
+    ModelLevel vmp = new ModelLevel();
+    vmp.setName("VMP");
+    vmp.setDisplayLabel("VMP");
+    vmp.setModelLevelType(ModelLevelType.CLINICAL_DRUG);
+
+    String ecl = EclBuilder.build(relationships, Set.of(), false, false, nmpcModel(), vmp);
+
+    assertThat(ecl)
+        .as("Candidate with a different unit of presentation must be excluded")
+        .contains(
+            "[0..0] " + SnomedConstants.HAS_UNIT_OF_PRESENTATION.getValue() + " != 733026001");
+  }
+
+  /**
+   * Vaccine Detailed template lacks HAS_UNIT_OF_PRESENTATION_SIZE_*, so a lookup without those
+   * fields should not over-constrain the search for non-Detailed candidates.
+   */
+  @Test
+  void vaccineDetailedTemplateOmitsUnitOfPresentationSizeFilters() {
+    Set<SnowstormRelationship> relationships = new HashSet<>();
+    relationships.add(isAMp());
+    relationships.add(rel(SnomedConstants.HAS_ACTIVE_INGREDIENT.getValue(), "1296750001", 1));
+    relationships.add(rel(SnomedConstants.HAS_UNIT_OF_PRESENTATION.getValue(), "733026001", 0));
+    // NO unit of presentation size — Vaccine Detailed doesn't have it
+
+    ModelLevel vmp = new ModelLevel();
+    vmp.setName("VMP");
+    vmp.setDisplayLabel("VMP");
+    vmp.setModelLevelType(ModelLevelType.CLINICAL_DRUG);
+
+    String ecl = EclBuilder.build(relationships, Set.of(), false, false, nmpcModel(), vmp);
+
+    assertThat(ecl)
+        .contains(
+            "[0..0] " + SnomedConstants.HAS_UNIT_OF_PRESENTATION_SIZE_QUANTITY.getValue() + " = *");
+    assertThat(ecl)
+        .contains(
+            "[0..0] " + SnomedConstants.HAS_UNIT_OF_PRESENTATION_SIZE_UNIT.getValue() + " = *");
+  }
+
+  /**
+   * Multi-ingredient NMPC VMP with BoSS — the BoSS values come through as a multi-value concept
+   * filter, which uses the valid {@code [0..0] X != (a OR b)} form.
+   */
+  @Test
+  void multiIngredientBossUsesOrNotEqualForm() {
+    Set<SnowstormRelationship> relationships = new HashSet<>();
+    relationships.add(isAMp());
+    relationships.add(rel(SnomedConstants.HAS_ACTIVE_INGREDIENT.getValue(), "111", 1));
+    relationships.add(rel(SnomedConstants.HAS_BOSS.getValue(), "111", 1));
+    relationships.add(rel(SnomedConstants.HAS_ACTIVE_INGREDIENT.getValue(), "222", 2));
+    relationships.add(rel(SnomedConstants.HAS_BOSS.getValue(), "222", 2));
+
+    ModelLevel vmp = new ModelLevel();
+    vmp.setName("VMP");
+    vmp.setDisplayLabel("VMP");
+    vmp.setModelLevelType(ModelLevelType.CLINICAL_DRUG);
+
+    String ecl = EclBuilder.build(relationships, Set.of(), false, false, nmpcModel(), vmp);
+
+    assertThat(ecl).contains("[0..0] " + SnomedConstants.HAS_BOSS.getValue() + " != (");
+    assertThat(ecl).containsAnyOf("(111 OR 222)", "(222 OR 111)");
+  }
+
   @Test
   void noNegativeFiltersWhenSuppressedOrLevelMissing() {
     Set<SnowstormRelationship> relationships = new HashSet<>();
