@@ -46,6 +46,21 @@ import lombok.extern.java.Log;
  * A node in a product summary which represents a concept with a particular label indicating the
  * type of the node in the context of the product. This DTO can also represent a new concept that
  * has not yet been created in Snowstorm.
+ *
+ * <p>The boolean accessors split into two distinct families:
+ *
+ * <ul>
+ *   <li><strong>Operation predicates</strong> ({@link #isNewConcept()}, {@link #isConceptEdit()},
+ *       {@link #isRetireAndReplace()}, {@link #isRetireAndReplaceWithExisting()}, {@link
+ *       #isReplaceWithoutRetire()}). These are mutually exclusive over the reachable state space
+ *       (asserted by {@code NodeReplaceWithoutRetireTest.operationPredicatesAreMutuallyExclusive})
+ *       and a downstream service dispatches on whichever one fires. At most one fires for any
+ *       given node; no-operation nodes (e.g. a concept that hasn't changed) leave them all false.
+ *   <li><strong>Change indicators</strong> ({@link #isPropertyUpdate()}, {@link
+ *       #isStatedFormChanged()}, {@link #isInferredFormChanged()}). These are orthogonal to the
+ *       operation predicates AND to each other — any combination may fire alongside any operation
+ *       predicate, and they describe finer-grained reasons the node differs from its original.
+ * </ul>
  */
 @Data
 @Builder
@@ -150,6 +165,11 @@ public class Node {
     return Objects.requireNonNull(concept.getFsn()).getTerm();
   }
 
+  // ---------------------------------------------------------------------------------------------
+  // Operation predicates — mutually exclusive; downstream services dispatch on these.
+  // See the class Javadoc for the operation-vs-change-indicator split.
+  // ---------------------------------------------------------------------------------------------
+
   /**
    * Returns true if this node represents a brand-new concept being added to Snowstorm — i.e. there
    * is no existing counterpart it is replacing or editing. A node that has an {@link OriginalNode}
@@ -189,9 +209,11 @@ public class Node {
    * International concept). The original concept's reference set memberships in the configured
    * in-scope reference sets are removed but the concept itself is not retired and no historical
    * association is created. An inactivation reason on the original node makes no sense in this
-   * mode (the concept is not being inactivated), so the predicate excludes it for symmetry with
-   * {@link #isConceptEdit} and {@link #isRetireAndReplace}; the server-side validator rejects
-   * the combination explicitly.
+   * mode (the concept is not being inactivated), so the predicate excludes it. This aligns the
+   * inactivation-reason precondition with {@link #isConceptEdit} (also requires null) and keeps
+   * the predicate mutually exclusive with {@link #isRetireAndReplace}, which requires the reason
+   * to be non-null. The server-side validator rejects the contradictory combination
+   * (external + non-null reason) explicitly.
    */
   @JsonProperty(value = "replaceWithoutRetire", access = JsonProperty.Access.READ_ONLY)
   public boolean isReplaceWithoutRetire() {
@@ -214,6 +236,12 @@ public class Node {
         && !originalNode.isExternalConcept()
         && originalNode.getInactivationReason() == null;
   }
+
+  // ---------------------------------------------------------------------------------------------
+  // Change indicators — orthogonal to the operation predicates and to each other. Any combination
+  // may co-fire with any operation predicate; they describe finer-grained reasons a node differs
+  // from its original.
+  // ---------------------------------------------------------------------------------------------
 
   /**
    * Returns true if this node represents a property update, which means it has an original node and

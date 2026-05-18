@@ -53,6 +53,7 @@ import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.exception.ResourceNotFoundProblem;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
+import au.gov.digitalhealth.lingo.product.OriginalNode;
 import au.gov.digitalhealth.lingo.product.PrimitiveConceptCreationRequest;
 import au.gov.digitalhealth.lingo.product.ProductCreateUpdateDetails;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
@@ -238,11 +239,61 @@ public class ProductCreationService {
   }
 
   /**
-   * Builds the inactivation-indicator and historical-association reference set members that should
-   * accompany retire-and-replace operations. Replace-without-retire nodes (external concepts)
-   * deliberately produce NO members from this method — they are still cleaned up from the in-scope
-   * reference sets by the caller, but they are not retired and no historical association is
-   * recorded against them.
+   * Re-derives the {@code externalConcept} flag on every {@link OriginalNode} in the supplied
+   * {@link ProductSummary} from the original concept's {@code moduleId}, using the authoring module
+   * from {@link ModelConfiguration}. The JSON binding of {@code externalConcept} is READ_ONLY so a
+   * client-supplied value is dropped on the way in; this method ensures the server-authoritative
+   * value is set before any predicate dispatches on it.
+   *
+   * <p>OriginalNodes are replaced via {@link OriginalNode#of(Node, InactivationReason, boolean,
+   * String)} rather than mutated, because the {@code externalConcept} field's setter is suppressed
+   * by Lombok ({@code @Setter(AccessLevel.NONE)}). Both {@code Node.originalNode} and {@code
+   * ProductSummary.unmatchedPreviouslyReferencedNodes} are walked.
+   */
+  static void normaliseExternalConceptFlag(
+      ProductSummary productSummary, ModelConfiguration modelConfiguration) {
+    String authoringModuleId = modelConfiguration.getModuleId();
+    productSummary
+        .getNodes()
+        .forEach(
+            node -> {
+              OriginalNode current = node.getOriginalNode();
+              if (current != null) {
+                node.setOriginalNode(
+                    OriginalNode.of(
+                        current.getNode(),
+                        current.getInactivationReason(),
+                        current.isReferencedByOtherProducts(),
+                        authoringModuleId));
+              }
+            });
+
+    Set<OriginalNode> unmatched = productSummary.getUnmatchedPreviouslyReferencedNodes();
+    Set<OriginalNode> renormalised =
+        unmatched.stream()
+            .map(
+                original ->
+                    OriginalNode.of(
+                        original.getNode(),
+                        original.getInactivationReason(),
+                        original.isReferencedByOtherProducts(),
+                        authoringModuleId))
+            .collect(Collectors.toSet());
+    unmatched.clear();
+    unmatched.addAll(renormalised);
+  }
+
+  /**
+   * Builds the inactivation-indicator and historical-association reference set members accompanying
+   * retire-and-replace operations.
+   *
+   * <p><strong>Precondition:</strong> the input set MUST contain only nodes for which {@link
+   * Node#isRetireAndReplace()} or {@link Node#isRetireAndReplaceWithExisting()} returns true.
+   * Replace-without-retire nodes (external concepts) must NOT be passed in — they are cleaned up
+   * from the in-scope reference sets separately by the caller (see {@link
+   * #createandUpdateRefsetMemberships}) and must not have inactivation-indicator or historical-
+   * association members recorded against them. The method throws {@link IllegalStateException} on
+   * any other node type as defence-in-depth against a future caller forgetting the pre-filter.
    */
   static List<SnowstormReferenceSetMemberViewComponent> buildInactivationAndAssociationMembers(
       Set<Node> retireAndReplaceNodes) {
@@ -281,6 +332,23 @@ public class ProductCreationService {
     return members;
   }
 
+  /**
+   * Service-layer guard against the contradictory {@code externalConcept && inactivationReason !=
+   * null} combination on any {@link OriginalNode} in the summary. The same invariant is also
+   * enforced by the {@code @AssertTrue isExternalConceptInactivationReasonConsistent} on {@link
+   * OriginalNode}, which fires at any {@code @Valid} boundary. Both layers exist deliberately:
+   *
+   * <ul>
+   *   <li>The {@code @AssertTrue} produces a generic JSR-303 constraint-violation envelope; this
+   *       service-layer check throws a domain-specific {@link ProductAtomicDataValidationProblem}
+   *       with a clearer message that names the offending concept.
+   *   <li>If a future code path constructs a {@code ProductSummary} server-side without going
+   *       through a {@code @Valid} boundary, the service-layer check still catches the bad state.
+   * </ul>
+   *
+   * <p>Runs after {@link #normaliseExternalConceptFlag} so it sees the server-authoritative {@code
+   * externalConcept} value, not whatever the client may have sent.
+   */
   private static void validateUpdateOperation(ProductSummary productSummary) {
     productSummary
         .getNodes()
@@ -629,6 +697,14 @@ public class ProductCreationService {
       String branch, ProductSummary productSummary, boolean createOnly)
       throws InterruptedException {
 
+    final ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+
+    // The externalConcept flag on every OriginalNode is server-derived; the JSON binding is
+    // read-only and client-supplied values are intentionally ignored. Re-derive here so that
+    // even a client that tampers with the in-memory state (e.g. via a custom POST body) cannot
+    // route an authoring-module concept down the replace-without-retire path.
+    normaliseExternalConceptFlag(productSummary, modelConfiguration);
+
     if (createOnly) {
       validateCreateOperation(productSummary);
       if (productSummary.getNodes().stream().noneMatch(Node::isNewConcept)) {
@@ -637,7 +713,9 @@ public class ProductCreationService {
     } else {
       // Run the specific validators before the empty-payload check so a bad-state node yields a
       // specific 4xx (e.g. "external concept cannot be retired") rather than the generic
-      // "did not contain any concepts" message when it's the only changed node.
+      // "did not contain any concepts" message when it's the only changed node. The validators
+      // run AFTER normaliseExternalConceptFlag so they see the server-authoritative externality
+      // state, not whatever the client may have sent.
       validateUpdateOperation(productSummary);
       if (productSummary.getNodes().stream().noneMatch(Node::isNewConcept)
           && productSummary.getNodes().stream().noneMatch(Node::isConceptEdit)
@@ -648,8 +726,6 @@ public class ProductCreationService {
         throw new EmptyProductCreationProblem();
       }
     }
-
-    final ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
     // validation done - update URL based non-defining properties
     blobStorageService.updateNonDefiningUrlProperties(modelConfiguration, productSummary);

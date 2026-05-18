@@ -52,28 +52,29 @@ import java.util.stream.Collectors;
  *   <li><strong>User-controllable</strong> — the user can legitimately add or remove it via the
  *       atomic-data form, so a difference between source and candidate is a real shape change.
  *   <li><strong>Mandatory-when-applicable</strong> — when the user has filled in enough of the
- *       form to look up a candidate, this attribute is always populated. Otherwise, listing it
- *       would over-filter a partially-completed lookup (any existing concept carrying the
- *       attribute would be excluded just because the user hadn't yet filled in their value).
+ *       form to look up a candidate, this attribute is always populated. This is a UI invariant
+ *       the backend does not enforce: a partially-completed form that triggers a lookup early
+ *       will, for any attribute in this catalogue, emit a {@code [0..0] X = *} filter that
+ *       excludes valid candidates whose template carries the attribute. That is a UX failure
+ *       mode the form-trigger logic should prevent (don't fire lookups before the relevant
+ *       template fields are populated); the catalogue assumes the form is complete enough at
+ *       lookup time.
  * </ol>
  *
- * <p>The catalogue covers, for NMPC clinical-drug level, the template-distinguishing attributes
- * documented in the NMPC Medicinal / Vaccine / Nutritional product modelling v6/v7 documents.
- * Form-driven optional attributes — like {@link SnomedConstants#HAS_UNIT_OF_PRESENTATION} (absent
- * in medicinal Template 2 "concentration strength, no unit of presentation"),
- * {@link SnomedConstants#HAS_UNIT_OF_PRESENTATION_SIZE_QUANTITY} /
- * {@link SnomedConstants#HAS_UNIT_OF_PRESENTATION_SIZE_UNIT} (absent in vaccine Detailed
- * template), and {@link SnomedConstants#HAS_BOSS} (absent in nutritional VMP and vaccine
- * Simplified) — are listed here because the form-driven {@code addRelationshipIfNotNull} emission
- * means a Template-2 lookup correctly omits them, and the {@code [0..0] X = *} filter therefore
- * admits Template-2 candidates while excluding Template-1 ones (and vice versa).
+ * <p>Form-driven optional attributes are safe to include because the calculation services use
+ * {@code addRelationshipIfNotNull} — they emit a relationship only when the corresponding field
+ * is populated. A template-distinguishing attribute (e.g. {@link
+ * SnomedConstants#HAS_UNIT_OF_PRESENTATION}, present in some VMP templates and absent in others)
+ * therefore correctly admits the right templates: omitting the field maps to {@code [0..0] X =
+ * *}, which matches candidates without the attribute. See the per-bucket helper methods for which
+ * attributes apply at each level.
  *
  * <p>Concrete grouped strength values
  * ({@code HAS_PRESENTATION_STRENGTH_*_VALUE} / {@code HAS_CONCENTRATION_STRENGTH_*_VALUE}) and AMT
  * clinical-drug attributes ({@code HAS_TOTAL_QUANTITY_*}, AMT {@code CONCENTRATION_STRENGTH_*},
- * {@code HAS_DEVICE_TYPE}) are deliberately omitted today because each one needs further analysis
- * (concrete multi-value attributes hit the {@code [N..N]} cardinality approximation; AMT
- * per-ingredient attributes need careful thought about partial-form lookups).
+ * {@code HAS_DEVICE_TYPE}) are deliberately omitted today: concrete multi-value attributes hit
+ * the {@code [N..N]} cardinality approximation in the ECL builder, and the AMT per-ingredient
+ * attributes need careful thought about partial-form lookups.
  *
  * <p><strong>Sync requirement:</strong> when {@code MedicationProductCalculationService}'s
  * {@code createMpRelationships}, {@code createClinicalDrugRelationships}, or {@code

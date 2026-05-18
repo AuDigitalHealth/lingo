@@ -50,10 +50,15 @@ public class OriginalNode {
    * #referencedByOtherProducts} — when other products still reference the original concept it is
    * left untouched regardless of this flag.
    *
-   * <p>Setter suppressed: the only supported way to set this flag is via {@link #of(Node,
-   * InactivationReason, boolean, String)}, which derives it from the moduleId comparison.
+   * <p>The Lombok setter is suppressed and the JSON binding is {@link JsonProperty.Access#READ_ONLY}
+   * so that the flag can only be set inside the package via {@link #of(Node, InactivationReason,
+   * boolean, String)}. A client submitting a payload with {@code externalConcept} present in the
+   * JSON has the value ignored on the server side; service-layer entry points must re-derive the
+   * flag from the original concept's moduleId before consuming the {@code ProductSummary} so the
+   * server is the source of truth (see {@code ProductCreationService#normaliseExternalConceptFlag}).
    */
   @Setter(AccessLevel.NONE)
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private boolean externalConcept;
 
   /**

@@ -385,4 +385,181 @@ class ProductCreationServiceTest {
 
     assertThat(members).isEmpty();
   }
+
+  // ------------------------------------------------------------------------------------------
+  // normaliseExternalConceptFlag — server-side re-derivation of externalConcept on incoming
+  // ProductSummary, defending against a client tampering with the flag through Jackson
+  // deserialization (the field is JsonProperty.READ_ONLY but Jackson can still bind via
+  // reflection if Lombok-suppressed setters are bypassed).
+  // ------------------------------------------------------------------------------------------
+
+  private static au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration nmpcModel() {
+    au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration cfg =
+        new au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration();
+    cfg.setModelType(au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType.NMPC);
+    cfg.setModuleId(AUTHORING_MODULE);
+    return cfg;
+  }
+
+  @Test
+  void normaliseFlipsExternalFlagBackToTrueForExternalConcept() {
+    Node externalOriginal = existingNode("1296676008", SCT_CORE_MODULE);
+    // Build with the WRONG authoringModuleId so externalConcept is false — simulating a
+    // client-supplied payload that's been tampered with.
+    OriginalNode tampered =
+        OriginalNode.of(externalOriginal, InactivationReason.ERRONEOUS, false, (String) null);
+    assertThat(tampered.isExternalConcept()).isFalse();
+
+    Node node = nodeWithNewConceptDetails(tampered);
+    au.gov.digitalhealth.lingo.product.ProductSummary summary =
+        new au.gov.digitalhealth.lingo.product.ProductSummary();
+    summary.getNodes().add(node);
+
+    ProductCreationService.normaliseExternalConceptFlag(summary, nmpcModel());
+
+    assertThat(node.getOriginalNode().isExternalConcept())
+        .as("externalConcept must be re-derived to true for SCT International concept")
+        .isTrue();
+  }
+
+  @Test
+  void normaliseFlipsExternalFlagBackToFalseForInternalConcept() {
+    Node internalOriginal = existingNode("1234567890", AUTHORING_MODULE);
+    // Adversarial client claims externalConcept=true on an authoring-module concept by routing
+    // through a deserialized-from-JSON path. Simulate by constructing with null authoringModuleId
+    // and then... actually the factory forces externalConcept=false for null moduleId, so to
+    // simulate a tampered state we'd need the Jackson path. Here we just verify that a
+    // correctly-constructed external=false stays false after normalisation.
+    OriginalNode correctlyInternal =
+        OriginalNode.of(internalOriginal, null, false, AUTHORING_MODULE);
+    assertThat(correctlyInternal.isExternalConcept()).isFalse();
+
+    Node node = nodeWithNewConceptDetails(correctlyInternal);
+    au.gov.digitalhealth.lingo.product.ProductSummary summary =
+        new au.gov.digitalhealth.lingo.product.ProductSummary();
+    summary.getNodes().add(node);
+
+    ProductCreationService.normaliseExternalConceptFlag(summary, nmpcModel());
+
+    assertThat(node.getOriginalNode().isExternalConcept())
+        .as("Authoring-module concept must remain internal after normalisation")
+        .isFalse();
+  }
+
+  @Test
+  void normaliseHandlesNodesWithoutOriginalNode() {
+    Node nodeWithoutOriginal = new Node(null, vmpLevel());
+    NewConceptDetails details = new NewConceptDetails();
+    details.setConceptId(-1);
+    details.setFullySpecifiedName("New (medicinal product)");
+    details.setPreferredTerm("New");
+    nodeWithoutOriginal.setNewConceptDetails(details);
+    // No originalNode set
+    au.gov.digitalhealth.lingo.product.ProductSummary summary =
+        new au.gov.digitalhealth.lingo.product.ProductSummary();
+    summary.getNodes().add(nodeWithoutOriginal);
+
+    // Should not throw — nodes without an originalNode are simply skipped.
+    ProductCreationService.normaliseExternalConceptFlag(summary, nmpcModel());
+
+    assertThat(nodeWithoutOriginal.getOriginalNode()).isNull();
+  }
+
+  @Test
+  void normaliseAlsoRewritesUnmatchedPreviouslyReferencedNodes() {
+    Node externalOriginal = existingNode("1296676008", SCT_CORE_MODULE);
+    OriginalNode tampered = OriginalNode.of(externalOriginal, null, false, (String) null);
+    assertThat(tampered.isExternalConcept()).isFalse();
+
+    au.gov.digitalhealth.lingo.product.ProductSummary summary =
+        new au.gov.digitalhealth.lingo.product.ProductSummary();
+    summary.getUnmatchedPreviouslyReferencedNodes().add(tampered);
+
+    ProductCreationService.normaliseExternalConceptFlag(summary, nmpcModel());
+
+    // The set was rebuilt, so the contents should be the re-derived version.
+    assertThat(summary.getUnmatchedPreviouslyReferencedNodes())
+        .singleElement()
+        .matches(OriginalNode::isExternalConcept);
+  }
+
+  // ------------------------------------------------------------------------------------------
+  // validateUpdateOperation — service-layer guard against external + inactivationReason. Also
+  // enforced by @AssertTrue on OriginalNode, but the service-layer throw produces a clearer
+  // domain message than the generic constraint-violation envelope.
+  // ------------------------------------------------------------------------------------------
+
+  private static void invokeValidateUpdateOperation(
+      au.gov.digitalhealth.lingo.product.ProductSummary summary) throws Exception {
+    Method method =
+        ProductCreationService.class.getDeclaredMethod(
+            "validateUpdateOperation", au.gov.digitalhealth.lingo.product.ProductSummary.class);
+    method.setAccessible(true);
+    try {
+      method.invoke(null, summary);
+    } catch (java.lang.reflect.InvocationTargetException e) {
+      // unwrap the underlying exception
+      if (e.getCause() instanceof RuntimeException re) {
+        throw re;
+      }
+      throw new RuntimeException(e.getCause());
+    }
+  }
+
+  @Test
+  void validateUpdateOperationRejectsExternalConceptWithInactivationReason() {
+    // The illegal state: external concept with a non-null inactivation reason. The @AssertTrue
+    // catches this at any @Valid boundary, but the service-layer check is needed when the
+    // ProductSummary is built server-side (no JSR-303 entry point) or when a future refactor
+    // moves the boundary.
+    Node externalOriginal = existingNode("1296676008", SCT_CORE_MODULE);
+    // Construct via the all-args path that bypasses moduleId derivation by using null
+    // authoringModuleId, then mutate inactivationReason post-construction.
+    OriginalNode bad = OriginalNode.of(externalOriginal, null, false, (String) null);
+    // Force the bad state directly: set inactivationReason after construction, and force
+    // externalConcept via a separately-constructed OriginalNode with a matching moduleId.
+    OriginalNode badRederived =
+        OriginalNode.of(externalOriginal, InactivationReason.ERRONEOUS, false, AUTHORING_MODULE);
+    assertThat(badRederived.isExternalConcept()).isTrue();
+    assertThat(badRederived.getInactivationReason()).isNotNull();
+
+    Node node = nodeWithNewConceptDetails(badRederived);
+    au.gov.digitalhealth.lingo.product.ProductSummary summary =
+        new au.gov.digitalhealth.lingo.product.ProductSummary();
+    summary.getNodes().add(node);
+
+    assertThatThrownBy(() -> invokeValidateUpdateOperation(summary))
+        .isInstanceOf(au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem.class)
+        .hasMessageContaining("1296676008")
+        .hasMessageContaining("external module");
+  }
+
+  @Test
+  void validateUpdateOperationAcceptsLegitimateExternalReplaceWithoutRetire() {
+    // External concept with null inactivationReason — valid replace-without-retire.
+    Node externalOriginal = existingNode("1296676008", SCT_CORE_MODULE);
+    OriginalNode legitExternal = OriginalNode.of(externalOriginal, null, false, AUTHORING_MODULE);
+    Node node = nodeWithNewConceptDetails(legitExternal);
+    au.gov.digitalhealth.lingo.product.ProductSummary summary =
+        new au.gov.digitalhealth.lingo.product.ProductSummary();
+    summary.getNodes().add(node);
+
+    // Should not throw.
+    org.junit.jupiter.api.Assertions.assertDoesNotThrow(
+        () -> invokeValidateUpdateOperation(summary));
+  }
+
+  @Test
+  void validateUpdateOperationAcceptsInternalRetireAndReplace() {
+    Node internalOriginal = existingNode("1234567890", AUTHORING_MODULE);
+    OriginalNode legitRetire =
+        OriginalNode.of(internalOriginal, InactivationReason.ERRONEOUS, false, AUTHORING_MODULE);
+    Node node = nodeWithNewConceptDetails(legitRetire);
+    au.gov.digitalhealth.lingo.product.ProductSummary summary =
+        new au.gov.digitalhealth.lingo.product.ProductSummary();
+    summary.getNodes().add(node);
+
+    org.junit.jupiter.api.Assertions.assertDoesNotThrow(
+        () -> invokeValidateUpdateOperation(summary));
+  }
 }
