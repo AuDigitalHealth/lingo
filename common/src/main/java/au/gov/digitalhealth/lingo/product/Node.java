@@ -156,7 +156,10 @@ public class Node {
    */
   @JsonProperty(value = "newConcept", access = JsonProperty.Access.READ_ONLY)
   public boolean isNewConcept() {
-    return concept == null && newConceptDetails != null && !isRetireAndReplace();
+    return concept == null
+        && newConceptDetails != null
+        && !isRetireAndReplace()
+        && !isReplaceWithoutRetire();
   }
 
   /** Returns true if this node represents a retire and replace operation. */
@@ -165,6 +168,7 @@ public class Node {
     return newConceptDetails != null
         && originalNode != null
         && !originalNode.isReferencedByOtherProducts()
+        && !originalNode.isExternalConcept()
         && originalNode.getInactivationReason() != null;
   }
 
@@ -177,7 +181,22 @@ public class Node {
         && concept != null
         && originalNode != null
         && !originalNode.getNode().getConceptId().equals(concept.getConceptId())
+        && !originalNode.isExternalConcept()
         && originalNode.getInactivationReason() != null;
+  }
+
+  /**
+   * Returns true if this node represents a replacement of an external concept (e.g. a SNOMED CT
+   * International concept). The original concept's reference set memberships for the authoring
+   * module are removed but the concept itself is not retired and no historical association is
+   * created.
+   */
+  @JsonProperty(value = "replaceWithoutRetire", access = JsonProperty.Access.READ_ONLY)
+  public boolean isReplaceWithoutRetire() {
+    return newConceptDetails != null
+        && originalNode != null
+        && originalNode.isExternalConcept()
+        && !originalNode.isReferencedByOtherProducts();
   }
 
   /**
@@ -189,6 +208,7 @@ public class Node {
     return originalNode != null
         && newConceptDetails != null
         && !originalNode.isReferencedByOtherProducts()
+        && !originalNode.isExternalConcept()
         && originalNode.getInactivationReason() == null;
   }
 

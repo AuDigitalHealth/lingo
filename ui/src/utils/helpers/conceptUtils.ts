@@ -195,6 +195,14 @@ export function isReplacedWithExistingConcept(product: Product) {
   );
 }
 
+export function isExternalOriginalConcept(product: Product) {
+  return (
+    product.originalNode != null &&
+    product.originalNode.externalConcept &&
+    !product.originalNode.referencedByOtherProducts
+  );
+}
+
 export const isValidConceptName = (concept: Concept) => {
   return concept && concept.pt?.term !== '' && concept.pt?.term !== null;
 };

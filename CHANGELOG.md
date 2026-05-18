@@ -8,7 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
+
+### Fixed
+
+- Fix vaccine target population update not creating a new VTM when the existing model concept (e.g.
+  a SNOMED CT International concept reused by NMPC/AMT) is owned by an external module: the preview
+  no longer offers "edit in place" or "retire and replace" for those concepts. Instead the original
+  concept is removed from the authoring reference sets and a new concept is created in its place,
+  with no inactivation and no historical association. (#1793)
 
 
 ## [1.3.39] - 2026-05-08

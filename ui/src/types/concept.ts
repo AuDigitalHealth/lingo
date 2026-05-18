@@ -333,6 +333,7 @@ class OriginalNode {
   node: Product | null;
   inactivationReason: InactivationReason | null;
   referencedByOtherProducts: boolean;
+  externalConcept: boolean;
 }
 
 export interface Product {

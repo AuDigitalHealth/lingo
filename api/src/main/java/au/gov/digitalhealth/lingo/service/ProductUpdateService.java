@@ -662,7 +662,9 @@ public class ProductUpdateService {
     // the subject of the new summary is the same as the subject of the old summary by definition
     newSummary
         .getSingleSubject()
-        .setOriginalNode(new OriginalNode(existingSummary.getSingleSubject(), null, false));
+        .setOriginalNode(
+            new OriginalNode(
+                existingSummary.getSingleSubject(), null, false, modelConfiguration.getModuleId()));
     allocatedExistingNodes.add(newSummary.getSingleSubject().getConceptId());
 
     // for all the new nodes in the new summary, find the corresponding existing node
@@ -677,7 +679,9 @@ public class ProductUpdateService {
               final Node bestMatchingNode =
                   getBestMatchingNode(newNode, existingNodesByConceptId, allocatedExistingNodes);
               if (bestMatchingNode != null) {
-                newNode.setOriginalNode(new OriginalNode(bestMatchingNode, null, true));
+                newNode.setOriginalNode(
+                    new OriginalNode(
+                        bestMatchingNode, null, true, modelConfiguration.getModuleId()));
                 allocatedExistingNodes.add(bestMatchingNode.getConceptId());
               }
             });
@@ -690,7 +694,7 @@ public class ProductUpdateService {
             node ->
                 finalNewSummary
                     .getUnmatchedPreviouslyReferencedNodes()
-                    .add(new OriginalNode(node, null, true)));
+                    .add(new OriginalNode(node, null, true, modelConfiguration.getModuleId())));
 
     // update all the existing nodes to indicate if they are referenced by other concepts outside
     // the ones in the summary
@@ -775,9 +779,9 @@ public class ProductUpdateService {
 
                             originalNode.setReferencedByOtherProducts(referencedByOtherProducts);
 
-                            if (referencedByOtherProducts) {
-                              // if the original node is referenced by other products, it should not
-                              // be retired or modified
+                            if (referencedByOtherProducts || originalNode.isExternalConcept()) {
+                              // if the original node is referenced by other products or owned by
+                              // an external module, it should not be retired or edited in place
                               originalNode.setInactivationReason(null);
                             } else if (!newNode.isNewInTask() && !newNode.isNewInProject()) {
                               // if the node is not new in task or project, the original node should
