@@ -665,7 +665,12 @@ public class ProductUpdateService {
         .setOriginalNode(
             OriginalNode.of(
                 existingSummary.getSingleSubject(), null, false, modelConfiguration.getModuleId()));
+    // Mark BOTH the new subject id and the existing subject id as allocated. The new subject's
+    // id is added for the unchanged-subject case (concept matches existing → same id); the
+    // existing subject's id is added for the changed-subject case (new SCTID replacing the
+    // existing one → must not leak the existing CTPP into unmatchedPreviouslyReferencedNodes).
     allocatedExistingNodes.add(newSummary.getSingleSubject().getConceptId());
+    allocatedExistingNodes.add(existingSummary.getSingleSubject().getConceptId());
 
     // for all the new nodes in the new summary, find the corresponding existing node
     newNodes.stream()

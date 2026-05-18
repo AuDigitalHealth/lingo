@@ -70,12 +70,15 @@ class NodeReplaceWithoutRetireTest {
   }
 
   @Test
-  void externalConceptWithStrayInactivationReasonFiresNoOperation() {
-    // The normal flow nulls the inactivation reason for external concepts. If the bad state
-    // (external + inactivationReason set) is reached through a bug or hostile payload, the
-    // node must not match any operation predicate — the server-side validator then rejects the
-    // payload before any concept changes are made. See `validateUpdateOperation` in
-    // ProductCreationService.
+  void externalConceptWithStrayInactivationReasonFallsBackToNewConcept() {
+    // The normal flow nulls the inactivation reason for external concepts. The bad state
+    // (external + inactivationReason set) is rejected upfront by the server's
+    // ProductCreationService.validateUpdateOperation and by OriginalNode's @AssertTrue at any
+    // @Valid boundary. If it ever slips past both, the safe fallback is that none of the
+    // specific operation predicates fire (RAR/RWR/edit/RARE all reject the state) and the node
+    // is classified as isNewConcept — downstream creates a new SCTID and leaves the original
+    // external concept untouched. That is the safest possible behaviour: no retirement, no
+    // refset cleanup, no historical association on the foreign concept.
     Node original = existingNode("1296676008", SCT_CORE_MODULE);
     OriginalNode originalNode =
         OriginalNode.of(original, InactivationReason.ERRONEOUS, false, AUTHORING_MODULE);
@@ -86,7 +89,7 @@ class NodeReplaceWithoutRetireTest {
     assertFalse(node.isRetireAndReplaceWithExisting());
     assertFalse(node.isConceptEdit());
     assertFalse(node.isReplaceWithoutRetire());
-    assertFalse(node.isNewConcept());
+    assertTrue(node.isNewConcept(), "Bad state falls back to new-SCTID creation");
   }
 
   @Test

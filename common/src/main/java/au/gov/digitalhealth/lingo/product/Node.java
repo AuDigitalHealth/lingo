@@ -171,14 +171,24 @@ public class Node {
   // ---------------------------------------------------------------------------------------------
 
   /**
-   * Returns true if this node represents a brand-new concept being added to Snowstorm — i.e. there
-   * is no existing counterpart it is replacing or editing. A node that has an {@link OriginalNode}
-   * is, by definition, not a new concept: depending on its other state it is an edit, a
-   * retire-and-replace, or a replace-without-retire.
+   * Returns true if this node represents the creation of a new SNOMED concept (a fresh SCTID).
+   * This includes both brand-new concepts (no original at all) AND the "fork" case where the
+   * original concept exists but cannot be retired or edited because it is referenced by other
+   * products — in that case the calculation creates a new concept and leaves the original alone.
+   *
+   * <p>Exclusive with the other four operation predicates by construction: it explicitly excludes
+   * {@link #isConceptEdit()} (modifies the existing concept), {@link #isRetireAndReplace()} (a
+   * specific retire-and-replace operation), and {@link #isReplaceWithoutRetire()} (a specific
+   * external-concept replacement). {@link #isRetireAndReplaceWithExisting()} is mutually exclusive
+   * by shape (it requires {@code concept != null} and {@code newConceptDetails == null}).
    */
   @JsonProperty(value = "newConcept", access = JsonProperty.Access.READ_ONLY)
   public boolean isNewConcept() {
-    return concept == null && newConceptDetails != null && originalNode == null;
+    return concept == null
+        && newConceptDetails != null
+        && !isConceptEdit()
+        && !isRetireAndReplace()
+        && !isReplaceWithoutRetire();
   }
 
   /** Returns true if this node represents a retire and replace operation. */

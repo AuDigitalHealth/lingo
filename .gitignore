@@ -6,6 +6,8 @@
 api/src/main/resources/static
 ui/reports
 setenv.sh
+.env
+api/.env
 sergio-extension/dependency-reduced-pom.xml
 /eclrefset/target/
 ui/public/*
