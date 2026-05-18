@@ -16,12 +16,24 @@
 package au.gov.digitalhealth.lingo.service;
 
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.ADDITIONAL_RELATIONSHIP;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONCEPT_INACTIVATION_INDICATOR_REFERENCE_SET;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormConcreteValue;
+import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
+import au.gov.digitalhealth.lingo.product.NewConceptDetails;
+import au.gov.digitalhealth.lingo.product.Node;
+import au.gov.digitalhealth.lingo.product.OriginalNode;
+import au.gov.digitalhealth.lingo.util.HistoricalAssociationReferenceSet;
+import au.gov.digitalhealth.lingo.util.InactivationReason;
 import java.lang.reflect.Method;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
@@ -284,5 +296,93 @@ class ProductCreationServiceTest {
     // (the inactive relationship is not an ADDITIONAL_RELATIONSHIP so it's not removed)
     assertThat(result).isFalse();
     assertThat(existingRelationships).hasSize(1);
+  }
+
+  // ------------------------------------------------------------------------------------------
+  // buildInactivationAndAssociationMembers — invariant: external (replace-without-retire) nodes
+  // must NOT produce inactivation-indicator or historical-association refset members. Only the
+  // refset cleanup (handled separately, in the caller) applies to those.
+  // ------------------------------------------------------------------------------------------
+
+  private static final String AUTHORING_MODULE = "32506021000036107";
+  private static final String SCT_CORE_MODULE = "900000000000207008";
+
+  private static ModelLevel vmpLevel() {
+    ModelLevel level = new ModelLevel();
+    level.setName("VMP");
+    level.setDisplayLabel("VMP");
+    level.setModelLevelType(ModelLevelType.CLINICAL_DRUG);
+    return level;
+  }
+
+  private static Node existingNode(String conceptId, String moduleId) {
+    SnowstormConceptMini concept =
+        new SnowstormConceptMini().conceptId(conceptId).moduleId(moduleId);
+    return new Node(concept, vmpLevel());
+  }
+
+  private static Node nodeWithNewConceptDetails(OriginalNode originalNode) {
+    Node node = new Node(null, vmpLevel());
+    NewConceptDetails details = new NewConceptDetails();
+    details.setConceptId(-42);
+    details.setFullySpecifiedName("New replacement (medicinal product)");
+    details.setPreferredTerm("New replacement");
+    node.setNewConceptDetails(details);
+    node.setOriginalNode(originalNode);
+    return node;
+  }
+
+  @Test
+  void retireAndReplaceNodeEmitsInactivationAndHistoricalAssociationMembers() {
+    Node original = existingNode("1234567890", AUTHORING_MODULE);
+    OriginalNode originalNode =
+        OriginalNode.of(original, InactivationReason.ERRONEOUS, false, AUTHORING_MODULE);
+    Node retireAndReplaceNode = nodeWithNewConceptDetails(originalNode);
+    assertThat(retireAndReplaceNode.isRetireAndReplace()).isTrue();
+
+    List<SnowstormReferenceSetMemberViewComponent> members =
+        ProductCreationService.buildInactivationAndAssociationMembers(Set.of(retireAndReplaceNode));
+
+    assertThat(members).hasSize(2);
+    assertThat(members)
+        .anyMatch(
+            m ->
+                CONCEPT_INACTIVATION_INDICATOR_REFERENCE_SET.getValue().equals(m.getRefsetId())
+                    && "1234567890".equals(m.getReferencedComponentId())
+                    && InactivationReason.ERRONEOUS
+                        .getValue()
+                        .equals(m.getAdditionalFields().get("valueId")));
+    assertThat(members)
+        .anyMatch(
+            m ->
+                HistoricalAssociationReferenceSet.REPLACED_BY.getValue().equals(m.getRefsetId())
+                    && "1234567890".equals(m.getReferencedComponentId()));
+  }
+
+  @Test
+  void replaceWithoutRetireNodeMustNotBePassedToInactivationMemberBuilder() {
+    // External concept → replace-without-retire. Calling the inactivation-member builder for
+    // such a node is a programmer error: external concepts must never have inactivation
+    // indicators or historical associations recorded against them.
+    Node original = existingNode("1296676008", SCT_CORE_MODULE);
+    OriginalNode externalOriginalNode = OriginalNode.of(original, null, false, AUTHORING_MODULE);
+    Node replaceWithoutRetireNode = nodeWithNewConceptDetails(externalOriginalNode);
+    assertThat(replaceWithoutRetireNode.isReplaceWithoutRetire()).isTrue();
+    assertThat(replaceWithoutRetireNode.isRetireAndReplace()).isFalse();
+    assertThat(replaceWithoutRetireNode.isRetireAndReplaceWithExisting()).isFalse();
+
+    assertThatThrownBy(
+            () ->
+                ProductCreationService.buildInactivationAndAssociationMembers(
+                    Set.of(replaceWithoutRetireNode)))
+        .isInstanceOf(IllegalStateException.class);
+  }
+
+  @Test
+  void emptyRetireAndReplaceSetProducesNoMembers() {
+    List<SnowstormReferenceSetMemberViewComponent> members =
+        ProductCreationService.buildInactivationAndAssociationMembers(Set.of());
+
+    assertThat(members).isEmpty();
   }
 }

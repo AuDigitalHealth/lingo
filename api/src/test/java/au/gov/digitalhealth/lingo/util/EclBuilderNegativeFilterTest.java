@@ -102,11 +102,13 @@ class EclBuilderNegativeFilterTest {
   }
 
   @Test
-  void multiValueConcreteEmitsCardinalityNotInvalidOrList() {
+  void multiValueConcreteEmitsOccurrenceCardinalityNotInvalidOrList() {
     // Snowstorm's ECL grammar disallows `X != (#1.0 OR #2.0)` for concrete values. For
-    // multi-value concrete attributes we instead emit `[N..N] X = *` so candidates carrying
-    // additional values of the same attribute are excluded. Duplicate values across role groups
-    // (e.g. two inner products with pack size #1.0) must collapse to a single distinct value.
+    // multi-value concrete attributes we instead emit `[N..N] X = *` where N is the number of
+    // source occurrences — NOT the number of distinct values. A source that legitimately has
+    // duplicate pack-size values across role groups (e.g. two inner products both packaged in
+    // 1mL containers, plus one in 2mL) must still match itself, so [3..3] is correct here, not
+    // [2..2].
     Set<SnowstormRelationship> relationships = new HashSet<>();
     relationships.add(isAMp());
     relationships.add(packSizeValue("1.0", 1));
@@ -124,9 +126,8 @@ class EclBuilderNegativeFilterTest {
 
     String ecl = EclBuilder.build(relationships, Set.of(), false, false, amtModel, packLevel);
 
-    assertThat(ecl).doesNotContain("!=");
     assertThat(ecl).doesNotContain("#1.0 OR");
-    assertThat(ecl).contains("[2..2] " + SnomedConstants.HAS_PACK_SIZE_VALUE.getValue() + " = *");
+    assertThat(ecl).contains("[3..3] " + SnomedConstants.HAS_PACK_SIZE_VALUE.getValue() + " = *");
   }
 
   @Test

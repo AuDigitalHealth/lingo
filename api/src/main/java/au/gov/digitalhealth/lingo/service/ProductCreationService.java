@@ -237,6 +237,50 @@ public class ProductCreationService {
     }
   }
 
+  /**
+   * Builds the inactivation-indicator and historical-association reference set members that should
+   * accompany retire-and-replace operations. Replace-without-retire nodes (external concepts)
+   * deliberately produce NO members from this method — they are still cleaned up from the in-scope
+   * reference sets by the caller, but they are not retired and no historical association is
+   * recorded against them.
+   */
+  static List<SnowstormReferenceSetMemberViewComponent> buildInactivationAndAssociationMembers(
+      Set<Node> retireAndReplaceNodes) {
+    List<SnowstormReferenceSetMemberViewComponent> members = new ArrayList<>();
+    retireAndReplaceNodes.forEach(
+        node -> {
+          if (!node.isRetireAndReplace() && !node.isRetireAndReplaceWithExisting()) {
+            // Defence in depth: callers should pre-filter, but if a replace-without-retire node
+            // sneaks in here, the resulting members would reference an external concept's
+            // inactivation indicator — which is exactly what this PR is trying to prevent.
+            throw new IllegalStateException(
+                "buildInactivationAndAssociationMembers received a node that is neither "
+                    + "isRetireAndReplace nor isRetireAndReplaceWithExisting: "
+                    + node.getConceptId());
+          }
+          members.add(
+              new SnowstormReferenceSetMemberViewComponent()
+                  .active(true)
+                  .referencedComponentId(node.getOriginalNode().getNode().getConceptId())
+                  .refsetId(CONCEPT_INACTIVATION_INDICATOR_REFERENCE_SET.getValue())
+                  .additionalFields(
+                      Map.of(
+                          "valueId", node.getOriginalNode().getInactivationReason().getValue())));
+
+          members.add(
+              new SnowstormReferenceSetMemberViewComponent()
+                  .active(true)
+                  .referencedComponentId(node.getOriginalNode().getNode().getConceptId())
+                  .refsetId(
+                      node.getOriginalNode()
+                          .getInactivationReason()
+                          .getHistoricalAssociationReferenceSet()
+                          .getValue())
+                  .additionalFields(Map.of("targetComponentId", node.getConceptId())));
+        });
+    return members;
+  }
+
   private static void validateUpdateOperation(ProductSummary productSummary) {
     productSummary
         .getNodes()
@@ -586,11 +630,15 @@ public class ProductCreationService {
       throws InterruptedException {
 
     if (createOnly) {
+      validateCreateOperation(productSummary);
       if (productSummary.getNodes().stream().noneMatch(Node::isNewConcept)) {
         throw new EmptyProductCreationProblem();
       }
-      validateCreateOperation(productSummary);
     } else {
+      // Run the specific validators before the empty-payload check so a bad-state node yields a
+      // specific 4xx (e.g. "external concept cannot be retired") rather than the generic
+      // "did not contain any concepts" message when it's the only changed node.
+      validateUpdateOperation(productSummary);
       if (productSummary.getNodes().stream().noneMatch(Node::isNewConcept)
           && productSummary.getNodes().stream().noneMatch(Node::isConceptEdit)
           && productSummary.getNodes().stream().noneMatch(Node::isRetireAndReplace)
@@ -599,7 +647,6 @@ public class ProductCreationService {
           && productSummary.getNodes().stream().noneMatch(Node::isPropertyUpdate)) {
         throw new EmptyProductCreationProblem();
       }
-      validateUpdateOperation(productSummary);
     }
 
     final ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
@@ -1149,39 +1196,18 @@ public class ProductCreationService {
 
     List<SnowstormReferenceSetMember> membersToDelete = new ArrayList<>();
 
-    // add retire and replace to inactivation refset and historical association refset
     final Set<Node> retireAndReplaceNodes =
         nodeCreateOrder.stream()
             .filter(node -> node.isRetireAndReplace() || node.isRetireAndReplaceWithExisting())
             .collect(Collectors.toSet());
 
-    // replace-without-retire nodes have their original concept removed from authoring reference
-    // sets but the concept itself is not retired and no historical association is created
+    // replace-without-retire nodes have their original concept removed from the configured
+    // in-scope reference sets but the concept itself is not retired and no historical
+    // association is created
     final Set<Node> replaceWithoutRetireNodes =
         nodeCreateOrder.stream().filter(Node::isReplaceWithoutRetire).collect(Collectors.toSet());
 
-    retireAndReplaceNodes.forEach(
-        node -> {
-          membersToCreate.add(
-              new SnowstormReferenceSetMemberViewComponent()
-                  .active(true)
-                  .referencedComponentId(node.getOriginalNode().getNode().getConceptId())
-                  .refsetId(CONCEPT_INACTIVATION_INDICATOR_REFERENCE_SET.getValue())
-                  .additionalFields(
-                      Map.of(
-                          "valueId", node.getOriginalNode().getInactivationReason().getValue())));
-
-          membersToCreate.add(
-              new SnowstormReferenceSetMemberViewComponent()
-                  .active(true)
-                  .referencedComponentId(node.getOriginalNode().getNode().getConceptId())
-                  .refsetId(
-                      node.getOriginalNode()
-                          .getInactivationReason()
-                          .getHistoricalAssociationReferenceSet()
-                          .getValue())
-                  .additionalFields(Map.of("targetComponentId", node.getConceptId())));
-        });
+    membersToCreate.addAll(buildInactivationAndAssociationMembers(retireAndReplaceNodes));
 
     final Set<Node> originalConceptRefsetCleanupNodes = new HashSet<>(retireAndReplaceNodes);
     originalConceptRefsetCleanupNodes.addAll(replaceWithoutRetireNodes);

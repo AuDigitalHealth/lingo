@@ -152,6 +152,28 @@ class NodeReplaceWithoutRetireTest {
   }
 
   @Test
+  void missingConceptModuleIdIsHardError() {
+    SnowstormConceptMini concept = new SnowstormConceptMini().conceptId("1296676008");
+    // moduleId not set — simulates a malformed Snowstorm response
+    Node original = new Node(concept, level());
+
+    org.junit.jupiter.api.Assertions.assertThrows(
+        au.gov.digitalhealth.lingo.exception.LingoProblem.class,
+        () -> OriginalNode.of(original, null, false, AUTHORING_MODULE),
+        "Missing moduleId should fail loudly rather than silently treat the concept as internal");
+  }
+
+  @Test
+  void nullOriginalConceptIsHardError() {
+    Node nodeWithNullConcept = new Node(null, level());
+
+    org.junit.jupiter.api.Assertions.assertThrows(
+        au.gov.digitalhealth.lingo.exception.LingoProblem.class,
+        () -> OriginalNode.of(nodeWithNullConcept, null, false, AUTHORING_MODULE),
+        "OriginalNode requires a concept on the original node");
+  }
+
+  @Test
   void nullAuthoringModuleTreatsConceptAsInternal() {
     Node original = existingNode("1296676008", SCT_CORE_MODULE);
     OriginalNode originalNode = OriginalNode.of(original, null, false, (String) null);
@@ -190,13 +212,12 @@ class NodeReplaceWithoutRetireTest {
                   node.setNewConceptDetails(ncd);
                 }
                 if (hasOriginal) {
+                  // Drive externality via the original concept's moduleId, which is what
+                  // `OriginalNode.of` consults — there's no public setter for the flag.
                   Node originalConceptNode =
                       existingNode("111", external ? SCT_CORE_MODULE : AUTHORING_MODULE);
                   OriginalNode on =
                       OriginalNode.of(originalConceptNode, reason, referenced, AUTHORING_MODULE);
-                  // Force the flag independently of the moduleId derivation so the predicate
-                  // matrix is exercised in full.
-                  on.setExternalConcept(external);
                   node.setOriginalNode(on);
                 }
 

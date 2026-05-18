@@ -41,18 +41,38 @@ import java.util.stream.Collectors;
  * model level. Used by ECL generation to constrain searches so that concepts carrying additional
  * defining attributes not present in the supplied atomic data are excluded from the candidate set.
  *
- * <p>This deliberately mirrors the (previously hard-coded) negative-filter rules in {@code
- * EclBuilder} plus the NMPC-specific MP-level attributes ({@link
+ * <p>The catalogue is intentionally narrower than the full set of relationships the calculation
+ * services emit. To be a useful negative filter an attribute must be both:
+ *
+ * <ol>
+ *   <li><strong>User-controllable</strong> — the user can legitimately add or remove it via the
+ *       atomic-data form, so a difference between source and candidate is a real shape change.
+ *   <li><strong>Mandatory-when-applicable</strong> — when the user has filled in enough of the
+ *       form to look up a candidate, this attribute is always populated. Otherwise, listing it
+ *       would over-filter a partially-completed lookup (any existing concept carrying the
+ *       attribute would be excluded just because the user hadn't yet filled in their value).
+ * </ol>
+ *
+ * <p>The catalogue today covers the attributes whose absence-in-update has been reported as
+ * causing missed-change bugs (notably the MP-level NMPC user attributes — {@link
  * SnomedConstants#HAS_TARGET_POPULATION}, {@link SnomedConstants#PLAYS_ROLE}, {@link
- * SnomedConstants#HAS_QUALITATIVE_STRENGTH}) that the original rule set missed. Attributes that
- * are intrinsic to existing AMT/NMPC content but not user-controllable in the atomic-data form
- * (e.g. BOSS, total quantity, presentation strength) are intentionally omitted so candidate
- * concepts carrying them are not over-filtered.
+ * SnomedConstants#HAS_QUALITATIVE_STRENGTH}). Known omissions that may be candidates for future
+ * inclusion if a similar bug surfaces:
+ *
+ * <ul>
+ *   <li>NMPC clinical-drug attributes: {@code HAS_UNIT_OF_PRESENTATION}, {@code
+ *       HAS_UNIT_OF_PRESENTATION_SIZE_*}, presentation/concentration strength values and units.
+ *   <li>AMT clinical-drug attributes: {@code HAS_BOSS}, {@code HAS_TOTAL_QUANTITY_*}, {@code
+ *       CONCENTRATION_STRENGTH_*}, {@code HAS_DEVICE_TYPE}.
+ * </ul>
+ *
+ * Each candidate addition needs to be analysed against criterion (2) above before being added —
+ * blindly including them risks over-filtering partially-specified lookups.
  *
  * <p><strong>Sync requirement:</strong> when {@code MedicationProductCalculationService}'s
  * {@code createMpRelationships}, {@code createClinicalDrugRelationships}, or {@code
  * createPackagedClinicalDrugRelationships} starts emitting a new defining attribute that the user
- * controls (i.e. can be present-or-absent based on atomic-data input), add it here too — otherwise
+ * controls AND that is always populated for a complete lookup, add it here too — otherwise
  * candidates carrying that attribute will silently match when the user has removed it.
  */
 public final class ModelLevelDefiningAttributes {

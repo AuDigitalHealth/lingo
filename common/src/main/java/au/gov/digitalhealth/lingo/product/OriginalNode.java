@@ -15,6 +15,7 @@
  */
 package au.gov.digitalhealth.lingo.product;
 
+import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.util.InactivationReason;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -24,9 +25,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.springframework.http.HttpStatus;
 
 @Data
-@Builder
+@Builder(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
 public class OriginalNode {
@@ -42,26 +45,26 @@ public class OriginalNode {
    * cleared and a new concept is created in its place, with no inactivation indicator or
    * historical association.
    *
-   * <p>Returns {@code false} when externality cannot be determined — when the original concept,
-   * its moduleId, or the authoring moduleId is null. Returns {@code false} when {@link
-   * #referencedByOtherProducts} is also true the original concept is left untouched even though
-   * this flag may still be set.
+   * <p>This flag describes the original concept's module ownership only; whether {@link
+   * Node#isReplaceWithoutRetire()} actually fires also depends on {@link
+   * #referencedByOtherProducts} — when other products still reference the original concept it is
+   * left untouched regardless of this flag.
+   *
+   * <p>Setter suppressed: the only supported way to set this flag is via {@link #of(Node,
+   * InactivationReason, boolean, String)}, which derives it from the moduleId comparison.
    */
+  @Setter(AccessLevel.NONE)
   private boolean externalConcept;
 
   /**
    * The supported way to construct an {@code OriginalNode}. Derives {@link #externalConcept} by
    * comparing the original concept's moduleId to the supplied authoring moduleId; the all-args
-   * constructor is intentionally package-private to prevent callers from setting the flag
-   * directly and bypassing this comparison.
+   * constructor is intentionally private to prevent callers from setting the flag directly and
+   * bypassing this comparison.
    *
    * <p>{@code authoringModuleId} may be {@code null} when the caller doesn't have access to the
    * model configuration (e.g. some test fixtures); in that case the flag is set to {@code false}.
-   * Production paths always pass {@code modelConfiguration.getModuleId()}.
-   *
-   * @return an {@code OriginalNode} with {@code externalConcept} derived from the moduleIds;
-   *     resolves to {@code false} if any of {@code node}, {@code node.getConcept()}, {@code
-   *     node.getConcept().getModuleId()}, or {@code authoringModuleId} is null.
+   * Today all production callers supply {@code modelConfiguration.getModuleId()}.
    */
   public static OriginalNode of(
       Node node,
@@ -77,11 +80,31 @@ public class OriginalNode {
   }
 
   private static boolean isExternalConcept(Node node, String authoringModuleId) {
-    if (authoringModuleId == null || node == null || node.getConcept() == null) {
+    // The only legitimate null case is when the caller doesn't have a model configuration
+    // available (test fixtures); production paths always supply the authoring moduleId. Other
+    // nulls are programmer errors or malformed Snowstorm responses and must surface — silently
+    // treating an external concept as authorable would mis-route a SNOMED CT International
+    // concept down the edit/retire path.
+    if (authoringModuleId == null) {
       return false;
     }
+    if (node == null || node.getConcept() == null) {
+      throw new LingoProblem(
+          "original-node-construction",
+          "Cannot determine concept externality: original node or its concept is null",
+          HttpStatus.INTERNAL_SERVER_ERROR);
+    }
     String originalModuleId = node.getConcept().getModuleId();
-    return originalModuleId != null && !originalModuleId.equals(authoringModuleId);
+    if (originalModuleId == null) {
+      throw new LingoProblem(
+          "original-node-construction",
+          "Concept "
+              + node.getConceptId()
+              + " has no moduleId; cannot determine externality. Ensure moduleId is included in"
+              + " the requested concept fields.",
+          HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    return !originalModuleId.equals(authoringModuleId);
   }
 
   @JsonProperty(value = "conceptId", access = JsonProperty.Access.READ_ONLY)

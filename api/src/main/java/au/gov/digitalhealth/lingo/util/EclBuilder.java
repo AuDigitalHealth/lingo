@@ -266,15 +266,17 @@ public class EclBuilder {
     // For multi-valued attributes, Snowstorm ECL supports `X != (a OR b)` when the values are
     // concept references but NOT when they are concrete domains (the grammar disallows concrete
     // value disjunctions inside an attribute filter). For concept-valued multi-value attributes
-    // we therefore emit the OR form. For concrete-valued multi-value attributes we fall back to a
-    // cardinality constraint `[N..N] X = *`, which correctly excludes candidates carrying
-    // additional values of the same attribute (concrete defining attributes such as pack-size
-    // value appear at most once per role group, so the global count matches the number of
-    // distinct supplied values).
+    // we therefore emit the OR form, which is an exact constraint at the concept level. For
+    // concrete-valued multi-value attributes we fall back to an occurrence-count cardinality
+    // constraint `[N..N] X = *`, where N is the number of source relationships (not distinct
+    // values — duplicate values across role groups are allowed in source content, e.g. multiple
+    // inner products with the same pack size). This is approximate at the top level but
+    // sufficient as a Snowstorm-side pruning constraint; the grouped refinements carry the
+    // per-group correctness.
     if (!concreteValued) {
       return ", [0..0] " + typeId + " != (" + String.join(" OR ", distinctValues) + ")";
     }
-    int cardinality = distinctValues.size();
+    int cardinality = relationshipSet.size();
     return ", [" + cardinality + ".." + cardinality + "] " + typeId + " = *";
   }
 
