@@ -16,7 +16,10 @@
 package au.gov.digitalhealth.lingo.product;
 
 import au.gov.digitalhealth.lingo.util.InactivationReason;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.AssertTrue;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,7 +27,7 @@ import lombok.NoArgsConstructor;
 
 @Data
 @Builder
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
 public class OriginalNode {
   private Node node;
@@ -32,28 +35,45 @@ public class OriginalNode {
   private boolean referencedByOtherProducts;
 
   /**
-   * True when the original concept is owned by an external module (e.g. SNOMED CT International core
-   * metadata module) and so cannot be edited in place or retired by this authoring tool. When true,
-   * the concept will be removed from the authoring module's reference sets and a new concept will be
-   * created in its place without any historical association.
+   * True when the original concept is owned by an external module — e.g. a SNOMED CT International
+   * concept reused by an NMPC or AMT product — and so the authoring tool cannot retire or modify
+   * it. Read by {@link Node#isReplaceWithoutRetire()} to route the update through the cleanup
+   * path: the original concept's memberships in the configured in-scope reference sets are
+   * cleared and a new concept is created in its place, with no inactivation indicator or
+   * historical association.
+   *
+   * <p>Returns {@code false} when externality cannot be determined — when the original concept,
+   * its moduleId, or the authoring moduleId is null. Returns {@code false} when {@link
+   * #referencedByOtherProducts} is also true the original concept is left untouched even though
+   * this flag may still be set.
    */
   private boolean externalConcept;
 
   /**
-   * Convenience constructor that derives {@link #externalConcept} by comparing the original
-   * concept's moduleId to the supplied authoring module id. Pass {@code null} for the authoring
-   * module id when the caller cannot determine externality at construction time (the flag will
-   * default to {@code false} and may be set later).
+   * The supported way to construct an {@code OriginalNode}. Derives {@link #externalConcept} by
+   * comparing the original concept's moduleId to the supplied authoring moduleId; the all-args
+   * constructor is intentionally package-private to prevent callers from setting the flag
+   * directly and bypassing this comparison.
+   *
+   * <p>{@code authoringModuleId} may be {@code null} when the caller doesn't have access to the
+   * model configuration (e.g. some test fixtures); in that case the flag is set to {@code false}.
+   * Production paths always pass {@code modelConfiguration.getModuleId()}.
+   *
+   * @return an {@code OriginalNode} with {@code externalConcept} derived from the moduleIds;
+   *     resolves to {@code false} if any of {@code node}, {@code node.getConcept()}, {@code
+   *     node.getConcept().getModuleId()}, or {@code authoringModuleId} is null.
    */
-  public OriginalNode(
+  public static OriginalNode of(
       Node node,
       InactivationReason inactivationReason,
       boolean referencedByOtherProducts,
       String authoringModuleId) {
-    this.node = node;
-    this.inactivationReason = inactivationReason;
-    this.referencedByOtherProducts = referencedByOtherProducts;
-    this.externalConcept = isExternalConcept(node, authoringModuleId);
+    OriginalNode result = new OriginalNode();
+    result.node = node;
+    result.inactivationReason = inactivationReason;
+    result.referencedByOtherProducts = referencedByOtherProducts;
+    result.externalConcept = isExternalConcept(node, authoringModuleId);
+    return result;
   }
 
   private static boolean isExternalConcept(Node node, String authoringModuleId) {
@@ -67,5 +87,18 @@ public class OriginalNode {
   @JsonProperty(value = "conceptId", access = JsonProperty.Access.READ_ONLY)
   public String getConceptId() {
     return node.getConceptId();
+  }
+
+  /**
+   * Inactivation reasons are only meaningful for concepts the authoring tool is allowed to
+   * retire. An external concept (owned by a foreign module) is replaced without retirement, so
+   * carrying a reason on it indicates a contradictory request. Surface as a JSR-303 validation
+   * failure at any {@code @Valid} boundary so the bad state cannot silently flow through to the
+   * service layer.
+   */
+  @AssertTrue(message = "An external original concept cannot carry an inactivation reason")
+  @JsonIgnore
+  public boolean isExternalConceptInactivationReasonConsistent() {
+    return !externalConcept || inactivationReason == null;
   }
 }

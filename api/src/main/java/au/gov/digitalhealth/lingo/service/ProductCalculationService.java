@@ -312,7 +312,7 @@ public abstract class ProductCalculationService<T extends ProductDetails> {
             subordinateNode =
                 getNodeGeneratorService().lookUpNode(branch, linkedConcept, level, null).join();
             subordinateNode.setOriginalNode(
-                new OriginalNode(
+                OriginalNode.of(
                     subordinateNode.cloneNode(), null, true, modelConfiguration.getModuleId()));
             nodeCache.put(linkedConcept.getConceptId(), subordinateNode);
           }

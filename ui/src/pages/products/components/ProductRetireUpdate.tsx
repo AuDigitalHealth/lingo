@@ -79,6 +79,10 @@ export const ProductRetireUpdate: React.FC<ProductRetireUpdateProps> = ({
   React.useEffect(() => {
     setRetireAndReplace(getIsRetireAndReplace(product));
     setConceptEdit(getIsConceptEdit(product));
+    // Defensive: the inactivation-reason dropdown is hidden for external concepts and the server
+    // already nulls the reason on calculate, so this should always be a no-op in practice. It
+    // exists to keep the form value aligned with the server contract if any future code path
+    // were to leave a stale reason on an external-concept node.
     if (isExternalConcept) {
       setValue(`nodes[${index}].originalNode.inactivationReason`, null);
     }

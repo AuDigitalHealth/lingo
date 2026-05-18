@@ -204,7 +204,7 @@ public class NodeGeneratorService {
               .thenAccept(
                   original ->
                       node.setOriginalNode(
-                          new OriginalNode(original, null, true, configuration.getModuleId())));
+                          OriginalNode.of(original, null, true, configuration.getModuleId())));
     }
 
     // Create a Mono that completes when both Flux operations complete
@@ -234,7 +234,7 @@ public class NodeGeneratorService {
       }
     } else if (newProperties != null) {
       node.setOriginalNode(
-          new OriginalNode(node.cloneNode(), null, true, configuration.getModuleId()));
+          OriginalNode.of(node.cloneNode(), null, true, configuration.getModuleId()));
       Map<String, NonDefiningPropertyDefinition> nonDefiningPropertiesMap =
           configuration.getNonDefiningPropertiesBySchemeForModelLevel(modelLevel);
       Map<String, ReferenceSetDefinition> referenceSetsMap =

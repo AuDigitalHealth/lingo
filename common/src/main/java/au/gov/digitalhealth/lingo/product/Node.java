@@ -86,7 +86,7 @@ public class Node {
 
   @Builder.Default Set<@Valid NonDefiningBase> nonDefiningProperties = new HashSet<>();
 
-  OriginalNode originalNode;
+  @Valid OriginalNode originalNode;
 
   ModelLevelType modelLevel;
 
@@ -151,15 +151,14 @@ public class Node {
   }
 
   /**
-   * Returns true if this node represents a new concept, or false if it represents an existing
-   * concept.
+   * Returns true if this node represents a brand-new concept being added to Snowstorm — i.e. there
+   * is no existing counterpart it is replacing or editing. A node that has an {@link OriginalNode}
+   * is, by definition, not a new concept: depending on its other state it is an edit, a
+   * retire-and-replace, or a replace-without-retire.
    */
   @JsonProperty(value = "newConcept", access = JsonProperty.Access.READ_ONLY)
   public boolean isNewConcept() {
-    return concept == null
-        && newConceptDetails != null
-        && !isRetireAndReplace()
-        && !isReplaceWithoutRetire();
+    return concept == null && newConceptDetails != null && originalNode == null;
   }
 
   /** Returns true if this node represents a retire and replace operation. */
@@ -187,16 +186,20 @@ public class Node {
 
   /**
    * Returns true if this node represents a replacement of an external concept (e.g. a SNOMED CT
-   * International concept). The original concept's reference set memberships for the authoring
-   * module are removed but the concept itself is not retired and no historical association is
-   * created.
+   * International concept). The original concept's reference set memberships in the configured
+   * in-scope reference sets are removed but the concept itself is not retired and no historical
+   * association is created. An inactivation reason on the original node makes no sense in this
+   * mode (the concept is not being inactivated), so the predicate excludes it for symmetry with
+   * {@link #isConceptEdit} and {@link #isRetireAndReplace}; the server-side validator rejects
+   * the combination explicitly.
    */
   @JsonProperty(value = "replaceWithoutRetire", access = JsonProperty.Access.READ_ONLY)
   public boolean isReplaceWithoutRetire() {
     return newConceptDetails != null
         && originalNode != null
         && originalNode.isExternalConcept()
-        && !originalNode.isReferencedByOtherProducts();
+        && !originalNode.isReferencedByOtherProducts()
+        && originalNode.getInactivationReason() == null;
   }
 
   /**

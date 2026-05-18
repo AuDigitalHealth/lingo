@@ -141,11 +141,12 @@ public class EclBuilder {
     }
 
     // Derive defining attribute types valid at this level for this model variant. For each such
-    // type, emit either a `[0..0] type = *` (when absent from the new relationships, so a
-    // candidate carrying it is excluded) or a `[0..0] type != value` (when present, so a
-    // candidate carrying additional values of the same type is excluded).
+    // type, emit a negative filter so that candidate concepts carrying additional values are
+    // excluded. The concrete shape of the filter depends on whether the attribute is absent,
+    // single-valued, or multi-valued and whether the values are concepts or concrete domains —
+    // see generateNegativeFilters.
     Set<String> levelDefiningAttributes =
-        ModelLevelDefiningAttributes.getDefiningAttributeTypes(
+        ModelLevelDefiningAttributes.getDefiningAttributeTypeIds(
             modelLevel.getModelLevelType(), modelConfiguration.getModelType());
 
     levelDefiningAttributes.stream()
@@ -219,8 +220,10 @@ public class EclBuilder {
             .filter(r -> r.getTypeId().equals(typeId))
             .collect(Collectors.toSet());
 
+    boolean concreteValued = relationshipSet.stream().allMatch(r -> r.getConcreteValue() != null);
+
     List<String> distinctValues;
-    if (relationshipSet.stream().allMatch(r -> r.getConcreteValue() != null)) {
+    if (concreteValued) {
       DataTypeEnum datatype = relationshipSet.iterator().next().getConcreteValue().getDataType();
 
       if (!relationshipSet.stream()
@@ -256,14 +259,23 @@ public class EclBuilder {
           relationshipSet.stream().map(SnowstormRelationship::getDestinationId).distinct().toList();
     }
 
-    // Snowstorm ECL doesn't support `X != (a OR b)` and the AND-of-negations form
-    // `(X != a) AND (X != b)` has the wrong semantics (it requires every X to equal both a and b,
-    // which is unsatisfiable). For multi-valued attributes we therefore omit value-exclusion; the
-    // positive filters in getRelationshipFilters still require the values to be present.
-    if (distinctValues.size() != 1) {
-      return "";
+    if (distinctValues.size() == 1) {
+      return ", [0..0] " + typeId + " != " + distinctValues.get(0);
     }
-    return ", [0..0] " + typeId + " != " + distinctValues.get(0);
+
+    // For multi-valued attributes, Snowstorm ECL supports `X != (a OR b)` when the values are
+    // concept references but NOT when they are concrete domains (the grammar disallows concrete
+    // value disjunctions inside an attribute filter). For concept-valued multi-value attributes
+    // we therefore emit the OR form. For concrete-valued multi-value attributes we fall back to a
+    // cardinality constraint `[N..N] X = *`, which correctly excludes candidates carrying
+    // additional values of the same attribute (concrete defining attributes such as pack-size
+    // value appear at most once per role group, so the global count matches the number of
+    // distinct supplied values).
+    if (!concreteValued) {
+      return ", [0..0] " + typeId + " != (" + String.join(" OR ", distinctValues) + ")";
+    }
+    int cardinality = distinctValues.size();
+    return ", [" + cardinality + ".." + cardinality + "] " + typeId + " = *";
   }
 
   @SuppressWarnings("java:S1192")

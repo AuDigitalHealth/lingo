@@ -28,83 +28,97 @@ class ModelLevelDefiningAttributesTest {
 
   @Test
   void nmpcMpLevelIncludesTargetPopulationAndPlaysRole() {
-    Set<String> attrs =
+    Set<LingoConstants> attrs =
         ModelLevelDefiningAttributes.getDefiningAttributeTypes(
             ModelLevelType.MEDICINAL_PRODUCT_ONLY, ModelType.NMPC);
 
-    assertTrue(attrs.contains(SnomedConstants.HAS_TARGET_POPULATION.getValue()));
-    assertTrue(attrs.contains(SnomedConstants.PLAYS_ROLE.getValue()));
-    assertTrue(attrs.contains(SnomedConstants.HAS_QUALITATIVE_STRENGTH.getValue()));
-    assertTrue(attrs.contains(SnomedConstants.HAS_ACTIVE_INGREDIENT.getValue()));
-    assertTrue(attrs.contains(SnomedConstants.HAS_MANUFACTURED_DOSE_FORM.getValue()));
+    assertTrue(attrs.contains(SnomedConstants.HAS_TARGET_POPULATION));
+    assertTrue(attrs.contains(SnomedConstants.PLAYS_ROLE));
+    assertTrue(attrs.contains(SnomedConstants.HAS_QUALITATIVE_STRENGTH));
+    assertTrue(attrs.contains(SnomedConstants.HAS_ACTIVE_INGREDIENT));
+    assertTrue(attrs.contains(SnomedConstants.HAS_MANUFACTURED_DOSE_FORM));
   }
 
   @Test
   void amtMpLevelExcludesNmpcSpecificAttributes() {
-    Set<String> attrs =
+    Set<LingoConstants> attrs =
         ModelLevelDefiningAttributes.getDefiningAttributeTypes(
             ModelLevelType.MEDICINAL_PRODUCT, ModelType.AMT);
 
-    assertFalse(attrs.contains(SnomedConstants.HAS_TARGET_POPULATION.getValue()));
-    assertFalse(attrs.contains(SnomedConstants.PLAYS_ROLE.getValue()));
-    assertTrue(attrs.contains(SnomedConstants.HAS_ACTIVE_INGREDIENT.getValue()));
-    assertTrue(attrs.contains(SnomedConstants.HAS_MANUFACTURED_DOSE_FORM.getValue()));
-    assertTrue(attrs.contains(SnomedConstants.COUNT_OF_ACTIVE_INGREDIENT.getValue()));
+    assertFalse(attrs.contains(SnomedConstants.HAS_TARGET_POPULATION));
+    assertFalse(attrs.contains(SnomedConstants.PLAYS_ROLE));
+    assertTrue(attrs.contains(SnomedConstants.HAS_ACTIVE_INGREDIENT));
+    assertTrue(attrs.contains(SnomedConstants.HAS_MANUFACTURED_DOSE_FORM));
+    assertTrue(attrs.contains(SnomedConstants.COUNT_OF_ACTIVE_INGREDIENT));
   }
 
   @Test
   void nmpcClinicalDrugIncludesUserControllableMpAttributes() {
-    Set<String> attrs =
+    Set<LingoConstants> attrs =
         ModelLevelDefiningAttributes.getDefiningAttributeTypes(
             ModelLevelType.CLINICAL_DRUG, ModelType.NMPC);
 
     // VMP IS_A constraint is supplied separately via the parent node; the MP-defining ingredient
     // and dose-form attributes are not re-added here. But the user-controllable NMPC attributes
     // are restated on the VMP and so must be filterable.
-    assertFalse(attrs.contains(SnomedConstants.HAS_MANUFACTURED_DOSE_FORM.getValue()));
-    assertTrue(attrs.contains(SnomedConstants.HAS_TARGET_POPULATION.getValue()));
-    assertTrue(attrs.contains(SnomedConstants.PLAYS_ROLE.getValue()));
-    assertTrue(attrs.contains(SnomedConstants.HAS_QUALITATIVE_STRENGTH.getValue()));
-    assertTrue(attrs.contains(SnomedConstants.HAS_PRODUCT_NAME.getValue()));
+    assertFalse(attrs.contains(SnomedConstants.HAS_MANUFACTURED_DOSE_FORM));
+    assertTrue(attrs.contains(SnomedConstants.HAS_TARGET_POPULATION));
+    assertTrue(attrs.contains(SnomedConstants.PLAYS_ROLE));
+    assertTrue(attrs.contains(SnomedConstants.HAS_QUALITATIVE_STRENGTH));
+    assertTrue(attrs.contains(SnomedConstants.HAS_PRODUCT_NAME));
   }
 
   @Test
   void amtClinicalDrugOmitsNmpcUserAttributes() {
-    Set<String> attrs =
+    Set<LingoConstants> attrs =
         ModelLevelDefiningAttributes.getDefiningAttributeTypes(
             ModelLevelType.CLINICAL_DRUG, ModelType.AMT);
 
-    assertFalse(attrs.contains(SnomedConstants.HAS_TARGET_POPULATION.getValue()));
-    assertFalse(attrs.contains(SnomedConstants.PLAYS_ROLE.getValue()));
-    assertTrue(attrs.contains(SnomedConstants.HAS_PRODUCT_NAME.getValue()));
+    assertFalse(attrs.contains(SnomedConstants.HAS_TARGET_POPULATION));
+    assertFalse(attrs.contains(SnomedConstants.PLAYS_ROLE));
+    assertTrue(attrs.contains(SnomedConstants.HAS_PRODUCT_NAME));
   }
 
   @Test
   void amtPackagesIncludePackSizeAndContainerType() {
-    Set<String> attrs =
+    Set<LingoConstants> attrs =
         ModelLevelDefiningAttributes.getDefiningAttributeTypes(
             ModelLevelType.PACKAGED_CLINICAL_DRUG, ModelType.AMT);
 
-    assertTrue(attrs.contains(SnomedConstants.HAS_PACK_SIZE_VALUE.getValue()));
-    assertTrue(attrs.contains(SnomedConstants.HAS_PACK_SIZE_UNIT.getValue()));
-    assertTrue(attrs.contains(AmtConstants.HAS_CONTAINER_TYPE.getValue()));
-    assertTrue(attrs.contains(SnomedConstants.HAS_PRODUCT_NAME.getValue()));
+    assertTrue(attrs.contains(SnomedConstants.HAS_PACK_SIZE_VALUE));
+    assertTrue(attrs.contains(SnomedConstants.HAS_PACK_SIZE_UNIT));
+    assertTrue(attrs.contains(AmtConstants.HAS_CONTAINER_TYPE));
+    assertTrue(attrs.contains(SnomedConstants.HAS_PRODUCT_NAME));
   }
 
   @Test
   void nmpcPackagesOmitAmtOnlyFilters() {
-    Set<String> attrs =
+    Set<LingoConstants> attrs =
         ModelLevelDefiningAttributes.getDefiningAttributeTypes(
             ModelLevelType.PACKAGED_CLINICAL_DRUG, ModelType.NMPC);
 
-    assertFalse(attrs.contains(AmtConstants.HAS_CONTAINER_TYPE.getValue()));
-    assertFalse(attrs.contains(SnomedConstants.HAS_PACK_SIZE_VALUE.getValue()));
-    assertTrue(attrs.contains(SnomedConstants.HAS_PRODUCT_NAME.getValue()));
+    assertFalse(attrs.contains(AmtConstants.HAS_CONTAINER_TYPE));
+    assertFalse(attrs.contains(SnomedConstants.HAS_PACK_SIZE_VALUE));
+    assertTrue(attrs.contains(SnomedConstants.HAS_PRODUCT_NAME));
   }
 
   @Test
   void nullLevelReturnsEmptySet() {
     assertEquals(
         Set.of(), ModelLevelDefiningAttributes.getDefiningAttributeTypes(null, ModelType.AMT));
+  }
+
+  @Test
+  void getDefiningAttributeTypeIdsReturnsSctidStringsForSameSet() {
+    Set<LingoConstants> typed =
+        ModelLevelDefiningAttributes.getDefiningAttributeTypes(
+            ModelLevelType.MEDICINAL_PRODUCT_ONLY, ModelType.NMPC);
+    Set<String> ids =
+        ModelLevelDefiningAttributes.getDefiningAttributeTypeIds(
+            ModelLevelType.MEDICINAL_PRODUCT_ONLY, ModelType.NMPC);
+
+    assertEquals(
+        typed.stream().map(LingoConstants::getValue).collect(java.util.stream.Collectors.toSet()),
+        ids);
   }
 }

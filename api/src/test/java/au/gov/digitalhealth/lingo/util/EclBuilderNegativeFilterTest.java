@@ -102,9 +102,11 @@ class EclBuilderNegativeFilterTest {
   }
 
   @Test
-  void duplicateConcreteValuesAreDeduplicatedInNegativeFilter() {
-    // Pack-size attributes can be emitted once per inner product/group; when several share the
-    // same value (#1.0) the generated `!= (#1.0 OR #1.0 OR #2.0)` is invalid ECL.
+  void multiValueConcreteEmitsCardinalityNotInvalidOrList() {
+    // Snowstorm's ECL grammar disallows `X != (#1.0 OR #2.0)` for concrete values. For
+    // multi-value concrete attributes we instead emit `[N..N] X = *` so candidates carrying
+    // additional values of the same attribute are excluded. Duplicate values across role groups
+    // (e.g. two inner products with pack size #1.0) must collapse to a single distinct value.
     Set<SnowstormRelationship> relationships = new HashSet<>();
     relationships.add(isAMp());
     relationships.add(packSizeValue("1.0", 1));
@@ -122,12 +124,35 @@ class EclBuilderNegativeFilterTest {
 
     String ecl = EclBuilder.build(relationships, Set.of(), false, false, amtModel, packLevel);
 
+    assertThat(ecl).doesNotContain("!=");
+    assertThat(ecl).doesNotContain("#1.0 OR");
+    assertThat(ecl).contains("[2..2] " + SnomedConstants.HAS_PACK_SIZE_VALUE.getValue() + " = *");
+  }
+
+  @Test
+  void multiValueConceptEmitsOrNotEqualForm() {
+    // Concept-valued attributes do support `X != (a OR b)` in Snowstorm ECL, so multi-ingredient
+    // MP candidates with extra ingredients must be excluded that way.
+    Set<SnowstormRelationship> relationships = new HashSet<>();
+    relationships.add(isAMp());
+    relationships.add(rel(SnomedConstants.HAS_ACTIVE_INGREDIENT.getValue(), "111", 1));
+    relationships.add(rel(SnomedConstants.HAS_ACTIVE_INGREDIENT.getValue(), "222", 2));
+
+    ModelLevel amtMp = new ModelLevel();
+    amtMp.setName("Product");
+    amtMp.setDisplayLabel("MP");
+    amtMp.setModelLevelType(ModelLevelType.MEDICINAL_PRODUCT);
+
+    ModelConfiguration amtModel = new ModelConfiguration();
+    amtModel.setModelType(ModelType.AMT);
+    amtModel.setModuleId("32506021000036107");
+
+    String ecl = EclBuilder.build(relationships, Set.of(), false, false, amtModel, amtMp);
+
     assertThat(ecl)
-        .as("ECL must not contain duplicate concrete values in a negative filter")
-        .doesNotContain("#1.0 OR #1.0");
-    // Snowstorm doesn't accept `X != (a OR b)` so for multi-value attributes we skip the
-    // value-exclusion form entirely; only the positive filters constrain the values.
-    assertThat(ecl).doesNotContain("[0..0] " + SnomedConstants.HAS_PACK_SIZE_VALUE.getValue());
+        .contains("[0..0] " + SnomedConstants.HAS_ACTIVE_INGREDIENT.getValue() + " != (");
+    // Order is non-deterministic; both orderings are acceptable.
+    assertThat(ecl).containsAnyOf("(111 OR 222)", "(222 OR 111)");
   }
 
   private static SnowstormRelationship packSizeValue(String value, int group) {

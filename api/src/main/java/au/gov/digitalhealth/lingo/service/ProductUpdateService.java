@@ -663,7 +663,7 @@ public class ProductUpdateService {
     newSummary
         .getSingleSubject()
         .setOriginalNode(
-            new OriginalNode(
+            OriginalNode.of(
                 existingSummary.getSingleSubject(), null, false, modelConfiguration.getModuleId()));
     allocatedExistingNodes.add(newSummary.getSingleSubject().getConceptId());
 
@@ -680,7 +680,7 @@ public class ProductUpdateService {
                   getBestMatchingNode(newNode, existingNodesByConceptId, allocatedExistingNodes);
               if (bestMatchingNode != null) {
                 newNode.setOriginalNode(
-                    new OriginalNode(
+                    OriginalNode.of(
                         bestMatchingNode, null, true, modelConfiguration.getModuleId()));
                 allocatedExistingNodes.add(bestMatchingNode.getConceptId());
               }
@@ -694,7 +694,7 @@ public class ProductUpdateService {
             node ->
                 finalNewSummary
                     .getUnmatchedPreviouslyReferencedNodes()
-                    .add(new OriginalNode(node, null, true, modelConfiguration.getModuleId())));
+                    .add(OriginalNode.of(node, null, true, modelConfiguration.getModuleId())));
 
     // update all the existing nodes to indicate if they are referenced by other concepts outside
     // the ones in the summary
