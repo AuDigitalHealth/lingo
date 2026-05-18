@@ -16,6 +16,12 @@ The following sections are considered for each release: **Added, Changed, Fixed,
   no longer offers "edit in place" or "retire and replace" for those concepts. Instead the original
   concept is removed from the authoring reference sets and a new concept is created in its place,
   with no inactivation and no historical association. (#1793)
+- Fix product update not detecting changes when removing `Has target population` or `Has ingredient
+  qualitative strength` from a vaccine/nutritional product. The ECL generated for candidate concept
+  lookup now adds `[0..0]` negative filters for the NMPC user-controllable MP-level attributes
+  (target population, plays role, qualitative strength) at the MP/VTM, VMP and AMP levels, and the
+  VMP/AMP search is constrained by the recalculated VTM rather than a generic `Virtual Medicinal
+  Product` root so the cascade picks up the new parent. (#1792)
 
 
 ## [1.3.39] - 2026-05-08

@@ -943,9 +943,7 @@ public class MedicationProductCalculationService
                           findOrCreateUnit(
                                   branch,
                                   productDetails,
-                                  level.getModelLevelType().equals(CLINICAL_DRUG)
-                                      ? Set.of()
-                                      : parentNodes,
+                                  parentNodes,
                                   atomicCache,
                                   selectedConceptIdentifiers,
                                   level)

@@ -15,25 +15,18 @@
  */
 package au.gov.digitalhealth.lingo.util;
 
-import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_CONTAINER_TYPE;
 import static au.gov.digitalhealth.lingo.util.AmtConstants.HAS_OTHER_IDENTIFYING_INFORMATION;
 import static au.gov.digitalhealth.lingo.util.NmpcConstants.HAS_OTHER_IDENTIFYING_INFORMATION_NMPC;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.COUNT_OF_ACTIVE_INGREDIENT;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.COUNT_OF_BASE_ACTIVE_INGREDIENT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_ACTIVE_INGREDIENT;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_MANUFACTURED_DOSE_FORM;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_UNIT;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PACK_SIZE_VALUE;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRECISE_ACTIVE_INGREDIENT;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_PRODUCT_NAME;
-import static au.gov.digitalhealth.lingo.util.SnomedConstants.MEDICINAL_PRODUCT;
 import static java.util.stream.Collectors.mapping;
 
 import au.csiro.snowstorm_client.model.SnowstormConcreteValue.DataTypeEnum;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
-import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
+import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.exception.UnexpectedSnowstormResponseProblem;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -53,6 +46,23 @@ public class EclBuilder {
       boolean suppressIsa,
       boolean suppressNegativeStatements,
       ModelConfiguration modelConfiguration) {
+    return build(
+        relationships,
+        referencedIds,
+        suppressIsa,
+        suppressNegativeStatements,
+        modelConfiguration,
+        null);
+  }
+
+  @SuppressWarnings("java:S1192")
+  public static String build(
+      Set<SnowstormRelationship> relationships,
+      Set<String> referencedIds,
+      boolean suppressIsa,
+      boolean suppressNegativeStatements,
+      ModelConfiguration modelConfiguration,
+      ModelLevel modelLevel) {
     // first do the isa relationships
     // and the refsets
     // then group 0 relationships, including grouped relationships
@@ -76,7 +86,8 @@ public class EclBuilder {
     ecl.append(")");
 
     String ungrouped =
-        buildUngroupedRelationships(relationships, suppressNegativeStatements, modelConfiguration);
+        buildUngroupedRelationships(
+            relationships, suppressNegativeStatements, modelConfiguration, modelLevel);
     String grouped = buildGroupedRelationships(relationships);
 
     if (!ungrouped.isEmpty() && !grouped.isEmpty()) {
@@ -119,58 +130,29 @@ public class EclBuilder {
   private static String buildUngroupedRelationships(
       Set<SnowstormRelationship> relationships,
       boolean suppressNegativeStatements,
-      ModelConfiguration modelConfiguration) {
+      ModelConfiguration modelConfiguration,
+      ModelLevel modelLevel) {
     StringBuilder response = new StringBuilder();
 
     response.append(getRelationshipFilters(relationships));
 
-    if (!suppressNegativeStatements) {
-      if (relationships.stream()
-          .anyMatch(
-              r ->
-                  r.getTypeId().equals(SnomedConstants.IS_A.getValue())
-                      && r.getDestinationId() != null
-                      && r.getDestinationId().equals(MEDICINAL_PRODUCT.getValue()))) {
-        response.append(
-            generateNegativeFilters(relationships, HAS_MANUFACTURED_DOSE_FORM.getValue()));
-        if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
-          response.append(
-              generateNegativeFilters(relationships, COUNT_OF_ACTIVE_INGREDIENT.getValue()));
-        }
-        response.append(
-            generateNegativeFilters(relationships, COUNT_OF_BASE_ACTIVE_INGREDIENT.getValue()));
-        response.append(generateNegativeFilters(relationships, HAS_ACTIVE_INGREDIENT.getValue()));
-        response.append(
-            generateNegativeFilters(relationships, HAS_PRECISE_ACTIVE_INGREDIENT.getValue()));
-      }
-
-      if (modelConfiguration.getModelType().equals(ModelType.AMT)) {
-        if (relationships.stream()
-            .noneMatch(r -> r.getTypeId().equals(HAS_CONTAINER_TYPE.getValue()))) {
-          appendNoAttributeConstraint(response, HAS_CONTAINER_TYPE);
-        }
-        if (relationships.stream()
-            .noneMatch(r -> r.getTypeId().equals(HAS_PACK_SIZE_UNIT.getValue()))) {
-          appendNoAttributeConstraint(response, HAS_PACK_SIZE_UNIT);
-        }
-        if (relationships.stream()
-            .noneMatch(r -> r.getTypeId().equals(HAS_PACK_SIZE_VALUE.getValue()))) {
-          appendNoAttributeConstraint(response, HAS_PACK_SIZE_VALUE);
-        }
-      }
-
-      if (relationships.stream()
-          .noneMatch(r -> r.getTypeId().equals(HAS_PRODUCT_NAME.getValue()))) {
-        appendNoAttributeConstraint(response, HAS_PRODUCT_NAME);
-      }
+    if (suppressNegativeStatements || modelLevel == null) {
+      return response.toString();
     }
 
-    return response.toString();
-  }
+    // Derive defining attribute types valid at this level for this model variant. For each such
+    // type, emit either a `[0..0] type = *` (when absent from the new relationships, so a
+    // candidate carrying it is excluded) or a `[0..0] type != value` (when present, so a
+    // candidate carrying additional values of the same type is excluded).
+    Set<String> levelDefiningAttributes =
+        ModelLevelDefiningAttributes.getDefiningAttributeTypes(
+            modelLevel.getModelLevelType(), modelConfiguration.getModelType());
 
-  private static void appendNoAttributeConstraint(
-      StringBuilder response, LingoConstants attributeType) {
-    response.append(", [0..0] ").append(attributeType).append(" = *");
+    levelDefiningAttributes.stream()
+        .sorted()
+        .forEach(typeId -> response.append(generateNegativeFilters(relationships, typeId)));
+
+    return response.toString();
   }
 
   private static String getRelationshipFilters(Set<SnowstormRelationship> relationships) {
@@ -228,60 +210,60 @@ public class EclBuilder {
   @SuppressWarnings("java:S1192")
   private static String generateNegativeFilters(
       Set<SnowstormRelationship> relationships, String typeId) {
-    String response;
     if (relationships.stream().noneMatch(r -> r.getTypeId().equals(typeId))) {
-      response = ", [0..0] " + typeId + " = *";
-    } else {
-      String value;
-
-      Set<SnowstormRelationship> relationshipSet =
-          relationships.stream()
-              .filter(r -> r.getTypeId().equals(typeId))
-              .collect(Collectors.toSet());
-
-      if (relationshipSet.stream().allMatch(r -> r.getConcreteValue() != null)) {
-        DataTypeEnum datatype = relationshipSet.iterator().next().getConcreteValue().getDataType();
-
-        if (!relationshipSet.stream()
-            .allMatch(
-                r ->
-                    r.getConcreteValue() != null
-                        && r.getConcreteValue().getDataType() != null
-                        && r.getConcreteValue().getDataType().equals(datatype))) {
-          throw new UnexpectedSnowstormResponseProblem(
-              "Expected all concrete domains to share the same datatype for "
-                  + typeId
-                  + " for source concept "
-                  + relationshipSet.iterator().next().getSourceId()
-                  + " set was "
-                  + relationshipSet.stream()
-                      .map(SnowstormRelationship::getConcreteValue)
-                      .map(Objects::toString)
-                      .distinct()
-                      .collect(Collectors.joining(", ")));
-        }
-
-        value =
-            relationshipSet.stream()
-                .map(
-                    r ->
-                        datatype.equals(DataTypeEnum.STRING)
-                            ? "\"" + Objects.requireNonNull(r.getConcreteValue()).getValue() + "\""
-                            : "#" + Objects.requireNonNull(r.getConcreteValue()).getValue())
-                .collect(Collectors.joining(" OR "));
-      } else {
-        value =
-            relationshipSet.stream()
-                .map(SnowstormRelationship::getDestinationId)
-                .collect(Collectors.joining(" OR "));
-      }
-
-      if (value.contains(" OR ")) {
-        value = "(" + value + ")";
-      }
-      response = ", [0..0] " + typeId + " != " + value;
+      return ", [0..0] " + typeId + " = *";
     }
-    return response;
+
+    Set<SnowstormRelationship> relationshipSet =
+        relationships.stream()
+            .filter(r -> r.getTypeId().equals(typeId))
+            .collect(Collectors.toSet());
+
+    List<String> distinctValues;
+    if (relationshipSet.stream().allMatch(r -> r.getConcreteValue() != null)) {
+      DataTypeEnum datatype = relationshipSet.iterator().next().getConcreteValue().getDataType();
+
+      if (!relationshipSet.stream()
+          .allMatch(
+              r ->
+                  r.getConcreteValue() != null
+                      && r.getConcreteValue().getDataType() != null
+                      && r.getConcreteValue().getDataType().equals(datatype))) {
+        throw new UnexpectedSnowstormResponseProblem(
+            "Expected all concrete domains to share the same datatype for "
+                + typeId
+                + " for source concept "
+                + relationshipSet.iterator().next().getSourceId()
+                + " set was "
+                + relationshipSet.stream()
+                    .map(SnowstormRelationship::getConcreteValue)
+                    .map(Objects::toString)
+                    .distinct()
+                    .collect(Collectors.joining(", ")));
+      }
+
+      distinctValues =
+          relationshipSet.stream()
+              .map(
+                  r ->
+                      datatype.equals(DataTypeEnum.STRING)
+                          ? "\"" + Objects.requireNonNull(r.getConcreteValue()).getValue() + "\""
+                          : "#" + Objects.requireNonNull(r.getConcreteValue()).getValue())
+              .distinct()
+              .toList();
+    } else {
+      distinctValues =
+          relationshipSet.stream().map(SnowstormRelationship::getDestinationId).distinct().toList();
+    }
+
+    // Snowstorm ECL doesn't support `X != (a OR b)` and the AND-of-negations form
+    // `(X != a) AND (X != b)` has the wrong semantics (it requires every X to equal both a and b,
+    // which is unsatisfiable). For multi-valued attributes we therefore omit value-exclusion; the
+    // positive filters in getRelationshipFilters still require the values to be present.
+    if (distinctValues.size() != 1) {
+      return "";
+    }
+    return ", [0..0] " + typeId + " != " + distinctValues.get(0);
   }
 
   @SuppressWarnings("java:S1192")
