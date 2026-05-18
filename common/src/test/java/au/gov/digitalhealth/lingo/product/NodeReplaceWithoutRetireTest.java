@@ -129,6 +129,26 @@ class NodeReplaceWithoutRetireTest {
   }
 
   @Test
+  void nullNodeFailsBeanValidation() {
+    // Malformed payload: an OriginalNode without its `node` field. JSR-303's @NotNull should
+    // reject this at the @Valid boundary, surfacing a 400 with a useful message rather than the
+    // 500 that OriginalNode.of would throw at service-layer normalisation time.
+    OriginalNode malformed = new OriginalNode();
+    // node is left null; @NotNull should fire
+
+    try (jakarta.validation.ValidatorFactory factory =
+        jakarta.validation.Validation.buildDefaultValidatorFactory()) {
+      jakarta.validation.Validator validator = factory.getValidator();
+      java.util.Set<jakarta.validation.ConstraintViolation<OriginalNode>> violations =
+          validator.validate(malformed);
+      assertTrue(
+          violations.stream()
+              .anyMatch(v -> "node".equals(v.getPropertyPath().toString())),
+          "Expected a @NotNull constraint violation on the `node` property; got " + violations);
+    }
+  }
+
+  @Test
   void externalConceptWithInactivationReasonFailsBeanValidation() {
     // Belt-and-braces: the OriginalNode's @AssertTrue invariant makes the bad state
     // (externalConcept + inactivationReason) representable but reportable, so any @Valid

@@ -423,26 +423,28 @@ class ProductCreationServiceTest {
   }
 
   @Test
-  void normaliseFlipsExternalFlagBackToFalseForInternalConcept() {
-    Node internalOriginal = existingNode("1234567890", AUTHORING_MODULE);
-    // Adversarial client claims externalConcept=true on an authoring-module concept by routing
-    // through a deserialized-from-JSON path. Simulate by constructing with null authoringModuleId
-    // and then... actually the factory forces externalConcept=false for null moduleId, so to
-    // simulate a tampered state we'd need the Jackson path. Here we just verify that a
-    // correctly-constructed external=false stays false after normalisation.
-    OriginalNode correctlyInternal =
-        OriginalNode.of(internalOriginal, null, false, AUTHORING_MODULE);
-    assertThat(correctlyInternal.isExternalConcept()).isFalse();
+  void jacksonDeserialisationDropsClientSuppliedExternalConcept() throws Exception {
+    // Direct round-trip test for the @JsonProperty(READ_ONLY) lockdown on externalConcept.
+    // A client posting a payload that claims externalConcept=true on an authoring-module concept
+    // must NOT result in a deserialized OriginalNode with externalConcept=true; the field is
+    // server-derived only and the wire value is ignored on input.
+    com.fasterxml.jackson.databind.ObjectMapper mapper =
+        new com.fasterxml.jackson.databind.ObjectMapper();
+    String json =
+        "{\"node\":{\"concept\":{\"conceptId\":\"1234567890\",\"moduleId\":\""
+            + AUTHORING_MODULE
+            + "\"},\"label\":\"VMP\",\"displayName\":\"Virtual Medicinal Product\","
+            + "\"modelLevel\":\"CLINICAL_DRUG\"},"
+            + "\"inactivationReason\":null,"
+            + "\"referencedByOtherProducts\":false,"
+            + "\"externalConcept\":true}"; // client tries to assert external=true
 
-    Node node = nodeWithNewConceptDetails(correctlyInternal);
-    au.gov.digitalhealth.lingo.product.ProductSummary summary =
-        new au.gov.digitalhealth.lingo.product.ProductSummary();
-    summary.getNodes().add(node);
+    OriginalNode parsed = mapper.readValue(json, OriginalNode.class);
 
-    ProductCreationService.normaliseExternalConceptFlag(summary, nmpcModel());
-
-    assertThat(node.getOriginalNode().isExternalConcept())
-        .as("Authoring-module concept must remain internal after normalisation")
+    assertThat(parsed.isExternalConcept())
+        .as(
+            "Jackson must ignore the client-supplied externalConcept value; the server is the"
+                + " source of truth via OriginalNode.of and normaliseExternalConceptFlag")
         .isFalse();
   }
 
@@ -513,11 +515,6 @@ class ProductCreationServiceTest {
     // ProductSummary is built server-side (no JSR-303 entry point) or when a future refactor
     // moves the boundary.
     Node externalOriginal = existingNode("1296676008", SCT_CORE_MODULE);
-    // Construct via the all-args path that bypasses moduleId derivation by using null
-    // authoringModuleId, then mutate inactivationReason post-construction.
-    OriginalNode bad = OriginalNode.of(externalOriginal, null, false, (String) null);
-    // Force the bad state directly: set inactivationReason after construction, and force
-    // externalConcept via a separately-constructed OriginalNode with a matching moduleId.
     OriginalNode badRederived =
         OriginalNode.of(externalOriginal, InactivationReason.ERRONEOUS, false, AUTHORING_MODULE);
     assertThat(badRederived.isExternalConcept()).isTrue();

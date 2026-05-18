@@ -19,7 +19,9 @@ import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.util.InactivationReason;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,7 +35,15 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
 public class OriginalNode {
-  private Node node;
+  /**
+   * The original concept this {@code OriginalNode} wraps. Must be non-null and carry a non-null
+   * {@code concept.moduleId} — the moduleId is used by {@link #of(Node, InactivationReason,
+   * boolean, String)} to derive {@link #externalConcept}. A malformed client payload that omits
+   * this field (or the nested concept) is rejected by JSR-303 at any {@code @Valid} boundary
+   * with a 400, rather than reaching the service-layer normalisation and throwing a 500.
+   */
+  @NotNull @Valid private Node node;
+
   private InactivationReason inactivationReason;
   private boolean referencedByOtherProducts;
 

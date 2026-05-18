@@ -501,6 +501,10 @@ public class ProductCreationService {
       productSummaryClone =
           objectMapper.readValue(
               objectMapper.writeValueAsString(productSummary), ProductSummary.class);
+      // The clone went through Jackson, which drops `externalConcept` (READ_ONLY input) on every
+      // OriginalNode. Re-derive on the clone so any downstream consumer sees the same
+      // server-authoritative externality state as the live summary.
+      normaliseExternalConceptFlag(productSummaryClone, models.getModelConfiguration(branch));
     } catch (JsonProcessingException jsonProcessingException) {
       log.severe("Could not clone product summary - potentially missed ModifiedGeneratedNames");
     }
@@ -579,6 +583,9 @@ public class ProductCreationService {
       productSummaryClone =
           objectMapper.readValue(
               objectMapper.writeValueAsString(productSummary), ProductSummary.class);
+      // Re-derive externalConcept on the clone — Jackson drops it on input (READ_ONLY) so the
+      // clone would otherwise see external concepts as internal. See createAndUpdate's call.
+      normaliseExternalConceptFlag(productSummaryClone, models.getModelConfiguration(branch));
     } catch (JsonProcessingException jsonProcessingException) {
       log.severe("Could not clone product summary - potentially missed ModifiedGeneratedNames");
     }
