@@ -404,10 +404,11 @@ class ProductCreationServiceTest {
   @Test
   void normaliseFlipsExternalFlagBackToTrueForExternalConcept() {
     Node externalOriginal = existingNode("1296676008", SCT_CORE_MODULE);
-    // Build with the WRONG authoringModuleId so externalConcept is false — simulating a
-    // client-supplied payload that's been tampered with.
+    // Build with the WRONG authoringModuleId (matches the concept's own module) so the stored
+    // externalConcept flag computes to false — simulating a client-supplied payload that's been
+    // tampered with, or a clone whose Jackson round-trip dropped the server-derived flag.
     OriginalNode tampered =
-        OriginalNode.of(externalOriginal, InactivationReason.ERRONEOUS, false, (String) null);
+        OriginalNode.of(externalOriginal, InactivationReason.ERRONEOUS, false, SCT_CORE_MODULE);
     assertThat(tampered.isExternalConcept()).isFalse();
 
     Node node = nodeWithNewConceptDetails(tampered);
@@ -470,7 +471,9 @@ class ProductCreationServiceTest {
   @Test
   void normaliseAlsoRewritesUnmatchedPreviouslyReferencedNodes() {
     Node externalOriginal = existingNode("1296676008", SCT_CORE_MODULE);
-    OriginalNode tampered = OriginalNode.of(externalOriginal, null, false, (String) null);
+    // See normaliseFlipsExternalFlagBackToTrueForExternalConcept: passing the concept's own
+    // module as "authoring" yields a stored flag of false — the tampered state we want to test.
+    OriginalNode tampered = OriginalNode.of(externalOriginal, null, false, SCT_CORE_MODULE);
     assertThat(tampered.isExternalConcept()).isFalse();
 
     au.gov.digitalhealth.lingo.product.ProductSummary summary =

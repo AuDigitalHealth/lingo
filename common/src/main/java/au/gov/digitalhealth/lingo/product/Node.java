@@ -54,8 +54,8 @@ import lombok.extern.java.Log;
  *       {@link #isRetireAndReplace()}, {@link #isRetireAndReplaceWithExisting()}, {@link
  *       #isReplaceWithoutRetire()}). These are mutually exclusive over the reachable state space
  *       (asserted by {@code NodeReplaceWithoutRetireTest.operationPredicatesAreMutuallyExclusive})
- *       and a downstream service dispatches on whichever one fires. At most one fires for any
- *       given node; no-operation nodes (e.g. a concept that hasn't changed) leave them all false.
+ *       and a downstream service dispatches on whichever one fires. At most one fires for any given
+ *       node; no-operation nodes (e.g. a concept that hasn't changed) leave them all false.
  *   <li><strong>Change indicators</strong> ({@link #isPropertyUpdate()}, {@link
  *       #isStatedFormChanged()}, {@link #isInferredFormChanged()}). These are orthogonal to the
  *       operation predicates AND to each other — any combination may fire alongside any operation
@@ -171,10 +171,10 @@ public class Node {
   // ---------------------------------------------------------------------------------------------
 
   /**
-   * Returns true if this node represents the creation of a new SNOMED concept (a fresh SCTID).
-   * This includes both brand-new concepts (no original at all) AND the "fork" case where the
-   * original concept exists but cannot be retired or edited because it is referenced by other
-   * products — in that case the calculation creates a new concept and leaves the original alone.
+   * Returns true if this node represents the creation of a new SNOMED concept (a fresh SCTID). This
+   * includes both brand-new concepts (no original at all) AND the "fork" case where the original
+   * concept exists but cannot be retired or edited because it is referenced by other products — in
+   * that case the calculation creates a new concept and leaves the original alone.
    *
    * <p>Exclusive with the other four operation predicates by construction: it explicitly excludes
    * {@link #isConceptEdit()} (modifies the existing concept), {@link #isRetireAndReplace()} (a
@@ -218,20 +218,23 @@ public class Node {
    * Returns true if this node represents a replacement of an external concept (e.g. a SNOMED CT
    * International concept). The original concept's reference set memberships in the configured
    * in-scope reference sets are removed but the concept itself is not retired and no historical
-   * association is created. An inactivation reason on the original node makes no sense in this
-   * mode (the concept is not being inactivated), so the predicate excludes it. This aligns the
-   * inactivation-reason precondition with {@link #isConceptEdit} (also requires null) and keeps
-   * the predicate mutually exclusive with {@link #isRetireAndReplace}, which requires the reason
-   * to be non-null. The server-side validator rejects the contradictory combination
-   * (external + non-null reason) explicitly.
+   * association is created.
+   *
+   * <p>The {@code !isReferencedByOtherProducts} guard is load-bearing: when other authoring
+   * products still reference the external concept, those refset memberships must not be stripped,
+   * so dispatch falls through to {@link #isNewConcept} (the fork case — new SCTID, original
+   * untouched). Mutual exclusivity with {@link #isRetireAndReplace} and {@link #isConceptEdit} is
+   * provided by their {@code !isExternalConcept} guards. An inactivation reason on an external
+   * original node is a contradictory client payload — rejected upstream by {@code
+   * OriginalNode.@AssertTrue} and by {@code ProductCreationService.validateUpdateOperation} — so
+   * this predicate does not re-guard against it.
    */
   @JsonProperty(value = "replaceWithoutRetire", access = JsonProperty.Access.READ_ONLY)
   public boolean isReplaceWithoutRetire() {
     return newConceptDetails != null
         && originalNode != null
         && originalNode.isExternalConcept()
-        && !originalNode.isReferencedByOtherProducts()
-        && originalNode.getInactivationReason() == null;
+        && !originalNode.isReferencedByOtherProducts();
   }
 
   /**

@@ -39,8 +39,8 @@ public class OriginalNode {
    * The original concept this {@code OriginalNode} wraps. Must be non-null and carry a non-null
    * {@code concept.moduleId} — the moduleId is used by {@link #of(Node, InactivationReason,
    * boolean, String)} to derive {@link #externalConcept}. A malformed client payload that omits
-   * this field (or the nested concept) is rejected by JSR-303 at any {@code @Valid} boundary
-   * with a 400, rather than reaching the service-layer normalisation and throwing a 500.
+   * this field (or the nested concept) is rejected by JSR-303 at any {@code @Valid} boundary with a
+   * 400, rather than reaching the service-layer normalisation and throwing a 500.
    */
   @NotNull @Valid private Node node;
 
@@ -50,22 +50,22 @@ public class OriginalNode {
   /**
    * True when the original concept is owned by an external module — e.g. a SNOMED CT International
    * concept reused by an NMPC or AMT product — and so the authoring tool cannot retire or modify
-   * it. Read by {@link Node#isReplaceWithoutRetire()} to route the update through the cleanup
-   * path: the original concept's memberships in the configured in-scope reference sets are
-   * cleared and a new concept is created in its place, with no inactivation indicator or
-   * historical association.
+   * it. Read by {@link Node#isReplaceWithoutRetire()} to route the update through the cleanup path:
+   * the original concept's memberships in the configured in-scope reference sets are cleared and a
+   * new concept is created in its place, with no inactivation indicator or historical association.
    *
    * <p>This flag describes the original concept's module ownership only; whether {@link
    * Node#isReplaceWithoutRetire()} actually fires also depends on {@link
    * #referencedByOtherProducts} — when other products still reference the original concept it is
    * left untouched regardless of this flag.
    *
-   * <p>The Lombok setter is suppressed and the JSON binding is {@link JsonProperty.Access#READ_ONLY}
-   * so that the flag can only be set inside the package via {@link #of(Node, InactivationReason,
-   * boolean, String)}. A client submitting a payload with {@code externalConcept} present in the
-   * JSON has the value ignored on the server side; service-layer entry points must re-derive the
-   * flag from the original concept's moduleId before consuming the {@code ProductSummary} so the
-   * server is the source of truth (see {@code ProductCreationService#normaliseExternalConceptFlag}).
+   * <p>The Lombok setter is suppressed and the JSON binding is {@link
+   * JsonProperty.Access#READ_ONLY} so that the flag can only be set inside the package via {@link
+   * #of(Node, InactivationReason, boolean, String)}. A client submitting a payload with {@code
+   * externalConcept} present in the JSON has the value ignored on the server side; service-layer
+   * entry points must re-derive the flag from the original concept's moduleId before consuming the
+   * {@code ProductSummary} so the server is the source of truth (see {@code
+   * ProductCreationService#normaliseExternalConceptFlag}).
    */
   @Setter(AccessLevel.NONE)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
@@ -77,9 +77,11 @@ public class OriginalNode {
    * constructor is intentionally private to prevent callers from setting the flag directly and
    * bypassing this comparison.
    *
-   * <p>{@code authoringModuleId} may be {@code null} when the caller doesn't have access to the
-   * model configuration (e.g. some test fixtures); in that case the flag is set to {@code false}.
-   * Today all production callers supply {@code modelConfiguration.getModuleId()}.
+   * <p>All arguments controlling externality must be non-null. {@code node} must carry a non-null
+   * concept with a non-null {@code moduleId}, and {@code authoringModuleId} must be supplied —
+   * silently treating an external concept as authorable would mis-route a SNOMED CT International
+   * concept down the edit/retire path. Production callers pass {@code modelConfiguration
+   * .getModuleId()}; test fixtures should pass a concrete authoring module rather than null.
    */
   public static OriginalNode of(
       Node node,
@@ -95,13 +97,11 @@ public class OriginalNode {
   }
 
   private static boolean isExternalConcept(Node node, String authoringModuleId) {
-    // The only legitimate null case is when the caller doesn't have a model configuration
-    // available (test fixtures); production paths always supply the authoring moduleId. Other
-    // nulls are programmer errors or malformed Snowstorm responses and must surface — silently
-    // treating an external concept as authorable would mis-route a SNOMED CT International
-    // concept down the edit/retire path.
     if (authoringModuleId == null) {
-      return false;
+      throw new LingoProblem(
+          "original-node-construction",
+          "Cannot determine concept externality: authoringModuleId is null",
+          HttpStatus.INTERNAL_SERVER_ERROR);
     }
     if (node == null || node.getConcept() == null) {
       throw new LingoProblem(
@@ -128,11 +128,10 @@ public class OriginalNode {
   }
 
   /**
-   * Inactivation reasons are only meaningful for concepts the authoring tool is allowed to
-   * retire. An external concept (owned by a foreign module) is replaced without retirement, so
-   * carrying a reason on it indicates a contradictory request. Surface as a JSR-303 validation
-   * failure at any {@code @Valid} boundary so the bad state cannot silently flow through to the
-   * service layer.
+   * Inactivation reasons are only meaningful for concepts the authoring tool is allowed to retire.
+   * An external concept (owned by a foreign module) is replaced without retirement, so carrying a
+   * reason on it indicates a contradictory request. Surface as a JSR-303 validation failure at any
+   * {@code @Valid} boundary so the bad state cannot silently flow through to the service layer.
    */
   @AssertTrue(message = "An external original concept cannot carry an inactivation reason")
   @JsonIgnore

@@ -64,32 +64,31 @@ class NodeReplaceWithoutRetireTest {
 
     assertTrue(node.isReplaceWithoutRetire());
     assertFalse(node.isConceptEdit(), "Edit-in-place must not be allowed for external concepts");
-    assertFalse(
-        node.isRetireAndReplace(), "External concepts must never be retired and replaced");
+    assertFalse(node.isRetireAndReplace(), "External concepts must never be retired and replaced");
     assertFalse(node.isNewConcept(), "Replace-without-retire is not a pure new concept");
   }
 
   @Test
-  void externalConceptWithStrayInactivationReasonFallsBackToNewConcept() {
-    // The normal flow nulls the inactivation reason for external concepts. The bad state
-    // (external + inactivationReason set) is rejected upfront by the server's
-    // ProductCreationService.validateUpdateOperation and by OriginalNode's @AssertTrue at any
-    // @Valid boundary. If it ever slips past both, the safe fallback is that none of the
-    // specific operation predicates fire (RAR/RWR/edit/RARE all reject the state) and the node
-    // is classified as isNewConcept — downstream creates a new SCTID and leaves the original
-    // external concept untouched. That is the safest possible behaviour: no retirement, no
-    // refset cleanup, no historical association on the foreign concept.
+  void externalConceptWithStrayInactivationReasonStillFiresReplaceWithoutRetire() {
+    // The bad state (external + inactivationReason set) is rejected upstream by
+    // OriginalNode's @AssertTrue at any @Valid boundary and by ProductCreationService's
+    // validateUpdateOperation. If it ever slips past both, dispatch is governed by externality:
+    // RWR fires and the stray inactivationReason is silently ignored — RWR does not retire and
+    // does not honour inactivationReason. Mutual exclusivity with RAR is preserved because RAR
+    // requires !external.
     Node original = existingNode("1296676008", SCT_CORE_MODULE);
     OriginalNode originalNode =
         OriginalNode.of(original, InactivationReason.ERRONEOUS, false, AUTHORING_MODULE);
 
     Node node = newNodeWithOriginal(originalNode);
 
+    assertTrue(
+        node.isReplaceWithoutRetire(),
+        "External concept dispatches to RWR regardless of stray inactivation reason");
     assertFalse(node.isRetireAndReplace());
     assertFalse(node.isRetireAndReplaceWithExisting());
     assertFalse(node.isConceptEdit());
-    assertFalse(node.isReplaceWithoutRetire());
-    assertTrue(node.isNewConcept(), "Bad state falls back to new-SCTID creation");
+    assertFalse(node.isNewConcept());
   }
 
   @Test
@@ -145,8 +144,7 @@ class NodeReplaceWithoutRetireTest {
       java.util.Set<jakarta.validation.ConstraintViolation<OriginalNode>> violations =
           validator.validate(malformed);
       assertTrue(
-          violations.stream()
-              .anyMatch(v -> "node".equals(v.getPropertyPath().toString())),
+          violations.stream().anyMatch(v -> "node".equals(v.getPropertyPath().toString())),
           "Expected a @NotNull constraint violation on the `node` property; got " + violations);
     }
   }
@@ -168,7 +166,9 @@ class NodeReplaceWithoutRetireTest {
       assertTrue(
           violations.stream()
               .anyMatch(
-                  v -> v.getMessage().contains("external original concept cannot carry an inactivation")),
+                  v ->
+                      v.getMessage()
+                          .contains("external original concept cannot carry an inactivation")),
           "Expected @AssertTrue invariant to fire on external + inactivationReason; got "
               + violations);
     }
@@ -197,11 +197,16 @@ class NodeReplaceWithoutRetireTest {
   }
 
   @Test
-  void nullAuthoringModuleTreatsConceptAsInternal() {
+  void nullAuthoringModuleIsHardError() {
+    // The authoringModuleId is mandatory — silently treating an external concept as authorable
+    // would mis-route a SNOMED CT International concept down the edit/retire path. Production
+    // callers pass modelConfiguration.getModuleId(); test fixtures must do the same.
     Node original = existingNode("1296676008", SCT_CORE_MODULE);
-    OriginalNode originalNode = OriginalNode.of(original, null, false, (String) null);
 
-    assertFalse(originalNode.isExternalConcept());
+    org.junit.jupiter.api.Assertions.assertThrows(
+        au.gov.digitalhealth.lingo.exception.LingoProblem.class,
+        () -> OriginalNode.of(original, null, false, (String) null),
+        "Null authoringModuleId must fail loudly rather than default to internal");
   }
 
   /**
