@@ -316,6 +316,20 @@ class ProductCreationServiceTest {
   }
 
   private static Node existingNode(String conceptId, String moduleId) {
+    // Default to a released concept: effectiveTime non-null signals the concept has been versioned
+    // in a Snowstorm release, which is the steady state for any external/AMT/NMPC concept loaded
+    // from Snowstorm. Tests that need to exercise the unreleased path use existingUnreleasedNode.
+    SnowstormConceptMini concept =
+        new SnowstormConceptMini()
+            .conceptId(conceptId)
+            .moduleId(moduleId)
+            .effectiveTime("20240101");
+    return new Node(concept, vmpLevel());
+  }
+
+  private static Node existingUnreleasedNode(String conceptId, String moduleId) {
+    // Unreleased: effectiveTime null — simulates a concept that was created in the current
+    // authoring task but never versioned, and so cannot be PUT-inactivated by Snowstorm.
     SnowstormConceptMini concept =
         new SnowstormConceptMini().conceptId(conceptId).moduleId(moduleId);
     return new Node(concept, vmpLevel());
@@ -384,6 +398,53 @@ class ProductCreationServiceTest {
         ProductCreationService.buildInactivationAndAssociationMembers(Set.of());
 
     assertThat(members).isEmpty();
+  }
+
+  @Test
+  void unreleasedOriginalEmitsNoInactivationOrAssociationMembers() {
+    // An unreleased original (effectiveTime null) is going to be DELETEd by createOrUpdateConcepts
+    // rather than PUT-inactivated. Inactivation-indicator and historical-association refset
+    // members on a concept that will be deleted are pointless — Snowstorm cascades the delete and
+    // those members would either fail to write or be immediately orphaned. The builder must
+    // silently skip such nodes.
+    Node original = existingUnreleasedNode("1234567890", AUTHORING_MODULE);
+    OriginalNode originalNode =
+        OriginalNode.of(original, InactivationReason.ERRONEOUS, false, AUTHORING_MODULE);
+    Node retireAndReplaceNode = nodeWithNewConceptDetails(originalNode);
+    assertThat(retireAndReplaceNode.isRetireAndReplace()).isTrue();
+
+    List<SnowstormReferenceSetMemberViewComponent> members =
+        ProductCreationService.buildInactivationAndAssociationMembers(Set.of(retireAndReplaceNode));
+
+    assertThat(members)
+        .as(
+            "Unreleased originals are deleted not inactivated; no inactivation indicator or"
+                + " historical association should be written for them")
+        .isEmpty();
+  }
+
+  @Test
+  void mixedReleasedAndUnreleasedRetireAndReplaceFiltersOnlyUnreleased() {
+    // Belt and braces: when a batch contains both released and unreleased originals, only the
+    // released ones get inactivation-indicator and historical-association members.
+    Node releasedOriginal = existingNode("1111111111", AUTHORING_MODULE);
+    OriginalNode releasedOriginalNode =
+        OriginalNode.of(releasedOriginal, InactivationReason.ERRONEOUS, false, AUTHORING_MODULE);
+    Node releasedNode = nodeWithNewConceptDetails(releasedOriginalNode);
+
+    Node unreleasedOriginal = existingUnreleasedNode("2222222222", AUTHORING_MODULE);
+    OriginalNode unreleasedOriginalNode =
+        OriginalNode.of(unreleasedOriginal, InactivationReason.ERRONEOUS, false, AUTHORING_MODULE);
+    Node unreleasedNode = nodeWithNewConceptDetails(unreleasedOriginalNode);
+
+    List<SnowstormReferenceSetMemberViewComponent> members =
+        ProductCreationService.buildInactivationAndAssociationMembers(
+            Set.of(releasedNode, unreleasedNode));
+
+    // Two members per released original (inactivation indicator + historical association); zero
+    // for the unreleased one.
+    assertThat(members).hasSize(2);
+    assertThat(members).allMatch(m -> "1111111111".equals(m.getReferencedComponentId()));
   }
 
   // ------------------------------------------------------------------------------------------

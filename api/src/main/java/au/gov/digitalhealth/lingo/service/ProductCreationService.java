@@ -294,6 +294,10 @@ public class ProductCreationService {
    * #createandUpdateRefsetMemberships}) and must not have inactivation-indicator or historical-
    * association members recorded against them. The method throws {@link IllegalStateException} on
    * any other node type as defence-in-depth against a future caller forgetting the pre-filter.
+   *
+   * <p>Nodes whose original concept is unreleased are silently skipped: those originals are being
+   * deleted (not inactivated), and inactivation-indicator / historical-association members on a
+   * concept that's about to be deleted are pointless and rejected by Snowstorm validation.
    */
   static List<SnowstormReferenceSetMemberViewComponent> buildInactivationAndAssociationMembers(
       Set<Node> retireAndReplaceNodes) {
@@ -308,6 +312,11 @@ public class ProductCreationService {
                 "buildInactivationAndAssociationMembers received a node that is neither "
                     + "isRetireAndReplace nor isRetireAndReplaceWithExisting: "
                     + node.getConceptId());
+          }
+          if (!isOriginalReleased(node)) {
+            // Unreleased original — being deleted, not inactivated. No inactivation indicator or
+            // historical association recorded.
+            return;
           }
           members.add(
               new SnowstormReferenceSetMemberViewComponent()
@@ -996,6 +1005,32 @@ public class ProductCreationService {
         .forEach(a -> a.setActive(false));
   }
 
+  /**
+   * True when the concept has been published as part of an authoritative release. Snowstorm refuses
+   * to delete released concepts and rejects PUT-inactivation of unreleased concepts — so the right
+   * lifecycle operation depends on this flag. We derive it from {@code effectiveTime}: a concept
+   * that has been versioned in any release has an {@code effectiveTime} set to that release's
+   * effective date. Unreleased concepts (created in the current task, never versioned) have it
+   * null. The {@code SnowstormConcept.released} Boolean exists in the API DTO but is not reliably
+   * populated by every Snowstorm endpoint; {@code effectiveTime} is — see
+   * SnowstormDtoUtil#toSnowstormConcept where it is copied through unchanged.
+   */
+  private static boolean isReleased(SnowstormConcept concept) {
+    return concept.getEffectiveTime() != null;
+  }
+
+  /**
+   * Mini-DTO variant of {@link #isReleased(SnowstormConcept)} for use where only a {@code
+   * SnowstormConceptMini} is available (e.g. inside {@link
+   * #buildInactivationAndAssociationMembers}, which receives nodes rather than the
+   * editAndRetireConceptMap).
+   */
+  private static boolean isOriginalReleased(Node node) {
+    return node.getOriginalNode() != null
+        && node.getOriginalNode().getNode().getConcept() != null
+        && node.getOriginalNode().getNode().getConcept().getEffectiveTime() != null;
+  }
+
   private void createOrUpdateConcepts(
       String branch, List<Node> nodeCreateOrder, Map<String, String> idMap, boolean createOnly)
       throws InterruptedException {
@@ -1009,6 +1044,12 @@ public class ProductCreationService {
 
     final Map<String, SnowstormConcept> editAndRetireConceptMap =
         getExistingConceptsToEditAndRetire(branch, nodeCreateOrder);
+
+    // Unreleased originals on a retire-and-replace dispatch cannot be PUT-inactivated — Snowstorm
+    // rejects that and we get a 500 from the upstream call. Instead we DELETE them after the bulk
+    // concept update and refset cleanup have completed (which removes their in-scope refset
+    // memberships, leaving the concept safe to delete). Collect the ids here as we walk the nodes.
+    final List<String> unreleasedOriginalsToDelete = new ArrayList<>();
 
     // set up the concepts to create
     List<SnowstormConceptView> concepts = new ArrayList<>();
@@ -1064,8 +1105,15 @@ public class ProductCreationService {
         if (node.isRetireAndReplace() || node.isRetireAndReplaceWithExisting()) {
           SnowstormConcept conceptToRetire =
               editAndRetireConceptMap.get(node.getOriginalNode().getConceptId());
-          inactivateConcept(conceptToRetire);
-          concepts.add(toSnowstormConceptView(conceptToRetire));
+          if (isReleased(conceptToRetire)) {
+            inactivateConcept(conceptToRetire);
+            concepts.add(toSnowstormConceptView(conceptToRetire));
+          } else {
+            // Unreleased: queue for delete after refset cleanup completes. The bulk concept
+            // update list must not include this concept at all — Snowstorm rejects PUT-inactivate
+            // for unreleased.
+            unreleasedOriginalsToDelete.add(conceptToRetire.getConceptId());
+          }
         }
       } else {
         log.warning("Creating concept sequentially - this will be slow");
@@ -1083,12 +1131,17 @@ public class ProductCreationService {
         if (node.isRetireAndReplace() || node.isRetireAndReplaceWithExisting()) {
           SnowstormConcept conceptToRetire =
               editAndRetireConceptMap.get(node.getOriginalNode().getConceptId());
-          inactivateConcept(conceptToRetire);
-          snowstormClient.updateConceptView(
-              branch,
-              conceptToRetire.getConceptId(),
-              toSnowstormConceptView(conceptToRetire),
-              false);
+          if (isReleased(conceptToRetire)) {
+            inactivateConcept(conceptToRetire);
+            snowstormClient.updateConceptView(
+                branch,
+                conceptToRetire.getConceptId(),
+                toSnowstormConceptView(conceptToRetire),
+                false);
+          } else {
+            // Unreleased: queue for delete after refset cleanup completes.
+            unreleasedOriginalsToDelete.add(conceptToRetire.getConceptId());
+          }
         }
       }
       idMap.put(conceptId, concept.getConceptId());
@@ -1139,6 +1192,14 @@ public class ProductCreationService {
         });
 
     createandUpdateRefsetMemberships(branch, nodeCreateOrder);
+
+    // Refset cleanup has now removed the in-scope refset memberships of all retired concepts —
+    // including the unreleased ones we deferred from inactivation. Delete those concepts now;
+    // Snowstorm's concept-delete cascades descriptions, axioms and relationships.
+    for (String conceptId : unreleasedOriginalsToDelete) {
+      log.fine("Deleting unreleased original concept " + conceptId + " on branch " + branch);
+      snowstormClient.deleteConcept(branch, conceptId);
+    }
 
     nodeCreateOrder.forEach(
         node -> {
