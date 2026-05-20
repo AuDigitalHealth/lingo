@@ -481,7 +481,7 @@
     <dependency>
       <artifactId>awaitility</artifactId>
       <groupId>org.awaitility</groupId>
-      <version>4.2.2</version>
+      <version>4.3.0</version>
     </dependency>
     <dependency>
       <artifactId>mapstruct</artifactId>
