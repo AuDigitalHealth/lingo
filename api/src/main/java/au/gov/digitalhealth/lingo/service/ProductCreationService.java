@@ -1118,10 +1118,21 @@ public class ProductCreationService {
       } else {
         log.warning("Creating concept sequentially - this will be slow");
         // if it isn't a replacement with an existing concept, we need to create it
-        if (node.isConceptEdit() || node.isRetireAndReplaceWithExisting()) {
+        if (node.isConceptEdit()) {
           concept.setConceptId(node.getOriginalNode().getConceptId());
           concept =
               snowstormClient.updateConceptView(branch, concept.getConceptId(), concept, false);
+        } else if (node.isRetireAndReplaceWithExisting()) {
+          // The replacement concept already exists in Snowstorm with the correct modelling. A
+          // PUT here used to stamp the original's conceptId onto the replacement's view and
+          // re-submit it — but the inner descriptions and relationships still reference the
+          // replacement's conceptId, so the payload mixes two identities. Snowstorm NPEs
+          // validating the releaseHash on released components claimed to belong to a different
+          // concept ("Cannot invoke String.equals(Object) because the return value of
+          // SnomedComponent.getReleaseHash() is null"). The replacement doesn't need to be
+          // pushed back — the original is the only thing changing, and that's handled by the
+          // retire/delete branch below. Leave `concept` as the replacement's view so the
+          // downstream idMap/conceptMap wiring still resolves to the right concept.
         } else {
           concept.setConceptId(node.getNewConceptDetails().getSpecifiedConceptId());
           concept = snowstormClient.createConcept(branch, concept, false);
