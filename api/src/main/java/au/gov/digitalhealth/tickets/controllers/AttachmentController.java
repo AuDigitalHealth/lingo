@@ -122,7 +122,10 @@ public class AttachmentController {
     for (AttachmentUrlDto attachment : request) {
       responses.add(
           attachmentService.processAttachmentUploadFromUrl(
-              ticketId, attachment.getUrl(), attachment.getFileName()));
+              ticketId,
+              attachment.getUrl(),
+              attachment.getFileName(),
+              attachment.getContentType()));
     }
 
     return ResponseEntity.ok(responses);

@@ -71,7 +71,7 @@ public class TaskAssociationCleanupService {
     for (TaskAssociation association : associations) {
       Task.Status status = taskStatusByKey.get(association.getTaskId());
 
-      if (CLOSE_TICKET_STATUSES.contains(status) && closedState.isPresent()) {
+      if (status != null && CLOSE_TICKET_STATUSES.contains(status) && closedState.isPresent()) {
         ticketRepository.updateStateByTaskAssociation(association.getId(), closedState.get());
         log.info(
             "Closed ticket for taskId ["

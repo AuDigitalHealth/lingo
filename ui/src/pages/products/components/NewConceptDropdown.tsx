@@ -543,7 +543,7 @@ function NewConceptDropdownField({
       fieldName as 'nodes.0.newConceptDetails.preferredTerm',
     );
 
-    setCopyVal(`${currentVal} ${semanticTag}`);
+    setCopyVal(semanticTag ? `${currentVal} (${semanticTag})` : currentVal);
 
     const generatedVal: string = getValues(
       preferredFieldName as 'nodes.0.newConceptDetails.preferredTerm',

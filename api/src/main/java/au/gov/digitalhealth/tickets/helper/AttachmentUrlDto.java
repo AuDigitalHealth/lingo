@@ -46,4 +46,6 @@ public class AttachmentUrlDto {
   @Size(max = 2048, message = "url must be at most 2048 characters")
   @URL(message = "url must be a valid URL")
   private String url;
+
+  private String contentType;
 }

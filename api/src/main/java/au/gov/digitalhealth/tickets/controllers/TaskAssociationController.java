@@ -24,7 +24,6 @@ import au.gov.digitalhealth.tickets.models.Ticket;
 import au.gov.digitalhealth.tickets.repository.TaskAssociationRepository;
 import au.gov.digitalhealth.tickets.repository.TicketRepository;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -96,21 +95,10 @@ public class TaskAssociationController {
     Ticket ticket = ticketOptional.get();
     TaskAssociation taskAssociation = taskAssociationOptional.get();
 
-    // Verify that the task association is actually associated with this ticket
-    if (!Objects.equals(ticket.getTaskAssociation(), taskAssociation)) {
-      throw new ResourceNotFoundProblem(
-          String.format(
-              "Task association %d is not associated with ticket %d", taskAssociationId, ticketId));
-    }
-
-    // Only remove the association from the ticket, don't delete the TaskAssociation entity
     ticket.setTaskAssociation(null);
     ticketRepository.save(ticket);
 
-    // Optionally, you might also want to clear the ticket_id on the TaskAssociation
-    // if your model supports bidirectional relationships:
-    taskAssociation.setTicket(null);
-    taskAssociationRepository.save(taskAssociation);
+    taskAssociationRepository.delete(taskAssociation);
 
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }

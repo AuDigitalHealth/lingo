@@ -22,6 +22,14 @@ The following sections are considered for each release: **Added, Changed, Fixed,
   (target population, plays role, qualitative strength) at the MP/VTM, VMP and AMP levels, and the
   VMP/AMP search is constrained by the recalculated VTM rather than a generic `Virtual Medicinal
   Product` root so the cascade picks up the new parent. (#1792)
+- Fixed a bug in the auto task/ticket association removal when a task is deleted
+
+
+## [1.3.41] - 2026-05-15
+- Fix Attachment content type to fallback to jdk detected content type when the file is uploaded without a content type
+
+
+## [1.3.40] - 2026-05-15
 
 
 ## [1.3.39] - 2026-05-08
