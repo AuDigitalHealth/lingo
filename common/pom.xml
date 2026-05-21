@@ -33,7 +33,7 @@
           </archive>
         </configuration>
         <groupId>org.apache.maven.plugins</groupId>
-        <version>3.4.2</version>
+        <version>3.5.0</version>
       </plugin>
       <plugin>
         <artifactId>license-maven-plugin</artifactId>
@@ -90,7 +90,7 @@
     <dependency>
       <artifactId>commons-validator</artifactId>
       <groupId>commons-validator</groupId>
-      <version>1.9.0</version>
+      <version>1.10.1</version>
     </dependency>
     <dependency>
       <artifactId>jackson-datatype-jsr310</artifactId>

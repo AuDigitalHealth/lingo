@@ -411,7 +411,7 @@
     <dependency>
       <artifactId>commons-validator</artifactId>
       <groupId>commons-validator</groupId>
-      <version>1.9.0</version>
+      <version>1.10.1</version>
     </dependency>
     <dependency>
       <artifactId>spring-context</artifactId>
@@ -481,7 +481,7 @@
     <dependency>
       <artifactId>awaitility</artifactId>
       <groupId>org.awaitility</groupId>
-      <version>4.2.2</version>
+      <version>4.3.0</version>
     </dependency>
     <dependency>
       <artifactId>mapstruct</artifactId>
@@ -630,7 +630,7 @@
     <json-schema.version>4.36.0</json-schema.version>
     <maven-enforcer-plugin.version>3.5.0</maven-enforcer-plugin.version>
     <owlapi.version>4.5.19</owlapi.version>
-    <postgres.version>42.7.3</postgres.version>
+    <postgres.version>42.7.11</postgres.version>
     <problem-spring-web.version>0.23.0</problem-spring-web.version>
     <querydsl.version>5.1.0</querydsl.version>
     <sentry.version>7.18.0</sentry.version>
