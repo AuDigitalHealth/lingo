@@ -91,6 +91,7 @@ const typeMap: Record<DefinitionType, string> = {
   [DefinitionType.FSN]: '900000000000003001',
   [DefinitionType.SYNONYM]: '900000000000013009',
 };
+const SNOMED_CT_CORE_MODULE_ID = '900000000000207008';
 
 interface ProductEditModalProps {
   open: boolean;
@@ -203,6 +204,8 @@ function EditConceptBody({
       return removeDescriptionSemanticTag(desc);
     });
   }, [sortedDescriptions]);
+  const isSnomedInternationalConcept =
+    data?.moduleId === SNOMED_CT_CORE_MODULE_ID;
 
   const { fieldBindings } = useFieldBindings(branch);
 
@@ -629,6 +632,9 @@ function EditConceptBody({
                         setValue={setValue}
                         getValues={getValues}
                         watch={watch}
+                        isSnomedInternationalConcept={
+                          isSnomedInternationalConcept
+                        }
                       />
                       <ActionButton
                         control={control}
@@ -673,6 +679,7 @@ interface RightSectionProps {
   setValue: UseFormSetValue<ProductUpdateRequest>;
   getValues: UseFormGetValues<ProductUpdateRequest>;
   watch: UseFormWatch<ProductUpdateRequest>;
+  isSnomedInternationalConcept: boolean;
 }
 
 // Update RightSection component
@@ -692,6 +699,7 @@ function RightSection({
   setValue,
   getValues,
   watch,
+  isSnomedInternationalConcept,
 }: RightSectionProps) {
   const { synonymConfigurations } = useAllSynonymConfigurations(); // You'll need to import this hook
   const defaultLangRefset = findDefaultLangRefset(langRefsets);
@@ -855,6 +863,7 @@ function RightSection({
                 control={control}
                 disabled={isUpdating}
                 setValue={setValue}
+                isSnomedInternationalConcept={isSnomedInternationalConcept}
               />
             );
           })}
@@ -983,6 +992,7 @@ interface FieldDescriptionsProps {
   control: Control<ProductUpdateRequest>;
   disabled: boolean;
   setValue: UseFormSetValue<ProductUpdateRequest>;
+  isSnomedInternationalConcept: boolean;
 }
 const FieldDescriptions = ({
   displayRetiredDescriptions,
@@ -995,6 +1005,7 @@ const FieldDescriptions = ({
   control,
   disabled,
   setValue,
+  isSnomedInternationalConcept,
 }: FieldDescriptionsProps) => {
   const description = sortedDescriptionsWithoutSemanticTag[index] as
     | Description
@@ -1030,12 +1041,17 @@ const FieldDescriptions = ({
         : 'Synonym';
 
   const isFsnOrPreferred = descriptionType === 'FSN' || isPreferred;
+  const isProtectedSnomedInternationalDescription =
+    isSnomedInternationalConcept && descriptionType === DefinitionType.FSN;
+  const isSnomedInternationalSynonym =
+    isSnomedInternationalConcept && descriptionType === DefinitionType.SYNONYM;
 
   if (!displayRetiredDescriptions && description && !description.active) {
     return <></>;
   }
 
-  const isDisabled = disabled || !isActive;
+  const isDisabled =
+    disabled || !isActive || isProtectedSnomedInternationalDescription;
 
   const isReleased = description?.released;
 
@@ -1157,7 +1173,9 @@ const FieldDescriptions = ({
                               {...controllerField}
                               disabled={
                                 isDisabled ||
-                                dialect.dialectName.toLowerCase() === 'en-gb'
+                                dialect.dialectName.toLowerCase() === 'en-gb' ||
+                                (isSnomedInternationalSynonym &&
+                                  dialect.default !== 'true')
                               }
                               error={!!fieldState.error}
                             >

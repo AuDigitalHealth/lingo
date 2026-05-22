@@ -79,6 +79,14 @@ import reactor.core.publisher.Mono;
 @Service
 @Validated({AuthoringValidation.class, Default.class})
 public class ProductUpdateService {
+  private static final String SNOMED_CT_CORE_MODULE_ID = "900000000000207008";
+  private static final String CORE_FSN_EDIT_ERROR =
+      "Cannot edit or inactivate SNOMED International FSN for core module concepts.";
+  private static final String CORE_ACCEPTABILITY_EDIT_ERROR =
+      "Cannot change the acceptability for SNOMED International managed language reference sets."
+          + " Editable language reference sets are: %s";
+  private static final String CORE_FSN_MISSING_ERROR =
+      "SNOMED International FSN cannot be removed from core module concepts.";
 
   SnowstormClient snowstormClient;
   TicketServiceImpl ticketService;
@@ -198,6 +206,10 @@ public class ProductUpdateService {
             Objects.requireNonNull(existingConceptView.getDefinitionStatus())));
 
     productUpdateCreationDetails.getHistoricState().setConcept(existingConceptView);
+    validateCoreConceptDescriptionsImmutable(
+        existingConceptView,
+        productDescriptionUpdateRequest,
+        models.getModelConfiguration(branch).getPreferredLanguageRefsets());
 
     Map<SnowstormDescription, SnowstormDescription> retireReplaceDescriptions =
         getDescriptionsNeedingRetireReplace(existingConceptView, productDescriptionUpdateRequest);
@@ -453,6 +465,65 @@ public class ProductUpdateService {
     }
 
     return descriptionsNeedingUpdate;
+  }
+
+  static void validateCoreConceptDescriptionsImmutable(
+      SnowstormConcept existingConcept,
+      ProductDescriptionUpdateRequest productDescriptionUpdateRequest,
+      Set<String> preferredLanguageRefsets) {
+    if (existingConcept == null
+        || existingConcept.getDescriptions() == null
+        || productDescriptionUpdateRequest == null
+        || productDescriptionUpdateRequest.getDescriptions() == null
+        || !SNOMED_CT_CORE_MODULE_ID.equals(existingConcept.getModuleId())) {
+      return;
+    }
+
+    Map<String, SnowstormDescription> requestedDescriptionsById =
+        productDescriptionUpdateRequest.getDescriptions().stream()
+            .filter(description -> description.getDescriptionId() != null)
+            .collect(
+                Collectors.toMap(
+                    SnowstormDescription::getDescriptionId,
+                    Function.identity(),
+                    (existing, replacement) -> replacement));
+
+    existingConcept.getDescriptions().stream()
+        .filter(description -> Boolean.TRUE.equals(description.getActive()))
+        .forEach(
+            existingDescription -> {
+              SnowstormDescription requested =
+                  requestedDescriptionsById.get(existingDescription.getDescriptionId());
+
+              if ("FSN".equals(existingDescription.getType())) {
+                if (requested == null) {
+                  throw new ProductAtomicDataValidationProblem(CORE_FSN_MISSING_ERROR);
+                }
+                if (!Objects.equals(existingDescription.getTerm(), requested.getTerm())
+                    || !Objects.equals(existingDescription.getActive(), requested.getActive())) {
+                  throw new ProductAtomicDataValidationProblem(CORE_FSN_EDIT_ERROR);
+                }
+              } else if ("SYNONYM".equals(existingDescription.getType())
+                  && requested != null
+                  && existingDescription.getAcceptabilityMap() != null) {
+                existingDescription
+                    .getAcceptabilityMap()
+                    .forEach(
+                        (refsetId, acceptability) -> {
+                          if (!preferredLanguageRefsets.contains(refsetId)) {
+                            String requestedAcceptability =
+                                requested.getAcceptabilityMap() != null
+                                    ? requested.getAcceptabilityMap().get(refsetId)
+                                    : null;
+                            if (!Objects.equals(acceptability, requestedAcceptability)) {
+                              throw new ProductAtomicDataValidationProblem(
+                                  String.format(
+                                      CORE_ACCEPTABILITY_EDIT_ERROR, preferredLanguageRefsets));
+                            }
+                          }
+                        });
+              }
+            });
   }
 
   public SnowstormConcept fetchBrowserConcept(String branch, String conceptId) {
