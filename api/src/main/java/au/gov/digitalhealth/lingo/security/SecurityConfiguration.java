@@ -18,17 +18,14 @@ package au.gov.digitalhealth.lingo.security;
 import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
 
 import au.gov.digitalhealth.lingo.auth.security.CookieAuthenticationFilter;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer.FrameOptionsConfig;
-import org.springframework.security.task.DelegatingSecurityContextAsyncTaskExecutor;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
@@ -89,21 +86,5 @@ public class SecurityConfiguration {
             "/config/bulk-pack/(.*)/.*",
             "/config/edit/(.*)/.*/schema",
             "/config/edit/(.*)/.*/ui-schema"));
-  }
-
-  @Bean
-  public ThreadPoolTaskExecutor threadPoolTaskExecutor() {
-    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-    executor.setCorePoolSize(10);
-    executor.setMaxPoolSize(100);
-    executor.setQueueCapacity(50);
-    executor.setThreadNamePrefix("async-");
-    return executor;
-  }
-
-  @Bean
-  public DelegatingSecurityContextAsyncTaskExecutor taskExecutor(
-      @Qualifier("threadPoolTaskExecutor") ThreadPoolTaskExecutor delegate) {
-    return new DelegatingSecurityContextAsyncTaskExecutor(delegate);
   }
 }

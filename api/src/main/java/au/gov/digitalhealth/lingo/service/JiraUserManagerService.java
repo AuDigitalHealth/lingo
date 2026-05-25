@@ -19,6 +19,8 @@ import au.gov.digitalhealth.lingo.auth.JiraUser;
 import au.gov.digitalhealth.lingo.auth.JiraUserResponse;
 import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.util.CacheConstants;
+import io.micrometer.core.instrument.MeterRegistry;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -44,13 +46,17 @@ public class JiraUserManagerService extends GenericRefreshCacheService<List<Jira
   @Value("${lingo.internal.users:}")
   private Set<String> internalUsers;
 
+  @Value("${ihtsdo.jira.user.timeout.seconds}")
+  private long jiraUserTimeoutSeconds;
+
   private final WebClient defaultAuthoringPlatformApiClient;
 
   @Autowired
   public JiraUserManagerService(
       @Qualifier("defaultAuthoringPlatformApiClient") WebClient defaultAuthoringPlatformApiClient,
-      CacheManager cacheManager) {
-    super(cacheManager);
+      CacheManager cacheManager,
+      MeterRegistry meterRegistry) {
+    super(cacheManager, meterRegistry);
     this.defaultAuthoringPlatformApiClient = defaultAuthoringPlatformApiClient;
   }
 
@@ -108,6 +114,7 @@ public class JiraUserManagerService extends GenericRefreshCacheService<List<Jira
         .uri("/users?offset=" + offset)
         .retrieve()
         .bodyToMono(JiraUserResponse.class) // TODO May be change to actual objects?
+        .timeout(Duration.ofSeconds(jiraUserTimeoutSeconds))
         .block();
   }
 }

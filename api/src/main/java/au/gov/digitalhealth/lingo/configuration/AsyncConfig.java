@@ -18,6 +18,7 @@ package au.gov.digitalhealth.lingo.configuration;
 import java.util.concurrent.Executor;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
 import org.springframework.aop.interceptor.SimpleAsyncUncaughtExceptionHandler;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -31,12 +32,21 @@ import org.springframework.web.context.request.RequestContextHolder;
 @EnableAsync
 public class AsyncConfig implements AsyncConfigurer {
 
+  @Value("${snomio.async.core-pool-size:10}")
+  private int corePoolSize;
+
+  @Value("${snomio.async.max-pool-size:100}")
+  private int maxPoolSize;
+
+  @Value("${snomio.async.queue-capacity:50}")
+  private int queueCapacity;
+
   @Override
   public Executor getAsyncExecutor() {
     ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-    executor.setCorePoolSize(10);
-    executor.setMaxPoolSize(20);
-    executor.setQueueCapacity(25);
+    executor.setCorePoolSize(corePoolSize);
+    executor.setMaxPoolSize(maxPoolSize);
+    executor.setQueueCapacity(queueCapacity);
     executor.setThreadNamePrefix("async-");
 
     // This decorator preserves request context for all async tasks

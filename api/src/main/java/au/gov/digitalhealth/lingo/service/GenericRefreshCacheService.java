@@ -15,9 +15,13 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.java.Log;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
@@ -27,10 +31,15 @@ import org.springframework.scheduling.annotation.Async;
 @Log
 public abstract class GenericRefreshCacheService<T> {
 
+  public static final String LAST_SUCCESSFUL_REFRESH = "lastSuccessfulRefresh";
+  static final String SKIPPED_REFRESH_METRIC = "snomio.cache.refresh.skipped";
   private final CacheManager cacheManager;
+  private final MeterRegistry meterRegistry;
+  private static final Map<String, AtomicBoolean> refreshInProgressMap = new ConcurrentHashMap<>();
 
-  protected GenericRefreshCacheService(CacheManager cacheManager) {
+  protected GenericRefreshCacheService(CacheManager cacheManager, MeterRegistry meterRegistry) {
     this.cacheManager = cacheManager;
+    this.meterRegistry = meterRegistry;
   }
 
   public abstract String getCacheName();
@@ -41,10 +50,23 @@ public abstract class GenericRefreshCacheService<T> {
 
   @Async
   public CompletableFuture<T> refreshCache() {
-    Instant start = Instant.now();
-    Cache cache = cacheManager.getCache(getCacheName());
+    String cacheName = getCacheName();
+    AtomicBoolean refreshInProgress =
+        refreshInProgressMap.computeIfAbsent(cacheName, k -> new AtomicBoolean(false));
+
+    // Skip if already running
+    if (!refreshInProgress.compareAndSet(false, true)) {
+      log.warning(() -> String.format("[%s] refresh already in progress, skipping", cacheName));
+      meterRegistry.counter(SKIPPED_REFRESH_METRIC, "cache", cacheName).increment();
+      Cache cache = cacheManager.getCache(cacheName);
+      T cached = (cache != null) ? cache.get(SimpleKey.EMPTY, valueType()) : null;
+      return CompletableFuture.completedFuture(cached);
+    }
 
     try {
+      Instant start = Instant.now();
+      Cache cache = cacheManager.getCache(getCacheName());
+
       T data = fetchFromSource();
       Instant end = Instant.now();
 
@@ -56,15 +78,16 @@ public abstract class GenericRefreshCacheService<T> {
 
       if (cache != null) {
         cache.put(SimpleKey.EMPTY, data);
-        cache.put("lastSuccessfulRefresh", end);
+        cache.put(LAST_SUCCESSFUL_REFRESH, end);
       }
 
       return CompletableFuture.completedFuture(data);
 
     } catch (Exception ex) {
       Instant last = null;
-      if (cache != null && cache.get("lastSuccessfulRefresh") != null) {
-        last = cache.get("lastSuccessfulRefresh", Instant.class);
+      Cache cache = cacheManager.getCache(getCacheName());
+      if (cache != null && cache.get(LAST_SUCCESSFUL_REFRESH) != null) {
+        last = cache.get(LAST_SUCCESSFUL_REFRESH, Instant.class);
       }
 
       String lastStr = (last != null) ? last.toString() : "never";
@@ -81,6 +104,8 @@ public abstract class GenericRefreshCacheService<T> {
 
       T cached = (cache != null) ? cache.get(SimpleKey.EMPTY, valueType()) : null;
       return CompletableFuture.completedFuture(cached);
+    } finally {
+      refreshInProgress.set(false);
     }
   }
 }

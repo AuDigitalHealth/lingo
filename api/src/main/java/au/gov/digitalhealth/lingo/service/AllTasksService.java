@@ -17,6 +17,8 @@ package au.gov.digitalhealth.lingo.service;
 
 import au.gov.digitalhealth.lingo.util.CacheConstants;
 import au.gov.digitalhealth.lingo.util.Task;
+import io.micrometer.core.instrument.MeterRegistry;
+import java.time.Duration;
 import java.util.List;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -36,10 +38,14 @@ public class AllTasksService extends GenericRefreshCacheService<List<Task>> {
   @Value("${ihtsdo.ap.projectKey}")
   private Set<String> apProjects;
 
+  @Value("${ihtsdo.task.timeout.seconds}")
+  private long taskTimeoutSeconds;
+
   public AllTasksService(
       @Qualifier("defaultAuthoringPlatformApiClient") WebClient defaultAuthoringPlatformApiClient,
-      CacheManager cacheManager) {
-    super(cacheManager);
+      CacheManager cacheManager,
+      MeterRegistry meterRegistry) {
+    super(cacheManager, meterRegistry);
     this.defaultAuthoringPlatformApiClient = defaultAuthoringPlatformApiClient;
   }
 
@@ -66,7 +72,8 @@ public class AllTasksService extends GenericRefreshCacheService<List<Task>> {
                         .retrieve()
                         .bodyToMono(Task[].class)
                         .flatMapMany(tasks -> tasks == null ? Flux.empty() : Flux.fromArray(tasks)))
-            .collectList();
+            .collectList()
+            .timeout(Duration.ofSeconds(taskTimeoutSeconds));
 
     return allTasksMono.block();
   }
