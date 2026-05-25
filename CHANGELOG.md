@@ -26,6 +26,9 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 - For SNOMED International concepts, synonym language refset editing is now restricted to the project-configured refset only
 - Bumped Java dependencies: postgresql 42.7.3→42.7.11, rest-assured 5.5.0→6.0.0,
   maven-jar-plugin 3.4.2→3.5.0, awaitility 4.2.2→4.3.0, commons-validator 1.9.0→1.10.1
+- Fix Check Changelog workflow to skip dependabot PRs reliably; the previous
+  `github.actor` check was unmasked whenever a human triggered a re-run (e.g.
+  label change), now keyed on the PR author. Also bumped `actions/checkout` v2→v4. (#1820)
 
 
 ## [1.3.41] - 2026-05-15
