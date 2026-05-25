@@ -782,6 +782,27 @@ public class SnowstormClient {
     }
   }
 
+  /**
+   * Deletes a concept and its components (descriptions, axioms, relationships) on the given branch.
+   * Snowstorm's concept-delete cascades these but does NOT cascade arbitrary refset memberships
+   * pointing to the concept — those must be removed separately before calling this method.
+   *
+   * <p>Snowstorm refuses to delete released concepts unless {@code force=true}; this method always
+   * passes {@code force=false}. Callers must therefore only invoke this for unreleased concepts —
+   * the use case being concepts created in the current authoring task that are now being replaced
+   * before ever being versioned. Inactivating an unreleased concept (the PUT path) is rejected by
+   * Snowstorm with a 500; the correct lifecycle is to delete.
+   */
+  public void deleteConcept(String branch, String conceptId) {
+    try {
+      getConceptsApi().deleteConcept(branch, conceptId, false).block();
+    } catch (RuntimeException e) {
+      throw new LingoProblem(
+          "Failed to delete concept " + conceptId + " on branch " + branch + ": " + e.getMessage(),
+          e);
+    }
+  }
+
   public void deleteRelationship(String branch, String relationshipId) {
     try {
       new RelationshipsApi(getApiClient())

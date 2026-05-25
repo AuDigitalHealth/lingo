@@ -116,6 +116,9 @@ public class MedicationProductDetails extends ProductDetails {
     if (containerType != null) {
       addToIdFsnMap(idMap, containerType);
     }
+    if (unitOfPresentation != null) {
+      addToIdFsnMap(idMap, unitOfPresentation);
+    }
     for (SnowstormConceptMini role : playsRole) {
       addToIdFsnMap(idMap, role);
     }
@@ -139,6 +142,9 @@ public class MedicationProductDetails extends ProductDetails {
     }
     if (containerType != null) {
       addToIdPtMap(idMap, containerType);
+    }
+    if (unitOfPresentation != null) {
+      addToIdPtMap(idMap, unitOfPresentation);
     }
     for (SnowstormConceptMini role : playsRole) {
       addToIdPtMap(idMap, role);

@@ -201,7 +201,10 @@ public class NodeGeneratorService {
       originalNode =
           self.lookUpNode(
                   BranchPatternMatcher.getProjectFromTask(branch), node.getConcept(), modelLevel)
-              .thenAccept(original -> node.setOriginalNode(new OriginalNode(original, null, true)));
+              .thenAccept(
+                  original ->
+                      node.setOriginalNode(
+                          OriginalNode.of(original, null, true, configuration.getModuleId())));
     }
 
     // Create a Mono that completes when both Flux operations complete
@@ -230,7 +233,8 @@ public class NodeGeneratorService {
             e);
       }
     } else if (newProperties != null) {
-      node.setOriginalNode(new OriginalNode(node.cloneNode(), null, true));
+      node.setOriginalNode(
+          OriginalNode.of(node.cloneNode(), null, true, configuration.getModuleId()));
       Map<String, NonDefiningPropertyDefinition> nonDefiningPropertiesMap =
           configuration.getNonDefiningPropertiesBySchemeForModelLevel(modelLevel);
       Map<String, ReferenceSetDefinition> referenceSetsMap =
@@ -449,7 +453,12 @@ public class NodeGeneratorService {
                         && Long.parseLong(r.getDestinationId()) < 0)) {
       String ecl =
           EclBuilder.build(
-              relationships, refsets, suppressIsa, suppressNegativeStatements, modelConfiguration);
+              relationships,
+              refsets,
+              suppressIsa,
+              suppressNegativeStatements,
+              modelConfiguration,
+              modelLevel);
 
       if (log.isLoggable(Level.FINE)) {
         log.fine("ECL for " + label + " " + ecl);
@@ -474,7 +483,8 @@ public class NodeGeneratorService {
                 Set.of(),
                 suppressIsa,
                 suppressNegativeStatements,
-                modelConfiguration);
+                modelConfiguration,
+                modelLevel);
 
         if (log.isLoggable(Level.FINE)) {
           log.fine("ECL for " + label + " " + ecl);

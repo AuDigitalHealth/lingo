@@ -20,6 +20,7 @@ import { Product, ProductSummary } from '../../../types/concept';
 import useApplicationConfigStore from '../../../stores/ApplicationConfigStore.ts';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import {
+  isExternalOriginalConcept,
   isReplacedWithExistingConcept,
   isReplacedWithNewConcept,
 } from '../../../utils/helpers/conceptUtils.ts';
@@ -66,6 +67,7 @@ export const ProductRetireUpdate: React.FC<ProductRetireUpdateProps> = ({
 }) => {
   const isReplacedWithExisting = isReplacedWithExistingConcept(product);
   const isReplacedWithNew = isReplacedWithNewConcept(product);
+  const isExternalConcept = isExternalOriginalConcept(product);
   const theme = useTheme();
   const { applicationConfig } = useApplicationConfigStore();
   const [retireAndReplace, setRetireAndReplace] = React.useState(
@@ -77,7 +79,14 @@ export const ProductRetireUpdate: React.FC<ProductRetireUpdateProps> = ({
   React.useEffect(() => {
     setRetireAndReplace(getIsRetireAndReplace(product));
     setConceptEdit(getIsConceptEdit(product));
-  }, [product]);
+    // Defensive: the inactivation-reason dropdown is hidden for external concepts and the server
+    // already nulls the reason on calculate, so this should always be a no-op in practice. It
+    // exists to keep the form value aligned with the server contract if any future code path
+    // were to leave a stale reason on an external-concept node.
+    if (isExternalConcept) {
+      setValue(`nodes[${index}].originalNode.inactivationReason`, null);
+    }
+  }, [product, isExternalConcept, index, setValue]);
   if (!isReplacedWithNew && !isReplacedWithExisting) return null;
 
   const id = product.originalNode?.node.concept.conceptId;
@@ -117,9 +126,11 @@ export const ProductRetireUpdate: React.FC<ProductRetireUpdateProps> = ({
           color: 'text.primary',
         }}
       >
-        {referencedByOtherProducts || isReplacedWithExisting
-          ? 'Original Concept'
-          : 'Edit/Retire Concept'}
+        {isExternalConcept
+          ? 'External Concept (replace without retire)'
+          : referencedByOtherProducts || isReplacedWithExisting
+            ? 'Original Concept'
+            : 'Edit/Retire Concept'}
       </Typography>
 
       <Stack spacing={2}>
@@ -153,32 +164,33 @@ export const ProductRetireUpdate: React.FC<ProductRetireUpdateProps> = ({
           </div>
         </Stack>
 
-        {((retireAndReplace && !originalConceptReleased) ||
-          (conceptEdit && originalConceptReleased)) && (
-          <Box
-            sx={{
-              display: 'flex',
-              gap: 2,
-              mb: 2,
-              p: 1,
-              backgroundColor: theme.palette.grey[100],
-              color: theme.palette.text.primary,
-              borderRadius: 1,
-              fontSize: '0.875rem',
-            }}
-          >
-            <Stack direction="row" spacing={1} alignItems="center">
-              <WarningAmberIcon
-                sx={{ color: 'warning.main' }}
-              ></WarningAmberIcon>
-              <Typography>
-                {originalConceptReleased
-                  ? 'Previously released – likely should be retired, not edited.'
-                  : 'New and unreleased – likely should edit rather than retire.'}
-              </Typography>
-            </Stack>
-          </Box>
-        )}
+        {!isExternalConcept &&
+          ((retireAndReplace && !originalConceptReleased) ||
+            (conceptEdit && originalConceptReleased)) && (
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 2,
+                mb: 2,
+                p: 1,
+                backgroundColor: theme.palette.grey[100],
+                color: theme.palette.text.primary,
+                borderRadius: 1,
+                fontSize: '0.875rem',
+              }}
+            >
+              <Stack direction="row" spacing={1} alignItems="center">
+                <WarningAmberIcon
+                  sx={{ color: 'warning.main' }}
+                ></WarningAmberIcon>
+                <Typography>
+                  {originalConceptReleased
+                    ? 'Previously released – likely should be retired, not edited.'
+                    : 'New and unreleased – likely should edit rather than retire.'}
+                </Typography>
+              </Stack>
+            </Box>
+          )}
 
         <Box
           sx={{
@@ -192,13 +204,15 @@ export const ProductRetireUpdate: React.FC<ProductRetireUpdateProps> = ({
             fontSize: '0.875rem',
           }}
         >
-          {referencedByOtherProducts
-            ? 'This concept is used by other products and cannot be edited. A new concept will be created to apply the changes.'
-            : 'This concept is not referenced by other products.'}
+          {isExternalConcept
+            ? 'This concept is owned by an external module (e.g. SNOMED CT International) and cannot be edited or retired here. It will be removed from the authoring reference sets and a new concept will be created to replace it; no historical association will be recorded.'
+            : referencedByOtherProducts
+              ? 'This concept is used by other products and cannot be edited. A new concept will be created to apply the changes.'
+              : 'This concept is not referenced by other products.'}
         </Box>
 
         {/* Toggles and Dropdown */}
-        {!referencedByOtherProducts && (
+        {!referencedByOtherProducts && !isExternalConcept && (
           <>
             {isReplacedWithNew && (
               <Box

@@ -46,6 +46,21 @@ import lombok.extern.java.Log;
  * A node in a product summary which represents a concept with a particular label indicating the
  * type of the node in the context of the product. This DTO can also represent a new concept that
  * has not yet been created in Snowstorm.
+ *
+ * <p>The boolean accessors split into two distinct families:
+ *
+ * <ul>
+ *   <li><strong>Operation predicates</strong> ({@link #isNewConcept()}, {@link #isConceptEdit()},
+ *       {@link #isRetireAndReplace()}, {@link #isRetireAndReplaceWithExisting()}, {@link
+ *       #isReplaceWithoutRetire()}). These are mutually exclusive over the reachable state space
+ *       (asserted by {@code NodeReplaceWithoutRetireTest.operationPredicatesAreMutuallyExclusive})
+ *       and a downstream service dispatches on whichever one fires. At most one fires for any given
+ *       node; no-operation nodes (e.g. a concept that hasn't changed) leave them all false.
+ *   <li><strong>Change indicators</strong> ({@link #isPropertyUpdate()}, {@link
+ *       #isStatedFormChanged()}, {@link #isInferredFormChanged()}). These are orthogonal to the
+ *       operation predicates AND to each other — any combination may fire alongside any operation
+ *       predicate, and they describe finer-grained reasons the node differs from its original.
+ * </ul>
  */
 @Data
 @Builder
@@ -86,7 +101,7 @@ public class Node {
 
   @Builder.Default Set<@Valid NonDefiningBase> nonDefiningProperties = new HashSet<>();
 
-  OriginalNode originalNode;
+  @Valid OriginalNode originalNode;
 
   ModelLevelType modelLevel;
 
@@ -150,13 +165,30 @@ public class Node {
     return Objects.requireNonNull(concept.getFsn()).getTerm();
   }
 
+  // ---------------------------------------------------------------------------------------------
+  // Operation predicates — mutually exclusive; downstream services dispatch on these.
+  // See the class Javadoc for the operation-vs-change-indicator split.
+  // ---------------------------------------------------------------------------------------------
+
   /**
-   * Returns true if this node represents a new concept, or false if it represents an existing
-   * concept.
+   * Returns true if this node represents the creation of a new SNOMED concept (a fresh SCTID). This
+   * includes both brand-new concepts (no original at all) AND the "fork" case where the original
+   * concept exists but cannot be retired or edited because it is referenced by other products — in
+   * that case the calculation creates a new concept and leaves the original alone.
+   *
+   * <p>Exclusive with the other four operation predicates by construction: it explicitly excludes
+   * {@link #isConceptEdit()} (modifies the existing concept), {@link #isRetireAndReplace()} (a
+   * specific retire-and-replace operation), and {@link #isReplaceWithoutRetire()} (a specific
+   * external-concept replacement). {@link #isRetireAndReplaceWithExisting()} is mutually exclusive
+   * by shape (it requires {@code concept != null} and {@code newConceptDetails == null}).
    */
   @JsonProperty(value = "newConcept", access = JsonProperty.Access.READ_ONLY)
   public boolean isNewConcept() {
-    return concept == null && newConceptDetails != null && !isRetireAndReplace();
+    return concept == null
+        && newConceptDetails != null
+        && !isConceptEdit()
+        && !isRetireAndReplace()
+        && !isReplaceWithoutRetire();
   }
 
   /** Returns true if this node represents a retire and replace operation. */
@@ -165,6 +197,7 @@ public class Node {
     return newConceptDetails != null
         && originalNode != null
         && !originalNode.isReferencedByOtherProducts()
+        && !originalNode.isExternalConcept()
         && originalNode.getInactivationReason() != null;
   }
 
@@ -177,7 +210,31 @@ public class Node {
         && concept != null
         && originalNode != null
         && !originalNode.getNode().getConceptId().equals(concept.getConceptId())
+        && !originalNode.isExternalConcept()
         && originalNode.getInactivationReason() != null;
+  }
+
+  /**
+   * Returns true if this node represents a replacement of an external concept (e.g. a SNOMED CT
+   * International concept). The original concept's reference set memberships in the configured
+   * in-scope reference sets are removed but the concept itself is not retired and no historical
+   * association is created.
+   *
+   * <p>The {@code !isReferencedByOtherProducts} guard is load-bearing: when other authoring
+   * products still reference the external concept, those refset memberships must not be stripped,
+   * so dispatch falls through to {@link #isNewConcept} (the fork case — new SCTID, original
+   * untouched). Mutual exclusivity with {@link #isRetireAndReplace} and {@link #isConceptEdit} is
+   * provided by their {@code !isExternalConcept} guards. An inactivation reason on an external
+   * original node is a contradictory client payload — rejected upstream by {@code
+   * OriginalNode.@AssertTrue} and by {@code ProductCreationService.validateUpdateOperation} — so
+   * this predicate does not re-guard against it.
+   */
+  @JsonProperty(value = "replaceWithoutRetire", access = JsonProperty.Access.READ_ONLY)
+  public boolean isReplaceWithoutRetire() {
+    return newConceptDetails != null
+        && originalNode != null
+        && originalNode.isExternalConcept()
+        && !originalNode.isReferencedByOtherProducts();
   }
 
   /**
@@ -189,8 +246,15 @@ public class Node {
     return originalNode != null
         && newConceptDetails != null
         && !originalNode.isReferencedByOtherProducts()
+        && !originalNode.isExternalConcept()
         && originalNode.getInactivationReason() == null;
   }
+
+  // ---------------------------------------------------------------------------------------------
+  // Change indicators — orthogonal to the operation predicates and to each other. Any combination
+  // may co-fire with any operation predicate; they describe finer-grained reasons a node differs
+  // from its original.
+  // ---------------------------------------------------------------------------------------------
 
   /**
    * Returns true if this node represents a property update, which means it has an original node and

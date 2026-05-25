@@ -72,9 +72,16 @@ public class ProductSummary implements Serializable {
 
   @NotNull final Set<@Valid OriginalNode> unmatchedPreviouslyReferencedNodes = new HashSet<>();
 
+  /**
+   * Returns true if this summary creates at least one new SNOMED concept. Includes the "fork" case
+   * (a new concept that takes over from an existing one referenced by other products), all
+   * retire-and-replace operations, and replace-without-retire operations — all paths captured by
+   * {@link Node#isNewConcept()} plus the explicit RAR / RWR predicates.
+   */
   @JsonProperty(value = "containsNewConcepts", access = JsonProperty.Access.READ_ONLY)
   public boolean isContainsNewConcepts() {
-    return nodes.stream().anyMatch(Node::isNewConcept);
+    return nodes.stream()
+        .anyMatch(n -> n.isNewConcept() || n.isRetireAndReplace() || n.isReplaceWithoutRetire());
   }
 
   @JsonProperty(value = "containsEditedConcepts", access = JsonProperty.Access.READ_ONLY)

@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
+
+### Fixed
+
+- Fix vaccine target population update not creating a new VTM when the existing model concept (e.g.
+  a SNOMED CT International concept reused by NMPC/AMT) is owned by an external module: the preview
+  no longer offers "edit in place" or "retire and replace" for those concepts. Instead the original
+  concept is removed from the authoring reference sets and a new concept is created in its place,
+  with no inactivation and no historical association. (#1793)
+- Fix product update not detecting changes when removing `Has target population` or `Has ingredient
+  qualitative strength` from a vaccine/nutritional product. The ECL generated for candidate concept
+  lookup now adds `[0..0]` negative filters for the NMPC user-controllable MP-level attributes
+  (target population, plays role, qualitative strength) at the MP/VTM, VMP and AMP levels, and the
+  VMP/AMP search is constrained by the recalculated VTM rather than a generic `Virtual Medicinal
+  Product` root so the cascade picks up the new parent. (#1792)
 - Fixed a bug in the auto task/ticket association removal when a task is deleted
 - For SNOMED International concepts, synonym language refset editing is now restricted to the project-configured refset only
 - Bumped Java dependencies: postgresql 42.7.3→42.7.11, rest-assured 5.5.0→6.0.0,

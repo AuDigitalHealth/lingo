@@ -53,6 +53,7 @@ import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.exception.ResourceNotFoundProblem;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
+import au.gov.digitalhealth.lingo.product.OriginalNode;
 import au.gov.digitalhealth.lingo.product.PrimitiveConceptCreationRequest;
 import au.gov.digitalhealth.lingo.product.ProductCreateUpdateDetails;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
@@ -230,6 +231,149 @@ public class ProductCreationService {
       throw new ProductAtomicDataValidationProblem(
           "Cannot retire and replace concepts as part of a create operation");
     }
+
+    if (productSummary.getNodes().stream().anyMatch(Node::isReplaceWithoutRetire)) {
+      throw new ProductAtomicDataValidationProblem(
+          "Cannot replace external concepts as part of a create operation");
+    }
+  }
+
+  /**
+   * Re-derives the {@code externalConcept} flag on every {@link OriginalNode} in the supplied
+   * {@link ProductSummary} from the original concept's {@code moduleId}, using the authoring module
+   * from {@link ModelConfiguration}. The JSON binding of {@code externalConcept} is READ_ONLY so a
+   * client-supplied value is dropped on the way in; this method ensures the server-authoritative
+   * value is set before any predicate dispatches on it.
+   *
+   * <p>OriginalNodes are replaced via {@link OriginalNode#of(Node, InactivationReason, boolean,
+   * String)} rather than mutated, because the {@code externalConcept} field's setter is suppressed
+   * by Lombok ({@code @Setter(AccessLevel.NONE)}). Both {@code Node.originalNode} and {@code
+   * ProductSummary.unmatchedPreviouslyReferencedNodes} are walked.
+   */
+  static void normaliseExternalConceptFlag(
+      ProductSummary productSummary, ModelConfiguration modelConfiguration) {
+    String authoringModuleId = modelConfiguration.getModuleId();
+    productSummary
+        .getNodes()
+        .forEach(
+            node -> {
+              OriginalNode current = node.getOriginalNode();
+              if (current != null) {
+                node.setOriginalNode(
+                    OriginalNode.of(
+                        current.getNode(),
+                        current.getInactivationReason(),
+                        current.isReferencedByOtherProducts(),
+                        authoringModuleId));
+              }
+            });
+
+    Set<OriginalNode> unmatched = productSummary.getUnmatchedPreviouslyReferencedNodes();
+    Set<OriginalNode> renormalised =
+        unmatched.stream()
+            .map(
+                original ->
+                    OriginalNode.of(
+                        original.getNode(),
+                        original.getInactivationReason(),
+                        original.isReferencedByOtherProducts(),
+                        authoringModuleId))
+            .collect(Collectors.toSet());
+    unmatched.clear();
+    unmatched.addAll(renormalised);
+  }
+
+  /**
+   * Builds the inactivation-indicator and historical-association reference set members accompanying
+   * retire-and-replace operations.
+   *
+   * <p><strong>Precondition:</strong> the input set MUST contain only nodes for which {@link
+   * Node#isRetireAndReplace()} or {@link Node#isRetireAndReplaceWithExisting()} returns true.
+   * Replace-without-retire nodes (external concepts) must NOT be passed in — they are cleaned up
+   * from the in-scope reference sets separately by the caller (see {@link
+   * #createandUpdateRefsetMemberships}) and must not have inactivation-indicator or historical-
+   * association members recorded against them. The method throws {@link IllegalStateException} on
+   * any other node type as defence-in-depth against a future caller forgetting the pre-filter.
+   *
+   * <p>Nodes whose original concept is unreleased are silently skipped: those originals are being
+   * deleted (not inactivated), and inactivation-indicator / historical-association members on a
+   * concept that's about to be deleted are pointless and rejected by Snowstorm validation.
+   */
+  static List<SnowstormReferenceSetMemberViewComponent> buildInactivationAndAssociationMembers(
+      Set<Node> retireAndReplaceNodes) {
+    List<SnowstormReferenceSetMemberViewComponent> members = new ArrayList<>();
+    retireAndReplaceNodes.forEach(
+        node -> {
+          if (!node.isRetireAndReplace() && !node.isRetireAndReplaceWithExisting()) {
+            // Defence in depth: callers should pre-filter, but if a replace-without-retire node
+            // sneaks in here, the resulting members would reference an external concept's
+            // inactivation indicator — which is exactly what this PR is trying to prevent.
+            throw new IllegalStateException(
+                "buildInactivationAndAssociationMembers received a node that is neither "
+                    + "isRetireAndReplace nor isRetireAndReplaceWithExisting: "
+                    + node.getConceptId());
+          }
+          if (!isOriginalReleased(node)) {
+            // Unreleased original — being deleted, not inactivated. No inactivation indicator or
+            // historical association recorded.
+            return;
+          }
+          members.add(
+              new SnowstormReferenceSetMemberViewComponent()
+                  .active(true)
+                  .referencedComponentId(node.getOriginalNode().getNode().getConceptId())
+                  .refsetId(CONCEPT_INACTIVATION_INDICATOR_REFERENCE_SET.getValue())
+                  .additionalFields(
+                      Map.of(
+                          "valueId", node.getOriginalNode().getInactivationReason().getValue())));
+
+          members.add(
+              new SnowstormReferenceSetMemberViewComponent()
+                  .active(true)
+                  .referencedComponentId(node.getOriginalNode().getNode().getConceptId())
+                  .refsetId(
+                      node.getOriginalNode()
+                          .getInactivationReason()
+                          .getHistoricalAssociationReferenceSet()
+                          .getValue())
+                  .additionalFields(Map.of("targetComponentId", node.getConceptId())));
+        });
+    return members;
+  }
+
+  /**
+   * Service-layer guard against the contradictory {@code externalConcept && inactivationReason !=
+   * null} combination on any {@link OriginalNode} in the summary. The same invariant is also
+   * enforced by the {@code @AssertTrue isExternalConceptInactivationReasonConsistent} on {@link
+   * OriginalNode}, which fires at any {@code @Valid} boundary. Both layers exist deliberately:
+   *
+   * <ul>
+   *   <li>The {@code @AssertTrue} produces a generic JSR-303 constraint-violation envelope; this
+   *       service-layer check throws a domain-specific {@link ProductAtomicDataValidationProblem}
+   *       with a clearer message that names the offending concept.
+   *   <li>If a future code path constructs a {@code ProductSummary} server-side without going
+   *       through a {@code @Valid} boundary, the service-layer check still catches the bad state.
+   * </ul>
+   *
+   * <p>Runs after {@link #normaliseExternalConceptFlag} so it sees the server-authoritative {@code
+   * externalConcept} value, not whatever the client may have sent.
+   */
+  private static void validateUpdateOperation(ProductSummary productSummary) {
+    productSummary
+        .getNodes()
+        .forEach(
+            node -> {
+              if (node.getOriginalNode() != null
+                  && node.getOriginalNode().isExternalConcept()
+                  && node.getNewConceptDetails() != null
+                  && node.getOriginalNode().getInactivationReason() != null) {
+                throw new ProductAtomicDataValidationProblem(
+                    "External concepts (such as SNOMED CT International concepts) cannot be "
+                        + "retired by this tool. Concept "
+                        + node.getOriginalNode().getConceptId()
+                        + " is owned by an external module and must be replaced without retirement.");
+              }
+            });
   }
 
   private static void logCreationOrder(List<Node> nodeCreateOrder) {
@@ -366,6 +510,10 @@ public class ProductCreationService {
       productSummaryClone =
           objectMapper.readValue(
               objectMapper.writeValueAsString(productSummary), ProductSummary.class);
+      // The clone went through Jackson, which drops `externalConcept` (READ_ONLY input) on every
+      // OriginalNode. Re-derive on the clone so any downstream consumer sees the same
+      // server-authoritative externality state as the live summary.
+      normaliseExternalConceptFlag(productSummaryClone, models.getModelConfiguration(branch));
     } catch (JsonProcessingException jsonProcessingException) {
       log.severe("Could not clone product summary - potentially missed ModifiedGeneratedNames");
     }
@@ -444,6 +592,9 @@ public class ProductCreationService {
       productSummaryClone =
           objectMapper.readValue(
               objectMapper.writeValueAsString(productSummary), ProductSummary.class);
+      // Re-derive externalConcept on the clone — Jackson drops it on input (READ_ONLY) so the
+      // clone would otherwise see external concepts as internal. See createAndUpdate's call.
+      normaliseExternalConceptFlag(productSummaryClone, models.getModelConfiguration(branch));
     } catch (JsonProcessingException jsonProcessingException) {
       log.severe("Could not clone product summary - potentially missed ModifiedGeneratedNames");
     }
@@ -562,22 +713,35 @@ public class ProductCreationService {
       String branch, ProductSummary productSummary, boolean createOnly)
       throws InterruptedException {
 
+    final ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
+
+    // The externalConcept flag on every OriginalNode is server-derived; the JSON binding is
+    // read-only and client-supplied values are intentionally ignored. Re-derive here so that
+    // even a client that tampers with the in-memory state (e.g. via a custom POST body) cannot
+    // route an authoring-module concept down the replace-without-retire path.
+    normaliseExternalConceptFlag(productSummary, modelConfiguration);
+
     if (createOnly) {
+      validateCreateOperation(productSummary);
       if (productSummary.getNodes().stream().noneMatch(Node::isNewConcept)) {
         throw new EmptyProductCreationProblem();
       }
-      validateCreateOperation(productSummary);
     } else {
+      // Run the specific validators before the empty-payload check so a bad-state node yields a
+      // specific 4xx (e.g. "external concept cannot be retired") rather than the generic
+      // "did not contain any concepts" message when it's the only changed node. The validators
+      // run AFTER normaliseExternalConceptFlag so they see the server-authoritative externality
+      // state, not whatever the client may have sent.
+      validateUpdateOperation(productSummary);
       if (productSummary.getNodes().stream().noneMatch(Node::isNewConcept)
           && productSummary.getNodes().stream().noneMatch(Node::isConceptEdit)
           && productSummary.getNodes().stream().noneMatch(Node::isRetireAndReplace)
           && productSummary.getNodes().stream().noneMatch(Node::isRetireAndReplaceWithExisting)
+          && productSummary.getNodes().stream().noneMatch(Node::isReplaceWithoutRetire)
           && productSummary.getNodes().stream().noneMatch(Node::isPropertyUpdate)) {
         throw new EmptyProductCreationProblem();
       }
     }
-
-    final ModelConfiguration modelConfiguration = models.getModelConfiguration(branch);
 
     // validation done - update URL based non-defining properties
     blobStorageService.updateNonDefiningUrlProperties(modelConfiguration, productSummary);
@@ -611,7 +775,8 @@ public class ProductCreationService {
                     node.isConceptEdit()
                         || node.isNewConcept()
                         || node.isRetireAndReplace()
-                        || node.isRetireAndReplaceWithExisting())
+                        || node.isRetireAndReplaceWithExisting()
+                        || node.isReplaceWithoutRetire())
             .sorted(Node.getNewNodeComparator(productSummary.getNodes()))
             .toList();
 
@@ -840,6 +1005,32 @@ public class ProductCreationService {
         .forEach(a -> a.setActive(false));
   }
 
+  /**
+   * True when the concept has been published as part of an authoritative release. Snowstorm refuses
+   * to delete released concepts and rejects PUT-inactivation of unreleased concepts — so the right
+   * lifecycle operation depends on this flag. We derive it from {@code effectiveTime}: a concept
+   * that has been versioned in any release has an {@code effectiveTime} set to that release's
+   * effective date. Unreleased concepts (created in the current task, never versioned) have it
+   * null. The {@code SnowstormConcept.released} Boolean exists in the API DTO but is not reliably
+   * populated by every Snowstorm endpoint; {@code effectiveTime} is — see
+   * SnowstormDtoUtil#toSnowstormConcept where it is copied through unchanged.
+   */
+  private static boolean isReleased(SnowstormConcept concept) {
+    return concept.getEffectiveTime() != null;
+  }
+
+  /**
+   * Mini-DTO variant of {@link #isReleased(SnowstormConcept)} for use where only a {@code
+   * SnowstormConceptMini} is available (e.g. inside {@link
+   * #buildInactivationAndAssociationMembers}, which receives nodes rather than the
+   * editAndRetireConceptMap).
+   */
+  private static boolean isOriginalReleased(Node node) {
+    return node.getOriginalNode() != null
+        && node.getOriginalNode().getNode().getConcept() != null
+        && node.getOriginalNode().getNode().getConcept().getEffectiveTime() != null;
+  }
+
   private void createOrUpdateConcepts(
       String branch, List<Node> nodeCreateOrder, Map<String, String> idMap, boolean createOnly)
       throws InterruptedException {
@@ -853,6 +1044,12 @@ public class ProductCreationService {
 
     final Map<String, SnowstormConcept> editAndRetireConceptMap =
         getExistingConceptsToEditAndRetire(branch, nodeCreateOrder);
+
+    // Unreleased originals on a retire-and-replace dispatch cannot be PUT-inactivated — Snowstorm
+    // rejects that and we get a 500 from the upstream call. Instead we DELETE them after the bulk
+    // concept update and refset cleanup have completed (which removes their in-scope refset
+    // memberships, leaving the concept safe to delete). Collect the ids here as we walk the nodes.
+    final List<String> unreleasedOriginalsToDelete = new ArrayList<>();
 
     // set up the concepts to create
     List<SnowstormConceptView> concepts = new ArrayList<>();
@@ -908,16 +1105,34 @@ public class ProductCreationService {
         if (node.isRetireAndReplace() || node.isRetireAndReplaceWithExisting()) {
           SnowstormConcept conceptToRetire =
               editAndRetireConceptMap.get(node.getOriginalNode().getConceptId());
-          inactivateConcept(conceptToRetire);
-          concepts.add(toSnowstormConceptView(conceptToRetire));
+          if (isReleased(conceptToRetire)) {
+            inactivateConcept(conceptToRetire);
+            concepts.add(toSnowstormConceptView(conceptToRetire));
+          } else {
+            // Unreleased: queue for delete after refset cleanup completes. The bulk concept
+            // update list must not include this concept at all — Snowstorm rejects PUT-inactivate
+            // for unreleased.
+            unreleasedOriginalsToDelete.add(conceptToRetire.getConceptId());
+          }
         }
       } else {
         log.warning("Creating concept sequentially - this will be slow");
         // if it isn't a replacement with an existing concept, we need to create it
-        if (node.isConceptEdit() || node.isRetireAndReplaceWithExisting()) {
+        if (node.isConceptEdit()) {
           concept.setConceptId(node.getOriginalNode().getConceptId());
           concept =
               snowstormClient.updateConceptView(branch, concept.getConceptId(), concept, false);
+        } else if (node.isRetireAndReplaceWithExisting()) {
+          // The replacement concept already exists in Snowstorm with the correct modelling. A
+          // PUT here used to stamp the original's conceptId onto the replacement's view and
+          // re-submit it — but the inner descriptions and relationships still reference the
+          // replacement's conceptId, so the payload mixes two identities. Snowstorm NPEs
+          // validating the releaseHash on released components claimed to belong to a different
+          // concept ("Cannot invoke String.equals(Object) because the return value of
+          // SnomedComponent.getReleaseHash() is null"). The replacement doesn't need to be
+          // pushed back — the original is the only thing changing, and that's handled by the
+          // retire/delete branch below. Leave `concept` as the replacement's view so the
+          // downstream idMap/conceptMap wiring still resolves to the right concept.
         } else {
           concept.setConceptId(node.getNewConceptDetails().getSpecifiedConceptId());
           concept = snowstormClient.createConcept(branch, concept, false);
@@ -927,12 +1142,17 @@ public class ProductCreationService {
         if (node.isRetireAndReplace() || node.isRetireAndReplaceWithExisting()) {
           SnowstormConcept conceptToRetire =
               editAndRetireConceptMap.get(node.getOriginalNode().getConceptId());
-          inactivateConcept(conceptToRetire);
-          snowstormClient.updateConceptView(
-              branch,
-              conceptToRetire.getConceptId(),
-              toSnowstormConceptView(conceptToRetire),
-              false);
+          if (isReleased(conceptToRetire)) {
+            inactivateConcept(conceptToRetire);
+            snowstormClient.updateConceptView(
+                branch,
+                conceptToRetire.getConceptId(),
+                toSnowstormConceptView(conceptToRetire),
+                false);
+          } else {
+            // Unreleased: queue for delete after refset cleanup completes.
+            unreleasedOriginalsToDelete.add(conceptToRetire.getConceptId());
+          }
         }
       }
       idMap.put(conceptId, concept.getConceptId());
@@ -983,6 +1203,14 @@ public class ProductCreationService {
         });
 
     createandUpdateRefsetMemberships(branch, nodeCreateOrder);
+
+    // Refset cleanup has now removed the in-scope refset memberships of all retired concepts —
+    // including the unreleased ones we deferred from inactivation. Delete those concepts now;
+    // Snowstorm's concept-delete cascades descriptions, axioms and relationships.
+    for (String conceptId : unreleasedOriginalsToDelete) {
+      log.fine("Deleting unreleased original concept " + conceptId + " on branch " + branch);
+      snowstormClient.deleteConcept(branch, conceptId);
+    }
 
     nodeCreateOrder.forEach(
         node -> {
@@ -1123,50 +1351,39 @@ public class ProductCreationService {
 
     List<SnowstormReferenceSetMember> membersToDelete = new ArrayList<>();
 
-    // add retire and replace to inactivation refset and historical association refset
     final Set<Node> retireAndReplaceNodes =
         nodeCreateOrder.stream()
             .filter(node -> node.isRetireAndReplace() || node.isRetireAndReplaceWithExisting())
             .collect(Collectors.toSet());
 
-    if (!retireAndReplaceNodes.isEmpty()) {
-      retireAndReplaceNodes.forEach(
-          node -> {
-            membersToCreate.add(
-                new SnowstormReferenceSetMemberViewComponent()
-                    .active(true)
-                    .referencedComponentId(node.getOriginalNode().getNode().getConceptId())
-                    .refsetId(CONCEPT_INACTIVATION_INDICATOR_REFERENCE_SET.getValue())
-                    .additionalFields(
-                        Map.of(
-                            "valueId", node.getOriginalNode().getInactivationReason().getValue())));
+    // replace-without-retire nodes have their original concept removed from the configured
+    // in-scope reference sets but the concept itself is not retired and no historical
+    // association is created
+    final Set<Node> replaceWithoutRetireNodes =
+        nodeCreateOrder.stream().filter(Node::isReplaceWithoutRetire).collect(Collectors.toSet());
 
-            membersToCreate.add(
-                new SnowstormReferenceSetMemberViewComponent()
-                    .active(true)
-                    .referencedComponentId(node.getOriginalNode().getNode().getConceptId())
-                    .refsetId(
-                        node.getOriginalNode()
-                            .getInactivationReason()
-                            .getHistoricalAssociationReferenceSet()
-                            .getValue())
-                    .additionalFields(Map.of("targetComponentId", node.getConceptId())));
-          });
+    membersToCreate.addAll(buildInactivationAndAssociationMembers(retireAndReplaceNodes));
 
-      // remove all the reference set members for the retired concept that are in scope
+    final Set<Node> originalConceptRefsetCleanupNodes = new HashSet<>(retireAndReplaceNodes);
+    originalConceptRefsetCleanupNodes.addAll(replaceWithoutRetireNodes);
+
+    if (!originalConceptRefsetCleanupNodes.isEmpty()) {
+      // remove all the reference set members for the original concept that are in scope
       // i.e. don't touch reference sets that aren't configured
-      final List<String> retireAndReplaceIds =
-          retireAndReplaceNodes.stream()
+      final List<String> originalConceptIds =
+          originalConceptRefsetCleanupNodes.stream()
               .map(node -> node.getOriginalNode().getConceptId())
               .toList();
 
       final Set<String> inScopeReferenceSetIds =
           modelConfiguration.getInScopeReferenceSetIds(
-              retireAndReplaceNodes.stream().map(Node::getModelLevel).collect(Collectors.toSet()));
+              originalConceptRefsetCleanupNodes.stream()
+                  .map(Node::getModelLevel)
+                  .collect(Collectors.toSet()));
 
       membersToDelete.addAll(
           snowstormClient
-              .getRefsetMembers(branch, retireAndReplaceIds, inScopeReferenceSetIds)
+              .getRefsetMembers(branch, originalConceptIds, inScopeReferenceSetIds)
               .stream()
               .filter(r -> TRUE.equals(r.getActive()))
               .toList());
