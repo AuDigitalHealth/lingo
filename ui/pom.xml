@@ -26,23 +26,23 @@
       <plugin>
         <artifactId>frontend-maven-plugin</artifactId>
         <configuration>
-          <nodeVersion>v20.2.0</nodeVersion>
-          <npmVersion>9.6.6</npmVersion>
+          <nodeVersion>v22.13.0</nodeVersion>
+          <pnpmVersion>11.1.1</pnpmVersion>
           <workingDirectory>./</workingDirectory>
         </configuration>
         <executions>
           <execution>
             <goals>
-              <goal>install-node-and-npm</goal>
+              <goal>install-node-and-pnpm</goal>
             </goals>
-            <id>install node and npm before clean</id>
+            <id>install node and pnpm before clean</id>
             <phase>pre-clean</phase>
           </execution>
           <execution>
             <goals>
-              <goal>install-node-and-npm</goal>
+              <goal>install-node-and-pnpm</goal>
             </goals>
-            <id>install node and npm</id>
+            <id>install node and pnpm</id>
             <phase>initialize</phase>
           </execution>
           <execution>
@@ -50,9 +50,9 @@
               <arguments>install</arguments>
             </configuration>
             <goals>
-              <goal>npm</goal>
+              <goal>pnpm</goal>
             </goals>
-            <id>npm install</id>
+            <id>pnpm install</id>
             <phase>initialize</phase>
           </execution>
           <execution>
@@ -60,7 +60,7 @@
               <arguments>list</arguments>
             </configuration>
             <goals>
-              <goal>npm</goal>
+              <goal>pnpm</goal>
             </goals>
             <id>list all packages and versions</id>
             <phase>initialize</phase>
@@ -70,9 +70,9 @@
               <arguments>run check-licenses</arguments>
             </configuration>
             <goals>
-              <goal>npm</goal>
+              <goal>pnpm</goal>
             </goals>
-            <id>npm check-licenses</id>
+            <id>pnpm check-licenses</id>
             <phase>initialize</phase>
           </execution>
           <execution>
@@ -80,9 +80,9 @@
               <arguments>run record-npm-dependency-licenses</arguments>
             </configuration>
             <goals>
-              <goal>npm</goal>
+              <goal>pnpm</goal>
             </goals>
-            <id>npm record-npm-dependency-licenses</id>
+            <id>pnpm record-npm-dependency-licenses</id>
             <phase>initialize</phase>
           </execution>
           <execution>
@@ -90,9 +90,9 @@
               <arguments>run lint</arguments>
             </configuration>
             <goals>
-              <goal>npm</goal>
+              <goal>pnpm</goal>
             </goals>
-            <id>npm lint</id>
+            <id>pnpm lint</id>
             <phase>initialize</phase>
           </execution>
           <execution>
@@ -100,9 +100,9 @@
               <arguments>run build</arguments>
             </configuration>
             <goals>
-              <goal>npm</goal>
+              <goal>pnpm</goal>
             </goals>
-            <id>npm run build</id>
+            <id>pnpm run build</id>
             <phase>process-sources</phase>
           </execution>
           <execution>
@@ -111,17 +111,17 @@
               <skip>${skipUITests}</skip>
             </configuration>
             <goals>
-              <goal>npm</goal>
+              <goal>pnpm</goal>
             </goals>
-            <id>npm test</id>
+            <id>pnpm test</id>
             <phase>test</phase>
           </execution>
           <execution>
             <configuration>
-              <arguments>prettier . --check</arguments>
+              <arguments>run prettier</arguments>
             </configuration>
             <goals>
-              <goal>npx</goal>
+              <goal>pnpm</goal>
             </goals>
             <id>prettier verify</id>
             <phase>test</phase>

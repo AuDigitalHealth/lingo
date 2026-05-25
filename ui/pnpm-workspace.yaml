@@ -1,0 +1,7 @@
+allowBuilds:
+  '@sentry/cli': true
+  bufferutil: true
+  cypress: true
+  es5-ext: false
+  esbuild: true
+  utf-8-validate: true

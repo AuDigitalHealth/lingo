@@ -30,6 +30,7 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 ## [1.3.41] - 2026-05-15
 - Fix Attachment content type to fallback to jdk detected content type when the file is uploaded without a content type
+- Migrate to pnpm
 
 
 ## [1.3.40] - 2026-05-15
