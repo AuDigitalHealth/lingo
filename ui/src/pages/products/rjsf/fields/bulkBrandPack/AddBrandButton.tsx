@@ -108,6 +108,7 @@ const AddBrandButton: React.FC<AddBrandButtonFieldProps> = props => {
       onClick={handleAddClick}
       isEnabled={isEnabled}
       sx={{ marginLeft: '-20px' }}
+      dataTestId="create-new-brand-btn"
     />
   );
 };

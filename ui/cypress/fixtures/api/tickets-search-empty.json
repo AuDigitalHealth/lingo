@@ -1,0 +1,16 @@
+{
+  "_embedded": {
+    "ticketBacklogDtoList": []
+  },
+  "_links": {
+    "self": { "href": "/api/tickets/search?page=0&size=20" },
+    "first": { "href": "/api/tickets/search?page=0&size=20" },
+    "last": { "href": "/api/tickets/search?page=0&size=20" }
+  },
+  "page": {
+    "size": "20",
+    "totalElements": 0,
+    "totalPages": 0,
+    "number": 0
+  }
+}

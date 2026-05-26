@@ -1,0 +1,6 @@
+{
+  "snowstorm": { "running": true, "version": "mock", "effectiveDate": "20240101" },
+  "authoringPlatform": { "running": true, "version": "mock" },
+  "cis": { "running": true, "version": "mock" },
+  "database": { "running": true, "version": "mock" }
+}

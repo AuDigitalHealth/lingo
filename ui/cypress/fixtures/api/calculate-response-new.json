@@ -1,0 +1,187 @@
+{
+  "subjects": [
+    {
+      "conceptId": "-1",
+      "label": "CTPP",
+      "displayName": "Branded Container",
+      "concept": null,
+      "newConcept": true,
+      "newConceptDetails": {
+        "conceptId": -1,
+        "specifiedConceptId": null,
+        "fullySpecifiedName": "Snomio test-9999 (product)",
+        "preferredTerm": "Snomio test-9999",
+        "semanticTag": "product",
+        "axioms": [{ "definitionStatus": "PRIMITIVE", "definitionStatusId": "900000000000074008", "relationships": [] }]
+      },
+      "conceptOptions": [],
+      "newInTask": true,
+      "newInProject": true,
+      "propertyUpdate": false,
+      "originalNode": null,
+      "statedFormChanged": null,
+      "inferredFormChanged": null,
+      "hasUnknownCodes": null
+    }
+  ],
+  "nodes": [
+    {
+      "conceptId": "700026311000036104",
+      "label": "MP",
+      "displayName": "Product",
+      "concept": {
+        "conceptId": "700026311000036104",
+        "active": true,
+        "definitionStatus": "FULLY_DEFINED",
+        "fsn": { "term": "amoxicillin 500 mg oral capsule (product)", "lang": "en" },
+        "pt": { "term": "amoxicillin 500 mg oral capsule", "lang": "en" }
+      },
+      "newConcept": false,
+      "newConceptDetails": null,
+      "conceptOptions": [],
+      "newInTask": false,
+      "newInProject": false,
+      "propertyUpdate": false,
+      "originalNode": null,
+      "statedFormChanged": null,
+      "inferredFormChanged": null,
+      "hasUnknownCodes": null
+    },
+    {
+      "conceptId": "700026411000036108",
+      "label": "MPUU",
+      "displayName": "Generic Product",
+      "concept": {
+        "conceptId": "700026411000036108",
+        "active": true,
+        "definitionStatus": "FULLY_DEFINED",
+        "fsn": { "term": "amoxicillin 500 mg oral capsule (unit of use)", "lang": "en" },
+        "pt": { "term": "amoxicillin 500 mg oral capsule", "lang": "en" }
+      },
+      "newConcept": false,
+      "newConceptDetails": null,
+      "conceptOptions": [],
+      "newInTask": false,
+      "newInProject": false,
+      "propertyUpdate": false,
+      "originalNode": null,
+      "statedFormChanged": null,
+      "inferredFormChanged": null,
+      "hasUnknownCodes": null
+    },
+    {
+      "conceptId": "-2",
+      "label": "MPP",
+      "displayName": "Generic Pack",
+      "concept": null,
+      "newConcept": true,
+      "newConceptDetails": {
+        "conceptId": -2,
+        "specifiedConceptId": null,
+        "fullySpecifiedName": "amoxicillin 500 mg oral capsule, 9999 (product)",
+        "preferredTerm": "amoxicillin 500 mg oral capsule, 9999",
+        "semanticTag": "product",
+        "axioms": [{ "definitionStatus": "PRIMITIVE", "definitionStatusId": "900000000000074008", "relationships": [] }]
+      },
+      "conceptOptions": [],
+      "newInTask": true,
+      "newInProject": true,
+      "propertyUpdate": false,
+      "originalNode": null,
+      "statedFormChanged": null,
+      "inferredFormChanged": null,
+      "hasUnknownCodes": null
+    },
+    {
+      "conceptId": "700026511000036104",
+      "label": "TP",
+      "displayName": "Brand Name",
+      "concept": {
+        "conceptId": "700026511000036104",
+        "active": true,
+        "definitionStatus": "PRIMITIVE",
+        "fsn": { "term": "Amoxil (product)", "lang": "en" },
+        "pt": { "term": "Amoxil", "lang": "en" }
+      },
+      "newConcept": false,
+      "newConceptDetails": null,
+      "conceptOptions": [],
+      "newInTask": false,
+      "newInProject": false,
+      "propertyUpdate": false,
+      "originalNode": null,
+      "statedFormChanged": null,
+      "inferredFormChanged": null,
+      "hasUnknownCodes": null
+    },
+    {
+      "conceptId": "700026611000036101",
+      "label": "TPUU",
+      "displayName": "Branded Product",
+      "concept": {
+        "conceptId": "700026611000036101",
+        "active": true,
+        "definitionStatus": "FULLY_DEFINED",
+        "fsn": { "term": "Amoxil 500 mg oral capsule (unit of use)", "lang": "en" },
+        "pt": { "term": "Amoxil 500 mg oral capsule", "lang": "en" }
+      },
+      "newConcept": false,
+      "newConceptDetails": null,
+      "conceptOptions": [],
+      "newInTask": false,
+      "newInProject": false,
+      "propertyUpdate": false,
+      "originalNode": null,
+      "statedFormChanged": null,
+      "inferredFormChanged": null,
+      "hasUnknownCodes": null
+    },
+    {
+      "conceptId": "-3",
+      "label": "TPP",
+      "displayName": "Branded Pack",
+      "concept": null,
+      "newConcept": true,
+      "newConceptDetails": {
+        "conceptId": -3,
+        "specifiedConceptId": null,
+        "fullySpecifiedName": "Amoxil 500 mg capsule, 9999 (product)",
+        "preferredTerm": "Amoxil 500 mg capsule, 9999",
+        "semanticTag": "product",
+        "axioms": [{ "definitionStatus": "PRIMITIVE", "definitionStatusId": "900000000000074008", "relationships": [] }]
+      },
+      "conceptOptions": [],
+      "newInTask": true,
+      "newInProject": true,
+      "propertyUpdate": false,
+      "originalNode": null,
+      "statedFormChanged": null,
+      "inferredFormChanged": null,
+      "hasUnknownCodes": null
+    },
+    {
+      "conceptId": "-1",
+      "label": "CTPP",
+      "displayName": "Branded Container",
+      "concept": null,
+      "newConcept": true,
+      "newConceptDetails": {
+        "conceptId": -1,
+        "specifiedConceptId": null,
+        "fullySpecifiedName": "Snomio test-9999 (product)",
+        "preferredTerm": "Snomio test-9999",
+        "semanticTag": "product",
+        "axioms": [{ "definitionStatus": "PRIMITIVE", "definitionStatusId": "900000000000074008", "relationships": [] }]
+      },
+      "conceptOptions": [],
+      "newInTask": true,
+      "newInProject": true,
+      "propertyUpdate": false,
+      "originalNode": null,
+      "statedFormChanged": null,
+      "inferredFormChanged": null,
+      "hasUnknownCodes": null
+    }
+  ],
+  "edges": []
+}

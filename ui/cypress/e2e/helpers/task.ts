@@ -175,7 +175,6 @@ export function loadTaskPage(taskKey: string, ticketKey: string) {
     throw new Error('Invalid ticketKey');
   }
   cy.waitForGetTaskDetails(taskKey);
-  cy.visit(`/dashboard/tasks/edit/${taskKey}`);
-  cy.visit(`/dashboard/tasks/edit/${taskKey}/${ticketKey}`);
+  cy.visit(`/dashboard/tasks/edit/${taskKey}/ticket/${ticketKey}`);
   cy.get("[data-testid='create-new-product']", { timeout: 30000 });
 }

@@ -223,14 +223,15 @@ const PackDetails: React.FC<PackDetailsProps> = props => {
                   !Number.isInteger(Number(packSize))
                     ? 'Pack size must be a whole number when unit is each'
                     : packSize !== '' && !isValidPackSize
-                      ? 'Pack size must be a positive number'
+                      ? 'Not a valid pack size'
                       : packSize !== '' && !isEnabled
-                        ? 'Invalid Pack Size'
+                        ? 'Not a valid pack size'
                         : ''
                 }
                 type={isNumber ? 'number' : 'text'}
                 sx={{ maxWidth: '200px' }}
                 inputProps={{ min: 1 }}
+                data-testid="pack-size-input"
               />
             )}
 

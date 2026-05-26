@@ -1,0 +1,6 @@
+[
+  { "id": 1, "version": 0, "created": "2026-01-01T00:00:00Z", "createdBy": "System", "modified": "2026-01-01T00:00:00Z", "modifiedBy": "System", "name": "S2", "description": "Pharmacy Only Medicine", "grouping": 2 },
+  { "id": 2, "version": 0, "created": "2026-01-01T00:00:00Z", "createdBy": "System", "modified": "2026-01-01T00:00:00Z", "modifiedBy": "System", "name": "S4", "description": "Prescription Only Medicine", "grouping": 4 },
+  { "id": 3, "version": 0, "created": "2026-01-01T00:00:00Z", "createdBy": "System", "modified": "2026-01-01T00:00:00Z", "modifiedBy": "System", "name": "S7", "description": "Controlled Drug", "grouping": 9 },
+  { "id": 4, "version": 0, "created": "2026-01-01T00:00:00Z", "createdBy": "System", "modified": "2026-01-01T00:00:00Z", "modifiedBy": "System", "name": "OTC", "description": "Over the Counter", "grouping": 0 }
+]

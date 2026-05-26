@@ -14,20 +14,57 @@
 /// limitations under the License.
 ///
 
-describe('login spec', () => {
+import { setupMockInterceptors } from '../support/mock-interceptors';
+
+describe('Login Spec', () => {
   it('loads the page', () => {
     cy.visit('/');
   });
 
-  it('logs in to ims', () => {
+  // ── Live mode tests ────────────────────────────────────────────────────────
+
+  it('logs in to ims', function () {
+    if (Cypress.env('MOCK_MODE')) return this.skip();
     cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
   });
 
-  it('displays the dashboard', () => {
+  it('displays the dashboard', function () {
+    if (Cypress.env('MOCK_MODE')) return this.skip();
     cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
-
     cy.visit('/');
-
     cy.url().should('include', 'dashboard');
+  });
+
+  // ── Mock mode tests ────────────────────────────────────────────────────────
+
+  it('shows login page when unauthenticated', function () {
+    if (!Cypress.env('MOCK_MODE')) return this.skip();
+    cy.intercept('GET', '/config', { fixture: 'api/app-config.json' });
+    cy.intercept('GET', '/api/auth', { statusCode: 403, body: { error: 'Unauthorized' } });
+    cy.visit('/');
+    cy.url().should('include', '/login').or('include', '/');
+  });
+
+  it('redirects to dashboard when already authenticated', function () {
+    if (!Cypress.env('MOCK_MODE')) return this.skip();
+    setupMockInterceptors();
+    cy.visit('/');
+    cy.url().should('include', 'dashboard');
+  });
+
+  it('shows the dashboard after mocked login', function () {
+    if (!Cypress.env('MOCK_MODE')) return this.skip();
+    setupMockInterceptors();
+    cy.visit('/');
+    cy.url().should('include', 'dashboard');
+    cy.get('body').should('be.visible');
+  });
+
+  it('shows the user profile area in the header when logged in', function () {
+    if (!Cypress.env('MOCK_MODE')) return this.skip();
+    setupMockInterceptors();
+    cy.visit('/dashboard/tasks');
+    cy.url().should('include', 'dashboard');
+    cy.get('[data-testid="profile-button"]', { timeout: 10000 }).should('exist');
   });
 });

@@ -1,0 +1,35 @@
+{
+  "nonDefiningProperties": {
+    "ui:options": {}
+  },
+  "newPackSizeInput": {
+    "ui:field": "PackDetails",
+    "ui:options": {
+      "showDefaultValues": false
+    }
+  },
+  "addPackSizeButton": {
+    "ui:field": "AddButtonField",
+    "ui:options": {
+      "tooltipTitle": "Add Pack Size",
+      "sourcePath": "newPackSizeInput",
+      "targetPath": "packSizes",
+      "existingPath": "existingPackSizes"
+    }
+  },
+  "packSizes": {
+    "ui:options": {
+      "readOnly": true,
+      "allowDelete": true
+    },
+    "items": {
+      "packDetails": {
+        "nonDefiningProperties": {
+          "ui:options": {
+            "readOnlyProperties": []
+          }
+        }
+      }
+    }
+  }
+}

@@ -42,6 +42,7 @@ const AddPackSizeButton: React.FC<AddButtonFieldProps> = props => {
       onClick={handleAddClick}
       isEnabled={isEnabled}
       sx={{ marginLeft: '-20px' }}
+      dataTestId="create-pack-btn"
     />
   );
 };

@@ -338,11 +338,14 @@ export const validator = (() => {
       const cleanedFormData = removeNullFields(formData);
 
       const now = new Date().toISOString();
-      if (schema) {
+      const schemaToCompile = schema ? { ...schema } : schema;
+      if (schemaToCompile) {
         const variant = formData?.variant ?? 'default'; // fallback
-        schema.$id = `${variant}-${now}`;
+        const newId = `${variant}-${now}`;
+        schemaToCompile.$id = newId;
+        ajvMain.removeSchema(newId);
       }
-      const validate = ajvMain.compile(schema);
+      const validate = ajvMain.compile(schemaToCompile);
       const valid = validate(cleanedFormData);
 
       // Collect AJV errors first

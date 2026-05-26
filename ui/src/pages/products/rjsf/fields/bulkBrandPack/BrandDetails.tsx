@@ -58,6 +58,9 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
   } = packSizeUiSchemaOptions;
 
   const [editMode, setEditMode] = useState(!readOnly && !requireEditButton);
+  const [duplicateError, setDuplicateError] = useState<string | undefined>(
+    undefined,
+  );
 
   // Ensure externalIdentifiers is always an array
   const nonDefiningProperties = Array.isArray(formData?.nonDefiningProperties)
@@ -65,6 +68,16 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
     : [];
 
   const handleBrandChange = (newBrand: any) => {
+    const existingBrands: any[] =
+      formContext?.formData?.existingBrands || [];
+    const isDuplicate =
+      newBrand?.conceptId &&
+      existingBrands.some(
+        (eb: any) => eb?.brand?.conceptId === newBrand.conceptId,
+      );
+    setDuplicateError(
+      isDuplicate ? 'Brand name already exists' : undefined,
+    );
     const updated = {
       ...formData,
       brand: newBrand,
@@ -176,6 +189,9 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
             ) : (
               <AutoCompleteField
                 {...props}
+                id="package-new-brand"
+                idSchema={{ $id: 'package-new-brand' }}
+                errorMessage={duplicateError}
                 formData={formData?.brand}
                 onChange={handleBrandChange}
                 schema={schema?.properties?.brand}

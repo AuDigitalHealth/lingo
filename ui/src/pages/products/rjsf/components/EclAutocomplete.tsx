@@ -173,10 +173,11 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
             {option.pt.term}
           </li>
         )}
+        filterOptions={x => x}
         renderInput={params => (
           <TextField
             {...params}
-            data-test-id={id}
+            data-testid={id}
             label={label}
             // error={hasError}
             onBlur={readOnly ? undefined : handleBlur}

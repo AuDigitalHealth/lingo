@@ -1,0 +1,23 @@
+{
+  "items": [
+    {
+      "conceptId": "700027211000036107",
+      "active": true,
+      "definitionStatus": "FULLY_DEFINED",
+      "moduleId": "32506021000036107",
+      "effectiveTime": "20200630",
+      "fsn": {
+        "term": "Amoxil 500 mg capsule, 20 (product)",
+        "lang": "en"
+      },
+      "pt": {
+        "term": "Amoxil 500 mg capsule, 20",
+        "lang": "en"
+      },
+      "id": "700027211000036107"
+    }
+  ],
+  "total": 1,
+  "limit": 50,
+  "offset": 0
+}

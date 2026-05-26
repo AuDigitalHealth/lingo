@@ -24,6 +24,7 @@ import {
   testState,
   updatePriority,
 } from './helpers/ticket';
+import { setupMockInterceptors } from '../support/mock-interceptors';
 
 const TEST_ITERATION_NAME = 'TestIteration';
 const TEST_LABELS_NAME = 'ARTG Cancelled';
@@ -41,95 +42,133 @@ const columnsIndex = {
   created: 10,
 };
 
-describe('Search Spec', () => {
+describe('Backlog Spec', () => {
   beforeEach(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
-    // interceptAndFakeJiraUsers();
-    cy.setUpIteration();
-    cy.setUpExternalRequestor();
+    if (Cypress.env('MOCK_MODE')) {
+      setupMockInterceptors();
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
+      cy.setUpIteration();
+      cy.setUpExternalRequestor();
+    }
   });
+
+  // ── Mock mode tests ────────────────────────────────────────────────────────
+
+  it('navigates to the backlog page', () => {
+    cy.visit('/dashboard/tickets/backlog');
+    cy.url().should('include', 'dashboard/tickets/backlog');
+  });
+
+  it('displays ticket rows when tickets exist in search results', function () {
+    if (!Cypress.env('MOCK_MODE')) return this.skip();
+    cy.visit('/dashboard/tickets/backlog');
+    cy.url().should('include', 'dashboard/tickets/backlog');
+    cy.wait('@mockTicketSearch', { timeout: 10000 });
+    cy.get('tbody > tr', { timeout: 10000 }).should('exist');
+  });
+
+  it('shows the create ticket button', () => {
+    cy.visit('/dashboard/tickets/backlog');
+    cy.get('[data-testid="create-ticket"]', { timeout: 10000 }).should('be.visible');
+  });
+
+  it('can open the create ticket modal', function () {
+    if (!Cypress.env('MOCK_MODE')) return this.skip();
+    cy.visit('/dashboard/tickets/backlog');
+    cy.get('[data-testid="create-ticket"]', { timeout: 10000 }).click();
+    cy.get('[data-testid="create-ticket-title"]').should('be.visible');
+  });
+
+  it('can create a ticket via the modal', function () {
+    if (!Cypress.env('MOCK_MODE')) return this.skip();
+    cy.visit('/dashboard/tickets/backlog');
+    cy.get('[data-testid="create-ticket"]', { timeout: 10000 }).click();
+    cy.get('[data-testid="create-ticket-title"]').type('E2E Mocked Ticket');
+    cy.get('[data-testid="create-ticket-submit"]').click();
+    cy.wait('@mockCreateTicket');
+  });
+
+  it('shows the filter controls', function () {
+    if (!Cypress.env('MOCK_MODE')) return this.skip();
+    cy.visit('/dashboard/tickets/backlog');
+    cy.get('.p-datatable-thead', { timeout: 10000 }).should('be.visible');
+  });
+
+  it('shows the save filter button', () => {
+    cy.visit('/dashboard/tickets/backlog');
+    cy.get('[data-testid="backlog-filter-save"]', { timeout: 10000 }).should('be.visible');
+  });
+
+  // ── Live mode tests ────────────────────────────────────────────────────────
+
   let ticket: Ticket | undefined = undefined;
-  it('Set up Ticket', async () => {
+
+  it('Set up Ticket', async function () {
+    if (Cypress.env('MOCK_MODE')) return this.skip();
     ticket = await promisify(createTicket('TestTicket'));
     if (ticket.ticketNumber === undefined) {
       throw new Error('Invalid ticketNumber');
     }
     closeTicket();
   });
-  it('can do all filters', { scrollBehavior: false }, () => {
+
+  it('can do all filters', { scrollBehavior: false }, function () {
+    if (Cypress.env('MOCK_MODE')) return this.skip();
     visitBacklogPage();
     searchByTitle(ticket.title, 1);
-    updatePriority(ticket).then(priority => {
+    updatePriority(ticket).then(() => {
       searchByPriority('1a', 'Not Equals', 1);
       searchByPriority('1a', 'Equals', 1);
     });
-
-    testLabels(ticket).then(label => {
+    testLabels(ticket).then(() => {
       searchByLabels(TEST_LABELS_NAME, 1);
     });
-    testIteration(ticket).then(iteration => {
+    testIteration(ticket).then(() => {
       searchByRelease(TEST_ITERATION_NAME, 1);
     });
-    testState(ticket).then(state => {
+    testState(ticket).then(() => {
       searchByStatus('To Do', 1);
     });
-    return;
   });
 
-  it('can save and load filters', { scrollBehavior: false }, () => {
+  it('can save and load filters', { scrollBehavior: false }, function () {
+    if (Cypress.env('MOCK_MODE')) return this.skip();
     visitBacklogPage();
     searchByTitle(ticket.title, 1);
     cy.get('[data-testid="backlog-filter-save"]').click();
 
-    // save, so it's always unique, in case you are running it locally
     const currentTimeInMs = Date.now();
-    cy.get('[data-testid="save-filter-modal-input"]').type(
-      '64435 - ' + currentTimeInMs,
-    );
+    cy.get('[data-testid="save-filter-modal-input"]').type('64435 - ' + currentTimeInMs);
     cy.interceptPostTicketFilter();
     cy.interceptGetTicketFilter();
     cy.get('[data-testid="save-filter-modal-save"]').click();
     cy.wait('@postTicketFilter');
     cy.wait('@getTicketFilter');
 
-    // clear the list
+    cy.waitForGetTicketList(() => cy.get('[data-testid="backlog-filter-clear"]').click());
 
-    cy.waitForGetTicketList(() =>
-      cy.get('[data-testid="backlog-filter-clear"]').click(),
-    );
-
-    // load the saved filter
     cy.get('[data-testid="backlog-filter-load"]').click();
-
     cy.get('[data-testid="load-filter-modal-input"]').click();
-
     cy.get('[data-testid="load-filter-modal-input-dropdown"] > ul > li')
       .contains('64435 - ' + currentTimeInMs)
       .click();
 
-    // cy.waitForGetTicketList(() =>
-    //   ,
-    // );
-
     cy.wait('@getTicketList');
     cy.get('[data-testid="load-filter-modal-submit"]').click();
-    // check the filter is loaded, should be 1 entry
-
     cy.get('tbody > tr').should('exist').and('have.length', 1);
   });
 
-  it('deletes the ticket', () => {
+  it('deletes the ticket', function () {
+    if (Cypress.env('MOCK_MODE')) return this.skip();
     deleteTicket(ticket);
   });
 });
 
 function searchByTitle(title: string, expect: number) {
-  // cy.scrollTo('top', { timeout: 1000 });
   openFilter(columnsIndex.title);
-
   cy.get('[data-testid="title-filter-input"]').type(title, { delay: 100 });
-
   applyFilterAndWait();
   testNumberOfRows(expect);
 }
@@ -140,139 +179,48 @@ function searchByPriority(
   count: number,
 ) {
   openFilter(columnsIndex.priority);
-
   cy.get('.p-column-filter-matchmode-dropdown').click();
-  cy.get('.p-dropdown-items-wrapper')
-    .find('li')
-    .contains(equalsOrNotEquals)
-    .click();
-
+  cy.get('.p-dropdown-items-wrapper').find('li').contains(equalsOrNotEquals).click();
   cy.get('[data-testid="priority-filter-input"]').click();
   cy.get('.p-multiselect-panel', { timeout: 1000 }).should('be.visible');
-  cy.get('.p-multiselect-panel')
-    .find('li')
-    .contains(val)
-    .click({ force: true });
+  cy.get('.p-multiselect-panel').find('li').contains(val).click({ force: true });
   cy.wait(500);
   cy.get('[data-testid="priority-filter-input"]').click();
-  applyFilterAndWait();
-  testNumberOfRows(count);
-}
-
-function searchBySchedule(val: string, count: number) {
-  openFilter(columnsIndex.schedule);
-
-  cy.get('[data-testid="schedule-filter-input"]').click();
-  cy.get('.p-multiselect-panel', { timeout: 1000 }).should('be.visible');
-  cy.get('.p-multiselect-panel')
-    .find('li')
-    .contains(val)
-    .click({ force: true });
-  cy.wait(500);
-  cy.get('[data-testid="schedule-filter-input"]').click({ force: true });
-
   applyFilterAndWait();
   testNumberOfRows(count);
 }
 
 function searchByRelease(val: string, count: number) {
   openFilter(columnsIndex.release);
-
   cy.get('[data-testid="iteration-filter-input"]').click();
   cy.get('.p-multiselect-panel', { timeout: 1000 }).should('be.visible');
-  cy.get('.p-multiselect-panel')
-    .find('li')
-    .contains(val)
-    .click({ force: true });
+  cy.get('.p-multiselect-panel').find('li').contains(val).click({ force: true });
   cy.wait(500);
   cy.get('[data-testid="iteration-filter-input"]').click();
-
-  applyFilterAndWait();
-  testNumberOfRows(count);
-}
-function searchByExternalRequestors(val: string, count: number) {
-  openFilter(columnsIndex.externalRequestors);
-
-  cy.get('[data-testid="external-requestor-filter-input"]').click();
-  cy.get('.p-multiselect-panel', { timeout: 1000 }).should('be.visible');
-  cy.get('.p-multiselect-panel')
-    .find('li')
-    .contains(val)
-    .click({ force: true });
-  cy.wait(500);
-  cy.get('[data-testid="external-requestor-filter-input"]').click();
-
   applyFilterAndWait();
   testNumberOfRows(count);
 }
 
 function searchByStatus(val: string, count: number) {
   openFilter(columnsIndex.status);
-
   cy.get('[data-testid="state-filter-input"]').click();
   cy.get('.p-multiselect-panel', { timeout: 1000 }).should('be.visible');
-  cy.get('.p-multiselect-panel')
-    .find('li')
-    .contains(val)
-    .click({ force: true });
+  cy.get('.p-multiselect-panel').find('li').contains(val).click({ force: true });
   cy.wait(500);
   cy.get('[data-testid="state-filter-input"]').click();
-
   applyFilterAndWait();
   testNumberOfRows(count);
 }
 
 function searchByLabels(label: string, count: number) {
   openFilter(columnsIndex.labels);
-
-  cy.get('[data-testid="label-filter-input"]');
-
   cy.get('[data-testid="label-filter-input"]').click();
   cy.get('.p-multiselect-panel', { timeout: 1000 }).should('be.visible');
-  cy.get('.p-multiselect-panel')
-    .find('li')
-    .contains(label)
-    .click({ force: true });
+  cy.get('.p-multiselect-panel').find('li').contains(label).click({ force: true });
   cy.wait(500);
   cy.get('[data-testid="label-filter-input"]').click();
-
   applyFilterAndWait();
   testNumberOfRows(count);
-}
-
-function searchByTask(priority: string) {
-  openFilter(columnsIndex.task);
-
-  cy.get('[data-testid="task-filter-input"]');
-
-  applyFilterAndWait();
-  testNumberOfRows(1);
-}
-
-function searchByAssignee(val: string, count: number) {
-  openFilter(columnsIndex.assigne);
-
-  cy.get('[data-testid="assignee-filter-input"]').click();
-  cy.get('.p-multiselect-panel', { timeout: 1000 }).should('be.visible');
-  cy.get('.p-multiselect-panel')
-    .find('li')
-    .contains(val)
-    .click({ force: true });
-  cy.wait(500);
-  cy.get('[data-testid="assignee-filter-input"]').click();
-
-  applyFilterAndWait();
-  testNumberOfRows(count);
-}
-
-function searchByCreated(priority: string) {
-  // needs updating
-  openFilter(columnsIndex.created);
-
-  cy.get('[data-testid="created-filter-input"]');
-
-  applyFilterAndWait();
-  testNumberOfRows(1);
 }
 
 function testNumberOfRows(count: number) {
@@ -286,7 +234,6 @@ function testNumberOfRows(count: number) {
 function applyFilterAndWait() {
   cy.wait('@getTicketList');
   cy.get('button[aria-label="Apply"]').click({ force: true });
-
   cy.get('body').click();
 }
 
@@ -296,20 +243,3 @@ function openFilter(index: number) {
     .find('.p-column-filter-menu-button')
     .click();
 }
-
-function openFirstTicketInTable() {
-  cy.get('tbody > tr')
-    .should('exist')
-    .should('have.length', 1)
-    .find('td')
-    .eq(1)
-    .find('a')
-    .click();
-  cy.url().should('match', /\/tickets\/individual\/\d+/);
-}
-
-function quickSearch(value: string) {
-  cy.waitForGetTicketList(() => cy.get('#backlog-quick-search').type(value));
-}
-
-function updateBacklogTicket() {}

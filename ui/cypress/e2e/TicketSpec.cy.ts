@@ -31,7 +31,8 @@ import {
 } from './helpers/ticket';
 
 describe('Ticket Spec', () => {
-  beforeEach(() => {
+  beforeEach(function () {
+    if (Cypress.env('MOCK_MODE')) return this.skip();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
     interceptAndFakeJiraUsers();
@@ -50,14 +51,12 @@ describe('Ticket Spec', () => {
 
 function testEditTicket(ticket: Ticket) {
   testTitle(ticket);
-
   testLabels(ticket);
   // testIteration(ticket);
   testState(ticket);
   testSchedule(ticket);
   updatePriority(ticket);
   testAdditionalFields(ticket);
-
   testComments(ticket);
   testAttachments(ticket);
   deleteTicket(ticket);

@@ -288,6 +288,7 @@ function DeviceAuthoring({
     errorSchema,
     snowStormFormData,
     mode,
+    task,
   };
 
   const onError = (errors: any) => {
@@ -299,7 +300,7 @@ function DeviceAuthoring({
   return (
     <Paper sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1 }}>
       <Box m={2} p={2}>
-        <Container>
+        <Container data-testid="product-creation-grid">
           {staleModeOn &&
             isOriginalConceptActive(originalConceptId, activeConceptIds) && (
               <Alert
@@ -431,9 +432,7 @@ function DeviceAuthoring({
                   lockDescription={getLockDescription()}
                 >
                   <Button
-                    data-testid={
-                      mode === 'create' ? 'create-btn' : 'update-btn'
-                    }
+                    data-testid="preview-btn"
                     type="submit"
                     variant="contained"
                     color={mode === 'create' ? 'primary' : 'warning'}

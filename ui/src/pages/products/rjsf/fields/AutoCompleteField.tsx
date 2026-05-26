@@ -81,7 +81,8 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
   const [localExtendedEcl, setLocalExtendedEcl] = useState<boolean>(false);
   const currentEcl = localExtendedEcl ? extendedEcl : ecl;
 
-  const task = useTaskByKey();
+  const hookTask = useTaskByKey();
+  const task = hookTask ?? props.formContext?.task;
   const { ticketNumber } = useParams();
   const useTicketQuery = useTicketByTicketNumber(ticketNumber, false);
 
@@ -150,38 +151,41 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
     idSchema.$id,
   );
 
+  const branchPath = task?.branchPath || '';
+
   return (
     <span data-component-name="AutoCompleteField">
       <Box>
         <Box display="flex" alignItems="center" gap={1}>
           <Box flex={50} sx={{ position: 'relative', paddingRight }}>
-            {task?.branchPath &&
-              (isMultivalued ? (
-                <MultiValueEclAutocomplete
-                  {...props}
-                  ecl={currentEcl}
-                  showDefaultOptions={isShowDefaultOptions}
-                  value={formData}
-                  isDisabled={isDisabled}
-                  branch={task?.branchPath}
-                  onChange={(val: ConceptMini[]) => {
-                    setFormData(val);
-                    onChange(val);
-                  }}
-                  errorMessage=""
-                />
-              ) : (
-                <EclAutocomplete
-                  {...props}
-                  ecl={currentEcl}
-                  showDefaultOptions={isShowDefaultOptions}
-                  value={formData}
-                  isDisabled={isDisabled}
-                  branch={task?.branchPath}
-                  onChange={handleSelect}
-                  turnOffPublishParam={createPrimitiveConcept ? true : false}
-                />
-              ))}
+            {isMultivalued ? (
+              <MultiValueEclAutocomplete
+                {...props}
+                id={idSchema.$id}
+                ecl={currentEcl}
+                showDefaultOptions={isShowDefaultOptions}
+                value={formData}
+                isDisabled={isDisabled}
+                branch={branchPath}
+                onChange={(val: ConceptMini[]) => {
+                  setFormData(val);
+                  onChange(val);
+                }}
+                errorMessage=""
+              />
+            ) : (
+              <EclAutocomplete
+                {...props}
+                id={idSchema.$id}
+                ecl={currentEcl}
+                showDefaultOptions={isShowDefaultOptions}
+                value={formData}
+                isDisabled={isDisabled}
+                branch={branchPath}
+                onChange={handleSelect}
+                turnOffPublishParam={createPrimitiveConcept ? true : false}
+              />
+            )}
             {createPrimitiveConcept && (
               <Tooltip title="Create Brand">
                 <IconButton

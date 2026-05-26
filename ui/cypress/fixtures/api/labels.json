@@ -1,0 +1,24 @@
+[
+  {
+    "id": 1,
+    "version": 0,
+    "created": "2026-01-01T00:00:00Z",
+    "createdBy": "System",
+    "modified": "2026-01-01T00:00:00Z",
+    "modifiedBy": "System",
+    "name": "ARTG Cancelled",
+    "description": "ARTG entry has been cancelled",
+    "displayColor": { "name": "Red", "code": "#F04134" }
+  },
+  {
+    "id": 2,
+    "version": 0,
+    "created": "2026-01-01T00:00:00Z",
+    "createdBy": "System",
+    "modified": "2026-01-01T00:00:00Z",
+    "modifiedBy": "System",
+    "name": "PBS Listed",
+    "description": "Product is PBS listed",
+    "displayColor": { "name": "Green", "code": "#00A854" }
+  }
+]

@@ -1,0 +1,170 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Medication Package",
+  "required": ["productName"],
+  "properties": {
+    "productName": {
+      "type": "object",
+      "title": "Brand Name",
+      "properties": {
+        "conceptId": { "type": "string" },
+        "pt": { "type": "object", "properties": { "term": { "type": "string" } } },
+        "fsn": { "type": "object", "properties": { "term": { "type": "string" } } }
+      }
+    },
+    "containerType": {
+      "type": "object",
+      "title": "Container Type",
+      "properties": {
+        "conceptId": { "type": "string" },
+        "pt": { "type": "object", "properties": { "term": { "type": "string" } } },
+        "fsn": { "type": "object", "properties": { "term": { "type": "string" } } }
+      }
+    },
+    "containedProducts": {
+      "type": "array",
+      "title": "Contained Products",
+      "items": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "number",
+            "title": "Pack Size",
+            "minimum": 0,
+            "errorMessage": {
+              "minimum": "Value must be at least 0"
+            }
+          },
+          "unit": {
+            "type": "object",
+            "title": "Pack Size Unit",
+            "properties": {
+              "conceptId": { "type": "string" },
+              "pt": { "type": "object", "properties": { "term": { "type": "string" } } },
+              "fsn": { "type": "object", "properties": { "term": { "type": "string" } } }
+            }
+          },
+          "productDetails": {
+            "type": "object",
+            "title": "Product Details",
+            "properties": {
+              "productName": {
+                "type": "object",
+                "title": "Brand Name",
+                "properties": {
+                  "conceptId": { "type": "string" },
+                  "pt": { "type": "object", "properties": { "term": { "type": "string" } } }
+                }
+              },
+              "genericForm": {
+                "type": "object",
+                "title": "Form",
+                "properties": {
+                  "conceptId": { "type": "string" },
+                  "pt": { "type": "object", "properties": { "term": { "type": "string" } } }
+                }
+              },
+              "specificForm": {
+                "type": "object",
+                "title": "Specific Form",
+                "properties": {
+                  "conceptId": { "type": "string" },
+                  "pt": { "type": "object", "properties": { "term": { "type": "string" } } }
+                }
+              },
+              "containerType": {
+                "type": "object",
+                "title": "Container Type",
+                "properties": {
+                  "conceptId": { "type": "string" },
+                  "pt": { "type": "object", "properties": { "term": { "type": "string" } } }
+                }
+              },
+              "deviceType": {
+                "type": "object",
+                "title": "Device Type",
+                "properties": {
+                  "conceptId": { "type": "string" },
+                  "pt": { "type": "object", "properties": { "term": { "type": "string" } } }
+                }
+              },
+              "quantity": {
+                "type": "number",
+                "title": "Quantity"
+              },
+              "quantity_unit": {
+                "type": "object",
+                "title": "Quantity Unit",
+                "properties": {
+                  "conceptId": { "type": "string" },
+                  "pt": { "type": "object", "properties": { "term": { "type": "string" } } }
+                }
+              },
+              "activeIngredients": {
+                "type": "array",
+                "title": "Active Ingredients",
+                "default": [{}],
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "activeIngredient": {
+                      "type": "object",
+                      "title": "Active Ingredient",
+                      "properties": {
+                        "conceptId": { "type": "string" },
+                        "pt": { "type": "object", "properties": { "term": { "type": "string" } } }
+                      }
+                    },
+                    "totalQuantity": {
+                      "type": "number",
+                      "title": "Total Quantity"
+                    },
+                    "totalQuantity_unit": {
+                      "type": "object",
+                      "title": "Total Quantity Unit",
+                      "properties": {
+                        "conceptId": { "type": "string" },
+                        "pt": { "type": "object", "properties": { "term": { "type": "string" } } }
+                      }
+                    },
+                    "concentrationStrength": {
+                      "type": "number",
+                      "title": "Concentration Strength"
+                    },
+                    "concentrationStrength_unit": {
+                      "type": "object",
+                      "title": "Concentration Strength Unit",
+                      "properties": {
+                        "conceptId": { "type": "string" },
+                        "pt": { "type": "object", "properties": { "term": { "type": "string" } } }
+                      }
+                    }
+                  }
+                }
+              },
+              "preciseIngredients": {
+                "type": "array",
+                "title": "Precise Ingredients",
+                "default": [{}],
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "preciseIngredient": {
+                      "type": "object",
+                      "title": "Precise Ingredient",
+                      "properties": {
+                        "conceptId": { "type": "string" },
+                        "pt": { "type": "object", "properties": { "term": { "type": "string" } } }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

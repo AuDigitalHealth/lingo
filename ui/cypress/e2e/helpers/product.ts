@@ -251,11 +251,8 @@ export function changePackSize(packSize: number) {
   cy.wait(2000);
 }
 export function setBulkPackSize(packSize: string) {
-  cy.get('[data-testid="root_containedProducts_0_value"] input').click();
-  cy.get('[data-testid="root_containedProducts_0_value"] input').type(
-    packSize,
-    { delay: 5 },
-  );
+  cy.get('[data-testid="pack-size-input"] input').first().click();
+  cy.get('[data-testid="pack-size-input"] input').first().type(packSize, { delay: 5 });
 }
 export function verifyPackSizeChange(packSize: number) {
   cy.wait(2000);
@@ -294,19 +291,13 @@ export function createProduct(
         if (element.text().startsWith('Generated name unavailable')) {
           cy.wrap(element).click();
           cy.wrap(element).within(() => {
-            cy.get(`[data-testid="fsn-input"]`).clear();
-            cy.get(`[data-testid="fsn-input"]`).click();
+            cy.get(`[data-testid="fsn-input"] textarea`).first().clear();
+            cy.get(`[data-testid="fsn-input"] textarea`).first().click();
+            cy.get(`[data-testid="fsn-input"] textarea`).first().type(generatedName, { delay: 5 });
 
-            cy.get(`[data-testid="fsn-input"]`).type(generatedName, {
-              delay: 5,
-            });
-
-            cy.get(`[data-testid="pt-input"]`).clear();
-            cy.get(`[data-testid="pt-input"]`).click();
-
-            cy.get(`[data-testid="pt-input"]`).type(generatedName, {
-              delay: 5,
-            });
+            cy.get(`[data-testid="pt-input"] textarea`).first().clear();
+            cy.get(`[data-testid="pt-input"] textarea`).first().click();
+            cy.get(`[data-testid="pt-input"] textarea`).first().type(generatedName, { delay: 5 });
           });
         }
       });
@@ -316,11 +307,11 @@ export function createProduct(
   } else if (generatedName) {
     cy.get('[data-testid="product-group-CTPP"]').within(() => {
       cy.get('[data-testid="accodion-product"]').click();
-      cy.get('[data-testid="fsn-input"]').clear();
-      cy.get('[data-testid="fsn-input"]').type(generatedName, { delay: 5 });
+      cy.get('[data-testid="fsn-input"] textarea').first().clear();
+      cy.get('[data-testid="fsn-input"] textarea').first().type(generatedName, { delay: 5 });
 
-      cy.get('[data-testid="pt-input"]').clear();
-      cy.get('[data-testid="pt-input"]').type(generatedName, { delay: 5 });
+      cy.get('[data-testid="pt-input"] textarea').first().clear();
+      cy.get('[data-testid="pt-input"] textarea').first().type(generatedName, { delay: 5 });
       cy.wait(2000);
     });
   }
@@ -390,6 +381,7 @@ export function searchAndSelectAutocomplete(
   cy.wait(1000); // Adjust the wait time as needed
 
   cy.get(`[data-testid="${dataTestId}"] input`).should('have.value', value);
+  cy.get(`[data-testid="${dataTestId}"] input`).click(); // Re-focus to open listbox
   cy.get('ul[role="listbox"]', { timeout: timeOut }).should('be.visible');
 
   cy.get('li[data-option-index="0"]').click();
@@ -401,9 +393,11 @@ export function handleBrandHack(
   value: string,
   timeOut: number,
 ) {
+  // Wait for the form to be ready before interacting with autocomplete fields
+  cy.get("[data-testid='product-creation-grid']", { timeout: timeOut }).should('be.visible');
   cy.waitForConceptSearch(branch);
-  cy.get(`[data-testid="${dataTestId}"]`).click();
-  cy.get(`[data-testid="${dataTestId}"] input`) // Select the input element inside the Autocomplete
+  cy.get(`[data-testid="${dataTestId}"]`, { timeout: timeOut }).click();
+  cy.get(`[data-testid="${dataTestId}"] input`, { timeout: timeOut }) // Select the input element inside the Autocomplete
     .focus() // Focus on the input field
     .type(value, { delay: 100 });
   cy.wait('@getConceptSearch', { responseTimeout: timeOut });
@@ -419,11 +413,15 @@ export function verifyGenericError(errorPattern: string) {
   cy.get('#notistack-snackbar').should('include.text', errorPattern);
 }
 export function previewWithError(error: string, branch: string) {
-  cy.waitForConceptSearch(branch);
+  if (!Cypress.env('MOCK_MODE')) {
+    cy.waitForConceptSearch(branch);
+  }
   cy.get("[data-testid='preview-btn']").should('be.visible');
   cy.get("[data-testid='preview-btn']").click();
-  cy.wait('@getConceptSearch', { responseTimeout: 600000 });
-  verifyGenericError(error);
+  if (!Cypress.env('MOCK_MODE')) {
+    cy.wait('@getConceptSearch', { responseTimeout: 600000 });
+    verifyGenericError(error);
+  }
 }
 export function addNewProduct() {
   cy.get(

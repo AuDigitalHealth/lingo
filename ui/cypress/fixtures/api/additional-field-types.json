@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "version": 0,
+    "created": "2026-01-01T00:00:00Z",
+    "createdBy": "System",
+    "modified": "2026-01-01T00:00:00Z",
+    "modifiedBy": "System",
+    "name": "ARTGID",
+    "label": "ARTG ID",
+    "description": "Australian Register of Therapeutic Goods identifier",
+    "fieldType": "TEXT"
+  },
+  {
+    "id": 2,
+    "version": 0,
+    "created": "2026-01-01T00:00:00Z",
+    "createdBy": "System",
+    "modified": "2026-01-01T00:00:00Z",
+    "modifiedBy": "System",
+    "name": "StartDate",
+    "label": "Start Date",
+    "description": "Date when product became active",
+    "fieldType": "DATE"
+  },
+  {
+    "id": 3,
+    "version": 0,
+    "created": "2026-01-01T00:00:00Z",
+    "createdBy": "System",
+    "modified": "2026-01-01T00:00:00Z",
+    "modifiedBy": "System",
+    "name": "EffectiveDate",
+    "label": "Effective Date",
+    "description": "Effective date of the change",
+    "fieldType": "DATE"
+  },
+  {
+    "id": 4,
+    "version": 0,
+    "created": "2026-01-01T00:00:00Z",
+    "createdBy": "System",
+    "modified": "2026-01-01T00:00:00Z",
+    "modifiedBy": "System",
+    "name": "DateRequested",
+    "label": "Date Requested",
+    "description": "Date when the request was made",
+    "fieldType": "DATE"
+  },
+  {
+    "id": 5,
+    "version": 0,
+    "created": "2026-01-01T00:00:00Z",
+    "createdBy": "System",
+    "modified": "2026-01-01T00:00:00Z",
+    "modifiedBy": "System",
+    "name": "InactiveDate",
+    "label": "Inactive Date",
+    "description": "Date when product became inactive",
+    "fieldType": "DATE"
+  }
+]

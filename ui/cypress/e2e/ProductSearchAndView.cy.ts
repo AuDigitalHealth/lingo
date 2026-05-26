@@ -14,76 +14,105 @@
 /// limitations under the License.
 ///
 
+import { setupMockInterceptors } from '../support/mock-interceptors';
 import { verifyLoadedProduct } from './helpers/product';
 
-describe('Search Spec', () => {
+describe('Product Search and View Spec', () => {
   beforeEach(() => {
-    cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
+    if (Cypress.env('MOCK_MODE')) {
+      setupMockInterceptors();
+    } else {
+      cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
+    }
   });
-  it('can perform search and load single product using term', () => {
-    visitProductSearchPage();
 
+  // ── Mock mode tests ────────────────────────────────────────────────────────
+
+  it('shows the product search input on the dashboard', function () {
+    if (!Cypress.env('MOCK_MODE')) return this.skip();
+    cy.visit('/dashboard');
+    cy.wait('@mockUsers', { timeout: 10000 });
+    cy.get('[data-testid="search-product-input"]', { timeout: 10000 }).should('be.visible');
+  });
+
+  it('can type in the product search field and see results from mock', function () {
+    if (!Cypress.env('MOCK_MODE')) return this.skip();
+    cy.visit('/dashboard');
+    cy.wait('@mockUsers', { timeout: 10000 });
+    cy.get('[data-testid="search-product-input"]').type('Amoxil', { delay: 5 });
+    cy.wait('@mockConceptSearch');
+    cy.get('ul[role="listbox"]', { timeout: 10000 }).should('be.visible');
+  });
+
+  it('can select a product from search results and navigate to product view', function () {
+    if (!Cypress.env('MOCK_MODE')) return this.skip();
+    cy.visit('/dashboard');
+    cy.wait('@mockUsers', { timeout: 10000 });
+    cy.get('[data-testid="search-product-input"]').type('Amoxil', { delay: 5 });
+    cy.wait('@mockConceptSearch');
+    cy.get('li[data-option-index="0"]', { timeout: 10000 }).click();
+    cy.wait('@mockProductModel');
+    cy.url().should('include', 'products');
+  });
+
+  // ── Live mode tests ────────────────────────────────────────────────────────
+
+  it('can perform search and load single product using term', function () {
+    if (Cypress.env('MOCK_MODE')) return this.skip();
+    visitProductSearchPage();
     searchAndLoadProduct('Picato');
     verifyLoadedProduct(1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0);
   });
 
-  it('can perform search and load single product using sct Id', () => {
+  it('can perform search and load single product using sct Id', function () {
+    if (Cypress.env('MOCK_MODE')) return this.skip();
     visitProductSearchPage();
     setProductSearchFilter('Sct Id');
-
-    // searchAndLoadProduct('44207011000036100');
     searchAndLoadProduct('700027211000036107');
-
     verifyLoadedProduct(1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0);
   });
 
-  it('can perform search and load single product using Artg Id', () => {
+  it('can perform search and load single product using Artg Id', function () {
+    if (Cypress.env('MOCK_MODE')) return this.skip();
     visitProductSearchPage();
     setProductSearchFilter('Artg Id');
-
     searchAndLoadProduct('97190');
     verifyLoadedProduct(3, 3, 4, 4, 3, 4, 4, 0, 0, 0, 0, 0, 0, 0);
   });
 
-  it('can perform search and load Multi pack product using term', () => {
+  it('can perform search and load Multi pack product using term', function () {
+    if (Cypress.env('MOCK_MODE')) return this.skip();
     visitProductSearchPage();
-
     searchAndLoadProduct('hp7', 120000);
     verifyLoadedProduct(3, 3, 4, 4, 3, 4, 4, 0, 0, 0, 0, 0, 0, 0);
   });
-
-  function visitProductSearchPage() {
-    cy.visit('/dashboard');
-    cy.waitForGetUsers();
-    cy.url().should('include', 'dashboard');
-  }
 });
+
+function visitProductSearchPage() {
+  cy.visit('/dashboard');
+  cy.waitForGetUsers();
+  cy.url().should('include', 'dashboard');
+}
 
 function searchAndLoadProduct(value: string, timeout?: number) {
   if (!timeout) {
-    timeout = 30000; //default timeout
+    timeout = 30000;
   }
   cy.waitForConceptSearch(Cypress.env('apDefaultBranch'));
   cy.get('[data-testid="search-product-input"]').type(value, { delay: 5 });
-  cy.wait(2000); //adding a delay for type to complete
+  cy.wait(2000);
   cy.wait('@getConceptSearch');
-  cy.get('[data-testid="search-product-input"] input').should(
-    'have.value',
-    value,
-  );
-
+  cy.get('[data-testid="search-product-input"] input').should('have.value', value);
   cy.get('ul[role="listbox"]').should('be.visible');
   cy.waitForProductLoad(Cypress.env('apDefaultBranch'));
   cy.get('li[data-option-index="0"]').click();
-  cy.wait('@getProductLoad', { responseTimeout: timeout }); //handling response timeout more than default 30s
+  cy.wait('@getProductLoad', { responseTimeout: timeout });
   cy.url().should('include', 'products');
   cy.get('#product-view').should('be.visible');
 }
+
 function setProductSearchFilter(filterType: string) {
   cy.get('[data-testid="search-product-filter-input"]').click();
   cy.contains('[role="option"]', filterType).click();
-  cy.get('[data-testid="search-product-filter-input"]').should(
-    'contain.text',
-    filterType,
-  );
+  cy.get('[data-testid="search-product-filter-input"]').should('contain.text', filterType);
 }

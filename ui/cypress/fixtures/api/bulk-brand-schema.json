@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Bulk Brand Creation",
+  "properties": {
+    "newBrandInput": {
+      "$ref": "#/$defs/BrandDetails"
+    },
+    "addBrandButton": {
+      "type": "null",
+      "title": "Add Brand"
+    },
+    "brands": {
+      "type": "array",
+      "title": "Brands",
+      "items": { "$ref": "#/$defs/BrandDetails" }
+    }
+  },
+  "$defs": {
+    "BrandDetails": {
+      "type": "object",
+      "title": "Brand Details",
+      "properties": {
+        "brand": {
+          "type": "object",
+          "title": "Brand",
+          "properties": {
+            "conceptId": { "type": "string" },
+            "pt": { "type": "object", "properties": { "term": { "type": "string" } } }
+          }
+        },
+        "nonDefiningProperties": {
+          "type": "array",
+          "title": "Non Defining Properties",
+          "items": { "type": "object" }
+        }
+      }
+    },
+    "MEDICATION_PRODUCT_NonDefiningProperty": {
+      "anyOf": []
+    },
+    "MEDICATION_PACKAGE_NonDefiningProperty": {
+      "anyOf": []
+    }
+  }
+}

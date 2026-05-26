@@ -1,0 +1,21 @@
+{
+  "product.search": "< 373873005 |Pharmaceutical / biologic product (product)|",
+  "product.search.ctpp": "< 30450003 |Product containing only [values] (product)|",
+  "medicationProduct.search": "< 373873005 |Pharmaceutical / biologic product (product)|",
+  "deviceProduct.search": "< 49062001 |Device (physical object)|",
+  "vaccineProduct.search": "< 787859002 |Vaccine product (product)|",
+  "nutritionalProduct.search": "< 418290006 |Nutrition product (product)|",
+  "bulk.new-brand-pack-sizes": "< 373873005",
+  "description.validation.regex": "^[a-zA-Z0-9 \\-\\.\\(\\)\\,\\'\\%\\/\\+\\&\\;\\:]+$",
+  "product.nameGenerator.incompleteNameCheck.keywords": "Generated name unavailable",
+  "product.nameGenerator.error.keywords": "ERROR,INVALID,UNKNOWN",
+  "product.nameGenerator.enabled": "true",
+  "medication.unit.each.conceptId": "767525000",
+  "medication.unit.each.term": "each",
+  "medication.containedProduct.defaultCount": "1",
+  "medication.activeIngredient.defaultCount": "1",
+  "task.validation.status": "NOT_TRIGGERED:Not Triggered,FAILED:Failed,PENDING:Pending,STALE:Stale,SCHEDULED:Scheduled,COMPLETED:Completed",
+  "task.branch.state": "UP_TO_DATE:Up To Date,FORWARD:Forward,BEHIND:Behind,DIVERGED:Diverged,STALE:Stale",
+  "task.classification.status": "SCHEDULED:Scheduled,RUNNING:Running,COMPLETED:Completed,FAILED:Failed,CANCELLED:Cancelled,STALE:Stale,SAVING_IN_PROGRESS:Saving,SAVED:Saved,SAVE_FAILED:Save Failed",
+  "task.feedback.status": "read:Read,unread:Unread,none:None"
+}

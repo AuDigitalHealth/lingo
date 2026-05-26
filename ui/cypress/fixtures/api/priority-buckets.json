@@ -1,0 +1,6 @@
+[
+  { "id": 1, "version": 0, "created": "2026-01-01T00:00:00Z", "createdBy": "System", "modified": "2026-01-01T00:00:00Z", "modifiedBy": "System", "name": "1a", "description": "Priority 1a - Urgent", "orderIndex": 1 },
+  { "id": 2, "version": 0, "created": "2026-01-01T00:00:00Z", "createdBy": "System", "modified": "2026-01-01T00:00:00Z", "modifiedBy": "System", "name": "1b", "description": "Priority 1b - High", "orderIndex": 2 },
+  { "id": 3, "version": 0, "created": "2026-01-01T00:00:00Z", "createdBy": "System", "modified": "2026-01-01T00:00:00Z", "modifiedBy": "System", "name": "2a", "description": "Priority 2a - Medium High", "orderIndex": 3 },
+  { "id": 4, "version": 0, "created": "2026-01-01T00:00:00Z", "createdBy": "System", "modified": "2026-01-01T00:00:00Z", "modifiedBy": "System", "name": "2b", "description": "Priority 2b - Medium", "orderIndex": 4 }
+]
