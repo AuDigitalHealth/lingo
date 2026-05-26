@@ -32,7 +32,10 @@
         "conceptId": "700026311000036104",
         "active": true,
         "definitionStatus": "FULLY_DEFINED",
-        "fsn": { "term": "amoxicillin 500 mg oral capsule (product)", "lang": "en" },
+        "fsn": {
+          "term": "amoxicillin 500 mg oral capsule (product)",
+          "lang": "en"
+        },
         "pt": { "term": "amoxicillin 500 mg oral capsule", "lang": "en" }
       },
       "newConcept": false,
@@ -54,7 +57,10 @@
         "conceptId": "700026411000036108",
         "active": true,
         "definitionStatus": "FULLY_DEFINED",
-        "fsn": { "term": "amoxicillin 500 mg oral capsule (unit of use)", "lang": "en" },
+        "fsn": {
+          "term": "amoxicillin 500 mg oral capsule (unit of use)",
+          "lang": "en"
+        },
         "pt": { "term": "amoxicillin 500 mg oral capsule", "lang": "en" }
       },
       "newConcept": false,
@@ -76,7 +82,10 @@
         "conceptId": "700027211000036107",
         "active": true,
         "definitionStatus": "FULLY_DEFINED",
-        "fsn": { "term": "amoxicillin 500 mg oral capsule, 20 (product)", "lang": "en" },
+        "fsn": {
+          "term": "amoxicillin 500 mg oral capsule, 20 (product)",
+          "lang": "en"
+        },
         "pt": { "term": "amoxicillin 500 mg oral capsule, 20", "lang": "en" }
       },
       "newConcept": false,
@@ -142,7 +151,10 @@
         "conceptId": "700026711000036107",
         "active": true,
         "definitionStatus": "FULLY_DEFINED",
-        "fsn": { "term": "Amoxil 500 mg oral capsule (unit of use)", "lang": "en" },
+        "fsn": {
+          "term": "Amoxil 500 mg oral capsule (unit of use)",
+          "lang": "en"
+        },
         "pt": { "term": "Amoxil 500 mg oral capsule", "lang": "en" }
       },
       "newConcept": false,
@@ -164,7 +176,10 @@
         "conceptId": "9000000014",
         "active": true,
         "definitionStatus": "FULLY_DEFINED",
-        "fsn": { "term": "Duodopa 500 mg oral capsule (unit of use)", "lang": "en" },
+        "fsn": {
+          "term": "Duodopa 500 mg oral capsule (unit of use)",
+          "lang": "en"
+        },
         "pt": { "term": "Duodopa 500 mg oral capsule", "lang": "en" }
       },
       "newConcept": false,
@@ -186,7 +201,10 @@
         "conceptId": "700027311000036101",
         "active": true,
         "definitionStatus": "FULLY_DEFINED",
-        "fsn": { "term": "Amoxil 500 mg capsule, 20 blister pack (product)", "lang": "en" },
+        "fsn": {
+          "term": "Amoxil 500 mg capsule, 20 blister pack (product)",
+          "lang": "en"
+        },
         "pt": { "term": "Amoxil 500 mg capsule, 20 blister pack", "lang": "en" }
       },
       "newConcept": false,
@@ -208,7 +226,10 @@
         "conceptId": "9000000015",
         "active": true,
         "definitionStatus": "FULLY_DEFINED",
-        "fsn": { "term": "Duodopa 500 mg capsule, 9999 (product)", "lang": "en" },
+        "fsn": {
+          "term": "Duodopa 500 mg capsule, 9999 (product)",
+          "lang": "en"
+        },
         "pt": { "term": "Duodopa 500 mg capsule, 9999", "lang": "en" }
       },
       "newConcept": false,
@@ -230,8 +251,14 @@
         "conceptId": "700027411000036104",
         "active": true,
         "definitionStatus": "FULLY_DEFINED",
-        "fsn": { "term": "Amoxil 500 mg capsule, 20 blister pack carton (product)", "lang": "en" },
-        "pt": { "term": "Amoxil 500 mg capsule, 20 blister pack carton", "lang": "en" }
+        "fsn": {
+          "term": "Amoxil 500 mg capsule, 20 blister pack carton (product)",
+          "lang": "en"
+        },
+        "pt": {
+          "term": "Amoxil 500 mg capsule, 20 blister pack carton",
+          "lang": "en"
+        }
       },
       "newConcept": false,
       "newConceptDetails": null,

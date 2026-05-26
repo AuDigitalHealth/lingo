@@ -84,15 +84,15 @@ npm run cypress:open:live
 
 #### Required environment variables for live mode:
 
-| Variable | Description | Example                              |
-|---|---|--------------------------------------|
-| `VITE_SNOMIO_UI_URL` | Deployed frontend URL | `https://dev-snomio.ihtsdotools.org` |
-| `IMS_USERNAME` | IMS login username | `(your username)`                    |
-| `IMS_PASSWORD` | IMS login password | `(your password)`                    |
-| `VITE_IMS_URL` | IMS base URL | `https://ims.ihtsdotools.org`        |
-| `VITE_AP_URL` | Authoring Platform URL | `https://authoring.ihtsdotools.org`  |
-| `VITE_SNOWSTORM_URL` | Snowstorm URL | `https://snowstorm.ihtsdotools.org`  |
-| `IHTSDO_PROJECT_KEY` | Project key | `AUAMT`                              |
+| Variable             | Description            | Example                              |
+| -------------------- | ---------------------- | ------------------------------------ |
+| `VITE_SNOMIO_UI_URL` | Deployed frontend URL  | `https://dev-snomio.ihtsdotools.org` |
+| `IMS_USERNAME`       | IMS login username     | `(your username)`                    |
+| `IMS_PASSWORD`       | IMS login password     | `(your password)`                    |
+| `VITE_IMS_URL`       | IMS base URL           | `https://ims.ihtsdotools.org`        |
+| `VITE_AP_URL`        | Authoring Platform URL | `https://authoring.ihtsdotools.org`  |
+| `VITE_SNOWSTORM_URL` | Snowstorm URL          | `https://snowstorm.ihtsdotools.org`  |
+| `IHTSDO_PROJECT_KEY` | Project key            | `AUAMT`                              |
 
 **Security note:** Never commit `.env` files containing real credentials.
 Use environment variable injection via CI/CD secrets for pipeline runs.
@@ -150,7 +150,7 @@ it('handles an empty state', () => {
 Mocks that need dynamic values (IDs, timestamps) can be set up inline:
 
 ```typescript
-cy.intercept('POST', '/api/tickets', (req) => {
+cy.intercept('POST', '/api/tickets', req => {
   req.reply({
     statusCode: 200,
     body: {
@@ -191,6 +191,7 @@ npm run remock
 ### When to run remock
 
 Run remock when:
+
 - The backend API has changed and mocks are out of date
 - New API endpoints have been added and need mocking
 - Mock data has drifted from reality
@@ -206,6 +207,7 @@ before committing them to ensure no sensitive data (tokens, PII, etc.) was captu
 This file is currently disabled with `cy.onlyOn(false)` in the `beforeEach` block.
 
 **Original intent:** These tests cover the complex product authoring workflow:
+
 - Creating medication products from scratch
 - Validation rules (pack size, brand name, form/device exclusions)
 - Concentration/strength alignment validation
@@ -214,11 +216,13 @@ This file is currently disabled with `cy.onlyOn(false)` in the `beforeEach` bloc
 - Loading and previewing existing products
 
 **Why disabled:** The tests require:
+
 1. A real Snowstorm/AMT SNOMED CT service for concept searches
 2. A live authoring platform with writable SNOMED CT branches
 3. Specific test data to exist in the system
 
 **Path to re-enabling:**
+
 1. Create comprehensive Snowstorm mock responses for AMT product concept searches
 2. Create mock responses for the medication calculation endpoints
 3. Update the tests to support mock mode

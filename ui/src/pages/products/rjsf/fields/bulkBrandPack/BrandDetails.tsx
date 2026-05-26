@@ -68,16 +68,13 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
     : [];
 
   const handleBrandChange = (newBrand: any) => {
-    const existingBrands: any[] =
-      formContext?.formData?.existingBrands || [];
+    const existingBrands: any[] = formContext?.formData?.existingBrands || [];
     const isDuplicate =
       newBrand?.conceptId &&
       existingBrands.some(
         (eb: any) => eb?.brand?.conceptId === newBrand.conceptId,
       );
-    setDuplicateError(
-      isDuplicate ? 'Brand name already exists' : undefined,
-    );
+    setDuplicateError(isDuplicate ? 'Brand name already exists' : undefined);
     const updated = {
       ...formData,
       brand: newBrand,

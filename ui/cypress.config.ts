@@ -65,7 +65,11 @@ export default defineConfig({
          * Called by the remock script after traffic capture completes.
          */
         saveFixture({ filePath, data }: { filePath: string; data: unknown }) {
-          const fullPath = path.resolve(__dirname, 'cypress/fixtures/api', filePath);
+          const fullPath = path.resolve(
+            __dirname,
+            'cypress/fixtures/api',
+            filePath,
+          );
           const dir = path.dirname(fullPath);
           if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
@@ -77,7 +81,11 @@ export default defineConfig({
          * Reads a fixture file as JSON — useful in remock flows.
          */
         readFixture(filePath: string) {
-          const fullPath = path.resolve(__dirname, 'cypress/fixtures/api', filePath);
+          const fullPath = path.resolve(
+            __dirname,
+            'cypress/fixtures/api',
+            filePath,
+          );
           if (!fs.existsSync(fullPath)) return null;
           return JSON.parse(fs.readFileSync(fullPath, 'utf-8'));
         },

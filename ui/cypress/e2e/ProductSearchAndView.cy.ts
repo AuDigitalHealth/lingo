@@ -32,7 +32,9 @@ describe('Product Search and View Spec', () => {
     if (!Cypress.env('MOCK_MODE')) return this.skip();
     cy.visit('/dashboard');
     cy.wait('@mockUsers', { timeout: 10000 });
-    cy.get('[data-testid="search-product-input"]', { timeout: 10000 }).should('be.visible');
+    cy.get('[data-testid="search-product-input"]', { timeout: 10000 }).should(
+      'be.visible',
+    );
   });
 
   it('can type in the product search field and see results from mock', function () {
@@ -102,7 +104,10 @@ function searchAndLoadProduct(value: string, timeout?: number) {
   cy.get('[data-testid="search-product-input"]').type(value, { delay: 5 });
   cy.wait(2000);
   cy.wait('@getConceptSearch');
-  cy.get('[data-testid="search-product-input"] input').should('have.value', value);
+  cy.get('[data-testid="search-product-input"] input').should(
+    'have.value',
+    value,
+  );
   cy.get('ul[role="listbox"]').should('be.visible');
   cy.waitForProductLoad(Cypress.env('apDefaultBranch'));
   cy.get('li[data-option-index="0"]').click();
@@ -114,5 +119,8 @@ function searchAndLoadProduct(value: string, timeout?: number) {
 function setProductSearchFilter(filterType: string) {
   cy.get('[data-testid="search-product-filter-input"]').click();
   cy.contains('[role="option"]', filterType).click();
-  cy.get('[data-testid="search-product-filter-input"]').should('contain.text', filterType);
+  cy.get('[data-testid="search-product-filter-input"]').should(
+    'contain.text',
+    filterType,
+  );
 }

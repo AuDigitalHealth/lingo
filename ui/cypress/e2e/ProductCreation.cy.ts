@@ -73,7 +73,10 @@ function previewProductMocked(
     .should('be.visible')
     .should('not.be.disabled');
 
-  if (productType === ActionType.newPackSize || productType === ActionType.newBrand) {
+  if (
+    productType === ActionType.newPackSize ||
+    productType === ActionType.newBrand
+  ) {
     cy.waitForCalculateBrandPackLoad(branch);
   } else if (productType === ActionType.newDevice) {
     cy.waitForCalculateDeviceLoad(branch);
@@ -89,12 +92,24 @@ function previewProductMocked(
       .click();
   }
 
-  if (productType === ActionType.newPackSize || productType === ActionType.newBrand) {
-    cy.wait('@postCalculateBrandPack', { responseTimeout: timeOut, requestTimeout: 30000 });
+  if (
+    productType === ActionType.newPackSize ||
+    productType === ActionType.newBrand
+  ) {
+    cy.wait('@postCalculateBrandPack', {
+      responseTimeout: timeOut,
+      requestTimeout: 30000,
+    });
   } else if (productType === ActionType.newDevice) {
-    cy.wait('@postCalculateDeviceLoad', { responseTimeout: timeOut, requestTimeout: 30000 });
+    cy.wait('@postCalculateDeviceLoad', {
+      responseTimeout: timeOut,
+      requestTimeout: 30000,
+    });
   } else {
-    cy.wait('@postCalculateMedicationLoad', { responseTimeout: timeOut, requestTimeout: 30000 });
+    cy.wait('@postCalculateMedicationLoad', {
+      responseTimeout: timeOut,
+      requestTimeout: 30000,
+    });
   }
 
   scrollTillElementIsVisible('preview-cancel');
@@ -123,10 +138,14 @@ describe('Product creation Spec', () => {
         statusCode: 200,
         fixture: 'api/calculate-response.json',
       }).as('postCalculateDeviceLoad');
-      cy.intercept('POST', '/api/**/medications/product/$calculateNewBrandPackSizes', {
-        statusCode: 200,
-        fixture: 'api/calculate-response.json',
-      }).as('postCalculateBrandPack');
+      cy.intercept(
+        'POST',
+        '/api/**/medications/product/$calculateNewBrandPackSizes',
+        {
+          statusCode: 200,
+          fixture: 'api/calculate-response.json',
+        },
+      ).as('postCalculateBrandPack');
     } else {
       cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
     }
@@ -178,7 +197,9 @@ describe('Product creation Spec', () => {
       cy.get("[aria-label='Create Brand']").click();
       cy.wait(500);
       cy.waitForConceptSearch(MOCK_BRANCH);
-      cy.get("[data-testid='create-primitive-input']").type('Amoxil', { delay: 500 });
+      cy.get("[data-testid='create-primitive-input']").type('Amoxil', {
+        delay: 500,
+      });
       cy.wait('@getConceptSearch', { responseTimeout: mockTimeOut });
       cy.get("[data-testid='create-primitive-btn']").should('be.disabled');
     } else {
@@ -189,7 +210,9 @@ describe('Product creation Spec', () => {
       cy.get("[aria-label='Create Brand']").click();
       cy.wait(500);
       cy.waitForConceptSearch(branch);
-      cy.get("[data-testid='create-brand-input']").type('Amoxil', { delay: 500 });
+      cy.get("[data-testid='create-brand-input']").type('Amoxil', {
+        delay: 500,
+      });
       cy.wait('@getConceptSearch', { responseTimeout: timeOut });
       cy.get("[data-testid='create-brand-btn']").should('be.disabled');
     }
@@ -204,13 +227,18 @@ describe('Product creation Spec', () => {
       cy.wait(500);
       const testBrand = `A-${generateRandomFourDigit()}`;
       cy.waitForConceptSearch(MOCK_BRANCH);
-      cy.get("[data-testid='create-primitive-input']").type(testBrand, { delay: 500 });
+      cy.get("[data-testid='create-primitive-input']").type(testBrand, {
+        delay: 500,
+      });
       cy.wait('@getConceptSearch', { responseTimeout: mockTimeOut });
       cy.waitForCreateTpBrand(MOCK_BRANCH);
       cy.get("[data-testid='create-primitive-btn']").click();
       cy.wait('@postTpBrand', { responseTimeout: mockTimeOut });
       cy.wait(1000);
-      cy.get(`[data-testid="root_productName"] input`).should('have.value', 'MockBrand');
+      cy.get(`[data-testid="root_productName"] input`).should(
+        'have.value',
+        'MockBrand',
+      );
     } else {
       loadTaskPage(taskKey, ticketNumber);
       cy.get("[data-testid='create-new-product']").click();
@@ -220,13 +248,18 @@ describe('Product creation Spec', () => {
       cy.wait(500);
       const testBrand = `A-${generateRandomFourDigit()}`;
       cy.waitForConceptSearch(branch);
-      cy.get("[data-testid='create-brand-input']").type(testBrand, { delay: 500 });
+      cy.get("[data-testid='create-brand-input']").type(testBrand, {
+        delay: 500,
+      });
       cy.wait('@getConceptSearch', { responseTimeout: timeOut });
       cy.waitForCreateTpBrand(branch);
       cy.get("[data-testid='create-brand-btn']").click();
       cy.wait('@postTpBrand', { responseTimeout: timeOut });
       cy.wait(2000);
-      cy.get(`[data-testid="root_productName"] input`).should('have.value', testBrand);
+      cy.get(`[data-testid="root_productName"] input`).should(
+        'have.value',
+        testBrand,
+      );
     }
   });
 
@@ -237,17 +270,28 @@ describe('Product creation Spec', () => {
       let savedProductDto: any = null;
 
       cy.intercept('PUT', `/api/tickets/${MOCK_TICKET_ID}/products`, req => {
-        savedProductDto = { ...req.body, id: 1, created: new Date().toISOString() };
+        savedProductDto = {
+          ...req.body,
+          id: 1,
+          created: new Date().toISOString(),
+        };
         req.reply({ statusCode: 200, body: {} });
       }).as('mockDraftProduct');
 
       cy.intercept('GET', `/api/tickets/${MOCK_TICKET_ID}/products`, req => {
-        req.reply({ statusCode: 200, body: savedProductDto ? [savedProductDto] : [] });
+        req.reply({
+          statusCode: 200,
+          body: savedProductDto ? [savedProductDto] : [],
+        });
       });
 
-      cy.intercept('GET', `/api/tickets/${MOCK_TICKET_ID}/products/id/*`, req => {
-        req.reply({ statusCode: 200, body: savedProductDto || {} });
-      });
+      cy.intercept(
+        'GET',
+        `/api/tickets/${MOCK_TICKET_ID}/products/id/*`,
+        req => {
+          req.reply({ statusCode: 200, body: savedProductDto || {} });
+        },
+      );
 
       loadTaskPage(MOCK_TASK_KEY, MOCK_TICKET_NUMBER);
       cy.get("[data-testid='create-new-product']").click();
@@ -264,9 +308,9 @@ describe('Product creation Spec', () => {
       cy.get("[data-testid='partial-save-confirm-btn']").should('be.visible');
       cy.get("[data-testid='partial-save-confirm-btn']").click();
       cy.wait('@mockDraftProduct', { timeout: mockTimeOut });
-      cy.get(`[data-testid='link-Amoxil-${packSize}']`, { timeout: mockTimeOut }).should(
-        'be.visible',
-      );
+      cy.get(`[data-testid='link-Amoxil-${packSize}']`, {
+        timeout: mockTimeOut,
+      }).should('be.visible');
 
       scrollTillElementIsVisible(`link-Amoxil-${packSize}`);
       cy.get(`[data-testid='link-Amoxil-${packSize}']`).click();
@@ -288,7 +332,9 @@ describe('Product creation Spec', () => {
       cy.waitForBulkTicketProductsLoad(ticketId);
       cy.get("[data-testid='partial-save-confirm-btn']").should('be.visible');
       cy.get("[data-testid='partial-save-confirm-btn']").click();
-      cy.get(`[data-testid='link-Amoxil-${packSize}']`, { timeout: timeOut }).should('be.visible');
+      cy.get(`[data-testid='link-Amoxil-${packSize}']`, {
+        timeout: timeOut,
+      }).should('be.visible');
 
       scrollTillElementIsVisible(`link-Amoxil-${packSize}`);
       cy.get(`[data-testid='link-Amoxil-${packSize}']`).click();
@@ -326,8 +372,20 @@ describe('Product creation Spec', () => {
       loadTaskPage(MOCK_TASK_KEY, MOCK_TICKET_NUMBER);
       cy.get("[data-testid='create-new-product']").click();
       handleBrandHack(MOCK_BRANCH, 'root_productName', 'Amox', mockTimeOut);
-      searchAndSelectAutocomplete(MOCK_BRANCH, 'root_productName', mockTestProduct2, mockTimeOut, false);
-      searchAndSelectAutocomplete(MOCK_BRANCH, 'root_containerType', 'Blister Pack', mockTimeOut, true);
+      searchAndSelectAutocomplete(
+        MOCK_BRANCH,
+        'root_productName',
+        mockTestProduct2,
+        mockTimeOut,
+        false,
+      );
+      searchAndSelectAutocomplete(
+        MOCK_BRANCH,
+        'root_containerType',
+        'Blister Pack',
+        mockTimeOut,
+        true,
+      );
       addNewProduct();
       fillSuccessfulProductDetails(MOCK_BRANCH, 0, mockTimeOut);
       previewProductMocked(MOCK_BRANCH, mockTimeOut);
@@ -336,8 +394,20 @@ describe('Product creation Spec', () => {
       cy.get("[data-testid='create-new-product']").click();
       const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
       handleBrandHack(branch, 'root_productName', 'Amox', timeOut);
-      searchAndSelectAutocomplete(branch, 'root_productName', testProduct2, timeOut, false);
-      searchAndSelectAutocomplete(branch, 'root_containerType', 'Blister Pack', timeOut, true);
+      searchAndSelectAutocomplete(
+        branch,
+        'root_productName',
+        testProduct2,
+        timeOut,
+        false,
+      );
+      searchAndSelectAutocomplete(
+        branch,
+        'root_containerType',
+        'Blister Pack',
+        timeOut,
+        true,
+      );
       addNewProduct();
       fillSuccessfulProductDetails(branch, 0, timeOut);
       previewProduct(branch, timeOut);
@@ -368,15 +438,22 @@ describe('Product creation Spec', () => {
     }
 
     cy.get("[data-testid='create-new-product']").click();
-    cy.get("[data-testid='product-creation-grid']", { timeout: tOut }).should('be.visible');
+    cy.get("[data-testid='product-creation-grid']", { timeout: tOut }).should(
+      'be.visible',
+    );
     addNewProduct();
 
     previewWithError('Error Validating Product Definition', branch);
     if (!Cypress.env('MOCK_MODE')) {
-      verifyErrorMsg('[data-testid="root_productName"] input', 'Brand Name must be populated.');
+      verifyErrorMsg(
+        '[data-testid="root_productName"] input',
+        'Brand Name must be populated.',
+      );
     }
 
-    cy.get(`[data-testid="root_containerType"] input`, { timeout: tOut }).click();
+    cy.get(`[data-testid="root_containerType"] input`, {
+      timeout: tOut,
+    }).click();
     cy.get(`[data-testid="root_containerType"] input`).clear();
     previewWithError('Error Validating Product Definition', branch);
     if (!Cypress.env('MOCK_MODE')) {
@@ -402,7 +479,9 @@ describe('Product creation Spec', () => {
     searchAndSelectAutocomplete(branch, 'root_productName', product2, tOut);
     addNewProduct();
     fillSuccessfulProductDetails(branch, 0, tOut);
-    cy.get(`[data-testid="root_containedProducts_0_productDetails_genericForm"] input`).clear();
+    cy.get(
+      `[data-testid="root_containedProducts_0_productDetails_genericForm"] input`,
+    ).clear();
     expandOrHideProduct(0);
     cy.wait(3000);
     previewWithError(
@@ -429,7 +508,9 @@ describe('Product creation Spec', () => {
     searchAndSelectAutocomplete(branch, 'root_productName', product2, tOut);
     addNewProduct();
     fillSuccessfulProductDetails(branch, 0, tOut);
-    cy.get(`[data-testid="root_containedProducts_0_productDetails_productName"] input`).clear();
+    cy.get(
+      `[data-testid="root_containedProducts_0_productDetails_productName"] input`,
+    ).clear();
     expandOrHideProduct(0);
     cy.wait(3000);
     previewWithError('Error Validating Product Definition', branch);
@@ -465,7 +546,10 @@ describe('Product creation Spec', () => {
     cy.wait(3000);
     previewWithError('Error Validating Product Definition', branch);
     if (!Cypress.env('MOCK_MODE')) {
-      verifyErrorMsg('root_containedProducts_0_value', 'Pack Size must be populated.');
+      verifyErrorMsg(
+        'root_containedProducts_0_value',
+        'Pack Size must be populated.',
+      );
     }
   });
 
@@ -520,7 +604,10 @@ describe('Product creation Spec', () => {
     cy.wait(3000);
     previewWithError('Error Validating Product Definition', branch);
     if (!Cypress.env('MOCK_MODE')) {
-      verifyErrorMsg('root_containedProducts_0_value', 'Value must be at least 0');
+      verifyErrorMsg(
+        'root_containedProducts_0_value',
+        'Value must be at least 0',
+      );
     }
   });
 
@@ -798,7 +885,13 @@ describe('Product creation Spec', () => {
     cy.get("[data-testid='create-new-product']").click();
     handleBrandHack(branch, 'root_productName', 'Amox', tOut);
     searchAndSelectAutocomplete(branch, 'root_productName', product2, tOut);
-    searchAndSelectAutocomplete(branch, 'root_containerType', 'Blister Pack', tOut, true);
+    searchAndSelectAutocomplete(
+      branch,
+      'root_containerType',
+      'Blister Pack',
+      tOut,
+      true,
+    );
     addNewProduct();
     expandOrHideProduct(0);
     searchAndSelectAutocomplete(
@@ -846,7 +939,9 @@ describe('Product creation Spec', () => {
         req.reply({
           statusCode: 200,
           fixture:
-            callCount === 1 ? 'api/calculate-response-new.json' : 'api/calculate-response.json',
+            callCount === 1
+              ? 'api/calculate-response-new.json'
+              : 'api/calculate-response.json',
         });
       }).as('postCalculateMedicationLoad');
 
@@ -857,7 +952,13 @@ describe('Product creation Spec', () => {
       changePackSize(packSize);
       previewProductMocked(MOCK_BRANCH, mockTimeOut);
       verifyLoadedProduct(1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1);
-      createProduct(MOCK_BRANCH, mockTimeOut, getGeneratedName(packSize), false, false);
+      createProduct(
+        MOCK_BRANCH,
+        mockTimeOut,
+        getGeneratedName(packSize),
+        false,
+        false,
+      );
       verifyLoadedProduct(1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0);
     } else {
       loadTaskPage(taskKey, ticketNumber);
@@ -884,7 +985,13 @@ describe('Product creation Spec', () => {
     changePackSize(packSize);
     previewProduct(branch, timeoutMultiPack, undefined, undefined, true);
     verifyLoadedProduct(3, 3, 4, 4, 3, 4, 4, 0, 0, 2, 0, 0, 2, 2);
-    createProduct(branch, timeoutMultiPack, getGeneratedName(packSize), true, false);
+    createProduct(
+      branch,
+      timeoutMultiPack,
+      getGeneratedName(packSize),
+      true,
+      false,
+    );
     verifyLoadedProduct(3, 3, 4, 4, 3, 4, 4, 0, 0, 0, 0, 0, 0, 0);
   });
 
@@ -900,12 +1007,29 @@ describe('Product creation Spec', () => {
       loadTaskPage(MOCK_TASK_KEY, MOCK_TICKET_NUMBER);
       cy.get("[data-testid='create-new-product']").click();
       selectDeviceType();
-      searchAndLoadProduct('nu-gel', MOCK_BRANCH, mockTimeOut, ActionType.newDevice);
+      searchAndLoadProduct(
+        'nu-gel',
+        MOCK_BRANCH,
+        mockTimeOut,
+        ActionType.newDevice,
+      );
       const packSize = generateRandomFourDigit();
       changePackSize(packSize);
-      previewProductMocked(MOCK_BRANCH, mockTimeOut, false, ActionType.newDevice);
+      previewProductMocked(
+        MOCK_BRANCH,
+        mockTimeOut,
+        false,
+        ActionType.newDevice,
+      );
       verifyLoadedProduct(1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1);
-      createProduct(MOCK_BRANCH, mockTimeOut, getGeneratedName(packSize), false, false, ActionType.newDevice);
+      createProduct(
+        MOCK_BRANCH,
+        mockTimeOut,
+        getGeneratedName(packSize),
+        false,
+        false,
+        ActionType.newDevice,
+      );
       verifyLoadedProduct(1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0);
     } else {
       loadTaskPage(taskKey, ticketNumber);
@@ -917,7 +1041,14 @@ describe('Product creation Spec', () => {
       changePackSize(packSize);
       previewProduct(branch, timeOut, false, ActionType.newDevice);
       verifyLoadedProduct(1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1);
-      createProduct(branch, timeOut, getGeneratedName(packSize), false, false, ActionType.newDevice);
+      createProduct(
+        branch,
+        timeOut,
+        getGeneratedName(packSize),
+        false,
+        false,
+        ActionType.newDevice,
+      );
       verifyLoadedProduct(1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0);
     }
   });
@@ -926,10 +1057,14 @@ describe('Product creation Spec', () => {
 
   it('Bulk pack: Create a bulk pack', () => {
     if (Cypress.env('MOCK_MODE')) {
-      cy.intercept('POST', '/api/**/medications/product/$calculateNewBrandPackSizes', {
-        statusCode: 200,
-        fixture: 'api/calculate-response-new-pack.json',
-      }).as('postCalculateBrandPack');
+      cy.intercept(
+        'POST',
+        '/api/**/medications/product/$calculateNewBrandPackSizes',
+        {
+          statusCode: 200,
+          fixture: 'api/calculate-response-new-pack.json',
+        },
+      ).as('postCalculateBrandPack');
       cy.intercept('POST', '/api/**/medications/product/new-brand-pack-sizes', {
         statusCode: 201,
         fixture: 'api/calculate-response-pack-done.json',
@@ -938,32 +1073,70 @@ describe('Product creation Spec', () => {
       loadTaskPage(MOCK_TASK_KEY, MOCK_TICKET_NUMBER);
       cy.get("[data-testid='create-new-product']").click();
       selectBulkPack();
-      searchAndLoadProduct(testProductName, MOCK_BRANCH, mockTimeOut, ActionType.newPackSize);
+      searchAndLoadProduct(
+        testProductName,
+        MOCK_BRANCH,
+        mockTimeOut,
+        ActionType.newPackSize,
+      );
       const packSize = generateRandomFourDigit();
-      cy.get("[data-testid='product-creation-grid']", { timeout: mockTimeOut }).click();
+      cy.get("[data-testid='product-creation-grid']", {
+        timeout: mockTimeOut,
+      }).click();
       cy.get("[data-testid='pack-size-input'] input").click();
-      cy.get("[data-testid='pack-size-input'] input").type(packSize.toString(), { delay: 5 });
-      cy.get("[data-testid='create-pack-btn']", { timeout: mockTimeOut }).click();
+      cy.get("[data-testid='pack-size-input'] input").type(
+        packSize.toString(),
+        { delay: 5 },
+      );
+      cy.get("[data-testid='create-pack-btn']", {
+        timeout: mockTimeOut,
+      }).click();
       cy.wait(1000);
-      previewProductMocked(MOCK_BRANCH, mockTimeOut, false, ActionType.newPackSize);
+      previewProductMocked(
+        MOCK_BRANCH,
+        mockTimeOut,
+        false,
+        ActionType.newPackSize,
+      );
       verifyLoadedProduct(1, 1, 2, 1, 1, 2, 2, 0, 0, 1, 0, 0, 1, 1);
-      createProduct(MOCK_BRANCH, mockTimeOut, undefined, false, false, ActionType.newPackSize);
+      createProduct(
+        MOCK_BRANCH,
+        mockTimeOut,
+        undefined,
+        false,
+        false,
+        ActionType.newPackSize,
+      );
       verifyLoadedProduct(1, 1, 2, 1, 1, 2, 2, 0, 0, 0, 0, 0, 0, 0);
     } else {
       loadTaskPage(taskKey, ticketNumber);
       cy.get("[data-testid='create-new-product']").click();
       selectBulkPack();
       const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
-      searchAndLoadProduct(testProductName, branch, timeOut, ActionType.newPackSize);
+      searchAndLoadProduct(
+        testProductName,
+        branch,
+        timeOut,
+        ActionType.newPackSize,
+      );
       const packSize = generateRandomFourDigit();
       cy.get("[data-testid='product-creation-grid']").click();
       cy.get("[data-testid='pack-size-input']").click();
-      cy.get("[data-testid='pack-size-input']").type(packSize.toString(), { delay: 5 });
+      cy.get("[data-testid='pack-size-input']").type(packSize.toString(), {
+        delay: 5,
+      });
       cy.get("[data-testid='create-pack-btn']").click();
       cy.wait(1000);
       previewProduct(branch, timeOut, false, ActionType.newPackSize);
       verifyLoadedProduct(1, 1, 2, 1, 1, 2, 2, 0, 0, 1, 0, 0, 1, 1);
-      createProduct(branch, timeOut, undefined, false, false, ActionType.newPackSize);
+      createProduct(
+        branch,
+        timeOut,
+        undefined,
+        false,
+        false,
+        ActionType.newPackSize,
+      );
       verifyLoadedProduct(1, 1, 2, 1, 1, 2, 2, 0, 0, 0, 0, 0, 0, 0);
     }
   });
@@ -973,17 +1146,31 @@ describe('Product creation Spec', () => {
       loadTaskPage(MOCK_TASK_KEY, MOCK_TICKET_NUMBER);
       cy.get("[data-testid='create-new-product']").click();
       selectBulkPack();
-      searchAndLoadProduct(testProductName, MOCK_BRANCH, mockTimeOut, ActionType.newPackSize);
-      cy.get("[data-testid='product-creation-grid']", { timeout: mockTimeOut }).click();
+      searchAndLoadProduct(
+        testProductName,
+        MOCK_BRANCH,
+        mockTimeOut,
+        ActionType.newPackSize,
+      );
+      cy.get("[data-testid='product-creation-grid']", {
+        timeout: mockTimeOut,
+      }).click();
       setBulkPackSize('xyz');
       verifyErrorMsg('pack-size-input', 'Not a valid pack size');
-      cy.get("[data-testid='create-pack-btn']", { timeout: mockTimeOut }).should('be.disabled');
+      cy.get("[data-testid='create-pack-btn']", {
+        timeout: mockTimeOut,
+      }).should('be.disabled');
     } else {
       loadTaskPage(taskKey, ticketNumber);
       cy.get("[data-testid='create-new-product']").click();
       selectBulkPack();
       const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
-      searchAndLoadProduct(testProductName, branch, timeOut, ActionType.newPackSize);
+      searchAndLoadProduct(
+        testProductName,
+        branch,
+        timeOut,
+        ActionType.newPackSize,
+      );
       cy.get("[data-testid='product-creation-grid']").click();
       setBulkPackSize('xyz');
       verifyErrorMsg('pack-size-input', 'Not a valid pack size');
@@ -996,11 +1183,20 @@ describe('Product creation Spec', () => {
       loadTaskPage(MOCK_TASK_KEY, MOCK_TICKET_NUMBER);
       cy.get("[data-testid='create-new-product']").click();
       selectBulkPack();
-      searchAndLoadProduct(testProductName, MOCK_BRANCH, mockTimeOut, ActionType.newPackSize);
-      cy.get("[data-testid='product-creation-grid']", { timeout: mockTimeOut }).click();
+      searchAndLoadProduct(
+        testProductName,
+        MOCK_BRANCH,
+        mockTimeOut,
+        ActionType.newPackSize,
+      );
+      cy.get("[data-testid='product-creation-grid']", {
+        timeout: mockTimeOut,
+      }).click();
       const packSize = generateRandomFourDigit();
       setBulkPackSize(packSize.toString());
-      cy.get("[data-testid='create-pack-btn']", { timeout: mockTimeOut }).click();
+      cy.get("[data-testid='create-pack-btn']", {
+        timeout: mockTimeOut,
+      }).click();
       setBulkPackSize(packSize.toString());
       verifyErrorMsg('pack-size-input', 'Not a valid pack size');
     } else {
@@ -1008,7 +1204,12 @@ describe('Product creation Spec', () => {
       cy.get("[data-testid='create-new-product']").click();
       selectBulkPack();
       const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
-      searchAndLoadProduct(testProductName, branch, timeOut, ActionType.newPackSize);
+      searchAndLoadProduct(
+        testProductName,
+        branch,
+        timeOut,
+        ActionType.newPackSize,
+      );
       cy.get("[data-testid='product-creation-grid']").click();
       const packSize = generateRandomFourDigit();
       setBulkPackSize(packSize.toString());
@@ -1022,10 +1223,14 @@ describe('Product creation Spec', () => {
 
   it('Bulk brand: create new Brand', () => {
     if (Cypress.env('MOCK_MODE')) {
-      cy.intercept('POST', '/api/**/medications/product/$calculateNewBrandPackSizes', {
-        statusCode: 200,
-        fixture: 'api/calculate-response-new-brand.json',
-      }).as('postCalculateBrandPack');
+      cy.intercept(
+        'POST',
+        '/api/**/medications/product/$calculateNewBrandPackSizes',
+        {
+          statusCode: 200,
+          fixture: 'api/calculate-response-new-brand.json',
+        },
+      ).as('postCalculateBrandPack');
       cy.intercept('POST', '/api/**/medications/product/new-brand-pack-sizes', {
         statusCode: 201,
         fixture: 'api/calculate-response-brand-done.json',
@@ -1034,26 +1239,67 @@ describe('Product creation Spec', () => {
       loadTaskPage(MOCK_TASK_KEY, MOCK_TICKET_NUMBER);
       cy.get("[data-testid='create-new-product']").click();
       selectBulkBrand();
-      searchAndLoadProduct(testProductName, MOCK_BRANCH, mockTimeOut, ActionType.newBrand);
-      searchAndSelectAutocomplete(MOCK_BRANCH, 'package-new-brand', 'Duodopa', mockTimeOut, false);
+      searchAndLoadProduct(
+        testProductName,
+        MOCK_BRANCH,
+        mockTimeOut,
+        ActionType.newBrand,
+      );
+      searchAndSelectAutocomplete(
+        MOCK_BRANCH,
+        'package-new-brand',
+        'Duodopa',
+        mockTimeOut,
+        false,
+      );
       cy.get("[data-testid='create-new-brand-btn']").click();
       cy.wait(1000);
-      previewProductMocked(MOCK_BRANCH, mockTimeOut, false, ActionType.newBrand);
+      previewProductMocked(
+        MOCK_BRANCH,
+        mockTimeOut,
+        false,
+        ActionType.newBrand,
+      );
       verifyLoadedProduct(1, 1, 1, 2, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1);
-      createProduct(MOCK_BRANCH, mockTimeOut, undefined, false, false, ActionType.newBrand);
+      createProduct(
+        MOCK_BRANCH,
+        mockTimeOut,
+        undefined,
+        false,
+        false,
+        ActionType.newBrand,
+      );
       verifyLoadedProduct(1, 1, 1, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0);
     } else {
       loadTaskPage(taskKey, ticketNumber);
       cy.get("[data-testid='create-new-product']").click();
       selectBulkBrand();
       const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
-      searchAndLoadProduct(testProductName, branch, timeOut, ActionType.newBrand);
-      searchAndSelectAutocomplete(branch, 'package-new-brand', 'Duodopa', timeOut, false);
+      searchAndLoadProduct(
+        testProductName,
+        branch,
+        timeOut,
+        ActionType.newBrand,
+      );
+      searchAndSelectAutocomplete(
+        branch,
+        'package-new-brand',
+        'Duodopa',
+        timeOut,
+        false,
+      );
       cy.get("[data-testid='create-new-brand-btn']").click();
       cy.wait(1000);
       previewProduct(branch, timeOut, false, ActionType.newBrand);
       verifyLoadedProduct(1, 1, 1, 2, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1);
-      createProduct(branch, timeOut, undefined, false, false, ActionType.newBrand);
+      createProduct(
+        branch,
+        timeOut,
+        undefined,
+        false,
+        false,
+        ActionType.newBrand,
+      );
       verifyLoadedProduct(1, 1, 1, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0);
     }
   });
@@ -1078,7 +1324,12 @@ describe('Product creation Spec', () => {
       loadTaskPage(MOCK_TASK_KEY, MOCK_TICKET_NUMBER);
       cy.get("[data-testid='create-new-product']").click();
       selectBulkBrand();
-      searchAndLoadProduct(testProductName, MOCK_BRANCH, mockTimeOut, ActionType.newBrand);
+      searchAndLoadProduct(
+        testProductName,
+        MOCK_BRANCH,
+        mockTimeOut,
+        ActionType.newBrand,
+      );
       searchAndSelectAutocomplete(
         MOCK_BRANCH,
         'package-new-brand',
@@ -1092,8 +1343,19 @@ describe('Product creation Spec', () => {
       cy.get("[data-testid='create-new-product']").click();
       selectBulkBrand();
       const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
-      searchAndLoadProduct(testProductName, branch, timeOut, ActionType.newBrand);
-      searchAndSelectAutocomplete(branch, 'package-new-brand', 'Amoxycillin (Sandoz)', timeOut, false);
+      searchAndLoadProduct(
+        testProductName,
+        branch,
+        timeOut,
+        ActionType.newBrand,
+      );
+      searchAndSelectAutocomplete(
+        branch,
+        'package-new-brand',
+        'Amoxycillin (Sandoz)',
+        timeOut,
+        false,
+      );
       verifyErrorMsg('package-new-brand', 'Brand name already exists');
     }
   });

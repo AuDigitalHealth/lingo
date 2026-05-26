@@ -488,7 +488,9 @@ Cypress.Commands.add('loginMocked', () => {
  * Use this to conditionally skip or adjust tests based on mode.
  */
 Cypress.Commands.add('isMockMode', () => {
-  return Cypress.env('MOCK_MODE') === true || Cypress.env('MOCK_MODE') === 'true';
+  return (
+    Cypress.env('MOCK_MODE') === true || Cypress.env('MOCK_MODE') === 'true'
+  );
 });
 
 /**
@@ -496,7 +498,8 @@ Cypress.Commands.add('isMockMode', () => {
  * Prefer this over cy.login() in tests that should work in both modes.
  */
 Cypress.Commands.add('loginForMode', () => {
-  const isMock = Cypress.env('MOCK_MODE') === true || Cypress.env('MOCK_MODE') === 'true';
+  const isMock =
+    Cypress.env('MOCK_MODE') === true || Cypress.env('MOCK_MODE') === 'true';
   if (isMock) {
     cy.loginMocked();
   } else {

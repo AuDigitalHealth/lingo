@@ -12,7 +12,13 @@
         "fullySpecifiedName": "Snomio test-9999 (product)",
         "preferredTerm": "Snomio test-9999",
         "semanticTag": "product",
-        "axioms": [{ "definitionStatus": "PRIMITIVE", "definitionStatusId": "900000000000074008", "relationships": [] }]
+        "axioms": [
+          {
+            "definitionStatus": "PRIMITIVE",
+            "definitionStatusId": "900000000000074008",
+            "relationships": []
+          }
+        ]
       },
       "conceptOptions": [],
       "newInTask": true,
@@ -33,7 +39,10 @@
         "conceptId": "700026311000036104",
         "active": true,
         "definitionStatus": "FULLY_DEFINED",
-        "fsn": { "term": "amoxicillin 500 mg oral capsule (product)", "lang": "en" },
+        "fsn": {
+          "term": "amoxicillin 500 mg oral capsule (product)",
+          "lang": "en"
+        },
         "pt": { "term": "amoxicillin 500 mg oral capsule", "lang": "en" }
       },
       "newConcept": false,
@@ -55,7 +64,10 @@
         "conceptId": "700026411000036108",
         "active": true,
         "definitionStatus": "FULLY_DEFINED",
-        "fsn": { "term": "amoxicillin 500 mg oral capsule (unit of use)", "lang": "en" },
+        "fsn": {
+          "term": "amoxicillin 500 mg oral capsule (unit of use)",
+          "lang": "en"
+        },
         "pt": { "term": "amoxicillin 500 mg oral capsule", "lang": "en" }
       },
       "newConcept": false,
@@ -81,7 +93,13 @@
         "fullySpecifiedName": "amoxicillin 500 mg oral capsule, 9999 (product)",
         "preferredTerm": "amoxicillin 500 mg oral capsule, 9999",
         "semanticTag": "product",
-        "axioms": [{ "definitionStatus": "PRIMITIVE", "definitionStatusId": "900000000000074008", "relationships": [] }]
+        "axioms": [
+          {
+            "definitionStatus": "PRIMITIVE",
+            "definitionStatusId": "900000000000074008",
+            "relationships": []
+          }
+        ]
       },
       "conceptOptions": [],
       "newInTask": true,
@@ -122,7 +140,10 @@
         "conceptId": "700026611000036101",
         "active": true,
         "definitionStatus": "FULLY_DEFINED",
-        "fsn": { "term": "Amoxil 500 mg oral capsule (unit of use)", "lang": "en" },
+        "fsn": {
+          "term": "Amoxil 500 mg oral capsule (unit of use)",
+          "lang": "en"
+        },
         "pt": { "term": "Amoxil 500 mg oral capsule", "lang": "en" }
       },
       "newConcept": false,
@@ -148,7 +169,13 @@
         "fullySpecifiedName": "Amoxil 500 mg capsule, 9999 (product)",
         "preferredTerm": "Amoxil 500 mg capsule, 9999",
         "semanticTag": "product",
-        "axioms": [{ "definitionStatus": "PRIMITIVE", "definitionStatusId": "900000000000074008", "relationships": [] }]
+        "axioms": [
+          {
+            "definitionStatus": "PRIMITIVE",
+            "definitionStatusId": "900000000000074008",
+            "relationships": []
+          }
+        ]
       },
       "conceptOptions": [],
       "newInTask": true,
@@ -171,7 +198,13 @@
         "fullySpecifiedName": "Snomio test-9999 (product)",
         "preferredTerm": "Snomio test-9999",
         "semanticTag": "product",
-        "axioms": [{ "definitionStatus": "PRIMITIVE", "definitionStatusId": "900000000000074008", "relationships": [] }]
+        "axioms": [
+          {
+            "definitionStatus": "PRIMITIVE",
+            "definitionStatusId": "900000000000074008",
+            "relationships": []
+          }
+        ]
       },
       "conceptOptions": [],
       "newInTask": true,

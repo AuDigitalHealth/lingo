@@ -40,7 +40,10 @@ describe('Login Spec', () => {
   it('shows login page when unauthenticated', function () {
     if (!Cypress.env('MOCK_MODE')) return this.skip();
     cy.intercept('GET', '/config', { fixture: 'api/app-config.json' });
-    cy.intercept('GET', '/api/auth', { statusCode: 403, body: { error: 'Unauthorized' } });
+    cy.intercept('GET', '/api/auth', {
+      statusCode: 403,
+      body: { error: 'Unauthorized' },
+    });
     cy.visit('/');
     cy.url().should('include', '/login').or('include', '/');
   });
@@ -65,6 +68,8 @@ describe('Login Spec', () => {
     setupMockInterceptors();
     cy.visit('/dashboard/tasks');
     cy.url().should('include', 'dashboard');
-    cy.get('[data-testid="profile-button"]', { timeout: 10000 }).should('exist');
+    cy.get('[data-testid="profile-button"]', { timeout: 10000 }).should(
+      'exist',
+    );
   });
 });

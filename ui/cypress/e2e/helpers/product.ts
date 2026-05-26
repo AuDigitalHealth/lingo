@@ -252,7 +252,9 @@ export function changePackSize(packSize: number) {
 }
 export function setBulkPackSize(packSize: string) {
   cy.get('[data-testid="pack-size-input"] input').first().click();
-  cy.get('[data-testid="pack-size-input"] input').first().type(packSize, { delay: 5 });
+  cy.get('[data-testid="pack-size-input"] input')
+    .first()
+    .type(packSize, { delay: 5 });
 }
 export function verifyPackSizeChange(packSize: number) {
   cy.wait(2000);
@@ -293,11 +295,15 @@ export function createProduct(
           cy.wrap(element).within(() => {
             cy.get(`[data-testid="fsn-input"] textarea`).first().clear();
             cy.get(`[data-testid="fsn-input"] textarea`).first().click();
-            cy.get(`[data-testid="fsn-input"] textarea`).first().type(generatedName, { delay: 5 });
+            cy.get(`[data-testid="fsn-input"] textarea`)
+              .first()
+              .type(generatedName, { delay: 5 });
 
             cy.get(`[data-testid="pt-input"] textarea`).first().clear();
             cy.get(`[data-testid="pt-input"] textarea`).first().click();
-            cy.get(`[data-testid="pt-input"] textarea`).first().type(generatedName, { delay: 5 });
+            cy.get(`[data-testid="pt-input"] textarea`)
+              .first()
+              .type(generatedName, { delay: 5 });
           });
         }
       });
@@ -308,10 +314,14 @@ export function createProduct(
     cy.get('[data-testid="product-group-CTPP"]').within(() => {
       cy.get('[data-testid="accodion-product"]').click();
       cy.get('[data-testid="fsn-input"] textarea').first().clear();
-      cy.get('[data-testid="fsn-input"] textarea').first().type(generatedName, { delay: 5 });
+      cy.get('[data-testid="fsn-input"] textarea')
+        .first()
+        .type(generatedName, { delay: 5 });
 
       cy.get('[data-testid="pt-input"] textarea').first().clear();
-      cy.get('[data-testid="pt-input"] textarea').first().type(generatedName, { delay: 5 });
+      cy.get('[data-testid="pt-input"] textarea')
+        .first()
+        .type(generatedName, { delay: 5 });
       cy.wait(2000);
     });
   }
@@ -394,7 +404,9 @@ export function handleBrandHack(
   timeOut: number,
 ) {
   // Wait for the form to be ready before interacting with autocomplete fields
-  cy.get("[data-testid='product-creation-grid']", { timeout: timeOut }).should('be.visible');
+  cy.get("[data-testid='product-creation-grid']", { timeout: timeOut }).should(
+    'be.visible',
+  );
   cy.waitForConceptSearch(branch);
   cy.get(`[data-testid="${dataTestId}"]`, { timeout: timeOut }).click();
   cy.get(`[data-testid="${dataTestId}"] input`, { timeout: timeOut }) // Select the input element inside the Autocomplete

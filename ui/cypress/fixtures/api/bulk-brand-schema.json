@@ -26,7 +26,10 @@
           "title": "Brand",
           "properties": {
             "conceptId": { "type": "string" },
-            "pt": { "type": "object", "properties": { "term": { "type": "string" } } }
+            "pt": {
+              "type": "object",
+              "properties": { "term": { "type": "string" } }
+            }
           }
         },
         "nonDefiningProperties": {

@@ -71,7 +71,9 @@ describe('Backlog Spec', () => {
 
   it('shows the create ticket button', () => {
     cy.visit('/dashboard/tickets/backlog');
-    cy.get('[data-testid="create-ticket"]', { timeout: 10000 }).should('be.visible');
+    cy.get('[data-testid="create-ticket"]', { timeout: 10000 }).should(
+      'be.visible',
+    );
   });
 
   it('can open the create ticket modal', function () {
@@ -98,7 +100,9 @@ describe('Backlog Spec', () => {
 
   it('shows the save filter button', () => {
     cy.visit('/dashboard/tickets/backlog');
-    cy.get('[data-testid="backlog-filter-save"]', { timeout: 10000 }).should('be.visible');
+    cy.get('[data-testid="backlog-filter-save"]', { timeout: 10000 }).should(
+      'be.visible',
+    );
   });
 
   // ── Live mode tests ────────────────────────────────────────────────────────
@@ -140,14 +144,18 @@ describe('Backlog Spec', () => {
     cy.get('[data-testid="backlog-filter-save"]').click();
 
     const currentTimeInMs = Date.now();
-    cy.get('[data-testid="save-filter-modal-input"]').type('64435 - ' + currentTimeInMs);
+    cy.get('[data-testid="save-filter-modal-input"]').type(
+      '64435 - ' + currentTimeInMs,
+    );
     cy.interceptPostTicketFilter();
     cy.interceptGetTicketFilter();
     cy.get('[data-testid="save-filter-modal-save"]').click();
     cy.wait('@postTicketFilter');
     cy.wait('@getTicketFilter');
 
-    cy.waitForGetTicketList(() => cy.get('[data-testid="backlog-filter-clear"]').click());
+    cy.waitForGetTicketList(() =>
+      cy.get('[data-testid="backlog-filter-clear"]').click(),
+    );
 
     cy.get('[data-testid="backlog-filter-load"]').click();
     cy.get('[data-testid="load-filter-modal-input"]').click();
@@ -180,10 +188,16 @@ function searchByPriority(
 ) {
   openFilter(columnsIndex.priority);
   cy.get('.p-column-filter-matchmode-dropdown').click();
-  cy.get('.p-dropdown-items-wrapper').find('li').contains(equalsOrNotEquals).click();
+  cy.get('.p-dropdown-items-wrapper')
+    .find('li')
+    .contains(equalsOrNotEquals)
+    .click();
   cy.get('[data-testid="priority-filter-input"]').click();
   cy.get('.p-multiselect-panel', { timeout: 1000 }).should('be.visible');
-  cy.get('.p-multiselect-panel').find('li').contains(val).click({ force: true });
+  cy.get('.p-multiselect-panel')
+    .find('li')
+    .contains(val)
+    .click({ force: true });
   cy.wait(500);
   cy.get('[data-testid="priority-filter-input"]').click();
   applyFilterAndWait();
@@ -194,7 +208,10 @@ function searchByRelease(val: string, count: number) {
   openFilter(columnsIndex.release);
   cy.get('[data-testid="iteration-filter-input"]').click();
   cy.get('.p-multiselect-panel', { timeout: 1000 }).should('be.visible');
-  cy.get('.p-multiselect-panel').find('li').contains(val).click({ force: true });
+  cy.get('.p-multiselect-panel')
+    .find('li')
+    .contains(val)
+    .click({ force: true });
   cy.wait(500);
   cy.get('[data-testid="iteration-filter-input"]').click();
   applyFilterAndWait();
@@ -205,7 +222,10 @@ function searchByStatus(val: string, count: number) {
   openFilter(columnsIndex.status);
   cy.get('[data-testid="state-filter-input"]').click();
   cy.get('.p-multiselect-panel', { timeout: 1000 }).should('be.visible');
-  cy.get('.p-multiselect-panel').find('li').contains(val).click({ force: true });
+  cy.get('.p-multiselect-panel')
+    .find('li')
+    .contains(val)
+    .click({ force: true });
   cy.wait(500);
   cy.get('[data-testid="state-filter-input"]').click();
   applyFilterAndWait();
@@ -216,7 +236,10 @@ function searchByLabels(label: string, count: number) {
   openFilter(columnsIndex.labels);
   cy.get('[data-testid="label-filter-input"]').click();
   cy.get('.p-multiselect-panel', { timeout: 1000 }).should('be.visible');
-  cy.get('.p-multiselect-panel').find('li').contains(label).click({ force: true });
+  cy.get('.p-multiselect-panel')
+    .find('li')
+    .contains(label)
+    .click({ force: true });
   cy.wait(500);
   cy.get('[data-testid="label-filter-input"]').click();
   applyFilterAndWait();

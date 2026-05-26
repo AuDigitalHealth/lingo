@@ -24,7 +24,10 @@
         "productName": {
           "conceptId": "700026611000036101",
           "pt": { "term": "Amoxil 500 mg oral capsule", "lang": "en" },
-          "fsn": { "term": "Amoxil 500 mg oral capsule (unit of use)", "lang": "en" }
+          "fsn": {
+            "term": "Amoxil 500 mg oral capsule (unit of use)",
+            "lang": "en"
+          }
         },
         "genericForm": {
           "conceptId": "385049006",

@@ -9,8 +9,14 @@
       "title": "Brand Name",
       "properties": {
         "conceptId": { "type": "string" },
-        "pt": { "type": "object", "properties": { "term": { "type": "string" } } },
-        "fsn": { "type": "object", "properties": { "term": { "type": "string" } } }
+        "pt": {
+          "type": "object",
+          "properties": { "term": { "type": "string" } }
+        },
+        "fsn": {
+          "type": "object",
+          "properties": { "term": { "type": "string" } }
+        }
       }
     },
     "containerType": {
@@ -18,8 +24,14 @@
       "title": "Container Type",
       "properties": {
         "conceptId": { "type": "string" },
-        "pt": { "type": "object", "properties": { "term": { "type": "string" } } },
-        "fsn": { "type": "object", "properties": { "term": { "type": "string" } } }
+        "pt": {
+          "type": "object",
+          "properties": { "term": { "type": "string" } }
+        },
+        "fsn": {
+          "type": "object",
+          "properties": { "term": { "type": "string" } }
+        }
       }
     },
     "containedProducts": {
@@ -41,8 +53,14 @@
             "title": "Pack Size Unit",
             "properties": {
               "conceptId": { "type": "string" },
-              "pt": { "type": "object", "properties": { "term": { "type": "string" } } },
-              "fsn": { "type": "object", "properties": { "term": { "type": "string" } } }
+              "pt": {
+                "type": "object",
+                "properties": { "term": { "type": "string" } }
+              },
+              "fsn": {
+                "type": "object",
+                "properties": { "term": { "type": "string" } }
+              }
             }
           },
           "productDetails": {
@@ -54,7 +72,10 @@
                 "title": "Brand Name",
                 "properties": {
                   "conceptId": { "type": "string" },
-                  "pt": { "type": "object", "properties": { "term": { "type": "string" } } }
+                  "pt": {
+                    "type": "object",
+                    "properties": { "term": { "type": "string" } }
+                  }
                 }
               },
               "genericForm": {
@@ -62,7 +83,10 @@
                 "title": "Form",
                 "properties": {
                   "conceptId": { "type": "string" },
-                  "pt": { "type": "object", "properties": { "term": { "type": "string" } } }
+                  "pt": {
+                    "type": "object",
+                    "properties": { "term": { "type": "string" } }
+                  }
                 }
               },
               "specificForm": {
@@ -70,7 +94,10 @@
                 "title": "Specific Form",
                 "properties": {
                   "conceptId": { "type": "string" },
-                  "pt": { "type": "object", "properties": { "term": { "type": "string" } } }
+                  "pt": {
+                    "type": "object",
+                    "properties": { "term": { "type": "string" } }
+                  }
                 }
               },
               "containerType": {
@@ -78,7 +105,10 @@
                 "title": "Container Type",
                 "properties": {
                   "conceptId": { "type": "string" },
-                  "pt": { "type": "object", "properties": { "term": { "type": "string" } } }
+                  "pt": {
+                    "type": "object",
+                    "properties": { "term": { "type": "string" } }
+                  }
                 }
               },
               "deviceType": {
@@ -86,7 +116,10 @@
                 "title": "Device Type",
                 "properties": {
                   "conceptId": { "type": "string" },
-                  "pt": { "type": "object", "properties": { "term": { "type": "string" } } }
+                  "pt": {
+                    "type": "object",
+                    "properties": { "term": { "type": "string" } }
+                  }
                 }
               },
               "quantity": {
@@ -98,7 +131,10 @@
                 "title": "Quantity Unit",
                 "properties": {
                   "conceptId": { "type": "string" },
-                  "pt": { "type": "object", "properties": { "term": { "type": "string" } } }
+                  "pt": {
+                    "type": "object",
+                    "properties": { "term": { "type": "string" } }
+                  }
                 }
               },
               "activeIngredients": {
@@ -113,7 +149,10 @@
                       "title": "Active Ingredient",
                       "properties": {
                         "conceptId": { "type": "string" },
-                        "pt": { "type": "object", "properties": { "term": { "type": "string" } } }
+                        "pt": {
+                          "type": "object",
+                          "properties": { "term": { "type": "string" } }
+                        }
                       }
                     },
                     "totalQuantity": {
@@ -125,7 +164,10 @@
                       "title": "Total Quantity Unit",
                       "properties": {
                         "conceptId": { "type": "string" },
-                        "pt": { "type": "object", "properties": { "term": { "type": "string" } } }
+                        "pt": {
+                          "type": "object",
+                          "properties": { "term": { "type": "string" } }
+                        }
                       }
                     },
                     "concentrationStrength": {
@@ -137,7 +179,10 @@
                       "title": "Concentration Strength Unit",
                       "properties": {
                         "conceptId": { "type": "string" },
-                        "pt": { "type": "object", "properties": { "term": { "type": "string" } } }
+                        "pt": {
+                          "type": "object",
+                          "properties": { "term": { "type": "string" } }
+                        }
                       }
                     }
                   }
@@ -155,7 +200,10 @@
                       "title": "Precise Ingredient",
                       "properties": {
                         "conceptId": { "type": "string" },
-                        "pt": { "type": "object", "properties": { "term": { "type": "string" } } }
+                        "pt": {
+                          "type": "object",
+                          "properties": { "term": { "type": "string" } }
+                        }
                       }
                     }
                   }
