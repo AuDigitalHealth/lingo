@@ -209,7 +209,7 @@
           </execution>
         </executions>
         <groupId>com.mycila</groupId>
-        <version>4.0.rc2</version>
+        <version>5.0.0</version>
       </plugin>
     </plugins>
   </build>
