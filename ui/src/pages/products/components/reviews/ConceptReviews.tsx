@@ -187,7 +187,12 @@ function ConceptReviews({ conceptReview }: ConceptReviewsProps) {
         />
       )}
 
-      <Grid container justifyContent="flex-end" alignItems="center">
+      <Grid
+        container
+        justifyContent="flex-end"
+        alignItems="center"
+        onClick={e => e.stopPropagation()}
+      >
         {conceptReview.unread ? (
           <Tooltip title="Unread">
             <Badge

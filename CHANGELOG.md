@@ -15,6 +15,7 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 ### Fixed
 
+- Fixed accordion collapsing in the info review screen when clicking the review (mail/approve) buttons or product status indicators (new-in-task, new-in-project, description/property change badges). Clicks on disabled buttons and plain SVG icons now stop propagating to the accordion summary.
 - Fix vaccine target population update not creating a new VTM when the existing model concept (e.g.
   a SNOMED CT International concept reused by NMPC/AMT) is owned by an external module: the preview
   no longer offers "edit in place" or "retire and replace" for those concepts. Instead the original

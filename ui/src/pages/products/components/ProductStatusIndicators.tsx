@@ -27,7 +27,12 @@ export const ProductStatusIndicators: React.FC<ProductStatusProps> = ({
   }));
 
   return (
-    <Stack direction="row" spacing={spacing} alignItems="center">
+    <Stack
+      direction="row"
+      spacing={spacing}
+      alignItems="center"
+      onClick={e => e.stopPropagation()}
+    >
       {hasHistoricalAssociationsChanged(product) && (
         <Tooltip
           title={
