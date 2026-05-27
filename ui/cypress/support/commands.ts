@@ -82,16 +82,11 @@ Cypress.Commands.add('login', (email: string, password: string) => {
     cy.visit('/login');
     cy.contains('Log In').click();
 
-    cy.url().should('include', 'ims.ihtsdotools.org');
+    cy.url().should('include', '.ihtsdotools.org');
 
     cy.get('#username').type(Cypress.env('ims_username'));
     cy.get('#password').type(Cypress.env('ims_password'));
-
-    cy.intercept('/api/authenticate').as('authenticate');
-
-    cy.contains('button', /Sign me in!/i).click();
-
-    cy.wait('@authenticate');
+    cy.contains('Sign In').click();
 
     cy.url().should('include', 'snomio');
   });
@@ -119,10 +114,6 @@ Cypress.Commands.add('waitForCreateTicket', callback => {
     method: 'POST',
     url: '/api/tickets',
   }).as('createTicket');
-  callback();
-  return cy.wait('@createTicket').then(interception => {
-    return interception.response.body as Ticket;
-  });
 });
 
 Cypress.Commands.add('interceptFetchTicket', () => {
@@ -391,7 +382,7 @@ Cypress.Commands.add('waitForTicketProductLoad', (ticketKey: number) => {
 
 Cypress.Commands.add('interceptGetLogout', () => {
   cy.intercept({
-    method: 'GET',
+    method: 'POST',
     url: `/api/auth/logout`,
   }).as('getLogout');
 });

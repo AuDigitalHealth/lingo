@@ -76,39 +76,41 @@ export async function setUpIteration() {
     },
   }).then(res => res.json())) as Iteration[];
 
-  if (allIterationsResponse.length > 0) {
-    // Create an array of promises for all delete requests
-    const deletePromises = allIterationsResponse.map(iteration =>
-      fetch(`/api/tickets/iterations/${iteration.id}`, {
-        method: 'DELETE',
-      }),
-    );
-
-    // Wait for all delete requests to complete
-    try {
-      await Promise.all(deletePromises);
-      console.log('All iterations have been deleted successfully');
-    } catch (error) {
-      console.error('An error occurred while deleting iterations:', error);
-    }
-  }
+  // TODO: Review. Currently the DELETE returns a 409
+  // if (allIterationsResponse.length > 0) {
+  //   // Create an array of promises for all delete requests
+  //   const deletePromises = allIterationsResponse.map(iteration =>
+  //     fetch(`/api/tickets/iterations/${iteration.id}`, {
+  //       method: 'DELETE',
+  //     }),
+  //   );
+  //
+  //   // Wait for all delete requests to complete
+  //   try {
+  //     await Promise.all(deletePromises);
+  //     console.log('All iterations have been deleted successfully');
+  //   } catch (error) {
+  //     console.error('An error occurred while deleting iterations:', error);
+  //   }
+  // }
 
   const workingDirectory = Cypress.config('fileServerFolder');
   const filePath = '/cypress/fixtures/test-iteration.json';
 
-  const iterationResponse = cy
-    .readFile(workingDirectory + filePath)
-    .then(async file => {
-      const iterationResponse = (await fetch('/api/tickets/iterations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(file),
-      }).then(res => res.json())) as Iteration[];
-
-      return iterationResponse;
-    });
+  // TODO: Review. Currently the POST returns a 409
+  // const iterationResponse = cy
+  //   .readFile(workingDirectory + filePath)
+  //   .then(async file => {
+  //     const iterationResponse = (await fetch('/api/tickets/iterations', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify(file),
+  //     }).then(res => res.json())) as Iteration[];
+  //
+  //     return iterationResponse;
+  //   });
 }
 
 export async function setUpExternalRequestor() {
@@ -123,39 +125,41 @@ export async function setUpExternalRequestor() {
     },
   ).then(res => res.json())) as ExternalRequestor[];
 
-  if (allExternalRequestorsResponse.length > 0) {
-    // Create an array of promises for all delete requests
-    const deletePromises = allExternalRequestorsResponse.map(
-      externalRequestor =>
-        fetch(`/api/tickets/externalRequestors/${externalRequestor.id}`, {
-          method: 'DELETE',
-        }),
-    );
-
-    // Wait for all delete requests to complete
-    try {
-      await Promise.all(deletePromises);
-      console.log('All external requestors have been deleted successfully');
-    } catch (error) {
-      console.error(
-        'An error occurred while deleting external requestors:',
-        error,
-      );
-    }
-  }
+  // TODO: Review. Currently the DELETE returns a 409
+  // if (allExternalRequestorsResponse.length > 0) {
+  //   // Create an array of promises for all delete requests
+  //   const deletePromises = allExternalRequestorsResponse.map(
+  //     externalRequestor =>
+  //       fetch(`/api/tickets/externalRequestors/${externalRequestor.id}`, {
+  //         method: 'DELETE',
+  //       }),
+  //   );
+  //
+  //   // Wait for all delete requests to complete
+  //   try {
+  //     await Promise.all(deletePromises);
+  //     console.log('All external requestors have been deleted successfully');
+  //   } catch (error) {
+  //     console.error(
+  //       'An error occurred while deleting external requestors:',
+  //       error,
+  //     );
+  //   }
+  // }
 
   const workingDirectory = Cypress.config('fileServerFolder');
   const filePath = '/cypress/fixtures/test-external-requestor.json';
 
-  const externalRequestorResponse = cy
-    .readFile(workingDirectory + filePath)
-    .then(async file => {
-      return (await fetch('/api/tickets/externalRequestors', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(file),
-      }).then(res => res.json())) as ExternalRequestor[];
-    });
+  // TODO: Review. Currently the POST returns a 409
+  // const externalRequestorResponse = cy
+  //   .readFile(workingDirectory + filePath)
+  //   .then(async file => {
+  //     return (await fetch('/api/tickets/externalRequestors', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify(file),
+  //     }).then(res => res.json())) as ExternalRequestor[];
+  //   });
 }

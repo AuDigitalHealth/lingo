@@ -14,58 +14,48 @@
 /// limitations under the License.
 ///
 
-import { setupMockInterceptors } from '../support/mock-interceptors';
+import {setupMockInterceptors} from "../support/mock-interceptors";
 
 describe('Login Spec', () => {
+
+    const login = () => {
+        cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
+    };
+
   it('loads the page', () => {
     cy.visit('/');
   });
 
-  // ── Live mode tests ────────────────────────────────────────────────────────
-
   it('logs in to ims', function () {
-    if (Cypress.env('MOCK_MODE')) return this.skip();
-    cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
+    login();
   });
 
   it('displays the dashboard', function () {
-    if (Cypress.env('MOCK_MODE')) return this.skip();
-    cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
+    login();
     cy.visit('/');
     cy.url().should('include', 'dashboard');
   });
 
-  // ── Mock mode tests ────────────────────────────────────────────────────────
 
   it('shows login page when unauthenticated', function () {
-    if (!Cypress.env('MOCK_MODE')) return this.skip();
     cy.intercept('GET', '/config', { fixture: 'api/app-config.json' });
     cy.intercept('GET', '/api/auth', {
       statusCode: 403,
       body: { error: 'Unauthorized' },
     });
     cy.visit('/');
-    cy.url().should('include', '/login').or('include', '/');
+    cy.url().should('match', /\/(login)?\/?$/);
   });
 
   it('redirects to dashboard when already authenticated', function () {
-    if (!Cypress.env('MOCK_MODE')) return this.skip();
-    setupMockInterceptors();
+    login();
     cy.visit('/');
+    cy.reload();
     cy.url().should('include', 'dashboard');
-  });
-
-  it('shows the dashboard after mocked login', function () {
-    if (!Cypress.env('MOCK_MODE')) return this.skip();
-    setupMockInterceptors();
-    cy.visit('/');
-    cy.url().should('include', 'dashboard');
-    cy.get('body').should('be.visible');
   });
 
   it('shows the user profile area in the header when logged in', function () {
-    if (!Cypress.env('MOCK_MODE')) return this.skip();
-    setupMockInterceptors();
+    login();
     cy.visit('/dashboard/tasks');
     cy.url().should('include', 'dashboard');
     cy.get('[data-testid="profile-button"]', { timeout: 10000 }).should(

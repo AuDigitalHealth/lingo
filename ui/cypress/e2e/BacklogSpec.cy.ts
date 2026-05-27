@@ -24,7 +24,6 @@ import {
   testState,
   updatePriority,
 } from './helpers/ticket';
-import { setupMockInterceptors } from '../support/mock-interceptors';
 
 const TEST_ITERATION_NAME = 'TestIteration';
 const TEST_LABELS_NAME = 'ARTG Cancelled';
@@ -44,17 +43,16 @@ const columnsIndex = {
 
 describe('Backlog Spec', () => {
   beforeEach(() => {
-    if (Cypress.env('MOCK_MODE')) {
-      setupMockInterceptors();
-    } else {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
       cy.setUpIteration();
       cy.setUpExternalRequestor();
-    }
   });
 
-  // ── Mock mode tests ────────────────────────────────────────────────────────
+    // beforeEach(() => {
+    //     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    //     cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
+    // });
 
   it('navigates to the backlog page', () => {
     cy.visit('/dashboard/tickets/backlog');
@@ -62,10 +60,8 @@ describe('Backlog Spec', () => {
   });
 
   it('displays ticket rows when tickets exist in search results', function () {
-    if (!Cypress.env('MOCK_MODE')) return this.skip();
     cy.visit('/dashboard/tickets/backlog');
     cy.url().should('include', 'dashboard/tickets/backlog');
-    cy.wait('@mockTicketSearch', { timeout: 10000 });
     cy.get('tbody > tr', { timeout: 10000 }).should('exist');
   });
 
@@ -77,23 +73,20 @@ describe('Backlog Spec', () => {
   });
 
   it('can open the create ticket modal', function () {
-    if (!Cypress.env('MOCK_MODE')) return this.skip();
     cy.visit('/dashboard/tickets/backlog');
     cy.get('[data-testid="create-ticket"]', { timeout: 10000 }).click();
     cy.get('[data-testid="create-ticket-title"]').should('be.visible');
   });
 
   it('can create a ticket via the modal', function () {
-    if (!Cypress.env('MOCK_MODE')) return this.skip();
     cy.visit('/dashboard/tickets/backlog');
     cy.get('[data-testid="create-ticket"]', { timeout: 10000 }).click();
-    cy.get('[data-testid="create-ticket-title"]').type('E2E Mocked Ticket');
+    cy.get('[data-testid="create-ticket-title"]').type('E2E Test Ticket');
     cy.get('[data-testid="create-ticket-submit"]').click();
-    cy.wait('@mockCreateTicket');
+  cy.waitForCreateTicket(() => {}).get('[id=ticket-title]').should('include.text', 'E2E Test Ticket');
   });
 
   it('shows the filter controls', function () {
-    if (!Cypress.env('MOCK_MODE')) return this.skip();
     cy.visit('/dashboard/tickets/backlog');
     cy.get('.p-datatable-thead', { timeout: 10000 }).should('be.visible');
   });
@@ -105,13 +98,10 @@ describe('Backlog Spec', () => {
     );
   });
 
-  // ── Live mode tests ────────────────────────────────────────────────────────
-
   let ticket: Ticket | undefined = undefined;
 
-  it('Set up Ticket', async function () {
-    if (Cypress.env('MOCK_MODE')) return this.skip();
-    ticket = await promisify(createTicket('TestTicket'));
+  it('Set up Ticket', async () => {
+    ticket = await promisify(createTicket('TestTicket ' + Date.now()));
     if (ticket.ticketNumber === undefined) {
       throw new Error('Invalid ticketNumber');
     }
@@ -119,7 +109,6 @@ describe('Backlog Spec', () => {
   });
 
   it('can do all filters', { scrollBehavior: false }, function () {
-    if (Cypress.env('MOCK_MODE')) return this.skip();
     visitBacklogPage();
     searchByTitle(ticket.title, 1);
     updatePriority(ticket).then(() => {
@@ -138,7 +127,6 @@ describe('Backlog Spec', () => {
   });
 
   it('can save and load filters', { scrollBehavior: false }, function () {
-    if (Cypress.env('MOCK_MODE')) return this.skip();
     visitBacklogPage();
     searchByTitle(ticket.title, 1);
     cy.get('[data-testid="backlog-filter-save"]').click();
@@ -169,7 +157,6 @@ describe('Backlog Spec', () => {
   });
 
   it('deletes the ticket', function () {
-    if (Cypress.env('MOCK_MODE')) return this.skip();
     deleteTicket(ticket);
   });
 });
