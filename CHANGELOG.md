@@ -8,8 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
+### Fixed
 
+- Fixed accordion collapsing in the info review screen when clicking the concept diagram, description or edit icon buttons inside the product preview accordion.
 
 ## [1.3.43] - 2026-05-26
 
