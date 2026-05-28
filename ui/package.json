@@ -40,7 +40,7 @@
     "cypress:open": "CYPRESS_MOCK_MODE=true cypress open",
     "cypress:run": "CYPRESS_MOCK_MODE=true cypress run",
     "cypress:open:live": "CYPRESS_MOCK_MODE=false cypress open",
-    "cypress:run:live": "CYPRESS_MOCK_MODE=false cypress run",
+    "cypress:run:live": "CYPRESS_MOCK_MODE=false cypress run --browser electron --headless",
     "remock": "bash scripts/remock.sh"
   },
   "dependencies": {

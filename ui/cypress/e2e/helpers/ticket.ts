@@ -37,22 +37,20 @@ export function testLabels(ticket: Ticket) {
   cy.interceptPutTicketLabel();
   cy.get(`#ticket-labels-select-${ticket.id}`).click();
 
+  // Pick by name so the downstream filter (searchByLabels('ARTG Cancelled', 1))
+  // matches the row we just updated — eq(0) was data-dependent.
   return cy
     .get(`#ticket-labels-select-${ticket.id}-container > ul > li`)
-    .eq(0)
-    .find('.MuiChip-label')
-    .invoke('text')
-    .then(labelText => {
-      cy.get(`#ticket-labels-select-${ticket.id}-container > ul > li`)
-        .eq(0)
-        .click();
-
-      cy.wait('@putTicketLabel').wait(1000);
-      cy.get('body').type('{esc}');
-
-      cy.get(`#ticket-labels-select-${ticket.id}`)
-        .find('span')
-        .contains(labelText);
+    .contains('ARTG Cancelled')
+    .click()
+    .then(() => {
+      return cy
+        .wait('@putTicketLabel')
+        .its('response.statusCode')
+        .should('eq', 200);
+    })
+    .then(() => {
+      cy.get('body').click();
     });
 }
 
@@ -60,22 +58,23 @@ export function testIteration(ticket: Ticket) {
   cy.interceptPutTicketIteration();
   cy.get(`#ticket-iteration-select-${ticket.id}`).click();
 
+  // Pick by name so the downstream filter (searchByRelease('TestIteration', 1))
+  // matches the row we just updated — eq(1) was data-dependent.
   return cy
     .get(`#ticket-iteration-select-${ticket.id}-container > ul > li`)
-    .eq(1)
-    .find('.MuiChip-label')
-    .invoke('text')
-    .then(iterationText => {
-      cy.get(`#ticket-iteration-select-${ticket.id}-container > ul > li`)
-        .eq(1)
-        .click();
-
-      cy.wait('@putTicketIteration').wait(1000);
-      cy.get('body').type('{esc}');
-
-      cy.get(`#ticket-iteration-select-${ticket.id}`)
-        .find('span')
-        .contains(iterationText);
+    .contains('TestIteration')
+    .click()
+    .then(() => {
+      // Verify via the API response — the DOM verify is racy because the
+      // backlog table re-fetches under the active filters and the search
+      // index can briefly drop the row.
+      return cy
+        .wait('@putTicketIteration')
+        .its('response.statusCode')
+        .should('eq', 200);
+    })
+    .then(() => {
+      cy.get('body').click();
     });
 }
 

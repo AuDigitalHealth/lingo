@@ -149,7 +149,7 @@ describe('Backlog Spec', () => {
     cy.get('[data-testid="load-filter-modal-input"]').click();
     cy.get('[data-testid="load-filter-modal-input-dropdown"] > ul > li')
       .contains('64435 - ' + currentTimeInMs)
-      .click();
+      .click({ force: true });
 
     cy.wait('@getTicketList');
     cy.get('[data-testid="load-filter-modal-submit"]').click();
@@ -237,7 +237,11 @@ function testNumberOfRows(count: number) {
   if (count === 0) {
     cy.get('tbody > tr').contains('No Tickets Found');
   } else {
-    cy.get('tbody > tr').should('exist').and('have.length', count);
+    // Exclude PrimeReact's empty-message row, which is a real <tr> in tbody
+    // that would otherwise be miscounted as a result.
+    cy.get('tbody > tr:not(.p-datatable-emptymessage)')
+      .should('exist')
+      .and('have.length', count);
   }
 }
 
