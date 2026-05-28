@@ -425,15 +425,11 @@ export function verifyGenericError(errorPattern: string) {
   cy.get('#notistack-snackbar').should('include.text', errorPattern);
 }
 export function previewWithError(error: string, branch: string) {
-  if (!Cypress.env('MOCK_MODE')) {
-    cy.waitForConceptSearch(branch);
-  }
+  cy.waitForConceptSearch(branch);
   cy.get("[data-testid='preview-btn']").should('be.visible');
   cy.get("[data-testid='preview-btn']").click();
-  if (!Cypress.env('MOCK_MODE')) {
-    cy.wait('@getConceptSearch', { responseTimeout: 600000 });
-    verifyGenericError(error);
-  }
+  cy.wait('@getConceptSearch', { responseTimeout: 600000 });
+  verifyGenericError(error);
 }
 export function addNewProduct() {
   cy.get(

@@ -14,22 +14,13 @@
 /// limitations under the License.
 ///
 
-import { setupMockInterceptors } from '../support/mock-interceptors';
 import { createNewTaskIfNotExists } from './helpers/task';
 
 describe('Task Spec', () => {
-  before(function () {
-    if (!Cypress.env('MOCK_MODE')) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
-      createNewTaskIfNotExists();
-    }
-  });
-
-  beforeEach(() => {
-    if (Cypress.env('MOCK_MODE')) {
-      setupMockInterceptors();
-    }
+  before(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
+    createNewTaskIfNotExists();
   });
 
   it('displays the my tasks page', () => {
@@ -61,18 +52,11 @@ describe('Task Spec', () => {
   });
 
   it('displays the task details edit page', () => {
-    if (Cypress.env('MOCK_MODE')) {
-      cy.visit('/dashboard/tasks/edit/AUAMT-E2E-1');
-      cy.url().should('include', 'dashboard/tasks/edit');
+    const taskCreation = createNewTaskIfNotExists();
+    taskCreation.then(value => {
+      cy.visit('/dashboard/tasks/edit/' + value);
       cy.injectAxe();
       cy.checkPageA11y();
-    } else {
-      const taskCreation = createNewTaskIfNotExists();
-      taskCreation.then(value => {
-        cy.visit('/dashboard/tasks/edit/' + value);
-        cy.injectAxe();
-        cy.checkPageA11y();
-      });
-    }
+    });
   });
 });

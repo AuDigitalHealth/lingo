@@ -31,8 +31,7 @@ import {
 } from './helpers/ticket';
 
 describe('Ticket Spec', () => {
-  beforeEach(function () {
-    if (Cypress.env('MOCK_MODE')) return this.skip();
+  beforeEach(() => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
     interceptAndFakeJiraUsers();

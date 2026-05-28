@@ -55,7 +55,6 @@
 import { TaskAssocation, Ticket } from '../../src/types/tickets/ticket';
 import { Task } from '../../src/types/task';
 import { setUpExternalRequestor, setUpIteration } from '../e2e/helpers/backlog';
-import { setupMockInterceptors } from './mock-interceptors';
 function printAccessibilityViolations(violations) {
   cy.task(
     'table',
@@ -455,45 +454,5 @@ Cypress.Commands.add('setUpExternalRequestor', () => {
 Cypress.Commands.add('onlyOn', (enabled: boolean) => {
   if (enabled !== true) {
     cy.state('runnable').ctx.skip();
-  }
-});
-
-// ─── Mock Mode Support ────────────────────────────────────────────────────────
-
-/**
- * Performs a mocked login by:
- * 1. Setting up mock interceptors for auth endpoints
- * 2. Visiting the app root - it will auto-navigate to /dashboard/tasks
- *    because the mocked /api/auth returns a valid user
- *
- * Use this instead of cy.login() when running in MOCK_MODE.
- */
-Cypress.Commands.add('loginMocked', () => {
-  setupMockInterceptors();
-  cy.visit('/');
-  cy.url().should('include', 'dashboard');
-});
-
-/**
- * Returns true if running in mock mode (CYPRESS_MOCK_MODE=true).
- * Use this to conditionally skip or adjust tests based on mode.
- */
-Cypress.Commands.add('isMockMode', () => {
-  return (
-    Cypress.env('MOCK_MODE') === true || Cypress.env('MOCK_MODE') === 'true'
-  );
-});
-
-/**
- * Mode-aware login: uses mocked login in mock mode, real login otherwise.
- * Prefer this over cy.login() in tests that should work in both modes.
- */
-Cypress.Commands.add('loginForMode', () => {
-  const isMock =
-    Cypress.env('MOCK_MODE') === true || Cypress.env('MOCK_MODE') === 'true';
-  if (isMock) {
-    cy.loginMocked();
-  } else {
-    cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
   }
 });

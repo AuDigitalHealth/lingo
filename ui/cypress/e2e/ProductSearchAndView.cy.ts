@@ -14,76 +14,34 @@
 /// limitations under the License.
 ///
 
-import { setupMockInterceptors } from '../support/mock-interceptors';
 import { verifyLoadedProduct } from './helpers/product';
 
 describe('Product Search and View Spec', () => {
   beforeEach(() => {
-    if (Cypress.env('MOCK_MODE')) {
-      setupMockInterceptors();
-    } else {
-      cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
-    }
+    cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
   });
 
-  // ── Mock mode tests ────────────────────────────────────────────────────────
-
-  it('shows the product search input on the dashboard', function () {
-    if (!Cypress.env('MOCK_MODE')) return this.skip();
-    cy.visit('/dashboard');
-    cy.wait('@mockUsers', { timeout: 10000 });
-    cy.get('[data-testid="search-product-input"]', { timeout: 10000 }).should(
-      'be.visible',
-    );
-  });
-
-  it('can type in the product search field and see results from mock', function () {
-    if (!Cypress.env('MOCK_MODE')) return this.skip();
-    cy.visit('/dashboard');
-    cy.wait('@mockUsers', { timeout: 10000 });
-    cy.get('[data-testid="search-product-input"]').type('Amoxil', { delay: 5 });
-    cy.wait('@mockConceptSearch');
-    cy.get('ul[role="listbox"]', { timeout: 10000 }).should('be.visible');
-  });
-
-  it('can select a product from search results and navigate to product view', function () {
-    if (!Cypress.env('MOCK_MODE')) return this.skip();
-    cy.visit('/dashboard');
-    cy.wait('@mockUsers', { timeout: 10000 });
-    cy.get('[data-testid="search-product-input"]').type('Amoxil', { delay: 5 });
-    cy.wait('@mockConceptSearch');
-    cy.get('li[data-option-index="0"]', { timeout: 10000 }).click();
-    cy.wait('@mockProductModel');
-    cy.url().should('include', 'products');
-  });
-
-  // ── Live mode tests ────────────────────────────────────────────────────────
-
-  it('can perform search and load single product using term', function () {
-    if (Cypress.env('MOCK_MODE')) return this.skip();
+  it('can perform search and load single product using term', () => {
     visitProductSearchPage();
     searchAndLoadProduct('Picato');
     verifyLoadedProduct(1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0);
   });
 
-  it('can perform search and load single product using sct Id', function () {
-    if (Cypress.env('MOCK_MODE')) return this.skip();
+  it('can perform search and load single product using sct Id', () => {
     visitProductSearchPage();
     setProductSearchFilter('Sct Id');
     searchAndLoadProduct('700027211000036107');
     verifyLoadedProduct(1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0);
   });
 
-  it('can perform search and load single product using Artg Id', function () {
-    if (Cypress.env('MOCK_MODE')) return this.skip();
+  it('can perform search and load single product using Artg Id', () => {
     visitProductSearchPage();
     setProductSearchFilter('Artg Id');
     searchAndLoadProduct('97190');
     verifyLoadedProduct(3, 3, 4, 4, 3, 4, 4, 0, 0, 0, 0, 0, 0, 0);
   });
 
-  it('can perform search and load Multi pack product using term', function () {
-    if (Cypress.env('MOCK_MODE')) return this.skip();
+  it('can perform search and load Multi pack product using term', () => {
     visitProductSearchPage();
     searchAndLoadProduct('hp7', 120000);
     verifyLoadedProduct(3, 3, 4, 4, 3, 4, 4, 0, 0, 0, 0, 0, 0, 0);

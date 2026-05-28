@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- Rewrote the Cypress UI test suite to run in two modes: mocked (`CYPRESS_MOCK_MODE=true`, default) using JSON fixtures and request interceptors with no real backend, and live (`CYPRESS_MOCK_MODE=false`) using `cy.login()` against a real environment. Added `cypress:open`/`cypress:run`/`cypress:open:live`/`cypress:run:live`/`remock` npm scripts and an e2e Docker harness with a self-signed `localhost` cert for the HTTPS test endpoint. (#1826)
+- Rewrote the Cypress UI test suite to run live against a deployed environment using `cy.login()` and real backend calls. Specs cover login/logout, tasks, backlog filtering, system settings, product search/view, and product authoring. The suite is driven by `npm run cypress:run` (headless) or `npm run cypress:open`, configured via `.env` (`VITE_SNOMIO_UI_TEST_URL`, `IMS_USERNAME`/`IMS_PASSWORD`, etc.). (#1826)
 
 
 ## [1.3.43] - 2026-05-26

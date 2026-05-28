@@ -22,133 +22,18 @@ import {
   IterationDto,
   LabelTypeDto,
 } from '../../src/types/tickets/ticket';
-import { setupMockInterceptors } from '../support/mock-interceptors';
 
 describe('Settings Spec', () => {
   beforeEach(() => {
-    if (Cypress.env('MOCK_MODE')) {
-      setupMockInterceptors();
-    } else {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
-      interceptAndFakeJiraUsers();
-    }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
+    interceptAndFakeJiraUsers();
   });
-
-  // ── Mock mode tests ────────────────────────────────────────────────────────
-
-  it('navigates to the labels settings page via the profile menu', function () {
-    if (!Cypress.env('MOCK_MODE')) return this.skip();
-    cy.visit('/dashboard');
-    cy.get('[data-testid="profile-button"]', { timeout: 10000 }).click();
-    cy.get('[data-testid="profile-card"]').should('exist');
-    cy.get('[data-testid="profile-card-settings-tab-button"]').click();
-    cy.get('[data-testid="profile-card-settings-tab-labels"]').click();
-    cy.url().should('include', '/dashboard/settings/label');
-  });
-
-  it('navigates directly to the labels settings page', function () {
-    if (!Cypress.env('MOCK_MODE')) return this.skip();
-    cy.visit('/dashboard/settings/label');
-    cy.url().should('include', '/dashboard/settings/label');
-    cy.wait('@mockLabels', { timeout: 10000 });
-  });
-
-  it('can open the create label modal', function () {
-    if (!Cypress.env('MOCK_MODE')) return this.skip();
-    cy.visit('/dashboard/settings/label');
-    cy.wait('@mockLabels', { timeout: 10000 });
-    cy.get("[data-testid='create-label-button']", { timeout: 10000 }).click();
-    cy.get("[data-testid='label-modal-name']").should('be.visible');
-  });
-
-  it('can create a label and see it in the list', function () {
-    if (!Cypress.env('MOCK_MODE')) return this.skip();
-    cy.intercept('POST', '/api/tickets/labelType', {
-      statusCode: 200,
-      body: {
-        id: 101,
-        version: 0,
-        created: '2026-01-01T00:00:00Z',
-        createdBy: 'e2e-test-user',
-        modified: '2026-01-01T00:00:00Z',
-        modifiedBy: 'e2e-test-user',
-        name: 'a',
-        description: 'b',
-        displayColor: { name: 'Aqua', code: '#00A8A8' },
-      },
-    }).as('createLabelMock');
-    cy.intercept('GET', '/api/tickets/labelType', {
-      statusCode: 200,
-      body: [
-        {
-          id: 101,
-          version: 0,
-          created: '2026-01-01T00:00:00Z',
-          createdBy: 'e2e-test-user',
-          modified: '2026-01-01T00:00:00Z',
-          modifiedBy: 'e2e-test-user',
-          name: 'a',
-          description: 'b',
-          displayColor: { name: 'Aqua', code: '#00A8A8' },
-        },
-      ],
-    }).as('getLabelsAfterCreate');
-
-    cy.visit('/dashboard/settings/label');
-    cy.get("[data-testid='create-label-button']", { timeout: 10000 }).click();
-    cy.get("[data-testid='label-modal-name']").type('a');
-    cy.get("[data-testid='label-modal-description']").type('b');
-    cy.get("[data-testid='label-modal-autocomplete'] > div").click();
-    cy.get("[data-testid='li-color-option-Aqua'] > div").click();
-    cy.get("[data-testid='label-modal-save']").click();
-
-    cy.wait('@createLabelMock');
-    cy.wait('@getLabelsAfterCreate');
-    cy.get("[data-rowindex='0'] > div").eq(0).contains('a');
-  });
-
-  it('navigates to the external requestors settings page', function () {
-    if (!Cypress.env('MOCK_MODE')) return this.skip();
-    cy.visit('/dashboard/settings/externalRequestors');
-    cy.url().should('include', '/dashboard/settings/externalRequestors');
-    cy.wait('@mockExternalRequestors', { timeout: 10000 });
-  });
-
-  it('can open the create external requestor modal', function () {
-    if (!Cypress.env('MOCK_MODE')) return this.skip();
-    cy.visit('/dashboard/settings/externalRequestors');
-    cy.wait('@mockExternalRequestors', { timeout: 10000 });
-    cy.get("[data-testid='create-external-requestor-button']", {
-      timeout: 10000,
-    }).click();
-    cy.get("[data-testid='external-requestor-modal-name']").should(
-      'be.visible',
-    );
-  });
-
-  it('navigates to the releases settings page', function () {
-    if (!Cypress.env('MOCK_MODE')) return this.skip();
-    cy.visit('/dashboard/settings/release');
-    cy.url().should('include', '/dashboard/settings/release');
-    cy.wait('@mockIterations', { timeout: 10000 });
-  });
-
-  it('can open the create release modal', function () {
-    if (!Cypress.env('MOCK_MODE')) return this.skip();
-    cy.visit('/dashboard/settings/release');
-    cy.wait('@mockIterations', { timeout: 10000 });
-    cy.get("[data-testid='create-release-button']", { timeout: 10000 }).click();
-    cy.get("[data-testid='release-modal-name']").should('be.visible');
-  });
-
-  // ── Live mode tests ────────────────────────────────────────────────────────
 
   it(
     'can create and edit labels',
     { scrollBehavior: false },
     async function () {
-      if (Cypress.env('MOCK_MODE')) return this.skip();
       visitDashboard();
       cy.get('[data-testid="profile-button"]').click();
       cy.get('[data-testid="profile-card"]').should('exist');
@@ -206,7 +91,6 @@ describe('Settings Spec', () => {
     'can create and edit external requestors',
     { scrollBehavior: false },
     async function () {
-      if (Cypress.env('MOCK_MODE')) return this.skip();
       visitDashboard();
       cy.get('[data-testid="profile-button"]').click();
       cy.get('[data-testid="profile-card"]').should('exist');
@@ -270,7 +154,6 @@ describe('Settings Spec', () => {
     'can create and edit releases',
     { scrollBehavior: false },
     async function () {
-      if (Cypress.env('MOCK_MODE')) return this.skip();
       visitDashboard();
       cy.get('[data-testid="profile-button"]').click();
       cy.get('[data-testid="profile-card"]').should('exist');

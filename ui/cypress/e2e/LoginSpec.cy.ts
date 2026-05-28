@@ -14,13 +14,10 @@
 /// limitations under the License.
 ///
 
-import {setupMockInterceptors} from "../support/mock-interceptors";
-
 describe('Login Spec', () => {
-
-    const login = () => {
-        cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
-    };
+  const login = () => {
+    cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
+  };
 
   it('loads the page', () => {
     cy.visit('/');
@@ -36,9 +33,17 @@ describe('Login Spec', () => {
     cy.url().should('include', 'dashboard');
   });
 
-
   it('shows login page when unauthenticated', function () {
-    cy.intercept('GET', '/config', { fixture: 'api/app-config.json' });
+    cy.intercept('GET', '/config', {
+      statusCode: 200,
+      body: {
+        appName: 'Lingo',
+        imsUrl: Cypress.env('ims_url'),
+        apUrl: Cypress.env('apUrl'),
+        apProjectKey: Cypress.env('apProjectKey'),
+        apDefaultBranch: Cypress.env('apDefaultBranch'),
+      },
+    });
     cy.intercept('GET', '/api/auth', {
       statusCode: 403,
       body: { error: 'Unauthorized' },

@@ -37,11 +37,8 @@
     "preview": "vite preview",
     "check-licenses": "node check-licenses.cjs",
     "record-npm-dependency-licenses": "node record-npm-dependency-licenses.cjs",
-    "cypress:open": "CYPRESS_MOCK_MODE=true cypress open",
-    "cypress:run": "CYPRESS_MOCK_MODE=true cypress run",
-    "cypress:open:live": "CYPRESS_MOCK_MODE=false cypress open",
-    "cypress:run:live": "CYPRESS_MOCK_MODE=false cypress run --browser electron --headless",
-    "remock": "bash scripts/remock.sh"
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run --browser electron --headless"
   },
   "dependencies": {
     "@aehrc/ecl-editor-react": "^1.1.2",
