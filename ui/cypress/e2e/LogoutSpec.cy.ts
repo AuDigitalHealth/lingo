@@ -18,8 +18,8 @@ import { visitDashboard } from './helpers/backlog';
 
 describe('Logout Spec', () => {
   beforeEach(() => {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
   });
 
   it('can logout with profile icon', { scrollBehavior: false }, () => {

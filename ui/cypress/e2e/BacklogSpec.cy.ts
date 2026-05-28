@@ -43,16 +43,16 @@ const columnsIndex = {
 
 describe('Backlog Spec', () => {
   beforeEach(() => {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
-      cy.setUpIteration();
-      cy.setUpExternalRequestor();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
+    cy.setUpIteration();
+    cy.setUpExternalRequestor();
   });
 
-    // beforeEach(() => {
-    //     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    //     cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
-    // });
+  // beforeEach(() => {
+  //     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+  //     cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
+  // });
 
   it('navigates to the backlog page', () => {
     cy.visit('/dashboard/tickets/backlog');
@@ -83,7 +83,9 @@ describe('Backlog Spec', () => {
     cy.get('[data-testid="create-ticket"]', { timeout: 10000 }).click();
     cy.get('[data-testid="create-ticket-title"]').type('E2E Test Ticket');
     cy.get('[data-testid="create-ticket-submit"]').click();
-  cy.waitForCreateTicket(() => {}).get('[id=ticket-title]').should('include.text', 'E2E Test Ticket');
+    cy.waitForCreateTicket(() => {})
+      .get('[id=ticket-title]')
+      .should('include.text', 'E2E Test Ticket');
   });
 
   it('shows the filter controls', function () {
