@@ -149,7 +149,7 @@ export function generateSuggestedProductName(
     ? `${packageDetails.productName.pt?.term}`
     : 'New Product';
   if (
-    packageDetails.containedProducts.length > 0 &&
+    packageDetails.containedProducts?.length > 0 &&
     packageDetails.containedProducts[0].value
   ) {
     suggestedName += `-${packageDetails.containedProducts[0].value}`;
@@ -168,7 +168,7 @@ export function generateSuggestedProductNameForDevice(
     ? `${packageDetails.productName.pt?.term}`
     : 'New Product';
   if (
-    packageDetails.containedProducts.length > 0 &&
+    packageDetails.containedProducts?.length > 0 &&
     packageDetails.containedProducts[0].value
   ) {
     suggestedName += `-${packageDetails.containedProducts[0].value}`;

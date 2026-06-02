@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
+- Fixed crash when `containedProducts` is undefined in `generateSuggestedProductName` and `generateSuggestedProductNameForDevice`.
+- Concepts within each group in the "Preview New Product" screen are now sorted alphanumerically by preferred term.
 
 
 ## [1.3.44] - 2026-05-27
