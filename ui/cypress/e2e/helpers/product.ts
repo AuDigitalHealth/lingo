@@ -129,23 +129,26 @@ export function getGeneratedName(packSize?: number) {
 // once loaded.) We also guard against search-index propagation lag by retrying.
 function openProductSearchListbox(
   value: string,
-  branch: string,
+  _branch: string,
   attempts: number,
 ) {
-  cy.waitForConceptSearch(branch);
+  // NB: this intentionally does NOT use `cy.wait('@getConceptSearch')`. That
+  // alias is positional (each cy.wait expects the next matching request), so
+  // across the multiple search helpers a single test calls it desynchronises
+  // and flakily times out on a "2nd request that never occurred". Instead we
+  // type, allow time for the debounced query, open the dropdown (it does not
+  // auto-open on result load — a product UX defect), and poll for an option,
+  // retrying for search-index propagation lag.
   cy.get("main [data-testid='search-product-textfield'] > div").click();
   cy.get('main [data-testid="search-product-input"] input').clear();
   cy.get('main [data-testid="search-product-input"]').type(value, {
     delay: 5,
   });
-  cy.wait(1500);
-  cy.wait('@getConceptSearch', { responseTimeout: 30000 });
+  cy.wait(3000);
   cy.get('main [data-testid="search-product-input"] input').should(
     'have.value',
     value,
   );
-  // The dropdown does not auto-open on result load — click the popup indicator
-  // to reveal the loaded options.
   cy.get('body').then($body => {
     const listboxOpen =
       $body.find('ul[role="listbox"] li[data-option-index="0"]').length > 0;
@@ -158,13 +161,13 @@ function openProductSearchListbox(
       }
     }
   });
-  cy.wait(500);
+  cy.wait(1000);
   cy.get('body').then($body => {
     const hasOption =
       $body.find('ul[role="listbox"] li[data-option-index="0"]').length > 0;
     if (!hasOption && attempts > 1) {
       cy.wait(1500);
-      openProductSearchListbox(value, branch, attempts - 1);
+      openProductSearchListbox(value, _branch, attempts - 1);
     }
   });
 }
@@ -175,6 +178,13 @@ export function searchAndLoadProduct(
   timeout: number,
   productType?: ActionType,
 ) {
+  // An all-numeric value is an SCTID. Search it via the "Sct Id" filter for a
+  // deterministic match — a "Term" search of an SCTID can fuzzy-match a
+  // different product. Term searches (hp7, nu-gel, Picato) keep the default.
+  if (/^\d+$/.test(value)) {
+    cy.get('main [data-testid="search-product-filter-input"]').click();
+    cy.contains('[role="option"]', 'Sct Id').click();
+  }
   openProductSearchListbox(value, branch, 4);
 
   cy.get('ul[role="listbox"]', { timeout: 30000 }).should('be.visible');
@@ -215,7 +225,6 @@ export function previewProduct(
   cy.get("[data-testid='preview-btn']").should('be.visible');
   if (isMedicationType(productType)) {
     cy.waitForCalculateMedicationLoad(branch);
-    cy.waitForConceptSearch(branch);
   } else if (isDeviceType(productType)) {
     cy.waitForCalculateDeviceLoad(branch);
   } else if (isBulkProduct(productType)) {
@@ -223,12 +232,11 @@ export function previewProduct(
   }
 
   cy.get("[data-testid='preview-btn']").click();
-  if (isMedicationType(productType)) {
-    cy.wait('@getConceptSearch', {
-      responseTimeout: timeout,
-      requestTimeout: 30000,
-    });
-  }
+  // The preview action is confirmed by the calculate request below
+  // (@postCalculate*). The old intermediate `@getConceptSearch` wait was
+  // positional and brittle — the preview click no longer reliably fires a
+  // concept search, so it intermittently timed out on a "2nd request" that
+  // never came.
   if (proceedWithWarning) {
     cy.wait(1000);
     cy.get('[data-testid="warning-and-proceed-btn"]', {
@@ -425,13 +433,17 @@ export function searchAndSelectAutocomplete(
         cy.get(`[data-testid="${dataTestId}"] input`).type(value);
       }
     });
-  cy.wait('@getConceptSearch', { responseTimeout: timeOut });
-  cy.wait(1000); // Adjust the wait time as needed
+  // Allow the debounced search to run. We deliberately avoid
+  // cy.wait('@getConceptSearch') here — that alias is positional and
+  // desynchronises across the many search helpers a single test calls,
+  // causing flaky "Nth request never occurred" timeouts.
+  cy.wait(3000);
 
   cy.get(`[data-testid="${dataTestId}"] input`).should('have.value', value);
   cy.get(`[data-testid="${dataTestId}"] input`).click(); // Re-focus to open listbox
-  cy.get('ul[role="listbox"]', { timeout: timeOut }).should('be.visible');
-
+  cy.get('li[data-option-index="0"]', { timeout: timeOut }).should(
+    'be.visible',
+  );
   cy.get('li[data-option-index="0"]').click();
 }
 
@@ -445,12 +457,13 @@ export function handleBrandHack(
   cy.get("[data-testid='product-creation-grid']", { timeout: timeOut }).should(
     'be.visible',
   );
-  cy.waitForConceptSearch(branch);
   cy.get(`[data-testid="${dataTestId}"]`, { timeout: timeOut }).click();
   cy.get(`[data-testid="${dataTestId}"] input`, { timeout: timeOut }) // Select the input element inside the Autocomplete
     .focus() // Focus on the input field
     .type(value, { delay: 100 });
-  cy.wait('@getConceptSearch', { responseTimeout: timeOut });
+  // Let the debounced search run (no positional @getConceptSearch wait — see
+  // searchAndSelectAutocomplete), then clear so the real value can be typed.
+  cy.wait(3000);
   cy.get(`[data-testid="${dataTestId}"] input`).clear();
 }
 export function verifyErrorMsg(dataTestId: string, expectedError) {
