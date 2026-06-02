@@ -11,12 +11,86 @@ Branch: `feature/uitest-rewrite` (post MOCK_MODE removal)
 
 ---
 
-## ProductCreation.cy.ts — 24 of 29 tests fail
+## ProductCreation.cy.ts — incremental rewrite in progress (15 pass / 6 skip / 8 fail)
 
-**Passing (5):** `Create parent branches`, `Set up Task`, `Set up Ticket`,
-`Medication: Create a new brand(Tp) fails for duplicate`, `delete task`.
+### CURRENT STATUS (verified against the redesigned UI on a local vite
+dev server that serves the fixed code and proxies to the dev backends —
+the deployed dev UI does not yet have the product-side fix, so these only
+go green in CI once the `AutoCompleteField` change is deployed)
 
-### Root failure: SCTID `700027211000036107` autocomplete returns empty after first use
+**Passing (15):** the 3 setup tests, `Create a new brand(Tp) fails for
+duplicate`, `Load and preview existing product`, `Verify Fields on package
+level`, `Validate Rule 1`, `Validate product brand name is required`,
+`Validate product pack size`, `Validate product pack size unit`, `validate a
+simple product from scratch`, `create a simple product by changing pack
+size`, `Bulk pack: Duplicate pack size`, `Bulk brand: Duplicate brand`,
+`delete task`.
+
+**Fixes applied (all verified locally):**
+
+1. **Product-side testid regression** (`AutoCompleteField.tsx`) — fall back
+   to `root_<name>` when rjsf `idSchema.$id` is undefined → restores
+   `root_productName` / `root_containerType`.
+2. **Setup timing** — 30s waits in `setupTask`/`visitBacklogPage`.
+3. **`preciseIngredient`** moved inside each `activeIngredients` item.
+4. **New-schema field paths** — `quantity`/`totalQuantity`/
+   `concentrationStrength` → `…_value` sub-field.
+5. **Search dropdown does not auto-open** — `SearchProduct.tsx` is a
+   controlled MUI Autocomplete whose `open` only toggles via `onOpen`
+   (focus/click/arrow); typing + result-load does NOT open it (a real UX
+   defect — results should show once loaded). `searchAndLoadProduct` now
+   clicks the popup indicator after the query, with retries for index lag.
+   Fixed the SCTID/`hp7` empty-listbox failures.
+6. **`loadTaskPage` redirect retry** — the `/…/ticket/<key>` route
+   intermittently redirects back to `/dashboard/tasks` when task data isn't
+   ready (proxy race), leaving no `create-new-product`. Now re-visits until
+   the ticket route sticks — **this eliminated the cascade**, so every test
+   now reaches its real logic.
+7. **Validation moved client-side** — the form now validates via rjsf and
+   shows errors in the inline `ErrorDisplay` (`role="alert"`) as
+   `Field must be populated "<prop>" (at <jsonPath>)` — there is no longer a
+   backend "Error Validating Product Definition" snackbar, and errors are not
+   per-field. `previewWithError` now asserts the `[role="alert"]` "Errors:"
+   block (and force-clicks the submit button, which an autocomplete
+   default-options dropdown can overlay); a new `verifyValidationError(path)`
+   helper matches `(at <path>)`. Recovered the 6 validation tests +
+   `validate a simple product from scratch`.
+
+**Skipped (6)** — per direction, deferred:
+
+- 4 ingredient strength-type tests: `activeIngredients` is a discriminated
+  `oneOf` (`TotalQuantity`/`Concentration`/`TotalQuantityAndConcentration`/
+  `NoStrength`); `concentrationStrength` only renders after selecting the
+  type via a MUI Select with **no `data-testid`**. Needs a label-based
+  selector or a product-side testid.
+- `Bulk pack: Invalid pack size(characters)`: `pack-size-input` is now
+  `type="number"`, so typing `'xyz'` enters nothing — stale premise.
+- `Validate product pack size when unit is each`: asserted a "Value must be
+  at least 0" error for `-0.5`, but the current build accepts negative
+  values (no `.value` error fires) — validation semantics changed; revisit.
+
+**Remaining real failures (8), by category:**
+
+- **Device flow (2):** `Verify if form is populated device type must not be
+  populated` (`…_deviceType` field doesn't render on a medication product),
+  and `Device: Create a device` (`preview-cancel` not reached).
+- **Bulk flows (2):** `Bulk pack: Create a bulk pack` and `Bulk brand:
+  create new Brand` both time out on a 2nd `getConceptSearch` that never
+  fires — the bulk search/wait sequence changed.
+- **`partial save product` (1):** SCTID is confirmed Amoxil, search/load now
+  works, but `link-Amoxil-<packSize>` never appears — partial-save link
+  format/flow to confirm.
+- **`Preview new product from scratch` (1):** `postCalculateMedicationLoad`
+  never fires — client-side validation likely blocks submit because the
+  from-scratch product is missing a now-required field (e.g. ingredient
+  strength).
+- **`Create a new brand(Tp)` (1):** `create-brand-input` intermittently not
+  found after clicking Create Brand (timing; the duplicate variant passes).
+- **`multiPack … by changing pack size` (1):** `changePackSize` can't find
+  `root_containedProducts_0_container .MuiButtonBase-root` — multi-pack
+  product structure differs (multiple contained products).
+
+### Earlier note (now explained & fixed via fix #5): SCTID `700027211000036107` autocomplete returns empty after first use
 
 The spec defines `testProductName = '700027211000036107'` and calls
 `searchAndLoadProduct(testProductName, …)` repeatedly. The autocomplete
@@ -71,25 +145,42 @@ relies on it cascades:
 | 25–27 | Bulk pack / Bulk brand                                        | `searchAndLoadProduct` grid                                      | search empty                        |
 | 28    | Bulk brand: Duplicate brand                                   | `searchAndLoadProduct` grid                                      | search empty                        |
 
-### Schema note — `root_productName`
+### Schema note — `root_productName` (UPDATED with measured evidence)
 
-Tests that call `handleBrandHack(branch, 'root_productName', …)` expect the
-medication form to render an autocomplete field with `data-testid="root_productName"`.
-The product creation grid does render with fields like "Brand Name (\*)",
-"Container Type (\*)", "Schedule (\*)", "Strength (\*)" (visible in
-screenshot of failure #8), but no element with `data-testid="root_productName"`.
+The medication schema (`GET /config/medication/<branch>/schema`) now has a
+single top-level property `packType` (a discriminator); `productName`
+lives inside `oneOf` branches and `$defs.MedicationPackageDetails`. More
+importantly, the **product authoring UI has been redesigned**.
 
-The rjsf form derives `data-testid` from `idSchema.$id` (see
-`ValueSetAutocomplete.tsx:102`), which would normally yield
-`root_productName` for a top-level `productName` schema property. The
-field appears to be rendering under a different schema key (perhaps
-`root_brandName`, or a nested key like `root_product_productName`), or the
-schema no longer exposes `productName` at top level.
+A headless dump of every `[data-testid]` on the from-scratch product
+creation grid (after `create-new-product`, form fully settled) shows:
 
-The schema is loaded at runtime from `/api/<branch>/medications/$schema`
-(approx.) — to confirm, run the spec interactively (`pnpm cypress:open`),
-inspect the rendered form's DOM, and update the test's `dataTestId`
-argument to match the actual schema key.
+```
+project-select-input, search-product-*, create-new-product,
+device-toggle, medication-toggle, bulk-pack-toggle, bulk-brand-toggle,
+product-creation-grid, create-brand-btn, root_containedProducts_container,
+product-clear-btn, partial-save-btn, create-btn, upload-json-button
+```
+
+There is **no** `root_productName`, `root_containerType`, or
+`root_artgId`. The visible "Brand Name *" field renders as a plain
+`MuiTextField` (no `data-testid`) wired to the new "create brand"
+control (`create-brand-btn` + a "+" button), not as the old rjsf
+`ValueSetAutocomplete` with `data-testid="root_productName"`. New
+elements (`device-toggle`, `medication-toggle`, `upload-json-button`,
+`create-btn`, `product-clear-btn`) confirm the grid was reworked since
+these tests (and their now-deleted mock fixtures) were written.
+
+**Implication:** every from-scratch test that calls
+`handleBrandHack(branch, 'root_productName', …)` /
+`searchAndSelectAutocomplete(branch, 'root_containerType', …)` is
+asserting against a UI that no longer exists in that shape. Fixing them
+is a **test rewrite against the new authoring UI**, not a one-line testid
+rename. The load-existing-product tests (those that call
+`searchAndLoadProduct(SCTID)` first) are a separate group whose blocker
+is the autocomplete-empties-after-first-use behaviour described above —
+that still needs to be reproduced interactively against the redesigned UI
+to determine whether it is a test-data or a product issue.
 
 ### What I tried
 
@@ -124,80 +215,55 @@ argument to match the actual schema key.
 
 ---
 
-## ProductSearchAndView.cy.ts — 1 of 4 tests fail (currently `.skip`-ed)
+## ProductSearchAndView.cy.ts — RESOLVED (4/4 passing)
 
-**Passing (3):** `can perform search and load single product using sct Id`,
-`can perform search and load single product using Artg Id`,
-`can perform search and load Multi pack product using term`.
+### Failing test: `can perform search and load single product using term`
 
-### Failing: `can perform search and load single product using term`
+`searchAndLoadProduct('Picato')` loads the first autocomplete option,
+`Picato 0.015% gel, 3 x 470 mg tubes`. That strength has two pack
+variants, so the loaded product model has 2 generic/branded packs.
 
-The test calls `searchAndLoadProduct('Picato')` and then
-`verifyLoadedProduct(1, 1, 1, 1, 1, 1, 1, …)` (expecting 1 of each
-MP/MPUU/MPP/TP/TPUU/TPP/CTPP).
+### Real counts (measured by dumping
+`[data-testid="product-group-{…}"] [data-testid="accodion-product"]`
+lengths headlessly)
 
-On the current dev catalog, "Picato" resolves to a **product family with
-two strength variants** (0.015% gel and 0.05% gel). The loaded product
-model has more accordions per group than the test expects. The first
-failed assertion is `cy.get('[data-testid="accodion-product"]').should('have.length', tpCount)`
-inside `product-group-TP` (the Brand Name group), with the error
-`Too many elements found. Found '2', expected '1'.`
+| Group | MP | MPUU | MPP | TP | TPUU | TPP | CTPP |
+| ----- | -- | ---- | --- | -- | ---- | --- | ---- |
+| Count | 1  | 1    | 2   | 1  | 1    | 2   | 2    |
 
-### What I tried
+The previously-tried combinations `(1,1,1,2,2,2,2)` and `(1,2,2,1,2,2,2)`
+were both wrong; the correct combination is `(1,1,2,1,1,2,2)`.
 
-- **Update counts to `(1,1,1,2,2,2,2)`** — still failed at the same line.
-  Either `accodion-product` is rendered more than once per visible row
-  (likely a Brand Name accordion wraps another accordion for each
-  variant), or my visual count of the screenshot is off.
-- **Update counts to `(1,2,2,1,2,2,2)`** based on visible rows in the
-  screenshot — still failed.
-- **Switch term to `'Picato 0.015% gel'`** — search returned no
-  autocomplete options at all. The preferred-term shown in UI columns is
-  not necessarily the search-indexed name.
+### Fix applied
 
-### What needs to happen
-
-1. Open Cypress interactively, run this single test, let it fail on the
-   group assertions, then in DevTools count
-   `document.querySelectorAll('[data-testid="product-group-TP"] [data-testid="accodion-product"]').length`
-   and equivalents for MP / MPUU / MPP / TPUU / TPP / CTPP.
-2. Plug those counts into the `verifyLoadedProduct(...)` call and
-   remove the `.skip`. Alternatively, pick a different term that
-   uniquely matches one Picato variant (something resolvable by the
-   Snowstorm `concepts?term=…` query — the UI preferred terms may not
-   match the search index).
+Updated `verifyLoadedProduct(1, 1, 2, 1, 1, 2, 2, 0,0,0,0,0,0,0)` and
+removed the `.skip`.
 
 ---
 
-## TaskSpec.cy.ts — 1 of 5 tests fail
+## TaskSpec.cy.ts — RESOLVED (5/5 passing)
 
-**Passing (4):** `displays the my tasks page`, `displays the all tasks
-page`, `displays the tasks needing review page`,
-`displays the tasks requested your review page`.
+### Real root cause (the earlier "wrong host" diagnosis was incorrect)
 
-### Failing: `displays the task details edit page`
+`authoring-services` **is** served from the configured base host
+(`ihtsdo.base.api.url = https://dev-snowstorm.ihtsdotools.org` + the
+`/authoring-services` path). The 403 was an **auth** problem, not a
+"host doesn't serve it" problem. The `dev-ims-ihtsdo` session cookie
+(domain `.ihtsdotools.org`) authenticates requests to either host once
+the session is active.
 
-The test calls `createNewTaskIfNotExists()` which uses
-`cy.request(Cypress.env('apUrl') + '/authoring-services/projects/my-tasks')`.
-This issues a **direct HTTP request** (no app proxy) to the Authoring
-Platform endpoint. On the current local `.env`, `VITE_AP_URL =
-https://dev-snowstorm.ihtsdotools.org`, so the request lands at
-`https://dev-snowstorm.ihtsdotools.org/authoring-services/projects/my-tasks`
-and nginx returns **403 Forbidden** (snowstorm host doesn't serve
-authoring-services).
+The actual bug: TaskSpec logged in via `before()` (runs once), but
+Cypress 13's default `testIsolation: true` clears cookies before **every**
+test and only restores the `cy.session` when `cy.login` is called again.
+Tests 1–4 passed *vacuously* (their URL/a11y assertions also pass on the
+login-redirect page), but test 5 issued a real `cy.request` to
+authoring-services with no active session → 403.
 
-The other four tests in this spec only do `cy.visit(...)` against the
-snomio UI URL (which proxies authoring-services internally), so they pass.
+### Fix applied
 
-### What needs to happen
-
-1. Set `VITE_AP_URL` in `ui/.env` to the **Authoring Platform** host
-   directly (typically `https://dev-authoring.ihtsdotools.org` or similar,
-   not the snowstorm host).
-2. Or change `createNewTaskIfNotExists` to drive the UI rather than
-   issuing a `cy.request` against the AP — visit `/dashboard/tasks`, click
-   the create-task button, etc. — so the test goes through the same
-   proxy the rest of the app does.
+Changed `before()` → `beforeEach()` for `cy.login()` (matching
+BacklogSpec/TicketSpec, which already log in per-test). No env or helper
+change needed. `VITE_AP_URL` was left pointing at the base host.
 
 ---
 
@@ -208,9 +274,9 @@ snomio UI URL (which proxies authoring-services internally), so they pass.
 | LoginSpec.cy.ts                          | 6      | 0      | 0     | All green                                                                     |
 | LogoutSpec.cy.ts                         | 2      | 0      | 0     | All green                                                                     |
 | BacklogSpec.cy.ts                        | 11     | 0      | 0     | All green (fixed earlier — see prior commits)                                 |
-| TaskSpec.cy.ts                           | 4      | 1      | 0     | `displays the task details edit page` — env config (VITE_AP_URL)              |
+| TaskSpec.cy.ts                           | 5      | 0      | 0     | RESOLVED — `before` → `beforeEach` login (testIsolation cookie clearing)       |
 | TicketSpec.cy.ts                         | 1      | 0      | 0     | All green                                                                     |
 | SystemSettingsSpec.cy.ts                 | 3      | 0      | 0     | All green                                                                     |
-| ProductSearchAndView.cy.ts               | 3      | 0      | 1     | `can perform search and load single product using term` skipped — count drift |
-| ProductCreation.cy.ts                    | 5      | 24     | 0     | One root failure cascades (see top of doc)                                    |
-| **Total (live, post-MOCK_MODE removal)** | **35** | **25** | **1** |                                                                               |
+| ProductSearchAndView.cy.ts               | 4      | 0      | 0     | RESOLVED — term test counts corrected to `(1,1,2,1,1,2,2)`, `.skip` removed   |
+| ProductCreation.cy.ts                    | 15     | 8      | 6     | Rewrite in progress — 7 root-cause fixes landed (cascade + validation recovered); remaining = device/bulk/partial-save/multipack flows (see above) |
+| **Total (live, post-MOCK_MODE removal)** | **47** | **8**  | **6** | ProductCreation product-fix only goes green in CI once `AutoCompleteField` is deployed |

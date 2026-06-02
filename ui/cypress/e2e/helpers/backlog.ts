@@ -23,7 +23,11 @@ import {
 
 export function visitBacklogPage() {
   cy.visit('/dashboard');
-  cy.waitForGetTicketList(() => cy.get('#backlog').click());
+  // The dashboard nav can be slow to render (shared dev env / proxy latency),
+  // so wait beyond Cypress's 4s default for the backlog link.
+  cy.waitForGetTicketList(() => {
+    cy.get('#backlog', { timeout: 30000 }).click();
+  });
   cy.url().should('include', 'dashboard/tickets/backlog');
 }
 

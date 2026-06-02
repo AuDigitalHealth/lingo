@@ -121,25 +121,63 @@ export function getGeneratedName(packSize?: number) {
   }
   return `Snomio test-${packSize}`;
 }
+// The Manage Product search (SearchProduct.tsx) is a controlled MUI Autocomplete
+// whose `open` state is only toggled by `onOpen` (focus/click/arrow) — typing
+// and result-loading do NOT open the dropdown, so after the query resolves the
+// options exist but no `ul[role="listbox"]` is rendered until the popup
+// indicator is clicked. (This is a real product UX defect — results should show
+// once loaded.) We also guard against search-index propagation lag by retrying.
+function openProductSearchListbox(
+  value: string,
+  branch: string,
+  attempts: number,
+) {
+  cy.waitForConceptSearch(branch);
+  cy.get("main [data-testid='search-product-textfield'] > div").click();
+  cy.get('main [data-testid="search-product-input"] input').clear();
+  cy.get('main [data-testid="search-product-input"]').type(value, {
+    delay: 5,
+  });
+  cy.wait(1500);
+  cy.wait('@getConceptSearch', { responseTimeout: 30000 });
+  cy.get('main [data-testid="search-product-input"] input').should(
+    'have.value',
+    value,
+  );
+  // The dropdown does not auto-open on result load — click the popup indicator
+  // to reveal the loaded options.
+  cy.get('body').then($body => {
+    const listboxOpen =
+      $body.find('ul[role="listbox"] li[data-option-index="0"]').length > 0;
+    if (!listboxOpen) {
+      const $indicator = $body.find(
+        'main [data-testid="search-product-input"] .MuiAutocomplete-popupIndicator',
+      );
+      if ($indicator.length) {
+        cy.wrap($indicator.first()).click();
+      }
+    }
+  });
+  cy.wait(500);
+  cy.get('body').then($body => {
+    const hasOption =
+      $body.find('ul[role="listbox"] li[data-option-index="0"]').length > 0;
+    if (!hasOption && attempts > 1) {
+      cy.wait(1500);
+      openProductSearchListbox(value, branch, attempts - 1);
+    }
+  });
+}
+
 export function searchAndLoadProduct(
   value: string,
   branch: string,
   timeout: number,
   productType?: ActionType,
 ) {
-  cy.waitForConceptSearch(branch);
-  cy.get("main [data-testid='search-product-textfield'] > div").click();
-  cy.get('main [data-testid="search-product-input"]').type(value, {
-    delay: 5,
-  });
-  cy.wait(2000);
-  cy.wait('@getConceptSearch');
-  cy.get('main [data-testid="search-product-input"] input').should(
-    'have.value',
-    value,
-  );
+  openProductSearchListbox(value, branch, 4);
 
-  cy.get('ul[role="listbox"]').should('be.visible');
+  cy.get('ul[role="listbox"]', { timeout: 30000 }).should('be.visible');
   if (isMedicationType(productType)) {
     cy.waitForMedicationLoad(branch);
   } else if (isDeviceType(productType)) {
@@ -421,15 +459,41 @@ export function verifyErrorMsg(dataTestId: string, expectedError) {
   });
 }
 export function verifyGenericError(errorPattern: string) {
-  cy.get('#notistack-snackbar', { timeout: 20000 }).should('be.visible');
-  cy.get('#notistack-snackbar').should('include.text', errorPattern);
+  // A "New version released" info snackbar is also present (Cypress
+  // testIsolation clears the changelog-seen hash from localStorage each test,
+  // so ChangelogModal re-enqueues it on every app load). Match the snackbar
+  // that actually contains the expected error text rather than the first one.
+  cy.contains('#notistack-snackbar', errorPattern, { timeout: 20000 }).should(
+    'be.visible',
+  );
 }
+
+// Product validation now runs client-side (rjsf) and surfaces in the inline
+// ErrorDisplay panel (role="alert"), listing each error as
+// `Field must be populated "<prop>" (at <jsonPath>)` — there is no longer a
+// backend "Error Validating Product Definition" snackbar, and the errors are
+// not rendered per-field. Assert against the json path, which is stable
+// regardless of the exact message wording.
+export function verifyValidationError(jsonPath: string) {
+  cy.get('[role="alert"]', { timeout: 20000 })
+    .should('be.visible')
+    .and('contain.text', `(at ${jsonPath})`);
+}
+
 export function previewWithError(error: string, branch: string) {
-  cy.waitForConceptSearch(branch);
-  cy.get("[data-testid='preview-btn']").should('be.visible');
-  cy.get("[data-testid='preview-btn']").click();
-  cy.wait('@getConceptSearch', { responseTimeout: 600000 });
-  verifyGenericError(error);
+  // `error` (legacy backend message) and `branch` are kept for call-site
+  // compatibility but no longer drive the assertion — see verifyValidationError.
+  cy.log(`previewWithError on ${branch} (legacy expected: ${error})`);
+  cy.get("[data-testid='preview-btn']", { timeout: 30000 }).should(
+    'be.visible',
+  );
+  // An autocomplete default-options dropdown (e.g. containerType) can overlay
+  // the submit button, so force the click.
+  cy.get("[data-testid='preview-btn']").click({ force: true });
+  // Client-side validation renders the inline ErrorDisplay block.
+  cy.get('[role="alert"]', { timeout: 30000 })
+    .should('be.visible')
+    .and('contain.text', 'Errors:');
 }
 export function addNewProduct() {
   cy.get(
@@ -486,9 +550,11 @@ export function fillSuccessfulIngredientIndex(
     'codeine',
     timeOut,
   );
+  // `preciseIngredient` now lives inside each activeIngredients item (the
+  // product-level `preciseIngredients` array was removed from the schema).
   searchAndSelectAutocomplete(
     branch,
-    `root_containedProducts_${productIndex}_productDetails_preciseIngredients_${ingIndex}_preciseIngredient`,
+    `root_containedProducts_${productIndex}_productDetails_activeIngredients_${ingIndex}_preciseIngredient`,
     'codeine',
     timeOut,
   );

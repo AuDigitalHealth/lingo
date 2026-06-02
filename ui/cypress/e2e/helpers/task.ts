@@ -121,9 +121,12 @@ export function setupTask(timeout: number) {
     cy.waitForGetTasks();
     cy.wait('@getTasks');
 
-    // Click the 'Create Task' button
-    cy.get("[data-testid='create-task']").click();
-    cy.get("[data-testid='task-create-title']").click().type('test-ticket');
+    // Click the 'Create Task' button. The dashboard can be slow to render its
+    // controls (shared dev env / proxy latency), so wait beyond the 4s default.
+    cy.get("[data-testid='create-task']", { timeout: 30000 }).click();
+    cy.get("[data-testid='task-create-title']", { timeout: 30000 })
+      .click()
+      .type('test-ticket');
     cy.get('[data-testid="task-create-project"]').click();
     cy.get(`[data-testid='project-option-${projectKey}']`).click();
 
@@ -167,7 +170,11 @@ export async function associateTicketToTask(ticketNumber: string) {
   return taskAssociation.id;
 }
 
-export function loadTaskPage(taskKey: string, ticketKey: string) {
+export function loadTaskPage(
+  taskKey: string,
+  ticketKey: string,
+  attempts: number = 3,
+) {
   if (taskKey === undefined) {
     throw new Error('Invalid taskKey');
   }
@@ -176,5 +183,14 @@ export function loadTaskPage(taskKey: string, ticketKey: string) {
   }
   cy.waitForGetTaskDetails(taskKey);
   cy.visit(`/dashboard/tasks/edit/${taskKey}/ticket/${ticketKey}`);
+  // The task/ticket route can redirect back to /dashboard/tasks when the task
+  // data isn't ready yet (proxy latency race), which leaves the page without
+  // the create-new-product button. Re-visit until the ticket route sticks.
+  cy.wait(2500);
+  cy.location('pathname').then(path => {
+    if (!path.includes(`/ticket/${ticketKey}`) && attempts > 1) {
+      loadTaskPage(taskKey, ticketKey, attempts - 1);
+    }
+  });
   cy.get("[data-testid='create-new-product']", { timeout: 30000 });
 }

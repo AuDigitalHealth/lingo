@@ -26,7 +26,14 @@ import { isEmptyObjectByValue } from '../../../../utils/helpers/conceptUtils.ts'
 import { compareByConceptId } from '../helpers/comparator.ts';
 
 const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
-  const { onChange, idSchema } = props;
+  const { onChange, idSchema, name } = props;
+
+  // When this field is resolved through a discriminated `oneOf` (packType /
+  // variant) the rjsf `idSchema.$id` can arrive undefined, which means the
+  // underlying autocomplete renders with no `data-testid`. Reconstruct the
+  // standard rjsf root id (`root_<name>`) so package-level fields such as
+  // `root_productName` / `root_containerType` stay addressable.
+  const fieldId = idSchema?.$id || (name ? `root_${name}` : undefined);
 
   const [rootUiSchema, setRootUiSchema] = useState(
     props?.formContext?.uiSchema || {},
@@ -161,7 +168,7 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
             {isMultivalued ? (
               <MultiValueEclAutocomplete
                 {...props}
-                id={idSchema.$id}
+                id={fieldId}
                 ecl={currentEcl}
                 showDefaultOptions={isShowDefaultOptions}
                 value={formData}
@@ -176,7 +183,7 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
             ) : (
               <EclAutocomplete
                 {...props}
-                id={idSchema.$id}
+                id={fieldId}
                 ecl={currentEcl}
                 showDefaultOptions={isShowDefaultOptions}
                 value={formData}

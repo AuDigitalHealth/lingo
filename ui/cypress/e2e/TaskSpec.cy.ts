@@ -17,7 +17,12 @@
 import { createNewTaskIfNotExists } from './helpers/task';
 
 describe('Task Spec', () => {
-  before(() => {
+  beforeEach(() => {
+    // Cypress 13 `testIsolation` clears cookies before every test, so the
+    // session must be restored per-test (cy.login is cached via cy.session).
+    // Using `before` only authenticated the first test; later tests that make
+    // a real cy.request to authoring-services then 403'd. Other specs
+    // (BacklogSpec, TicketSpec) log in via beforeEach for the same reason.
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
     createNewTaskIfNotExists();
