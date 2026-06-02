@@ -222,6 +222,9 @@ export function previewProduct(
   // warning might not happen, but if it does just skip it!
   proceedWithWarningIfHappens?: boolean,
 ) {
+  // In some layouts (e.g. the bulk-pack grid) the preview button renders
+  // below the fold, so scroll it into view before asserting visibility.
+  cy.get("[data-testid='preview-btn']").scrollIntoView();
   cy.get("[data-testid='preview-btn']").should('be.visible');
   if (isMedicationType(productType)) {
     cy.waitForCalculateMedicationLoad(branch);
@@ -440,11 +443,40 @@ export function searchAndSelectAutocomplete(
   cy.wait(3000);
 
   cy.get(`[data-testid="${dataTestId}"] input`).should('have.value', value);
-  cy.get(`[data-testid="${dataTestId}"] input`).click(); // Re-focus to open listbox
+  // Open the option list. The re-focus click usually opens it, but flakily
+  // doesn't — fall back to clicking the field's popup indicator, and give the
+  // results time to load.
+  openFieldOptionList(dataTestId, 4);
   cy.get('li[data-option-index="0"]', { timeout: timeOut }).should(
     'be.visible',
   );
   cy.get('li[data-option-index="0"]').click();
+}
+
+function openFieldOptionList(dataTestId: string, attempts: number) {
+  cy.get(`[data-testid="${dataTestId}"] input`).click();
+  cy.wait(1000);
+  cy.get('body').then($body => {
+    const open =
+      $body.find('ul[role="listbox"] li[data-option-index="0"]').length > 0;
+    if (!open) {
+      const $indicator = $body.find(
+        `[data-testid="${dataTestId}"] .MuiAutocomplete-popupIndicator`,
+      );
+      if ($indicator.length) {
+        cy.wrap($indicator.first()).click();
+        cy.wait(1000);
+      }
+    }
+  });
+  cy.get('body').then($body => {
+    const open =
+      $body.find('ul[role="listbox"] li[data-option-index="0"]').length > 0;
+    if (!open && attempts > 1) {
+      cy.wait(1500);
+      openFieldOptionList(dataTestId, attempts - 1);
+    }
+  });
 }
 
 export function handleBrandHack(

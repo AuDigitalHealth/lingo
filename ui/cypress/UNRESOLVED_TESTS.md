@@ -11,7 +11,7 @@ Branch: `feature/uitest-rewrite` (post MOCK_MODE removal)
 
 ---
 
-## ProductCreation.cy.ts — incremental rewrite in progress (17 pass / 5 fail / 7 skip)
+## ProductCreation.cy.ts — incremental rewrite in progress (~18 pass / ~3 fail / 8 skip)
 
 ### CURRENT STATUS
 
@@ -20,14 +20,15 @@ the fixed code and proxies to the dev backends — the deployed dev UI does
 not yet have the product-side fix, so these only go green in CI once the
 `AutoCompleteField` change is deployed.
 
-**Passing (17):** the 3 setup tests, both `Create a new brand(Tp)` tests
+**Passing (~18):** the 3 setup tests, both `Create a new brand(Tp)` tests
 (duplicate + create), `partial save product`, `Load and preview existing
-product`, `Verify Fields on package level`, `Validate product brand name is
-required`, `Validate product pack size`, `Validate product pack size unit`,
-`validate a simple product from scratch`, `create a simple product by
-changing pack size`, `Bulk pack: Duplicate pack size`, `Bulk brand: create
-new Brand`, `Bulk brand: Duplicate brand`, `delete task`.
-(`Validate Rule 1` passes but is intermittently flaky on the search listbox.)
+product`, `Verify Fields on package level`, `Validate Rule 1`, `Validate
+product brand name is required`, `Validate product pack size`, `Validate
+product pack size unit`, `validate a simple product from scratch`, `create a
+simple product by changing pack size`, `Bulk pack: Create a bulk pack`,
+`Bulk pack: Duplicate pack size`, `Bulk brand: create new Brand`, `Bulk
+brand: Duplicate brand`, `delete task`. (See residual flakiness below — the
+exact passing set varies by ±1 per run.)
 
 **Fixes applied (all verified locally):**
 
@@ -74,14 +75,26 @@ new Brand`, `Bulk brand: Duplicate brand`, `delete task`.
     `searchAndSelectAutocomplete`, `handleBrandHack`, and `previewProduct` now
     poll/settle instead. Fixed both bulk-brand tests and the brand-create
     flake; the preview action is confirmed by `@postCalculate*` instead.
+11. **`previewProduct` scrolls the preview button into view** before asserting
+    visibility — in the bulk-pack grid it renders below the fold. Fixed
+    `Bulk pack: Create a bulk pack`.
+12. **`searchAndSelectAutocomplete` opens the option list robustly** — the
+    rjsf field dropdown sometimes didn't open on the re-focus click; it now
+    falls back to the field's popup indicator and retries. Stabilised
+    `Validate Rule 1` and the other multi-field-fill tests.
 
-**Skipped (7)** — per direction, deferred:
+**Skipped (8)** — deferred / obsolete:
 
 - 4 ingredient strength-type tests: `activeIngredients` is a discriminated
   `oneOf` (`TotalQuantity`/`Concentration`/`TotalQuantityAndConcentration`/
   `NoStrength`); `concentrationStrength` only renders after selecting the
   type via a MUI Select with **no `data-testid`**. Needs a label-based
   selector or a product-side testid.
+- `Verify if form is populated device type must not be populated`: schema-
+  obsolete. Medication (`genericForm`, no `deviceType`) and drug-device
+  (`deviceType`, no `genericForm`) are now mutually-exclusive `oneOf`
+  branches, so `deviceType` can't be populated alongside a form — the rule
+  is enforced structurally and can't be driven from the UI.
 - `Preview new product from scratch`: building a valid product from scratch
   now requires an ingredient strength (a no-strength ingredient fails
   client-side validation on `basisOfStrengthSubstance`/`totalQuantity`), so
@@ -93,25 +106,31 @@ new Brand`, `Bulk brand: Duplicate brand`, `delete task`.
   at least 0" error for `-0.5`, but the current build accepts negative
   values (no `.value` error fires) — validation semantics changed; revisit.
 
-**Remaining real failures (5), distinct flows not yet investigated:**
+**Remaining hard failures (2), each a distinct flow that needs its own fix:**
 
-- **`Verify if form is populated device type must not be populated`:**
-  `root_containedProducts_0_productDetails_deviceType` doesn't render on a
-  medication product — the device-type field is gated by product type.
-- **`Device: Create a device by changing pack size`:** `preview-cancel` is
-  never reached on the device flow (device preview/calculate).
-- **`Bulk pack: Create a bulk pack`:** a button never becomes visible after
-  entering the pack size — bulk-pack create flow changed.
-- **`multiPack … by changing pack size`:** `changePackSize` can't find
-  `root_containedProducts_0_container .MuiButtonBase-root` — a multi-pack
-  product has a different contained-product structure.
-- **`Validate Rule 1`:** passes but is intermittently flaky on the search
-  listbox not opening; needs the same poll-based hardening verified.
+- **`multiPack … by changing pack size`:** a multi-pack (`hp7`) loads a
+  nested **Contained Packages** structure, so `changePackSize`'s
+  `root_containedProducts_0_container` selector doesn't exist — it would be
+  `root_containedPackages_0_…` then the contained product within. Needs a
+  multi-pack-aware `changePackSize` (capture the nested testids from the
+  loaded `hp7` DOM).
+- **`Device: Create a device by changing pack size`:** `POST
+/api/<branch>/devices/product/$calculate` returns **400** (the device
+  preview/calculate is rejected server-side), so `preview-cancel` is never
+  reached. This looks like a real backend/data issue (or a changed device
+  payload), not a pure test fix — confirm the `nu-gel` device flow on dev
+  manually / capture the 400 response body.
 
-> Note: full-spec runs (~14 min, with video) intermittently SIGKILL (OOM) on
-> this machine near the end. The 17-pass figure is from a clean full run
-> (run12); later helper hardening (fixes 9–10) is safe and was confirmed not
-> to regress the validation/brand tests before an OOM crash cut a run short.
+**Residual flakiness:** the exact pass count varies by ±1 between runs
+(~18–19). The rotating offender is usually a search listbox not opening or
+`verifyNewConceptCreated` racing the product-model accordions after a
+create. The poll-based hardening (fixes 5, 10, 12) reduced but didn't fully
+eliminate this; a further pass could replace the remaining fixed `cy.wait`s
+with condition polling.
+
+> Note: full-spec runs with video on intermittently SIGKILL (OOM) on this
+> machine near the end. Run with `--config video=false` (CYPRESS_VIDEO=false)
+> for a stable full run.
 
 ### Earlier note (now explained & fixed via fix #5): SCTID `700027211000036107` autocomplete returns empty after first use
 
@@ -293,14 +312,14 @@ change needed. `VITE_AP_URL` was left pointing at the base host.
 
 ## Summary by spec
 
-| Spec                                     | Pass   | Fail  | Skip  | Notes                                                                                                                       |
-| ---------------------------------------- | ------ | ----- | ----- | --------------------------------------------------------------------------------------------------------------------------- |
-| LoginSpec.cy.ts                          | 6      | 0     | 0     | All green                                                                                                                   |
-| LogoutSpec.cy.ts                         | 2      | 0     | 0     | All green                                                                                                                   |
-| BacklogSpec.cy.ts                        | 11     | 0     | 0     | All green (fixed earlier — see prior commits)                                                                               |
-| TaskSpec.cy.ts                           | 5      | 0     | 0     | RESOLVED — `before` → `beforeEach` login (testIsolation cookie clearing)                                                    |
-| TicketSpec.cy.ts                         | 1      | 0     | 0     | All green                                                                                                                   |
-| SystemSettingsSpec.cy.ts                 | 3      | 0     | 0     | All green                                                                                                                   |
-| ProductSearchAndView.cy.ts               | 4      | 0     | 0     | RESOLVED — term test counts corrected to `(1,1,2,1,1,2,2)`, `.skip` removed                                                 |
-| ProductCreation.cy.ts                    | 17     | 5     | 7     | Rewrite in progress — 10 root-cause fixes landed; remaining = device/bulk-pack/multipack flows + 1 search flake (see above) |
-| **Total (live, post-MOCK_MODE removal)** | **49** | **5** | **7** | ProductCreation product-fix only goes green in CI once `AutoCompleteField` is deployed                                      |
+| Spec                                     | Pass    | Fail   | Skip  | Notes                                                                                                                             |
+| ---------------------------------------- | ------- | ------ | ----- | --------------------------------------------------------------------------------------------------------------------------------- |
+| LoginSpec.cy.ts                          | 6       | 0      | 0     | All green                                                                                                                         |
+| LogoutSpec.cy.ts                         | 2       | 0      | 0     | All green                                                                                                                         |
+| BacklogSpec.cy.ts                        | 11      | 0      | 0     | All green (fixed earlier — see prior commits)                                                                                     |
+| TaskSpec.cy.ts                           | 5       | 0      | 0     | RESOLVED — `before` → `beforeEach` login (testIsolation cookie clearing)                                                          |
+| TicketSpec.cy.ts                         | 1       | 0      | 0     | All green                                                                                                                         |
+| SystemSettingsSpec.cy.ts                 | 3       | 0      | 0     | All green                                                                                                                         |
+| ProductSearchAndView.cy.ts               | 4       | 0      | 0     | RESOLVED — term test counts corrected to `(1,1,2,1,1,2,2)`, `.skip` removed                                                       |
+| ProductCreation.cy.ts                    | ~18     | ~3     | 8     | Rewrite in progress — 12 fixes landed; remaining hard fails = multipack (nested) + device (\$calculate 400); ±1 flake (see above) |
+| **Total (live, post-MOCK_MODE removal)** | **~50** | **~3** | **8** | ProductCreation product-fix only goes green in CI once `AutoCompleteField` is deployed                                            |

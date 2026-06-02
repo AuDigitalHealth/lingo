@@ -335,7 +335,13 @@ describe('Product creation Spec', () => {
     verifyValidationError('.containedProducts.0.value');
   });
 
-  it('Medication: Verify if form is populated device type must not be populated', () => {
+  // SKIPPED: schema-obsolete. The product model now splits medication
+  // (genericForm, no deviceType) and drug-device (deviceType, no genericForm)
+  // into mutually-exclusive `oneOf` branches, so `…_deviceType` never renders
+  // alongside a populated form — the "Form populated => Device must not be
+  // populated" rule is enforced structurally and can't be driven from the UI.
+  // See UNRESOLVED_TESTS.md.
+  it.skip('Medication: Verify if form is populated device type must not be populated', () => {
     const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
     const tOut = timeOut;
     const product2 = testProduct2;
