@@ -284,19 +284,61 @@ export function previewProduct(
   scrollTillElementIsVisible('preview-cancel');
 }
 
+// Select the ingredient "strength type" (Product Template) for a contained
+// product. This drives the discriminated strength sub-schema:
+//   "Total Quantity Only"                              -> totalQuantity only
+//   "Concentration Strength Only"                      -> concentrationStrength only
+//   "Total Quantity, Concentration Strength, and Size" -> both + unit size
+//   "No Strength"                                      -> neither
+// It renders via CustomSelectWidget (a MUI <TextField select>) which now emits
+// data-testid={id}; the resolved id is
+// root_containedProducts_<i>_productDetails_productType. Changing it triggers
+// updateSchemaOnChange, so the strength sub-fields re-render — fill them AFTER
+// calling this.
+export function selectProductStrengthType(
+  productIndex: number,
+  optionLabel: string,
+) {
+  const testId = `root_containedProducts_${productIndex}_productDetails_productType`;
+  cy.get(`[data-testid="${testId}"]`, { timeout: 20000 }).should('be.visible');
+  cy.get(`[data-testid="${testId}"] [role="combobox"]`)
+    .first()
+    .click({ force: true });
+  cy.get('ul[role="listbox"]', { timeout: 20000 }).should('be.visible');
+  cy.contains('li[role="option"]', optionLabel).click();
+  // updateSchemaOnChange re-renders the strength sub-fields.
+  cy.wait(2000);
+}
+
 export function changePackSize(packSize: number) {
   cy.wait(2000);
-  cy.get(
-    '[data-testid="root_containedProducts_0_container"] .MuiButtonBase-root',
-  )
-    .first()
-    .click();
-  cy.wait(1000);
-  cy.get('[data-testid="root_containedProducts_0_value"] input').clear();
-  cy.get('[data-testid="root_containedProducts_0_value"] input').type(
-    packSize.toString(),
-    { delay: 5 },
-  );
+  // A normal pack exposes the contained product at the top level
+  // (root_containedProducts_0_*). A multi-pack (e.g. hp7) instead nests the
+  // products one level down under the first contained package
+  // (root_containedPackages_0_packageDetails_containedProducts_0_*). Pick the
+  // base path that's actually present so the same helper drives both shapes.
+  cy.get('body').then($body => {
+    const isFlat =
+      $body.find('[data-testid="root_containedProducts_0_container"]').length >
+      0;
+    // A normal pack exposes the contained product at the top level
+    // (root_containedProducts_0). A multi-pack (e.g. hp7) instead nests the
+    // sub-packs under containedPackages — the redesigned-UI rename of what the
+    // old flat model surfaced as the top-level contained product. So for a
+    // multi-pack the equivalent "pack size" is the first sub-pack's quantity
+    // (root_containedPackages_0_value), whose accordion is collapsed on load.
+    const base = isFlat
+      ? 'root_containedProducts_0'
+      : 'root_containedPackages_0';
+    cy.get(`[data-testid="${base}_container"] .MuiButtonBase-root`)
+      .first()
+      .click();
+    cy.wait(1000);
+    cy.get(`[data-testid="${base}_value"] input`).clear();
+    cy.get(`[data-testid="${base}_value"] input`).type(packSize.toString(), {
+      delay: 5,
+    });
+  });
   cy.wait(2000);
 }
 export function setBulkPackSize(packSize: string) {
@@ -446,6 +488,24 @@ export function searchAndSelectAutocomplete(
   // Open the option list. The re-focus click usually opens it, but flakily
   // doesn't — fall back to clicking the field's popup indicator, and give the
   // results time to load.
+  openFieldOptionList(dataTestId, 4);
+  cy.get('li[data-option-index="0"]', { timeout: timeOut }).should(
+    'be.visible',
+  );
+  cy.get('li[data-option-index="0"]').click();
+}
+
+// For an AutoCompleteField configured with showDefaultOptions (e.g. the device
+// specificDeviceType, whose options are descendants of the chosen deviceType),
+// open the field and select the first offered option without needing a search
+// term.
+export function selectFirstAutocompleteOption(
+  dataTestId: string,
+  timeOut: number,
+) {
+  cy.get(`[data-testid="${dataTestId}"]`, { timeout: timeOut }).should(
+    'be.visible',
+  );
   openFieldOptionList(dataTestId, 4);
   cy.get('li[data-option-index="0"]', { timeout: timeOut }).should(
     'be.visible',

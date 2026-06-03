@@ -62,5 +62,14 @@ export default defineConfig({
     numTestsKeptInMemory: 4,
     screenshotOnRunFailure: true,
     video: true,
+    // The product-authoring flows depend on many sequential debounced
+    // autocomplete searches against the shared dev terminology server, whose
+    // index occasionally lags (a 200 returns but the MUI listbox renders no
+    // option). Each such step is individually reliable, so retry failed tests
+    // in CI rather than let a transient empty-listbox fail the run.
+    retries: {
+      runMode: 2,
+      openMode: 0,
+    },
   },
 });

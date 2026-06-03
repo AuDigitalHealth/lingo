@@ -109,6 +109,7 @@ const CustomSelectWidget: React.FC<WidgetProps> = props => {
         <TextField
           select
           id={id}
+          data-testid={id}
           value={value || ''}
           label={uiSchema?.['ui:title'] || schema.title || 'Select'}
           disabled={shouldDisableDropdown}

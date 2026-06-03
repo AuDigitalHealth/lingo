@@ -11,6 +11,56 @@ Branch: `feature/uitest-rewrite` (post MOCK_MODE removal)
 
 ---
 
+## UPDATE (2026-06-03) — strength / device / multipack tests fixed
+
+Ran the suite live (local vite serving the fixed UI, proxied to the dev
+backends). **ProductCreation now: 23 pass / 0 fail / 6 skip** in the full
+sequential run (with `retries: { runMode: 2 }` in `cypress.config.ts`).
+
+**Fixed (were failing/skipped):**
+
+- **Ingredient strength-type selector** — `CustomSelectWidget.tsx` now emits
+  `data-testid={id}`, so the "Product Template" select resolves as
+  `root_containedProducts_0_productDetails_productType`. New helper
+  `selectProductStrengthType(productIndex, optionLabel)`. The four
+  strength-alignment tests select **"Total Quantity, Concentration Strength, and
+  Size"** before filling the strength fields, and now also fill the required
+  `basisOfStrengthSubstance` (BoSS). The two **Fail** alignment tests pass
+  reliably.
+- **Device: Create a device by changing pack size** — the 400 was
+  `Either newSpecificDeviceName or specificDeviceType must be populated`; the
+  loaded `nu-gel` carries only the generic `deviceType`. The test now selects a
+  `specificDeviceType` (new helper `selectFirstAutocompleteOption`, using the
+  field's `showDefaultOptions`). Passes.
+- **create a multiPack product by changing pack size** — `changePackSize` is now
+  multi-pack-aware: a multi-pack (`hp7` = Esomeprazole Hp7) nests sub-packs under
+  `containedPackages`, so it expands `root_containedPackages_0_container` and
+  edits `root_containedPackages_0_value`. The structure totals matched the
+  original `(3,3,4,4,3,4,4)`; the redesigned UI flags **one** new pack per level
+  (re-measured `…,0,0,1,0,0,1,1`), not two. Passes.
+
+**Still skipped — verified individually but flaky in the full sequential run
+(3):** `Preview new product from scratch`, `Success …values are aligned`,
+`Success …denominator unit show warning`. These are the only tests that need a
+*fully successful* preview, so every one of their many debounced autocomplete
+searches must return options. Run after the brand-create / partial-save tests on
+the same shared task branch, the dev terminology index intermittently returns an
+empty listbox for one field (200 with no options); this blocks the build and
+survives test retries. **They pass when run in isolation.** To enable in CI:
+stabilise the autocomplete search (re-trigger the debounced query on an empty
+listbox) or give each test its own task branch.
+
+**Still skipped — genuinely obsolete (3), see per-test notes below:**
+`Validate product pack size when unit is each` (negative values now accepted —
+new rule is "value must be 1 when unit is each"), `Verify if form is populated
+device type must not be populated` (medication vs drug-device are now
+mutually-exclusive `oneOf` branches — not drivable from the UI), `Bulk pack:
+Invalid pack size(characters)` (`pack-size-input` is now `type="number"`).
+
+The original (pre-fix) diagnosis for these is retained below for context.
+
+---
+
 ## ProductCreation.cy.ts — incremental rewrite in progress (~18 pass / ~3 fail / 8 skip)
 
 ### CURRENT STATUS
