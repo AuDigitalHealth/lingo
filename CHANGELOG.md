@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
+- Fixed task association not disappearing from the UI after clicking the bin button on the backlog ticket view.
+- Fixed Trivy pipeline failures caused by a context-cancel crash on `ui/pom.xml` and Maven Central
+  429 rate-limit errors during parent POM resolution. `ui/pom.xml` is now skipped (build plugins
+  only, no runtime deps); all scans run with `--offline-scan` backed by a cached
+  `mvn dependency:go-offline` pre-populate step to prevent remote Maven Central requests.
 - Fixed crash when `containedProducts` is undefined in `generateSuggestedProductName` and `generateSuggestedProductNameForDevice`.
 - Concepts within each group in the "Preview New Product" screen are now sorted alphanumerically by preferred term.
 
