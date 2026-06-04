@@ -224,7 +224,14 @@ describe('Product creation Spec', () => {
       'mg',
       timeOut,
     );
-    fillContainedProductPackDetails(branch, 0, testProduct2, 1, 'Each', timeOut);
+    fillContainedProductPackDetails(
+      branch,
+      0,
+      testProduct2,
+      1,
+      'Each',
+      timeOut,
+    );
     previewProduct(branch, timeOut);
   });
 
