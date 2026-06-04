@@ -20,12 +20,12 @@ search-index lag. That premise was wrong. Two real causes, both confirmed live:
 
 1. **Wrong-option selection race.** `searchAndSelectAutocomplete` clicked
    `li[data-option-index="0"]` blindly. Under load the listbox can still hold
-   the *unfiltered default* option set when the helper clicks (observed
+   the _unfiltered default_ option set when the helper clicks (observed
    `domOpts=81` vs the filtered `4` for `genericForm="injection"`), so it
    selected the wrong concept. For a parent field that poisons the dependent
    child's ECL (`useDependantUpdates` substitutes the parent `conceptId` into
    `getEcl`), producing an **empty child listbox** — exactly the symptom blamed
-   on "index lag" (a same-origin backend probe showed the term *always* had
+   on "index lag" (a same-origin backend probe showed the term _always_ had
    results). Fix: select the option whose **text matches** the typed term
    (exact → startsWith → includes → fall back to index 0).
 2. **Incomplete product (deterministic).** The from-scratch builders never
@@ -73,7 +73,7 @@ sequential run (with `retries: { runMode: 2 }` in `cypress.config.ts`).
 **Still skipped — verified individually but flaky in the full sequential run
 (3):** `Preview new product from scratch`, `Success …values are aligned`,
 `Success …denominator unit show warning`. These are the only tests that need a
-*fully successful* preview, so every one of their many debounced autocomplete
+_fully successful_ preview, so every one of their many debounced autocomplete
 searches must return options. Run after the brand-create / partial-save tests on
 the same shared task branch, the dev terminology index intermittently returns an
 empty listbox for one field (200 with no options); this blocks the build and
@@ -393,14 +393,14 @@ change needed. `VITE_AP_URL` was left pointing at the base host.
 
 ## Summary by spec
 
-| Spec                                     | Pass    | Fail   | Skip  | Notes                                                                                                                             |
-| ---------------------------------------- | ------- | ------ | ----- | --------------------------------------------------------------------------------------------------------------------------------- |
-| LoginSpec.cy.ts                          | 6       | 0      | 0     | All green                                                                                                                         |
-| LogoutSpec.cy.ts                         | 2       | 0      | 0     | All green                                                                                                                         |
-| BacklogSpec.cy.ts                        | 11      | 0      | 0     | All green (fixed earlier — see prior commits)                                                                                     |
-| TaskSpec.cy.ts                           | 5       | 0      | 0     | RESOLVED — `before` → `beforeEach` login (testIsolation cookie clearing)                                                          |
-| TicketSpec.cy.ts                         | 1       | 0      | 0     | All green                                                                                                                         |
-| SystemSettingsSpec.cy.ts                 | 3       | 0      | 0     | All green                                                                                                                         |
-| ProductSearchAndView.cy.ts               | 4       | 0      | 0     | RESOLVED — term test counts corrected to `(1,1,2,1,1,2,2)`, `.skip` removed                                                       |
-| ProductCreation.cy.ts                    | ~18     | ~3     | 8     | Rewrite in progress — 12 fixes landed; remaining hard fails = multipack (nested) + device (\$calculate 400); ±1 flake (see above) |
-| **Total (live, post-MOCK_MODE removal)** | **~50** | **~3** | **8** | ProductCreation product-fix only goes green in CI once `AutoCompleteField` is deployed                                            |
+| Spec                                     | Pass   | Fail  | Skip  | Notes                                                                                                                                                                                                                                                                             |
+| ---------------------------------------- | ------ | ----- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| LoginSpec.cy.ts                          | 6      | 0     | 0     | All green                                                                                                                                                                                                                                                                         |
+| LogoutSpec.cy.ts                         | 2      | 0     | 0     | All green                                                                                                                                                                                                                                                                         |
+| BacklogSpec.cy.ts                        | 11     | 0     | 0     | All green (fixed earlier — see prior commits)                                                                                                                                                                                                                                     |
+| TaskSpec.cy.ts                           | 5      | 0     | 0     | RESOLVED — `before` → `beforeEach` login (testIsolation cookie clearing)                                                                                                                                                                                                          |
+| TicketSpec.cy.ts                         | 1      | 0     | 0     | All green                                                                                                                                                                                                                                                                         |
+| SystemSettingsSpec.cy.ts                 | 3      | 0     | 0     | All green                                                                                                                                                                                                                                                                         |
+| ProductSearchAndView.cy.ts               | 4      | 0     | 0     | RESOLVED — term test counts corrected to `(1,1,2,1,1,2,2)`, `.skip` removed                                                                                                                                                                                                       |
+| ProductCreation.cy.ts                    | 26     | 0     | 3     | At committed `retries: 2` (CI). 3 success-preview tests un-skipped & fixed (2026-06-04); 3 remaining skips are genuinely obsolete. Verified deterministically at `retries: 0` = 23 pass / 3 fail / 3 skip (the 3 fails are pre-existing transient flakes masked by `retries: 2`). |
+| **Total (live, post-MOCK_MODE removal)** | **58** | **0** | **3** | ProductCreation product-fix only goes green in CI once `AutoCompleteField` (+ `CustomSelectWidget`) is deployed                                                                                                                                                                   |
