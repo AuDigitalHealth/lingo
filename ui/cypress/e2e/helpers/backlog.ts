@@ -72,98 +72,110 @@ export function interceptAndFakeJiraUsers(): void {
   });
 }
 
-export async function setUpIteration() {
-  const allIterationsResponse = (await fetch('/api/tickets/iterations', {
+// Fixture payloads (previously cypress/fixtures/test-iteration.json and
+// test-external-requestor.json). Inlined as constants because these plain
+// async helpers can't use cy.readFile — a queued Cypress command can't be
+// awaited from a Promise.
+const TEST_ITERATION = {
+  name: 'TestIteration',
+  startDate: '2024-09-30T14:00:00.000Z',
+  endDate: '2024-10-30T14:00:00.000Z',
+  active: true,
+  completed: false,
+};
+
+const TEST_EXTERNAL_REQUESTOR = {
+  name: 'TestExternalRequestor',
+  description: 'A test',
+  displayColor: '#F04134',
+};
+
+// Ensure the test iteration EXISTS (idempotent get-or-create). Called from
+// BacklogSpec / TicketSpec `beforeEach`, so it must be safe to run repeatedly.
+//
+// The original reset — DELETE every iteration, then POST the fixture — could
+// never work on the shared/populated dev environment and was disabled:
+//   • DELETE → 409 ResourceInUseProblem: an iteration mapped to any ticket
+//     can't be deleted (IterationController.deleteIteration), and a blanket
+//     delete would wipe other users' shared data.
+//   • POST  → 409 ResourceAlreadyExists: once the fixture iteration exists,
+//     re-POSTing the same name conflicts (IterationController.createIteration).
+// Both 409s are intentional backend guards, not bugs — so the correct test
+// setup is get-or-create: reuse the fixture iteration when present, create it
+// only when missing.
+export async function setUpIteration(): Promise<Iteration> {
+  const existing = (await fetch('/api/tickets/iterations', {
     method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
   }).then(res => res.json())) as Iteration[];
 
-  // TODO: Review. Currently the DELETE returns a 409
-  // if (allIterationsResponse.length > 0) {
-  //   // Create an array of promises for all delete requests
-  //   const deletePromises = allIterationsResponse.map(iteration =>
-  //     fetch(`/api/tickets/iterations/${iteration.id}`, {
-  //       method: 'DELETE',
-  //     }),
-  //   );
-  //
-  //   // Wait for all delete requests to complete
-  //   try {
-  //     await Promise.all(deletePromises);
-  //     console.log('All iterations have been deleted successfully');
-  //   } catch (error) {
-  //     console.error('An error occurred while deleting iterations:', error);
-  //   }
-  // }
+  const found = existing.find(i => i.name === TEST_ITERATION.name);
+  if (found) {
+    return found;
+  }
 
-  const workingDirectory = Cypress.config('fileServerFolder');
-  const filePath = '/cypress/fixtures/test-iteration.json';
+  const response = await fetch('/api/tickets/iterations', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(TEST_ITERATION),
+  });
 
-  // TODO: Review. Currently the POST returns a 409
-  // const iterationResponse = cy
-  //   .readFile(workingDirectory + filePath)
-  //   .then(async file => {
-  //     const iterationResponse = (await fetch('/api/tickets/iterations', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: JSON.stringify(file),
-  //     }).then(res => res.json())) as Iteration[];
-  //
-  //     return iterationResponse;
-  //   });
+  // Tolerate a concurrent create (409 ResourceAlreadyExists): re-fetch and use
+  // the existing iteration.
+  if (response.status === 409) {
+    const refetched = (await fetch('/api/tickets/iterations', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    }).then(res => res.json())) as Iteration[];
+    const conflict = refetched.find(i => i.name === TEST_ITERATION.name);
+    if (conflict) {
+      return conflict;
+    }
+  }
+  if (!response.ok) {
+    throw new Error(
+      `Failed to create test iteration (${response.status}): ${await response.text()}`,
+    );
+  }
+  return (await response.json()) as Iteration;
 }
 
-export async function setUpExternalRequestor() {
-  // Fetch all external requestors
-  const allExternalRequestorsResponse = (await fetch(
-    '/api/tickets/externalRequestors',
-    {
+// Ensure the test external requestor EXISTS (idempotent get-or-create) — same
+// rationale and 409 guards as setUpIteration above
+// (ExternalRequestorController.createExternalRequestor / deleteExternalRequestor).
+export async function setUpExternalRequestor(): Promise<ExternalRequestor> {
+  const existing = (await fetch('/api/tickets/externalRequestors', {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  }).then(res => res.json())) as ExternalRequestor[];
+
+  const found = existing.find(e => e.name === TEST_EXTERNAL_REQUESTOR.name);
+  if (found) {
+    return found;
+  }
+
+  const response = await fetch('/api/tickets/externalRequestors', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(TEST_EXTERNAL_REQUESTOR),
+  });
+
+  if (response.status === 409) {
+    const refetched = (await fetch('/api/tickets/externalRequestors', {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    },
-  ).then(res => res.json())) as ExternalRequestor[];
-
-  // TODO: Review. Currently the DELETE returns a 409
-  // if (allExternalRequestorsResponse.length > 0) {
-  //   // Create an array of promises for all delete requests
-  //   const deletePromises = allExternalRequestorsResponse.map(
-  //     externalRequestor =>
-  //       fetch(`/api/tickets/externalRequestors/${externalRequestor.id}`, {
-  //         method: 'DELETE',
-  //       }),
-  //   );
-  //
-  //   // Wait for all delete requests to complete
-  //   try {
-  //     await Promise.all(deletePromises);
-  //     console.log('All external requestors have been deleted successfully');
-  //   } catch (error) {
-  //     console.error(
-  //       'An error occurred while deleting external requestors:',
-  //       error,
-  //     );
-  //   }
-  // }
-
-  const workingDirectory = Cypress.config('fileServerFolder');
-  const filePath = '/cypress/fixtures/test-external-requestor.json';
-
-  // TODO: Review. Currently the POST returns a 409
-  // const externalRequestorResponse = cy
-  //   .readFile(workingDirectory + filePath)
-  //   .then(async file => {
-  //     return (await fetch('/api/tickets/externalRequestors', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: JSON.stringify(file),
-  //     }).then(res => res.json())) as ExternalRequestor[];
-  //   });
+      headers: { 'Content-Type': 'application/json' },
+    }).then(res => res.json())) as ExternalRequestor[];
+    const conflict = refetched.find(
+      e => e.name === TEST_EXTERNAL_REQUESTOR.name,
+    );
+    if (conflict) {
+      return conflict;
+    }
+  }
+  if (!response.ok) {
+    throw new Error(
+      `Failed to create test external requestor (${response.status}): ${await response.text()}`,
+    );
+  }
+  return (await response.json()) as ExternalRequestor;
 }
