@@ -200,20 +200,29 @@ export default function ProductPreviewSimple({
                     <ProductStatusIndicators product={product} />
                     <IconButton
                       size="small"
-                      onClick={() => setConceptDiagramModalOpen(true)}
+                      onClick={e => {
+                        e.stopPropagation();
+                        setConceptDiagramModalOpen(true);
+                      }}
                     >
                       <AccountTreeOutlined />
                     </IconButton>
                     <IconButton
                       size="small"
-                      onClick={() => setDescriptionModalOpen(true)}
+                      onClick={e => {
+                        e.stopPropagation();
+                        setDescriptionModalOpen(true);
+                      }}
                     >
                       <NotesOutlined />
                     </IconButton>
                     {isSimpleEdit && (
                       <IconButton
                         size="small"
-                        onClick={() => setEditModalOpen(true)}
+                        onClick={e => {
+                          e.stopPropagation();
+                          setEditModalOpen(true);
+                        }}
                       >
                         <Edit />
                       </IconButton>
@@ -249,20 +258,29 @@ export default function ProductPreviewSimple({
 
                     <IconButton
                       size="small"
-                      onClick={() => setConceptDiagramModalOpen(true)}
+                      onClick={e => {
+                        e.stopPropagation();
+                        setConceptDiagramModalOpen(true);
+                      }}
                     >
                       <AccountTreeOutlined />
                     </IconButton>
                     <IconButton
                       size="small"
-                      onClick={() => setDescriptionModalOpen(true)}
+                      onClick={e => {
+                        e.stopPropagation();
+                        setDescriptionModalOpen(true);
+                      }}
                     >
                       <NotesOutlined />
                     </IconButton>
                     {isSimpleEdit && (
                       <IconButton
                         size="small"
-                        onClick={() => setEditModalOpen(true)}
+                        onClick={e => {
+                          e.stopPropagation();
+                          setEditModalOpen(true);
+                        }}
                       >
                         <Edit />
                       </IconButton>

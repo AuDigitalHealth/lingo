@@ -104,6 +104,44 @@ jobs:
     steps:
       - checkout: self
 
+      # Required so Maven can resolve internal SNAPSHOT artifacts from Azure Artifacts
+      # without this, dependency:go-offline fails early and leaves ~/.m2 incomplete.
+      - task: MavenAuthenticate@0
+        displayName: 'Authenticate Maven (Azure Artifacts)'
+        inputs:
+          artifactsFeeds: '$(feedName)'
+
+      # Use $(Agent.HomeDirectory) — tilde (~) is not expanded in Cache@2 path inputs
+      # and would resolve literally to <sources>/~/.m2/repository.
+      - script: mkdir -p $(Agent.HomeDirectory)/.m2/repository
+        displayName: 'Create ~/.m2 directory'
+
+      - task: Cache@2
+        displayName: 'Cache Maven local repo (Trivy)'
+        inputs:
+          key: 'trivy-maven | "$(Agent.OS)" | **/pom.xml'
+          restoreKeys: |
+            trivy-maven | "$(Agent.OS)"
+            trivy-maven
+          path: $(Agent.HomeDirectory)/.m2/repository
+
+      # Pre-populate the local Maven repository so Trivy can resolve POM parent chains
+      # from disk rather than Maven Central. Runs on every build (no cache-hit condition)
+      # to fill any gaps left by a partial prior cache. Failures are non-fatal because
+      # --offline-scan (below) prevents Trivy from hitting Maven Central regardless.
+      - script: |
+          set -euo pipefail
+          echo "##[section]Pre-populating Maven local repo for Trivy"
+          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+          mvn dependency:go-offline \
+            -Denforcer.skip=true \
+            -DskipTests \
+            -Dims-username=ci \
+            -Dims-password=ci \
+            -Dmaven.repo.local=$(Agent.HomeDirectory)/.m2/repository \
+            --no-transfer-progress 2>&1 | tail -20 || true
+        displayName: 'Pre-populate ~/.m2 for Trivy Maven scanning'
+
       - script: |
           set -euo pipefail
           echo "##[section]Installing Trivy (latest)"
@@ -117,6 +155,18 @@ jobs:
           echo "Maven POMs:"
           find . -name "pom.xml" -not -path "*/target/*" | sed 's/^/  /'
 
+          # Download the vulnerability DB explicitly before running in offline mode.
+          # --offline-scan skips all remote calls (including DB updates), so the DB
+          # must be fetched here first to ensure the scan uses up-to-date data.
+          echo ""
+          echo "##[section]Downloading Trivy vulnerability databases"
+          trivy fs --download-db-only .
+
+          # --offline-scan prevents Trivy from hitting Maven Central for parent POM
+          # resolution, which was causing FATAL 429 rate-limit errors. Any POM not
+          # found in ~/.m2 produces a WARN instead of aborting the scan.
+          # ui/pom.xml is skipped because it contains only build plugins (no runtime
+          # deps) and was causing a separate context-cancel crash.
           echo ""
           echo "##[section]Running Trivy (HIGH/CRITICAL, fixed only — no npm install required)"
           status=0
@@ -124,7 +174,9 @@ jobs:
             --exit-code 1 \
             --severity HIGH,CRITICAL \
             --ignore-unfixed \
+            --offline-scan \
             --skip-dirs node_modules \
+            --skip-files ui/pom.xml \
             --format table \
             --scanners vuln || status=$?
 
@@ -133,7 +185,9 @@ jobs:
           trivy fs . \
             --severity HIGH,CRITICAL \
             --ignore-unfixed \
+            --offline-scan \
             --skip-dirs node_modules \
+            --skip-files ui/pom.xml \
             --format json \
             --output trivy-report.json \
             --scanners vuln 2>/dev/null || true
@@ -170,7 +224,9 @@ jobs:
           trivy fs . \
             --severity HIGH,CRITICAL \
             --ignore-unfixed \
+            --offline-scan \
             --skip-dirs node_modules \
+            --skip-files ui/pom.xml \
             --format sarif \
             --output trivy-report.sarif \
             --scanners vuln

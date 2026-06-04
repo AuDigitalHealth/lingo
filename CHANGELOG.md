@@ -10,7 +10,19 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 ## [Unreleased]
 - Rewrote the Cypress UI test suite to run live against a deployed environment using `cy.login()` and real backend calls. Specs cover login/logout, tasks, backlog filtering, system settings, product search/view, and product authoring. The suite is driven by `npm run cypress:run` (headless) or `npm run cypress:open`, configured via `.env` (`VITE_SNOMIO_UI_TEST_URL`, `IMS_USERNAME`/`IMS_PASSWORD`, etc.). (#1826)
 - Product authoring: `CustomSelectWidget` now emits a `data-testid` (the rjsf field id) so select widgets such as the ingredient strength-type ("Product Template") are addressable; recovered the strength-alignment, device and multi-pack ProductCreation Cypress tests and added test retries for the autocomplete-driven flows. (#1826)
+- Fixed task association not disappearing from the UI after clicking the bin button on the backlog ticket view.
+- Fixed Trivy pipeline failures caused by a context-cancel crash on `ui/pom.xml` and Maven Central
+  429 rate-limit errors during parent POM resolution. `ui/pom.xml` is now skipped (build plugins
+  only, no runtime deps); all scans run with `--offline-scan` backed by a cached
+  `mvn dependency:go-offline` pre-populate step to prevent remote Maven Central requests.
+- Fixed crash when `containedProducts` is undefined in `generateSuggestedProductName` and `generateSuggestedProductNameForDevice`.
+- Concepts within each group in the "Preview New Product" screen are now sorted alphanumerically by preferred term.
 
+
+## [1.3.44] - 2026-05-27
+### Fixed
+
+- Fixed accordion collapsing in the info review screen when clicking the concept diagram, description or edit icon buttons inside the product preview accordion.
 
 ## [1.3.43] - 2026-05-26
 

@@ -32,11 +32,14 @@ export default function TaskAssociationFieldInput({
   >(ticket?.taskAssociation);
 
   useEffect(() => {
-    const thisTicketsTask = taskAssociationsData?.filter(taskAssociation => {
-      return taskAssociation.ticketId === ticket?.id;
-    });
-    if (thisTicketsTask?.length === 1) {
+    if (!taskAssociationsData) return;
+    const thisTicketsTask = taskAssociationsData.filter(
+      ta => ta.ticketId === ticket?.id,
+    );
+    if (thisTicketsTask.length === 1) {
       setTaskAssociation(thisTicketsTask[0]);
+    } else if (thisTicketsTask.length === 0) {
+      setTaskAssociation(null);
     }
   }, [taskAssociationsData, ticket]);
 
@@ -67,17 +70,14 @@ export default function TaskAssociationFieldInput({
         >
           Task:
         </Typography>
-        {taskAssociation ? (
+        {taskAssociation && isCurrent ? (
           <>
-            {isCurrent ? (
-              <Link
-                to={`/dashboard/tasks/edit/${taskAssociation.taskId}/ticket/${ticket?.ticketNumber}`}
-              >
-                {taskAssociation.taskId}
-              </Link>
-            ) : (
-              <TaskTypographyTemplate taskKey={taskAssociation.taskId} />
-            )}
+            <Link
+              to={`/dashboard/tasks/edit/${taskAssociation.taskId}/ticket/${ticket?.ticketNumber}`}
+            >
+              {taskAssociation.taskId}
+            </Link>
+
             <IconButton
               size="small"
               aria-label="delete"

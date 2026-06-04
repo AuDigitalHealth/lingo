@@ -83,40 +83,52 @@ function ProductTypeGroupPreview({
         </AccordionSummary>
         <AccordionDetails key={label + '-accordion'}>
           <div key={label + '-lists'}>
-            {productLabelItems?.map((p, index) => {
-              const productRefSetMembers = p.newConcept
-                ? p.newConceptDetails?.referenceSetMembers
-                    ?.filter(r => r.refsetId !== OWL_EXPRESSION_ID)
-                    .flatMap(r => r) || []
-                : refsetData?.filter(
-                    r =>
-                      r.referencedComponentId === p.conceptId &&
-                      r.refsetId !== OWL_EXPRESSION_ID,
-                  ) || [];
-              return (
-                <ProductPreviewPanel
-                  control={control}
-                  fsnToggle={isFsnToggleOn()}
-                  productModel={productModel}
-                  activeConcept={activeConcept}
-                  product={p}
-                  expandedConcepts={expandedConcepts}
-                  setExpandedConcepts={setExpandedConcepts}
-                  setActiveConcept={setActiveConcept}
-                  register={register}
-                  key={`${p.conceptId}-${index}`}
-                  getValues={getValues}
-                  idsWithInvalidName={idsWithInvalidName}
-                  setIdsWithInvalidName={setIdsWithInvalidName}
-                  fieldBindings={fieldBindings}
-                  branch={branch}
-                  refsetMembers={productRefSetMembers}
-                  isSimpleEdit={isSimpleEdit}
-                  setValue={setValue}
-                  ticket={ticket}
-                />
-              );
-            })}
+            {[...productLabelItems]
+              .sort((a, b) => {
+                const aName =
+                  (a.newConcept
+                    ? a.newConceptDetails?.preferredTerm
+                    : a.preferredTerm) ?? '';
+                const bName =
+                  (b.newConcept
+                    ? b.newConceptDetails?.preferredTerm
+                    : b.preferredTerm) ?? '';
+                return aName.localeCompare(bName);
+              })
+              .map((p, index) => {
+                const productRefSetMembers = p.newConcept
+                  ? p.newConceptDetails?.referenceSetMembers
+                      ?.filter(r => r.refsetId !== OWL_EXPRESSION_ID)
+                      .flatMap(r => r) || []
+                  : refsetData?.filter(
+                      r =>
+                        r.referencedComponentId === p.conceptId &&
+                        r.refsetId !== OWL_EXPRESSION_ID,
+                    ) || [];
+                return (
+                  <ProductPreviewPanel
+                    control={control}
+                    fsnToggle={isFsnToggleOn()}
+                    productModel={productModel}
+                    activeConcept={activeConcept}
+                    product={p}
+                    expandedConcepts={expandedConcepts}
+                    setExpandedConcepts={setExpandedConcepts}
+                    setActiveConcept={setActiveConcept}
+                    register={register}
+                    key={`${p.conceptId}-${index}`}
+                    getValues={getValues}
+                    idsWithInvalidName={idsWithInvalidName}
+                    setIdsWithInvalidName={setIdsWithInvalidName}
+                    fieldBindings={fieldBindings}
+                    branch={branch}
+                    refsetMembers={productRefSetMembers}
+                    isSimpleEdit={isSimpleEdit}
+                    setValue={setValue}
+                    ticket={ticket}
+                  />
+                );
+              })}
           </div>
         </AccordionDetails>
       </ProductPreviewAccordion>
