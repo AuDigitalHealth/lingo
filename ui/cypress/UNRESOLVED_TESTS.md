@@ -11,6 +11,37 @@ Branch: `feature/uitest-rewrite` (post MOCK_MODE removal)
 
 ---
 
+## UPDATE (2026-06-04) — the 3 "flaky" success-preview tests fixed (NOT a flake)
+
+The three skipped tests (`Preview new product from scratch`, both
+`Success … values are aligned` / `… denominator unit show warning`) were
+**not** failing because of an intermittent empty autocomplete listbox / dev
+search-index lag. That premise was wrong. Two real causes, both confirmed live:
+
+1. **Wrong-option selection race.** `searchAndSelectAutocomplete` clicked
+   `li[data-option-index="0"]` blindly. Under load the listbox can still hold
+   the *unfiltered default* option set when the helper clicks (observed
+   `domOpts=81` vs the filtered `4` for `genericForm="injection"`), so it
+   selected the wrong concept. For a parent field that poisons the dependent
+   child's ECL (`useDependantUpdates` substitutes the parent `conceptId` into
+   `getEcl`), producing an **empty child listbox** — exactly the symptom blamed
+   on "index lag" (a same-origin backend probe showed the term *always* had
+   results). Fix: select the option whose **text matches** the typed term
+   (exact → startsWith → includes → fall back to index 0).
+2. **Incomplete product (deterministic).** The from-scratch builders never
+   populated schema-required fields: `containedProducts.0.productDetails.productName`
+   (inner "(product name)" concept), pack size `containedProducts.0.value` /
+   `.unit`, and `.containerType` (the two Success tests). Client-side validation
+   blocked with `Field must be populated "…"`, so `$calculate` never POSTed. The
+   exact shape was read off a loaded valid product (Amoxil): inner productName =
+   a product-name concept (we reuse `Picato`), unit `Each`, container
+   `Blister pack`. New helper `fillContainedProductPackDetails` sets all three.
+
+All three now pass **deterministically** (verified `retries: 0`, full sequential
+run: 23 pass / 3 fail / 3 pending — the 3 remaining failures are pre-existing
+transient flakes masked by `retries: 2`: `Create a new brand(Tp)` button-disabled,
+and `multiPack` / `Bulk pack: Create a bulk pack` slow `$calculate` responses).
+
 ## UPDATE (2026-06-03) — strength / device / multipack tests fixed
 
 Ran the suite live (local vite serving the fixed UI, proxied to the dev

@@ -30,6 +30,7 @@ import {
   searchAndLoadProduct,
   searchAndSelectAutocomplete,
   selectProductStrengthType,
+  fillContainedProductPackDetails,
   selectFirstAutocompleteOption,
   selectDeviceType,
   selectBulkPack,
@@ -187,7 +188,7 @@ describe('Product creation Spec', () => {
   // (a 200 with no options), which blocks the build and survives test retries.
   // Un-skip once the autocomplete search is stabilised or each test gets its own
   // task branch. See UNRESOLVED_TESTS.md.
-  it.skip('Medication: Preview new product from scratch', () => {
+  it('Medication: Preview new product from scratch', () => {
     loadTaskPage(taskKey, ticketNumber);
     cy.get("[data-testid='create-new-product']").click();
     const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
@@ -223,6 +224,7 @@ describe('Product creation Spec', () => {
       'mg',
       timeOut,
     );
+    fillContainedProductPackDetails(branch, 0, testProduct2, 1, 'Each', timeOut);
     previewProduct(branch, timeOut);
   });
 
@@ -456,7 +458,7 @@ describe('Product creation Spec', () => {
   // autocomplete listbox (dev search index lag on the shared branch) blocks it
   // and survives retries. Un-skip with the search-stability fix. See
   // UNRESOLVED_TESTS.md.
-  it.skip('Medication: Success if The Unit Strength, Concentration Strength, and Unit Size values are aligned', () => {
+  it('Medication: Success if The Unit Strength, Concentration Strength, and Unit Size values are aligned', () => {
     const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
     const tOut = timeOut;
     const product2 = testProduct2;
@@ -511,6 +513,14 @@ describe('Product creation Spec', () => {
       tOut,
     );
 
+    searchAndSelectAutocomplete(
+      branch,
+      'root_containerType',
+      'Blister Pack',
+      tOut,
+      true,
+    );
+    fillContainedProductPackDetails(branch, 0, product2, 1, 'Each', tOut);
     previewProduct(branch, tOut);
   });
 
@@ -519,7 +529,7 @@ describe('Product creation Spec', () => {
   // survives retries). Also note: on the current backend the unit mismatch no
   // longer raises a blocking WarningModal — the product previews successfully.
   // Un-skip with the search-stability fix. See UNRESOLVED_TESTS.md.
-  it.skip('Medication: Success if the Unit Size Unit should match the Concentration Strength Unit denominator unit show warning', () => {
+  it('Medication: Success if the Unit Size Unit should match the Concentration Strength Unit denominator unit show warning', () => {
     const branch = `${Cypress.env('apDefaultBranch')}/${taskKey}`;
     const tOut = timeOut;
     const product2 = testProduct2;
@@ -576,6 +586,14 @@ describe('Product creation Spec', () => {
     // (ml). On the current backend this no longer raises a blocking WarningModal
     // — the product previews successfully — so proceed past a warning only if
     // one happens to appear and assert the preview succeeds either way.
+    searchAndSelectAutocomplete(
+      branch,
+      'root_containerType',
+      'Blister Pack',
+      tOut,
+      true,
+    );
+    fillContainedProductPackDetails(branch, 0, product2, 1, 'Each', tOut);
     previewProduct(branch, tOut, undefined, undefined, true);
   });
 

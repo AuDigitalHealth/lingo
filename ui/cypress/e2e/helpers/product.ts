@@ -485,14 +485,35 @@ export function searchAndSelectAutocomplete(
   cy.wait(3000);
 
   cy.get(`[data-testid="${dataTestId}"] input`).should('have.value', value);
-  // Open the option list. The re-focus click usually opens it, but flakily
-  // doesn't — fall back to clicking the field's popup indicator, and give the
-  // results time to load.
+  // Open the option list. The re-focus click usually doesn't open it — fall
+  // back to clicking the field's popup indicator, and give the results time to
+  // load.
   openFieldOptionList(dataTestId, 4);
   cy.get('li[data-option-index="0"]', { timeout: timeOut }).should(
     'be.visible',
   );
-  cy.get('li[data-option-index="0"]').click();
+  // Select the option whose text MATCHES the typed term rather than blindly
+  // clicking index 0. Under a timing race the listbox can still hold the
+  // unfiltered default option set (observed: domOpts=81 vs the filtered 4) when
+  // the helper clicks — index 0 then selects the WRONG concept. For a parent
+  // field that poisons a dependent child field's ECL (see useDependantUpdates:
+  // `getEcl.replace(/@parent/, conceptId)`), yielding an empty child listbox;
+  // elsewhere it produces an invalid product so $calculate never fires. The
+  // correct option is present in both the filtered and the default list, so
+  // matching by text is robust to the race. Fall back to index 0 (e.g. for
+  // create-new-brand flows where the typed term has no existing match).
+  const norm = (s: string | null) =>
+    (s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+  const want = norm(value);
+  cy.get('ul[role="listbox"] li[data-option-index]').then($opts => {
+    const opts = [...$opts];
+    const target =
+      opts.find(li => norm(li.textContent) === want) ||
+      opts.find(li => norm(li.textContent).startsWith(want)) ||
+      opts.find(li => norm(li.textContent).includes(want)) ||
+      opts[0];
+    cy.wrap(target).click();
+  });
 }
 
 // For an AutoCompleteField configured with showDefaultOptions (e.g. the device
@@ -661,6 +682,42 @@ export function fillSuccessfulIngredientIndex(
     branch,
     `root_containedProducts_${productIndex}_productDetails_activeIngredients_${ingIndex}_preciseIngredient`,
     'codeine',
+    timeOut,
+  );
+}
+// Fill the pack-level required fields of a contained product that
+// fillSuccessfulProductDetails does NOT set: the inner product name
+// (containedProducts.<i>.productDetails.productName), and the pack size
+// value + unit (containedProducts.<i>.value / .unit). A loaded valid product
+// (e.g. Amoxil) carries all three — without them client-side validation fails
+// with `Field must be populated` at those paths and $calculate never POSTs, so
+// a from-scratch "successful preview" test can never pass. The inner
+// productName is a "(product name)" concept like the package brand, so the same
+// term used for root_productName works here.
+export function fillContainedProductPackDetails(
+  branch: string,
+  productIndex: number,
+  productNameTerm: string,
+  packSize: number,
+  unitTerm: string,
+  timeOut: number,
+) {
+  searchAndSelectAutocomplete(
+    branch,
+    `root_containedProducts_${productIndex}_productDetails_productName`,
+    productNameTerm,
+    timeOut,
+  );
+  cy.get(
+    `[data-testid="root_containedProducts_${productIndex}_value"] input`,
+  ).clear();
+  cy.get(
+    `[data-testid="root_containedProducts_${productIndex}_value"] input`,
+  ).type(packSize.toString(), { delay: 5 });
+  searchAndSelectAutocomplete(
+    branch,
+    `root_containedProducts_${productIndex}_unit`,
+    unitTerm,
     timeOut,
   );
 }
