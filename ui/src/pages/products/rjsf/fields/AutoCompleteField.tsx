@@ -26,7 +26,14 @@ import { isEmptyObjectByValue } from '../../../../utils/helpers/conceptUtils.ts'
 import { compareByConceptId } from '../helpers/comparator.ts';
 
 const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
-  const { onChange, idSchema } = props;
+  const { onChange, idSchema, name } = props;
+
+  // When this field is resolved through a discriminated `oneOf` (packType /
+  // variant) the rjsf `idSchema.$id` can arrive undefined, which means the
+  // underlying autocomplete renders with no `data-testid`. Reconstruct the
+  // standard rjsf root id (`root_<name>`) so package-level fields such as
+  // `root_productName` / `root_containerType` stay addressable.
+  const fieldId = idSchema?.$id || (name ? `root_${name}` : undefined);
 
   const [rootUiSchema, setRootUiSchema] = useState(
     props?.formContext?.uiSchema || {},
@@ -81,7 +88,8 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
   const [localExtendedEcl, setLocalExtendedEcl] = useState<boolean>(false);
   const currentEcl = localExtendedEcl ? extendedEcl : ecl;
 
-  const task = useTaskByKey();
+  const hookTask = useTaskByKey();
+  const task = hookTask ?? props.formContext?.task;
   const { ticketNumber } = useParams();
   const useTicketQuery = useTicketByTicketNumber(ticketNumber, false);
 
@@ -150,38 +158,41 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
     idSchema.$id,
   );
 
+  const branchPath = task?.branchPath || '';
+
   return (
     <span data-component-name="AutoCompleteField">
       <Box>
         <Box display="flex" alignItems="center" gap={1}>
           <Box flex={50} sx={{ position: 'relative', paddingRight }}>
-            {task?.branchPath &&
-              (isMultivalued ? (
-                <MultiValueEclAutocomplete
-                  {...props}
-                  ecl={currentEcl}
-                  showDefaultOptions={isShowDefaultOptions}
-                  value={formData}
-                  isDisabled={isDisabled}
-                  branch={task?.branchPath}
-                  onChange={(val: ConceptMini[]) => {
-                    setFormData(val);
-                    onChange(val);
-                  }}
-                  errorMessage=""
-                />
-              ) : (
-                <EclAutocomplete
-                  {...props}
-                  ecl={currentEcl}
-                  showDefaultOptions={isShowDefaultOptions}
-                  value={formData}
-                  isDisabled={isDisabled}
-                  branch={task?.branchPath}
-                  onChange={handleSelect}
-                  turnOffPublishParam={createPrimitiveConcept ? true : false}
-                />
-              ))}
+            {isMultivalued ? (
+              <MultiValueEclAutocomplete
+                {...props}
+                id={fieldId}
+                ecl={currentEcl}
+                showDefaultOptions={isShowDefaultOptions}
+                value={formData}
+                isDisabled={isDisabled}
+                branch={branchPath}
+                onChange={(val: ConceptMini[]) => {
+                  setFormData(val);
+                  onChange(val);
+                }}
+                errorMessage=""
+              />
+            ) : (
+              <EclAutocomplete
+                {...props}
+                id={fieldId}
+                ecl={currentEcl}
+                showDefaultOptions={isShowDefaultOptions}
+                value={formData}
+                isDisabled={isDisabled}
+                branch={branchPath}
+                onChange={handleSelect}
+                turnOffPublishParam={createPrimitiveConcept ? true : false}
+              />
+            )}
             {createPrimitiveConcept && (
               <Tooltip title="Create Brand">
                 <IconButton

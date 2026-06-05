@@ -60,6 +60,7 @@ const CustomTextFieldWidget: React.FC<WidgetProps> = ({
 
   return (
     <Box
+      data-testid={id}
       sx={{
         display: 'flex',
         alignItems: 'center',
@@ -76,7 +77,18 @@ const CustomTextFieldWidget: React.FC<WidgetProps> = ({
         placeholder={placeholder}
         type={isNumber ? 'number' : 'text'}
         value={inputValue}
-        onChange={e => setInputValue(e.target.value)} // local typing only
+        onChange={e => {
+          const val = e.target.value;
+          setInputValue(val);
+          if (val === '') {
+            onChange(options?.emptyValue ?? undefined);
+          } else if (isNumber) {
+            const num = Number(val);
+            if (!isNaN(num)) onChange(num);
+          } else {
+            onChange(val);
+          }
+        }}
         onBlur={handleBlur} // form update
         onFocus={handleFocus}
         error={hasError}

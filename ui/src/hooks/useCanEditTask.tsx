@@ -59,10 +59,10 @@ function useIsTaskLocked(task: Task | null | undefined, login: string | null) {
         setLockDescription(
           'Task has been promoted. No further changes allowed.',
         );
-      } else if (task?.assignee.username != login) {
+      } else if (login !== null && task?.assignee.username != login) {
         setLocked(true);
         setLockDescription('Must be Task owner');
-      } else {
+      } else if (login !== null) {
         setLocked(false);
         setLockDescription('');
       }

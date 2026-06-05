@@ -171,7 +171,7 @@ const MultiValueEclAutocomplete: React.FC<FieldProps<any, any>> = props => {
         renderInput={params => (
           <TextField
             {...params}
-            data-test-id={id}
+            data-testid={id}
             label={title}
             error={!!errorMessage || anyConceptNeedsAttention}
             helperText={

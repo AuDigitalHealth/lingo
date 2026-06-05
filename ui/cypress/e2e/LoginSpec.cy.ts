@@ -14,20 +14,57 @@
 /// limitations under the License.
 ///
 
-describe('login spec', () => {
+describe('Login Spec', () => {
+  const login = () => {
+    cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
+  };
+
   it('loads the page', () => {
     cy.visit('/');
   });
 
-  it('logs in to ims', () => {
-    cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
+  it('logs in to ims', function () {
+    login();
   });
 
-  it('displays the dashboard', () => {
-    cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
-
+  it('displays the dashboard', function () {
+    login();
     cy.visit('/');
-
     cy.url().should('include', 'dashboard');
+  });
+
+  it('shows login page when unauthenticated', function () {
+    cy.intercept('GET', '/config', {
+      statusCode: 200,
+      body: {
+        appName: 'Lingo',
+        imsUrl: Cypress.env('ims_url'),
+        apUrl: Cypress.env('apUrl'),
+        apProjectKey: Cypress.env('apProjectKey'),
+        apDefaultBranch: Cypress.env('apDefaultBranch'),
+      },
+    });
+    cy.intercept('GET', '/api/auth', {
+      statusCode: 403,
+      body: { error: 'Unauthorized' },
+    });
+    cy.visit('/');
+    cy.url().should('match', /\/(login)?\/?$/);
+  });
+
+  it('redirects to dashboard when already authenticated', function () {
+    login();
+    cy.visit('/');
+    cy.reload();
+    cy.url().should('include', 'dashboard');
+  });
+
+  it('shows the user profile area in the header when logged in', function () {
+    login();
+    cy.visit('/dashboard/tasks');
+    cy.url().should('include', 'dashboard');
+    cy.get('[data-testid="profile-button"]', { timeout: 10000 }).should(
+      'exist',
+    );
   });
 });

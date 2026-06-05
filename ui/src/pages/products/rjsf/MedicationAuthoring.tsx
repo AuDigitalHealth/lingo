@@ -296,6 +296,7 @@ function MedicationAuthoring({
     evaluateExpression,
     snowStormFormData,
     mode,
+    task,
   };
 
   const saveDraft = () => {
@@ -452,9 +453,7 @@ function MedicationAuthoring({
                   lockDescription={getLockDescription()}
                 >
                   <Button
-                    data-testid={
-                      mode === 'create' ? 'create-btn' : 'update-btn'
-                    }
+                    data-testid="preview-btn"
                     type="submit"
                     variant="contained"
                     color={mode === 'create' ? 'primary' : 'warning'}

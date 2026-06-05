@@ -50,14 +50,12 @@ describe('Ticket Spec', () => {
 
 function testEditTicket(ticket: Ticket) {
   testTitle(ticket);
-
   testLabels(ticket);
   // testIteration(ticket);
   testState(ticket);
   testSchedule(ticket);
   updatePriority(ticket);
   testAdditionalFields(ticket);
-
   testComments(ticket);
   testAttachments(ticket);
   deleteTicket(ticket);

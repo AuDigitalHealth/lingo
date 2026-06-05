@@ -36,7 +36,9 @@
     "makeitpretty": "prettier . -w",
     "preview": "vite preview",
     "check-licenses": "node check-licenses.cjs",
-    "record-npm-dependency-licenses": "node record-npm-dependency-licenses.cjs"
+    "record-npm-dependency-licenses": "node record-npm-dependency-licenses.cjs",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run --browser electron --headless"
   },
   "dependencies": {
     "@aehrc/ecl-editor-react": "^1.1.2",

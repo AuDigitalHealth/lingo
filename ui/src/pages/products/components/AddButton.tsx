@@ -7,6 +7,7 @@ interface AddButtonProps extends FieldProps {
   tooltipTitle?: string;
   onClick: () => void;
   isEnabled: boolean;
+  dataTestId?: string;
 }
 
 export const AddButton: React.FC<AddButtonProps> = ({
@@ -14,6 +15,7 @@ export const AddButton: React.FC<AddButtonProps> = ({
   onClick,
   isEnabled,
   sx = {},
+  dataTestId,
 }) => {
   return (
     <Tooltip title={tooltipTitle}>
@@ -24,6 +26,7 @@ export const AddButton: React.FC<AddButtonProps> = ({
           disabled={!isEnabled}
           color="primary"
           size="large"
+          data-testid={dataTestId}
         >
           <AddCircleOutlineIcon />
         </IconButton>

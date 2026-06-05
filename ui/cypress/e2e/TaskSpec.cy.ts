@@ -14,59 +14,49 @@
 /// limitations under the License.
 ///
 
-import { Task } from '../../src/types/task';
 import { createNewTaskIfNotExists } from './helpers/task';
 
-describe('Task spec', () => {
-  before(() => {
+describe('Task Spec', () => {
+  beforeEach(() => {
+    // Cypress 13 `testIsolation` clears cookies before every test, so the
+    // session must be restored per-test (cy.login is cached via cy.session).
+    // Using `before` only authenticated the first test; later tests that make
+    // a real cy.request to authoring-services then 403'd. Other specs
+    // (BacklogSpec, TicketSpec) log in via beforeEach for the same reason.
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
-    // deleteAllMyTasks();
     createNewTaskIfNotExists();
   });
-  it('displays the my task page', () => {
+
+  it('displays the my tasks page', () => {
     cy.visit('/dashboard/tasks');
-    //cy.url().should('include', 'dashboard');
     cy.url().should('include', 'dashboard/tasks');
     cy.injectAxe();
     cy.checkPageA11y();
   });
-  it('displays the all task page', () => {
+
+  it('displays the all tasks page', () => {
     cy.visit('/dashboard/tasks/all');
-    //cy.url().should('include', 'dashboard');
     cy.url().should('include', 'dashboard/tasks/all');
     cy.injectAxe();
     cy.checkPageA11y();
   });
-  it('displays tasks need review  page', () => {
+
+  it('displays the tasks needing review page', () => {
     cy.visit('/dashboard/tasks/needReview');
-    //cy.url().should('include', 'dashboard');
-    cy.url().should('include', '/dashboard/tasks/needReview');
+    cy.url().should('include', 'dashboard/tasks/needReview');
     cy.injectAxe();
     cy.checkPageA11y();
-  });
-  it('displays tasks requested your review', () => {
-    cy.visit('/dashboard/tasks/reviewRequested');
-    //cy.url().should('include', 'dashboard');
-    cy.url().should('include', '/dashboard/tasks/reviewRequested');
-    cy.injectAxe();
-    cy.checkPageA11y();
-  });
-});
-describe('Task details spec', () => {
-  before(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    cy.login(Cypress.env('ims_username'), Cypress.env('ims_password'));
   });
 
-  it('displays the task details page', () => {
-    //commented out below as its taking time to load all the task
-    // cy.visit('/dashboard/tasks/all');
-    // cy.get('.MuiDataGrid-row', { timeout: 20000 })
-    //   .should('be.visible')
-    //   .find('a.task-details-link')
-    //   .first()
-    //   .click();
+  it('displays the tasks requested your review page', () => {
+    cy.visit('/dashboard/tasks/reviewRequested');
+    cy.url().should('include', 'dashboard/tasks/reviewRequested');
+    cy.injectAxe();
+    cy.checkPageA11y();
+  });
+
+  it('displays the task details edit page', () => {
     const taskCreation = createNewTaskIfNotExists();
     taskCreation.then(value => {
       cy.visit('/dashboard/tasks/edit/' + value);

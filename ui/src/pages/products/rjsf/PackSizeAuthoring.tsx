@@ -297,7 +297,12 @@ function PackSizeAuthoring({
     unitOfMeasure: data?.unitOfMeasure,
     handleClear,
     validator,
+    task,
   };
+
+  if (isSchemaLoading || isUiSchemaLoading || !schema || !uiSchema) {
+    return <ProductLoader message="Loading Schema" />;
+  }
 
   if (isFetching)
     return (
@@ -324,7 +329,7 @@ function PackSizeAuthoring({
   }
 
   return (
-    <Box sx={{ width: '100%' }}>
+    <Box data-testid="product-creation-grid" sx={{ width: '100%' }}>
       <Grid container>
         <WarningModal
           open={warningModalOpen}
@@ -383,6 +388,7 @@ function PackSizeAuthoring({
                   }}
                 >
                   <Button
+                    data-testid="preview-btn"
                     onClick={handlePreviewClick}
                     variant="contained"
                     color="primary"

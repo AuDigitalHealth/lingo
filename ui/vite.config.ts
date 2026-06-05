@@ -44,10 +44,11 @@ export default ({ mode }) => {
     },
     server: {
       host: true,
+      watch: { ignored: ['**/cypress/**'] },
       proxy: {
         '/api': {
           target: snomioBaseUrl,
-          changeOrigin: false,
+          changeOrigin: true,
           secure: false,
           rewrite: path => path.replace(/^\/api\/branch/, '/api/'),
         },
@@ -86,12 +87,12 @@ export default ({ mode }) => {
         },
         '/$defs': {
           target: snomioBaseUrl,
-          changeOrigin: false,
+          changeOrigin: true,
           secure: false,
         },
         '/config': {
           target: snomioBaseUrl,
-          changeOrigin: false,
+          changeOrigin: true,
           secure: false,
         },
       },

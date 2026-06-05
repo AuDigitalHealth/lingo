@@ -35,5 +35,8 @@ node/*
 .env.sentry-build-plugin
 
 #env
-.env
+/.env
 /.eslintcache
+
+/cypress/videos
+/cypress/screenshots

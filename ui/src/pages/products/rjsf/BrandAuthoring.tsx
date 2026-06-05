@@ -404,6 +404,7 @@ function BrandAuthoring({
     validator,
     formErrors,
     setFormErrors,
+    task,
   };
 
   if (isSchemaLoading || isUiSchemaLoading) {
@@ -434,7 +435,7 @@ function BrandAuthoring({
   }
 
   return (
-    <Box sx={{ width: '100%' }}>
+    <Box data-testid="product-creation-grid" sx={{ width: '100%' }}>
       <Grid container>
         <WarningModal
           open={warningModalOpen}
@@ -495,6 +496,7 @@ function BrandAuthoring({
                   }}
                 >
                   <Button
+                    data-testid="preview-btn"
                     onClick={handlePreviewClick}
                     variant="contained"
                     color="primary"

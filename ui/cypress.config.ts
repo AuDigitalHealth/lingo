@@ -16,15 +16,16 @@
 
 import { defineConfig } from 'cypress';
 import dotenv from 'dotenv';
+
 dotenv.config();
 
-const username = `${process.env.IMS_USERNAME}`;
-const password = `${process.env.IMS_PASSWORD}`;
-const imsUrl = `${process.env.VITE_IMS_URL}`;
-const frontendUrl = `${process.env.VITE_SNOMIO_UI_URL}`;
-const apUrl = `${process.env.VITE_AP_URL}`;
-const snowStormUrl = `${process.env.VITE_SNOWSTORM_URL}`;
-const apProjectKey = `${process.env.IHTSDO_PROJECT_KEY}`;
+const username = `${process.env.IMS_USERNAME || ''}`;
+const password = `${process.env.IMS_PASSWORD || ''}`;
+const imsUrl = `${process.env.VITE_IMS_URL || ''}`;
+const frontendUrl = `${process.env.VITE_SNOMIO_UI_TEST_URL || 'https://localhost:5173/'}`;
+const apUrl = `${process.env.VITE_AP_URL || ''}`;
+const snowStormUrl = `${process.env.VITE_SNOWSTORM_URL || ''}`;
+const apProjectKey = `${process.env.IHTSDO_PROJECT_KEY || 'AUAMT'}`;
 const apDefaultBranch = 'MAIN/SNOMEDCT-AU/AUAMT';
 
 export default defineConfig({
@@ -43,7 +44,7 @@ export default defineConfig({
   viewportHeight: 1080,
   viewportWidth: 1920,
   e2e: {
-    setupNodeEvents(on, config) {
+    setupNodeEvents(on, _config) {
       on('task', {
         table(message) {
           console.table(message);
@@ -61,5 +62,14 @@ export default defineConfig({
     numTestsKeptInMemory: 4,
     screenshotOnRunFailure: true,
     video: true,
+    // The product-authoring flows depend on many sequential debounced
+    // autocomplete searches against the shared dev terminology server, whose
+    // index occasionally lags (a 200 returns but the MUI listbox renders no
+    // option). Each such step is individually reliable, so retry failed tests
+    // in CI rather than let a transient empty-listbox fail the run.
+    retries: {
+      runMode: 2,
+      openMode: 0,
+    },
   },
 });
