@@ -1,229 +1,145 @@
 name: snomio-e2e-$(Date:yyyyMMdd)$(Rev:.r)_$(Build.SourceBranchName)
 
+# On-demand only — run manually from Azure DevOps ("Run pipeline") or via the
+# REST API. There is no CI/PR trigger.
 trigger: none
+pr: none
 
-variables:
-  mavenCache: $(Pipeline.Workspace)/.m2/repository
-  mavenOptions: '-Dmaven.repo.local=$(mavenCache) -Dmaven.settings.security=never'
-
-# resources:
-#   repositories:
-#     - repository: sergio
-#       type: github
-#       name: aehrc/sergio
-#       endpoint: aehrc
-#       ref: rabbit-snomio-image-as-cli-entity-refactor
+# The Cypress e2e suite drives a LIVE deployed environment (see
+# ui/cypress/TESTING.md). By default that is the dev environment:
+#
+#   https://dev-snomio.ihtsdotools.org
+#
+# To target a different environment, set any of the following pipeline
+# variables in Azure (queue-time variables or a linked variable group). Any
+# value left unset/empty falls back to the dev default:
+#
+#   E2E_BASE_URL            URL the tests drive (Cypress baseUrl)
+#   E2E_IMS_URL             IMS base URL
+#   E2E_AP_URL              Authoring Platform URL
+#   E2E_SNOWSTORM_URL       Snowstorm URL
+#   E2E_AP_PROJECT_KEY      Authoring Platform project key
+#   E2E_AP_DEFAULT_BRANCH   Authoring Platform default branch
+#   E2E_SPECS               Spec glob passed to --spec (default: all specs)
+#
+# Required secrets (pipeline variables or a linked variable group):
+#
+#   imsUsername             IMS account the tests log in with
+#   imsPassword             IMS account password (mark as secret)
 
 pool:
-  vmImage: ubuntu-latest
+  name: 'highmemory-pool'
 
 jobs:
-  - job: set_image_tag
-    displayName: Set Image Tag
-    steps:
-      - script: |
-          if [[ "$(Build.SourceBranch)" =~ refs/heads/(.+) ]]; then
-            # Direct branch build
-            postfix=""
-          elif [[ "$(Build.SourceBranch)" =~ refs/pull/[0-9]+/merge ]]; then
-            postfix="_${SYSTEM_PULLREQUEST_SOURCEBRANCH#refs/heads/}"
-          elif [[ "$(Build.SourceBranch)" =~ refs/tags/(.+) ]]; then
-            postfix="_${BASH_REMATCH[1]}"
-          else
-            postfix="_unknown"
-          fi
-          imageTag="$(Build.BuildNumber)$postfix"
-          imageTag=${imageTag//\//-}
-          imageTag=${imageTag//#/}
-          echo "##vso[task.setvariable variable=imageTag]$imageTag"
-          echo "$imageTag" > branchInfo.txt
-        displayName: 'Set Image Tag and Save to File'
-
-      - task: CopyFiles@2
-        displayName: 'Copy branchInfo.txt to Artifacts Dir'
-        inputs:
-          contents: 'branchInfo.txt'
-          targetFolder: '$(Build.ArtifactStagingDirectory)'
-
-      - publish: $(Build.ArtifactStagingDirectory)
-        displayName: Publish branchInfo.txt
-        artifact: branchInfo
-
-  - job: snomio_build
-    dependsOn: set_image_tag
-    displayName: Build, run integration test and publish
-    timeoutInMinutes: 60
-    steps:
-      - download: current
-        artifact: branchInfo
-
-      - script: |
-          imageTag=$(cat $(Pipeline.Workspace)/branchInfo/branchInfo.txt)
-          if [[ -z "$imageTag" || "$imageTag" == *unknown* ]]; then
-            echo "Invalid imageTag: $imageTag"
-            exit 1
-          fi
-          echo "##vso[task.setvariable variable=buildInfo]$imageTag"
-          if [ "$(Build.SourceBranch)" = "refs/heads/main" ]; then
-            imageTag="$imageTag,latest"
-          fi
-          echo "##vso[task.setvariable variable=imageTag]$imageTag"
-          echo "Using imageTag: $imageTag"
-        displayName: 'Read imageTag from branchInfo.txt'
-
-      - task: MavenAuthenticate@0
-        inputs:
-          artifactsFeeds: 'snomio'
-
-      - task: Docker@2
-        displayName: 'Login to ACR'
-        inputs:
-          command: login
-          containerRegistry: $(containerRegistry)
-
-      - task: Cache@2
-        displayName: Cache Maven local repo
-        inputs:
-          key: 'maven | "$(Agent.OS)" | **/pom.xml'
-          restoreKeys: |
-            maven | "$(Agent.OS)"
-            maven
-          path: $(mavenCache)
-
-      - task: Cache@2
-        displayName: Cache node_modules
-        inputs:
-          key: 'npm | "$(Agent.OS)" | $(Build.SourcesDirectory)/ui/package.json'
-          path: $(Build.SourcesDirectory)/ui/node_modules
-          cacheHitVar: CACHE_RESTORED
-
-      - script: |
-          echo "*** Create Maven Local Repo at $(mavenCache)"
-          mkdir -p "$(mavenCache)"
-          echo "##vso[task.setvariable variable=M2_HOME]/opt/maven"
-        displayName: 'Create Maven Local Repo and set up M2_HOME'
-
-      - task: Maven@3
-        displayName: 'Build and run integration test'
-        inputs:
-          mavenPomFile: 'pom.xml'
-          options: '-DskipTests -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(imageTag) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword)"'
-          mavenOptions: '$(mavenOptions) -Xmx5072m -Dbuildnumber=$(buildInfo)'
-          javaHomeOption: 'path'
-          jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
-          jdkArchitectureOption: 'x64'
-          publishJUnitResults: true
-          testResultsFiles: '**/surefire-reports/TEST-*.xml'
-          goals: 'package -DskipTests'
-      - task: PublishCodeCoverageResults@1
-        displayName: Publish Code Coverage
-        inputs:
-          enabled: true
-          codeCoverageTool: 'JaCoCo'
-          summaryFileLocation: '**/target/site/jacoco/jacoco.xml'
-          reportDirectory: '**/target/site/jacoco'
-          additionalCodeCoverageFiles: '**/target/jacoco.exec'
-
-      # - script: |
-      #     curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.50.0
-      #     trivy -v
-      #   displayName: 'Download and install Trivy'
-      # - task: CmdLine@2
-      #   displayName: "Run trivy scan on snomio"
-      #   inputs:
-      #     script: |
-      #       trivy image --exit-code 0 --severity LOW,MEDIUM --scanners vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(buildInfo)
-      #       trivy image --exit-code 1 --severity HIGH,CRITICAL --scanners vuln --timeout 15m $(dockerRegistry)/$(dockerRepository):$(buildInfo)
-
-      # - task: Maven@3
-      #   inputs:
-      #     mavenPomFile: 'pom.xml'
-      #     mavenOptions: '$(mavenOptions)'
-      #     javaHomeOption: 'path'
-      #     jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
-      #     jdkArchitectureOption: 'x64'
-      #     publishJUnitResults: false
-      #     goals: 'deploy -pl .,common,auth'
-  
   - job: e2e_tests
-    displayName: Run e2e Tests
-    timeoutInMinutes: 60
-    pool:
-      name: 'highmemory-pool'
-    dependsOn: 
-      - set_image_tag
-      - snomio_build_test_publish
+    displayName: Run Cypress e2e tests against deployed environment
+    timeoutInMinutes: 90
+    variables:
+      pnpmStore: $(Pipeline.Workspace)/.pnpm-store
+      cypressCache: $(Pipeline.Workspace)/.cypress-cache
     steps:
-      - download: current
-        artifact: branchInfo
+      - checkout: self
+        fetchDepth: 1
 
-      - script: |
-          imageTag=$(cat $(Pipeline.Workspace)/branchInfo/branchInfo.txt)
-          if [[ -z "$imageTag" || "$imageTag" == *unknown* ]]; then
-            echo "Invalid imageTag: $imageTag"
-            exit 1
-          fi
-          echo "##vso[task.setvariable variable=buildInfo]$imageTag"
-          if [ "$(Build.SourceBranch)" = "refs/heads/main" ]; then
-            imageTag="$imageTag,latest"
-          fi
-          echo "##vso[task.setvariable variable=imageTag]$imageTag"
-          echo "Using imageTag: $imageTag"
-        displayName: 'Read imageTag from branchInfo.txt'
-
-      - task: Docker@2
-        displayName: 'Login to ACR'
+      - task: UseNode@1
         inputs:
-          command: login
-          containerRegistry: $(containerRegistry)
-      - script: |
-          # Modify docker compose 
-          sed -i 's/nctsacr.azurecr.io\/snomio:latest/nctsacr.azurecr.io\/snomio:$(imageTag)/' ui/cypress/docker/docker-compose.yaml
-          sed -i 's/ims-username=.*/ims-username=$(imsUsername)/' ui/cypress/docker/docker-compose.yaml
-          sed -i "s|ims-password=.*|ims-password=$(printf '%s\n' "$(imsPassword)" | sed 's|[&/]|\\&|g')|" ui/cypress/docker/docker-compose.yaml
+          version: '20.x'
+        displayName: 'Install Node.js 20'
 
-          sed -i 's/snomio.jira.users=.*/snomio.jira.users=$(imsUsername)/' ui/cypress/docker/docker-compose.yaml
-          cat ui/cypress/docker/docker-compose.yaml
-
-          # Create nginx directory if it doesn't exist
-          mkdir -p ui/cypress/docker/nginx
-
-          # Generate SSL certificates
-          openssl req -x509 -nodes -newkey rsa:2048 -keyout ui/cypress/docker/nginx/key.pem -out ui/cypress/docker/nginx/cert.pem -days 365 -subj "/C=AU/ST=QLD/L=Brisbane/O=CSIRO/OU=CSIRO Department/CN=snomio"
-      - task: DockerCompose@1
+      - task: Cache@2
+        displayName: Cache pnpm store
         inputs:
-          containerregistrytype: 'Azure Container Registry'
-          azureContainerRegistry: $(dockerRegistry)
-          dockerComposeFile: 'ui/cypress/docker/docker-compose.yaml'
-          action: 'Run services'
-          projectName: snomio
-          buildImages: false
-          abortOnContainerExit: false
-          detached: true
+          key: 'pnpm | "$(Agent.OS)" | $(Build.SourcesDirectory)/ui/pnpm-lock.yaml'
+          restoreKeys: |
+            pnpm | "$(Agent.OS)"
+          path: $(pnpmStore)
+
+      - task: Cache@2
+        displayName: Cache Cypress binary
+        inputs:
+          key: 'cypress | "$(Agent.OS)" | $(Build.SourcesDirectory)/ui/pnpm-lock.yaml'
+          restoreKeys: |
+            cypress | "$(Agent.OS)"
+          path: $(cypressCache)
+
       - script: |
-          # Add entry to hosts file
-          echo "127.0.0.1 local-snomio.ihtsdotools.org" | sudo tee -a /etc/hosts
-          
-          cat /etc/hosts
+          set -euo pipefail
+          corepack enable
+          mkdir -p ~/.config/pnpm
+          echo "store-dir=$(pnpmStore)" > ~/.config/pnpm/rc
           cd ui
-          npm install cypress --save-dev
-          npm install dotenv
-          export CYPRESS_BASE_URL="https://local-snomio.ihtsdotools.org:443"
-          export cypress_frontend_url="https://local-snomio.ihtsdotools.org:443"
-          export cypress_ims_username=$(imsUsername)
-          export cypress_ims_password=$(imsPassword)
-          export cypress_ims_url="https://dev-ims.ihtsdotools.org"
-          export cypress_apUrl="https://dev-snowstorm.ihtsdotools.org"
-          export cypress_apProjectKey="AUAMT"
-          export cypress_apDefaultBranch="MAIN/SNOMEDCT-AU/AUAMT"
-          
-          npx cypress run --spec "cypress/e2e/ProductCreation.cy.ts"
-        displayName: 'Set environment variables and run Cypress tests'
+          pnpm install --frozen-lockfile
+        displayName: 'Install UI dependencies (pnpm)'
+        env:
+          # Let corepack fetch the pnpm version pinned in ui/package.json
+          # without an interactive prompt.
+          COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
+          CYPRESS_CACHE_FOLDER: $(cypressCache)
 
-#      - task: PublishPipelineArtifact@1
-#        condition: succeededOrFailed()
-#        inputs:
-#          targetPath: $(Build.SourcesDirectory)/ui/cypress/screenshots
-#          artifact: cypress-screenshots
-#          publishLocation: pipeline
-#        displayName: 'Publish Cypress screenshots'
+      - script: |
+          set -euo pipefail
+          cd ui
+
+          # Defaults target the live dev environment; any E2E_* pipeline
+          # variable set in Azure overrides the corresponding value
+          # (":-" treats empty the same as unset).
+          #
+          # cypress_*/CYPRESS_* environment variables take precedence over
+          # both cypress.env.json and the env block in cypress.config.ts —
+          # do not rely on the (stale) values in cypress.env.json.
+          export CYPRESS_BASE_URL="${E2E_BASE_URL:-https://dev-snomio.ihtsdotools.org}"
+          export cypress_frontend_url="$CYPRESS_BASE_URL"
+          export cypress_ims_url="${E2E_IMS_URL:-https://dev-ims.ihtsdotools.org}"
+          export cypress_apUrl="${E2E_AP_URL:-https://dev-snowstorm.ihtsdotools.org}"
+          export cypress_snowStormUrl="${E2E_SNOWSTORM_URL:-https://dev-snowstorm.ihtsdotools.org/snowstorm/snomed-ct}"
+          export cypress_apProjectKey="${E2E_AP_PROJECT_KEY:-AUAMT}"
+          export cypress_apDefaultBranch="${E2E_AP_DEFAULT_BRANCH:-MAIN/SNOMEDCT-AU/AUAMT}"
+          export cypress_ims_username="$IMS_USERNAME"
+          export cypress_ims_password="$IMS_PASSWORD"
+
+          echo "Running e2e tests against $CYPRESS_BASE_URL"
+
+          spec_args=()
+          if [[ -n "${E2E_SPECS:-}" ]]; then
+            spec_args=(--spec "$E2E_SPECS")
+          fi
+
+          # ${spec_args[@]+...} keeps "set -u" happy when the array is empty
+          # on bash < 4.4 (possible on self-hosted agents).
+          npx cypress run --browser electron --headless \
+            --reporter junit \
+            --reporter-options "mochaFile=cypress/results/results-[hash].xml,toConsole=false" \
+            ${spec_args[@]+"${spec_args[@]}"}
+        displayName: 'Run Cypress e2e tests'
+        env:
+          CYPRESS_CACHE_FOLDER: $(cypressCache)
+          # Secret variables are not exported to scripts automatically —
+          # map them in explicitly.
+          IMS_USERNAME: $(imsUsername)
+          IMS_PASSWORD: $(imsPassword)
+
+      - task: PublishTestResults@2
+        condition: succeededOrFailed()
+        displayName: 'Publish test results'
+        inputs:
+          testResultsFormat: 'JUnit'
+          testResultsFiles: 'ui/cypress/results/*.xml'
+          testRunTitle: 'Cypress e2e ($(Build.SourceBranchName))'
+
+      - task: PublishPipelineArtifact@1
+        condition: failed()
+        continueOnError: true
+        displayName: 'Publish Cypress screenshots'
+        inputs:
+          targetPath: $(Build.SourcesDirectory)/ui/cypress/screenshots
+          artifact: cypress-screenshots
+          publishLocation: pipeline
+
+      - task: PublishPipelineArtifact@1
+        condition: failed()
+        continueOnError: true
+        displayName: 'Publish Cypress videos'
+        inputs:
+          targetPath: $(Build.SourcesDirectory)/ui/cypress/videos
+          artifact: cypress-videos
+          publishLocation: pipeline
