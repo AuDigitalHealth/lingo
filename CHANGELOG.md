@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
+## [Unreleased]
+- No updates yet.
+
+
 ## [1.3.45] - 2026-06-05
 - Reworked `azure-pipelines-e2e.yml` into an on-demand pipeline that runs the Cypress e2e suite directly against the live dev environment (`https://dev-snomio.ihtsdotools.org`) by default, overridable via `E2E_*` pipeline variables in Azure. Removed the stale image-build/docker-compose stack, switched dependency install to pnpm, and added JUnit test publishing plus screenshot/video artifacts on failure. (#1826)
 - Rewrote the Cypress UI test suite to run live against a deployed environment using `cy.login()` and real backend calls. Specs cover login/logout, tasks, backlog filtering, system settings, product search/view, and product authoring. The suite is driven by `npm run cypress:run` (headless) or `npm run cypress:open`, configured via `.env` (`VITE_SNOMIO_UI_TEST_URL`, `IMS_USERNAME`/`IMS_PASSWORD`, etc.). (#1826)
