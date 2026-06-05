@@ -1026,6 +1026,14 @@ public class MedicationProductCalculationService
       List<String> order,
       NodeNameGenerator nameGenerator) {
     return n -> {
+      // Copy the user's strengthFormat choice (form input on the product) onto the new node so the
+      // downstream name generator request carries it as strength_format. See
+      // NameGenerationService.generateNameGeneratorSpec for the read.
+      if (modelConfiguration.isNameGeneratorSupportsStrengthFormat()
+          && n.isNewConcept()
+          && productDetails.getStrengthFormat() != null) {
+        n.getNewConceptDetails().setStrengthFormat(productDetails.getStrengthFormat());
+      }
       generateName(atomicCache, productDetails, level, n, modelConfiguration, order, nameGenerator);
       productSummary.addNode(n);
       for (Node parent : parentNodes) {

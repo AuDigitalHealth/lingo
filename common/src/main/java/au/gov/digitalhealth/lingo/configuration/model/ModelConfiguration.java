@@ -48,6 +48,14 @@ import lombok.Data;
 public class ModelConfiguration {
   boolean trimWholeNumbers = false;
 
+  /**
+   * Whether the name generator configured for this model accepts the {@code strength_format}
+   * request parameter. When true, the medication authoring schema/uiSchema is extended with a
+   * strengthFormat radio, the rehydration heuristic runs, and the value is propagated through to
+   * the name generator. Default false.
+   */
+  boolean nameGeneratorSupportsStrengthFormat = false;
+
   /** The type of model. */
   @NotNull private ModelType modelType;
 

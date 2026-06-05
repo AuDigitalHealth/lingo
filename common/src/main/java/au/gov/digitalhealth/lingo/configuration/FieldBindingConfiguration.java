@@ -41,15 +41,13 @@ public class FieldBindingConfiguration {
 
   private Map<String, String> resolveMapperForDefaultBranch() {
     String normalizedBranch = apDefaultBranch.replace("/", "_");
-    return mappers.getOrDefault(
-        normalizedBranch, mappers.entrySet().iterator().next().getValue());
+    return mappers.getOrDefault(normalizedBranch, mappers.entrySet().iterator().next().getValue());
   }
 
   @Cacheable(cacheNames = CacheConstants.VALIDATION_EXCLUDED_SUBSTANCES)
   public Set<String> getExcludedSubstances() {
     String excludedItems =
-        resolveMapperForDefaultBranch()
-            .getOrDefault("product.validation.exclude.substances", "");
+        resolveMapperForDefaultBranch().getOrDefault("product.validation.exclude.substances", "");
     return Arrays.stream(excludedItems.split(","))
         .map(String::trim)
         .filter(item -> !item.isEmpty())
@@ -63,8 +61,7 @@ public class FieldBindingConfiguration {
 
   @Cacheable(cacheNames = CacheConstants.PREFERRED_TERM_MAX_LENGTH)
   public String getPreferredTermMaxLength() {
-    return resolveMapperForDefaultBranch()
-        .getOrDefault("description.preferredTerm.maxLength", "");
+    return resolveMapperForDefaultBranch().getOrDefault("description.preferredTerm.maxLength", "");
   }
 
   @Cacheable(cacheNames = CacheConstants.DESCRIPTION_VALIDATION_REGEX)

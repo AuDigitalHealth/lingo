@@ -45,8 +45,9 @@ public class NameGenerationClient {
 
   @Cacheable(value = "nameGenerator", key = "#spec.toString()")
   public FsnAndPt generateNames(NameGeneratorSpec spec) {
+    final long startNanos = System.nanoTime();
     if (log.isLoggable(Level.FINE)) {
-      log.fine("Generating names for spec: " + spec);
+      log.fine("Name generator request body: " + writeJsonOrToString(spec));
     }
     return this.client
         .post()
@@ -54,11 +55,24 @@ public class NameGenerationClient {
         .bodyValue(spec)
         .retrieve()
         .bodyToMono(FsnAndPt.class)
+        .doOnNext(
+            result -> {
+              if (log.isLoggable(Level.FINE)) {
+                log.fine(
+                    "Name generator response in "
+                        + ((System.nanoTime() - startNanos) / 1_000_000)
+                        + " ms: "
+                        + writeJsonOrToString(result));
+              }
+            })
         .doOnError(
             e -> {
+              long elapsedMs = (System.nanoTime() - startNanos) / 1_000_000;
               try {
                 log.severe(
-                    "Name generator failed to execute with "
+                    "Name generator failed in "
+                        + elapsedMs
+                        + " ms with "
                         + e.getMessage()
                         + " for spec: "
                         + objectMapper.writeValueAsString(spec));
@@ -74,5 +88,21 @@ public class NameGenerationClient {
                 .PT(GENERATED_NAME_UNAVAILABLE)
                 .build())
         .block();
+  }
+
+  private String writeJsonOrToString(Object value) {
+    try {
+      return objectMapper.writeValueAsString(value);
+    } catch (JsonProcessingException ex) {
+      if (log.isLoggable(Level.FINE)) {
+        log.log(
+            Level.FINE,
+            "Failed to serialise "
+                + (value == null ? "null" : value.getClass().getName())
+                + " for log; falling back to toString()",
+            ex);
+      }
+      return String.valueOf(value);
+    }
   }
 }

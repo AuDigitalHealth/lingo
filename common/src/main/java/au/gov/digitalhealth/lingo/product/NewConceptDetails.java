@@ -20,6 +20,7 @@ import au.csiro.snowstorm_client.model.SnowstormDescription;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
+import au.gov.digitalhealth.lingo.product.namegenerator.StrengthFormat;
 import au.gov.digitalhealth.lingo.util.PartitionIdentifier;
 import au.gov.digitalhealth.lingo.validation.ValidDescription;
 import au.gov.digitalhealth.lingo.validation.ValidPreferredTermLength;
@@ -90,6 +91,15 @@ public class NewConceptDetails {
   Set<SnowstormReferenceSetMemberViewComponent> referenceSetMembers = new HashSet<>();
 
   NameGeneratorSpec nameGeneratorSpec;
+
+  /**
+   * Hint passed to the name generator describing how strengths should be rendered in the produced
+   * preferred term. Null when the configured name generator does not support the parameter, or when
+   * the value has not been derived (legacy data). By convention, also null on pack-level concepts —
+   * set only by product-level node construction, not enforced by the type system. Propagated onto
+   * the outbound name-generator request via {@link NameGeneratorSpec#strength_format}.
+   */
+  StrengthFormat strengthFormat;
 
   public NewConceptDetails(int conceptId) {
     this.conceptId = conceptId;

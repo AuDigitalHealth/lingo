@@ -18,6 +18,7 @@ The following sections are considered for each release: **Added, Changed, Fixed,
   `mvn dependency:go-offline` pre-populate step to prevent remote Maven Central requests.
 - Fixed crash when `containedProducts` is undefined in `generateSuggestedProductName` and `generateSuggestedProductNameForDevice`.
 - Concepts within each group in the "Preview New Product" screen are now sorted alphanumerically by preferred term.
+- Added per-product **Strength format** choice (auto-inference / simple / ratio / percentage) on the medication authoring form, passed through to the name generator as `strength_format` for product-level concepts (including new branded products created in the brand/pack-size flow). When loading an existing product, the previous choice is pre-selected via a heuristic over the source preferred term and structured concentration-strength data. Honoured by name generators that accept the parameter — enabled per terminology model in `default-model-config.yaml` via `nameGeneratorSupportsStrengthFormat: true` (currently set on NMPC / `MAIN_SNOMEDCT-IE`). On models where this is unset/false the radio is not rendered, the rehydration heuristic does not run, and `strength_format` is not on the wire.
 
 
 ## [1.3.44] - 2026-05-27

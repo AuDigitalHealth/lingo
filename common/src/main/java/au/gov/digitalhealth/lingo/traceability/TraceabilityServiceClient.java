@@ -24,8 +24,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 /**
  * Thin client over the SNOMED CT authoring-traceability-service. Currently only exposes the one
- * call dangling-reference detection needs: every CONTENT_CHANGE activity that originated on a
- * given branch.
+ * call dangling-reference detection needs: every CONTENT_CHANGE activity that originated on a given
+ * branch.
  */
 @Component
 public class TraceabilityServiceClient {
@@ -47,9 +47,9 @@ public class TraceabilityServiceClient {
   /**
    * Fetch every CONTENT_CHANGE activity originally written to the given branch. Promotions and
    * higher-level rebases are excluded — we only want what was actually authored on this branch.
-   * Pages are walked until the service marks the page as {@code last}; reaching {@link
-   * #MAX_PAGES} without a last page throws so dangling-reference detection can't silently scope
-   * to a partial activity log.
+   * Pages are walked until the service marks the page as {@code last}; reaching {@link #MAX_PAGES}
+   * without a last page throws so dangling-reference detection can't silently scope to a partial
+   * activity log.
    */
   public List<Activity> getContentChangeActivitiesOnBranch(String branch) {
     List<Activity> all = new ArrayList<>();

@@ -31,9 +31,11 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import lombok.extern.java.Log;
 import org.springframework.stereotype.Component;
 
 @Component
+@Log
 public class UiSchemaExtender {
 
   public static final String ITEMS = "items";
@@ -44,6 +46,18 @@ public class UiSchemaExtender {
   public static final String CONTAINED_PRODUCTS = "containedProducts";
   public static final String PRODUCT_DETAILS = "productDetails";
   private static final String PACKAGE_DETAILS = "packageDetails";
+
+  /**
+   * Same key as {@link SchemaExtender#ACTIVE_INGREDIENTS_KEY} — locator for variants needing the
+   * strengthFormat radio.
+   */
+  public static final String ACTIVE_INGREDIENTS_KEY = SchemaExtender.ACTIVE_INGREDIENTS_KEY;
+
+  private static final String UI_ORDER_KEY = "ui:order";
+  private static final String STRENGTH_FORMAT_KEY = "strengthFormat";
+
+  /** Defence-in-depth cap on recursion depth — see SchemaExtender.MAX_WALK_DEPTH. */
+  private static final int MAX_WALK_DEPTH = 64;
 
   ObjectMapper objectMapper;
 
@@ -68,6 +82,91 @@ public class UiSchemaExtender {
 
     updateUiSchemaForType(
         uiSchemaNode, NON_DEFINING_PROPERTIES, properties, readOnlyProperties, hiddenProperties);
+
+    if (productType == ProductType.MEDICATION
+        && modelConfiguration.isNameGeneratorSupportsStrengthFormat()) {
+      injectStrengthFormatRadio(uiSchemaNode);
+    }
+  }
+
+  /**
+   * Inject a radio uiSchema entry next to every {@code activeIngredients} key in the served
+   * uiSchema, and append {@code strengthFormat} to that variant's {@code ui:order} immediately
+   * after {@code activeIngredients}. Walks the whole tree so both inlined and {@code $defs}-based
+   * uiSchema shapes are handled.
+   *
+   * <p>The schema-side injection (in {@link SchemaExtender}) already skips the {@code noStrength}
+   * variant, and the uiSchema walker here is intentionally permissive on the assumption that RJSF
+   * silently ignores uiSchema entries with no matching schema property. <strong>That assumption is
+   * current RJSF behaviour, not enforced anywhere in this codebase</strong> — verify if upgrading
+   * RJSF, or add a Cypress test that asserts the {@code noStrength} variant doesn't render the
+   * radio.
+   */
+  private void injectStrengthFormatRadio(JsonNode uiSchemaNode) {
+    ObjectNode radio = com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.objectNode();
+    radio.put(UI_WIDGET, "radio");
+    radio.put("ui:title", "Strength format");
+    ObjectNode options = com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.objectNode();
+    options.put("inline", true);
+    radio.set(UI_OPTIONS, options);
+
+    try {
+      walkAndInjectRadio(uiSchemaNode, radio, 0);
+    } catch (RuntimeException | StackOverflowError e) {
+      log.log(
+          java.util.logging.Level.WARNING,
+          "Failed to inject strengthFormat radio into served uiSchema; serving without it",
+          e);
+    }
+  }
+
+  private void walkAndInjectRadio(JsonNode node, ObjectNode radio, int depth) {
+    if (depth > MAX_WALK_DEPTH) {
+      log.warning(
+          "uiSchema walk reached max depth " + MAX_WALK_DEPTH + "; stopping radio injection");
+      return;
+    }
+    if (node.isObject()) {
+      ObjectNode obj = (ObjectNode) node;
+      injectRadioIfTargetVariant(obj, radio);
+      java.util.Iterator<java.util.Map.Entry<String, JsonNode>> it = obj.fields();
+      while (it.hasNext()) {
+        walkAndInjectRadio(it.next().getValue(), radio, depth + 1);
+      }
+      return;
+    }
+    if (node.isArray()) {
+      for (JsonNode child : node) {
+        walkAndInjectRadio(child, radio, depth + 1);
+      }
+    }
+  }
+
+  private void injectRadioIfTargetVariant(ObjectNode obj, ObjectNode radio) {
+    if (!obj.has(ACTIVE_INGREDIENTS_KEY) || obj.has(STRENGTH_FORMAT_KEY)) {
+      return;
+    }
+    obj.set(STRENGTH_FORMAT_KEY, radio.deepCopy());
+    JsonNode uiOrder = obj.path(UI_ORDER_KEY);
+    if (uiOrder.isArray()) {
+      insertStrengthFormatAfterIngredientsInOrder((ArrayNode) uiOrder);
+      return;
+    }
+    // ui:order absent on a variant we just injected into — strengthFormat will render in arbitrary
+    // key position. Surface this so the schema authors can add a ui:order entry.
+    log.warning(
+        "uiSchema variant has activeIngredients but no ui:order; injected strengthFormat will"
+            + " render in arbitrary position");
+  }
+
+  private static void insertStrengthFormatAfterIngredientsInOrder(ArrayNode uiOrder) {
+    for (int i = 0; i < uiOrder.size(); i++) {
+      if (ACTIVE_INGREDIENTS_KEY.equals(uiOrder.get(i).asText())) {
+        uiOrder.insert(i + 1, STRENGTH_FORMAT_KEY);
+        return;
+      }
+    }
+    uiOrder.add(STRENGTH_FORMAT_KEY);
   }
 
   public void updateEditUiSchema(

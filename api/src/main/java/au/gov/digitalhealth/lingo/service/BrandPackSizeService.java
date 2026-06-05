@@ -57,6 +57,8 @@ import au.gov.digitalhealth.lingo.product.ProductPackSizes;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.bulk.BrandPackSizeCreationDetails;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
+import au.gov.digitalhealth.lingo.product.namegenerator.StrengthFormat;
+import au.gov.digitalhealth.lingo.product.namegenerator.StrengthFormatHeuristic;
 import au.gov.digitalhealth.lingo.service.namegenerator.NameGenerationService;
 import au.gov.digitalhealth.lingo.service.namegenerator.NodeNameGenerator;
 import au.gov.digitalhealth.lingo.service.validators.ValidationResult;
@@ -1002,8 +1004,48 @@ public class BrandPackSizeService {
             false)
         .thenApply(
             n -> {
+              if (modelConfiguration.isNameGeneratorSupportsStrengthFormat()
+                  && n.isNewConcept()
+                  && modelLevelType.equals(
+                      modelConfiguration.getLeafProductModelLevel().getModelLevelType())) {
+                n.getNewConceptDetails()
+                    .setStrengthFormat(deriveStrengthFormat(leafProductConcept));
+              }
               nameGenerator.generate(atomicCache, semanticTag, n, modelConfiguration, List.of());
               return n;
             });
+  }
+
+  /**
+   * Derives the {@link au.gov.digitalhealth.lingo.product.namegenerator.StrengthFormat} hint for a
+   * new branded product concept created in the brand/pack-size flow. Only invoked for the leaf
+   * branded product level (TPUU / AMP / RCD equivalent) — higher branded levels (e.g. branded MP)
+   * carry the same strength format by definition but their rendered names don't include strength,
+   * so deriving the hint there is wasted work. Brand/pack-size flows are constrained to
+   * single-component packs by {@link
+   * au.gov.digitalhealth.lingo.util.ValidationUtil#assertSingleComponentSinglePackProduct}, so
+   * exactly one source product (the {@code leafProductConcept}) carries the answer.
+   *
+   * <p>Precondition: the caller has already validated that {@code leafProductConcept} has exactly
+   * one active class axiom (via {@link
+   * au.gov.digitalhealth.lingo.util.SnowstormDtoUtil#getSingleAxiom} elsewhere in the flow). This
+   * method does not re-validate.
+   */
+  private static StrengthFormat deriveStrengthFormat(SnowstormConcept leafProductConcept) {
+    String sourcePt =
+        leafProductConcept.getPt() != null && leafProductConcept.getPt().getTerm() != null
+            ? leafProductConcept.getPt().getTerm()
+            : "";
+    boolean hasConcentration =
+        SnowstormDtoUtil.getRelationshipsFromAxioms(leafProductConcept).stream()
+            .filter(r -> r.getActive() == null || Boolean.TRUE.equals(r.getActive()))
+            .map(SnowstormRelationship::getTypeId)
+            .anyMatch(
+                typeId ->
+                    AmtConstants.CONCENTRATION_STRENGTH_VALUE.getValue().equals(typeId)
+                        || SnomedConstants.HAS_CONCENTRATION_STRENGTH_NUMERATOR_VALUE
+                            .getValue()
+                            .equals(typeId));
+    return StrengthFormatHeuristic.classify(sourcePt, hasConcentration);
   }
 }

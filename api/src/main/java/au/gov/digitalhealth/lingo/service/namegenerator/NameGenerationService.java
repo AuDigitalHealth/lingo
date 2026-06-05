@@ -17,7 +17,6 @@ package au.gov.digitalhealth.lingo.service.namegenerator;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptView;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
-import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.FsnAndPt;
 import au.gov.digitalhealth.lingo.product.NameGeneratorSpec;
@@ -84,7 +83,7 @@ public class NameGenerationService {
     if (nameGeneratorSpec.isEmpty()) return;
     node.getNewConceptDetails().setNameGeneratorSpec(nameGeneratorSpec.get());
 
-    FsnAndPt fsnAndPt = createFsnAndPreferredTerm(generator, node, nameGeneratorSpec.get());
+    FsnAndPt fsnAndPt = createFsnAndPreferredTerm(generator, nameGeneratorSpec.get());
 
     node.getNewConceptDetails().setFullySpecifiedName(fsnAndPt.getFSN());
     node.getNewConceptDetails().setPreferredTerm(fsnAndPt.getPT());
@@ -126,19 +125,18 @@ public class NameGenerationService {
           atomicCache.substituteIdsForFsnInAxiom(
               axiomN, node.getNewConceptDetails().getConceptId());
       String axiomPt =
-          modelConfiguration.getModelType().equals(ModelType.NMPC)
-              ? ""
-              : atomicCache.substituteIdsForPtInAxiom(
-                  axiomN, node.getNewConceptDetails().getConceptId());
+          atomicCache.substituteIdsForPtInAxiom(axiomN, node.getNewConceptDetails().getConceptId());
 
-      return Optional.of(new NameGeneratorSpec(semanticTag, axiomFsn, axiomPt, order));
+      NameGeneratorSpec spec = new NameGeneratorSpec(semanticTag, axiomFsn, axiomPt, order);
+      spec.setStrengthFormat(node.getNewConceptDetails().getStrengthFormat());
+      return Optional.of(spec);
     }
 
     return Optional.empty();
   }
 
   public FsnAndPt createFsnAndPreferredTerm(
-      Function<NameGeneratorSpec, FsnAndPt> generator, Node node, NameGeneratorSpec spec) {
+      Function<NameGeneratorSpec, FsnAndPt> generator, NameGeneratorSpec spec) {
 
     if (spec.getOwl().matches(".*\\d{7,18}.*")) {
       String msg =

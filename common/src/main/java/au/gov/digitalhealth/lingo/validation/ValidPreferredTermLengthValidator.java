@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,16 +41,14 @@ public class ValidPreferredTermLengthValidator
 
   private static final int DEFAULT_MAX_LENGTH = 4096;
 
-  @Autowired
-  private FieldBindingConfiguration fieldBindingConfiguration;
+  @Autowired private FieldBindingConfiguration fieldBindingConfiguration;
 
   @Value("${ihtsdo.ap.defaultBranch}")
   private String defaultBranch;
 
-  @Autowired
-  private Models models;
+  @Autowired private Models models;
 
-  private int resolvedMaxLength = DEFAULT_MAX_LENGTH;
+  @Getter private int resolvedMaxLength = DEFAULT_MAX_LENGTH;
 
   @PostConstruct
   private void init() {
@@ -73,18 +72,17 @@ public class ValidPreferredTermLengthValidator
     Set<String> preferredRefsets =
         models.getModelConfiguration(defaultBranch.replace("/", "|")).getPreferredLanguageRefsets();
 
-    resolvedMaxLength = preferredRefsets.stream()
-        .mapToInt(code -> refsetMaxLengths.getOrDefault(code, DEFAULT_MAX_LENGTH))
-        .findAny()
-        .orElse(DEFAULT_MAX_LENGTH);
+    resolvedMaxLength =
+        preferredRefsets.stream()
+            .mapToInt(code -> refsetMaxLengths.getOrDefault(code, DEFAULT_MAX_LENGTH))
+            .findAny()
+            .orElse(DEFAULT_MAX_LENGTH);
 
     log.info(
         "Preferred term max length resolved to {} for refsets {} on branch {}",
-        resolvedMaxLength, preferredRefsets, defaultBranch);
-  }
-
-  public int getResolvedMaxLength() {
-    return resolvedMaxLength;
+        resolvedMaxLength,
+        preferredRefsets,
+        defaultBranch);
   }
 
   @Override

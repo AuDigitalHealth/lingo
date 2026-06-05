@@ -51,33 +51,32 @@ import java.util.stream.Collectors;
  * <ol>
  *   <li><strong>User-controllable</strong> — the user can legitimately add or remove it via the
  *       atomic-data form, so a difference between source and candidate is a real shape change.
- *   <li><strong>Mandatory-when-applicable</strong> — when the user has filled in enough of the
- *       form to look up a candidate, this attribute is always populated. This is a UI invariant
- *       the backend does not enforce: a partially-completed form that triggers a lookup early
- *       will, for any attribute in this catalogue, emit a {@code [0..0] X = *} filter that
- *       excludes valid candidates whose template carries the attribute. That is a UX failure
- *       mode the form-trigger logic should prevent (don't fire lookups before the relevant
- *       template fields are populated); the catalogue assumes the form is complete enough at
- *       lookup time.
+ *   <li><strong>Mandatory-when-applicable</strong> — when the user has filled in enough of the form
+ *       to look up a candidate, this attribute is always populated. This is a UI invariant the
+ *       backend does not enforce: a partially-completed form that triggers a lookup early will, for
+ *       any attribute in this catalogue, emit a {@code [0..0] X = *} filter that excludes valid
+ *       candidates whose template carries the attribute. That is a UX failure mode the form-trigger
+ *       logic should prevent (don't fire lookups before the relevant template fields are
+ *       populated); the catalogue assumes the form is complete enough at lookup time.
  * </ol>
  *
  * <p>Form-driven optional attributes are safe to include because the calculation services use
- * {@code addRelationshipIfNotNull} — they emit a relationship only when the corresponding field
- * is populated. A template-distinguishing attribute (e.g. {@link
+ * {@code addRelationshipIfNotNull} — they emit a relationship only when the corresponding field is
+ * populated. A template-distinguishing attribute (e.g. {@link
  * SnomedConstants#HAS_UNIT_OF_PRESENTATION}, present in some VMP templates and absent in others)
- * therefore correctly admits the right templates: omitting the field maps to {@code [0..0] X =
- * *}, which matches candidates without the attribute. See the per-bucket helper methods for which
+ * therefore correctly admits the right templates: omitting the field maps to {@code [0..0] X = *},
+ * which matches candidates without the attribute. See the per-bucket helper methods for which
  * attributes apply at each level.
  *
- * <p>Concrete grouped strength values
- * ({@code HAS_PRESENTATION_STRENGTH_*_VALUE} / {@code HAS_CONCENTRATION_STRENGTH_*_VALUE}) and AMT
- * clinical-drug attributes ({@code HAS_TOTAL_QUANTITY_*}, AMT {@code CONCENTRATION_STRENGTH_*},
- * {@code HAS_DEVICE_TYPE}) are deliberately omitted today: concrete multi-value attributes hit
- * the {@code [N..N]} cardinality approximation in the ECL builder, and the AMT per-ingredient
- * attributes need careful thought about partial-form lookups.
+ * <p>Concrete grouped strength values ({@code HAS_PRESENTATION_STRENGTH_*_VALUE} / {@code
+ * HAS_CONCENTRATION_STRENGTH_*_VALUE}) and AMT clinical-drug attributes ({@code
+ * HAS_TOTAL_QUANTITY_*}, AMT {@code CONCENTRATION_STRENGTH_*}, {@code HAS_DEVICE_TYPE}) are
+ * deliberately omitted today: concrete multi-value attributes hit the {@code [N..N]} cardinality
+ * approximation in the ECL builder, and the AMT per-ingredient attributes need careful thought
+ * about partial-form lookups.
  *
- * <p><strong>Sync requirement:</strong> when {@code MedicationProductCalculationService}'s
- * {@code createMpRelationships}, {@code createClinicalDrugRelationships}, or {@code
+ * <p><strong>Sync requirement:</strong> when {@code MedicationProductCalculationService}'s {@code
+ * createMpRelationships}, {@code createClinicalDrugRelationships}, or {@code
  * createPackagedClinicalDrugRelationships} starts emitting a new defining attribute that the user
  * controls AND that is always populated for a complete lookup, add it here too — otherwise
  * candidates carrying that attribute will silently match when the user has removed it.
@@ -90,8 +89,8 @@ public final class ModelLevelDefiningAttributes {
    * Returns the set of user-controllable defining attribute types that may appear on a concept at
    * the given model level for the given model type. Callers can compare this set to the
    * relationships of a candidate atomic-data shape to determine which attribute types should be
-   * added as {@code [0..0] X = *} or {@code [0..0] X != value} negative filters in a generated
-   * ECL query.
+   * added as {@code [0..0] X = *} or {@code [0..0] X != value} negative filters in a generated ECL
+   * query.
    *
    * @param levelType the model level of the concept being matched
    * @param modelType the model variant (AMT, NMPC, ...)
@@ -112,8 +111,8 @@ public final class ModelLevelDefiningAttributes {
 
   /**
    * Convenience accessor that returns the same set as {@link
-   * #getDefiningAttributeTypes(ModelLevelType, ModelType)} but as SCTID strings, for direct use
-   * in ECL fragment construction.
+   * #getDefiningAttributeTypes(ModelLevelType, ModelType)} but as SCTID strings, for direct use in
+   * ECL fragment construction.
    */
   public static Set<String> getDefiningAttributeTypeIds(
       ModelLevelType levelType, ModelType modelType) {
@@ -144,7 +143,8 @@ public final class ModelLevelDefiningAttributes {
           REAL_PACKAGED_CLINICAL_DRUG,
           REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG,
           REAL_MEDICINAL_PRODUCT,
-          PRODUCT_NAME -> Set.of();
+          PRODUCT_NAME ->
+          Set.of();
     };
     // Note: the switch is exhaustive over ModelLevelType — when a new level is added the compiler
     // will require it to be handled here.
@@ -172,21 +172,21 @@ public final class ModelLevelDefiningAttributes {
   /**
    * NMPC clinical-drug-level attributes that distinguish the medicinal-product / vaccine /
    * nutritional templates. Each is form-driven and emitted by the calculation services only when
-   * the user supplies a value via {@code productDetails.getUnitOfPresentation()},
-   * {@code productDetails.getQuantity()} or {@code ingredient.getBasisOfStrengthSubstance()}.
+   * the user supplies a value via {@code productDetails.getUnitOfPresentation()}, {@code
+   * productDetails.getQuantity()} or {@code ingredient.getBasisOfStrengthSubstance()}.
    *
    * <ul>
    *   <li>{@link SnomedConstants#HAS_UNIT_OF_PRESENTATION} — present in vaccine VMP (both
    *       templates), nutritional VMP, medicinal Templates 1 &amp; 3; absent in medicinal Template
-   *       2 (concentration strength). The form sends null for Template 2 so the
-   *       {@code [0..0] X = *} filter matches Template-2 candidates correctly.
-   *   <li>{@link SnomedConstants#HAS_UNIT_OF_PRESENTATION_SIZE_QUANTITY} /
-   *       {@link SnomedConstants#HAS_UNIT_OF_PRESENTATION_SIZE_UNIT} — present in vaccine
-   *       Simplified template; absent in vaccine Detailed and most medicinal templates. Same
-   *       form-driven mechanism.
+   *       2 (concentration strength). The form sends null for Template 2 so the {@code [0..0] X =
+   *       *} filter matches Template-2 candidates correctly.
+   *   <li>{@link SnomedConstants#HAS_UNIT_OF_PRESENTATION_SIZE_QUANTITY} / {@link
+   *       SnomedConstants#HAS_UNIT_OF_PRESENTATION_SIZE_UNIT} — present in vaccine Simplified
+   *       template; absent in vaccine Detailed and most medicinal templates. Same form-driven
+   *       mechanism.
    *   <li>{@link SnomedConstants#HAS_BOSS} — present in medicinal VMP (all three templates),
-   *       vaccine Detailed; absent in vaccine Simplified, nutritional VMP. Grouped per
-   *       ingredient — concept-valued so the multi-value OR form is exact.
+   *       vaccine Detailed; absent in vaccine Simplified, nutritional VMP. Grouped per ingredient —
+   *       concept-valued so the multi-value OR form is exact.
    * </ul>
    *
    * <p>Concrete strength values (presentation/concentration numerator/denominator) are still
@@ -199,7 +199,8 @@ public final class ModelLevelDefiningAttributes {
     if (modelType != ModelType.NMPC) {
       return Set.of();
     }
-    if (levelType != ModelLevelType.CLINICAL_DRUG && levelType != ModelLevelType.REAL_CLINICAL_DRUG) {
+    if (levelType != ModelLevelType.CLINICAL_DRUG
+        && levelType != ModelLevelType.REAL_CLINICAL_DRUG) {
       return Set.of();
     }
     return Set.of(

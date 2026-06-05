@@ -29,23 +29,23 @@ import java.util.logging.Logger;
 /**
  * The net effect of a sequence of traceability activities on a single branch.
  *
- * <p>Replays the activity log chronologically (oldest commit first), ignoring entries marked
- * {@code superseded=true}, and reports three id sets keyed by what dangling-reference detection
- * needs to look up:
+ * <p>Replays the activity log chronologically (oldest commit first), ignoring entries marked {@code
+ * superseded=true}, and reports three id sets keyed by what dangling-reference detection needs to
+ * look up:
  *
  * <ul>
- *   <li>{@link #refsetMemberIdsStillOnBranch()} — refset members whose latest non-superseded
- *       change is not a {@code DELETE}. Used to fetch per-id from Snowstorm and check that each
- *       member's referenced concept is still active.
+ *   <li>{@link #refsetMemberIdsStillOnBranch()} — refset members whose latest non-superseded change
+ *       is not a {@code DELETE}. Used to fetch per-id from Snowstorm and check that each member's
+ *       referenced concept is still active.
  *   <li>{@link #relationshipIdsStillOnBranch()} — same shape for non-defining relationships.
- *   <li>{@link #conceptIdsInactivatedOnBranch()} — concepts whose latest non-superseded change
- *       is an {@code INACTIVATE}. Used to fan out and find any active member or relationship on
- *       the branch that still references them; those are dangling and need cleanup too.
+ *   <li>{@link #conceptIdsInactivatedOnBranch()} — concepts whose latest non-superseded change is
+ *       an {@code INACTIVATE}. Used to fan out and find any active member or relationship on the
+ *       branch that still references them; those are dangling and need cleanup too.
  * </ul>
  *
  * <p>Description changes are intentionally not tracked. The returned record is immutable: the
- * canonical constructor wraps each input set in a defensive {@link Set#copyOf}, so accessors
- * hand out unmodifiable views even if a caller supplied mutable inputs.
+ * canonical constructor wraps each input set in a defensive {@link Set#copyOf}, so accessors hand
+ * out unmodifiable views even if a caller supplied mutable inputs.
  */
 public record BranchChangeSummary(
     Set<String> refsetMemberIdsStillOnBranch,
@@ -114,8 +114,7 @@ public record BranchChangeSummary(
       Map<String, ChangeType> lastConcept) {
     if (conceptChange != null && conceptChange.componentChanges() != null) {
       for (ComponentChange change : conceptChange.componentChanges()) {
-        recordComponentChange(
-            change, conceptChange.conceptId(), lastMember, lastRel, lastConcept);
+        recordComponentChange(change, conceptChange.conceptId(), lastMember, lastRel, lastConcept);
       }
     }
   }

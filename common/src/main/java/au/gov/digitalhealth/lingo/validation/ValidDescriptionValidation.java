@@ -34,8 +34,7 @@ public class ValidDescriptionValidation implements ConstraintValidator<ValidDesc
   private Pattern invalidCharPattern;
   private boolean validationActive = false; // Flag to indicate if validation is active
 
-  @Autowired
-  private FieldBindingConfiguration fieldBindingConfiguration;
+  @Autowired private FieldBindingConfiguration fieldBindingConfiguration;
 
   private String fieldName;
 

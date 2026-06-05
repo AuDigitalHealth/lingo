@@ -185,6 +185,10 @@ public class NameGenerationRouter {
   }
 
   private FsnAndPt callNameGenerator(WebClient client, NameGeneratorSpec spec) {
+    final long startNanos = System.nanoTime();
+    if (log.isLoggable(java.util.logging.Level.FINE)) {
+      log.fine("ECL name generator request body: " + writeJsonOrToString(spec));
+    }
     FsnAndPt result =
         client
             .post()
@@ -192,11 +196,24 @@ public class NameGenerationRouter {
             .bodyValue(spec)
             .retrieve()
             .bodyToMono(FsnAndPt.class)
+            .doOnNext(
+                r -> {
+                  if (log.isLoggable(java.util.logging.Level.FINE)) {
+                    log.fine(
+                        "ECL name generator response in "
+                            + ((System.nanoTime() - startNanos) / 1_000_000)
+                            + " ms: "
+                            + writeJsonOrToString(r));
+                  }
+                })
             .doOnError(
                 e -> {
+                  long elapsedMs = (System.nanoTime() - startNanos) / 1_000_000;
                   try {
                     log.severe(
-                        "ECL name generator failed with "
+                        "ECL name generator failed in "
+                            + elapsedMs
+                            + " ms with "
                             + e.getMessage()
                             + " for spec: "
                             + objectMapper.writeValueAsString(spec)
@@ -218,6 +235,22 @@ public class NameGenerationRouter {
       return defaultClient.generateNames(spec);
     }
     return result;
+  }
+
+  private String writeJsonOrToString(Object value) {
+    try {
+      return objectMapper.writeValueAsString(value);
+    } catch (JsonProcessingException ex) {
+      if (log.isLoggable(java.util.logging.Level.FINE)) {
+        log.log(
+            java.util.logging.Level.FINE,
+            "Failed to serialise "
+                + (value == null ? "null" : value.getClass().getName())
+                + " for log; falling back to toString()",
+            ex);
+      }
+      return String.valueOf(value);
+    }
   }
 
   /** Holds the ECL expression and the name generator function for one configured ECL generator. */

@@ -606,16 +606,16 @@ public class SnowstormClient {
    * traceability log gives us the IDs the task authored, and we ask Snowstorm for each so we can
    * inspect the current referencedComponentId / refsetId / released state.
    *
-   * <p>A 404 on any id is logged and skipped. The traceability log claimed it existed, so a
-   * miss usually means the component was deleted between traceability writing the activity and
-   * us reading it (e.g. a concurrent revert), or the id is from a path that doesn't reach this
-   * branch — neither warrants aborting the rest of the fan-out, but we shouldn't be silent about
-   * it either. Other failures (5xx, timeout, deserialisation) propagate.
+   * <p>A 404 on any id is logged and skipped. The traceability log claimed it existed, so a miss
+   * usually means the component was deleted between traceability writing the activity and us
+   * reading it (e.g. a concurrent revert), or the id is from a path that doesn't reach this branch
+   * — neither warrants aborting the rest of the fan-out, but we shouldn't be silent about it
+   * either. Other failures (5xx, timeout, deserialisation) propagate.
    *
-   * <p>Implemented as a synchronous loop with per-id {@code .block()} rather than a reactive
-   * {@code Flux.flatMap} chain. The latter subscribes follow-up calls from netty event-loop
-   * threads where the request-scoped {@code SecurityContextHolder} ThreadLocal — relied on by
-   * the {@code AuthHelper.addImsAuthCookie} filter — is empty, causing NPE on the IMS cookie.
+   * <p>Implemented as a synchronous loop with per-id {@code .block()} rather than a reactive {@code
+   * Flux.flatMap} chain. The latter subscribes follow-up calls from netty event-loop threads where
+   * the request-scoped {@code SecurityContextHolder} ThreadLocal — relied on by the {@code
+   * AuthHelper.addImsAuthCookie} filter — is empty, causing NPE on the IMS cookie.
    */
   public Mono<List<SnowstormReferenceSetMember>> fetchRefsetMembersByIds(
       String branch, Set<String> memberIds) {
@@ -633,7 +633,11 @@ public class SnowstormClient {
         if (m != null) result.add(m);
       } catch (WebClientResponseException.NotFound e) {
         log.warning(
-            "Refset member " + id + " not found on branch " + branch + " — skipping (traceability log claimed it existed)");
+            "Refset member "
+                + id
+                + " not found on branch "
+                + branch
+                + " — skipping (traceability log claimed it existed)");
       }
     }
     return result;
@@ -659,17 +663,21 @@ public class SnowstormClient {
         if (r != null) result.add(r);
       } catch (WebClientResponseException.NotFound e) {
         log.warning(
-            "Relationship " + id + " not found on branch " + branch + " — skipping (traceability log claimed it existed)");
+            "Relationship "
+                + id
+                + " not found on branch "
+                + branch
+                + " — skipping (traceability log claimed it existed)");
       }
     }
     return result;
   }
 
   /**
-   * Active refset members on the branch whose referencedComponentId is one of the supplied
-   * concept ids. Used by dangling-reference detection's scenario-B fan-out: when a concept is
-   * inactivated on this task, every active member referencing it (whether on the task path or
-   * inherited) is dangling and needs cleanup.
+   * Active refset members on the branch whose referencedComponentId is one of the supplied concept
+   * ids. Used by dangling-reference detection's scenario-B fan-out: when a concept is inactivated
+   * on this task, every active member referencing it (whether on the task path or inherited) is
+   * dangling and needs cleanup.
    */
   public Mono<List<SnowstormReferenceSetMember>> findActiveRefsetMembersForConcepts(
       String branch, Set<String> conceptIds) {
@@ -687,17 +695,18 @@ public class SnowstormClient {
 
   /**
    * Active non-defining relationships on the branch where source or destination is one of the
-   * supplied concept ids. Snowstorm's findRelationships filters by a single source or
-   * destination per call, so we issue a fan-out (2N requests) and dedupe by relationshipId.
+   * supplied concept ids. Snowstorm's findRelationships filters by a single source or destination
+   * per call, so we issue a fan-out (2N requests) and dedupe by relationshipId.
    *
-   * <p>Synchronous loop rather than reactive fan-out for the same reason as
-   * {@link #fetchRefsetMembersByIds}: each follow-up Snowstorm call needs the IMS auth filter
-   * to run on a thread that has the request's SecurityContextHolder.
+   * <p>Synchronous loop rather than reactive fan-out for the same reason as {@link
+   * #fetchRefsetMembersByIds}: each follow-up Snowstorm call needs the IMS auth filter to run on a
+   * thread that has the request's SecurityContextHolder.
    */
   public Mono<List<SnowstormRelationship>> findActiveNonDefiningRelationshipsForConcepts(
       String branch, Set<String> conceptIds) {
     if (conceptIds == null || conceptIds.isEmpty()) return Mono.just(List.of());
-    return Mono.fromSupplier(() -> findActiveNonDefiningRelationshipsForConceptsSync(branch, conceptIds));
+    return Mono.fromSupplier(
+        () -> findActiveNonDefiningRelationshipsForConceptsSync(branch, conceptIds));
   }
 
   private List<SnowstormRelationship> findActiveNonDefiningRelationshipsForConceptsSync(
@@ -705,8 +714,8 @@ public class SnowstormClient {
     RelationshipsApi api = new RelationshipsApi(getApiClient());
     Map<String, SnowstormRelationship> byId = new java.util.LinkedHashMap<>();
     for (String id : conceptIds) {
-      addRelationshipsTo(byId, api, branch, id, /* asSource = */ true);
-      addRelationshipsTo(byId, api, branch, id, /* asSource = */ false);
+      addRelationshipsTo(byId, api, branch, id, /* asSource= */ true);
+      addRelationshipsTo(byId, api, branch, id, /* asSource= */ false);
     }
     return List.copyOf(byId.values());
   }
@@ -742,9 +751,7 @@ public class SnowstormClient {
     try {
       getRefsetMembersApi()
           .deleteMembers(
-              branch,
-              new SnowstormMemberIdsPojoComponent().memberIds(Set.of(memberId)),
-              false)
+              branch, new SnowstormMemberIdsPojoComponent().memberIds(Set.of(memberId)), false)
           .block();
     } catch (RuntimeException e) {
       throw new LingoProblem(
@@ -834,7 +841,10 @@ public class SnowstormClient {
       SnowstormConcept parent = getBrowserConcept(branch, sourceId).block();
       if (parent == null || parent.getRelationships() == null) {
         throw new LingoProblem(
-            "Source concept " + sourceId + " not found or has no relationships on branch " + branch);
+            "Source concept "
+                + sourceId
+                + " not found or has no relationships on branch "
+                + branch);
       }
       boolean found = false;
       for (SnowstormRelationship r : parent.getRelationships()) {
@@ -1300,15 +1310,15 @@ public class SnowstormClient {
 
   /**
    * POST-based bulk concept lookup. Uses {@code /browser/{branch}/concepts/bulk-load} so the
-   * conceptIds travel in the request body — safer than {@link #getConceptsById(String, Set)}
-   * when the id set is large enough that the GET form's repeated {@code conceptIds=} query
-   * params would overrun reverse-proxy URI length limits. Returns SnowstormConceptMini values
-   * (id, active flag, PT) extracted from the full browser-concept responses.
+   * conceptIds travel in the request body — safer than {@link #getConceptsById(String, Set)} when
+   * the id set is large enough that the GET form's repeated {@code conceptIds=} query params would
+   * overrun reverse-proxy URI length limits. Returns SnowstormConceptMini values (id, active flag,
+   * PT) extracted from the full browser-concept responses.
    *
-   * <p>Not @Cacheable — the BranchAwareKeyGenerator depends on the request-scoped branch
-   * timestamp service, so any caller that invokes this from a Reactor scheduler thread (rather
-   * than the request thread) would trip ScopeNotActiveException. Callers should invoke this on
-   * the request thread.
+   * <p>Not @Cacheable — the BranchAwareKeyGenerator depends on the request-scoped branch timestamp
+   * service, so any caller that invokes this from a Reactor scheduler thread (rather than the
+   * request thread) would trip ScopeNotActiveException. Callers should invoke this on the request
+   * thread.
    */
   public List<SnowstormConceptMini> getConceptsByIdViaSearch(String branch, Set<String> ids) {
     if (ids == null || ids.isEmpty()) return List.of();

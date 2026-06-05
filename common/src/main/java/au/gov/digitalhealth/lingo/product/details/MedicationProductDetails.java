@@ -16,11 +16,13 @@
 package au.gov.digitalhealth.lingo.product.details;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.gov.digitalhealth.lingo.product.namegenerator.StrengthFormat;
 import au.gov.digitalhealth.lingo.util.NmpcType;
 import au.gov.digitalhealth.lingo.validation.AuthoringValidation;
 import au.gov.digitalhealth.lingo.validation.OnlyOnePopulated;
 import au.gov.digitalhealth.lingo.validation.ValidSnowstormConceptMini;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import jakarta.validation.Valid;
 import java.util.ArrayList;
@@ -63,6 +65,13 @@ public class MedicationProductDetails extends ProductDetails {
       playsRole = new HashSet<>();
 
   List<@Valid Ingredient> activeIngredients = new ArrayList<>();
+
+  /**
+   * Hint passed to the name generator describing how strengths should be rendered in the produced
+   * preferred term. Optional on the wire — absent means "use the generator's default".
+   */
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  StrengthFormat strengthFormat;
 
   @Override
   public ProductType getType() {

@@ -75,6 +75,7 @@ import au.gov.digitalhealth.lingo.product.details.NutritionalProductDetails;
 import au.gov.digitalhealth.lingo.product.details.Quantity;
 import au.gov.digitalhealth.lingo.product.details.VaccineProductDetails;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
+import au.gov.digitalhealth.lingo.product.namegenerator.StrengthFormatHeuristic;
 import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import au.gov.digitalhealth.lingo.util.NmpcConstants;
 import au.gov.digitalhealth.lingo.util.NmpcType;
@@ -647,6 +648,18 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
           .add(
               getIngredient(
                   group, productRelationships, preciseActiveInredientMap, modelConfiguration));
+    }
+
+    if (modelConfiguration.isNameGeneratorSupportsStrengthFormat()) {
+      String sourcePt =
+          product.getPt() != null && product.getPt().getTerm() != null
+              ? product.getPt().getTerm()
+              : "";
+      boolean hasConcentration =
+          productDetails.getActiveIngredients().stream()
+              .anyMatch(Ingredient::isIngredientConcentrationStrength);
+      productDetails.setStrengthFormat(
+          StrengthFormatHeuristic.classify(sourcePt, hasConcentration));
     }
     return productDetails;
   }

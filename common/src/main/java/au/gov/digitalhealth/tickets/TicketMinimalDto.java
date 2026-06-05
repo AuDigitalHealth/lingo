@@ -40,7 +40,7 @@ public class TicketMinimalDto extends BaseAuditableDto implements Serializable {
 
   private String assignee;
 
-  private StateDto  state;
+  private StateDto state;
 
   private Set<LabelDto> labels;
 

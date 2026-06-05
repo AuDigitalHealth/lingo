@@ -114,6 +114,7 @@ models:
   MAIN_SNOMEDCT-IE:
     modelType: NMPC
     moduleId: 1601000220105
+    nameGeneratorSupportsStrengthFormat: true
     preferredLanguageRefsets:
       - 21000220103
       - 900000000000509007
