@@ -16,3 +16,8 @@ ui/pnpm-lock.yaml
 # Authoring artefacts from the superpowers brainstorming/writing-plans skills.
 # Useful while a feature is being designed, not part of what ships.
 docs/superpowers/
+
+# Personal Claude Code allowlist - do not commit
+.claude/settings.local.json
+# Claude Code worktrees - never commit (embedded git worktrees)
+.claude/worktrees/

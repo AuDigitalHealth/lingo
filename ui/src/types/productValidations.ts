@@ -20,9 +20,9 @@ import {
   ProductDescriptionUpdateRequest,
   NonDefiningProperty,
 } from './product.ts';
-import { CaseSignificance, Product } from './concept.ts';
 import {
   Acceptability,
+  CaseSignificance,
   DefinitionType,
   Description,
   Product,
@@ -134,6 +134,35 @@ export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateReques
                   if (value.length > ptMaxLength) {
                     return this.createError({
                       message: `Preferred term exceeds maximum length of ${ptMaxLength} characters (current: ${value.length}).`,
+                    });
+                  }
+                  return true;
+                })
+                .test('no-duplicate-active-term', function (value) {
+                  const thisDescription = this.parent as Description;
+                  if (!thisDescription.active || !value) return true;
+
+                  const request = this.from?.[1]?.value as
+                    | ProductDescriptionUpdateRequest
+                    | undefined;
+                  const descriptions = request?.descriptions ?? [];
+
+                  // Count active descriptions sharing this term, type and language. A unique term
+                  // yields a count of one (this description itself); more than one is a collision.
+                  // Counting (rather than excluding self by identity) is robust to yup casting the
+                  // validated objects into new instances.
+                  const matchingActive = descriptions.filter(
+                    desc =>
+                      desc.active === true &&
+                      desc.term === value &&
+                      desc.typeId === thisDescription.typeId &&
+                      desc.lang === thisDescription.lang,
+                  ).length;
+
+                  if (matchingActive > 1) {
+                    return this.createError({
+                      message:
+                        'Another active description with the same term, type and language already exists on this concept.',
                     });
                   }
                   return true;
@@ -409,7 +438,10 @@ export const productUpdateValidationSchema: yup.ObjectSchema<ProductUpdateReques
           .required(),
       }),
     })
-    .defined();
+    // yup cannot structurally infer the nested descriptions array (a multi-field object with
+    // cross-field tests) back to ProductUpdateRequest, so the built schema's type is asserted.
+    // Runtime validation is covered by productValidations.test.ts.
+    .defined() as unknown as yup.ObjectSchema<ProductUpdateRequest>;
 
 export function uniqueFsnValidator(products: Product[]): boolean {
   if (!products) return true; // Handle undefined or null cases
@@ -437,7 +469,7 @@ export function uniquePtValidator(products: Product[]): boolean {
     let pt = '';
     if (product.concept) {
       pt = product.concept.pt ? product.concept.pt.term : '';
-    } else {
+    } else if (product.newConceptDetails) {
       pt = product.newConceptDetails['preferredTerm'];
     }
 

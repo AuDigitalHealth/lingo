@@ -615,8 +615,20 @@ public class SnowstormDtoUtil {
                                 && !d.getTerm().equals(existingConcept.getPt().getTerm()))
                     .collect(Collectors.toSet()));
       }
-      // no need to keep the inferred axiomx - classification is required anyway
-      // class axioms have been updated so nothing to keep from the existing concept
+      // The relationships of the class axiom have been recalculated, but for an edit-in-place we
+      // must reuse the existing class axiom's id so Snowstorm updates that OWL axiom reference set
+      // member in place rather than retiring it and creating an entirely new axiom. Only the axiom
+      // identity is carried over - the relationships and definition status come from the
+      // recalculated axiom. Handled for the single-axiom case, which is the norm for product
+      // concepts; if either side has multiple class axioms the ids are left to Snowstorm.
+      Set<SnowstormAxiom> existingActiveClassAxioms = getActiveClassAxioms(existingConcept);
+      Set<SnowstormAxiom> recalculatedClassAxioms = getActiveClassAxioms(conceptView);
+      if (existingActiveClassAxioms.size() == 1 && recalculatedClassAxioms.size() == 1) {
+        recalculatedClassAxioms
+            .iterator()
+            .next()
+            .setAxiomId(existingActiveClassAxioms.iterator().next().getAxiomId());
+      }
 
       // add back any GCIs
       conceptView.setGciAxioms(existingConcept.getGciAxioms());

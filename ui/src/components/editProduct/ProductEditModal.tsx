@@ -1133,6 +1133,7 @@ const FieldDescriptions = ({
             isDisabled={isDisabled}
             isReleased={isReleased || false}
             isFsnOrPreferred={isFsnOrPreferred}
+            descriptions={sortedDescriptionsWithoutSemanticTag}
           />
           {/* Display Semantic Tag if available */}
           {containsSemanticTag && (
@@ -1344,6 +1345,7 @@ interface DescriptionTextInputProps {
   isDisabled: boolean;
   isReleased: boolean;
   isFsnOrPreferred: boolean;
+  descriptions: Description[];
 }
 
 const DescriptionTextInput = ({
@@ -1353,6 +1355,7 @@ const DescriptionTextInput = ({
   isDisabled,
   isReleased,
   isFsnOrPreferred,
+  descriptions,
 }: DescriptionTextInputProps) => {
   const { field, fieldState } = useController({
     name: `descriptionUpdate.descriptions.${index}.term`,
@@ -1362,6 +1365,30 @@ const DescriptionTextInput = ({
   const initialValueRef = useRef(field.value);
 
   const hasChanged = field.value !== initialValueRef.current;
+
+  const currentType = useWatch({
+    control,
+    name: `descriptionUpdate.descriptions.${index}.type`,
+  });
+  const currentLang = useWatch({
+    control,
+    name: `descriptionUpdate.descriptions.${index}.lang`,
+  });
+
+  // When the edited term matches an existing inactive (retired) description of the same type and
+  // language on this concept, the update reactivates that description rather than retiring/editing
+  // this one - so neither the "retire and replace" nor the "edit in place" message is accurate.
+  const matchesRetiredDescription = useMemo(() => {
+    const value = (field.value ?? '').trim();
+    if (!value) return false;
+    return descriptions.some(
+      description =>
+        description.active === false &&
+        description.type === currentType &&
+        description.lang === currentLang &&
+        (description.term ?? '').trim() === value,
+    );
+  }, [descriptions, field.value, currentType, currentLang]);
 
   return (
     <>
@@ -1381,12 +1408,18 @@ const DescriptionTextInput = ({
           field.onChange(trimmed);
         }}
       />
-      {hasChanged && isReleased && (
+      {hasChanged && matchesRetiredDescription && (
+        <FormHelperText sx={{ color: t => `${t.palette.warning.main}` }}>
+          This term matches a retired description on this concept, which will be
+          reactivated.
+        </FormHelperText>
+      )}
+      {hasChanged && !matchesRetiredDescription && isReleased && (
         <FormHelperText sx={{ color: t => `${t.palette.warning.main}` }}>
           This change will retire this description and create a replacement.
         </FormHelperText>
       )}
-      {hasChanged && !isReleased && (
+      {hasChanged && !matchesRetiredDescription && !isReleased && (
         <FormHelperText sx={{ color: t => `${t.palette.warning.main}` }}>
           This change will <u>NOT</u> retire this description, instead it will
           be edited.

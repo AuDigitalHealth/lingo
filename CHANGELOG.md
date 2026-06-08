@@ -8,8 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
-
+- Fixed product description updates creating a duplicate active description when the edited term matches an existing inactive description on the same concept. The existing inactive description (and its language reference set members) is now reactivated instead, and editing a term to collide with another active description is now rejected in the UI and API (CUST1634236).
+- Fixed editing an existing product in place creating an entirely new OWL axiom (and retiring the previous one) instead of updating the existing axiom's relationships. The existing class axiom's identity is now preserved so Snowstorm updates it in place (CUST1634236).
 
 ## [1.3.45] - 2026-06-05
 - Reworked `azure-pipelines-e2e.yml` into an on-demand pipeline that runs the Cypress e2e suite directly against the live dev environment (`https://dev-snomio.ihtsdotools.org`) by default, overridable via `E2E_*` pipeline variables in Azure. Removed the stale image-build/docker-compose stack, switched dependency install to pnpm, and added JUnit test publishing plus screenshot/video artifacts on failure. (#1826)

@@ -24,6 +24,7 @@ import au.gov.digitalhealth.lingo.configuration.FieldBindingConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
 import au.gov.digitalhealth.lingo.configuration.model.NonDefiningPropertyDefinition;
+import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.product.Edge;
 import au.gov.digitalhealth.lingo.product.Node;
@@ -54,7 +55,6 @@ import jakarta.validation.groups.Default;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -67,8 +67,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import lombok.NonNull;
 import lombok.extern.java.Log;
-import org.springframework.beans.BeanUtils;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -211,63 +212,10 @@ public class ProductUpdateService {
         productDescriptionUpdateRequest,
         models.getModelConfiguration(branch).getPreferredLanguageRefsets());
 
-    Map<SnowstormDescription, SnowstormDescription> retireReplaceDescriptions =
-        getDescriptionsNeedingRetireReplace(existingConceptView, productDescriptionUpdateRequest);
+    DescriptionUpdatePlan plan =
+        buildDescriptionUpdatePlan(existingConceptView, productDescriptionUpdateRequest);
 
-    if (!retireReplaceDescriptions.isEmpty()) {
-      log.info(
-          String.format("Product description update for %s requires retire/replace", conceptId));
-      // Create a map for quick lookup of keys by descriptionId
-      Map<String, SnowstormDescription> keyDescriptionsById =
-          retireReplaceDescriptions.keySet().stream()
-              .filter(desc -> desc.getDescriptionId() != null)
-              .collect(
-                  Collectors.toMap(SnowstormDescription::getDescriptionId, Function.identity()));
-
-      // Create a new set to hold the updated descriptions
-      Set<SnowstormDescription> updatedDescriptions = new HashSet<>();
-
-      // Process each description in the request
-      for (SnowstormDescription description : productDescriptionUpdateRequest.getDescriptions()) {
-        String descriptionId = description.getDescriptionId();
-
-        // If this matches a key in retireReplaceDescriptions, replace it
-        if (descriptionId != null && keyDescriptionsById.containsKey(descriptionId)) {
-          // Add the original description from the key set
-          updatedDescriptions.add(keyDescriptionsById.get(descriptionId));
-
-          // Find the corresponding value
-          SnowstormDescription valueDescription = null;
-          for (Map.Entry<SnowstormDescription, SnowstormDescription> entry :
-              retireReplaceDescriptions.entrySet()) {
-            if (descriptionId.equals(entry.getKey().getDescriptionId())) {
-              valueDescription = entry.getValue();
-              break;
-            }
-          }
-
-          // Create a new description based on the value with type SYNONYM
-          if (valueDescription != null) {
-            SnowstormDescription synonymDesc = new SnowstormDescription();
-            // Copy all properties from valueDescription
-            BeanUtils.copyProperties(valueDescription, synonymDesc);
-            // Set type to SYNONYM
-            synonymDesc.setType("SYNONYM");
-            synonymDesc.setDescriptionId(null);
-            synonymDesc.setReleased(false);
-            synonymDesc.setTypeId("900000000000013009");
-            // Add the new SYNONYM description
-            updatedDescriptions.add(synonymDesc);
-          }
-        } else {
-          // Keep descriptions that don't need replacement
-          updatedDescriptions.add(description);
-        }
-      }
-
-      // Update the request with the modified descriptions
-      productDescriptionUpdateRequest.setDescriptions(updatedDescriptions);
-    }
+    productDescriptionUpdateRequest.setDescriptions(plan.targetDescriptions());
 
     SnowstormConcept conceptsNeedUpdate =
         prepareConceptUpdate(existingConceptView, productDescriptionUpdateRequest, branch);
@@ -297,92 +245,21 @@ public class ProductUpdateService {
                 conceptId));
         productUpdateCreationDetails.getUpdatedState().setConcept(response);
 
-        if (!retireReplaceDescriptions.isEmpty()) {
-
-          Set<SnowstormDescription> descriptionsWithRetireReplaceCompleted = new HashSet<>();
-          response
-              .getDescriptions()
-              .forEach(
-                  desc -> {
-                    Optional<SnowstormDescription> descriptionForRetirement =
-                        retireReplaceDescriptions.keySet().stream()
-                            .filter(
-                                key ->
-                                    key.getDescriptionId() != null
-                                        && key.getDescriptionId().equals(desc.getDescriptionId()))
-                            .findFirst();
-
-                    Optional<SnowstormDescription> isAReplacementDescription =
-                        retireReplaceDescriptions.values().stream()
-                            .filter(
-                                key ->
-                                    key.getTerm() != null && key.getTerm().equals(desc.getTerm()))
-                            .findFirst();
-
-                    if (!descriptionForRetirement.isEmpty()) {
-                      // Get the matching key and its corresponding value from
-                      // retireReplaceDescriptions
-                      SnowstormDescription keyDescription = descriptionForRetirement.get();
-                      SnowstormDescription valueDescription =
-                          retireReplaceDescriptions.get(keyDescription);
-
-                      // Find the description in response that has the same term as valueDescription
-                      Optional<SnowstormDescription> matchingValueDesc =
-                          response.getDescriptions().stream()
-                              .filter(
-                                  responseDesc ->
-                                      valueDescription.getTerm() != null
-                                          && valueDescription
-                                              .getTerm()
-                                              .equals(responseDesc.getTerm()))
-                              .findFirst();
-
-                      if (matchingValueDesc.isPresent()) {
-                        // add the replaced by
-                        Map<String, Set<String>> replacedBy = new HashMap<>();
-                        Set<String> replacementIds = new HashSet<>();
-                        SnowstormDescription matchingDesc = matchingValueDesc.get();
-                        replacementIds.add(
-                            matchingDesc.getDescriptionId()); // Add the replacement ID
-
-                        replacedBy.put("REPLACED_BY", replacementIds);
-
-                        // Set the association targets on the description
-                        SnowstormDescription unwrappedDescriptionForRetirement =
-                            SnowstormDtoUtil.cloneSnowstormDescription(
-                                descriptionForRetirement.get());
-                        unwrappedDescriptionForRetirement.setInactivationIndicator("OUTDATED");
-                        unwrappedDescriptionForRetirement.setAssociationTargets(replacedBy);
-                        unwrappedDescriptionForRetirement.setActive(false);
-                        unwrappedDescriptionForRetirement.setAcceptabilityMap(new HashMap<>());
-
-                        // Add to the completed set
-                        descriptionsWithRetireReplaceCompleted.add(
-                            unwrappedDescriptionForRetirement);
-                      } else {
-                        // If no matching term found, add the original description
-                        descriptionsWithRetireReplaceCompleted.add(desc);
-                      }
-                    } else if (isAReplacementDescription.isPresent()) {
-                      SnowstormDescription replacement = isAReplacementDescription.get();
-                      replacement.setDescriptionId(desc.getDescriptionId());
-                      replacement.setReleased(false);
-                      descriptionsWithRetireReplaceCompleted.add(replacement);
-                    } else {
-                      descriptionsWithRetireReplaceCompleted.add(desc);
-                    }
-                  });
-
-          response.setDescriptions(descriptionsWithRetireReplaceCompleted);
-          response.setDefinitionStatusId(
-              mapFromDefinitionStatusToId(Objects.requireNonNull(response.getDefinitionStatus())));
+        // A second update is only required when a genuinely new description had to be created (so
+        // that its server-assigned id is known) before the released description it replaces can be
+        // retired with a REPLACED_BY historical association. Reactivation-only edits are completed
+        // in the first update because the reactivated description's id is known up front.
+        if (!plan.postCreateRetirements().isEmpty()) {
+          SnowstormConcept retireUpdate =
+              applyPostCreateRetirements(
+                  existingConceptView, response, plan.postCreateRetirements());
           log.info(
               String.format(
                   "Product description update for %s retire/replace description update commencing",
                   conceptId));
           SnowstormConcept response2 =
               snowstormClient.updateConcept(
-                  branch, conceptsNeedUpdate.getConceptId(), response, false);
+                  branch, conceptsNeedUpdate.getConceptId(), retireUpdate, false);
           log.info(
               String.format(
                   "Product description update for %s retire/replace description update completed",
@@ -422,49 +299,320 @@ public class ProductUpdateService {
       snowstormClient.checkForDuplicateFsn(newFsn, branch);
     }
 
-    // if snowstorm does not recieve the retired descriptions... it is going to delete them
-    Set<SnowstormDescription> retiredDescriptions =
-        conceptNeedToUpdate.getDescriptions().stream()
-            .filter(desc -> Boolean.FALSE.equals(desc.getActive()))
-            .collect(Collectors.toSet());
-
-    productDescriptionUpdateRequest.getDescriptions().addAll(retiredDescriptions);
+    // The target description set computed by buildDescriptionUpdatePlan already includes the
+    // existing inactive descriptions that must be re-sent so Snowstorm does not delete them.
     conceptNeedToUpdate.setDescriptions(productDescriptionUpdateRequest.getDescriptions());
 
     return conceptNeedToUpdate;
   }
 
-  private Map<SnowstormDescription, SnowstormDescription> getDescriptionsNeedingRetireReplace(
-      SnowstormConcept existingConcept,
-      ProductDescriptionUpdateRequest productDescriptionUpdateRequest) {
-    if (productDescriptionUpdateRequest == null || existingConcept == null) {
-      return Collections.emptyMap();
+  /**
+   * The set of descriptions to send to Snowstorm in the first update, plus any retirements that can
+   * only be completed in a second update once a newly created replacement description has been
+   * assigned an id.
+   */
+  private record DescriptionUpdatePlan(
+      @NonNull Set<SnowstormDescription> targetDescriptions,
+      @NonNull List<PostCreateRetirement> postCreateRetirements) {}
+
+  /**
+   * A released description that must be retired and pointed (REPLACED_BY) at a newly created one.
+   */
+  private record PostCreateRetirement(
+      @NonNull SnowstormDescription oldReleasedDescription, @NonNull String replacementTermKey) {}
+
+  /**
+   * Identity for a description within a concept that participates in the SNOMED CT "no two
+   * descriptions with the same term and language" constraints: term + language code + type.
+   */
+  private static String descriptionKey(SnowstormDescription description) {
+    return description.getTerm()
+        + "|"
+        + description.getLanguageCode()
+        + "|"
+        + description.getTypeId();
+  }
+
+  /** The existing descriptions on the concept, indexed for building the update plan. */
+  private record ExistingDescriptionIndex(
+      @NonNull Map<String, SnowstormDescription> byId,
+      @NonNull Map<String, SnowstormDescription> activeByKey,
+      @NonNull Map<String, SnowstormDescription> inactiveByKey) {}
+
+  /**
+   * Computes the descriptions to send to Snowstorm for a description update.
+   *
+   * <p>When an edit introduces an active term that already exists as an <em>inactive</em>
+   * description on the same concept, that inactive description is reactivated (reusing its id;
+   * Snowstorm in turn reactivates its existing reference set members) rather than creating a
+   * duplicate active description. When an edit collides with another <em>active</em> description
+   * the update is rejected. Genuine new terms that replace a released description are created in
+   * the first update and the released description is retired in a second update once the new id is
+   * known.
+   */
+  private DescriptionUpdatePlan buildDescriptionUpdatePlan(
+      SnowstormConcept existingConcept, ProductDescriptionUpdateRequest request) {
+
+    List<SnowstormDescription> existingDescriptions =
+        existingConcept.getDescriptions() == null
+            ? List.of()
+            : new ArrayList<>(existingConcept.getDescriptions());
+
+    ExistingDescriptionIndex existing =
+        new ExistingDescriptionIndex(
+            existingDescriptions.stream()
+                .filter(desc -> desc.getDescriptionId() != null)
+                .collect(
+                    Collectors.toMap(
+                        SnowstormDescription::getDescriptionId, Function.identity(), (a, b) -> a)),
+            existingDescriptions.stream()
+                .filter(desc -> Boolean.TRUE.equals(desc.getActive()))
+                .collect(
+                    Collectors.toMap(
+                        ProductUpdateService::descriptionKey, Function.identity(), (a, b) -> a)),
+            existingDescriptions.stream()
+                .filter(desc -> Boolean.FALSE.equals(desc.getActive()))
+                .collect(
+                    Collectors.toMap(
+                        ProductUpdateService::descriptionKey, Function.identity(), (a, b) -> a)));
+
+    Set<String> requestIds =
+        request.getDescriptions().stream()
+            .map(SnowstormDescription::getDescriptionId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+
+    Set<SnowstormDescription> target = new HashSet<>();
+    Set<String> consumedInactiveIds = new HashSet<>();
+    List<PostCreateRetirement> postCreateRetirements = new ArrayList<>();
+
+    for (SnowstormDescription requested : request.getDescriptions()) {
+      planRequestedDescription(
+          requested, existing, target, consumedInactiveIds, postCreateRetirements);
     }
 
-    Map<String, SnowstormDescription> existingDescriptionsById =
-        existingConcept.getDescriptions().stream()
-            .collect(Collectors.toMap(SnowstormDescription::getDescriptionId, Function.identity()));
+    reAddUntouchedInactiveDescriptions(
+        existingDescriptions, requestIds, consumedInactiveIds, target);
 
-    Map<SnowstormDescription, SnowstormDescription> descriptionsNeedingUpdate = new HashMap<>();
+    // A reactivated description is now active, so it must not also appear as an inactive row. The
+    // UI
+    // re-sends retired descriptions in the request to preserve them, so the description we just
+    // reactivated can also be present inactive - sending the same id twice makes Snowstorm resolve
+    // it to inactive and the term is lost. Drop the inactive duplicate of any reactivated id.
+    target.removeIf(
+        description ->
+            Boolean.FALSE.equals(description.getActive())
+                && description.getDescriptionId() != null
+                && consumedInactiveIds.contains(description.getDescriptionId()));
 
-    for (SnowstormDescription newDescription : productDescriptionUpdateRequest.getDescriptions()) {
-      String descriptionId = newDescription.getDescriptionId();
-      if (descriptionId != null && existingDescriptionsById.containsKey(descriptionId)) {
-        SnowstormDescription oldDescription = existingDescriptionsById.get(descriptionId);
+    return new DescriptionUpdatePlan(target, postCreateRetirements);
+  }
 
-        // Check if both are released and term has changed
-        if (oldDescription != null
-            && newDescription != null
-            && Boolean.TRUE.equals(oldDescription.getReleased())
-            && Boolean.TRUE.equals(newDescription.getReleased())
-            && !Objects.equals(oldDescription.getTerm(), newDescription.getTerm())) {
+  /**
+   * Decides how a single requested description contributes to the update, adding to {@code target}
+   * (and {@code consumedInactiveIds} / {@code postCreateRetirements}) accordingly.
+   */
+  private void planRequestedDescription(
+      SnowstormDescription requested,
+      ExistingDescriptionIndex existing,
+      Set<SnowstormDescription> target,
+      Set<String> consumedInactiveIds,
+      List<PostCreateRetirement> postCreateRetirements) {
 
-          descriptionsNeedingUpdate.put(oldDescription, newDescription);
-        }
+    if (!Boolean.TRUE.equals(requested.getActive())) {
+      // An inactive description sent explicitly by the caller is kept as-is.
+      target.add(requested);
+      return;
+    }
+
+    SnowstormDescription sameId =
+        requested.getDescriptionId() == null
+            ? null
+            : existing.byId().get(requested.getDescriptionId());
+
+    if (sameId != null && Objects.equals(sameId.getTerm(), requested.getTerm())) {
+      // Term unchanged - acceptability or other mutable edit only; send as requested.
+      target.add(requested);
+      return;
+    }
+
+    String key = descriptionKey(requested);
+
+    SnowstormDescription activeMatch = existing.activeByKey().get(key);
+    if (activeMatch != null
+        && !Objects.equals(activeMatch.getDescriptionId(), requested.getDescriptionId())) {
+      throw new ProductAtomicDataValidationProblem(
+          String.format(
+              "Cannot use the term \"%s\" because an active description with the same term and"
+                  + " language already exists on this concept.",
+              requested.getTerm()));
+    }
+
+    SnowstormDescription inactiveMatch = existing.inactiveByKey().get(key);
+    if (inactiveMatch != null) {
+      // Reactivate the existing inactive description instead of creating a duplicate term.
+      target.add(buildReactivatedDescription(inactiveMatch, requested));
+      consumedInactiveIds.add(inactiveMatch.getDescriptionId());
+
+      if (sameId != null
+          && Boolean.TRUE.equals(sameId.getReleased())
+          && !Objects.equals(sameId.getDescriptionId(), inactiveMatch.getDescriptionId())) {
+        // Genuine rename of a released description: retire the old term, replaced by the
+        // reactivated description (whose id is already known).
+        target.add(retireDescription(sameId, inactiveMatch.getDescriptionId()));
+      }
+      // An unreleased description being renamed is simply dropped - Snowstorm deletes
+      // descriptions that are not re-sent.
+    } else if (sameId != null && Boolean.TRUE.equals(sameId.getReleased())) {
+      // Rename of a released description with no inactive match: create the new description now and
+      // retire the old one once its replacement id is known (second update).
+      SnowstormDescription newDescription = SnowstormDtoUtil.cloneSnowstormDescription(requested);
+      newDescription.setDescriptionId(null);
+      newDescription.setReleased(false);
+      newDescription.setActive(true);
+      target.add(newDescription);
+      target.add(SnowstormDtoUtil.cloneSnowstormDescription(sameId));
+      postCreateRetirements.add(new PostCreateRetirement(sameId, key));
+    } else {
+      // Brand new description (no id) or an unreleased edit-in-place: send as requested.
+      target.add(requested);
+    }
+  }
+
+  /**
+   * Re-sends existing inactive descriptions that were neither reactivated nor explicitly provided
+   * so Snowstorm does not delete them. Their acceptability is blanked so we never re-assert active
+   * language reference set members against an inactive description.
+   */
+  private void reAddUntouchedInactiveDescriptions(
+      List<SnowstormDescription> existingDescriptions,
+      Set<String> requestIds,
+      Set<String> consumedInactiveIds,
+      Set<SnowstormDescription> target) {
+
+    for (SnowstormDescription inactive : existingDescriptions) {
+      if (Boolean.FALSE.equals(inactive.getActive())
+          && !consumedInactiveIds.contains(inactive.getDescriptionId())
+          && !requestIds.contains(inactive.getDescriptionId())) {
+        SnowstormDescription retained = SnowstormDtoUtil.cloneSnowstormDescription(inactive);
+        retained.setAcceptabilityMap(new HashMap<>());
+        target.add(retained);
       }
     }
+  }
 
-    return descriptionsNeedingUpdate;
+  /**
+   * Builds a reactivated copy of an inactive description: active, with the requested acceptability,
+   * and with the description-inactivation-indicator and historical-association reference set
+   * members cleared. Snowstorm reactivates the existing language reference set members (reusing
+   * their ids) and retires the indicator/association members based on these fields.
+   */
+  private static SnowstormDescription buildReactivatedDescription(
+      SnowstormDescription inactiveDescription, SnowstormDescription requested) {
+    SnowstormDescription reactivated =
+        SnowstormDtoUtil.cloneSnowstormDescription(inactiveDescription);
+    reactivated.setActive(true);
+    reactivated.setInactivationIndicator(null);
+    reactivated.setAssociationTargets(new HashMap<>());
+    reactivated.setAcceptabilityMap(
+        requested.getAcceptabilityMap() == null
+            ? new HashMap<>()
+            : new HashMap<>(requested.getAcceptabilityMap()));
+    return reactivated;
+  }
+
+  /**
+   * Builds a retired copy of a released description, pointed at its replacement via REPLACED_BY.
+   */
+  private static SnowstormDescription retireDescription(
+      SnowstormDescription releasedDescription, String replacementDescriptionId) {
+    SnowstormDescription retired = SnowstormDtoUtil.cloneSnowstormDescription(releasedDescription);
+    retired.setActive(false);
+    retired.setInactivationIndicator("OUTDATED");
+    Map<String, Set<String>> associationTargets = new HashMap<>();
+    associationTargets.put("REPLACED_BY", new HashSet<>(Set.of(replacementDescriptionId)));
+    retired.setAssociationTargets(associationTargets);
+    retired.setAcceptabilityMap(new HashMap<>());
+    return retired;
+  }
+
+  /**
+   * Completes retire/replace for genuinely new descriptions: locates each newly created replacement
+   * (by term key, restricted to ids that did not exist before the first update) and retires the
+   * released description it replaces with a REPLACED_BY association.
+   */
+  private SnowstormConcept applyPostCreateRetirements(
+      SnowstormConcept existingConcept,
+      SnowstormConcept response,
+      List<PostCreateRetirement> postCreateRetirements) {
+
+    Set<String> preExistingIds =
+        existingConcept.getDescriptions() == null
+            ? Set.of()
+            : existingConcept.getDescriptions().stream()
+                .map(SnowstormDescription::getDescriptionId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+    Map<String, SnowstormDescription> responseById =
+        response.getDescriptions().stream()
+            .filter(desc -> desc.getDescriptionId() != null)
+            .collect(
+                Collectors.toMap(
+                    SnowstormDescription::getDescriptionId, Function.identity(), (a, b) -> a));
+
+    Set<SnowstormDescription> finalDescriptions = new HashSet<>(response.getDescriptions());
+
+    for (PostCreateRetirement retirement : postCreateRetirements) {
+      SnowstormDescription createdReplacement =
+          response.getDescriptions().stream()
+              .filter(desc -> Boolean.TRUE.equals(desc.getActive()))
+              .filter(desc -> retirement.replacementTermKey().equals(descriptionKey(desc)))
+              .filter(
+                  desc ->
+                      desc.getDescriptionId() != null
+                          && !preExistingIds.contains(desc.getDescriptionId()))
+              .findFirst()
+              .orElse(null);
+
+      if (createdReplacement == null) {
+        // The first update already committed, so the concept is half-updated (replacement created,
+        // old description not yet retired). This is an internal invariant failure - not bad user
+        // input - so surface it as a server error with enough context to debug the partial state.
+        String message =
+            String.format(
+                "Retire/replace could not locate the newly created replacement for concept %s"
+                    + " (replacement key '%s', original description %s). The initial update already"
+                    + " committed, so the concept may be left partially updated. Candidate"
+                    + " description ids: %s",
+                response.getConceptId(),
+                retirement.replacementTermKey(),
+                retirement.oldReleasedDescription().getDescriptionId(),
+                response.getDescriptions().stream()
+                    .map(SnowstormDescription::getDescriptionId)
+                    .toList());
+        log.severe(message);
+        throw new LingoProblem(
+            "retire-replace-incomplete",
+            "Retire/replace could not be completed",
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            message);
+      }
+
+      SnowstormDescription oldInResponse =
+          responseById.get(retirement.oldReleasedDescription().getDescriptionId());
+      if (oldInResponse != null) {
+        finalDescriptions.remove(oldInResponse);
+      }
+      finalDescriptions.add(
+          retireDescription(
+              retirement.oldReleasedDescription(), createdReplacement.getDescriptionId()));
+    }
+
+    response.setDescriptions(finalDescriptions);
+    response.setDefinitionStatusId(
+        mapFromDefinitionStatusToId(Objects.requireNonNull(response.getDefinitionStatus())));
+    return response;
   }
 
   static void validateCoreConceptDescriptionsImmutable(
