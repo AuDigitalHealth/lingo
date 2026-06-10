@@ -91,6 +91,7 @@ const MultiValueEclAutocomplete: React.FC<FieldProps<any, any>> = props => {
       conceptId: s.conceptId,
       pt: s.pt,
       fsn: s.fsn,
+      moduleId: s.moduleId,
     }));
 
     setSelectedConcepts(conceptMinis);

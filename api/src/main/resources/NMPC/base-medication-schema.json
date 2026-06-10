@@ -15,7 +15,8 @@
             "PRIMITIVE",
             "FULLY_DEFINED"
           ]
-        }
+        },
+        "moduleId": { "type": "string" }
       },
       "minProperties": 1,
       "required": [

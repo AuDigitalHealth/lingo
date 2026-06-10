@@ -37,13 +37,23 @@ export function convertFromValueSetExpansionContainsToSnowstormConceptMini(
     id: valueSet.code,
     idAndFsnTerm: `${valueSet.code} | ${generateFsnFromValueSetExpansionContains(valueSet).term}`,
     conceptId: valueSet.code,
-    moduleId: '',
+    moduleId: generateModuleIdFromValueSetExpansionContains(valueSet),
     effectiveTime: '',
     fsn: generateFsnFromValueSetExpansionContains(valueSet),
     pt: generatePtFromValueSetExpansionContains(valueSet, preferredForLanguage),
     definitionStatus:
       generateDefinitionStatusFromValueSetExpansionContains(valueSet),
   };
+}
+
+function generateModuleIdFromValueSetExpansionContains(
+  valueSet: ValueSetExpansionContains,
+): string {
+  const moduleIdExt = valueSet?.extension?.find(ext =>
+    ext.extension?.some(e => e.url === 'code' && e.valueCode === 'moduleId'),
+  );
+  const valueExt = moduleIdExt?.extension?.find(e => e.url === 'value');
+  return valueExt?.valueCode ?? valueExt?.valueString ?? '';
 }
 
 export function generateFsnFromValueSetExpansionContains(

@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
+- Fixed NMPC Nutritional product saves crashing with a null moduleId error on the MP node. The UI concept pickers now include moduleId in the submitted payload
 - Fixed a bug in the auto task/ticket association removal when a task is deleted
 - Fixed product description updates creating a duplicate active description when the edited term matches an existing inactive description on the same concept. The existing inactive description (and its language reference set members) is now reactivated instead, and editing a term to collide with another active description is now rejected in the UI and API (CUST1634236).
 - Fixed editing an existing product in place creating an entirely new OWL axiom (and retiring the previous one) instead of updating the existing axiom's relationships. The existing class axiom's identity is now preserved so Snowstorm updates it in place (CUST1634236).

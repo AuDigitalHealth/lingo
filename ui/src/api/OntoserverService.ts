@@ -52,7 +52,7 @@ const OntoserverService = {
     }
 
     const response = await axios.get(
-      `${baseUrl}/ValueSet/$expand?url=${url}${filter ? '&filter=' + encodedFilter : ''}&includeDesignations=true&property=sufficientlyDefined&count=${count}`,
+      `${baseUrl}/ValueSet/$expand?url=${url}${filter ? '&filter=' + encodedFilter : ''}&includeDesignations=true&property=sufficientlyDefined&property=moduleId&count=${count}`,
     );
 
     const statusCode = response.status;
