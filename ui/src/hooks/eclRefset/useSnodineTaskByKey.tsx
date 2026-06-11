@@ -3,13 +3,14 @@ import { useParams } from 'react-router-dom';
 import { Task } from '../../types/task';
 import {
   getTaskById,
+  useAllTasks,
   useInitializeUserReviewTasks,
   useInitializeUserTasks,
 } from '../api/task/useAllTasks';
 
 function useSnodineTaskByKey(key?: string) {
   const [task, setTask] = useState<Task | null>();
-  const { userTasksData } = useInitializeUserTasks();
+  const { allTasks: userTasksData } = useAllTasks();
 
   useInitializeUserReviewTasks();
 

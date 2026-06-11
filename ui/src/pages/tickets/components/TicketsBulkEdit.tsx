@@ -46,7 +46,9 @@ const defaultValues: TicketBulkEditForm = {
   iteration: null,
   state: null,
   labels: [],
+  labelsToRemove: [],
   externalRequestors: [],
+  externalRequestorsToRemove: [],
   task: null,
   assignee: null,
 };
@@ -87,7 +89,9 @@ interface TicketBulkEditForm {
   iteration: Iteration | null;
   state: State | null;
   labels: LabelType[] | [];
+  labelsToRemove: LabelType[] | [];
   externalRequestors: ExternalRequestor[] | [];
+  externalRequestorsToRemove: ExternalRequestor[] | [];
   task: string | null;
   assignee: JiraUser | null;
 }
@@ -255,7 +259,25 @@ export default function TicketsBulkEdit({
                     options={labels}
                     optionLabel="name"
                     itemTemplate={LabelItemTemplate}
-                    placeholder="Labels"
+                    placeholder="Add Labels"
+                  />
+                )}
+              />
+            </div>
+            <div>
+              <Controller
+                name="labelsToRemove"
+                control={control}
+                render={({ field }) => (
+                  <MultiSelect
+                    display="chip"
+                    id={field.name}
+                    value={field.value}
+                    onChange={e => field.onChange(e.value)}
+                    options={labels}
+                    optionLabel="name"
+                    itemTemplate={LabelItemTemplate}
+                    placeholder="Remove Labels"
                   />
                 )}
               />
@@ -273,7 +295,25 @@ export default function TicketsBulkEdit({
                     options={externalRequestors}
                     optionLabel="name"
                     itemTemplate={ExternalRequestorItemTemplate}
-                    placeholder="External Requesters"
+                    placeholder="Add External Requesters"
+                  />
+                )}
+              />
+            </div>
+            <div>
+              <Controller
+                name="externalRequestorsToRemove"
+                control={control}
+                render={({ field }) => (
+                  <MultiSelect
+                    display="chip"
+                    id={field.name}
+                    value={field.value}
+                    onChange={e => field.onChange(e.value)}
+                    options={externalRequestors}
+                    optionLabel="name"
+                    itemTemplate={ExternalRequestorItemTemplate}
+                    placeholder="Remove External Requesters"
                   />
                 )}
               />
@@ -367,6 +407,11 @@ const updateTickets = (tickets: Ticket[], values: TicketBulkEditForm) => {
         }
       });
     }
+    if (values.labelsToRemove.length > 0) {
+      ticket.labels = ticket.labels.filter(
+        label => !values.labelsToRemove.some(r => r.id === label.id),
+      );
+    }
     if (values.externalRequestors.length > 0) {
       values.externalRequestors.forEach(newRequestor => {
         if (
@@ -377,6 +422,12 @@ const updateTickets = (tickets: Ticket[], values: TicketBulkEditForm) => {
           ticket.externalRequestors.push(newRequestor);
         }
       });
+    }
+    if (values.externalRequestorsToRemove.length > 0) {
+      ticket.externalRequestors = ticket.externalRequestors.filter(
+        requestor =>
+          !values.externalRequestorsToRemove.some(r => r.id === requestor.id),
+      );
     }
     if (
       values.task &&
