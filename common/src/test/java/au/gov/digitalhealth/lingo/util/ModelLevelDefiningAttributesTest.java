@@ -40,6 +40,21 @@ class ModelLevelDefiningAttributesTest {
   }
 
   @Test
+  void nmpcRealMpLevelIncludesTargetPopulationAndPlaysRole() {
+    // The ATM (Actual Therapeutic Moiety, REAL_MEDICINAL_PRODUCT) restates the vaccine
+    // user-controllable attributes via createMpRelationships, so they must be filterable here
+    // too — otherwise removing e.g. qualitative strength reuses the existing ATM unchanged.
+    Set<LingoConstants> attrs =
+        ModelLevelDefiningAttributes.getDefiningAttributeTypes(
+            ModelLevelType.REAL_MEDICINAL_PRODUCT, ModelType.NMPC);
+
+    assertTrue(attrs.contains(SnomedConstants.HAS_TARGET_POPULATION));
+    assertTrue(attrs.contains(SnomedConstants.PLAYS_ROLE));
+    assertTrue(attrs.contains(SnomedConstants.HAS_QUALITATIVE_STRENGTH));
+    assertTrue(attrs.contains(SnomedConstants.HAS_PRODUCT_NAME));
+  }
+
+  @Test
   void amtMpLevelExcludesNmpcSpecificAttributes() {
     Set<LingoConstants> attrs =
         ModelLevelDefiningAttributes.getDefiningAttributeTypes(

@@ -6,7 +6,10 @@ import {
   DrawConceptDiagramArgs,
   drawNewConceptDiagram,
 } from './conceptDiagramUtils';
-import { useSearchConceptById } from '../../hooks/api/products/useSearchConcept';
+import {
+  useSearchConceptById,
+  useSearchConceptByIdNoCache,
+} from '../../hooks/api/products/useSearchConcept';
 import useApplicationConfigStore from '../../stores/ApplicationConfigStore';
 import {
   ButtonGroup,
@@ -61,7 +64,7 @@ export default function ConceptDiagram({
       ? project?.branchPath
       : useApplicationConfigStore.getState().applicationConfig?.apDefaultBranch;
   const fullBranch = `${branchPath}${branchKey ? `/${branchKey}` : ''}`;
-  const { data, isLoading } = useSearchConceptById(
+  const { data, isLoading } = useSearchConceptByIdNoCache(
     concept?.conceptId,
     fullBranch,
   );

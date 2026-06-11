@@ -153,7 +153,8 @@ public final class ModelLevelDefiningAttributes {
   private static Set<LingoConstants> nmpcUserControllableAttributes(
       ModelLevelType levelType, ModelType modelType) {
     // NMPC restates the MP-level user attributes (plays role, target population, qualitative
-    // strength) on the VMP and AMP — see createClinicalDrugRelationships for VaccineProductDetails.
+    // strength) on the ATM, VMP and AMP — see createMpRelationships and
+    // createClinicalDrugRelationships for VaccineProductDetails.
     if (modelType != ModelType.NMPC) {
       return Set.of();
     }
@@ -161,6 +162,7 @@ public final class ModelLevelDefiningAttributes {
         EnumSet.of(
             ModelLevelType.MEDICINAL_PRODUCT,
             ModelLevelType.MEDICINAL_PRODUCT_ONLY,
+            ModelLevelType.REAL_MEDICINAL_PRODUCT,
             ModelLevelType.CLINICAL_DRUG,
             ModelLevelType.REAL_CLINICAL_DRUG);
     if (!nmpcUserAttrLevels.contains(levelType)) {

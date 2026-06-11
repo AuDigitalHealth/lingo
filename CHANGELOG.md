@@ -16,7 +16,8 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 - Fixed a stored XSS risk in the concept review messages panel by sanitising review message HTML with DOMPurify before rendering (matching the existing ticket history pattern).
 - Removed a hardcoded IMS credential from `ui/cypress/docker/docker-compose.yaml`; the username/password now come from the `IMS_USERNAME`/`IMS_PASSWORD` environment variables. The leaked credential should be rotated.
 
-## Fixed
+### Fixed
+- Fixed removal of a vaccine's qualitative strength (and target population / plays role) not being applied to the ATM (Actual Therapeutic Moiety): the NMPC `REAL_MEDICINAL_PRODUCT` level was missing from the ECL negative-filter catalogue, so the existing ATM still carrying the attribute was reused unchanged instead of being recalculated (CUST1634236).
 - Fixed NMPC Nutritional product saves crashing with a null moduleId error on the MP node. The UI concept pickers now include moduleId in the submitted payload
 - Fixed a bug in the auto task/ticket association removal when a task is deleted
 - Fixed product description updates creating a duplicate active description when the edited term matches an existing inactive description on the same concept. The existing inactive description (and its language reference set members) is now reactivated instead, and editing a term to collide with another active description is now rejected in the UI and API (CUST1634236).
