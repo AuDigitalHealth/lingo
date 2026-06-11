@@ -25,6 +25,7 @@ import au.gov.digitalhealth.tickets.models.Attachment;
 import au.gov.digitalhealth.tickets.repository.AttachmentRepository;
 import au.gov.digitalhealth.tickets.service.AttachmentService;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -107,7 +108,7 @@ public class AttachmentController {
       produces = MediaType.APPLICATION_JSON_VALUE)
   @Transactional
   public ResponseEntity<List<AttachmentUploadResponse>> uploadAttachmentsFromUrls(
-      @PathVariable Long ticketId, @RequestBody List<AttachmentUrlDto> request) {
+      @PathVariable Long ticketId, @Valid @RequestBody List<AttachmentUrlDto> request) {
 
     if (request == null || request.isEmpty()) {
       throw new LingoProblem(

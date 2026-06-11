@@ -76,8 +76,8 @@ services:
       - security.enable-csrf=false
       - spring.flyway.locations=classpath:db/migration/postgresql
       - spring.flyway.user=postgres
-      - ims-username=sjose
-      - ims-password=Jmshere@457
+      - ims-username=${IMS_USERNAME}
+      - ims-password=${IMS_PASSWORD}
       - ihtsdo.ap.projectKey=AUAMT
       - ihtsdo.ap.defaultBranch=MAIN/SNOMEDCT-AU/AUAMT
       - ihtsdo.ims.api.url=https://uat-ims.ihtsdotools.org

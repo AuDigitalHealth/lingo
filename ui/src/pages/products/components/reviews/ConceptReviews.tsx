@@ -15,6 +15,7 @@ import {
   useTheme,
 } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
+import DOMPurify from 'dompurify';
 import { Task } from '../../../../types/task.ts';
 import { Ticket } from '../../../../types/tickets/ticket.ts';
 import {
@@ -443,7 +444,9 @@ function ReviewMessageRender({ message }: ReviewMessageRenderProps) {
         </Box>
 
         <Box
-          dangerouslySetInnerHTML={{ __html: message.messageHtml }}
+          dangerouslySetInnerHTML={{
+            __html: DOMPurify.sanitize(message.messageHtml),
+          }}
           sx={{
             '& *': {
               fontSize: 'inherit',

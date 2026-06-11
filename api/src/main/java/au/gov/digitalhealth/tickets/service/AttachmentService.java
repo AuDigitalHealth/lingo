@@ -31,8 +31,12 @@ import au.gov.digitalhealth.tickets.repository.TicketRepository;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.InetAddress;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.UnknownHostException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -63,6 +67,14 @@ public class AttachmentService {
 
   @Value("${snomio.attachments.url.read-timeout-ms:30000}")
   private int urlReadTimeoutMs;
+
+  /**
+   * When false (the default) attachment URLs that resolve to loopback/link-local/private/wildcard
+   * addresses are rejected, to defend against SSRF. Enabled only in tests that fetch from a local
+   * stub server.
+   */
+  @Value("${snomio.attachments.url.allow-private-targets:false}")
+  private boolean allowPrivateUrlTargets;
 
   protected final Log logger = LogFactory.getLog(getClass());
 
@@ -163,9 +175,15 @@ public class AttachmentService {
     Path tempFile = null;
 
     try {
-      URLConnection connection = new URL(url).openConnection();
+      URL parsedUrl = parseAndValidateUrl(ticketId, url);
+      URLConnection connection = parsedUrl.openConnection();
       connection.setConnectTimeout(urlConnectTimeoutMs);
       connection.setReadTimeout(urlReadTimeoutMs);
+      // Do not follow redirects: a permitted host could otherwise 30x to an internal
+      // host, bypassing the validation above.
+      if (connection instanceof HttpURLConnection httpConnection) {
+        httpConnection.setInstanceFollowRedirects(false);
+      }
       tempFile = Files.createTempFile(Path.of(attachmentsDirectory), "attachment-", ".tmp");
       try (InputStream in = connection.getInputStream()) {
         Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
@@ -228,6 +246,75 @@ public class AttachmentService {
         }
       }
     }
+  }
+
+  /**
+   * Parses the supplied attachment URL and rejects anything that could be used for server-side
+   * request forgery (SSRF) or local file disclosure. Only {@code http}/{@code https} schemes are
+   * permitted, and the host must not resolve to a loopback, link-local (e.g. the cloud metadata
+   * endpoint 169.254.169.254), site-local/private, wildcard or multicast address.
+   */
+  private URL parseAndValidateUrl(Long ticketId, String url) {
+    final URL parsedUrl;
+    try {
+      parsedUrl = new URL(url);
+    } catch (MalformedURLException e) {
+      throw new LingoProblem(
+          UPLOAD_API + ticketId,
+          "Invalid attachment URL",
+          HttpStatus.BAD_REQUEST,
+          "Attachment URL is not a valid URL");
+    }
+
+    String protocol = parsedUrl.getProtocol();
+    if (!"http".equalsIgnoreCase(protocol) && !"https".equalsIgnoreCase(protocol)) {
+      throw new LingoProblem(
+          UPLOAD_API + ticketId,
+          "Unsupported attachment URL scheme",
+          HttpStatus.BAD_REQUEST,
+          "Only http and https attachment URLs are supported");
+    }
+
+    String host = parsedUrl.getHost();
+    if (host == null || host.isBlank()) {
+      throw new LingoProblem(
+          UPLOAD_API + ticketId,
+          "Invalid attachment URL",
+          HttpStatus.BAD_REQUEST,
+          "Attachment URL must include a host");
+    }
+
+    if (allowPrivateUrlTargets) {
+      return parsedUrl;
+    }
+
+    try {
+      for (InetAddress address : InetAddress.getAllByName(host)) {
+        if (isDisallowedAddress(address)) {
+          throw new LingoProblem(
+              UPLOAD_API + ticketId,
+              "Attachment URL is not permitted",
+              HttpStatus.BAD_REQUEST,
+              "Attachment URL resolves to a disallowed (internal/private) address");
+        }
+      }
+    } catch (UnknownHostException e) {
+      throw new LingoProblem(
+          UPLOAD_API + ticketId,
+          "Invalid attachment URL",
+          HttpStatus.BAD_REQUEST,
+          "Attachment URL host could not be resolved");
+    }
+
+    return parsedUrl;
+  }
+
+  private boolean isDisallowedAddress(InetAddress address) {
+    return address.isAnyLocalAddress()
+        || address.isLoopbackAddress()
+        || address.isLinkLocalAddress()
+        || address.isSiteLocalAddress()
+        || address.isMulticastAddress();
   }
 
   private void copyAttachmentFile(MultipartFile file, String attachmentLocation)

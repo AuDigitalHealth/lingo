@@ -297,7 +297,7 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
   }
 
   @Test
-  void uploadAttachmentsFromUrls_blankUrl_returnsBadRequestWithTitle() {
+  void uploadAttachmentsFromUrls_blankUrl_returnsBadRequest() {
     List<Ticket> tickets = ticketRepository.findAll();
     Ticket ticketToTest = tickets.stream().findFirst().orElseThrow();
 
@@ -309,7 +309,9 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
     blankUrl.setUrl("  ");
     blankUrl.setSizeMb(0.1);
 
-    ProblemDetail response =
+    // A blank url is rejected by bean validation on the request body (@NotBlank), before the
+    // service is invoked.
+    String body =
         withAuth()
             .contentType(ContentType.JSON)
             .body(List.of(blankUrl))
@@ -318,9 +320,11 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
             .then()
             .statusCode(HttpStatus.BAD_REQUEST.value())
             .extract()
-            .as(ProblemDetail.class);
+            .asString();
 
-    Assertions.assertEquals("Invalid attachment URL", response.getTitle());
+    Assertions.assertTrue(
+        body.contains("url must not be blank"),
+        "Response should contain the bean-validation message for the blank url");
   }
 
   @Test
@@ -355,8 +359,7 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
   }
 
   @Test
-  void uploadAttachmentsFromUrls_unknownExtension_noContentType_returnsBadRequestWithDetail()
-      throws IOException {
+  void uploadAttachmentsFromUrls_fileScheme_rejected() throws IOException {
     List<Ticket> tickets = ticketRepository.findAll();
     Ticket ticketToTest = tickets.stream().findFirst().orElseThrow();
     Long ticketId = ticketToTest.getId();
@@ -364,8 +367,8 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
     String endpointUrl =
         this.getSnomioLocation() + "/api/attachments/upload/" + ticketId + "/from-urls";
 
-    // Use a local classpath resource as the download source via file:// URL.
-    // The fileName is set to an unknown extension so that content-type probing returns null.
+    // A file:// URL pointing at a local resource must be rejected: only http/https are permitted,
+    // otherwise the endpoint could be abused to disclose arbitrary local files (SSRF/LFI).
     File sourceFile = new ClassPathResource("grrfile.grr").getFile();
     String fileUrl = sourceFile.toURI().toURL().toString();
 
@@ -388,8 +391,8 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
     Assertions.assertEquals("Failed to upload attachment from URL", response.getTitle());
     Assertions.assertNotNull(response.getDetail());
     Assertions.assertTrue(
-        response.getDetail().contains("Cannot determine content type"),
-        "Detail should reference the underlying content type failure");
+        response.getDetail().contains("http and https"),
+        "Detail should reference the unsupported scheme rejection");
     Assertions.assertTrue(
         response.getDetail().contains("data.grr"), "Detail should contain the file name");
     Assertions.assertTrue(

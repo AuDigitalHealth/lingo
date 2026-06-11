@@ -72,6 +72,9 @@ class AttachmentServiceTest {
         attachmentService, "attachmentsDirectory", tempAttachmentsDir.toString());
     ReflectionTestUtils.setField(attachmentService, "urlConnectTimeoutMs", 5000);
     ReflectionTestUtils.setField(attachmentService, "urlReadTimeoutMs", 5000);
+    // The stub server runs on localhost; allow private targets so the happy-path tests can reach
+    // it. SSRF rejection of private targets is covered explicitly below with this flag disabled.
+    ReflectionTestUtils.setField(attachmentService, "allowPrivateUrlTargets", true);
   }
 
   @AfterEach
@@ -210,6 +213,40 @@ class AttachmentServiceTest {
             TICKET_ID, wireMock.baseUrl() + "/report.pdf", "report.pdf", null);
 
     assertThat(response.getAttachmentId()).isEqualTo(100L);
+  }
+
+  @Test
+  void processAttachmentUploadFromUrl_privateAddress_rejectedWhenNotAllowed() {
+    // Disable the test-only allowance so the SSRF guard is exercised. The WireMock server runs on
+    // localhost, which resolves to a loopback address and must be rejected.
+    ReflectionTestUtils.setField(attachmentService, "allowPrivateUrlTargets", false);
+    when(ticketRepository.findById(TICKET_ID)).thenReturn(Optional.of(aTicket()));
+
+    LingoProblem ex =
+        assertThrows(
+            LingoProblem.class,
+            () ->
+                attachmentService.processAttachmentUploadFromUrl(
+                    TICKET_ID, wireMock.baseUrl() + "/file.pdf", "file.pdf", null));
+
+    assertThat(ex.getBody().getTitle()).isEqualTo("Failed to upload attachment from URL");
+    assertThat(ex.getBody().getDetail()).contains("disallowed");
+  }
+
+  @Test
+  void processAttachmentUploadFromUrl_nonHttpScheme_rejected() {
+    // file:// (and any non-http(s) scheme) must be rejected to prevent local file disclosure.
+    when(ticketRepository.findById(TICKET_ID)).thenReturn(Optional.of(aTicket()));
+
+    LingoProblem ex =
+        assertThrows(
+            LingoProblem.class,
+            () ->
+                attachmentService.processAttachmentUploadFromUrl(
+                    TICKET_ID, "file:///etc/passwd", "passwd", null));
+
+    assertThat(ex.getBody().getTitle()).isEqualTo("Failed to upload attachment from URL");
+    assertThat(ex.getBody().getDetail()).contains("http and https");
   }
 
   private void stubFile(String path) {
