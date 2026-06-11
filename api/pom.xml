@@ -223,7 +223,7 @@
     <dependency>
       <artifactId>metadata-extractor</artifactId>
       <groupId>com.drewnoakes</groupId>
-      <version>2.19.0</version>
+      <version>2.20.0</version>
     </dependency>
     <!-- Webp image support for ImageIO https://github.com/haraldk/TwelveMonkeys -->
     <dependency>
