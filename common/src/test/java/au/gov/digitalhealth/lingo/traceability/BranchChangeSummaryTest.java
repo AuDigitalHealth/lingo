@@ -102,9 +102,10 @@ class BranchChangeSummaryTest {
   }
 
   @Test
-  void from_conceptInactivate_recordsInConceptIdsInactivated() {
-    // Pre-existing concept whose latest change is INACTIVATE — its inherited refset members /
-    // relationships need to be cleaned up by detect's scenario-B fan-out.
+  void from_conceptInactivate_recordsConceptAsChanged() {
+    // A concept the task touched is reported as changed-on-branch regardless of the change type.
+    // Whether it's now actually inactive (and so its inherited references are dangling) is decided
+    // downstream against Snowstorm, not here.
     Activity activity =
         activity(
             "t1",
@@ -120,12 +121,12 @@ class BranchChangeSummaryTest {
 
     BranchChangeSummary summary = BranchChangeSummary.from(List.of(activity));
 
-    assertEquals(Set.of("concept-retired"), summary.conceptIdsInactivatedOnBranch());
+    assertEquals(Set.of("concept-retired"), summary.conceptIdsChangedOnBranch());
   }
 
   @Test
-  void from_conceptCreatedThenInactivated_recordsLatestChange() {
-    // CREATE then INACTIVATE — latest change wins, so the concept is marked inactivated.
+  void from_conceptCreatedThenInactivated_recordsConceptAsChanged() {
+    // CREATE then INACTIVATE across two commits — the concept was touched, so it's changed.
     Activity create =
         activity(
             "t1",
@@ -143,13 +144,16 @@ class BranchChangeSummaryTest {
 
     BranchChangeSummary summary = BranchChangeSummary.from(List.of(create, inactivate));
 
-    assertEquals(Set.of("concept-1"), summary.conceptIdsInactivatedOnBranch());
+    assertEquals(Set.of("concept-1"), summary.conceptIdsChangedOnBranch());
   }
 
   @Test
-  void from_conceptUpdate_doesNotRecordAsInactivated() {
-    // A non-INACTIVATE change on a concept (CREATE / UPDATE / DELETE) shouldn't fall into the
-    // inactivated set — only an explicit INACTIVATE change qualifies.
+  void from_conceptUpdate_recordsConceptAsChanged() {
+    // The IEDC-7423 regression. The authoring-traceability-service records a concept inactivation
+    // as an UPDATE on the concept row (the active flag flipped), NOT an INACTIVATE. An UPDATE must
+    // therefore still mark the concept as changed-on-branch — the previous code keyed on
+    // INACTIVATE here and so silently missed every real retire, leaving dangling references
+    // undetected. The active/inactive decision is deferred to Snowstorm's authoritative status.
     Activity activity =
         activity(
             "t1",
@@ -160,7 +164,26 @@ class BranchChangeSummaryTest {
 
     BranchChangeSummary summary = BranchChangeSummary.from(List.of(activity));
 
-    assertTrue(summary.conceptIdsInactivatedOnBranch().isEmpty());
+    assertEquals(Set.of("concept-1"), summary.conceptIdsChangedOnBranch());
+  }
+
+  @Test
+  void from_memberOnlyChange_recordsOwningConceptAsChanged() {
+    // A concept whose only logged change is to one of its components — here a refset member, as
+    // happens when a retire adds an inactivation-indicator member but the traceability log carries
+    // no CONCEPT-type entry — must still count as changed-on-branch. The owning conceptId is what
+    // the scenario-B fan-out keys on, so it has to be captured regardless of component type.
+    Activity activity =
+        activity(
+            "t1",
+            "2026-01-01T00:00:00Z",
+            "concept-owner",
+            new ComponentChange(
+                "m-1", ChangeType.CREATE, ComponentType.REFERENCE_SET_MEMBER, null, true, false));
+
+    BranchChangeSummary summary = BranchChangeSummary.from(List.of(activity));
+
+    assertEquals(Set.of("concept-owner"), summary.conceptIdsChangedOnBranch());
   }
 
   @Test

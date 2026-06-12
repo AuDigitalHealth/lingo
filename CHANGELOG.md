@@ -26,6 +26,20 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 - Fixed a bug in the auto task/ticket association removal when a task is deleted
 - Fixed product description updates creating a duplicate active description when the edited term matches an existing inactive description on the same concept. The existing inactive description (and its language reference set members) is now reactivated instead, and editing a term to collide with another active description is now rejected in the UI and API (CUST1634236).
 - Fixed editing an existing product in place creating an entirely new OWL axiom (and retiring the previous one) instead of updating the existing axiom's relationships. The existing class axiom's identity is now preserved so Snowstorm updates it in place (CUST1634236).
+- Fixed promotion validation ("Tidy & Promote") failing to detect dangling reference set members and
+  non-defining relationships left behind when a concept is retired in the Authoring Platform.
+  Detection now decides whether a changed concept is inactive from Snowstorm's authoritative status
+  rather than the traceability change type (the traceability service records an inactivation as an
+  `UPDATE`, not an `INACTIVATE`, so inherited references — e.g. a retired VTM's VTM reference set
+  membership and `Has NMPC product type` property — were silently missed). Also stopped a concept's
+  own (already-inactivated) OWL axiom member from being falsely listed as dangling. Fixed "Tidy &
+  Promote" then failing with a 400 ("definitionStatusId must not be null") when inactivating a
+  retired concept's released non-defining relationship: the browser concept update now backfills the
+  `definitionStatusId` that Snowstorm's browser GET omits for inactive concepts (CUST1634236).
+- Fixed the task list flooding the console with React "Maximum update depth exceeded" warnings: the
+  `useAllTasks` hook returned a freshly sorted `allTasks` array on every render, which retriggered an
+  effect-with-setState in the task assignee dropdown in an infinite loop. `allTasks` is now memoised
+  so its identity only changes when the underlying query data does.
 - Can now view tasks that you are the reviewer for in snodine, previously it would be stuck on the loading screen
 
 ## [1.3.45] - 2026-06-05

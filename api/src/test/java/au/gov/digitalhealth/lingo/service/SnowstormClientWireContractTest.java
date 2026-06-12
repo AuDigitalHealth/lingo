@@ -215,8 +215,13 @@ class SnowstormClientWireContractTest {
 
   @Test
   void inactivateRelationship_fetchesParentConceptAndPutsActiveFalse() {
+    // Mirror Snowstorm's real browser GET shape for a retired concept (IEDC-7423): it returns
+    // the definitionStatus enum name but NOT definitionStatusId. The browser PUT, however,
+    // rejects a null definitionStatusId ("must not be null"). The client must backfill the id
+    // from the status before PUTting, or tidy of a released non-defining relationship 400s.
     String fetchedConcept =
-        "{\"conceptId\":\"c-source\",\"active\":true,\"relationships\":["
+        "{\"conceptId\":\"c-source\",\"active\":false,\"definitionStatus\":\"PRIMITIVE\","
+            + "\"relationships\":["
             + "  {\"relationshipId\":\"r-1\",\"sourceId\":\"c-source\",\"destinationId\":\"c-dst\","
             + "   \"typeId\":\"t\",\"active\":true,\"released\":true}"
             + "]}";
@@ -251,6 +256,11 @@ class SnowstormClientWireContractTest {
         .as("PUT body must inactivate the matching relationship")
         .contains("\"relationshipId\":\"r-1\"")
         .contains("\"active\":false");
+    assertThat(put.getBodyAsString())
+        .as(
+            "PUT body must carry a non-null definitionStatusId derived from the definitionStatus "
+                + "enum (PRIMITIVE -> 900000000000074008), or Snowstorm rejects the update")
+        .contains("\"definitionStatusId\":\"900000000000074008\"");
   }
 
   // SnowstormClient's per-id loops swallow 404 (the traceability log claimed an id existed but

@@ -60,9 +60,12 @@ import reactor.core.publisher.Mono;
  *       traceability log entry's latest non-superseded change isn't a {@code DELETE}. Any of these
  *       that point at an inactive or missing concept are flagged.
  *   <li><b>Inherited references to concepts inactivated on this task</b> — for every concept the
- *       traceability log records as INACTIVATEd, fan out via Snowstorm to find any active refset
- *       member or non-defining relationship anywhere on the branch that still references it. Those
- *       are dangling and need cleanup too.
+ *       task changed on this branch that Snowstorm now reports inactive or deleted, fan out via
+ *       Snowstorm to find any active refset member or non-defining relationship anywhere on the
+ *       branch that still references it. Those are dangling and need cleanup too. The inactive
+ *       decision uses Snowstorm's authoritative {@code active} status, deliberately NOT the
+ *       traceability change type — the traceability service records a concept inactivation as an
+ *       {@code UPDATE}, not an {@code INACTIVATE}, so keying on the label missed every retire.
  * </ul>
  *
  * <p>Tidy mirrors the rule: released components are inactivated (we keep the audit trail);
@@ -74,10 +77,13 @@ import reactor.core.publisher.Mono;
 @Service
 public class DanglingReferenceService {
 
-  // Refsets that legitimately reference inactive concepts as part of their normal function —
-  // a member in any of these pointing to an inactive/retired concept is NOT dangling.
-  // - 900000000000489007 |Concept inactivation indicator attribute value reference set|
-  // - <<900000000000522004 |Historical association reference set| and its descendants
+  // Refsets a member can belong to that must NEVER be flagged as a dangling reference, for one of
+  // two reasons:
+  //   1. They legitimately reference inactive concepts as part of their normal function (flagging
+  //      them would delete the very metadata that records why a concept was retired).
+  //   2. They are definitional and owned by classification, not by this tidy feature — an OWL
+  //      axiom member is the concept's logic definition; when the concept is retired its axiom is
+  //      inactivated by the platform/classifier, so it is not a stray reference we should touch.
   static final Set<String> EXPECTED_INACTIVE_REFERENCE_REFSETS =
       Set.of(
           "900000000000489007", // Concept inactivation indicator attribute value reference set
@@ -91,7 +97,8 @@ public class DanglingReferenceService {
           "900000000000531004", // REFERS TO concept association reference set
           "1186921009", // PARTIALLY EQUIVALENT TO association reference set
           "1186924001", // PARTIALLY OVERLAPS THE MEANING OF association reference set
-          "1193550005"); // POSSIBLY REPLACED BY association reference set
+          "1193550005", // POSSIBLY REPLACED BY association reference set
+          "733073007"); // OWL axiom reference set — definitional, owned by classification
 
   private final SnowstormClient snowstormClient;
   private final TraceabilityServiceClient traceabilityServiceClient;
@@ -117,7 +124,10 @@ public class DanglingReferenceService {
     List<DanglingNonDefiningRelationship> danglingRels = new ArrayList<>();
 
     for (SnowstormReferenceSetMember m : ctx.taskMembers) {
-      if (!isExpectedInactiveReferenceRefset(m)) {
+      // An inactive member is not dangling — an inactive member pointing at an inactive concept
+      // is a consistent end state (e.g. a retired concept's own OWL axiom member, inactivated by
+      // the platform). Only an ACTIVE member that still points at a gone concept needs tidying.
+      if (isActive(m) && !isExpectedInactiveReferenceRefset(m)) {
         ConceptStatus status = statusOf(m.getReferencedComponentId(), ctx.byId);
         if (status != ConceptStatus.ACTIVE) {
           danglingMembers.add(toDanglingMember(m, status, ctx.byId));
@@ -125,7 +135,8 @@ public class DanglingReferenceService {
       }
     }
     for (SnowstormRelationship r : ctx.taskRels) {
-      if (isWellFormed(r, branch)) {
+      // Same rule as members: an already-inactive relationship is not a dangling reference.
+      if (isActive(r) && isWellFormed(r, branch)) {
         ConceptStatus srcStatus = statusOf(r.getSourceId(), ctx.byId);
         ConceptStatus dstStatus = statusOf(r.getDestinationId(), ctx.byId);
         if (srcStatus != ConceptStatus.ACTIVE || dstStatus != ConceptStatus.ACTIVE) {
@@ -323,6 +334,18 @@ public class DanglingReferenceService {
         BranchChangeSummary.from(
             traceabilityServiceClient.getContentChangeActivitiesOnBranch(branch));
 
+    // Phase 1.5: decide which concepts the task touched are now gone. We ask Snowstorm for the
+    // authoritative active status rather than trusting the traceability change type — the
+    // traceability service records a concept inactivation as an UPDATE, not an INACTIVATE, so
+    // keying on the label misses every retire (the original cause of this detection silently
+    // returning nothing). A changed concept that Snowstorm reports inactive or absent is the
+    // trigger for the scenario-B fan-out below. The concept minis fetched here seed `byId` so the
+    // phase-3 status lookup doesn't re-fetch the ones it also references (e.g. the retired concept
+    // is both changed-on-branch and the referenced target of its own dangling references).
+    Map<String, SnowstormConceptMini> byId = new HashMap<>();
+    Set<String> inactivatedConceptIds =
+        inactiveOrMissing(branch, summary.conceptIdsChangedOnBranch(), byId);
+
     // Phase 2: parallel — fetch the actual member/relationship payloads for the ids the task
     // authored, plus (in parallel) any active refset members and non-defining relationships
     // anywhere on the branch that reference a concept the task inactivated. Together these are
@@ -334,10 +357,9 @@ public class DanglingReferenceService {
                     branch, summary.refsetMemberIdsStillOnBranch()),
                 snowstormClient.fetchRelationshipsByIds(
                     branch, summary.relationshipIdsStillOnBranch()),
-                snowstormClient.findActiveRefsetMembersForConcepts(
-                    branch, summary.conceptIdsInactivatedOnBranch()),
+                snowstormClient.findActiveRefsetMembersForConcepts(branch, inactivatedConceptIds),
                 snowstormClient.findActiveNonDefiningRelationshipsForConcepts(
-                    branch, summary.conceptIdsInactivatedOnBranch()))
+                    branch, inactivatedConceptIds))
             .block();
 
     // Combine the authored-on-task and references-to-inactivated sets. Dedupe by id so we
@@ -347,40 +369,61 @@ public class DanglingReferenceService {
     List<SnowstormRelationship> taskRels = mergeRelationships(phase2.getT2(), phase2.getT4());
 
     // Phase 3: bulk-fetch the referenced concepts (refset, referencedComponent, source,
-    // destination, type) so we can determine each component's status. Synchronous — runs on the
-    // request thread because getConceptsByIdViaSearch depends on request-scoped beans.
+    // destination, type) so we can determine each component's status — but only the ones phase 1.5
+    // didn't already resolve. Synchronous — runs on the request thread because
+    // getConceptsByIdViaSearch depends on request-scoped beans.
     Set<String> referencedIds = collectReferencedConceptIds(taskMembers, taskRels);
-    Map<String, SnowstormConceptMini> byId = new HashMap<>();
-    if (!referencedIds.isEmpty()) {
-      for (SnowstormConceptMini c :
-          snowstormClient.getConceptsByIdViaSearch(branch, referencedIds)) {
+    Set<String> toFetch = new HashSet<>(referencedIds);
+    toFetch.removeAll(byId.keySet());
+    if (!toFetch.isEmpty()) {
+      for (SnowstormConceptMini c : snowstormClient.getConceptsByIdViaSearch(branch, toFetch)) {
         if (c.getConceptId() != null) byId.put(c.getConceptId(), c);
       }
-      logBulkConceptFetchOutcome(branch, referencedIds, byId.keySet());
     }
+    logBulkConceptFetchOutcome(branch, referencedIds, byId.keySet());
 
     return new DetectionContext(taskMembers, taskRels, byId);
+  }
+
+  // Of the concepts the task changed on this branch, the subset Snowstorm no longer reports as
+  // ACTIVE — i.e. retired (active=false) or deleted (absent from the fetch). These, and only
+  // these, drive the scenario-B fan-out for inherited dangling references. The decision is made
+  // against Snowstorm's authoritative active status, never the traceability change type, so it is
+  // immune to whether the service labels an inactivation UPDATE or INACTIVATE. Synchronous —
+  // getConceptsByIdViaSearch depends on request-scoped beans and must run on the request thread.
+  private Set<String> inactiveOrMissing(
+      String branch, Set<String> conceptIds, Map<String, SnowstormConceptMini> outById) {
+    if (conceptIds == null || conceptIds.isEmpty()) return Set.of();
+    for (SnowstormConceptMini c : snowstormClient.getConceptsByIdViaSearch(branch, conceptIds)) {
+      if (c.getConceptId() != null) outById.put(c.getConceptId(), c);
+    }
+    Set<String> result = new HashSet<>();
+    for (String id : conceptIds) {
+      if (statusOf(id, outById) != ConceptStatus.ACTIVE) result.add(id);
+    }
+    return result;
   }
 
   // statusOf() returns DELETED for any concept missing from the bulk fetch — that's correct when
   // the concept genuinely doesn't exist on the branch, but would silently mask a truncation bug
   // in the paginated search. Log the missing-id count so an unexpectedly large gap shows up in
-  // ops logs even though the per-concept fallback to DELETED stays the same.
+  // ops logs even though the per-concept fallback to DELETED stays the same. `available` may be a
+  // superset of `requested` (it also holds the phase-1.5 changed concepts), so compute "missing"
+  // as a set difference rather than a size subtraction.
   private static void logBulkConceptFetchOutcome(
-      String branch, Set<String> requested, Set<String> returned) {
-    int missing = requested.size() - returned.size();
-    if (missing <= 0) return;
+      String branch, Set<String> requested, Set<String> available) {
     Set<String> missingIds = new HashSet<>(requested);
-    missingIds.removeAll(returned);
+    missingIds.removeAll(available);
+    if (missingIds.isEmpty()) return;
     log.info(
         "Concept bulk fetch on branch "
             + branch
-            + " returned "
-            + returned.size()
+            + " resolved "
+            + (requested.size() - missingIds.size())
             + "/"
             + requested.size()
             + " concepts; "
-            + missing
+            + missingIds.size()
             + " absent (will be treated as DELETED): "
             + truncateForLog(missingIds));
   }
@@ -557,6 +600,16 @@ public class DanglingReferenceService {
 
   private static boolean isReleased(SnowstormRelationship r) {
     return !Boolean.FALSE.equals(r.getReleased());
+  }
+
+  // A null `active` flag from Snowstorm is treated as active (the safe default — we only skip a
+  // component from dangling detection when it is explicitly inactive).
+  private static boolean isActive(SnowstormReferenceSetMember m) {
+    return !Boolean.FALSE.equals(m.getActive());
+  }
+
+  private static boolean isActive(SnowstormRelationship r) {
+    return !Boolean.FALSE.equals(r.getActive());
   }
 
   // The three required fields a non-defining relationship must have for us to act on it. The

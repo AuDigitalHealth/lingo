@@ -51,6 +51,7 @@ import au.gov.digitalhealth.lingo.util.BranchPatternMatcher;
 import au.gov.digitalhealth.lingo.util.CacheConstants;
 import au.gov.digitalhealth.lingo.util.ClientHelper;
 import au.gov.digitalhealth.lingo.util.HistoricalAssociationReferenceSet;
+import au.gov.digitalhealth.lingo.util.SnomedConstants;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -863,6 +864,7 @@ public class SnowstormClient {
                 + " on branch "
                 + branch);
       }
+      ensureDefinitionStatusId(parent);
       updateConcept(branch, sourceId, parent, false);
     } catch (LingoProblem lp) {
       throw lp;
@@ -876,6 +878,22 @@ public class SnowstormClient {
               + e.getMessage(),
           e);
     }
+  }
+
+  // Snowstorm's browser GET returns a concept's definitionStatus (the enum name, e.g. "PRIMITIVE")
+  // but not its definitionStatusId — yet the browser PUT rejects a null definitionStatusId with
+  // "Invalid property value definitionStatusId must not be null". A GET -> mutate -> PUT round-trip
+  // (how we inactivate a released relationship) therefore fails for any concept whose fetched form
+  // omits the id, which is the case for retired concepts. Backfill the id from the status so the
+  // PUT survives. No-op when the id is already present or the status is unknown.
+  private static void ensureDefinitionStatusId(SnowstormConcept concept) {
+    if (concept.getDefinitionStatusId() != null || concept.getDefinitionStatus() == null) {
+      return;
+    }
+    concept.setDefinitionStatusId(
+        SnomedConstants.PRIMITIVE.name().equals(concept.getDefinitionStatus())
+            ? SnomedConstants.PRIMITIVE.getValue()
+            : SnomedConstants.DEFINED.getValue());
   }
 
   public Collection<SnowstormReferenceSetMember> getAllRefsetMembers(

@@ -250,10 +250,13 @@ class DanglingReferenceServiceTest {
         member("m-ii", "900000000000489007", C_RETIRED, false);
     SnowstormReferenceSetMember sameAsAssociation =
         member("m-sameas", "900000000000527005", C_RETIRED, false);
+    // An OWL axiom member is definitional (owned by classification) — even active and pointing at
+    // a retired concept it must never be flagged as a dangling reference to tidy.
+    SnowstormReferenceSetMember owlAxiom = member("m-owl", "733073007", C_RETIRED, true);
     when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))
-        .thenReturn(traceabilityScope(List.of("m-ii", "m-sameas"), List.of()));
+        .thenReturn(traceabilityScope(List.of("m-ii", "m-sameas", "m-owl"), List.of()));
     when(snowstormClient.fetchRefsetMembersByIds(eq(BRANCH), any()))
-        .thenReturn(Mono.just(List.of(inactivationIndicator, sameAsAssociation)));
+        .thenReturn(Mono.just(List.of(inactivationIndicator, sameAsAssociation, owlAxiom)));
     when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
         .thenReturn(List.of(concept(C_RETIRED, false, "Retired thing")));
 
@@ -386,6 +389,166 @@ class DanglingReferenceServiceTest {
     verify(snowstormClient).findActiveRefsetMembersForConcepts(BRANCH, java.util.Set.of(C_RETIRED));
     verify(snowstormClient)
         .findActiveNonDefiningRelationshipsForConcepts(BRANCH, java.util.Set.of(C_RETIRED));
+  }
+
+  @Test
+  void detect_conceptInactivatedAsTraceabilityUpdate_iedc7423() {
+    // IEDC-7423 end to end. A VTM (here C_RETIRED) is retired in the Authoring Platform. The
+    // traceability service records that inactivation as a CONCEPT *UPDATE* (active flag flipped),
+    // never an INACTIVATE — and also logs the retire's effect on the concept's own OWL axiom
+    // member as an UPDATE. The AP does NOT touch the concept's other refset memberships or its
+    // non-defining relationships, so those are inherited and only reachable via the scenario-B
+    // fan-out.
+    //
+    // Expected after the fix:
+    //   * the inherited VTM-refset membership and the inherited "Has NMPC product type"
+    //     non-defining relationship ARE flagged (the UPDATE concept is recognised as inactive via
+    //     Snowstorm's status, re-enabling the fan-out), and
+    //   * the concept's own OWL axiom member is NOT flagged (it's inactive and definitional).
+    Activity retireAsUpdate =
+        new Activity(
+            "act-retire",
+            "sdoyle1",
+            BRANCH,
+            BRANCH,
+            OffsetDateTime.parse("2026-06-08T09:37:41Z"),
+            "CONTENT_CHANGE",
+            List.of(
+                new ConceptChange(
+                    C_RETIRED,
+                    List.of(
+                        new ComponentChange(
+                            "m-owl",
+                            ChangeType.UPDATE,
+                            ComponentType.REFERENCE_SET_MEMBER,
+                            "733073007",
+                            true,
+                            false),
+                        new ComponentChange(
+                            C_RETIRED,
+                            ChangeType.UPDATE, // real traceability: inactivation is an UPDATE
+                            ComponentType.CONCEPT,
+                            null,
+                            true,
+                            false)))));
+    when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))
+        .thenReturn(List.of(retireAsUpdate));
+
+    // Source 1 (authored on task): the concept's own OWL axiom member, now inactive.
+    SnowstormReferenceSetMember owlAxiom =
+        new SnowstormReferenceSetMember()
+            .memberId("m-owl")
+            .refsetId("733073007")
+            .referencedComponentId(C_RETIRED)
+            .released(true)
+            .active(false);
+    when(snowstormClient.fetchRefsetMembersByIds(eq(BRANCH), any()))
+        .thenReturn(Mono.just(List.of(owlAxiom)));
+
+    // Source 2 (inherited references the AP left behind): the VTM-refset membership and the
+    // Has NMPC product type relationship, both still active and pointing at the retired concept.
+    SnowstormReferenceSetMember vtmMember = member("m-vtm", C_REFSET, C_RETIRED, true);
+    SnowstormRelationship nmpcRel = relationship("r-nmpc", C_RETIRED, C_ACTIVE, C_TYPE, true);
+    when(snowstormClient.findActiveRefsetMembersForConcepts(eq(BRANCH), any()))
+        .thenReturn(Mono.just(List.of(vtmMember)));
+    when(snowstormClient.findActiveNonDefiningRelationshipsForConcepts(eq(BRANCH), any()))
+        .thenReturn(Mono.just(List.of(nmpcRel)));
+
+    when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
+        .thenReturn(
+            List.of(
+                concept(C_RETIRED, false, "Quizartinib"),
+                concept(C_REFSET, true, "VTM reference set"),
+                concept(C_ACTIVE, true, "Other end"),
+                concept(C_TYPE, true, "Has NMPC product type")));
+
+    DanglingReferenceSummary summary = service.detect(BRANCH);
+
+    // The fan-out ran for the concept whose inactivation was only an UPDATE in traceability.
+    verify(snowstormClient).findActiveRefsetMembersForConcepts(BRANCH, java.util.Set.of(C_RETIRED));
+    verify(snowstormClient)
+        .findActiveNonDefiningRelationshipsForConcepts(BRANCH, java.util.Set.of(C_RETIRED));
+
+    // Inherited references are flagged; the definitional/inactive OWL axiom member is not.
+    assertThat(summary.danglingRefsetMembers())
+        .extracting(DanglingRefsetMember::memberId)
+        .containsExactly("m-vtm");
+    assertThat(summary.danglingRefsetMembers().get(0).refsetPt()).isEqualTo("VTM reference set");
+    assertThat(summary.danglingNonDefiningRelationships())
+        .extracting(DanglingNonDefiningRelationship::relationshipId)
+        .containsExactly("r-nmpc");
+  }
+
+  @Test
+  void detect_conceptDeletedOnTask_flagsInheritedReferencesViaFanOut() {
+    // A concept the task changed that Snowstorm no longer returns at all (deleted, not merely
+    // retired) must still drive the scenario-B fan-out: statusOf treats an absent concept as
+    // DELETED, which is != ACTIVE, so inactiveOrMissing includes it and the inherited reference is
+    // flagged.
+    Activity changed =
+        new Activity(
+            "act-del",
+            "tester",
+            BRANCH,
+            BRANCH,
+            OffsetDateTime.parse("2026-05-01T00:00:00Z"),
+            "CONTENT_CHANGE",
+            List.of(
+                new ConceptChange(
+                    C_DELETED,
+                    List.of(
+                        new ComponentChange(
+                            C_DELETED,
+                            ChangeType.UPDATE,
+                            ComponentType.CONCEPT,
+                            null,
+                            true,
+                            false)))));
+    when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))
+        .thenReturn(List.of(changed));
+
+    SnowstormReferenceSetMember inheritedMember = member("m-inh", C_REFSET, C_DELETED, true);
+    when(snowstormClient.findActiveRefsetMembersForConcepts(eq(BRANCH), any()))
+        .thenReturn(Mono.just(List.of(inheritedMember)));
+    // C_DELETED is deliberately absent from the concept fetch → statusOf treats it as DELETED.
+    when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
+        .thenReturn(List.of(concept(C_REFSET, true, "My refset")));
+
+    DanglingReferenceSummary summary = service.detect(BRANCH);
+
+    // The fan-out was seeded by the deleted (absent) concept.
+    verify(snowstormClient).findActiveRefsetMembersForConcepts(BRANCH, java.util.Set.of(C_DELETED));
+    assertThat(summary.danglingRefsetMembers())
+        .extracting(DanglingRefsetMember::memberId)
+        .containsExactly("m-inh");
+    assertThat(summary.danglingRefsetMembers().get(0).referencedConceptStatus())
+        .isEqualTo(ConceptStatus.DELETED);
+  }
+
+  @Test
+  void detect_skipsInactiveMemberEvenWhenReferencedConceptRetired() {
+    // An already-inactive member is not a dangling reference, even in an ordinary refset pointing
+    // at a retired concept — an inactive member referencing an inactive concept is a consistent
+    // end state, and re-flagging it would have us try to "tidy" something already tidied.
+    SnowstormReferenceSetMember inactiveMember =
+        new SnowstormReferenceSetMember()
+            .memberId("m-inactive")
+            .refsetId(C_REFSET)
+            .referencedComponentId(C_RETIRED)
+            .released(true)
+            .active(false);
+    when(traceabilityServiceClient.getContentChangeActivitiesOnBranch(BRANCH))
+        .thenReturn(traceabilityScope(List.of("m-inactive"), List.of()));
+    when(snowstormClient.fetchRefsetMembersByIds(eq(BRANCH), any()))
+        .thenReturn(Mono.just(List.of(inactiveMember)));
+    when(snowstormClient.getConceptsByIdViaSearch(eq(BRANCH), any()))
+        .thenReturn(
+            List.of(
+                concept(C_RETIRED, false, "Retired thing"), concept(C_REFSET, true, "My refset")));
+
+    DanglingReferenceSummary summary = service.detect(BRANCH);
+
+    assertThat(summary.danglingRefsetMembers()).isEmpty();
   }
 
   @Test

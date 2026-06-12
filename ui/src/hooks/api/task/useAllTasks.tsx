@@ -111,28 +111,38 @@ export function useAllTasks() {
 
   const allTasksIsLoading: boolean = isLoading;
 
-  const allTasks = data?.slice().sort((a, b) => {
-    const keyA = a.key || '';
-    const keyB = b.key || '';
+  // Memoized so `allTasks` keeps a stable reference across renders. `data?.slice().sort()` builds
+  // a brand-new array every call; returning that unmemoized made `allTasks` a new identity on
+  // every render. Consumers that depend on it in a `useEffect` dependency array and call setState
+  // in that effect (e.g. CustomTaskAssigneeSelection) then re-ran the effect → setState → re-render
+  // → new array → ... an infinite loop ("Maximum update depth exceeded"). Keying the memo on
+  // `[data]` means the array identity only changes when the underlying query data does.
+  const allTasks = useMemo(
+    () =>
+      data?.slice().sort((a, b) => {
+        const keyA = a.key || '';
+        const keyB = b.key || '';
 
-    // Extract prefix and number from each key
-    const matchA = keyA.match(/^(.+?)-(\d+)$/);
-    const matchB = keyB.match(/^(.+?)-(\d+)$/);
+        // Extract prefix and number from each key
+        const matchA = keyA.match(/^(.+?)-(\d+)$/);
+        const matchB = keyB.match(/^(.+?)-(\d+)$/);
 
-    if (!matchA && !matchB) return keyA.localeCompare(keyB);
-    if (!matchA) return 1;
-    if (!matchB) return -1;
+        if (!matchA && !matchB) return keyA.localeCompare(keyB);
+        if (!matchA) return 1;
+        if (!matchB) return -1;
 
-    const [, prefixA, numStrA] = matchA;
-    const [, prefixB, numStrB] = matchB;
+        const [, prefixA, numStrA] = matchA;
+        const [, prefixB, numStrB] = matchB;
 
-    // First compare prefixes
-    const prefixCompare = prefixA.localeCompare(prefixB);
-    if (prefixCompare !== 0) return prefixCompare;
+        // First compare prefixes
+        const prefixCompare = prefixA.localeCompare(prefixB);
+        if (prefixCompare !== 0) return prefixCompare;
 
-    // Then compare numbers numerically
-    return parseInt(numStrA, 10) - parseInt(numStrB, 10);
-  });
+        // Then compare numbers numerically
+        return parseInt(numStrA, 10) - parseInt(numStrB, 10);
+      }),
+    [data],
+  );
 
   return { allTasksIsLoading, allTasks, isError };
 }

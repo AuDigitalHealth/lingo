@@ -38,19 +38,27 @@ import java.util.logging.Logger;
  *       is not a {@code DELETE}. Used to fetch per-id from Snowstorm and check that each member's
  *       referenced concept is still active.
  *   <li>{@link #relationshipIdsStillOnBranch()} — same shape for non-defining relationships.
- *   <li>{@link #conceptIdsInactivatedOnBranch()} — concepts whose latest non-superseded change is
- *       an {@code INACTIVATE}. Used to fan out and find any active member or relationship on the
- *       branch that still references them; those are dangling and need cleanup too.
+ *   <li>{@link #conceptIdsChangedOnBranch()} — every concept the task touched (any non-superseded
+ *       change, regardless of {@link ChangeType}). Detection fans out from these to find references
+ *       still pointing at any that Snowstorm now reports inactive or deleted.
  * </ul>
  *
- * <p>Description changes are intentionally not tracked. The returned record is immutable: the
- * canonical constructor wraps each input set in a defensive {@link Set#copyOf}, so accessors hand
- * out unmodifiable views even if a caller supplied mutable inputs.
+ * <p><b>Why "changed", not "inactivated":</b> we deliberately do <em>not</em> try to infer concept
+ * inactivation from the traceability {@link ChangeType}. The authoring-traceability-service records
+ * a concept inactivation as an {@code UPDATE} (the concept row's {@code active} flag flipped), not
+ * an {@code INACTIVATE}, so keying on the label silently misses every retire. Whether a changed
+ * concept is actually inactive is decided downstream against Snowstorm's authoritative {@code
+ * active} status — see {@code DanglingReferenceService.collect}.
+ *
+ * <p>Description changes are intentionally not tracked for the member/relationship id sets, but a
+ * concept whose only change was to its descriptions still counts as changed. The returned record is
+ * immutable: the canonical constructor wraps each input set in a defensive {@link Set#copyOf}, so
+ * accessors hand out unmodifiable views even if a caller supplied mutable inputs.
  */
 public record BranchChangeSummary(
     Set<String> refsetMemberIdsStillOnBranch,
     Set<String> relationshipIdsStillOnBranch,
-    Set<String> conceptIdsInactivatedOnBranch) {
+    Set<String> conceptIdsChangedOnBranch) {
 
   private static final Logger log = Logger.getLogger(BranchChangeSummary.class.getName());
 
@@ -59,30 +67,26 @@ public record BranchChangeSummary(
         refsetMemberIdsStillOnBranch == null ? Set.of() : Set.copyOf(refsetMemberIdsStillOnBranch);
     relationshipIdsStillOnBranch =
         relationshipIdsStillOnBranch == null ? Set.of() : Set.copyOf(relationshipIdsStillOnBranch);
-    conceptIdsInactivatedOnBranch =
-        conceptIdsInactivatedOnBranch == null
-            ? Set.of()
-            : Set.copyOf(conceptIdsInactivatedOnBranch);
+    conceptIdsChangedOnBranch =
+        conceptIdsChangedOnBranch == null ? Set.of() : Set.copyOf(conceptIdsChangedOnBranch);
   }
 
   public static BranchChangeSummary from(List<Activity> activities) {
     if (activities == null || activities.isEmpty()) {
       return new BranchChangeSummary(Set.of(), Set.of(), Set.of());
     }
-    // Track only the LAST non-superseded change per componentId. For members/rels, DELETE on
-    // the latest change means the component is gone; anything else means it's still there. For
-    // concepts, INACTIVATE on the latest change means the concept ended up retired on this task
-    // (so its inherited references may be dangling).
+    // Track the LAST non-superseded change per member/relationship id: DELETE on the latest
+    // change means the component is gone; anything else means it's still there. Concepts are
+    // tracked as a flat "was touched at all" set — the inactive/deleted decision is made later
+    // against Snowstorm, not from the change type here.
     Map<String, ChangeType> lastMemberChange = new HashMap<>();
     Map<String, ChangeType> lastRelationshipChange = new HashMap<>();
-    Map<String, ChangeType> lastConceptChange = new HashMap<>();
+    Set<String> changedConcepts = new HashSet<>();
     for (Activity activity : orderedByCommitDate(activities)) {
-      recordActivity(activity, lastMemberChange, lastRelationshipChange, lastConceptChange);
+      recordActivity(activity, lastMemberChange, lastRelationshipChange, changedConcepts);
     }
     return new BranchChangeSummary(
-        stillPresent(lastMemberChange),
-        stillPresent(lastRelationshipChange),
-        inactivated(lastConceptChange));
+        stillPresent(lastMemberChange), stillPresent(lastRelationshipChange), changedConcepts);
   }
 
   // Sort defensively so callers don't have to. Activities with a null commitDate sort last so
@@ -99,10 +103,10 @@ public record BranchChangeSummary(
       Activity activity,
       Map<String, ChangeType> lastMember,
       Map<String, ChangeType> lastRel,
-      Map<String, ChangeType> lastConcept) {
+      Set<String> changedConcepts) {
     if (activity != null && activity.conceptChanges() != null) {
       for (ConceptChange conceptChange : activity.conceptChanges()) {
-        recordConceptChange(conceptChange, lastMember, lastRel, lastConcept);
+        recordConceptChange(conceptChange, lastMember, lastRel, changedConcepts);
       }
     }
   }
@@ -111,20 +115,21 @@ public record BranchChangeSummary(
       ConceptChange conceptChange,
       Map<String, ChangeType> lastMember,
       Map<String, ChangeType> lastRel,
-      Map<String, ChangeType> lastConcept) {
+      Set<String> changedConcepts) {
     if (conceptChange != null && conceptChange.componentChanges() != null) {
       for (ComponentChange change : conceptChange.componentChanges()) {
-        recordComponentChange(change, conceptChange.conceptId(), lastMember, lastRel, lastConcept);
+        recordComponentChange(
+            change, conceptChange.conceptId(), lastMember, lastRel, changedConcepts);
       }
     }
   }
 
   private static void recordComponentChange(
       ComponentChange change,
-      String conceptIdForLog,
+      String conceptId,
       Map<String, ChangeType> lastMember,
       Map<String, ChangeType> lastRel,
-      Map<String, ChangeType> lastConcept) {
+      Set<String> changedConcepts) {
     if (change == null || Boolean.TRUE.equals(change.superseded())) {
       return;
     }
@@ -136,12 +141,17 @@ public record BranchChangeSummary(
           "Skipping malformed traceability ComponentChange on concept {0}"
               + " (componentId={1}, componentType={2}, changeType={3})",
           new Object[] {
-            conceptIdForLog, change.componentId(), change.componentType(), change.changeType()
+            conceptId, change.componentId(), change.componentType(), change.changeType()
           });
       return;
     }
-    Map<String, ChangeType> target =
-        mapFor(change.componentType(), lastMember, lastRel, lastConcept);
+    // Any real, non-superseded change means the task touched this concept. Whether the concept
+    // is now inactive/deleted (and therefore its references are dangling) is resolved later
+    // against Snowstorm — see the class javadoc.
+    if (conceptId != null) {
+      changedConcepts.add(conceptId);
+    }
+    Map<String, ChangeType> target = mapFor(change.componentType(), lastMember, lastRel);
     if (target != null) {
       target.put(change.componentId(), change.changeType());
     }
@@ -153,18 +163,13 @@ public record BranchChangeSummary(
         && change.changeType() != null;
   }
 
-  // Picks the bucket the change should land in, or null for component types we intentionally
-  // don't track (DESCRIPTION today). Centralised so the recordComponentChange body stays a
-  // straight line of decisions rather than a chain of if/else-if/else-if.
+  // Picks the still-present bucket the change should land in, or null for component types that
+  // don't have one (CONCEPT — tracked via changedConcepts; DESCRIPTION — not tracked).
   private static Map<String, ChangeType> mapFor(
-      ComponentType type,
-      Map<String, ChangeType> lastMember,
-      Map<String, ChangeType> lastRel,
-      Map<String, ChangeType> lastConcept) {
+      ComponentType type, Map<String, ChangeType> lastMember, Map<String, ChangeType> lastRel) {
     return switch (type) {
       case REFERENCE_SET_MEMBER -> lastMember;
       case RELATIONSHIP -> lastRel;
-      case CONCEPT -> lastConcept;
       default -> null;
     };
   }
@@ -175,15 +180,6 @@ public record BranchChangeSummary(
     Set<String> result = new HashSet<>();
     for (Map.Entry<String, ChangeType> entry : latest.entrySet()) {
       if (entry.getValue() != ChangeType.DELETE) result.add(entry.getKey());
-    }
-    return result;
-  }
-
-  // The latest change for each component id is INACTIVATE — concepts retired on the task.
-  private static Set<String> inactivated(Map<String, ChangeType> latest) {
-    Set<String> result = new HashSet<>();
-    for (Map.Entry<String, ChangeType> entry : latest.entrySet()) {
-      if (entry.getValue() == ChangeType.INACTIVATE) result.add(entry.getKey());
     }
     return result;
   }
