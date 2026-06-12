@@ -221,34 +221,23 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
     // Missing fileName
     AttachmentUrlDto missingFileName = new AttachmentUrlDto();
     missingFileName.setUrl("https://example.com/file.pdf");
-    missingFileName.setSizeMb(0.1);
 
     // Blank url
     AttachmentUrlDto blankUrl = new AttachmentUrlDto();
     blankUrl.setFileName("file.pdf");
     blankUrl.setUrl("  ");
-    blankUrl.setSizeMb(0.1);
-
-    // Negative size
-    AttachmentUrlDto negativeSize = new AttachmentUrlDto();
-    negativeSize.setFileName("file.pdf");
-    negativeSize.setUrl("https://example.com/file.pdf");
-    negativeSize.setSizeMb(-1.0);
 
     // Too long fileName (over 255 chars)
     AttachmentUrlDto longName = new AttachmentUrlDto();
     longName.setFileName("a".repeat(300));
     longName.setUrl("https://example.com/file.pdf");
-    longName.setSizeMb(0.1);
 
     // Invalid URL
     AttachmentUrlDto invalidUrl = new AttachmentUrlDto();
     invalidUrl.setFileName("file.pdf");
     invalidUrl.setUrl("not-a-valid-url");
-    invalidUrl.setSizeMb(0.1);
 
-    List<AttachmentUrlDto> invalidList =
-        List.of(missingFileName, blankUrl, negativeSize, longName, invalidUrl);
+    List<AttachmentUrlDto> invalidList = List.of(missingFileName, blankUrl, longName, invalidUrl);
 
     // Entire list invalid -> Bad Request
     withAuth()
@@ -307,7 +296,6 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
     AttachmentUrlDto blankUrl = new AttachmentUrlDto();
     blankUrl.setFileName("file.pdf");
     blankUrl.setUrl("  ");
-    blankUrl.setSizeMb(0.1);
 
     // A blank url is rejected by bean validation on the request body (@NotBlank), before the
     // service is invoked.
@@ -338,7 +326,6 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
     AttachmentUrlDto malformedUrl = new AttachmentUrlDto();
     malformedUrl.setFileName("report.pdf");
     malformedUrl.setUrl("http://localhost:0/no-such-server/report.pdf");
-    malformedUrl.setSizeMb(0.1);
 
     ProblemDetail response =
         withAuth()
@@ -375,7 +362,6 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
     AttachmentUrlDto dto = new AttachmentUrlDto();
     dto.setFileName("data.grr");
     dto.setUrl(fileUrl);
-    dto.setSizeMb(0.1);
 
     ProblemDetail response =
         withAuth()

@@ -12,9 +12,12 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 - Added "Remove Labels" and "Remove External Requesters" multi-selects to the bulk edit toolbar, allowing labels and external requestors to be removed from all selected tickets in one action.
 
 ### Security
-- Fixed a server-side request forgery (SSRF) and local file disclosure risk in the "attach from URL" endpoint (`POST /api/attachments/upload/{ticketId}/from-urls`). Attachment URLs are now restricted to `http`/`https` schemes, rejected if the host resolves to a loopback/link-local/private/wildcard/multicast address, and redirects are no longer followed. Bean validation on the request body is now enforced (`@Valid`); the unused `sizeMb` field is no longer required.
+- Fixed a server-side request forgery (SSRF) and local file disclosure risk in the "attach from URL" endpoint (`POST /api/attachments/upload/{ticketId}/from-urls`). Attachment URLs are now restricted to `http`/`https` schemes, rejected if the host resolves to a loopback/link-local/private/wildcard/multicast address, and redirects are no longer followed. Bean validation on the request body is now enforced (`@Valid`).
 - Fixed a stored XSS risk in the concept review messages panel by sanitising review message HTML with DOMPurify before rendering (matching the existing ticket history pattern).
 - Removed a hardcoded IMS credential from `ui/cypress/docker/docker-compose.yaml`; the username/password now come from the `IMS_USERNAME`/`IMS_PASSWORD` environment variables. The leaked credential should be rotated.
+
+### Removed
+- Removed the unused `sizeMb` field from the attach-from-URL request DTO (`AttachmentUrlDto`); it was never read by the server.
 
 ### Fixed
 - Fixed removal of a vaccine's qualitative strength (and target population / plays role) not being applied to the ATM (Actual Therapeutic Moiety): the NMPC `REAL_MEDICINAL_PRODUCT` level was missing from the ECL negative-filter catalogue, so the existing ATM still carrying the attribute was reused unchanged instead of being recalculated (CUST1634236).

@@ -15,7 +15,6 @@
  */
 package au.gov.digitalhealth.tickets.helper;
 
-import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -33,14 +32,6 @@ public class AttachmentUrlDto {
   @NotBlank(message = "fileName must not be blank")
   @Size(max = 255, message = "fileName must be at most 255 characters")
   private String fileName;
-
-  // Optional source-reported size; not currently consumed by the server, but validated when
-  // present so a malformed value is still rejected.
-  @DecimalMin(
-      value = "0.0",
-      inclusive = true,
-      message = "sizeMb must be greater than or equal to 0")
-  private Double sizeMb;
 
   @NotBlank(message = "url must not be blank")
   @Size(max = 2048, message = "url must be at most 2048 characters")
