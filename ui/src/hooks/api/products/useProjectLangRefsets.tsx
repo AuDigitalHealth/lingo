@@ -5,12 +5,15 @@ interface UseProjectLangRefsetsProps {
   project: Project | undefined;
 }
 
+// Fallback US reference set, only injected when a project's metadata omits it.
+// A project that does not list US as a required language reference set is not
+// authoring US content, so the column is read-only.
 // eslint-disable-next-line
 const USLangRefset: LanguageRefset = {
   default: 'false',
   en: '900000000000509007',
   dialectName: 'US',
-  readOnly: 'false',
+  readOnly: 'true',
 };
 
 export default function useProjectLangRefsets({

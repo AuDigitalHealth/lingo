@@ -655,3 +655,93 @@ export function isOriginalConceptActive(
     originalConceptId && activeConceptIds?.items?.includes(originalConceptId),
   );
 }
+
+/**
+ * SNOMED International core and metadata modules. Components on these modules
+ * belong to the International edition; an extension author cannot edit or
+ * inactivate them.
+ */
+export const INTERNATIONAL_MODULE_IDS = new Set<string>([
+  '900000000000207008', // SNOMED CT core module
+  '900000000000012004', // SNOMED CT model component (metadata) module
+]);
+
+/**
+ * Whether a module is one of the SNOMED International core/metadata modules.
+ * A missing/empty module id (e.g. a new, unsaved description) is not
+ * International, so it remains editable.
+ */
+export function isInternationalModule(
+  moduleId: string | null | undefined,
+): boolean {
+  return moduleId != null && INTERNATIONAL_MODULE_IDS.has(moduleId);
+}
+
+/**
+ * Term text and description type are read-only when the modal is disabled, the
+ * description is inactive, or the description's own module is an International
+ * module. Keys off the description's module, not the concept's, so an author's
+ * own-module description on an International concept stays editable.
+ */
+export function isDescriptionContentReadOnly(
+  description: Pick<Description, 'moduleId'> | undefined,
+  baseDisabled: boolean,
+  isActive: boolean,
+): boolean {
+  return (
+    baseDisabled || !isActive || isInternationalModule(description?.moduleId)
+  );
+}
+
+/**
+ * Whether the active/inactive toggle is disabled. An International-module
+ * description that is currently active cannot be inactivated (you manage usage
+ * via language reference set acceptability, not by retiring International
+ * content). An inactive International description stays toggleable so it can be
+ * reactivated - which writes a superseding active row on the project module.
+ */
+export function isActiveToggleDisabled(
+  description: Pick<Description, 'moduleId' | 'active'> | undefined,
+  baseDisabled: boolean,
+): boolean {
+  return (
+    baseDisabled ||
+    (isInternationalModule(description?.moduleId) &&
+      (description?.active ?? true))
+  );
+}
+
+/**
+ * SNOMED International GB English language reference set. Extensions never
+ * author or add GB English, so its acceptability is always read-only.
+ */
+export const GB_ENGLISH_LANGUAGE_REFSET_ID = '900000000000508004';
+
+/**
+ * Whether a language reference set acceptability cell is read-only. It is locked
+ * when:
+ *  - the modal is disabled, or
+ *  - Snowstorm marks that reference set read-only, or
+ *  - it is GB English (never authored by an extension), or
+ *  - it is a non-default dialect (e.g. en-US) on an International-module
+ *    description - the extension must not change International US/other preferences.
+ *
+ * The project's default dialect (e.g. en-IE) stays editable even on an
+ * International description, so an International preferred term can have its
+ * default-dialect acceptability reassigned. Non-default dialects remain editable
+ * on the extension's own (non-International) descriptions, e.g. setting the
+ * required US English preference on a new concept.
+ */
+export function isAcceptabilityReadOnly(
+  langRefset: Pick<LanguageRefset, 'readOnly' | 'en' | 'default'>,
+  description: Pick<Description, 'moduleId'> | undefined,
+  baseDisabled: boolean,
+): boolean {
+  return (
+    baseDisabled ||
+    langRefset.readOnly === 'true' ||
+    langRefset.en === GB_ENGLISH_LANGUAGE_REFSET_ID ||
+    (langRefset.default !== 'true' &&
+      isInternationalModule(description?.moduleId))
+  );
+}

@@ -1,5 +1,6 @@
 import {
   Button,
+  Chip,
   Divider,
   FormControl,
   FormControlLabel,
@@ -33,6 +34,10 @@ import {
 import {
   createDefaultDescription,
   findDefaultLangRefset,
+  isAcceptabilityReadOnly,
+  isActiveToggleDisabled,
+  isDescriptionContentReadOnly,
+  isInternationalModule,
   isPreferredTerm,
   sortDescriptions,
 } from '../../utils/helpers/conceptUtils.ts';
@@ -69,7 +74,7 @@ import { AxiosError } from 'axios';
 import { SnowstormError } from '../../types/ErrorHandler.ts';
 import { useSearchConceptByIdNoCache } from '../../hooks/api/products/useSearchConcept.tsx';
 import { cloneDeep, isEqual } from 'lodash';
-import { Add, AutoFixHigh, Delete } from '@mui/icons-material';
+import { Add, AutoFixHigh, Delete, Lock } from '@mui/icons-material';
 import useAvailableProjects from '../../hooks/api/useInitializeProjects.tsx';
 import useApplicationConfigStore from '../../stores/ApplicationConfigStore.ts';
 import { LanguageRefset } from '../../types/Project.ts';
@@ -91,7 +96,6 @@ const typeMap: Record<DefinitionType, string> = {
   [DefinitionType.FSN]: '900000000000003001',
   [DefinitionType.SYNONYM]: '900000000000013009',
 };
-const SNOMED_CT_CORE_MODULE_ID = '900000000000207008';
 
 interface ProductEditModalProps {
   open: boolean;
@@ -204,8 +208,6 @@ function EditConceptBody({
       return removeDescriptionSemanticTag(desc);
     });
   }, [sortedDescriptions]);
-  const isSnomedInternationalConcept =
-    data?.moduleId === SNOMED_CT_CORE_MODULE_ID;
 
   const { fieldBindings } = useFieldBindings(branch);
 
@@ -632,9 +634,6 @@ function EditConceptBody({
                         setValue={setValue}
                         getValues={getValues}
                         watch={watch}
-                        isSnomedInternationalConcept={
-                          isSnomedInternationalConcept
-                        }
                       />
                       <ActionButton
                         control={control}
@@ -679,7 +678,6 @@ interface RightSectionProps {
   setValue: UseFormSetValue<ProductUpdateRequest>;
   getValues: UseFormGetValues<ProductUpdateRequest>;
   watch: UseFormWatch<ProductUpdateRequest>;
-  isSnomedInternationalConcept: boolean;
 }
 
 // Update RightSection component
@@ -699,7 +697,6 @@ function RightSection({
   setValue,
   getValues,
   watch,
-  isSnomedInternationalConcept,
 }: RightSectionProps) {
   const { synonymConfigurations } = useAllSynonymConfigurations(); // You'll need to import this hook
   const defaultLangRefset = findDefaultLangRefset(langRefsets);
@@ -863,7 +860,6 @@ function RightSection({
                 control={control}
                 disabled={isUpdating}
                 setValue={setValue}
-                isSnomedInternationalConcept={isSnomedInternationalConcept}
               />
             );
           })}
@@ -992,7 +988,6 @@ interface FieldDescriptionsProps {
   control: Control<ProductUpdateRequest>;
   disabled: boolean;
   setValue: UseFormSetValue<ProductUpdateRequest>;
-  isSnomedInternationalConcept: boolean;
 }
 const FieldDescriptions = ({
   displayRetiredDescriptions,
@@ -1005,7 +1000,6 @@ const FieldDescriptions = ({
   control,
   disabled,
   setValue,
-  isSnomedInternationalConcept,
 }: FieldDescriptionsProps) => {
   const description = sortedDescriptionsWithoutSemanticTag[index] as
     | Description
@@ -1041,17 +1035,20 @@ const FieldDescriptions = ({
         : 'Synonym';
 
   const isFsnOrPreferred = descriptionType === 'FSN' || isPreferred;
-  const isProtectedSnomedInternationalDescription =
-    isSnomedInternationalConcept && descriptionType === DefinitionType.FSN;
-  const isSnomedInternationalSynonym =
-    isSnomedInternationalConcept && descriptionType === DefinitionType.SYNONYM;
 
   if (!displayRetiredDescriptions && description && !description.active) {
     return <></>;
   }
 
-  const isDisabled =
-    disabled || !isActive || isProtectedSnomedInternationalDescription;
+  // Editability is decided per description from its own module (not the concept's):
+  // International-module descriptions are read-only, an author's own-module
+  // descriptions stay editable. The active toggle is locked only when an active
+  // International description would be inactivated; reactivation stays allowed.
+  const isContentReadOnly = isDescriptionContentReadOnly(
+    description,
+    disabled,
+    isActive,
+  );
 
   const isReleased = description?.released;
 
@@ -1077,7 +1074,8 @@ const FieldDescriptions = ({
                     {...controllerField}
                     margin="dense"
                     disabled={
-                      description?.descriptionId !== undefined || isDisabled
+                      description?.descriptionId !== undefined ||
+                      isContentReadOnly
                     }
                   >
                     {['FSN', 'SYNONYM'].map((value: string) => (
@@ -1095,6 +1093,16 @@ const FieldDescriptions = ({
           />
         </Grid>
         <Grid item xs={12} md={caseSensitivityEnabled ? 4.5 : 7}>
+          {isInternationalModule(description?.moduleId) && (
+            <Chip
+              icon={<Lock fontSize="small" />}
+              label="SNOMED International – read-only"
+              size="small"
+              variant="outlined"
+              color="default"
+              sx={{ mb: 0.5 }}
+            />
+          )}
           <Controller
             name={`descriptionUpdate.descriptions.${index}.active`}
             control={control}
@@ -1102,7 +1110,7 @@ const FieldDescriptions = ({
               return (
                 <Switch
                   {...controllerField}
-                  disabled={disabled}
+                  disabled={isActiveToggleDisabled(description, disabled)}
                   checked={controllerField.value}
                   onChange={e => {
                     const newActiveState = e.target.checked;
@@ -1130,7 +1138,7 @@ const FieldDescriptions = ({
             control={control}
             index={index}
             label={label}
-            isDisabled={isDisabled}
+            isDisabled={isContentReadOnly}
             isReleased={isReleased || false}
             isFsnOrPreferred={isFsnOrPreferred}
             descriptions={sortedDescriptionsWithoutSemanticTag}
@@ -1172,12 +1180,11 @@ const FieldDescriptions = ({
                             <InputLabel>{dialect.dialectName}</InputLabel>
                             <Select
                               {...controllerField}
-                              disabled={
-                                isDisabled ||
-                                dialect.dialectName.toLowerCase() === 'en-gb' ||
-                                (isSnomedInternationalSynonym &&
-                                  dialect.default !== 'true')
-                              }
+                              disabled={isAcceptabilityReadOnly(
+                                dialect,
+                                description,
+                                disabled,
+                              )}
                               error={!!fieldState.error}
                             >
                               {['PREFERRED', 'ACCEPTABLE'].map(
@@ -1215,7 +1222,7 @@ const FieldDescriptions = ({
                 name={`descriptionUpdate.descriptions.${index}.caseSignificance`}
                 control={control}
                 render={({ field: controllerField }) => (
-                  <Select {...controllerField} disabled={isDisabled}>
+                  <Select {...controllerField} disabled={isContentReadOnly}>
                     {Object.values(CaseSignificance).map(value => (
                       <MenuItem key={value} value={value}>
                         {caseSignificanceDisplay[value]}
