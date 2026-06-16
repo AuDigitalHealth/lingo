@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
-## [Unreleased]
+## [1.3.46] - 2026-06-16
 ### Added
 - Task to ticket association removal is now automated by configurable options, depending on different task status'
 - Added "Remove Labels" and "Remove External Requesters" multi-selects to the bulk edit toolbar, allowing labels and external requestors to be removed from all selected tickets in one action.
