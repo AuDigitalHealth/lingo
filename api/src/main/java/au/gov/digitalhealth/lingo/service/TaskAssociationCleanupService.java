@@ -15,16 +15,21 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
+import au.gov.digitalhealth.lingo.configuration.TaskStatusProperties;
 import au.gov.digitalhealth.lingo.util.Task;
+import au.gov.digitalhealth.tickets.models.Comment;
 import au.gov.digitalhealth.tickets.models.State;
 import au.gov.digitalhealth.tickets.models.TaskAssociation;
+import au.gov.digitalhealth.tickets.repository.CommentRepository;
 import au.gov.digitalhealth.tickets.repository.StateRepository;
 import au.gov.digitalhealth.tickets.repository.TaskAssociationRepository;
 import au.gov.digitalhealth.tickets.repository.TicketRepository;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Service;
@@ -34,21 +39,26 @@ import org.springframework.transaction.annotation.Transactional;
 @Log
 public class TaskAssociationCleanupService {
 
-  private static final Set<Task.Status> REMOVE_ASSOCIATION_STATUSES = Set.of(Task.Status.DELETED);
-  private static final Set<Task.Status> CLOSE_TICKET_STATUSES =
-      Set.of(Task.Status.PROMOTED, Task.Status.COMPLETED);
+  private static final DateTimeFormatter PROMOTION_DATE_FORMAT =
+      DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss 'UTC'").withZone(ZoneOffset.UTC);
 
   private final TaskAssociationRepository taskAssociationRepository;
   private final TicketRepository ticketRepository;
   private final StateRepository stateRepository;
+  private final CommentRepository commentRepository;
+  private final TaskStatusProperties taskStatusProperties;
 
   public TaskAssociationCleanupService(
       TaskAssociationRepository taskAssociationRepository,
       TicketRepository ticketRepository,
-      StateRepository stateRepository) {
+      StateRepository stateRepository,
+      CommentRepository commentRepository,
+      TaskStatusProperties taskStatusProperties) {
     this.taskAssociationRepository = taskAssociationRepository;
     this.ticketRepository = ticketRepository;
     this.stateRepository = stateRepository;
+    this.commentRepository = commentRepository;
+    this.taskStatusProperties = taskStatusProperties;
   }
 
   @Transactional
@@ -71,7 +81,9 @@ public class TaskAssociationCleanupService {
     for (TaskAssociation association : associations) {
       Task.Status status = taskStatusByKey.get(association.getTaskId());
 
-      if (status != null && CLOSE_TICKET_STATUSES.contains(status) && closedState.isPresent()) {
+      if (status != null
+          && taskStatusProperties.getCloseTicket().contains(status)
+          && closedState.isPresent()) {
         ticketRepository.updateStateByTaskAssociation(association.getId(), closedState.get());
         log.info(
             "Closed ticket for taskId ["
@@ -81,7 +93,24 @@ public class TaskAssociationCleanupService {
                 + "]");
       }
 
-      if (status == null || REMOVE_ASSOCIATION_STATUSES.contains(status)) {
+      if (status == null || taskStatusProperties.getRemoveAssociation().contains(status)) {
+        Instant now = Instant.now();
+        String commentText =
+            status != null
+                ? "Task association to task ["
+                    + association.getTaskId()
+                    + "] automatically removed because of task being "
+                    + status
+                    + " on "
+                    + PROMOTION_DATE_FORMAT.format(now)
+                    + "."
+                : "Task association to task ["
+                    + association.getTaskId()
+                    + "] automatically removed because the task no longer exists in the authoring platform.";
+        Comment comment =
+            Comment.builder().ticket(association.getTicket()).text(commentText).build();
+        commentRepository.save(comment);
+        log.info("Added promotion comment to ticket for taskId [" + association.getTaskId() + "]");
         ticketRepository.clearTaskAssociation(association.getId());
         taskAssociationRepository.delete(association);
         log.info(

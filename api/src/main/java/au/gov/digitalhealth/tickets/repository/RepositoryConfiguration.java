@@ -15,30 +15,33 @@
  */
 package au.gov.digitalhealth.tickets.repository;
 
-import au.gov.digitalhealth.lingo.auth.helper.AuthHelper;
+import au.gov.digitalhealth.lingo.auth.model.ImsUser;
 import java.util.Optional;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @Configuration
 @EnableJpaAuditing(auditorAwareRef = "auditorProvider")
 public class RepositoryConfiguration {
 
-  @Value("${spring.profiles.active}")
-  private String activeProfile;
-
+  /**
+   * Auditor for JPA {@code @CreatedBy} / {@code @LastModifiedBy} fields. Resolves the authenticated
+   * IMS user's login, falling back to {@code "system"} when there is no security context - e.g.
+   * scheduled/async background work such as task association cleanup, which runs off the request
+   * thread and would otherwise have no authenticated principal.
+   */
   @Bean
-  @Autowired
-  AuditorAware<String> auditorProvider(AuthHelper authHelper) {
+  AuditorAware<String> auditorProvider() {
     return () -> {
-      if (activeProfile.equals("test")) {
-        return Optional.ofNullable("cgillespie");
+      Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+      if (authentication != null && authentication.getPrincipal() instanceof ImsUser imsUser) {
+        return Optional.ofNullable(imsUser.getLogin());
       }
-      return Optional.ofNullable(authHelper.getImsUser().getLogin());
+      return Optional.of("system");
     };
   }
 }

@@ -15,6 +15,7 @@
  */
 package au.gov.digitalhealth.tickets.models.listeners;
 
+import au.gov.digitalhealth.lingo.auth.model.ImsUser;
 import au.gov.digitalhealth.tickets.models.Attachment;
 import au.gov.digitalhealth.tickets.models.Ticket;
 import java.time.Instant;
@@ -25,16 +26,13 @@ import org.hibernate.event.spi.PostInsertEventListener;
 import org.hibernate.event.spi.PostUpdateEvent;
 import org.hibernate.event.spi.PostUpdateEventListener;
 import org.hibernate.persister.entity.EntityPersister;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 @Component
 public class AttachmentEntityListener
     implements PostInsertEventListener, PostUpdateEventListener, PostDeleteEventListener {
-
-  @Value("${spring.profiles.active}")
-  private String activeProfile;
 
   @Override
   public void onPostInsert(PostInsertEvent event) {
@@ -56,10 +54,11 @@ public class AttachmentEntityListener
     if (entity instanceof Attachment attachment) {
       Ticket ticket = attachment.getTicket();
       if (ticket != null) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String currentUser =
-            activeProfile.equals("test")
-                ? "cgillespie"
-                : SecurityContextHolder.getContext().getAuthentication().getName();
+            authentication != null && authentication.getPrincipal() instanceof ImsUser imsUser
+                ? imsUser.getLogin()
+                : "system";
         ticket.setModified(Instant.now());
         ticket.setModifiedBy(currentUser);
       }

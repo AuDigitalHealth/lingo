@@ -9,6 +9,7 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 ## [Unreleased]
 ### Added
+- Task to ticket association removal is now automated by configurable options, depending on different task status'
 - Added "Remove Labels" and "Remove External Requesters" multi-selects to the bulk edit toolbar, allowing labels and external requestors to be removed from all selected tickets in one action.
 
 ### Security
