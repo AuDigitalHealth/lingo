@@ -147,7 +147,16 @@ const AutoCompleteField: React.FC<FieldProps<any, any>> = props => {
     createPrimitiveConcept?.parentConceptName || '';
 
   const paddingRight = createPrimitiveConcept ? 5 : 0;
-  const isDisabled = disabled || props.disabled || false;
+  // A field that already holds a value stays editable even if its dependant
+  // (parent-driven) `disabled` flag is set. When loading an existing product the
+  // dependant enable propagates asynchronously, so a populated field such as
+  // specificDeviceType would otherwise stay greyed out and, because a disabled
+  // autocomplete reports no options, show a spurious "concept does not exist"
+  // error. Form-level disabling (props.disabled, e.g. while submitting) still wins.
+  const hasValue = isMultivalued
+    ? Array.isArray(formData) && formData.length > 0
+    : !!formData?.conceptId;
+  const isDisabled = props.disabled || (disabled && !hasValue) || false;
 
   const showDiff =
     props.formContext?.mode === 'update' &&

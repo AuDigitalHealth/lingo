@@ -8,7 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
+### Fixed
+- Fixed the AMT device authoring screen not showing the ARTG ID field, so a device product with an ARTGID could not be loaded and edited to create a new product. The AMT device schema now declares the package-level `nonDefiningProperties` field (matching the medication and NMPC device schemas) and the device UI schema grid references it correctly (#1864).
+- Fixed dependant concept fields (e.g. the device "Specific Device Type") being blank, greyed out, or showing a spurious "concept does not exist in this branch" error when loading an existing product. A field that already holds a value now stays editable instead of being disabled by its parent-driven dependant flag (whose enable propagates asynchronously on load), the autocomplete only clears its value on a genuine transition to disabled rather than during the load, and the currently selected concept is always retained as an option so a loaded value is no longer falsely reported as non-existent when the typeahead query doesn't return it (#1864).
 
 
 ## [1.3.46] - 2026-06-16

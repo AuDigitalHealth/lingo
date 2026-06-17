@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Autocomplete, CircularProgress, TextField } from '@mui/material';
 import {
   Concept,
@@ -39,12 +39,20 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
 
   const disabled = isDisabled || props.disabled || false;
 
-  // Clear state when disabled
+  // Clear state when disabled. Only wipe the field's value on a genuine transition
+  // from enabled to disabled (e.g. the parent concept is deselected). The dependant
+  // `disabled` flag is propagated asynchronously, so while an existing product is being
+  // loaded the field can momentarily hold its loaded value while still flagged disabled;
+  // clearing unconditionally there would wipe the freshly loaded value (e.g.
+  // specificDeviceType not populating on load).
+  const wasDisabledRef = useRef(disabled);
   useEffect(() => {
+    const transitionedToDisabled = disabled && !wasDisabledRef.current;
+    wasDisabledRef.current = disabled;
     if (disabled) {
       setInputValue(createEmptyConcept(apLanguageHeader));
       setOptions([]);
-      if (value) {
+      if (value && transitionedToDisabled) {
         onChange(null);
       }
     }
@@ -82,6 +90,16 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
       uniqueOptions = Array.from(
         new Map(processedData.map(item => [item.conceptId, item])).values(),
       );
+    }
+    // Always retain the currently selected concept as an option. A loaded value was
+    // already resolved against the branch (it carries its pt/fsn), so it must not be
+    // reported as non-existent just because the typeahead query (term/ECL filtered)
+    // didn't return it among its results.
+    if (
+      value?.conceptId &&
+      !uniqueOptions.some(option => option.conceptId === value.conceptId)
+    ) {
+      uniqueOptions = [value as ConceptSearchResult, ...uniqueOptions];
     }
     setOptions(uniqueOptions);
   }, [allData, disabled, value]);

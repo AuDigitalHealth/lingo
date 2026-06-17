@@ -250,6 +250,13 @@
         "minProperties": "Container Type must be populated."
       }
     },
+    "nonDefiningProperties": {
+      "type": "array",
+      "title": "ARTG ID",
+      "items": {
+        "$ref": "#/$defs/DEVICE_PACKAGE_NonDefiningProperty"
+      }
+    },
     "containedProducts": {
       "type": "array",
       "title": "Contained Products",
