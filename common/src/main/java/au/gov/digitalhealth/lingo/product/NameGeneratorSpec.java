@@ -44,6 +44,20 @@ public class NameGeneratorSpec {
   @JsonProperty("strength_format")
   StrengthFormat strengthFormat;
 
+  /**
+   * Brand term passed to the name generator as a NAMING-ONLY hint so it can be woven into the
+   * produced FSN/PT without the brand being part of the concept's logical definition (axiom).
+   * Populated only for virtual levels in models that opt in via {@link
+   * au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration#nameGeneratorSupportsProductName}
+   * (e.g. the NMPC Clinical Drug level). This is a hint only — it must never be added as a {@code
+   * HAS_PRODUCT_NAME} relationship on a virtual concept. Optional on the wire ({@code
+   * @JsonInclude(NON_NULL)}) — absent means "no brand hint". Wire form is {@code product_name}
+   * (snake_case to match the name generator's API contract).
+   */
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  @JsonProperty("product_name")
+  String productName;
+
   /** Convenience constructor preserving the legacy four-arg signature used by call sites. */
   public NameGeneratorSpec(String tag, String owl, String ptOwl, List<String> order) {
     this.tag = tag;
@@ -51,5 +65,6 @@ public class NameGeneratorSpec {
     this.pt_owl = ptOwl;
     this.order = order;
     this.strengthFormat = null;
+    this.productName = null;
   }
 }

@@ -101,6 +101,17 @@ public class NewConceptDetails {
    */
   StrengthFormat strengthFormat;
 
+  /**
+   * Brand term passed to the name generator as an out-of-band naming hint for opted-in virtual
+   * levels, so the rendered FSN/PT can reflect the brand WITHOUT adding {@code HAS_PRODUCT_NAME} to
+   * the concept's axiom. This is a naming hint only — it must never become a defining relationship
+   * on a virtual concept. Null unless the model opts in (see {@link
+   * au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration#nameGeneratorSupportsProductName})
+   * and the level is a virtual Clinical Drug. Propagated onto the outbound request via {@link
+   * NameGeneratorSpec#productName}.
+   */
+  String nameGeneratorProductName;
+
   public NewConceptDetails(int conceptId) {
     this.conceptId = conceptId;
   }

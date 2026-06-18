@@ -129,6 +129,7 @@ public class NameGenerationService {
 
       NameGeneratorSpec spec = new NameGeneratorSpec(semanticTag, axiomFsn, axiomPt, order);
       spec.setStrengthFormat(node.getNewConceptDetails().getStrengthFormat());
+      spec.setProductName(node.getNewConceptDetails().getNameGeneratorProductName());
       return Optional.of(spec);
     }
 

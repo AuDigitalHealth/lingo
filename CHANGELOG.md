@@ -8,7 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
+### Added
+- The name generator can now receive a brand (product name) hint for virtual NMPC Clinical Drug concepts via a new optional `product_name` request field, allowing the brand to be woven into the generated FSN/PT without adding it to the concept's logical definition (axiom). Gated behind a new `nameGeneratorSupportsProductName` model-configuration flag (enabled for NMPC).
+
 ### Fixed
+- NMPC presentation/concentration-strength medicinal products failed to generate an FSN/PT because the strength numerator and denominator unit concepts were not seeded into the name-generator term cache, leaving bare SCTIDs in the OWL axiom that the generator could not parse. These units are now included so names generate correctly.
 - Fixed the AMT device authoring screen not showing the ARTG ID field, so a device product with an ARTGID could not be loaded and edited to create a new product. The AMT device schema now declares the package-level `nonDefiningProperties` field (matching the medication and NMPC device schemas) and the device UI schema grid references it correctly (#1864).
 - Fixed dependant concept fields (e.g. the device "Specific Device Type") being blank, greyed out, or showing a spurious "concept does not exist in this branch" error when loading an existing product. A field that already holds a value now stays editable instead of being disabled by its parent-driven dependant flag (whose enable propagates asynchronously on load), the autocomplete only clears its value on a genuine transition to disabled rather than during the load, and the currently selected concept is always retained as an option so a loaded value is no longer falsely reported as non-existent when the typeahead query doesn't return it (#1864).
 

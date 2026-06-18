@@ -1034,6 +1034,22 @@ public class MedicationProductCalculationService
           && productDetails.getStrengthFormat() != null) {
         n.getNewConceptDetails().setStrengthFormat(productDetails.getStrengthFormat());
       }
+      // Pass the brand term to the name generator as a NAMING-ONLY hint for opted-in virtual
+      // Clinical Drug levels. The brand stays OUT of the axiom (createClinicalDrugRelationships
+      // still only adds HAS_PRODUCT_NAME when branded==true), so the logical definition is
+      // unchanged; only the rendered name reflects it. Resolves to the brand's term (not the
+      // SCTID) so it does not trip the raw-id guard in
+      // NameGenerationService.createFsnAndPreferredTerm.
+      // See NameGenerationService.generateNameGeneratorSpec for the read.
+      if (modelConfiguration.isNameGeneratorSupportsProductName()
+          && n.isNewConcept()
+          && !level.isBranded()
+          && level.getModelLevelType().equals(CLINICAL_DRUG)
+          && productDetails.getProductName() != null
+          && productDetails.getProductName().getPt() != null) {
+        n.getNewConceptDetails()
+            .setNameGeneratorProductName(productDetails.getProductName().getPt().getTerm());
+      }
       generateName(atomicCache, productDetails, level, n, modelConfiguration, order, nameGenerator);
       productSummary.addNode(n);
       for (Node parent : parentNodes) {
