@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
+## [Unreleased]
+- No updates yet.
+
+
 ## [1.3.47] - 2026-06-18
 ### Added
 - The name generator can now receive a brand (product name) hint for virtual NMPC Clinical Drug concepts via a new optional `product_name` request field, allowing the brand to be woven into the generated FSN/PT without adding it to the concept's logical definition (axiom). Gated behind a new `nameGeneratorSupportsProductName` model-configuration flag (enabled for NMPC).
