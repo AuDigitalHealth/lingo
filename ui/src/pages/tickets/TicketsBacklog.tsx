@@ -11,7 +11,6 @@ import 'primereact/resources/primereact.css';
 import 'primeflex/primeflex.css';
 
 import {
-  SyntheticEvent,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -34,22 +33,17 @@ import BaseModal from '../../components/modal/BaseModal';
 import BaseModalHeader from '../../components/modal/BaseModalHeader';
 import BaseModalBody from '../../components/modal/BaseModalBody';
 import {
-  Autocomplete,
-  AutocompleteInputChangeReason,
   Button as MuiButton,
   MenuItem,
   Select,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
   Typography,
 } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
 import BaseModalFooter from '../../components/modal/BaseModalFooter';
-import {
-  AutocompleteGroupOption,
-  AutocompleteGroupOptionType,
-  Ticket,
-  TicketFilter,
-} from '../../types/tickets/ticket';
+import { Ticket, TicketFilter } from '../../types/tickets/ticket';
 import {
   useCreateTicketFilter,
   useUpdateTicketFilter,
@@ -117,6 +111,10 @@ export default function TicketsBacklog() {
 
   const [bulkLoading, setBulkLoading] = useState(false);
 
+  const [loadedFilter, setLoadedFilter] = useState<TicketFilter | undefined>(
+    undefined,
+  );
+
   useEffect(() => {
     const filters = lazyState.filters;
     setFilters(generateSearchConditions(lazyState, debouncedGlobalFilterValue));
@@ -135,6 +133,7 @@ export default function TicketsBacklog() {
   const clearFilter = useCallback(() => {
     handleFilterChange(undefined);
     initFilters();
+    setLoadedFilter(undefined);
     // eslint-disable-next-line
   }, []);
 
@@ -201,6 +200,7 @@ export default function TicketsBacklog() {
 
   const handleSavedFilterLoad = useCallback(
     (ticketFilter: TicketFilter) => {
+      setLoadedFilter(ticketFilter);
       const chosenFilter = ticketFilter;
 
       const generatedFilters = generateFilterConditions(
@@ -275,6 +275,7 @@ export default function TicketsBacklog() {
           onGlobalFilterChange={onGlobalFilterChange}
           filters={filters}
           loadSavedFilter={handleSavedFilterLoad}
+          loadedFilter={loadedFilter}
           bulkEditOpen={bulkEditOpen}
           setBulkEditOpen={setBulkEditOpen}
           refresh={refresh}
@@ -295,6 +296,7 @@ export default function TicketsBacklog() {
     clearFilter,
     onGlobalFilterChange,
     handleSavedFilterLoad,
+    loadedFilter,
     bulkEditOpen,
     selectedTickets,
     setBulkLoading,
@@ -357,6 +359,7 @@ interface TicketTableHeaderProps {
   onGlobalFilterChange: (value: string) => void;
   filters?: SearchConditionBody;
   loadSavedFilter: (ticketFilter: TicketFilter) => void;
+  loadedFilter?: TicketFilter;
   bulkEditOpen: boolean;
   setBulkEditOpen: (bool: boolean) => void;
   refresh: () => void;
@@ -370,6 +373,7 @@ function TicketTableHeader({
   onGlobalFilterChange,
   filters,
   loadSavedFilter,
+  loadedFilter,
   bulkEditOpen,
   setBulkEditOpen,
   refresh,
@@ -387,6 +391,7 @@ function TicketTableHeader({
           modalOpen={saveFilterModalOpen}
           setModalOpen={setSaveFilterModalOpen}
           filters={filters}
+          loadedFilter={loadedFilter}
         />
       )}
       {loadFilterModalOpen && (
@@ -422,15 +427,34 @@ function TicketTableHeader({
             outlined
             onClick={clearFilter}
           />
-          <Button
-            data-testid="backlog-filter-load"
-            type="button"
-            icon="pi pi-save"
-            label="Load Filter"
-            // disabled={disabled}
-            outlined
-            onClick={() => setLoadFilterModalOpen(!loadFilterModalOpen)}
-          />
+          <Tooltip
+            title={loadedFilter ? `Active filter: ${loadedFilter.name}` : ''}
+            placement="bottom"
+          >
+            <span>
+              <Button
+                data-testid="backlog-filter-load"
+                type="button"
+                icon={loadedFilter ? 'pi pi-filter-fill' : 'pi pi-filter'}
+                label={
+                  loadedFilter ? (
+                    <>
+                      {'Loaded: '}
+                      <span style={{ opacity: 0.6, fontWeight: 400 }}>
+                        {loadedFilter.name.length > 20
+                          ? `${loadedFilter.name.slice(0, 20)}…`
+                          : loadedFilter.name}
+                      </span>
+                    </>
+                  ) : (
+                    'Load Filter'
+                  )
+                }
+                outlined
+                onClick={() => setLoadFilterModalOpen(!loadFilterModalOpen)}
+              />
+            </span>
+          </Tooltip>
           <Button
             data-testid="backlog-filter-save"
             type="button"
@@ -495,23 +519,24 @@ interface SaveFilterModalProps {
   modalOpen: boolean;
   setModalOpen: (modalOpen: boolean) => void;
   filters?: SearchConditionBody;
+  loadedFilter?: TicketFilter;
 }
 function SaveFilterModal({
   modalOpen,
   setModalOpen,
   filters,
+  loadedFilter,
 }: SaveFilterModalProps) {
-  const [value, setValue] = useState<AutocompleteGroupOption>({
-    name: '',
-    group: AutocompleteGroupOptionType.New,
-  });
+  const [mode, setMode] = useState<'update' | 'new'>(
+    loadedFilter ? 'update' : 'new',
+  );
+  const [newName, setNewName] = useState('');
+
   const { ticketFilters } = useAllTicketFilters();
   const postMutation = useCreateTicketFilter();
   const { data: postData, isError: postIsError } = postMutation;
   const putMutation = useUpdateTicketFilter();
   const { data: putData, isError: putIsError } = putMutation;
-
-  const theme = useTheme();
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -548,122 +573,132 @@ function SaveFilterModal({
     }
   }, [putData, putIsError, queryClient, setModalOpen]);
 
-  const saveFilter = () => {
-    const existing = ticketFilters.find(filter => {
-      return filter.name === value.name;
-    });
+  const nameAlreadyExists = ticketFilters.some(f => f.name === newName.trim());
 
-    if (existing === undefined) {
+  const saveFilter = () => {
+    if (mode === 'update' && loadedFilter) {
+      putMutation.mutate({
+        id: loadedFilter.id,
+        ticketFilter: {
+          ...loadedFilter,
+          filter: filters as SearchConditionBody,
+        },
+      });
+    } else {
       postMutation.mutate({
-        name: value.name,
+        name: newName.trim(),
         filter: filters as SearchConditionBody,
       });
-    } else {
-      existing.filter = filters as SearchConditionBody;
-      putMutation.mutate({ id: existing.id, ticketFilter: existing });
     }
   };
 
-  const onChange = (
-    e: SyntheticEvent<Element, Event>,
-    newValue: string | AutocompleteGroupOption | null,
-  ) => {
-    if (typeof newValue === 'string') {
-      setValue({ name: newValue, group: AutocompleteGroupOptionType.New });
-    } else {
-      if (newValue?.name === undefined) {
-        return;
-      }
-      setValue({
-        name: newValue?.name,
-        group: AutocompleteGroupOptionType.Existing,
-      });
-    }
-  };
-
-  const onInputChange = (
-    event: SyntheticEvent<Element, Event>,
-    value: string,
-    reason: AutocompleteInputChangeReason,
-  ) => {
-    setValue({ name: value, group: AutocompleteGroupOptionType.New });
-  };
-
-  const mapToFilterOptions = (ticketFilters: TicketFilter[]) => {
-    return ticketFilters.map(filter => {
-      return {
-        name: filter.name,
-        group: AutocompleteGroupOptionType.Existing,
-      };
-    });
-  };
-
-  const isExistingName = () => {
-    return (
-      value.name !== '' &&
-      ticketFilters?.find(filter => {
-        return filter.name === value.name;
-      }) !== undefined
-    );
-  };
+  const isSaveDisabled =
+    !filters ||
+    (mode === 'new' && (newName.trim() === '' || nameAlreadyExists));
 
   return (
     <BaseModal open={modalOpen} handleClose={() => setModalOpen(!modalOpen)}>
       <BaseModalHeader title={'Save Filter'} />
-      <BaseModalBody sx={{ paddingTop: '2.5em', paddingBottom: '2.5em' }}>
+      <BaseModalBody sx={{ paddingTop: '2em', paddingBottom: '2em' }}>
         {!filters ? (
           <Typography>No Filters selected</Typography>
         ) : (
-          <Autocomplete
-            data-testid="save-filter-modal-input"
-            autoSelect
-            freeSolo
-            sx={{ width: '100%' }}
-            groupBy={option => option.group}
-            options={mapToFilterOptions(ticketFilters)}
-            getOptionLabel={option => {
-              if (typeof option === 'string') {
-                return option;
-              } else {
-                return option.name;
-              }
-            }}
-            value={value}
-            onChange={onChange}
-            onInputChange={onInputChange}
-            renderInput={params => (
+          <Stack gap={2}>
+            {loadedFilter && (
+              <ToggleButtonGroup
+                value={mode}
+                exclusive
+                onChange={(_, val) => {
+                  if (val) setMode(val);
+                }}
+                size="small"
+                fullWidth
+              >
+                <Tooltip
+                  title={
+                    loadedFilter.name.length > 25
+                      ? `Update "${loadedFilter.name}"`
+                      : ''
+                  }
+                  placement="top"
+                >
+                  <ToggleButton
+                    value="update"
+                    data-testid="save-filter-mode-update"
+                    sx={{
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      maxWidth: 220,
+                      display: 'block',
+                    }}
+                  >
+                    Update &quot;
+                    {loadedFilter.name.length > 25
+                      ? `${loadedFilter.name.slice(0, 25)}…`
+                      : loadedFilter.name}
+                    &quot;
+                  </ToggleButton>
+                </Tooltip>
+                <ToggleButton value="new" data-testid="save-filter-mode-new">
+                  Save as New
+                </ToggleButton>
+              </ToggleButtonGroup>
+            )}
+            {mode === 'update' && loadedFilter && (
+              <Typography variant="body2" color="warning.main">
+                Warning: This will overwrite &quot;
+                {loadedFilter.name.length > 40
+                  ? `${loadedFilter.name.slice(0, 40)}…`
+                  : loadedFilter.name}
+                &quot; with the current filter settings.
+              </Typography>
+            )}
+            {mode === 'new' && (
               <TextField
-                {...params}
-                label={'Select or enter a new filter name'}
+                data-testid="save-filter-modal-input"
+                label="New filter name"
+                value={newName}
+                onChange={e => setNewName(e.target.value)}
+                size="small"
+                fullWidth
+                autoFocus
+                error={nameAlreadyExists}
+                helperText={
+                  nameAlreadyExists
+                    ? 'A filter with this name already exists'
+                    : ''
+                }
+                inputProps={{ maxLength: 100 }}
               />
             )}
-          />
+          </Stack>
         )}
-        <Box p={1}>
-          {isExistingName() ? (
-            <Box>
-              <span style={{ color: `${theme.palette.warning.darker}` }}>
-                Warning!: This will override the existing data{' '}
-              </span>
-            </Box>
-          ) : (
-            <div />
-          )}
-        </Box>
       </BaseModalBody>
       <BaseModalFooter
         startChildren={<></>}
         endChildren={
-          <MuiButton
-            data-testid="save-filter-modal-save"
-            color={isExistingName() ? 'warning' : 'primary'}
-            size="small"
-            variant="contained"
-            onClick={saveFilter}
-            disabled={value.name === ''}
-          >
-            {isExistingName() ? 'Update ' : 'Add '}Filter
-          </MuiButton>
+          <Stack flexDirection="row" gap={1}>
+            <MuiButton
+              data-testid="save-filter-modal-save"
+              color="primary"
+              size="small"
+              variant="contained"
+              onClick={saveFilter}
+              disabled={isSaveDisabled}
+            >
+              {mode === 'update' ? 'Update Filter' : 'Save Filter'}
+            </MuiButton>
+            <MuiButton
+              data-testid="save-filter-modal-cancel"
+              color="error"
+              size="small"
+              variant="contained"
+              onClick={() => setModalOpen(false)}
+            >
+              Cancel
+            </MuiButton>
+          </Stack>
         }
       />
     </BaseModal>
