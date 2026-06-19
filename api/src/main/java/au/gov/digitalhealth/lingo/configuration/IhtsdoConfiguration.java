@@ -36,6 +36,17 @@ public class IhtsdoConfiguration {
   @Value("${ihtsdo.ims.api.url}")
   String imsApiUrl;
 
+  /**
+   * IMS UI URL used for the browser login redirect (the user navigates here to the IMS login page).
+   * Kept separate from {@link #imsApiUrl} because the SI API gateway fronts the IMS API but not the
+   * IMS login UI: the API calls can route through the gateway while the login redirect must point
+   * at the browser-loadable IMS UI host. Defaults to {@code imsApiUrl} when unset, so environments
+   * that don't set it behave exactly as before.
+   */
+  @NotBlank(message = "IMS UI URL is required")
+  @Value("${ihtsdo.ims.ui.url:${ihtsdo.ims.api.url}}")
+  String imsUiUrl;
+
   @NotBlank(message = "IMS API Cookie Name is required")
   @Value("${ihtsdo.ims.api.cookie.name}")
   String imsApiCookieName;

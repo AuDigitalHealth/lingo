@@ -55,7 +55,9 @@ public class ConfigController {
   public UserInterfaceConfiguration config() {
     UserInterfaceConfigurationBuilder builder =
         UserInterfaceConfiguration.builder()
-            .imsUrl(ihtsdoConfiguration.getImsApiUrl())
+            // imsUrl is the browser login-redirect target (Login.tsx) — use the IMS UI URL,
+            // not the API URL, so the API can go via the gateway while login points at the IMS UI.
+            .imsUrl(ihtsdoConfiguration.getImsUiUrl())
             .apUrl(ihtsdoConfiguration.getApApiUrl())
             .apProjectKeys(ihtsdoConfiguration.getApProjectKeys())
             .apDefaultBranch(ihtsdoConfiguration.getApDefaultBranch())

@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
+### Changed
+- Split the IMS URL into a separate UI URL and API URL. A new `ihtsdo.ims.ui.url` property sets the browser login-redirect target (served to the frontend as `imsUrl`), while `ihtsdo.ims.api.url` is used by the backend for IMS API calls. `ihtsdo.ims.ui.url` defaults to `ihtsdo.ims.api.url`, so environments that don't set it are unchanged. This lets the IMS API route through the SI API gateway while the interactive login UI continues to point at the browser-loadable IMS host.
+
 - Improved Backlog filter workflow: the currently loaded filter is now shown as an "Active: [name]" chip in the toolbar. The Save Filter modal now restricts what can be saved — when a filter is loaded it offers two choices (update the loaded filter, or save as new with a unique name); when no filter is loaded it only allows creating a new filter by name. This prevents accidentally overwriting an unrelated saved filter.
 
 
