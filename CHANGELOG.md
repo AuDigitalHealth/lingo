@@ -13,6 +13,9 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 - Improved Backlog filter workflow: the currently loaded filter is now shown as an "Active: [name]" chip in the toolbar. The Save Filter modal now restricts what can be saved — when a filter is loaded it offers two choices (update the loaded filter, or save as new with a unique name); when no filter is loaded it only allows creating a new filter by name. This prevents accidentally overwriting an unrelated saved filter.
 
+### Fixed
+- Added a client-side response timeout (default 90s, configurable via `name.generator.api.timeout-seconds`) plus a connect timeout to the name-generator WebClients (both the default client and the ECL-based generators), so a hung upstream name-generation service can no longer make name generation/regeneration wait indefinitely. The timeout is set above the upstream's worst-case response time so it only trips on a genuinely stuck upstream, where it falls through the existing graceful "keep previous name + flag for manual edit" path — no user-facing behaviour change.
+
 
 ## [1.3.47] - 2026-06-18
 ### Added

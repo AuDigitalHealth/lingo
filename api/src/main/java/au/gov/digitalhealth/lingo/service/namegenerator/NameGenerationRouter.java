@@ -16,6 +16,7 @@
 package au.gov.digitalhealth.lingo.service.namegenerator;
 
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.gov.digitalhealth.lingo.configuration.ApiWebConfiguration;
 import au.gov.digitalhealth.lingo.product.FsnAndPt;
 import au.gov.digitalhealth.lingo.product.NameGeneratorSpec;
 import au.gov.digitalhealth.lingo.service.SnowstormClient;
@@ -34,13 +35,16 @@ import java.util.stream.Collectors;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.bind.Bindable;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClient;
 
 /**
  * Routes name generation requests to the appropriate name generator. ECL-based generators are
@@ -70,6 +74,7 @@ public class NameGenerationRouter {
   private final Environment environment;
   private final ObjectProvider<WebClient.Builder> webClientBuilderProvider;
   private final ObjectMapper objectMapper;
+  private final int timeoutSeconds;
 
   private List<EclClientEntry> eclClients;
 
@@ -79,17 +84,23 @@ public class NameGenerationRouter {
       SnowstormClient snowstormClient,
       Environment environment,
       ObjectProvider<WebClient.Builder> webClientBuilderProvider,
-      ObjectMapper objectMapper) {
+      ObjectMapper objectMapper,
+      @Value("${name.generator.api.timeout-seconds:90}") int timeoutSeconds) {
     this.defaultClient = defaultClient;
     this.snowstormClient = snowstormClient;
     this.environment = environment;
     this.webClientBuilderProvider = webClientBuilderProvider;
     this.objectMapper = objectMapper;
+    this.timeoutSeconds = timeoutSeconds;
   }
 
   @PostConstruct
   public void init() {
     eclClients = new ArrayList<>();
+
+    // Shared across every ECL generator client: the same client-side timeout backstop as the
+    // default name-generator bean, so a hung ECL generator can't make name generation wait forever.
+    HttpClient httpClient = ApiWebConfiguration.nameGeneratorHttpClient(timeoutSeconds);
 
     Map<String, EclGeneratorConfig> generators =
         Binder.get(environment)
@@ -112,6 +123,7 @@ public class NameGenerationRouter {
           webClientBuilderProvider
               .getObject()
               .baseUrl(config.getUrl())
+              .clientConnector(new ReactorClientHttpConnector(httpClient))
               .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
       if (config.getKey() != null && !config.getKey().isBlank()) {
         builder.defaultHeader("X-API-Key", config.getKey());

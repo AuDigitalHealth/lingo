@@ -20,6 +20,7 @@ import au.gov.digitalhealth.lingo.log.SnowstormLogger;
 import au.gov.digitalhealth.lingo.util.AuthSnowstormLogger;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.netty.channel.ChannelOption;
 import io.netty.handler.logging.LogLevel;
 import java.time.Duration;
 import lombok.extern.java.Log;
@@ -120,10 +121,13 @@ public class ApiWebConfiguration {
   public WebClient nameGeneratorApiClient(
       @Value("${name.generator.api.url}") String namegenApiUrl,
       @Value("${name.generator.api.key:}") String apiKeyHeader,
+      @Value("${name.generator.api.timeout-seconds:90}") int timeoutSeconds,
       WebClient.Builder webClientBuilder) {
     WebClient.Builder builder =
         webClientBuilder
             .baseUrl(namegenApiUrl)
+            .clientConnector(
+                new ReactorClientHttpConnector(nameGeneratorHttpClient(timeoutSeconds)))
             .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
 
     // Only add the API key header if it's not empty
@@ -132,6 +136,26 @@ public class ApiWebConfiguration {
     }
 
     return builder.build();
+  }
+
+  /**
+   * Builds the reactor-netty {@link HttpClient} used by every name-generator client — the default
+   * {@link #nameGeneratorApiClient} bean and the ECL-based generators built dynamically in {@code
+   * NameGenerationRouter}. Applies a sensible connect timeout and a configurable response timeout
+   * as a hard backstop against an upstream that hangs without ever responding; without it a name
+   * generation call would wait indefinitely.
+   *
+   * <p>The upstream name generator self-times-out its LLM call at ~30s (retries once, so ~60s worst
+   * case) and sits behind an nginx ingress capped at ~60s, so the response timeout is deliberately
+   * set ABOVE that worst case — it never pre-empts a slow-but-valid response the server would still
+   * deliver, and only trips on a genuinely stuck upstream. A timeout surfaces as an error in the
+   * client's reactive chain and is caught by the existing {@code onErrorReturn} fallback (keep the
+   * previous name + flag the node for manual edit).
+   */
+  public static HttpClient nameGeneratorHttpClient(int responseTimeoutSeconds) {
+    return HttpClient.create()
+        .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) Duration.ofSeconds(10).toMillis())
+        .responseTimeout(Duration.ofSeconds(responseTimeoutSeconds));
   }
 
   @Bean
