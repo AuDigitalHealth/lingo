@@ -637,7 +637,7 @@
     <postgres.version>42.7.11</postgres.version>
     <problem-spring-web.version>0.23.0</problem-spring-web.version>
     <querydsl.version>5.1.0</querydsl.version>
-    <sentry.version>7.18.0</sentry.version>
+    <sentry.version>8.43.2</sentry.version>
     <snomed-owl-toolkit.version>5.4.0</snomed-owl-toolkit.version>
     <buildnumber>${project.version}</buildnumber>
     <docker.api.version>1.44</docker.api.version> <!-- default value -->
