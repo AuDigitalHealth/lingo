@@ -35,34 +35,17 @@
             <goals>
               <goal>install-node-and-pnpm</goal>
             </goals>
-            <id>install node and pnpm before clean</id>
-            <phase>pre-clean</phase>
-          </execution>
-          <execution>
-            <goals>
-              <goal>install-node-and-pnpm</goal>
-            </goals>
             <id>install node and pnpm</id>
             <phase>initialize</phase>
           </execution>
           <execution>
             <configuration>
-              <arguments>install</arguments>
+              <arguments>install --frozen-lockfile --prefer-offline</arguments>
             </configuration>
             <goals>
               <goal>pnpm</goal>
             </goals>
             <id>pnpm install</id>
-            <phase>initialize</phase>
-          </execution>
-          <execution>
-            <configuration>
-              <arguments>list</arguments>
-            </configuration>
-            <goals>
-              <goal>pnpm</goal>
-            </goals>
-            <id>list all packages and versions</id>
             <phase>initialize</phase>
           </execution>
           <execution>

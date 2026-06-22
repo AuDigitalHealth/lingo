@@ -124,11 +124,13 @@ jobs:
             trivy-maven | "$(Agent.OS)"
             trivy-maven
           path: $(Agent.HomeDirectory)/.m2/repository
+          cacheHitVar: TRIVY_M2_HIT
 
       # Pre-populate the local Maven repository so Trivy can resolve POM parent chains
-      # from disk rather than Maven Central. Runs on every build (no cache-hit condition)
-      # to fill any gaps left by a partial prior cache. Failures are non-fatal because
-      # --offline-scan (below) prevents Trivy from hitting Maven Central regardless.
+      # from disk rather than Maven Central. Skipped on an exact cache hit (the parent
+      # POMs are already present); still runs on a miss/partial to fill gaps. Failures
+      # are non-fatal because --offline-scan (below) prevents Trivy from hitting Maven
+      # Central regardless.
       - script: |
           set -euo pipefail
           echo "##[section]Pre-populating Maven local repo for Trivy"
@@ -141,6 +143,7 @@ jobs:
             -Dmaven.repo.local=$(Agent.HomeDirectory)/.m2/repository \
             --no-transfer-progress 2>&1 | tail -20 || true
         displayName: 'Pre-populate ~/.m2 for Trivy Maven scanning'
+        condition: ne(variables.TRIVY_M2_HIT, 'true')
 
       - script: |
           set -euo pipefail
@@ -162,26 +165,18 @@ jobs:
           echo "##[section]Downloading Trivy vulnerability databases"
           trivy fs --download-db-only .
 
+          # Scan ONCE to JSON (the canonical report), then derive the table and SARIF
+          # outputs from that JSON with `trivy convert` — no second/third filesystem
+          # walk. We deliberately omit --exit-code here so the report is always written
+          # (incl. for the always() publish + SARIF); the HIGH/CRITICAL gate is applied
+          # from the JSON below.
+          #
           # --offline-scan prevents Trivy from hitting Maven Central for parent POM
-          # resolution, which was causing FATAL 429 rate-limit errors. Any POM not
-          # found in ~/.m2 produces a WARN instead of aborting the scan.
-          # ui/pom.xml is skipped because it contains only build plugins (no runtime
-          # deps) and was causing a separate context-cancel crash.
+          # resolution (was causing FATAL 429 rate-limit errors); any POM not found in
+          # ~/.m2 produces a WARN instead of aborting. ui/pom.xml is skipped (build
+          # plugins only, and was causing a separate context-cancel crash).
           echo ""
-          echo "##[section]Running Trivy (HIGH/CRITICAL, fixed only — no npm install required)"
-          status=0
-          trivy fs . \
-            --exit-code 1 \
-            --severity HIGH,CRITICAL \
-            --ignore-unfixed \
-            --offline-scan \
-            --skip-dirs node_modules \
-            --skip-files ui/pom.xml \
-            --format table \
-            --scanners vuln || status=$?
-
-          echo ""
-          echo "##[section]Saving JSON report"
+          echo "##[section]Running Trivy ONCE (HIGH/CRITICAL, fixed only) -> JSON"
           trivy fs . \
             --severity HIGH,CRITICAL \
             --ignore-unfixed \
@@ -190,49 +185,42 @@ jobs:
             --skip-files ui/pom.xml \
             --format json \
             --output trivy-report.json \
-            --scanners vuln 2>/dev/null || true
+            --scanners vuln
 
-          if [ "$status" -ne 0 ]; then
+          echo ""
+          echo "##[section]Converting JSON report to table + SARIF (no re-scan)"
+          trivy convert --format table trivy-report.json
+          trivy convert --format sarif --output trivy-report.sarif trivy-report.json
+
+          # Gate from the JSON (preserves the previous fail-on-HIGH/CRITICAL behaviour).
+          CRITICAL=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' trivy-report.json)
+          HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH")] | length' trivy-report.json)
+          # Fail closed if the report did not yield numeric counts (e.g. empty/truncated JSON),
+          # so an unparseable report can never fall through to a false PASS.
+          if ! [[ "${CRITICAL}" =~ ^[0-9]+$ && "${HIGH}" =~ ^[0-9]+$ ]]; then
+            echo "##[error]Trivy report did not yield numeric HIGH/CRITICAL counts (CRITICAL='${CRITICAL}' HIGH='${HIGH}') — failing closed."
+            exit 1
+          fi
+          if [ "${CRITICAL}" -gt 0 ] || [ "${HIGH}" -gt 0 ]; then
             echo ""
             echo "##[error]Trivy found HIGH/CRITICAL vulnerabilities — build blocked before pnpm install."
-            if [ -f trivy-report.json ]; then
-              echo ""
-              echo "##[section]Vulnerability summary"
-              CRITICAL=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' trivy-report.json)
-              HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH")] | length' trivy-report.json)
-              echo "  CRITICAL: ${CRITICAL}"
-              echo "  HIGH:     ${HIGH}"
-              echo ""
-              echo "  Severity  CVE                  Package                  Installed  Fixed      Title"
-              echo "  --------  -------------------  -----------------------  ---------  ---------  -----"
-              jq -r '
-                .Results[]? | .Target as $target |
-                .Vulnerabilities[]? |
-                "  \(.Severity)  \(.VulnerabilityID)  \(.PkgName)  \(.InstalledVersion // "?")  \(.FixedVersion // "no fix")  \(.Title // "")"
-              ' trivy-report.json | sort || true
-            fi
-            exit "$status"
+            echo "##[section]Vulnerability summary"
+            echo "  CRITICAL: ${CRITICAL}"
+            echo "  HIGH:     ${HIGH}"
+            echo ""
+            echo "  Severity  CVE                  Package                  Installed  Fixed      Title"
+            echo "  --------  -------------------  -----------------------  ---------  ---------  -----"
+            jq -r '
+              .Results[]? | .Target as $target |
+              .Vulnerabilities[]? |
+              "  \(.Severity)  \(.VulnerabilityID)  \(.PkgName)  \(.InstalledVersion // "?")  \(.FixedVersion // "no fix")  \(.Title // "")"
+            ' trivy-report.json | sort || true
+            exit 1
           fi
 
           echo "##[section]Result"
           echo "✅ Trivy: no HIGH/CRITICAL fixable vulnerabilities found."
-        displayName: "Run Trivy (pnpm + Maven, no install required)"
-
-      - script: |
-          set -euo pipefail
-          echo "##[section]Generating Trivy SARIF report"
-          trivy fs . \
-            --severity HIGH,CRITICAL \
-            --ignore-unfixed \
-            --offline-scan \
-            --skip-dirs node_modules \
-            --skip-files ui/pom.xml \
-            --format sarif \
-            --output trivy-report.sarif \
-            --scanners vuln
-          echo "SARIF report written to trivy-report.sarif"
-        displayName: "Generate Trivy SARIF report"
-        condition: always()
+        displayName: "Run Trivy once (scan -> JSON, convert to table/SARIF)"
 
       - task: CopyFiles@2
         displayName: "Collect Trivy reports"
@@ -349,6 +337,40 @@ jobs:
           path: $(Pipeline.Workspace)/.pnpm-store
           cacheHitVar: CACHE_RESTORED
 
+      # Cache Jib's base-image layer cache so the multi-arch eclipse-temurin:17
+      # base isn't re-pulled every build. Requires -Djib.baseImageCache below.
+      - script: mkdir -p $(Pipeline.Workspace)/.jib-cache
+        displayName: 'Create Jib base-image cache directory'
+
+      - task: Cache@2
+        displayName: Cache Jib base-image layers
+        inputs:
+          key: 'jib | "$(Agent.OS)" | $(Build.SourcesDirectory)/api/pom.xml'
+          restoreKeys: |
+            jib | "$(Agent.OS)"
+          path: $(Pipeline.Workspace)/.jib-cache
+
+      # Cache the frontend-maven-plugin Node/pnpm install dir so node v22 isn't
+      # re-extracted every build (keyed on ui/pom.xml which pins the versions).
+      - task: Cache@2
+        displayName: Cache UI node install dir
+        inputs:
+          key: 'uinode | "$(Agent.OS)" | $(Build.SourcesDirectory)/ui/pom.xml'
+          restoreKeys: |
+            uinode | "$(Agent.OS)"
+          path: $(Build.SourcesDirectory)/ui/node
+
+      # Cache the resolved node_modules so a frozen install only re-links on a
+      # lockfile change. The pnpm store cache avoids downloads but not the linking
+      # of ~1200 packages; keying on the lockfile makes this exact and safe.
+      - task: Cache@2
+        displayName: Cache UI node_modules
+        inputs:
+          key: 'uinodemodules | "$(Agent.OS)" | $(Build.SourcesDirectory)/ui/pnpm-lock.yaml'
+          restoreKeys: |
+            uinodemodules | "$(Agent.OS)"
+          path: $(Build.SourcesDirectory)/ui/node_modules
+
       - script: |
           echo "*** Create Maven Local Repo at $(mavenCache)"
           mkdir -p "$(mavenCache)"
@@ -362,7 +384,7 @@ jobs:
         condition: not(and(succeeded(), eq(variables.isRelease, true)))
         inputs:
           mavenPomFile: 'pom.xml'
-          options: '-Dsnomio.extensions.sergio.enabled=false -Dlingo.internal.users=$(imsUsername) -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(imageTag) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dihtsdo.ims.api.url=$(imsApiUrl) -Dihtsdo.ims.api.cookie.name=$(imsCookieName)"'
+          options: '-Dsnomio.extensions.sergio.enabled=false -Dlingo.internal.users=$(imsUsername) -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(imageTag) -Djib.baseImageCache=$(Pipeline.Workspace)/.jib-cache --no-transfer-progress -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dihtsdo.ims.api.url=$(imsApiUrl) -Dihtsdo.ims.api.cookie.name=$(imsCookieName)"'
           mavenOptions: '$(mavenOptions) -Xmx5072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(buildInfo)'
           javaHomeOption: 'path'
           jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
@@ -376,7 +398,7 @@ jobs:
         displayName: 'Deploy Release artefacts'
         inputs:
           mavenPomFile: 'pom.xml'
-          options: '-Dsnomio.extensions.sergio.enabled=false -Dlingo.internal.users=$(imsUsername) -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(imageTag) -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dihtsdo.ims.api.url=$(imsApiUrl) -Dihtsdo.ims.api.cookie.name=$(imsCookieName)"'
+          options: '-Dsnomio.extensions.sergio.enabled=false -Dlingo.internal.users=$(imsUsername) -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(imageTag) -Djib.baseImageCache=$(Pipeline.Workspace)/.jib-cache --no-transfer-progress -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dihtsdo.ims.api.url=$(imsApiUrl) -Dihtsdo.ims.api.cookie.name=$(imsCookieName)"'
           mavenOptions: '$(mavenOptions) -Xmx5072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(buildInfo)'
           javaHomeOption: 'path'
           jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
@@ -415,6 +437,9 @@ jobs:
         displayName: 'Deploy Build artefacts'
         inputs:
           mavenPomFile: 'pom.xml'
+          # common/auth were already compiled+tested in the package step above;
+          # skip re-running their tests here (deploy re-runs the full lifecycle).
+          options: '-DskipTests --no-transfer-progress'
           mavenOptions: '$(mavenOptions)'
           javaHomeOption: 'path'
           jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
@@ -497,184 +522,3 @@ jobs:
           SYSTEM_COLLECTIONURI: $(System.CollectionUri)
           SYSTEM_TEAMPROJECT: $(System.TeamProject)
           FEED_NAME: $(feedName)
-
-#  - job: e2e_tests
-#    displayName: Run e2e Tests
-#    timeoutInMinutes: 60
-#    pool:
-#      name: 'highmemory-pool'
-#    variables:
-#      agent.container.startupTimeout: '300'
-#    dependsOn:
-#      - set_image_tag
-#      - snomio_build_test_publish
-#    steps:
-#      - download: current
-#        artifact: branchInfo
-#
-#      - script: |
-#          imageTag=$(cat $(Pipeline.Workspace)/branchInfo/branchInfo.txt)
-#          if [[ -z "$imageTag" || "$imageTag" == *unknown* ]]; then
-#            echo "Invalid imageTag: $imageTag"
-#            exit 1
-#          fi
-#          echo "##vso[task.setvariable variable=buildInfo]$imageTag"
-#          if [ "$(Build.SourceBranch)" = "refs/heads/main" ]; then
-#            imageTag="latest"
-#          fi
-#          echo "##vso[task.setvariable variable=imageTag]$imageTag"
-#          echo "Using imageTag: $imageTag"
-#        displayName: 'Read imageTag from branchInfo.txt'
-#
-#      - task: UseNode@1
-#        inputs:
-#          version: '20.x'
-#        displayName: "Install Node.js 20 using Node.js Tool"
-#
-#      - task: Docker@2
-#        displayName: 'Login to ACR'
-#        inputs:
-#          command: login
-#          containerRegistry: $(containerRegistry)
-#
-#      - task: Docker@2
-#        displayName: 'Login to Quay.io'
-#        inputs:
-#          command: login
-#          containerRegistry: $(quayRegistry)
-#
-#      - script: |
-#          set -e
-#
-#          # Modify docker compose
-#          sed -i 's/nctsacr.azurecr.io\/snomio:latest/nctsacr.azurecr.io\/snomio:$(imageTag)/' ui/cypress/docker/docker-compose.yaml
-#          sed -i 's/ims-username=.*/ims-username=$(imsUsername)/' ui/cypress/docker/docker-compose.yaml
-#
-#
-#          PASSWORD="$IMSPASSWORD"
-#
-#          CISSPASSWORD="$CISPASSWORD"
-#
-#          # Escape special characters in the password for sed
-#          escapedPassword=$(printf '%s\n' "$PASSWORD" | sed -e 's/[&/\]/\\&/g')
-#          escapedCisPassword=$(printf '%s\n' "$CISSPASSWORD" | sed -e 's/[&/\]/\\&/g')
-#
-#          # Step 3: Use `sed` to replace the ims-password line in the Docker file
-#          sed -i "s|ims-password=.*|ims-password=${escapedPassword}|" ui/cypress/docker/docker-compose.yaml
-#          sed -i 's/cis.password=.*/cis.password=$(escapedCisPassword)/' ui/cypress/docker/docker-compose.yaml
-#
-#          sed -i 's/snomio.jira.users=.*/snomio.jira.users=$(imsUsername)/' ui/cypress/docker/docker-compose.yaml
-#
-#          # Generate SSL certificates
-#          openssl req -x509 -nodes -newkey rsa:2048 -keyout ui/cypress/docker/key.pem -out ui/cypress/docker/cert.pem -days 365 -subj "/C=AU/ST=QLD/L=Brisbane/O=CSIRO/OU=CSIRO Department/CN=snomio"
-#
-#          cd ui/cypress/docker
-#          ls -lah
-#
-#          snomioconf_path=$(readlink -f ./snomio.conf)
-#          key_path=$(readlink -f key.pem)
-#          cert_path=$(readlink -f cert.pem)
-#          sed -i "s|./snomio.conf|$snomioconf_path|" docker-compose.yaml
-#          sed -i "s|./key.pem|$key_path|" docker-compose.yaml
-#          sed -i "s|./cert.pem|$cert_path|" docker-compose.yaml
-#          cat docker-compose.yaml
-#
-#          docker compose up -d
-#
-#          # # Wait for containers to be healthy
-#          echo "Waiting for containers to be ready..."
-#          timeout=300  # 5 minutes timeout
-#          elapsed=0
-#          interval=10  # Check every 10 seconds
-#
-#          mountedfile=$(docker compose config | grep 'source:' | grep "snomio.conf" | sed -E 's/.*source: (.*)/\1/')
-#          echo "#### Mounted conf is $mountedfile"
-#          cat $mountedfile
-#
-#          while [ $elapsed -lt $timeout ]; do
-#              if docker compose ps | grep -q "healthy"; then
-#                  echo "Containers are ready!"
-#                  docker compose ps -a
-#                  docker compose run nginx nginx -t
-#                  exit 0
-#              fi
-#              sleep $interval
-#              elapsed=$((elapsed + interval))
-#              echo "Still waiting... ($elapsed seconds elapsed)"
-#          done
-#
-#          echo "Timeout reached waiting for containers"
-#          docker compose ps -a
-#          docker compose logs
-#          cd ../../../
-#          exit 1
-#        displayName: 'Configure Docker and Start Services'
-#        env:
-#          IMSPASSWORD: $(imsPassword)
-#          CISPASSWORD: $(cisPassword)
-#
-#      - script: |
-#          # Add entry to hosts file
-#          echo "127.0.0.1 local-snomio.ihtsdotools.org snowstorm" | sudo tee -a /etc/hosts
-#
-#          cat /etc/hosts
-#
-#          node --version
-#          npm --version
-#
-#          cd ui
-#
-#          npm install cypress --save-dev
-#          npm install dotenv
-#          export CYPRESS_BASE_URL="https://local-snomio.ihtsdotools.org:443"
-#          export cypress_frontend_url="https://local-snomio.ihtsdotools.org:443"
-#          export cypress_ims_username="$IMSUSERNAME"
-#          export cypress_ims_password="$IMSPASSWORD"
-#          export cypress_ims_url="https://dev-ims.ihtsdotools.org"
-#          export cypress_apUrl="https://dev-snowstorm.ihtsdotools.org"
-#          export cypress_snowStormUrl="http://snowstorm:8080"
-#          export cypress_apProjectKey="AUAMT"
-#          export cypress_apDefaultBranch="MAIN/SNOMEDCT-AU/AUAMT"
-#
-#          npx cypress run --headless --spec "cypress/e2e/"
-#
-#
-#        displayName: 'Set environment variables and run cypress tests'
-#        env:
-#          IMSUSERNAME: $(imsUsername)
-#          IMSPASSWORD: $(imsPassword)
-#
-#      - task: PublishPipelineArtifact@1
-#        condition: failed()
-#        inputs:
-#          targetPath: $(Build.SourcesDirectory)/ui/cypress/screenshots
-#          artifact: cypress-screenshots
-#          publishLocation: pipeline
-#        displayName: 'Publish Cypress screenshots'
-#      - script: |
-#          echo "Fixing permissions for the workspace..."
-#          sudo chmod -R 777 $(Build.SourcesDirectory)
-#          sudo chown -R $(whoami):$(whoami) $(Build.SourcesDirectory)
-#          echo "Permissions fixed."
-#        displayName: "Reset permissions on workspace"
-#        condition: succeededOrFailed()
-#      - script: |
-#          set -e
-#          # Array of file paths to check and update permissions
-#          FILE_PATHS=(
-#            "$(Build.SourcesDirectory)/ui/cypress/docker/files/attachments"
-#            "$(Build.SourcesDirectory)/ui/cypress/screenshots"
-#          )
-#
-#          # Loop through each file path and change permissions
-#          for FILE_PATH in "${FILE_PATHS[@]}"; do
-#            if [ -e "$FILE_PATH" ]; then
-#              echo "File or directory exists: $FILE_PATH. Deleting recursively..."
-#              sudo rm -rf "$FILE_PATH"
-#            else
-#              echo "File or directory does not exist: $FILE_PATH"
-#            fi
-#          done
-#
-#        displayName: 'Cleanup files'
-#        condition: succeededOrFailed()

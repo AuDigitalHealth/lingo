@@ -12,7 +12,6 @@ ui/.env
 sergio-extension/dependency-reduced-pom.xml
 /eclrefset/target/
 ui/public/*
-ui/pnpm-lock.yaml
 /target/*
 # Authoring artefacts from the superpowers brainstorming/writing-plans skills.
 # Useful while a feature is being designed, not part of what ships.

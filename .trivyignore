@@ -19,3 +19,10 @@ CVE-2026-22732
 # Spring Core: fix requires Spring 6.2.11 which ships with Spring Boot 3.4.x+.
 # Current Spring Boot is 3.3.x (Spring 6.1.x). Revisit when upgrading to Spring Boot 3.4.x+.
 CVE-2025-41249
+
+# vite is a devDependency (build-time only). The shipped artifact is the built static
+# bundle served by nginx/Spring — the vite dev server is never run in CI or prod.
+# CVE-2026-53571 is a `server.fs.deny` bypass affecting the dev server on Windows only,
+# so it is not applicable (Linux build, no dev server in prod). Revisit by bumping vite to
+# 6.4.3+ / 7.x (a major upgrade needing config/plugin review).
+CVE-2026-53571

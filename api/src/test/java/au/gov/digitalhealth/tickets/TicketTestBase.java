@@ -32,8 +32,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ActiveProfiles;
 
 /*
@@ -43,7 +41,6 @@ import org.springframework.test.context.ActiveProfiles;
 @Getter
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = Configuration.class)
 @TestInstance(Lifecycle.PER_METHOD)
-@DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
 @ActiveProfiles("test")
 public class TicketTestBase {
 

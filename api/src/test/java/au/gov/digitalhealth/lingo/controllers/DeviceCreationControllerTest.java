@@ -39,10 +39,8 @@ import java.math.BigDecimal;
 import lombok.extern.java.Log;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.annotation.DirtiesContext;
 
 @Log
-@DirtiesContext
 class DeviceCreationControllerTest extends LingoTestBase {
 
   @Test

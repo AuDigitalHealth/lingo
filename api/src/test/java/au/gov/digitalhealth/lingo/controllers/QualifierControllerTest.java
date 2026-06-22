@@ -31,6 +31,9 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.test.annotation.DirtiesContext;
 
 @Log
+// Kept: this class sets a field-bindings mapper via @BeforeAll System.setProperty, which is
+// only honoured if it gets its own context. Removing @DirtiesContext made context binding
+// order-dependent (the property could bind too late and leak into sibling lingo tests).
 @DirtiesContext
 class QualifierControllerTest extends LingoTestBase {
 

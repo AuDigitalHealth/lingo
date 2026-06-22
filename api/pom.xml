@@ -187,6 +187,10 @@
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
+          <!-- forkCount=1: a forkCount=2 trial (build 15023) gave no wall-clock gain and
+               triggered an OutOfMemory event — two forks each boot a Snowstorm+ES pair
+               (~8 GiB) which exceeds the 32 GiB agent's headroom. Parallelising the test
+               phase further requires sharding across multiple agents, not forks on one. -->
           <!--suppress UnresolvedMavenProperty -->
           <argLine>${argLine} -Dspring.profiles.active=test -Dapi.version=${docker.api.version}</argLine>
         </configuration>
