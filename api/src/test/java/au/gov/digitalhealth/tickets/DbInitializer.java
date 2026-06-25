@@ -27,6 +27,7 @@ import au.gov.digitalhealth.tickets.repository.AdditionalFieldValueRepository;
 import au.gov.digitalhealth.tickets.repository.AttachmentRepository;
 import au.gov.digitalhealth.tickets.repository.AttachmentTypeRepository;
 import au.gov.digitalhealth.tickets.repository.CommentRepository;
+import au.gov.digitalhealth.tickets.repository.ExternalRequestorRepository;
 import au.gov.digitalhealth.tickets.repository.IterationRepository;
 import au.gov.digitalhealth.tickets.repository.LabelRepository;
 import au.gov.digitalhealth.tickets.repository.PriorityBucketRepository;
@@ -72,6 +73,7 @@ public class DbInitializer {
 
   @Autowired private ScheduleRepository scheduleRepository;
   @Autowired private ProductRepository productRepository;
+  @Autowired private ExternalRequestorRepository externalRequestorRepository;
 
   public void init() {
 
@@ -89,6 +91,10 @@ public class DbInitializer {
     taskAssociationRepository.deleteAll();
     productRepository.deleteAll();
     ticketRepository.deleteAll();
+    // Cleared after tickets so the ticket.schedule_id FK and the ticket<->externalRequestor join
+    // are already gone. These two were previously never cleared, causing cross-test bleed.
+    scheduleRepository.deleteAll();
+    externalRequestorRepository.deleteAll();
     additionalFieldValueRepository.deleteAll();
     additionalFieldTypeRepository.deleteAll();
     stateRepository.deleteAll();

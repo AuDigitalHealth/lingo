@@ -239,6 +239,71 @@ jobs:
           ArtifactName: "trivy-scan-reports"
           publishLocation: "Container"
 
+  # ESLint runs here as an independent parallel job rather than inside the `ui` Maven module
+  # (where it sat on the image-build critical path, ~80s). It is intentionally NOT a dependsOn
+  # of snomio_build_test_publish: gating the build on it would re-serialise lint ahead of the
+  # build. As a job in this pipeline its failure still fails the overall pipeline status, so the
+  # PR merge gate is preserved. The main build passes -DskipUILint=true so lint runs only here.
+  - job: ui_lint
+    displayName: "Lint UI (ESLint)"
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+      - checkout: self
+
+      - task: NodeTool@0
+        displayName: 'Use Node 22.13.0'
+        inputs:
+          versionSpec: '22.13.0'
+
+      - script: |
+          set -euo pipefail
+          # Install pnpm directly rather than via corepack: the corepack bundled with Node
+          # 22.13.0 ships stale npm-registry signing keys and fails pnpm signature verification
+          # with "Internal Error: Cannot find matching keyid". The frontend-maven-plugin in the
+          # build job likewise installs pnpm without corepack.
+          npm install -g pnpm@11.1.1
+          pnpm --version
+        displayName: 'Install pnpm 11.1.1'
+
+      - script: mkdir -p $(Pipeline.Workspace)/.pnpm-store
+        displayName: 'Create pnpm store directory'
+
+      # Same cache keys as the build job so this job shares the warm pnpm store / node_modules.
+      - task: Cache@2
+        displayName: Cache pnpm store
+        inputs:
+          key: 'pnpm | "$(Agent.OS)" | $(Build.SourcesDirectory)/ui/package.json'
+          restoreKeys: |
+            pnpm | "$(Agent.OS)"
+          path: $(Pipeline.Workspace)/.pnpm-store
+
+      - task: Cache@2
+        displayName: Cache UI node_modules
+        inputs:
+          key: 'uinodemodules | "$(Agent.OS)" | $(Build.SourcesDirectory)/ui/pnpm-lock.yaml'
+          restoreKeys: |
+            uinodemodules | "$(Agent.OS)"
+          path: $(Build.SourcesDirectory)/ui/node_modules
+
+      - script: |
+          set -euo pipefail
+          mkdir -p ~/.config/pnpm
+          echo "store-dir=$(Pipeline.Workspace)/.pnpm-store" > ~/.config/pnpm/rc
+          cd ui
+          pnpm install --frozen-lockfile --prefer-offline
+        displayName: 'pnpm install (UI)'
+
+      - script: |
+          set -euo pipefail
+          cd ui
+          # ubuntu-latest hosted agents cap Node's old-space heap near ~2GB; type-aware ESLint on
+          # this codebase OOMs there (exit 134). The build job ran lint fine on highmemory-pool, so
+          # this is purely the smaller hosted agent — give Node a 4GB heap (agent has ~7GB).
+          export NODE_OPTIONS=--max-old-space-size=4096
+          pnpm run lint
+        displayName: 'pnpm run lint (ESLint, --max-warnings 0)'
+
   - job: set_image_tag
     displayName: Set Image Tag
     steps:
@@ -379,12 +444,28 @@ jobs:
           echo "store-dir=$(Pipeline.Workspace)/.pnpm-store" > ~/.config/pnpm/rc
         displayName: 'Create Maven Local Repo and set up M2_HOME'
 
+      # Kick off the Testcontainers image pulls in the BACKGROUND so they overlap the ~3-4min
+      # compile + UI build that runs before any integration test needs a container — by test time
+      # they're warm, adding ~0 to the critical path. All 5 images pull concurrently (and docker
+      # parallelises layers within each). Fully detached (nohup + redirect + disown) so this step
+      # returns immediately and the pulls survive into the Maven step. Best-effort: anything not
+      # ready in time, Testcontainers pulls itself (concurrent pulls of the same image dedupe at the
+      # daemon). Requires the ACR/Quay logins above (quay.io/aehrc/* images).
+      - script: |
+          set -uo pipefail
+          IMAGES="quay.io/aehrc/reduced-amt-elasticsearch:20240831-10.9.1 snomedinternational/snowstorm:10.9.1 postgres:15.5 testcontainers/ryuk:0.13.0 quay.io/aehrc/snomio_test_db:latest"
+          nohup bash -c 'for img in '"$IMAGES"'; do docker pull "$img" & done; wait' \
+            > "$(Pipeline.Workspace)/docker-prepull.log" 2>&1 &
+          disown
+          echo "Started background pull of Testcontainers images: $IMAGES"
+        displayName: 'Pre-pull Testcontainers images (background)'
+
       - task: Maven@3
         displayName: 'Build and run integration test'
         condition: not(and(succeeded(), eq(variables.isRelease, true)))
         inputs:
           mavenPomFile: 'pom.xml'
-          options: '-Dsnomio.extensions.sergio.enabled=false -Dlingo.internal.users=$(imsUsername) -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(imageTag) -Djib.baseImageCache=$(Pipeline.Workspace)/.jib-cache --no-transfer-progress -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dihtsdo.ims.api.url=$(imsApiUrl) -Dihtsdo.ims.api.cookie.name=$(imsCookieName)"'
+          options: '-Dsnomio.extensions.sergio.enabled=false -DskipUILint=true -Dlingo.internal.users=$(imsUsername) -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(imageTag) -Djib.baseImageCache=$(Pipeline.Workspace)/.jib-cache --no-transfer-progress -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dihtsdo.ims.api.url=$(imsApiUrl) -Dihtsdo.ims.api.cookie.name=$(imsCookieName)"'
           mavenOptions: '$(mavenOptions) -Xmx5072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(buildInfo)'
           javaHomeOption: 'path'
           jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
@@ -398,7 +479,7 @@ jobs:
         displayName: 'Deploy Release artefacts'
         inputs:
           mavenPomFile: 'pom.xml'
-          options: '-Dsnomio.extensions.sergio.enabled=false -Dlingo.internal.users=$(imsUsername) -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(imageTag) -Djib.baseImageCache=$(Pipeline.Workspace)/.jib-cache --no-transfer-progress -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dihtsdo.ims.api.url=$(imsApiUrl) -Dihtsdo.ims.api.cookie.name=$(imsCookieName)"'
+          options: '-Dsnomio.extensions.sergio.enabled=false -DskipUILint=true -Dlingo.internal.users=$(imsUsername) -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(imageTag) -Djib.baseImageCache=$(Pipeline.Workspace)/.jib-cache --no-transfer-progress -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dihtsdo.ims.api.url=$(imsApiUrl) -Dihtsdo.ims.api.cookie.name=$(imsCookieName)"'
           mavenOptions: '$(mavenOptions) -Xmx5072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(buildInfo)'
           javaHomeOption: 'path'
           jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
@@ -432,8 +513,13 @@ jobs:
         displayName: 'Copy multi-arch image from ACR to Quay (release only)'
         condition: and(succeeded(), eq(variables.isRelease, true))
 
+      # Gated to main only. This publishes lingo/common/auth SNAPSHOTs to the Azure feed for
+      # external consumers; PR builds don't need to (they build the whole reactor locally), and
+      # republishing the floating SNAPSHOT on every PR is a wasted second Maven run. The Snodine
+      # cron (eclrefset on snodine-branch) pins an older version line (1.2.10.4-SNAPSHOT) and is
+      # unaffected; only main's current SNAPSHOT is ever published here.
       - task: Maven@3
-        condition: not(and(succeeded(), eq(variables.isRelease, true)))
+        condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
         displayName: 'Deploy Build artefacts'
         inputs:
           mavenPomFile: 'pom.xml'

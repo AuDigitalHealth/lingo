@@ -47,25 +47,19 @@ import java.math.BigDecimal;
 import java.util.List;
 import lombok.extern.java.Log;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.TestPropertySource;
 
 @Log
-// Kept: this class sets a field-bindings mapper via @BeforeAll System.setProperty, which is
-// only honoured if it gets its own context. Removing @DirtiesContext made context binding
-// order-dependent (the property could bind too late and leak into sibling lingo tests).
-@DirtiesContext
+// Sets the AUAMT field-bindings mapper for this class only, via the test Spring Environment rather
+// than a JVM-global System property. This binds deterministically into this class's own (cached)
+// context, so it needs no @DirtiesContext and is safe to run in parallel with other test classes.
+@TestPropertySource(
+    properties =
+        "snomio.field-bindings.mappers.MAIN_SNOMEDCT-AU_AUAMT.product.validation.exclude.substances=920012011000036105")
 class MedicationCreationControllerTest extends LingoTestBase {
 
   public static final long BETADINE_GAUZE = 50526011000036105L;
-
-  @BeforeAll
-  public static void setUpClass() {
-    System.setProperty(
-        "snomio.field-bindings.mappers.MAIN_SNOMEDCT-AU_AUAMT.product.validation.exclude.substances",
-        "920012011000036105");
-  }
 
   @Test
   void calculateExistingProductWithNoChanges() {

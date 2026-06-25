@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.Getter;
@@ -43,8 +44,10 @@ import okhttp3.mockwebserver.RecordedRequest;
 import org.apache.commons.validator.routines.checkdigit.CheckDigitException;
 import org.apache.commons.validator.routines.checkdigit.VerhoeffCheckDigit;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
@@ -53,6 +56,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.MockReset;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -91,9 +95,16 @@ public class LingoTestBase {
   @Value("${ims-password}")
   String password;
 
+  private SnowstormBranchManager branchManager;
+  String currentBranch;
   private LingoTestClient lingoTestClient;
   @Autowired private DbInitializer dbInitializer;
-  @MockBean private NameGenerationClient nameGenerationClient;
+
+  // reset = NONE so the deterministic stub set once below isn't cleared between tests; this avoids
+  // re-stubbing the shared context mock on every @BeforeEach, which would race under parallel
+  // methods.
+  @MockBean(reset = MockReset.NONE)
+  private NameGenerationClient nameGenerationClient;
 
   @BeforeAll
   static void beforeAll() throws IOException {
@@ -217,18 +228,61 @@ public class LingoTestBase {
     lingoTestClient = new LingoTestClient(imsCookie, getSnomioLocation());
   }
 
+  @AfterEach
+  void deleteTestBranch() {
+    if (branchManager != null && currentBranch != null) {
+      branchManager.deleteBranch(currentBranch);
+    }
+  }
+
+  @BeforeEach
+  void createTestBranch(TestInfo testInfo) {
+    if (branchManager == null) {
+      branchManager = new SnowstormBranchManager(System.getProperty("ihtsdo.snowstorm.api.url"));
+    }
+    String className = testInfo.getTestClass().map(Class::getSimpleName).orElse("UnknownClass");
+    String methodName =
+        testInfo.getTestMethod().map(java.lang.reflect.Method::getName).orElse("unknownMethod");
+    String name =
+        SnowstormBranchManager.sanitise(className)
+            + "-"
+            + SnowstormBranchManager.sanitise(methodName)
+            + "-"
+            + UUID.randomUUID().toString().substring(0, 8);
+    currentBranch = branchManager.createChildBranch("MAIN/SNOMEDCT-AU/AUAMT", name);
+    getLingoTestClient().setBranch(currentBranch);
+  }
+
+  // Reference data is seeded ONCE per JVM (not wiped+reseeded per method). Removing the per-method
+  // global delete-all is what lets lingo tests run concurrently on the shared DB: each test creates
+  // its own data and asserts on its own content; nothing clobbers a sibling's in-flight rows.
+  private static volatile boolean referenceDataSeeded = false;
+
   @BeforeEach
   void initDb() {
-    dbInitializer.init();
-    Mockito.when(nameGenerationClient.generateNames(Mockito.any(NameGeneratorSpec.class)))
-        .thenAnswer(
-            (Answer<FsnAndPt>)
-                invocation -> {
-                  NameGeneratorSpec input = invocation.getArgument(0, NameGeneratorSpec.class);
-                  return FsnAndPt.builder()
-                      .FSN("Mock fully specified name (" + input.getTag() + ")")
-                      .PT("Mock preferred term")
-                      .build();
-                });
+    if (!referenceDataSeeded) {
+      synchronized (LingoTestBase.class) {
+        if (!referenceDataSeeded) {
+          dbInitializer.init();
+          referenceDataSeeded = true;
+        }
+      }
+    }
+    // Stub once per context (guarded), since reset=NONE keeps it. Synchronised + emptiness check so
+    // concurrent test methods don't re-stub the shared mock while another thread is invoking it.
+    synchronized (nameGenerationClient) {
+      if (Mockito.mockingDetails(nameGenerationClient).getStubbings().isEmpty()) {
+        Mockito.when(nameGenerationClient.generateNames(Mockito.any(NameGeneratorSpec.class)))
+            .thenAnswer(
+                (Answer<FsnAndPt>)
+                    invocation -> {
+                      NameGeneratorSpec input = invocation.getArgument(0, NameGeneratorSpec.class);
+                      return FsnAndPt.builder()
+                          .FSN("Mock fully specified name (" + input.getTag() + ")")
+                          .PT("Mock preferred term")
+                          .build();
+                    });
+      }
+    }
   }
 }

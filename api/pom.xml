@@ -187,13 +187,105 @@
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <!-- forkCount=1: a forkCount=2 trial (build 15023) gave no wall-clock gain and
-               triggered an OutOfMemory event — two forks each boot a Snowstorm+ES pair
-               (~8 GiB) which exceeds the 32 GiB agent's headroom. Parallelising the test
-               phase further requires sharding across multiple agents, not forks on one. -->
+          <!-- forkCount is set PER EXECUTION below: default-test forks 2-wide (each fork is its own
+               JVM with its own jdbc:tc Postgres + Flyway schema, so the order-coupled ticket suite
+               is isolated per fork with zero test changes); lingo-it-parallel stays forkCount=1
+               because each fork boots an ~8 GiB Snowstorm+ES pair (a forkCount=2 trial OOM'd on
+               that). The earlier blanket forkCount=1 was driven by Snowstorm, which no longer runs
+               in default-test. -->
           <!--suppress UnresolvedMavenProperty -->
           <argLine>${argLine} -Dspring.profiles.active=test -Dapi.version=${docker.api.version}</argLine>
         </configuration>
+        <executions>
+          <!-- Default run: everything EXCEPT the Snowstorm-backed integration tests, sequentially.
+               The ticket suite is order-coupled and stays sequential here. All tests that boot
+               Snowstorm/ES via AmtV4SnowstormExtension are excluded so this execution's fork never
+               boots Snowstorm — they all run in the lingo-it-parallel fork below, which boots it
+               once. Previously SnowstormBranchManagerTest/BaseBranchUntouchedTest/the dangling-ref
+               IT ran here and forced a second ~27s Snowstorm boot. -->
+          <execution>
+            <id>default-test</id>
+            <goals>
+              <goal>test</goal>
+            </goals>
+            <configuration>
+              <!-- Fork 2-wide: surefire distributes test classes across 2 reused JVM forks, each
+                   with its own Spring context and its own jdbc:tc Postgres (Flyway-migrated). Classes
+                   run sequentially within a fork, so the per-method DbInitializer.clearDb keeps the
+                   order-coupled ticket suite isolated exactly as today — no test changes needed. The
+                   two forks' Postgres containers are fully isolated, so cross-class coupling can't
+                   span forks. Each fork is lightweight now (Postgres ~150MB + context), not the
+                   Snowstorm+ES pair that made the old forkCount=2 OOM. Bump to 3 if the agent has
+                   headroom and wall-clock still improves. -->
+              <forkCount>2</forkCount>
+              <reuseForks>true</reuseForks>
+              <excludes>
+                <exclude>**/lingo/LingoApplicationTests.java</exclude>
+                <exclude>**/lingo/controllers/AuthControllerTest.java</exclude>
+                <exclude>**/lingo/controllers/MedicationControllerTest.java</exclude>
+                <exclude>**/lingo/controllers/DeviceControllerTest.java</exclude>
+                <exclude>**/lingo/controllers/MedicationNewBrandPackTest.java</exclude>
+                <exclude>**/lingo/controllers/ProductControllerTest.java</exclude>
+                <exclude>**/lingo/controllers/QualifierControllerTest.java</exclude>
+                <exclude>**/lingo/controllers/DeviceCreationControllerTest.java</exclude>
+                <exclude>**/lingo/controllers/MedicationCreationControllerTest.java</exclude>
+                <exclude>**/lingo/SnowstormBranchManagerTest.java</exclude>
+                <exclude>**/lingo/BaseBranchUntouchedTest.java</exclude>
+                <exclude>**/lingo/service/SnowstormClientDanglingReferenceIntegrationTest.java</exclude>
+              </excludes>
+            </configuration>
+          </execution>
+          <!-- Lingo integration tests: classes AND methods run concurrently against the one shared
+               Snowstorm. Self-contained per-test (seed-once + per-test branches + thread-safe shared
+               mock) makes class-level concurrency safe. classes=concurrent pools all ~46 methods so
+               threads stay busy across class boundaries (most classes have <4 methods, so
+               same_thread left lanes idle). parallelism=8 is an experimental ceiling probe: if the
+               single shared Snowstorm/ES (-Xmx4g, forkCount=1) saturates and wall-clock regresses,
+               drop further. parallelism=6: build 73 ran green 8-wide but the heavy classes inflated
+               under contention (MedicationNewBrandPackTest 129s, MedicationCreationControllerTest
+               107s), so 6 trades a little concurrency for less per-test contention on the shared
+               Snowstorm. The Hikari default pool (10) caps useful parallelism around 8-10 anyway. -->
+          <execution>
+            <id>lingo-it-parallel</id>
+            <phase>test</phase>
+            <goals>
+              <goal>test</goal>
+            </goals>
+            <configuration>
+              <!-- Stay single-fork: each fork boots an ~8 GiB Snowstorm+ES pair, so forking OOMs.
+                   Parallelism here is JUnit method/class concurrency within the one fork (below). -->
+              <forkCount>1</forkCount>
+              <includes>
+                <include>**/lingo/LingoApplicationTests.java</include>
+                <include>**/lingo/controllers/AuthControllerTest.java</include>
+                <include>**/lingo/controllers/MedicationControllerTest.java</include>
+                <include>**/lingo/controllers/DeviceControllerTest.java</include>
+                <include>**/lingo/controllers/MedicationNewBrandPackTest.java</include>
+                <include>**/lingo/controllers/ProductControllerTest.java</include>
+                <include>**/lingo/controllers/QualifierControllerTest.java</include>
+                <include>**/lingo/controllers/DeviceCreationControllerTest.java</include>
+                <include>**/lingo/controllers/MedicationCreationControllerTest.java</include>
+                <!-- Snowstorm-backed tests moved here so only this fork boots Snowstorm (was a
+                     second ~27s boot in default-test). BaseBranchUntouchedTest asserts the base
+                     branch head never moves on child-branch create — an invariant that holds under
+                     concurrency since no test promotes to base, so it stays valid (and stronger)
+                     in the concurrent pool; a flake here would be a real isolation bug. -->
+                <include>**/lingo/SnowstormBranchManagerTest.java</include>
+                <include>**/lingo/BaseBranchUntouchedTest.java</include>
+                <include>**/lingo/service/SnowstormClientDanglingReferenceIntegrationTest.java</include>
+              </includes>
+              <properties>
+                <configurationParameters>
+                  junit.jupiter.execution.parallel.enabled=true
+                  junit.jupiter.execution.parallel.mode.default=concurrent
+                  junit.jupiter.execution.parallel.mode.classes.default=concurrent
+                  junit.jupiter.execution.parallel.config.strategy=fixed
+                  junit.jupiter.execution.parallel.config.fixed.parallelism=6
+                </configurationParameters>
+              </properties>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <artifactId>license-maven-plugin</artifactId>

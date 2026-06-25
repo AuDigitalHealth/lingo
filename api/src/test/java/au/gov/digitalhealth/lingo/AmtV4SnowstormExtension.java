@@ -15,6 +15,7 @@
  */
 package au.gov.digitalhealth.lingo;
 
+import java.time.Duration;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.extension.AfterAllCallback;
@@ -53,7 +54,8 @@ public class AmtV4SnowstormExtension implements BeforeAllCallback, AfterAllCallb
           .withNetworkAliases("es")
           .waitingFor(
               new org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy()
-                  .withRegEx(".*Cluster health status changed from.*"))
+                  .withRegEx(".*Cluster health status changed from.*")
+                  .withStartupTimeout(Duration.ofMinutes(10)))
           .withLogConsumer(LOG_CONSUMER);
   public static final GenericContainer<?> snowstormContainer =
       new GenericContainer<>("snomedinternational/snowstorm:10.9.1")
@@ -70,15 +72,32 @@ public class AmtV4SnowstormExtension implements BeforeAllCallback, AfterAllCallb
           .withNetwork(network)
           .withNetworkAliases(SNOWSTORM_CONTAINER_ALIAS)
           .dependsOn(elasticSearchContainer)
-          .waitingFor(Wait.forHttp("/").forPort(8080))
+          .waitingFor(Wait.forHttp("/").forPort(8080).withStartupTimeout(Duration.ofMinutes(10)))
           .withLogConsumer(LOG_CONSUMER);
+
+  // Guards a one-time start of the shared static containers. Under
+  // junit.jupiter.execution.parallel.mode.classes.default=concurrent, every test class's beforeAll
+  // fires on its own ForkJoinPool worker simultaneously; calling GenericContainer.start()
+  // concurrently on the same container makes Docker return "Status 304" (NotModifiedException) to
+  // the losers, failing their startup. Double-checked locking funnels all callers through a single
+  // start; the rest observe started==true and skip.
+  private static final Object STARTUP_LOCK = new Object();
+  private static volatile boolean started = false;
 
   @Override
   public void beforeAll(ExtensionContext extensionContext) {
-    elasticSearchContainer.start();
-    snowstormContainer.start();
-    System.setProperty(
-        "ihtsdo.snowstorm.api.url", "http://localhost:" + snowstormContainer.getMappedPort(8080));
+    if (!started) {
+      synchronized (STARTUP_LOCK) {
+        if (!started) {
+          elasticSearchContainer.start();
+          snowstormContainer.start();
+          System.setProperty(
+              "ihtsdo.snowstorm.api.url",
+              "http://localhost:" + snowstormContainer.getMappedPort(8080));
+          started = true;
+        }
+      }
+    }
   }
 
   @Override

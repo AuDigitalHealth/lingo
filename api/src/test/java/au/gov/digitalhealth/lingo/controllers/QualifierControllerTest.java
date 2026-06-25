@@ -23,28 +23,22 @@ import au.gov.digitalhealth.tickets.models.Ticket;
 import java.util.UUID;
 import lombok.extern.java.Log;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
-import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.TestPropertySource;
 
 @Log
-// Kept: this class sets a field-bindings mapper via @BeforeAll System.setProperty, which is
-// only honoured if it gets its own context. Removing @DirtiesContext made context binding
-// order-dependent (the property could bind too late and leak into sibling lingo tests).
-@DirtiesContext
+// Sets the AUAMT field-bindings mapper for this class only, via the test Spring Environment rather
+// than a JVM-global System property. This binds deterministically into this class's own (cached)
+// context, so it needs no @DirtiesContext and is safe to run in parallel with other test classes.
+@TestPropertySource(
+    properties =
+        "snomio.field-bindings.mappers.MAIN_SNOMEDCT-AU_AUAMT.product.productName.semanticTag=(product name)")
 class QualifierControllerTest extends LingoTestBase {
 
   @Autowired FieldBindingConfiguration fieldBindingConfiguration;
-
-  @BeforeAll
-  public static void setUpClass() {
-    System.setProperty(
-        "snomio.field-bindings.mappers.MAIN_SNOMEDCT-AU_AUAMT.product.productName.semanticTag",
-        "(product name)");
-  }
 
   @Test
   void createBrandTest() {
@@ -68,7 +62,7 @@ class QualifierControllerTest extends LingoTestBase {
     ProblemDetail problemDetail =
         getLingoTestClient()
             .postRequest(
-                "/api/MAIN/SNOMEDCT-AU/AUAMT/qualifier/product-name",
+                getLingoTestClient().apiPath("/qualifier/product-name"),
                 brandCreationRequest,
                 HttpStatus.BAD_REQUEST,
                 ProblemDetail.class);

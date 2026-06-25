@@ -52,6 +52,10 @@ class TaskAssociationRepositoryTests extends TicketTestBase {
 
     List<TaskAssociationDto> taskAssociationDtos = taskAssociationRepository.findAllToDto();
 
-    Assertions.assertEquals(2, taskAssociationDtos.size());
+    // Assert on the associations this test created (by their unique task ids) rather than a global
+    // count, so the test is self-contained and safe under shared-DB / parallel execution.
+    List<String> taskIds = taskAssociationDtos.stream().map(TaskAssociationDto::getTaskId).toList();
+    Assertions.assertTrue(taskIds.contains("AU-Test1"));
+    Assertions.assertTrue(taskIds.contains("AU-Test2"));
   }
 }

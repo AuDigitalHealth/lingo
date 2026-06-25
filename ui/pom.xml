@@ -71,6 +71,11 @@
           <execution>
             <configuration>
               <arguments>run lint</arguments>
+              <!-- CI runs ESLint in a dedicated parallel Azure job (see azure-pipelines.yml
+                   "Lint UI (ESLint)") and passes -DskipUILint=true here so the ~80s lint is
+                   off the image-build critical path. Defaults to false so a plain local
+                   `mvn package` still lints. -->
+              <skip>${skipUILint}</skip>
             </configuration>
             <goals>
               <goal>pnpm</goal>
@@ -181,6 +186,9 @@
     <frontend-maven-plugin.version>1.15.0</frontend-maven-plugin.version>
     <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
     <skipUITests>true</skipUITests>
+    <!-- Default false: local `mvn package` lints the UI. CI sets -DskipUILint=true on the
+         main build because a dedicated parallel job runs ESLint off the critical path. -->
+    <skipUILint>false</skipUILint>
   </properties>
 
 </project>

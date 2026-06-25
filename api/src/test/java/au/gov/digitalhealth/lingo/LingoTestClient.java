@@ -57,6 +57,19 @@ public class LingoTestClient {
 
   private final Cookie imsCookie;
   private final String snomioLocation;
+  private String branch = "MAIN/SNOMEDCT-AU/AUAMT";
+
+  public void setBranch(String branch) {
+    this.branch = branch;
+  }
+
+  public String getBranch() {
+    return branch;
+  }
+
+  public String apiPath(String suffix) {
+    return "/api/" + branch + suffix;
+  }
 
   public LingoTestClient(Cookie imsCookie, String snomioLocation) {
     this.imsCookie = imsCookie;
@@ -78,46 +91,33 @@ public class LingoTestClient {
   }
 
   public PackageDetails<MedicationProductDetails> getMedicationPackDetails(long ctppId) {
-    return getRequest(
-        "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/" + ctppId, HttpStatus.OK, new TypeRef<>() {});
+    return getRequest(apiPath("/medications/" + ctppId), HttpStatus.OK, new TypeRef<>() {});
   }
 
   public ProductPackSizes getMedicationProductPackSizes(long ctppId) {
     return getRequest(
-        "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/" + ctppId + "/pack-sizes",
-        HttpStatus.OK,
-        new TypeRef<>() {});
+        apiPath("/medications/" + ctppId + "/pack-sizes"), HttpStatus.OK, new TypeRef<>() {});
   }
 
   public ProductBrands getMedicationProductBrands(long ctppId) {
     return getRequest(
-        "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/" + ctppId + "/brands",
-        HttpStatus.OK,
-        new TypeRef<>() {});
+        apiPath("/medications/" + ctppId + "/brands"), HttpStatus.OK, new TypeRef<>() {});
   }
 
   public MedicationProductDetails getMedicationProductDetails(long tpuuId) {
-    return getRequest(
-        "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/product/" + tpuuId,
-        HttpStatus.OK,
-        new TypeRef<>() {});
+    return getRequest(apiPath("/medications/product/" + tpuuId), HttpStatus.OK, new TypeRef<>() {});
   }
 
   public PackageDetails<DeviceProductDetails> getDevicePackDetails(long ctppId) {
-    return getRequest(
-        "/api/MAIN/SNOMEDCT-AU/AUAMT/devices/" + ctppId, HttpStatus.OK, new TypeRef<>() {});
+    return getRequest(apiPath("/devices/" + ctppId), HttpStatus.OK, new TypeRef<>() {});
   }
 
   public DeviceProductDetails getDeviceProductDetails(long ctppId) {
-    return getRequest(
-        "/api/MAIN/SNOMEDCT-AU/AUAMT/devices/product/" + ctppId, HttpStatus.OK, new TypeRef<>() {});
+    return getRequest(apiPath("/devices/product/" + ctppId), HttpStatus.OK, new TypeRef<>() {});
   }
 
   public ProductSummary getProductModel(long conceptId) {
-    return getRequest(
-        "/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/" + conceptId,
-        HttpStatus.OK,
-        ProductSummary.class);
+    return getRequest(apiPath("/product-model/" + conceptId), HttpStatus.OK, ProductSummary.class);
   }
 
   public ProductSummary getProductModel(String conceptId) {
@@ -128,7 +128,7 @@ public class LingoTestClient {
   public ProductSummary createMedicationProduct(
       ProductCreationDetails<MedicationProductDetails> productCreationDetails) {
     return postRequest(
-        "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/product",
+        apiPath("/medications/product"),
         productCreationDetails,
         HttpStatus.CREATED,
         ProductSummary.class);
@@ -137,7 +137,7 @@ public class LingoTestClient {
   public ProductSummary createNewBrandPackSizes(
       BulkProductAction<BrandPackSizeCreationDetails> action) {
     return postRequest(
-        "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/product/new-brand-pack-sizes",
+        apiPath("/medications/product/new-brand-pack-sizes"),
         action,
         HttpStatus.CREATED,
         ProductSummary.class);
@@ -146,7 +146,7 @@ public class LingoTestClient {
   public ProductSummary createDeviceProduct(
       ProductCreationDetails<DeviceProductDetails> productCreationDetails) {
     return postRequest(
-        "/api/MAIN/SNOMEDCT-AU/AUAMT/devices/product",
+        apiPath("/devices/product"),
         productCreationDetails,
         HttpStatus.CREATED,
         ProductSummary.class);
@@ -155,7 +155,7 @@ public class LingoTestClient {
   public ProductSummary calculateMedicationProductSummary(
       PackageDetails<MedicationProductDetails> packageDetails) {
     return postRequest(
-        "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/product/$calculate",
+        apiPath("/medications/product/$calculate"),
         packageDetails,
         HttpStatus.OK,
         ProductSummary.class);
@@ -164,7 +164,7 @@ public class LingoTestClient {
   public SnowstormConceptMini createPrimitive(
       PrimitiveConceptCreationRequest brandCreationRequest) {
     return postRequest(
-        "/api/MAIN/SNOMEDCT-AU/AUAMT/qualifier/product-name",
+        apiPath("/qualifier/product-name"),
         brandCreationRequest,
         HttpStatus.CREATED,
         SnowstormConceptMini.class);
@@ -173,7 +173,7 @@ public class LingoTestClient {
   public au.gov.digitalhealth.tickets.models.BulkProductAction updateProduct(
       ProductUpdateRequest productUpdateRequest, String productId) {
     return putRequest(
-        "/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/" + productId + "/descriptions",
+        apiPath("/product-model/" + productId + "/descriptions"),
         productUpdateRequest,
         HttpStatus.OK,
         au.gov.digitalhealth.tickets.models.BulkProductAction.class);
@@ -183,7 +183,7 @@ public class LingoTestClient {
       ProductPropertiesUpdateRequest request, String productId) {
     Type responseType = new ParameterizedTypeReference<Set<ExternalIdentifier>>() {}.getType();
     return putRequest(
-        "/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/" + productId + "/properties",
+        apiPath("/product-model/" + productId + "/properties"),
         request,
         HttpStatus.OK,
         responseType);
@@ -193,16 +193,14 @@ public class LingoTestClient {
       PackageDetails<MedicationProductDetails> packageDetails) {
     ExtractableResponse<Response> response =
         postRequest(
-            "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/product/$calculate",
-            packageDetails,
-            HttpStatus.BAD_REQUEST);
+            apiPath("/medications/product/$calculate"), packageDetails, HttpStatus.BAD_REQUEST);
     return response.asString();
   }
 
   public ProductSummary calculateDeviceProductSummary(
       PackageDetails<DeviceProductDetails> packageDetails) {
     return postRequest(
-        "/api/MAIN/SNOMEDCT-AU/AUAMT/devices/product/$calculate",
+        apiPath("/devices/product/$calculate"),
         packageDetails,
         HttpStatus.OK,
         ProductSummary.class);
@@ -211,7 +209,7 @@ public class LingoTestClient {
   public ProductSummary calculateNewBrandAndPackSizes(
       BrandPackSizeCreationDetails brandPackSizeCreationDetails) {
     return postRequest(
-        "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/product/$calculateNewBrandPackSizes",
+        apiPath("/medications/product/$calculateNewBrandPackSizes"),
         brandPackSizeCreationDetails,
         HttpStatus.OK,
         ProductSummary.class);
@@ -221,7 +219,7 @@ public class LingoTestClient {
       Long productId, PackageDetails<MedicationProductDetails> packageDetails) {
     final ProductSummary productSummary =
         postRequest(
-            "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/product/" + productId + "/$calculateUpdate",
+            apiPath("/medications/product/" + productId + "/$calculateUpdate"),
             packageDetails,
             HttpStatus.OK,
             ProductSummary.class);
@@ -335,7 +333,7 @@ public class LingoTestClient {
       Long productId,
       ProductUpdateDetails<MedicationProductDetails> medicationProductDetailsProductUpdateDetails) {
     return putRequest(
-        "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/product/" + productId,
+        apiPath("/medications/product/" + productId),
         medicationProductDetailsProductUpdateDetails,
         HttpStatus.OK,
         ProductSummary.class);

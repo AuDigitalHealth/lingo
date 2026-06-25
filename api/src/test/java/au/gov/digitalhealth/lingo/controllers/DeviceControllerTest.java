@@ -38,7 +38,7 @@ class DeviceControllerTest extends LingoTestBase {
     ProblemDetail problemDetail =
         getLingoTestClient()
             .getRequest(
-                "/api/MAIN/SNOMEDCT-AU/AUAMT/devices/" + AmtTestData.NEXIUM_HP7,
+                getLingoTestClient().apiPath("/devices/" + AmtTestData.NEXIUM_HP7),
                 HttpStatus.NOT_FOUND,
                 ProblemDetail.class);
 

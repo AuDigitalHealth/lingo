@@ -43,7 +43,8 @@ class MedicationControllerTest extends LingoTestBase {
     Assertions.assertNotNull(
         getLingoTestClient()
             .getRequest(
-                "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/" + AmtTestData.NEXIUM_HP7 + "/pack-sizes",
+                getLingoTestClient()
+                    .apiPath("/medications/" + AmtTestData.NEXIUM_HP7 + "/pack-sizes"),
                 HttpStatus.BAD_REQUEST,
                 new TypeRef<>() {}));
   }
@@ -53,7 +54,7 @@ class MedicationControllerTest extends LingoTestBase {
     Assertions.assertNotNull(
         getLingoTestClient()
             .getRequest(
-                "/api/MAIN/SNOMEDCT-AU/AUAMT/medications/" + AmtTestData.NEXIUM_HP7 + "/brands",
+                getLingoTestClient().apiPath("/medications/" + AmtTestData.NEXIUM_HP7 + "/brands"),
                 HttpStatus.BAD_REQUEST,
                 new TypeRef<>() {}));
   }
