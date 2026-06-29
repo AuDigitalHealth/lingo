@@ -374,7 +374,7 @@
     <dependency>
       <artifactId>spring-boot-starter-hateoas</artifactId>
       <groupId>org.springframework.boot</groupId>
-      <version>3.3.2</version>
+      <version>4.1.0</version>
     </dependency>
     <dependency>
       <artifactId>spring-boot-configuration-processor</artifactId>
