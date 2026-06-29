@@ -371,5 +371,13 @@ const ProductService = {
     const result = response.data as NonDefiningProperty[];
     return result;
   },
+  async fetchBrandedProductNameSuggestion(
+    ticketId: string | number,
+  ): Promise<string | null> {
+    const response = await api.get(
+      `/api/tickets/${ticketId}/branded-product-name`,
+    );
+    return (response.data?.brandedProductName as string | null) ?? null;
+  },
 };
 export default ProductService;

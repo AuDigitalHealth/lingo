@@ -63,6 +63,9 @@
             "deviceType": 12
           },
           {
+            "brandedProductName": 24
+          },
+          {
             "_empty": 12,
             "specificDeviceType": 12
           },
@@ -123,6 +126,9 @@
             "skipTitle": true,
             "showDefaultOptions": true
           }
+        },
+        "brandedProductName": {
+          "ui:widget": "brandedProductNameWidget"
         },
         "newSpecificDeviceName": {
           "type": "string",

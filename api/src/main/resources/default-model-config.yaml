@@ -116,6 +116,7 @@ models:
     moduleId: 1601000220105
     nameGeneratorSupportsStrengthFormat: true
     nameGeneratorSupportsProductName: true
+    nameGeneratorSupportsBrandedProductName: true
     preferredLanguageRefsets:
       - 21000220103
       - 900000000000509007

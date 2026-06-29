@@ -50,13 +50,25 @@ public class NameGeneratorSpec {
    * Populated only for virtual levels in models that opt in via {@link
    * au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration#nameGeneratorSupportsProductName}
    * (e.g. the NMPC Clinical Drug level). This is a hint only — it must never be added as a {@code
-   * HAS_PRODUCT_NAME} relationship on a virtual concept. Optional on the wire ({@code
-   * @JsonInclude(NON_NULL)}) — absent means "no brand hint". Wire form is {@code product_name}
-   * (snake_case to match the name generator's API contract).
+   * HAS_PRODUCT_NAME} relationship on a virtual concept. Optional on the wire
+   * ({@code @JsonInclude(NON_NULL)}) — absent means "no brand hint". Wire form is {@code
+   * product_name} (snake_case to match the name generator's API contract).
    */
   @JsonInclude(JsonInclude.Include.NON_NULL)
   @JsonProperty("product_name")
   String productName;
+
+  /**
+   * User-supplied registered branded product name used by the name generator to produce the AMP
+   * name when the modelling alone is insufficient. Populated only for the branded leaf product
+   * (AMP) level in models that opt in via {@link
+   * au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration#nameGeneratorSupportsBrandedProductName}.
+   * Optional on the wire — absent means "no supplied name, do best-efforts". Wire form is {@code
+   * branded_product_name} (snake_case to match the name generator's API contract).
+   */
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  @JsonProperty("branded_product_name")
+  String brandedProductName;
 
   /** Convenience constructor preserving the legacy four-arg signature used by call sites. */
   public NameGeneratorSpec(String tag, String owl, String ptOwl, List<String> order) {
@@ -66,5 +78,6 @@ public class NameGeneratorSpec {
     this.order = order;
     this.strengthFormat = null;
     this.productName = null;
+    this.brandedProductName = null;
   }
 }

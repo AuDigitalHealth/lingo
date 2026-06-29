@@ -354,6 +354,8 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
 
     validateTypeParameters(packageDetails, result);
 
+    rejectBrandedProductName(packageDetails, result);
+
     validateNonDefiningProperties(
         snowstormClient,
         fhirClient,
@@ -610,6 +612,28 @@ public class AmtMedicationDetailsValidator extends DetailsValidator
             .getUnit()
             .getConceptId()
             .equals(numeratorAndDenominator.getSecond().getConceptId());
+  }
+
+  private static void rejectBrandedProductName(
+      PackageDetails<MedicationProductDetails> packageDetails, ValidationResult result) {
+    if (hasBrandedProductName(packageDetails)) {
+      result.addProblem("Branded product name is not supported in AMT");
+    }
+  }
+
+  private static boolean hasBrandedProductName(
+      PackageDetails<MedicationProductDetails> packageDetails) {
+    boolean inDirectProducts =
+        packageDetails.getContainedProducts().stream()
+            .map(pq -> pq.getProductDetails())
+            .anyMatch(
+                pd -> pd.getBrandedProductName() != null && !pd.getBrandedProductName().isBlank());
+    if (inDirectProducts) {
+      return true;
+    }
+    return packageDetails.getContainedPackages().stream()
+        .map(pq -> pq.getPackageDetails())
+        .anyMatch(AmtMedicationDetailsValidator::hasBrandedProductName);
   }
 
   @Override

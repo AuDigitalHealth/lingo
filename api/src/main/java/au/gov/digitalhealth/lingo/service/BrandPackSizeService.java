@@ -548,6 +548,7 @@ public class BrandPackSizeService {
                                 branch,
                                 concepts.get(node.getConceptId()),
                                 brand,
+                                brandPackSizeEntry.getBrandedProductName(),
                                 atomicCache,
                                 brandPackSizeEntry.getNonDefiningProperties(),
                                 isDevice,
@@ -949,6 +950,7 @@ public class BrandPackSizeService {
       String branch,
       SnowstormConcept leafProductConcept,
       SnowstormConceptMini brand,
+      String brandedProductName,
       AtomicCache atomicCache,
       Set<NonDefiningBase> properties,
       boolean isDevice,
@@ -1010,6 +1012,14 @@ public class BrandPackSizeService {
                       modelConfiguration.getLeafProductModelLevel().getModelLevelType())) {
                 n.getNewConceptDetails()
                     .setStrengthFormat(deriveStrengthFormat(leafProductConcept));
+              }
+              if (modelConfiguration.isNameGeneratorSupportsBrandedProductName()
+                  && n.isNewConcept()
+                  && modelLevelType.equals(
+                      modelConfiguration.getLeafProductModelLevel().getModelLevelType())
+                  && brandedProductName != null
+                  && !brandedProductName.isBlank()) {
+                n.getNewConceptDetails().setBrandedProductName(brandedProductName);
               }
               nameGenerator.generate(atomicCache, semanticTag, n, modelConfiguration, List.of());
               return n;

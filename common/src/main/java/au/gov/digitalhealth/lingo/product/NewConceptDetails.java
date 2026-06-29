@@ -112,6 +112,13 @@ public class NewConceptDetails {
    */
   String nameGeneratorProductName;
 
+  /**
+   * User-supplied registered branded product name (e.g. from HPRA/PCRS), used to derive the AMP's
+   * name in the name generator (medications/bulk-brand) or as the AMP preferred term directly
+   * (devices). NMPC-only; null means "derive a best-efforts name from the modelling".
+   */
+  String brandedProductName;
+
   public NewConceptDetails(int conceptId) {
     this.conceptId = conceptId;
   }

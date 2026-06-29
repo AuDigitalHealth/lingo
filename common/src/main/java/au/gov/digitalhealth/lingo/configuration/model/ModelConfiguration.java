@@ -60,10 +60,17 @@ public class ModelConfiguration {
    * Whether the name generator configured for this model accepts the {@code product_name} request
    * parameter, allowing a brand term to be woven into the generated name of a virtual Clinical Drug
    * WITHOUT the brand being added to the concept's logical definition (axiom). When true, the brand
-   * term is passed through to the name generator as a naming-only hint for the virtual Clinical Drug
-   * level. Default false (e.g. AMT virtual names remain brand-free).
+   * term is passed through to the name generator as a naming-only hint for the virtual Clinical
+   * Drug level. Default false (e.g. AMT virtual names remain brand-free).
    */
   boolean nameGeneratorSupportsProductName = false;
+
+  /**
+   * Whether the name generator configured for this model accepts the {@code branded_product_name}
+   * request parameter, allowing a branded product name to be supplied for the Actual Medicinal
+   * Product (branded product) level. Default false.
+   */
+  boolean nameGeneratorSupportsBrandedProductName = false;
 
   /** The type of model. */
   @NotNull private ModelType modelType;

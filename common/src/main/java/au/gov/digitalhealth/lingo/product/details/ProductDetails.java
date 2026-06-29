@@ -49,6 +49,12 @@ public abstract class ProductDetails extends PackageProductDetailsBase {
   String genericOtherIdentifyingInformation;
 
   /**
+   * Optional registered branded product name used to derive the AMP name. NMPC-only — AMT
+   * validators reject it if populated. Null means "derive from modelling".
+   */
+  String brandedProductName;
+
+  /**
    * This is the particular style of product, presentation strength, concentration strength, no
    * strength etc.
    */

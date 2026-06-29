@@ -36,4 +36,7 @@ public class BrandWithIdentifiers implements Serializable {
 
   @Builder.Default @NotNull @Valid
   private Set<@Valid NonDefiningBase> nonDefiningProperties = new HashSet<>();
+
+  /** Optional NMPC branded product name to drive the new AMP's generated name. */
+  private String brandedProductName;
 }

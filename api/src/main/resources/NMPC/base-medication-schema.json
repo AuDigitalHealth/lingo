@@ -181,6 +181,7 @@
                     "properties": {
                       "productType": { "const": "presentationStrength" },
                       "productName": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Brand Name" },
+                      "brandedProductName": { "type": "string", "title": "Branded product name", "description": "Registered branded product name used to name the AMP. Optional; leave blank to let the name generator derive it from the modelling." },
                       "genericForm": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Generic Dose Form" },
                       "specificForm": { "type": ["object", "null"], "nullable": true, "$ref": "#/$defs/SnowstormConceptMini", "title": "Specific Dose Form" },
                       "type": { "type": "string", "const": "medication" },
@@ -201,6 +202,7 @@
                     "properties": {
                       "productType": { "const": "concentrationStrength" },
                       "productName": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Brand Name" },
+                      "brandedProductName": { "type": "string", "title": "Branded product name", "description": "Registered branded product name used to name the AMP. Optional; leave blank to let the name generator derive it from the modelling." },
                       "genericForm": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Generic Dose Form" },
                       "specificForm": { "type": ["object", "null"], "nullable": true, "$ref": "#/$defs/SnowstormConceptMini", "title": "Specific Dose Form" },
                       "type": { "type": "string", "const": "medication" },
@@ -220,6 +222,7 @@
                     "properties": {
                       "productType": { "const": "noStrength" },
                       "productName": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Brand Name" },
+                      "brandedProductName": { "type": "string", "title": "Branded product name", "description": "Registered branded product name used to name the AMP. Optional; leave blank to let the name generator derive it from the modelling." },
                       "genericForm": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Generic Dose Form" },
                       "specificForm": { "type": ["object", "null"], "nullable": true, "$ref": "#/$defs/SnowstormConceptMini", "title": "Specific Dose Form" },
                       "type": { "type": "string", "const": "medication" },
@@ -286,6 +289,7 @@
                     "properties": {
                       "productType": { "const": "presentationStrength" },
                       "productName": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Brand Name" },
+                      "brandedProductName": { "type": "string", "title": "Branded product name", "description": "Registered branded product name used to name the AMP. Optional; leave blank to let the name generator derive it from the modelling." },
                       "genericForm": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Generic Dose Form" },
                       "specificForm": { "type": ["object", "null"], "nullable": true, "$ref": "#/$defs/SnowstormConceptMini", "title": "Specific Dose Form" },
                       "type": { "type": "string", "const": "vaccine" },
@@ -308,6 +312,7 @@
                     "properties": {
                       "productType": { "const": "noStrength" },
                       "productName": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Brand Name" },
+                      "brandedProductName": { "type": "string", "title": "Branded product name", "description": "Registered branded product name used to name the AMP. Optional; leave blank to let the name generator derive it from the modelling." },
                       "genericForm": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Generic Dose Form" },
                       "specificForm": { "type": ["object", "null"], "nullable": true, "$ref": "#/$defs/SnowstormConceptMini", "title": "Specific Dose Form" },
                       "type": { "type": "string", "const": "vaccine" },
@@ -371,6 +376,7 @@
                     "properties": {
                       "productType": { "const": "noIngredients" },
                       "productName": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Brand Name" },
+                      "brandedProductName": { "type": "string", "title": "Branded product name", "description": "Registered branded product name used to name the AMP. Optional; leave blank to let the name generator derive it from the modelling." },
                       "genericForm": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Generic Dose Form" },
                       "specificForm": { "type": ["object", "null"], "nullable": true, "$ref": "#/$defs/SnowstormConceptMini", "title": "Specific Dose Form" },
                       "existingMedicinalProduct": { "type": ["object", "null"], "$ref": "#/$defs/SnowstormConceptMini", "title": "Existing VTM Level Concept"},

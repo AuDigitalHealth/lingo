@@ -53,6 +53,13 @@ public class AmtDeviceValidator extends DetailsValidator implements DeviceDetail
 
     validateTypeParameters(packageDetails, result);
 
+    if (packageDetails.getContainedProducts().stream()
+        .map(pq -> pq.getProductDetails())
+        .anyMatch(
+            pd -> pd.getBrandedProductName() != null && !pd.getBrandedProductName().isBlank())) {
+      result.addProblem("Branded product name is not supported in AMT");
+    }
+
     validateNonDefiningProperties(
         snowstormClient,
         fhirClient,

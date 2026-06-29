@@ -22,6 +22,7 @@ import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.exception.ResourceNotFoundProblem;
 import au.gov.digitalhealth.lingo.exception.TicketImportProblem;
 import au.gov.digitalhealth.lingo.exception.TicketStateClosedProblem;
+import au.gov.digitalhealth.lingo.service.TicketProductNameDerivationService;
 import au.gov.digitalhealth.tickets.TicketBacklogDto;
 import au.gov.digitalhealth.tickets.TicketDto;
 import au.gov.digitalhealth.tickets.TicketDtoExtended;
@@ -53,6 +54,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.querydsl.core.types.Predicate;
+import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import java.io.File;
@@ -101,6 +103,7 @@ public class TicketController {
   private final ScheduleRepository scheduleRepository;
   private final IterationRepository iterationRepository;
   private final TicketMapper ticketMapper;
+  private final TicketProductNameDerivationService ticketProductNameDerivationService;
 
   @Value("${snomio.import.allowed.directory}")
   private String allowedImportDirectory;
@@ -115,7 +118,8 @@ public class TicketController {
       StateRepository stateRepository,
       ScheduleRepository scheduleRepository,
       IterationRepository iterationRepository,
-      TicketMapper ticketMapper) {
+      TicketMapper ticketMapper,
+      TicketProductNameDerivationService ticketProductNameDerivationService) {
     this.ticketService = ticketService;
     this.ticketHistoryService = ticketHistoryService;
     this.ticketRepository = ticketRepository;
@@ -123,6 +127,7 @@ public class TicketController {
     this.scheduleRepository = scheduleRepository;
     this.iterationRepository = iterationRepository;
     this.ticketMapper = ticketMapper;
+    this.ticketProductNameDerivationService = ticketProductNameDerivationService;
   }
 
   @GetMapping("/api/tickets")
@@ -264,6 +269,16 @@ public class TicketController {
   @GetMapping("/api/tickets/{ticketId}")
   public ResponseEntity<TicketDtoExtended> getTicket(@PathVariable Long ticketId) {
     return new ResponseEntity<>(ticketService.findTicket(ticketId), HttpStatus.OK);
+  }
+
+  public record BrandedProductNameResponse(@Nullable String brandedProductName) {}
+
+  @GetMapping("/api/tickets/{ticketId}/branded-product-name")
+  public ResponseEntity<BrandedProductNameResponse> getBrandedProductName(
+      @PathVariable Long ticketId) {
+    return ResponseEntity.ok(
+        new BrandedProductNameResponse(
+            ticketProductNameDerivationService.derive(ticketId).orElse(null)));
   }
 
   @GetMapping("/api/tickets/ticketNumber/{ticketNumber}/history")

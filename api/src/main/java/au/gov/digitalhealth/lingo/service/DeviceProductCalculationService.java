@@ -745,16 +745,20 @@ public class DeviceProductCalculationService
             true,
             false);
     if (leafBrandedProductNode.isNewConcept()) {
-      leafBrandedProductNode
-          .getNewConceptDetails()
-          .setPreferredTerm(calculateBrandedProductName(productQuantity.getProductDetails()));
+      // NMPC: a user-supplied registered branded product name becomes the AMP preferred term
+      // directly (devices build the name inline rather than via the external name generator).
+      // Blank => best-efforts from the modelling via calculateBrandedProductName.
+      String brandedPt =
+          modelConfiguration.isNameGeneratorSupportsBrandedProductName()
+                  && productQuantity.getProductDetails().getBrandedProductName() != null
+                  && !productQuantity.getProductDetails().getBrandedProductName().isBlank()
+              ? productQuantity.getProductDetails().getBrandedProductName()
+              : calculateBrandedProductName(productQuantity.getProductDetails());
+      leafBrandedProductNode.getNewConceptDetails().setPreferredTerm(brandedPt);
       leafBrandedProductNode
           .getNewConceptDetails()
           .setFullySpecifiedName(
-              leafBrandedProductNode.getNewConceptDetails().getPreferredTerm()
-                  + " ("
-                  + leafBrandedProductModelLevel.getDeviceSemanticTag()
-                  + ")");
+              brandedPt + " (" + leafBrandedProductModelLevel.getDeviceSemanticTag() + ")");
     }
 
     innerProductSummary.addNode(leafBrandedProductNode);

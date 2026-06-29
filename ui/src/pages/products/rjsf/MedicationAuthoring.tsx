@@ -48,11 +48,16 @@ import {
   buildErrorSchema,
   resetDiscriminators,
 } from './helpers/validationHelper.ts';
+import {
+  applyBrandRename,
+  type LastBrands,
+} from './helpers/brandRenameHelper.ts';
 import { ErrorDisplay } from './components/ErrorDisplay.tsx';
 import CustomSelectWidget from './widgets/CustomSelectWidget.tsx';
 import { evaluateExpression } from './helpers/rjsfUtils.ts';
 import WarningIcon from '@mui/icons-material/Warning';
 import CustomTextFieldWidget from './widgets/CustomTextFieldWidget.tsx';
+import BrandedProductNameWidget from './widgets/BrandedProductNameWidget.tsx';
 import UnableToEditTooltip from '../../tasks/components/UnableToEditTooltip.tsx';
 import { showError } from '../../../types/ErrorHandler.ts';
 import { useActiveConceptIdsByIds } from '../../../hooks/eclRefset/useConceptsById.tsx';
@@ -75,6 +80,11 @@ function MedicationAuthoring({
   productAuditDto,
 }: MedicationAuthoringV2Props) {
   const [formKey, setFormKey] = useState(0);
+  const [brandedProductNamePrefill, setBrandedProductNamePrefill] = useState<{
+    status: 'suggested' | 'empty' | 'none';
+    value?: string;
+    index?: number;
+  }>({ status: 'none' });
   const [formData, setFormData] = useState<any>({});
   const [initialFormData, setInitialFormData] = useState<any>({});
   const [snowStormFormData, setSnowStormFormData] = useState<any>({});
@@ -82,6 +92,8 @@ function MedicationAuthoring({
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const formRef = useRef<any>(null);
+  const clearSeqRef = useRef(0);
+  const lastBrandRef = useRef<LastBrands>({});
 
   const [isDirty, setIsDirty] = useState(false);
   const [formErrors, setFormErrors] = useState<any[]>([]);
@@ -120,6 +132,8 @@ function MedicationAuthoring({
     productId: existingConceptToLoad,
     task,
     setFunction: (data: any) => {
+      lastBrandRef.current = {};
+      setBrandedProductNamePrefill({ status: 'none' });
       setFormData(data);
       setInitialFormData(data);
       setFormErrors([]);
@@ -144,6 +158,8 @@ function MedicationAuthoring({
     productAuditDto,
     ticket,
     setFunction: (data: any) => {
+      lastBrandRef.current = {};
+      setBrandedProductNamePrefill({ status: 'none' });
       setMode(
         data.action === 'UPDATE' && data.originalConceptId
           ? 'update'
@@ -174,15 +190,20 @@ function MedicationAuthoring({
     setCreateModalOpen(!createModalOpen);
   }, [createModalOpen]);
 
-  const handleChange = ({ formData }: any) => {
-    const updatedFormData = resetDiscriminators(schema, formData, uiSchema);
-    setFormData(updatedFormData);
+  const handleChange = ({ formData: incomingFormData }: any) => {
+    const updatedFormData = resetDiscriminators(
+      schema,
+      incomingFormData,
+      uiSchema,
+    );
+    const renamed = applyBrandRename(
+      formData,
+      updatedFormData,
+      lastBrandRef.current,
+    );
+    setFormData(renamed);
 
-    if (
-      !_.isEmpty(
-        updatedFormData.productName || updatedFormData.containedProducts,
-      )
-    ) {
+    if (!_.isEmpty(renamed.productName || renamed.containedProducts)) {
       setIsDirty(true);
     }
   };
@@ -212,16 +233,48 @@ function MedicationAuthoring({
   };
 
   const handleClear = useCallback(() => {
-    setFormData({});
+    lastBrandRef.current = {};
     setErrorSchema({});
     setFormErrors([]);
     setIsDirty(false);
-    setFormKey(prev => prev + 1);
     setMode('create');
     handleClearForm();
     setOriginalConceptId(undefined);
     setSelectedConceptIdentifiers([]);
-  }, []);
+    setBrandedProductNamePrefill({ status: 'none' });
+    // Clear immediately so the form never shows stale data.
+    setFormData({});
+    setFormKey(prev => prev + 1);
+    // Capture this clear's sequence so a stale/raced response from a previous
+    // clear cannot overwrite state that belongs to a newer clear.
+    const seq = ++clearSeqRef.current;
+    // NMPC: prefill brandedProductName from the ticket's HPRA feed data on blank/clear.
+    // The backend returns null for AMT and HPRA-less tickets, so null-guarding is
+    // sufficient to ensure we only seed the field when a suggestion is available.
+    productService
+      .fetchBrandedProductNameSuggestion(ticket.id)
+      .then(suggestion => {
+        if (clearSeqRef.current !== seq) return;
+        if (suggestion != null) {
+          setBrandedProductNamePrefill({
+            status: 'suggested',
+            value: suggestion,
+            index: 0,
+          });
+          setFormData({
+            containedProducts: [
+              { productDetails: { brandedProductName: suggestion } },
+            ],
+          });
+          setFormKey(prev => prev + 1);
+        } else {
+          setBrandedProductNamePrefill({ status: 'empty', index: 0 });
+        }
+      })
+      .catch(() => {
+        // Form already cleared synchronously; nothing more to do on error.
+      });
+  }, [ticket.id]);
   const { activeConceptIds, activeConceptsLoading } = useActiveConceptIdsByIds(
     task.branchPath,
     originalConceptId ? [originalConceptId] : [],
@@ -297,6 +350,7 @@ function MedicationAuthoring({
     snowStormFormData,
     mode,
     task,
+    brandedProductNamePrefill,
   };
 
   const saveDraft = () => {
@@ -386,6 +440,7 @@ function MedicationAuthoring({
               TextWidget: CustomTextFieldWidget,
               OneOfArrayWidget,
               SelectWidget: CustomSelectWidget,
+              brandedProductNameWidget: BrandedProductNameWidget,
             }}
             templates={{
               ArrayFieldTemplate: CustomArrayFieldTemplate,

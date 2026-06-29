@@ -112,6 +112,11 @@
           "ui:title": "VTM Level Device Type",
           "description": "Select a VTM level device type for the product."
         },
+        "brandedProductName": {
+          "type": "string",
+          "title": "Branded product name",
+          "description": "Registered branded product name used to name the AMP. Optional; leave blank to let the name generator derive it from the modelling."
+        },
         "specificDeviceType": {
           "type": ["object", "null"],
           "$ref": "#/$defs/SnowstormConceptMini",

@@ -123,6 +123,7 @@ export interface MedicationProductDetails {
   activeIngredients?: Ingredient[];
   type?: ProductType;
   otherIdentifyingInformation?: string;
+  brandedProductName?: string | null;
 }
 
 export interface MedicationPackageDetails {
@@ -157,6 +158,7 @@ export interface DeviceProductDetails {
   newSpecificDeviceName?: string | null;
   otherParentConcepts?: Concept[] | null;
   type?: ProductType;
+  brandedProductName?: string | null;
 }
 export interface DeviceProductQuantity {
   value?: number;

@@ -61,4 +61,25 @@ class NameGeneratorSpecTest {
 
     assertEquals(null, spec.getStrengthFormat());
   }
+
+  @Test
+  void serialisesBrandedProductNameAsSnakeCaseWhenPresent() throws Exception {
+    NameGeneratorSpec spec =
+        new NameGeneratorSpec("branded clinical drug", "owl", "ptOwl", List.of());
+    spec.setBrandedProductName("Ongentys 50 mg hard capsules");
+
+    String json = mapper.writeValueAsString(spec);
+
+    assertTrue(json.contains("\"branded_product_name\":\"Ongentys 50 mg hard capsules\""), json);
+  }
+
+  @Test
+  void omitsBrandedProductNameWhenNull() throws Exception {
+    NameGeneratorSpec spec =
+        new NameGeneratorSpec("branded clinical drug", "owl", "ptOwl", List.of());
+
+    String json = mapper.writeValueAsString(spec);
+
+    assertFalse(json.contains("branded_product_name"), json);
+  }
 }

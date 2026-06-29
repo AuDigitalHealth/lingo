@@ -1021,6 +1021,12 @@ public abstract class AtomicDataService<T extends ProductDetails> {
     productDetails.setProductName(
         getSingleActiveTarget(productRelationships, HAS_PRODUCT_NAME.getValue()));
 
+    // NMPC: round-trip the existing AMP preferred term into the branded product name field so an
+    // edit starts from the current AMP name. AMT leaves it null (flag off + validator rejects).
+    if (modelConfiguration.isNameGeneratorSupportsBrandedProductName() && product.getPt() != null) {
+      productDetails.setBrandedProductName(product.getPt().getTerm());
+    }
+
     addNonDefiningData(
         productDetails, maps, modelConfiguration, Set.of(ProductPackageType.PRODUCT), product);
 

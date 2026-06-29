@@ -55,6 +55,11 @@
             "minProperties": "Brand Name must be populated."
           }
         },
+        "brandedProductName": {
+          "type": "string",
+          "title": "Branded product name",
+          "description": "Registered branded product name used to name the AMP. Optional; leave blank to let the name generator derive it from the modelling."
+        },
         "nonDefiningProperties": {
           "type": "array",
           "title": "Non Defining Properties",

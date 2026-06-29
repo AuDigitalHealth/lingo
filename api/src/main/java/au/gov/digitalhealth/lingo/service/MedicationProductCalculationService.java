@@ -1050,6 +1050,26 @@ public class MedicationProductCalculationService
         n.getNewConceptDetails()
             .setNameGeneratorProductName(productDetails.getProductName().getPt().getTerm());
       }
+      // Pass the user-supplied registered branded product name to the name generator for BOTH
+      // clinical-drug-tier nodes that go through the generator: the VMP (unbranded Virtual
+      // Medicinal Product, CLINICAL_DRUG) and the AMP (branded leaf product, REAL_CLINICAL_DRUG).
+      // Supplying it on the VMP call as well as the AMP call helps the generator derive the
+      // virtual name when the modelling is incomplete. NMPC-only (opt-in flag); only for a newly
+      // created/recreated concept; blank => not set => generator does best-efforts.
+      // See NameGenerationService.generateNameGeneratorSpec for the read.
+      boolean isVirtualClinicalDrug =
+          !level.isBranded() && level.getModelLevelType().equals(CLINICAL_DRUG);
+      boolean isLeafProduct =
+          level
+              .getModelLevelType()
+              .equals(modelConfiguration.getLeafProductModelLevel().getModelLevelType());
+      if (modelConfiguration.isNameGeneratorSupportsBrandedProductName()
+          && n.isNewConcept()
+          && (isVirtualClinicalDrug || isLeafProduct)
+          && productDetails.getBrandedProductName() != null
+          && !productDetails.getBrandedProductName().isBlank()) {
+        n.getNewConceptDetails().setBrandedProductName(productDetails.getBrandedProductName());
+      }
       generateName(atomicCache, productDetails, level, n, modelConfiguration, order, nameGenerator);
       productSummary.addNode(n);
       for (Node parent : parentNodes) {

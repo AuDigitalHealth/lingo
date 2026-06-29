@@ -120,6 +120,9 @@
             "productName": 24
           },
           {
+            "brandedProductName": 24
+          },
+          {
             "genericForm": 12,
             "specificForm": 12
           },
@@ -287,6 +290,9 @@
             "skipTitle": true,
             "showDefaultOptions": true
           }
+        },
+        "brandedProductName": {
+          "ui:widget": "brandedProductNameWidget"
         },
         "newGenericProductName": {
           "ui:widget": "text"
