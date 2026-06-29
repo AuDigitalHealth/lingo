@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
+## [Unreleased]
+- No updates yet.
+
+
 ## [1.3.48] - 2026-06-29
 ### Added
 - Added an optional **branded product name** field for NMPC medication, device, and bulk-brand authoring. When populated it is passed to the name generator to help name the unbranded Virtual Medicinal Product (VMP) and the branded Actual Medicinal Product (AMP); for devices, which build names in code rather than via the name generator, it is used directly as the AMP preferred term and FSN. The field is prefilled from the ticket's HPRA/PCRS feed data when a blank form is opened or cleared, and from the existing AMP's preferred term when an existing product is loaded for editing. It is NMPC-only — it is absent from the AMT forms and rejected by AMT validation. A prefilled value is flagged with a "prefilled from the ticket — please review" hint that clears once edited; and changing the Brand Name on a product auto-updates the branded product name by replacing the old brand's term with the new one (best-effort, with the author reviewing).
