@@ -552,6 +552,38 @@ const ConceptService = {
     const concept = response.data as Concept;
     return concept;
   },
+  async getEclConceptsPost(
+    branch: string,
+    ecl: string,
+    options?: {
+      limit?: number;
+      offset?: number;
+      term?: string;
+      activeFilter?: boolean;
+      searchAfter?: string;
+    },
+  ): Promise<ConceptResponse> {
+    const { activeFilter, searchAfter } = options ?? {};
+    let { limit, offset, term } = options ?? {};
+    limit = limit || 50;
+    offset = offset || 0;
+    if (term && term.length <= 2) term = undefined;
+
+    const url = `${useApplicationConfigStore.getState().applicationConfig?.snodineSnowstormProxy}/${encodeURIComponent(branch)}/concepts/search`;
+    const response = await api.post(
+      url,
+      { eclFilter: ecl, limit, offset, activeFilter, searchAfter, term },
+      {
+        headers: {
+          'Accept-Language': `${useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader}`,
+        },
+      },
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    return response.data as ConceptResponse;
+  },
   async searchConceptIdsBulkFilters(
     branch: string,
     filters: {

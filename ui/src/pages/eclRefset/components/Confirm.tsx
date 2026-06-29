@@ -4,7 +4,7 @@ import { Alert, capitalize, Stack, Typography } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import CheckIcon from '@mui/icons-material/Check';
 import { Concept, ConceptResponse } from '../../../types/concept.ts';
-import { useConceptsByEcl } from '../../../hooks/eclRefset/useConceptsByEcl.tsx';
+import { useConceptsByEclPost } from '../../../hooks/eclRefset/useConceptsByEcl.tsx';
 import { SnowstormError } from '../../../types/ErrorHandler.ts';
 import InvalidEclError from './InvalidEclError.tsx';
 import ConfirmModal from './ConfirmModal.tsx';
@@ -49,7 +49,7 @@ export default function Confirm({
   };
 
   const { data: dataConceptsCurr, isFetching: isFetchingConceptsCurr } =
-    useConceptsByEcl(branch, `^ ${concept.conceptId}`, {
+    useConceptsByEclPost(branch, `^ ${concept.conceptId}`, {
       limit: 1,
       activeFilter: true,
     });
@@ -57,7 +57,7 @@ export default function Confirm({
     data: dataConceptsAdds,
     error: errorConceptsAdds,
     isFetching: isFetchingConceptsAdds,
-  } = useConceptsByEcl(branch, getAdditionsEcl(), {
+  } = useConceptsByEclPost(branch, getAdditionsEcl(), {
     limit: 1,
     activeFilter: true,
   });
@@ -65,7 +65,7 @@ export default function Confirm({
     data: dataConceptsDels,
     error: errorConceptsDels,
     isFetching: isFetchingConceptsDels,
-  } = useConceptsByEcl(branch, getDeletionsEcl(), {
+  } = useConceptsByEclPost(branch, getDeletionsEcl(), {
     limit: 1,
     activeFilter: true,
   });

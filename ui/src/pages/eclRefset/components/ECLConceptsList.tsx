@@ -13,7 +13,7 @@ import { TableHeaders } from '../../../components/TableHeaders.tsx';
 import { useServiceStatus } from '../../../hooks/api/useServiceStatus.tsx';
 import { SnowstormError } from '../../../types/ErrorHandler.ts';
 import { Concept } from '../../../types/concept.ts';
-import { useConceptsByEcl } from '../../../hooks/eclRefset/useConceptsByEcl.tsx';
+import { useConceptsByEclPost } from '../../../hooks/eclRefset/useConceptsByEcl.tsx';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import ConceptDetailsModal from './ConceptDetailsModal.tsx';
 import { AxiosError } from 'axios';
@@ -69,7 +69,7 @@ function ECLConceptsList({
     isLoading,
     searchTerm: querySearchTerm,
     error,
-  } = useConceptsByEcl(branch, ecl, {
+  } = useConceptsByEclPost(branch, ecl, {
     limit: paginationModel.pageSize,
     offset: paginationModel.page * paginationModel.pageSize,
     term: searchTerm,

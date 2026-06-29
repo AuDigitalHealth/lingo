@@ -82,6 +82,59 @@ export function useConceptsByEcl(
   return { isLoading, data, error, fetchStatus, searchTerm, isFetching };
 }
 
+export function useConceptsByEclPost(
+  branch: string,
+  ecl: string,
+  options?: {
+    limit?: number;
+    offset?: number;
+    term?: string;
+    activeFilter?: boolean;
+  },
+) {
+  const { limit, offset, activeFilter } = options ?? {};
+  let searchTerm = options?.term;
+  const { serviceStatus } = useServiceStatus();
+  if (searchTerm && searchTerm.length < 3) searchTerm = '';
+
+  const shouldCall = () => {
+    const validSearch = !!ecl?.length || !!searchTerm;
+
+    if (!serviceStatus?.snowstorm.running && validSearch) {
+      unavailableErrorHandler('search', 'Snowstorm');
+    }
+
+    return serviceStatus?.snowstorm.running !== undefined && validSearch;
+  };
+
+  const { isLoading, data, error, fetchStatus, isFetching } = useQuery({
+    queryKey: [
+      `concept-post-${branch}-${ecl}-${searchTerm ?? ''}-${limit}-${offset}-${activeFilter}`,
+    ],
+    queryFn: () => {
+      return ConceptService.getEclConceptsPost(branch, ecl, {
+        limit,
+        offset,
+        term: searchTerm,
+        activeFilter,
+      });
+    },
+    staleTime: 20 * (60 * 1000),
+    retry: 0,
+    enabled: shouldCall(),
+  });
+
+  useEffect(() => {
+    if (error) {
+      const err = error as AxiosError<SnowstormError>;
+      if (err.response?.status !== 400) {
+        snowstormErrorHandler(error, 'Search Failed', serviceStatus);
+      }
+    }
+  }, [error, serviceStatus]);
+  return { isLoading, data, error, fetchStatus, searchTerm, isFetching };
+}
+
 export function useConceptsByEclSnodine(
   branch: string,
   ecl: string,

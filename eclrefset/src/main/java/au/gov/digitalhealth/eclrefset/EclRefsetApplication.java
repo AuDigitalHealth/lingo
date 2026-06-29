@@ -20,6 +20,7 @@ import au.gov.digitalhealth.eclrefset.model.addorremovequeryresponse.AddRemoveIt
 import au.gov.digitalhealth.eclrefset.model.refsetqueryresponse.Data;
 import au.gov.digitalhealth.eclrefset.model.refsetqueryresponse.Item;
 import au.gov.digitalhealth.eclrefset.model.refsetqueryresponse.ReferencedComponent;
+import au.gov.digitalhealth.lingo.auth.service.ImsService;
 import au.gov.digitalhealth.tickets.ExternalProcessDto;
 import au.gov.digitalhealth.tickets.JobResultDto;
 import au.gov.digitalhealth.tickets.JobResultDto.ResultDto;
@@ -29,10 +30,9 @@ import au.gov.digitalhealth.tickets.JobResultDto.ResultDto.ResultNotificationDto
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.http.Cookie;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -79,7 +79,6 @@ import org.springframework.http.MediaType;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.DefaultUriBuilderFactory;
 
 @SpringBootApplication
 @Log
@@ -89,6 +88,8 @@ public class EclRefsetApplication {
   public static final String LOG_SEPARATOR_LINE =
       "### ---------------------------------------------------------";
   private static final String ECL_REFSET_ID = "900000000000513000";
+  private static final String ECL_FILTER_PARAM = "eclFilter";
+  private static final String ACTIVE_FILTER_PARAM = "activeFilter";
   // snowstorm limitation, can be addressed with searchAfter, but 10K seems like a
   // reasonable batch to prevent lost work due to 6 hour pipeline limitation and
   // there could be limitations on the size of the batch changes that we hit
@@ -130,7 +131,7 @@ public class EclRefsetApplication {
     jobResultDto.setJobName("ECL Refset Job");
 
     // Generate encoded jobId based on current date/time
-    LocalDateTime now = LocalDateTime.now();
+    LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
     String encodedJobId = now.format(formatter);
     jobResultDto.setJobId(encodedJobId);
@@ -153,15 +154,13 @@ public class EclRefsetApplication {
   }
 
   @Bean
+  public ImsService imsService() {
+    return new ImsService();
+  }
+
+  @Bean
   public RestTemplate restTemplate(RestTemplateBuilder builder) {
-
-    // Create a DefaultUriBuilderFactory with no encoding as it doesn't handle the encoding
-    // of {{}} (descriptions filters) .. we will do our own encoding elsewhere
-    DefaultUriBuilderFactory uriBuilderFactory = new DefaultUriBuilderFactory();
-    uriBuilderFactory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.NONE);
-
-    // Build the RestTemplate with the custom UriBuilderFactory
-    return builder.uriTemplateHandler(uriBuilderFactory).build();
+    return builder.build();
   }
 
   @Bean
@@ -339,40 +338,25 @@ public class EclRefsetApplication {
         // tripping.
 
         // check what changes are necessary to update the distributed refsets
-        // we also encode here as refsetTemplate does not handle {{}} (description filters)
-        // and replace + encoding of spaces with %20 as URLEncoder encodes to +
         String addEcl =
             "(" + ecl + ") MINUS (^ " + item.getReferencedComponent().getConceptId() + ")";
-        addEcl = URLEncoder.encode(addEcl, StandardCharsets.UTF_8);
-        addEcl = addEcl.replace("+", "%20");
         String removeEcl =
             "(^ " + item.getReferencedComponent().getConceptId() + ") MINUS (" + ecl + ")";
-        removeEcl = URLEncoder.encode(removeEcl, StandardCharsets.UTF_8);
-        removeEcl = removeEcl.replace("+", "%20");
 
-        String baseAddQuery =
-            perfSnowstormUrl
-                + BRANCH
-                + "/concepts?ecl="
-                + addEcl
-                + "&activeFilter=true&includeLeafFlag=false&form=inferred";
-        String baseRemoveQuery =
-            perfSnowstormUrl
-                + BRANCH
-                + "/concepts?ecl="
-                + removeEcl
-                + "&activeFilter=true&includeLeafFlag=false&form=inferred";
+        String conceptSearchUrl = perfSnowstormUrl + BRANCH + "/concepts/search";
+        Map<String, Object> baseAddBody = new HashMap<>();
+        baseAddBody.put(ECL_FILTER_PARAM, addEcl);
+        baseAddBody.put(ACTIVE_FILTER_PARAM, true);
 
-        String removeInactiveConceptQuery =
-            mainSnowstormUrl
-                + BRANCH
-                + "/concepts?ecl="
-                // equates to "^ "
-                + "%5E%20"
-                + item.getReferencedComponent().getId()
-                // equates to " {{C active = 0}}"
-                + "%20%7B%7BC%20active%20%3D%200%7D%7D"
-                + "&includeLeafFlag=false&form=inferred";
+        Map<String, Object> baseRemoveBody = new HashMap<>();
+        baseRemoveBody.put(ECL_FILTER_PARAM, removeEcl);
+        baseRemoveBody.put(ACTIVE_FILTER_PARAM, true);
+
+        // ECL: ^ <id> {{C active = 0}} — sent as plain string, no URL encoding needed
+        String inactiveConceptSearchUrl = mainSnowstormUrl + BRANCH + "/concepts/search";
+        Map<String, Object> removeInactiveBody = new HashMap<>();
+        removeInactiveBody.put(
+            ECL_FILTER_PARAM, "^ " + item.getReferencedComponent().getId() + " {{C active = 0}}");
 
         log.info("### Processing refsetId: " + item.getReferencedComponent().getConceptId());
         log.info("### ECL:" + ecl);
@@ -384,7 +368,8 @@ public class EclRefsetApplication {
         AddOrRemoveQueryResponse allAddQueryResponse =
             getAddQueryResponse(
                 restTemplate,
-                baseAddQuery,
+                conceptSearchUrl,
+                baseAddBody,
                 fileAppender,
                 item.getReferencedComponent().getConceptId(),
                 addResult);
@@ -437,7 +422,8 @@ public class EclRefsetApplication {
             allAddQueryResponse =
                 getAddQueryResponse(
                     restTemplate,
-                    baseAddQuery,
+                    conceptSearchUrl,
+                    baseAddBody,
                     fileAppender,
                     item.getReferencedComponent().getConceptId(),
                     addResult);
@@ -471,7 +457,8 @@ public class EclRefsetApplication {
           AddOrRemoveQueryResponse allRemoveQueryResponse =
               getRemoveQueryResponse(
                   restTemplate,
-                  baseRemoveQuery,
+                  conceptSearchUrl,
+                  baseRemoveBody,
                   fileAppender,
                   item.getReferencedComponent().getConceptId(),
                   removeResult);
@@ -479,7 +466,8 @@ public class EclRefsetApplication {
           AddOrRemoveQueryResponse allInactiveQueryResponse =
               getRemoveQueryResponse(
                   restTemplate,
-                  removeInactiveConceptQuery,
+                  inactiveConceptSearchUrl,
+                  removeInactiveBody,
                   fileAppender,
                   item.getReferencedComponent().getConceptId(),
                   removeResult);
@@ -503,23 +491,27 @@ public class EclRefsetApplication {
           if (allRemoveQueryResponse != null) {
             processRefsetRemovals(
                 allRemoveQueryResponse,
-                restTemplate,
-                baseRemoveQuery,
-                bulkChangeList,
-                fileAppender,
-                item,
-                removeResult);
+                new RemovalContext(
+                    restTemplate,
+                    conceptSearchUrl,
+                    baseRemoveBody,
+                    bulkChangeList,
+                    fileAppender,
+                    item,
+                    removeResult));
           }
 
           if (allInactiveQueryResponse != null) {
             processRefsetRemovals(
                 allInactiveQueryResponse,
-                restTemplate,
-                removeInactiveConceptQuery,
-                bulkChangeList,
-                fileAppender,
-                item,
-                removeResult);
+                new RemovalContext(
+                    restTemplate,
+                    inactiveConceptSearchUrl,
+                    removeInactiveBody,
+                    bulkChangeList,
+                    fileAppender,
+                    item,
+                    removeResult));
           }
 
           log.info(LOG_SEPARATOR_LINE);
@@ -584,14 +576,37 @@ public class EclRefsetApplication {
     executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
   }
 
-  private void processRefsetRemovals(
-      AddOrRemoveQueryResponse queryResponse,
+  // New small context class to group removal-related parameters
+  private static class RemovalContext {
+    final RestTemplate restTemplate;
+    final String removeUrl;
+    final Map<String, Object> removeBody;
+    final List<JSONObject> bulkChangeList;
+    final FileAppender fileAppender;
+    final Item item;
+    final ResultDto removeResult;
+
+    RemovalContext(
       RestTemplate restTemplate,
-      String removeQuery,
+      String removeUrl,
+      Map<String, Object> removeBody,
       List<JSONObject> bulkChangeList,
       FileAppender fileAppender,
       Item item,
-      ResultDto removeResult)
+        ResultDto removeResult) {
+      this.restTemplate = restTemplate;
+      this.removeUrl = removeUrl;
+      this.removeBody = removeBody;
+      this.bulkChangeList = bulkChangeList;
+      this.fileAppender = fileAppender;
+      this.item = item;
+      this.removeResult = removeResult;
+    }
+  }
+
+  private void processRefsetRemovals(
+      AddOrRemoveQueryResponse queryResponse,
+      RemovalContext ctx)
       throws InterruptedException, Exception {
 
     List<ResultItemDto> removeResultItems =
@@ -604,25 +619,25 @@ public class EclRefsetApplication {
                         .build()))
             .toList();
 
-    removeResult.getItems().addAll(removeResultItems);
+    ctx.removeResult.getItems().addAll(removeResultItems);
 
-    logAndRemoveRefsetMembersToBulk(queryResponse, item, restTemplate, bulkChangeList);
+    logAndRemoveRefsetMembersToBulk(queryResponse, ctx.item, ctx.restTemplate, ctx.bulkChangeList);
 
-    this.doBulkUpdate(restTemplate, bulkChangeList, removeResult, item);
-    bulkChangeList.clear();
+    this.doBulkUpdate(ctx.restTemplate, ctx.bulkChangeList, ctx.removeResult, ctx.item);
+    ctx.bulkChangeList.clear();
 
-    // process remaining pages
     while (queryResponse.getOffset() + queryResponse.getLimit()
         >= MAXIMUM_UNSORTED_OFFSET_PLUS_PAGE_SIZE) {
       queryResponse =
           getRemoveQueryResponse(
-              restTemplate,
-              removeQuery,
-              fileAppender,
-              item.getReferencedComponent().getConceptId(),
-              removeResult);
+              ctx.restTemplate,
+              ctx.removeUrl,
+              ctx.removeBody,
+              ctx.fileAppender,
+              ctx.item.getReferencedComponent().getConceptId(),
+              ctx.removeResult);
 
-      logAndRemoveRefsetMembersToBulk(queryResponse, item, restTemplate, bulkChangeList);
+      logAndRemoveRefsetMembersToBulk(queryResponse, ctx.item, ctx.restTemplate, ctx.bulkChangeList);
 
       removeResultItems =
           queryResponse.getItems().stream()
@@ -634,10 +649,10 @@ public class EclRefsetApplication {
                           .build()))
               .toList();
 
-      removeResult.getItems().addAll(removeResultItems);
+      ctx.removeResult.getItems().addAll(removeResultItems);
 
-      this.doBulkUpdate(restTemplate, bulkChangeList, removeResult, item);
-      bulkChangeList.clear();
+      this.doBulkUpdate(ctx.restTemplate, ctx.bulkChangeList, ctx.removeResult, ctx.item);
+      ctx.bulkChangeList.clear();
     }
   }
 
@@ -763,44 +778,48 @@ public class EclRefsetApplication {
   // null return value indicates count threshold exceeded
   private AddOrRemoveQueryResponse getAddQueryResponse(
       RestTemplate restTemplate,
-      String baseQuery,
+      String baseUrl,
+      Map<String, Object> baseBody,
       FileAppender fileAppender,
       String refsetConceptId,
       ResultDto resultDto)
       throws InterruptedException {
     return this.getAddOrRemoveQueryResponse(
-        restTemplate, baseQuery, fileAppender, refsetConceptId, "add", resultDto);
+        restTemplate, baseUrl, baseBody, fileAppender, refsetConceptId, "add", resultDto);
   }
 
   // null return value indicates count threshold exceeded
   private AddOrRemoveQueryResponse getRemoveQueryResponse(
       RestTemplate restTemplate,
-      String baseQuery,
+      String baseUrl,
+      Map<String, Object> baseBody,
       FileAppender fileAppender,
       String refsetConceptId,
       ResultDto resultDto)
       throws InterruptedException {
     return this.getAddOrRemoveQueryResponse(
-        restTemplate, baseQuery, fileAppender, refsetConceptId, "remove", resultDto);
+        restTemplate, baseUrl, baseBody, fileAppender, refsetConceptId, "remove", resultDto);
   }
 
   // null return value indicates count threshold exceeded
   private AddOrRemoveQueryResponse getAddOrRemoveQueryResponse(
       RestTemplate restTemplate,
-      String baseQuery,
+      String baseUrl,
+      Map<String, Object> baseBody,
       FileAppender fileAppender,
       String refsetConceptId,
       String mode,
       ResultDto resultDto)
       throws InterruptedException {
 
-    String query = baseQuery + "&offset=0";
+    Map<String, Object> body = new HashMap<>(baseBody);
+    body.put("offset", 0);
 
     long startTime = System.nanoTime();
 
     try {
       AddOrRemoveQueryResponse queryResponse =
-          restTemplate.getForObject(query, AddOrRemoveQueryResponse.class);
+          restTemplate.postForObject(baseUrl, body, AddOrRemoveQueryResponse.class);
 
       long endTime = System.nanoTime();
       long elapsedTime = endTime - startTime;
@@ -895,7 +914,8 @@ public class EclRefsetApplication {
           executor.execute(
               new AddRemoveQueryThread(
                   restTemplate,
-                  baseQuery,
+                  baseUrl,
+                  baseBody,
                   allQueryResponse,
                   threadCount++,
                   offset,

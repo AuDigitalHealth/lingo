@@ -16,6 +16,8 @@
 package au.gov.digitalhealth.eclrefset;
 
 import au.gov.digitalhealth.eclrefset.model.addorremovequeryresponse.AddOrRemoveQueryResponse;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.extern.java.Log;
 import org.springframework.web.client.RestTemplate;
 
@@ -23,7 +25,8 @@ import org.springframework.web.client.RestTemplate;
 public class AddRemoveQueryThread extends Thread {
 
   RestTemplate restTemplate;
-  String baseQuery;
+  String baseUrl;
+  Map<String, Object> baseBody;
   AddOrRemoveQueryResponse allQueryResponse;
   int threadCount;
   int offset;
@@ -31,13 +34,15 @@ public class AddRemoveQueryThread extends Thread {
 
   public AddRemoveQueryThread(
       RestTemplate restTemplate,
-      String baseQuery,
+      String baseUrl,
+      Map<String, Object> baseBody,
       AddOrRemoveQueryResponse allQueryResponse,
       int threadCount,
       int offset,
       int limit) {
     this.restTemplate = restTemplate;
-    this.baseQuery = baseQuery;
+    this.baseUrl = baseUrl;
+    this.baseBody = baseBody;
     this.allQueryResponse = allQueryResponse;
     this.threadCount = threadCount;
     this.offset = offset;
@@ -50,14 +55,17 @@ public class AddRemoveQueryThread extends Thread {
 
     log.fine("Thread:" + threadCount + " started");
 
-    String query = baseQuery + "&offset=" + (offset + limit);
+    int nextOffset = offset + limit;
+    log.fine("Thread:" + threadCount + " processing from offset=" + nextOffset);
 
-    log.fine("Thread:" + threadCount + " processing from offset=" + (offset + limit));
+    Map<String, Object> body = new HashMap<>(baseBody);
+    body.put("offset", nextOffset);
+    body.put("limit", limit);
 
     long startTime = System.nanoTime();
 
     AddOrRemoveQueryResponse nextQueryResponse =
-        restTemplate.getForObject(query, AddOrRemoveQueryResponse.class);
+        restTemplate.postForObject(baseUrl, body, AddOrRemoveQueryResponse.class);
 
     long endTime = System.nanoTime();
     long elapsedTime = endTime - startTime;

@@ -56,6 +56,25 @@
 			<artifactId>lingo-common</artifactId>
 			<groupId>au.gov.digitalhealth</groupId>
 		</dependency>
+		<dependency>
+			<artifactId>lingo-auth</artifactId>
+			<groupId>au.gov.digitalhealth</groupId>
+			<exclusions>
+				<!-- eclrefset is a CLI — no servlet container, web stack, or security filter chain needed -->
+				<exclusion>
+					<artifactId>spring-boot-starter-security</artifactId>
+					<groupId>org.springframework.boot</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>spring-boot-starter-web</artifactId>
+					<groupId>org.springframework.boot</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>spring-boot-starter-webflux</artifactId>
+					<groupId>org.springframework.boot</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
 	    <dependency>
             <artifactId>spring-boot-starter</artifactId>
             <groupId>org.springframework.boot</groupId>
