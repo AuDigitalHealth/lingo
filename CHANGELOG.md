@@ -18,6 +18,7 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 ### Fixed
 - Added a client-side response timeout (default 90s, configurable via `name.generator.api.timeout-seconds`) plus a connect timeout to the name-generator WebClients (both the default client and the ECL-based generators), so a hung upstream name-generation service can no longer make name generation/regeneration wait indefinitely. The timeout is set above the upstream's worst-case response time so it only trips on a genuinely stuck upstream, where it falls through the existing graceful "keep previous name + flag for manual edit" path — no user-facing behaviour change.
+- Stopped the task list's rebase indicator (`RebaseIcon`) from forwarding its custom `branchState` prop to the DOM, removing the React "does not recognize the `branchState` prop on a DOM element" console warning. The styled `Avatar`'s `shouldForwardProp` filtered a stale prop name (`status`) instead of `branchState`.
 
 
 ## [1.3.47] - 2026-06-18

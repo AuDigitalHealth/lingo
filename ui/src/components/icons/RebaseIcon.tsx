@@ -5,7 +5,7 @@ import { RefreshOutlined } from '@mui/icons-material';
 import { Theme } from '@mui/material/styles';
 
 const StyledAvatar = styled(Avatar, {
-  shouldForwardProp: prop => prop !== 'status',
+  shouldForwardProp: prop => prop !== 'branchState',
 })<{ branchState?: BranchState }>(({ theme, branchState }) => ({
   width: 'auto',
   height: 'auto',
