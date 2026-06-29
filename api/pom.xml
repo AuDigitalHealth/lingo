@@ -470,7 +470,7 @@
     <dependency>
       <artifactId>wiremock-standalone</artifactId>
       <groupId>org.wiremock</groupId>
-      <version>3.0.3</version>
+      <version>3.13.2</version>
     </dependency>
     <dependency>
       <artifactId>postgresql</artifactId>
