@@ -155,7 +155,7 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
     allowDelete = true,
     requireEditButton = false,
     ecl,
-    createBrand,
+    createPrimitiveConcept,
     nondefiningPropertyTitle,
     allowCopy,
     allowNonDefiningPropertyEdit,
@@ -338,7 +338,7 @@ const BrandDetails: React.FC<BrandDetailsProps> = props => {
                     showDefaultOptions: false,
                     label: 'Brand',
                     skipTitle: false,
-                    createBrand: createBrand,
+                    createPrimitiveConcept: createPrimitiveConcept,
                   },
                 }}
                 registry={registry}

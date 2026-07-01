@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
+### Fixed
+- Restored the "Create Brand" button on the bulk brand authoring screen, which lets an author create a new product name concept when the brand isn't in the existing set (matching the medication/device authoring screens). The button had stopped rendering because the `createBrand` → `createPrimitiveConcept` rename updated the ui-schema and the shared `AutoCompleteField` but missed the `BrandDetails` field that forwards the config on the bulk brand path.
 
 
 ## [1.3.48] - 2026-06-29
