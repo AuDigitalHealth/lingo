@@ -123,6 +123,47 @@ class ModelLevelDefiningAttributesTest {
   }
 
   @Test
+  void amtClinicalDrugIncludesActiveIngredientToExcludeExtraIngredients() {
+    // An AMT MPUU (unbranded CLINICAL_DRUG) modelled with a given set of active ingredients must
+    // not match a candidate carrying an additional ingredient. HAS_ACTIVE_INGREDIENT is always
+    // emitted for the unbranded level, so it can safely drive a `[0..0] X != value` exclusion.
+    // Precise ingredient and BoSS remain excluded — they are not mandatory-when-applicable at CD
+    // level, so filtering on them would wrongly exclude partially-modelled lookups.
+    Set<LingoConstants> attrs =
+        ModelLevelDefiningAttributes.getDefiningAttributeTypes(
+            ModelLevelType.CLINICAL_DRUG, ModelType.AMT);
+
+    assertTrue(attrs.contains(SnomedConstants.HAS_ACTIVE_INGREDIENT));
+    assertFalse(attrs.contains(SnomedConstants.HAS_PRECISE_ACTIVE_INGREDIENT));
+    assertFalse(attrs.contains(SnomedConstants.HAS_BOSS));
+  }
+
+  @Test
+  void nmpcClinicalDrugOmitsActiveIngredient() {
+    // NMPC VMP is guarded against extra ingredients by the always-emitted
+    // COUNT_OF_BASE_ACTIVE_INGREDIENT positive filter, so the active-ingredient exclusion is
+    // AMT-gated to keep NMPC's generated ECL unchanged.
+    Set<LingoConstants> attrs =
+        ModelLevelDefiningAttributes.getDefiningAttributeTypes(
+            ModelLevelType.CLINICAL_DRUG, ModelType.NMPC);
+
+    assertFalse(attrs.contains(SnomedConstants.HAS_ACTIVE_INGREDIENT));
+  }
+
+  @Test
+  void amtRealClinicalDrugOmitsActiveIngredient() {
+    // The branded level (TPUU) is already guarded by COUNT_OF_ACTIVE_INGREDIENT. Adding
+    // HAS_ACTIVE_INGREDIENT to REAL_CLINICAL_DRUG would be unsafe because NMPC AMP never emits
+    // HAS_ACTIVE_INGREDIENT (only HAS_PRECISE_ACTIVE_INGREDIENT), which would produce a toxic
+    // `[0..0] X = *` filter — so it stays off the branded level for both model types.
+    Set<LingoConstants> attrs =
+        ModelLevelDefiningAttributes.getDefiningAttributeTypes(
+            ModelLevelType.REAL_CLINICAL_DRUG, ModelType.AMT);
+
+    assertFalse(attrs.contains(SnomedConstants.HAS_ACTIVE_INGREDIENT));
+  }
+
+  @Test
   void mpLevelOmitsClinicalDrugLevelAttributes() {
     // The unit-of-presentation attributes belong at VMP/AMP, not at VTM/MP.
     Set<LingoConstants> attrs =

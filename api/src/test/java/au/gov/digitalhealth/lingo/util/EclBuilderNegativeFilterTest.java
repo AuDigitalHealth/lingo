@@ -156,6 +156,86 @@ class EclBuilderNegativeFilterTest {
     assertThat(ecl).containsAnyOf("(111 OR 222)", "(222 OR 111)");
   }
 
+  private static ModelConfiguration amtModel() {
+    ModelConfiguration cfg = new ModelConfiguration();
+    cfg.setModelType(ModelType.AMT);
+    cfg.setModuleId("32506021000036107");
+    return cfg;
+  }
+
+  private static ModelLevel clinicalDrugLevel() {
+    ModelLevel level = new ModelLevel();
+    level.setName("Clinical Drug");
+    level.setDisplayLabel("MPUU");
+    level.setModelLevelType(ModelLevelType.CLINICAL_DRUG);
+    return level;
+  }
+
+  /**
+   * Regression: an AMT MPUU (unbranded CLINICAL_DRUG) modelled with a single active ingredient must
+   * not match an existing MPUU that carries an additional ingredient. Before the fix the ingredient
+   * role group used pure "some" semantics with no cardinality guard, so a candidate with the
+   * modelled ingredient plus an extra one still matched.
+   */
+  @Test
+  void amtClinicalDrugExcludesCandidatesWithAnExtraIngredient() {
+    Set<SnowstormRelationship> relationships = new HashSet<>();
+    relationships.add(isAMp());
+    relationships.add(rel(SnomedConstants.HAS_ACTIVE_INGREDIENT.getValue(), "111", 1));
+
+    String ecl =
+        EclBuilder.build(relationships, Set.of(), false, false, amtModel(), clinicalDrugLevel());
+
+    assertThat(ecl)
+        .as(
+            "A candidate MPUU carrying an active ingredient other than the modelled one must be "
+                + "excluded")
+        .contains("[0..0] " + SnomedConstants.HAS_ACTIVE_INGREDIENT.getValue() + " != 111");
+    assertThat(ecl)
+        .as("The ingredient is present, so the absence form must not be emitted")
+        .doesNotContain("[0..0] " + SnomedConstants.HAS_ACTIVE_INGREDIENT.getValue() + " = *");
+  }
+
+  @Test
+  void amtClinicalDrugMultiIngredientExcludesExtraViaOrForm() {
+    Set<SnowstormRelationship> relationships = new HashSet<>();
+    relationships.add(isAMp());
+    relationships.add(rel(SnomedConstants.HAS_ACTIVE_INGREDIENT.getValue(), "111", 1));
+    relationships.add(rel(SnomedConstants.HAS_ACTIVE_INGREDIENT.getValue(), "222", 2));
+
+    String ecl =
+        EclBuilder.build(relationships, Set.of(), false, false, amtModel(), clinicalDrugLevel());
+
+    assertThat(ecl)
+        .contains("[0..0] " + SnomedConstants.HAS_ACTIVE_INGREDIENT.getValue() + " != (");
+    assertThat(ecl).containsAnyOf("(111 OR 222)", "(222 OR 111)");
+  }
+
+  /**
+   * NMPC VMP (unbranded CLINICAL_DRUG) is guarded against extra ingredients by a separate
+   * COUNT_OF_BASE_ACTIVE_INGREDIENT positive filter, so the active-ingredient exclusion is
+   * AMT-gated — an NMPC clinical-drug lookup must not emit any HAS_ACTIVE_INGREDIENT negative
+   * filter.
+   */
+  @Test
+  void nmpcClinicalDrugDoesNotEmitActiveIngredientNegativeFilter() {
+    Set<SnowstormRelationship> relationships = new HashSet<>();
+    relationships.add(isAMp());
+    relationships.add(rel(SnomedConstants.HAS_ACTIVE_INGREDIENT.getValue(), "111", 1));
+
+    ModelLevel vmp = new ModelLevel();
+    vmp.setName("VMP");
+    vmp.setDisplayLabel("VMP");
+    vmp.setModelLevelType(ModelLevelType.CLINICAL_DRUG);
+
+    String ecl = EclBuilder.build(relationships, Set.of(), false, false, nmpcModel(), vmp);
+
+    assertThat(ecl)
+        .doesNotContain("[0..0] " + SnomedConstants.HAS_ACTIVE_INGREDIENT.getValue() + " !=");
+    assertThat(ecl)
+        .doesNotContain("[0..0] " + SnomedConstants.HAS_ACTIVE_INGREDIENT.getValue() + " = *");
+  }
+
   private static SnowstormRelationship packSizeValue(String value, int group) {
     SnowstormRelationship r = new SnowstormRelationship();
     r.setTypeId(SnomedConstants.HAS_PACK_SIZE_VALUE.getValue());

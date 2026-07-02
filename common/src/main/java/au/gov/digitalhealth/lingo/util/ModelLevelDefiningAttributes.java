@@ -72,8 +72,17 @@ import java.util.stream.Collectors;
  * HAS_CONCENTRATION_STRENGTH_*_VALUE}) and AMT clinical-drug attributes ({@code
  * HAS_TOTAL_QUANTITY_*}, AMT {@code CONCENTRATION_STRENGTH_*}, {@code HAS_DEVICE_TYPE}) are
  * deliberately omitted today: concrete multi-value attributes hit the {@code [N..N]} cardinality
- * approximation in the ECL builder, and the AMT per-ingredient attributes need careful thought
- * about partial-form lookups.
+ * approximation in the ECL builder.
+ *
+ * <p>Of the AMT per-ingredient attributes, only {@code HAS_ACTIVE_INGREDIENT} is included (AMT
+ * {@code CLINICAL_DRUG}) — it is always emitted at the unbranded level, so its {@code [0..0] X !=
+ * value} exclusion is safe and stops a candidate with an extra ingredient matching a
+ * fewer-ingredient shape. {@code HAS_PRECISE_ACTIVE_INGREDIENT} and {@code HAS_BOSS} remain
+ * deliberately omitted at CD level: they are only populated when the user models a precise
+ * ingredient / strength, so including them would emit {@code [0..0] X = *} on a partial-form lookup
+ * and wrongly exclude fully-modelled candidates. As a consequence, a candidate that differs only in
+ * precise-ingredient identity or BoSS (sharing the same base ingredient set) is not yet
+ * discriminated at CD level.
  *
  * <p><strong>Sync requirement:</strong> when {@code MedicationProductCalculationService}'s {@code
  * createMpRelationships}, {@code createClinicalDrugRelationships}, or {@code
@@ -137,8 +146,17 @@ public final class ModelLevelDefiningAttributes {
         }
         yield attrs;
       }
-      case CLINICAL_DRUG,
-          REAL_CLINICAL_DRUG,
+      case CLINICAL_DRUG ->
+          // AMT MPUUs (unbranded clinical drugs) carry no ingredient-count attribute, so without an
+          // explicit active-ingredient exclusion a candidate with an extra ingredient still
+          // satisfies the "some"-semantics ingredient role-group refinement and is matched
+          // erroneously. HAS_ACTIVE_INGREDIENT is always emitted at the unbranded level, so it can
+          // safely drive a [0..0] X != value exclusion. Gated to AMT because NMPC VMPs are guarded
+          // against extra ingredients by COUNT_OF_BASE_ACTIVE_INGREDIENT instead — this keeps
+          // NMPC's generated ECL unchanged. Precise ingredient and BoSS stay out: they are not
+          // mandatory-when-applicable at CD level (see class Javadoc).
+          modelType == ModelType.AMT ? Set.of(HAS_ACTIVE_INGREDIENT) : Set.of();
+      case REAL_CLINICAL_DRUG,
           PACKAGED_CLINICAL_DRUG,
           REAL_PACKAGED_CLINICAL_DRUG,
           REAL_CONTAINERIZED_PACKAGED_CLINICAL_DRUG,
