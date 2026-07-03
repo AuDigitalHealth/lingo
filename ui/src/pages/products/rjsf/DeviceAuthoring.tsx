@@ -254,11 +254,8 @@ function DeviceAuthoring({
             value: suggestion,
             index: 0,
           });
-          setFormData({
-            containedProducts: [
-              { productDetails: { brandedProductName: suggestion } },
-            ],
-          });
+          // Applied by BrandedProductNameWidget from this prefill state; see MedicationAuthoring
+          // handleClear — no setFormData here, to avoid racing/clobbering the product-load write.
         } else {
           setBrandedProductNamePrefill({ status: 'empty', index: 0 });
         }

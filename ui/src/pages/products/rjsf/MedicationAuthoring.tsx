@@ -261,12 +261,11 @@ function MedicationAuthoring({
             value: suggestion,
             index: 0,
           });
-          setFormData({
-            containedProducts: [
-              { productDetails: { brandedProductName: suggestion } },
-            ],
-          });
-          setFormKey(prev => prev + 1);
+          // The suggestion is applied by BrandedProductNameWidget, which seeds the empty field
+          // from this prefill state. We deliberately do NOT setFormData here: a second async
+          // form-data write races the product-load write, and whichever landed last won —
+          // intermittently wiping the suggestion (or the loaded product) (IEDC-7474). Seeding
+          // inside the widget happens within the resolved form and cannot be raced/clobbered.
         } else {
           setBrandedProductNamePrefill({ status: 'empty', index: 0 });
         }
