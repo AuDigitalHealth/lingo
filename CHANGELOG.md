@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
+## [Unreleased]
+- No updates yet.
+
+
 ## [1.3.49] - 2026-07-03
 ### Fixed
 - Fixed the HPRA ticket "Branded product name" prefill intermittently going missing when authoring a medication or device (IEDC-7474). The prefill did a second `setFormData` that raced the product-load `setFormData`; whichever settled last won, so the suggestion (or the loaded product) was intermittently wiped. The suggestion is now applied by `BrandedProductNameWidget` from within the resolved form — seeding the empty field and re-seeding if a later load blanks it, while never overriding a user edit — so it can no longer be lost to the race.
