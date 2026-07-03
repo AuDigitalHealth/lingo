@@ -1026,71 +1026,100 @@ public class MedicationProductCalculationService
       List<String> order,
       NodeNameGenerator nameGenerator) {
     return n -> {
-      // Copy the user's strengthFormat choice (form input on the product) onto the new node so the
-      // downstream name generator request carries it as strength_format. See
-      // NameGenerationService.generateNameGeneratorSpec for the read.
-      if (modelConfiguration.isNameGeneratorSupportsStrengthFormat()
-          && n.isNewConcept()
-          && productDetails.getStrengthFormat() != null) {
-        n.getNewConceptDetails().setStrengthFormat(productDetails.getStrengthFormat());
-      }
-      // Pass the brand term to the name generator as a NAMING-ONLY hint for opted-in virtual
-      // Clinical Drug levels. The brand stays OUT of the axiom (createClinicalDrugRelationships
-      // still only adds HAS_PRODUCT_NAME when branded==true), so the logical definition is
-      // unchanged; only the rendered name reflects it. Resolves to the brand's term (not the
-      // SCTID) so it does not trip the raw-id guard in
-      // NameGenerationService.createFsnAndPreferredTerm.
-      // See NameGenerationService.generateNameGeneratorSpec for the read.
-      if (modelConfiguration.isNameGeneratorSupportsProductName()
-          && n.isNewConcept()
-          && !level.isBranded()
-          && level.getModelLevelType().equals(CLINICAL_DRUG)
-          && productDetails.getProductName() != null
-          && productDetails.getProductName().getPt() != null) {
-        n.getNewConceptDetails()
-            .setNameGeneratorProductName(productDetails.getProductName().getPt().getTerm());
-      }
-      // Pass the user-supplied registered branded product name to the name generator for BOTH
-      // clinical-drug-tier nodes that go through the generator: the VMP (unbranded Virtual
-      // Medicinal Product, CLINICAL_DRUG) and the AMP (branded leaf product, REAL_CLINICAL_DRUG).
-      // Supplying it on the VMP call as well as the AMP call helps the generator derive the
-      // virtual name when the modelling is incomplete. NMPC-only (opt-in flag); only for a newly
-      // created/recreated concept; blank => not set => generator does best-efforts.
-      // See NameGenerationService.generateNameGeneratorSpec for the read.
-      boolean isVirtualClinicalDrug =
-          !level.isBranded() && level.getModelLevelType().equals(CLINICAL_DRUG);
-      boolean isLeafProduct =
-          level
-              .getModelLevelType()
-              .equals(modelConfiguration.getLeafProductModelLevel().getModelLevelType());
-      if (modelConfiguration.isNameGeneratorSupportsBrandedProductName()
-          && n.isNewConcept()
-          && (isVirtualClinicalDrug || isLeafProduct)
-          && productDetails.getBrandedProductName() != null
-          && !productDetails.getBrandedProductName().isBlank()) {
-        n.getNewConceptDetails().setBrandedProductName(productDetails.getBrandedProductName());
-      }
+      applyNameGeneratorHints(n, productDetails, level, modelConfiguration);
       generateName(atomicCache, productDetails, level, n, modelConfiguration, order, nameGenerator);
       productSummary.addNode(n);
-      for (Node parent : parentNodes) {
-        productSummary.addEdge(
-            n.getConceptId(), parent.getConceptId(), ProductSummaryService.IS_A_LABEL);
-        if (n.isNewConcept()) {
-          SnowstormAxiom axoim = getSingleAxiom(n.getNewConceptDetails());
-
-          if (axoim.getRelationships().stream()
-              .noneMatch(
-                  relationship ->
-                      TRUE.equals(relationship.getActive())
-                          && relationship.getTypeId().equals(IS_A.getValue())
-                          && relationship.getDestinationId().equals(parent.getConceptId()))) {
-            axoim.addRelationshipsItem(
-                getSnowstormRelationship(IS_A, parent, 0, branchModelConfiguration.getModuleId()));
-          }
-        }
-      }
+      linkToParents(n, parentNodes, productSummary, branchModelConfiguration);
       return n;
     };
+  }
+
+  /**
+   * Copies the user's naming-only hints (strength format, product name, branded product name) from
+   * the product details onto a newly created node so the downstream name generator request carries
+   * them. These are naming hints only and never change the logical axiom. No-op for existing
+   * concepts. See {@code NameGenerationService.generateNameGeneratorSpec} for the read side.
+   */
+  private static void applyNameGeneratorHints(
+      Node n,
+      MedicationProductDetails productDetails,
+      ModelLevel level,
+      ModelConfiguration modelConfiguration) {
+    if (!n.isNewConcept()) {
+      return;
+    }
+    // Copy the user's strengthFormat choice (form input on the product) onto the new node so the
+    // downstream name generator request carries it as strength_format.
+    if (modelConfiguration.isNameGeneratorSupportsStrengthFormat()
+        && productDetails.getStrengthFormat() != null) {
+      n.getNewConceptDetails().setStrengthFormat(productDetails.getStrengthFormat());
+    }
+    // Pass the brand term to the name generator as a NAMING-ONLY hint for opted-in virtual
+    // Clinical Drug levels. The brand stays OUT of the axiom (createClinicalDrugRelationships
+    // still only adds HAS_PRODUCT_NAME when branded==true), so the logical definition is
+    // unchanged; only the rendered name reflects it. Resolves to the brand's term (not the
+    // SCTID) so it does not trip the raw-id guard in
+    // NameGenerationService.createFsnAndPreferredTerm.
+    if (modelConfiguration.isNameGeneratorSupportsProductName()
+        && !level.isBranded()
+        && level.getModelLevelType().equals(CLINICAL_DRUG)
+        && productDetails.getProductName() != null
+        && productDetails.getProductName().getPt() != null) {
+      n.getNewConceptDetails()
+          .setNameGeneratorProductName(productDetails.getProductName().getPt().getTerm());
+    }
+    // Pass the user-supplied registered branded product name to the name generator for BOTH
+    // clinical-drug-tier nodes that go through the generator: the VMP (unbranded Virtual
+    // Medicinal Product, CLINICAL_DRUG) and the AMP (branded leaf product, REAL_CLINICAL_DRUG).
+    // Supplying it on the VMP call as well as the AMP call helps the generator derive the
+    // virtual name when the modelling is incomplete. NMPC-only (opt-in flag); blank => not set
+    // => generator does best-efforts.
+    boolean isVirtualClinicalDrug =
+        !level.isBranded() && level.getModelLevelType().equals(CLINICAL_DRUG);
+    boolean isLeafProduct =
+        level
+            .getModelLevelType()
+            .equals(modelConfiguration.getLeafProductModelLevel().getModelLevelType());
+    if (modelConfiguration.isNameGeneratorSupportsBrandedProductName()
+        && (isVirtualClinicalDrug || isLeafProduct)
+        && productDetails.getBrandedProductName() != null
+        && !productDetails.getBrandedProductName().isBlank()) {
+      n.getNewConceptDetails().setBrandedProductName(productDetails.getBrandedProductName());
+    }
+  }
+
+  /**
+   * Adds an IS-A edge from the node to each parent in the product summary, and — for newly created
+   * concepts — ensures the node's axiom carries a matching IS-A relationship to that parent.
+   */
+  private static void linkToParents(
+      Node n,
+      Set<Node> parentNodes,
+      ProductSummary productSummary,
+      ModelConfiguration branchModelConfiguration) {
+    for (Node parent : parentNodes) {
+      productSummary.addEdge(
+          n.getConceptId(), parent.getConceptId(), ProductSummaryService.IS_A_LABEL);
+      if (n.isNewConcept()) {
+        addIsARelationshipIfAbsent(n, parent, branchModelConfiguration);
+      }
+    }
+  }
+
+  private static void addIsARelationshipIfAbsent(
+      Node n, Node parent, ModelConfiguration branchModelConfiguration) {
+    SnowstormAxiom axiom = getSingleAxiom(n.getNewConceptDetails());
+    boolean hasIsAToParent =
+        axiom.getRelationships().stream()
+            .anyMatch(
+                relationship ->
+                    TRUE.equals(relationship.getActive())
+                        && relationship.getTypeId().equals(IS_A.getValue())
+                        && relationship.getDestinationId().equals(parent.getConceptId()));
+    if (!hasIsAToParent) {
+      axiom.addRelationshipsItem(
+          getSnowstormRelationship(IS_A, parent, 0, branchModelConfiguration.getModuleId()));
+    }
   }
 
   /**
@@ -1137,7 +1166,14 @@ public class MedicationProductCalculationService
     if (term == null) {
       return null;
     }
-    String stripped = term.replaceFirst("(?i)\\s*\\(brand\\)\\s*$", "").trim();
+    // Plain trailing-token check (case-insensitive) rather than a regex: the surrounding whitespace
+    // the old "\\s*\\(brand\\)\\s*$" pattern consumed is handled by trim(), so this is linear and
+    // avoids the regex backtracking Sonar flagged.
+    final String tag = "(brand)";
+    String stripped = term.trim();
+    if (stripped.regionMatches(true, stripped.length() - tag.length(), tag, 0, tag.length())) {
+      stripped = stripped.substring(0, stripped.length() - tag.length()).trim();
+    }
     return stripped.isEmpty() ? null : stripped;
   }
 
@@ -1504,42 +1540,33 @@ public class MedicationProductCalculationService
         relationships.add(
             getSnowstormRelationship(IS_A, parent, 0, modelConfiguration.getModuleId()));
       }
-    } else if (modelConfiguration.getModelType().equals(ModelType.NMPC)
-        && level.getModelLevelType().equals(CLINICAL_DRUG)) {
-      relationships.add(
-          getSnowstormRelationship(
-              IS_A, VIRTUAL_MEDICINAL_PRODUCT, 0, modelConfiguration.getModuleId()));
     } else {
       relationships.add(
           getSnowstormRelationship(IS_A, MEDICINAL_PRODUCT, 0, modelConfiguration.getModuleId()));
     }
 
-    if (productDetails instanceof NutritionalProductDetails nutritionalProductDetails) {
-      if (level.equals(CLINICAL_DRUG)) {
-        relationships.add(
-            getSnowstormRelationship(
-                IS_A,
-                productDetails.getExistingMedicinalProduct(),
-                0,
-                STATED_RELATIONSHIP,
-                modelConfiguration.getModuleId()));
-      } else if (level.equals(REAL_CLINICAL_DRUG)) {
-        relationships.add(
-            getSnowstormRelationship(
-                IS_A,
-                productDetails.getExistingClinicalDrug(),
-                0,
-                STATED_RELATIONSHIP,
-                modelConfiguration.getModuleId()));
-      }
-      if (modelConfiguration.getModelType().equals(ModelType.NMPC)) {
-        addRelationshipIfNotNull(
-            relationships,
-            nutritionalProductDetails.getTargetPopulation(),
-            HAS_TARGET_POPULATION,
-            0,
-            modelConfiguration.getModuleId());
-      }
+    if (modelConfiguration.getModelType().equals(ModelType.NMPC)
+        && level.getModelLevelType().equals(CLINICAL_DRUG)) {
+      relationships.add(
+          getSnowstormRelationship(
+              IS_A, VIRTUAL_MEDICINAL_PRODUCT, 0, modelConfiguration.getModuleId()));
+    }
+
+    // NOTE: this block previously also added IS_A relationships to the existing medicinal product /
+    // clinical drug, guarded by level.equals(CLINICAL_DRUG) / level.equals(REAL_CLINICAL_DRUG) -
+    // comparisons of a ModelLevel to a ModelLevelType that were always false, so those branches
+    // never executed. Those parent IS_A relationships are already supplied by the generic
+    // parent-node mechanism (createProduct / postProductNodeCreationFunction), so the dead branches
+    // were removed rather than "fixed" to avoid duplicate IS_A relationships and NPEs on a null
+    // existing concept.
+    if (productDetails instanceof NutritionalProductDetails nutritionalProductDetails
+        && modelConfiguration.getModelType().equals(ModelType.NMPC)) {
+      addRelationshipIfNotNull(
+          relationships,
+          nutritionalProductDetails.getTargetPopulation(),
+          HAS_TARGET_POPULATION,
+          0,
+          modelConfiguration.getModuleId());
     }
 
     if (modelConfiguration.getModelType().equals(ModelType.NMPC)
