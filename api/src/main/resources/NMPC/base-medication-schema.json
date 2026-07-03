@@ -376,7 +376,7 @@
                     "properties": {
                       "productType": { "const": "noIngredients" },
                       "productName": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Brand Name" },
-                      "brandedProductName": { "type": "string", "title": "Branded product name", "description": "Registered branded product name used to name the AMP. Optional; leave blank to let the name generator derive it from the modelling." },
+                      "brandedProductName": { "type": "string", "title": "Branded product name", "description": "Registered branded product name used verbatim to name the AMP. Required for nutritional products." },
                       "genericForm": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Generic Dose Form" },
                       "specificForm": { "type": ["object", "null"], "nullable": true, "$ref": "#/$defs/SnowstormConceptMini", "title": "Specific Dose Form" },
                       "existingMedicinalProduct": { "type": ["object", "null"], "$ref": "#/$defs/SnowstormConceptMini", "title": "Existing VTM Level Concept"},
@@ -387,7 +387,7 @@
                       "unitOfPresentation": { "$ref": "#/$defs/SnowstormConceptMini", "title": "Unit of Presentation" },
                       "nonDefiningProperties": { "type": "array", "items": { "$ref": "#/$defs/NUTRITIONAL_PRODUCT_NonDefiningProperty" }, "title": "Non Defining Properties" }
                     },
-                    "required": ["productName", "genericForm", "productType", "unitOfPresentation"],
+                    "required": ["productName", "genericForm", "productType", "unitOfPresentation", "brandedProductName"],
                     "additionalProperties": false
                   }
                 ],

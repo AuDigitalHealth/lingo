@@ -1093,18 +1093,52 @@ public class MedicationProductCalculationService
     };
   }
 
-  private static String generateNutritionalProductName(
+  /**
+   * Builds the base name (PT) for a nutritional product concept at the given level. HSE keep the
+   * whole marketed descriptor in the author-supplied name fields — there is no ingredient/strength
+   * skeleton to derive from — so each level echoes the appropriate supplied name verbatim:
+   *
+   * <ul>
+   *   <li>ATM (real medicinal product): the bare brand, with any trailing "(brand)" tag removed;
+   *   <li>AMP (real clinical drug): the registered branded product name;
+   *   <li>VMP (new virtual clinical drug): the new generic product name, which already carries the
+   *       dose form and container, so nothing further is appended.
+   * </ul>
+   */
+  static String generateNutritionalProductName(
       ModelLevel level, NutritionalProductDetails nutritionalProductDetails) {
-    String genericName = nutritionalProductDetails.getNewGenericProductName();
-    String form = nutritionalProductDetails.getGenericForm().getPt().getTerm().toLowerCase().trim();
-    String unit =
-        nutritionalProductDetails.getUnitOfPresentation().getPt().getTerm().toLowerCase().trim();
-    String productName = nutritionalProductDetails.getProductName().getPt().getTerm();
+    // Null-safe: the mandatory-field validation runs before name generation for a real NMPC save,
+    // but callers on other paths (e.g. a nutritional payload on a non-NMPC branch) are not
+    // guaranteed to have populated these fields — return null there rather than throwing.
+    return switch (level.getModelLevelType()) {
+      case REAL_MEDICINAL_PRODUCT -> stripBrandTag(brandTerm(nutritionalProductDetails));
+      case REAL_CLINICAL_DRUG -> trimToNull(nutritionalProductDetails.getBrandedProductName());
+      default -> trimToNull(nutritionalProductDetails.getNewGenericProductName());
+    };
+  }
 
-    boolean isRealClinicalDrug = level.getModelLevelType().equals(REAL_CLINICAL_DRUG);
-    String prefix = isRealClinicalDrug ? (productName + " ") : "";
+  private static String brandTerm(NutritionalProductDetails nutritionalProductDetails) {
+    return nutritionalProductDetails.getProductName() == null
+            || nutritionalProductDetails.getProductName().getPt() == null
+        ? null
+        : nutritionalProductDetails.getProductName().getPt().getTerm();
+  }
 
-    return (prefix + genericName + " " + form + " " + unit).trim();
+  private static String trimToNull(String value) {
+    if (value == null) {
+      return null;
+    }
+    String trimmed = value.trim();
+    return trimmed.isEmpty() ? null : trimmed;
+  }
+
+  /** Removes a trailing "(brand)" naming tag from a brand concept's term (e.g. "Foo (brand)"). */
+  static String stripBrandTag(String term) {
+    if (term == null) {
+      return null;
+    }
+    String stripped = term.replaceFirst("(?i)\\s*\\(brand\\)\\s*$", "").trim();
+    return stripped.isEmpty() ? null : stripped;
   }
 
   private static void handleNutritionalProductName(
@@ -1113,30 +1147,28 @@ public class MedicationProductCalculationService
       Node node,
       NutritionalProductDetails nutritionalProductDetails) {
 
-    if (node.isNewConcept()) {
-      boolean isExistingClinicalDrug =
-          level.getModelLevelType().equals(CLINICAL_DRUG)
-              && nutritionalProductDetails.getExistingClinicalDrug() != null
-              && nutritionalProductDetails.getExistingClinicalDrug().getConceptId() != null;
-
-      if (level.getModelLevelType().equals(REAL_MEDICINAL_PRODUCT)) {
-        // If this is a new concept, we need to generate the FSN and PT
-        final String productName = nutritionalProductDetails.getProductName().getPt().getTerm();
-        node.getNewConceptDetails()
-            .setFullySpecifiedName(
-                productName + " nutritional product (" + level.getDrugDeviceSemanticTag() + ")");
-        node.getNewConceptDetails().setPreferredTerm(productName);
-        atomicCache.addFsnAndPt(node.getConceptId(), productName, productName);
-      } else if (!isExistingClinicalDrug
-          && !level.getModelLevelType().equals(MEDICINAL_PRODUCT_ONLY)) {
-        final String baseName = generateNutritionalProductName(level, nutritionalProductDetails);
-        String fsn = baseName + " (" + level.getDrugDeviceSemanticTag() + ")";
-
-        node.getNewConceptDetails().setFullySpecifiedName(fsn);
-        node.getNewConceptDetails().setPreferredTerm(baseName);
-        atomicCache.addFsnAndPt(node.getConceptId(), fsn, baseName);
-      }
+    if (!node.isNewConcept()) {
+      return;
     }
+    // An existing VMP keeps its own name; the medicinal-product-only level is never named here.
+    boolean isExistingClinicalDrug =
+        level.getModelLevelType().equals(CLINICAL_DRUG)
+            && nutritionalProductDetails.getExistingClinicalDrug() != null
+            && nutritionalProductDetails.getExistingClinicalDrug().getConceptId() != null;
+    if (isExistingClinicalDrug || level.getModelLevelType().equals(MEDICINAL_PRODUCT_ONLY)) {
+      return;
+    }
+
+    final String baseName = generateNutritionalProductName(level, nutritionalProductDetails);
+    if (baseName == null) {
+      // Incomplete input (e.g. a $calculate preview before the name fields are entered); leave the
+      // node unnamed rather than emitting a malformed name. Mandatory validation gates a real save.
+      return;
+    }
+    final String fsn = baseName + " (" + level.getDrugDeviceSemanticTag() + ")";
+    node.getNewConceptDetails().setFullySpecifiedName(fsn);
+    node.getNewConceptDetails().setPreferredTerm(baseName);
+    atomicCache.addFsnAndPt(node.getConceptId(), fsn, baseName);
   }
 
   /** Collects the preferred terms of every concept that participates in the product's OWL axiom. */

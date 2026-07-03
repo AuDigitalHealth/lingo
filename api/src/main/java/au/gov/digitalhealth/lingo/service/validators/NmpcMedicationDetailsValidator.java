@@ -156,6 +156,12 @@ public class NmpcMedicationDetailsValidator extends DetailsValidator
           productDetails.getExistingMedicinalProduct(),
           "Nutritional product must have an existing medicinal product defined",
           result);
+      // The branded product name is used verbatim as the AMP name, so it is mandatory for
+      // nutritional products (there is no modelling to derive it from).
+      if (nutritionalProductDetails.getBrandedProductName() == null
+          || nutritionalProductDetails.getBrandedProductName().isBlank()) {
+        result.addProblem("Nutritional product must have a branded product name defined");
+      }
       if (nutritionalProductDetails.getNewGenericProductName() == null
           || nutritionalProductDetails.getNewGenericProductName().isBlank()) {
         validatePopulatedConcept(
