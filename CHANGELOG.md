@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
+## [Unreleased]
+- No updates yet.
+
+
 ## [1.3.50] - 2026-07-07
 - Fixed the ECL Refset `useSnodineTaskByKey` hook to search across all authoring-platform projects (user tasks + review tasks) instead of the Snomio-configured AP project only, so SNODINE tasks are found correctly.
 
