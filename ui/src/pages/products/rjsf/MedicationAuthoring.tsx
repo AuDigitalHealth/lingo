@@ -159,7 +159,6 @@ function MedicationAuthoring({
     ticket,
     setFunction: (data: any) => {
       lastBrandRef.current = {};
-      setBrandedProductNamePrefill({ status: 'none' });
       setMode(
         data.action === 'UPDATE' && data.originalConceptId
           ? 'update'
