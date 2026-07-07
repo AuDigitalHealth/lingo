@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
-## [Unreleased]
+## [1.3.51] - 2026-07-07
 ### Fixed
 - Fixed the NMPC medication-create form's "Brand Name" and "Branded Product Name" fields intermittently overwriting each other on load. The ticket-product load and the ticket brand-name-suggestion fetch raced with no ordering guarantee: the ticket-product callback reset the suggestion status to "none" at the same time it wholesale-replaced the form data, which could land after the suggestion had already been applied and block `BrandedProductNameWidget`'s re-seed logic from recovering it — leaving either field populated with the other blank, or (when the race happened to resolve favourably) both populated. The suggestion is ticket-level, not product-specific, so it stays valid across product loads on the same ticket; removing the redundant reset lets the existing self-heal logic re-seed Branded Product Name correctly regardless of which async call finishes first.
 
