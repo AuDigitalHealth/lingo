@@ -41,6 +41,7 @@ public enum SnomedConstants implements LingoConstants {
       "900000000000227009", "Additional relationship (core metadata concept)"),
   MEDICINAL_PRODUCT("763158003", "Medicinal product (product)"),
   MEDICINAL_PRODUCT_PACKAGE("781405001", "Medicinal product package (product)"),
+  DRUG_DEVICE_COMBINATION_PRODUCT("411115002", "Drug-device combination product (product)"),
   MEDICINAL_PRODUCT_SEMANTIC_TAG("medicinal product"),
   CLINICAL_DRUG_SEMANTIC_TAG("clinical drug"),
   PHYSICAL_OBJECT_SEMANTIC_TAG("physical object"),

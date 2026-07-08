@@ -34,6 +34,7 @@ import static au.gov.digitalhealth.lingo.util.NmpcConstants.VIRTUAL_MEDICINAL_PR
 import static au.gov.digitalhealth.lingo.util.NonDefiningPropertiesConverter.calculateNonDefiningRelationships;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONTAINS_CD;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.COUNT_OF_ACTIVE_INGREDIENT;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.DRUG_DEVICE_COMBINATION_PRODUCT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_ACTIVE_INGREDIENT;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_BOSS;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.HAS_CONCENTRATION_STRENGTH_DENOMINATOR_UNIT;
@@ -1550,6 +1551,12 @@ public class MedicationProductCalculationService
       relationships.add(
           getSnowstormRelationship(
               IS_A, VIRTUAL_MEDICINAL_PRODUCT, 0, modelConfiguration.getModuleId()));
+    }
+
+    if (productDetails.hasDeviceType()) {
+      relationships.add(
+          getSnowstormRelationship(
+              IS_A, DRUG_DEVICE_COMBINATION_PRODUCT, 0, modelConfiguration.getModuleId()));
     }
 
     // NOTE: this block previously also added IS_A relationships to the existing medicinal product /
