@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
+## [Unreleased]
+- No updates yet.
+
+
 ## [1.3.52] - 2026-07-09
 ### Fixed
 - Fixed newly authored drug-device combination products (e.g. a medicated patch) missing the `411115002 | Drug-device combination product (product)|` IS A relationship on the new CD/Product and BCD/Branded Product concepts. `hasDeviceType()` was already used to select the drug-device semantic tag but wasn't wired into the IS A relationships emitted for those levels.
