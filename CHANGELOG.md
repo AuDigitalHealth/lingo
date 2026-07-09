@@ -10,6 +10,7 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 ## [Unreleased]
 ### Fixed
 - Fixed newly authored drug-device combination products (e.g. a medicated patch) missing the `411115002 | Drug-device combination product (product)|` IS A relationship on the new CD/Product and BCD/Branded Product concepts. `hasDeviceType()` was already used to select the drug-device semantic tag but wasn't wired into the IS A relationships emitted for those levels.
+- Fixed newly authored NMPC nutritional VMP and AMP concepts defaulting to Fully Defined instead of Primitive when no ingredient strength data was supplied, causing over-eager classification pull-in of unrelated concepts on authoring tasks.
 
 
 ## [1.3.51] - 2026-07-07

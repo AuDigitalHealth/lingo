@@ -1434,7 +1434,10 @@ public class MedicationProductCalculationService
 
     // if the product has ingredients and they have some sort of strength or quantity then it can be
     // defined, otherwise we'll guess primitive - user can always override the decision
-    // Also, if the product has a productName then it is defined by default
+    // Also, if the product has a productName then it is defined by default. Nutritional products
+    // always carry a productName (the brand, mandatory for naming) regardless of how simply they
+    // are modelled, so that signal doesn't apply to them - they fall back to the ingredient/
+    // strength check like every other level, keeping VMP/AMP primitive by default as before.
     boolean defined =
         !productDetails.getActiveIngredients().isEmpty()
                 && productDetails.getActiveIngredients().stream()
@@ -1444,7 +1447,8 @@ public class MedicationProductCalculationService
                                 || i.getTotalQuantity() != null
                                 || i.getPresentationStrengthNumerator() != null
                                 || i.getConcentrationStrengthNumerator() != null)
-            || productDetails.getProductName() != null;
+            || (!(productDetails instanceof NutritionalProductDetails)
+                && productDetails.getProductName() != null);
 
     return nodeGeneratorService.generateNodeAsync(
         branch,
