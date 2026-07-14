@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
+### Fixed
+- Fixed authoring a new multi-component (2+ active ingredient) NMPC product creating two identical ATM concepts instead of one, blocking the preview screen (CUST1705924). New-concept de-duplication compared axioms with a plain `equals()`/`contains()` check that is sensitive to which number a relationship group is given; with 2+ ingredients that numbering isn't guaranteed stable across two independently-built copies of the same concept, so two axioms describing the same product with swapped ingredient group numbers were wrongly treated as different concepts. `SnowstormDtoUtil.sameAxioms` now delegates to the existing group-number-insensitive comparator (`sameAxiom`/`sameRelationships`), matching its own Javadoc's original intent.
 
 
 ## [1.3.52] - 2026-07-09

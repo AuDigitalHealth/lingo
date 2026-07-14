@@ -20,13 +20,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import au.csiro.snowstorm_client.model.SnowstormAxiom;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
+import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.csiro.snowstorm_client.model.SnowstormTermLangPojo;
+import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.product.details.properties.ReferenceSet;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 public class ProductSummaryNodeDeduplicationTest {
@@ -256,6 +260,78 @@ public class ProductSummaryNodeDeduplicationTest {
     int comparison = comparator.compare(node1, node2);
     assertNotEquals(
         0, comparison, "Nodes with different non-defining properties should not be equal");
+  }
+
+  /**
+   * Regression test for a customer-reported bug (CUST1705924): authoring a new multi-component (2+
+   * active ingredient) NMPC product created two identical ATM concepts instead of one.
+   *
+   * <p>Two "new concept" nodes are built for the same product, but with the two active ingredient
+   * relationships assigned to swapped group numbers (ingredient A group 1 / B group 2 on one node,
+   * B group 1 / A group 2 on the other) — exactly what can happen when the same set of ingredients
+   * is independently built twice during a single product calculation. They should still be
+   * recognised as the same concept and merged down to one node.
+   */
+  @Test
+  public void testDeduplicateNewNodes_ShouldMergeSameConceptWithSwappedIngredientGroupNumbers() {
+    SnowstormRelationship isA = relationship("116680003", "763158003", 0);
+    SnowstormRelationship ingredientA = relationship("762949000", "387584000", 1);
+    SnowstormRelationship ingredientB = relationship("762949000", "387047004", 2);
+    SnowstormRelationship ingredientASwapped = relationship("762949000", "387584000", 2);
+    SnowstormRelationship ingredientBSwapped = relationship("762949000", "387047004", 1);
+
+    Node node1 = newConceptNode(-1, isA, ingredientA, ingredientB);
+    Node node2 = newConceptNode(-2, isA, ingredientASwapped, ingredientBSwapped);
+
+    ProductSummary summary = new ProductSummary();
+    summary.addNode(node1);
+    summary.addNode(node2);
+
+    summary.deduplicateNewNodes(new ModelConfiguration());
+
+    assertEquals(
+        1,
+        summary.getNodes().size(),
+        "The two new-concept nodes describe the same product with the same two ingredients, just "
+            + "numbered in a different order, so they should be merged into a single node");
+  }
+
+  private static SnowstormRelationship relationship(
+      String typeId, String destinationId, int group) {
+    SnowstormRelationship relationship = new SnowstormRelationship();
+    relationship.setTypeId(typeId);
+    relationship.setDestinationId(destinationId);
+    relationship.setGroupId(group);
+    return relationship;
+  }
+
+  /** Helper to build a "new concept" Node (i.e. isNewConcept() == true) with the given axiom. */
+  private static Node newConceptNode(int conceptId, SnowstormRelationship... relationships) {
+    SnowstormAxiom axiom = new SnowstormAxiom();
+    axiom.setDefinitionStatus("PRIMITIVE");
+    axiom.setRelationships(new HashSet<>(Set.of(relationships)));
+
+    NewConceptDetails newConceptDetails = new NewConceptDetails(conceptId);
+    newConceptDetails.setFullySpecifiedName("Test product (clinical drug)");
+    newConceptDetails.setPreferredTerm("Test product");
+    newConceptDetails.setGeneratedFullySpecifiedName("Test product (clinical drug)");
+    newConceptDetails.setGeneratedPreferredTerm("Test product");
+    newConceptDetails.setSemanticTag("clinical drug");
+    newConceptDetails.setAxioms(new HashSet<>(Set.of(axiom)));
+
+    return Node.builder()
+        .newConceptDetails(newConceptDetails)
+        .conceptOptions(new ArrayList<>())
+        .label("MPUU")
+        .displayName("Generic Product")
+        .newInTask(true)
+        .newInProject(true)
+        .nonDefiningProperties(new HashSet<>())
+        .modelLevel(ModelLevelType.CLINICAL_DRUG)
+        .relationships(new ArrayList<>())
+        .axioms(new ArrayList<>())
+        .historicalAssociations(new ArrayList<>())
+        .build();
   }
 
   /** Helper method to create a SnowstormConceptMini with specified values */

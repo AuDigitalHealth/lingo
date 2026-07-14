@@ -1019,7 +1019,10 @@ public class SnowstormDtoUtil {
   /**
    * Determines if two sets of SnowstormAxioms are equivalent. The comparison ignores fields such as
    * id, moduleId, released status, and effectiveTime, focusing only on the core content of the
-   * axioms.
+   * axioms via {@link #sameAxiom}, and is insensitive to relationship group numbering (a set with
+   * two or more grouped relationships, e.g. active ingredients, can be assigned group numbers in a
+   * different order across two independently-built axioms for the same concept - a naive {@code
+   * Set.contains} using generated {@code equals()} would wrongly treat those as different axioms).
    *
    * @param axioms the first set of {@code SnowstormAxiom} objects to compare
    * @param axioms1 the second set of {@code SnowstormAxiom} objects to compare
@@ -1031,10 +1034,14 @@ public class SnowstormDtoUtil {
     if (axioms.size() != axioms1.size()) {
       return false;
     }
+    Set<SnowstormAxiom> remaining = new HashSet<>(axioms1);
     for (SnowstormAxiom axiom : axioms) {
-      if (!axioms1.contains(axiom)) {
+      SnowstormAxiom match =
+          remaining.stream().filter(candidate -> sameAxiom(axiom, candidate)).findFirst().orElse(null);
+      if (match == null) {
         return false;
       }
+      remaining.remove(match);
     }
     return true;
   }
