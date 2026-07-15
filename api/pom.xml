@@ -326,7 +326,7 @@
       <artifactId>imageio-webp</artifactId>
       <groupId>com.twelvemonkeys.imageio</groupId>
       <scope>runtime</scope>
-      <version>3.11.0</version>
+      <version>3.13.1</version>
     </dependency>
     <!-- Avif image support for ImageIO https://github.com/umjammer/vavi-image-avif -->
     <!-- If we need avif support add the following dependency and install libavif in the image -->
