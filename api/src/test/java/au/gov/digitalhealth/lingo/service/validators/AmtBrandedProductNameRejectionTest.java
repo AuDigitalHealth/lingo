@@ -33,9 +33,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.MockReset;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockReset;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 /**
  * Verifies that {@link AmtMedicationDetailsValidator} and {@link AmtDeviceValidator} reject a
@@ -61,10 +61,10 @@ class AmtBrandedProductNameRejectionTest {
    */
   private static final String AMT_BRANCH = "MAIN_SNOMEDCT-AU";
 
-  @MockBean(reset = MockReset.NONE)
+  @MockitoBean(reset = MockReset.NONE)
   SnowstormClient snowstormClient;
 
-  @MockBean(reset = MockReset.NONE)
+  @MockitoBean(reset = MockReset.NONE)
   FhirClient fhirClient;
 
   @Autowired AmtMedicationDetailsValidator medicationValidator;

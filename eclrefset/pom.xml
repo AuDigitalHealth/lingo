@@ -83,6 +83,12 @@
 			<artifactId>spring-boot</artifactId>
 			<groupId>org.springframework.boot</groupId>
 		</dependency>
+		<!-- Spring Boot 4 moved RestTemplateBuilder's auto-config out of spring-boot-autoconfigure into
+		     this module, which is no longer a transitive of spring-boot-starter. -->
+		<dependency>
+			<artifactId>spring-boot-restclient</artifactId>
+			<groupId>org.springframework.boot</groupId>
+		</dependency>
         <dependency>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<groupId>org.springframework.boot</groupId>
@@ -116,7 +122,6 @@
 		<dependency>
 			<artifactId>spring-web</artifactId>
 			<groupId>org.springframework</groupId>
-			<version>${spring-web.version}</version>
 		</dependency>
 		<dependency>
             <artifactId>jackson-datatype-jsr310</artifactId>
@@ -136,10 +141,10 @@
 
 	<properties>
 		<gson.version>2.10.1</gson.version>
+		<java.version>21</java.version>
 		<json.version>20240303</json.version>
-		<lombok.version>1.18.30</lombok.version>
 		<rest-assured.version>6.0.0</rest-assured.version>
-		<spring-web.version>7.0.8</spring-web.version>
+		<!-- spring-web managed by Spring Boot 4 BOM (Spring Framework 7.1.x) -->
 	</properties>
 
 	<repositories>

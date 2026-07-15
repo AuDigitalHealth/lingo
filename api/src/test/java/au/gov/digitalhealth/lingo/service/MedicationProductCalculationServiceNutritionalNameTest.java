@@ -51,9 +51,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.MockReset;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockReset;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -192,10 +192,10 @@ class MedicationProductCalculationServiceNutritionalNameTest {
    */
   private static final String NMPC_MODULE_ID = "1601000220105";
 
-  @MockBean(reset = MockReset.NONE)
+  @MockitoBean(reset = MockReset.NONE)
   SnowstormClient snowstormClient;
 
-  @MockBean(reset = MockReset.NONE)
+  @MockitoBean(reset = MockReset.NONE)
   NameGenerationClient nameGenerationClient;
 
   @Autowired MedicationProductCalculationService productCalculationService;

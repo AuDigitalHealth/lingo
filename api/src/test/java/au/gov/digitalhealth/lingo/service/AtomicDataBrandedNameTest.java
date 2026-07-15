@@ -42,9 +42,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.MockReset;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockReset;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -107,10 +107,10 @@ class AtomicDataBrandedNameTest {
   /** The known preferred term of the stub AMP concept — this is the value the test asserts. */
   private static final String AMP_PREFERRED_TERM = "AcmeWidget 25 mg patch (real clinical device)";
 
-  @MockBean(reset = MockReset.NONE)
+  @MockitoBean(reset = MockReset.NONE)
   SnowstormClient snowstormClient;
 
-  @MockBean(reset = MockReset.NONE)
+  @MockitoBean(reset = MockReset.NONE)
   FhirClient fhirClient;
 
   @Autowired DeviceService deviceService;

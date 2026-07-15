@@ -60,7 +60,7 @@ class TicketImportTest extends TicketTestBaseLocal {
             .as(ImportResponse.class);
 
     Assertions.assertTrue(
-        importResopnse.getMessage().contains("tickets have been imported successfully"));
+        importResopnse.message().contains("tickets have been imported successfully"));
     TicketImportDto ticket1 = ticketService.findByTitle(ticket1Title);
     TicketImportDto ticket2 = ticketService.findByTitle(ticket2Title);
 
@@ -149,15 +149,15 @@ class TicketImportTest extends TicketTestBaseLocal {
             .as(ImportResponse.class);
 
     Assertions.assertTrue(
-        importResopnse.getMessage().contains("Successfully created new import files at"));
+        importResopnse.message().contains("Successfully created new import files at"));
 
-    int startIndex = importResopnse.getMessage().indexOf("[");
-    int endIndex = importResopnse.getMessage().indexOf("]");
+    int startIndex = importResopnse.message().indexOf("[");
+    int endIndex = importResopnse.message().indexOf("]");
     String path1 = "";
     String path2 = "";
 
     if (startIndex != -1 && endIndex != -1) {
-      String paths = importResopnse.getMessage().substring(startIndex + 1, endIndex);
+      String paths = importResopnse.message().substring(startIndex + 1, endIndex);
       String[] pathArray = paths.split(",");
 
       if (pathArray.length >= 2) {

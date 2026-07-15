@@ -126,7 +126,7 @@ class LabelControllerTests extends TicketTestBaseLocal {
             .statusCode(200)
             .extract()
             .jsonPath()
-            .getLong("_embedded.ticketDtoList[0].id");
+            .getLong("_embedded.ticketBacklogDtoList[0].id");
 
     withAuth()
         .contentType(ContentType.JSON)
@@ -163,7 +163,7 @@ class LabelControllerTests extends TicketTestBaseLocal {
             .statusCode(200)
             .extract()
             .jsonPath()
-            .getLong("_embedded.ticketDtoList[0].id");
+            .getLong("_embedded.ticketBacklogDtoList[0].id");
 
     Label newLabel =
         Label.builder().name("ThisisNewLabel").description("This is a description").build();

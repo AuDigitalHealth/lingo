@@ -15,8 +15,6 @@
  */
 package au.gov.digitalhealth.lingo.security;
 
-import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
-
 import au.gov.digitalhealth.lingo.auth.security.CookieAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -51,17 +49,11 @@ public class SecurityConfiguration {
         .authorizeHttpRequests(
             requests ->
                 requests
-                    // https://github.com/jzheaux/cve-2023-34035-mitigations
-                    .requestMatchers(
-                        antMatcher("/"),
-                        antMatcher("/assets"),
-                        antMatcher("/assets/*"),
-                        antMatcher("/index.html"),
-                        antMatcher("/vite.svg"))
+                    .requestMatchers("/", "/assets", "/assets/*", "/index.html", "/vite.svg")
                     .anonymous()
-                    .requestMatchers(antMatcher("/api/h2-console/**"))
+                    .requestMatchers("/api/h2-console/**")
                     .permitAll()
-                    .requestMatchers(antMatcher("/api/**"))
+                    .requestMatchers("/api/**")
                     .hasAnyRole(allowedRoles)
                     .anyRequest()
                     .anonymous());

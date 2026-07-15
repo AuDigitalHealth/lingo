@@ -15,13 +15,17 @@
  */
 package au.gov.digitalhealth.lingo.service;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ServiceStatus {
   private Status authoringPlatform;
   private SnowstormStatus snowstorm;
@@ -30,6 +34,7 @@ public class ServiceStatus {
 
   @Data
   @SuperBuilder
+  @NoArgsConstructor
   public static class Status {
     private boolean running;
     private String version;
@@ -38,6 +43,7 @@ public class ServiceStatus {
   @EqualsAndHashCode(callSuper = true)
   @Data
   @SuperBuilder
+  @NoArgsConstructor
   public static class SnowstormStatus extends Status {
     private String effectiveDate;
   }

@@ -44,7 +44,7 @@ public class SpaConfig implements WebMvcConfigurer {
         // Capture everything (REST controllers get priority over this, see above)
         .addResourceHandler("/**")
         // Add locations where files might be found
-        .addResourceLocations("classpath:/static/**")
+        .addResourceLocations("classpath:/static/")
         // Needed to allow use of `addResolver` below
         .resourceChain(true)
         // This thing is what does all the resolving. This impl. is responsible for

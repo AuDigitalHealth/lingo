@@ -19,28 +19,32 @@ import au.gov.digitalhealth.lingo.auth.helper.AuthHelper;
 import au.gov.digitalhealth.lingo.log.SnowstormLogger;
 import au.gov.digitalhealth.lingo.util.AuthSnowstormLogger;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.logging.LogLevel;
 import java.time.Duration;
+import java.util.List;
 import lombok.extern.java.Log;
 import org.openapitools.jackson.nullable.JsonNullableModule;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.boot.http.codec.CodecCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
-import org.springframework.http.codec.json.Jackson2JsonEncoder;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import org.springframework.http.codec.json.JacksonJsonEncoder;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
-import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.transport.logging.AdvancedByteBufFormat;
 import reactor.util.retry.Retry;
+import tools.jackson.databind.json.JsonMapper;
 
 @Configuration
 @Log
@@ -53,8 +57,28 @@ public class ApiWebConfiguration {
   }
 
   @Bean
-  public ObjectMapper objectMapper(Jackson2ObjectMapperBuilder builder) {
-    ObjectMapper objectMapper = builder.createXmlMapper(false).build();
+  @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+  public WebClient.Builder webClientBuilder(List<CodecCustomizer> codecCustomizers) {
+    // WebClient.builder() here is constructed directly rather than injecting Spring Boot's own
+    // WebClient.Builder bean (needed because this bean is prototype-scoped - each @Bean WebClient
+    // method below mutates its own instance - whereas Spring Boot's is a singleton). That means
+    // Spring Boot's WebClientAutoConfiguration never gets a chance to apply its CodecCustomizer
+    // beans (e.g. the one honouring spring.http.codecs.preferred-json-mapper=jackson2), so they're
+    // applied explicitly here instead.
+    WebClient.Builder builder = WebClient.builder();
+    codecCustomizers.forEach(customizer -> builder.codecs(customizer::customize));
+    return builder;
+  }
+
+  @Bean
+  public ObjectMapper objectMapper() {
+    ObjectMapper objectMapper = new ObjectMapper();
+    // Restores module auto-discovery (e.g. jackson-datatype-jsr310 for Instant/LocalDate) and the
+    // lenient unknown-property default that used to come from Jackson2ObjectMapperBuilder before
+    // the Spring Boot 4 migration dropped it - Jackson2ObjectMapperBuilder itself is deprecated
+    // for removal in Spring Framework 7, so it's not used here either.
+    objectMapper.findAndRegisterModules();
+    objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     objectMapper.registerModule(new JsonNullableModule());
     return objectMapper;
   }
@@ -70,9 +94,14 @@ public class ApiWebConfiguration {
                 "reactor.netty.http.client.HttpClient",
                 LogLevel.DEBUG,
                 AdvancedByteBufFormat.TEXTUAL);
-    ObjectMapper customMapper =
-        new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
-    Jackson2JsonEncoder encoder = new Jackson2JsonEncoder(customMapper, MediaType.APPLICATION_JSON);
+    JsonMapper customMapper =
+        JsonMapper.builderWithJackson2Defaults()
+            .changeDefaultPropertyInclusion(
+                v ->
+                    JsonInclude.Value.construct(
+                        JsonInclude.Include.NON_NULL, JsonInclude.Include.NON_NULL))
+            .build();
+    JacksonJsonEncoder encoder = new JacksonJsonEncoder(customMapper, MediaType.APPLICATION_JSON);
     return webClientBuilder
         .codecs(
             clientCodecConfigurer ->
@@ -95,10 +124,7 @@ public class ApiWebConfiguration {
         .baseUrl(authoringServiceUrl)
         .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
         .filter(authHelper.addImsAuthCookie)
-        .exchangeStrategies(
-            ExchangeStrategies.builder()
-                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024))
-                .build())
+        .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024))
         .build();
   }
 
@@ -110,10 +136,7 @@ public class ApiWebConfiguration {
         .baseUrl(traceabilityUrl)
         .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
         .filter(authHelper.addImsAuthCookie)
-        .exchangeStrategies(
-            ExchangeStrategies.builder()
-                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(50 * 1024 * 1024))
-                .build())
+        .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(50 * 1024 * 1024))
         .build();
   }
 
@@ -166,16 +189,18 @@ public class ApiWebConfiguration {
         .baseUrl(authoringServiceUrl)
         .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
         .filter(authHelper.addDefaultAuthCookie) // Cookies are injected through filter
-        .exchangeStrategies(
-            ExchangeStrategies.builder()
-                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024))
-                .build())
+        .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024))
         .build();
   }
 
   @Bean
   public WebClient sergioApiClient(
       @Value("${sergio.base.url}") String sergioUrl, WebClient.Builder webClientBuilder) {
+    // TicketDto (returned by this client) carries a com.fasterxml.jackson.databind.JsonNode field
+    // (JsonFieldDto.value), a Jackson 2 type. This client relies on the app-wide
+    // spring.http.converters.preferred-json-mapper=jackson2 property (see application.properties)
+    // to get Jackson 2 reactive codecs by default, rather than overriding codecs here with the
+    // deprecated Jackson2JsonEncoder/Decoder classes.
     return webClientBuilder
         .baseUrl(sergioUrl)
         .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)

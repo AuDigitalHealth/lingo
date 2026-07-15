@@ -131,10 +131,16 @@ jobs:
       # POMs are already present); still runs on a miss/partial to fill gaps. Failures
       # are non-fatal because --offline-scan (below) prevents Trivy from hitting Maven
       # Central regardless.
+      - task: JavaToolInstaller@0
+        displayName: 'Use Java 21'
+        condition: ne(variables.TRIVY_M2_HIT, 'true')
+        inputs:
+          versionSpec: '21'
+          jdkArchitectureOption: 'x64'
+          jdkSourceOption: 'PreInstalled'
       - script: |
           set -euo pipefail
           echo "##[section]Pre-populating Maven local repo for Trivy"
-          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
           mvn dependency:go-offline \
             -Denforcer.skip=true \
             -DskipTests \
@@ -460,6 +466,23 @@ jobs:
           echo "Started background pull of Testcontainers images: $IMAGES"
         displayName: 'Pre-pull Testcontainers images (background)'
 
+      - script: |
+          set -euo pipefail
+          # Find Java 21 home — try standard apt path first, then update-java-alternatives
+          JAVA21_HOME=$( \
+            { [ -d /usr/lib/jvm/java-21-openjdk-amd64 ] && echo /usr/lib/jvm/java-21-openjdk-amd64; } || \
+            update-java-alternatives -l 2>/dev/null | awk '/java-21/{print $3; exit}' || \
+            find /usr/lib/jvm -maxdepth 1 \( -name 'java-21*' -o -name 'temurin-21*' \) -type d 2>/dev/null | head -1 \
+          )
+          if [ -z "${JAVA21_HOME:-}" ] || [ ! -d "$JAVA21_HOME" ]; then
+            echo "Java 21 not found — installing via apt"
+            sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends openjdk-21-jdk-headless
+            JAVA21_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+          fi
+          echo "Java 21 home: $JAVA21_HOME"
+          echo "##vso[task.setvariable variable=JAVA21_HOME]$JAVA21_HOME"
+        displayName: 'Detect (or install) Java 21 and set JAVA21_HOME'
+
       - task: Maven@3
         displayName: 'Build and run integration test'
         condition: not(and(succeeded(), eq(variables.isRelease, true)))
@@ -468,7 +491,7 @@ jobs:
           options: '-Dsnomio.extensions.sergio.enabled=false -DskipUILint=true -Dlingo.internal.users=$(imsUsername) -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(imageTag) -Djib.baseImageCache=$(Pipeline.Workspace)/.jib-cache --no-transfer-progress -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dihtsdo.ims.api.url=$(imsApiUrl) -Dihtsdo.ims.api.cookie.name=$(imsCookieName)"'
           mavenOptions: '$(mavenOptions) -Xmx5072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(buildInfo)'
           javaHomeOption: 'path'
-          jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
+          jdkUserInputPath: '$(JAVA21_HOME)'
           jdkArchitectureOption: 'x64'
           publishJUnitResults: true
           testResultsFiles: '**/surefire-reports/TEST-*.xml'
@@ -482,7 +505,7 @@ jobs:
           options: '-Dsnomio.extensions.sergio.enabled=false -DskipUILint=true -Dlingo.internal.users=$(imsUsername) -Ddocker.registry.host=$(dockerRegistry) -Ddocker.repository=$(dockerRepository) -Djib.to.tags=$(imageTag) -Djib.baseImageCache=$(Pipeline.Workspace)/.jib-cache --no-transfer-progress -DargLine="-Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dihtsdo.ims.api.url=$(imsApiUrl) -Dihtsdo.ims.api.cookie.name=$(imsCookieName)"'
           mavenOptions: '$(mavenOptions) -Xmx5072m -Dims-username=$(imsUsername) -Dims-password=$(imsPassword) -Dbuildnumber=$(buildInfo)'
           javaHomeOption: 'path'
-          jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
+          jdkUserInputPath: '$(JAVA21_HOME)'
           jdkArchitectureOption: 'x64'
           publishJUnitResults: true
           testResultsFiles: '**/surefire-reports/TEST-*.xml'
@@ -528,7 +551,7 @@ jobs:
           options: '-DskipTests --no-transfer-progress'
           mavenOptions: '$(mavenOptions)'
           javaHomeOption: 'path'
-          jdkUserInputPath: '/usr/lib/jvm/java-17-openjdk-amd64'
+          jdkUserInputPath: '$(JAVA21_HOME)'
           jdkArchitectureOption: 'x64'
           publishJUnitResults: false
           goals: 'deploy -pl .,common,auth'

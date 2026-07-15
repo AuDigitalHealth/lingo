@@ -196,7 +196,7 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
                     .getAbsolutePath()),
             "image/png");
 
-    url = this.getSnomioLocation() + "/api/attachments/" + response.getAttachmentId();
+    url = this.getSnomioLocation() + "/api/attachments/" + response.attachmentId();
     Attachment theAttachment =
         withAuth().when().get(url).then().statusCode(200).extract().as(Attachment.class);
     String attachmentsDir = attachmentsDirectory + (attachmentsDirectory.endsWith("/") ? "" : "/");
@@ -277,9 +277,9 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
     Assertions.assertEquals(1, responses.length);
     AttachmentUploadResponse resp = responses[0];
     Assertions.assertNotNull(resp);
-    Assertions.assertNotNull(resp.getAttachmentId());
+    Assertions.assertNotNull(resp.attachmentId());
 
-    Attachment theAttachment = getAttachmentJson(resp.getAttachmentId());
+    Attachment theAttachment = getAttachmentJson(resp.attachmentId());
     Assertions.assertNotNull(theAttachment);
     Assertions.assertEquals("smoll.pdf", theAttachment.getFilename());
     Assertions.assertNotNull(theAttachment.getLocation());
@@ -463,8 +463,8 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
                     .getFile()
                     .getAbsolutePath()),
             "image/png"));
-    Long attachmentId1 = responses.get(0).getAttachmentId();
-    Long attachmentId2 = responses.get(1).getAttachmentId();
+    Long attachmentId1 = responses.get(0).attachmentId();
+    Long attachmentId2 = responses.get(1).attachmentId();
     Attachment attachment1 = getAttachmentJson(attachmentId1);
     Attachment attachment2 = getAttachmentJson(attachmentId2);
     // Remove attachment1
@@ -505,7 +505,7 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
                     .getAbsolutePath()),
             "image/png");
 
-    String url2 = this.getSnomioLocation() + "/api/attachments/" + response.getAttachmentId();
+    String url2 = this.getSnomioLocation() + "/api/attachments/" + response.attachmentId();
     Attachment theAttachment =
         withAuth().when().get(url2).then().statusCode(200).extract().as(Attachment.class);
     Assertions.assertEquals(
@@ -517,7 +517,7 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
             new File(new ClassPathResource("grrfile.grr").getFile().getAbsolutePath()),
             "application/grr");
 
-    url2 = this.getSnomioLocation() + "/api/attachments/" + response2.getAttachmentId();
+    url2 = this.getSnomioLocation() + "/api/attachments/" + response2.attachmentId();
     Attachment theAttachment2 =
         withAuth().when().get(url2).then().statusCode(200).extract().as(Attachment.class);
     Assertions.assertEquals("application/grr", theAttachment2.getAttachmentType().getName());

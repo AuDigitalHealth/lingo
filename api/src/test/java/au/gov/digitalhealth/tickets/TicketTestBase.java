@@ -20,9 +20,11 @@ import static io.restassured.RestAssured.given;
 import au.gov.digitalhealth.lingo.configuration.Configuration;
 import com.google.gson.JsonObject;
 import io.restassured.RestAssured;
+import io.restassured.config.ObjectMapperConfig;
 import io.restassured.http.ContentType;
 import io.restassured.http.Cookie;
 import io.restassured.http.Cookies;
+import io.restassured.mapper.ObjectMapperType;
 import io.restassured.specification.RequestSpecification;
 import lombok.Getter;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,6 +45,18 @@ import org.springframework.test.context.ActiveProfiles;
 @TestInstance(Lifecycle.PER_METHOD)
 @ActiveProfiles("test")
 public class TicketTestBase {
+
+  static {
+    // Both Jackson 2 (com.fasterxml.jackson) and Jackson 3 (tools.jackson) are on the test
+    // classpath - Jackson 3 via flyway-core - so RestAssured's auto-detection would otherwise
+    // pick Jackson 3 for .as(Class) deserialization. The app's DTOs (e.g. IterationDto's Instant
+    // field, ImportResponse's Lombok builder) only work with Jackson 2's more lenient handling,
+    // matching the app's own Jackson 2 ObjectMapper bean.
+    RestAssured.config =
+        RestAssured.config()
+            .objectMapperConfig(
+                new ObjectMapperConfig().defaultObjectMapperType(ObjectMapperType.JACKSON_2));
+  }
 
   @LocalServerPort int randomServerPort;
 

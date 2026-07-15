@@ -1,5 +1,10 @@
 <config xmlns:jsr107="http://www.ehcache.org/v3/jsr107"
   xmlns="http://www.ehcache.org/v3">
+  <service>
+    <jsr107:defaults enable-management="true" enable-statistics="true"/>
+  </service>
+
+  <!-- Hibernate second-level caches -->
   <cache alias="org.hibernate.cache.spi.UpdateTimestampsCache">
     <expiry>
       <ttl unit="seconds">120</ttl>
@@ -13,11 +18,39 @@
     </expiry>
     <heap unit="entries">10000</heap>
   </cache>
+
+  <!-- Auth: IMS auth cookie (evicted on refresh schedule, ~24h interval) -->
+  <cache alias="authCookie" uses-template="lru-1day-template"/>
+
+  <!-- Auth: IMS user lookup by token -->
+  <cache alias="users" uses-template="lru-1hour-template"/>
+
+  <!-- JIRA user list -->
+  <cache alias="jiraUsers" uses-template="lru-1hour-template"/>
+
+  <!-- Name generator results (keyed by spec) -->
+  <cache alias="nameGenerator" uses-template="lru-1hour-template"/>
+
+  <!-- Snowstorm and AP status (evicted every 60 s by scheduler) -->
+  <cache alias="snowstorm-status" uses-template="lru-5min-template"/>
+  <cache alias="ap-status" uses-template="lru-5min-template"/>
+
+  <!-- Task list from AP (evicted on configurable schedule) -->
+  <cache alias="all-tasks" uses-template="lru-30min-template"/>
+
+  <!-- Unit caches (evicted every 60 min by scheduler) -->
+  <cache alias="composite-unit" uses-template="lru-1day-template"/>
+  <cache alias="unit-numerator-denominator" uses-template="lru-1day-template"/>
+
+  <!-- Field-binding config caches (effectively static; long TTL is fine) -->
+  <cache alias="validation-excluded-substances" uses-template="lru-1day-template"/>
+  <cache alias="brand-semantic-tag" uses-template="lru-1day-template"/>
+  <cache alias="preferred-term-max-length" uses-template="lru-1day-template"/>
+  <cache alias="description-validation-regex" uses-template="lru-1day-template"/>
+
+  <!-- Snowstorm concept caches -->
   <cache alias="snowstorm-concepts-ids-from-ecl" uses-template="lru-20min-template"/>
-
   <cache alias="snowstorm-concepts-from-ecl" uses-template="lru-20min-template"/>
-
-  <!-- Snowstorm cache definitions using the template -->
   <cache alias="snowstorm-concept" uses-template="lru-20min-template"/>
   <cache alias="snowstorm-refset-members" uses-template="lru-20min-template"/>
   <cache alias="snowstorm-browser-concepts" uses-template="lru-20min-template"/>
@@ -28,16 +61,31 @@
   <cache alias="snowstorm-concepts-for-branch" uses-template="lru-20min-template"/>
   <cache alias="snowstorm-historical-associations-for-branch" uses-template="lru-20min-template"/>
   <cache alias="fhir-concepts" uses-template="lru-20min-template"/>
-  <cache-template name="lru-20min-template">
-    <expiry>
-      <ttl unit="minutes">20</ttl>
-    </expiry>
-    <resources>
-      <heap unit="entries">10000</heap>
-    </resources>
+
+  <!-- Templates -->
+  <cache-template name="lru-5min-template">
+    <expiry><ttl unit="minutes">5</ttl></expiry>
+    <resources><heap unit="entries">100</heap></resources>
   </cache-template>
-  <service>
-    <jsr107:defaults enable-management="true" enable-statistics="true"/>
-  </service>
+
+  <cache-template name="lru-20min-template">
+    <expiry><ttl unit="minutes">20</ttl></expiry>
+    <resources><heap unit="entries">10000</heap></resources>
+  </cache-template>
+
+  <cache-template name="lru-30min-template">
+    <expiry><ttl unit="minutes">30</ttl></expiry>
+    <resources><heap unit="entries">1000</heap></resources>
+  </cache-template>
+
+  <cache-template name="lru-1hour-template">
+    <expiry><ttl unit="hours">1</ttl></expiry>
+    <resources><heap unit="entries">1000</heap></resources>
+  </cache-template>
+
+  <cache-template name="lru-1day-template">
+    <expiry><ttl unit="hours">25</ttl></expiry>
+    <resources><heap unit="entries">100</heap></resources>
+  </cache-template>
 
 </config>

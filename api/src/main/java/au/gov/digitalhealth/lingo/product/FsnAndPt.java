@@ -15,14 +15,28 @@
  */
 package au.gov.digitalhealth.lingo.product;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @SuppressWarnings("java:S116")
 public class FsnAndPt {
 
+  // Jackson's default bean-property mangling lowercases the all-caps field name to "fsn"/"pt",
+  // which no longer matches the name generator's exact-case "FSN"/"PT" response keys once
+  // deserialization goes through setter-based binding instead of a parameter-name-aware
+  // constructor (see jackson-module-parameter-names, which Spring Boot 4 no longer pulls in
+  // transitively). Pinning the wire name explicitly makes the match independent of both the
+  // mangling algorithm and which deserialization path Jackson picks.
+  @JsonProperty("FSN")
   String FSN;
+
+  @JsonProperty("PT")
   String PT;
 }

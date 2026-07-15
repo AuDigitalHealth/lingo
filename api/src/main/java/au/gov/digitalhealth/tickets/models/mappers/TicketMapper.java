@@ -23,6 +23,7 @@ import au.gov.digitalhealth.tickets.TicketImportDto;
 import au.gov.digitalhealth.tickets.TicketMinimalDto;
 import au.gov.digitalhealth.tickets.models.Schedule;
 import au.gov.digitalhealth.tickets.models.Ticket;
+import java.util.HashSet;
 import java.util.List;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.BeanMapping;
@@ -42,7 +43,11 @@ public interface TicketMapper {
 
   @AfterMapping
   default void linkJsonFields(@MappingTarget Ticket ticket) {
-    ticket.getJsonFields().forEach(jsonField -> jsonField.setTicket(ticket));
+    if (ticket.getJsonFields() == null) {
+      ticket.setJsonFields(new HashSet<>());
+    } else {
+      ticket.getJsonFields().forEach(jsonField -> jsonField.setTicket(ticket));
+    }
   }
 
   @Named("toDto")

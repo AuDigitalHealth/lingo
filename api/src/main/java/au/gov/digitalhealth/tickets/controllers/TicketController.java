@@ -32,6 +32,7 @@ import au.gov.digitalhealth.tickets.TicketImportDto;
 import au.gov.digitalhealth.tickets.TicketMinimalDto;
 import au.gov.digitalhealth.tickets.helper.BulkAddExternalRequestorsRequest;
 import au.gov.digitalhealth.tickets.helper.BulkAddExternalRequestorsResponse;
+import au.gov.digitalhealth.tickets.helper.HalPageResponse;
 import au.gov.digitalhealth.tickets.helper.SafeUtils;
 import au.gov.digitalhealth.tickets.helper.SearchConditionBody;
 import au.gov.digitalhealth.tickets.helper.StringUtils;
@@ -72,8 +73,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PagedResourcesAssembler;
-import org.springframework.hateoas.CollectionModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -130,26 +129,27 @@ public class TicketController {
     this.ticketProductNameDerivationService = ticketProductNameDerivationService;
   }
 
+  private static final String TICKET_BACKLOG_DTO_EMBEDDED_RELATION = "ticketBacklogDtoList";
+
   @GetMapping("/api/tickets")
-  public ResponseEntity<CollectionModel<?>> getAllTickets(
+  public ResponseEntity<HalPageResponse<TicketDto>> getAllTickets(
       @RequestParam(defaultValue = "0") final Integer page,
-      @RequestParam(defaultValue = "20") final Integer size,
-      PagedResourcesAssembler<TicketDto> pagedResourcesAssembler) {
+      @RequestParam(defaultValue = "20") final Integer size) {
     Pageable pageable = PageRequest.of(page, size);
     final Page<TicketDto> pagedTicketDto = ticketService.findAllTickets(pageable);
     if (page > pagedTicketDto.getTotalPages()) {
       throw new ResourceNotFoundProblem("Page does not exist");
     }
 
-    return new ResponseEntity<>(pagedResourcesAssembler.toModel(pagedTicketDto), HttpStatus.OK);
+    return new ResponseEntity<>(
+        HalPageResponse.of(pagedTicketDto, TICKET_BACKLOG_DTO_EMBEDDED_RELATION), HttpStatus.OK);
   }
 
   @GetMapping("/api/tickets/search")
-  public ResponseEntity<CollectionModel<?>> searchTickets(
+  public ResponseEntity<HalPageResponse<TicketBacklogDto>> searchTickets(
       HttpServletRequest request,
       @RequestParam(defaultValue = "0") final Integer page,
-      @RequestParam(defaultValue = "20") final Integer size,
-      PagedResourcesAssembler<TicketBacklogDto> pagedResourcesAssembler) {
+      @RequestParam(defaultValue = "20") final Integer size) {
     Pageable pageable = PageRequest.of(page, size);
 
     String search =
@@ -160,15 +160,15 @@ public class TicketController {
     Page<TicketBacklogDto> ticketDtos =
         ticketService.findAllTicketsByQueryParam(predicate, pageable, null, null);
 
-    return new ResponseEntity<>(pagedResourcesAssembler.toModel(ticketDtos), HttpStatus.OK);
+    return new ResponseEntity<>(
+        HalPageResponse.of(ticketDtos, TICKET_BACKLOG_DTO_EMBEDDED_RELATION), HttpStatus.OK);
   }
 
   @PostMapping(value = "/api/tickets/search", consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<CollectionModel<?>> searchTicketsByBody(
+  public ResponseEntity<HalPageResponse<TicketBacklogDto>> searchTicketsByBody(
       @RequestParam(defaultValue = "0") final Integer page,
       @RequestParam(defaultValue = "20") final Integer size,
-      @RequestBody final SearchConditionBody searchConditionBody,
-      PagedResourcesAssembler<TicketBacklogDto> pagedResourcesAssembler) {
+      @RequestBody final SearchConditionBody searchConditionBody) {
     Pageable pageable = PageRequest.of(page, size);
 
     Predicate predicate =
@@ -182,7 +182,8 @@ public class TicketController {
             searchConditionBody.getOrderCondition(),
             searchConditionBody.getSearchConditions());
 
-    return new ResponseEntity<>(pagedResourcesAssembler.toModel(ticketDtos), HttpStatus.OK);
+    return new ResponseEntity<>(
+        HalPageResponse.of(ticketDtos, TICKET_BACKLOG_DTO_EMBEDDED_RELATION), HttpStatus.OK);
   }
 
   @PostMapping(value = "/api/tickets", consumes = MediaType.APPLICATION_JSON_VALUE)

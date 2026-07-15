@@ -188,8 +188,8 @@ class AttachmentServiceTest {
         attachmentService.processAttachmentUploadFromUrl(
             TICKET_ID, wireMock.baseUrl() + "/data.xyz", "data.xyz", "application/octet-stream");
 
-    assertThat(response.getAttachmentId()).isEqualTo(99L);
-    assertThat(response.getTicketId()).isEqualTo(TICKET_ID);
+    assertThat(response.attachmentId()).isEqualTo(99L);
+    assertThat(response.ticketId()).isEqualTo(TICKET_ID);
   }
 
   @Test
@@ -212,7 +212,7 @@ class AttachmentServiceTest {
         attachmentService.processAttachmentUploadFromUrl(
             TICKET_ID, wireMock.baseUrl() + "/report.pdf", "report.pdf", null);
 
-    assertThat(response.getAttachmentId()).isEqualTo(100L);
+    assertThat(response.attachmentId()).isEqualTo(100L);
   }
 
   @Test

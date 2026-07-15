@@ -23,11 +23,14 @@ import au.gov.digitalhealth.lingo.service.identifier.cis.CISGenerateRequest;
 import au.gov.digitalhealth.lingo.service.identifier.cis.CISRecord;
 import au.gov.digitalhealth.lingo.service.namegenerator.NameGenerationClient;
 import au.gov.digitalhealth.tickets.DbInitializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonObject;
 import io.restassured.RestAssured;
+import io.restassured.config.ObjectMapperConfig;
 import io.restassured.http.ContentType;
 import io.restassured.http.Cookie;
 import io.restassured.http.Cookies;
+import io.restassured.mapper.ObjectMapperType;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -55,15 +58,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.MockReset;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.test.context.bean.override.mockito.MockReset;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 /*
  * For now there is some duplicated logic between here and LingoTestBase. Some kind of attempt to
@@ -74,6 +76,18 @@ import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 @ActiveProfiles("test")
 @ExtendWith(AmtV4SnowstormExtension.class)
 public class LingoTestBase {
+
+  static {
+    // Both Jackson 2 (com.fasterxml.jackson) and Jackson 3 (tools.jackson) are on the test
+    // classpath - Jackson 3 via flyway-core - so RestAssured's auto-detection would otherwise
+    // pick Jackson 3 for .as(Class) deserialization. ProductSummary/Node and friends only work
+    // with Jackson 2's handling of their com.fasterxml.jackson.annotation.* annotations, matching
+    // the app's own Jackson 2 ObjectMapper bean.
+    RestAssured.config =
+        RestAssured.config()
+            .objectMapperConfig(
+                new ObjectMapperConfig().defaultObjectMapperType(ObjectMapperType.JACKSON_2));
+  }
 
   private static final String NAMESPACE = "1000168";
   private static final VerhoeffCheckDigit verhoeffCheckDigit = new VerhoeffCheckDigit();
@@ -103,7 +117,7 @@ public class LingoTestBase {
   // reset = NONE so the deterministic stub set once below isn't cleared between tests; this avoids
   // re-stubbing the shared context mock on every @BeforeEach, which would race under parallel
   // methods.
-  @MockBean(reset = MockReset.NONE)
+  @MockitoBean(reset = MockReset.NONE)
   private NameGenerationClient nameGenerationClient;
 
   @BeforeAll
@@ -236,6 +250,11 @@ public class LingoTestBase {
   }
 
   @BeforeEach
+  void setUp(TestInfo testInfo) {
+    createTestBranch(testInfo);
+    initDb();
+  }
+
   void createTestBranch(TestInfo testInfo) {
     if (branchManager == null) {
       branchManager = new SnowstormBranchManager(System.getProperty("ihtsdo.snowstorm.api.url"));
@@ -258,7 +277,6 @@ public class LingoTestBase {
   // its own data and asserts on its own content; nothing clobbers a sibling's in-flight rows.
   private static volatile boolean referenceDataSeeded = false;
 
-  @BeforeEach
   void initDb() {
     if (!referenceDataSeeded) {
       synchronized (LingoTestBase.class) {
