@@ -34,7 +34,7 @@ importers:
         version: 11.14.1(@emotion/react@11.14.0(@types/react@18.3.27)(react@18.3.1))(@types/react@18.3.27)(react@18.3.1)
       '@hookform/resolvers':
         specifier: ^3.6.0
-        version: 3.10.0(react-hook-form@7.49.2(react@18.3.1))
+        version: 3.10.0(react-hook-form@7.80.0(react@18.3.1))
       '@mui/icons-material':
         specifier: ^5.16.7
         version: 5.18.0(@mui/material@5.18.0(@emotion/react@11.14.0(@types/react@18.3.27)(react@18.3.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@18.3.27)(react@18.3.1))(@types/react@18.3.27)(react@18.3.1))(@types/react@18.3.27)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.27)(react@18.3.1)
@@ -339,8 +339,8 @@ importers:
         specifier: ^2.6.3
         version: 2.6.3(react@18.3.1)
       react-hook-form:
-        specifier: 7.49.2
-        version: 7.49.2(react@18.3.1)
+        specifier: 7.80.0
+        version: 7.80.0(react@18.3.1)
       react-intl:
         specifier: ^6.6.2
         version: 6.8.9(react@18.3.1)(typescript@5.9.3)
@@ -4349,11 +4349,11 @@ packages:
     peerDependencies:
       react: '*'
 
-  react-hook-form@7.49.2:
-    resolution: {integrity: sha512-TZcnSc17+LPPVpMRIDNVITY6w20deMdNi6iehTFLV1x8SqThXGwu93HjlUVU09pzFgZH7qZOvLMM7UYf2ShAHA==}
-    engines: {node: '>=18', pnpm: '8'}
+  react-hook-form@7.80.0:
+    resolution: {integrity: sha512-4P+fk6oXsxY+6xSj7Euhc2sumQD8zQqCuVHoJwoyp9EchP+IUW9OESB7uHFJOKsIBQ4MQqYE84INJFqUCYNoOg==}
+    engines: {node: '>=18.0.0'}
     peerDependencies:
-      react: ^16.8.0 || ^17 || ^18
+      react: ^16.8.0 || ^17 || ^18 || ^19
 
   react-intl@6.8.9:
     resolution: {integrity: sha512-TUfj5E7lyUDvz/GtovC9OMh441kBr08rtIbgh3p0R8iF3hVY+V2W9Am7rb8BpJ/29BH1utJOqOOhmvEVh3GfZg==}
@@ -5685,9 +5685,9 @@ snapshots:
     optionalDependencies:
       typescript: 5.9.3
 
-  '@hookform/resolvers@3.10.0(react-hook-form@7.49.2(react@18.3.1))':
+  '@hookform/resolvers@3.10.0(react-hook-form@7.80.0(react@18.3.1))':
     dependencies:
-      react-hook-form: 7.49.2(react@18.3.1)
+      react-hook-form: 7.80.0(react@18.3.1)
 
   '@humanwhocodes/config-array@0.13.0':
     dependencies:
@@ -9630,7 +9630,7 @@ snapshots:
       query-string: 4.3.4
       react: 18.3.1
 
-  react-hook-form@7.49.2(react@18.3.1):
+  react-hook-form@7.80.0(react@18.3.1):
     dependencies:
       react: 18.3.1
 
