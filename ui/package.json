@@ -162,7 +162,7 @@
     "stompjs": "^2.3.3",
     "vitest": "^3.2.4",
     "yup": "^1.4.0",
-    "zustand": "^4.5.2"
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
