@@ -1387,6 +1387,20 @@ public class MedicationProductCalculationService
     return relationships;
   }
 
+  /**
+   * {@code NodeGeneratorService.lookUpNode} (used to reuse an existing MP/clinical drug for a
+   * nutritional product, rather than generating a new one) never registers the looked-up concept's
+   * FSN/PT in the {@link AtomicCache}, unlike {@code generateNodeAsync}. Without this, any axiom
+   * built later that references this concept (e.g. a VMPP/AMPP packaging it) has no name to
+   * substitute in and falls back to the raw SCTID, which the external name generator cannot
+   * reliably name.
+   */
+  private static Node registerLookedUpNodeName(AtomicCache atomicCache, Node node) {
+    atomicCache.addFsnAndPt(
+        node.getConceptId(), node.getFullySpecifiedName(), node.getPreferredTerm());
+    return node;
+  }
+
   private CompletableFuture<Node> findOrCreateUnit(
       String branch,
       MedicationProductDetails productDetails,
@@ -1406,18 +1420,20 @@ public class MedicationProductCalculationService
         && !branded) {
       if (productDetails.getExistingClinicalDrug() != null
           && productDetails.getExistingClinicalDrug().getConceptId() != null) {
-        return nodeGeneratorService.lookUpNode(
-            branch,
-            productDetails.getExistingClinicalDrug(),
-            level,
-            productDetails.getNonDefiningProperties().stream()
-                .filter(
-                    p ->
-                        modelConfiguration
-                            .getProperty(p.getIdentifierScheme())
-                            .getModelLevels()
-                            .contains(level.getModelLevelType()))
-                .collect(Collectors.toSet()));
+        return nodeGeneratorService
+            .lookUpNode(
+                branch,
+                productDetails.getExistingClinicalDrug(),
+                level,
+                productDetails.getNonDefiningProperties().stream()
+                    .filter(
+                        p ->
+                            modelConfiguration
+                                .getProperty(p.getIdentifierScheme())
+                                .getModelLevels()
+                                .contains(level.getModelLevelType()))
+                    .collect(Collectors.toSet()))
+            .thenApply(node -> registerLookedUpNodeName(atomicCache, node));
       } else {
         skipLookup = true;
       }
@@ -1486,18 +1502,20 @@ public class MedicationProductCalculationService
     if (details instanceof NutritionalProductDetails
         && modelConfiguration.getModelType().equals(ModelType.NMPC)
         && !mpLevel.isBranded()) {
-      return nodeGeneratorService.lookUpNode(
-          branch,
-          details.getExistingMedicinalProduct(),
-          mpLevel,
-          details.getNonDefiningProperties().stream()
-              .filter(
-                  p ->
-                      modelConfiguration
-                          .getProperty(p.getIdentifierScheme())
-                          .getModelLevels()
-                          .contains(mpLevel.getModelLevelType()))
-              .collect(Collectors.toSet()));
+      return nodeGeneratorService
+          .lookUpNode(
+              branch,
+              details.getExistingMedicinalProduct(),
+              mpLevel,
+              details.getNonDefiningProperties().stream()
+                  .filter(
+                      p ->
+                          modelConfiguration
+                              .getProperty(p.getIdentifierScheme())
+                              .getModelLevels()
+                              .contains(mpLevel.getModelLevelType()))
+                  .collect(Collectors.toSet()))
+          .thenApply(node -> registerLookedUpNodeName(atomicCache, node));
     }
 
     Set<SnowstormRelationship> relationships =
