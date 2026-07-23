@@ -23,6 +23,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import au.csiro.snowstorm_client.model.SnowstormAxiom;
@@ -34,6 +37,7 @@ import au.gov.digitalhealth.lingo.configuration.Configuration;
 import au.gov.digitalhealth.lingo.configuration.model.ModelLevel;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.product.FsnAndPt;
+import au.gov.digitalhealth.lingo.product.NameGeneratorSpec;
 import au.gov.digitalhealth.lingo.product.NewConceptDetails;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.ProductSummary;
@@ -49,6 +53,7 @@ import java.util.concurrent.ExecutionException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -186,6 +191,16 @@ class MedicationProductCalculationServiceNutritionalNameTest {
   private static final String EXISTING_MP_ID = NmpcConstants.CONTAINS_DEVICE_NMPC.getValue();
 
   /**
+   * A real product SCTID (from the customer's report), used as a stand-in for a pre-existing
+   * clinical drug (VMP) reused when a new pack size is added to an existing nutritional product —
+   * {@code existingClinicalDrug} on {@link MedicationProductDetails}. Deliberately NOT one of the
+   * {@code AmtConstants}/{@code SnomedConstants}/{@code NmpcConstants} values passed into {@link
+   * AtomicCache}'s constructor — those are all pre-seeded with their enum label regardless of this
+   * fix, which would mask the bug (the FSN would resolve, just to the wrong text).
+   */
+  private static final String EXISTING_CLINICAL_DRUG_ID = "897751000220107";
+
+  /**
    * NMPC authoring module. {@code existingMedicinalProduct} must carry it, or {@link
    * au.gov.digitalhealth.lingo.product.OriginalNode#of} cannot determine externality when the VTM
    * is looked up as a pre-existing concept.
@@ -266,6 +281,45 @@ class MedicationProductCalculationServiceNutritionalNameTest {
             "a new nutritional AMP with no ingredient strength data must default to Primitive, not"
                 + " Fully Defined, purely because a productName (brand) is present")
         .isEqualTo("PRIMITIVE");
+  }
+
+  /**
+   * Regression test for a customer-reported defect: adding a new pack size to an EXISTING
+   * nutritional product reuses its clinical drug (VMP) via {@code existingClinicalDrug} rather than
+   * authoring a new one, which routes through {@code NodeGeneratorService.lookUpNode} instead of
+   * {@code generateNodeAsync}. That lookup never registered the reused VMP's FSN/PT in the {@link
+   * AtomicCache}, so the new VMPP's axiom referenced it by raw SCTID instead of by name — visible
+   * in production as {@code NameGenerationService} logging "Axiom to generate names for contains
+   * SCTID/s - results may be unreliable" for the packaged-clinical-drug (VMPP) level.
+   */
+  @Test
+  void existingClinicalDrugReusedForNewPackSizeIsNamedNotLeftAsRawSctid()
+      throws ExecutionException, InterruptedException {
+    PackageDetails<MedicationProductDetails> pkg = nutritionalPackage();
+    MedicationProductDetails productDetails = pkg.getContainedProducts().get(0).getProductDetails();
+    productDetails.setExistingClinicalDrug(
+        toSnowstormConceptMini(
+                EXISTING_CLINICAL_DRUG_ID,
+                "Ensure Compact 125 mL drink vanilla (real clinical drug)")
+            .moduleId(NMPC_MODULE_ID));
+
+    clearInvocations(nameGenerationClient);
+    productCalculationService.calculateProductFromAtomicData(NMPC_BRANCH, pkg);
+
+    ArgumentCaptor<NameGeneratorSpec> specCaptor = ArgumentCaptor.forClass(NameGeneratorSpec.class);
+    verify(nameGenerationClient, atLeastOnce()).generateNames(specCaptor.capture());
+
+    NameGeneratorSpec vmppSpec =
+        specCaptor.getAllValues().stream()
+            .filter(spec -> "packaged clinical drug".equals(spec.getTag()))
+            .findFirst()
+            .orElseThrow(() -> new AssertionError("No name generator call for the VMPP level"));
+
+    assertThat(vmppSpec.getOwl())
+        .as(
+            "the reused clinical drug's FSN must be registered in the AtomicCache so the new"
+                + " VMPP's axiom substitutes its name rather than leaking the raw SCTID")
+        .doesNotContain(EXISTING_CLINICAL_DRUG_ID);
   }
 
   private NewConceptDetails newNodeAt(ProductSummary summary, ModelLevelType modelLevelType) {
