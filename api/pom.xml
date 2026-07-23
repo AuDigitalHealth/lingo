@@ -639,6 +639,16 @@
       <groupId>org.ehcache</groupId>
       <version>3.12.0</version>
     </dependency>
+    <!-- Backs the single CacheManager for all Spring @Cacheable/@CacheEvict caches (see
+         CacheManagerConfig). Caffeine is used (rather than JCache/Ehcache) because Spring's cache
+         aspect uses the async Cache.retrieve(key) API for reactive return types, which JCache's
+         Cache implementation does not support (throws UnsupportedOperationException); Caffeine's
+         AsyncCache serves synchronous and reactive callers alike. Ehcache (above) remains solely
+         for Hibernate's second-level cache. -->
+    <dependency>
+      <groupId>com.github.ben-manes.caffeine</groupId>
+      <artifactId>caffeine</artifactId>
+    </dependency>
     <!-- Ehcache 3.x XML parser uses old javax.xml.bind (removed from JDK 11+) -->
     <dependency>
       <groupId>javax.xml.bind</groupId>
