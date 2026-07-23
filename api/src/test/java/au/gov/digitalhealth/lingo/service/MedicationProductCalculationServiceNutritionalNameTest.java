@@ -269,6 +269,37 @@ class MedicationProductCalculationServiceNutritionalNameTest {
   }
 
   @Test
+  void newNutritionalVmpFsnStartsWithProductContainingOnlyButPtAndVmppDoNot()
+      throws ExecutionException, InterruptedException {
+    PackageDetails<MedicationProductDetails> pkg = nutritionalPackage();
+
+    clearInvocations(nameGenerationClient);
+    ProductSummary summary =
+        productCalculationService.calculateProductFromAtomicData(NMPC_BRANCH, pkg);
+
+    NewConceptDetails vmp = newNodeAt(summary, ModelLevelType.CLINICAL_DRUG);
+    assertThat(vmp.getPreferredTerm()).isEqualTo(GENERIC_NAME);
+    assertThat(vmp.getFullySpecifiedName())
+        .isEqualTo("Product containing only " + GENERIC_NAME + " (clinical drug)");
+
+    ArgumentCaptor<NameGeneratorSpec> specCaptor = ArgumentCaptor.forClass(NameGeneratorSpec.class);
+    verify(nameGenerationClient, atLeastOnce()).generateNames(specCaptor.capture());
+
+    NameGeneratorSpec vmppSpec =
+        specCaptor.getAllValues().stream()
+            .filter(spec -> "packaged clinical drug".equals(spec.getTag()))
+            .findFirst()
+            .orElseThrow(() -> new AssertionError("No name generator call for the VMPP level"));
+
+    assertThat(vmppSpec.getOwl())
+        .as(
+            "the VMP's own \"Product containing only\" display prefix must not leak into the"
+                + " VMPP's \"Contains clinical drug\" role-group text sent to the name generator")
+        .doesNotContain("Product containing only");
+    assertThat(vmppSpec.getPt_owl()).doesNotContain("Product containing only");
+  }
+
+  @Test
   void newNutritionalAmpDefaultsToPrimitiveWhenNoStrengthDataSupplied()
       throws ExecutionException, InterruptedException {
     ProductSummary summary =
