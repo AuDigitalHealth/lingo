@@ -5,3 +5,11 @@ allowBuilds:
   es5-ext: false
   esbuild: true
   utf-8-validate: true
+
+# Force transitive dependencies flagged by the Trivy dependency scan to their patched versions.
+# brace-expansion is present on both its 1.x and 2.x lines, so each is pinned to its own fix.
+overrides:
+  brace-expansion@1: 1.1.16
+  brace-expansion@2: 2.1.2
+  fast-uri: ^3.1.4
+  linkify-it: ^5.0.2

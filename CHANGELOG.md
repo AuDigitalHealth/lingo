@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
+## [1.3.55] - 2026-07-24
+### Security
+- Bumped transitive dependencies flagged as HIGH by the Trivy dependency scan to their patched versions: `plexus-utils` 3.0.24/3.5.1→3.6.1 (CVE-2025-67030), forced via root-pom `dependencyManagement` since it arrives transitively through build plugins on the compile classpath (`commons-io` was already pinned to 2.22.0, past 2.17.0's fix for CVE-2024-47554); `postgresql` 42.7.11→42.7.12 (CVE-2026-54291) via the `postgres.version` property; and the UI transitives `brace-expansion` (→1.1.16/2.1.2, CVE-2026-13149), `fast-uri` (→3.1.4, CVE-2026-13676/CVE-2026-16221) and `linkify-it` (→5.0.2, CVE-2026-59887) via `pnpm-workspace.yaml` overrides.
+
 ## [1.3.54] - 2026-07-24
 ### Fixed
 - Fixed the VMPP name generator falling back to a raw SCTID when a new pack size is added to an existing nutritional product. `MedicationProductCalculationService.findOrCreateUnit`/`findOrCreateMp` reuse an existing clinical drug/medicinal product via `NodeGeneratorService.lookUpNode` for this NMPC flow, but that lookup never registered the reused concept's FSN/PT in the `AtomicCache`, so the new pack's axiom (its `Contains clinical drug` role) had no name to substitute in and the raw concept ID was sent to the external name generator instead.

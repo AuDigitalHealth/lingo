@@ -126,10 +126,19 @@
         <groupId>com.fasterxml.jackson.datatype</groupId>
         <version>2.22.0</version>
       </dependency>
+      <!-- commons-io already pinned to 2.22.0 above, well past 2.17.0's fix for CVE-2024-47554. -->
       <dependency>
         <artifactId>commons-io</artifactId>
         <groupId>commons-io</groupId>
         <version>2.22.0</version>
+      </dependency>
+      <!-- plexus-utils arrives transitively via build plugins on the compile classpath
+           (maven-resources-plugin -> 3.5.1, jacoco-maven-plugin -> 3.0.24), both carrying
+           CVE-2025-67030 (fixed in 3.6.1). Force every transitive to the fixed version. -->
+      <dependency>
+        <artifactId>plexus-utils</artifactId>
+        <groupId>org.codehaus.plexus</groupId>
+        <version>3.6.1</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
