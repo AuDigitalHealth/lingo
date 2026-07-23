@@ -1202,7 +1202,11 @@ public class MedicationProductCalculationService
       // node unnamed rather than emitting a malformed name. Mandatory validation gates a real save.
       return;
     }
-    final String fsn = baseName + " (" + level.getDrugDeviceSemanticTag() + ")";
+    final String fsnBaseName =
+        level.getModelLevelType().equals(CLINICAL_DRUG)
+            ? "Product containing only " + baseName
+            : baseName;
+    final String fsn = fsnBaseName + " (" + level.getDrugDeviceSemanticTag() + ")";
     node.getNewConceptDetails().setFullySpecifiedName(fsn);
     node.getNewConceptDetails().setPreferredTerm(baseName);
     atomicCache.addFsnAndPt(node.getConceptId(), fsn, baseName);
