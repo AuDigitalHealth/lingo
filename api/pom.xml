@@ -776,7 +776,8 @@
     <json-schema.version>4.36.0</json-schema.version>
     <maven-enforcer-plugin.version>3.5.0</maven-enforcer-plugin.version>
     <owlapi.version>4.5.19</owlapi.version>
-    <postgres.version>42.7.11</postgres.version>
+    <!-- 42.7.12 clears CVE-2026-54291 (fixed in 42.7.12). -->
+    <postgres.version>42.7.12</postgres.version>
     <problem-spring-web.version>0.23.0</problem-spring-web.version>
     <querydsl.version>5.1.0</querydsl.version>
     <sentry.version>8.46.0</sentry.version>

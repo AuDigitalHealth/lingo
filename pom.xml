@@ -137,7 +137,22 @@
         <version>${lombok.version}</version>
       </dependency>
       <!-- jackson-datatype-jsr310 managed by Spring Boot 4 BOM — no explicit version needed -->
-      <!-- commons-io managed by Spring Boot 4 BOM — no explicit version needed -->
+      <!-- commons-io is NOT managed by the Spring Boot 4 BOM: it arrives transitively (e.g. via the
+           maven-resources-plugin that lingo-common pulls onto the compile classpath) at 2.11.0,
+           which carries CVE-2024-47554 (fixed in 2.14.0). Force every transitive to a safe version. -->
+      <dependency>
+        <artifactId>commons-io</artifactId>
+        <groupId>commons-io</groupId>
+        <version>2.17.0</version>
+      </dependency>
+      <!-- plexus-utils arrives transitively via build plugins on the compile classpath
+           (maven-resources-plugin -> 3.5.1, jacoco-maven-plugin -> 3.0.24), both carrying
+           CVE-2025-67030 (fixed in 3.6.1). Force every transitive to the fixed version. -->
+      <dependency>
+        <artifactId>plexus-utils</artifactId>
+        <groupId>org.codehaus.plexus</groupId>
+        <version>3.6.1</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
