@@ -269,7 +269,7 @@ class MedicationProductCalculationServiceNutritionalNameTest {
   }
 
   @Test
-  void newNutritionalVmpFsnStartsWithProductContainingOnlyButPtAndVmppDoNot()
+  void newNutritionalVmpFsnStartsWithProductContainingOnlyButPtDoesNot()
       throws ExecutionException, InterruptedException {
     PackageDetails<MedicationProductDetails> pkg = nutritionalPackage();
 
@@ -291,11 +291,13 @@ class MedicationProductCalculationServiceNutritionalNameTest {
             .findFirst()
             .orElseThrow(() -> new AssertionError("No name generator call for the VMPP level"));
 
+    // The VMPP's "Contains clinical drug" role substitutes the VMP's real FSN/PT into the owl/
+    // pt_owl axiom text (matching every other level's convention - see
+    // NameGenerationService#addGeneratedFsnAndPt), so the FSN-based axiom legitimately carries the
+    // VMP's own "Product containing only" prefix since that is genuinely its FSN.
     assertThat(vmppSpec.getOwl())
-        .as(
-            "the VMP's own \"Product containing only\" display prefix must not leak into the"
-                + " VMPP's \"Contains clinical drug\" role-group text sent to the name generator")
-        .doesNotContain("Product containing only");
+        .contains("Product containing only " + GENERIC_NAME + " (clinical drug)");
+    // The PT-based axiom substitutes the VMP's PT, which never carries the prefix.
     assertThat(vmppSpec.getPt_owl()).doesNotContain("Product containing only");
   }
 
