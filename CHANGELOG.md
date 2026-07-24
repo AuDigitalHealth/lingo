@@ -7,9 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
-## [Unreleased]
+## [1.3.54] - 2026-07-24
 ### Fixed
 - Fixed the VMPP name generator falling back to a raw SCTID when a new pack size is added to an existing nutritional product. `MedicationProductCalculationService.findOrCreateUnit`/`findOrCreateMp` reuse an existing clinical drug/medicinal product via `NodeGeneratorService.lookUpNode` for this NMPC flow, but that lookup never registered the reused concept's FSN/PT in the `AtomicCache`, so the new pack's axiom (its `Contains clinical drug` role) had no name to substitute in and the raw concept ID was sent to the external name generator instead.
+- Fixed a newly authored nutritional VMP (created from "New Generic Product Name" rather than reusing an existing clinical drug) missing the standard "Product containing only" prefix on its FSN. Nutritional VMP naming echoes the author-supplied name verbatim rather than going through the external name generator (there is no ingredient/strength data to derive a real generated name from), so this is now prepended as fixed text in `generateNutritionalProductName`'s caller, matching the convention non-nutritional VMPs get from the generator. The PT is left unprefixed, matching the generator's own FSN/PT convention.
 
 ## [1.3.53] - 2026-07-15
 ### Fixed
