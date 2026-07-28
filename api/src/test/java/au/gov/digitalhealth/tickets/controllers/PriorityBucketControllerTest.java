@@ -17,11 +17,45 @@ package au.gov.digitalhealth.tickets.controllers;
 
 import au.gov.digitalhealth.tickets.TicketTestBaseLocal;
 import au.gov.digitalhealth.tickets.models.PriorityBucket;
+import au.gov.digitalhealth.tickets.models.TaskAssociation;
+import au.gov.digitalhealth.tickets.models.Ticket;
+import au.gov.digitalhealth.tickets.repository.TaskAssociationRepository;
+import au.gov.digitalhealth.tickets.repository.TicketRepository;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 class PriorityBucketControllerTest extends TicketTestBaseLocal {
+
+  @Autowired private TicketRepository ticketRepository;
+
+  @Autowired private TaskAssociationRepository taskAssociationRepository;
+
+  @Test
+  void deletePriorityBucketOnTicketWithTaskAssociationReturns204() {
+    // Reproduces LINGO-NPC-9J: the delete endpoint previously returned the Ticket entity, and
+    // Jackson failed serialising its lazy `taskAssociation` proxy, 500ing every delete on a ticket
+    // that had an associated task. The endpoint now returns an empty 204, so nothing is serialised.
+    Ticket ticket =
+        ticketRepository.save(
+            Ticket.builder()
+                .title("LINGO-NPC-9J regression")
+                .description("ticket with a task association")
+                .build());
+
+    TaskAssociation taskAssociation = new TaskAssociation();
+    taskAssociation.setTicket(ticket);
+    taskAssociation.setTaskId("AU-9J-regression");
+    taskAssociationRepository.save(taskAssociation);
+
+    withAuth()
+        .contentType(ContentType.JSON)
+        .when()
+        .delete(this.getSnomioLocation() + "/api/tickets/" + ticket.getId() + "/priorityBuckets")
+        .then()
+        .statusCode(204);
+  }
 
   @Test
   void getAllBuckets() {

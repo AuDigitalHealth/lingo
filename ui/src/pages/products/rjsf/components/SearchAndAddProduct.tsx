@@ -49,7 +49,10 @@ const SearchAndAddProduct: React.FC<SearchAndAddProductProps> = ({
   // Fetch product details when a product is selected
   useEffect(() => {
     const getDetails = async () => {
-      if (selectedProduct) {
+      // Guard on conceptId, not just selectedProduct: a selection whose conceptId is undefined
+      // otherwise interpolated the string "undefined" into the product-fetch URL, 500ing the
+      // Long path-param conversion server-side (SNOMIO-4C).
+      if (selectedProduct?.conceptId) {
         setLoading(true);
         setError('');
         try {

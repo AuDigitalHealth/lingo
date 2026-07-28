@@ -114,7 +114,7 @@ public class PriorityBucketController {
   }
 
   @DeleteMapping(value = "/api/tickets/{ticketId}/priorityBuckets")
-  public ResponseEntity<Ticket> deleteBucket(@PathVariable Long ticketId) {
+  public ResponseEntity<Void> deleteBucket(@PathVariable Long ticketId) {
 
     Ticket ticket =
         ticketRepository
@@ -126,8 +126,10 @@ public class PriorityBucketController {
     ticketService.validateTicketState(ticket);
 
     ticket.setPriorityBucket(null);
-    Ticket updatedTicket = ticketRepository.save(ticket);
+    ticketRepository.save(ticket);
 
-    return new ResponseEntity<>(updatedTicket, HttpStatus.NO_CONTENT);
+    // Return an empty 204: the client only checks the status, and serialising the Ticket entity
+    // here triggered a Jackson failure on its lazy `taskAssociation` proxy (LINGO-NPC-9J).
+    return ResponseEntity.noContent().build();
   }
 }
