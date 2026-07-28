@@ -68,9 +68,11 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.groups.Default;
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -180,17 +182,53 @@ public class DeviceProductCalculationService
       Entry<ProductQuantity<DeviceProductDetails>, ProductSummary> entry, ModelLevelType type) {
     ProductSummary productSummary = entry.getValue();
     ProductQuantity<DeviceProductDetails> productQuantity = entry.getKey();
-    return productSummary
+    String containedName =
+        productSummary
             .getNode(productSummary.getSingleConceptOfType(type).getConceptId())
-            .getPreferredTerm()
-        + ", "
-        + productQuantity.getValue()
-        + (UNIT_OF_PRESENTATION.getValue().equals(productQuantity.getUnit().getConceptId())
+            .getPreferredTerm();
+    String unitTerm =
+        UNIT_OF_PRESENTATION.getValue().equals(productQuantity.getUnit().getConceptId())
+            ? null
+            : Objects.requireNonNull(
+                    productQuantity.getUnit().getPt(), "Unit must have a preferred term")
+                .getTerm();
+    return formatDevicePackTerm(containedName, productQuantity.getValue(), unitTerm);
+  }
+
+  /**
+   * Formats a device pack term per the HSE gold: {@code "<contained name> (N device(s))"} — the
+   * count is parenthesised and the count unit (e.g. "Device") is lower-cased and pluralised, e.g.
+   * "Blood ketone testing strips (10 devices)". A unit-of-presentation count carries no unit word.
+   */
+  static String formatDevicePackTerm(String containedName, BigDecimal value, String unitTerm) {
+    String suffix =
+        unitTerm == null || unitTerm.isBlank()
             ? ""
-            : " "
-                + Objects.requireNonNull(
-                        productQuantity.getUnit().getPt(), "Unit must have a preferred term")
-                    .getTerm());
+            : " " + pluralise(unitTerm.toLowerCase(Locale.ROOT), value);
+    return containedName + " (" + value + suffix + ")";
+  }
+
+  /** Removes a trailing "(brand)" naming tag from a brand concept term (e.g. "Foo (brand)"). */
+  static String stripBrandTag(String term) {
+    if (term == null) {
+      return null;
+    }
+    String stripped = term.replaceFirst("(?i)\\s*\\(brand\\)\\s*$", "").trim();
+    return stripped.isEmpty() ? term.trim() : stripped;
+  }
+
+  /** Minimal English pluralisation of a count unit word (singular when the count is exactly 1). */
+  static String pluralise(String word, BigDecimal count) {
+    if (word.isEmpty() || (count != null && count.compareTo(BigDecimal.ONE) == 0)) {
+      return word;
+    }
+    if (word.matches("(?i).*(s|x|z|ch|sh)$")) {
+      return word + "es";
+    }
+    if (word.matches("(?i).*[^aeiou]y$")) {
+      return word.substring(0, word.length() - 1) + "ies";
+    }
+    return word + "s";
   }
 
   @Override
@@ -845,16 +883,13 @@ public class DeviceProductCalculationService
   }
 
   private String calculateAtmName(DeviceProductDetails productDetails) {
-    String deviceType =
-        Objects.requireNonNull(
-                productDetails.getDeviceType().getPt(), "Device type must have a preferred term")
-            .getTerm();
+    // ATM (real device) is the bare brand per the HSE gold (e.g. "4Sure B-Ketone"): the device
+    // type is not appended, and any trailing "(brand)" naming tag on the brand concept is removed.
     String productName =
         Objects.requireNonNull(
                 productDetails.getProductName().getPt(), "Product name must have a preferred term")
             .getTerm();
-
-    return productName + " " + deviceType;
+    return stripBrandTag(productName);
   }
 
   private String calculateBrandedProductName(DeviceProductDetails productDetails) {
@@ -876,7 +911,7 @@ public class DeviceProductCalculationService
 
     assert deviceType != null;
     assert genericDeviceName != null;
-    return productName + " " + genericDeviceName.replace(deviceType, "");
+    return stripBrandTag(productName) + " " + genericDeviceName.replace(deviceType, "");
   }
 
   private NewConceptDetails getNewLeafUnbrandedDetails(
