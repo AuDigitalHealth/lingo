@@ -14,7 +14,7 @@
       "arrayTemplate": "accordion",
       "initiallyExpanded": true,
       "searchAndAddProduct": {
-        "ecl": "^660381000220107 AND <63653004",
+        "ecl": "^660381000220107 AND <49062001",
         "type": "device",
         "package": false
       }
@@ -104,8 +104,8 @@
           "ui:title": "VTM Level Device Type",
           "ui:options": {
             "skipTitle": true,
-            "ecl": "(<<49062001 and ^660351000220100 ): [0..0] 774158006 = *",
-            "extendedEcl": "(<<49062001): [0..0] 774158006 = *",
+            "ecl": "(^ 660351000220100) AND (<< 49062001)",
+            "extendedEcl": "<< 49062001 MINUS (^ 660371000220109 OR ^ 660391000220105 OR ^ 660361000220103 OR ^ 660381000220107)",
             "showDefaultOptions": false,
             "dependants": [
               {
@@ -145,7 +145,7 @@
           },
           "ui:field": "AutoCompleteField",
           "ui:options": {
-            "ecl": "<63653004",
+            "ecl": "<49062001",
             "skipTitle": true,
             "showDefaultOptions": false,
             "multiValued": true

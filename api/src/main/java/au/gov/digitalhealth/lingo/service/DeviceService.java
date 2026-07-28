@@ -29,11 +29,13 @@ import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
 import au.gov.digitalhealth.lingo.configuration.model.ModelConfiguration;
 import au.gov.digitalhealth.lingo.configuration.model.Models;
+import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType;
 import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelType;
 import au.gov.digitalhealth.lingo.exception.AtomicDataExtractionProblem;
 import au.gov.digitalhealth.lingo.product.details.DeviceProductDetails;
 import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -179,6 +181,9 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
             productDetails.getSpecificDeviceType(),
             modelConfiguration));
 
+    checkVtmRouteConsistency(
+        branch, product, productId, productDetails.getDeviceType(), browserMap, modelConfiguration);
+
     final String hasOtherIdentifyingInfoType =
         modelConfiguration.getModelType().equals(ModelType.NMPC)
             ? HAS_OTHER_IDENTIFYING_INFORMATION_NMPC.getValue()
@@ -211,6 +216,64 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
     }
 
     return productDetails;
+  }
+
+  /**
+   * Verifies the two routes from a branded device product to its VTM agree - the unbranded route
+   * (AMP -> VMP -> VTM) and the branded route (AMP -> ATM -> VTM). Migrated content exists where
+   * the routes are modelled against different VTM reference set members (CUST1679268); silently
+   * authoring against the unbranded route's VTM re-parents the product and generates a duplicate
+   * ATM on update, so such products are rejected until the data is remediated. Only applies to
+   * models with a root branded product (ATM) level, and costs a single cached ECL query per
+   * product: the VTM reference set members among the ancestors of the product's ATM(s). An empty
+   * result (no ATM route) passes, as does any result containing the unbranded route's VTM.
+   */
+  private void checkVtmRouteConsistency(
+      String branch,
+      SnowstormConcept product,
+      String productId,
+      SnowstormConceptMini deviceType,
+      Map<String, SnowstormConcept> browserMap,
+      ModelConfiguration modelConfiguration) {
+    if (!modelConfiguration.containsModelLevel(ModelLevelType.REAL_MEDICINAL_PRODUCT)) {
+      return;
+    }
+
+    String atmRefsetId =
+        modelConfiguration
+            .getLevelOfType(ModelLevelType.REAL_MEDICINAL_PRODUCT)
+            .getReferenceSetIdentifier();
+    String vtmRefsetId =
+        modelConfiguration.getRootUnbrandedProductModelLevel().getReferenceSetIdentifier();
+
+    Collection<String> atmRouteVtmIds =
+        snowStormApiClient.getConceptsIdsFromEcl(
+            branch,
+            "(> ((> <id>) and ^ " + atmRefsetId + ")) and ^ " + vtmRefsetId,
+            Long.parseLong(product.getConceptId()),
+            0,
+            10,
+            modelConfiguration.isExecuteEclAsStated());
+
+    if (!atmRouteVtmIds.isEmpty() && !atmRouteVtmIds.contains(deviceType.getConceptId())) {
+      throw new AtomicDataExtractionProblem(
+          "Inconsistent device model: the unbranded route (via the VMP) resolves the VTM to "
+              + formatConcept(deviceType.getConceptId(), browserMap)
+              + " but the branded route (via the ATM) is modelled under "
+              + atmRouteVtmIds.stream()
+                  .map(id -> formatConcept(id, browserMap))
+                  .collect(Collectors.joining(", "))
+              + ". Both routes must resolve to the same VTM - the product's stated model needs"
+              + " remediation",
+          productId);
+    }
+  }
+
+  private static String formatConcept(String conceptId, Map<String, SnowstormConcept> browserMap) {
+    SnowstormConcept concept = browserMap.get(conceptId);
+    return concept == null || concept.getPt() == null
+        ? conceptId
+        : conceptId + " |" + concept.getPt().getTerm() + "|";
   }
 
   @Override
