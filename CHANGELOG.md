@@ -9,6 +9,8 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 ## [Unreleased]
 ### Security
+- Cleared newly-published HIGH Trivy dependency-scan findings. Bumped Netty 4.2.15.Final→4.2.16.Final via the root-pom `netty.version` property (which overrides Spring Boot's managed version), covering `netty-codec-http` (CVE-2026-55831/CVE-2026-55833/CVE-2026-56745), `netty-codec-compression` (CVE-2026-59901) and `netty-codec-http3` (CVE-2026-56816). Bumped the UI transitives `postcss` (→8.5.18+, GHSA-r28c-9q8g-f849) and `brace-expansion`'s 2.x line up to 5.0.8 (CVE-2026-14257, only patched on the current line) via `pnpm-workspace.yaml` overrides.
+- Proactively bumped Jackson to its current patch releases via the Spring Boot BOM properties `jackson-2-bom.version` 2.21.4→2.21.5 (2.x compat line) and `jackson-bom.version` 3.1.4→3.1.5 (Jackson 3.x), clearing MEDIUM findings CVE-2026-59889 and CVE-2026-54515 (GHSA-mhm7-754m-9p8w).
 - Bumped transitive dependencies flagged as HIGH by the Trivy dependency scan to their patched versions: `commons-io` 2.11.0→2.17.0 (CVE-2024-47554) and `plexus-utils` 3.0.24/3.5.1→3.6.1 (CVE-2025-67030), both forced via root-pom `dependencyManagement` since they arrive transitively through build plugins on the compile classpath; `postgresql` 42.7.11→42.7.12 (CVE-2026-54291) via the `postgres.version` property; and the UI transitives `brace-expansion` (→1.1.16/2.1.2, CVE-2026-13149), `fast-uri` (→3.1.4, CVE-2026-13676/CVE-2026-16221) and `linkify-it` (→5.0.2, CVE-2026-59887) via `pnpm-workspace.yaml` overrides.
 
 ### Fixed

@@ -234,7 +234,13 @@
     </deployment.repo.url>
     <gson.version>2.11.0</gson.version>
     <jgrapht-core.version>1.5.2</jgrapht-core.version>
-    <netty.version>4.2.15.Final</netty.version>
+    <netty.version>4.2.16.Final</netty.version>
+    <!-- Override Spring Boot 4.1.0's managed Jackson versions with their patch fixes for
+         CVE-2026-59889 / CVE-2026-54515 (and GHSA-mhm7-754m-9p8w). jackson-2-bom is the 2.x compat
+         line, jackson-bom is Jackson 3.x (Spring Boot 4's primary). Both are patch bumps within the
+         same minor. -->
+    <jackson-2-bom.version>2.21.5</jackson-2-bom.version>
+    <jackson-bom.version>3.1.5</jackson-bom.version>
     <json-schema.version>4.36.0</json-schema.version>
     <lombok.version>1.18.46</lombok.version>
     <rest-assured.version>6.0.0</rest-assured.version>
