@@ -93,6 +93,29 @@ export const isUserReportableProblem = (
 };
 
 /**
+ * Type prefix stamped on every deliberate backend problem (see `LingoProblem` -
+ * `BASE_PROBLEM_TYPE_URI`). A response carrying it is an application-level problem the backend chose
+ * to raise with a human-readable `detail`, as opposed to an unexpected framework crash.
+ */
+export const LINGO_PROBLEM_TYPE_PREFIX = 'http://lingo.csiro.au/problem/';
+
+/**
+ * True when the response is a well-formed backend problem with a message to show the user, at any
+ * status (including 5xx). Deliberate problems like `too-many-concepts` carry a useful `detail` and
+ * must be surfaced as a readable message rather than swallowed into the generic crash-report path.
+ */
+export const isApplicationProblem = (
+  // eslint-disable-next-line
+  data: any,
+): data is ProblemDetail => {
+  return (
+    isProblemDetail(data) &&
+    data.type.startsWith(LINGO_PROBLEM_TYPE_PREFIX) &&
+    data.detail.trim().length > 0
+  );
+};
+
+/**
  * Normalizes line endings in a message to LF so that CSS white-space handling can render them.
  * Supports CRLF/CR/LF inputs.
  */

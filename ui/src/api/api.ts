@@ -18,6 +18,7 @@ import axios from 'axios';
 import useUserStore from '../stores/UserStore';
 import { enqueueSnackbar } from 'notistack';
 import {
+  isApplicationProblem,
   isInternalServerError,
   isProblemDetail,
   isUpstreamServerProblem,
@@ -121,6 +122,18 @@ api.interceptors.response.use(
           enqueueSnackbar(`${potentialInternalServerError?.detail}`, {
             variant: 'error',
           });
+        } else if (isApplicationProblem(potentialInternalServerError)) {
+          // A deliberate backend problem (e.g. a 500 `too-many-concepts` from $calculate) carries a
+          // human-readable `detail`. Show it instead of routing to the Sentry crash-report dialog,
+          // which is why a failed product calculation previously bounced the user back to the
+          // atomic screen with no explanation.
+          enqueueSnackbar(
+            normalizeMultilineMessage(potentialInternalServerError.detail),
+            {
+              variant: 'error',
+              style: snackbarMultilineStyle,
+            },
+          );
         } else if (isInternalServerError(potentialInternalServerError)) {
           if (isSentryAvailable()) {
             Sentry.withScope(scope => {

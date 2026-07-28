@@ -275,19 +275,19 @@ public class MedicationProductCalculationService
               .filter(Objects::nonNull)
               .collect(Collectors.toSet());
 
-      final Collection<String> baseIds =
-          getBaseActiveIngredients(branch, productDetails, modelConfiguration, activeSubstanceIds);
+      final int baseCount =
+          getBaseActiveIngredientCount(branch, modelConfiguration, activeSubstanceIds);
 
       relationships.add(
           getSnowstormDatatypeComponent(
               SnomedConstants.COUNT_OF_BASE_ACTIVE_INGREDIENT,
-              Integer.toString(baseIds.size()),
+              Integer.toString(baseCount),
               DataTypeEnum.INTEGER,
               0,
               SnomedConstants.STATED_RELATIONSHIP,
               modelConfiguration.getModuleId()));
 
-      if (baseIds.size() != activeSubstanceIds.size()) {
+      if (baseCount != activeSubstanceIds.size()) {
         relationships.add(
             getSnowstormDatatypeComponent(
                 COUNT_OF_ACTIVE_INGREDIENT,
@@ -300,12 +300,13 @@ public class MedicationProductCalculationService
     }
   }
 
-  private Collection<String> getBaseActiveIngredients(
-      String branch,
-      MedicationProductDetails productDetails,
-      ModelConfiguration modelConfiguration,
-      Set<String> activeSubstanceIds) {
-    final String activeSubstanceOrClause = String.join(" OR ", activeSubstanceIds);
+  private int getBaseActiveIngredientCount(
+      String branch, ModelConfiguration modelConfiguration, Set<String> activeSubstanceIds) {
+    // The ECL substitutes the (parenthesised) active substance OR clause into <ids>. The wrapping
+    // parentheses matter: they group the whole set so the [1..1] modification guard applies to
+    // every
+    // substance, not just the last term of the OR.
+    final String activeSubstanceOrClause = "(" + String.join(" OR ", activeSubstanceIds) + ")";
 
     if (log.isLoggable(Level.FINE)) {
       log.fine(
@@ -315,17 +316,26 @@ public class MedicationProductCalculationService
               + activeSubstanceOrClause);
     }
 
-    // find the base substances for the set of active ingredients
+    // Count the base substances for the set of active ingredients by walking "is modification of"
+    // (738774007) up to three hops. Each hop is gated by ": [1..1] 738774007 = *" on its source and
+    // wrapped in its own parentheses before the next guard, so the walk only descends through
+    // substances that are a modification of exactly one thing. A base is a substance with no
+    // modification attribute ([0..0]) OR one with two or more ([2..*]) - the latter encodes the
+    // SNOMED editorial exception ("Chemical element compound with multiple modification", e.g.
+    // sodium zirconium cyclosilicate or calcium lactate gluconate) where the compound is its own
+    // base rather than resolving to its multiple parents. Because descent only follows single
+    // modification links, each ingredient contributes exactly one base, so the result can never
+    // exceed the ingredient count.
     Collection<String> baseIds =
         snowstormClient.getConceptIdsFromEcl(
             branch,
-            "((<ids>) or ((<ids>).738774007) or (((<ids>).738774007).738774007) or ((((<ids>).738774007).738774007).738774007)) and ((< 105590001 or (<ids>)):[0..0] 738774007=*)",
+            "((<ids>) or ((<ids> : [1..1] 738774007 = *).738774007)"
+                + " or ((((<ids> : [1..1] 738774007 = *).738774007) : [1..1] 738774007 = *).738774007)"
+                + " or ((((((<ids> : [1..1] 738774007 = *).738774007) : [1..1] 738774007 = *).738774007) : [1..1] 738774007 = *).738774007))"
+                + " and (((< 105590001 or (<ids>)) : [0..0] 738774007 = *)"
+                + " or ((< 105590001 or (<ids>)) : [2..*] 738774007 = *))",
             0,
-            (int)
-                productDetails.getActiveIngredients().stream()
-                    .map(i -> i.getActiveIngredient().getConceptId())
-                    .filter(Objects::nonNull)
-                    .count(),
+            activeSubstanceIds.size(),
             modelConfiguration.isExecuteEclAsStated(),
             Set.of(Pair.of("<ids>", activeSubstanceOrClause)));
 
@@ -338,7 +348,7 @@ public class MedicationProductCalculationService
               + ", substanceIds: "
               + activeSubstanceOrClause);
     }
-    return baseIds;
+    return baseIds.size();
   }
 
   @Override
