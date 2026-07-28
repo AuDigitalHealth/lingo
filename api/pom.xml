@@ -463,12 +463,6 @@
       <groupId>org.springframework.data</groupId>
     </dependency>
     <dependency>
-      <artifactId>h2</artifactId>
-      <groupId>com.h2database</groupId>
-      <scope>runtime</scope>
-      <version>${h2.version}</version>
-    </dependency>
-    <dependency>
       <artifactId>spring-boot-starter-test</artifactId>
       <groupId>org.springframework.boot</groupId>
       <scope>test</scope>
@@ -776,7 +770,6 @@
     <docker.registry.host>nctsacr.azurecr.io</docker.registry.host>
     <docker.repository>snomio</docker.repository>
     <fmt-maven-plugin.version>2.23</fmt-maven-plugin.version>
-    <h2.version>2.4.240</h2.version>
     <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
     <java.docker.image>eclipse-temurin:21</java.docker.image>
     <java.version>21</java.version>

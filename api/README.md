@@ -1,4 +1,4 @@
-- Update the values in the application-{env}.properties file depending on your environment, and whether you want to skip signing in with ims.
-- For debugging locally add `--spring.profiles.active=local` to your debugger's arguments. This will spin up a local h2 database
-- For H2 specific Flyway migrations add your script to `src/main/resources/db/migration/h2` for PostgreSQL migrations the location is `src/main/resources/db/migration/postgresql`
-- `h2_schema_snapshot.sql` mirrors the current DB schema. Run `latest_ddl.sh` to determine any changes that need to go into Flyway migration scripts. Commit this file along with a new version of Flyway DB migration scripts.
+- Update the values in the `application-{env}.properties` file for your environment, including whether to skip signing in with IMS.
+- The API uses a PostgreSQL database (see the `spring.datasource.*` settings in `application.properties`). To run locally, point it at a local or containerised PostgreSQL instance.
+- Add Flyway migration scripts under `src/main/resources/db/migration/postgresql` (PostgreSQL-specific) or `src/main/resources/db/migration/common` (shared), named `V<n>__Description.sql`.
+- The test suite runs against a Testcontainers PostgreSQL instance (see `src/test/resources/application-test.properties`); no local database is required to run the tests.

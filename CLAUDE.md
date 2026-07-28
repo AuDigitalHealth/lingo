@@ -68,7 +68,6 @@ Local runs pick a profile via `spring.profiles.active`. Available profiles in
 - `amtuat` — UAT against Australian Medicines Terminology
 - `nmpcuat` — UAT against the Irish NMPC extension
 - `dc4h` — Dev environment
-- `h2` — In-memory H2 database (no external Snowstorm/Auth)
 
 The `application-test.properties` file is for tests; do not commit local edits to it.
 
