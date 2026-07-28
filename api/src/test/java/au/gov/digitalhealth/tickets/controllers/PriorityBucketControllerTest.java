@@ -18,7 +18,7 @@ package au.gov.digitalhealth.tickets.controllers;
 import au.gov.digitalhealth.tickets.TicketTestBaseLocal;
 import au.gov.digitalhealth.tickets.models.PriorityBucket;
 import io.restassured.http.ContentType;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 class PriorityBucketControllerTest extends TicketTestBaseLocal {
@@ -55,7 +55,7 @@ class PriorityBucketControllerTest extends TicketTestBaseLocal {
             .extract()
             .as(PriorityBucket.class);
     Integer order = newBucket.getOrderIndex();
-    Assert.assertEquals(3, order.intValue());
+    Assertions.assertEquals(3, order.intValue());
 
     PriorityBucket newPriorityBucketMiddle =
         PriorityBucket.builder()
@@ -75,7 +75,7 @@ class PriorityBucketControllerTest extends TicketTestBaseLocal {
             .extract()
             .as(PriorityBucket.class);
     order = newBucketMiddle.getOrderIndex();
-    Assert.assertEquals(2, order.intValue());
+    Assertions.assertEquals(2, order.intValue());
 
     PriorityBucket[] allBuckets =
         withAuth()
@@ -88,8 +88,8 @@ class PriorityBucketControllerTest extends TicketTestBaseLocal {
             .as(PriorityBucket[].class);
 
     PriorityBucket middleBucketReturned = allBuckets[2];
-    Assert.assertEquals("Will reorder list", middleBucketReturned.getDescription());
+    Assertions.assertEquals("Will reorder list", middleBucketReturned.getDescription());
     PriorityBucket finalBucketReturned = allBuckets[4];
-    Assert.assertEquals("Won't reorder list", finalBucketReturned.getDescription());
+    Assertions.assertEquals("Won't reorder list", finalBucketReturned.getDescription());
   }
 }

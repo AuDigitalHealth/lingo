@@ -53,9 +53,9 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import junit.framework.AssertionFailedError;
 import lombok.extern.java.Log;
 import org.assertj.core.api.Assertions;
+import org.opentest4j.AssertionFailedError;
 
 @Log
 public class MedicationAssertions {

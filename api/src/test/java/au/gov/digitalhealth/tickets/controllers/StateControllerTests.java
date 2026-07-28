@@ -18,7 +18,7 @@ package au.gov.digitalhealth.tickets.controllers;
 import au.gov.digitalhealth.tickets.TicketTestBaseLocal;
 import au.gov.digitalhealth.tickets.models.State;
 import io.restassured.http.ContentType;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 class StateControllerTests extends TicketTestBaseLocal {
@@ -36,6 +36,6 @@ class StateControllerTests extends TicketTestBaseLocal {
             .extract()
             .as(State[].class);
 
-    Assert.assertEquals(6, allStates.length);
+    Assertions.assertEquals(6, allStates.length);
   }
 }

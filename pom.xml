@@ -28,40 +28,174 @@
         <configuration>
           <failOnBlacklist>true</failOnBlacklist>
           <failOnMissing>true</failOnMissing>
-          <includeTransitiveDependencies>false</includeTransitiveDependencies>
+          <!-- Always regenerate from scratch. Without this the plugin skips
+               rewriting an up-to-date file, which would let the npm listing that
+               maven-antrun appends afterwards accumulate (double-append) across
+               builds. Forcing regeneration keeps LICENSE/NOTICE/THIRD_PARTY_NOTICES.md
+               idempotent and deterministic. -->
+          <force>true</force>
+          <includeTransitiveDependencies>true</includeTransitiveDependencies>
+          <!-- Only report on what is actually distributed. Test/provided/system
+               scoped dependencies (JUnit, JaCoCo, WireMock, Testcontainers,
+               annotation processors, etc.) are not shipped in the Jib image and
+               therefore carry no distribution obligation. -->
+          <excludedScopes>test,provided,system</excludedScopes>
+          <!-- Snomio's own reactor modules (au.gov.digitalhealth:*) are not
+               third-party and must not appear in the third-party notices. They
+               also resolve to a SNAPSHOT whose timestamp changes every build
+               (e.g. lingo-auth from the remote snapshot repo), which would make
+               the generated notices non-deterministic and break the CI drift
+               check. Exclude the whole group. -->
+          <excludedGroups>au\.gov\.digitalhealth</excludedGroups>
+          <!-- Allowlist of licences permitted in the *distributed* closure. Every
+               entry below is either permissive or file/library-level (weak) copyleft
+               and is therefore compatible with re-distributing an Apache-2.0 work.
+               No strong copyleft (GPL/AGPL), CDDL or commercial licence is permitted:
+               such a dependency causes the build to fail via failOnBlacklist. -->
           <includedLicenses>
             <includedLicense>Apache License, Version 2.0</includedLicense>
             <includedLicense>Apache License Version 2.0, January 2004</includedLicense>
             <includedLicense>BSD License</includedLicense>
             <includedLicense>BSD-2-Clause</includedLicense>
+            <includedLicense>Eclipse Distribution License v. 1.0</includedLicense>
             <includedLicense>GNU LGPL Version 3.0</includedLicense>
             <includedLicense>GNU Library General Public License v2.1 or later</includedLicense>
             <includedLicense>Eclipse Public License 1.0</includedLicense>
             <includedLicense>Eclipse Public License 2.0</includedLicense>
             <includedLicense>MIT License</includedLicense>
+            <includedLicense>MIT-0</includedLicense>
             <includedLicense>Public Domain</includedLicense>
             <includedLicense>CDDL 1.1</includedLicense>
             <includedLicense>Eclipse Distribution License - v 1.0</includedLicense>
           </includedLicenses>
+          <!-- Normalise the many upstream spellings of each licence onto one
+               canonical name (the left-hand token), which must appear in the
+               allowlist above. These are synonym mappings only; no mapping changes
+               a dependency's actual licence family. -->
           <licenseMerges>
-            <licenseMerge>Apache License, Version 2.0|Apache Software License 2.0|The Apache License, Version 2.0|The Apache Software License, Version 2.0|Apache 2.0 License|Apache License 2.0|Apache-2.0|Apache 2.0|Apache Software Licenses|Apache 2|ASF 2.0</licenseMerge>
-            <licenseMerge>BSD License|BSD New|The BSD License|New BSD License|BSD-3-Clause|The New BSD License</licenseMerge>
+            <licenseMerge>Apache License, Version 2.0|Apache License Version 2.0|Apache Software License 2.0|The Apache License, Version 2.0|The Apache Software License, Version 2.0|Apache 2.0 License|Apache License 2.0|Apache-2.0|Apache 2.0|Apache Software Licenses|Apache 2|ASF 2.0|Apache Public License 2.0</licenseMerge>
+            <licenseMerge>BSD License|BSD New|The BSD License|New BSD License|BSD-3-Clause|The New BSD License|The BSD 3-Clause License|The BSD 3-Clause License (BSD3)|BSD License 3|BSD 3-Clause|Revised BSD License</licenseMerge>
+            <licenseMerge>Eclipse Distribution License v. 1.0|EDL 1.0|Eclipse Distribution License v1.0|Eclipse Distribution License - v 1.0|Eclipse Distribution License (New BSD License)</licenseMerge>
             <licenseMerge>Eclipse Public License 1.0|Eclipse Public License - v 1.0|EPL 1.0</licenseMerge>
-            <licenseMerge>Eclipse Public License 2.0|Eclipse Public License - v 2.0|EPL 2.0|EPL-2.0|Eclipse Public License (EPL) 2.0|Eclipse Public License v2.0</licenseMerge>
+            <licenseMerge>Eclipse Public License 2.0|Eclipse Public License - v 2.0|EPL 2.0|EPL-2.0|Eclipse Public License (EPL) 2.0|Eclipse Public License v2.0|Eclipse Public License v. 2.0</licenseMerge>
             <licenseMerge>MIT License|The MIT License (MIT)|The MIT License|MIT|The JSON License</licenseMerge>
+            <licenseMerge>Public Domain|Public Domain, per Creative Commons CC0|CC0|CC0 1.0 Universal|Creative Commons Zero</licenseMerge>
           </licenseMerges>
           <sortArtifactByName>true</sortArtifactByName>
-          <thirdPartyFilename>LICENSE</thirdPartyFilename>
         </configuration>
         <executions>
+          <!-- The three executions below regenerate LICENSE, NOTICE and
+               THIRD_PARTY_NOTICES.md in the repository root on every build, so
+               they can never drift from the actual distributed dependency tree.
+               A CI check (see azure-pipelines.yml) fails the build if a commit
+               leaves them stale. -->
+          <!-- Generates the third-party licence listing embedded in LICENSE. -->
           <execution>
+            <id>generate-license</id>
+            <phase>generate-resources</phase>
             <goals>
               <goal>aggregate-add-third-party</goal>
             </goals>
+            <configuration>
+              <thirdPartyFilename>LICENSE</thirdPartyFilename>
+              <outputDirectory>${project.basedir}</outputDirectory>
+              <fileTemplate>${project.basedir}/src/license/license-file.ftl</fileTemplate>
+            </configuration>
+          </execution>
+          <!-- Generates the human-readable THIRD_PARTY_NOTICES.md. -->
+          <execution>
+            <id>generate-third-party-notices</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>aggregate-add-third-party</goal>
+            </goals>
+            <configuration>
+              <thirdPartyFilename>THIRD_PARTY_NOTICES.md</thirdPartyFilename>
+              <outputDirectory>${project.basedir}</outputDirectory>
+              <fileTemplate>${project.basedir}/src/license/third-party-notices.ftl</fileTemplate>
+            </configuration>
+          </execution>
+          <!-- Generates the NOTICE file (Apache-2.0 section 4(d)). -->
+          <execution>
+            <id>generate-notice</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>aggregate-add-third-party</goal>
+            </goals>
+            <configuration>
+              <thirdPartyFilename>NOTICE</thirdPartyFilename>
+              <outputDirectory>${project.basedir}</outputDirectory>
+              <fileTemplate>${project.basedir}/src/license/notice.ftl</fileTemplate>
+            </configuration>
           </execution>
         </executions>
         <groupId>org.codehaus.mojo</groupId>
         <version>2.4.0</version>
+      </plugin>
+      <!-- Generates a CycloneDX Software Bill of Materials (SBOM) for the whole
+           reactor at target/sbom.json and target/sbom.xml. Test-scope artefacts
+           are excluded so the SBOM matches what is actually distributed. -->
+      <plugin>
+        <groupId>org.cyclonedx</groupId>
+        <artifactId>cyclonedx-maven-plugin</artifactId>
+        <version>2.9.1</version>
+        <!-- makeAggregateBom builds a single SBOM for the whole reactor, so it
+             must run only on the root project, not once per inherited module. -->
+        <inherited>false</inherited>
+        <configuration>
+          <projectType>application</projectType>
+          <outputFormat>all</outputFormat>
+          <outputName>sbom</outputName>
+          <includeTestScope>false</includeTestScope>
+          <includeProvidedScope>false</includeProvidedScope>
+        </configuration>
+        <executions>
+          <execution>
+            <id>generate-sbom</id>
+            <phase>package</phase>
+            <goals>
+              <goal>makeAggregateBom</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- license-maven-plugin only sees the Maven (Java) dependency tree. The
+           frontend (npm) components are listed in ui/dependency-licenses, produced
+           by ui/record-npm-dependency-licenses.cjs. This step appends that npm
+           listing onto the freshly generated LICENSE and THIRD_PARTY_NOTICES.md so
+           both cover the whole distributed product. It runs at process-resources,
+           i.e. after the generate-resources license executions overwrite those two
+           files, so re-runs never double-append. -->
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+        <version>3.1.0</version>
+        <inherited>false</inherited>
+        <executions>
+          <execution>
+            <id>append-npm-third-party</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <!-- LICENSE keeps the flat npm listing (matches its backend
+                     listing format). -->
+                <concat append="true" destfile="${project.basedir}/LICENSE">
+                  <fileset file="${project.basedir}/ui/dependency-licenses"/>
+                </concat>
+                <!-- THIRD_PARTY_NOTICES.md gets the structured Markdown npm
+                     section (summary table + component list) produced by
+                     ui/format-third-party-notices-npm.cjs. -->
+                <concat append="true" destfile="${project.basedir}/THIRD_PARTY_NOTICES.md">
+                  <string>${line.separator}</string>
+                  <fileset file="${project.basedir}/ui/third-party-notices-npm.md"/>
+                </concat>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <artifactId>license-maven-plugin</artifactId>

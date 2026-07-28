@@ -23,11 +23,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import junit.framework.TestCase;
 import org.jgrapht.graph.GraphCycleProhibitedException;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class NewNodeDependencyComparatorTest extends TestCase {
+class NewNodeDependencyComparatorTest {
 
   private static Node getNode(int x) {
     ModelLevel modelLevel = new ModelLevel();
@@ -59,7 +59,8 @@ public class NewNodeDependencyComparatorTest extends TestCase {
                 .collect(Collectors.joining(",")));
   }
 
-  public void testSimpleDependency() {
+  @Test
+  void testSimpleDependency() {
     Node node1 = getNode(-1);
     Node node2 = getNode(2);
 
@@ -74,7 +75,8 @@ public class NewNodeDependencyComparatorTest extends TestCase {
     assertExpectedOrder(nodes, comparator, List.of(node1.getConceptId(), node2.getConceptId()));
   }
 
-  public void testComplexDependency() {
+  @Test
+  void testComplexDependency() {
     Node node2 = getNode(-2);
     Node node3 = getNode(-3);
     Node node4 = getNode(-4);
@@ -110,7 +112,8 @@ public class NewNodeDependencyComparatorTest extends TestCase {
             node3.getConceptId()));
   }
 
-  public void testComplexDependency2() {
+  @Test
+  void testComplexDependency2() {
     Node node2 = getNode(-2);
     Node node3 = getNode(-3);
     Node node4 = getNode(-4);
@@ -149,7 +152,8 @@ public class NewNodeDependencyComparatorTest extends TestCase {
             node6.getConceptId()));
   }
 
-  public void testCyclicDependency() {
+  @Test
+  void testCyclicDependency() {
     Node node1 = getNode(-1);
     Node node2 = getNode(-2);
 
@@ -164,7 +168,8 @@ public class NewNodeDependencyComparatorTest extends TestCase {
         GraphCycleProhibitedException.class, () -> new NewNodeDependencyComparator(nodes));
   }
 
-  public void testComplexCyclicDependency() {
+  @Test
+  void testComplexCyclicDependency() {
     Node node1 = getNode(-1);
     Node node2 = getNode(-2);
     Node node3 = getNode(-3);

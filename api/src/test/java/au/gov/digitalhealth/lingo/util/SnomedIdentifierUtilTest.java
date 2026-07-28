@@ -15,7 +15,7 @@
  */
 package au.gov.digitalhealth.lingo.util;
 
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -35,6 +35,7 @@ class SnomedIdentifierUtilTest {
   })
   void testIsValid(String id, String partition, boolean expected, String message) {
     PartitionIdentifier partitionIdentifier = PartitionIdentifier.valueOf(partition);
-    Assert.assertEquals(message, expected, SnomedIdentifierUtil.isValid(id, partitionIdentifier));
+    Assertions.assertEquals(
+        expected, SnomedIdentifierUtil.isValid(id, partitionIdentifier), message);
   }
 }

@@ -58,6 +58,39 @@
         <groupId>org.springframework.boot</groupId>
       </plugin>
 
+      <!-- Bundle the generated LICENSE, NOTICE and THIRD_PARTY_NOTICES.md
+           (produced in the repo root by the root pom) into the application's
+           static resources so the distributed image serves the current notices.
+           Runs at prepare-package, after the standard resource copy and before
+           spring-boot repackage. -->
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+        <executions>
+          <execution>
+            <id>copy-third-party-notices</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.outputDirectory}/static</outputDirectory>
+              <overwrite>true</overwrite>
+              <resources>
+                <resource>
+                  <directory>${project.parent.basedir}</directory>
+                  <includes>
+                    <include>LICENSE</include>
+                    <include>NOTICE</include>
+                    <include>THIRD_PARTY_NOTICES.md</include>
+                  </includes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
       <plugin>
         <artifactId>flyway-maven-plugin</artifactId>
         <groupId>org.flywaydb</groupId>
@@ -364,6 +397,25 @@
       <artifactId>snowstorm-java-client</artifactId>
       <groupId>au.csiro</groupId>
       <version>${snowstorm-java-client.version}</version>
+      <exclusions>
+        <!-- This OpenAPI-generated client leaks two artefacts into compile scope
+             that we neither need nor want to distribute:
+              * javax.annotation-api (CDDL-1.1 + GPLv2-with-classpath-exception) is
+                superseded by jakarta.annotation-api 2.x, already on the classpath
+                via Spring Boot 3. Excluding it removes all CDDL from the shipped
+                image. The client's @javax.annotation.Generated markers are CLASS
+                retention, so their absence at runtime is harmless.
+              * junit 4 (EPL-1.0) is a test framework that must not ship in the
+                runtime image; tests use JUnit Jupiter. -->
+        <exclusion>
+          <groupId>javax.annotation</groupId>
+          <artifactId>javax.annotation-api</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <artifactId>spring-boot-starter</artifactId>
@@ -648,6 +700,16 @@
       <groupId>javax.xml.bind</groupId>
       <artifactId>jaxb-api</artifactId>
       <version>2.3.1</version>
+      <exclusions>
+        <!-- javax.activation-api (CDDL/GPLv2+CE) is redundant here: jaxb-impl
+             (below) already pulls in com.sun.activation:jakarta.activation 1.2.2
+             (EDL-1.0), which ships the same javax.activation classes. Excluding
+             it keeps CDDL-only-licensed jars out of the distributed image. -->
+        <exclusion>
+          <groupId>javax.activation</groupId>
+          <artifactId>javax.activation-api</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.sun.xml.bind</groupId>

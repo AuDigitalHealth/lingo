@@ -513,7 +513,35 @@ jobs:
 
       - script: |
           set -euo pipefail
-          
+          # The Maven build regenerates the backend (Java) third-party notices from the
+          # resolved dependency tree (license-maven-plugin). This check fails if a Java
+          # dependency changed without the notices being regenerated and committed.
+          # Regenerate locally and commit LICENSE, NOTICE and THIRD_PARTY_NOTICES.md:
+          #   mvn process-resources -Dims-username=<u> -Dims-password=<p>
+          #
+          # Only the backend portion is compared. The frontend (npm) listing appended
+          # to LICENSE and THIRD_PARTY_NOTICES.md is regenerated from node_modules on
+          # every build and is platform-dependent (optional deps differ by OS/arch), so
+          # it cannot be diffed reproducibly across machines; it is a committed snapshot
+          # and is always rebuilt fresh into the distributed image.
+          strip_npm() { sed "/$1/,\$d" "$2"; }
+          fail=0
+          if ! diff <(git show "HEAD:LICENSE" | sed '/# NPM Dependencies and Licenses/,$d') \
+                    <(sed '/# NPM Dependencies and Licenses/,$d' LICENSE) >/dev/null; then fail=1; fi
+          if ! diff <(git show "HEAD:THIRD_PARTY_NOTICES.md" | sed '/## Licence summary - Frontend (npm)/,$d') \
+                    <(sed '/## Licence summary - Frontend (npm)/,$d' THIRD_PARTY_NOTICES.md) >/dev/null; then fail=1; fi
+          if ! git diff --exit-code -- NOTICE >/dev/null; then fail=1; fi
+          if [ "$fail" -ne 0 ]; then
+            echo "##vso[task.logissue type=error]Backend third-party notices are stale. Run 'mvn process-resources' and commit LICENSE, NOTICE and THIRD_PARTY_NOTICES.md."
+            exit 1
+          fi
+          echo "Backend third-party notices are up to date."
+        displayName: 'Check third-party notices are up to date'
+        condition: succeeded()
+
+      - script: |
+          set -euo pipefail
+
           sudo apt-get update
           sudo apt-get install -y skopeo
           

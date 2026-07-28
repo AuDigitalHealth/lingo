@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
+### Changed
+- Third-party licence compliance is now generated and enforced by the build. `LICENSE`, `NOTICE` and `THIRD_PARTY_NOTICES.md` are regenerated from the full distributed (compile+runtime) dependency closure on every build (`license-maven-plugin`, now with transitive scanning enabled; the frontend npm listing from `ui/dependency-licenses` is appended to `LICENSE` and `THIRD_PARTY_NOTICES.md`), a CycloneDX SBOM is produced for the backend, and CI fails if the committed notices drift. The distributed image previously shipped a legacy CDDL-licensed `javax.annotation-api` and a stray JUnit 4 (both leaked transitively via `snowstorm-java-client`); these are now excluded, so the shipped closure is permissive/weak-copyleft only.
+
 ### Security
 - Cleared newly-published HIGH Trivy dependency-scan findings. Bumped Netty 4.2.15.Final→4.2.16.Final via the root-pom `netty.version` property (which overrides Spring Boot's managed version), covering `netty-codec-http` (CVE-2026-55831/CVE-2026-55833/CVE-2026-56745), `netty-codec-compression` (CVE-2026-59901) and `netty-codec-http3` (CVE-2026-56816). Bumped the UI transitives `postcss` (→8.5.18+, GHSA-r28c-9q8g-f849) and `brace-expansion`'s 2.x line up to 5.0.8 (CVE-2026-14257, only patched on the current line) via `pnpm-workspace.yaml` overrides.
 - Proactively bumped Jackson to its current patch releases via the Spring Boot BOM properties `jackson-2-bom.version` 2.21.4→2.21.5 (2.x compat line) and `jackson-bom.version` 3.1.4→3.1.5 (Jackson 3.x), clearing MEDIUM findings CVE-2026-59889 and CVE-2026-54515 (GHSA-mhm7-754m-9p8w).

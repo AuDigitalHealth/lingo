@@ -1,0 +1,1012 @@
+# Third-Party Notices
+
+This file is **generated** by the build - do not edit it by hand. The backend
+(Java) sections are produced by `license-maven-plugin` from the resolved Maven
+dependency tree (edit `src/license/third-party-notices.ftl` to change them); the
+frontend (npm) section is appended from `ui/third-party-notices-npm.md`. A CI
+check fails the build if the backend sections drift from the committed file.
+
+Snomio ("the Software") is licensed under the Apache License, Version 2.0 (see
+`LICENSE`). The Software is distributed (as a container image) together with the
+unmodified third-party components listed below, each of which remains under its
+own licence. Components are aggregated as separate JARs (backend) or bundled by
+the web build (frontend) - none is modified, shaded or statically linked into
+Snomio's own code.
+
+Only components that are actually distributed are listed here; backend test-,
+build- and provided-scope dependencies are excluded.
+
+## Licence summary - Backend (Java)
+
+| Licence(s) | Components |
+| ---------- | ---------: |
+| (Apache License, Version 2.0) | 258 |
+| (Apache License Version 2.0, January 2004) (GNU LGPL Version 3.0) | 7 |
+| (BSD-2-Clause) | 1 |
+| (BSD-2-Clause) (Public Domain) | 1 |
+| (BSD License) | 16 |
+| (CDDL 1.1) (GPL2 w/ CPE) | 1 |
+| (Eclipse Distribution License v. 1.0) | 24 |
+| (Eclipse Distribution License v. 1.0) (Eclipse Public License 2.0) | 1 |
+| (Eclipse Public License 1.0) | 1 |
+| (Eclipse Public License 1.0) (MPL 2.0) | 1 |
+| (Eclipse Public License 2.0) | 6 |
+| (Eclipse Public License 2.0) (GNU Lesser General Public License Version 2.1, February 1999) | 1 |
+| (Eclipse Public License 2.0) (GPL2 w/ CPE) | 2 |
+| (Eclipse Public License 2.0) (LGPL-2.1-only) | 2 |
+| (MIT-0) | 1 |
+| (MIT License) | 10 |
+| (Public Domain) | 2 |
+
+## Copyleft components - source availability
+
+The following components carry file- or library-level copyleft obligations
+(LGPL / EPL / MPL). They are distributed **unmodified** as separate JARs, so the
+obligation is satisfied by (a) preserving their licences (reproduced in `LICENSE`)
+and (b) this written offer: the corresponding source for the exact version shipped
+is available from the component's project below. Snomio makes no modifications to
+these components; if you require the source we relied on, request it via the
+project's issue tracker referenced in `README.md`.
+
+- **AspectJ Weaver** (`org.aspectj:aspectjweaver:1.9.25.1`) - (Eclipse Public License 2.0) - <https://www.eclipse.org/aspectj/>
+- **Eclipse Compiler for Java(TM)** (`org.eclipse.jdt:ecj:3.26.0`) - (Eclipse Public License 2.0) - <http://www.eclipse.org/jdt>
+- **H2 Database Engine** (`com.h2database:h2:2.4.240`) - (Eclipse Public License 1.0) (MPL 2.0) - <https://h2database.com>
+- **JaCoCo :: Agent** (`org.jacoco:org.jacoco.agent:0.8.12`) - (Eclipse Public License 2.0) - <http://org.jacoco.agent>
+- **JaCoCo :: Core** (`org.jacoco:org.jacoco.core:0.8.12`) - (Eclipse Public License 2.0) - <http://org.jacoco.core>
+- **JaCoCo :: Maven Plugin** (`org.jacoco:jacoco-maven-plugin:0.8.12`) - (Eclipse Public License 2.0) - <https://www.jacoco.org/jacoco/trunk/doc/maven.html>
+- **JaCoCo :: Report** (`org.jacoco:org.jacoco.report:0.8.12`) - (Eclipse Public License 2.0) - <http://org.jacoco.report>
+- **Jakarta Annotations API** (`jakarta.annotation:jakarta.annotation-api:3.0.0`) - (Eclipse Public License 2.0) (GPL2 w/ CPE) - <https://projects.eclipse.org/projects/ee4j.ca>
+- **Jakarta Persistence API** (`jakarta.persistence:jakarta.persistence-api:3.2.0`) - (Eclipse Distribution License v. 1.0) (Eclipse Public License 2.0) - <https://github.com/jakartaee/persistence>
+- **jakarta.transaction API** (`jakarta.transaction:jakarta.transaction-api:2.0.1`) - (Eclipse Public License 2.0) (GPL2 w/ CPE) - <https://projects.eclipse.org/projects/ee4j.jta>
+- **JGraphT - Core** (`org.jgrapht:jgrapht-core:1.5.2`) - (Eclipse Public License 2.0) (GNU Lesser General Public License Version 2.1, February 1999) - <http://www.jgrapht.org/jgrapht-core>
+- **JUnit** (`junit:junit:4.13.2`) - (Eclipse Public License 1.0) - <http://junit.org>
+- **Logback Classic Module** (`ch.qos.logback:logback-classic:1.5.34`) - (Eclipse Public License 2.0) (LGPL-2.1-only) - <http://logback.qos.ch/logback-classic>
+- **Logback Core Module** (`ch.qos.logback:logback-core:1.5.34`) - (Eclipse Public License 2.0) (LGPL-2.1-only) - <http://logback.qos.ch/logback-core>
+- **OWLAPI :: Interfaces** (`net.sourceforge.owlapi:owlapi-api:4.5.19`) - (Apache License Version 2.0, January 2004) (GNU LGPL Version 3.0) - <http://owlcs.github.io/owlapi/owlapi-api/>
+- **OWLAPI :: Sesame Rio module** (`net.sourceforge.owlapi:owlapi-rio:4.5.19`) - (Apache License Version 2.0, January 2004) (GNU LGPL Version 3.0) - <http://owlcs.github.io/owlapi/owlapi-rio/>
+- **OWLAPI Binding and Config** (`net.sourceforge.owlapi:owlapi-apibinding:4.5.19`) - (Apache License Version 2.0, January 2004) (GNU LGPL Version 3.0) - <http://owlcs.github.io/owlapi/owlapi-apibinding/>
+- **OWLAPI Default Implementation** (`net.sourceforge.owlapi:owlapi-impl:4.5.19`) - (Apache License Version 2.0, January 2004) (GNU LGPL Version 3.0) - <http://owlcs.github.io/owlapi/owlapi-impl/>
+- **OWLAPITOOLS OWL profile and fixers** (`net.sourceforge.owlapi:owlapi-fixers:4.5.19`) - (Apache License Version 2.0, January 2004) (GNU LGPL Version 3.0) - <http://owlcs.github.io/owlapi/owlapi-fixers/>
+- **parsers** (`net.sourceforge.owlapi:owlapi-parsers:4.5.19`) - (Apache License Version 2.0, January 2004) (GNU LGPL Version 3.0) - <http://owlcs.github.io/owlapi/owlapi-parsers/>
+- **tools** (`net.sourceforge.owlapi:owlapi-tools:4.5.19`) - (Apache License Version 2.0, January 2004) (GNU LGPL Version 3.0) - <http://owlcs.github.io/owlapi/owlapi-tools/>
+
+## Backend (Java) components
+
+- (BSD License) **Adobe XMPCore** (`com.adobe.xmp:xmpcore:6.1.11`) - <https://www.adobe.com/devnet/xmp/library/eula-xmp-library-java.html>
+- (Eclipse Distribution License v. 1.0) **Angus Activation Registries** (`org.eclipse.angus:angus-activation:2.0.3`) - <https://github.com/eclipse-ee4j/angus-activation/angus-activation>
+- (BSD License) **ANTLR 4 Runtime** (`org.antlr:antlr4-runtime:4.13.2`) - <https://www.antlr.org/antlr4-runtime/>
+- (BSD License) **ANTLR 4 Runtime** (`org.antlr:antlr4-runtime:4.5.3`) - <http://www.antlr.org/antlr4-runtime>
+- (Apache License, Version 2.0) **Apache Commons BeanUtils** (`commons-beanutils:commons-beanutils:1.11.0`) - <https://commons.apache.org/proper/commons-beanutils>
+- (Apache License, Version 2.0) **Apache Commons Codec** (`commons-codec:commons-codec:1.21.0`) - <https://commons.apache.org/proper/commons-codec/>
+- (Apache License, Version 2.0) **Apache Commons Collections** (`commons-collections:commons-collections:3.2.2`) - <http://commons.apache.org/collections/>
+- (Apache License, Version 2.0) **Apache Commons Collections** (`org.apache.commons:commons-collections4:4.5.0`) - <https://commons.apache.org/proper/commons-collections/>
+- (Apache License, Version 2.0) **Apache Commons CSV** (`org.apache.commons:commons-csv:1.12.0`) - <https://commons.apache.org/proper/commons-csv/>
+- (Apache License, Version 2.0) **Apache Commons IO** (`commons-io:commons-io:2.17.0`) - <https://commons.apache.org/proper/commons-io/>
+- (Apache License, Version 2.0) **Apache Commons Lang** (`org.apache.commons:commons-lang3:3.20.0`) - <https://commons.apache.org/proper/commons-lang/>
+- (Apache License, Version 2.0) **Apache Commons Logging** (`commons-logging:commons-logging:1.3.6`) - <https://commons.apache.org/proper/commons-logging/>
+- (Apache License, Version 2.0) **Apache Commons Validator** (`commons-validator:commons-validator:1.10.1`) - <https://commons.apache.org/proper/commons-validator/>
+- (Apache License, Version 2.0) **Apache Groovy** (`org.apache.groovy:groovy:5.0.6`) - <https://groovy-lang.org>
+- (Apache License, Version 2.0) **Apache Groovy** (`org.apache.groovy:groovy-json:5.0.6`) - <https://groovy-lang.org>
+- (Apache License, Version 2.0) **Apache Groovy** (`org.apache.groovy:groovy-xml:5.0.6`) - <https://groovy-lang.org>
+- (Apache License, Version 2.0) **Apache HttpClient** (`org.apache.httpcomponents:httpclient:4.5.13`) - <http://hc.apache.org/httpcomponents-client>
+- (Apache License, Version 2.0) **Apache HttpClient Cache** (`org.apache.httpcomponents:httpclient-cache:4.5.5`) - <http://hc.apache.org/httpcomponents-client>
+- (Apache License, Version 2.0) **Apache HttpClient Mime** (`org.apache.httpcomponents:httpmime:4.5.13`) - <http://hc.apache.org/httpcomponents-client>
+- (Apache License, Version 2.0) **Apache HttpCore** (`org.apache.httpcomponents:httpcore:4.4.16`) - <http://hc.apache.org/httpcomponents-core-ga>
+- (Apache License, Version 2.0) **Apache Log4j API** (`org.apache.logging.log4j:log4j-api:2.25.4`) - <https://logging.apache.org/log4j/2.x/>
+- (Apache License, Version 2.0) **Apache Maven File Management API** (`org.apache.maven.shared:file-management:3.1.0`) - <https://maven.apache.org/shared/file-management/>
+- (Apache License, Version 2.0) **Apache Maven Filtering** (`org.apache.maven.shared:maven-filtering:3.3.1`) - <https://maven.apache.org/shared/maven-filtering/>
+- (Apache License, Version 2.0) **Apache Maven Resources Plugin** (`org.apache.maven.plugins:maven-resources-plugin:3.3.1`) - <https://maven.apache.org/plugins/maven-resources-plugin/>
+- (MIT License) **apfloat** (`org.apfloat:apfloat:1.10.1`) - <http://www.apfloat.org>
+- (BSD License) **asm** (`org.ow2.asm:asm:9.7`) - <http://asm.ow2.io/>
+- (Apache License, Version 2.0) **ASM based accessors helper used by json-smart** (`net.minidev:accessors-smart:2.6.0`) - <https://urielch.github.io/>
+- (BSD License) **asm-commons** (`org.ow2.asm:asm-commons:9.7`) - <http://asm.ow2.io/>
+- (BSD License) **asm-tree** (`org.ow2.asm:asm-tree:9.7`) - <http://asm.ow2.io/>
+- (Eclipse Public License 2.0) **AspectJ Weaver** (`org.aspectj:aspectjweaver:1.9.25.1`) - <https://www.eclipse.org/aspectj/>
+- (Apache License, Version 2.0) **Awaitility** (`org.awaitility:awaitility:4.3.0`) - <http://awaitility.org>
+- (Apache License, Version 2.0) **AWS Event Stream** (`software.amazon.eventstream:eventstream:1.0.1`) - <https://github.com/awslabs/aws-eventstream-java>
+- (Apache License, Version 2.0) **AWS Java SDK :: Annotations** (`software.amazon.awssdk:annotations:2.33.0`) - <https://aws.amazon.com/sdkforjava/core/annotations>
+- (Apache License, Version 2.0) **AWS Java SDK :: Arns** (`software.amazon.awssdk:arns:2.33.0`) - <https://aws.amazon.com/sdkforjava>
+- (Apache License, Version 2.0) **AWS Java SDK :: Auth** (`software.amazon.awssdk:auth:2.33.0`) - <https://aws.amazon.com/sdkforjava>
+- (Apache License, Version 2.0) **AWS Java SDK :: AWS Core** (`software.amazon.awssdk:aws-core:2.33.0`) - <https://aws.amazon.com/sdkforjava>
+- (Apache License, Version 2.0) **AWS Java SDK :: AWS CRT Core** (`software.amazon.awssdk:crt-core:2.33.0`) - <https://aws.amazon.com/sdkforjava>
+- (Apache License, Version 2.0) **AWS Java SDK :: Checksums** (`software.amazon.awssdk:checksums:2.33.0`) - <https://aws.amazon.com/sdkforjava>
+- (Apache License, Version 2.0) **AWS Java SDK :: Checksums SPI** (`software.amazon.awssdk:checksums-spi:2.33.0`) - <https://aws.amazon.com/sdkforjava>
+- (Apache License, Version 2.0) **AWS Java SDK :: Core :: Protocols :: AWS Query Protocol** (`software.amazon.awssdk:aws-query-protocol:2.33.0`) - <https://aws.amazon.com/sdkforjava>
+- (Apache License, Version 2.0) **AWS Java SDK :: Core :: Protocols :: AWS Xml Protocol** (`software.amazon.awssdk:aws-xml-protocol:2.33.0`) - <https://aws.amazon.com/sdkforjava>
+- (Apache License, Version 2.0) **AWS Java SDK :: Core :: Protocols :: Json Utils** (`software.amazon.awssdk:json-utils:2.33.0`) - <https://aws.amazon.com/sdkforjava>
+- (Apache License, Version 2.0) **AWS Java SDK :: Core :: Protocols :: Protocol Core** (`software.amazon.awssdk:protocol-core:2.33.0`) - <https://aws.amazon.com/sdkforjava>
+- (Apache License, Version 2.0) **AWS Java SDK :: Endpoints SPI** (`software.amazon.awssdk:endpoints-spi:2.33.0`) - <https://aws.amazon.com/sdkforjava/core/endpoints-spi>
+- (Apache License, Version 2.0) **AWS Java SDK :: HTTP Auth** (`software.amazon.awssdk:http-auth:2.33.0`) - <https://aws.amazon.com/sdkforjava>
+- (Apache License, Version 2.0) **AWS Java SDK :: HTTP Auth AWS** (`software.amazon.awssdk:http-auth-aws:2.33.0`) - <https://aws.amazon.com/sdkforjava>
+- (Apache License, Version 2.0) **AWS Java SDK :: HTTP Auth Event Stream** (`software.amazon.awssdk:http-auth-aws-eventstream:2.33.0`) - <https://aws.amazon.com/sdkforjava>
+- (Apache License, Version 2.0) **AWS Java SDK :: HTTP Auth SPI** (`software.amazon.awssdk:http-auth-spi:2.33.0`) - <https://aws.amazon.com/sdkforjava>
+- (Apache License, Version 2.0) **AWS Java SDK :: HTTP Client Interface** (`software.amazon.awssdk:http-client-spi:2.33.0`) - <https://aws.amazon.com/sdkforjava/http-client-spi>
+- (Apache License, Version 2.0) **AWS Java SDK :: HTTP Clients :: Apache** (`software.amazon.awssdk:apache-client:2.33.0`) - <https://aws.amazon.com/sdkforjava/http-clients/apache-client>
+- (Apache License, Version 2.0) **AWS Java SDK :: HTTP Clients :: Netty Non-Blocking I/O** (`software.amazon.awssdk:netty-nio-client:2.33.0`) - <https://aws.amazon.com/sdkforjava/http-clients/netty-nio-client>
+- (Apache License, Version 2.0) **AWS Java SDK :: Identity SPI** (`software.amazon.awssdk:identity-spi:2.33.0`) - <https://aws.amazon.com/sdkforjava>
+- (Apache License, Version 2.0) **AWS Java SDK :: Metrics SPI** (`software.amazon.awssdk:metrics-spi:2.33.0`) - <https://aws.amazon.com/sdkforjava/core/metrics-spi>
+- (Apache License, Version 2.0) **AWS Java SDK :: Profiles** (`software.amazon.awssdk:profiles:2.33.0`) - <https://aws.amazon.com/sdkforjava>
+- (Apache License, Version 2.0) **AWS Java SDK :: Regions** (`software.amazon.awssdk:regions:2.33.0`) - <https://aws.amazon.com/sdkforjava/core/regions>
+- (Apache License, Version 2.0) **AWS Java SDK :: Retries** (`software.amazon.awssdk:retries:2.33.0`) - <https://aws.amazon.com/sdkforjava/core/retries>
+- (Apache License, Version 2.0) **AWS Java SDK :: Retries API** (`software.amazon.awssdk:retries-spi:2.33.0`) - <https://aws.amazon.com/sdkforjava/core/retries-spi>
+- (Apache License, Version 2.0) **AWS Java SDK :: SDK Core** (`software.amazon.awssdk:sdk-core:2.33.0`) - <https://aws.amazon.com/sdkforjava>
+- (Apache License, Version 2.0) **AWS Java SDK :: Services :: Amazon S3** (`software.amazon.awssdk:s3:2.33.0`) - <https://aws.amazon.com/sdkforjava>
+- (Apache License, Version 2.0) **AWS Java SDK :: Third Party :: Jackson-core** (`software.amazon.awssdk:third-party-jackson-core:2.33.0`) - <https://aws.amazon.com/sdkforjava>
+- (Apache License, Version 2.0) **AWS Java SDK :: Utilities** (`software.amazon.awssdk:utils:2.33.0`) - <https://aws.amazon.com/sdkforjava/utils>
+- (Apache License, Version 2.0) **Byte Buddy (without dependencies)** (`net.bytebuddy:byte-buddy:1.18.10`) - <https://bytebuddy.net/byte-buddy>
+- (Apache License, Version 2.0) **Caffeine cache** (`com.github.ben-manes.caffeine:caffeine:3.2.4`) - <https://github.com/ben-manes/caffeine>
+- (MIT License) **ClassGraph** (`io.github.classgraph:classgraph:4.8.146`) - <https://github.com/classgraph/classgraph>
+- (Apache License, Version 2.0) **ClassMate** (`com.fasterxml:classmate:1.7.3`) - <https://github.com/FasterXML/java-classmate>
+- (Apache License, Version 2.0) **com.drewnoakes:metadata-extractor** (`com.drewnoakes:metadata-extractor:2.20.0`) - <https://drewnoakes.com/code/exif/>
+- (Apache License, Version 2.0) **Commons Digester** (`commons-digester:commons-digester:2.1`) - <http://commons.apache.org/digester/>
+- (Apache License, Version 2.0) **Core functionality for the Reactor Netty library** (`io.projectreactor.netty:reactor-netty-core:1.3.6`) - <https://github.com/reactor/reactor-netty>
+- (Apache License, Version 2.0) **Doxia :: Sink API** (`org.apache.maven.doxia:doxia-sink-api:1.0`) - <http://maven.apache.org/doxia/doxia/doxia-sink-api>
+- (Eclipse Public License 2.0) **Eclipse Compiler for Java(TM)** (`org.eclipse.jdt:ecj:3.26.0`) - <http://www.eclipse.org/jdt>
+- (Apache License, Version 2.0) **Ehcache** (`org.ehcache:ehcache:3.12.0`) - <http://ehcache.org>
+- (Apache License, Version 2.0) **ELK Common Utilities** (`org.semanticweb.elk:elk-util-common:0.4.3`) - <http://elk.semanticweb.org/elk-util-parent/elk-util-common/>
+- (Apache License, Version 2.0) **ELK OWL API Binding** (`org.semanticweb.elk:elk-owlapi:0.4.3`) - <http://elk.semanticweb.org/elk-owlapi/>
+- (Apache License, Version 2.0) **ELK OWL Model Implementation** (`org.semanticweb.elk:elk-owl-implementation:0.4.3`) - <http://elk.semanticweb.org/elk-owl-parent/elk-owl-implementation/>
+- (Apache License, Version 2.0) **ELK OWL Object Interfaces** (`org.semanticweb.elk:elk-owl-model:0.4.3`) - <http://elk.semanticweb.org/elk-owl-parent/elk-owl-model/>
+- (Apache License, Version 2.0) **ELK Reasoner** (`org.semanticweb.elk:elk-reasoner:0.4.3`) - <http://elk.semanticweb.org/elk-reasoner/>
+- (Apache License, Version 2.0) **ELK Utilities Collections** (`org.semanticweb.elk:elk-util-collections:0.4.3`) - <http://elk.semanticweb.org/elk-util-parent/elk-util-collections/>
+- (Apache License, Version 2.0) **ELK Utilities for Concurrency** (`org.semanticweb.elk:elk-util-concurrent:0.4.3`) - <http://elk.semanticweb.org/elk-util-parent/elk-util-concurrent/>
+- (Apache License, Version 2.0) **ELK Utilities for Hashing** (`org.semanticweb.elk:elk-util-hashing:0.4.3`) - <http://elk.semanticweb.org/elk-util-parent/elk-util-hashing/>
+- (Apache License, Version 2.0) **ELK Utilities for Input-Output** (`org.semanticweb.elk:elk-util-io:0.4.3`) - <http://elk.semanticweb.org/elk-util-parent/elk-util-io/>
+- (Apache License, Version 2.0) **ELK Utilities for Logging** (`org.semanticweb.elk:elk-util-logging:0.4.3`) - <http://elk.semanticweb.org/elk-util-parent/elk-util-logging/>
+- (Apache License, Version 2.0) **error-prone annotations** (`com.google.errorprone:error_prone_annotations:2.27.0`) - <https://errorprone.info/error_prone_annotations>
+- (Apache License, Version 2.0) **fastutil** (`it.unimi.dsi:fastutil:8.5.12`) - <http://fastutil.di.unimi.it/>
+- (Apache License, Version 2.0) **FindBugs-jsr305** (`com.google.code.findbugs:jsr305:3.0.2`) - <http://findbugs.sourceforge.net/>
+- (Apache License, Version 2.0) **flyway-core** (`org.flywaydb:flyway-core:12.4.0`) - <https://flywaydb.org/flyway-core>
+- (Apache License, Version 2.0) **flyway-database-postgresql** (`org.flywaydb:flyway-database-postgresql:12.4.0`) - <https://flywaydb.org/flyway-database-postgresql>
+- (Apache License, Version 2.0) **Gson** (`com.google.code.gson:gson:2.10.1`) - <https://github.com/google/gson/gson>
+- (Apache License, Version 2.0) **Gson** (`com.google.code.gson:gson:2.11.0`) - <https://github.com/google/gson>
+- (Apache License, Version 2.0) **Guava: Google Core Libraries for Java** (`com.google.guava:guava:18.0`) - <http://code.google.com/p/guava-libraries/guava>
+- (Eclipse Public License 1.0) (MPL 2.0) **H2 Database Engine** (`com.h2database:h2:2.4.240`) - <https://h2database.com>
+- (BSD License) **Hamcrest** (`org.hamcrest:hamcrest:3.0`) - <http://hamcrest.org/JavaHamcrest/>
+- (BSD License) **Hamcrest Core** (`org.hamcrest:hamcrest-core:3.0`) - <http://hamcrest.org/JavaHamcrest/>
+- (BSD-2-Clause) (Public Domain) **HdrHistogram** (`org.hdrhistogram:HdrHistogram:2.2.2`) - <http://hdrhistogram.github.io/HdrHistogram/>
+- (Apache License, Version 2.0) **Hibernate Models** (`org.hibernate.models:hibernate-models:1.1.1`) - <https://github.com/hibernate/hibernate-models>
+- (Apache License, Version 2.0) **Hibernate ORM - hibernate-core** (`org.hibernate.orm:hibernate-core:7.4.1.Final`) - <https://hibernate.org/orm>
+- (Apache License, Version 2.0) **Hibernate ORM - hibernate-envers** (`org.hibernate.orm:hibernate-envers:7.4.1.Final`) - <https://hibernate.org/orm>
+- (Apache License, Version 2.0) **Hibernate ORM - hibernate-jcache** (`org.hibernate.orm:hibernate-jcache:7.4.1.Final`) - <https://hibernate.org/orm>
+- (Apache License, Version 2.0) **Hibernate Validator Engine** (`org.hibernate.validator:hibernate-validator:9.1.0.Final`) - <https://hibernate.org/validator>
+- (Apache License, Version 2.0) **HikariCP** (`com.zaxxer:HikariCP:7.0.2`) - <https://github.com/brettwooldridge/HikariCP>
+- (Apache License, Version 2.0) **HPPC-RT Collections** (`com.github.vsonnier:hppcrt:0.7.5`) - <http://nexus.sonatype.org/oss-repository-hosting.html/hppcrt-parent/hppcrt>
+- (Apache License, Version 2.0) **HTTP functionality for the Reactor Netty library** (`io.projectreactor.netty:reactor-netty-http:1.3.6`) - <https://github.com/reactor/reactor-netty>
+- (Apache License, Version 2.0) **imgscalr - A Java Image Scaling Library** (`org.imgscalr:imgscalr-lib:4.2`) - <http://www.thebuzzmedia.com/software/imgscalr-java-image-scaling-library/>
+- (Eclipse Distribution License v. 1.0) **istack common utility code runtime** (`com.sun.istack:istack-commons-runtime:4.1.2`) - <https://projects.eclipse.org/projects/ee4j/istack-commons/istack-commons-runtime>
+- (Apache License, Version 2.0) **Jackson datatype: JSR310** (`com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.5`) - <https://github.com/FasterXML/jackson-modules-java8/jackson-datatype-jsr310>
+- (Apache License, Version 2.0) **Jackson-annotations** (`com.fasterxml.jackson.core:jackson-annotations:2.21`) - <https://github.com/FasterXML/jackson>
+- (Apache License, Version 2.0) **Jackson-core** (`com.fasterxml.jackson.core:jackson-core:2.21.5`) - <https://github.com/FasterXML/jackson-core>
+- (Apache License, Version 2.0) **Jackson-core** (`tools.jackson.core:jackson-core:3.1.5`) - <https://github.com/FasterXML/jackson-core>
+- (Apache License, Version 2.0) **jackson-databind** (`com.fasterxml.jackson.core:jackson-databind:2.21.5`) - <https://github.com/FasterXML/jackson>
+- (Apache License, Version 2.0) **jackson-databind** (`tools.jackson.core:jackson-databind:3.1.5`) - <https://github.com/FasterXML/jackson>
+- (Apache License, Version 2.0) **Jackson-dataformat-YAML** (`com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.21.5`) - <https://github.com/FasterXML/jackson-dataformats-text>
+- (Eclipse Public License 2.0) **JaCoCo :: Agent** (`org.jacoco:org.jacoco.agent:0.8.12`) - <http://org.jacoco.agent>
+- (Eclipse Public License 2.0) **JaCoCo :: Core** (`org.jacoco:org.jacoco.core:0.8.12`) - <http://org.jacoco.core>
+- (Eclipse Public License 2.0) **JaCoCo :: Maven Plugin** (`org.jacoco:jacoco-maven-plugin:0.8.12`) - <https://www.jacoco.org/jacoco/trunk/doc/maven.html>
+- (Eclipse Public License 2.0) **JaCoCo :: Report** (`org.jacoco:org.jacoco.report:0.8.12`) - <http://org.jacoco.report>
+- (Eclipse Distribution License v. 1.0) **Jakarta Activation** (`com.sun.activation:jakarta.activation:1.2.2`) - <https://github.com/eclipse-ee4j/jaf/jakarta.activation>
+- (Eclipse Distribution License v. 1.0) **Jakarta Activation API** (`jakarta.activation:jakarta.activation-api:2.1.4`) - <https://github.com/jakartaee/jaf-api>
+- (Eclipse Public License 2.0) (GPL2 w/ CPE) **Jakarta Annotations API** (`jakarta.annotation:jakarta.annotation-api:3.0.0`) - <https://projects.eclipse.org/projects/ee4j.ca>
+- (Apache License, Version 2.0) **Jakarta Dependency Injection** (`jakarta.inject:jakarta.inject-api:2.0.1`) - <https://github.com/eclipse-ee4j/injection-api>
+- (Eclipse Distribution License v. 1.0) (Eclipse Public License 2.0) **Jakarta Persistence API** (`jakarta.persistence:jakarta.persistence-api:3.2.0`) - <https://github.com/jakartaee/persistence>
+- (Apache License, Version 2.0) **Jakarta Validation API** (`jakarta.validation:jakarta.validation-api:3.1.1`) - <https://beanvalidation.org>
+- (Eclipse Distribution License v. 1.0) **Jakarta XML Binding API** (`jakarta.xml.bind:jakarta.xml.bind-api:4.0.5`) - <https://github.com/jakartaee/jaxb-api/jakarta.xml.bind-api>
+- (Eclipse Public License 2.0) (GPL2 w/ CPE) **jakarta.transaction API** (`jakarta.transaction:jakarta.transaction-api:2.0.1`) - <https://projects.eclipse.org/projects/ee4j.jta>
+- (Apache License, Version 2.0) **Jandex: Core** (`io.smallrye:jandex:3.3.2`) - <https://smallrye.io>
+- (Apache License, Version 2.0) **Java JSON Schema Generator** (`com.github.victools:jsonschema-generator:4.36.0`) - <https://github.com/victools/jsonschema-generator>
+- (Apache License, Version 2.0) **Java JSON Schema Generator Module – jackson** (`com.github.victools:jsonschema-module-jackson:4.36.0`) - <https://github.com/victools/jsonschema-generator>
+- (Apache License, Version 2.0) **Java JSON Schema Generator Module – jakarta.validation** (`com.github.victools:jsonschema-module-jakarta-validation:4.36.0`) - <https://github.com/victools/jsonschema-generator/jsonschema-module-jakarta-validation>
+- (Apache License, Version 2.0) **javax.inject** (`javax.inject:javax.inject:1`) - <http://code.google.com/p/atinject/>
+- (Eclipse Distribution License v. 1.0) **JAXB Core** (`org.glassfish.jaxb:jaxb-core:4.0.9`) - <https://eclipse-ee4j.github.io/jaxb-ri/>
+- (Eclipse Distribution License v. 1.0) **JAXB Runtime** (`org.glassfish.jaxb:jaxb-runtime:4.0.9`) - <https://eclipse-ee4j.github.io/jaxb-ri/>
+- (CDDL 1.1) (GPL2 w/ CPE) **jaxb-api** (`javax.xml.bind:jaxb-api:2.3.1`) - <https://github.com/javaee/jaxb-spec/jaxb-api>
+- (Apache License, Version 2.0) **JBoss Logging 3** (`org.jboss.logging:jboss-logging:3.6.3.Final`) - <https://www.jboss.org>
+- (Eclipse Public License 2.0) (GNU Lesser General Public License Version 2.1, February 1999) **JGraphT - Core** (`org.jgrapht:jgrapht-core:1.5.2`) - <http://www.jgrapht.org/jgrapht-core>
+- (Apache License, Version 2.0) **JHeaps** (`org.jheaps:jheaps:0.14`) - <http://www.jheaps.org>
+- (Public Domain) **JSON in Java** (`org.json:json:20240303`) - <https://github.com/douglascrockford/JSON-java>
+- (Apache License, Version 2.0) **JSON Small and Fast Parser** (`net.minidev:json-smart:2.6.0`) - <https://urielch.github.io/>
+- (Apache License, Version 2.0) **json-path** (`com.jayway.jsonpath:json-path:2.10.0`) - <https://github.com/jayway/JsonPath>
+- (Apache License, Version 2.0) **json-path** (`io.rest-assured:json-path:6.0.0`) - <https://rest-assured.io/>
+- (BSD License) **jsonld-java** (`com.github.jsonld-java:jsonld-java:0.12.0`) - <no URL declared>
+- (Apache License, Version 2.0) **JsonNullable Jackson module** (`org.openapitools:jackson-databind-nullable:0.2.6`) - <https://github.com/OpenAPITools/jackson-databind-nullable>
+- (Apache License, Version 2.0) **JSpecify annotations** (`org.jspecify:jspecify:1.0.0`) - <http://jspecify.org/>
+- (Apache License, Version 2.0) **JSR107 API and SPI** (`javax.cache:cache-api:1.1.1`) - <https://github.com/jsr107/jsr107spec>
+- (MIT License) **JUL to SLF4J bridge** (`org.slf4j:jul-to-slf4j:2.0.18`) - <http://www.slf4j.org>
+- (Eclipse Public License 1.0) **JUnit** (`junit:junit:4.13.2`) - <http://junit.org>
+- (Apache License, Version 2.0) **lang** (`com.mysema.commons:mysema-commons-lang:0.2.4`) - <http://www.github.com/mysema/mysema-commons-lang>
+- (Apache License, Version 2.0) **Log4j API to SLF4J Adapter** (`org.apache.logging.log4j:log4j-to-slf4j:2.25.4`) - <https://logging.apache.org/log4j/2.x/>
+- (Eclipse Public License 2.0) (LGPL-2.1-only) **Logback Classic Module** (`ch.qos.logback:logback-classic:1.5.34`) - <http://logback.qos.ch/logback-classic>
+- (Eclipse Public License 2.0) (LGPL-2.1-only) **Logback Core Module** (`ch.qos.logback:logback-core:1.5.34`) - <http://logback.qos.ch/logback-core>
+- (Apache License, Version 2.0) **MapStruct Core** (`org.mapstruct:mapstruct:1.6.3`) - <https://mapstruct.org/mapstruct/>
+- (Apache License, Version 2.0) **Maven Reporting API** (`org.apache.maven.reporting:maven-reporting-api:3.0`) - <http://maven.apache.org/shared/maven-reporting-api/>
+- (Apache License, Version 2.0) **micrometer-commons** (`io.micrometer:micrometer-commons:1.17.0`) - <https://github.com/micrometer-metrics/micrometer>
+- (Apache License, Version 2.0) **micrometer-core** (`io.micrometer:micrometer-core:1.17.0`) - <https://github.com/micrometer-metrics/micrometer>
+- (Apache License, Version 2.0) **micrometer-jakarta9** (`io.micrometer:micrometer-jakarta9:1.17.0`) - <https://github.com/micrometer-metrics/micrometer>
+- (Apache License, Version 2.0) **micrometer-observation** (`io.micrometer:micrometer-observation:1.17.0`) - <https://github.com/micrometer-metrics/micrometer>
+- (Apache License, Version 2.0) **micrometer-registry-prometheus** (`io.micrometer:micrometer-registry-prometheus:1.17.0`) - <https://github.com/micrometer-metrics/micrometer>
+- (Apache License, Version 2.0) **Netty/Buffer** (`io.netty:netty-buffer:4.2.16.Final`) - <https://netty.io/netty-buffer/>
+- (Apache License, Version 2.0) **Netty/Codec** (`io.netty:netty-codec:4.2.16.Final`) - <https://netty.io/netty-codec/>
+- (Apache License, Version 2.0) **Netty/Codec/Base** (`io.netty:netty-codec-base:4.2.16.Final`) - <https://netty.io/netty-codec-base/>
+- (Apache License, Version 2.0) **Netty/Codec/Classes/Quic** (`io.netty:netty-codec-classes-quic:4.2.16.Final`) - <https://netty.io/netty-codec-classes-quic/>
+- (Apache License, Version 2.0) **Netty/Codec/Compression** (`io.netty:netty-codec-compression:4.2.16.Final`) - <https://netty.io/netty-codec-compression/>
+- (Apache License, Version 2.0) **Netty/Codec/DNS** (`io.netty:netty-codec-dns:4.2.16.Final`) - <https://netty.io/netty-codec-dns/>
+- (Apache License, Version 2.0) **Netty/Codec/HTTP** (`io.netty:netty-codec-http:4.2.16.Final`) - <https://netty.io/netty-codec-http/>
+- (Apache License, Version 2.0) **Netty/Codec/HTTP2** (`io.netty:netty-codec-http2:4.2.16.Final`) - <https://netty.io/netty-codec-http2/>
+- (Apache License, Version 2.0) **Netty/Codec/Http3** (`io.netty:netty-codec-http3:4.2.16.Final`) - <https://netty.io/netty-codec-http3/>
+- (Apache License, Version 2.0) **Netty/Codec/Marshalling** (`io.netty:netty-codec-marshalling:4.2.16.Final`) - <https://netty.io/netty-codec-marshalling/>
+- (Apache License, Version 2.0) **Netty/Codec/Native/Quic** (`io.netty:netty-codec-native-quic:4.2.16.Final`) - <https://netty.io/netty-codec-native-quic/>
+- (Apache License, Version 2.0) **Netty/Codec/Protobuf** (`io.netty:netty-codec-protobuf:4.2.16.Final`) - <https://netty.io/netty-codec-protobuf/>
+- (Apache License, Version 2.0) **Netty/Codec/Socks** (`io.netty:netty-codec-socks:4.2.16.Final`) - <https://netty.io/netty-codec-socks/>
+- (Apache License, Version 2.0) **Netty/Common** (`io.netty:netty-common:4.2.16.Final`) - <https://netty.io/netty-common/>
+- (Apache License, Version 2.0) **Netty/Handler** (`io.netty:netty-handler:4.2.16.Final`) - <https://netty.io/netty-handler/>
+- (Apache License, Version 2.0) **Netty/Handler/Proxy** (`io.netty:netty-handler-proxy:4.2.16.Final`) - <https://netty.io/netty-handler-proxy/>
+- (Apache License, Version 2.0) **Netty/Resolver** (`io.netty:netty-resolver:4.2.16.Final`) - <https://netty.io/netty-resolver/>
+- (Apache License, Version 2.0) **Netty/Resolver/DNS** (`io.netty:netty-resolver-dns:4.2.16.Final`) - <https://netty.io/netty-resolver-dns/>
+- (Apache License, Version 2.0) **Netty/Resolver/DNS/Classes/MacOS** (`io.netty:netty-resolver-dns-classes-macos:4.2.16.Final`) - <https://netty.io/netty-resolver-dns-classes-macos/>
+- (Apache License, Version 2.0) **Netty/Resolver/DNS/Native/MacOS** (`io.netty:netty-resolver-dns-native-macos:4.2.16.Final`) - <https://netty.io/netty-resolver-dns-native-macos/>
+- (Apache License, Version 2.0) **Netty/Transport** (`io.netty:netty-transport:4.2.16.Final`) - <https://netty.io/netty-transport/>
+- (Apache License, Version 2.0) **Netty/Transport/Classes/Epoll** (`io.netty:netty-transport-classes-epoll:4.2.16.Final`) - <https://netty.io/netty-transport-classes-epoll/>
+- (Apache License, Version 2.0) **Netty/Transport/Native/Epoll** (`io.netty:netty-transport-native-epoll:4.2.16.Final`) - <https://netty.io/netty-transport-native-epoll/>
+- (Apache License, Version 2.0) **Netty/Transport/Native/Unix/Common** (`io.netty:netty-transport-native-unix-common:4.2.16.Final`) - <https://netty.io/netty-transport-native-unix-common/>
+- (Apache License, Version 2.0) **Non-Blocking Reactive Foundation for the JVM** (`io.projectreactor:reactor-core:3.8.6`) - <https://github.com/reactor/reactor-core>
+- (BSD License) **oboformat parser** (`net.sourceforge.owlapi:owlapi-oboformat:4.5.19`) - <https://github.com/owlcollab/oboformat/>
+- (Eclipse Distribution License v. 1.0) **Old JAXB Runtime** (`com.sun.xml.bind:jaxb-impl:2.3.9`) - <https://eclipse-ee4j.github.io/jaxb-ri/>
+- (Apache License, Version 2.0) **OpenTelemetry Instrumentation for Java** (`io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.28.1`) - <https://github.com/open-telemetry/opentelemetry-java-instrumentation>
+- (Apache License, Version 2.0) **OpenTelemetry Java** (`io.opentelemetry:opentelemetry-api:1.62.0`) - <https://github.com/open-telemetry/opentelemetry-java>
+- (Apache License, Version 2.0) **OpenTelemetry Java** (`io.opentelemetry:opentelemetry-common:1.62.0`) - <https://github.com/open-telemetry/opentelemetry-java>
+- (Apache License, Version 2.0) **OpenTelemetry Java** (`io.opentelemetry:opentelemetry-context:1.62.0`) - <https://github.com/open-telemetry/opentelemetry-java>
+- (Apache License Version 2.0, January 2004) (GNU LGPL Version 3.0) **OWLAPI :: Interfaces** (`net.sourceforge.owlapi:owlapi-api:4.5.19`) - <http://owlcs.github.io/owlapi/owlapi-api/>
+- (Apache License Version 2.0, January 2004) (GNU LGPL Version 3.0) **OWLAPI :: Sesame Rio module** (`net.sourceforge.owlapi:owlapi-rio:4.5.19`) - <http://owlcs.github.io/owlapi/owlapi-rio/>
+- (Apache License Version 2.0, January 2004) (GNU LGPL Version 3.0) **OWLAPI Binding and Config** (`net.sourceforge.owlapi:owlapi-apibinding:4.5.19`) - <http://owlcs.github.io/owlapi/owlapi-apibinding/>
+- (Apache License Version 2.0, January 2004) (GNU LGPL Version 3.0) **OWLAPI Default Implementation** (`net.sourceforge.owlapi:owlapi-impl:4.5.19`) - <http://owlcs.github.io/owlapi/owlapi-impl/>
+- (Apache License Version 2.0, January 2004) (GNU LGPL Version 3.0) **OWLAPITOOLS OWL profile and fixers** (`net.sourceforge.owlapi:owlapi-fixers:4.5.19`) - <http://owlcs.github.io/owlapi/owlapi-fixers/>
+- (Apache License Version 2.0, January 2004) (GNU LGPL Version 3.0) **parsers** (`net.sourceforge.owlapi:owlapi-parsers:4.5.19`) - <http://owlcs.github.io/owlapi/owlapi-parsers/>
+- (Apache License, Version 2.0) **Plexus Common Utilities** (`org.codehaus.plexus:plexus-utils:3.6.1`) - <https://codehaus-plexus.github.io/plexus-utils/>
+- (Apache License, Version 2.0) **Plexus Interpolation API** (`org.codehaus.plexus:plexus-interpolation:1.26`) - <http://codehaus-plexus.github.io/plexus-interpolation/>
+- (Apache License, Version 2.0) **plexus-build-api** (`org.sonatype.plexus:plexus-build-api:0.0.7`) - <http://forge.sonatype.com/spice-parent/plexus-build-api/>
+- (BSD-2-Clause) **PostgreSQL JDBC Driver** (`org.postgresql:postgresql:42.7.12`) - <https://jdbc.postgresql.org>
+- (MIT License) **Project Lombok** (`org.projectlombok:lombok:1.18.46`) - <https://projectlombok.org>
+- (Apache License, Version 2.0) **Prometheus Metrics Config** (`io.prometheus:prometheus-metrics-config:1.5.1`) - <http://github.com/prometheus/client_java/client_java/prometheus-metrics-config>
+- (Apache License, Version 2.0) **Prometheus Metrics Core** (`io.prometheus:prometheus-metrics-core:1.5.1`) - <http://github.com/prometheus/client_java/client_java/prometheus-metrics-core>
+- (Apache License, Version 2.0) **Prometheus Metrics Exposition Formats** (`io.prometheus:prometheus-metrics-exposition-formats:1.5.1`) - <http://github.com/prometheus/client_java/client_java/prometheus-metrics-exposition-formats>
+- (Apache License, Version 2.0) **Prometheus Metrics Exposition Text Formats** (`io.prometheus:prometheus-metrics-exposition-textformats:1.5.1`) - <http://github.com/prometheus/client_java/client_java/prometheus-metrics-exposition-textformats>
+- (Apache License, Version 2.0) **Prometheus Metrics Model** (`io.prometheus:prometheus-metrics-model:1.5.1`) - <http://github.com/prometheus/client_java/client_java/prometheus-metrics-model>
+- (Apache License, Version 2.0) **Prometheus Metrics Tracer Common** (`io.prometheus:prometheus-metrics-tracer-common:1.5.1`) - <http://github.com/prometheus/client_java/client_java/prometheus-metrics-tracer/prometheus-metrics-tracer-common>
+- (Apache License, Version 2.0) **Querydsl - APT support** (`com.querydsl:querydsl-apt:5.1.0`) - <http://www.querydsl.com>
+- (Apache License, Version 2.0) **Querydsl - Codegen module** (`com.querydsl:querydsl-codegen:5.1.0`) - <http://www.querydsl.com>
+- (Apache License, Version 2.0) **Querydsl - Codegen utils** (`com.querydsl:codegen-utils:5.1.0`) - <https://querydsl.github.io/codegen-utils/>
+- (Apache License, Version 2.0) **Querydsl - Core module** (`com.querydsl:querydsl-core:5.1.0`) - <http://www.querydsl.com>
+- (Apache License, Version 2.0) **Querydsl - JPA support** (`com.querydsl:querydsl-jpa:5.1.0`) - <http://www.querydsl.com>
+- (Apache License, Version 2.0) **Querydsl - SQL Spring support** (`com.querydsl:querydsl-sql-spring:5.1.0`) - <https://querydsl.github.io/querydsl-sql-spring/>
+- (Apache License, Version 2.0) **Querydsl - SQL support** (`com.querydsl:querydsl-sql:5.1.0`) - <https://querydsl.github.io/querydsl-sql/>
+- (Eclipse Distribution License v. 1.0) **RDF4J: Model** (`org.eclipse.rdf4j:rdf4j-model:2.4.2`) - <http://www.rdf4j.org/rdf4j-model/>
+- (Eclipse Distribution License v. 1.0) **RDF4J: Rio - API** (`org.eclipse.rdf4j:rdf4j-rio-api:2.4.2`) - <http://www.rdf4j.org/rdf4j-rio/rdf4j-rio-api/>
+- (Eclipse Distribution License v. 1.0) **RDF4J: Rio - Binary** (`org.eclipse.rdf4j:rdf4j-rio-binary:2.4.2`) - <http://www.rdf4j.org/rdf4j-rio/rdf4j-rio-binary/>
+- (Eclipse Distribution License v. 1.0) **RDF4J: Rio - Datatypes** (`org.eclipse.rdf4j:rdf4j-rio-datatypes:2.4.2`) - <http://www.rdf4j.org/rdf4j-rio/rdf4j-rio-datatypes/>
+- (Eclipse Distribution License v. 1.0) **RDF4J: Rio - JSON-LD** (`org.eclipse.rdf4j:rdf4j-rio-jsonld:2.4.2`) - <http://www.rdf4j.org/rdf4j-rio/rdf4j-rio-jsonld/>
+- (Eclipse Distribution License v. 1.0) **RDF4J: Rio - Languages** (`org.eclipse.rdf4j:rdf4j-rio-languages:2.4.2`) - <http://www.rdf4j.org/rdf4j-rio/rdf4j-rio-languages/>
+- (Eclipse Distribution License v. 1.0) **RDF4J: Rio - N-Quads** (`org.eclipse.rdf4j:rdf4j-rio-nquads:2.4.2`) - <http://www.rdf4j.org/rdf4j-rio/rdf4j-rio-nquads/>
+- (Eclipse Distribution License v. 1.0) **RDF4J: Rio - N-Triples** (`org.eclipse.rdf4j:rdf4j-rio-ntriples:2.4.2`) - <http://www.rdf4j.org/rdf4j-rio/rdf4j-rio-ntriples/>
+- (Eclipse Distribution License v. 1.0) **RDF4J: Rio - N3 (writer-only)** (`org.eclipse.rdf4j:rdf4j-rio-n3:2.4.2`) - <http://www.rdf4j.org/rdf4j-rio/rdf4j-rio-n3/>
+- (Eclipse Distribution License v. 1.0) **RDF4J: Rio - RDF/JSON** (`org.eclipse.rdf4j:rdf4j-rio-rdfjson:2.4.2`) - <http://www.rdf4j.org/rdf4j-rio/rdf4j-rio-rdfjson/>
+- (Eclipse Distribution License v. 1.0) **RDF4J: Rio - RDF/XML** (`org.eclipse.rdf4j:rdf4j-rio-rdfxml:2.4.2`) - <http://www.rdf4j.org/rdf4j-rio/rdf4j-rio-rdfxml/>
+- (Eclipse Distribution License v. 1.0) **RDF4J: Rio - TriG** (`org.eclipse.rdf4j:rdf4j-rio-trig:2.4.2`) - <http://www.rdf4j.org/rdf4j-rio/rdf4j-rio-trig/>
+- (Eclipse Distribution License v. 1.0) **RDF4J: Rio - TriX** (`org.eclipse.rdf4j:rdf4j-rio-trix:2.4.2`) - <http://www.rdf4j.org/rdf4j-rio/rdf4j-rio-trix/>
+- (Eclipse Distribution License v. 1.0) **RDF4J: Rio - Turtle** (`org.eclipse.rdf4j:rdf4j-rio-turtle:2.4.2`) - <http://www.rdf4j.org/rdf4j-rio/rdf4j-rio-turtle/>
+- (Eclipse Distribution License v. 1.0) **RDF4J: util** (`org.eclipse.rdf4j:rdf4j-util:2.4.2`) - <http://www.rdf4j.org/rdf4j-util/>
+- (MIT-0) **reactive-streams** (`org.reactivestreams:reactive-streams:1.0.4`) - <http://www.reactive-streams.org/>
+- (Apache License, Version 2.0) **REST Assured** (`io.rest-assured:rest-assured:6.0.0`) - <https://rest-assured.io/>
+- (Apache License, Version 2.0) **rest-assured-common** (`io.rest-assured:rest-assured-common:6.0.0`) - <https://rest-assured.io/>
+- (MIT License) **Sentry SDK** (`io.sentry:sentry:8.46.0`) - <https://github.com/getsentry/sentry-java>
+- (MIT License) **Sentry SDK** (`io.sentry:sentry-reactor:8.46.0`) - <https://github.com/getsentry/sentry-java>
+- (MIT License) **Sentry SDK** (`io.sentry:sentry-spring-7:8.46.0`) - <https://github.com/getsentry/sentry-java>
+- (MIT License) **Sentry SDK** (`io.sentry:sentry-spring-boot-4:8.46.0`) - <https://github.com/getsentry/sentry-java>
+- (MIT License) **SLF4J API Module** (`org.slf4j:slf4j-api:2.0.18`) - <http://www.slf4j.org>
+- (Apache License, Version 2.0) **SnakeYAML** (`org.yaml:snakeyaml:2.6`) - <https://bitbucket.org/snakeyaml/snakeyaml>
+- (Apache License, Version 2.0) **Snomed Boot** (`org.snomed.otf:snomed-boot:5.0.0`) - <no URL declared>
+- (Apache License, Version 2.0) **SNOMED CT Expression Constraint Language Parser** (`org.snomed.languages:snomed-ecl-parser:3.0.0`) - <no URL declared>
+- (Apache License, Version 2.0) **Snomed Parent OWASP** (`org.snomed:snomed-parent-owasp:1.0.3`) - <no URL declared>
+- (Apache License, Version 2.0) **snomed-owl-toolkit** (`org.snomed.otf:snomed-owl-toolkit:5.4.0`) - <no URL declared>
+- (Apache License, Version 2.0) **snomio api** (`au.csiro:snowstorm-java-client:8.1.3-20260702.000428-2`) - <no URL declared>
+- (Apache License, Version 2.0) **Spring AOP** (`org.springframework:spring-aop:7.0.8`) - <https://github.com/spring-projects/spring-framework>
+- (Apache License, Version 2.0) **Spring Aspects** (`org.springframework:spring-aspects:7.0.8`) - <https://github.com/spring-projects/spring-framework>
+- (Apache License, Version 2.0) **Spring Beans** (`org.springframework:spring-beans:7.0.8`) - <https://github.com/spring-projects/spring-framework>
+- (Apache License, Version 2.0) **Spring Context** (`org.springframework:spring-context:7.0.8`) - <https://github.com/spring-projects/spring-framework>
+- (Apache License, Version 2.0) **Spring Context Support** (`org.springframework:spring-context-support:7.0.8`) - <https://github.com/spring-projects/spring-framework>
+- (Apache License, Version 2.0) **Spring Core** (`org.springframework:spring-core:7.0.8`) - <https://github.com/spring-projects/spring-framework>
+- (Apache License, Version 2.0) **Spring Data Core** (`org.springframework.data:spring-data-commons:4.1.0`) - <https://spring.io/projects/spring-data>
+- (Apache License, Version 2.0) **Spring Data Envers** (`org.springframework.data:spring-data-envers:4.1.0`) - <https://spring.io/projects/spring-data-jpa/spring-data-envers>
+- (Apache License, Version 2.0) **Spring Data JPA** (`org.springframework.data:spring-data-jpa:4.1.0`) - <https://projects.spring.io/spring-data-jpa>
+- (Apache License, Version 2.0) **Spring Expression Language (SpEL)** (`org.springframework:spring-expression:7.0.8`) - <https://github.com/spring-projects/spring-framework>
+- (Apache License, Version 2.0) **Spring HATEOAS** (`org.springframework.hateoas:spring-hateoas:3.1.1`) - <https://github.com/spring-projects/spring-hateoas>
+- (Apache License, Version 2.0) **Spring JDBC** (`org.springframework:spring-jdbc:7.0.8`) - <https://github.com/spring-projects/spring-framework>
+- (Apache License, Version 2.0) **Spring Object/Relational Mapping** (`org.springframework:spring-orm:7.0.8`) - <https://github.com/spring-projects/spring-framework>
+- (Apache License, Version 2.0) **Spring Plugin - Core** (`org.springframework.plugin:spring-plugin-core:4.1.0`) - <https://github.com/spring-projects/spring-plugin/spring-plugin-core>
+- (Apache License, Version 2.0) **Spring Transaction** (`org.springframework:spring-tx:7.0.8`) - <https://github.com/spring-projects/spring-framework>
+- (Apache License, Version 2.0) **Spring Web** (`org.springframework:spring-web:7.0.8`) - <https://github.com/spring-projects/spring-framework>
+- (Apache License, Version 2.0) **Spring Web MVC** (`org.springframework:spring-webmvc:7.0.8`) - <https://github.com/spring-projects/spring-framework>
+- (Apache License, Version 2.0) **Spring WebFlux** (`org.springframework:spring-webflux:7.0.8`) - <https://github.com/spring-projects/spring-framework>
+- (Apache License, Version 2.0) **spring-boot** (`org.springframework.boot:spring-boot:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-actuator** (`org.springframework.boot:spring-boot-actuator:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-actuator-autoconfigure** (`org.springframework.boot:spring-boot-actuator-autoconfigure:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-autoconfigure** (`org.springframework.boot:spring-boot-autoconfigure:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-cache** (`org.springframework.boot:spring-boot-cache:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-configuration-processor** (`org.springframework.boot:spring-boot-configuration-processor:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-data-commons** (`org.springframework.boot:spring-boot-data-commons:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-data-jpa** (`org.springframework.boot:spring-boot-data-jpa:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-flyway** (`org.springframework.boot:spring-boot-flyway:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-hateoas** (`org.springframework.boot:spring-boot-hateoas:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-health** (`org.springframework.boot:spring-boot-health:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-hibernate** (`org.springframework.boot:spring-boot-hibernate:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-http-client** (`org.springframework.boot:spring-boot-http-client:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-http-codec** (`org.springframework.boot:spring-boot-http-codec:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-http-converter** (`org.springframework.boot:spring-boot-http-converter:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-jackson** (`org.springframework.boot:spring-boot-jackson:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-jdbc** (`org.springframework.boot:spring-boot-jdbc:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-jpa** (`org.springframework.boot:spring-boot-jpa:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-micrometer-metrics** (`org.springframework.boot:spring-boot-micrometer-metrics:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-micrometer-observation** (`org.springframework.boot:spring-boot-micrometer-observation:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-netty** (`org.springframework.boot:spring-boot-netty:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-persistence** (`org.springframework.boot:spring-boot-persistence:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-reactor** (`org.springframework.boot:spring-boot-reactor:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-reactor-netty** (`org.springframework.boot:spring-boot-reactor-netty:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-restclient** (`org.springframework.boot:spring-boot-restclient:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-security** (`org.springframework.boot:spring-boot-security:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-servlet** (`org.springframework.boot:spring-boot-servlet:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-sql** (`org.springframework.boot:spring-boot-sql:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-starter** (`org.springframework.boot:spring-boot-starter:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-starter-actuator** (`org.springframework.boot:spring-boot-starter-actuator:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-starter-aspectj** (`org.springframework.boot:spring-boot-starter-aspectj:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-starter-cache** (`org.springframework.boot:spring-boot-starter-cache:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-starter-data-jpa** (`org.springframework.boot:spring-boot-starter-data-jpa:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-starter-hateoas** (`org.springframework.boot:spring-boot-starter-hateoas:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-starter-jackson** (`org.springframework.boot:spring-boot-starter-jackson:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-starter-jdbc** (`org.springframework.boot:spring-boot-starter-jdbc:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-starter-logging** (`org.springframework.boot:spring-boot-starter-logging:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-starter-micrometer-metrics** (`org.springframework.boot:spring-boot-starter-micrometer-metrics:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-starter-reactor-netty** (`org.springframework.boot:spring-boot-starter-reactor-netty:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-starter-security** (`org.springframework.boot:spring-boot-starter-security:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-starter-tomcat** (`org.springframework.boot:spring-boot-starter-tomcat:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-starter-tomcat-runtime** (`org.springframework.boot:spring-boot-starter-tomcat-runtime:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-starter-validation** (`org.springframework.boot:spring-boot-starter-validation:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-starter-web** (`org.springframework.boot:spring-boot-starter-web:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-starter-webflux** (`org.springframework.boot:spring-boot-starter-webflux:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-starter-webmvc** (`org.springframework.boot:spring-boot-starter-webmvc:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-tomcat** (`org.springframework.boot:spring-boot-tomcat:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-transaction** (`org.springframework.boot:spring-boot-transaction:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-validation** (`org.springframework.boot:spring-boot-validation:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-web-server** (`org.springframework.boot:spring-boot-web-server:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-webflux** (`org.springframework.boot:spring-boot-webflux:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-boot-webmvc** (`org.springframework.boot:spring-boot-webmvc:4.1.0`) - <https://spring.io/projects/spring-boot>
+- (Apache License, Version 2.0) **spring-security-config** (`org.springframework.security:spring-security-config:7.1.0`) - <https://spring.io/projects/spring-security>
+- (Apache License, Version 2.0) **spring-security-core** (`org.springframework.security:spring-security-core:7.1.0`) - <https://spring.io/projects/spring-security>
+- (Apache License, Version 2.0) **spring-security-crypto** (`org.springframework.security:spring-security-crypto:7.1.0`) - <https://spring.io/projects/spring-security>
+- (Apache License, Version 2.0) **spring-security-web** (`org.springframework.security:spring-security-web:7.1.0`) - <https://spring.io/projects/spring-security>
+- (Apache License, Version 2.0) **springdoc-openapi-starter-common** (`org.springdoc:springdoc-openapi-starter-common:3.0.3`) - <https://springdoc.org/springdoc-openapi-starter-common/>
+- (Apache License, Version 2.0) **springdoc-openapi-starter-webmvc-api** (`org.springdoc:springdoc-openapi-starter-webmvc-api:3.0.3`) - <https://springdoc.org/springdoc-openapi-starter-webmvc-api/>
+- (Apache License, Version 2.0) **springdoc-openapi-starter-webmvc-ui** (`org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3`) - <https://springdoc.org/springdoc-openapi-starter-webmvc-ui/>
+- (Apache License, Version 2.0) **Swagger UI** (`org.webjars:swagger-ui:5.32.2`) - <https://www.webjars.org>
+- (Apache License, Version 2.0) **swagger-annotations-jakarta** (`io.swagger.core.v3:swagger-annotations-jakarta:2.2.47`) - <https://github.com/swagger-api/swagger-core/modules/swagger-annotations-jakarta>
+- (Apache License, Version 2.0) **swagger-core-jakarta** (`io.swagger.core.v3:swagger-core-jakarta:2.2.47`) - <https://github.com/swagger-api/swagger-core/modules/swagger-core-jakarta>
+- (Apache License, Version 2.0) **swagger-models-jakarta** (`io.swagger.core.v3:swagger-models-jakarta:2.2.47`) - <https://github.com/swagger-api/swagger-core/modules/swagger-models-jakarta>
+- (Apache License, Version 2.0) **TagSoup** (`org.ccil.cowan.tagsoup:tagsoup:1.2.1`) - <http://home.ccil.org/~cowan/XML/tagsoup/>
+- (Apache License, Version 2.0) **tomcat-embed-core** (`org.apache.tomcat.embed:tomcat-embed-core:11.0.22`) - <https://tomcat.apache.org/>
+- (Apache License, Version 2.0) **tomcat-embed-el** (`org.apache.tomcat.embed:tomcat-embed-el:11.0.22`) - <https://tomcat.apache.org/>
+- (Apache License, Version 2.0) **tomcat-embed-websocket** (`org.apache.tomcat.embed:tomcat-embed-websocket:11.0.22`) - <https://tomcat.apache.org/>
+- (Apache License Version 2.0, January 2004) (GNU LGPL Version 3.0) **tools** (`net.sourceforge.owlapi:owlapi-tools:4.5.19`) - <http://owlcs.github.io/owlapi/owlapi-tools/>
+- (BSD License) **TwelveMonkeys :: Common :: Image** (`com.twelvemonkeys.common:common-image:3.11.0`) - <https://github.com/haraldk/TwelveMonkeys/common/common-image>
+- (BSD License) **TwelveMonkeys :: Common :: IO** (`com.twelvemonkeys.common:common-io:3.11.0`) - <https://github.com/haraldk/TwelveMonkeys/common/common-io>
+- (BSD License) **TwelveMonkeys :: Common :: Language support** (`com.twelvemonkeys.common:common-lang:3.11.0`) - <https://github.com/haraldk/TwelveMonkeys/common/common-lang>
+- (BSD License) **TwelveMonkeys :: ImageIO :: Core** (`com.twelvemonkeys.imageio:imageio-core:3.11.0`) - <https://github.com/haraldk/TwelveMonkeys/tree/master/imageio/imageio-core>
+- (BSD License) **TwelveMonkeys :: ImageIO :: Metadata** (`com.twelvemonkeys.imageio:imageio-metadata:3.11.0`) - <https://github.com/haraldk/TwelveMonkeys/tree/master/imageio/imageio-metadata>
+- (BSD License) **TwelveMonkeys :: ImageIO :: WebP plugin** (`com.twelvemonkeys.imageio:imageio-webp:3.11.0`) - <https://github.com/haraldk/TwelveMonkeys/tree/master/imageio/imageio-webp>
+- (Eclipse Distribution License v. 1.0) **TXW2 Runtime** (`org.glassfish.jaxb:txw2:4.0.9`) - <https://eclipse-ee4j.github.io/jaxb-ri/>
+- (MIT License) **webjars-locator-lite** (`org.webjars:webjars-locator-lite:1.1.3`) - <https://webjars.org>
+- (Apache License, Version 2.0) **WireMock** (`org.wiremock:wiremock-standalone:3.13.2`) - <http://wiremock.org>
+- (Apache License, Version 2.0) **xml-path** (`io.rest-assured:xml-path:6.0.0`) - <https://rest-assured.io/xml-path/>
+- (Public Domain) **XZ for Java** (`org.tukaani:xz:1.6`) - <http://tukaani.org/xz/java.html>
+
+## Licence summary - Frontend (npm)
+
+The web UI is bundled from the 582 npm packages below. All are
+under permissive licences, enforced at build time by `ui/check-licenses.cjs`
+against the allowlist in `ui/allowed-licenses.json`.
+
+| Licence(s) | Components |
+| ---------- | ---------: |
+| (MIT OR CC0-1.0) | 1 |
+| (MPL-2.0 OR Apache-2.0) | 2 |
+| 0BSD | 1 |
+| Apache-2.0 | 43 |
+| BSD-2-Clause | 4 |
+| BSD-3-Clause | 11 |
+| ISC | 12 |
+| MIT | 507 |
+| Python-2.0 | 1 |
+
+## Frontend (npm) components
+
+- (Apache-2.0) **@aehrc/ecl-core** (`1.1.2`)
+- (Apache-2.0) **@aehrc/ecl-editor-core** (`1.1.2`)
+- (Apache-2.0) **@aehrc/ecl-editor-react** (`1.1.2`)
+- (MIT) **@ant-design/colors** (`7.2.1`)
+- (MIT) **@ant-design/cssinjs** (`1.24.0`)
+- (MIT) **@ant-design/cssinjs-utils** (`1.1.3`)
+- (MIT) **@ant-design/fast-color** (`2.0.6`)
+- (MIT) **@ant-design/icons** (`5.6.1`)
+- (MIT) **@ant-design/icons-svg** (`4.4.2`)
+- (MIT) **@ant-design/react-slick** (`1.1.2`)
+- (MIT) **@babel/code-frame** (`7.29.7`)
+- (MIT) **@babel/generator** (`7.29.7`)
+- (MIT) **@babel/helper-globals** (`7.29.7`)
+- (MIT) **@babel/helper-module-imports** (`7.29.7`)
+- (MIT) **@babel/helper-string-parser** (`7.29.7`)
+- (MIT) **@babel/helper-validator-identifier** (`7.29.7`)
+- (MIT) **@babel/parser** (`7.29.7`)
+- (MIT) **@babel/runtime** (`7.29.7`)
+- (MIT) **@babel/template** (`7.29.7`)
+- (MIT) **@babel/traverse** (`7.29.7`)
+- (MIT) **@babel/types** (`7.29.7`)
+- (MIT) **@dnd-kit/accessibility** (`3.1.1`)
+- (MIT) **@dnd-kit/core** (`6.3.1`)
+- (MIT) **@dnd-kit/sortable** (`8.0.0`)
+- (MIT) **@dnd-kit/utilities** (`3.2.2`)
+- (MIT) **@emotion/babel-plugin** (`11.13.5`)
+- (MIT) **@emotion/cache** (`11.14.0`)
+- (MIT) **@emotion/hash** (`0.8.0`)
+- (MIT) **@emotion/hash** (`0.9.2`)
+- (MIT) **@emotion/is-prop-valid** (`1.4.0`)
+- (MIT) **@emotion/memoize** (`0.9.0`)
+- (MIT) **@emotion/react** (`11.14.0`)
+- (MIT) **@emotion/serialize** (`1.3.3`)
+- (MIT) **@emotion/sheet** (`1.4.0`)
+- (MIT) **@emotion/styled** (`11.14.1`)
+- (MIT) **@emotion/unitless** (`0.10.0`)
+- (MIT) **@emotion/unitless** (`0.7.5`)
+- (MIT) **@emotion/use-insertion-effect-with-fallbacks** (`1.2.0`)
+- (MIT) **@emotion/utils** (`1.4.2`)
+- (MIT) **@emotion/weak-memoize** (`0.4.0`)
+- (MIT) **@floating-ui/core** (`1.7.5`)
+- (MIT) **@floating-ui/dom** (`1.7.6`)
+- (MIT) **@floating-ui/react-dom** (`2.1.8`)
+- (MIT) **@floating-ui/utils** (`0.2.11`)
+- (MIT) **@formatjs/ecma402-abstract** (`2.2.4`)
+- (MIT) **@formatjs/fast-memoize** (`2.2.3`)
+- (MIT) **@formatjs/icu-messageformat-parser** (`2.9.4`)
+- (MIT) **@formatjs/icu-skeleton-parser** (`1.8.8`)
+- (MIT) **@formatjs/intl** (`2.10.15`)
+- (MIT) **@formatjs/intl-displaynames** (`6.8.5`)
+- (MIT) **@formatjs/intl-listformat** (`7.7.5`)
+- (MIT) **@formatjs/intl-localematcher** (`0.5.8`)
+- (MIT) **@hookform/resolvers** (`3.10.0`)
+- (MIT) **@jridgewell/gen-mapping** (`0.3.13`)
+- (MIT) **@jridgewell/resolve-uri** (`3.1.2`)
+- (MIT) **@jridgewell/sourcemap-codec** (`1.5.5`)
+- (MIT) **@jridgewell/trace-mapping** (`0.3.31`)
+- (MIT) **@monaco-editor/loader** (`1.7.0`)
+- (MIT) **@monaco-editor/react** (`4.7.0`)
+- (MIT) **@mui/base** (`5.0.0-beta.40-1`)
+- (MIT) **@mui/core-downloads-tracker** (`5.18.0`)
+- (MIT) **@mui/icons-material** (`5.18.0`)
+- (MIT) **@mui/lab** (`5.0.0-alpha.177`)
+- (MIT) **@mui/material** (`5.18.0`)
+- (MIT) **@mui/private-theming** (`5.17.1`)
+- (MIT) **@mui/styled-engine** (`5.18.0`)
+- (MIT) **@mui/system** (`5.18.0`)
+- (MIT) **@mui/types** (`7.2.24`)
+- (MIT) **@mui/types** (`7.4.12`)
+- (MIT) **@mui/utils** (`5.17.1`)
+- (MIT) **@mui/utils** (`7.3.11`)
+- (MIT) **@mui/x-data-grid** (`6.11.0`)
+- (MIT) **@mui/x-date-pickers** (`7.29.4`)
+- (MIT) **@mui/x-internals** (`7.29.0`)
+- (Apache-2.0) **@opentelemetry/api** (`1.9.1`)
+- (Apache-2.0) **@opentelemetry/api-logs** (`0.201.1`)
+- (Apache-2.0) **@opentelemetry/api-logs** (`0.57.2`)
+- (Apache-2.0) **@opentelemetry/auto-instrumentations-web** (`0.47.0`)
+- (Apache-2.0) **@opentelemetry/context-zone** (`1.30.1`)
+- (Apache-2.0) **@opentelemetry/context-zone-peer-dep** (`1.30.1`)
+- (Apache-2.0) **@opentelemetry/core** (`1.30.1`)
+- (Apache-2.0) **@opentelemetry/core** (`2.0.1`)
+- (Apache-2.0) **@opentelemetry/core** (`2.8.0`)
+- (Apache-2.0) **@opentelemetry/exporter-zipkin** (`1.30.1`)
+- (Apache-2.0) **@opentelemetry/instrumentation** (`0.201.1`)
+- (Apache-2.0) **@opentelemetry/instrumentation** (`0.57.2`)
+- (Apache-2.0) **@opentelemetry/instrumentation-document-load** (`0.46.0`)
+- (Apache-2.0) **@opentelemetry/instrumentation-fetch** (`0.201.1`)
+- (Apache-2.0) **@opentelemetry/instrumentation-user-interaction** (`0.46.0`)
+- (Apache-2.0) **@opentelemetry/instrumentation-xml-http-request** (`0.201.1`)
+- (Apache-2.0) **@opentelemetry/propagator-b3** (`1.30.1`)
+- (Apache-2.0) **@opentelemetry/resources** (`1.30.1`)
+- (Apache-2.0) **@opentelemetry/resources** (`2.0.1`)
+- (Apache-2.0) **@opentelemetry/resources** (`2.8.0`)
+- (Apache-2.0) **@opentelemetry/sdk-trace-base** (`1.30.1`)
+- (Apache-2.0) **@opentelemetry/sdk-trace-base** (`2.0.1`)
+- (Apache-2.0) **@opentelemetry/sdk-trace-base** (`2.8.0`)
+- (Apache-2.0) **@opentelemetry/sdk-trace-web** (`1.30.1`)
+- (Apache-2.0) **@opentelemetry/sdk-trace-web** (`2.0.1`)
+- (Apache-2.0) **@opentelemetry/sdk-trace-web** (`2.8.0`)
+- (Apache-2.0) **@opentelemetry/semantic-conventions** (`1.28.0`)
+- (Apache-2.0) **@opentelemetry/semantic-conventions** (`1.41.1`)
+- (MIT) **@popperjs/core** (`2.11.8`)
+- (MIT) **@rc-component/async-validator** (`5.1.2`)
+- (MIT) **@rc-component/color-picker** (`2.0.1`)
+- (MIT) **@rc-component/context** (`1.4.0`)
+- (MIT) **@rc-component/mini-decimal** (`1.1.4`)
+- (MIT) **@rc-component/mutate-observer** (`1.1.0`)
+- (MIT) **@rc-component/portal** (`1.1.2`)
+- (MIT) **@rc-component/qrcode** (`1.1.3`)
+- (MIT) **@rc-component/tour** (`1.15.1`)
+- (MIT) **@rc-component/trigger** (`2.3.1`)
+- (MIT) **@remirror/core-constants** (`3.0.0`)
+- (MIT) **@remix-run/router** (`1.23.3`)
+- (Apache-2.0) **@rjsf/core** (`5.24.13`)
+- (Apache-2.0) **@rjsf/mui** (`5.24.13`)
+- (Apache-2.0) **@rjsf/utils** (`5.24.13`)
+- (Apache-2.0) **@rjsf/validator-ajv8** (`5.24.13`)
+- (MIT) **@sentry-internal/browser-utils** (`8.55.2`)
+- (MIT) **@sentry-internal/feedback** (`8.55.2`)
+- (MIT) **@sentry-internal/replay** (`8.55.2`)
+- (MIT) **@sentry-internal/replay-canvas** (`8.55.2`)
+- (MIT) **@sentry-internal/tracing** (`7.120.4`)
+- (MIT) **@sentry/browser** (`8.55.2`)
+- (MIT) **@sentry/core** (`7.120.4`)
+- (MIT) **@sentry/core** (`8.55.2`)
+- (MIT) **@sentry/react** (`8.55.2`)
+- (MIT) **@sentry/tracing** (`7.120.4`)
+- (MIT) **@sentry/types** (`7.120.4`)
+- (MIT) **@sentry/utils** (`7.120.4`)
+- (MIT) **@socket.io/component-emitter** (`3.1.2`)
+- (MIT) **@tabler/icons** (`3.44.0`)
+- (MIT) **@tabler/icons-react** (`3.44.0`)
+- (MIT) **@tanstack/query-core** (`4.44.0`)
+- (MIT) **@tanstack/query-core** (`5.101.0`)
+- (MIT) **@tanstack/react-query** (`4.44.0`)
+- (MIT) **@tanstack/react-query** (`5.101.0`)
+- (MIT) **@tiptap/core** (`3.10.1`)
+- (MIT) **@tiptap/extension-blockquote** (`3.10.1`)
+- (MIT) **@tiptap/extension-bold** (`3.10.1`)
+- (MIT) **@tiptap/extension-bubble-menu** (`3.27.1`)
+- (MIT) **@tiptap/extension-bullet-list** (`3.10.1`)
+- (MIT) **@tiptap/extension-code** (`3.10.1`)
+- (MIT) **@tiptap/extension-code-block** (`3.10.1`)
+- (MIT) **@tiptap/extension-color** (`3.10.1`)
+- (MIT) **@tiptap/extension-document** (`3.10.1`)
+- (MIT) **@tiptap/extension-dropcursor** (`3.10.1`)
+- (MIT) **@tiptap/extension-floating-menu** (`3.27.1`)
+- (MIT) **@tiptap/extension-font-family** (`3.10.1`)
+- (MIT) **@tiptap/extension-gapcursor** (`3.10.1`)
+- (MIT) **@tiptap/extension-hard-break** (`3.10.1`)
+- (MIT) **@tiptap/extension-heading** (`3.27.1`)
+- (MIT) **@tiptap/extension-highlight** (`3.10.1`)
+- (MIT) **@tiptap/extension-horizontal-rule** (`3.10.1`)
+- (MIT) **@tiptap/extension-image** (`3.27.1`)
+- (MIT) **@tiptap/extension-italic** (`3.10.1`)
+- (MIT) **@tiptap/extension-link** (`3.10.1`)
+- (MIT) **@tiptap/extension-list** (`3.27.1`)
+- (MIT) **@tiptap/extension-list-item** (`3.10.1`)
+- (MIT) **@tiptap/extension-list-keymap** (`3.27.1`)
+- (MIT) **@tiptap/extension-ordered-list** (`3.10.1`)
+- (MIT) **@tiptap/extension-paragraph** (`3.10.1`)
+- (MIT) **@tiptap/extension-placeholder** (`3.10.1`)
+- (MIT) **@tiptap/extension-strike** (`3.10.1`)
+- (MIT) **@tiptap/extension-subscript** (`3.10.1`)
+- (MIT) **@tiptap/extension-superscript** (`3.10.1`)
+- (MIT) **@tiptap/extension-table** (`3.27.1`)
+- (MIT) **@tiptap/extension-table-cell** (`3.10.1`)
+- (MIT) **@tiptap/extension-table-header** (`3.10.1`)
+- (MIT) **@tiptap/extension-table-row** (`3.10.1`)
+- (MIT) **@tiptap/extension-task-item** (`3.10.1`)
+- (MIT) **@tiptap/extension-task-list** (`3.10.1`)
+- (MIT) **@tiptap/extension-text** (`3.10.1`)
+- (MIT) **@tiptap/extension-text-align** (`3.10.1`)
+- (MIT) **@tiptap/extension-text-style** (`3.10.1`)
+- (MIT) **@tiptap/extension-underline** (`3.10.1`)
+- (MIT) **@tiptap/extensions** (`3.27.1`)
+- (MIT) **@tiptap/pm** (`3.10.1`)
+- (MIT) **@tiptap/react** (`3.10.1`)
+- (MIT) **@tiptap/starter-kit** (`3.10.1`)
+- (MIT) **@types/antlr4** (`4.12.0`)
+- (MIT) **@types/debug** (`4.1.13`)
+- (MIT) **@types/estree** (`1.0.9`)
+- (MIT) **@types/estree-jsx** (`1.0.5`)
+- (MIT) **@types/fhir** (`0.0.35`)
+- (MIT) **@types/fhir** (`0.0.41`)
+- (MIT) **@types/file-saver** (`2.0.7`)
+- (MIT) **@types/hast** (`3.0.4`)
+- (MIT) **@types/hoist-non-react-statics** (`3.3.7`)
+- (MIT) **@types/linkify-it** (`5.0.0`)
+- (MIT) **@types/lodash** (`4.17.24`)
+- (MIT) **@types/markdown-it** (`14.1.2`)
+- (MIT) **@types/mdast** (`4.0.4`)
+- (MIT) **@types/mdurl** (`2.0.0`)
+- (MIT) **@types/ms** (`2.1.0`)
+- (MIT) **@types/parse-json** (`4.0.2`)
+- (MIT) **@types/prop-types** (`15.7.15`)
+- (MIT) **@types/react** (`18.3.27`)
+- (MIT) **@types/react-copy-to-clipboard** (`5.0.7`)
+- (MIT) **@types/react-dom** (`18.3.7`)
+- (MIT) **@types/react-transition-group** (`4.4.12`)
+- (MIT) **@types/shimmer** (`1.2.0`)
+- (MIT) **@types/sockjs-client** (`1.5.4`)
+- (MIT) **@types/trusted-types** (`2.0.7`)
+- (MIT) **@types/unist** (`2.0.11`)
+- (MIT) **@types/unist** (`3.0.3`)
+- (MIT) **@types/use-sync-external-store** (`0.0.6`)
+- (MIT) **@types/uuid** (`8.3.4`)
+- (MIT) **@uiw/react-json-view** (`2.0.0-alpha.43`)
+- (ISC) **@ungap/structured-clone** (`1.3.1`)
+- (MIT) **acorn** (`8.17.0`)
+- (MIT) **acorn-import-attributes** (`1.9.5`)
+- (MIT) **add-px-to-style** (`1.0.0`)
+- (MIT) **agent-base** (`6.0.2`)
+- (MIT) **ajv** (`8.20.0`)
+- (MIT) **ajv-errors** (`3.0.0`)
+- (MIT) **ajv-formats** (`2.1.1`)
+- (MIT) **ajv-keywords** (`5.1.0`)
+- (MIT) **antd** (`5.29.3`)
+- (BSD-3-Clause) **antlr4** (`4.10.1`)
+- (BSD-3-Clause) **antlr4ts** (`0.5.0-alpha.4`)
+- (Python-2.0) **argparse** (`2.0.1`)
+- (MIT) **asynckit** (`0.4.0`)
+- (MIT) **attr-accept** (`2.2.5`)
+- (MIT) **axios** (`1.18.0`)
+- (MIT) **babel-plugin-macros** (`3.1.0`)
+- (MIT) **bail** (`2.0.2`)
+- (MIT) **big.js** (`6.2.2`)
+- (MIT) **bufferutil** (`4.1.0`)
+- (MIT) **call-bind-apply-helpers** (`1.0.2`)
+- (MIT) **callsites** (`3.1.0`)
+- (MIT) **ccount** (`2.0.1`)
+- (MIT) **character-entities** (`2.0.2`)
+- (MIT) **character-entities-html4** (`2.1.0`)
+- (MIT) **character-entities-legacy** (`3.0.0`)
+- (MIT) **character-reference-invalid** (`2.0.1`)
+- (BSD-3-Clause) **charenc** (`0.0.2`)
+- (MIT) **cjs-module-lexer** (`1.4.3`)
+- (MIT) **classnames** (`2.5.1`)
+- (MIT) **clsx** (`1.2.1`)
+- (MIT) **clsx** (`2.1.1`)
+- (MIT) **combined-stream** (`1.0.8`)
+- (MIT) **comma-separated-tokens** (`2.0.3`)
+- (MIT) **compute-gcd** (`1.2.1`)
+- (MIT) **compute-lcm** (`1.1.2`)
+- (MIT) **compute-scroll-into-view** (`3.1.1`)
+- (MIT) **convert-source-map** (`1.9.0`)
+- (MIT) **copy-to-clipboard** (`3.3.3`)
+- (MIT) **cosmiconfig** (`7.1.0`)
+- (MIT) **crelt** (`1.0.6`)
+- (BSD-3-Clause) **crypt** (`0.0.2`)
+- (MIT) **csstype** (`3.2.3`)
+- (ISC) **d** (`1.0.2`)
+- (MIT) **date-fns** (`4.4.0`)
+- (MIT) **dayjs** (`1.11.21`)
+- (MIT) **debug** (`2.6.9`)
+- (MIT) **debug** (`3.2.7`)
+- (MIT) **debug** (`4.4.3`)
+- (MIT) **decode-named-character-reference** (`1.3.0`)
+- (MIT) **delayed-stream** (`1.0.0`)
+- (MIT) **dequal** (`2.0.3`)
+- (MIT) **devlop** (`1.1.0`)
+- (MIT) **dom-css** (`2.1.0`)
+- (MIT) **dom-helpers** (`5.2.1`)
+- ((MPL-2.0 OR Apache-2.0)) **dompurify** (`3.2.6`)
+- ((MPL-2.0 OR Apache-2.0)) **dompurify** (`3.2.7`)
+- (BSD-2-Clause) **dotenv** (`16.6.1`)
+- (MIT) **dunder-proto** (`1.0.1`)
+- (Apache-2.0) **ecl-builder** (`0.3.0`)
+- (MIT) **encodeurl** (`2.0.0`)
+- (MIT) **engine.io-client** (`6.6.6`)
+- (MIT) **engine.io-parser** (`5.2.3`)
+- (BSD-2-Clause) **entities** (`4.5.0`)
+- (MIT) **error-ex** (`1.3.4`)
+- (MIT) **es-define-property** (`1.0.1`)
+- (MIT) **es-errors** (`1.3.0`)
+- (MIT) **es-object-atoms** (`1.1.2`)
+- (MIT) **es-set-tostringtag** (`2.1.0`)
+- (MIT) **es-toolkit** (`1.47.1`)
+- (ISC) **es5-ext** (`0.10.64`)
+- (MIT) **es6-iterator** (`2.0.3`)
+- (ISC) **es6-symbol** (`3.1.4`)
+- (MIT) **escape-string-regexp** (`4.0.0`)
+- (MIT) **escape-string-regexp** (`5.0.0`)
+- (ISC) **esniff** (`2.0.1`)
+- (MIT) **estree-util-is-identifier-name** (`3.0.0`)
+- (MIT) **event-emitter** (`0.3.5`)
+- (MIT) **eventsource** (`2.0.2`)
+- (ISC) **ext** (`1.7.0`)
+- (MIT) **extend** (`3.0.2`)
+- (MIT) **fast-deep-equal** (`3.1.3`)
+- (BSD-3-Clause) **fast-uri** (`3.1.4`)
+- (Apache-2.0) **faye-websocket** (`0.11.4`)
+- (MIT) **file-saver** (`2.0.5`)
+- (MIT) **file-selector** (`2.1.2`)
+- (MIT) **find-root** (`1.1.0`)
+- (MIT) **follow-redirects** (`1.16.0`)
+- (MIT) **form-data** (`4.0.6`)
+- (MIT) **framer-motion** (`11.18.2`)
+- (MIT) **function-bind** (`1.1.2`)
+- (MIT) **get-intrinsic** (`1.3.0`)
+- (MIT) **get-proto** (`1.0.1`)
+- (MIT) **goober** (`2.1.19`)
+- (MIT) **gopd** (`1.2.0`)
+- (MIT) **has-flag** (`4.0.0`)
+- (MIT) **has-symbols** (`1.1.0`)
+- (MIT) **has-tostringtag** (`1.0.2`)
+- (MIT) **hasown** (`2.0.4`)
+- (MIT) **hast-util-to-jsx-runtime** (`2.3.6`)
+- (MIT) **hast-util-whitespace** (`3.0.0`)
+- (BSD-3-Clause) **hoist-non-react-statics** (`3.3.2`)
+- (MIT) **html-url-attributes** (`3.0.1`)
+- (MIT) **http-parser-js** (`0.5.10`)
+- (MIT) **https-proxy-agent** (`5.0.1`)
+- (MIT) **import-fresh** (`3.3.1`)
+- (Apache-2.0) **import-in-the-middle** (`1.15.0`)
+- (ISC) **inherits** (`2.0.4`)
+- (MIT) **inline-style-parser** (`0.2.7`)
+- (BSD-3-Clause) **intl-messageformat** (`10.7.7`)
+- (MIT) **is-alphabetical** (`2.0.1`)
+- (MIT) **is-alphanumerical** (`2.0.1`)
+- (MIT) **is-arrayish** (`0.2.1`)
+- (MIT) **is-buffer** (`1.1.6`)
+- (MIT) **is-core-module** (`2.16.2`)
+- (MIT) **is-decimal** (`2.0.1`)
+- (MIT) **is-hexadecimal** (`2.0.1`)
+- (MIT) **is-plain-obj** (`4.1.0`)
+- (MIT) **is-retina** (`1.0.3`)
+- (MIT) **is-typedarray** (`1.0.0`)
+- (MIT) **js-tokens** (`4.0.0`)
+- (MIT) **jsesc** (`3.1.0`)
+- (MIT) **json-parse-even-better-errors** (`2.3.1`)
+- (MIT) **json-schema-compare** (`0.2.2`)
+- (MIT) **json-schema-merge-allof** (`0.8.1`)
+- (MIT) **json-schema-traverse** (`1.0.0`)
+- (MIT) **json2mq** (`0.2.0`)
+- (MIT) **jsonpointer** (`5.0.1`)
+- (MIT) **konva** (`9.3.22`)
+- (MIT) **lines-and-columns** (`1.2.4`)
+- (MIT) **linkify-it** (`5.0.2`)
+- (MIT) **linkifyjs** (`4.3.3`)
+- (MIT) **lodash** (`4.18.1`)
+- (MIT) **lodash-es** (`4.18.1`)
+- (MIT) **lodash.debounce** (`4.0.8`)
+- (MIT) **longest-streak** (`3.1.0`)
+- (MIT) **loose-envify** (`1.4.0`)
+- (MIT) **markdown-it** (`14.2.0`)
+- (MIT) **markdown-table** (`3.0.4`)
+- (MIT) **markdown-to-jsx** (`7.7.17`)
+- (MIT) **marked** (`14.0.0`)
+- (MIT) **math-intrinsics** (`1.1.0`)
+- (BSD-3-Clause) **md5** (`2.3.0`)
+- (MIT) **mdast-util-find-and-replace** (`3.0.2`)
+- (MIT) **mdast-util-from-markdown** (`2.0.3`)
+- (MIT) **mdast-util-gfm** (`3.1.0`)
+- (MIT) **mdast-util-gfm-autolink-literal** (`2.0.1`)
+- (MIT) **mdast-util-gfm-footnote** (`2.1.0`)
+- (MIT) **mdast-util-gfm-strikethrough** (`2.0.0`)
+- (MIT) **mdast-util-gfm-table** (`2.0.0`)
+- (MIT) **mdast-util-gfm-task-list-item** (`2.0.0`)
+- (MIT) **mdast-util-mdx-expression** (`2.0.1`)
+- (MIT) **mdast-util-mdx-jsx** (`3.2.0`)
+- (MIT) **mdast-util-mdxjs-esm** (`2.0.1`)
+- (MIT) **mdast-util-phrasing** (`4.1.0`)
+- (MIT) **mdast-util-to-hast** (`13.2.1`)
+- (MIT) **mdast-util-to-markdown** (`2.1.2`)
+- (MIT) **mdast-util-to-string** (`4.0.0`)
+- (MIT) **mdurl** (`2.0.0`)
+- (MIT) **micromark** (`4.0.2`)
+- (MIT) **micromark-core-commonmark** (`2.0.3`)
+- (MIT) **micromark-extension-gfm** (`3.0.0`)
+- (MIT) **micromark-extension-gfm-autolink-literal** (`2.1.0`)
+- (MIT) **micromark-extension-gfm-footnote** (`2.1.0`)
+- (MIT) **micromark-extension-gfm-strikethrough** (`2.1.0`)
+- (MIT) **micromark-extension-gfm-table** (`2.1.1`)
+- (MIT) **micromark-extension-gfm-tagfilter** (`2.0.0`)
+- (MIT) **micromark-extension-gfm-task-list-item** (`2.1.0`)
+- (MIT) **micromark-factory-destination** (`2.0.1`)
+- (MIT) **micromark-factory-label** (`2.0.1`)
+- (MIT) **micromark-factory-space** (`2.0.1`)
+- (MIT) **micromark-factory-title** (`2.0.1`)
+- (MIT) **micromark-factory-whitespace** (`2.0.1`)
+- (MIT) **micromark-util-character** (`2.1.1`)
+- (MIT) **micromark-util-chunked** (`2.0.1`)
+- (MIT) **micromark-util-classify-character** (`2.0.1`)
+- (MIT) **micromark-util-combine-extensions** (`2.0.1`)
+- (MIT) **micromark-util-decode-numeric-character-reference** (`2.0.2`)
+- (MIT) **micromark-util-decode-string** (`2.0.1`)
+- (MIT) **micromark-util-encode** (`2.0.1`)
+- (MIT) **micromark-util-html-tag-name** (`2.0.1`)
+- (MIT) **micromark-util-normalize-identifier** (`2.0.1`)
+- (MIT) **micromark-util-resolve-all** (`2.0.1`)
+- (MIT) **micromark-util-sanitize-uri** (`2.0.1`)
+- (MIT) **micromark-util-subtokenize** (`2.1.0`)
+- (MIT) **micromark-util-symbol** (`2.0.1`)
+- (MIT) **micromark-util-types** (`2.0.2`)
+- (MIT) **mime-db** (`1.52.0`)
+- (MIT) **mime-types** (`2.1.35`)
+- (MIT) **module-details-from-path** (`1.0.4`)
+- (MIT) **monaco-editor** (`0.55.1`)
+- (MIT) **motion-dom** (`11.18.1`)
+- (MIT) **motion-utils** (`11.18.1`)
+- (MIT) **ms** (`2.0.0`)
+- (MIT) **ms** (`2.1.3`)
+- (MIT) **mui-tiptap** (`1.31.0`)
+- (MIT) **nanoid** (`5.1.15`)
+- (ISC) **next-tick** (`1.1.0`)
+- (MIT) **node-fetch** (`2.7.0`)
+- (MIT) **node-gyp-build** (`4.8.4`)
+- (MIT) **notistack** (`3.0.2`)
+- (MIT) **object-assign** (`4.1.1`)
+- (MIT) **orderedmap** (`2.1.1`)
+- (MIT) **parent-module** (`1.0.1`)
+- (MIT) **parse-entities** (`4.0.2`)
+- (MIT) **parse-json** (`5.2.0`)
+- (MIT) **path-parse** (`1.0.7`)
+- (MIT) **path-type** (`4.0.0`)
+- (MIT) **performance-now** (`2.1.0`)
+- (ISC) **picocolors** (`1.1.1`)
+- (MIT) **prefix-style** (`2.0.1`)
+- (MIT) **primeflex** (`3.3.1`)
+- (MIT) **primereact** (`10.9.8`)
+- (MIT) **prop-types** (`15.8.1`)
+- (MIT) **property-expr** (`2.0.6`)
+- (MIT) **property-information** (`7.2.0`)
+- (MIT) **prosemirror-changeset** (`2.4.1`)
+- (MIT) **prosemirror-collab** (`1.3.1`)
+- (MIT) **prosemirror-commands** (`1.7.1`)
+- (MIT) **prosemirror-dropcursor** (`1.8.2`)
+- (MIT) **prosemirror-gapcursor** (`1.4.1`)
+- (MIT) **prosemirror-history** (`1.5.0`)
+- (MIT) **prosemirror-inputrules** (`1.5.1`)
+- (MIT) **prosemirror-keymap** (`1.2.3`)
+- (MIT) **prosemirror-markdown** (`1.13.4`)
+- (MIT) **prosemirror-menu** (`1.3.2`)
+- (MIT) **prosemirror-model** (`1.25.9`)
+- (MIT) **prosemirror-schema-basic** (`1.2.4`)
+- (MIT) **prosemirror-schema-list** (`1.5.1`)
+- (MIT) **prosemirror-state** (`1.4.4`)
+- (MIT) **prosemirror-tables** (`1.8.5`)
+- (MIT) **prosemirror-trailing-node** (`3.0.0`)
+- (MIT) **prosemirror-transform** (`1.12.0`)
+- (MIT) **prosemirror-view** (`1.41.9`)
+- (MIT) **proxy-from-env** (`2.1.0`)
+- (MIT) **punycode.js** (`2.3.1`)
+- (MIT) **query-string** (`4.3.4`)
+- (MIT) **querystringify** (`2.2.0`)
+- (MIT) **raf** (`3.4.1`)
+- (MIT) **rc-cascader** (`3.34.0`)
+- (MIT) **rc-checkbox** (`3.5.0`)
+- (MIT) **rc-collapse** (`3.9.0`)
+- (MIT) **rc-dialog** (`9.6.0`)
+- (MIT) **rc-drawer** (`7.3.0`)
+- (MIT) **rc-dropdown** (`4.2.1`)
+- (MIT) **rc-field-form** (`2.7.1`)
+- (MIT) **rc-image** (`7.12.0`)
+- (MIT) **rc-input** (`1.8.0`)
+- (MIT) **rc-input-number** (`9.5.0`)
+- (MIT) **rc-mentions** (`2.20.0`)
+- (MIT) **rc-menu** (`9.16.1`)
+- (MIT) **rc-motion** (`2.9.5`)
+- (MIT) **rc-notification** (`5.6.4`)
+- (MIT) **rc-overflow** (`1.5.0`)
+- (MIT) **rc-pagination** (`5.1.0`)
+- (MIT) **rc-picker** (`4.11.3`)
+- (MIT) **rc-progress** (`4.0.0`)
+- (MIT) **rc-rate** (`2.13.1`)
+- (MIT) **rc-resize-observer** (`1.4.3`)
+- (MIT) **rc-segmented** (`2.7.1`)
+- (MIT) **rc-select** (`14.16.8`)
+- (MIT) **rc-slider** (`11.1.9`)
+- (MIT) **rc-steps** (`6.0.1`)
+- (MIT) **rc-switch** (`4.1.0`)
+- (MIT) **rc-table** (`7.54.0`)
+- (MIT) **rc-tabs** (`15.7.0`)
+- (MIT) **rc-textarea** (`1.10.2`)
+- (MIT) **rc-tooltip** (`6.4.0`)
+- (MIT) **rc-tree** (`5.13.1`)
+- (MIT) **rc-tree-select** (`5.27.0`)
+- (MIT) **rc-upload** (`4.11.0`)
+- (MIT) **rc-util** (`5.44.4`)
+- (MIT) **rc-virtual-list** (`3.19.2`)
+- (MIT) **react** (`18.3.1`)
+- (MIT) **react-colorful** (`5.7.0`)
+- (MIT) **react-copy-to-clipboard** (`5.1.1`)
+- (MIT) **react-custom-scrollbars-2** (`4.5.0`)
+- (MIT) **react-device-detect** (`2.2.3`)
+- (MIT) **react-dom** (`18.3.1`)
+- (MIT) **react-dropzone** (`14.4.1`)
+- (MIT) **react-gravatar** (`2.6.3`)
+- (MIT) **react-hook-form** (`7.49.2`)
+- (BSD-3-Clause) **react-intl** (`6.8.9`)
+- (MIT) **react-is** (`16.13.1`)
+- (MIT) **react-is** (`18.3.1`)
+- (MIT) **react-is** (`19.2.7`)
+- (MIT) **react-markdown** (`9.1.0`)
+- (MIT) **react-router** (`6.30.4`)
+- (MIT) **react-router-dom** (`6.30.4`)
+- (BSD-3-Clause) **react-transition-group** (`4.4.5`)
+- (MIT) **remark-gfm** (`4.0.1`)
+- (MIT) **remark-parse** (`11.0.0`)
+- (MIT) **remark-rehype** (`11.1.2`)
+- (MIT) **remark-stringify** (`11.0.0`)
+- (MIT) **require-from-string** (`2.0.2`)
+- (MIT) **require-in-the-middle** (`7.5.2`)
+- (MIT) **requires-port** (`1.0.0`)
+- (MIT) **reselect** (`4.1.8`)
+- (MIT) **resize-observer-polyfill** (`1.5.1`)
+- (MIT) **resolve** (`1.22.12`)
+- (MIT) **resolve-from** (`4.0.0`)
+- (MIT) **rope-sequence** (`1.3.4`)
+- (MIT) **safe-buffer** (`5.2.1`)
+- (MIT) **scheduler** (`0.23.2`)
+- (MIT) **scroll-into-view-if-needed** (`3.1.0`)
+- (ISC) **semver** (`7.8.5`)
+- (BSD-2-Clause) **shimmer** (`1.2.1`)
+- (MIT) **simplebar-core** (`1.3.2`)
+- (MIT) **simplebar-react** (`3.3.2`)
+- (MIT) **socket.io-client** (`4.8.3`)
+- (MIT) **socket.io-parser** (`4.2.6`)
+- (MIT) **sockjs-client** (`1.6.1`)
+- (BSD-3-Clause) **source-map** (`0.5.7`)
+- (MIT) **space-separated-tokens** (`2.0.2`)
+- (MIT) **state-local** (`1.0.7`)
+- (Apache-2.0) **stompjs** (`2.3.3`)
+- (MIT) **strict-uri-encode** (`1.1.0`)
+- (MIT) **string-convert** (`0.2.1`)
+- (MIT) **stringify-entities** (`4.0.4`)
+- (MIT) **style-to-js** (`1.1.21`)
+- (MIT) **style-to-object** (`1.0.14`)
+- (MIT) **stylis** (`4.2.0`)
+- (MIT) **stylis** (`4.4.0`)
+- (MIT) **supports-color** (`8.1.1`)
+- (MIT) **supports-preserve-symlinks-flag** (`1.0.0`)
+- (MIT) **throttle-debounce** (`5.0.2`)
+- (MIT) **tiny-case** (`1.0.3`)
+- (MIT) **to-camel-case** (`1.0.0`)
+- (MIT) **to-no-case** (`1.0.2`)
+- (MIT) **to-space-case** (`1.0.0`)
+- (MIT) **toggle-selection** (`1.0.6`)
+- (MIT) **toposort** (`2.0.2`)
+- (MIT) **tr46** (`0.0.3`)
+- (MIT) **trim-lines** (`3.0.1`)
+- (MIT) **trough** (`2.2.0`)
+- (0BSD) **tslib** (`2.8.1`)
+- (ISC) **type** (`2.7.3`)
+- ((MIT OR CC0-1.0)) **type-fest** (`2.19.0`)
+- (MIT) **typedarray-to-buffer** (`3.1.5`)
+- (Apache-2.0) **typescript** (`5.9.3`)
+- (MIT) **ua-parser-js** (`1.0.41`)
+- (MIT) **uc.micro** (`2.1.0`)
+- (MIT) **unified** (`11.0.5`)
+- (MIT) **unist-util-is** (`6.0.1`)
+- (MIT) **unist-util-position** (`5.0.0`)
+- (MIT) **unist-util-stringify-position** (`4.0.0`)
+- (MIT) **unist-util-visit** (`5.1.0`)
+- (MIT) **unist-util-visit-parents** (`6.0.2`)
+- (MIT) **url-parse** (`1.5.10`)
+- (MIT) **use-sync-external-store** (`1.6.0`)
+- (MIT) **utf-8-validate** (`5.0.10`)
+- (MIT) **uuid** (`8.3.2`)
+- (MIT) **validate.io-array** (`1.0.6`)
+- (MIT) **validate.io-function** (`1.0.2`)
+- (MIT) **validate.io-integer** (`1.0.5`)
+- (MIT) **validate.io-integer-array** (`1.0.0`)
+- (MIT) **validate.io-number** (`1.0.3`)
+- (MIT) **vfile** (`6.0.3`)
+- (MIT) **vfile-message** (`4.0.3`)
+- (MIT) **w3c-keyname** (`2.2.8`)
+- (BSD-2-Clause) **webidl-conversions** (`3.0.1`)
+- (Apache-2.0) **websocket** (`1.0.35`)
+- (Apache-2.0) **websocket-driver** (`0.7.5`)
+- (Apache-2.0) **websocket-extensions** (`0.1.4`)
+- (MIT) **whatwg-url** (`5.0.0`)
+- (MIT) **ws** (`8.21.0`)
+- (MIT) **xmlhttprequest-ssl** (`2.1.2`)
+- (MIT) **yaeti** (`0.0.6`)
+- (ISC) **yaml** (`1.10.3`)
+- (MIT) **yup** (`1.7.1`)
+- (MIT) **zone.js** (`0.15.1`)
+- (MIT) **zustand** (`4.5.7`)
+- (MIT) **zwitch** (`2.0.4`)
