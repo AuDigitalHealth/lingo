@@ -5,7 +5,7 @@ This product is licensed under the Apache License, Version 2.0. A copy of the
 Apache License is provided in the file LICENSE, which also enumerates the full
 set of third-party components distributed with this product and their licences.
 
-This product bundles 335 unmodified third-party components, each
+This product bundles 334 unmodified third-party components, each
 distributed under its own licence as a separate artifact (no third-party code is
 modified, shaded or statically linked into Snomio's own code). Per-component
 notices, and the written offer of source for the copyleft-licensed components

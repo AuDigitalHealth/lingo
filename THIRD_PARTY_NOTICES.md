@@ -29,7 +29,6 @@ build- and provided-scope dependencies are excluded.
 | (Eclipse Distribution License v. 1.0) | 24 |
 | (Eclipse Distribution License v. 1.0) (Eclipse Public License 2.0) | 1 |
 | (Eclipse Public License 1.0) | 1 |
-| (Eclipse Public License 1.0) (MPL 2.0) | 1 |
 | (Eclipse Public License 2.0) | 6 |
 | (Eclipse Public License 2.0) (GNU Lesser General Public License Version 2.1, February 1999) | 1 |
 | (Eclipse Public License 2.0) (GPL2 w/ CPE) | 2 |
@@ -50,7 +49,6 @@ project's issue tracker referenced in `README.md`.
 
 - **AspectJ Weaver** (`org.aspectj:aspectjweaver:1.9.25.1`) - (Eclipse Public License 2.0) - <https://www.eclipse.org/aspectj/>
 - **Eclipse Compiler for Java(TM)** (`org.eclipse.jdt:ecj:3.26.0`) - (Eclipse Public License 2.0) - <http://www.eclipse.org/jdt>
-- **H2 Database Engine** (`com.h2database:h2:2.4.240`) - (Eclipse Public License 1.0) (MPL 2.0) - <https://h2database.com>
 - **JaCoCo :: Agent** (`org.jacoco:org.jacoco.agent:0.8.12`) - (Eclipse Public License 2.0) - <http://org.jacoco.agent>
 - **JaCoCo :: Core** (`org.jacoco:org.jacoco.core:0.8.12`) - (Eclipse Public License 2.0) - <http://org.jacoco.core>
 - **JaCoCo :: Maven Plugin** (`org.jacoco:jacoco-maven-plugin:0.8.12`) - (Eclipse Public License 2.0) - <https://www.jacoco.org/jacoco/trunk/doc/maven.html>
@@ -161,7 +159,6 @@ project's issue tracker referenced in `README.md`.
 - (Apache License, Version 2.0) **Gson** (`com.google.code.gson:gson:2.10.1`) - <https://github.com/google/gson/gson>
 - (Apache License, Version 2.0) **Gson** (`com.google.code.gson:gson:2.11.0`) - <https://github.com/google/gson>
 - (Apache License, Version 2.0) **Guava: Google Core Libraries for Java** (`com.google.guava:guava:18.0`) - <http://code.google.com/p/guava-libraries/guava>
-- (Eclipse Public License 1.0) (MPL 2.0) **H2 Database Engine** (`com.h2database:h2:2.4.240`) - <https://h2database.com>
 - (BSD License) **Hamcrest** (`org.hamcrest:hamcrest:3.0`) - <http://hamcrest.org/JavaHamcrest/>
 - (BSD License) **Hamcrest Core** (`org.hamcrest:hamcrest-core:3.0`) - <http://hamcrest.org/JavaHamcrest/>
 - (BSD-2-Clause) (Public Domain) **HdrHistogram** (`org.hdrhistogram:HdrHistogram:2.2.2`) - <http://hdrhistogram.github.io/HdrHistogram/>
@@ -299,10 +296,10 @@ project's issue tracker referenced in `README.md`.
 - (MIT-0) **reactive-streams** (`org.reactivestreams:reactive-streams:1.0.4`) - <http://www.reactive-streams.org/>
 - (Apache License, Version 2.0) **REST Assured** (`io.rest-assured:rest-assured:6.0.0`) - <https://rest-assured.io/>
 - (Apache License, Version 2.0) **rest-assured-common** (`io.rest-assured:rest-assured-common:6.0.0`) - <https://rest-assured.io/>
-- (MIT License) **Sentry SDK** (`io.sentry:sentry:8.46.0`) - <https://github.com/getsentry/sentry-java>
-- (MIT License) **Sentry SDK** (`io.sentry:sentry-reactor:8.46.0`) - <https://github.com/getsentry/sentry-java>
-- (MIT License) **Sentry SDK** (`io.sentry:sentry-spring-7:8.46.0`) - <https://github.com/getsentry/sentry-java>
-- (MIT License) **Sentry SDK** (`io.sentry:sentry-spring-boot-4:8.46.0`) - <https://github.com/getsentry/sentry-java>
+- (MIT License) **Sentry SDK** (`io.sentry:sentry:8.50.1`) - <https://github.com/getsentry/sentry-java>
+- (MIT License) **Sentry SDK** (`io.sentry:sentry-reactor:8.50.1`) - <https://github.com/getsentry/sentry-java>
+- (MIT License) **Sentry SDK** (`io.sentry:sentry-spring-7:8.50.1`) - <https://github.com/getsentry/sentry-java>
+- (MIT License) **Sentry SDK** (`io.sentry:sentry-spring-boot-4:8.50.1`) - <https://github.com/getsentry/sentry-java>
 - (MIT License) **SLF4J API Module** (`org.slf4j:slf4j-api:2.0.18`) - <http://www.slf4j.org>
 - (Apache License, Version 2.0) **SnakeYAML** (`org.yaml:snakeyaml:2.6`) - <https://bitbucket.org/snakeyaml/snakeyaml>
 - (Apache License, Version 2.0) **Snomed Boot** (`org.snomed.otf:snomed-boot:5.0.0`) - <no URL declared>
@@ -396,12 +393,12 @@ project's issue tracker referenced in `README.md`.
 - (Apache License, Version 2.0) **tomcat-embed-el** (`org.apache.tomcat.embed:tomcat-embed-el:11.0.22`) - <https://tomcat.apache.org/>
 - (Apache License, Version 2.0) **tomcat-embed-websocket** (`org.apache.tomcat.embed:tomcat-embed-websocket:11.0.22`) - <https://tomcat.apache.org/>
 - (Apache License Version 2.0, January 2004) (GNU LGPL Version 3.0) **tools** (`net.sourceforge.owlapi:owlapi-tools:4.5.19`) - <http://owlcs.github.io/owlapi/owlapi-tools/>
-- (BSD License) **TwelveMonkeys :: Common :: Image** (`com.twelvemonkeys.common:common-image:3.11.0`) - <https://github.com/haraldk/TwelveMonkeys/common/common-image>
-- (BSD License) **TwelveMonkeys :: Common :: IO** (`com.twelvemonkeys.common:common-io:3.11.0`) - <https://github.com/haraldk/TwelveMonkeys/common/common-io>
-- (BSD License) **TwelveMonkeys :: Common :: Language support** (`com.twelvemonkeys.common:common-lang:3.11.0`) - <https://github.com/haraldk/TwelveMonkeys/common/common-lang>
-- (BSD License) **TwelveMonkeys :: ImageIO :: Core** (`com.twelvemonkeys.imageio:imageio-core:3.11.0`) - <https://github.com/haraldk/TwelveMonkeys/tree/master/imageio/imageio-core>
-- (BSD License) **TwelveMonkeys :: ImageIO :: Metadata** (`com.twelvemonkeys.imageio:imageio-metadata:3.11.0`) - <https://github.com/haraldk/TwelveMonkeys/tree/master/imageio/imageio-metadata>
-- (BSD License) **TwelveMonkeys :: ImageIO :: WebP plugin** (`com.twelvemonkeys.imageio:imageio-webp:3.11.0`) - <https://github.com/haraldk/TwelveMonkeys/tree/master/imageio/imageio-webp>
+- (BSD License) **TwelveMonkeys :: Common :: Image** (`com.twelvemonkeys.common:common-image:3.13.1`) - <https://github.com/haraldk/TwelveMonkeys/common/common-image>
+- (BSD License) **TwelveMonkeys :: Common :: IO** (`com.twelvemonkeys.common:common-io:3.13.1`) - <https://github.com/haraldk/TwelveMonkeys/common/common-io>
+- (BSD License) **TwelveMonkeys :: Common :: Language support** (`com.twelvemonkeys.common:common-lang:3.13.1`) - <https://github.com/haraldk/TwelveMonkeys/common/common-lang>
+- (BSD License) **TwelveMonkeys :: ImageIO :: Core** (`com.twelvemonkeys.imageio:imageio-core:3.13.1`) - <https://github.com/haraldk/TwelveMonkeys/tree/master/imageio/imageio-core>
+- (BSD License) **TwelveMonkeys :: ImageIO :: Metadata** (`com.twelvemonkeys.imageio:imageio-metadata:3.13.1`) - <https://github.com/haraldk/TwelveMonkeys/tree/master/imageio/imageio-metadata>
+- (BSD License) **TwelveMonkeys :: ImageIO :: WebP plugin** (`com.twelvemonkeys.imageio:imageio-webp:3.13.1`) - <https://github.com/haraldk/TwelveMonkeys/tree/master/imageio/imageio-webp>
 - (Eclipse Distribution License v. 1.0) **TXW2 Runtime** (`org.glassfish.jaxb:txw2:4.0.9`) - <https://eclipse-ee4j.github.io/jaxb-ri/>
 - (MIT License) **webjars-locator-lite** (`org.webjars:webjars-locator-lite:1.1.3`) - <https://webjars.org>
 - (Apache License, Version 2.0) **WireMock** (`org.wiremock:wiremock-standalone:3.13.2`) - <http://wiremock.org>
