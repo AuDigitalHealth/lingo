@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
+### Changed
+- Renamed the priority bucket labels: "1a" -> "1", "1b" -> "2", "2" -> "3", "3" -> "4" (`priority_bucket.name`, row identity/`order_index` unchanged). Note: any pre-existing saved ticket filter/view that constrains on the old priority names will silently stop matching that priority (the filter's stored value no longer resolves to a bucket) until re-saved with the new name.
+
 ### Fixed
 - Corrected device (NMPC) product name generation to match the HSE gold. The real-medicinal-product (ATM) is now the bare brand with any trailing "(brand)" tag removed — previously the device type was appended (e.g. "4Sure B-Ketone Biomedical device" instead of "4Sure B-Ketone"). Device packs now count as "<name> (N device(s))" (e.g. "Blood ketone testing strips (10 devices)") instead of the AMT-style ", N unit". The AMP continues to use the Branded product name field verbatim. (Open question for HSE: the semantic tag for a newly created device VMP — the model config uses "clinical device" while the gold shows existing device-type concepts as "physical object".)
 ### Changed

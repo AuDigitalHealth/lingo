@@ -114,8 +114,8 @@ describe('Backlog Spec', () => {
     visitBacklogPage();
     searchByTitle(ticket.title, 1);
     updatePriority(ticket).then(() => {
-      searchByPriority('1a', 'Not Equals', 1);
-      searchByPriority('1a', 'Equals', 1);
+      searchByPriority('1', 'Not Equals', 1);
+      searchByPriority('1', 'Equals', 1);
     });
     testLabels(ticket).then(() => {
       searchByLabels(TEST_LABELS_NAME, 1);
