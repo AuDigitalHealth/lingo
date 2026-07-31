@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Form } from '@rjsf/mui';
 import {
   Alert,
@@ -261,7 +267,10 @@ function DeviceAuthoring({
         }
       })
       .catch(() => {
-        // Form already cleared synchronously; nothing more to do on error.
+        // Suggestion fetch failed (network/auth). Show the "couldn't derive" hint rather
+        // than silently leaving the field unseeded with no explanation (CUST1737896).
+        if (clearSeqRef.current !== seq) return;
+        setBrandedProductNamePrefill({ status: 'empty', index: 0 });
       });
   }, [ticket.id]);
 
@@ -269,6 +278,19 @@ function DeviceAuthoring({
     task.branchPath,
     originalConceptId ? [originalConceptId] : [],
   );
+
+  // Keep the validator prop's identity stable across renders: RJSF compares it
+  // by reference and rebuilds its schemaUtils (losing internal caches) whenever
+  // it changes, which an inline object literal forced on every render (#1932).
+  const formValidator = useMemo(
+    () => ({
+      ...validator,
+      validateFormData: (formData: any, schema: any) =>
+        validator.validateFormData(formData, schema, uiSchema),
+    }),
+    [uiSchema],
+  );
+
   const isProductUpdateDisabled = () => {
     if (mode === 'update') {
       if (!selectedProduct && !originalConceptId) {
@@ -421,11 +443,7 @@ function DeviceAuthoring({
               ArrayFieldTemplate: CustomArrayFieldTemplate,
               ObjectFieldTemplate: MuiGridTemplate,
             }}
-            validator={{
-              ...validator,
-              validateFormData: (formData, schema) =>
-                validator.validateFormData(formData, schema, uiSchema),
-            }}
+            validator={formValidator}
             widgets={{
               OneOfArrayWidget,
               TextWidget: CustomTextFieldWidget,

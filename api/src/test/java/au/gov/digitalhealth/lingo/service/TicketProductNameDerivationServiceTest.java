@@ -64,6 +64,17 @@ class TicketProductNameDerivationServiceTest {
   }
 
   @Test
+  void pcrsReturnsEmptyWhenProductNameBlank() throws Exception {
+    JsonNode empty =
+        json("{\"ProductName\":[\"\"],\"PackDescription\":[\"Fortisip Compact 125 ml. Pack 1\"]}");
+    JsonNode whitespace =
+        json("{\"ProductName\":[\" \"],\"PackDescription\":[\"Fortisip Compact 125 ml. Pack 1\"]}");
+
+    assertThat(TicketProductNameDerivationService.deriveFrom(Set.of("PCRS"), empty)).isEmpty();
+    assertThat(TicketProductNameDerivationService.deriveFrom(Set.of("PCRS"), whitespace)).isEmpty();
+  }
+
+  @Test
   void discriminatesByValueShapeWhenLabelMissing() throws Exception {
     JsonNode hpra = json("{\"ProductName\":\"Plain Name\"}");
     JsonNode pcrs =

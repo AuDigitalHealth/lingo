@@ -78,7 +78,8 @@ public class TicketProductNameDerivationService {
 
     String name = firstText(productName);
     String packDescription = firstText(entryValue.get("PackDescription"));
-    if (name == null || packDescription == null) {
+    if (name == null || name.isBlank() || packDescription == null) {
+      // A blank name would "match" at index 0 and derive a blank suggestion; treat as absent.
       return Optional.empty();
     }
     int idx = packDescription.toLowerCase(Locale.ROOT).indexOf(name.toLowerCase(Locale.ROOT));

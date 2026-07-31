@@ -315,6 +315,10 @@ export const customTransformErrors = (
   );
 };
 
+// Compiled-validator caches for isValid (see comment at the isValid call site).
+const isValidCompileCacheByRef = new WeakMap<object, any>();
+const isValidCompileCacheByKey = new Map<string, any>();
+
 // Create validator
 export const validator = (() => {
   const ajvMain = new Ajv({
@@ -470,11 +474,35 @@ export const validator = (() => {
     },
 
     isValid: (schema: any, formData: any, rootSchema: any) => {
-      const schemaCopy = { ...schema };
-      delete schemaCopy.$id;
       const cleanedFormData = removeNullFields(formData);
       try {
-        const validate = ajvIsValid.compile(schemaCopy);
+        // RJSF calls isValid once per oneOf branch on every change event and
+        // every oneOf field mount, and AJV compilation is by far the dominant
+        // cost (#1932). AJV's own cache is keyed by schema object identity,
+        // which the `{ ...schema }` copy defeated on every call — so cache
+        // compiled validators ourselves: by schema reference first, falling
+        // back to the serialised schema for identical schemas arriving as
+        // fresh objects (e.g. out of RJSF's retrieveSchema).
+        let validate =
+          typeof schema === 'object' && schema !== null
+            ? isValidCompileCacheByRef.get(schema)
+            : undefined;
+        if (!validate) {
+          const schemaCopy = { ...schema };
+          delete schemaCopy.$id;
+          const key = JSON.stringify(schemaCopy);
+          validate = isValidCompileCacheByKey.get(key);
+          if (!validate) {
+            validate = ajvIsValid.compile(schemaCopy);
+            if (isValidCompileCacheByKey.size >= 500) {
+              isValidCompileCacheByKey.clear();
+            }
+            isValidCompileCacheByKey.set(key, validate);
+          }
+          if (typeof schema === 'object' && schema !== null) {
+            isValidCompileCacheByRef.set(schema, validate);
+          }
+        }
         return validate(cleanedFormData) === true;
       } catch (e) {
         console.error('isValid compilation error:', e);

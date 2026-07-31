@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Form } from '@rjsf/mui';
 import {
   Alert,
@@ -55,6 +61,10 @@ import {
 import { ErrorDisplay } from './components/ErrorDisplay.tsx';
 import CustomSelectWidget from './widgets/CustomSelectWidget.tsx';
 import { evaluateExpression } from './helpers/rjsfUtils.ts';
+import {
+  normaliseLoadedPackageDetails,
+  seedBrandedProductNamePrefill,
+} from './helpers/ticketProductLoadHelper.ts';
 import WarningIcon from '@mui/icons-material/Warning';
 import CustomTextFieldWidget from './widgets/CustomTextFieldWidget.tsx';
 import BrandedProductNameWidget from './widgets/BrandedProductNameWidget.tsx';
@@ -94,6 +104,9 @@ function MedicationAuthoring({
   const formRef = useRef<any>(null);
   const clearSeqRef = useRef(0);
   const lastBrandRef = useRef<LastBrands>({});
+  // Set when a ticket product has just been loaded and still needs load-time normalisation
+  // (stale discriminator coercion + branded-product-name seeding) once schema/uiSchema exist.
+  const pendingLoadNormaliseRef = useRef(false);
 
   const [isDirty, setIsDirty] = useState(false);
   const [formErrors, setFormErrors] = useState<any[]>([]);
@@ -175,6 +188,7 @@ function MedicationAuthoring({
       }
       setFormData(data.packageDetails);
       setInitialFormData(data.packageDetails);
+      pendingLoadNormaliseRef.current = true;
       setOriginalConceptId(
         data.originalConceptId ? data.originalConceptId : data.conceptId,
       ); //fallback to conceptId for newly created product where originalConceptId is null
@@ -255,27 +269,48 @@ function MedicationAuthoring({
       .then(suggestion => {
         if (clearSeqRef.current !== seq) return;
         if (suggestion != null) {
-          setBrandedProductNamePrefill({
-            status: 'suggested',
+          const prefill = {
+            status: 'suggested' as const,
             value: suggestion,
             index: 0,
-          });
-          // The suggestion is applied by BrandedProductNameWidget, which seeds the empty field
-          // from this prefill state. We deliberately do NOT setFormData here: a second async
-          // form-data write races the product-load write, and whichever landed last won —
-          // intermittently wiping the suggestion (or the loaded product) (IEDC-7474). Seeding
-          // inside the widget happens within the resolved form and cannot be raced/clobbered.
+          };
+          setBrandedProductNamePrefill(prefill);
+          // Fold the suggestion into already-loaded package details as a FUNCTIONAL update.
+          // A plain setFormData here raced the product-load write (whichever landed last won,
+          // IEDC-7474), but a functional update composes with concurrent writes instead of
+          // clobbering them: it fills the field only if the latest state has it empty. This
+          // lets a draft mount with the field already populated instead of waiting a full
+          // form re-render for the widget's post-mount seed (CUST1737896). The widget remains
+          // the backstop when the product loads after the suggestion.
+          setFormData((prev: any) =>
+            seedBrandedProductNamePrefill(prev, prefill),
+          );
         } else {
           setBrandedProductNamePrefill({ status: 'empty', index: 0 });
         }
       })
       .catch(() => {
-        // Form already cleared synchronously; nothing more to do on error.
+        // Suggestion fetch failed (network/auth). Show the "couldn't derive" hint rather
+        // than silently leaving the field unseeded with no explanation (CUST1737896).
+        if (clearSeqRef.current !== seq) return;
+        setBrandedProductNamePrefill({ status: 'empty', index: 0 });
       });
   }, [ticket.id]);
   const { activeConceptIds, activeConceptsLoading } = useActiveConceptIdsByIds(
     task.branchPath,
     originalConceptId ? [originalConceptId] : [],
+  );
+
+  // Keep the validator prop's identity stable across renders: RJSF compares it
+  // by reference and rebuilds its schemaUtils (losing internal caches) whenever
+  // it changes, which an inline object literal forced on every render (#1932).
+  const formValidator = useMemo(
+    () => ({
+      ...validator,
+      validateFormData: (formData: any, schema: any) =>
+        validator.validateFormData(formData, schema, uiSchema),
+    }),
+    [uiSchema],
   );
 
   const isProductUpdateDisabled = () => {
@@ -309,6 +344,29 @@ function MedicationAuthoring({
   useEffect(() => {
     handleClear();
   }, [handleClear]);
+
+  // Normalise a freshly loaded ticket product at the data level, before the form mounts:
+  // coerce discriminators saved under an older schema (e.g. variant=medication +
+  // productType=noIngredients) and seed the branded-product-name suggestion if it has
+  // already arrived. Correcting these through the form instead meant the first change
+  // flipped the oneOf branch and the suggestion queued behind that re-render, leaving the
+  // field visibly empty on slower machines (CUST1737896). A suggestion that arrives later
+  // is still applied by BrandedProductNameWidget.
+  useEffect(() => {
+    if (!pendingLoadNormaliseRef.current || !schema || !uiSchema) {
+      return;
+    }
+    pendingLoadNormaliseRef.current = false;
+    const normalised = normaliseLoadedPackageDetails(
+      schema,
+      uiSchema,
+      formData,
+      brandedProductNamePrefill,
+    );
+    if (normalised !== formData) {
+      setFormData(normalised);
+    }
+  }, [schema, uiSchema, formData, brandedProductNamePrefill]);
 
   if (
     isLoading ||
@@ -447,11 +505,7 @@ function MedicationAuthoring({
             onChange={handleChange}
             onSubmit={handleFormSubmit}
             onError={onError}
-            validator={{
-              ...validator,
-              validateFormData: (formData, schema) =>
-                validator.validateFormData(formData, schema, uiSchema),
-            }}
+            validator={formValidator}
             disabled={mutation.isPending}
             noHtml5Validate={true}
             noValidate={false}

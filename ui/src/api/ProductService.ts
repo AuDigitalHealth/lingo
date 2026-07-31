@@ -36,6 +36,7 @@ import {
 import { TicketBulkProductActionDto } from '../types/tickets/ticket.ts';
 
 import { api } from './api.ts';
+import { normaliseBrandedProductNameSuggestion } from '../pages/products/rjsf/helpers/ticketProductLoadHelper.ts';
 import { cleanUpWhiteSpaceFromNodes } from '../types/productValidationUtils.ts';
 
 const ProductService = {
@@ -377,7 +378,9 @@ const ProductService = {
     const response = await api.get(
       `/api/tickets/${ticketId}/branded-product-name`,
     );
-    return (response.data?.brandedProductName as string | null) ?? null;
+    return normaliseBrandedProductNameSuggestion(
+      response.data?.brandedProductName,
+    );
   },
 };
 export default ProductService;

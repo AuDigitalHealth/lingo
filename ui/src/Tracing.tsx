@@ -14,7 +14,17 @@ import { FetchInstrumentation } from '@opentelemetry/instrumentation-fetch';
 import { UserInteractionInstrumentation } from '@opentelemetry/instrumentation-user-interaction';
 import { XMLHttpRequestInstrumentation } from '@opentelemetry/instrumentation-xml-http-request';
 
+let initialized = false;
+
 export function initializeOpenTelemetry(): void {
+  // Both main.tsx and MainBody.tsx call this at module scope; registering the
+  // provider and instrumentations twice double-wraps every event listener,
+  // timer and fetch (two spans + two zone hops per interaction) (#1932).
+  if (initialized) {
+    return;
+  }
+  initialized = true;
+
   const resource = new Resource({
     [SEMRESATTRS_SERVICE_NAME]: 'snomio-ui',
   });

@@ -189,29 +189,36 @@ export const removeNullFields = (obj: any, path: string = ''): any => {
   return obj;
 };
 
-export function resetDiscriminators(
-  schema: any,
-  formData: any,
-  uiSchema: any = {},
-) {
-  const updatedData = cloneDeep(formData);
+function getUiSchemaPath(rootUiSchema: any, path: string[]): any {
+  let current = rootUiSchema;
 
-  function getUiSchemaPath(rootUiSchema: any, path: string[]): any {
-    let current = rootUiSchema;
-
-    for (const key of path) {
-      if (!current) {
-        return undefined;
-      }
-      if (!isNaN(Number(key))) {
-        current = current.items || current;
-      } else {
-        current = current[key] || current.items?.[key] || current;
-      }
+  for (const key of path) {
+    if (!current) {
+      return undefined;
     }
-    return current;
+    if (!isNaN(Number(key))) {
+      current = current.items || current;
+    } else {
+      current = current[key] || current.items?.[key] || current;
+    }
   }
+  return current;
+}
 
+// Thrown by the dry-run writer to abort the walk at the first effective write.
+const WALK_WOULD_WRITE = new Error('discriminator walk would write');
+
+/**
+ * The discriminator walk shared by resetDiscriminators' mutating run and its
+ * read-only dry run. All writes go through `write(path, value)` with a path
+ * absolute from the root of `data`; cross-node reads go through `data`.
+ */
+function runDiscriminatorWalk(
+  schema: any,
+  data: any,
+  uiSchema: any,
+  write: (path: string[], value: any) => void,
+) {
   function walk(
     schemaNode: any,
     dataNode: any,
@@ -262,7 +269,7 @@ export function resetDiscriminators(
         const parentValue =
           parentPath === discriminator
             ? discriminatorValue
-            : get(updatedData, parentPath);
+            : get(data, parentPath);
         const validOptions = dynamicOptions.options[parentValue] || [];
         const validValues = validOptions.map((opt: any) => opt.value);
 
@@ -271,9 +278,9 @@ export function resetDiscriminators(
             validOptions[0]?.value ||
             schemaNode.properties?.[discriminator]?.default;
           if (defaultValue !== undefined) {
-            set(updatedData, [...path, discriminator], defaultValue);
+            write([...path, discriminator], defaultValue);
             if (schemaNode.properties?.oneOf_select) {
-              set(updatedData, [...path, 'oneOf_select'], defaultValue);
+              write([...path, 'oneOf_select'], defaultValue);
             }
           }
         }
@@ -295,9 +302,9 @@ export function resetDiscriminators(
           )?.properties?.[discriminator]?.const;
 
         if (defaultValue !== undefined) {
-          set(updatedData, [...path, discriminator], defaultValue);
+          write([...path, discriminator], defaultValue);
           if (schemaNode.properties?.oneOf_select) {
-            set(updatedData, [...path, 'oneOf_select'], defaultValue);
+            write([...path, 'oneOf_select'], defaultValue);
           }
         }
       }
@@ -316,9 +323,9 @@ export function resetDiscriminators(
           path[2] === 'productDetails' &&
           activeSchema.properties?.type
         ) {
-          const variantValue = get(updatedData, ['variant']);
+          const variantValue = get(data, ['variant']);
           if (variantValue) {
-            set(updatedData, [...path, 'type'], variantValue);
+            write([...path, 'type'], variantValue);
           }
         }
 
@@ -326,7 +333,7 @@ export function resetDiscriminators(
         Object.entries(activeSchema.properties || {}).forEach(
           ([key, subschema]) => {
             if (subschema.const && !get(dataNode, key) && key !== 'type') {
-              set(updatedData, [...path, key], subschema.const);
+              write([...path, key], subschema.const);
             }
           },
         );
@@ -430,12 +437,12 @@ export function resetDiscriminators(
   }
 
   // Process top-level discriminator
-  walk(schema, updatedData, [], schema, uiSchema);
+  walk(schema, data, [], schema, uiSchema);
 
   // Explicitly reset nested productType discriminators, Due to a bug in rjsf handling multi level oneOf
-  const variant = get(updatedData, 'variant');
+  const variant = get(data, 'variant');
   if (variant) {
-    const containedProducts = get(updatedData, 'containedProducts') || [];
+    const containedProducts = get(data, 'containedProducts') || [];
     containedProducts.forEach((_: any, idx: number) => {
       const productDetailsSchema = schema.oneOf?.find(
         (branch: any) =>
@@ -449,7 +456,7 @@ export function resetDiscriminators(
         ];
         walk(
           productDetailsSchema,
-          get(updatedData, productDetailsPath),
+          get(data, productDetailsPath),
           productDetailsPath,
           schema,
           getUiSchemaPath(uiSchema, [
@@ -461,7 +468,53 @@ export function resetDiscriminators(
       }
     });
   }
+}
 
+/**
+ * Read-only dry run of the discriminator walk: true when the walk would apply
+ * at least one write that actually changes `formData`. Writes of a value that
+ * is already in place (deep-equal) are no-ops in the mutating run too, so they
+ * do not count. Aborts at the first effective write, at which point the caller
+ * falls back to the full mutating run — so control-flow divergence after that
+ * write cannot produce a wrong answer.
+ */
+function discriminatorWalkWouldWrite(
+  schema: any,
+  formData: any,
+  uiSchema: any,
+): boolean {
+  try {
+    runDiscriminatorWalk(schema, formData, uiSchema, (path, value) => {
+      if (!_.isEqual(get(formData, path), value)) {
+        throw WALK_WOULD_WRITE;
+      }
+    });
+    return false;
+  } catch (e) {
+    if (e === WALK_WOULD_WRITE) {
+      return true;
+    }
+    throw e;
+  }
+}
+
+export function resetDiscriminators(
+  schema: any,
+  formData: any,
+  uiSchema: any = {},
+) {
+  // Fast path: this runs on every RJSF change event (including keystrokes), and
+  // almost always has nothing to reset. Detect that with a read-only walk and
+  // return the input by reference — skipping the cloneDeep of the whole package
+  // details and keeping object identity stable for React (#1932).
+  if (!discriminatorWalkWouldWrite(schema, formData, uiSchema)) {
+    return formData;
+  }
+
+  const updatedData = cloneDeep(formData);
+  runDiscriminatorWalk(schema, updatedData, uiSchema, (path, value) =>
+    set(updatedData, path, value),
+  );
   return updatedData;
 }
 
