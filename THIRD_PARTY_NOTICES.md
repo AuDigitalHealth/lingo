@@ -306,7 +306,7 @@ project's issue tracker referenced in `README.md`.
 - (Apache License, Version 2.0) **SNOMED CT Expression Constraint Language Parser** (`org.snomed.languages:snomed-ecl-parser:3.0.0`) - <no URL declared>
 - (Apache License, Version 2.0) **Snomed Parent OWASP** (`org.snomed:snomed-parent-owasp:1.0.3`) - <no URL declared>
 - (Apache License, Version 2.0) **snomed-owl-toolkit** (`org.snomed.otf:snomed-owl-toolkit:5.4.0`) - <no URL declared>
-- (Apache License, Version 2.0) **snomio api** (`au.csiro:snowstorm-java-client:8.1.3-20260702.000428-2`) - <no URL declared>
+- (Apache License, Version 2.0) **snomio api** (`au.csiro:snowstorm-java-client:8.1.3-20260731.053348-3`) - <no URL declared>
 - (Apache License, Version 2.0) **Spring AOP** (`org.springframework:spring-aop:7.0.8`) - <https://github.com/spring-projects/spring-framework>
 - (Apache License, Version 2.0) **Spring Aspects** (`org.springframework:spring-aspects:7.0.8`) - <https://github.com/spring-projects/spring-framework>
 - (Apache License, Version 2.0) **Spring Beans** (`org.springframework:spring-beans:7.0.8`) - <https://github.com/spring-projects/spring-framework>
@@ -716,7 +716,7 @@ against the allowlist in `ui/allowed-licenses.json`.
 - (ISC) **ext** (`1.7.0`)
 - (MIT) **extend** (`3.0.2`)
 - (MIT) **fast-deep-equal** (`3.1.3`)
-- (BSD-3-Clause) **fast-uri** (`3.1.4`)
+- (BSD-3-Clause) **fast-uri** (`3.1.5`)
 - (Apache-2.0) **faye-websocket** (`0.11.4`)
 - (MIT) **file-saver** (`2.0.5`)
 - (MIT) **file-selector** (`2.1.2`)
@@ -944,7 +944,7 @@ against the allowlist in `ui/allowed-licenses.json`.
 - (MIT) **simplebar-core** (`1.3.2`)
 - (MIT) **simplebar-react** (`3.3.2`)
 - (MIT) **socket.io-client** (`4.8.3`)
-- (MIT) **socket.io-parser** (`4.2.6`)
+- (MIT) **socket.io-parser** (`4.2.7`)
 - (MIT) **sockjs-client** (`1.6.1`)
 - (BSD-3-Clause) **source-map** (`0.5.7`)
 - (MIT) **space-separated-tokens** (`2.0.2`)

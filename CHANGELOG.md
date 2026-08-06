@@ -8,7 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
+### Security
+- Bumped transitive dependencies flagged as HIGH by the Trivy dependency scan to their patched versions: `fast-uri` (→3.1.5, CVE-2026-18446) and `socket.io-parser` (→4.2.7, CVE-2026-69185) via `pnpm-workspace.yaml` overrides.
+
+### Fixed
+- Fixed product payloads being rejected with "definition status is missing" on concept fields whose source didn't supply one. A custom Jackson module that defaults a missing definition status to `PRIMITIVE` had stopped being picked up by the app's `ObjectMapper` following the Spring Boot 4 migration; module registration is now wired up explicitly again.
+- Corrected the third-party notices, which listed five components that are not actually in the distributed dependency closure (`fluent-hc`, `httpclient-osgi`, `httpcore-nio`, `httpcore-osgi`, `jcl-over-slf4j`). `com.github.jsonld-java:jsonld-java` is served by `ihtsdo-releases` with a stub POM that declares no dependencies, and that repository is consulted before Maven Central, so those transitives never enter the build; the notices had been regenerated on a machine where Central's full POM happened to be cached.
 
 
 ## [1.4.0] - 2026-07-31

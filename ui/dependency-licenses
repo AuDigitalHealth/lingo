@@ -584,7 +584,7 @@
 
     (MIT) fast-deep-equal@3.1.3
 
-    (BSD-3-Clause) fast-uri@3.1.4
+    (BSD-3-Clause) fast-uri@3.1.5
 
     (Apache-2.0) faye-websocket@0.11.4
 
@@ -1040,7 +1040,7 @@
 
     (MIT) socket.io-client@4.8.3
 
-    (MIT) socket.io-parser@4.2.6
+    (MIT) socket.io-parser@4.2.7
 
     (MIT) sockjs-client@1.6.1
 

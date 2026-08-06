@@ -20,6 +20,7 @@ import au.gov.digitalhealth.lingo.log.SnowstormLogger;
 import au.gov.digitalhealth.lingo.util.AuthSnowstormLogger;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.logging.LogLevel;
@@ -71,7 +72,7 @@ public class ApiWebConfiguration {
   }
 
   @Bean
-  public ObjectMapper objectMapper() {
+  public ObjectMapper objectMapper(List<Module> applicationJacksonModules) {
     ObjectMapper objectMapper = new ObjectMapper();
     // Restores module auto-discovery (e.g. jackson-datatype-jsr310 for Instant/LocalDate) and the
     // lenient unknown-property default that used to come from Jackson2ObjectMapperBuilder before
@@ -80,6 +81,13 @@ public class ApiWebConfiguration {
     objectMapper.findAndRegisterModules();
     objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     objectMapper.registerModule(new JsonNullableModule());
+    // Jackson2ObjectMapperBuilder used to auto-register every com.fasterxml.jackson.databind.Module
+    // bean in the Spring context (e.g. JacksonSnowstormConceptMiniConfig's defaulting module) onto
+    // the app's ObjectMapper; findAndRegisterModules() above only picks up ServiceLoader-registered
+    // modules (e.g. jsr310), not plain @Bean Modules, so that auto-discovery is restored explicitly
+    // here instead - injecting List<Module> (rather than one named module) means any future custom
+    // Module bean is picked up the same way, with nothing to remember to wire in by hand.
+    applicationJacksonModules.forEach(objectMapper::registerModule);
     return objectMapper;
   }
 
