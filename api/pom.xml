@@ -734,7 +734,7 @@
   <parent>
     <artifactId>lingo</artifactId>
     <groupId>au.gov.digitalhealth</groupId>
-    <version>1.4.1-SNAPSHOT</version>
+    <version>1.4.1</version>
   </parent>
   <profiles>
     <profile>

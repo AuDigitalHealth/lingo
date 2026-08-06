@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
+
+## [1.4.1] - 2026-08-06
 ### Security
 - Bumped transitive dependencies flagged as HIGH by the Trivy dependency scan to their patched versions: `fast-uri` (→3.1.5, CVE-2026-18446) and `socket.io-parser` (→4.2.7, CVE-2026-69185) via `pnpm-workspace.yaml` overrides.
 
