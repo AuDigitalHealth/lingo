@@ -12,6 +12,7 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 ### Changed
 - `[Unreleased]` in this changelog now always carries all six Keep a Changelog headings, `CHANGELOG.md` is marked `merge=union`, and the changelog check moved from GitHub Actions into the Azure pipeline (where it also verifies no released entry has been resurrected under `[Unreleased]`). Together these remove the merge conflicts that came from everyone appending to the same spot. Release-time rewriting now lives in `scripts/changelog.py release`.
+- Updated the snowstorm-java-client to 8.1.3 release version
 
 ### Fixed
 
@@ -20,6 +21,8 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 ### Deprecated
 
 ### Removed
+### Changed
+- Updated the snowstorm-java-client to 8.1.3 release version
 
 
 ## [1.4.1] - 2026-08-06

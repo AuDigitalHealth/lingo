@@ -306,7 +306,7 @@ project's issue tracker referenced in `README.md`.
 - (Apache License, Version 2.0) **SNOMED CT Expression Constraint Language Parser** (`org.snomed.languages:snomed-ecl-parser:3.0.0`) - <no URL declared>
 - (Apache License, Version 2.0) **Snomed Parent OWASP** (`org.snomed:snomed-parent-owasp:1.0.3`) - <no URL declared>
 - (Apache License, Version 2.0) **snomed-owl-toolkit** (`org.snomed.otf:snomed-owl-toolkit:5.4.0`) - <no URL declared>
-- (Apache License, Version 2.0) **snomio api** (`au.csiro:snowstorm-java-client:8.1.3-20260731.053348-3`) - <no URL declared>
+- (Apache License, Version 2.0) **snomio api** (`au.csiro:snowstorm-java-client:8.1.3`) - <no URL declared>
 - (Apache License, Version 2.0) **Spring AOP** (`org.springframework:spring-aop:7.0.8`) - <https://github.com/spring-projects/spring-framework>
 - (Apache License, Version 2.0) **Spring Aspects** (`org.springframework:spring-aspects:7.0.8`) - <https://github.com/spring-projects/spring-framework>
 - (Apache License, Version 2.0) **Spring Beans** (`org.springframework:spring-beans:7.0.8`) - <https://github.com/spring-projects/spring-framework>
