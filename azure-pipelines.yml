@@ -26,6 +26,52 @@ pool:
   vmImage: ubuntu-latest
 
 jobs:
+  # Moved here from .github/workflows/changelog-check.yml. That workflow could not be
+  # relied on: GitHub Actions is billed separately from Azure Pipelines, and when the
+  # org's Actions billing lapsed every run failed in ~3s with "The job was not started
+  # because recent account payments have failed", which surfaced to developers as
+  # "Remember to update CHANGELOG.md" on a PR whose changelog was perfectly fine. The
+  # check is a few lines of script and belongs alongside the rest of CI.
+  - job: changelog
+    displayName: "Changelog"
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+      # Two commits is enough: PR validation builds refs/pull/N/merge, whose first
+      # parent is the target branch tip, so HEAD^1 is the diff base without needing
+      # the target branch fetched separately.
+      - checkout: self
+        fetchDepth: 2
+
+      - script: |
+          set -euo pipefail
+          # Every entry under [Unreleased] must be genuinely unreleased. Runs on every
+          # build, including main and tags, because a bad merge can land there too.
+          python3 scripts/changelog.py check-duplicates
+        displayName: 'No released entries duplicated under [Unreleased]'
+
+      - script: |
+          set -euo pipefail
+          # Dependabot raises dependency bumps in bulk and cannot write a changelog
+          # entry; the old GitHub Actions workflow exempted it and so do we. The
+          # variable is spelled with a refs/heads/ prefix by some providers and
+          # without it by others, so strip it before matching.
+          case "${SYSTEM_PULLREQUEST_SOURCEBRANCH#refs/heads/}" in
+            dependabot/*)
+              echo "Dependabot PR detected; changelog update not required."
+              exit 0
+              ;;
+          esac
+          if ! base=$(git rev-parse --verify --quiet HEAD^1); then
+            echo "HEAD has no second parent; not a PR merge commit. Skipping."
+            exit 0
+          fi
+          python3 scripts/changelog.py check-updated "$base"
+        displayName: 'CHANGELOG.md updated in this PR'
+        condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+        env:
+          SYSTEM_PULLREQUEST_SOURCEBRANCH: $(System.PullRequest.SourceBranch)
+
   - job: secrets_scan
     displayName: "Secret scan (TruffleHog + Gitleaks)"
     pool:

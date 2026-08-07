@@ -8,7 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
+### Added
+
+### Changed
+- `[Unreleased]` in this changelog now always carries all six Keep a Changelog headings, `CHANGELOG.md` is marked `merge=union`, and the changelog check moved from GitHub Actions into the Azure pipeline (where it also verifies no released entry has been resurrected under `[Unreleased]`). Together these remove the merge conflicts that came from everyone appending to the same spot. Release-time rewriting now lives in `scripts/changelog.py release`.
+
+### Fixed
+
+### Security
+
+### Deprecated
+
+### Removed
 
 
 ## [1.4.1] - 2026-08-06

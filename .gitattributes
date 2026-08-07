@@ -1,0 +1,10 @@
+# Everyone appends to the same place in the changelog, so a plain three-way merge
+# conflicts constantly (CHANGELOG.md is touched by ~43% of commits). The union driver
+# keeps both sides of a conflicting hunk instead of raising a conflict, which is the
+# right answer for an unordered bullet list. The seeded headings in [Unreleased] do the
+# rest: entries under different headings already merge cleanly without any driver.
+#
+# Union never conflicts, so it cannot ask a human. The one case it gets wrong -- a
+# branch open across a release re-adding entries that shipped meanwhile -- is caught by
+# the "changelog" CI job (scripts/changelog.py check-duplicates).
+CHANGELOG.md merge=union

@@ -54,11 +54,30 @@ as errors — the project sets `--max-warnings=0` and the pre-commit hook enforc
 ## CHANGELOG
 
 User-facing changes must add a bullet to the `## [Unreleased]` section in
-`CHANGELOG.md` at the repo root. CI runs a `check-changelog` step that fails the
-build if a PR with substantive changes leaves `[Unreleased]` empty. Format follows
-Keep a Changelog (sections: Added, Changed, Fixed, Security, Deprecated, Removed)
-but the `[Unreleased]` block is typically a flat bullet list with the issue/PR
-number in parentheses.
+`CHANGELOG.md` at the repo root, **under the appropriate heading**, with the
+issue/PR number in parentheses. The `Changelog` job in `azure-pipelines.yml` fails
+the build if a PR does not touch `CHANGELOG.md` (Dependabot excepted).
+
+`[Unreleased]` always carries all six Keep a Changelog headings — Added, Changed,
+Fixed, Security, Deprecated, Removed — even when empty. Do not delete the empty
+ones and do not add a second copy of a heading; put the entry under the one that is
+already there. The headings are load-bearing: they give git's three-way merge a
+stable anchor, so two branches adding entries under *different* headings merge
+cleanly with no conflict. Without them, git aligns unrelated bullets against each
+other and can silently file an entry under an already-released version.
+
+`CHANGELOG.md` is marked `merge=union` in `.gitattributes`, so concurrent additions
+under the *same* heading keep both sides instead of conflicting. The cost of union
+is that it never asks: a branch open across a release can re-add entries that
+shipped meanwhile. The `Changelog` job catches exactly that
+(`scripts/changelog.py check-duplicates`) — if it fires, delete the duplicated
+entries from `[Unreleased]`.
+
+Releases are cut by the "Snomio Maven Release" pipeline, which calls
+`scripts/changelog.py release <version> <date>` on the gitflow release branch
+(renames `[Unreleased]` and drops the headings that stayed empty) and then
+`scripts/changelog.py new-unreleased` afterwards (seeds the next `[Unreleased]`).
+Do not hand-edit released sections.
 
 ## Spring profiles
 
