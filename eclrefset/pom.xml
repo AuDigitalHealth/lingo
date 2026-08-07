@@ -136,7 +136,7 @@
 		<artifactId>lingo</artifactId>
 		<groupId>au.gov.digitalhealth</groupId>
 		<relativePath>../pom.xml</relativePath>
-		<version>1.4.3-SNAPSHOT</version>
+		<version>1.4.3</version>
 	</parent>
 
 	<properties>
