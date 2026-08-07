@@ -98,7 +98,7 @@
   <parent>
     <artifactId>lingo</artifactId>
     <groupId>au.gov.digitalhealth</groupId>
-    <version>1.4.2</version>
+    <version>1.4.3-SNAPSHOT</version>
   </parent>
   <properties>
     <java.version>21</java.version>
