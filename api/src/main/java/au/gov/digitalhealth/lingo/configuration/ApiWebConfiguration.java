@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.logging.LogLevel;
 import java.time.Duration;
@@ -80,6 +81,12 @@ public class ApiWebConfiguration {
     // for removal in Spring Framework 7, so it's not used here either.
     objectMapper.findAndRegisterModules();
     objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    // Spring Boot's auto-configured ObjectMapper defaults this to false (dates as ISO-8601
+    // strings); a bare `new ObjectMapper()` falls back to Jackson's own default of true, which
+    // serialises Instant/LocalDateTime etc. as a raw epoch-seconds number instead. The frontend's
+    // `new Date(value)` calls expect either an ISO string or epoch milliseconds, so an
+    // unconverted epoch-seconds number was rendering as a date ~20 days after the 1970 epoch.
+    objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
     objectMapper.registerModule(new JsonNullableModule());
     // Jackson2ObjectMapperBuilder used to auto-register every com.fasterxml.jackson.databind.Module
     // bean in the Spring context (e.g. JacksonSnowstormConceptMiniConfig's defaulting module) onto

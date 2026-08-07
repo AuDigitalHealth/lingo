@@ -8,7 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
+### Added
+
+### Changed
+
+### Fixed
+- Fixed `Instant` fields (e.g. ticket `created`/`modified`) serializing as raw epoch-seconds numbers instead of ISO-8601 strings, which the frontend's `new Date(value)` calls (expecting milliseconds) then rendered as a date ~20 days after the 1970 epoch (e.g. "Created by X on 22/01/1970"). Spring Boot's auto-configured `ObjectMapper` defaults `WRITE_DATES_AS_TIMESTAMPS` to `false`; the hand-built `ObjectMapper` bean introduced by the Spring Boot 4 migration (`ApiWebConfiguration.objectMapper()`) never set this, so it fell back to Jackson's own default of `true`.
+
+### Security
+
+### Deprecated
+
+### Removed
 
 
 ## [1.4.2] - 2026-08-07
