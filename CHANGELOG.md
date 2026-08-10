@@ -8,7 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
+### Added
+
+### Changed
+
+### Fixed
+
+### Security
+- Bumped `nanoid` to 5.1.16, clearing CVE-2026-67214 (HIGH) which was failing the Trivy dependency scan. Versions before 5.1.16 hang in an infinite loop when `nanoid`/`customAlphabet` from `nanoid/non-secure` are called with a negative size. (#1947)
+
+### Deprecated
+
+### Removed
 
 
 ## [1.4.3] - 2026-08-07
