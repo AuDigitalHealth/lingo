@@ -219,6 +219,21 @@ export function useAllTicketFilters() {
   return { ticketFiltersIsLoading, ticketFilters };
 }
 
+export function useAllExportPresets() {
+  const { isLoading, data } = useQuery({
+    queryKey: ['export-presets'],
+    queryFn: () => {
+      return TicketsService.getAllExportPresets();
+    },
+    staleTime: 1 * (60 * 1000),
+  });
+
+  const exportPresetsIsLoading: boolean = isLoading;
+  const exportPresets = data ?? [];
+
+  return { exportPresetsIsLoading, exportPresets };
+}
+
 export function useAllExternalProcesses() {
   const { isLoading, data } = useQuery({
     queryKey: [externalProcessesQueryKey],

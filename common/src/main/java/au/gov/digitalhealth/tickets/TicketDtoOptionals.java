@@ -31,7 +31,8 @@ public class TicketDtoOptionals extends TicketMinimalDtoOptionals {
 
   private JsonNullable<TicketTypeDto> ticketType = JsonNullable.undefined();
 
-  private JsonNullable<Set<ExternalRequesterDto>> externalRequestors = JsonNullable.undefined();
+  private JsonNullable<Set<TicketExternalRequestorDto>> externalRequestors =
+      JsonNullable.undefined();
 
   private JsonNullable<PriorityBucketDto> priorityBucket = JsonNullable.undefined();
 

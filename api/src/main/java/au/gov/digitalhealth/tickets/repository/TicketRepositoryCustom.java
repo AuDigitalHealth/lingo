@@ -25,4 +25,7 @@ import org.springframework.data.domain.Sort;
 public interface TicketRepositoryCustom {
   Page<Long> findAllIds(
       Predicate predicate, Pageable pageable, Sort sort, List<SearchCondition> searchConditions);
+
+  List<Long> findAllIdsByPredicate(
+      Predicate predicate, Sort sort, List<SearchCondition> searchConditions);
 }

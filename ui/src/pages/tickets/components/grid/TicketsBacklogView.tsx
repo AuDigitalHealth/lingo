@@ -20,6 +20,7 @@ import {
   AssigneeItemTemplate,
   AssigneeTemplate,
   CreatedTemplate,
+  DueDateTemplate,
   ExternalRequestorItemTemplate,
   ExternalRequestorsTemplate,
   IterationItemTemplate,
@@ -66,6 +67,8 @@ interface TicketsBacklogViewProps {
   setGlobalFilterValue: (val: string) => void;
   createdCalenderAsRange: boolean;
   setCreatedCalenderAsRange: (val: boolean) => void;
+  dueDateCalenderAsRange: boolean;
+  setDueDateCalenderAsRange: (val: boolean) => void;
   width?: number;
   selectedTickets: Ticket[] | null;
   setSelectedTickets?: Dispatch<SetStateAction<Ticket[] | null>>;
@@ -88,6 +91,8 @@ export function TicketsBacklogView({
   header,
   createdCalenderAsRange,
   setCreatedCalenderAsRange,
+  dueDateCalenderAsRange,
+  setDueDateCalenderAsRange,
 
   width,
 }: TicketsBacklogViewProps) {
@@ -632,6 +637,46 @@ export function TicketsBacklogView({
             { label: 'Not Equals', value: FilterMatchMode.NOT_EQUALS },
           ]}
           filterMenuStyle={{ width: '14rem' }}
+        />
+      )}
+      {fieldsContains('dueDate') && dueDateCalenderAsRange ? (
+        <Column
+          field="dueDate"
+          header="Due Date"
+          dataType="date"
+          sortable={!minimal}
+          filter={!minimal}
+          filterPlaceholder="Search by Due Date"
+          body={DueDateTemplate}
+          filterElement={dateFilterTemplateRange}
+          onFilterMatchModeChange={e => {
+            if (
+              e.matchMode === FilterMatchMode.DATE_IS ||
+              e.matchMode === FilterMatchMode.DATE_IS_NOT
+            ) {
+              setDueDateCalenderAsRange(true);
+            } else {
+              setDueDateCalenderAsRange(false);
+            }
+          }}
+        />
+      ) : (
+        <Column
+          field="dueDate"
+          header="Due Date"
+          dataType="date"
+          sortable={!minimal}
+          filter={!minimal}
+          filterPlaceholder="Search by Due Date"
+          body={DueDateTemplate}
+          filterElement={dateFilterTemplate}
+          onFilterMatchModeChange={e => {
+            if (e.matchMode !== FilterMatchMode.EQUALS) {
+              setDueDateCalenderAsRange(false);
+            } else {
+              setDueDateCalenderAsRange(true);
+            }
+          }}
         />
       )}
       {fieldsContains('created') && createdCalenderAsRange ? (

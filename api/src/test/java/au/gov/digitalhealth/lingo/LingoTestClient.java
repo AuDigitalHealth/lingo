@@ -32,6 +32,7 @@ import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.update.ProductPropertiesUpdateRequest;
 import au.gov.digitalhealth.lingo.product.update.ProductUpdateRequest;
+import au.gov.digitalhealth.tickets.TicketDto;
 import au.gov.digitalhealth.tickets.controllers.BulkProductActionDto;
 import au.gov.digitalhealth.tickets.models.Ticket;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -84,10 +85,10 @@ public class LingoTestClient {
     return given().cookie("foo");
   }
 
-  public Ticket createTicket(String title) {
+  public TicketDto createTicket(String title) {
     Ticket ticket = Ticket.builder().title(title).description("ticket").build();
 
-    return postRequest("/api/tickets", ticket, HttpStatus.OK, Ticket.class);
+    return postRequest("/api/tickets", ticket, HttpStatus.OK, TicketDto.class);
   }
 
   public PackageDetails<MedicationProductDetails> getMedicationPackDetails(long ctppId) {

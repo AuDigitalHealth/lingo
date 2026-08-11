@@ -14,6 +14,12 @@
 /// limitations under the License.
 ///
 
+/**
+ * Display format for date pickers/inputs across the app (Australian DD/MM/YYYY).
+ * The wire/storage format sent to the backend stays 'YYYY-MM-DD' at each call site.
+ */
+export const DATE_FORMAT = 'DD/MM/YYYY';
+
 export function timeSince(dateString: string) {
   const date = new Date(dateString);
   const now = new Date();

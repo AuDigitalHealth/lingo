@@ -104,7 +104,7 @@ class TicketPredicateBuilderTest {
         TicketPredicateBuilder.buildPredicateFromSearchConditions(
             List.of(externalRequestorSearchCondition));
     Assertions.assertEquals(
-        "any(ticket.externalRequestors).name = externalRequestorTest",
+        "any(ticket.ticketExternalRequestors).externalRequestor.name = externalRequestorTest",
         externalRequestor.getValue().toString());
 
     SearchCondition scheduleSearchCondition =

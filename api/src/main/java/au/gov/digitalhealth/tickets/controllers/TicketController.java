@@ -62,6 +62,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -455,6 +456,24 @@ public class TicketController {
     BulkAddExternalRequestorsResponse bulkAddExternalRequestorsResponse =
         ticketService.bulkAddExternalRequestors(bulkAddExternalRequestorsRequest);
     return new ResponseEntity<>(bulkAddExternalRequestorsResponse, HttpStatus.CREATED);
+  }
+
+  record UpdateDueDateRequest(LocalDate dueDate) {}
+
+  @PutMapping("/api/tickets/{ticketId}/dueDate")
+  @Transactional
+  public ResponseEntity<TicketDto> updateTicketDueDate(
+      @PathVariable Long ticketId, @RequestBody UpdateDueDateRequest body) {
+    Ticket ticket =
+        ticketRepository
+            .findById(ticketId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
+    ticket.setDueDate(body.dueDate());
+    ticketRepository.save(ticket);
+    return new ResponseEntity<>(ticketMapper.toDto(ticket), HttpStatus.OK);
   }
 
   /*

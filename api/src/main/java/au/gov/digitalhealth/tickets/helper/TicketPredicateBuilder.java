@@ -20,11 +20,14 @@ import au.gov.digitalhealth.tickets.models.QTicket;
 import au.gov.digitalhealth.tickets.models.QTicketAssociation;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.DatePath;
 import com.querydsl.core.types.dsl.DateTimePath;
 import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.jpa.JPAExpressions;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -65,6 +68,8 @@ public class TicketPredicateBuilder {
   public static final String TASK_ID_PATH = "taskassociation.taskid";
 
   public static final String TICKET_ASSOCIATION = "ticketassociation";
+
+  public static final String DUE_DATE_PATH = "duedate";
 
   private TicketPredicateBuilder() {} // SonarLint
 
@@ -129,6 +134,30 @@ public class TicketPredicateBuilder {
               default -> predicate.and(between);
             }
           }
+          if (DUE_DATE_PATH.equals(field)) {
+            DatePath<LocalDate> dueDatePath = QTicket.ticket.dueDate;
+            String[] dates = InstantUtils.splitDates(value);
+            Instant startInstant = InstantUtils.convert(dates[0]);
+            if (startInstant == null) {
+              throw new InvalidSearchProblem("Incorrectly formatted date");
+            }
+            ZoneId brisbane = ZoneId.of("Australia/Brisbane");
+            LocalDate startDate = startInstant.atZone(brisbane).toLocalDate();
+            LocalDate endDate;
+            if (dates.length == 2 && dates[1] != null) {
+              Instant endInstant = InstantUtils.convert(dates[1]);
+              endDate = endInstant != null ? endInstant.atZone(brisbane).toLocalDate() : startDate;
+            } else {
+              endDate = startDate;
+            }
+            BooleanExpression dueBetween = dueDatePath.between(startDate, endDate);
+            switch (operation) {
+              case SearchConditionUtils.NOT_EQUALS -> predicate.and(dueBetween.not());
+              case SearchConditionUtils.LESS_THAN -> predicate.and(dueDatePath.before(startDate));
+              case SearchConditionUtils.GREATER_THAN -> predicate.and(dueDatePath.after(endDate));
+              default -> predicate.and(dueBetween);
+            }
+          }
           if (DESCRIPTION_PATH.equals(field)) {
             path = QTicket.ticket.description;
           }
@@ -176,16 +205,27 @@ public class TicketPredicateBuilder {
             }
           }
           if (EXTERNAL_REQUESTORS_PATH.equals(field)) {
-            path = QTicket.ticket.externalRequestors.any().name;
+            path = QTicket.ticket.ticketExternalRequestors.any().externalRequestor.name;
 
             if (condition.equalsIgnoreCase("and")) {
               for (String labelName : valueIn) {
                 if (combinedConditions == null) {
-                  combinedConditions = QTicket.ticket.externalRequestors.any().name.eq(labelName);
+                  combinedConditions =
+                      QTicket.ticket
+                          .ticketExternalRequestors
+                          .any()
+                          .externalRequestor
+                          .name
+                          .eq(labelName);
                 } else {
                   combinedConditions =
                       combinedConditions.and(
-                          QTicket.ticket.externalRequestors.any().name.eq(labelName));
+                          QTicket.ticket
+                              .ticketExternalRequestors
+                              .any()
+                              .externalRequestor
+                              .name
+                              .eq(labelName));
                 }
               }
             }
@@ -193,11 +233,22 @@ public class TicketPredicateBuilder {
             if (condition.equalsIgnoreCase("or")) {
               for (String labelName : valueIn) {
                 if (combinedConditions == null) {
-                  combinedConditions = QTicket.ticket.externalRequestors.any().name.eq(labelName);
+                  combinedConditions =
+                      QTicket.ticket
+                          .ticketExternalRequestors
+                          .any()
+                          .externalRequestor
+                          .name
+                          .eq(labelName);
                 } else {
                   combinedConditions =
                       combinedConditions.or(
-                          QTicket.ticket.externalRequestors.any().name.eq(labelName));
+                          QTicket.ticket
+                              .ticketExternalRequestors
+                              .any()
+                              .externalRequestor
+                              .name
+                              .eq(labelName));
                 }
               }
             }
@@ -427,7 +478,7 @@ public class TicketPredicateBuilder {
       nullPath = QTicket.ticket.labels.isEmpty();
     }
     if (EXTERNAL_REQUESTORS_PATH.equals(field)) {
-      nullPath = QTicket.ticket.externalRequestors.isEmpty();
+      nullPath = QTicket.ticket.ticketExternalRequestors.isEmpty();
     }
 
     return nullPath;

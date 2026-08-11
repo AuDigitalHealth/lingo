@@ -17,7 +17,12 @@ package au.gov.digitalhealth.tickets.controllers;
 
 import static org.hamcrest.Matchers.is;
 
+import au.gov.digitalhealth.tickets.IterationDto;
+import au.gov.digitalhealth.tickets.LabelDto;
+import au.gov.digitalhealth.tickets.PriorityBucketDto;
+import au.gov.digitalhealth.tickets.StateDto;
 import au.gov.digitalhealth.tickets.TicketDto;
+import au.gov.digitalhealth.tickets.TicketDtoExtended;
 import au.gov.digitalhealth.tickets.TicketTestBaseLocal;
 import au.gov.digitalhealth.tickets.models.ExternalRequestor;
 import au.gov.digitalhealth.tickets.models.Iteration;
@@ -62,12 +67,12 @@ class TicketControllerTest extends TicketTestBaseLocal {
 
   @Test
   void testCreateTicket() {
-    Ticket createdTicket = createTicket();
+    TicketDto createdTicket = createTicket();
     Assertions.assertEquals(TICKET_TITLE, createdTicket.getTitle());
     Assertions.assertEquals(TICKET_DESC, createdTicket.getDescription());
   }
 
-  private Ticket createTicket() {
+  private TicketDto createTicket() {
     TicketDto ticket =
         TicketDto.builder()
             .createdBy("cgillespie")
@@ -88,7 +93,7 @@ class TicketControllerTest extends TicketTestBaseLocal {
         .then()
         .statusCode(200)
         .extract()
-        .as(Ticket.class);
+        .as(TicketDto.class);
   }
 
   @Test
@@ -105,25 +110,6 @@ class TicketControllerTest extends TicketTestBaseLocal {
     Optional<Label> label = labelRepository.findById(startAllLabels.get(0).getId());
     Set<Label> labelList = new HashSet<>();
     labelList.add(label.orElseThrow());
-    Set<ExternalRequestor> externalRequestorList = new HashSet<>();
-    if (startAllExternalRequestors
-        .isEmpty()) { // handle test failures before the ticket import process
-      ExternalRequestor newExternalRequestor =
-          ExternalRequestor.builder()
-              .name("Test-external-requestor")
-              .description("Test-external-requestor")
-              .displayColor("info")
-              .build();
-      externalRequestorRepository.save(newExternalRequestor);
-      startAllExternalRequestors = externalRequestorRepository.findAll();
-      externalRequestorList.add(newExternalRequestor);
-    } else {
-      Optional<ExternalRequestor> externalRequestor =
-          externalRequestorRepository.findById(startAllExternalRequestors.get(0).getId());
-
-      externalRequestorList.add(externalRequestor.orElseThrow());
-    }
-
     Optional<State> state = stateRepository.findById(startAllStates.get(0).getId());
     Optional<PriorityBucket> priorityBucket =
         priorityBucketRepository.findById(startAllPriorities.get(0).getId());
@@ -134,14 +120,13 @@ class TicketControllerTest extends TicketTestBaseLocal {
             .title("Complex")
             .description("ticket")
             .labels(labelList)
-            .externalRequestors(externalRequestorList)
             .state(state.orElseThrow())
             .ticketType(ticketType.orElseThrow())
             .priorityBucket(priorityBucket.orElseThrow())
             .iteration(iteration.orElseThrow())
             .build();
 
-    Ticket ticketResponse =
+    TicketDto ticketResponse =
         withAuth()
             .contentType(ContentType.JSON)
             .when()
@@ -150,20 +135,16 @@ class TicketControllerTest extends TicketTestBaseLocal {
             .then()
             .statusCode(200)
             .extract()
-            .as(Ticket.class);
+            .as(TicketDto.class);
 
-    Set<Label> responseLabels = ticketResponse.getLabels();
-    Set<ExternalRequestor> responseExternalRequestors = ticketResponse.getExternalRequestors();
+    Set<LabelDto> responseLabels = ticketResponse.getLabels();
 
-    PriorityBucket responseBuckets = ticketResponse.getPriorityBucket();
-    State responseState = ticketResponse.getState();
-    Iteration responseIteration = ticketResponse.getIteration();
+    PriorityBucketDto responseBuckets = ticketResponse.getPriorityBucket();
+    StateDto responseState = ticketResponse.getState();
+    IterationDto responseIteration = ticketResponse.getIteration();
 
     Assertions.assertEquals(
         responseLabels.iterator().next().getId(), labelList.iterator().next().getId());
-    Assertions.assertEquals(
-        responseExternalRequestors.iterator().next().getName(),
-        externalRequestorList.iterator().next().getName());
     Assertions.assertEquals(responseBuckets.getName(), priorityBucket.get().getName());
     Assertions.assertEquals(responseState.getId(), state.get().getId());
     Assertions.assertEquals(responseIteration.getName(), iteration.get().getName());
@@ -264,7 +245,7 @@ class TicketControllerTest extends TicketTestBaseLocal {
         .body("page.totalElements", is(1));
   }
 
-  private Ticket createTicket(
+  private TicketDto createTicket(
       List<Label> startAllLabels,
       List<State> startAllStates,
       List<PriorityBucket> startAllPriorities,
@@ -300,12 +281,12 @@ class TicketControllerTest extends TicketTestBaseLocal {
         .then()
         .statusCode(200)
         .extract()
-        .as(Ticket.class);
+        .as(TicketDto.class);
   }
 
   @Test
   void testUpdatedTicketSchedule() {
-    Ticket createdTicket = createTicket();
+    TicketDto createdTicket = createTicket();
     Schedule schedule = createTestSchedule(NEWSCHED, NEWSCHED_DESC);
     withAuth()
         .when()
@@ -317,14 +298,14 @@ class TicketControllerTest extends TicketTestBaseLocal {
                 + schedule.getId())
         .then()
         .statusCode(200);
-    Ticket updatedTicket =
+    TicketDtoExtended updatedTicket =
         withAuth()
             .when()
             .get(this.getSnomioLocation() + "/api/tickets/" + createdTicket.getId())
             .then()
             .statusCode(200)
             .extract()
-            .as(Ticket.class);
+            .as(TicketDtoExtended.class);
     Assertions.assertEquals(schedule.getId(), updatedTicket.getSchedule().getId());
     Assertions.assertEquals(NEWSCHED, updatedTicket.getSchedule().getName());
     Assertions.assertEquals(NEWSCHED_DESC, updatedTicket.getSchedule().getDescription());
@@ -333,7 +314,7 @@ class TicketControllerTest extends TicketTestBaseLocal {
 
   @Test
   void testDeleteTicketSchedule() {
-    Ticket createdTicket = createTicket();
+    TicketDto createdTicket = createTicket();
     Schedule schedule = createTestSchedule(NEWSCHED, NEWSCHED_DESC);
     withAuth()
         .when()
@@ -345,28 +326,28 @@ class TicketControllerTest extends TicketTestBaseLocal {
                 + schedule.getId())
         .then()
         .statusCode(200);
-    Ticket updatedTicket =
+    TicketDtoExtended updatedTicket =
         withAuth()
             .when()
             .get(this.getSnomioLocation() + "/api/tickets/" + createdTicket.getId())
             .then()
             .statusCode(200)
             .extract()
-            .as(Ticket.class);
+            .as(TicketDtoExtended.class);
     Assertions.assertEquals(schedule.getId(), updatedTicket.getSchedule().getId());
     withAuth()
         .when()
         .delete(this.getSnomioLocation() + "/api/tickets/" + createdTicket.getId() + "/schedule")
         .then()
         .statusCode(204);
-    Ticket updatedTicket2 =
+    TicketDtoExtended updatedTicket2 =
         withAuth()
             .when()
             .get(this.getSnomioLocation() + "/api/tickets/" + createdTicket.getId())
             .then()
             .statusCode(200)
             .extract()
-            .as(Ticket.class);
+            .as(TicketDtoExtended.class);
     Assertions.assertNull(updatedTicket2.getSchedule());
   }
 

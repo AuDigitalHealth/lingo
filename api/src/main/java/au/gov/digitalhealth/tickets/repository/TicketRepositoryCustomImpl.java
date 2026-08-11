@@ -38,18 +38,26 @@ public class TicketRepositoryCustomImpl implements TicketRepositoryCustom {
   @Override
   public Page<Long> findAllIds(
       Predicate predicate, Pageable pageable, Sort sort, List<SearchCondition> searchConditions) {
-    QTicket ticket = QTicket.ticket;
+    JPAQuery<Long> query = buildQuery(predicate, sort, searchConditions);
+    query.offset(pageable.getOffset()).limit(pageable.getPageSize());
+    List<Long> ids = query.fetch();
+    long total = query.fetchCount();
+    return new PageImpl<>(ids, pageable, total);
+  }
+
+  @Override
+  public List<Long> findAllIdsByPredicate(
+      Predicate predicate, Sort sort, List<SearchCondition> searchConditions) {
+    return buildQuery(predicate, sort, searchConditions).fetch();
+  }
+
+  private JPAQuery<Long> buildQuery(
+      Predicate predicate, Sort sort, List<SearchCondition> searchConditions) {
     JPAQuery<Long> query = new JPAQuery<>(entityManager);
-    query
-        .select(ticket.id)
-        .from(ticket)
-        .where(predicate)
-        .offset(pageable.getOffset())
-        .limit(pageable.getPageSize());
+    query.select(QTicket.ticket.id).from(QTicket.ticket).where(predicate);
 
     addLeftJoins(searchConditions, query);
 
-    // Apply sorting from the Sort parameter
     if (sort != null && sort.isSorted()) {
       sort.forEach(
           order -> {
@@ -63,9 +71,7 @@ public class TicketRepositoryCustomImpl implements TicketRepositoryCustom {
           });
     }
 
-    List<Long> ids = query.fetch();
-    long total = query.fetchCount();
-    return new PageImpl<>(ids, pageable, total);
+    return query;
   }
 
   // for entitys that require a left join because of an order condition

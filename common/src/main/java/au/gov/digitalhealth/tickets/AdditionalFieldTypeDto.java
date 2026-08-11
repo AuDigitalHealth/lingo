@@ -34,6 +34,8 @@ public class AdditionalFieldTypeDto implements Serializable {
 
   private String name;
 
+  private String displayName;
+
   private String description;
 
   private AdditionalFieldTypeDto.Type type;

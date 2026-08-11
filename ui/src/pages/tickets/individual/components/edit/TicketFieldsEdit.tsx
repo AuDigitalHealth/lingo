@@ -19,6 +19,11 @@ import {
   useAllPriorityBuckets,
   useAllSchedules,
 } from '../../../../../hooks/api/useInitializeTickets.tsx';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
+import { useUpdateTicketDueDate } from '../../../../../hooks/api/tickets/useUpdateTicket.tsx';
 
 interface TicketFieldsEditProps {
   ticket?: Ticket;
@@ -33,6 +38,7 @@ export default function TicketFieldsEdit({
   const { priorityBuckets } = useAllPriorityBuckets();
   const { iterations } = useAllIterations();
   const { canEdit } = useCanEditTicket(ticket);
+  const updateDueDateMutation = useUpdateTicketDueDate();
 
   return (
     <>
@@ -70,6 +76,33 @@ export default function TicketFieldsEdit({
             External Requesters:
           </Typography>
           <ExternalRequestorSelect ticket={ticket} border={true} />
+        </Stack>
+        <Stack flexDirection="row" alignItems="center">
+          <Typography
+            variant="caption"
+            fontWeight="bold"
+            sx={{ display: 'block', width: '150px' }}
+          >
+            Due Date:
+          </Typography>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              value={ticket?.dueDate ? dayjs(ticket.dueDate) : null}
+              onChange={newValue => {
+                if (ticket) {
+                  updateDueDateMutation.mutate({
+                    ticket,
+                    dueDate: newValue ? newValue.format('YYYY-MM-DD') : null,
+                  });
+                }
+              }}
+              slotProps={{
+                textField: { size: 'small' },
+                field: { clearable: true },
+              }}
+              disabled={!canEdit}
+            />
+          </LocalizationProvider>
         </Stack>
         <Stack flexDirection="row">
           <Typography

@@ -16,6 +16,7 @@
 package au.gov.digitalhealth.tickets;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -40,13 +41,15 @@ public class TicketBacklogDto extends BaseAuditableDto implements Serializable {
 
   private String assignee;
 
+  private LocalDate dueDate;
+
   private StateDto state;
 
   private Set<LabelDto> labels;
 
   private IterationDto iteration;
 
-  private Set<ExternalRequesterDto> externalRequestors;
+  private Set<TicketExternalRequestorDto> externalRequestors;
 
   private PriorityBucketDto priorityBucket;
 

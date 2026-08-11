@@ -141,7 +141,7 @@ export default function AdditionalFieldInput({
     <>
       <ConfirmationModal
         open={deleteModalOpen}
-        content={`Confirm delete for ${type.name}?`}
+        content={`Confirm delete for ${type.displayName}?`}
         handleClose={() => {
           setDeleteModalOpen(false);
         }}
@@ -314,7 +314,7 @@ export function AdditionalFieldDateInput({
             value={dateTime}
             format="DD/MM/YYYY"
             onError={newError => setError(newError)}
-            label={type.name}
+            label={type.displayName}
             onChange={newValue => {
               handleDateChange(newValue);
             }}
@@ -331,7 +331,7 @@ export function AdditionalFieldDateInput({
           <DesktopDatePicker
             disabled={disabled}
             format="DD/MM/YYYY"
-            label={type.name}
+            label={type.displayName}
             value={dateTime}
             onChange={(newValue: Dayjs | null) => {
               handleDateChange(newValue);
@@ -383,7 +383,7 @@ export function AdditionalFieldListInput({
   return (
     <>
       <FormControl fullWidth>
-        <InputLabel id={`${type.name}`}>{type.name}</InputLabel>
+        <InputLabel id={`${type.name}`}>{type.displayName}</InputLabel>
         <Select
           id={id}
           labelId={`${type.name}`}
@@ -438,7 +438,7 @@ export function AdditionalFieldNumberInput({
     <TextField
       id={id}
       disabled={disabled}
-      label={type.name}
+      label={type.displayName}
       type="number"
       value={localVal ? localVal : ''}
       onChange={handleUpdate}
@@ -469,7 +469,7 @@ export function AdditionalFieldStringInput({
     <TextField
       id={id}
       disabled={disabled}
-      label={type.name}
+      label={type.displayName}
       value={localVal ? localVal : ''}
       onChange={handleUpdate}
     />

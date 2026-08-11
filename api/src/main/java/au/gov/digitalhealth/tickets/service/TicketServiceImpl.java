@@ -33,6 +33,7 @@ import au.gov.digitalhealth.tickets.TicketBacklogDto;
 import au.gov.digitalhealth.tickets.TicketDto;
 import au.gov.digitalhealth.tickets.TicketDtoExtended;
 import au.gov.digitalhealth.tickets.TicketDtoOptionals;
+import au.gov.digitalhealth.tickets.TicketExternalRequestorDto;
 import au.gov.digitalhealth.tickets.TicketImportDto;
 import au.gov.digitalhealth.tickets.TicketMinimalDto;
 import au.gov.digitalhealth.tickets.controllers.BulkProductActionDto;
@@ -58,6 +59,7 @@ import au.gov.digitalhealth.tickets.models.Schedule;
 import au.gov.digitalhealth.tickets.models.State;
 import au.gov.digitalhealth.tickets.models.TaskAssociation;
 import au.gov.digitalhealth.tickets.models.Ticket;
+import au.gov.digitalhealth.tickets.models.TicketExternalRequestor;
 import au.gov.digitalhealth.tickets.models.TicketType;
 import au.gov.digitalhealth.tickets.models.mappers.AdditionalFieldValueMapper;
 import au.gov.digitalhealth.tickets.models.mappers.BulkProductActionMapper;
@@ -92,6 +94,8 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -127,6 +131,9 @@ public class TicketServiceImpl implements TicketService {
 
   public static final String ARTGID = "ARTGID";
   private static final int ITEMS_TO_PROCESS = 60000;
+  // Snomio's business timezone — "today" for a requested date is the Brisbane calendar day, not
+  // the server's default zone.
+  private static final ZoneId BRISBANE_ZONE = ZoneId.of("Australia/Brisbane");
   protected final Log logger = LogFactory.getLog(getClass());
   private final TicketRepository ticketRepository;
   private final AdditionalFieldTypeRepository additionalFieldTypeRepository;
@@ -381,7 +388,8 @@ public class TicketServiceImpl implements TicketService {
                 () ->
                     new ResourceNotFoundProblem(
                         String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
-    return addEntitysToBacklogTicket(foundTicket, recievedTicket);
+    return addEntitysToBacklogTicket(
+        foundTicket, recievedTicket, ticketBacklogDto.getExternalRequestors());
   }
 
   @Transactional
@@ -567,9 +575,18 @@ public class TicketServiceImpl implements TicketService {
                 additionalFieldTypeValues,
                 newTicketToAdd));
         newTicketToSave.setLabels(processLabels(labelsToSave, labels, newTicketToAdd));
-        newTicketToSave.setExternalRequestors(
+        Set<ExternalRequestor> resolvedExternalRequestors =
             processExternalRequestors(
-                externalRequestorsToSave, externalRequestors, newTicketToAdd));
+                externalRequestorsToSave, externalRequestors, externalRequestorList);
+        resolvedExternalRequestors.forEach(
+            er -> {
+              TicketExternalRequestor ter =
+                  TicketExternalRequestor.builder()
+                      .ticket(newTicketToSave)
+                      .externalRequestor(er)
+                      .build();
+              newTicketToSave.getTicketExternalRequestors().add(ter);
+            });
 
         newTicketToSave.setState(
             processEntity(
@@ -784,10 +801,9 @@ public class TicketServiceImpl implements TicketService {
   private Set<ExternalRequestor> processExternalRequestors(
       Map<String, ExternalRequestor> externalRequestorsToSave,
       Map<String, ExternalRequestor> externalRequestors,
-      Ticket newTicketToAdd) {
-    Set<ExternalRequestor> theExternalRequestors = newTicketToAdd.getExternalRequestors();
+      Set<ExternalRequesterDto> externalRequesterDtos) {
     Set<ExternalRequestor> externalRequestorsToAdd = new HashSet<>();
-    for (ExternalRequestor externalRequestor : theExternalRequestors) {
+    for (ExternalRequesterDto externalRequestor : externalRequesterDtos) {
       String externalRequestorToAdd = externalRequestor.getName();
       // Check if the fieldType is already saved in the DB
       if (externalRequestors.containsKey(externalRequestorToAdd)) {
@@ -1377,13 +1393,16 @@ public class TicketServiceImpl implements TicketService {
     bulkProductActionRepository.delete(bulkProductAction);
   }
 
-  private Ticket addEntitysToBacklogTicket(Ticket ticketToCopyTo, Ticket ticketToCopyFrom) {
+  private Ticket addEntitysToBacklogTicket(
+      Ticket ticketToCopyTo,
+      Ticket ticketToCopyFrom,
+      Set<TicketExternalRequestorDto> externalRequestorDtos) {
     ticketToCopyTo.setTitle(ticketToCopyFrom.getTitle());
 
     ticketToCopyTo.setAssignee(ticketToCopyFrom.getAssignee());
 
     addLabelsToTicket(ticketToCopyTo, ticketToCopyFrom);
-    addExternalRequestorsToTicket(ticketToCopyTo, ticketToCopyFrom);
+    addExternalRequestorsToTicket(ticketToCopyTo, externalRequestorDtos);
     addStateToTicket(ticketToCopyTo, ticketToCopyFrom);
 
     addIterationToTicket(ticketToCopyTo, ticketToCopyFrom);
@@ -1407,7 +1426,7 @@ public class TicketServiceImpl implements TicketService {
     ticketToCopyTo.setAssignee(ticketToCopyFrom.getAssignee());
 
     addLabelsToTicket(ticketToCopyTo, ticketToCopyFrom);
-    addExternalRequestorsToTicket(ticketToCopyTo, ticketToCopyFrom);
+    addExternalRequestorsToTicket(ticketToCopyTo, dto.getExternalRequestors());
     addStateToTicket(ticketToCopyTo, ticketToCopyFrom);
 
     /*
@@ -1530,24 +1549,24 @@ public class TicketServiceImpl implements TicketService {
     }
   }
 
-  private void addExternalRequestorsToTicket(Ticket ticketToSave, Ticket dto) {
-    if (dto.getExternalRequestors() == null) {
-      ticketToSave.getExternalRequestors().clear();
-    }
-    // we want it to have whatever is in the dto, nothing more nothing less
-    if (dto.getExternalRequestors() != null) {
-      ticketToSave.getExternalRequestors().clear();
-      dto.getExternalRequestors()
-          .forEach(
-              externalRequestor -> {
-                ExternalRequestor externalRequestorToAdd = ExternalRequestor.of(externalRequestor);
-                Optional<ExternalRequestor> existingExternalRequestor =
-                    externalRequestorRepository.findByName(externalRequestorToAdd.getName());
-                if (existingExternalRequestor.isPresent()) {
-                  externalRequestorToAdd = existingExternalRequestor.get();
-                  ticketToSave.getExternalRequestors().add(externalRequestorToAdd);
-                }
-              });
+  private void addExternalRequestorsToTicket(
+      Ticket ticketToSave, Set<TicketExternalRequestorDto> requestorDtos) {
+    ticketToSave.getTicketExternalRequestors().clear();
+    if (requestorDtos != null) {
+      requestorDtos.forEach(
+          dto -> {
+            Optional<ExternalRequestor> existingExternalRequestor =
+                externalRequestorRepository.findById(dto.externalRequestorId());
+            if (existingExternalRequestor.isPresent()) {
+              TicketExternalRequestor ter =
+                  TicketExternalRequestor.builder()
+                      .ticket(ticketToSave)
+                      .externalRequestor(existingExternalRequestor.get())
+                      .dateRequested(dto.dateRequested())
+                      .build();
+              ticketToSave.getTicketExternalRequestors().add(ter);
+            }
+          });
     }
   }
 
@@ -1653,13 +1672,15 @@ public class TicketServiceImpl implements TicketService {
 
   @Transactional
   public Ticket createOrGetTicket(TicketMetadata ticketMetadata) {
-    List<ExternalRequestor> resolvedRequestors = resolveExternalRequestors(ticketMetadata);
+    List<ResolvedExternalRequestor> resolvedRequestors = resolveExternalRequestors(ticketMetadata);
     List<Label> resolvedLabels = resolveLabels(ticketMetadata);
 
     List<String> requestorNames =
         ticketMetadata.getExternalRequestors() != null
-            ? ticketMetadata.getExternalRequestors()
-            : List.of();
+            ? ticketMetadata.getExternalRequestors().stream()
+                .map(ExternalRequestorRequest::name)
+                .toList()
+            : List.<String>of();
 
     List<Ticket> existing =
         ticketRepository.findTicketsByTitle(ticketMetadata.getName()).stream()
@@ -1669,8 +1690,12 @@ public class TicketServiceImpl implements TicketService {
                         || requestorNames.stream()
                             .allMatch(
                                 name ->
-                                    t.getExternalRequestors().stream()
-                                        .anyMatch(er -> er.getName().equalsIgnoreCase(name))))
+                                    t.getTicketExternalRequestors().stream()
+                                        .anyMatch(
+                                            ter ->
+                                                ter.getExternalRequestor()
+                                                    .getName()
+                                                    .equalsIgnoreCase(name))))
             .toList();
 
     if (existing.isEmpty()) {
@@ -1695,7 +1720,7 @@ public class TicketServiceImpl implements TicketService {
 
   private Ticket createNewTicket(
       TicketMetadata ticketMetadata,
-      List<ExternalRequestor> resolvedRequestors,
+      List<ResolvedExternalRequestor> resolvedRequestors,
       List<Label> resolvedLabels) {
     State toDoState = stateRepository.findByLabel("To Do").orElse(null);
     Ticket newTicket =
@@ -1704,11 +1729,25 @@ public class TicketServiceImpl implements TicketService {
             .description(ticketMetadata.getResolvedDescription())
             .state(toDoState)
             .build();
-    newTicket.setExternalRequestors(new HashSet<>(resolvedRequestors));
     if (resolvedLabels != null) {
       newTicket.setLabels(new HashSet<>(resolvedLabels));
     }
-    return createTicketFromDto(ticketMapper.toDto(newTicket));
+    TicketDto ticketDto = ticketMapper.toDto(newTicket);
+    Set<TicketExternalRequestorDto> erDtos =
+        resolvedRequestors.stream()
+            .map(
+                resolved -> {
+                  ExternalRequestor er = resolved.externalRequestor();
+                  return new TicketExternalRequestorDto(
+                      er.getId(),
+                      er.getName(),
+                      er.getDescription(),
+                      er.getDisplayColor(),
+                      resolved.dateRequestedOrNow());
+                })
+            .collect(Collectors.toSet());
+    ticketDto.setExternalRequestors(erDtos);
+    return createTicketFromDto(ticketDto);
   }
 
   @Transactional
@@ -1717,15 +1756,11 @@ public class TicketServiceImpl implements TicketService {
       throw new InvalidSearchProblem("dedupeKey is required for ARTGID-based ticket lookup");
     }
     try {
-      List<ExternalRequestor> resolvedRequestors = resolveExternalRequestors(ticketMetadata);
+      List<ResolvedExternalRequestor> resolvedRequestors =
+          resolveExternalRequestors(ticketMetadata);
       List<Label> resolvedLabels = resolveLabels(ticketMetadata);
 
-      List<Ticket> tickets = new ArrayList<>();
-      try {
-        tickets = findByAdditionalFieldTypeValueOf(ARTGID, ticketMetadata.getDedupeKey());
-      } catch (ResourceNotFoundProblem ignored) {
-        logger.debug("No ticket found with dedupeKey: " + ticketMetadata.getDedupeKey());
-      }
+      List<Ticket> tickets = findTicketsByDedupeKey(ticketMetadata.getDedupeKey());
 
       List<Ticket> result = new ArrayList<>();
       for (Ticket ticket : tickets) {
@@ -1753,29 +1788,53 @@ public class TicketServiceImpl implements TicketService {
       }
       return result;
     } catch (Exception e) {
-      e.printStackTrace();
       logger.error(
           "Failed to create or get tickets for dedupeKey: " + ticketMetadata.getDedupeKey(), e);
       throw e;
     }
   }
 
-  private List<ExternalRequestor> resolveExternalRequestors(TicketMetadata ticketMetadata) {
+  /** Looks up tickets by ARTGID dedupe key, treating "none found" as an empty result. */
+  private List<Ticket> findTicketsByDedupeKey(String dedupeKey) {
+    try {
+      return findByAdditionalFieldTypeValueOf(ARTGID, dedupeKey);
+    } catch (ResourceNotFoundProblem ignored) {
+      logger.debug("No ticket found with dedupeKey: " + dedupeKey);
+      return new ArrayList<>();
+    }
+  }
+
+  private List<ResolvedExternalRequestor> resolveExternalRequestors(TicketMetadata ticketMetadata) {
     if (ticketMetadata.getExternalRequestors() == null
         || ticketMetadata.getExternalRequestors().isEmpty()) {
       return new ArrayList<>();
     }
     return ticketMetadata.getExternalRequestors().stream()
         .map(
-            name ->
-                externalRequestorRepository
-                    .findByName(name)
-                    .orElseThrow(
-                        () ->
-                            new ResourceNotFoundProblem(
-                                String.format(
-                                    ErrorMessages.EXTERNAL_REQUESTOR_NAME_NOT_FOUND, name))))
+            request ->
+                new ResolvedExternalRequestor(
+                    externalRequestorRepository
+                        .findByName(request.name())
+                        .orElseThrow(
+                            () ->
+                                new ResourceNotFoundProblem(
+                                    String.format(
+                                        ErrorMessages.EXTERNAL_REQUESTOR_NAME_NOT_FOUND,
+                                        request.name()))),
+                    request.dateRequested()))
         .toList();
+  }
+
+  /**
+   * An {@link ExternalRequestor} resolved from a request, paired with the date the caller said the
+   * request was made. A null date means the caller did not supply one.
+   */
+  private record ResolvedExternalRequestor(
+      ExternalRequestor externalRequestor, LocalDate dateRequested) {
+
+    LocalDate dateRequestedOrNow() {
+      return dateRequested != null ? dateRequested : LocalDate.now(BRISBANE_ZONE);
+    }
   }
 
   private List<Label> resolveLabels(TicketMetadata ticketMetadata) {
@@ -1796,14 +1855,23 @@ public class TicketServiceImpl implements TicketService {
 
   private void applyMetadataUpdates(
       Ticket ticket,
-      List<ExternalRequestor> resolvedRequestors,
+      List<ResolvedExternalRequestor> resolvedRequestors,
       List<Label> resolvedLabels,
       TicketMetadata ticketMetadata) {
     resolvedRequestors.forEach(
-        requestor -> {
-          if (ticket.getExternalRequestors().stream()
-              .noneMatch(er -> er.getName().equalsIgnoreCase(requestor.getName()))) {
-            ticket.getExternalRequestors().add(requestor);
+        resolved -> {
+          ExternalRequestor requestor = resolved.externalRequestor();
+          if (ticket.getTicketExternalRequestors().stream()
+              .noneMatch(
+                  ter ->
+                      ter.getExternalRequestor().getName().equalsIgnoreCase(requestor.getName()))) {
+            TicketExternalRequestor ter =
+                TicketExternalRequestor.builder()
+                    .ticket(ticket)
+                    .externalRequestor(requestor)
+                    .dateRequested(resolved.dateRequestedOrNow())
+                    .build();
+            ticket.getTicketExternalRequestors().add(ter);
           }
         });
     if (resolvedLabels != null) {
@@ -1878,7 +1946,16 @@ public class TicketServiceImpl implements TicketService {
     for (Ticket ticket : tickets) {
       if (TicketUtils.isTicketDuplicate(ticket)) continue;
       externalRequestors.forEach(
-          externalRequestor -> ticket.getExternalRequestors().add(externalRequestor));
+          er -> {
+            boolean alreadyLinked =
+                ticket.getTicketExternalRequestors().stream()
+                    .anyMatch(ter -> ter.getExternalRequestor().getId().equals(er.getId()));
+            if (!alreadyLinked) {
+              TicketExternalRequestor ter =
+                  TicketExternalRequestor.builder().ticket(ticket).externalRequestor(er).build();
+              ticket.getTicketExternalRequestors().add(ter);
+            }
+          });
       updatedTickets.add(ticketRepository.save(ticket));
     }
 
@@ -1918,58 +1995,102 @@ public class TicketServiceImpl implements TicketService {
   @Async
   public CompletableFuture<Ticket> processArtgIdAsync(
       String artgId, List<ExternalRequestor> externalRequestorList) {
+    // No caller-supplied dates on the bulk path — each association is stamped with the current
+    // date.
+    List<ResolvedExternalRequestor> resolved =
+        externalRequestorList == null
+            ? null
+            : externalRequestorList.stream()
+                .map(er -> new ResolvedExternalRequestor(er, null))
+                .toList();
     return CompletableFuture.completedFuture(
-        processArtgId(Long.parseLong(artgId), externalRequestorList, null, Optional.empty()));
+        processArtgId(Long.parseLong(artgId), resolved, null, Optional.empty()));
   }
 
   private Ticket processArtgId(
       Long artgId,
-      List<ExternalRequestor> externalRequestorList,
+      List<ResolvedExternalRequestor> externalRequestorList,
       List<Label> labels,
       Optional<String> ammendDescription) {
     TicketDto ticketDto = sergioService.getTicketByArtgEntryId(artgId);
     if (ticketDto == null) {
       throw new IllegalArgumentException("TicketDto is null for artgId: " + artgId);
     }
+    normaliseExternalRequestors(ticketDto);
+    appendDescription(ticketDto, ammendDescription);
+    mergeExternalRequestors(ticketDto, externalRequestorList);
+    mergeLabels(ticketDto, labels);
+    return createTicketFromDto(ticketDto);
+  }
+
+  /** Ensures the DTO carries a non-null requestor set with any null entries dropped. */
+  private void normaliseExternalRequestors(TicketDto ticketDto) {
     if (ticketDto.getExternalRequestors() == null) {
       ticketDto.setExternalRequestors(new HashSet<>());
     } else {
       ticketDto.getExternalRequestors().removeIf(Objects::isNull);
     }
+  }
+
+  /** Appends the addendum to the description unless it is already present. */
+  private void appendDescription(TicketDto ticketDto, Optional<String> ammendDescription) {
     if (ammendDescription.isPresent()
         && !ticketDto.getDescription().contains(ammendDescription.get())) {
       ticketDto.setDescription(ticketDto.getDescription() + "<br>" + ammendDescription.get());
     }
-    if (externalRequestorList != null) {
-      externalRequestorList.forEach(
-          externalRequestor -> {
-            if (externalRequestor != null
-                && ticketDto.getExternalRequestors().stream()
-                    .map(ExternalRequesterDto::getId)
-                    .noneMatch(id -> id.equals(externalRequestor.getId()))) {
-              ticketDto
-                  .getExternalRequestors()
-                  .add(externalRequestorMapper.toDto(externalRequestor));
-            }
-          });
+  }
+
+  /** Adds each resolved requestor to the DTO, skipping ones already associated. */
+  private void mergeExternalRequestors(
+      TicketDto ticketDto, List<ResolvedExternalRequestor> externalRequestorList) {
+    if (externalRequestorList == null) {
+      return;
     }
-    if (labels != null) {
-      if (ticketDto.getLabels() == null) {
-        ticketDto.setLabels(new HashSet<>());
-      } else {
-        ticketDto.getLabels().removeIf(Objects::isNull);
+    for (ResolvedExternalRequestor resolved : externalRequestorList) {
+      ExternalRequestor externalRequestor = resolved == null ? null : resolved.externalRequestor();
+      if (externalRequestor == null || containsRequestor(ticketDto, externalRequestor.getId())) {
+        continue;
       }
-      labels.forEach(
-          label -> {
-            if (label != null
-                && ticketDto.getLabels().stream()
-                    .map(LabelDto::getId)
-                    .noneMatch(id -> id.equals(label.getId()))) {
-              ticketDto.getLabels().add(labelMapper.toDto(label));
-            }
-          });
+      ticketDto
+          .getExternalRequestors()
+          .add(
+              new TicketExternalRequestorDto(
+                  externalRequestor.getId(),
+                  externalRequestor.getName(),
+                  externalRequestor.getDescription(),
+                  externalRequestor.getDisplayColor(),
+                  resolved.dateRequestedOrNow()));
     }
-    return createTicketFromDto(ticketDto);
+  }
+
+  private boolean containsRequestor(TicketDto ticketDto, Long externalRequestorId) {
+    return ticketDto.getExternalRequestors().stream()
+        .map(TicketExternalRequestorDto::externalRequestorId)
+        .anyMatch(id -> id.equals(externalRequestorId));
+  }
+
+  /** Adds each label to the DTO, skipping ones already applied. */
+  private void mergeLabels(TicketDto ticketDto, List<Label> labels) {
+    if (labels == null) {
+      return;
+    }
+    if (ticketDto.getLabels() == null) {
+      ticketDto.setLabels(new HashSet<>());
+    } else {
+      ticketDto.getLabels().removeIf(Objects::isNull);
+    }
+    for (Label label : labels) {
+      if (label == null) {
+        continue;
+      }
+      boolean alreadyApplied =
+          ticketDto.getLabels().stream()
+              .map(LabelDto::getId)
+              .anyMatch(id -> id.equals(label.getId()));
+      if (!alreadyApplied) {
+        ticketDto.getLabels().add(labelMapper.toDto(label));
+      }
+    }
   }
 
   private Set<String> findNewAdditionalFieldValues(
@@ -2091,24 +2212,27 @@ public class TicketServiceImpl implements TicketService {
 
     // Handle External Requestors
     if (ticketDto.getExternalRequestors().isPresent()) {
-      Set<ExternalRequesterDto> requestorDtos = ticketDto.getExternalRequestors().get();
+      Set<TicketExternalRequestorDto> requestorDtos = ticketDto.getExternalRequestors().get();
+      existingTicket.getTicketExternalRequestors().clear();
       if (requestorDtos != null && !requestorDtos.isEmpty()) {
-        Set<ExternalRequestor> newRequestors =
-            requestorDtos.stream()
-                .map(
-                    requestorDto ->
-                        externalRequestorRepository
-                            .findById(requestorDto.getId())
-                            .orElseThrow(
-                                () ->
-                                    new ResourceNotFoundProblem(
-                                        "ExternalRequestor not found with id: "
-                                            + requestorDto.getId())))
-                .collect(Collectors.toSet());
-        existingTicket.getExternalRequestors().clear();
-        existingTicket.getExternalRequestors().addAll(newRequestors);
-      } else {
-        existingTicket.getExternalRequestors().clear();
+        requestorDtos.stream()
+            .map(
+                requestorDto -> {
+                  ExternalRequestor er =
+                      externalRequestorRepository
+                          .findById(requestorDto.externalRequestorId())
+                          .orElseThrow(
+                              () ->
+                                  new ResourceNotFoundProblem(
+                                      "ExternalRequestor not found with id: "
+                                          + requestorDto.externalRequestorId()));
+                  return TicketExternalRequestor.builder()
+                      .ticket(existingTicket)
+                      .externalRequestor(er)
+                      .dateRequested(requestorDto.dateRequested())
+                      .build();
+                })
+            .forEach(existingTicket.getTicketExternalRequestors()::add);
       }
     }
 

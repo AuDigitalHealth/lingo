@@ -62,6 +62,7 @@ export default function TicketFields({
       externalRequestorName: name,
     };
   };
+
   const theXs = isCondensed ? 3.5 : 1.5;
   const theMinWidth = isCondensed ? '400px' : '850px';
 
@@ -115,6 +116,28 @@ export default function TicketFields({
             )}
           </Grid>
 
+          <Grid container spacing={2}>
+            <Grid item xs={theXs}>
+              <Typography
+                variant="caption"
+                fontWeight="bold"
+                sx={{ display: 'block', width: '120px' }}
+              >
+                Due Date:
+              </Typography>
+            </Grid>
+            {ticket?.dueDate && (
+              <Grid item>
+                <Typography variant="caption">
+                  {new Date(ticket.dueDate).toLocaleDateString(undefined, {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: '2-digit',
+                  })}
+                </Typography>
+              </Grid>
+            )}
+          </Grid>
           <Grid container spacing={2} sx={{ marginBottom: '20px' }}>
             <Grid item xs={theXs}>
               <Typography
@@ -127,20 +150,34 @@ export default function TicketFields({
             </Grid>
             <Grid item xs={8} sx={{ padding: '0px !important' }}>
               <Grid container spacing={2} sx={{ margin: 0, padding: 0 }}>
-                {ticket?.externalRequestors?.map((externalRequestor, index) => {
-                  const externalRequestorVal = createExternalRequestorBasic(
-                    externalRequestor.name,
-                    externalRequestor.id,
-                  );
-                  return (
-                    <Grid item key={index}>
-                      <ExternalRequestorChip
-                        externalRequestorList={externalRequestors}
-                        externalRequestorVal={externalRequestorVal}
-                      />
-                    </Grid>
-                  );
-                })}
+                {[...(ticket?.externalRequestors ?? [])]
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map((externalRequestor, index) => {
+                    const externalRequestorVal = createExternalRequestorBasic(
+                      externalRequestor.name,
+                      externalRequestor.externalRequestorId,
+                    );
+                    return (
+                      <Grid item key={index}>
+                        <Stack direction="row" alignItems="center" gap={0.5}>
+                          <ExternalRequestorChip
+                            externalRequestorList={externalRequestors}
+                            externalRequestorVal={externalRequestorVal}
+                          />
+                          {externalRequestor.dateRequested && (
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              {new Date(
+                                externalRequestor.dateRequested,
+                              ).toLocaleDateString('en-AU')}
+                            </Typography>
+                          )}
+                        </Stack>
+                      </Grid>
+                    );
+                  })}
               </Grid>
             </Grid>
           </Grid>

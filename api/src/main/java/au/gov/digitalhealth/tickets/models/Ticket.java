@@ -31,12 +31,14 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedAttributeNode;
 import jakarta.persistence.NamedEntityGraph;
+import jakarta.persistence.NamedSubgraph;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -59,7 +61,14 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
     name = "Ticket.backlogSearch",
     attributeNodes = {
       @NamedAttributeNode("labels"),
-      @NamedAttributeNode("externalRequestors"),
+      @NamedAttributeNode(
+          value = "ticketExternalRequestors",
+          subgraph = "ticketExternalRequestors"),
+    },
+    subgraphs = {
+      @NamedSubgraph(
+          name = "ticketExternalRequestors",
+          attributeNodes = {@NamedAttributeNode("externalRequestor")})
     })
 @Entity
 @SuperBuilder
@@ -74,6 +83,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 public class Ticket extends BaseAuditableEntity {
 
   @Column private Instant jiraCreated;
+
+  @Column private LocalDate dueDate;
 
   @Column private String title;
 
@@ -99,17 +110,15 @@ public class Ticket extends BaseAuditableEntity {
   @Builder.Default
   private Set<Label> labels = new HashSet<>();
 
-  @ManyToMany(
-      cascade = {CascadeType.PERSIST},
+  @OneToMany(
+      mappedBy = "ticket",
+      cascade = CascadeType.ALL,
+      orphanRemoval = true,
       fetch = FetchType.LAZY)
-  @JoinTable(
-      name = "ticket_external_requestors",
-      joinColumns = @JoinColumn(name = "ticket_id"),
-      inverseJoinColumns = @JoinColumn(name = "external_requestor_id"))
-  @JsonProperty("externalRequestors")
+  @JsonIgnore
   @Default
   @Exclude
-  private Set<ExternalRequestor> externalRequestors = new HashSet<>();
+  private Set<TicketExternalRequestor> ticketExternalRequestors = new HashSet<>();
 
   @ManyToMany(
       cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH},
@@ -229,7 +238,7 @@ public class Ticket extends BaseAuditableEntity {
 
   @Override
   @SuppressWarnings("java:S6201") // Suppressed because code is direct from JPABuddy advice
-  public final int hashCode() {
+  public int hashCode() {
     return this instanceof HibernateProxy
         ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass().hashCode()
         : getClass().hashCode();

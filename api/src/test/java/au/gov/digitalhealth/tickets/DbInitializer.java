@@ -147,6 +147,7 @@ public class DbInitializer {
     AdditionalFieldType additionalFieldType =
         AdditionalFieldType.builder()
             .name("TaskData")
+            .displayName("Task Data")
             .description("An additional field that holds the task data")
             .build();
     additionalFieldTypeRepository.save(additionalFieldType);

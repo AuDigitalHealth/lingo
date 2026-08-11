@@ -423,7 +423,7 @@ against the allowlist in `ui/allowed-licenses.json`.
 - (MIT) **ms** (`2.0.0`)
 - (MIT) **ms** (`2.1.3`)
 - (MIT) **mui-tiptap** (`1.31.0`)
-- (MIT) **nanoid** (`5.1.15`)
+- (MIT) **nanoid** (`5.1.16`)
 - (ISC) **next-tick** (`1.1.0`)
 - (MIT) **node-fetch** (`2.7.0`)
 - (MIT) **node-gyp-build** (`4.8.4`)

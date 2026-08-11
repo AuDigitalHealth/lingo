@@ -135,6 +135,40 @@ public class TicketAuditRepository {
     return query.getResultList();
   }
 
+  public List<Object[]> findClosedDates(List<Long> ticketIds) {
+    String sql =
+        """
+            SELECT ta.id, MIN(r.revtstmp)
+            FROM ticket_aud ta
+            JOIN revinfo r ON ta.rev = r.rev
+            JOIN state s ON ta.state_id = s.id
+            WHERE ta.id IN (:ticketIds) AND s.label = 'Closed'
+            GROUP BY ta.id
+            """;
+
+    Query query = entityManager.createNativeQuery(sql);
+    query.setParameter("ticketIds", ticketIds);
+    return query.getResultList();
+  }
+
+  public List<Object[]> findExternalRequestorAddedDates(
+      List<Long> ticketIds, List<String> erNames) {
+    String sql =
+        """
+            SELECT tera.ticket_id, er.name, MIN(r.revtstmp)
+            FROM ticket_external_requestors_aud tera
+            JOIN revinfo r ON tera.rev = r.rev
+            JOIN external_requestor er ON tera.external_requestor_id = er.id
+            WHERE tera.ticket_id IN (:ticketIds) AND er.name IN (:erNames) AND tera.revtype = 0
+            GROUP BY tera.ticket_id, er.name
+            """;
+
+    Query query = entityManager.createNativeQuery(sql);
+    query.setParameter("ticketIds", ticketIds);
+    query.setParameter("erNames", erNames);
+    return query.getResultList();
+  }
+
   public String findTaskIdFromAssociation(Long taskAssociationId) {
     if (taskAssociationId == null) return null;
 

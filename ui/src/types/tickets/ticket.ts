@@ -36,11 +36,12 @@ export interface TicketDto extends VersionedEntity {
   ticketType?: TicketType;
   state: State | null;
   labels: LabelType[];
-  externalRequestors: ExternalRequestor[];
+  externalRequestors: TicketExternalRequestorDto[];
   assignee: string | null;
   iteration: Iteration | null;
   schedule: Schedule | null;
   priorityBucket?: PriorityBucket | null;
+  dueDate?: string;
   comments?: Comment[];
   attachments?: Attachment[];
   'ticket-additional-fields'?: AdditionalFieldValue[];
@@ -55,10 +56,11 @@ export interface Ticket extends VersionedEntity {
   state: State | null;
   schedule: Schedule | null;
   labels: LabelType[];
-  externalRequestors: ExternalRequestor[];
+  externalRequestors: TicketExternalRequestorDto[];
   assignee: string | null;
   iteration: Iteration | null;
   priorityBucket?: PriorityBucket | null;
+  dueDate?: string;
   ticketSourceAssociations?: TicketAssociation[];
   ticketTargetAssociations?: TicketAssociation[];
   comments?: Comment[];
@@ -160,6 +162,18 @@ export interface ExternalRequestor extends VersionedEntity {
   displayColor?: ColorCode;
 }
 
+export interface TicketExternalRequestorDto {
+  externalRequestorId: number;
+  name: string;
+  description?: string;
+  displayColor?: ColorCode;
+  dateRequested?: string;
+}
+
+export interface UpdateExternalRequestorDateRequest {
+  dateRequested: string;
+}
+
 export interface BulkAddExternalRequestorRequest {
   additionalFieldTypeName?: string;
   fieldValues: string[];
@@ -234,7 +248,10 @@ export interface AdditionalFieldTypeOfListType {
 }
 
 export interface AdditionalFieldType extends VersionedEntity {
+  /** Identifier — letters only, unique. Used for lookups, DOM ids and export preset config. */
   name: string;
+  /** User-facing label. Free text — render this, not `name`. */
+  displayName: string;
   description: string;
   type: AdditionalFieldTypeEnum;
   display: boolean;
@@ -340,6 +357,27 @@ export interface TicketFilter extends BaseEntity {
 export interface TicketFilterDto {
   name: string;
   filter: SearchConditionBody;
+}
+
+export interface ExportPresetConfig {
+  columns: string[];
+  additionalFieldColumns?: string[];
+  externalRequestorColumns?: string[];
+  erDateRequested?: boolean;
+  erDateAdded?: boolean;
+  erWithDateRequested?: boolean;
+  // Explicit, user-defined order of the exported CSV columns (backend column keys).
+  columnOrder?: string[];
+}
+
+export interface ExportPreset extends BaseEntity {
+  name: string;
+  config: ExportPresetConfig;
+}
+
+export interface ExportPresetDto {
+  name: string;
+  config: ExportPresetConfig;
 }
 
 export interface ExternalProcess {

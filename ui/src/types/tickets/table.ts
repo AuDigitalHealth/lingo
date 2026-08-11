@@ -64,6 +64,10 @@ export const generateDefaultFilters = () => {
     },
     taskAssociation: { value: null, matchMode: FilterMatchMode.EQUALS },
     assignee: { value: [], matchMode: FilterMatchMode.EQUALS },
+    dueDate: {
+      value: null,
+      matchMode: FilterMatchMode.DATE_IS,
+    },
     created: {
       value: null,
       matchMode: FilterMatchMode.DATE_IS,
@@ -96,6 +100,7 @@ export interface TicketDataTableFilters {
   schedule?: ScheduleMetaData;
   priorityBucket?: PriorityBucketMetaData;
   taskAssociation?: TaskAssociationMetaData;
+  dueDate?: CreatedMetaData;
   created?: CreatedMetaData;
   // Add more filter keys as needed
   // eslint-disable-next-line

@@ -25,5 +25,6 @@ export const defaultTableFields = [
   'externalRequestors',
   'taskAssociation',
   'assignee',
+  'dueDate',
   'created',
 ];

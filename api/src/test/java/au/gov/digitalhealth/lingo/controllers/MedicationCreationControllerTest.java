@@ -39,7 +39,7 @@ import au.gov.digitalhealth.lingo.product.details.MedicationProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageQuantity;
 import au.gov.digitalhealth.lingo.product.details.Quantity;
-import au.gov.digitalhealth.tickets.models.Ticket;
+import au.gov.digitalhealth.tickets.TicketDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
@@ -328,7 +328,7 @@ class MedicationCreationControllerTest extends LingoTestBase {
     checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(productSummary, false, false, false);
 
-    Ticket ticketResponse =
+    TicketDto ticketResponse =
         getLingoTestClient().createTicket("createSimpleProductFromExistingWithPackSizeChange");
 
     productSummary.getNodes().stream()
@@ -452,7 +452,7 @@ class MedicationCreationControllerTest extends LingoTestBase {
 
     checkExternalIdentifiers(productSummary, packageDetails);
 
-    Ticket ticketResponse =
+    TicketDto ticketResponse =
         getLingoTestClient().createTicket("createComplexProductFromExistingWithPackSizeChange");
 
     // create
@@ -528,7 +528,7 @@ class MedicationCreationControllerTest extends LingoTestBase {
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 3, MP_LABEL);
     MedicationAssertions.assertProductSummaryHas(productSummary, 0, 0, 4, TP_LABEL);
 
-    Ticket ticketResponse =
+    TicketDto ticketResponse =
         getLingoTestClient().createTicket("createComplexProductFromExistingWithProductSizeChange");
 
     // create
@@ -623,7 +623,7 @@ class MedicationCreationControllerTest extends LingoTestBase {
     confirmAmtModelLinks(productSummary, false, true, true);
 
     log.info("Create ticket");
-    Ticket ticketResponse =
+    TicketDto ticketResponse =
         getLingoTestClient().createTicket("attemptCreateProductNoChangesPrimitiveMpuu");
 
     log.info("Create product");
@@ -751,7 +751,7 @@ class MedicationCreationControllerTest extends LingoTestBase {
     checkExternalIdentifiers(productSummary, packageDetails);
 
     // Step 5: Create the product
-    Ticket ticketResponse =
+    TicketDto ticketResponse =
         getLingoTestClient().createTicket("createAndUpdateProductWithNewStrengthAndPackSize");
     ProductSummary createdProduct =
         getLingoTestClient()
@@ -994,7 +994,8 @@ class MedicationCreationControllerTest extends LingoTestBase {
     checkExternalIdentifiers(productSummary, newPackageDetails);
 
     // update the product with the new data
-    Ticket ticketResponse = getLingoTestClient().createTicket("updateExistingProductWithChanges");
+    TicketDto ticketResponse =
+        getLingoTestClient().createTicket("updateExistingProductWithChanges");
     ProductSummary updatedProduct =
         getLingoTestClient()
             .updateMedicationProductFromAtomicData(
@@ -1088,7 +1089,8 @@ class MedicationCreationControllerTest extends LingoTestBase {
             });
 
     // update the product with the new data
-    Ticket ticketResponse = getLingoTestClient().createTicket("updateExistingProductWithChanges");
+    TicketDto ticketResponse =
+        getLingoTestClient().createTicket("updateExistingProductWithChanges");
     ProductSummary updatedProduct =
         getLingoTestClient()
             .updateMedicationProductFromAtomicData(

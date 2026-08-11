@@ -106,6 +106,7 @@ export default function TicketsBacklog() {
   );
 
   const [createdCalenderAsRange, setCreatedCalenderAsRange] = useState(true);
+  const [dueDateCalenderAsRange, setDueDateCalenderAsRange] = useState(true);
 
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
 
@@ -320,6 +321,8 @@ export default function TicketsBacklog() {
             externalRequestorsEnabled
             createTaskEnabled
             createTicketEnabled
+            filters={filters}
+            totalRecords={totalRecords}
           />
         </div>
         <TicketsBacklogView
@@ -339,6 +342,8 @@ export default function TicketsBacklog() {
           setGlobalFilterValue={setGlobalFilterValue}
           createdCalenderAsRange={createdCalenderAsRange}
           setCreatedCalenderAsRange={setCreatedCalenderAsRange}
+          dueDateCalenderAsRange={dueDateCalenderAsRange}
+          setDueDateCalenderAsRange={setDueDateCalenderAsRange}
           selectedTickets={selectedTickets}
           setSelectedTickets={setSelectedTickets}
         />

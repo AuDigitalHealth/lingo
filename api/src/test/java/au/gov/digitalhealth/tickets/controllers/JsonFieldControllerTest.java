@@ -16,9 +16,10 @@
 package au.gov.digitalhealth.tickets.controllers;
 
 import au.gov.digitalhealth.tickets.JsonFieldDto;
+import au.gov.digitalhealth.tickets.TicketDto;
+import au.gov.digitalhealth.tickets.TicketDtoExtended;
 import au.gov.digitalhealth.tickets.TicketMinimalDto;
 import au.gov.digitalhealth.tickets.TicketTestBaseLocal;
-import au.gov.digitalhealth.tickets.models.JsonField;
 import au.gov.digitalhealth.tickets.models.Ticket;
 import au.gov.digitalhealth.tickets.repository.TicketRepository;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -56,7 +57,7 @@ class JsonFieldControllerTest extends TicketTestBaseLocal {
 
     addJsonFieldToTicket(jsonFieldDto, ticketId);
 
-    Ticket ticket =
+    TicketDtoExtended ticket =
         withAuth()
             .contentType(ContentType.JSON)
             .when()
@@ -65,9 +66,9 @@ class JsonFieldControllerTest extends TicketTestBaseLocal {
             .then()
             .statusCode(200)
             .extract()
-            .as(Ticket.class);
+            .as(TicketDtoExtended.class);
 
-    Set<JsonField> ticketFields = ticket.getJsonFields();
+    Set<JsonFieldDto> ticketFields = ticket.getJsonFields();
 
     Assertions.assertEquals(1, ticketFields.size());
     Assertions.assertEquals("Tga Entry", ticketFields.iterator().next().getName());
@@ -127,15 +128,17 @@ class JsonFieldControllerTest extends TicketTestBaseLocal {
     }
     TicketMinimalDto ticketMinimalDto =
         TicketMinimalDto.builder().title(title).description("Test Description").build();
-    return withAuth()
-        .contentType(ContentType.JSON)
-        .when()
-        .body(ticketMinimalDto)
-        .post(this.getSnomioLocation() + "/api/tickets")
-        .then()
-        .statusCode(200)
-        .extract()
-        .as(Ticket.class);
+    TicketDto createdTicket =
+        withAuth()
+            .contentType(ContentType.JSON)
+            .when()
+            .body(ticketMinimalDto)
+            .post(this.getSnomioLocation() + "/api/tickets")
+            .then()
+            .statusCode(200)
+            .extract()
+            .as(TicketDto.class);
+    return ticketRepository.findById(createdTicket.getId()).orElseThrow();
   }
 
   private JsonNode createTestJsonNode(String attendum) {

@@ -43,7 +43,7 @@ export function externalRequestorExistsOnTicket(
 ): boolean {
   let exists = false;
   ticket.externalRequestors.forEach(externalRequestor => {
-    if (externalRequestor.id === inputExternalRequestor.id) {
+    if (externalRequestor.externalRequestorId === inputExternalRequestor.id) {
       exists = true;
     }
   });

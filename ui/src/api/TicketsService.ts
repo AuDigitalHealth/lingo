@@ -22,6 +22,8 @@ import {
   BulkAddExternalRequestorRequest,
   BulkAddExternalRequestorResponse,
   Comment,
+  ExportPreset,
+  ExportPresetDto,
   ExternalProcess,
   ExternalProcessDto,
   ExternalRequestor,
@@ -312,9 +314,15 @@ const TicketsService = {
     return response.data as LabelType;
   },
 
-  async addTicketExternalRequestor(id: string, externalRequestorId: number) {
+  async addTicketExternalRequestor(
+    id: string,
+    externalRequestorId: number,
+    dateRequested?: string,
+  ) {
+    const body = dateRequested ? { dateRequested } : undefined;
     const response = await api.post(
       `/api/tickets/${id}/externalRequestors/${externalRequestorId}`,
+      body,
     );
     if (response.status != 200) {
       this.handleErrors();
@@ -322,6 +330,32 @@ const TicketsService = {
 
     return response.data as ExternalRequestor;
   },
+
+  async updateTicketExternalRequestorDate(
+    id: string,
+    externalRequestorId: number,
+    dateRequested: string,
+  ) {
+    const response = await api.put(
+      `/api/tickets/${id}/externalRequestors/${externalRequestorId}`,
+      { dateRequested },
+    );
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as ExternalRequestor;
+  },
+  async updateTicketDueDate(ticketId: string, dueDate: string | null) {
+    const response = await api.put(`/api/tickets/${ticketId}/dueDate`, {
+      dueDate,
+    });
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+    return response.data as Ticket;
+  },
+
   async bulkCreateExternalRequestors(
     bulkAddExternalRequestorRequest: BulkAddExternalRequestorRequest,
   ): Promise<BulkAddExternalRequestorResponse> {
@@ -595,6 +629,43 @@ const TicketsService = {
 
     return response;
   },
+  async exportBacklogCsv(
+    filters: SearchConditionBody | undefined,
+    columns: string[],
+    additionalFieldColumns?: string[],
+    externalRequestorColumns?: string[],
+    erDateRequested?: boolean,
+    erDateAdded?: boolean,
+    erWithDateRequested?: boolean,
+    columnOrder?: string[],
+  ): Promise<AxiosResponse> {
+    const response = await api.post(
+      '/api/tickets/search/export',
+      {
+        searchConditionBody: filters,
+        columns,
+        additionalFieldColumns,
+        externalRequestorColumns,
+        erDateRequested: erDateRequested ?? false,
+        erDateAdded: erDateAdded ?? false,
+        erWithDateRequested: erWithDateRequested ?? false,
+        columnOrder,
+      },
+      { responseType: 'blob' },
+    );
+
+    const blob: Blob = new Blob([response.data], {
+      type: response.headers['content-type'],
+    });
+
+    const actualFileName = getFileNameFromContentDisposition(
+      response.headers['content-disposition'],
+    );
+
+    saveAs(blob, actualFileName);
+
+    return response;
+  },
   async getAllTicketFilters(): Promise<TicketFilter[]> {
     const response = await api.get(`/api/tickets/ticketFilters`);
     if (response.status != 200) {
@@ -602,6 +673,41 @@ const TicketsService = {
     }
 
     return response.data as TicketFilter[];
+  },
+  async getAllExportPresets(): Promise<ExportPreset[]> {
+    const response = await api.get(`/api/tickets/exportPresets`);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as ExportPreset[];
+  },
+  async createExportPreset(preset: ExportPresetDto): Promise<ExportPreset> {
+    const response = await api.post(`/api/tickets/exportPresets`, preset);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as ExportPreset;
+  },
+  async updateExportPreset(
+    id: number,
+    preset: ExportPresetDto,
+  ): Promise<ExportPreset> {
+    const response = await api.put(`/api/tickets/exportPresets/${id}`, preset);
+    if (response.status != 200) {
+      this.handleErrors();
+    }
+
+    return response.data as ExportPreset;
+  },
+  async deleteExportPreset(id: number): Promise<number> {
+    const response = await api.delete(`/api/tickets/exportPresets/${id}`);
+    if (response.status != 204) {
+      this.handleErrors();
+    }
+
+    return response.status;
   },
   async getAllExternalProcesses(): Promise<ExternalProcess[]> {
     const response = await api.get(`/api/tickets/external-processes`);

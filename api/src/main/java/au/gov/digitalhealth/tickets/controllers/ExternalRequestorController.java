@@ -19,28 +19,38 @@ import au.gov.digitalhealth.lingo.exception.ErrorMessages;
 import au.gov.digitalhealth.lingo.exception.ResourceAlreadyExists;
 import au.gov.digitalhealth.lingo.exception.ResourceInUseProblem;
 import au.gov.digitalhealth.lingo.exception.ResourceNotFoundProblem;
+import au.gov.digitalhealth.tickets.ExternalRequesterDto;
 import au.gov.digitalhealth.tickets.models.ExternalRequestor;
 import au.gov.digitalhealth.tickets.models.Ticket;
+import au.gov.digitalhealth.tickets.models.TicketExternalRequestor;
 import au.gov.digitalhealth.tickets.repository.ExternalRequestorRepository;
+import au.gov.digitalhealth.tickets.repository.TicketExternalRequestorRepository;
 import au.gov.digitalhealth.tickets.repository.TicketRepository;
+import jakarta.annotation.Nullable;
 import jakarta.transaction.Transactional;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 public class ExternalRequestorController {
 
+  record AddExternalRequestorToTicketRequest(@Nullable LocalDate dateRequested) {}
+
   private final ExternalRequestorRepository externalRequestorRepository;
   private final TicketRepository ticketRepository;
+  private final TicketExternalRequestorRepository ticketExternalRequestorRepository;
 
   public ExternalRequestorController(
-      ExternalRequestorRepository externalRequestorRepository, TicketRepository ticketRepository) {
+      ExternalRequestorRepository externalRequestorRepository,
+      TicketRepository ticketRepository,
+      TicketExternalRequestorRepository ticketExternalRequestorRepository) {
     this.externalRequestorRepository = externalRequestorRepository;
     this.ticketRepository = ticketRepository;
+    this.ticketExternalRequestorRepository = ticketExternalRequestorRepository;
   }
 
   @GetMapping("/api/tickets/externalRequestors")
@@ -58,16 +68,17 @@ public class ExternalRequestorController {
         .orElseThrow(
             () ->
                 new ResourceNotFoundProblem(
-                    String.format("External Requestor with Name %s not found", name)));
+                    String.format("External Requestor with name %s not found", name)));
   }
 
   @PostMapping(
       value = "/api/tickets/externalRequestors",
-      consumes = MediaType.APPLICATION_JSON_VALUE)
+      consumes = "application/json",
+      produces = "application/json")
   public ResponseEntity<ExternalRequestor> createExternalRequestor(
-      @RequestBody ExternalRequestor externalRequestor) {
+      @RequestBody ExternalRequesterDto externalRequestorDto) {
 
-    String externalRequestorName = externalRequestor.getName();
+    String externalRequestorName = externalRequestorDto.getName();
     Optional<ExternalRequestor> externalRequestorOptional =
         externalRequestorRepository.findByName(externalRequestorName);
 
@@ -75,6 +86,12 @@ public class ExternalRequestorController {
       throw new ResourceAlreadyExists(
           String.format("External Requestor with name %s already exists", externalRequestorName));
     }
+    ExternalRequestor externalRequestor =
+        ExternalRequestor.builder()
+            .name(externalRequestorDto.getName())
+            .description(externalRequestorDto.getDescription())
+            .displayColor(externalRequestorDto.getDisplayColor())
+            .build();
     ExternalRequestor createdExternalRequestor =
         externalRequestorRepository.save(externalRequestor);
 
@@ -83,9 +100,11 @@ public class ExternalRequestorController {
 
   @PutMapping(
       value = "/api/tickets/externalRequestors/{externalRequestorId}",
-      consumes = MediaType.APPLICATION_JSON_VALUE)
+      consumes = "application/json",
+      produces = "application/json")
   public ResponseEntity<ExternalRequestor> updateExternalRequestor(
-      @PathVariable Long externalRequestorId, @RequestBody ExternalRequestor externalRequestor) {
+      @PathVariable Long externalRequestorId,
+      @RequestBody ExternalRequesterDto externalRequestorDto) {
     ExternalRequestor foundExternalRequestor =
         externalRequestorRepository
             .findById(externalRequestorId)
@@ -95,9 +114,9 @@ public class ExternalRequestorController {
                         String.format(
                             "External requestor with id %s not found", externalRequestorId)));
 
-    foundExternalRequestor.setName(externalRequestor.getName());
-    foundExternalRequestor.setDescription(externalRequestor.getDescription());
-    foundExternalRequestor.setDisplayColor(externalRequestor.getDisplayColor());
+    foundExternalRequestor.setName(externalRequestorDto.getName());
+    foundExternalRequestor.setDescription(externalRequestorDto.getDescription());
+    foundExternalRequestor.setDisplayColor(externalRequestorDto.getDisplayColor());
 
     ExternalRequestor updatedExternalRequestor =
         externalRequestorRepository.save(foundExternalRequestor);
@@ -115,8 +134,9 @@ public class ExternalRequestorController {
                     new ResourceNotFoundProblem(
                         String.format(
                             "External requestor with id %s not found", externalRequestorId)));
-    List<Ticket> tickets = ticketRepository.findAllByExternalRequestors(foundExternalRequestor);
-    if (!tickets.isEmpty()) {
+    List<TicketExternalRequestor> associations =
+        ticketExternalRequestorRepository.findAllByExternalRequestor(foundExternalRequestor);
+    if (!associations.isEmpty()) {
       throw new ResourceInUseProblem(
           String.format(
               "External Requestor with ID %s is mapped to tickets and can't be deleted",
@@ -128,8 +148,10 @@ public class ExternalRequestorController {
 
   @PostMapping(value = "/api/tickets/{ticketId}/externalRequestors/{externalRequestorId}")
   @Transactional
-  public ResponseEntity<ExternalRequestor> createExternalRequestor(
-      @PathVariable Long externalRequestorId, @PathVariable Long ticketId) {
+  public ResponseEntity<ExternalRequestor> addExternalRequestorToTicket(
+      @PathVariable Long externalRequestorId,
+      @PathVariable Long ticketId,
+      @RequestBody(required = false) AddExternalRequestorToTicketRequest request) {
     ExternalRequestor externalRequestor =
         externalRequestorRepository
             .findById(externalRequestorId)
@@ -144,40 +166,90 @@ public class ExternalRequestorController {
             .orElseThrow(
                 () ->
                     new ResourceNotFoundProblem(
-                        String.format("Ticket with ID %s not found", ticketId)));
+                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
 
-    if (ticket.getExternalRequestors().contains(externalRequestor)) {
+    if (ticketExternalRequestorRepository
+        .findByTicketAndExternalRequestor(ticket, externalRequestor)
+        .isPresent()) {
       throw new ResourceAlreadyExists(
           String.format("External requestor already associated with Ticket Id %s", ticketId));
     }
-    ticket.getExternalRequestors().add(externalRequestor);
-    ticketRepository.save(ticket);
+    LocalDate dateRequested = request != null ? request.dateRequested() : null;
+    TicketExternalRequestor association =
+        TicketExternalRequestor.builder()
+            .ticket(ticket)
+            .externalRequestor(externalRequestor)
+            .dateRequested(dateRequested)
+            .build();
+    ticketExternalRequestorRepository.save(association);
+    return new ResponseEntity<>(externalRequestor, HttpStatus.OK);
+  }
+
+  @PutMapping(value = "/api/tickets/{ticketId}/externalRequestors/{externalRequestorId}")
+  @Transactional
+  public ResponseEntity<ExternalRequestor> updateExternalRequestorDateOnTicket(
+      @PathVariable Long ticketId,
+      @PathVariable Long externalRequestorId,
+      @RequestBody AddExternalRequestorToTicketRequest request) {
+    ExternalRequestor externalRequestor =
+        externalRequestorRepository
+            .findById(externalRequestorId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(
+                            ErrorMessages.EXTERNAL_REQUESTOR_ID_NOT_FOUND, externalRequestorId)));
+    Ticket ticket =
+        ticketRepository
+            .findById(ticketId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
+    TicketExternalRequestor association =
+        ticketExternalRequestorRepository
+            .findByTicketAndExternalRequestor(ticket, externalRequestor)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(
+                            "External requestor %s not associated with ticket %s",
+                            externalRequestorId, ticketId)));
+    LocalDate dateRequested = request != null ? request.dateRequested() : null;
+    association.setDateRequested(dateRequested);
+    ticketExternalRequestorRepository.save(association);
     return new ResponseEntity<>(externalRequestor, HttpStatus.OK);
   }
 
   @DeleteMapping("/api/tickets/{ticketId}/externalRequestors/{externalRequestorId}")
   @Transactional
-  public ResponseEntity<ExternalRequestor> deleteExternalRequestor(
+  public ResponseEntity<ExternalRequestor> removeExternalRequestorFromTicket(
       @PathVariable Long ticketId, @PathVariable Long externalRequestorId) {
-    Optional<ExternalRequestor> externalRequestorOptional =
-        externalRequestorRepository.findById(externalRequestorId);
-    Optional<Ticket> ticketOptional = ticketRepository.findById(ticketId);
-
-    if (externalRequestorOptional.isPresent() && ticketOptional.isPresent()) {
-      Ticket ticket = ticketOptional.get();
-      ExternalRequestor externalRequestor = externalRequestorOptional.get();
-      if (ticket.getExternalRequestors().contains(externalRequestor)) {
-        ticket.getExternalRequestors().remove(externalRequestor);
-        ticketRepository.save(ticket);
-        return new ResponseEntity<>(externalRequestor, HttpStatus.OK);
-      } else {
-        throw new ResourceAlreadyExists(
-            String.format("External requestor already not associated with Ticket Id %s", ticketId));
-      }
-    } else {
-      String message = externalRequestorOptional.isPresent() ? "Ticket" : "Label";
-      Long id = externalRequestorOptional.isPresent() ? ticketId : externalRequestorId;
-      throw new ResourceNotFoundProblem(String.format("%s with ID %s not found", message, id));
-    }
+    ExternalRequestor externalRequestor =
+        externalRequestorRepository
+            .findById(externalRequestorId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(
+                            ErrorMessages.EXTERNAL_REQUESTOR_ID_NOT_FOUND, externalRequestorId)));
+    Ticket ticket =
+        ticketRepository
+            .findById(ticketId)
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundProblem(
+                        String.format(ErrorMessages.TICKET_ID_NOT_FOUND, ticketId)));
+    TicketExternalRequestor association =
+        ticketExternalRequestorRepository
+            .findByTicketAndExternalRequestor(ticket, externalRequestor)
+            .orElseThrow(
+                () ->
+                    new ResourceAlreadyExists(
+                        String.format(
+                            "External requestor already not associated with Ticket Id %s",
+                            ticketId)));
+    ticketExternalRequestorRepository.delete(association);
+    return new ResponseEntity<>(externalRequestor, HttpStatus.OK);
   }
 }

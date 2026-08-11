@@ -31,7 +31,7 @@ public class TicketMetadata {
   private String name;
   private String description;
   private String descriptionMarkup;
-  private List<String> externalRequestors;
+  private List<ExternalRequestorRequest> externalRequestors;
   private String dedupeKey;
   private List<String> labels;
 

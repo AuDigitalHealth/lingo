@@ -20,7 +20,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
@@ -57,6 +60,14 @@ public class AdditionalFieldType extends BaseAuditableEntity {
           "Name must be less than 30 characters and contain only upper and lower case letters with no spaces or special characters")
   private String name;
 
+  /**
+   * User-facing label. Free text, unlike {@link #name}, which is the identifier and is constrained
+   * to letters only. Defaults to {@link #name} when not supplied.
+   */
+  @Column(name = "display_name", nullable = false)
+  @NotBlank(message = "Display name is required")
+  private String displayName;
+
   @Column private String description;
 
   @Column(columnDefinition = "BOOLEAN DEFAULT true")
@@ -68,6 +79,20 @@ public class AdditionalFieldType extends BaseAuditableEntity {
   @Enumerated(EnumType.STRING)
   @Column
   private Type type;
+
+  /**
+   * Defaults the display name to the identifier. Covers every write path — including the bulk
+   * ticket import, which creates field types from a name string alone — so callers that predate
+   * this field don't trip the NOT NULL constraint. Runs before Hibernate's bean-validation
+   * listener, so {@code @NotBlank} sees the defaulted value.
+   */
+  @PrePersist
+  @PreUpdate
+  private void defaultDisplayName() {
+    if (displayName == null || displayName.isBlank()) {
+      displayName = name;
+    }
+  }
 
   @Override
   @SuppressWarnings("java:S6201") // Suppressed because code is direct from JPABuddy advice

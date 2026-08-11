@@ -15,6 +15,7 @@
  */
 package au.gov.digitalhealth.tickets;
 
+import java.time.LocalDate;
 import java.util.Set;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -26,11 +27,13 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public class TicketDto extends TicketMinimalDto {
 
+  private LocalDate dueDate;
+
   private IterationDto iteration;
 
   private TicketTypeDto ticketType;
 
-  private Set<ExternalRequesterDto> externalRequestors;
+  private Set<TicketExternalRequestorDto> externalRequestors;
 
   private PriorityBucketDto priorityBucket;
 

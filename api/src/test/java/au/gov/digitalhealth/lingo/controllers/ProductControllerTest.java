@@ -34,8 +34,8 @@ import au.gov.digitalhealth.lingo.product.update.ProductDescriptionUpdateRequest
 import au.gov.digitalhealth.lingo.product.update.ProductUpdateRequest;
 import au.gov.digitalhealth.lingo.service.ProductUpdateService;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
+import au.gov.digitalhealth.tickets.TicketDto;
 import au.gov.digitalhealth.tickets.helper.JsonReader;
-import au.gov.digitalhealth.tickets.models.Ticket;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -102,7 +102,7 @@ class ProductControllerTest extends LingoTestBase {
 
   @Test
   void updateProductDescriptionTest() throws JsonProcessingException {
-    Ticket ticketResponse = getLingoTestClient().createTicket("Update Product Test");
+    TicketDto ticketResponse = getLingoTestClient().createTicket("Update Product Test");
 
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -162,80 +162,7 @@ class ProductControllerTest extends LingoTestBase {
     // fix so semantic tag error isnt thrown again
 
     fsn.setTerm(newFsn);
-    //  TODO: Move this so it uses the description route - the productPropertiesRoute is deleted
-    //    ProductPropertiesUpdateRequest productPropertiesUpdateRequest =
-    //        new ProductPropertiesUpdateRequest(
-    //            Set.of(
-    //                ExternalIdentifier.builder()
-    //                    .identifierScheme(ARTG_SCHEME)
-    //                    .value("123")
-    //                    .relationshipType(MappingType.RELATED)
-    //                    .build(),
-    //                ExternalIdentifier.builder()
-    //                    .identifierScheme(ARTG_SCHEME)
-    //                    .value("345")
-    //                    .relationshipType(MappingType.RELATED)
-    //                    .build()));
-    //
-    //    au.gov.digitalhealth.tickets.models.BulkProductAction externalIdentifiersUpdated =
-    //        getLingoTestClient()
-    //            .putRequest(
-    //                "/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/"
-    //                    + existingConcept.getConceptId()
-    //                    + "/update",
-    //                ProductUpdateRequest.builder()
-    //                    .ticketId(ticketResponse.getId())
-    //                    .conceptId(existingConcept.getConceptId())
-    //                    .descriptionUpdate(
-    //                        ProductDescriptionUpdateRequest.builder()
-    //                            .descriptions(Set.of(fsn, pt))
-    //                            .build())
-    //                    .propertiesUpdateRequest(productPropertiesUpdateRequest)
-    //                    .build(),
-    //                HttpStatus.OK,
-    //                au.gov.digitalhealth.tickets.models.BulkProductAction.class);
-    //
-    //    updatedProductDetails = (ProductUpdateCreationDetails)
-    // externalIdentifiersUpdated.getDetails();
-    //
-    //    Set<NonDefiningBase> newExternalIdentifiers =
-    //        updatedProductDetails.getUpdatedState().getNonDefiningProperties();
-    //
-    //    Assertions.assertThat(newExternalIdentifiers.size()).isEqualTo(2);
-    //    Assertions.assertThat(
-    //            newExternalIdentifiers.stream().anyMatch(e ->
-    // e.getIdentifierValue().equals("123")))
-    //        .isTrue();
-    //    Assertions.assertThat(
-    //            newExternalIdentifiers.stream().anyMatch(e ->
-    // e.getIdentifierValue().equals("345")))
-    //        .isTrue();
-    //
-    //    productPropertiesUpdateRequest =
-    //        new ProductPropertiesUpdateRequest(Collections.emptySet());
-    //
-    //    externalIdentifiersUpdated =
-    //        getLingoTestClient()
-    //            .putRequest(
-    //                "/api/MAIN/SNOMEDCT-AU/AUAMT/product-model/"
-    //                    + existingConcept.getConceptId()
-    //                    + "/update",
-    //                ProductUpdateRequest.builder()
-    //                    .ticketId(ticketResponse.getId())
-    //                    .conceptId(existingConcept.getConceptId())
-    //                    .descriptionUpdate(
-    //                        ProductDescriptionUpdateRequest.builder()
-    //                            .descriptions(Set.of(fsn, pt))
-    //                            .build())
-    //                    .externalRequesterUpdate(productExternalIdentifierUpdateRequest)
-    //                    .build(),
-    //                HttpStatus.OK,
-    //                au.gov.digitalhealth.tickets.models.BulkProductAction.class);
-    //
-    //    updatedProductDetails = (ProductUpdateCreationDetails)
-    // externalIdentifiersUpdated.getDetails();
-    //
-    //    newExternalIdentifiers = updatedProductDetails.getUpdatedState().getExternalIdentifiers();
-    //    Assertions.assertThat(newExternalIdentifiers.size()).isEqualTo(0);
+    // TODO: restore the external-identifier update assertions via the description route — the
+    // productPropertiesRoute they used has been deleted. See git history for the previous body.
   }
 }

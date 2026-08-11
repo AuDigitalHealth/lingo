@@ -15,7 +15,6 @@
  */
 package au.gov.digitalhealth.tickets.repository;
 
-import au.gov.digitalhealth.tickets.models.ExternalRequestor;
 import au.gov.digitalhealth.tickets.models.Iteration;
 import au.gov.digitalhealth.tickets.models.Label;
 import au.gov.digitalhealth.tickets.models.State;
@@ -51,7 +50,8 @@ public interface TicketRepository
   @Query(
       "SELECT DISTINCT t FROM Ticket t "
           + "LEFT JOIN FETCH t.labels "
-          + "LEFT JOIN FETCH t.externalRequestors "
+          + "LEFT JOIN FETCH t.ticketExternalRequestors ter "
+          + "LEFT JOIN FETCH ter.externalRequestor "
           + "LEFT JOIN FETCH t.jsonFields "
           +
           // Add more JOIN FETCH clauses for other lazy associations
@@ -114,8 +114,6 @@ public interface TicketRepository
   List<Ticket> findAllByLabels(Label label);
 
   List<Ticket> findAllByIteration(Iteration iteration);
-
-  List<Ticket> findAllByExternalRequestors(ExternalRequestor externalRequestor);
 
   @Query(
       "SELECT t FROM Ticket t JOIN t.state state WHERE state.label NOT IN :labels AND t.taskAssociation IS NOT NULL")

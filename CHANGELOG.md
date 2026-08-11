@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
+- Additional field types now have a separate display name, used for the labels shown in the ticket edit view and for the additional field column headers in the "Export Backlog to CSV" report. Existing types have their display name backfilled from their name, so nothing changes until a display name is edited. The name remains the identifier and is unchanged.
+- Refined the "Export Backlog to CSV" report (#1828): removed the unused "Ticket Type" column and the "Label Date Added" columns option; export columns can now be dragged into any order in the Column Preview, with the chosen order saved as part of each export preset; and the Additional Fields and External Requestors selectors gained "Select all" / "Clear" controls.
+- Fixed the "date requested" date picker for external requestors (both the backlog "Add External Requestor" dialog and the ticket edit view) displaying in MM/DD/YYYY; it now shows DD/MM/YYYY.
+- A ticket's external requestors are now listed in alphabetical order instead of an arbitrary order.
+- When adding an external requestor to a ticket directly from the backlog grid, a dialog now lets the user optionally record the "date requested" (defaulting to no date) instead of adding it with no date and no prompt.
+- Fixed the ticket due-date display using a hardcoded `en-AU` 4-digit-year format; it now matches the created-date field's locale-aware `dd/MM/yy` format in the backlog grid and ticket detail view.
+- Reworked the "Export Backlog to CSV" report (#1828): additional field types (e.g. ARTG ID) can now be added as export columns; a new "All External Requestors with Date Requested" option outputs positional `External Requester N` / `External Requester N Date Requested` column pairs listing every external requestor on the ticket ordered by requested date, with undated requestors last and their date cell left blank; and column/option selections can be saved as named, team-shared export presets that can be loaded, updated and deleted from the export dialog.
+- Each external requestor association on a ticket now carries a `dateAdded` field (defaulting to today). Users can set the date when adding a requestor via a date picker in the ticket edit view, and can edit it later inline from the ticket detail view.
+- Tickets now have an optional due date field. The due date is editable via a date picker in the ticket edit panel and displayed read-only in the ticket detail view and backlog grid.
+- The create/update external requestor endpoints now bind their request bodies to a DTO instead of the JPA entity, preventing mass assignment of persistence-managed fields (SonarQube java:S4684).
+- No updates yet.
 ### Added
 
 ### Changed
@@ -161,6 +172,7 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 
 ## [1.3.47] - 2026-06-18
 ### Added
+- Backlog CSV export now includes request submission date, product name (ticket title), schedule, priority, release (iteration formatted as date), ticket status, ticket number, and closed date as the default columns. Users can toggle any column, and can add dynamic "date added" columns for specific labels or external requestors (showing the first date each was added to a ticket). The export modal shows a live column preview table.
 - The name generator can now receive a brand (product name) hint for virtual NMPC Clinical Drug concepts via a new optional `product_name` request field, allowing the brand to be woven into the generated FSN/PT without adding it to the concept's logical definition (axiom). Gated behind a new `nameGeneratorSupportsProductName` model-configuration flag (enabled for NMPC).
 
 ### Fixed

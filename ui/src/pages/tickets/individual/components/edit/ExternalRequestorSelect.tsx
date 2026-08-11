@@ -1,142 +1,159 @@
-/* eslint-disable */
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
-import { Chip, MenuItem, Tooltip } from '@mui/material';
-import Select, { SelectChangeEvent } from '@mui/material/Select';
-import Checkbox from '@mui/material/Checkbox';
-import { Box, Stack } from '@mui/system';
-import StyledSelect from '../../../../../components/styled/StyledSelect.tsx';
+import AddIcon from '@mui/icons-material/Add';
+import {
+  Box,
+  Button,
+  Chip,
+  MenuItem,
+  Select,
+  SelectChangeEvent,
+  Stack,
+} from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import {
   ExternalRequestor,
   Ticket,
 } from '../../../../../types/tickets/ticket.ts';
-import useTicketStore from '../../../../../stores/TicketStore.ts';
-import { externalRequestorExistsOnTicket } from '../../../../../utils/helpers/tickets/labelUtils.ts';
 import { useUpdateExternalRequestors } from '../../../../../hooks/api/tickets/useUpdateTicket.tsx';
 import UnableToEditTicketTooltip from '../../../components/UnableToEditTicketTooltip.tsx';
 import { useCanEditTicket } from '../../../../../hooks/api/tickets/useCanEditTicket.tsx';
-import ExternalRequestorChip from '../../../components/ExternalRequestorChip.tsx';
 import { useAllExternalRequestors } from '../../../../../hooks/api/useInitializeTickets.tsx';
-import { getExternalRequestorByName } from '../../../../../utils/helpers/tickets/externalRequestorUtils.ts';
+import { DATE_FORMAT } from '../../../../../utils/helpers/dateUtils.ts';
 
 interface ExternalRequestorSelectProps {
   ticket?: Ticket;
   border?: boolean;
 }
+
 export default function ExternalRequestorSelect({
   ticket,
   border,
 }: ExternalRequestorSelectProps) {
-  if (ticket === undefined) return <></>;
-
-  const { mergeTicket: mergeTickets } = useTicketStore();
   const { externalRequestors } = useAllExternalRequestors();
   const mutation = useUpdateExternalRequestors();
-  const [method, setMethod] = useState('PUT');
-  const { isError, isSuccess, data, isPending } = mutation;
   const { canEdit } = useCanEditTicket(ticket);
+  const [selectedId, setSelectedId] = useState<string>('');
+  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
 
-  const getExternalRequestorIsChecked = (
-    externalRequestorType: ExternalRequestor,
-  ): boolean => {
-    let checked = false;
-    ticket.externalRequestors?.forEach(externalRequestor => {
-      if (Number(externalRequestor.id) === externalRequestorType.id) {
-        checked = true;
-        return;
-      }
-    });
-    return checked;
-  };
+  if (ticket === undefined) return <></>;
 
-  const handleChange = (
-    event: SelectChangeEvent<typeof ticket.externalRequestors>,
-  ) => {
-    const {
-      target: { value },
-    } = event;
+  const { isPending } = mutation;
 
-    if (value === undefined) return;
-    const externalRequestor = getExternalRequestorByName(
-      value[value.length - 1] as string,
-      externalRequestors,
+  const current = [...(ticket.externalRequestors ?? [])].sort((a, b) =>
+    a.name.localeCompare(b.name),
+  );
+  const available = externalRequestors.filter(
+    er => !current.some(ter => ter.externalRequestorId === er.id),
+  );
+
+  const handleAdd = () => {
+    if (!selectedId) return;
+    const externalRequestor = externalRequestors.find(
+      er => er.id === Number(selectedId),
     );
-    if (externalRequestor === undefined) return;
-    const shouldDelete = externalRequestorExistsOnTicket(
+    if (!externalRequestor) return;
+    mutation.mutate({
       ticket,
       externalRequestor,
-    );
+      method: 'PUT',
+      dateRequested: selectedDate?.format('YYYY-MM-DD'),
+    });
+    setSelectedId('');
+    setSelectedDate(null);
+  };
 
-    setMethod(shouldDelete ? 'DELETE' : 'PUT');
-
+  const handleRemove = (externalRequestor: ExternalRequestor) => {
     mutation.mutate({
-      ticket: ticket,
-      externalRequestor: externalRequestor,
-      method: shouldDelete ? 'DELETE' : 'PUT',
+      ticket,
+      externalRequestor,
+      method: 'DELETE',
     });
   };
 
   return (
     <UnableToEditTicketTooltip canEdit={canEdit}>
       <Box sx={{ width: '100%' }}>
-        <Select
-          id={`ticket-external-requestors-select-${ticket.id}`}
-          key={ticket.id}
-          multiple={true}
-          value={ticket.externalRequestors}
-          onChange={handleChange}
-          MenuProps={{
-            PaperProps: {
-              sx: { maxHeight: 400 },
-              id: `ticket-labels-select-${ticket.id}-container`,
-            },
-          }}
-          disabled={isPending || !canEdit}
-          sx={{ width: border ? 'auto' : '100%' }}
-          input={border ? <Select /> : <StyledSelect />}
-          renderValue={selected => (
-            <Stack gap={1} direction="row" flexWrap="wrap">
-              {selected.map(value => {
-                return (
-                  <ExternalRequestorChip
-                    externalRequestor={value}
-                    externalRequestorList={externalRequestors}
-                    key={`${value.id}`}
-                  />
+        <Stack gap={1}>
+          {current.length > 0 && (
+            <Stack direction="row" gap={1} flexWrap="wrap">
+              {current.map(ter => {
+                const er = externalRequestors.find(
+                  e => e.id === ter.externalRequestorId,
                 );
+                return er ? (
+                  <Chip
+                    key={ter.externalRequestorId}
+                    label={ter.name}
+                    size="small"
+                    sx={{ backgroundColor: ter.displayColor, color: 'black' }}
+                    onDelete={canEdit ? () => handleRemove(er) : undefined}
+                    disabled={isPending}
+                  />
+                ) : null;
               })}
             </Stack>
           )}
-        >
-          {externalRequestors.map(externalRequestorType => (
-            <MenuItem
-              key={externalRequestorType.id}
-              value={externalRequestorType.name}
-              disabled={isPending}
-            >
-              <Stack
-                direction="row"
-                justifyContent="space-between"
-                width="100%"
-                alignItems="center"
-              >
-                <Chip
-                  // color={labelType.displayColor}
-                  label={externalRequestorType.name}
+          {canEdit && (
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <Stack direction="row" gap={1} alignItems="center">
+                <Select
+                  value={selectedId}
+                  onChange={(e: SelectChangeEvent) =>
+                    setSelectedId(e.target.value)
+                  }
+                  displayEmpty
                   size="small"
-                  sx={{
-                    color: 'black',
-                    backgroundColor: externalRequestorType.displayColor,
+                  disabled={isPending || available.length === 0}
+                  sx={{ minWidth: 180 }}
+                  renderValue={val =>
+                    val
+                      ? (externalRequestors.find(er => er.id === Number(val))
+                          ?.name ?? val)
+                      : 'Add requestor…'
+                  }
+                >
+                  {available.map(er => (
+                    <MenuItem key={er.id} value={er.id.toString()}>
+                      <Chip
+                        label={er.name}
+                        size="small"
+                        sx={{
+                          backgroundColor: er.displayColor,
+                          color: 'black',
+                          pointerEvents: 'none',
+                        }}
+                      />
+                    </MenuItem>
+                  ))}
+                </Select>
+                <DatePicker
+                  label="Date Requested"
+                  format={DATE_FORMAT}
+                  value={selectedDate}
+                  onChange={setSelectedDate}
+                  slotProps={{
+                    textField: { size: 'small', sx: { width: 160 } },
+                    field: { clearable: true },
                   }}
+                  disabled={isPending}
                 />
-
-                <Checkbox
-                  checked={getExternalRequestorIsChecked(externalRequestorType)}
-                />
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={handleAdd}
+                  disabled={!selectedId || isPending}
+                  startIcon={<AddIcon />}
+                >
+                  Add
+                </Button>
               </Stack>
-            </MenuItem>
-          ))}
-        </Select>
+            </LocalizationProvider>
+          )}
+        </Stack>
       </Box>
     </UnableToEditTicketTooltip>
   );

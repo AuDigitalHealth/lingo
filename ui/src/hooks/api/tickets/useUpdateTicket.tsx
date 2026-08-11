@@ -125,6 +125,7 @@ interface UseUpdateExternalRequestorsArguments {
   ticket: Ticket;
   externalRequestor: ExternalRequestor;
   method: string;
+  dateRequested?: string;
 }
 export function useUpdateExternalRequestors() {
   const queryClient = useQueryClient();
@@ -133,6 +134,7 @@ export function useUpdateExternalRequestors() {
       ticket,
       externalRequestor,
       method,
+      dateRequested,
     }: UseUpdateExternalRequestorsArguments) => {
       if (method === 'DELETE') {
         return TicketsService.deleteTicketExternalRequestor(
@@ -143,6 +145,7 @@ export function useUpdateExternalRequestors() {
         return TicketsService.addTicketExternalRequestor(
           ticket.id.toString(),
           externalRequestor.id,
+          dateRequested,
         );
       }
     },
@@ -159,6 +162,62 @@ export function useUpdateExternalRequestors() {
 
   return mutation;
 }
+
+interface UseUpdateExternalRequestorDateArguments {
+  ticket: Ticket;
+  externalRequestorId: number;
+  dateRequested: string;
+}
+export function useUpdateExternalRequestorDate() {
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: ({
+      ticket,
+      externalRequestorId,
+      dateRequested,
+    }: UseUpdateExternalRequestorDateArguments) => {
+      return TicketsService.updateTicketExternalRequestorDate(
+        ticket.id.toString(),
+        externalRequestorId,
+        dateRequested,
+      );
+    },
+    onSuccess: (_, variables) => {
+      const ticketNumber = variables.ticket.ticketNumber;
+      void queryClient.invalidateQueries({
+        queryKey: ['ticket', ticketNumber],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ['ticketDto', ticketNumber],
+      });
+    },
+  });
+
+  return mutation;
+}
+interface UseUpdateTicketDueDateArguments {
+  ticket: Ticket;
+  dueDate: string | null;
+}
+export function useUpdateTicketDueDate() {
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: ({ ticket, dueDate }: UseUpdateTicketDueDateArguments) => {
+      return TicketsService.updateTicketDueDate(ticket.id.toString(), dueDate);
+    },
+    onSuccess: (_, variables) => {
+      const ticketNumber = variables.ticket.ticketNumber;
+      void queryClient.invalidateQueries({
+        queryKey: ['ticket', ticketNumber],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ['ticketDto', ticketNumber],
+      });
+    },
+  });
+  return mutation;
+}
+
 interface UseBulkCreateTicketsArgs {
   tickets: Ticket[];
 }

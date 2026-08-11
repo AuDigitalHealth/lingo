@@ -21,7 +21,6 @@ const UnableToEditTicketTooltip = ({
       ? `${robotMessage}${closedMessage}`
       : undefined;
 
-  console.log(tooltip);
   if (tooltip) {
     return (
       <Tooltip title={tooltip}>

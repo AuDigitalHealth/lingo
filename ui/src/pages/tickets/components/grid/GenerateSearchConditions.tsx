@@ -208,6 +208,47 @@ export const generateSearchConditions = (
     searchConditions.push(taskAssocationCondition);
   }
 
+  if (filters.dueDate?.value) {
+    let first = filters.dueDate?.value;
+
+    let setValue = '';
+
+    if (Array.isArray(first)) {
+      const firstArray = first;
+      first = firstArray[0];
+      const second = firstArray[1];
+
+      let value = first.toISOString();
+
+      if (second !== null && second !== undefined) {
+        value += '-';
+        value += second.toISOString();
+      }
+
+      setValue = value;
+    } else {
+      setValue = first.toISOString();
+    }
+
+    let operator =
+      filters.dueDate.matchMode === FilterMatchMode.DATE_BEFORE ? '<=' : '=';
+    operator =
+      filters.dueDate.matchMode === FilterMatchMode.DATE_IS_NOT
+        ? '!='
+        : operator;
+    operator =
+      filters.dueDate.matchMode === FilterMatchMode.DATE_AFTER
+        ? '>='
+        : operator;
+    const dueDateCondition: SearchCondition = {
+      key: 'duedate',
+      operation: operator,
+      condition: 'and',
+      value: setValue,
+    };
+    searchConditions.push(dueDateCondition);
+  }
+
   if (filters.created?.value) {
     let first = filters.created?.value;
 

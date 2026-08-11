@@ -33,7 +33,7 @@ import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.details.DeviceProductDetails;
 import au.gov.digitalhealth.lingo.product.details.PackageDetails;
 import au.gov.digitalhealth.lingo.product.details.ProductQuantity;
-import au.gov.digitalhealth.tickets.models.Ticket;
+import au.gov.digitalhealth.tickets.TicketDto;
 import jakarta.validation.Valid;
 import java.math.BigDecimal;
 import lombok.extern.java.Log;
@@ -97,7 +97,7 @@ class DeviceCreationControllerTest extends LingoTestBase {
     checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(productSummary, false, true, false);
 
-    Ticket ticketResponse =
+    TicketDto ticketResponse =
         getLingoTestClient().createTicket("createSimpleProductFromExistingWithPackSizeChange");
 
     // create
@@ -166,7 +166,7 @@ class DeviceCreationControllerTest extends LingoTestBase {
     checkExternalIdentifiers(productSummary, packageDetails);
     confirmAmtModelLinks(productSummary, false, true, false);
 
-    Ticket ticketResponse =
+    TicketDto ticketResponse =
         getLingoTestClient().createTicket("createSimpleProductFromExistingWithPackSizeChange");
 
     // create

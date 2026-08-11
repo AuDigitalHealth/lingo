@@ -284,3 +284,16 @@ export const CreatedTemplate = (rowData: TicketDto) => {
     </Typography>
   );
 };
+
+export const DueDateTemplate = (rowData: Ticket) => {
+  if (!rowData.dueDate) return null;
+  return (
+    <Typography>
+      {new Date(rowData.dueDate).toLocaleDateString(undefined, {
+        day: '2-digit',
+        month: '2-digit',
+        year: '2-digit',
+      })}
+    </Typography>
+  );
+};

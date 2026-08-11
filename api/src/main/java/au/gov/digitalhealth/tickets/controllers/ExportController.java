@@ -15,11 +15,15 @@
  */
 package au.gov.digitalhealth.tickets.controllers;
 
+import au.gov.digitalhealth.tickets.helper.BacklogExportRequest;
 import au.gov.digitalhealth.tickets.service.ExportService;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -35,5 +39,12 @@ public class ExportController {
   public ResponseEntity<InputStreamResource> adhaCsvExport(@PathVariable Long iterationId) {
 
     return exportService.adhaCsvExport(iterationId);
+  }
+
+  @PostMapping(value = "/api/tickets/search/export", consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<InputStreamResource> backlogCsvExport(
+      @RequestBody(required = false) BacklogExportRequest backlogExportRequest) {
+
+    return exportService.backlogCsvExport(backlogExportRequest);
   }
 }

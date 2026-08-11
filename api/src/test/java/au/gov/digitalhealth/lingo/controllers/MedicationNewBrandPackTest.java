@@ -38,7 +38,7 @@ import au.gov.digitalhealth.lingo.product.bulk.BrandPackSizeCreationDetails;
 import au.gov.digitalhealth.lingo.product.bulk.BulkProductAction;
 import au.gov.digitalhealth.lingo.product.details.properties.ExternalIdentifier;
 import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningBase;
-import au.gov.digitalhealth.tickets.models.Ticket;
+import au.gov.digitalhealth.tickets.TicketDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
@@ -213,7 +213,7 @@ class MedicationNewBrandPackTest extends LingoTestBase {
     MedicationAssertions.checkNoExternalIdentifiersOnTpp(productSummary);
     MedicationAssertions.confirmAmtModelLinks(productSummary, true, false, false);
 
-    Ticket ticketResponse =
+    TicketDto ticketResponse =
         getLingoTestClient().createTicket("createSimpleProductFromExistingWithPackSizeAdditions");
 
     BulkProductAction<BrandPackSizeCreationDetails> action =
@@ -331,7 +331,7 @@ class MedicationNewBrandPackTest extends LingoTestBase {
     MedicationAssertions.checkNoExternalIdentifiersOnTpp(productSummary);
     MedicationAssertions.confirmAmtModelLinks(productSummary, true, false, false);
 
-    Ticket ticketResponse =
+    TicketDto ticketResponse =
         getLingoTestClient().createTicket("createSimpleProductFromExistingWithPackSizeAdditions");
 
     BulkProductAction<BrandPackSizeCreationDetails> action =
@@ -466,7 +466,7 @@ class MedicationNewBrandPackTest extends LingoTestBase {
     MedicationAssertions.confirmAmtModelLinks(productSummary, true, false, false);
 
     // Create a ticket for the new brand creation
-    Ticket ticketResponse = getLingoTestClient().createTicket("createBulkBrand");
+    TicketDto ticketResponse = getLingoTestClient().createTicket("createBulkBrand");
 
     // Create a bulk action with the calculated product summary and ticket
     BulkProductAction<BrandPackSizeCreationDetails> action =

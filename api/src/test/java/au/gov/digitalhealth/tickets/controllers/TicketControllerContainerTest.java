@@ -25,6 +25,7 @@ import au.gov.digitalhealth.tickets.TicketDtoExtended;
 import au.gov.digitalhealth.tickets.TicketMinimalDto;
 import au.gov.digitalhealth.tickets.TicketTestBaseContainer;
 import au.gov.digitalhealth.tickets.helper.AdditionalFieldUtils;
+import au.gov.digitalhealth.tickets.helper.ExternalRequestorRequest;
 import au.gov.digitalhealth.tickets.helper.JsonReader;
 import au.gov.digitalhealth.tickets.helper.SearchCondition;
 import au.gov.digitalhealth.tickets.helper.SearchConditionBody;
@@ -44,6 +45,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.restassured.http.ContentType;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -335,7 +337,7 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
     TicketDtoExtended ticketWithPbsExternalRequester =
         ticketService.findTicket(markAsPbsRequestedResponse.getTicketId());
     ticketWithPbsExternalRequester.getExternalRequestors().stream()
-        .filter(requestor -> requestor.getName().equals("PBS"))
+        .filter(requestor -> requestor.name().equals("PBS"))
         .findAny()
         .orElseThrow();
     Assertions.assertTrue(
@@ -429,12 +431,13 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
 
     String uniqueTitle = "Test Different Requestor " + System.currentTimeMillis();
 
-    // Create first request with PBS and PBSRequest label
+    // Create first request with PBS and PBSRequest label. No dateRequested supplied — the service
+    // falls back to the current date.
     TicketMetadata pbsRequest =
         TicketMetadata.builder()
             .name(uniqueTitle)
             .description("PBS description")
-            .externalRequestors(List.of("PBS"))
+            .externalRequestors(List.of(ExternalRequestorRequest.fromName("PBS")))
             .labels(List.of("PBSRequest"))
             .build();
 
@@ -457,12 +460,23 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
     Assertions.assertTrue(
         pbsTicket.getLabels().stream().anyMatch(label -> label.getName().equals("PBSRequest")));
 
-    // Create second request with same title but different external requestor (TGA) and label
+    // Absent dateRequested falls back to today rather than being left null
+    Assertions.assertEquals(
+        LocalDate.now(),
+        pbsTicket.getExternalRequestors().stream()
+            .filter(requestor -> requestor.name().equals("PBS"))
+            .findAny()
+            .orElseThrow()
+            .dateRequested());
+
+    // Create second request with same title but different external requestor (TGA) and label,
+    // this time with an explicit dateRequested supplied by the caller
+    LocalDate tgaDateRequested = LocalDate.now().minusDays(3);
     TicketMetadata tgaRequest =
         TicketMetadata.builder()
             .name(uniqueTitle)
             .description("TGA description")
-            .externalRequestors(List.of("TGA"))
+            .externalRequestors(List.of(new ExternalRequestorRequest("TGA", tgaDateRequested)))
             .labels(List.of("TGARequest"))
             .build();
 
@@ -487,6 +501,73 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
     TicketDtoExtended tgaTicket = ticketService.findTicket(tgaTicketId);
     Assertions.assertTrue(
         tgaTicket.getLabels().stream().anyMatch(label -> label.getName().equals("TGARequest")));
+
+    // The caller-supplied dateRequested is persisted verbatim
+    Assertions.assertEquals(
+        tgaDateRequested,
+        tgaTicket.getExternalRequestors().stream()
+            .filter(requestor -> requestor.name().equals("TGA"))
+            .findAny()
+            .orElseThrow()
+            .dateRequested());
+  }
+
+  /**
+   * The ARTGID path reaches an existing ticket and merely adds the missing requestor, which
+   * previously left {@code dateRequested} null.
+   */
+  @Test
+  void testCreateOrGetTicketByArtgIdSetsDateRequestedOnRequestorAddedToExistingTicket()
+      throws JsonProcessingException {
+    ensureExternalRequestorExists("PBS", "PBS", "success");
+    ensureExternalRequestorExists("TGA", "TGA", "primary");
+    ensureLabelExists("PBSRequest", "PBS Request Label");
+    ensureLabelExists("Urgent", "Urgent Label");
+
+    String newPbsRequestString = JsonReader.readJsonFile("tickets/pbs-request-new.json");
+    TicketMetadata newRequest = mapper.readValue(newPbsRequestString, TicketMetadata.class);
+    SergioMockConfig.stubSergioResponse(
+        Long.valueOf(newRequest.getDedupeKey()),
+        JsonReader.readJsonFile("tickets/pbs-request-new-sergio-response.json"));
+
+    // First request creates the ticket via Sergio with the PBS requestor
+    TicketSubmissionResponse created =
+        withAuth()
+            .contentType(ContentType.JSON)
+            .when()
+            .body(newRequest)
+            .post(this.getSnomioLocation() + "/api/tickets/request")
+            .then()
+            .statusCode(201)
+            .extract()
+            .as(TicketSubmissionResponse.class);
+
+    // Second request against the same ARTG ID adds TGA to the ticket that already exists
+    LocalDate tgaDateRequested = LocalDate.now().minusDays(5);
+    newRequest.setExternalRequestors(
+        List.of(new ExternalRequestorRequest("TGA", tgaDateRequested)));
+
+    TicketSubmissionResponse updated =
+        withAuth()
+            .contentType(ContentType.JSON)
+            .when()
+            .body(newRequest)
+            .post(this.getSnomioLocation() + "/api/tickets/request")
+            .then()
+            .statusCode(201)
+            .extract()
+            .as(TicketSubmissionResponse.class);
+
+    Assertions.assertEquals(created.getTicketId(), updated.getTicketId());
+
+    TicketDtoExtended ticket = ticketService.findTicket(updated.getTicketId());
+    Assertions.assertEquals(
+        tgaDateRequested,
+        ticket.getExternalRequestors().stream()
+            .filter(requestor -> requestor.name().equals("TGA"))
+            .findAny()
+            .orElseThrow()
+            .dateRequested());
   }
 
   private void ensureExternalRequestorExists(String name, String description, String displayColor) {

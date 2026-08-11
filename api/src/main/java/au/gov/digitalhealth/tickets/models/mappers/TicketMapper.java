@@ -28,17 +28,23 @@ import java.util.List;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 import org.mapstruct.factory.Mappers;
 
-@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, componentModel = "spring")
+@Mapper(
+    unmappedTargetPolicy = ReportingPolicy.IGNORE,
+    componentModel = "spring",
+    uses = {TicketExternalRequestorMapper.class})
 public interface TicketMapper {
 
+  @Mapping(target = "ticketExternalRequestors", ignore = true)
   Ticket toEntity(TicketDto ticketDto);
 
+  @Mapping(target = "ticketExternalRequestors", ignore = true)
   Ticket toEntity(TicketImportDto ticketImportDto);
 
   @AfterMapping
@@ -51,20 +57,25 @@ public interface TicketMapper {
   }
 
   @Named("toDto")
+  @Mapping(source = "ticketExternalRequestors", target = "externalRequestors")
   TicketDto toDto(Ticket ticket);
 
+  @Mapping(source = "ticketExternalRequestors", target = "externalRequestors")
   TicketImportDto toImportDto(Ticket ticket);
 
   TicketMinimalDto toMinimalDto(Ticket ticket);
 
   TicketDto toDtoFromMinimalDto(TicketMinimalDto ticketMinimalDto);
 
+  @Mapping(source = "ticketExternalRequestors", target = "externalRequestors")
   TicketBacklogDto toBacklogDto(Ticket ticket);
 
   @Named("toExtendedDto")
+  @Mapping(source = "ticketExternalRequestors", target = "externalRequestors")
   TicketDtoExtended toExtendedDto(Ticket ticket);
 
   @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+  @Mapping(target = "ticketExternalRequestors", ignore = true)
   Ticket partialUpdate(TicketDto ticketDto, @MappingTarget Ticket ticket);
 
   default ScheduleMapper scheduleMapper() {
@@ -87,5 +98,6 @@ public interface TicketMapper {
 
   List<TicketDto> toDtoList(List<Ticket> ticketEntities);
 
+  @Mapping(target = "ticketExternalRequestors", ignore = true)
   Ticket toEntityFromBacklogDto(TicketBacklogDto ticketBacklogDto);
 }

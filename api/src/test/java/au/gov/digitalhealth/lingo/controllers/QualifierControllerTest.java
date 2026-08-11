@@ -19,7 +19,7 @@ import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.gov.digitalhealth.lingo.LingoTestBase;
 import au.gov.digitalhealth.lingo.configuration.FieldBindingConfiguration;
 import au.gov.digitalhealth.lingo.product.PrimitiveConceptCreationRequest;
-import au.gov.digitalhealth.tickets.models.Ticket;
+import au.gov.digitalhealth.tickets.TicketDto;
 import java.util.UUID;
 import lombok.extern.java.Log;
 import org.assertj.core.api.Assertions;
@@ -42,7 +42,7 @@ class QualifierControllerTest extends LingoTestBase {
 
   @Test
   void createBrandTest() {
-    Ticket ticketResponse = getLingoTestClient().createTicket("Create Brand Test");
+    TicketDto ticketResponse = getLingoTestClient().createTicket("Create Brand Test");
     String randomBrandName = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
     PrimitiveConceptCreationRequest brandCreationRequest =
         new PrimitiveConceptCreationRequest(
