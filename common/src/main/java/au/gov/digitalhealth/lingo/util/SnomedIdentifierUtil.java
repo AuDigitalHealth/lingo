@@ -29,4 +29,29 @@ public class SnomedIdentifierUtil {
     }
     return verhoeffCheck.isValid(sctId);
   }
+
+  /**
+   * True for a long form SCTID — one that carries a namespace, i.e. extension content rather than
+   * international.
+   *
+   * <p>The two digits before the check digit are the partition identifier. {@link #isValid} reads
+   * the second of them (the component type); this reads the first, which is '1' when the identifier
+   * carries a namespace and '0' when it does not.
+   *
+   * <p>Deliberately does not verify the check digit — callers use this to decide whether an
+   * identifier is worth looking up, not whether it is well formed. Anything non-numeric, or too
+   * short to carry a namespace (such as the negative placeholders standing in for concepts before
+   * identifiers are allocated), is false.
+   */
+  public static boolean hasNamespace(String sctId) {
+    if (sctId == null || sctId.length() < 11) {
+      return false;
+    }
+    for (int i = 0; i < sctId.length(); i++) {
+      if (!Character.isDigit(sctId.charAt(i))) {
+        return false;
+      }
+    }
+    return sctId.charAt(sctId.length() - 3) == '1';
+  }
 }

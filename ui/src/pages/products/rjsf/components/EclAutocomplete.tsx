@@ -8,6 +8,7 @@ import {
 import { useSearchConceptsByEcl } from '../../../../hooks/api/useInitializeConcepts.tsx';
 import { FieldProps } from '@rjsf/utils';
 import useApplicationConfigStore from '../../../../stores/ApplicationConfigStore.ts';
+import useAuthoringStore from '../../../../stores/AuthoringStore.ts';
 
 const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
   const {
@@ -30,6 +31,7 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
 
   const apLanguageHeader =
     useApplicationConfigStore.getState().applicationConfig?.apLanguageHeader;
+  const missingConceptIds = useAuthoringStore(state => state.missingConceptIds);
   const [inputValue, setInputValue] = useState<Concept>(
     value || createEmptyConcept(apLanguageHeader),
   );
@@ -91,10 +93,14 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
         new Map(processedData.map(item => [item.conceptId, item])).values(),
       );
     }
-    // Always retain the currently selected concept as an option. A loaded value was
-    // already resolved against the branch (it carries its pt/fsn), so it must not be
-    // reported as non-existent just because the typeahead query (term/ECL filtered)
-    // didn't return it among its results.
+    // Always retain the currently selected concept as an option, so MUI can render the
+    // selection even when the typeahead query (term/ECL filtered) didn't return it.
+    //
+    // Note this makes `options` useless as evidence that the value exists on the branch —
+    // a loaded value carries pt/fsn from the saved product JSON, which was resolved
+    // against whichever branch it was authored on, not necessarily this one. Whether the
+    // concept is actually present is decided by the batched pre-save check and read back
+    // from the authoring store below.
     if (
       value?.conceptId &&
       !uniqueOptions.some(option => option.conceptId === value.conceptId)
@@ -146,12 +152,16 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
 
   const normalizedValue =
     options.find(option => option.conceptId === value?.conceptId) || value;
-  const needsAttention = value && value.pt?.term && !value.conceptId;
+  // Free text the user typed that never resolved to a concept — handleBlur commits it as a
+  // term with no conceptId rather than discarding what was typed.
+  const needsAttention = Boolean(value && value.pt?.term && !value.conceptId);
 
-  const needsAttentionBecauseConceptMightNotExist =
-    value &&
-    value.conceptId &&
-    !options.some(opt => opt.conceptId === value.conceptId);
+  // Driven by the batched existence check rather than by `options` — see the note in the
+  // options effect above. Previously this was computed from `options`, which the same
+  // effect had just inserted `value` into, so it could never fire for a loaded value.
+  const needsAttentionBecauseConceptMightNotExist = Boolean(
+    value?.conceptId && missingConceptIds.includes(value.conceptId),
+  );
 
   const needsAttentionBecauseConceptMightNotExistMessage =
     'Concept does not exist in this branch, please search or create the concept';
@@ -198,7 +208,11 @@ const EclAutocomplete: React.FC<FieldProps<any, any>> = props => {
             {...params}
             data-testid={id}
             label={label}
-            // error={hasError}
+            error={Boolean(
+              errorMessage ||
+              needsAttention ||
+              needsAttentionBecauseConceptMightNotExist,
+            )}
             onBlur={readOnly ? undefined : handleBlur}
             helperText={
               errorMessage

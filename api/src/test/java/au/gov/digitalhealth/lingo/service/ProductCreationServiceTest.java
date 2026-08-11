@@ -17,9 +17,11 @@ package au.gov.digitalhealth.lingo.service;
 
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.ADDITIONAL_RELATIONSHIP;
 import static au.gov.digitalhealth.lingo.util.SnomedConstants.CONCEPT_INACTIVATION_INDICATOR_REFERENCE_SET;
+import static au.gov.digitalhealth.lingo.util.SnomedConstants.IS_A;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import au.csiro.snowstorm_client.model.SnowstormAxiom;
 import au.csiro.snowstorm_client.model.SnowstormConceptMini;
 import au.csiro.snowstorm_client.model.SnowstormConcreteValue;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMemberViewComponent;
@@ -29,9 +31,11 @@ import au.gov.digitalhealth.lingo.configuration.model.enumeration.ModelLevelType
 import au.gov.digitalhealth.lingo.product.NewConceptDetails;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.OriginalNode;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
 import au.gov.digitalhealth.lingo.util.HistoricalAssociationReferenceSet;
 import au.gov.digitalhealth.lingo.util.InactivationReason;
 import java.lang.reflect.Method;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -622,5 +626,199 @@ class ProductCreationServiceTest {
 
     org.junit.jupiter.api.Assertions.assertDoesNotThrow(
         () -> invokeValidateUpdateOperation(summary));
+  }
+
+  // ------------------------------------------------------------------------------------------
+  // collectReferencedConceptIds — the dependency set validateSpecifiedIdentifiers asserts must
+  // already exist on the branch. Scope is deliberately narrow: extension content only, and never
+  // a concept the same request is creating.
+  // ------------------------------------------------------------------------------------------
+
+  // Extension (long form) SCTIDs — namespace 1000220, the case that can be present on one task
+  // branch and absent from another.
+  private static final String MAH_TARGET = "968081000220105";
+  private static final String EXTENSION_PARENT = "1025181000220103";
+  // "Has marketing authorisation holder (attribute)".
+  private static final String MAH_TYPE = "680061000220102";
+  // Short form international content — cannot be missing from a task branch.
+  private static final String INTERNATIONAL_LONG = "900000000000207008";
+  private static final String INTERNATIONAL_SHORT = "763158003";
+
+  @SuppressWarnings("unchecked")
+  private Set<String> invokeCollectReferencedConceptIds(List<Node> nodes) throws Exception {
+    Method method =
+        ProductCreationService.class.getDeclaredMethod(
+            "collectReferencedConceptIds", Collection.class);
+    method.setAccessible(true);
+    return (Set<String>) method.invoke(null, nodes);
+  }
+
+  private static NonDefiningProperty conceptValuedProperty(String targetConceptId) {
+    NonDefiningProperty property = new NonDefiningProperty();
+    property.setIdentifier(MAH_TYPE);
+    property.setIdentifierScheme("mah");
+    property.setValueObject(new SnowstormConceptMini().conceptId(targetConceptId));
+    return property;
+  }
+
+  private static Node newConceptNode(int placeholderId) {
+    Node node = new Node(null, vmpLevel());
+    NewConceptDetails details = new NewConceptDetails();
+    details.setConceptId(placeholderId);
+    details.setFullySpecifiedName("New product (medicinal product)");
+    details.setPreferredTerm("New product");
+    node.setNewConceptDetails(details);
+    return node;
+  }
+
+  private static SnowstormRelationship activeRelationship(String typeId, String destinationId) {
+    SnowstormRelationship relationship = new SnowstormRelationship();
+    relationship.setCharacteristicType(ADDITIONAL_RELATIONSHIP.getValue());
+    relationship.setActive(true);
+    relationship.setTypeId(typeId);
+    relationship.setDestinationId(destinationId);
+    return relationship;
+  }
+
+  private static SnowstormAxiom axiomWith(SnowstormRelationship... relationships) {
+    SnowstormAxiom axiom = new SnowstormAxiom();
+    axiom.setRelationships(new HashSet<>(List.of(relationships)));
+    return axiom;
+  }
+
+  @Test
+  void collectsNonDefiningRelationshipTargetInTheExtensionNamespace() throws Exception {
+    // The reported failure: a marketing authorisation holder resolved against the task the
+    // product was originally saved on, replayed verbatim onto a different task.
+    Node node = newConceptNode(-42);
+    node.getNewConceptDetails()
+        .getNonDefiningProperties()
+        .add(activeRelationship(MAH_TYPE, MAH_TARGET));
+
+    assertThat(invokeCollectReferencedConceptIds(List.of(node))).containsExactly(MAH_TARGET);
+  }
+
+  @Test
+  void collectsDefiningAxiomTargets() throws Exception {
+    Node node = newConceptNode(-42);
+    node.getNewConceptDetails()
+        .getAxioms()
+        .add(axiomWith(activeRelationship(IS_A.getValue(), EXTENSION_PARENT)));
+
+    assertThat(invokeCollectReferencedConceptIds(List.of(node))).containsExactly(EXTENSION_PARENT);
+  }
+
+  @Test
+  void excludesInternationalTargets() throws Exception {
+    // Neither form of international identifier can be missing from a task branch, so checking
+    // them would be wasted work. The long one exercises the partition digit rather than length.
+    Node node = newConceptNode(-42);
+    node.getNewConceptDetails()
+        .getAxioms()
+        .add(
+            axiomWith(
+                activeRelationship(IS_A.getValue(), INTERNATIONAL_LONG),
+                activeRelationship(IS_A.getValue(), INTERNATIONAL_SHORT)));
+
+    assertThat(invokeCollectReferencedConceptIds(List.of(node))).isEmpty();
+  }
+
+  @Test
+  void excludesTargetsThisRequestIsCreating() throws Exception {
+    // A reference to a sibling node is satisfied by the create itself. Both the placeholder id
+    // and an explicitly specified id must be excluded, or the check would reject every product
+    // whose levels reference each other.
+    Node sibling = newConceptNode(-99);
+    sibling.getNewConceptDetails().setSpecifiedConceptId(EXTENSION_PARENT);
+
+    Node node = newConceptNode(-42);
+    node.getNewConceptDetails()
+        .getAxioms()
+        .add(
+            axiomWith(
+                activeRelationship(IS_A.getValue(), EXTENSION_PARENT),
+                activeRelationship(IS_A.getValue(), "-99")));
+
+    assertThat(invokeCollectReferencedConceptIds(List.of(sibling, node))).isEmpty();
+  }
+
+  @Test
+  void excludesInactiveAndConcreteValueRelationships() throws Exception {
+    Node node = newConceptNode(-42);
+
+    SnowstormRelationship inactive = activeRelationship(MAH_TYPE, MAH_TARGET);
+    inactive.setActive(false);
+
+    SnowstormRelationship concrete = activeRelationship(MAH_TYPE, EXTENSION_PARENT);
+    concrete.setConcreteValue(TEST_CONCRETE_VALUE);
+
+    node.getNewConceptDetails().getNonDefiningProperties().add(inactive);
+    node.getNewConceptDetails().getNonDefiningProperties().add(concrete);
+
+    assertThat(invokeCollectReferencedConceptIds(List.of(node))).isEmpty();
+  }
+
+  @Test
+  void existingNodeWithNoPropertiesContributesNothing() throws Exception {
+    assertThat(
+            invokeCollectReferencedConceptIds(
+                List.of(existingNode("1234567890", AUTHORING_MODULE))))
+        .isEmpty();
+  }
+
+  @Test
+  void collectsPropertyTargetsOnAConceptEdit() throws Exception {
+    // A concept edit has newConceptDetails and (per @OnlyOnePopulated) no concept, so its targets
+    // arrive on newConceptDetails rather than on the node.
+    Node edit = newConceptNode(-42);
+    edit.setOriginalNode(
+        OriginalNode.of(
+            existingNode("1234567890", AUTHORING_MODULE), null, false, AUTHORING_MODULE));
+    edit.getNewConceptDetails()
+        .getNonDefiningProperties()
+        .add(activeRelationship(MAH_TYPE, MAH_TARGET));
+
+    assertThat(edit.isConceptEdit()).isTrue();
+    assertThat(invokeCollectReferencedConceptIds(List.of(edit))).containsExactly(MAH_TARGET);
+  }
+
+  @Test
+  void ignoresNodesThisRequestDoesNotWrite() throws Exception {
+    // NodeGeneratorService reloads every existing node's properties from the branch on each
+    // calculate, so an untouched node reproduces whatever dangling reference the branch already
+    // had. Flagging it would veto an unrelated edit over a pre-existing data problem.
+    Node untouched = existingNode("1234567890", AUTHORING_MODULE);
+    untouched.getNonDefiningProperties().add(conceptValuedProperty(MAH_TARGET));
+
+    assertThat(untouched.isPropertyUpdate()).isFalse();
+    assertThat(invokeCollectReferencedConceptIds(List.of(untouched))).isEmpty();
+  }
+
+  @Test
+  void collectsPropertyTargetsOnAPropertyOnlyUpdate() throws Exception {
+    // A property-only update never reaches nodeCreateOrder — it is written by
+    // updateConceptsWithPropertyOnlyChanges — so it must still be covered here.
+    Node propertyUpdate = existingNode("1234567890", AUTHORING_MODULE);
+    propertyUpdate.getNonDefiningProperties().add(conceptValuedProperty(MAH_TARGET));
+    propertyUpdate.setOriginalNode(
+        OriginalNode.of(
+            existingNode("1234567890", AUTHORING_MODULE), null, false, AUTHORING_MODULE));
+
+    assertThat(propertyUpdate.isPropertyUpdate()).isTrue();
+    assertThat(invokeCollectReferencedConceptIds(List.of(propertyUpdate)))
+        .containsExactly(MAH_TARGET);
+  }
+
+  @Test
+  void toleratesNullNonDefiningPropertiesOnNewConceptDetails() throws Exception {
+    // nonDefiningProperties carries no @NotNull, unlike axioms, so an explicit null in the request
+    // JSON survives the bind and overwrites the field initializer.
+    Node node = newConceptNode(-42);
+    node.getNewConceptDetails().setNonDefiningProperties(null);
+    node.getNewConceptDetails()
+        .getAxioms()
+        .add(axiomWith(activeRelationship(IS_A.getValue(), EXTENSION_PARENT)));
+
+    assertThat(invokeCollectReferencedConceptIds(List.of(node))).containsExactly(EXTENSION_PARENT);
   }
 }

@@ -52,6 +52,7 @@ import au.gov.digitalhealth.lingo.exception.NamespaceNotConfiguredProblem;
 import au.gov.digitalhealth.lingo.exception.ProductAtomicDataValidationProblem;
 import au.gov.digitalhealth.lingo.exception.ResourceNotFoundProblem;
 import au.gov.digitalhealth.lingo.product.Edge;
+import au.gov.digitalhealth.lingo.product.NewConceptDetails;
 import au.gov.digitalhealth.lingo.product.Node;
 import au.gov.digitalhealth.lingo.product.OriginalNode;
 import au.gov.digitalhealth.lingo.product.PrimitiveConceptCreationRequest;
@@ -60,9 +61,11 @@ import au.gov.digitalhealth.lingo.product.ProductSummary;
 import au.gov.digitalhealth.lingo.product.bulk.BrandPackSizeCreationDetails;
 import au.gov.digitalhealth.lingo.product.bulk.BulkProductAction;
 import au.gov.digitalhealth.lingo.product.details.ProductDetails;
+import au.gov.digitalhealth.lingo.product.details.properties.NonDefiningProperty;
 import au.gov.digitalhealth.lingo.service.identifier.IdentifierSource;
 import au.gov.digitalhealth.lingo.service.namegenerator.NameGenerationService;
 import au.gov.digitalhealth.lingo.util.OwlAxiomService;
+import au.gov.digitalhealth.lingo.util.SnomedIdentifierUtil;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
 import au.gov.digitalhealth.lingo.validation.AuthoringValidation;
 import au.gov.digitalhealth.tickets.TicketDto;
@@ -766,6 +769,13 @@ public class ProductCreationService {
               }
             });
 
+    // Before any concept is written, and after the cleanup above has settled which nodes are
+    // creates and which are edits. Property-only updates are written by the very next call, so
+    // validating later (or only over nodeCreateOrder, which excludes them) would be both too narrow
+    // and too late. Note the blob-storage upload above has already run — this is the first gate on
+    // terminology writes, not on every side effect in the method.
+    validateSpecifiedIdentifiers(branch, productSummary.getNodes());
+
     updateConceptsWithPropertyOnlyChanges(branch, modelConfiguration, productSummary);
 
     List<Node> nodeCreateOrder =
@@ -1282,9 +1292,9 @@ public class ProductCreationService {
       log.fine("Preallocated identifiers " + String.join(",", preallocatedIdentifiers));
     }
 
-    log.fine("Validating specified identifiers");
-    // check if any concepts already exist if ids are specified
-    validateSpecifiedIdentifiers(branch, nodeCreateOrder);
+    // Identifier validation deliberately does not happen here — createAndUpdate runs it up front,
+    // over the nodes it will write and before any concept is written, so an invalid request is
+    // rejected without burning reserved identifiers.
     return preallocatedIdentifiers;
   }
 
@@ -1482,24 +1492,171 @@ public class ProductCreationService {
     return namespace;
   }
 
-  private void validateSpecifiedIdentifiers(String branch, List<Node> nodeCreateOrder) {
+  /**
+   * Concept ids the concepts about to be written point at, which must already exist on the branch:
+   * the defining targets in each new concept's axioms, and the targets of its non-defining
+   * relationships (e.g. "has marketing authorisation holder").
+   *
+   * <p>Normally the UI has gated these already, but a product saved against one task and later
+   * replayed onto another carries its targets verbatim from the saved atomic data — they were
+   * resolved against whichever branch was current when the field was filled in. If a target was
+   * authored on the original task and never promoted it does not exist on the new one, and the
+   * create writes a relationship to a concept that isn't there. That surfaces much later as a task
+   * validation failure, a long way from the cause.
+   *
+   * <p>Scoped to the nodes this request will actually write, per {@link
+   * #isWrittenByThisRequest(Node)} — which is wider than {@code nodeCreateOrder} (a property-only
+   * update never reaches that list) but deliberately narrower than the whole product summary.
+   * {@code NodeGeneratorService} reloads every existing node's non-defining properties from the
+   * branch on each calculate, so an untouched node faithfully reproduces whatever dangling
+   * reference the branch already had. Validating those would veto an unrelated edit over a
+   * pre-existing data problem the author is not touching; detecting and tidying that is {@code
+   * DanglingReferenceService}'s job.
+   *
+   * <p>Only extension SCTIDs are returned: international-namespace content cannot be present on one
+   * task branch and absent from another, so checking it would be wasted work. Targets this same
+   * request is creating are excluded — they are satisfied by the create itself, not by the branch —
+   * as are the negative placeholders standing in for them before identifiers are allocated.
+   */
+  private static Set<String> collectReferencedConceptIds(Collection<Node> nodes) {
+    Set<String> pendingIds = new HashSet<>();
+    for (Node node : nodes) {
+      pendingIds.add(node.getConceptId());
+      if (node.getNewConceptDetails() != null) {
+        pendingIds.add(node.getNewConceptDetails().getSpecifiedConceptId());
+      }
+    }
+
+    Set<String> referenced = new HashSet<>();
+    for (Node node : nodes) {
+      if (!isWrittenByThisRequest(node)) {
+        continue;
+      }
+      NewConceptDetails newConceptDetails = node.getNewConceptDetails();
+      if (newConceptDetails != null) {
+        for (SnowstormAxiom axiom : newConceptDetails.getAxioms()) {
+          if (axiom.getRelationships() != null) {
+            axiom.getRelationships().forEach(r -> addReferencedTarget(referenced, pendingIds, r));
+          }
+        }
+        // nonDefiningProperties carries no @NotNull, unlike axioms, so an explicit null in the
+        // request JSON survives the bind and overwrites the field initializer.
+        if (newConceptDetails.getNonDefiningProperties() != null) {
+          newConceptDetails
+              .getNonDefiningProperties()
+              .forEach(r -> addReferencedTarget(referenced, pendingIds, r));
+        }
+      }
+
+      // Both shapes have to be walked, because which one holds the targets depends on the
+      // operation. A node carries either `concept` or `newConceptDetails`, never both
+      // (@OnlyOnePopulated), so a create or a concept edit — both of which have newConceptDetails —
+      // is covered by the branch above. A property-only update has `concept != null` and therefore
+      // no newConceptDetails at all: its targets live only here, on the node, which is what
+      // updateConceptsWithPropertyOnlyChanges writes from. Walking newConceptDetails alone let
+      // property-only updates through unchecked.
+      if (node.getNonDefiningProperties() != null) {
+        for (NonDefiningProperty property :
+            NonDefiningProperty.filter(node.getNonDefiningProperties())) {
+          addReferencedId(
+              referenced,
+              pendingIds,
+              property.getValueObject() == null ? null : property.getValueObject().getConceptId());
+        }
+      }
+    }
+    return referenced;
+  }
+
+  /**
+   * True for a node this request may write: everything {@code nodeCreateOrder} covers, plus
+   * property-only updates, which {@link #updateConceptsWithPropertyOnlyChanges} writes without them
+   * ever reaching that list. A node the request leaves alone is excluded — see {@link
+   * #collectReferencedConceptIds(Collection)} for why validating those would do more harm than
+   * good.
+   */
+  private static boolean isWrittenByThisRequest(Node node) {
+    return node.isConceptEdit()
+        || node.isNewConcept()
+        || node.isRetireAndReplace()
+        || node.isRetireAndReplaceWithExisting()
+        || node.isReplaceWithoutRetire()
+        || node.isPropertyUpdate();
+  }
+
+  private static void addReferencedTarget(
+      Set<String> referenced, Set<String> pendingIds, SnowstormRelationship relationship) {
+    // Inactive relationships are not written, and concrete-value relationships have no target.
+    if (Boolean.FALSE.equals(relationship.getActive()) || relationship.getConcreteValue() != null) {
+      return;
+    }
+    addReferencedId(referenced, pendingIds, relationship.getDestinationId());
+  }
+
+  private static void addReferencedId(Set<String> referenced, Set<String> pendingIds, String id) {
+    if (id == null || pendingIds.contains(id) || !SnomedIdentifierUtil.hasNamespace(id)) {
+      return;
+    }
+    referenced.add(id);
+  }
+
+  /**
+   * Validates, in a single Snowstorm lookup, that no identifier this request specifies for a new
+   * concept already exists, and that every concept the request references does.
+   *
+   * <p>Must run before any concept is written, and over every node the request will write rather
+   * than just {@code nodeCreateOrder} — {@link #updateConceptsWithPropertyOnlyChanges} writes
+   * property-only updates before {@code nodeCreateOrder} is even built, so a check confined to that
+   * list would both miss them and run too late.
+   */
+  private void validateSpecifiedIdentifiers(String branch, Collection<Node> nodes) {
     Set<String> idsToCreate =
-        nodeCreateOrder.stream()
+        nodes.stream()
             .filter(n -> n.getNewConceptDetails() != null)
             .map(n -> n.getNewConceptDetails().getSpecifiedConceptId())
             .filter(Objects::nonNull)
             .collect(Collectors.toSet());
 
-    if (!idsToCreate.isEmpty()) {
-      Collection<String> existingConcepts =
-          snowstormClient.conceptIdsThatExist(branch, idsToCreate);
+    Set<String> referencedIds = collectReferencedConceptIds(nodes);
 
-      if (!existingConcepts.isEmpty()) {
-        throw new ProductAtomicDataValidationProblem(
-            "Concepts with ids "
-                + String.join(", ", existingConcepts)
-                + " already exist, cannot create new concepts with the specified ids");
-      }
+    // One lookup answers both questions - the ids we are about to create must NOT exist, and the
+    // ids we reference MUST. Merging them means the dependency check costs no extra round trip on
+    // a create that was already validating specified identifiers, and at worst one id-only query
+    // on a create that wasn't.
+    Set<String> idsToLookUp = new HashSet<>(idsToCreate);
+    idsToLookUp.addAll(referencedIds);
+
+    if (idsToLookUp.isEmpty()) {
+      return;
+    }
+
+    Collection<String> existingConcepts = snowstormClient.conceptIdsThatExist(branch, idsToLookUp);
+
+    String alreadyExist =
+        idsToCreate.stream()
+            .filter(existingConcepts::contains)
+            .sorted()
+            .collect(Collectors.joining(", "));
+    if (!alreadyExist.isEmpty()) {
+      throw new ProductAtomicDataValidationProblem(
+          "Concepts with ids "
+              + alreadyExist
+              + " already exist, cannot create new concepts with the specified ids");
+    }
+
+    String missingReferences =
+        referencedIds.stream()
+            .filter(id -> !existingConcepts.contains(id))
+            .sorted()
+            .collect(Collectors.joining(", "));
+    if (!missingReferences.isEmpty()) {
+      throw new ProductAtomicDataValidationProblem(
+          "Concepts with ids "
+              + missingReferences
+              + " are referenced by this product but do not exist on branch "
+              + branch
+              + ". This usually means the product was authored against a different task - the"
+              + " referenced concepts must be promoted or reselected before it can be saved here.");
     }
   }
 

@@ -68,6 +68,11 @@ interface AuthoringStoreConfig {
   setForceNavigation: (bool: boolean) => void;
   previewErrorKeys: string[];
   setPreviewErrorKeys: (errorKeys: string[]) => void;
+  // Concept ids the last pre-save validation resolved as absent from the authoring
+  // branch. Fields read this to flag a stale reference; it is deliberately sourced
+  // from the single batched existence check rather than per-field lookups.
+  missingConceptIds: string[];
+  setMissingConceptIds: (conceptIds: string[]) => void;
   selectedConceptIdentifiers: string[];
   setSelectedConceptIdentifiers: (conceptIds: string[]) => void;
   originalConceptId: string;
@@ -166,6 +171,10 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
   setPreviewErrorKeys: errorKeys => {
     set({ previewErrorKeys: errorKeys });
   },
+  missingConceptIds: [],
+  setMissingConceptIds: conceptIds => {
+    set({ missingConceptIds: conceptIds });
+  },
   setSelectedConceptIdentifiers: conceptIds => {
     set({ selectedConceptIdentifiers: conceptIds });
   },
@@ -179,6 +188,7 @@ const useAuthoringStore = create<AuthoringStoreConfig>()((set, get) => ({
     get().setSearchInputValue('');
     get().setFormContainsData(false);
     get().setForceNavigation(false);
+    get().setMissingConceptIds([]);
   },
   searchInputValue: '',
   setSearchInputValue: value => {

@@ -663,18 +663,15 @@ const ConceptService = {
       const batch = conceptIds.slice(i, i + batchSize);
       batches.push(batch);
     }
-    try {
-      const fetchPromises = batches.map(
-        async conceptIds =>
-          await ConceptService.searchConceptIdsByIds(conceptIds, branch),
-      );
-      const results = await Promise.all(fetchPromises);
-      const filteredConceptIds = results.flatMap(c => c.items);
-      return filteredConceptIds;
-    } catch (error) {
-      console.error('One or more API calls failed:', error);
-    }
-    return [];
+    // Deliberately not caught here. Callers use the result to decide which concepts are
+    // absent from the branch, so swallowing a transient failure and returning an empty
+    // list would report every concept as missing rather than reporting the outage.
+    const fetchPromises = batches.map(
+      async conceptIds =>
+        await ConceptService.searchConceptIdsByIds(conceptIds, branch),
+    );
+    const results = await Promise.all(fetchPromises);
+    return results.flatMap(c => c.items);
   },
 };
 
