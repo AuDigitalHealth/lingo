@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
-## [Unreleased]
+## [1.4.4] - 2026-08-13
 - Additional field types now have a separate display name, used for the labels shown in the ticket edit view and for the additional field column headers in the "Export Backlog to CSV" report. Existing types have their display name backfilled from their name, so nothing changes until a display name is edited. The name remains the identifier and is unchanged.
 - Refined the "Export Backlog to CSV" report (#1828): removed the unused "Ticket Type" column and the "Label Date Added" columns option; export columns can now be dragged into any order in the Column Preview, with the chosen order saved as part of each export preset; and the Additional Fields and External Requestors selectors gained "Select all" / "Clear" controls.
 - Fixed the "date requested" date picker for external requestors (both the backlog "Add External Requestor" dialog and the ticket edit view) displaying in MM/DD/YYYY; it now shows DD/MM/YYYY.
@@ -18,7 +18,6 @@ The following sections are considered for each release: **Added, Changed, Fixed,
 - Each external requestor association on a ticket now carries a `dateAdded` field (defaulting to today). Users can set the date when adding a requestor via a date picker in the ticket edit view, and can edit it later inline from the ticket detail view.
 - Tickets now have an optional due date field. The due date is editable via a date picker in the ticket edit panel and displayed read-only in the ticket detail view and backlog grid.
 - The create/update external requestor endpoints now bind their request bodies to a DTO instead of the JPA entity, preventing mass assignment of persistence-managed fields (SonarQube java:S4684).
-- No updates yet.
 ### Added
 
 ### Changed
