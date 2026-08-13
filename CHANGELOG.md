@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
+## [Unreleased]
+- No updates yet.
+
+
 ## [1.4.4] - 2026-08-13
 - Additional field types now have a separate display name, used for the labels shown in the ticket edit view and for the additional field column headers in the "Export Backlog to CSV" report. Existing types have their display name backfilled from their name, so nothing changes until a display name is edited. The name remains the identifier and is unchanged.
 - Refined the "Export Backlog to CSV" report (#1828): removed the unused "Ticket Type" column and the "Label Date Added" columns option; export columns can now be dragged into any order in the Column Preview, with the chosen order saved as part of each export preset; and the Additional Fields and External Requestors selectors gained "Select all" / "Clear" controls.
