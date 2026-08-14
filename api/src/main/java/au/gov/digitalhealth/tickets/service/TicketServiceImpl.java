@@ -1551,23 +1551,55 @@ public class TicketServiceImpl implements TicketService {
 
   private void addExternalRequestorsToTicket(
       Ticket ticketToSave, Set<TicketExternalRequestorDto> requestorDtos) {
-    ticketToSave.getTicketExternalRequestors().clear();
+    reconcileExternalRequestors(ticketToSave, requestorDtos, externalRequestorRepository::findById);
+  }
+
+  /**
+   * Makes a ticket's external requestor associations match requestorDtos, updating the rows that
+   * are still wanted rather than clearing the lot and recreating them.
+   *
+   * <p>Clear-then-recreate does not work here. TicketExternalRequestor's id is IDENTITY generated,
+   * so Hibernate has to run the insert for a re-added association the moment it is persisted and
+   * cannot defer it behind the orphan deletes the clear queued up. Any flush in between - an
+   * autoflush triggered by the next repository lookup is enough - then fails on
+   * uq_ticket_external_requestors (ticket_id, external_requestor_id). Reconciling also keeps each
+   * surviving row's id, audit columns and Envers history instead of churning them on every update.
+   *
+   * @param newRequestorResolver resolves the ExternalRequestor for an id the ticket doesn't already
+   *     have; an empty Optional skips that requestor
+   */
+  private void reconcileExternalRequestors(
+      Ticket ticketToSave,
+      Set<TicketExternalRequestorDto> requestorDtos,
+      Function<Long, Optional<ExternalRequestor>> newRequestorResolver) {
+
+    Map<Long, TicketExternalRequestorDto> wanted = new HashMap<>();
     if (requestorDtos != null) {
-      requestorDtos.forEach(
-          dto -> {
-            Optional<ExternalRequestor> existingExternalRequestor =
-                externalRequestorRepository.findById(dto.externalRequestorId());
-            if (existingExternalRequestor.isPresent()) {
-              TicketExternalRequestor ter =
-                  TicketExternalRequestor.builder()
-                      .ticket(ticketToSave)
-                      .externalRequestor(existingExternalRequestor.get())
-                      .dateRequested(dto.dateRequested())
-                      .build();
-              ticketToSave.getTicketExternalRequestors().add(ter);
-            }
-          });
+      requestorDtos.forEach(dto -> wanted.putIfAbsent(dto.externalRequestorId(), dto));
     }
+
+    Set<TicketExternalRequestor> associations = ticketToSave.getTicketExternalRequestors();
+    associations.removeIf(
+        association -> !wanted.containsKey(association.getExternalRequestor().getId()));
+    // Each association left is wanted, so the remove below always finds its dto. Taking it out of
+    // the map as we go leaves only the requestors the ticket doesn't have yet.
+    associations.forEach(
+        association ->
+            association.setDateRequested(
+                wanted.remove(association.getExternalRequestor().getId()).dateRequested()));
+
+    wanted.forEach(
+        (externalRequestorId, dto) ->
+            newRequestorResolver
+                .apply(externalRequestorId)
+                .ifPresent(
+                    externalRequestor ->
+                        associations.add(
+                            TicketExternalRequestor.builder()
+                                .ticket(ticketToSave)
+                                .externalRequestor(externalRequestor)
+                                .dateRequested(dto.dateRequested())
+                                .build())));
   }
 
   private void addStateToTicket(Ticket ticketToSave, Ticket existingTicket) {
@@ -2212,28 +2244,17 @@ public class TicketServiceImpl implements TicketService {
 
     // Handle External Requestors
     if (ticketDto.getExternalRequestors().isPresent()) {
-      Set<TicketExternalRequestorDto> requestorDtos = ticketDto.getExternalRequestors().get();
-      existingTicket.getTicketExternalRequestors().clear();
-      if (requestorDtos != null && !requestorDtos.isEmpty()) {
-        requestorDtos.stream()
-            .map(
-                requestorDto -> {
-                  ExternalRequestor er =
-                      externalRequestorRepository
-                          .findById(requestorDto.externalRequestorId())
-                          .orElseThrow(
-                              () ->
-                                  new ResourceNotFoundProblem(
-                                      "ExternalRequestor not found with id: "
-                                          + requestorDto.externalRequestorId()));
-                  return TicketExternalRequestor.builder()
-                      .ticket(existingTicket)
-                      .externalRequestor(er)
-                      .dateRequested(requestorDto.dateRequested())
-                      .build();
-                })
-            .forEach(existingTicket.getTicketExternalRequestors()::add);
-      }
+      reconcileExternalRequestors(
+          existingTicket,
+          ticketDto.getExternalRequestors().get(),
+          externalRequestorId ->
+              Optional.of(
+                  externalRequestorRepository
+                      .findById(externalRequestorId)
+                      .orElseThrow(
+                          () ->
+                              new ResourceNotFoundProblem(
+                                  "ExternalRequestor not found with id: " + externalRequestorId))));
     }
 
     // Handle JSON Fields

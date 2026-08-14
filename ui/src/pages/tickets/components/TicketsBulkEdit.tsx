@@ -25,9 +25,9 @@ import {
   Ticket,
 } from '../../../types/tickets/ticket';
 import { JiraUser } from '../../../types/JiraUserResponse';
+import { Dispatch, SetStateAction } from 'react';
 import { Button } from 'primereact/button';
 import { useBulkCreateTickets } from '../../../hooks/api/tickets/useUpdateTicket.tsx';
-import { useRef } from 'react';
 import { AvatarUrls } from '../../../types/JiraUserResponse';
 import { useAllTasks } from '../../../hooks/api/task/useAllTasks';
 import {
@@ -39,6 +39,8 @@ import {
   useAllStates,
 } from '../../../hooks/api/useInitializeTickets.tsx';
 import { useJiraUsers } from '../../../hooks/api/useInitializeJiraUsers.tsx';
+import { externalRequestorExistsOnTicket } from '../../../utils/helpers/tickets/labelUtils.ts';
+import { toTicketExternalRequestorDto } from '../../../utils/helpers/tickets/externalRequestorUtils.ts';
 
 const defaultValues: TicketBulkEditForm = {
   priorityBucket: null,
@@ -99,11 +101,13 @@ interface TicketBulkEditForm {
 interface TicketsBulkEditProps {
   tickets: Ticket[] | null;
   setTableLoading: (val: boolean) => void;
+  setSelectedTickets: Dispatch<SetStateAction<Ticket[] | null>>;
 }
 
 export default function TicketsBulkEdit({
   tickets,
   setTableLoading,
+  setSelectedTickets,
 }: TicketsBulkEditProps) {
   const { availableStates } = useAllStates();
   const { labels } = useAllLabels();
@@ -126,20 +130,26 @@ export default function TicketsBulkEdit({
   });
 
   const mutation = useBulkCreateTickets();
-  const { data, isPending } = mutation;
+  const { isPending } = mutation;
 
   setTableLoading(isPending);
 
-  const previousDataRef = useRef<Ticket[] | undefined>();
-
-  if (data && data !== previousDataRef.current) {
-    mergeTickets(data);
-    previousDataRef.current = data;
-  }
-
   const onSubmit = (data: TicketBulkEditForm) => {
     const updatedTickets = updateTickets(tickets as Ticket[], data);
-    mutation.mutate({ tickets: updatedTickets });
+    mutation.mutate(
+      { tickets: updatedTickets },
+      {
+        onSuccess: savedTickets => {
+          mergeTickets(savedTickets);
+          // The selection is a snapshot taken when the rows were ticked, and every edit in this
+          // session is applied to it rather than to the grid's data. Left stale, a second edit
+          // would be calculated from the ticket as it was before the first one was saved.
+          setSelectedTickets(current =>
+            applySavedTickets(current, savedTickets),
+          );
+        },
+      },
+    );
   };
 
   const priorityBucketOptions = [clearPriority, ...priorityBuckets];
@@ -381,72 +391,96 @@ export default function TicketsBulkEdit({
   );
 }
 
+/**
+ * Folds the saved tickets back over the selection. The bulk endpoint answers with
+ * TicketBacklogDto, which carries only the fields the backlog shows, so the saved values are
+ * spread over the selected ticket rather than replacing it — that keeps the fields it doesn't
+ * carry (comments, products, additional fields) on the selected rows.
+ */
+const applySavedTickets = (
+  selectedTickets: Ticket[] | null,
+  savedTickets: Ticket[],
+): Ticket[] | null => {
+  if (selectedTickets === null) return null;
+  const savedById = new Map(savedTickets.map(ticket => [ticket.id, ticket]));
+  return selectedTickets.map(ticket => {
+    const saved = savedById.get(ticket.id);
+    return saved ? { ...ticket, ...saved } : ticket;
+  });
+};
+
 const updateTickets = (tickets: Ticket[], values: TicketBulkEditForm) => {
-  const updatedTickets = [...tickets].map(ticket => {
+  const updatedTickets = tickets.map(ticket => {
+    const updatedTicket: Ticket = { ...ticket };
     if (values.priorityBucket) {
-      ticket.priorityBucket =
+      updatedTicket.priorityBucket =
         values.priorityBucket.name === DELETE ? null : values.priorityBucket;
     }
     if (values.schedule) {
-      ticket.schedule =
+      updatedTicket.schedule =
         values.schedule.name === DELETE ? null : values.schedule;
     }
     if (values.iteration) {
-      ticket.iteration =
+      updatedTicket.iteration =
         values.iteration.name === DELETE ? null : values.iteration;
     }
     if (values.state) {
-      ticket.state = values.state.label === DELETE ? null : values.state;
+      updatedTicket.state = values.state.label === DELETE ? null : values.state;
     }
     if (values.labels.length > 0) {
-      values.labels.forEach(newLabel => {
-        if (
-          !ticket.labels.some(existingLabel => existingLabel.id === newLabel.id)
-        ) {
-          ticket.labels.push(newLabel);
-        }
-      });
+      const labelsToAdd = values.labels.filter(
+        newLabel =>
+          !updatedTicket.labels.some(
+            existingLabel => existingLabel.id === newLabel.id,
+          ),
+      );
+      updatedTicket.labels = [...updatedTicket.labels, ...labelsToAdd];
     }
     if (values.labelsToRemove.length > 0) {
-      ticket.labels = ticket.labels.filter(
+      updatedTicket.labels = updatedTicket.labels.filter(
         label => !values.labelsToRemove.some(r => r.id === label.id),
       );
     }
     if (values.externalRequestors.length > 0) {
-      values.externalRequestors.forEach(newRequestor => {
-        if (
-          !ticket.externalRequestors.some(
-            existingRequestor => existingRequestor.id === newRequestor.id,
-          )
-        ) {
-          ticket.externalRequestors.push(newRequestor);
-        }
-      });
+      const requestorsToAdd = values.externalRequestors
+        .filter(
+          newRequestor =>
+            !externalRequestorExistsOnTicket(updatedTicket, newRequestor),
+        )
+        .map(toTicketExternalRequestorDto);
+      updatedTicket.externalRequestors = [
+        ...updatedTicket.externalRequestors,
+        ...requestorsToAdd,
+      ];
     }
     if (values.externalRequestorsToRemove.length > 0) {
-      ticket.externalRequestors = ticket.externalRequestors.filter(
-        requestor =>
-          !values.externalRequestorsToRemove.some(r => r.id === requestor.id),
-      );
+      updatedTicket.externalRequestors =
+        updatedTicket.externalRequestors.filter(
+          requestor =>
+            !values.externalRequestorsToRemove.some(
+              r => r.id === requestor.externalRequestorId,
+            ),
+        );
     }
     if (
       values.task &&
-      ((ticket.taskAssociation === null && values.task !== DELETE) ||
-        ticket.taskAssociation?.taskId !== values.task)
+      ((updatedTicket.taskAssociation === null && values.task !== DELETE) ||
+        updatedTicket.taskAssociation?.taskId !== values.task)
     ) {
       const association = {
-        ticketId: ticket.id,
+        ticketId: updatedTicket.id,
         taskId: values.task,
         id: undefined,
       };
-      ticket.taskAssociation = values.task === DELETE ? null : association;
+      updatedTicket.taskAssociation =
+        values.task === DELETE ? null : association;
     }
 
     if (values.assignee) {
-      ticket.assignee =
+      updatedTicket.assignee =
         values.assignee.displayName === DELETE ? null : values.assignee.name;
     }
-    return ticket;
+    return updatedTicket;
   });
   return updatedTickets;
 };

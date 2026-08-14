@@ -14,7 +14,10 @@
 /// limitations under the License.
 ///
 
-import { ExternalRequestor } from '../../../types/tickets/ticket';
+import {
+  ExternalRequestor,
+  TicketExternalRequestorDto,
+} from '../../../types/tickets/ticket';
 
 export const getExternalRequestorByName = (
   externalRequestorName: string,
@@ -26,4 +29,20 @@ export const getExternalRequestorByName = (
       externalRequestorName.toLocaleLowerCase()
     );
   });
+};
+
+/**
+ * A ticket carries its external requestors as TicketExternalRequestorDto, which is keyed
+ * by externalRequestorId (the id of the ExternalRequestor) rather than by its own id.
+ * Selection controls hand back ExternalRequestor, so convert before adding one to a ticket.
+ */
+export const toTicketExternalRequestorDto = (
+  externalRequestor: ExternalRequestor,
+): TicketExternalRequestorDto => {
+  return {
+    externalRequestorId: externalRequestor.id,
+    name: externalRequestor.name,
+    description: externalRequestor.description,
+    displayColor: externalRequestor.displayColor,
+  };
 };

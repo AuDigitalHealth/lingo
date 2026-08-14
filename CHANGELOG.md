@@ -8,7 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
+### Added
+
+### Changed
+
+### Fixed
+- Fixed updating a ticket that already has an external requestor failing with an internal server error (`duplicate key value violates unique constraint "uq_ticket_external_requestors"`). Saving a ticket rebuilt its external requestor associations by deleting them all and recreating them, and the recreated rows were written before the deletes, colliding with the rows still in the table. The associations are now reconciled in place, which also stops each save churning their audit history. Affects the backlog bulk update as well as the single-ticket update and patch endpoints. (#1780)
+- Fixed bulk-editing tickets from the backlog failing with a "Malformed JSON request" error whenever an external requestor was added. The bulk edit sent the selected external requestor as-is, but a ticket carries its external requestors keyed by `externalRequestorId` rather than by their own `id`, so the server rejected the request. The same mismatch also meant a requestor already on a ticket was added a second time, and that "external requestors to remove" silently did nothing; both now work. (#1780)
+
+### Security
+
+### Deprecated
+
+### Removed
 
 
 ## [1.4.5] - 2026-08-14

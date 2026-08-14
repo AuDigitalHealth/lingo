@@ -286,6 +286,7 @@ export default function TicketsBacklog() {
             <TicketsBulkEdit
               tickets={selectedTickets}
               setTableLoading={setBulkLoading}
+              setSelectedTickets={setSelectedTickets}
             />
           )}
         </Stack>
