@@ -1802,6 +1802,7 @@ public class TicketServiceImpl implements TicketService {
           ticket.setState(stateRepository.findByLabel("Reopened").orElse(ticket.getState()));
         }
         applyMetadataUpdates(ticket, resolvedRequestors, resolvedLabels, ticketMetadata);
+        refreshTgaHash(ticket, ticketMetadata.getDedupeKey());
         Ticket saved = ticketRepository.save(ticket);
         initializeProducts(saved);
         result.add(saved);
@@ -1833,6 +1834,38 @@ public class TicketServiceImpl implements TicketService {
     } catch (ResourceNotFoundProblem ignored) {
       logger.debug("No ticket found with dedupeKey: " + dedupeKey);
       return new ArrayList<>();
+    }
+  }
+
+  /**
+   * Refreshes the ticket's TGA hash field ({@link TicketMinimalDto#TGA_ENTRY_FIELD_NAME}) from
+   * sergio, which owns the ARTG entry shape the hash is computed from. Without this, sergio's own
+   * hash comparison ({@code TicketTgaContainer.compare()}) never sees an existing ticket as
+   * up-to-date, and keeps re-flagging it for update on every TGA sync run. Only this one field is
+   * touched — state/schedule/labels for an existing ticket are handled by {@link
+   * #applyMetadataUpdates}. Only called for an existing ticket reached via the update path, so the
+   * field is expected to already be present. Best-effort: sergio being unreachable shouldn't fail
+   * the ticket update.
+   */
+  private void refreshTgaHash(Ticket ticket, String artgId) {
+    try {
+      TicketDto sergioTicketDto = sergioService.getTicketByArtgEntryId(Long.valueOf(artgId));
+      if (sergioTicketDto == null || sergioTicketDto.getJsonFields() == null) {
+        return;
+      }
+      Optional<JsonFieldDto> tgaEntryFieldDto =
+          sergioTicketDto.getJsonFields().stream()
+              .filter(jf -> jf.getName().equals(TicketMinimalDto.TGA_ENTRY_FIELD_NAME))
+              .findFirst();
+      if (tgaEntryFieldDto.isEmpty() || ticket.getJsonFields() == null) {
+        return;
+      }
+      ticket.getJsonFields().stream()
+          .filter(jf -> jf.getName().equals(TicketMinimalDto.TGA_ENTRY_FIELD_NAME))
+          .findFirst()
+          .ifPresent(existing -> jsonFieldMapper.partialUpdate(tgaEntryFieldDto.get(), existing));
+    } catch (Exception e) {
+      logger.warn("Failed to refresh TGA hash field for artgId " + artgId + " from sergio", e);
     }
   }
 

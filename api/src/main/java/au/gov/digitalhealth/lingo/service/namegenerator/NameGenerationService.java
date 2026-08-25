@@ -152,6 +152,15 @@ public class NameGenerationService {
 
     FsnAndPt result = generator.apply(spec);
 
+    if ((result.getFSN() == null || result.getFSN().isBlank())
+        || (result.getPT() == null || result.getPT().isBlank())) {
+      log.warning(
+          "Name generator returned a null/blank FSN or PT for spec: "
+              + spec
+              + " - result was: "
+              + result);
+    }
+
     if (log.isLoggable(Level.FINE)) {
       log.fine("NameGeneratorSpec: " + spec);
       log.fine("Result: " + result);
