@@ -66,11 +66,8 @@ public class ExportService {
   private static final String ER_POSITIONAL_ORDER_KEY = "__erPositional__";
   // The one column whose value comes from audit history rather than the ticket itself.
   private static final String CLOSED_DATE_KEY = "closedDate";
-  private static final ZoneId BRISBANE_ZONE = ZoneId.of("Australia/Brisbane");
   private static final DateTimeFormatter LOCAL_DATE_FORMAT =
       DateTimeFormatter.ofPattern("dd/MM/yyyy");
-  private static final DateTimeFormatter FILENAME_TIMESTAMP_FORMAT =
-      DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss").withZone(BRISBANE_ZONE);
   final TicketRepository ticketRepository;
   final LabelRepository labelRepository;
   final IterationRepository iterationRepository;
@@ -78,6 +75,11 @@ public class ExportService {
   final TicketAuditRepository ticketAuditRepository;
   final ExternalRequestorRepository externalRequestorRepository;
   final AdditionalFieldTypeRepository additionalFieldTypeRepository;
+
+  /** The zone whose calendar day the exported dates and the filename timestamp are rendered in. */
+  private final ZoneId businessZoneId;
+
+  private final DateTimeFormatter filenameTimestampFormat;
 
   @Autowired
   public ExportService(
@@ -87,7 +89,8 @@ public class ExportService {
       StateRepository stateRepository,
       TicketAuditRepository ticketAuditRepository,
       ExternalRequestorRepository externalRequestorRepository,
-      AdditionalFieldTypeRepository additionalFieldTypeRepository) {
+      AdditionalFieldTypeRepository additionalFieldTypeRepository,
+      ZoneId businessZoneId) {
     this.ticketRepository = ticketRepository;
     this.labelRepository = labelRepository;
     this.iterationRepository = iterationRepository;
@@ -95,6 +98,9 @@ public class ExportService {
     this.ticketAuditRepository = ticketAuditRepository;
     this.externalRequestorRepository = externalRequestorRepository;
     this.additionalFieldTypeRepository = additionalFieldTypeRepository;
+    this.businessZoneId = businessZoneId;
+    this.filenameTimestampFormat =
+        DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss").withZone(businessZoneId);
   }
 
   @Transactional
@@ -132,7 +138,8 @@ public class ExportService {
 
     tickets.addAll(otherTickets);
 
-    InputStreamResource inputStream = new InputStreamResource(CsvUtils.createAdhaCsv(tickets));
+    InputStreamResource inputStream =
+        new InputStreamResource(CsvUtils.createAdhaCsv(tickets, businessZoneId));
 
     return ResponseEntity.ok()
         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
@@ -143,14 +150,14 @@ public class ExportService {
   @Transactional
   public ResponseEntity<InputStreamResource> backlogCsvExport(BacklogExportRequest request) {
 
-    String filename = "SnomioBacklog_" + FILENAME_TIMESTAMP_FORMAT.format(Instant.now()) + ".csv";
+    String filename = "SnomioBacklog_" + filenameTimestampFormat.format(Instant.now()) + ".csv";
 
     BacklogExportOptions options = resolveOptions(request);
     SearchConditionBody body = options.body();
     List<SearchCondition> searchConditions = body != null ? body.getSearchConditions() : null;
 
     Predicate predicate =
-        TicketPredicateBuilder.buildPredicateFromSearchConditions(searchConditions);
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(searchConditions, businessZoneId);
 
     List<Long> ids =
         ticketRepository.findAllIdsByPredicate(predicate, Sort.unsorted(), searchConditions);
@@ -219,7 +226,8 @@ public class ExportService {
     // Static columns (all except closedDate, which requires an audit query)
     List<String> staticKeys =
         options.selectedColumns().stream().filter(k -> !CLOSED_DATE_KEY.equals(k)).toList();
-    List<CsvUtils.ColumnDef> allColumns = new ArrayList<>(CsvUtils.resolveColumns(staticKeys));
+    List<CsvUtils.ColumnDef> allColumns =
+        new ArrayList<>(CsvUtils.resolveColumns(staticKeys, businessZoneId));
 
     if (options.selectedColumns().contains(CLOSED_DATE_KEY)) {
       allColumns.add(closedDateColumn(ids));
@@ -237,7 +245,7 @@ public class ExportService {
     return CsvUtils.columnDef(
         CLOSED_DATE_KEY,
         "Closed Date",
-        t -> AdditionalFieldUtils.formatDate(closedDates.get(t.getId())));
+        t -> AdditionalFieldUtils.formatDate(closedDates.get(t.getId()), businessZoneId));
   }
 
   /**
@@ -262,7 +270,9 @@ public class ExportService {
           CsvUtils.columnDef(
               "af_" + fieldName,
               displayNames.getOrDefault(fieldName, fieldName),
-              t -> AdditionalFieldUtils.findValueByAdditionalFieldName(fieldName, t)));
+              t ->
+                  AdditionalFieldUtils.findValueByAdditionalFieldName(
+                      fieldName, t, businessZoneId)));
     }
   }
 
@@ -282,10 +292,12 @@ public class ExportService {
     for (String erName : erColumns) {
       allColumns.add(erPresenceColumn(erName));
       if (options.erDateRequested()) {
-        allColumns.add(erDateRequestedColumn(erName));
+        allColumns.add(erDateRequestedColumn(erName, businessZoneId));
       }
       if (options.erDateAdded()) {
-        allColumns.add(erDateAddedColumn(erName, erAuditDateMap.getOrDefault(erName, Map.of())));
+        allColumns.add(
+            erDateAddedColumn(
+                erName, erAuditDateMap.getOrDefault(erName, Map.of()), businessZoneId));
       }
     }
   }
@@ -302,7 +314,7 @@ public class ExportService {
   }
 
   /** Falls back to the association's created timestamp when no requested date was recorded. */
-  private static CsvUtils.ColumnDef erDateRequestedColumn(String erName) {
+  private static CsvUtils.ColumnDef erDateRequestedColumn(String erName, ZoneId zoneId) {
     return CsvUtils.columnDef(
         "er_dateRequested_" + erName,
         erName + " Date Requested",
@@ -310,24 +322,24 @@ public class ExportService {
             t.getTicketExternalRequestors().stream()
                 .filter(ter -> ter.getExternalRequestor().getName().equals(erName))
                 .findFirst()
-                .map(ExportService::formatDateRequested)
+                .map(ter -> formatDateRequested(ter, zoneId))
                 .orElse(""));
   }
 
-  private static String formatDateRequested(TicketExternalRequestor ter) {
+  private static String formatDateRequested(TicketExternalRequestor ter, ZoneId zoneId) {
     LocalDate date = ter.getDateRequested();
     if (date == null && ter.getCreated() != null) {
-      date = ter.getCreated().atZone(BRISBANE_ZONE).toLocalDate();
+      date = ter.getCreated().atZone(zoneId).toLocalDate();
     }
     return date != null ? date.format(LOCAL_DATE_FORMAT) : "";
   }
 
   private static CsvUtils.ColumnDef erDateAddedColumn(
-      String erName, Map<Long, Instant> datesForEr) {
+      String erName, Map<Long, Instant> datesForEr, ZoneId zoneId) {
     return CsvUtils.columnDef(
         "er_dateAdded_" + erName,
         erName + " Added Date",
-        t -> AdditionalFieldUtils.formatDate(datesForEr.get(t.getId())));
+        t -> AdditionalFieldUtils.formatDate(datesForEr.get(t.getId()), zoneId));
   }
 
   /**

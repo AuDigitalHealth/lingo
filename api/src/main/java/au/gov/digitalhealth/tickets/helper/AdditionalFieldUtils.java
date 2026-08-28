@@ -31,7 +31,8 @@ public class AdditionalFieldUtils {
 
   private AdditionalFieldUtils() {}
 
-  public static String findValueByAdditionalFieldName(String additionalFieldName, Ticket ticket) {
+  public static String findValueByAdditionalFieldName(
+      String additionalFieldName, Ticket ticket, ZoneId zoneId) {
     Optional<AdditionalFieldValue> afv =
         ticket.getAdditionalFieldValues().stream()
             .filter(
@@ -42,26 +43,28 @@ public class AdditionalFieldUtils {
                         .equals(additionalFieldName))
             .findFirst();
 
-    return afv.map(AdditionalFieldUtils::formatAdditionalFieldValue).orElse("");
+    return afv.map(value -> formatAdditionalFieldValue(value, zoneId)).orElse("");
   }
 
-  public static String formatAdditionalFieldValue(AdditionalFieldValue afv) {
+  public static String formatAdditionalFieldValue(AdditionalFieldValue afv, ZoneId zoneId) {
     if (afv.getAdditionalFieldType().getType() == Type.DATE) {
       Instant instant = Instant.parse(afv.getValueOf());
 
-      return formatDate(instant);
+      return formatDate(instant, zoneId);
     }
 
     return afv.getValueOf();
   }
 
-  public static String formatDate(Instant instant) {
+  /**
+   * Renders an instant as a {@code dd/MM/yyyy} calendar date.
+   *
+   * @param zoneId the zone that decides which calendar day the instant falls on
+   */
+  public static String formatDate(Instant instant, ZoneId zoneId) {
     if (instant == null) return "";
 
-    DateTimeFormatter dtFormatter =
-        DateTimeFormatter.ofPattern("dd/MM/yyyy").withZone(ZoneId.of("Australia/Brisbane"));
-
-    return dtFormatter.format(instant);
+    return DateTimeFormatter.ofPattern("dd/MM/yyyy").withZone(zoneId).format(instant);
   }
 
   // formats yyyyMMdd

@@ -460,9 +460,12 @@ public class TicketControllerContainerTest extends TicketTestBaseContainer {
     Assertions.assertTrue(
         pbsTicket.getLabels().stream().anyMatch(label -> label.getName().equals("PBSRequest")));
 
-    // Absent dateRequested falls back to today rather than being left null
+    // Absent dateRequested falls back to today rather than being left null. "Today" is the
+    // configured business zone's calendar day, which is what the service uses; asserting against
+    // the JVM default zone instead fails every build that runs at or after 14:00 UTC, when UTC and
+    // Australia/Brisbane are on different dates.
     Assertions.assertEquals(
-        LocalDate.now(),
+        LocalDate.now(getBusinessZoneId()),
         pbsTicket.getExternalRequestors().stream()
             .filter(requestor -> requestor.name().equals("PBS"))
             .findAny()

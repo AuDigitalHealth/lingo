@@ -28,7 +28,6 @@ import { MainBody } from './MainBody.tsx';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
-dayjs.tz.setDefault('Australia/Brisbane');
 initializeOpenTelemetry();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(<MainBody />);

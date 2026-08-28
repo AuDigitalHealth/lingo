@@ -25,6 +25,7 @@ import au.gov.digitalhealth.tickets.models.Ticket;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.util.List;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -33,6 +34,8 @@ import org.junit.jupiter.api.Test;
 
 class CsvUtilsTest {
 
+  private static final ZoneId BRISBANE = ZoneId.of("Australia/Brisbane");
+
   // ---------------------------------------------------------------------------
   // resolveColumns
   // ---------------------------------------------------------------------------
@@ -40,7 +43,7 @@ class CsvUtilsTest {
   @Test
   void resolveColumns_returnsMatchingColumnsInSelectedOrder() {
     List<CsvUtils.ColumnDef> cols =
-        CsvUtils.resolveColumns(List.of("status", "ticketNumber", "priority"));
+        CsvUtils.resolveColumns(List.of("status", "ticketNumber", "priority"), BRISBANE);
 
     assertThat(cols)
         .extracting(CsvUtils.ColumnDef::key)
@@ -50,14 +53,14 @@ class CsvUtilsTest {
   @Test
   void resolveColumns_skipsUnknownKeys() {
     List<CsvUtils.ColumnDef> cols =
-        CsvUtils.resolveColumns(List.of("ticketNumber", "unknownKey", "status"));
+        CsvUtils.resolveColumns(List.of("ticketNumber", "unknownKey", "status"), BRISBANE);
 
     assertThat(cols).extracting(CsvUtils.ColumnDef::key).containsExactly("ticketNumber", "status");
   }
 
   @Test
   void resolveColumns_returnsEmptyListForEmptyInput() {
-    assertThat(CsvUtils.resolveColumns(List.of())).isEmpty();
+    assertThat(CsvUtils.resolveColumns(List.of(), BRISBANE)).isEmpty();
   }
 
   // ---------------------------------------------------------------------------
@@ -79,7 +82,8 @@ class CsvUtilsTest {
 
   @Test
   void createBacklogCsv_writesHeaderRow() throws IOException {
-    List<CsvUtils.ColumnDef> cols = CsvUtils.resolveColumns(List.of("ticketNumber", "status"));
+    List<CsvUtils.ColumnDef> cols =
+        CsvUtils.resolveColumns(List.of("ticketNumber", "status"), BRISBANE);
 
     String csv = toCsv(CsvUtils.createBacklogCsv(List.of(), cols));
     try (CSVParser parser = CSVParser.parse(csv, CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
@@ -94,7 +98,7 @@ class CsvUtilsTest {
     Ticket t2 = new Ticket();
     t2.setTicketNumber("SNOMIO-2");
 
-    List<CsvUtils.ColumnDef> cols = CsvUtils.resolveColumns(List.of("ticketNumber"));
+    List<CsvUtils.ColumnDef> cols = CsvUtils.resolveColumns(List.of("ticketNumber"), BRISBANE);
     String csv = toCsv(CsvUtils.createBacklogCsv(List.of(t1, t2), cols));
 
     try (CSVParser parser = CSVParser.parse(csv, CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
@@ -215,7 +219,7 @@ class CsvUtilsTest {
   }
 
   private static String singleColumnCsv(String columnKey, Ticket ticket) {
-    List<CsvUtils.ColumnDef> cols = CsvUtils.resolveColumns(List.of(columnKey));
+    List<CsvUtils.ColumnDef> cols = CsvUtils.resolveColumns(List.of(columnKey), BRISBANE);
     return toCsv(CsvUtils.createBacklogCsv(List.of(ticket), cols));
   }
 

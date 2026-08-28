@@ -19,9 +19,11 @@ import { queryClient } from './hooks/api/config/useQueryConfig.ts';
 import useApplicationConfigStore from './stores/ApplicationConfigStore.ts';
 import { PendingMutationsProvider } from './pages/products/components/reviews/PendingMutationsProvider.tsx';
 
+// The utc and timezone plugins are prerequisites for MUI's AdapterDayjs. There is deliberately no
+// dayjs.tz.setDefault here: it only affects dayjs.tz()/.tz() calls, of which this app makes none,
+// so pinning a zone here did nothing except imply that dates were not browser-local. They are.
 dayjs.extend(utc);
 dayjs.extend(timezone);
-dayjs.tz.setDefault('Australia/Brisbane');
 initializeOpenTelemetry();
 
 export const MainBody = () => {

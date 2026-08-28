@@ -16,11 +16,14 @@
 package au.gov.digitalhealth.tickets.helper;
 
 import com.querydsl.core.BooleanBuilder;
+import java.time.ZoneId;
 import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 class TicketPredicateBuilderTest {
+
+  private static final ZoneId BRISBANE = ZoneId.of("Australia/Brisbane");
 
   @Test
   void buildPredicateFromSearchConditions() {
@@ -35,7 +38,8 @@ class TicketPredicateBuilderTest {
             .build();
 
     BooleanBuilder titleBoolean =
-        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(titleSearchCondition));
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(
+            List.of(titleSearchCondition), BRISBANE);
 
     Assertions.assertEquals(
         "containsIc(ticket.title,titleTest)", titleBoolean.getValue().toString());
@@ -61,7 +65,8 @@ class TicketPredicateBuilderTest {
 
     BooleanBuilder titleAndComments =
         TicketPredicateBuilder.buildPredicateFromSearchConditions(
-            List.of(titleSearchCondition, commentSearchCondition, ticketNumberSearchCondition));
+            List.of(titleSearchCondition, commentSearchCondition, ticketNumberSearchCondition),
+            BRISBANE);
     Assertions.assertEquals(
         "containsIc(ticket.title,titleTest) || containsIc(any(ticket.comments).text,commentTest) || containsIc(ticket.ticketNumber,ticketNumberTest)",
         titleAndComments.getValue().toString());
@@ -75,7 +80,8 @@ class TicketPredicateBuilderTest {
             .build();
 
     BooleanBuilder priority =
-        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(prioritySearchCondition));
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(
+            List.of(prioritySearchCondition), BRISBANE);
     Assertions.assertEquals(
         "containsIc(ticket.priorityBucket.name,priorityTest)", priority.getValue().toString());
 
@@ -89,7 +95,8 @@ class TicketPredicateBuilderTest {
             .build();
 
     BooleanBuilder labels =
-        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(labelSearchCondition));
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(
+            List.of(labelSearchCondition), BRISBANE);
     Assertions.assertEquals("any(ticket.labels).name = labelsTest", labels.getValue().toString());
 
     SearchCondition externalRequestorSearchCondition =
@@ -102,7 +109,7 @@ class TicketPredicateBuilderTest {
 
     BooleanBuilder externalRequestor =
         TicketPredicateBuilder.buildPredicateFromSearchConditions(
-            List.of(externalRequestorSearchCondition));
+            List.of(externalRequestorSearchCondition), BRISBANE);
     Assertions.assertEquals(
         "any(ticket.ticketExternalRequestors).externalRequestor.name = externalRequestorTest",
         externalRequestor.getValue().toString());
@@ -116,7 +123,8 @@ class TicketPredicateBuilderTest {
             .build();
 
     BooleanBuilder schedule =
-        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(scheduleSearchCondition));
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(
+            List.of(scheduleSearchCondition), BRISBANE);
     Assertions.assertEquals(
         "containsIc(ticket.schedule.name,scheduleTest)", schedule.getValue().toString());
 
@@ -130,7 +138,7 @@ class TicketPredicateBuilderTest {
 
     BooleanBuilder iteration =
         TicketPredicateBuilder.buildPredicateFromSearchConditions(
-            List.of(iterationSearchCondition));
+            List.of(iterationSearchCondition), BRISBANE);
     Assertions.assertEquals(
         "containsIc(ticket.iteration.name,iterationTest)", iteration.getValue().toString());
 
@@ -143,7 +151,8 @@ class TicketPredicateBuilderTest {
             .build();
 
     BooleanBuilder state =
-        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(stateSearchCondition));
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(
+            List.of(stateSearchCondition), BRISBANE);
     Assertions.assertEquals(
         "containsIc(ticket.state.label,stateTest)", state.getValue().toString());
 
@@ -156,7 +165,7 @@ class TicketPredicateBuilderTest {
             .build();
 
     BooleanBuilder task =
-        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(taskCondition));
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(taskCondition), BRISBANE);
     Assertions.assertEquals(
         "containsIc(ticket.taskAssociation.taskId,taskTest)", task.getValue().toString());
 
@@ -169,7 +178,8 @@ class TicketPredicateBuilderTest {
             .build();
 
     BooleanBuilder assignee =
-        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(assigneeCondition));
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(
+            List.of(assigneeCondition), BRISBANE);
     Assertions.assertEquals(
         "ticket.assignee in [assigneeTest1, assigneeTest2]", assignee.getValue().toString());
 
@@ -182,7 +192,8 @@ class TicketPredicateBuilderTest {
             .build();
 
     BooleanBuilder created =
-        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(createdCondition));
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(
+            List.of(createdCondition), BRISBANE);
     Assertions.assertEquals(
         "ticket.created between 2023-12-31T14:00:00Z and 2024-01-03T14:00:00Z",
         created.getValue().toString());
@@ -196,7 +207,8 @@ class TicketPredicateBuilderTest {
             .build();
 
     BooleanBuilder created2 =
-        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(createdCondition2));
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(
+            List.of(createdCondition2), BRISBANE);
     Assertions.assertEquals(
         "ticket.created between 2023-12-31T14:00:00Z and 2024-01-01T13:59:59.999Z",
         created2.getValue().toString());
@@ -214,7 +226,8 @@ class TicketPredicateBuilderTest {
                 stateSearchCondition,
                 taskCondition,
                 assigneeCondition,
-                createdCondition));
+                createdCondition),
+            BRISBANE);
     Assertions.assertEquals(
         "(containsIc(ticket.title,titleTest) || containsIc(ticket.ticketNumber,ticketNumberTest) || containsIc(any(ticket.comments).text,commentTest)) && containsIc(ticket.priorityBucket.name,priorityTest) && containsIc(ticket.schedule.name,scheduleTest) && containsIc(ticket.iteration.name,iterationTest) && containsIc(ticket.state.label,stateTest) && containsIc(ticket.taskAssociation.taskId,taskTest) && ticket.assignee in [assigneeTest1, assigneeTest2] && ticket.created between 2023-12-31T14:00:00Z and 2024-01-03T14:00:00Z",
         together.getValue().toString());
@@ -233,7 +246,8 @@ class TicketPredicateBuilderTest {
             .build();
 
     BooleanBuilder assigneeBoolean =
-        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(assigneeSearchCondition));
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(
+            List.of(assigneeSearchCondition), BRISBANE);
 
     Assertions.assertEquals(
         "ticket.assignee = assignee1 || ticket.assignee is null",
@@ -249,7 +263,7 @@ class TicketPredicateBuilderTest {
 
     BooleanBuilder assigneeBoolean2 =
         TicketPredicateBuilder.buildPredicateFromSearchConditions(
-            List.of(assigneeSearchCondition2));
+            List.of(assigneeSearchCondition2), BRISBANE);
 
     Assertions.assertEquals(
         "ticket.assignee in [assignee1, assignee2] || ticket.assignee is null",
@@ -269,7 +283,8 @@ class TicketPredicateBuilderTest {
             .build();
 
     BooleanBuilder assigneeBoolean =
-        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(createdSearchCondition));
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(
+            List.of(createdSearchCondition), BRISBANE);
 
     Assertions.assertEquals(
         "ticket.created between 2023-10-12T14:00:00Z and 2023-10-13T13:59:59.999Z",
@@ -284,7 +299,8 @@ class TicketPredicateBuilderTest {
             .build();
 
     BooleanBuilder createdBoolean4 =
-        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(createdSearchCondition4));
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(
+            List.of(createdSearchCondition4), BRISBANE);
 
     Assertions.assertEquals(
         "!(ticket.created between 2023-10-12T14:00:00Z and 2023-10-13T13:59:59.999Z)",
@@ -299,7 +315,8 @@ class TicketPredicateBuilderTest {
             .build();
 
     BooleanBuilder createdBoolean2 =
-        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(createdSearchCondition2));
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(
+            List.of(createdSearchCondition2), BRISBANE);
 
     Assertions.assertEquals(
         "ticket.created > 2023-10-13T13:59:59.999Z", createdBoolean2.getValue().toString());
@@ -313,7 +330,8 @@ class TicketPredicateBuilderTest {
             .build();
 
     BooleanBuilder createdBoolean3 =
-        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(createdSearchCondition3));
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(
+            List.of(createdSearchCondition3), BRISBANE);
 
     Assertions.assertEquals(
         "ticket.created < 2023-10-12T14:00:00Z", createdBoolean3.getValue().toString());
@@ -332,7 +350,7 @@ class TicketPredicateBuilderTest {
 
     BooleanBuilder priorityWithoutNull =
         TicketPredicateBuilder.buildPredicateFromSearchConditions(
-            List.of(prioritySearchConditionWithoutNull));
+            List.of(prioritySearchConditionWithoutNull), BRISBANE);
     Assertions.assertEquals(
         "ticket.priorityBucket.name = priorityTest", priorityWithoutNull.getValue().toString());
 
@@ -345,7 +363,8 @@ class TicketPredicateBuilderTest {
             .build();
 
     BooleanBuilder priority =
-        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(prioritySearchCondition));
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(
+            List.of(prioritySearchCondition), BRISBANE);
     Assertions.assertEquals(
         "ticket.priorityBucket.name = priorityTest || ticket.priorityBucket is null",
         priority.getValue().toString());
@@ -359,7 +378,8 @@ class TicketPredicateBuilderTest {
             .build();
 
     BooleanBuilder schedule =
-        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(scheduleSearchCondition));
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(
+            List.of(scheduleSearchCondition), BRISBANE);
     Assertions.assertEquals(
         "ticket.schedule.name = scheduleTest || ticket.schedule is null",
         schedule.getValue().toString());
@@ -374,7 +394,7 @@ class TicketPredicateBuilderTest {
 
     BooleanBuilder iteration =
         TicketPredicateBuilder.buildPredicateFromSearchConditions(
-            List.of(iterationSearchCondition));
+            List.of(iterationSearchCondition), BRISBANE);
     Assertions.assertEquals(
         "ticket.iteration.name = iterationTest || ticket.iteration is null",
         iteration.getValue().toString());
@@ -388,7 +408,8 @@ class TicketPredicateBuilderTest {
             .build();
 
     BooleanBuilder state =
-        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(stateSearchCondition));
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(
+            List.of(stateSearchCondition), BRISBANE);
     Assertions.assertEquals(
         "ticket.state.label = stateTest || ticket.state is null", state.getValue().toString());
 
@@ -401,7 +422,7 @@ class TicketPredicateBuilderTest {
             .build();
 
     BooleanBuilder task =
-        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(taskCondition));
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(taskCondition), BRISBANE);
     Assertions.assertEquals(
         "ticket.taskAssociation.taskId = taskTest || ticket.taskAssociation is null",
         task.getValue().toString());

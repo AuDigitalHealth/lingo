@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The following sections are considered for each release: **Added, Changed, Fixed, Security, Deprecated, Removed**
 
 ## [Unreleased]
-- No updates yet.
+- The timezone Snomio resolves calendar dates against is now configurable via `snomio.timezone`, defaulting to `Australia/Brisbane` so existing deployments are unchanged. It was previously hardcoded to Brisbane at five sites, plus a fixed `+10:00` offset in `InstantUtils.formatTimeToDb`, with no property, JVM flag or container environment variable able to override any of it — and the ticketing subsystem those sites belong to is not gated by model type or Spring profile, so the Irish NMPC deployment ran on Australian dates. The visible effect there: an external requestor added after 15:00 IST (14:00 GMT in winter) was recorded against *tomorrow's* date, and that date flowed into the backlog CSV export. Also affected were export filename timestamps, the `dd/MM/yyyy` rendering of date additional fields, and the day boundaries a due-date search snapped to. Ticket audit timestamps, which used the JVM default zone (UTC in the container) and so disagreed with every other date shown, now follow the same configured zone. Deployments outside Australia must set `snomio.timezone` — the Irish instance wants `Europe/Dublin`. Also fixes `TicketControllerContainerTest.testCreateOrGetTicketDifferentExternalRequestorCreatesSeparateTicket`, which asserted against the JVM default zone rather than the zone the service uses and so failed every CI build starting at or after 14:00 UTC, blocking unrelated PRs for roughly 40% of the day. (#1964)
 
 
 ## [1.4.7] - 2026-08-14

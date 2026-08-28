@@ -73,15 +73,19 @@ public class TicketPredicateBuilder {
 
   private TicketPredicateBuilder() {} // SonarLint
 
-  public static BooleanBuilder buildPredicate(String search) {
+  public static BooleanBuilder buildPredicate(String search, ZoneId zoneId) {
 
     List<SearchCondition> searchConditions = SearchConditionFactory.parseSearchConditions(search);
 
-    return buildPredicateFromSearchConditions(searchConditions);
+    return buildPredicateFromSearchConditions(searchConditions, zoneId);
   }
 
+  /**
+   * @param zoneId the zone whose calendar days date searches are resolved against - a search for
+   *     "created on the 4th" means the 4th where the people searching live, not where the server is
+   */
   public static BooleanBuilder buildPredicateFromSearchConditions(
-      List<SearchCondition> searchConditions) {
+      List<SearchCondition> searchConditions, ZoneId zoneId) {
     BooleanBuilder predicate = new BooleanBuilder();
 
     if (searchConditions == null) return predicate;
@@ -116,13 +120,13 @@ public class TicketPredicateBuilder {
             // special case
             DateTimePath<Instant> datePath = QTicket.ticket.created;
             String[] dates = InstantUtils.splitDates(value);
-            Instant startOfRange = InstantUtils.convert(dates[0]);
+            Instant startOfRange = InstantUtils.convert(dates[0], zoneId);
             if (startOfRange == null) {
               throw new InvalidSearchProblem("Incorrectly formatted date");
             }
             Instant endOfRange = null;
             if (dates.length == 2 && dates[1] != null) {
-              endOfRange = InstantUtils.convert(dates[1]);
+              endOfRange = InstantUtils.convert(dates[1], zoneId);
             } else {
               endOfRange = startOfRange.plus(Duration.ofDays(1).minusMillis(1));
             }
@@ -137,16 +141,15 @@ public class TicketPredicateBuilder {
           if (DUE_DATE_PATH.equals(field)) {
             DatePath<LocalDate> dueDatePath = QTicket.ticket.dueDate;
             String[] dates = InstantUtils.splitDates(value);
-            Instant startInstant = InstantUtils.convert(dates[0]);
+            Instant startInstant = InstantUtils.convert(dates[0], zoneId);
             if (startInstant == null) {
               throw new InvalidSearchProblem("Incorrectly formatted date");
             }
-            ZoneId brisbane = ZoneId.of("Australia/Brisbane");
-            LocalDate startDate = startInstant.atZone(brisbane).toLocalDate();
+            LocalDate startDate = startInstant.atZone(zoneId).toLocalDate();
             LocalDate endDate;
             if (dates.length == 2 && dates[1] != null) {
-              Instant endInstant = InstantUtils.convert(dates[1]);
-              endDate = endInstant != null ? endInstant.atZone(brisbane).toLocalDate() : startDate;
+              Instant endInstant = InstantUtils.convert(dates[1], zoneId);
+              endDate = endInstant != null ? endInstant.atZone(zoneId).toLocalDate() : startDate;
             } else {
               endDate = startDate;
             }

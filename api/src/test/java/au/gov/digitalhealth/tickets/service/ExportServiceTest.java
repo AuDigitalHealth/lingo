@@ -40,14 +40,15 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.LinkedHashSet;
 import java.util.List;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.InputStreamResource;
@@ -66,7 +67,26 @@ class ExportServiceTest {
   @Mock ExternalRequestorRepository externalRequestorRepository;
   @Mock AdditionalFieldTypeRepository additionalFieldTypeRepository;
 
-  @InjectMocks ExportService exportService;
+  ExportService exportService;
+
+  /**
+   * Built by hand rather than with {@code @InjectMocks}: the business zone is a real value, not a
+   * collaborator to mock, and Mockito would inject null for it - which silently strips the zone
+   * from the filename formatter and fails on the next Instant it formats.
+   */
+  @BeforeEach
+  void setUp() {
+    exportService =
+        new ExportService(
+            ticketRepository,
+            labelRepository,
+            iterationRepository,
+            stateRepository,
+            ticketAuditRepository,
+            externalRequestorRepository,
+            additionalFieldTypeRepository,
+            ZoneId.of("Australia/Brisbane"));
+  }
 
   // ---------------------------------------------------------------------------
   // Default columns

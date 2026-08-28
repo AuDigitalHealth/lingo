@@ -26,10 +26,12 @@ import io.restassured.http.Cookie;
 import io.restassured.http.Cookies;
 import io.restassured.mapper.ObjectMapperType;
 import io.restassured.specification.RequestSpecification;
+import java.time.ZoneId;
 import lombok.Getter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
@@ -71,6 +73,12 @@ public class TicketTestBase {
 
   @Value("${ims-password}")
   String password;
+
+  /**
+   * The zone the application resolves calendar dates in. Injected rather than hardcoded so these
+   * tests assert whatever the deployment configured, and so a missing bean fails the wiring.
+   */
+  @Autowired ZoneId businessZoneId;
 
   @Getter String snomioLocation;
   @Getter Cookie imsCookie;

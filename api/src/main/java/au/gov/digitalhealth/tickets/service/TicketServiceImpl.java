@@ -108,6 +108,7 @@ import java.util.Set;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.LongFunction;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -131,9 +132,6 @@ public class TicketServiceImpl implements TicketService {
 
   public static final String ARTGID = "ARTGID";
   private static final int ITEMS_TO_PROCESS = 60000;
-  // Snomio's business timezone — "today" for a requested date is the Brisbane calendar day, not
-  // the server's default zone.
-  private static final ZoneId BRISBANE_ZONE = ZoneId.of("Australia/Brisbane");
   protected final Log logger = LogFactory.getLog(getClass());
   private final TicketRepository ticketRepository;
   private final AdditionalFieldTypeRepository additionalFieldTypeRepository;
@@ -162,6 +160,9 @@ public class TicketServiceImpl implements TicketService {
   private final LabelMapper labelMapper;
 
   private final AttachmentService attachmentService;
+
+  /** The zone whose calendar day counts as "today" for dates this service records. */
+  private final ZoneId businessZoneId;
 
   @Value("${snomio.attachments.directory}")
   String attachmentsDirConfig;
@@ -197,7 +198,8 @@ public class TicketServiceImpl implements TicketService {
       BulkProductActionMapper bulkProductActionMapper,
       LabelMapper labelMapper,
       ExternalRequestorMapper externalRequestorMapper,
-      AttachmentService attachmentService) {
+      AttachmentService attachmentService,
+      ZoneId businessZoneId) {
     this.ticketRepository = ticketRepository;
     this.additionalFieldTypeRepository = additionalFieldTypeRepository;
     this.additionalFieldValueRepository = additionalFieldValueRepository;
@@ -222,6 +224,7 @@ public class TicketServiceImpl implements TicketService {
     this.externalRequestorMapper = externalRequestorMapper;
     this.attachmentService = attachmentService;
     this.labelMapper = labelMapper;
+    this.businessZoneId = businessZoneId;
   }
 
   public static Sort toSpringDataSort(OrderCondition orderCondition) {
@@ -452,7 +455,9 @@ public class TicketServiceImpl implements TicketService {
       if (additionalFieldType.getType().equals(Type.DATE)) {
         additionalFieldValue.setValueOf(
             InstantUtils.formatTimeToDb(
-                additionalFieldValue.getValueOf(), InstantUtils.YYYY_MM_DD_T_HH_MM_SS_SSSXXX));
+                additionalFieldValue.getValueOf(),
+                InstantUtils.YYYY_MM_DD_T_HH_MM_SS_SSSXXX,
+                businessZoneId));
       }
 
       // for shared-value field types, reuse an existing value row rather than creating a duplicate
@@ -1571,7 +1576,7 @@ public class TicketServiceImpl implements TicketService {
   private void reconcileExternalRequestors(
       Ticket ticketToSave,
       Set<TicketExternalRequestorDto> requestorDtos,
-      Function<Long, Optional<ExternalRequestor>> newRequestorResolver) {
+      LongFunction<Optional<ExternalRequestor>> newRequestorResolver) {
 
     Map<Long, TicketExternalRequestorDto> wanted = new HashMap<>();
     if (requestorDtos != null) {
@@ -1775,7 +1780,7 @@ public class TicketServiceImpl implements TicketService {
                       er.getName(),
                       er.getDescription(),
                       er.getDisplayColor(),
-                      resolved.dateRequestedOrNow());
+                      resolved.dateRequestedOrToday(businessZoneId));
                 })
             .collect(Collectors.toSet());
     ticketDto.setExternalRequestors(erDtos);
@@ -1864,8 +1869,11 @@ public class TicketServiceImpl implements TicketService {
   private record ResolvedExternalRequestor(
       ExternalRequestor externalRequestor, LocalDate dateRequested) {
 
-    LocalDate dateRequestedOrNow() {
-      return dateRequested != null ? dateRequested : LocalDate.now(BRISBANE_ZONE);
+    /**
+     * @param zoneId the zone whose calendar day counts as today when the caller supplied no date
+     */
+    LocalDate dateRequestedOrToday(ZoneId zoneId) {
+      return dateRequested != null ? dateRequested : LocalDate.now(zoneId);
     }
   }
 
@@ -1901,7 +1909,7 @@ public class TicketServiceImpl implements TicketService {
                 TicketExternalRequestor.builder()
                     .ticket(ticket)
                     .externalRequestor(requestor)
-                    .dateRequested(resolved.dateRequestedOrNow())
+                    .dateRequested(resolved.dateRequestedOrToday(businessZoneId))
                     .build();
             ticket.getTicketExternalRequestors().add(ter);
           }
@@ -2091,7 +2099,7 @@ public class TicketServiceImpl implements TicketService {
                   externalRequestor.getName(),
                   externalRequestor.getDescription(),
                   externalRequestor.getDisplayColor(),
-                  resolved.dateRequestedOrNow()));
+                  resolved.dateRequestedOrToday(businessZoneId)));
     }
   }
 
@@ -2319,7 +2327,9 @@ public class TicketServiceImpl implements TicketService {
           if (type.getType().equals(Type.DATE)) {
             newAFV.setValueOf(
                 InstantUtils.formatTimeToDb(
-                    afvDto.getValueOf(), InstantUtils.YYYY_MM_DD_T_HH_MM_SS_SSSXXX));
+                    afvDto.getValueOf(),
+                    InstantUtils.YYYY_MM_DD_T_HH_MM_SS_SSSXXX,
+                    businessZoneId));
           } else {
             newAFV.setValueOf(afvDto.getValueOf());
           }

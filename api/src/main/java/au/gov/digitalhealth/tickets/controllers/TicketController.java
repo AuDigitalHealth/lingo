@@ -63,6 +63,7 @@ import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -105,6 +106,9 @@ public class TicketController {
   private final TicketMapper ticketMapper;
   private final TicketProductNameDerivationService ticketProductNameDerivationService;
 
+  /** The zone whose calendar days ticket date searches are resolved against. */
+  private final ZoneId businessZoneId;
+
   @Value("${snomio.import.allowed.directory}")
   private String allowedImportDirectory;
 
@@ -119,7 +123,8 @@ public class TicketController {
       ScheduleRepository scheduleRepository,
       IterationRepository iterationRepository,
       TicketMapper ticketMapper,
-      TicketProductNameDerivationService ticketProductNameDerivationService) {
+      TicketProductNameDerivationService ticketProductNameDerivationService,
+      ZoneId businessZoneId) {
     this.ticketService = ticketService;
     this.ticketHistoryService = ticketHistoryService;
     this.ticketRepository = ticketRepository;
@@ -128,6 +133,7 @@ public class TicketController {
     this.iterationRepository = iterationRepository;
     this.ticketMapper = ticketMapper;
     this.ticketProductNameDerivationService = ticketProductNameDerivationService;
+    this.businessZoneId = businessZoneId;
   }
 
   private static final String TICKET_BACKLOG_DTO_EMBEDDED_RELATION = "ticketBacklogDtoList";
@@ -157,7 +163,7 @@ public class TicketController {
         URLDecoder.decode(
             StringUtils.removePageAndAfter(request.getQueryString()), StandardCharsets.UTF_8);
 
-    Predicate predicate = TicketPredicateBuilder.buildPredicate(search);
+    Predicate predicate = TicketPredicateBuilder.buildPredicate(search, businessZoneId);
     Page<TicketBacklogDto> ticketDtos =
         ticketService.findAllTicketsByQueryParam(predicate, pageable, null, null);
 
@@ -174,7 +180,7 @@ public class TicketController {
 
     Predicate predicate =
         TicketPredicateBuilder.buildPredicateFromSearchConditions(
-            searchConditionBody.getSearchConditions());
+            searchConditionBody.getSearchConditions(), businessZoneId);
 
     Page<TicketBacklogDto> ticketDtos =
         ticketService.findAllTicketsByQueryParam(

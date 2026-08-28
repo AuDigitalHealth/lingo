@@ -23,11 +23,14 @@ import au.gov.digitalhealth.tickets.models.AdditionalFieldType.Type;
 import au.gov.digitalhealth.tickets.models.AdditionalFieldValue;
 import au.gov.digitalhealth.tickets.models.Ticket;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 class AdditionalFieldUtilsTest {
+
+  private static final ZoneId BRISBANE = ZoneId.of("Australia/Brisbane");
 
   @Test
   void testFindValueByAdditionalFieldName() {
@@ -39,11 +42,13 @@ class AdditionalFieldUtilsTest {
 
     when(ticket.getAdditionalFieldValues()).thenReturn(Set.of(afv1, afv2));
 
-    String dateValue = AdditionalFieldUtils.findValueByAdditionalFieldName("Field1", ticket);
+    String dateValue =
+        AdditionalFieldUtils.findValueByAdditionalFieldName("Field1", ticket, BRISBANE);
 
     Assertions.assertEquals("15/01/2023", dateValue);
 
-    String stringValue = AdditionalFieldUtils.findValueByAdditionalFieldName("Field2", ticket);
+    String stringValue =
+        AdditionalFieldUtils.findValueByAdditionalFieldName("Field2", ticket, BRISBANE);
     Assertions.assertEquals("Value2", stringValue);
   }
 
@@ -57,7 +62,7 @@ class AdditionalFieldUtilsTest {
 
     String expectedFormattedDate = "15/01/2023";
 
-    String actualFormattedValue = AdditionalFieldUtils.formatAdditionalFieldValue(afv);
+    String actualFormattedValue = AdditionalFieldUtils.formatAdditionalFieldValue(afv, BRISBANE);
 
     Assertions.assertEquals(expectedFormattedDate, actualFormattedValue);
   }
@@ -67,8 +72,23 @@ class AdditionalFieldUtilsTest {
     Instant instant = Instant.parse("2023-01-15T12:30:00Z");
     String expectedFormattedDate = "15/01/2023";
 
-    String actualFormattedDate = AdditionalFieldUtils.formatDate(instant);
+    String actualFormattedDate = AdditionalFieldUtils.formatDate(instant, BRISBANE);
     Assertions.assertEquals(expectedFormattedDate, actualFormattedDate);
+  }
+
+  /**
+   * The whole point of taking a zone: the same instant is a different calendar day depending on it.
+   * 22:30 UTC on the 15th is still the 15th in Dublin but already the 16th in Brisbane, so a
+   * deployment that configures its own zone gets its own dates rather than Australia's.
+   */
+  @Test
+  void formatDateResolvesTheCalendarDayInTheZoneGiven() {
+    Instant lateEveningUtc = Instant.parse("2023-01-15T22:30:00Z");
+
+    Assertions.assertEquals(
+        "15/01/2023", AdditionalFieldUtils.formatDate(lateEveningUtc, ZoneId.of("Europe/Dublin")));
+    Assertions.assertEquals(
+        "16/01/2023", AdditionalFieldUtils.formatDate(lateEveningUtc, BRISBANE));
   }
 
   @Test
@@ -76,7 +96,7 @@ class AdditionalFieldUtilsTest {
     Instant instant = null;
     String expectedFormattedDate = "";
 
-    String actualFormattedDate = AdditionalFieldUtils.formatDate(instant);
+    String actualFormattedDate = AdditionalFieldUtils.formatDate(instant, BRISBANE);
     Assertions.assertEquals(expectedFormattedDate, actualFormattedDate);
   }
 

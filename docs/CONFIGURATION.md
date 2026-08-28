@@ -62,6 +62,13 @@ These all must be supplied or the application simply will not work.
     snomio.jira.users=exampleuser1,exampleuser2
     // users that can login, but won't be assignable to tasks/tickets
     lingo.internal.users=exampleuser3,exampleuser4
+    // The zone Snomio resolves calendar dates against: the date an external requestor made a
+    // request, the dates written into the backlog CSV export, and the day boundaries a date search
+    // snaps to. This is NOT the server's own timezone - containers run in UTC, which would put
+    // "today" an afternoon away from the people using Snomio. Any IANA zone id is accepted, and an
+    // unrecognised value stops the application at startup rather than silently picking a zone.
+    // Defaults to Australia/Brisbane, so deployments outside Australia must set it.
+    snomio.timezone=Europe/Dublin
 
 #### Additional Options
 

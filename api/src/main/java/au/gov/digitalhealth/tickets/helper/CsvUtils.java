@@ -22,6 +22,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -50,83 +51,83 @@ public class CsvUtils {
           "dueDate",
           "closedDate");
 
-  private static final List<ColumnDef> COLUMN_DEFINITIONS =
-      List.of(
-          new ColumnDef("ticketNumber", "Ticket Number", t -> str(t.getTicketNumber())),
-          new ColumnDef("title", "Title", t -> str(t.getTitle())),
-          new ColumnDef(
-              "submissionDate",
-              "Submission Date",
-              t ->
-                  AdditionalFieldUtils.formatDate(
-                      t.getJiraCreated() != null ? t.getJiraCreated() : t.getCreated())),
-          new ColumnDef(
-              "priority",
-              "Priority",
-              t -> t.getPriorityBucket() != null ? t.getPriorityBucket().getName() : ""),
-          new ColumnDef(
-              "release",
-              "Release",
-              t ->
-                  t.getIteration() != null
-                      ? AdditionalFieldUtils.formatDateFromTitle(t.getIteration().getName())
-                      : ""),
-          new ColumnDef(
-              "iteration",
-              "Release",
-              t -> t.getIteration() != null ? t.getIteration().getName() : ""),
-          new ColumnDef("description", "Description", t -> str(t.getDescription())),
-          new ColumnDef("assignee", "Assignee", t -> str(t.getAssignee())),
-          new ColumnDef(
-              "status", "Status", t -> t.getState() != null ? t.getState().getLabel() : ""),
-          new ColumnDef(
-              "schedule",
-              "Schedule",
-              t -> t.getSchedule() != null ? t.getSchedule().getName() : ""),
-          new ColumnDef(
-              "dueDate",
-              "Due Date",
-              t ->
-                  t.getDueDate() != null
-                      ? t.getDueDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-                      : ""),
-          new ColumnDef(
-              "externalRequesters",
-              "External Requesters",
-              t -> getExternalRequesters(t.getTicketExternalRequestors())),
-          new ColumnDef(
-              "labels",
-              "Labels",
-              t ->
-                  t.getLabels().stream()
-                      .map(l -> l.getName())
-                      .sorted()
-                      .collect(Collectors.joining(", "))),
-          new ColumnDef(
-              "hasProducts",
-              "Has Products",
-              t -> t.getProducts() != null && !t.getProducts().isEmpty() ? "Yes" : "No"),
-          new ColumnDef(
-              "createdDate", "Created Date", t -> AdditionalFieldUtils.formatDate(t.getCreated())),
-          new ColumnDef(
-              "modifiedDate",
-              "Modified Date",
-              t -> AdditionalFieldUtils.formatDate(t.getModified())),
-          new ColumnDef("createdBy", "Created By", t -> str(t.getCreatedBy())),
-          new ColumnDef("modifiedBy", "Modified By", t -> str(t.getModifiedBy())));
+  private static List<ColumnDef> columnDefinitions(ZoneId zoneId) {
+    return List.of(
+        new ColumnDef("ticketNumber", "Ticket Number", t -> str(t.getTicketNumber())),
+        new ColumnDef("title", "Title", t -> str(t.getTitle())),
+        new ColumnDef(
+            "submissionDate",
+            "Submission Date",
+            t ->
+                AdditionalFieldUtils.formatDate(
+                    t.getJiraCreated() != null ? t.getJiraCreated() : t.getCreated(), zoneId)),
+        new ColumnDef(
+            "priority",
+            "Priority",
+            t -> t.getPriorityBucket() != null ? t.getPriorityBucket().getName() : ""),
+        new ColumnDef(
+            "release",
+            "Release",
+            t ->
+                t.getIteration() != null
+                    ? AdditionalFieldUtils.formatDateFromTitle(t.getIteration().getName())
+                    : ""),
+        new ColumnDef(
+            "iteration",
+            "Release",
+            t -> t.getIteration() != null ? t.getIteration().getName() : ""),
+        new ColumnDef("description", "Description", t -> str(t.getDescription())),
+        new ColumnDef("assignee", "Assignee", t -> str(t.getAssignee())),
+        new ColumnDef("status", "Status", t -> t.getState() != null ? t.getState().getLabel() : ""),
+        new ColumnDef(
+            "schedule", "Schedule", t -> t.getSchedule() != null ? t.getSchedule().getName() : ""),
+        new ColumnDef(
+            "dueDate",
+            "Due Date",
+            t ->
+                t.getDueDate() != null
+                    ? t.getDueDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                    : ""),
+        new ColumnDef(
+            "externalRequesters",
+            "External Requesters",
+            t -> getExternalRequesters(t.getTicketExternalRequestors())),
+        new ColumnDef(
+            "labels",
+            "Labels",
+            t ->
+                t.getLabels().stream()
+                    .map(l -> l.getName())
+                    .sorted()
+                    .collect(Collectors.joining(", "))),
+        new ColumnDef(
+            "hasProducts",
+            "Has Products",
+            t -> t.getProducts() != null && !t.getProducts().isEmpty() ? "Yes" : "No"),
+        new ColumnDef(
+            "createdDate",
+            "Created Date",
+            t -> AdditionalFieldUtils.formatDate(t.getCreated(), zoneId)),
+        new ColumnDef(
+            "modifiedDate",
+            "Modified Date",
+            t -> AdditionalFieldUtils.formatDate(t.getModified(), zoneId)),
+        new ColumnDef("createdBy", "Created By", t -> str(t.getCreatedBy())),
+        new ColumnDef("modifiedBy", "Modified By", t -> str(t.getModifiedBy())));
+  }
 
   public static ColumnDef columnDef(String key, String header, Function<Ticket, String> extractor) {
     return new ColumnDef(key, header, extractor);
   }
 
-  public static List<ColumnDef> resolveColumns(List<String> selectedKeys) {
+  public static List<ColumnDef> resolveColumns(List<String> selectedKeys, ZoneId zoneId) {
     Map<String, ColumnDef> byKey =
-        COLUMN_DEFINITIONS.stream()
+        columnDefinitions(zoneId).stream()
             .collect(Collectors.toMap(ColumnDef::key, cd -> cd, (a, b) -> a));
     return selectedKeys.stream().map(byKey::get).filter(Objects::nonNull).toList();
   }
 
-  public static ByteArrayInputStream createAdhaCsv(List<Ticket> tickets) {
+  public static ByteArrayInputStream createAdhaCsv(List<Ticket> tickets, ZoneId zoneId) {
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
 
@@ -147,9 +148,9 @@ public class CsvUtils {
           ticket -> {
             try {
               printer.printRecord(
-                  AdditionalFieldUtils.findValueByAdditionalFieldName("StartDate", ticket),
+                  AdditionalFieldUtils.findValueByAdditionalFieldName("StartDate", ticket, zoneId),
                   CsvUtils.getExternalRequesters(ticket.getTicketExternalRequestors()),
-                  AdditionalFieldUtils.findValueByAdditionalFieldName("ARTGID", ticket),
+                  AdditionalFieldUtils.findValueByAdditionalFieldName("ARTGID", ticket, zoneId),
                   ticket.getTicketNumber(),
                   ticket.getTitle(),
                   ticket.getPriorityBucket() != null ? ticket.getPriorityBucket().getName() : "",

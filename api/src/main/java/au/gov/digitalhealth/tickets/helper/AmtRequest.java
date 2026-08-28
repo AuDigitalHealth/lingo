@@ -17,6 +17,7 @@ package au.gov.digitalhealth.tickets.helper;
 
 import au.gov.digitalhealth.tickets.models.Ticket;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.time.ZoneId;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -42,8 +43,8 @@ public class AmtRequest {
 
   // TODO: name and description, as these aren't necassarily what is in the title & description of
   // the ticket
-  public static AmtRequest fromTicket(Ticket ticket) {
-    String artgid = AdditionalFieldUtils.findValueByAdditionalFieldName("ARTGID", ticket);
+  public static AmtRequest fromTicket(Ticket ticket, ZoneId zoneId) {
+    String artgid = AdditionalFieldUtils.findValueByAdditionalFieldName("ARTGID", ticket, zoneId);
     Long artgidLong = artgid != null ? Long.valueOf(artgid) : null;
     return AmtRequest.builder().id(ticket.getId()).artgid(artgidLong).build();
   }

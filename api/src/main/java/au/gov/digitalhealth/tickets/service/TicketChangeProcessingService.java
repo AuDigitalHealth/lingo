@@ -57,6 +57,12 @@ public class TicketChangeProcessingService {
   private final ExternalRequestorRepository externalRequestorRepository;
   private final TicketRepository ticketRepository;
 
+  /**
+   * The zone audit timestamps are rendered in. Previously the JVM default, which is UTC in the
+   * container and so disagreed with every other date Snomio shows.
+   */
+  private final ZoneId businessZoneId;
+
   public TicketChangeProcessingService(
       TaskAssociationRepository taskAssociationRepository,
       StateRepository stateRepository,
@@ -64,7 +70,8 @@ public class TicketChangeProcessingService {
       IterationRepository iterationRepository,
       PriorityBucketRepository priorityBucketRepository,
       ExternalRequestorRepository externalRequestorRepository,
-      TicketRepository ticketRepository) {
+      TicketRepository ticketRepository,
+      ZoneId businessZoneId) {
     this.taskAssociationRepository = taskAssociationRepository;
     this.stateRepository = stateRepository;
     this.labelRepository = labelRepository;
@@ -72,6 +79,7 @@ public class TicketChangeProcessingService {
     this.priorityBucketRepository = priorityBucketRepository;
     this.externalRequestorRepository = externalRequestorRepository;
     this.ticketRepository = ticketRepository;
+    this.businessZoneId = businessZoneId;
   }
 
   public List<TicketHistoryEntryDto> processFieldChanges(
@@ -268,7 +276,7 @@ public class TicketChangeProcessingService {
 
   // Utility methods
   private LocalDateTime convertTimestamp(Long timestamp) {
-    return Instant.ofEpochMilli(timestamp).atZone(ZoneId.systemDefault()).toLocalDateTime();
+    return Instant.ofEpochMilli(timestamp).atZone(businessZoneId).toLocalDateTime();
   }
 
   private String capitalizeFirst(String str) {
@@ -341,7 +349,7 @@ public class TicketChangeProcessingService {
       String fieldName = (String) result[7];
 
       LocalDateTime timestamp =
-          Instant.ofEpochMilli(revTimestamp).atZone(ZoneId.systemDefault()).toLocalDateTime();
+          Instant.ofEpochMilli(revTimestamp).atZone(businessZoneId).toLocalDateTime();
 
       String action = getRevisionAction(revType);
       String operationType = getRevisionOperationType(revType);
@@ -449,7 +457,7 @@ public class TicketChangeProcessingService {
       }
 
       LocalDateTime timestamp =
-          Instant.ofEpochMilli(revTimestamp).atZone(ZoneId.systemDefault()).toLocalDateTime();
+          Instant.ofEpochMilli(revTimestamp).atZone(businessZoneId).toLocalDateTime();
 
       // Determine association direction
       boolean isSource = Objects.equals(sourceId, ticketId);
@@ -534,7 +542,7 @@ public class TicketChangeProcessingService {
         String username = (String) currentResult[3];
 
         LocalDateTime timestamp =
-            Instant.ofEpochMilli(revTimestamp).atZone(ZoneId.systemDefault()).toLocalDateTime();
+            Instant.ofEpochMilli(revTimestamp).atZone(businessZoneId).toLocalDateTime();
 
         // Determine the type of change
         String action;

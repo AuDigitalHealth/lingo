@@ -19,7 +19,6 @@ import au.gov.digitalhealth.lingo.exception.DateFormatProblem;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.regex.Matcher;
@@ -31,18 +30,24 @@ public class InstantUtils {
 
   private InstantUtils() {}
 
-  public static Instant convert(String source) {
+  /**
+   * Parses a date that may be {@code dd/MM/yyyy}, {@code dd/MM/yy} or an ISO offset date-time.
+   *
+   * @param zoneId the zone the day-first forms are interpreted in; an ISO offset date-time carries
+   *     its own offset and so ignores this
+   */
+  public static Instant convert(String source, ZoneId zoneId) {
     if (source.isEmpty()) return null;
 
     // Try parsing with "dd/MM/yyyy" format
     try {
       LocalDate localDate = LocalDate.parse(source, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-      return convertLocalDateToInstant(localDate);
+      return convertLocalDateToInstant(localDate, zoneId);
     } catch (Exception e) {
       // If parsing with "dd/MM/yyyy" format fails, try "dd/MM/yy" format
       try {
         LocalDate localDate = LocalDate.parse(source, DateTimeFormatter.ofPattern("dd/MM/yy"));
-        return convertLocalDateToInstant(localDate);
+        return convertLocalDateToInstant(localDate, zoneId);
       } catch (Exception ex) {
         // If parsing with "dd/MM/yy" format also fails, try ISO format
         try {
@@ -57,15 +62,8 @@ public class InstantUtils {
     }
   }
 
-  public static Instant convertLocalDateToInstant(LocalDate localDate) {
-    // Specify the Brisbane timezone
-    ZoneId brisbaneZone = ZoneId.of("Australia/Brisbane");
-
-    // Create a ZonedDateTime in the Brisbane timezone
-    ZonedDateTime zonedDateTime = localDate.atStartOfDay(brisbaneZone);
-
-    // Convert ZonedDateTime to Instant
-    return zonedDateTime.toInstant();
+  public static Instant convertLocalDateToInstant(LocalDate localDate, ZoneId zoneId) {
+    return localDate.atStartOfDay(zoneId).toInstant();
   }
 
   public static String[] splitDates(String dates) {
@@ -98,15 +96,11 @@ public class InstantUtils {
     return datesArray;
   }
 
-  public static String formatTimeToDb(String source, String pattern) {
-    Instant time = InstantUtils.convert(source);
+  public static String formatTimeToDb(String source, String pattern, ZoneId zoneId) {
+    Instant time = InstantUtils.convert(source, zoneId);
     if (time == null) {
       throw new DateFormatProblem(String.format("Incorrectly formatted date '%s'", source));
     }
-    ZoneOffset zoneOffset = ZoneOffset.ofHours(10);
-    ZonedDateTime zonedDateTime = time.atZone(zoneOffset);
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
-
-    return zonedDateTime.format(formatter);
+    return DateTimeFormatter.ofPattern(pattern).withZone(zoneId).format(time);
   }
 }
