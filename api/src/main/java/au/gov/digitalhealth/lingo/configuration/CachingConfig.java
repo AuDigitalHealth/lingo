@@ -30,17 +30,29 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachingConfigurer;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
+/**
+ * Scheduled cache maintenance. Deliberately does <em>not</em> implement {@code CachingConfigurer}:
+ * that interface is resolved while Spring builds its caching/async infrastructure, which forces
+ * this class - and transitively every bean in its constructor - to be instantiated before {@code
+ * BeanPostProcessor} registration has finished. Beans created in that window are logged by {@code
+ * BeanPostProcessorChecker} as "not eligible for getting processed by all BeanPostProcessors" and
+ * may silently miss auto-proxying, which is what makes
+ * {@code @Cacheable}/{@code @CacheEvict}/{@code @Async} become no-ops. Implementing it here bought
+ * nothing - every {@code CachingConfigurer} method is a default returning {@code null}, and the
+ * {@code CacheManager} bean lives in {@link CacheManagerConfig} - while costing this class its own
+ * AOP proxy, so none of the {@code @CacheEvict} methods below actually evicted anything. {@code
+ * ProxiedAnnotationIntegrityTest} guards this.
+ */
 @Configuration
 @EnableCaching
 @EnableScheduling
 @Log
-public class CachingConfig implements CachingConfigurer {
+public class CachingConfig {
 
   SnowstormClient snowstormClient;
   AllTasksService allTasksService;
