@@ -581,13 +581,6 @@ public class SnowstormDtoUtil {
         concept, node.getNewConceptDetails().getDescriptions(), modelConfiguration);
 
     concept.setActive(true);
-    // Compared against the axiom's definitionStatusId, not its definitionStatus. The two fields
-    // carry different vocabularies - definitionStatusId holds the SCTID that DEFINED.getValue()
-    // returns, while definitionStatus holds the name ("FULLY_DEFINED"/"PRIMITIVE"). Matching the
-    // SCTID against the name never succeeded, so every new concept was persisted PRIMITIVE
-    // regardless of its axiom. The immediate create response hid this because
-    // ProductCreationService copies the definition status back off the axiom, which was correct -
-    // only a reload, reading what Snowstorm actually stored, showed the concept as Primitive.
     concept.setDefinitionStatusId(
         newConceptDetails.getAxioms().stream()
                 .anyMatch(a -> DEFINED.getValue().equals(a.getDefinitionStatusId()))
