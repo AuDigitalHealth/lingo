@@ -5,6 +5,21 @@ import {
   GridToolbarQuickFilterProps,
 } from '@mui/x-data-grid';
 
+/**
+ * Defined once at module scope rather than inline in the JSX below.
+ *
+ * GridToolbarQuickFilter derives three things from this function's identity: `updateSearchValue`
+ * (useCallback), the debounced updater built from it (useMemo), and the effect that syncs the
+ * input back from the grid's quick filter model (it is in that effect's dependency array). A new
+ * function on every render therefore rebuilds the pending debounce and re-runs the sync effect
+ * continuously, so typed text can fail to reach the filter model and be overwritten from it.
+ */
+const quickFilterParser = (searchInput: string) =>
+  searchInput
+    .split(',')
+    .map(value => value.trim())
+    .filter(value => value !== '');
+
 interface TableHeadersProps {
   tableName: string;
   showQuickFilter: boolean;
@@ -47,12 +62,7 @@ function QuickSearchToolbar({ quickFilterProps, sx }: QuickSearchToolbarProps) {
       }}
     >
       <GridToolbarQuickFilter
-        quickFilterParser={(searchInput: string) =>
-          searchInput
-            .split(',')
-            .map(value => value.trim())
-            .filter(value => value !== '')
-        }
+        quickFilterParser={quickFilterParser}
         {...quickFilterProps}
       />
     </Box>

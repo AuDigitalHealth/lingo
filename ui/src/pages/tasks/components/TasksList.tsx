@@ -18,7 +18,7 @@ import {
 import { Card, Chip, Grid } from '@mui/material';
 import { Link } from 'react-router-dom';
 
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useMemo, useState } from 'react';
 import statusToColor from '../../../utils/statusToColor.ts';
 import { ValidationColor } from '../../../types/validationColor.ts';
 
@@ -100,6 +100,28 @@ function TasksList({
     page: 0,
     pageSize: 10,
   });
+
+  // Memoised because the DataGrid rebuilds its slots whenever these object identities change, and
+  // this list re-renders on every tasks refetch (useAllTasks polls on a 60s refetchInterval). The
+  // toolbar hosts the quick filter, whose typed text lives in its own local state, so churning it
+  // on each render is what let that text be dropped mid-search.
+  const gridSlots = useMemo(
+    () => (!naked ? { toolbar: TableHeaders } : {}),
+    [naked],
+  );
+  const gridSlotProps = useMemo(
+    () =>
+      !naked
+        ? {
+            toolbar: {
+              showQuickFilter: true,
+              quickFilterProps: { debounceMs: 500 },
+              tableName: heading,
+            },
+          }
+        : {},
+    [naked, heading],
+  );
 
   const validationStatusMap = getAllKeyValueMapForTheKey(
     fieldBindings,
@@ -540,18 +562,8 @@ function TasksList({
               disableColumnSelector
               hideFooterSelectedRowCount
               disableDensitySelector
-              slots={!naked ? { toolbar: TableHeaders } : {}}
-              slotProps={
-                !naked
-                  ? {
-                      toolbar: {
-                        showQuickFilter: true,
-                        quickFilterProps: { debounceMs: 500 },
-                        tableName: heading,
-                      },
-                    }
-                  : {}
-              }
+              slots={gridSlots}
+              slotProps={gridSlotProps}
               paginationModel={!naked ? paginationModel : undefined}
               onPaginationModelChange={
                 !naked
