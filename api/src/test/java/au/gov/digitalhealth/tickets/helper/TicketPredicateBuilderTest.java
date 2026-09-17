@@ -427,4 +427,99 @@ class TicketPredicateBuilderTest {
         "ticket.taskAssociation.taskId = taskTest || ticket.taskAssociation is null",
         task.getValue().toString());
   }
+
+  @Test
+  void buildPredicateFromSearchConditionsDueDate() {
+
+    SearchCondition dueOnADay =
+        SearchCondition.builder()
+            .condition("and")
+            .value("13/10/23")
+            .operation("=")
+            .key("duedate")
+            .build();
+
+    Assertions.assertEquals(
+        "ticket.dueDate between 2023-10-13 and 2023-10-13",
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(dueOnADay), BRISBANE)
+            .getValue()
+            .toString());
+
+    SearchCondition dueBefore =
+        SearchCondition.builder()
+            .condition("and")
+            .value("13/10/23")
+            .operation("<=")
+            .key("duedate")
+            .build();
+
+    Assertions.assertEquals(
+        "ticket.dueDate < 2023-10-13",
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(dueBefore), BRISBANE)
+            .getValue()
+            .toString());
+  }
+
+  /**
+   * "Is not blank" is the case the backlog needs to answer "which open tickets are waiting on a due
+   * date" - it compares against no date at all, so it has to short-circuit the date parsing that
+   * would otherwise reject a condition carrying no value.
+   */
+  @Test
+  void buildPredicateFromSearchConditionsDueDateIsNotBlank() {
+
+    SearchCondition notBlank =
+        SearchCondition.builder().condition("and").operation("isNotNull").key("duedate").build();
+
+    Assertions.assertEquals(
+        "ticket.dueDate is not null",
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(notBlank), BRISBANE)
+            .getValue()
+            .toString());
+
+    SearchCondition blank =
+        SearchCondition.builder().condition("and").operation("isNull").key("duedate").build();
+
+    Assertions.assertEquals(
+        "ticket.dueDate is null",
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(blank), BRISBANE)
+            .getValue()
+            .toString());
+  }
+
+  @Test
+  void buildPredicateFromSearchConditionsCreatedIsNotBlank() {
+
+    SearchCondition notBlank =
+        SearchCondition.builder().condition("and").operation("isNotNull").key("created").build();
+
+    Assertions.assertEquals(
+        "ticket.created is not null",
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(List.of(notBlank), BRISBANE)
+            .getValue()
+            .toString());
+  }
+
+  /** A blank operation combines with the rest of the search like any other condition. */
+  @Test
+  void buildPredicateCombinesBlankDueDateWithOtherConditions() {
+
+    SearchCondition notBlank =
+        SearchCondition.builder().condition("and").operation("isNotNull").key("duedate").build();
+
+    SearchCondition state =
+        SearchCondition.builder()
+            .condition("and")
+            .valueIn("[In Progress]")
+            .operation("=")
+            .key("state.label")
+            .build();
+
+    Assertions.assertEquals(
+        "ticket.dueDate is not null && ticket.state.label = In Progress",
+        TicketPredicateBuilder.buildPredicateFromSearchConditions(
+                List.of(notBlank, state), BRISBANE)
+            .getValue()
+            .toString());
+  }
 }

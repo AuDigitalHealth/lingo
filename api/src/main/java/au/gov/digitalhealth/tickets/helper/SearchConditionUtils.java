@@ -23,5 +23,17 @@ public class SearchConditionUtils {
   public static final String GREATER_THAN = ">=";
   public static final String LESS_THAN = "<=";
 
+  /**
+   * Operations that ask whether a field holds a value at all, rather than comparing it to one. They
+   * carry no value of their own, so callers must check for them before parsing one.
+   */
+  public static final String IS_NULL = "isNull";
+
+  public static final String IS_NOT_NULL = "isNotNull";
+
+  public static boolean isBlankOperation(String operation) {
+    return IS_NULL.equals(operation) || IS_NOT_NULL.equals(operation);
+  }
+
   private SearchConditionUtils() {}
 }

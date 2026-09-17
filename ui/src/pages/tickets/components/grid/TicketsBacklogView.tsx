@@ -41,6 +41,31 @@ import { InputText } from 'primereact/inputtext';
 import { FilterMatchMode } from 'primereact/api';
 import { Dispatch, SetStateAction, useCallback, useState } from 'react';
 import useAllBacklogFields from '../../../../hooks/api/tickets/useAllBacklogFields';
+import {
+  BLANK_FILTER_VALUE,
+  DATE_IS_BLANK,
+  DATE_IS_NOT_BLANK,
+  isBlankDateMatchMode,
+} from './helpers/blankDateFilter';
+
+const dateFilterMatchModeOptions = [
+  { label: 'Date Is', value: FilterMatchMode.DATE_IS },
+  { label: 'Date Is Not', value: FilterMatchMode.DATE_IS_NOT },
+  { label: 'Date Before', value: FilterMatchMode.DATE_BEFORE },
+  { label: 'Date After', value: FilterMatchMode.DATE_AFTER },
+];
+
+/**
+ * Due Date alone also offers the two modes that ask whether the column holds a date at
+ * all, which is how the backlog answers "which tickets are waiting on a due date"
+ * without anyone having to guess the date. Created is left out: it is never null, so
+ * neither mode could tell one ticket from another.
+ */
+const dueDateFilterMatchModeOptions = [
+  ...dateFilterMatchModeOptions,
+  { label: 'Is Not Blank', value: DATE_IS_NOT_BLANK },
+  { label: 'Is Blank', value: DATE_IS_BLANK },
+];
 
 interface TicketsBacklogViewProps {
   // the ref of the parent container
@@ -403,6 +428,62 @@ export function TicketsBacklogView({
     );
   };
 
+  /**
+   * A blank match mode has nothing to fill in, so the filter menu says what it will do
+   * rather than showing a calendar.
+   */
+  const blankDateFilterTemplate = (matchMode: string | undefined) => {
+    return (
+      <span data-testid="blank-date-filter-note">
+        {matchMode === DATE_IS_BLANK
+          ? 'Tickets with no date'
+          : 'Tickets with a date'}
+      </span>
+    );
+  };
+
+  const dateFilterElement = (
+    matchMode: string | undefined,
+    calenderAsRange: boolean,
+  ) => {
+    if (isBlankDateMatchMode(matchMode)) {
+      return () => blankDateFilterTemplate(matchMode);
+    }
+    return calenderAsRange ? dateFilterTemplateRange : dateFilterTemplate;
+  };
+
+  /**
+   * PrimeReact carries the old filter value across a match mode change, which the blank
+   * modes cannot use: a leftover date would be sent as the search value, and a null one
+   * would read as an unset filter and leave the column header unmarked. Setting the
+   * value here also applies the filter straight away, so the user is not asked to press
+   * Apply on a menu with nothing to fill in.
+   */
+  const onDateMatchModeChange = (
+    field: 'dueDate' | 'created',
+    matchMode: string | undefined,
+    setCalenderAsRange: (val: boolean) => void,
+  ) => {
+    setCalenderAsRange(
+      matchMode === FilterMatchMode.DATE_IS ||
+        matchMode === FilterMatchMode.DATE_IS_NOT,
+    );
+
+    const wasBlank = isBlankDateMatchMode(lazyState.filters[field]?.matchMode);
+    const isBlank = isBlankDateMatchMode(matchMode);
+    if (!wasBlank && !isBlank) return;
+
+    handleFilterChange({
+      filters: {
+        ...lazyState.filters,
+        [field]: {
+          value: isBlank ? BLANK_FILTER_VALUE : null,
+          matchMode: matchMode,
+        },
+      },
+    });
+  };
+
   const isSelectable = (ticket: Ticket) => {
     if (ticket.state?.label !== 'Closed') return true;
     return false;
@@ -639,7 +720,7 @@ export function TicketsBacklogView({
           filterMenuStyle={{ width: '14rem' }}
         />
       )}
-      {fieldsContains('dueDate') && dueDateCalenderAsRange ? (
+      {fieldsContains('dueDate') && (
         <Column
           field="dueDate"
           header="Due Date"
@@ -648,38 +729,22 @@ export function TicketsBacklogView({
           filter={!minimal}
           filterPlaceholder="Search by Due Date"
           body={DueDateTemplate}
-          filterElement={dateFilterTemplateRange}
+          showFilterMatchModes={true}
+          filterMatchModeOptions={dueDateFilterMatchModeOptions}
+          filterElement={dateFilterElement(
+            lazyState.filters.dueDate?.matchMode,
+            dueDateCalenderAsRange,
+          )}
           onFilterMatchModeChange={e => {
-            if (
-              e.matchMode === FilterMatchMode.DATE_IS ||
-              e.matchMode === FilterMatchMode.DATE_IS_NOT
-            ) {
-              setDueDateCalenderAsRange(true);
-            } else {
-              setDueDateCalenderAsRange(false);
-            }
-          }}
-        />
-      ) : (
-        <Column
-          field="dueDate"
-          header="Due Date"
-          dataType="date"
-          sortable={!minimal}
-          filter={!minimal}
-          filterPlaceholder="Search by Due Date"
-          body={DueDateTemplate}
-          filterElement={dateFilterTemplate}
-          onFilterMatchModeChange={e => {
-            if (e.matchMode !== FilterMatchMode.EQUALS) {
-              setDueDateCalenderAsRange(false);
-            } else {
-              setDueDateCalenderAsRange(true);
-            }
+            onDateMatchModeChange(
+              'dueDate',
+              e.matchMode,
+              setDueDateCalenderAsRange,
+            );
           }}
         />
       )}
-      {fieldsContains('created') && createdCalenderAsRange ? (
+      {fieldsContains('created') && (
         <Column
           field="created"
           header="Created"
@@ -689,35 +754,18 @@ export function TicketsBacklogView({
           style={{ width: width ? '20%' : 'auto' }}
           filterPlaceholder="Search by Date"
           body={CreatedTemplate}
-          filterElement={dateFilterTemplateRange}
+          showFilterMatchModes={true}
+          filterMatchModeOptions={dateFilterMatchModeOptions}
+          filterElement={dateFilterElement(
+            lazyState.filters.created?.matchMode,
+            createdCalenderAsRange,
+          )}
           onFilterMatchModeChange={e => {
-            if (
-              e.matchMode === FilterMatchMode.DATE_IS ||
-              e.matchMode === FilterMatchMode.DATE_IS_NOT
-            ) {
-              setCreatedCalenderAsRange(true);
-            } else {
-              setCreatedCalenderAsRange(false);
-            }
-          }}
-        />
-      ) : (
-        <Column
-          field="created"
-          header="Created"
-          dataType="date"
-          sortable={!minimal}
-          filter={!minimal}
-          style={{ width: width ? '20%' : 'auto' }}
-          filterPlaceholder="Search by Date"
-          body={CreatedTemplate}
-          filterElement={dateFilterTemplate}
-          onFilterMatchModeChange={e => {
-            if (e.matchMode !== FilterMatchMode.EQUALS) {
-              setCreatedCalenderAsRange(false);
-            } else {
-              setCreatedCalenderAsRange(true);
-            }
+            onDateMatchModeChange(
+              'created',
+              e.matchMode,
+              setCreatedCalenderAsRange,
+            );
           }}
         />
       )}

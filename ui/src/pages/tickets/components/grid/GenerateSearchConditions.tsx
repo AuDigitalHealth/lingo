@@ -1,5 +1,12 @@
 import { FilterMatchMode } from 'primereact/api';
-import { LazyTicketTableState } from '../../../../types/tickets/table';
+import {
+  CreatedMetaData,
+  LazyTicketTableState,
+} from '../../../../types/tickets/table';
+import {
+  blankDateOperation,
+  isBlankDateMatchMode,
+} from './helpers/blankDateFilter';
 import {
   OrderCondition,
   SearchCondition,
@@ -208,89 +215,64 @@ export const generateSearchConditions = (
     searchConditions.push(taskAssocationCondition);
   }
 
-  if (filters.dueDate?.value) {
-    let first = filters.dueDate?.value;
-
-    let setValue = '';
-
-    if (Array.isArray(first)) {
-      const firstArray = first;
-      first = firstArray[0];
-      const second = firstArray[1];
-
-      let value = first.toISOString();
-
-      if (second !== null && second !== undefined) {
-        value += '-';
-        value += second.toISOString();
-      }
-
-      setValue = value;
-    } else {
-      setValue = first.toISOString();
-    }
-
-    let operator =
-      filters.dueDate.matchMode === FilterMatchMode.DATE_BEFORE ? '<=' : '=';
-    operator =
-      filters.dueDate.matchMode === FilterMatchMode.DATE_IS_NOT
-        ? '!='
-        : operator;
-    operator =
-      filters.dueDate.matchMode === FilterMatchMode.DATE_AFTER
-        ? '>='
-        : operator;
-    const dueDateCondition: SearchCondition = {
-      key: 'duedate',
-      operation: operator,
-      condition: 'and',
-      value: setValue,
-    };
+  const dueDateCondition = generateDateCondition('duedate', filters.dueDate);
+  if (dueDateCondition) {
     searchConditions.push(dueDateCondition);
   }
 
-  if (filters.created?.value) {
-    let first = filters.created?.value;
-
-    let setValue = '';
-
-    if (Array.isArray(first)) {
-      const firstArray = first;
-      first = firstArray[0];
-      const second = firstArray[1];
-
-      let value = first.toISOString();
-
-      if (second !== null && second !== undefined) {
-        value += '-';
-        value += second.toISOString();
-      }
-
-      setValue = value;
-    } else {
-      setValue = first.toISOString();
-    }
-
-    let operator =
-      filters.created.matchMode === FilterMatchMode.DATE_BEFORE ? '<=' : '=';
-    operator =
-      filters.created.matchMode === FilterMatchMode.DATE_IS_NOT
-        ? '!='
-        : operator;
-    operator =
-      filters.created.matchMode === FilterMatchMode.DATE_AFTER
-        ? '>='
-        : operator;
-    const createdCondition: SearchCondition = {
-      key: 'created',
-      operation: operator,
-      condition: 'and',
-      value: setValue,
-    };
+  const createdCondition = generateDateCondition('created', filters.created);
+  if (createdCondition) {
     searchConditions.push(createdCondition);
   }
+
   returnSearchConditionsBody.searchConditions = searchConditions;
   return returnSearchConditionsBody;
+};
+
+/**
+ * Turns one date column's filter into a search condition. "Is blank" and "is not blank"
+ * ask whether the column holds a date at all, so they produce a condition carrying no
+ * value; every other mode needs a date before there is anything to search for.
+ */
+const generateDateCondition = (
+  key: string,
+  filter: CreatedMetaData | undefined,
+): SearchCondition | undefined => {
+  if (!filter) return undefined;
+
+  if (isBlankDateMatchMode(filter.matchMode)) {
+    return {
+      key: key,
+      operation: blankDateOperation(filter.matchMode),
+      condition: 'and',
+    };
+  }
+
+  const filterValue = filter.value;
+  if (!filterValue || typeof filterValue === 'boolean') return undefined;
+
+  let setValue = '';
+  if (Array.isArray(filterValue)) {
+    const [first, second] = filterValue;
+    setValue = first.toISOString();
+    if (second !== null && second !== undefined) {
+      setValue += '-';
+      setValue += second.toISOString();
+    }
+  } else {
+    setValue = filterValue.toISOString();
+  }
+
+  let operator = filter.matchMode === FilterMatchMode.DATE_BEFORE ? '<=' : '=';
+  operator = filter.matchMode === FilterMatchMode.DATE_IS_NOT ? '!=' : operator;
+  operator = filter.matchMode === FilterMatchMode.DATE_AFTER ? '>=' : operator;
+
+  return {
+    key: key,
+    operation: operator,
+    condition: 'and',
+    value: setValue,
+  };
 };
 
 export const generateOrderCondition = (lazyState: LazyTicketTableState) => {

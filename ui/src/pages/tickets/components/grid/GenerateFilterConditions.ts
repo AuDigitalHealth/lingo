@@ -35,6 +35,11 @@ import {
   SearchCondition,
   SearchConditionBody,
 } from '../../../../types/tickets/search';
+import {
+  BLANK_FILTER_VALUE,
+  blankDateMatchMode,
+  isBlankDateOperation,
+} from './helpers/blankDateFilter';
 
 export const generateFilterConditions = (
   searchConditionBody: SearchConditionBody,
@@ -82,7 +87,10 @@ export const generateFilterConditions = (
         generateTask(baseFilter, condition, tasks);
         break;
       case 'created':
-        generateCreated(baseFilter, condition);
+        generateDateFilter(baseFilter, condition, 'created');
+        break;
+      case 'duedate':
+        generateDateFilter(baseFilter, condition, 'dueDate');
         break;
     }
   });
@@ -334,39 +342,78 @@ const generateTask = (
   }
 };
 
-const generateCreated = (
+/**
+ * Rebuilds a date column's filter from a saved search. The blank match modes carry no
+ * date, so they are restored from the operation alone.
+ */
+const generateDateFilter = (
   filters: TicketDataTableFilters,
   searchCondition: SearchCondition,
+  field: 'created' | 'dueDate',
 ) => {
+  const filter = filters[field];
+  if (!filter) {
+    return;
+  }
+
+  if (isBlankDateOperation(searchCondition.operation)) {
+    filter.value = BLANK_FILTER_VALUE;
+    filter.matchMode = blankDateMatchMode(searchCondition.operation);
+    return;
+  }
+
   if (!searchCondition.value) {
     return;
   }
-  const searchValue = searchCondition.value;
-  const { day, month, year } = createDayMonthYear(searchValue);
-  const date = new Date(year, month, day);
 
-  if (filters.created) {
-    filters.created.value = date;
-    // filters.created.value.push(date);
-    // filters.created.value.push(null);
-    if (searchCondition.operation === '!=') {
-      filters.created.matchMode = FilterMatchMode.DATE_IS_NOT;
-    } else if (searchCondition.operation === '<=') {
-      filters.created.matchMode = FilterMatchMode.DATE_BEFORE;
-    } else if (searchCondition.operation === '>=') {
-      filters.created.matchMode = FilterMatchMode.DATE_AFTER;
-    }
+  const dates = splitDateFilterValue(searchCondition.value)
+    .map(parseFilterDate)
+    .filter((date): date is Date => date !== undefined);
+
+  if (dates.length === 0) {
+    return;
   }
+
+  filter.value = dates.length > 1 ? dates : dates[0];
+  filter.matchMode = dateMatchMode(searchCondition.operation);
 };
-// takes in format of dd/mm/yyyy
-const createDayMonthYear = (val: string) => {
-  const components = val.split('/');
 
-  const day = parseInt(components[0], 10);
-  const month = parseInt(components[1], 10) - 1;
-  const year = parseInt(components[2], 10) + 2000;
+/**
+ * A saved range is two ISO datetimes joined by a hyphen. Matching each datetime whole
+ * keeps the hyphens inside a date out of the split.
+ */
+const ISO_DATE_RANGE =
+  /^(\d{4}-\d{2}-\d{2}T[\d:.]+(?:Z|[+-]\d{2}:?\d{2})?)(?:\s*-\s*(\d{4}-\d{2}-\d{2}T[\d:.]+(?:Z|[+-]\d{2}:?\d{2})?))?$/;
 
-  return { day, month, year };
+const splitDateFilterValue = (value: string): string[] => {
+  const match = ISO_DATE_RANGE.exec(value);
+  if (!match) {
+    return [value];
+  }
+  return match[2] ? [match[1], match[2]] : [match[1]];
+};
+
+/**
+ * Filters are saved as ISO datetimes, but older saved searches hold a day-first date, so
+ * both are accepted.
+ */
+const parseFilterDate = (value: string): Date | undefined => {
+  const dayFirst = /^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/.exec(value);
+  if (dayFirst) {
+    const [, day, month, year] = dayFirst;
+    const fullYear = year.length === 2 ? 2000 + Number(year) : Number(year);
+    return new Date(fullYear, Number(month) - 1, Number(day));
+  }
+
+  const parsed = new Date(value);
+  return isNaN(parsed.getTime()) ? undefined : parsed;
+};
+
+const dateMatchMode = (operation: string) => {
+  if (operation === '!=') return FilterMatchMode.DATE_IS_NOT;
+  if (operation === '<=') return FilterMatchMode.DATE_BEFORE;
+  if (operation === '>=') return FilterMatchMode.DATE_AFTER;
+  return FilterMatchMode.DATE_IS;
 };
 
 const generateMatchMode = (matchMode: string) => {

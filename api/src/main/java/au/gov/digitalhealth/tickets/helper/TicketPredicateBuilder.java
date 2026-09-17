@@ -22,6 +22,7 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.DatePath;
 import com.querydsl.core.types.dsl.DateTimePath;
+import com.querydsl.core.types.dsl.SimpleExpression;
 import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.jpa.JPAExpressions;
 import java.time.Duration;
@@ -119,6 +120,10 @@ public class TicketPredicateBuilder {
           if (CREATED_PATH.equals(field)) {
             // special case
             DateTimePath<Instant> datePath = QTicket.ticket.created;
+            if (SearchConditionUtils.isBlankOperation(operation)) {
+              predicate.and(blankExpression(datePath, operation));
+              return;
+            }
             String[] dates = InstantUtils.splitDates(value);
             Instant startOfRange = InstantUtils.convert(dates[0], zoneId);
             if (startOfRange == null) {
@@ -140,6 +145,10 @@ public class TicketPredicateBuilder {
           }
           if (DUE_DATE_PATH.equals(field)) {
             DatePath<LocalDate> dueDatePath = QTicket.ticket.dueDate;
+            if (SearchConditionUtils.isBlankOperation(operation)) {
+              predicate.and(blankExpression(dueDatePath, operation));
+              return;
+            }
             String[] dates = InstantUtils.splitDates(value);
             Instant startInstant = InstantUtils.convert(dates[0], zoneId);
             if (startInstant == null) {
@@ -451,6 +460,14 @@ public class TicketPredicateBuilder {
           : booleanExpression.or(nullExpression);
     }
     return booleanExpression;
+  }
+
+  /**
+   * The predicate for an operation that asks about the presence of a value - "is blank" and "is not
+   * blank" compare against nothing, so they never look at the search condition's value.
+   */
+  private static BooleanExpression blankExpression(SimpleExpression<?> path, String operation) {
+    return SearchConditionUtils.IS_NULL.equals(operation) ? path.isNull() : path.isNotNull();
   }
 
   private static BooleanExpression createNullExpressions(String field) {

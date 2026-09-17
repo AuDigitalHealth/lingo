@@ -152,8 +152,18 @@ interface TaskAssociationMetaData extends DataTableFilterMetaData {
   value: Task | null;
 }
 
-interface CreatedMetaData extends DataTableFilterMetaData {
-  value: Date | Date[] | null;
+/**
+ * A date column's filter. The match mode widens to a plain string because the backlog
+ * adds two modes of its own - "is blank" and "is not blank" - that PrimeReact's own
+ * union does not know about, and the value widens to a boolean because those modes
+ * carry a placeholder rather than a date.
+ */
+export interface CreatedMetaData extends Omit<
+  DataTableFilterMetaData,
+  'matchMode'
+> {
+  value: Date | Date[] | boolean | null;
+  matchMode?: string;
 }
 
 export function hasFiltersChanged(filters: TicketDataTableFilters): boolean {
