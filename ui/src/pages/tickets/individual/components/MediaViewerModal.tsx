@@ -16,6 +16,7 @@ const MediaViewerModal = ({
   const [scale, setScale] = useState(1);
   const [fileUrl, setFileUrl] = useState<string | undefined>(undefined);
   const [fileName, setFileName] = useState<string>('');
+  const [fileMimeType, setFileMimeType] = useState<string>('');
 
   const [isLoading, setIsLoading] = useState(true);
   const [isFullscreen] = useState(false);
@@ -64,16 +65,27 @@ const MediaViewerModal = ({
     return () => window.removeEventListener('resize', handleResize);
   }, [calculateInitialScale, naturalDimensions]);
 
-  // Determine file type from URL
+  // Determine the file type from the filename, falling back to the content type the server sent.
+  // The extension is the better signal - it distinguishes files the browser serves under a generic
+  // content type - but it is only available when the response carried a usable filename, so the
+  // content type is what keeps a nameless attachment previewable instead of "Unsupported file type".
   const fileType = useMemo(() => {
+    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
     const extension = fileName?.split('.').pop()?.toLowerCase();
+
+    if (
+      extension === 'pdf' ||
+      (extension && imageExtensions.includes(extension))
+    ) {
+      return { isPdf: extension === 'pdf', isImage: extension !== 'pdf' };
+    }
+
+    const mimeType = fileMimeType.split(';')[0].trim().toLowerCase();
     return {
-      isPdf: extension === 'pdf',
-      isImage:
-        extension !== undefined &&
-        ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(extension),
+      isPdf: mimeType === 'application/pdf',
+      isImage: mimeType.startsWith('image/'),
     };
-  }, [fileName]);
+  }, [fileName, fileMimeType]);
 
   useEffect(() => {
     if (open && fileId) {
@@ -98,6 +110,7 @@ const MediaViewerModal = ({
           const url = URL.createObjectURL(blob);
           setFileUrl(url);
           setFileName(actualFileName);
+          setFileMimeType(blob.type);
         }
       }
     } catch (error) {

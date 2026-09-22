@@ -38,6 +38,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 
@@ -91,6 +92,46 @@ class AttachmentControllerTest extends TicketTestBaseLocal {
         .get(this.getSnomioLocation() + "/api/attachments/download/999999")
         .then()
         .statusCode(HttpStatus.NOT_FOUND.value());
+  }
+
+  /**
+   * A filename containing a character above U+00FF used to take the whole Content-Disposition
+   * header with it: HTTP/1.1 header values are written as ISO-8859-1, and Tomcat drops any header
+   * whose value it cannot encode. The download then carried no filename, and the ticket screen -
+   * which works out whether it can preview a file from the filename extension - fell back to
+   * "Unsupported file type" for PDFs that downloaded and opened perfectly well.
+   */
+  @Test
+  void downloadAttachment_filenameAboveLatin1_stillSendsContentDisposition() {
+    String filename = "CMI • Jungle Cake • 15g.pdf";
+    // Rename an attachment the import already created rather than inserting a new one. A new
+    // Attachment cascades PERSIST to its AttachmentType, and the type read here is detached -
+    // findAll() opens and closes its own transaction - so Hibernate rejects it with "Detached
+    // entity passed to persist". save() on a row that already has an id merges instead, and
+    // AttachmentType carries no MERGE cascade. DbInitializer reloads the data before every test,
+    // so the rename does not outlive this one.
+    Attachment renamed = attachmentRepository.findAll().get(0);
+    renamed.setFilename(filename);
+    renamed.setDescription(filename);
+    attachmentRepository.save(renamed);
+
+    String header =
+        withAuth()
+            .when()
+            .get(this.getSnomioLocation() + "/api/attachments/download/" + renamed.getId())
+            .then()
+            .statusCode(200)
+            .extract()
+            .header(HttpHeaders.CONTENT_DISPOSITION);
+
+    Assertions.assertNotNull(
+        header, "Content-Disposition must survive a filename containing characters above U+00FF");
+    Assertions.assertTrue(
+        header.chars().allMatch(c -> c <= 0xFF),
+        "Content-Disposition must stay inside ISO-8859-1 or the server drops it: " + header);
+    Assertions.assertTrue(
+        header.contains("filename*=UTF-8''CMI%20%E2%80%A2%20Jungle%20Cake%20%E2%80%A2%2015g.pdf"),
+        "The exact filename must survive in the RFC 5987 filename* parameter: " + header);
   }
 
   @Test
