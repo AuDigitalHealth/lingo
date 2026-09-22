@@ -338,14 +338,20 @@ public abstract class AtomicDataService<T extends ProductDetails> {
               filteredRelationships.get(0).getConcreteValue().getValue());
         } else {
           log.severe(
-              "Multiple relationships found for Has Other Identifying Information for product "
-                  + productId);
+              "Expected 1 Has Other Identifying Information relationship for product "
+                  + productId
+                  + " after excluding the generic value, but found "
+                  + filteredRelationships.size());
         }
+      } else if (relationships.isEmpty()) {
+        // absent is normal - plenty of packages carry no other identifying information at all
+        log.fine(
+            () -> "No Has Other Identifying Information relationships for product " + productId);
       } else {
         log.severe(
-            "Expected 1 or 2 relationships for Has Other Identifying Information for product "
+            "Expected 1 or 2 Has Other Identifying Information relationships for product "
                 + productId
-                + ", found: "
+                + " but found "
                 + relationships.size());
       }
     }

@@ -80,11 +80,17 @@ import au.gov.digitalhealth.lingo.service.fhir.FhirClient;
 import au.gov.digitalhealth.lingo.util.NmpcConstants;
 import au.gov.digitalhealth.lingo.util.NmpcType;
 import au.gov.digitalhealth.lingo.util.SnowstormDtoUtil;
+import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
@@ -179,8 +185,60 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
     return ingredient;
   }
 
-  private static Map<String, SnowstormConceptMini> getClinicalDrugRelationships(
+  /**
+   * Finds the concept at {@code referenceSetIdentifier}'s model level that this specific {@code
+   * product} sits under, by walking stated IS-A links up through {@code browserMap}.
+   *
+   * <p>Necessary because a multi-component pack contributes more than one concept at each model
+   * level - one per component - and they are not interchangeable. Pabrinex, for example, has two
+   * ampoules with two different MP-only (VTM) concepts, one holding thiamine/riboflavin/pyridoxine
+   * and the other ascorbic acid/nicotinamide/glucose. Picking the wrong one makes the precise
+   * ingredients of the other component unresolvable, which surfaced as "Expected 1 active
+   * ingredient for precise ingredient 126227009 ... for product 1008011000220108".
+   *
+   * <p>Returns empty when the walk is inconclusive (nothing found, or more than one concept at that
+   * level reachable) so the caller can fall back to its previous behaviour rather than fail.
+   */
+  static Optional<String> findModelLevelConceptForProduct(
+      SnowstormConcept product,
+      Map<String, SnowstormConcept> browserMap,
+      Map<String, String> typeMap,
+      String referenceSetIdentifier) {
+
+    Set<String> matches = new LinkedHashSet<>();
+    Set<String> visited = new HashSet<>();
+    Deque<String> queue = new ArrayDeque<>();
+    queue.add(product.getConceptId());
+
+    while (!queue.isEmpty()) {
+      String conceptId = queue.poll();
+      if (conceptId == null || !visited.add(conceptId)) {
+        continue;
+      }
+      if (referenceSetIdentifier.equals(typeMap.get(conceptId))) {
+        // this is the level we were looking for - don't walk past it to its own ancestors
+        matches.add(conceptId);
+        continue;
+      }
+      SnowstormConcept concept = browserMap.get(conceptId);
+      if (concept == null) {
+        continue;
+      }
+      filterActiveStatedRelationshipByType(getRelationshipsFromAxioms(concept), IS_A.getValue())
+          .stream()
+          .map(SnowstormRelationship::getTarget)
+          .filter(Objects::nonNull)
+          .map(SnowstormConceptMini::getConceptId)
+          .forEach(queue::add);
+    }
+
+    return matches.size() == 1 ? Optional.of(matches.iterator().next()) : Optional.empty();
+  }
+
+  // package-private for MedicationMultiComponentPackIngredientTest
+  static Map<String, SnowstormConceptMini> getClinicalDrugRelationships(
       String productId,
+      SnowstormConcept product,
       Map<String, SnowstormConcept> browserMap,
       Map<String, String> typeMap,
       ModelConfiguration modelConfiguration,
@@ -188,17 +246,23 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
     String referenceSetIdentifier =
         modelConfiguration.getLevelOfType(modelLevelType).getReferenceSetIdentifier();
 
+    // Resolve the concept at this level for THIS product first; only fall back to "any concept at
+    // this level" when that is inconclusive, which preserves the previous behaviour for shapes the
+    // stated-IS-A walk cannot resolve.
     String typeKey =
-        typeMap.entrySet().stream()
-            .filter(entry -> referenceSetIdentifier.equals(entry.getValue()))
-            .map(Map.Entry::getKey)
-            .findFirst()
-            .orElseThrow(
+        findModelLevelConceptForProduct(product, browserMap, typeMap, referenceSetIdentifier)
+            .orElseGet(
                 () ->
-                    new AtomicDataExtractionProblem(
-                        "Incorrectly modelled content - no type found for reference set identifier: "
-                            + referenceSetIdentifier,
-                        productId));
+                    typeMap.entrySet().stream()
+                        .filter(entry -> referenceSetIdentifier.equals(entry.getValue()))
+                        .map(Map.Entry::getKey)
+                        .findFirst()
+                        .orElseThrow(
+                            () ->
+                                new AtomicDataExtractionProblem(
+                                    "Incorrectly modelled content - no type found for reference set identifier: "
+                                        + referenceSetIdentifier,
+                                    productId)));
 
     SnowstormConcept concept = browserMap.get(typeKey);
 
@@ -525,8 +589,16 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
       if (relationships.size() == 1) {
         productDetails.setGenericOtherIdentifyingInformation(
             relationships.iterator().next().getConcreteValue().getValue());
+      } else if (relationships.isEmpty()) {
+        // absent is normal - plenty of products carry no other identifying information at all
+        log.fine(
+            () -> "No Has Other Identifying Information on the unbranded product for " + productId);
       } else {
-        log.severe("There are more than one relationship found for unbranded product");
+        log.severe(
+            "Expected 1 Has Other Identifying Information relationship on the unbranded product for "
+                + productId
+                + " but found "
+                + relationships.size());
       }
 
       Set<SnowstormRelationship> brandedRelationships =
@@ -554,12 +626,20 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
               filteredRelationships.get(0).getConcreteValue().getValue());
         } else {
           log.severe(
-              "There are more than one Has Other Identifying Information relationship found for branded product, expected 1 but found "
+              "Expected 1 branded Has Other Identifying Information relationship for product "
+                  + productId
+                  + " after excluding the unbranded value, but found "
                   + filteredRelationships.size());
         }
+      } else if (brandedRelationships.isEmpty()) {
+        // absent is normal - plenty of products carry no other identifying information at all
+        log.fine(
+            () -> "No Has Other Identifying Information on the branded product for " + productId);
       } else {
         log.severe(
-            "Single Has Other Identifying Information relationships cannot be found for branded product, found "
+            "Expected 1 or 2 Has Other Identifying Information relationships on the branded product for "
+                + productId
+                + " but found "
                 + brandedRelationships.size());
       }
 
@@ -640,7 +720,13 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
 
     final Map<Integer, ActivePreciseIngredient> preciseActiveInredientMap =
         getActivePreciseIngredientMap(
-            branch, productId, browserMap, typeMap, modelConfiguration, productRelationships);
+            branch,
+            productId,
+            product,
+            browserMap,
+            typeMap,
+            modelConfiguration,
+            productRelationships);
 
     for (Integer group : ingredientGroups) {
       productDetails
@@ -664,9 +750,11 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
     return productDetails;
   }
 
-  private Map<Integer, ActivePreciseIngredient> getActivePreciseIngredientMap(
+  // package-private for MedicationMultiComponentPackIngredientTest
+  Map<Integer, ActivePreciseIngredient> getActivePreciseIngredientMap(
       String branch,
       String productId,
+      SnowstormConcept product,
       Map<String, SnowstormConcept> browserMap,
       Map<String, String> typeMap,
       ModelConfiguration modelConfiguration,
@@ -708,10 +796,16 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
       // active ingredients aren't on the branded product, need to look at the clinical drug and MP
       final Map<String, SnowstormConceptMini> refinedActiveIngredients =
           getClinicalDrugRelationships(
-              productId, browserMap, typeMap, modelConfiguration, ModelLevelType.CLINICAL_DRUG);
+              productId,
+              product,
+              browserMap,
+              typeMap,
+              modelConfiguration,
+              ModelLevelType.CLINICAL_DRUG);
       final Map<String, SnowstormConceptMini> activeIngredients =
           getClinicalDrugRelationships(
               productId,
+              product,
               browserMap,
               typeMap,
               modelConfiguration,
@@ -789,9 +883,14 @@ public class MedicationService extends AtomicDataService<MedicationProductDetail
               + " for precise ingredient "
               + preciseIngredientId
               + " but found "
-              + candidateIngredients.stream()
-                  .map(SnowstormConceptMini::getConceptId)
-                  .collect(Collectors.joining(",")),
+              + candidateIngredients.size()
+              + (candidateIngredients.isEmpty()
+                  ? ""
+                  : " ("
+                      + candidateIngredients.stream()
+                          .map(SnowstormConceptMini::getConceptId)
+                          .collect(Collectors.joining(","))
+                      + ")"),
           productId);
     }
 

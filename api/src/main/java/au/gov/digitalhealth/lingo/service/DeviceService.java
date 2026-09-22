@@ -211,8 +211,16 @@ public class DeviceService extends AtomicDataService<DeviceProductDetails> {
     if (relationships.size() == 1) {
       productDetails.setGenericOtherIdentifyingInformation(
           relationships.iterator().next().getConcreteValue().getValue());
+    } else if (relationships.isEmpty()) {
+      // absent is normal - plenty of products carry no other identifying information at all
+      log.fine(
+          () -> "No Has Other Identifying Information on the unbranded product for " + productId);
     } else {
-      log.severe("There are more than one relationship found for unbranded product");
+      log.severe(
+          "Expected 1 Has Other Identifying Information relationship on the unbranded product for "
+              + productId
+              + " but found "
+              + relationships.size());
     }
 
     return productDetails;
