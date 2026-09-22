@@ -1,6 +1,7 @@
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -141,36 +142,55 @@ function MedicationAuthoring({
     setMode,
   } = useAuthoringStore();
 
-  const { isLoading, isFetching, refetchWithParam } = useProductQuery({
+  // Applied from `data` in an effect below rather than from inside queryFn. React Query runs one
+  // queryFn per key and dedupes other observers onto it, so a write made from inside the fetch can
+  // land on an unmounted instance's setters and be silently lost - which is what left the form
+  // blank when a product was opened in the atomic screen right after one was opened in view mode
+  // (IEDC). refetchWithParam still takes it directly: that call bypasses the query cache, so there
+  // is no `data` for an effect to observe, and it is invoked imperatively from the live instance.
+  const applyLoadedProduct = useCallback((data: any) => {
+    lastBrandRef.current = {};
+    setBrandedProductNamePrefill({ status: 'none' });
+    setFormData(data);
+    setInitialFormData(data);
+    setFormErrors([]);
+  }, []);
+
+  const {
+    isLoading,
+    isFetching,
+    refetchWithParam,
+    data: loadedProduct,
+  } = useProductQuery({
     productId: existingConceptToLoad,
     task,
-    setFunction: (data: any) => {
-      lastBrandRef.current = {};
-      setBrandedProductNamePrefill({ status: 'none' });
-      setFormData(data);
-      setInitialFormData(data);
-      setFormErrors([]);
-    },
+    setFunction: applyLoadedProduct,
   });
+
+  useEffect(() => {
+    if (loadedProduct) {
+      applyLoadedProduct(loadedProduct);
+    }
+  }, [loadedProduct, applyLoadedProduct]);
+
   const {
     isLoading: originalConceptIsLoading,
     isFetching: originalConceptIsFetching,
+    data: originalConceptProduct,
   } = useProductQuery({
     productId: originalConceptId ? originalConceptId : existingConceptToLoad,
     task,
-    setFunction: (data: any) => {
-      setSnowStormFormData(data);
-    },
     disabled: mode != 'update',
   });
-  const {
-    isLoading: isTicketProductLoading,
-    isFetching: isTicketProductFetching,
-  } = useTicketProductQuery({
-    ticketProductId,
-    productAuditDto,
-    ticket,
-    setFunction: (data: any) => {
+
+  useEffect(() => {
+    if (originalConceptProduct) {
+      setSnowStormFormData(originalConceptProduct);
+    }
+  }, [originalConceptProduct]);
+
+  const applyTicketProduct = useCallback(
+    (data: any) => {
       lastBrandRef.current = {};
       setMode(
         data.action === 'UPDATE' && data.originalConceptId
@@ -196,7 +216,40 @@ function MedicationAuthoring({
         setStaleModeOn(true);
       }
     },
+    [setMode, setOriginalConceptId],
+  );
+
+  const {
+    isLoading: isTicketProductLoading,
+    isFetching: isTicketProductFetching,
+    data: ticketProduct,
+    error: ticketProductError,
+  } = useTicketProductQuery({
+    ticketProductId,
+    productAuditDto,
+    ticket,
   });
+
+  useEffect(() => {
+    if (ticketProduct) {
+      applyTicketProduct(ticketProduct);
+    }
+  }, [ticketProduct, applyTicketProduct]);
+
+  // Previously the failure was silent: the load wrote state from inside queryFn, so a rejected
+  // request simply never wrote anything and the screen rendered an empty form with no spinner and
+  // no message.
+  useEffect(() => {
+    if (ticketProductError) {
+      showError(
+        `Could not load the saved product details: ${
+          ticketProductError instanceof Error
+            ? ticketProductError.message
+            : String(ticketProductError)
+        }`,
+      );
+    }
+  }, [ticketProductError]);
   const mutation = useCalculateProduct();
 
   const handleToggleCreateModal = useCallback(() => {
@@ -340,8 +393,14 @@ function MedicationAuthoring({
 
     return 'Submitting ...';
   };
-  // Clear form data when schemaType changes
-  useEffect(() => {
+  // Clear form data when schemaType changes.
+  //
+  // A layout effect, not a passive one, because this reset must happen BEFORE the effects that
+  // apply a loaded product - and those are declared above this, so as a passive effect it would
+  // run last and wipe what they just wrote. That ordering only matters now that loads are applied
+  // from `data`: when React Query already holds the result, `data` is populated on the very first
+  // render and the load effects fire during mount rather than asynchronously after it.
+  useLayoutEffect(() => {
     handleClear();
   }, [handleClear]);
 

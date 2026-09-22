@@ -8,7 +8,7 @@ import {
 } from '@mui/material';
 import { Grid } from '@mui/material';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ProductTableRow } from '../../../types/TicketProduct.ts';
 import BaseModal from '../../../components/modal/BaseModal.tsx';
 import BaseModalHeader from '../../../components/modal/BaseModalHeader.tsx';
@@ -46,14 +46,24 @@ export default function ProductAuditModal({
   ticketProductId,
 }: ProductAuditModalProps) {
   const [expandedRows, setExpandedRows] = useState<TicketProductAuditDto[]>([]);
-  const [auditRecords, setAuditRecords] = useState([]);
-  const { isLoading, isFetching } = useTicketProductAuditQuery({
+  // `any[]` rather than TicketProductAuditDto[]: the DataTable below is not type-clean against
+  // that DTO, so tightening this only surfaces unrelated pre-existing errors.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [auditRecords, setAuditRecords] = useState<any[]>([]);
+  const {
+    isLoading,
+    isFetching,
+    data: auditData,
+  } = useTicketProductAuditQuery({
     ticketProductId,
     ticket,
-    setFunction: (data: TicketProductAuditDto[] | undefined | null) => {
-      setAuditRecords(data);
-    },
   });
+
+  useEffect(() => {
+    if (auditData) {
+      setAuditRecords(auditData);
+    }
+  }, [auditData]);
   const { jiraUsers } = useJiraUsers();
 
   // eslint-disable-next-line

@@ -1,6 +1,7 @@
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -129,35 +130,50 @@ function DeviceAuthoring({
     setMode,
   } = useAuthoringStore();
 
-  const { isLoading, isFetching, refetchWithParam } = useProductQuery({
+  // See useTicketProductQuery: results are applied from `data` in effects, never from inside
+  // queryFn, so a write cannot land on an unmounted instance's setters and be lost.
+  const applyLoadedProduct = useCallback((data: any) => {
+    lastBrandRef.current = {};
+    setBrandedProductNamePrefill({ status: 'none' });
+    setFormData(data);
+    setInitialFormData(data);
+  }, []);
+
+  const {
+    isLoading,
+    isFetching,
+    refetchWithParam,
+    data: loadedProduct,
+  } = useProductQuery({
     productId: existingConceptToLoad,
     task,
-    setFunction: (data: any) => {
-      lastBrandRef.current = {};
-      setBrandedProductNamePrefill({ status: 'none' });
-      setFormData(data);
-      setInitialFormData(data);
-    },
+    setFunction: applyLoadedProduct,
   });
+
+  useEffect(() => {
+    if (loadedProduct) {
+      applyLoadedProduct(loadedProduct);
+    }
+  }, [loadedProduct, applyLoadedProduct]);
+
   const {
     isLoading: originalConceptIsLoading,
     isFetching: originalConceptIsFetching,
+    data: originalConceptProduct,
   } = useProductQuery({
     productId: originalConceptId ? originalConceptId : existingConceptToLoad,
     task,
-    setFunction: (data: any) => {
-      setSnowStormFormData(data);
-    },
     disabled: mode != 'update',
   });
-  const {
-    isLoading: isTicketProductLoading,
-    isFetching: isTicketProductFetching,
-  } = useTicketProductQuery({
-    ticketProductId,
-    productAuditDto,
-    ticket,
-    setFunction: (data: any) => {
+
+  useEffect(() => {
+    if (originalConceptProduct) {
+      setSnowStormFormData(originalConceptProduct);
+    }
+  }, [originalConceptProduct]);
+
+  const applyTicketProduct = useCallback(
+    (data: any) => {
       lastBrandRef.current = {};
       setBrandedProductNamePrefill({ status: 'none' });
       setMode(
@@ -183,7 +199,37 @@ function DeviceAuthoring({
         setStaleModeOn(true);
       }
     },
+    [setMode, setOriginalConceptId],
+  );
+
+  const {
+    isLoading: isTicketProductLoading,
+    isFetching: isTicketProductFetching,
+    data: ticketProduct,
+    error: ticketProductError,
+  } = useTicketProductQuery({
+    ticketProductId,
+    productAuditDto,
+    ticket,
   });
+
+  useEffect(() => {
+    if (ticketProduct) {
+      applyTicketProduct(ticketProduct);
+    }
+  }, [ticketProduct, applyTicketProduct]);
+
+  useEffect(() => {
+    if (ticketProductError) {
+      showError(
+        `Could not load the saved product details: ${
+          ticketProductError instanceof Error
+            ? ticketProductError.message
+            : String(ticketProductError)
+        }`,
+      );
+    }
+  }, [ticketProductError]);
   const mutation = useCalculateProduct();
   const { isPending, data } = mutation;
 
@@ -319,7 +365,10 @@ function DeviceAuthoring({
     return 'Submitting ...';
   };
 
-  useEffect(() => {
+  // A layout effect, not a passive one, because this reset must happen BEFORE the effects that
+  // apply a loaded product - and those are declared above this, so as a passive effect it would
+  // run last and wipe what they just wrote. See MedicationAuthoring for the full reasoning.
+  useLayoutEffect(() => {
     handleClear();
   }, [handleClear]);
 
