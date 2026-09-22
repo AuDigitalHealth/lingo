@@ -583,7 +583,7 @@ public class SnowstormDtoUtil {
     concept.setActive(true);
     concept.setDefinitionStatusId(
         newConceptDetails.getAxioms().stream()
-                .anyMatch(a -> DEFINED.getValue().equals(a.getDefinitionStatus()))
+                .anyMatch(a -> DEFINED.getValue().equals(a.getDefinitionStatusId()))
             ? DEFINED.getValue()
             : PRIMITIVE.getValue());
     concept.setClassAxioms(newConceptDetails.getAxioms());
@@ -1037,7 +1037,10 @@ public class SnowstormDtoUtil {
     Set<SnowstormAxiom> remaining = new HashSet<>(axioms1);
     for (SnowstormAxiom axiom : axioms) {
       SnowstormAxiom match =
-          remaining.stream().filter(candidate -> sameAxiom(axiom, candidate)).findFirst().orElse(null);
+          remaining.stream()
+              .filter(candidate -> sameAxiom(axiom, candidate))
+              .findFirst()
+              .orElse(null);
       if (match == null) {
         return false;
       }
