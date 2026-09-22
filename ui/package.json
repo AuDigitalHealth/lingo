@@ -156,7 +156,7 @@
     "sockjs-client": "^1.6.1",
     "stompjs": "^2.3.3",
     "yup": "^1.4.0",
-    "zustand": "^4.5.2"
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@sentry/vite-plugin": "^2.22.6",
