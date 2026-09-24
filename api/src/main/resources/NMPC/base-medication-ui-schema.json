@@ -24,14 +24,14 @@
           { "label": "Vaccine", "value": "vaccine" }
         ],
         "nutritional": [
-          { "label": "Nutritional", "value": "nutritional" }
+          { "label": "Nutritional/Consumer Health", "value": "nutritional" }
         ]
       }
     }
 
   },
   "variant": {
-    "ui:enumNames": ["Medication", "Vaccine", "Nutritional"],
+    "ui:enumNames": ["Medication", "Vaccine", "Nutritional/Consumer Health"],
     "ui:widget": "select",
     "ui:title": "Target Model",
     "ui:options": {
