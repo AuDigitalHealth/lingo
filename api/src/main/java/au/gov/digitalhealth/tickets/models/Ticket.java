@@ -41,6 +41,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -130,7 +131,12 @@ public class Ticket extends BaseAuditableEntity {
   @JsonProperty("ticket-additional-fields")
   @Default
   @Exclude
-  private Set<AdditionalFieldValue> additionalFieldValues = new HashSet<>();
+  // Insertion-ordered: additional fields are displayed in the order they were added, so the order a
+  // caller supplies them in has to survive to the join table. A plain HashSet ordered them by hash,
+  // which is stable for a given set of values but arbitrary — and changed the moment the values
+  // were
+  // constructed differently.
+  private Set<AdditionalFieldValue> additionalFieldValues = new LinkedHashSet<>();
 
   @ManyToOne(cascade = {CascadeType.MERGE})
   private State state;

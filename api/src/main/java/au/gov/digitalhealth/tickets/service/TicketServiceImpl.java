@@ -21,13 +21,15 @@ import au.gov.digitalhealth.lingo.exception.LingoProblem;
 import au.gov.digitalhealth.lingo.exception.ResourceNotFoundProblem;
 import au.gov.digitalhealth.lingo.exception.TicketImportProblem;
 import au.gov.digitalhealth.lingo.exception.TicketStateClosedProblem;
-import au.gov.digitalhealth.lingo.service.SergioService;
+import au.gov.digitalhealth.lingo.service.SubmissionGatewayComposer;
+import au.gov.digitalhealth.tickets.AdditionalFieldTypeDto;
 import au.gov.digitalhealth.tickets.AdditionalFieldValueDto;
 import au.gov.digitalhealth.tickets.ExternalRequesterDto;
 import au.gov.digitalhealth.tickets.IterationDto;
 import au.gov.digitalhealth.tickets.JsonFieldDto;
 import au.gov.digitalhealth.tickets.LabelDto;
 import au.gov.digitalhealth.tickets.PriorityBucketDto;
+import au.gov.digitalhealth.tickets.ScheduleDto;
 import au.gov.digitalhealth.tickets.StateDto;
 import au.gov.digitalhealth.tickets.TicketBacklogDto;
 import au.gov.digitalhealth.tickets.TicketDto;
@@ -61,6 +63,7 @@ import au.gov.digitalhealth.tickets.models.TaskAssociation;
 import au.gov.digitalhealth.tickets.models.Ticket;
 import au.gov.digitalhealth.tickets.models.TicketExternalRequestor;
 import au.gov.digitalhealth.tickets.models.TicketType;
+import au.gov.digitalhealth.tickets.models.WorkIdentityReservation;
 import au.gov.digitalhealth.tickets.models.mappers.AdditionalFieldValueMapper;
 import au.gov.digitalhealth.tickets.models.mappers.BulkProductActionMapper;
 import au.gov.digitalhealth.tickets.models.mappers.ExternalRequestorMapper;
@@ -84,8 +87,10 @@ import au.gov.digitalhealth.tickets.repository.StateRepository;
 import au.gov.digitalhealth.tickets.repository.TicketAssociationRepository;
 import au.gov.digitalhealth.tickets.repository.TicketRepository;
 import au.gov.digitalhealth.tickets.repository.TicketTypeRepository;
+import au.gov.digitalhealth.tickets.repository.WorkIdentityReservationRepository;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.querydsl.core.types.Predicate;
@@ -100,6 +105,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -135,6 +141,7 @@ public class TicketServiceImpl implements TicketService {
   protected final Log logger = LogFactory.getLog(getClass());
   private final TicketRepository ticketRepository;
   private final AdditionalFieldTypeRepository additionalFieldTypeRepository;
+  private final WorkIdentityReservationRepository reservationRepository;
   private final AdditionalFieldValueRepository additionalFieldValueRepository;
   private final StateRepository stateRepository;
   private final AttachmentTypeRepository attachmentTypeRepository;
@@ -149,7 +156,8 @@ public class TicketServiceImpl implements TicketService {
   private final IterationRepository iterationRepository;
   private final PriorityBucketRepository priorityBucketRepository;
   private final ProductRepository productRepository;
-  private final SergioService sergioService;
+  private final SubmissionGatewayComposer submissionGatewayComposer;
+
   private final BulkProductActionRepository bulkProductActionRepository;
   private final TicketMapper ticketMapper;
   private final AdditionalFieldValueMapper additionalFieldValueMapper;
@@ -176,6 +184,7 @@ public class TicketServiceImpl implements TicketService {
   public TicketServiceImpl(
       TicketRepository ticketRepository,
       AdditionalFieldTypeRepository additionalFieldTypeRepository,
+      WorkIdentityReservationRepository reservationRepository,
       AdditionalFieldValueRepository additionalFieldValueRepository,
       StateRepository stateRepository,
       AttachmentTypeRepository attachmentTypeRepository,
@@ -187,7 +196,7 @@ public class TicketServiceImpl implements TicketService {
       IterationRepository iterationRepository,
       PriorityBucketRepository priorityBucketRepository,
       ProductRepository productRepository,
-      SergioService sergioService,
+      SubmissionGatewayComposer submissionGatewayComposer,
       ExternalRequestorRepository externalRequestorRepository,
       TicketAssociationRepository ticketAssociationRepository,
       TicketMapper ticketMapper,
@@ -202,6 +211,7 @@ public class TicketServiceImpl implements TicketService {
       ZoneId businessZoneId) {
     this.ticketRepository = ticketRepository;
     this.additionalFieldTypeRepository = additionalFieldTypeRepository;
+    this.reservationRepository = reservationRepository;
     this.additionalFieldValueRepository = additionalFieldValueRepository;
     this.stateRepository = stateRepository;
     this.attachmentTypeRepository = attachmentTypeRepository;
@@ -213,7 +223,7 @@ public class TicketServiceImpl implements TicketService {
     this.iterationRepository = iterationRepository;
     this.priorityBucketRepository = priorityBucketRepository;
     this.productRepository = productRepository;
-    this.sergioService = sergioService;
+    this.submissionGatewayComposer = submissionGatewayComposer;
     this.externalRequestorRepository = externalRequestorRepository;
     this.ticketMapper = ticketMapper;
     this.additionalFieldValueMapper = additionalFieldValueMapper;
@@ -414,7 +424,8 @@ public class TicketServiceImpl implements TicketService {
 
   public Set<AdditionalFieldValue> generateAdditionalFields(
       Set<AdditionalFieldValueDto> additionalFieldDtos, Ticket ticketToSave) {
-    Set<AdditionalFieldValue> additionalFieldValues = new HashSet<>();
+    // Ordered, so the order the caller listed its fields in reaches the join table.
+    Set<AdditionalFieldValue> additionalFieldValues = new LinkedHashSet<>();
 
     for (AdditionalFieldValueDto additionalFieldValueDto : additionalFieldDtos) {
 
@@ -862,7 +873,7 @@ public class TicketServiceImpl implements TicketService {
       Map<String, AdditionalFieldType> additionalFieldTypes,
       Map<String, AdditionalFieldValue> additionalFieldTypeValues,
       Ticket newTicketToAdd) {
-    Set<AdditionalFieldValue> additionalFieldValuesToAdd = new HashSet<>();
+    Set<AdditionalFieldValue> additionalFieldValuesToAdd = new LinkedHashSet<>();
     Set<AdditionalFieldValue> additionalFields = newTicketToAdd.getAdditionalFieldValues();
     for (AdditionalFieldValue additionalFieldValue : additionalFields) {
       AdditionalFieldValue fieldValueToAdd = new AdditionalFieldValue();
@@ -1759,17 +1770,40 @@ public class TicketServiceImpl implements TicketService {
       TicketMetadata ticketMetadata,
       List<ResolvedExternalRequestor> resolvedRequestors,
       List<Label> resolvedLabels) {
-    State toDoState = stateRepository.findByLabel("To Do").orElse(null);
+    return createNewTicket(ticketMetadata, resolvedRequestors, resolvedLabels, null);
+  }
+
+  /**
+   * Builds and persists a new ticket from caller-supplied metadata.
+   *
+   * @param artgIdForDedupe when non-null, stamps this value onto the ticket as its {@code ARTGID}
+   *     additional field so subsequent {@link #createOrGetTicketsByArtgId} lookups can dedupe on
+   *     it. Required whenever this is used for the ARTGID path — without it the new ticket would be
+   *     invisible to the dedupe query that created it.
+   */
+  private Ticket createNewTicket(
+      TicketMetadata ticketMetadata,
+      List<ResolvedExternalRequestor> resolvedRequestors,
+      List<Label> resolvedLabels,
+      String artgIdForDedupe) {
+    // A caller that composed the ticket resolved its state too — a reopened entry is not "To Do".
+    // Falls back to "To Do" for a caller that supplied no state, which is every caller that submits
+    // a bare identifier.
+    State state = resolveStateOrDefault(ticketMetadata.getStateLabel(), "To Do");
     Ticket newTicket =
         Ticket.builder()
             .title(ticketMetadata.getName())
-            .description(ticketMetadata.getResolvedDescription())
-            .state(toDoState)
+            // A new ticket describes the submission that asked for it, which is where these
+            // details appeared before callers composed anything. The composed description is the
+            // register's own and is what an automated run creates a ticket with.
+            .description(newTicketDescription(ticketMetadata))
+            .state(state)
             .build();
     if (resolvedLabels != null) {
       newTicket.setLabels(new HashSet<>(resolvedLabels));
     }
     TicketDto ticketDto = ticketMapper.toDto(newTicket);
+    applyComposedContent(ticketDto, ticketMetadata);
     Set<TicketExternalRequestorDto> erDtos =
         resolvedRequestors.stream()
             .map(
@@ -1784,7 +1818,92 @@ public class TicketServiceImpl implements TicketService {
                 })
             .collect(Collectors.toSet());
     ticketDto.setExternalRequestors(erDtos);
+    Set<AdditionalFieldValueDto> additionalFields =
+        composedAdditionalFields(ticketMetadata.getAdditionalFields());
+    if (artgIdForDedupe != null && !artgIdForDedupe.isBlank()) {
+      // Merged, not replaced: the dedupe stamp must survive whatever else the caller derived, or
+      // the new ticket is invisible to the lookup that created it. Prepended rather than appended,
+      // because ARTGID leads the composed order and appending would move it to the end.
+      additionalFields.removeIf(value -> ARTGID.equals(value.getAdditionalFieldType().getName()));
+      Set<AdditionalFieldValueDto> ordered =
+          new LinkedHashSet<>(artgIdAdditionalField(artgIdForDedupe));
+      ordered.addAll(additionalFields);
+      additionalFields = ordered;
+    }
+    if (!additionalFields.isEmpty()) {
+      ticketDto.setAdditionalFieldValues(additionalFields);
+    }
     return createTicketFromDto(ticketDto);
+  }
+
+  /**
+   * Resolves a state by label, falling back to {@code defaultLabel} when the caller named none.
+   *
+   * <p>An unrecognised label falls back too rather than failing: the caller has already done the
+   * work of composing a ticket, and refusing the whole ticket because one label does not match this
+   * deployment's states would lose that work.
+   */
+  private State resolveStateOrDefault(String stateLabel, String defaultLabel) {
+    if (stateLabel != null && !stateLabel.isBlank()) {
+      Optional<State> named = stateRepository.findByLabel(stateLabel);
+      if (named.isPresent()) {
+        return named.get();
+      }
+      logger.warn(
+          "Caller supplied unknown state label '"
+              + stateLabel
+              + "' — falling back to "
+              + defaultLabel);
+    }
+    if (defaultLabel == null) {
+      return null;
+    }
+    return stateRepository.findByLabel(defaultLabel).orElse(null);
+  }
+
+  /**
+   * Applies the register-derived content a caller composed: schedule, priority bucket and the
+   * register snapshot.
+   *
+   * <p>These arrive with the create so the ticket exists complete. Previously they could only be
+   * patched in afterwards, which meant a second write and a window in which the ticket was missing
+   * them. Each is applied only when supplied, so a caller submitting a bare identifier is
+   * unaffected.
+   */
+  private void applyComposedContent(TicketDto ticketDto, TicketMetadata ticketMetadata) {
+    // Name-only DTOs: addEntitysToTicket resolves the real Schedule and PriorityBucket from the
+    // repository by name, the same way artgIdAdditionalField leaves the ARTGID type to be resolved.
+    if (ticketMetadata.getSchedule() != null && !ticketMetadata.getSchedule().isBlank()) {
+      ScheduleDto schedule = new ScheduleDto();
+      schedule.setName(ticketMetadata.getSchedule());
+      ticketDto.setSchedule(schedule);
+    }
+    if (ticketMetadata.getPriorityBucket() != null
+        && !ticketMetadata.getPriorityBucket().isBlank()) {
+      PriorityBucketDto bucket = new PriorityBucketDto();
+      bucket.setName(ticketMetadata.getPriorityBucket());
+      ticketDto.setPriorityBucket(bucket);
+    }
+    if (ticketMetadata.getRegisterSnapshot() != null) {
+      JsonFieldDto snapshot = new JsonFieldDto();
+      snapshot.setName(TicketMinimalDto.TGA_ENTRY_FIELD_NAME);
+      snapshot.setValue(ticketMetadata.getRegisterSnapshot());
+      ticketDto.setJsonFields(new HashSet<>(Set.of(snapshot)));
+    }
+  }
+
+  /**
+   * Builds the single {@code ARTGID} additional-field value for a new ticket. Only the type name is
+   * set — {@link #generateAdditionalFields} resolves the real {@link AdditionalFieldType} from the
+   * repository by that name.
+   */
+  private Set<AdditionalFieldValueDto> artgIdAdditionalField(String artgId) {
+    AdditionalFieldTypeDto typeDto = new AdditionalFieldTypeDto();
+    typeDto.setName(ARTGID);
+    AdditionalFieldValueDto valueDto = new AdditionalFieldValueDto();
+    valueDto.setAdditionalFieldType(typeDto);
+    valueDto.setValueOf(artgId);
+    return Set.of(valueDto);
   }
 
   @Transactional
@@ -1813,14 +1932,49 @@ public class TicketServiceImpl implements TicketService {
       }
 
       if (result.isEmpty()) {
-        // No open tickets — create a new one
+        // Nothing found — but "found nothing" is not safe to act on directly. Two callers
+        // submitting the same ARTG ID concurrently can both reach here, and both create a ticket.
+        // Claim the work atomically first: the loser re-reads and reuses the winner's ticket
+        // rather than creating a duplicate.
+        Optional<Ticket> claimed = claimOrAdoptArtgWork(ticketMetadata.getDedupeKey());
+        if (claimed.isPresent()) {
+          Ticket adopted = claimed.get();
+          initializeProducts(adopted);
+          result.add(adopted);
+          return result;
+        }
+
+        // No open tickets — create a new one.
+        //
+        // When the caller supplied a ticket name it has already composed the ticket's content
+        // (the Submission Gateway resolves the product name, description and labels before
+        // calling), so build from that metadata directly. Calling out to Sergio here would
+        // re-fetch the register entry, discard the caller's composed title in favour of Sergio's
+        // template, and make this endpoint depend on the nightly batch processor being healthy.
+        //
+        // The name-absent path (currently Snomio's own "Bulk Add External Requesters", which
+        // submits bare ARTG IDs) still delegates to Sergio, which composes content from the
+        // register entry.
         Ticket newTicket =
-            processArtgId(
-                Long.valueOf(ticketMetadata.getDedupeKey()),
-                resolvedRequestors,
-                resolvedLabels,
-                Optional.ofNullable(ticketMetadata.getResolvedDescription()));
+            hasComposedContent(ticketMetadata)
+                ? createNewTicket(
+                    ticketMetadata,
+                    resolvedRequestors,
+                    resolvedLabels,
+                    ticketMetadata.getDedupeKey())
+                : composeViaSubmissionGateway(
+                    Long.valueOf(ticketMetadata.getDedupeKey()),
+                    resolvedRequestors,
+                    resolvedLabels,
+                    Optional.ofNullable(ticketMetadata.getResolvedDescription()));
         initializeProducts(newTicket);
+        // Point the reservation at the ticket that won, so a concurrent caller that lost the race
+        // can be handed this ticket instead of finding an empty claim.
+        reservationRepository.recordTicket(
+            WorkIdentityReservation.SCOPE_TICKETS,
+            WorkIdentityReservation.TYPE_ARTG_TICKET,
+            ticketMetadata.getDedupeKey(),
+            newTicket.getId());
         result.add(newTicket);
       }
       return result;
@@ -1829,6 +1983,100 @@ public class TicketServiceImpl implements TicketService {
           "Failed to create or get tickets for dedupeKey: " + ticketMetadata.getDedupeKey(), e);
       throw e;
     }
+  }
+
+  /**
+   * Claims the work of creating a ticket for {@code artgId}, or adopts the ticket another caller
+   * already created for it.
+   *
+   * @return empty when this caller won the claim and should create the ticket; the existing ticket
+   *     when another caller got there first
+   */
+  private Optional<Ticket> claimOrAdoptArtgWork(String artgId) {
+    int claimed =
+        reservationRepository.tryClaim(
+            WorkIdentityReservation.SCOPE_TICKETS,
+            WorkIdentityReservation.TYPE_ARTG_TICKET,
+            artgId);
+    if (claimed == 1) {
+      return Optional.empty();
+    }
+
+    // Another caller holds the claim. It may not have finished creating yet, in which case there
+    // is no ticket to adopt — fall through and create, accepting that the pre-existing
+    // dedupe-by-ARTGID lookup remains the backstop for that narrow window.
+    Optional<Long> winningTicketId =
+        reservationRepository
+            .findByScopeAndWorkTypeAndWorkKey(
+                WorkIdentityReservation.SCOPE_TICKETS,
+                WorkIdentityReservation.TYPE_ARTG_TICKET,
+                artgId)
+            .map(WorkIdentityReservation::getTicketId);
+    if (winningTicketId.isEmpty()) {
+      logger.info(
+          "Work for ARTG ID "
+              + artgId
+              + " is claimed but its ticket is not recorded yet — proceeding");
+      return Optional.empty();
+    }
+    logger.info(
+        "Reusing ticket "
+            + winningTicketId.get()
+            + " for ARTG ID "
+            + artgId
+            + " — another caller already created it");
+    return ticketRepository.findById(winningTicketId.get());
+  }
+
+  /**
+   * True when the caller has composed the ticket's content itself and Snomio can persist it
+   * directly, rather than asking Sergio to compose it from the register entry.
+   */
+  /**
+   * The description a new ticket is created with: what the submission said about itself when a
+   * person made it, otherwise the caller's composed description.
+   */
+  private static String newTicketDescription(TicketMetadata ticketMetadata) {
+    String details = ticketMetadata.getSubmissionDetails();
+    if (details != null && !details.isBlank()) {
+      return details;
+    }
+    return ticketMetadata.getResolvedDescription();
+  }
+
+  /**
+   * Files what a submission said about itself as a comment on a ticket that already exists.
+   *
+   * <p>An identical comment is not written twice. Each interactive submission differs — a different
+   * person, a different business reason — so each is recorded, while a caller that resubmits
+   * unchanged records it once rather than on every run.
+   *
+   * <p>Failing to file it does not fail the update: the ticket's content is written either way, and
+   * losing that write because a comment could not be saved would be the worse outcome.
+   */
+  private void recordSubmissionDetails(Ticket ticket, TicketMetadata ticketMetadata) {
+    String details = ticketMetadata.getSubmissionDetails();
+    if (details == null || details.isBlank()) {
+      return;
+    }
+    try {
+      boolean alreadyRecorded =
+          commentRepository.findByTicket_Id(ticket.getId()).stream()
+              .anyMatch(comment -> details.equals(comment.getText()));
+      if (!alreadyRecorded) {
+        commentRepository.save(Comment.builder().ticket(ticket).text(details).build());
+      }
+    } catch (Exception e) {
+      logger.error(
+          "Could not record the submission details on ticket "
+              + ticket.getId()
+              + "; the ticket is still updated, but without the comment",
+          e);
+    }
+  }
+
+  private static boolean hasComposedContent(TicketMetadata ticketMetadata) {
+    return ticketMetadata.getName() != null && !ticketMetadata.getName().isBlank();
   }
 
   /** Looks up tickets by ARTGID dedupe key, treating "none found" as an empty result. */
@@ -1923,6 +2171,18 @@ public class TicketServiceImpl implements TicketService {
             }
           });
     }
+
+    if (hasComposedContent(ticketMetadata)) {
+      applyComposedUpdates(ticket, ticketMetadata);
+      // The ticket already has a description, so a further submission's details are filed as a
+      // comment rather than replacing it — the same place they appeared before callers composed.
+      recordSubmissionDetails(ticket, ticketMetadata);
+      return;
+    }
+
+    // Bare-identifier callers: the description is filed as a comment rather than replacing the
+    // ticket's own. Unchanged, because such a caller has composed nothing and its description is an
+    // addendum, not the ticket's content.
     String existingDescription = ticket.getDescription();
     String newDescription = ticketMetadata.getResolvedDescription();
     if (newDescription != null
@@ -1931,6 +2191,168 @@ public class TicketServiceImpl implements TicketService {
       Comment comment = Comment.builder().ticket(ticket).text(newDescription).build();
       commentRepository.save(comment);
     }
+  }
+
+  /**
+   * Applies an update from a caller that composed the ticket's register-derived content.
+   *
+   * <p>Update is made symmetric with create: the same content the caller would have set on a new
+   * ticket is set on an existing one. Previously an update could only ever add — so a label derived
+   * from register content stayed on the ticket after the content stopped justifying it, and the
+   * composed description was filed as a comment rather than becoming the description.
+   *
+   * <p>Title and description are replaced only when the caller says the register value behind them
+   * changed. That protects a human edit from being restamped by a run triggered by some unrelated
+   * register field, and keeps the ticket's audit trail free of identical rewrites.
+   */
+  private void applyComposedUpdates(Ticket ticket, TicketMetadata ticketMetadata) {
+    if (ticketMetadata.getLabelsToRemove() != null) {
+      ticketMetadata
+          .getLabelsToRemove()
+          .forEach(
+              name -> ticket.getLabels().removeIf(label -> label.getName().equalsIgnoreCase(name)));
+    }
+
+    if (ticketMetadata.isTitleChanged() && ticketMetadata.getName() != null) {
+      ticket.setTitle(ticketMetadata.getName());
+    }
+    if (ticketMetadata.isDescriptionChanged() && ticketMetadata.getResolvedDescription() != null) {
+      ticket.setDescription(ticketMetadata.getResolvedDescription());
+    }
+
+    if (ticketMetadata.getStateLabel() != null && !ticketMetadata.getStateLabel().isBlank()) {
+      State state = resolveStateOrDefault(ticketMetadata.getStateLabel(), null);
+      if (state != null) {
+        ticket.setState(state);
+      }
+    }
+    if (ticketMetadata.getSchedule() != null && !ticketMetadata.getSchedule().isBlank()) {
+      scheduleRepository.findByName(ticketMetadata.getSchedule()).ifPresent(ticket::setSchedule);
+    }
+    if (ticketMetadata.getPriorityBucket() != null
+        && !ticketMetadata.getPriorityBucket().isBlank()) {
+      priorityBucketRepository
+          .findByName(ticketMetadata.getPriorityBucket())
+          .ifPresent(ticket::setPriorityBucket);
+    }
+
+    applyRegisterSnapshot(ticket, ticketMetadata.getRegisterSnapshot());
+    applyAdditionalFields(ticket, ticketMetadata.getAdditionalFields());
+  }
+
+  /**
+   * Builds additional field values from names the caller supplied, leaving the real {@link
+   * AdditionalFieldType} to be resolved from the repository by name.
+   */
+  private Set<AdditionalFieldValueDto> composedAdditionalFields(Map<String, String> supplied) {
+    // Ordered: the caller composed these in a deliberate order and it is the order they display in.
+    Set<AdditionalFieldValueDto> values = new LinkedHashSet<>();
+    if (supplied == null) {
+      return values;
+    }
+    supplied.forEach(
+        (name, value) -> {
+          if (value == null || value.isBlank()) {
+            return;
+          }
+          AdditionalFieldTypeDto typeDto = new AdditionalFieldTypeDto();
+          typeDto.setName(name);
+          AdditionalFieldValueDto valueDto = new AdditionalFieldValueDto();
+          valueDto.setAdditionalFieldType(typeDto);
+          valueDto.setValueOf(value);
+          values.add(valueDto);
+        });
+    return values;
+  }
+
+  /**
+   * Applies register-derived additional field values to an existing ticket, replacing the value of
+   * each named field and leaving fields the caller did not mention alone.
+   *
+   * <p>Leaving them alone matters: a ticket carries fields people set by hand alongside the ones
+   * derived from the register, and an update that reconciled the whole set would erase them.
+   */
+  /**
+   * A field value in the form the database holds it: a date-typed field is stored as an instant,
+   * every other type verbatim.
+   *
+   * <p>Creation has always converted date values, but this path stored what the caller sent. A
+   * caller composes dates for people to read — {@code 15/11/2024} — so a ticket updated through
+   * here ended up holding a different format from one that was created, on the same field type, and
+   * the interface could not read it. {@link InstantUtils#convert} accepts what is already an
+   * instant, so applying this to a value that needs no conversion leaves it unchanged.
+   */
+  private String valueForStorage(AdditionalFieldType type, String value) {
+    if (!Type.DATE.equals(type.getType())) {
+      return value;
+    }
+    return InstantUtils.formatTimeToDb(
+        value, InstantUtils.YYYY_MM_DD_T_HH_MM_SS_SSSXXX, businessZoneId);
+  }
+
+  private void applyAdditionalFields(Ticket ticket, Map<String, String> supplied) {
+    if (supplied == null || supplied.isEmpty()) {
+      return;
+    }
+    if (ticket.getAdditionalFieldValues() == null) {
+      ticket.setAdditionalFieldValues(new LinkedHashSet<>());
+    }
+    supplied.forEach(
+        (name, value) -> {
+          if (value == null || value.isBlank()) {
+            return;
+          }
+          additionalFieldTypeRepository
+              .findByName(name)
+              .ifPresent(
+                  type -> {
+                    String storedValue = valueForStorage(type, value);
+                    Optional<AdditionalFieldValue> existing =
+                        ticket.getAdditionalFieldValues().stream()
+                            .filter(v -> v.getAdditionalFieldType().getName().equals(name))
+                            .findFirst();
+                    if (existing.isPresent()) {
+                      existing.get().setValueOf(storedValue);
+                      return;
+                    }
+                    AdditionalFieldValue created =
+                        AdditionalFieldValue.builder()
+                            .additionalFieldType(type)
+                            .valueOf(storedValue)
+                            .build();
+                    created.getTickets().add(ticket);
+                    ticket.getAdditionalFieldValues().add(created);
+                  });
+        });
+  }
+
+  /**
+   * Records the register entry as the caller observed it, replacing any snapshot already held.
+   *
+   * <p>This is the field the next run compares against, so an update that changes the ticket's
+   * content without rewriting it leaves the entry looking permanently changed: every subsequent run
+   * would detect the same difference and update the same ticket again.
+   */
+  private void applyRegisterSnapshot(Ticket ticket, JsonNode registerSnapshot) {
+    if (registerSnapshot == null) {
+      return;
+    }
+    if (ticket.getJsonFields() == null) {
+      ticket.setJsonFields(new HashSet<>());
+    }
+    Optional<JsonField> existing =
+        ticket.getJsonFields().stream()
+            .filter(field -> TicketMinimalDto.TGA_ENTRY_FIELD_NAME.equals(field.getName()))
+            .findFirst();
+    if (existing.isPresent()) {
+      existing.get().setValue(registerSnapshot);
+      return;
+    }
+    JsonField field = new JsonField();
+    field.setName(TicketMinimalDto.TGA_ENTRY_FIELD_NAME);
+    field.setValue(registerSnapshot);
+    field.setTicket(ticket);
+    ticket.getJsonFields().add(field);
   }
 
   private void initializeProducts(Ticket ticket) {
@@ -2044,23 +2466,53 @@ public class TicketServiceImpl implements TicketService {
                 .map(er -> new ResolvedExternalRequestor(er, null))
                 .toList();
     return CompletableFuture.completedFuture(
-        processArtgId(Long.parseLong(artgId), resolved, null, Optional.empty()));
+        composeViaSubmissionGateway(Long.parseLong(artgId), resolved, null, Optional.empty()));
   }
 
-  private Ticket processArtgId(
+  /**
+   * Obtains composed content from the submission gateway and creates the ticket here.
+   *
+   * <p>Only where the content comes from changes. The ticket is still created by this application,
+   * so the caller's requestors, labels and description addendum are merged exactly as they were —
+   * the gateway composes register-derived content and knows nothing about them.
+   */
+  private Ticket composeViaSubmissionGateway(
       Long artgId,
       List<ResolvedExternalRequestor> externalRequestorList,
       List<Label> labels,
       Optional<String> ammendDescription) {
-    TicketDto ticketDto = sergioService.getTicketByArtgEntryId(artgId);
-    if (ticketDto == null) {
-      throw new IllegalArgumentException("TicketDto is null for artgId: " + artgId);
+
+    TicketMetadata composed = submissionGatewayComposer.getComposedContent(artgId);
+
+    // The addendum is appended rather than replacing the composed description, matching what the
+    // feed-processor path did with it.
+    if (ammendDescription.isPresent()
+        && composed.getDescription() != null
+        && !composed.getDescription().contains(ammendDescription.get())) {
+      composed.setDescription(composed.getDescription() + "<br>" + ammendDescription.get());
     }
-    normaliseExternalRequestors(ticketDto);
-    appendDescription(ticketDto, ammendDescription);
-    mergeExternalRequestors(ticketDto, externalRequestorList);
-    mergeLabels(ticketDto, labels);
-    return createTicketFromDto(ticketDto);
+
+    // The composer's labels describe the register entry; the caller's describe why it was
+    // submitted. A ticket needs both, so they are merged rather than one replacing the other.
+    List<Label> mergedLabels = new ArrayList<>();
+    if (labels != null) {
+      mergedLabels.addAll(labels);
+    }
+    if (composed.getLabels() != null) {
+      composed
+          .getLabels()
+          .forEach(
+              name ->
+                  labelRepository
+                      .findByName(name)
+                      .filter(
+                          label ->
+                              mergedLabels.stream()
+                                  .noneMatch(l -> l.getName().equalsIgnoreCase(label.getName())))
+                      .ifPresent(mergedLabels::add));
+    }
+
+    return createNewTicket(composed, externalRequestorList, mergedLabels, artgId.toString());
   }
 
   /** Ensures the DTO carries a non-null requestor set with any null entries dropped. */

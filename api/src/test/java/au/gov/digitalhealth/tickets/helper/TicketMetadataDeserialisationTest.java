@@ -15,6 +15,7 @@
  */
 package au.gov.digitalhealth.tickets.helper;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -32,6 +33,44 @@ import org.junit.jupiter.api.Test;
 class TicketMetadataDeserialisationTest {
 
   private final ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+
+  @Test
+  void submissionDetailsBindsFromTheNameSubmissionGatewaySends() {
+    // The two TicketMetadata classes are one wire contract expressed twice, matched only by field
+    // name. A name that differs is dropped silently rather than rejected, so the details would
+    // simply never arrive and the ticket would carry no record of the submission.
+    String json =
+        """
+        {
+          "dedupeKey": "443270",
+          "name": "TGA - ARTG ID 443270 Ibuprofen",
+          "description": "<div>composed</div>",
+          "submissionDetails": "<strong>Submission Details</strong><table><tbody></tbody></table>"
+        }
+        """;
+
+    TicketMetadata metadata =
+        assertDoesNotThrow(() -> mapper.readValue(json, TicketMetadata.class));
+
+    assertEquals(
+        "<strong>Submission Details</strong><table><tbody></tbody></table>",
+        metadata.getSubmissionDetails());
+    // Carried separately: the composed description is still the register's own.
+    assertEquals("<div>composed</div>", metadata.getDescription());
+  }
+
+  @Test
+  void anAutomatedCallerSendsNoSubmissionDetails() {
+    String json =
+        """
+        {"dedupeKey": "443270", "description": "<div>composed</div>"}
+        """;
+
+    TicketMetadata metadata =
+        assertDoesNotThrow(() -> mapper.readValue(json, TicketMetadata.class));
+
+    assertNull(metadata.getSubmissionDetails());
+  }
 
   @Test
   void legacyStringShapeDeserialises() throws JsonProcessingException {

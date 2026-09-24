@@ -209,22 +209,6 @@ public class ApiWebConfiguration {
   }
 
   @Bean
-  public WebClient sergioApiClient(
-      @Value("${sergio.base.url}") String sergioUrl, WebClient.Builder webClientBuilder) {
-    // TicketDto (returned by this client) carries a com.fasterxml.jackson.databind.JsonNode field
-    // (JsonFieldDto.value), a Jackson 2 type. This client relies on the app-wide
-    // spring.http.converters.preferred-json-mapper=jackson2 property (see application.properties)
-    // to get Jackson 2 reactive codecs by default, rather than overriding codecs here with the
-    // deprecated Jackson2JsonEncoder/Decoder classes.
-    return webClientBuilder
-        .baseUrl(sergioUrl)
-        .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-        .filter(authHelper.addDefaultAuthCookie)
-        .filter(logRequest())
-        .build();
-  }
-
-  @Bean
   public WebClient fhirApiClient(
       @Value("${fhir.server.url}") String fhirServerUrl, WebClient.Builder webClientBuilder) {
     return webClientBuilder
