@@ -66,6 +66,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -1019,6 +1020,51 @@ public class SnowstormClient {
         .block();
   }
 
+  /**
+   * Snowstorm reports a lock it could not take as the batch's failure <em>message</em>, not as a
+   * distinct status, so the text is the only signal available. Matched narrowly on the phrase
+   * Snowstorm emits when acquiring a branch lock fails.
+   */
+  private static boolean isBranchLockedMessage(String message) {
+    return message != null && message.toLowerCase(Locale.ROOT).contains("already locked");
+  }
+
+  /**
+   * Converts a batch that failed because the branch was locked into a {@link BranchLockedProblem}
+   * (423) rather than letting it surface as a 500.
+   *
+   * <p>{@link #waitForBranchLock} already waits out a lock that is present when the request starts,
+   * but the branch can be locked in the window between that check passing and Snowstorm beginning
+   * the batch - a classification or promotion kicking off on the task is enough. That is an
+   * expected, transient race, not a server fault, and an author can act on it.
+   *
+   * <p>The batch itself writes nothing in this case: Snowstorm takes the branch lock before it
+   * applies any content, so failing to acquire it fails the job before the first change. Earlier
+   * steps of the same request may already have been written though - {@code
+   * ProductCreationService.createAndUpdate} writes property-only updates in one batch and the
+   * created concepts in another - so the caller is told to check rather than assured nothing
+   * happened.
+   */
+  private static void throwIfBatchFailedOnBranchLock(String branch, String message) {
+    if (isBranchLockedMessage(message)) {
+      throw new BranchLockedProblem(
+          branch,
+          message,
+          "The branch was free when this request started and was locked before the change could be"
+              + " written, so this batch applied nothing. Wait for the task to finish what it is"
+              + " doing and try again. Earlier steps of the same save may already have been"
+              + " written, so re-open the product to check before retrying.");
+    }
+  }
+
+  private static String joinConceptIds(SnowstormAsyncConceptChangeBatch batch) {
+    // Not Objects.requireNonNull: a batch that failed before it did any work reports no concept
+    // ids, and an NPE here would replace Snowstorm's actual failure message with a useless one.
+    return batch.getConceptIds() == null
+        ? ""
+        : batch.getConceptIds().stream().map(Object::toString).collect(Collectors.joining(","));
+  }
+
   @SuppressWarnings("java:S1192")
   public List<SnowstormConceptMini> createUpdateBulkConcepts(
       String branch, Collection<SnowstormConceptView> concepts) throws InterruptedException {
@@ -1099,13 +1145,12 @@ public class SnowstormClient {
         }
         complete = true;
       } else if (batch.getStatus() == StatusEnum.FAILED) {
+        throwIfBatchFailedOnBranchLock(branch, batch.getMessage());
         throw new BatchSnowstormRequestFailedProblem(
             "The batch "
                 + batch.getId()
                 + " to create/update concepts "
-                + Objects.requireNonNull(batch.getConceptIds()).stream()
-                    .map(Object::toString)
-                    .collect(Collectors.joining(","))
+                + joinConceptIds(batch)
                 + " failed on '"
                 + branch
                 + "' message was "
@@ -1117,6 +1162,7 @@ public class SnowstormClient {
     }
 
     if (!complete) {
+      throwIfBatchFailedOnBranchLock(branch, lastMessage);
       throw new BatchSnowstormRequestFailedProblem(
           "Batch timed out creating/updating concepts on branch '"
               + branch

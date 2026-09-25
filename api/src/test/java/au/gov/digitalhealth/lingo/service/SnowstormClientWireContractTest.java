@@ -20,11 +20,16 @@ import static com.github.tomakehurst.wiremock.client.WireMock.any;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import au.csiro.snowstorm_client.model.SnowstormConceptView;
 import au.csiro.snowstorm_client.model.SnowstormReferenceSetMember;
 import au.csiro.snowstorm_client.model.SnowstormRelationship;
+import au.gov.digitalhealth.lingo.exception.BatchSnowstormRequestFailedProblem;
+import au.gov.digitalhealth.lingo.exception.BranchLockedProblem;
 import au.gov.digitalhealth.lingo.log.SnowstormLogger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -55,6 +60,7 @@ class SnowstormClientWireContractTest {
 
   private WireMockServer wireMock;
   private SnowstormClient client;
+  private String baseUrl;
 
   @BeforeAll
   void startWireMock() throws ReflectiveOperationException {
@@ -63,6 +69,7 @@ class SnowstormClientWireContractTest {
             WireMockConfiguration.wireMockConfig().dynamicPort().bindAddress("127.0.0.1"));
     wireMock.start();
     String url = "http://127.0.0.1:" + wireMock.port();
+    baseUrl = url;
     WebClient webClient = WebClient.builder().baseUrl(url).build();
     // SnowstormClient caches the OpenAPI ApiClient in static ThreadLocals. If a previous
     // test class on this JVM thread (e.g. SnowstormClientDanglingReferenceIntegrationTest)
@@ -130,6 +137,73 @@ class SnowstormClientWireContractTest {
                     .withStatus(200)
                     .withHeader("Content-Type", "application/json")
                     .withBody("{\"path\":\"" + BRANCH + "\",\"locked\":false}")));
+  }
+
+  /**
+   * A Snowstorm bulk change that fails because the branch was locked must surface as 423 LOCKED,
+   * not 500. waitForBranchLock waits out a lock that is already present when the request starts,
+   * but the branch can be locked in the window between that check passing and Snowstorm beginning
+   * the batch - a classification or promotion starting on the task is enough - and that reached
+   * production as a fatal, unhandled 500 (IEDC-9351). 423 is a 4xx, so ClientErrorNoiseFilter also
+   * stops it being reported to Sentry at all.
+   */
+  @Test
+  void createUpdateBulkConcepts_batchFailedOnBranchLock_reportsLockedNotServerError()
+      throws Exception {
+    stubBulkChange(
+        "{\"id\":\"a944cf6f\",\"status\":\"FAILED\",\"message\":\"Branch "
+            + BRANCH
+            + " is already locked\"}");
+
+    List<SnowstormConceptView> concepts = List.of(conceptView());
+    assertThatThrownBy(() -> client.createUpdateBulkConcepts(BRANCH, concepts))
+        .as("a locked branch is transient and actionable, not a server fault")
+        .isInstanceOf(BranchLockedProblem.class)
+        .hasMessageContaining(BRANCH)
+        .hasMessageContaining("already locked")
+        .hasMessageContaining("this batch applied nothing");
+  }
+
+  /**
+   * Any other batch failure is still a server fault and must keep reporting as one - and must not
+   * be replaced by an NPE when the failed batch carries no concept ids, which is exactly the shape
+   * a batch that failed before doing any work returns.
+   */
+  @Test
+  void createUpdateBulkConcepts_batchFailedForOtherReason_stillReportsBatchFailure()
+      throws Exception {
+    stubBulkChange("{\"id\":\"b1\",\"status\":\"FAILED\",\"message\":\"Something broke\"}");
+
+    List<SnowstormConceptView> concepts = List.of(conceptView());
+    assertThatThrownBy(() -> client.createUpdateBulkConcepts(BRANCH, concepts))
+        .as("non-lock failures are genuine faults and must not be downgraded")
+        .isInstanceOf(BatchSnowstormRequestFailedProblem.class)
+        .hasMessageContaining("Something broke");
+  }
+
+  private SnowstormConceptView conceptView() {
+    SnowstormConceptView concept = new SnowstormConceptView();
+    concept.setConceptId("100");
+    return concept;
+  }
+
+  /** Stubs the bulk POST and the batch-status poll it redirects to with the given status body. */
+  private void stubBulkChange(String statusBody) throws ReflectiveOperationException {
+    setField("maxBatchChecks", 3);
+    setField("delayBetweenBatchChecks", 1);
+    String statusPath = "/batch-status/1";
+    wireMock.stubFor(
+        post(urlMatching(".*/concepts/bulk.*"))
+            .atPriority(1)
+            .willReturn(aResponse().withStatus(201).withHeader("Location", baseUrl + statusPath)));
+    wireMock.stubFor(
+        get(urlMatching(".*" + statusPath))
+            .atPriority(1)
+            .willReturn(
+                aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody(statusBody)));
   }
 
   @Test

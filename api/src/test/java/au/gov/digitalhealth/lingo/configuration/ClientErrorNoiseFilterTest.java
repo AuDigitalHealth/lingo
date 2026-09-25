@@ -18,6 +18,7 @@ package au.gov.digitalhealth.lingo.configuration;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
+import au.gov.digitalhealth.lingo.exception.BranchLockedProblem;
 import au.gov.digitalhealth.lingo.exception.ResourceNotFoundProblem;
 import io.sentry.Hint;
 import io.sentry.SentryEvent;
@@ -36,6 +37,18 @@ class ClientErrorNoiseFilterTest {
   @Test
   void dropsApplicationNotFoundProblem() {
     SentryEvent event = eventFor(new ResourceNotFoundProblem("External Requestor 'x' not found"));
+    assertNull(new ClientErrorNoiseFilter(true).execute(event, new Hint()));
+  }
+
+  /**
+   * A branch locked mid-save reached production as an unhandled fatal (IEDC-9351). It is now a 423,
+   * which puts it in this filter's scope - this pins that, so a future change to the problem's
+   * status would fail here rather than quietly restore the Sentry noise.
+   */
+  @Test
+  void dropsBranchLockedProblem() {
+    SentryEvent event =
+        eventFor(new BranchLockedProblem("MAIN/SNOMEDCT-IE/IEDC/IEDC-9351", "classifying"));
     assertNull(new ClientErrorNoiseFilter(true).execute(event, new Hint()));
   }
 
